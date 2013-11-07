@@ -108,7 +108,7 @@ public class AddSupportForFrameworksPanel implements Disposable {
         ((DefaultTreeModel)myFrameworksTree.getModel()).nodeChanged(getSelectedNode());
       }
     }, this);
-    setProviders(providers, Collections.<String>emptySet());
+    setProviders(providers, Collections.<String>emptySet(), Collections.<String>emptySet());
 
     myFrameworksTree.addTreeSelectionListener(new TreeSelectionListener() {
       public void valueChanged(TreeSelectionEvent e) {
@@ -129,10 +129,15 @@ public class AddSupportForFrameworksPanel implements Disposable {
 
   }
 
-  public void setProviders(List<FrameworkSupportInModuleProvider> providers, Set<String> associated) {
+  public void setProviders(List<FrameworkSupportInModuleProvider> providers, Set<String> associated, Set<String> preselected) {
     myProviders = providers;
 
     myAssociatedFrameworks = createNodes(myProviders, associated);
+    for (FrameworkSupportNodeBase node : myRoots) {
+      if (preselected.contains(node.getId())) {
+        node.setChecked(true);
+      }
+    }
     setAssociatedFrameworks();
 
     myFrameworksTree.setRoots(myRoots);

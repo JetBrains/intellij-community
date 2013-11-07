@@ -194,7 +194,9 @@ public class ProjectTypeStep extends ModuleWizardStep {
             }
           });
 
-        myFrameworksPanel.setProviders(matched, new HashSet<String>(Arrays.asList(projectCategory.getAssociatedFrameworkIds())));
+        myFrameworksPanel.setProviders(matched,
+                                       new HashSet<String>(Arrays.asList(projectCategory.getAssociatedFrameworkIds())),
+                                       new HashSet<String>(Arrays.asList(projectCategory.getPreselectedFrameworkIds())));
       }
     }
     else if (object instanceof TemplatesGroup) {
