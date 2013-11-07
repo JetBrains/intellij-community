@@ -3,6 +3,7 @@ package org.jetbrains.postfixCompletion.TemplateProviders;
 import com.intellij.codeInsight.completion.InsertionContext;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
@@ -103,8 +104,10 @@ public class IfStatementTemplateProvider extends TemplateProviderBase {
       return xs;
     }
 
+
+
     @Override
-    public void handleInsert(InsertionContext context) {
+    public void handleInsert(final InsertionContext context) {
 
 
 
@@ -119,40 +122,37 @@ public class IfStatementTemplateProvider extends TemplateProviderBase {
       context.getDocument().replaceString(startOffset, endOffset, "postfix");
       context.commitDocument();
 
-      final PsiElement psiElement = context.getFile().findElementAt(startOffset);
-      if (psiElement == null) {
-        return;
-      }
+      final PsiFile file = context.getFile();
+      final PsiElement psiElement = file.findElementAt(startOffset);
+      if (psiElement == null) return;
 
       final PostfixTemplateAcceptanceContext acceptanceContext = templatesManager.isAvailable(psiElement, true);
-      if (acceptanceContext == null) {
-        return;
-      }
+      if (acceptanceContext == null) return;
 
-      final List<PrefixExpressionContext> expressions = acceptanceContext.expressions;
-      for (PrefixExpressionContext expression : expressions) {
+      for (final PrefixExpressionContext expression : acceptanceContext.expressions) {
         final PsiExpression expr = expression.expression;
         if (myExpressionType.isInstance(expr) && expr.getTextRange().equals(myExpressionRange)) {
 
+          // get facade and factory while all elements are physical and valid
           final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(expr.getProject());
           final PsiElementFactory psiElementFactory = psiFacade.getElementFactory();
+
+          // fix up expression before template expansion
+          final PrefixExpressionContext fixedContext = expression.fixUp();
+
+          // get target statement to replace
+          final PsiStatement targetStatement = fixedContext.getContainingStatement();
+          assert targetStatement != null : "impossible";
+
           final PsiIfStatement psiStatement = (PsiIfStatement)
-            psiElementFactory.createStatementFromText("if(expr){CARET;}", expr);
+            psiElementFactory.createStatementFromText("if(expr){CARET;}", file);
 
-
-
-          PsiExpression condition = psiStatement.getCondition();
+          // already physical
+          final PsiExpression condition = psiStatement.getCondition();
           assert condition != null;
+          condition.replace(fixedContext.expression.copy());
 
-          final PrefixExpressionContext fixed = expression.fixUp();
-
-          condition.replace(fixed.expression);
-
-          final PsiStatement parent1 = fixed.getContainingStatement();
-          assert parent1 != null : "impossible?";
-
-          PsiIfStatement newSt = (PsiIfStatement) parent1.replace(psiStatement);
-
+          PsiIfStatement newSt = (PsiIfStatement) targetStatement.replace(psiStatement);
 
           final PsiStatement thenBranch = newSt.getThenBranch();
           if (thenBranch instanceof PsiBlockStatement) {
@@ -161,8 +161,27 @@ public class IfStatementTemplateProvider extends TemplateProviderBase {
 
 
             final TextRange textRange = caret.getTextRange();
-            context.getEditor().getCaretModel().moveToOffset(caret.getTextOffset());
-            context.getDocument().deleteString(textRange.getStartOffset(), textRange.getEndOffset());
+            final RangeMarker rangeMarker = context.getDocument().createRangeMarker(textRange);
+
+            context.setLaterRunnable(new Runnable() {
+              @Override
+              public void run() {
+                if (!rangeMarker.isValid()) {
+                  return;
+                }
+
+                //PsiDocumentManager.getInstance(null)
+                ApplicationManager.getApplication().runWriteAction(new Runnable() {
+                  @Override
+                  public void run() {
+                    context.getEditor().getCaretModel().moveToOffset(rangeMarker.getEndOffset());
+                    context.getDocument().deleteString(rangeMarker.getStartOffset(), rangeMarker.getEndOffset());
+                  }
+                });
+              }
+            });
+
+
             //caret.delete();
           }
 

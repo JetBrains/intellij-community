@@ -1,1 +1,4 @@
 * Remove usages of PsiTreeUtil.getParentOfType()
+
+.if
+.assert
