@@ -20,6 +20,7 @@ import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -66,14 +67,16 @@ public class TerminalProcessHandler extends OSProcessHandler {
   public void notifyTextAvailable(String text, Key outputType) {
     terminalOutputCapturer.onTextAvailable(new ProcessEvent(this, text), outputType);
 
-    // filter terminal escape codes - they are presented in the output for windows platform
-    String filteredText = text.replaceAll(CSI_ESCAPE_CODE, "").replaceAll(NON_CSI_ESCAPE_CODE, "");
-    // trim leading '\r' symbols - as they break xml parsing logic
-    filteredText = StringUtil.trimLeading(filteredText, '\r');
+    if (SystemInfo.isWindows) {
+      // filter terminal escape codes - they are presented in the output for windows platform
+      text = text.replaceAll(CSI_ESCAPE_CODE, "").replaceAll(NON_CSI_ESCAPE_CODE, "");
+      // trim leading '\r' symbols - as they break xml parsing logic
+      text = StringUtil.trimLeading(text, '\r');
+    }
 
-    if (!StringUtil.isEmpty(filteredText)) {
+    if (!StringUtil.isEmpty(text)) {
       StringBuilder lastLine = getLastLineFor(outputType);
-      String currentLine = lastLine.append(filteredText).toString();
+      String currentLine = lastLine.append(text).toString();
       lastLine.setLength(0);
 
       // check if current line presents some interactive output
@@ -93,7 +96,9 @@ public class TerminalProcessHandler extends OSProcessHandler {
     // for instance, same text could be returned twice with '\r' symbol in between (so in emulator output we'll still see correct
     // text without duplication)
     // because of this we manually process '\r' occurrences to get correct output
-    text = removeAllBeforeCaretReturn(text);
+    if (SystemInfo.isWindows) {
+      text = removeAllBeforeCaretReturn(text);
+    }
 
     // text is not more than one line - either one line or part of the line
     if (StringUtil.endsWith(text, "\n")) {
