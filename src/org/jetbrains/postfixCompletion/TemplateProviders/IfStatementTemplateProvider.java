@@ -3,7 +3,6 @@ package org.jetbrains.postfixCompletion.TemplateProviders;
 import com.intellij.codeInsight.completion.InsertionContext;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
@@ -81,34 +80,30 @@ public class IfStatementTemplateProvider extends TemplateProviderBase {
     @NotNull private final Class<? extends PsiExpression> myExpressionType;
     @NotNull private final TextRange myExpressionRange;
 
-    //private final PsiExpression myFoo;
-
     public IfLookupElement(@NotNull final PrefixExpressionContext context) {
       super("if");
       myExpressionType = context.expression.getClass();
       myExpressionRange = context.expression.getTextRange();
     }
 
-    @Override
-    public boolean isWorthShowingInAutoPopup() {
-      final boolean worthShowingInAutoPopup = super.isWorthShowingInAutoPopup();
-      return true;
+    @Override public boolean isWorthShowingInAutoPopup() {
+      return true; // thanks IDEA folks for implementing this!
     }
 
-    @Override
-    public Set<String> getAllLookupStrings() {
-      final Set<String> xs = new HashSet<>();
-      xs.add("if");
-      xs.add("if ");
-      xs.add("if{");
-      return xs;
+    @Override public Set<String> getAllLookupStrings() {
+      final HashSet<String> set = new HashSet<>();
+      final String lookupString = getLookupString();
+
+      // this hack prevents completion list from closing
+      // when whole template name is typed
+      set.add(lookupString);
+      set.add(lookupString + " ");
+
+      return set;
     }
-
-
 
     @Override
     public void handleInsert(final InsertionContext context) {
-
 
 
       final PostfixTemplatesManager templatesManager =
@@ -145,7 +140,7 @@ public class IfStatementTemplateProvider extends TemplateProviderBase {
           assert targetStatement != null : "impossible";
 
           final PsiIfStatement psiStatement = (PsiIfStatement)
-            psiElementFactory.createStatementFromText("if(expr){CARET;}", file);
+            psiElementFactory.createStatementFromText("if(expr)", file);
 
           // already physical
           final PsiExpression condition = psiStatement.getCondition();
@@ -154,39 +149,14 @@ public class IfStatementTemplateProvider extends TemplateProviderBase {
 
           PsiIfStatement newSt = (PsiIfStatement) targetStatement.replace(psiStatement);
 
-          final PsiStatement thenBranch = newSt.getThenBranch();
-          if (thenBranch instanceof PsiBlockStatement) {
-            final PsiStatement caret = ((PsiBlockStatement) thenBranch)
-              .getCodeBlock().getStatements()[0];
+          final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(context.getProject());
+          documentManager.doPostponedOperationsAndUnblockDocument(context.getDocument());
 
+          final int offset = newSt.getTextRange().getEndOffset();
+          context.getEditor().getCaretModel().moveToOffset(offset);
+          context.getDocument().insertString(offset, " "); // ?
 
-            final TextRange textRange = caret.getTextRange();
-            final RangeMarker rangeMarker = context.getDocument().createRangeMarker(textRange);
-
-            context.setLaterRunnable(new Runnable() {
-              @Override
-              public void run() {
-                if (!rangeMarker.isValid()) {
-                  return;
-                }
-
-                //PsiDocumentManager.getInstance(null)
-                ApplicationManager.getApplication().runWriteAction(new Runnable() {
-                  @Override
-                  public void run() {
-                    context.getEditor().getCaretModel().moveToOffset(rangeMarker.getEndOffset());
-                    context.getDocument().deleteString(rangeMarker.getStartOffset(), rangeMarker.getEndOffset());
-                  }
-                });
-              }
-            });
-
-
-            //caret.delete();
-          }
-
-          // do magic
-          break;
+          break; // ewww
         }
       }
     }

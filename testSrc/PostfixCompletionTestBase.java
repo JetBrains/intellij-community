@@ -1,9 +1,5 @@
-import com.intellij.codeInsight.completion.CompletionType;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.Arrays;
-import java.util.List;
 
 public class PostfixCompletionTestBase extends LightCodeInsightFixtureTestCase {
   @Override
@@ -11,31 +7,15 @@ public class PostfixCompletionTestBase extends LightCodeInsightFixtureTestCase {
     return PostfixTestUtils.BASE_TEST_DATA_PATH + "/completion";
   }
 
+  private void test(@NotNull final String typingChars) {
+    final StackTraceElement[] trace = Thread.currentThread().getStackTrace();
+    final String methodName = trace[2].getMethodName();
 
-  private void doTest(@NotNull final String name) {
-    myFixture.configureByFile(name);
-    myFixture.complete(CompletionType.BASIC);
-
-    //myFixture.testCompletion();
-
+    myFixture.testCompletionTyping(methodName + ".java", typingChars, methodName + ".gold");
   }
 
-  public void testIf01() {
-    myFixture.testCompletionTyping("testIf01.java", "if\n", "testIf01.gold");
-  }
-
-  public void testCompletion() {
-
-    //myFixture.testCompletion();
-
-    myFixture.configureByFiles("foo.java");
-    myFixture.complete(CompletionType.BASIC, 1);
-    List<String> strings = myFixture.getLookupElementStrings();
-
-
-
-    assertTrue(strings.containsAll(Arrays.asList("key\\ with\\ spaces", "language", "message", "tab", "website")));
-    assertEquals(5, strings.size());
-  }
+  public void testIf01() { test("if\n"); }
+  public void testIf02() { test("f\n"); }
+  public void testIf03() { test("if\n"); }
 }
 

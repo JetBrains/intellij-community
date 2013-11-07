@@ -1,9 +1,11 @@
+package completion;
+
 public class Foo {
     void m() {
-        if (bar()) 
+        bar().i<caret>
     }
 
-    boolean bar() {
+    Boolean bar() {
         return true;
     }
 }
