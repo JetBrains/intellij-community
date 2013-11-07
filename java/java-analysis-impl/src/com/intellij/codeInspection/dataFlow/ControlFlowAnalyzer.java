@@ -79,7 +79,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     myAssertionError = createClassType(manager, scope, JAVA_LANG_ASSERTION_ERROR);
     myString = myFactory.createTypeValue(createClassType(manager, scope, JAVA_LANG_STRING), Nullness.NOT_NULL);
     
-    PsiParameter mockVar = JavaPsiFacade.getElementFactory(manager.getProject()).createParameter("$exception$", createClassType(manager, scope, JAVA_LANG_OBJECT));
+    PsiParameter mockVar = JavaPsiFacade.getElementFactory(manager.getProject()).createParameterFromText("java.lang.Object $exception$", null);
     myExceptionHolder = myFactory.getVarFactory().createVariableValue(mockVar, false);
     
     myFields = new HashSet<DfaVariableValue>();
