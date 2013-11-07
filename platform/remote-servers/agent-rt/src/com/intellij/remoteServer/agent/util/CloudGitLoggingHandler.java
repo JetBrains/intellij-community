@@ -18,8 +18,7 @@ package com.intellij.remoteServer.agent.util;
 import com.intellij.remoteServer.agent.util.log.LogListener;
 
 /**
- * Created by IntelliJ IDEA.
- * User: michael.golubev
+ * @author michael.golubev
  */
 public interface CloudGitLoggingHandler extends CloudAgentLoggingHandler, LogListener {
 

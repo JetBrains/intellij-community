@@ -10,8 +10,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Set;
 
 /**
- * Created by IntelliJ IDEA.
- * User: michael.golubev
+ * @author michael.golubev
  */
 public class EditConfigurationAction extends ServersTreeActionBase {
   public EditConfigurationAction() {

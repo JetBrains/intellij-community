@@ -36,8 +36,7 @@ import java.util.Collection;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
- * Created by IntelliJ IDEA.
- * User: michael.golubev
+ * @author michael.golubev
  */
 public abstract class CloudSupportConfigurableBase<
   SC extends CloudConfigurationBase,

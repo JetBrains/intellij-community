@@ -38,8 +38,7 @@ import java.io.File;
 import java.io.IOException;
 
 /**
- * Created by IntelliJ IDEA.
- * User: michael.golubev
+ * @author michael.golubev
  */
 public abstract class CloudGitDeploymentRuntime<DC extends CloudDeploymentNameConfiguration,
   AD extends CloudGitAgentDeployment,

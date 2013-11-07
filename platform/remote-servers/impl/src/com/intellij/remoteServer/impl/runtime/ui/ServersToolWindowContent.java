@@ -44,8 +44,7 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * Created by IntelliJ IDEA.
- * User: michael.golubev
+ * @author michael.golubev
  */
 public class ServersToolWindowContent extends JPanel implements Disposable {
   public static final DataKey<ServersToolWindowContent> KEY = DataKey.create("serversToolWindowContent");

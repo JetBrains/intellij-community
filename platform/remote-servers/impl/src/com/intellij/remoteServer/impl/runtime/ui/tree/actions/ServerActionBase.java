@@ -9,8 +9,7 @@ import javax.swing.*;
 import java.util.Set;
 
 /**
- * Created by IntelliJ IDEA.
- * User: michael.golubev
+ * @author michael.golubev
  */
 public abstract class ServerActionBase extends ServersTreeActionBase {
 

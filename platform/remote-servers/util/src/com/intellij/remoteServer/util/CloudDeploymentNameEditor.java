@@ -25,8 +25,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
 /**
- * Created by IntelliJ IDEA.
- * User: michael.golubev
+ * @author michael.golubev
  */
 public class CloudDeploymentNameEditor<T extends DeploymentNameConfiguration> extends SettingsEditor<T> {
 

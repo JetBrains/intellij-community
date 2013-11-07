@@ -5,8 +5,7 @@ import com.intellij.execution.executors.DefaultDebugExecutor;
 import com.intellij.icons.AllIcons;
 
 /**
- * Created by IntelliJ IDEA.
- * User: michael.golubev
+ * @author michael.golubev
  */
 public class DebugServerAction extends RunServerActionBase {
   public DebugServerAction() {

@@ -3,8 +3,7 @@ package com.intellij.remoteServer.util;
 import com.intellij.remoteServer.configuration.deployment.DeploymentConfigurationBase;
 
 /**
- * Created by IntelliJ IDEA.
- * User: michael.golubev
+ * @author michael.golubev
  */
 
 public class CloudDeploymentNameConfiguration<Self extends CloudDeploymentNameConfiguration<Self>>

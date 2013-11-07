@@ -9,8 +9,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 
 /**
- * Created by IntelliJ IDEA.
- * User: michael.golubev
+ * @author michael.golubev
  */
 public abstract class CloudConfigurableBase<SC extends CloudConfigurationBase> implements UnnamedConfigurable {
 

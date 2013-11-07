@@ -5,8 +5,7 @@ import com.intellij.remoteServer.configuration.ServerConfigurationBase;
 import com.intellij.util.xmlb.annotations.Attribute;
 
 /**
- * Created by IntelliJ IDEA.
- * User: michael.golubev
+ * @author michael.golubev
  */
 
 public class CloudConfigurationBase<Self extends CloudConfigurationBase<Self>>

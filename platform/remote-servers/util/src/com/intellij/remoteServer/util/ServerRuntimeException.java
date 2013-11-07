@@ -1,8 +1,7 @@
 package com.intellij.remoteServer.util;
 
 /**
- * Created by IntelliJ IDEA.
- * User: michael.golubev
+ * @author michael.golubev
  */
 public class ServerRuntimeException extends Exception {
 
