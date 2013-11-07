@@ -1,17 +1,16 @@
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.testFramework.fixtures.*;
+import org.jetbrains.annotations.*;
 
 public class PostfixCompletionTestBase extends LightCodeInsightFixtureTestCase {
-  @Override
-  protected String getTestDataPath() {
+  @Override protected String getTestDataPath() {
     return PostfixTestUtils.BASE_TEST_DATA_PATH + "/completion";
   }
 
   private void test(@NotNull final String typingChars) {
     final StackTraceElement[] trace = Thread.currentThread().getStackTrace();
-    final String methodName = trace[2].getMethodName();
+    final String name = trace[2].getMethodName();
 
-    myFixture.testCompletionTyping(methodName + ".java", typingChars, methodName + ".gold");
+    myFixture.testCompletionTyping(name + ".java", typingChars, name + ".gold");
   }
 
   public void testIf01() { test("if\n"); }

@@ -1,11 +1,11 @@
-package completion;
+import java.lang.*;
 
 public class Foo {
     void m() {
         bar().i<caret>
     }
 
-    Boolean bar() {
+    java.lang.Boolean bar() {
         return true;
     }
 }

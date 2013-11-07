@@ -1,8 +1,8 @@
 package org.jetbrains.postfixCompletion.TemplateProviders;
 
-import com.intellij.openapi.components.ApplicationComponent;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.postfixCompletion.Infrastructure.PostfixTemplateProvider;
+import com.intellij.openapi.components.*;
+import org.jetbrains.annotations.*;
+import org.jetbrains.postfixCompletion.Infrastructure.*;
 
 public abstract class TemplateProviderBase
   implements ApplicationComponent, PostfixTemplateProvider {

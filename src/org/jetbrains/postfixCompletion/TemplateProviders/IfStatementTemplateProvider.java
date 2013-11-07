@@ -1,15 +1,13 @@
 package org.jetbrains.postfixCompletion.TemplateProviders;
 
-import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.codeInsight.lookup.*;
 import com.intellij.psi.*;
-import com.intellij.psi.tree.IElementType;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.postfixCompletion.Infrastructure.PostfixTemplateAcceptanceContext;
-import org.jetbrains.postfixCompletion.Infrastructure.PrefixExpressionContext;
-import org.jetbrains.postfixCompletion.Infrastructure.TemplateProvider;
-import org.jetbrains.postfixCompletion.LookupItems.StatementPostfixLookupElement;
+import com.intellij.psi.tree.*;
+import org.jetbrains.annotations.*;
+import org.jetbrains.postfixCompletion.Infrastructure.*;
+import org.jetbrains.postfixCompletion.LookupItems.*;
 
-import java.util.List;
+import java.util.*;
 
 @TemplateProvider(
   templateName = "if",
@@ -22,6 +20,7 @@ public class IfStatementTemplateProvider extends TemplateProviderBase {
 
     // todo: handle force mode
     // todo: handle unknown type?
+    // todo: use InvertIfConditionAction for .else/.not
 
     for (final PrefixExpressionContext expressionContext : context.expressions) {
       if (isBooleanExpression(expressionContext)) {
@@ -39,7 +38,6 @@ public class IfStatementTemplateProvider extends TemplateProviderBase {
       if (PsiType.BOOLEAN.isAssignableFrom(expressionType)) {
         return true;
       }
-
     } else {
       final PsiExpression expression = context.expression;
       if (expression instanceof PsiBinaryExpression) {

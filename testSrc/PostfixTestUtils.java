@@ -1,7 +1,7 @@
-import com.intellij.openapi.application.PathManager;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.openapi.application.*;
+import org.jetbrains.annotations.*;
 
-import java.io.File;
+import java.io.*;
 
 public class PostfixTestUtils {
   @NotNull public static final String BASE_TEST_DATA_PATH = findTestDataPath();

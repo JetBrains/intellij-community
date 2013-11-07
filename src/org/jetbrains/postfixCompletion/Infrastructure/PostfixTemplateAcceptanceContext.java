@@ -1,14 +1,9 @@
 package org.jetbrains.postfixCompletion.Infrastructure;
 
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiExpression;
-import com.intellij.psi.PsiReferenceExpression;
-import com.intellij.psi.PsiStatement;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.psi.*;
+import org.jetbrains.annotations.*;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 public abstract class PostfixTemplateAcceptanceContext {
   @NotNull public final PsiReferenceExpression referenceExpression;

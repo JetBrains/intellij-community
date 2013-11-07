@@ -1,13 +1,11 @@
 package org.jetbrains.postfixCompletion.Infrastructure;
 
-import com.intellij.codeInsight.completion.CompletionParameters;
-import com.intellij.codeInsight.completion.CompletionProvider;
-import com.intellij.codeInsight.completion.CompletionResultSet;
-import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.psi.PsiElement;
-import com.intellij.util.ProcessingContext;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.codeInsight.completion.*;
+import com.intellij.codeInsight.lookup.*;
+import com.intellij.openapi.application.*;
+import com.intellij.psi.*;
+import com.intellij.util.*;
+import org.jetbrains.annotations.*;
 
 public final class PostfixItemsCompletionProvider
   extends CompletionProvider<CompletionParameters> {

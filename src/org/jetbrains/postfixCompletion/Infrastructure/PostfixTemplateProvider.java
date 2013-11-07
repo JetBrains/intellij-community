@@ -1,9 +1,9 @@
 package org.jetbrains.postfixCompletion.Infrastructure;
 
-import com.intellij.codeInsight.lookup.LookupElement;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.codeInsight.lookup.*;
+import org.jetbrains.annotations.*;
 
-import java.util.List;
+import java.util.*;
 
 public interface PostfixTemplateProvider {
   void createItems(
