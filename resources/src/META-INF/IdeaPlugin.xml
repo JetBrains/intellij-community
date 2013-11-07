@@ -1487,6 +1487,8 @@
     <codeInsight.unresolvedReferenceQuickFixProvider implementation="com.intellij.jarFinder.FindJarQuickFixProvider"/>
 
     <xdebugger.breakpointType implementation="org.jetbrains.java.debugger.breakpoints.JavaBreakpointType"/>
+
+    <refactoring.pullUpHelperFactory language="JAVA" implementationClass="com.intellij.refactoring.memberPullUp.JavaPullUpHelperFactory"/>
   </extensions>
 
   <actions>
