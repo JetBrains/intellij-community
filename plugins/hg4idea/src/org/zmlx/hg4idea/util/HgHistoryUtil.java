@@ -22,6 +22,7 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.Consumer;
 import com.intellij.util.Function;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
@@ -138,7 +139,8 @@ public class HgHistoryUtil {
   }
 
   @NotNull
-  public static List<TimedVcsCommit> readAllHashes(@NotNull Project project, @NotNull VirtualFile root) throws VcsException {
+  public static List<TimedVcsCommit> readAllHashes(@NotNull Project project, @NotNull VirtualFile root,
+                                                   @NotNull final Consumer<VcsUser> userRegistry) throws VcsException {
 
     final VcsLogObjectsFactory factory = ServiceManager.getService(project, VcsLogObjectsFactory.class);
     return ContainerUtil.map(getCommittedChangeList(project, root, -1, false, ""), new Function<HgCommittedChangeList, TimedVcsCommit>() {
@@ -149,6 +151,7 @@ public class HgHistoryUtil {
         for (HgRevisionNumber parent : revNumber.getParents()) {
           parents.add(factory.createHash(parent.getChangeset()));
         }
+        userRegistry.consume(factory.createUser(record.getRevision().getAuthor(), ""));
         return factory.createTimedCommit(factory.createHash(revNumber.getChangeset()),
                                          parents, record.getCommitDate().getTime());
       }

@@ -40,10 +40,7 @@ import com.intellij.util.Function;
 import com.intellij.util.SmartList;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.vcs.log.Hash;
-import com.intellij.vcs.log.TimedVcsCommit;
-import com.intellij.vcs.log.VcsLogObjectsFactory;
-import com.intellij.vcs.log.VcsShortCommitDetails;
+import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.impl.HashImpl;
 import git4idea.*;
 import git4idea.branch.GitBranchUtil;
@@ -537,11 +534,14 @@ public class GitHistoryUtils {
   }
 
   @NotNull
-  public static List<TimedVcsCommit> readAllHashes(@NotNull final Project project, @NotNull VirtualFile root) throws VcsException {
+  public static List<TimedVcsCommit> readAllHashes(@NotNull final Project project,
+                                                   @NotNull VirtualFile root,
+                                                   @NotNull final Consumer<VcsUser> userRegistry) throws VcsException {
     final int COMMIT_BUFFER = 1000;
 
     GitLineHandler h = new GitLineHandler(project, root, GitCommand.LOG);
-    final GitLogParser parser = new GitLogParser(project, GitLogParser.NameStatus.NONE, HASH, PARENTS, AUTHOR_TIME);
+    final GitLogParser parser = new GitLogParser(project, GitLogParser.NameStatus.NONE, HASH, PARENTS, AUTHOR_TIME,
+                                                 AUTHOR_NAME, AUTHOR_EMAIL);
     h.setStdoutSuppressed(true);
     h.addParameters(parser.getPretty(), "--encoding=UTF-8");
     h.addParameters("HEAD", "--branches", "--remotes", "--tags");
@@ -573,7 +573,7 @@ public class GitHistoryUtils {
             afterParseRemainder = line.substring(recordEnd + 1);
           }
           if (afterParseRemainder != null && records.incrementAndGet() > COMMIT_BUFFER) { // null means can't parse now
-            commits.addAll(parseCommit(project, parser, record));
+            commits.addAll(parseCommit(project, parser, record, userRegistry));
             record.setLength(0);
             record.append(afterParseRemainder);
           }
@@ -586,7 +586,7 @@ public class GitHistoryUtils {
       @Override
       public void processTerminated(int exitCode) {
         try {
-          commits.addAll(parseCommit(project, parser, record));
+          commits.addAll(parseCommit(project, parser, record, userRegistry));
         }
         catch (Exception e) {
           ex.set(new VcsException(e));
@@ -605,12 +605,18 @@ public class GitHistoryUtils {
     return commits;
   }
 
-  private static List<TimedVcsCommit> parseCommit(final Project project, GitLogParser parser, StringBuilder record) {
+  private static List<TimedVcsCommit> parseCommit(final Project project, GitLogParser parser, StringBuilder record,
+                                                  final Consumer<VcsUser> userRegistry) {
     List<GitLogRecord> rec = parser.parse(record.toString());
     return ContainerUtil.mapNotNull(rec, new Function<GitLogRecord, TimedVcsCommit>() {
       @Override
       public TimedVcsCommit fun(GitLogRecord record) {
-        return (record == null) ? null : convert(project, record);
+        if (record == null) {
+          return null;
+        }
+        TimedVcsCommit commit = convert(project, record);
+        userRegistry.consume(vcsObjectsFactory(project).createUser(record.getAuthorName(), record.getAuthorEmail()));
+        return commit;
       }
     });
   }

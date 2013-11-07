@@ -233,12 +233,18 @@ public class VcsLogDataHolder implements Disposable {
       @Override
       public void consume(ProgressIndicator indicator) throws VcsException {
         try {
+          Consumer<VcsUser> userRegistry = new Consumer<VcsUser>() {
+            @Override
+            public void consume(VcsUser user) {
+              myUserRegistry.addUser(user);
+            }
+          };
           Map<VirtualFile, List<TimedVcsCommit>> logs = ContainerUtil.newHashMap();
           Map<VirtualFile, Collection<VcsRef>> refs = ContainerUtil.newHashMap();
           for (Map.Entry<VirtualFile, VcsLogProvider> entry : myLogProviders.entrySet()) {
             VirtualFile root = entry.getKey();
             VcsLogProvider logProvider = entry.getValue();
-            logs.put(root, logProvider.readAllHashes(root));
+            logs.put(root, logProvider.readAllHashes(root, userRegistry));
             refs.put(root, logProvider.readAllRefs(root));
           }
           DataPack existingDataPack = myLogData.getDataPack();
