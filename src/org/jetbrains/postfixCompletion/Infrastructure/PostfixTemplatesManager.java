@@ -1,14 +1,13 @@
 package org.jetbrains.postfixCompletion.Infrastructure;
 
-import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.openapi.components.ApplicationComponent;
+import com.intellij.codeInsight.lookup.*;
+import com.intellij.openapi.components.*;
+import com.intellij.openapi.project.*;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiTreeUtil;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.psi.util.*;
+import org.jetbrains.annotations.*;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 public final class PostfixTemplatesManager implements ApplicationComponent {
   @NotNull private final List<TemplateProviderInfo> myProviders;
@@ -103,40 +102,24 @@ public final class PostfixTemplatesManager implements ApplicationComponent {
             } while (expression != null);
 
             if (brokenLiteral != null) {
-
-
-              final PsiLiteralExpression finalBrokenLiteral = brokenLiteral;
+              final PsiLiteralExpression literal = brokenLiteral;
               return new PostfixTemplateAcceptanceContext(
-                referenceExpression, finalBrokenLiteral, forceMode) {
+                referenceExpression, literal, forceMode) {
 
                 @Override @NotNull public PrefixExpressionContext
                   fixUpExpression(@NotNull final PrefixExpressionContext context) {
 
+                  statement.delete(); // remove extra statement
 
-
-
-
-
-                  statement.delete();
-
-                  // EWWWWW
-
-                  final JavaPsiFacade facade = JavaPsiFacade.getInstance(context.expression.getProject());
-                  final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(context.expression.getProject());
-                  final String text = finalBrokenLiteral.getText();
+                  // fix broken double literal by cutting of "." suffix
+                  final Project project = context.expression.getProject();
+                  final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
+                  final String literalText = literal.getText();
+                  final String fixedText = literalText.substring(0, literalText.length() - 1);
                   final PsiLiteralExpression fixedLiteral = (PsiLiteralExpression)
-                    elementFactory.createExpressionFromText(text.substring(0, text.length() - 1), null);
+                    factory.createExpressionFromText(fixedText, null);
 
-                  finalBrokenLiteral.replace(fixedLiteral);
-
-
-                  //JavaTokenType.DOUBLE_LITERAL
-
-                  //facade.getElementFactory().cre
-
-                  // todo: unbroke literal
-                  // todo: remove separated expression statement
-
+                  literal.replace(fixedLiteral);
                   return context;
                 }
               };
