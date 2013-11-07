@@ -1088,44 +1088,26 @@ class RunConfigurable extends BaseConfigurable {
     }
 
     private void showAddPopup(final boolean showApplicableTypesOnly) {
-      final JBPopupFactory popupFactory = JBPopupFactory.getInstance();
-      final List<ConfigurationType> configurationTypes;
-      int hiddenCount = 0;
-      if (showApplicableTypesOnly) {
-        List<ConfigurationType> applicableTypes = new ArrayList<ConfigurationType>();
-        for (ConfigurationType type : getRunManager().getConfigurationFactories(false)) {
-          if (isApplicable(type)) {
-            applicableTypes.add(type);
-          }
-          else {
-            hiddenCount++;
-          }
-        }
-        configurationTypes = applicableTypes;
-      }
-      else {
-        configurationTypes = new ArrayList<ConfigurationType>(Arrays.asList(getRunManager().getConfigurationFactories(false)));
-      }
-
+      ConfigurationType[] allTypes = getRunManager().getConfigurationFactories(false);
+      final List<ConfigurationType> configurationTypes = getTypesToShow(showApplicableTypesOnly, allTypes);
       Collections.sort(configurationTypes, new Comparator<ConfigurationType>() {
         @Override
         public int compare(final ConfigurationType type1, final ConfigurationType type2) {
           return type1.getDisplayName().compareToIgnoreCase(type2.getDisplayName());
         }
       });
+      final int hiddenCount = allTypes.length - configurationTypes.size();
       if (hiddenCount > 0) {
         configurationTypes.add(null);
       }
 
-      final int finalHiddenCount = hiddenCount;
-      final ListPopup popup =
-        popupFactory.createListPopup(new BaseListPopupStep<ConfigurationType>(
+      final ListPopup popup = JBPopupFactory.getInstance().createListPopup(new BaseListPopupStep<ConfigurationType>(
           ExecutionBundle.message("add.new.run.configuration.acrtion.name"), configurationTypes) {
 
           @Override
           @NotNull
           public String getTextFor(final ConfigurationType type) {
-            return type != null ? type.getDisplayName() : "(" + finalHiddenCount + " more items)";
+            return type != null ? type.getDisplayName() : "(" + hiddenCount + " more items)";
           }
 
           @Override
@@ -1197,7 +1179,6 @@ class RunConfigurable extends BaseConfigurable {
                 createNewConfiguration(factory);
                 return FINAL_CHOICE;
               }
-
             };
           }
 
@@ -1205,10 +1186,24 @@ class RunConfigurable extends BaseConfigurable {
           public boolean hasSubstep(final ConfigurationType type) {
             return type != null && type.getConfigurationFactories().length > 1;
           }
-
         });
       //new TreeSpeedSearch(myTree);
       popup.showUnderneathOf(myToolbarDecorator.getActionsPanel());
+    }
+
+    private List<ConfigurationType> getTypesToShow(boolean showApplicableTypesOnly, ConfigurationType[] allTypes) {
+      if (showApplicableTypesOnly) {
+        List<ConfigurationType> applicableTypes = new ArrayList<ConfigurationType>();
+        for (ConfigurationType type : allTypes) {
+          if (isApplicable(type)) {
+            applicableTypes.add(type);
+          }
+        }
+        if (applicableTypes.size() < allTypes.length - 1) {
+          return applicableTypes;
+        }
+      }
+      return new ArrayList<ConfigurationType>(Arrays.asList(allTypes));
     }
 
     private boolean isApplicable(ConfigurationType type) {
