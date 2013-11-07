@@ -292,11 +292,11 @@ public class FilePathCompletionContributor extends CompletionContributor {
       if (myFile.isValid()) {
         final PsiReference psiReference = context.getFile().findReferenceAt(context.getStartOffset());
         final Pair<FileReference, Boolean> fileReferencePair = getReference(psiReference);
-        LOG.assertTrue(fileReferencePair != null);
-
-        FileReference ref = fileReferencePair.getFirst();
-        context.setTailOffset(ref.getRangeInElement().getEndOffset() + ref.getElement().getTextRange().getStartOffset());
-        ref.bindToElement(myFile);
+        if (fileReferencePair != null) {
+          FileReference ref = fileReferencePair.getFirst();
+          context.setTailOffset(ref.getRangeInElement().getEndOffset() + ref.getElement().getTextRange().getStartOffset());
+          ref.bindToElement(myFile);
+        }
       }
     }
 
