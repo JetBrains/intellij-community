@@ -925,7 +925,7 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
   }
 
   public String getHelpTopic() {
-    return null;
+    return "preferences.keymap";
   }
 
   public JComponent createComponent() {
