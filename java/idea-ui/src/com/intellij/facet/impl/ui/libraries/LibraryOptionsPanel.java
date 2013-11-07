@@ -125,10 +125,7 @@ public class LibraryOptionsPanel implements Disposable {
             public void run() {
               if (!myDisposed) {
                 showSettingsPanel(libraryDescription, baseDirectoryPath, versionFilter, showDoNotCreateOption, versions);
-                LibraryDownloadSettings settings = mySettings.getDownloadSettings();
-                if (settings != null) {
-                  onVersionChanged(settings.getVersion());
-                }
+                onVersionChanged(getPresentableVersion());
               }
             }
           });
@@ -141,7 +138,28 @@ public class LibraryOptionsPanel implements Disposable {
     }
   }
 
-  protected void onVersionChanged(FrameworkLibraryVersion version) {
+  @Nullable
+  private String getPresentableVersion() {
+    switch (myButtonEnumModel.getSelected()) {
+      case DOWNLOAD:
+        LibraryDownloadSettings settings = mySettings.getDownloadSettings();
+        if (settings != null) {
+          return settings.getVersion().getVersionNumber();
+        }
+        break;
+      case USE_LIBRARY:
+        LibraryEditor item = myLibraryComboBoxModel.getSelectedItem();
+        if (item instanceof ExistingLibraryEditor) {
+          return item.getName();
+        }
+        break;
+      default:
+        return null;
+    }
+    return null;
+  }
+
+  protected void onVersionChanged(@Nullable String version) {
   }
 
   public JPanel getSimplePanel() {
@@ -176,6 +194,7 @@ public class LibraryOptionsPanel implements Disposable {
       @Override
       public void actionPerformed(ActionEvent e) {
         updateState();
+        onVersionChanged(getPresentableVersion());
       }
     });
 
@@ -208,6 +227,7 @@ public class LibraryOptionsPanel implements Disposable {
           myButtonEnumModel.setSelected(Choice.USE_LIBRARY);
         }
         updateState();
+        onVersionChanged(getPresentableVersion());
       }
     });
     myExistingLibraryComboBox.setRenderer(new ColoredListCellRenderer() {
