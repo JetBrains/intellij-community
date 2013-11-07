@@ -170,25 +170,7 @@ public class VcsLogDataHolder implements Disposable {
     myUserRegistry = new VcsUserRegistry();
   }
 
-  /**
-   * Initializes the VcsLogDataHolder in background in the following sequence:
-   * <ul>
-   * <li>Loads the first part of the log with details.</li>
-   * <li>Invokes the Consumer to initialize the UI with the initial data pack.</li>
-   * <li>Loads the whole log in background. When completed, substitutes the data and tells the UI to refresh itself.</li>
-   * </ul>
-   *
-   * @param settings
-   * @param onInitialized This is called when the holder is initialized with the initial data received from the VCS.
-   */
-  public static void init(@NotNull final Project project,
-                          @NotNull Map<VirtualFile, VcsLogProvider> logProviders,
-                          @NotNull VcsLogSettings settings, @NotNull final Consumer<VcsLogDataHolder> onInitialized) {
-    final VcsLogDataHolder dataHolder = new VcsLogDataHolder(project, logProviders, settings);
-    dataHolder.initialize(onInitialized);
-  }
-
-  private void initialize(@NotNull final Consumer<VcsLogDataHolder> onInitialized) {
+  public void initialize(@NotNull final Consumer<VcsLogDataHolder> onInitialized) {
     // complete refresh => other scheduled refreshes are not interesting
     // TODO: interrupt the current task as well instead of waiting for it to finish, since the result is invalid anyway
     myDataLoaderQueue.clear();
@@ -408,11 +390,24 @@ public class VcsLogDataHolder implements Disposable {
       List<? extends VcsFullCommitDetails> firstBlockDetails = logProvider.readFirstBlock(root, ordered, commitsCount);
       Collection<VcsRef> newRefs = logProvider.readAllRefs(root);
       storeTopCommitsDetailsInCache(firstBlockDetails);
+      storeUsers(firstBlockDetails);
       List<TimedVcsCommit> firstBlockCommits = getCommitsFromDetails(firstBlockDetails);
 
       infoByRoot.put(root, new RecentCommitsInfo(firstBlockCommits, newRefs));
     }
     return infoByRoot.entrySet();
+  }
+
+  private void storeUsers(@NotNull List<? extends VcsFullCommitDetails> details) {
+    for (VcsFullCommitDetails detail : details) {
+      myUserRegistry.addUser(detail.getAuthor());
+      myUserRegistry.addUser(detail.getCommitter());
+    }
+  }
+
+  @NotNull
+  public Set<VcsUser> getAllUsers() {
+    return myUserRegistry.getUsers();
   }
 
   public void getFilteredDetailsFromTheVcs(final Collection<VcsLogFilter> filters, final Consumer<List<VcsFullCommitDetails>> success) {

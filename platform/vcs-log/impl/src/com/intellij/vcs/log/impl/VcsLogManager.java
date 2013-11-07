@@ -66,7 +66,8 @@ public class VcsLogManager implements Disposable {
     final Map<VirtualFile, VcsLogProvider> logProviders = findLogProviders();
     final VcsLogContainer mainPanel = new VcsLogContainer(myProject);
 
-    VcsLogDataHolder.init(myProject, logProviders, mySettings, new Consumer<VcsLogDataHolder>() {
+    myLogDataHolder = new VcsLogDataHolder(myProject, logProviders, mySettings);
+    myLogDataHolder.initialize(new Consumer<VcsLogDataHolder>() {
       @Override
       public void consume(VcsLogDataHolder vcsLogDataHolder) {
         Disposer.register(VcsLogManager.this, vcsLogDataHolder);
@@ -110,10 +111,12 @@ public class VcsLogManager implements Disposable {
     return logProviders;
   }
 
+  @NotNull
   public VcsLogDataHolder getDataHolder() {
     return myLogDataHolder;
   }
 
+  @NotNull
   public VcsLogUI getLogUi() {
     return myUi;
   }

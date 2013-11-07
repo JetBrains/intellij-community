@@ -19,6 +19,8 @@ import com.intellij.util.containers.Interner;
 import com.intellij.vcs.log.VcsUser;
 import com.intellij.vcs.log.impl.VcsUserImpl;
 
+import java.util.Set;
+
 /**
  *
  */
@@ -30,4 +32,11 @@ public class VcsUserRegistry {
     return myUserMap.intern(new VcsUserImpl(name, email));
   }
 
+  public void addUser(VcsUser user) {
+    myUserMap.intern(user);
+  }
+
+  public Set<VcsUser> getUsers() {
+    return myUserMap.getValues();
+  }
 }
