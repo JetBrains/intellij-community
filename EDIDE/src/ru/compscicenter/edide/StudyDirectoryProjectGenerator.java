@@ -7,6 +7,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.DirectoryProjectGenerator;
 import com.intellij.remotesdk.RemoteSdkData;
+import com.jetbrains.python.newProject.PyNewProjectSettings;
+import com.jetbrains.python.remote.PythonRemoteInterpreterManager;
+import com.jetbrains.python.remote.RemoteProjectSettings;
+import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -20,23 +24,44 @@ public class StudyDirectoryProjectGenerator implements DirectoryProjectGenerator
     @NotNull
     @Override
     public String getName() {
-        return "Study project";
+        return "My Study project";
     }
 
     @Nullable
     @Override
-    public Object showGenerationSettings(VirtualFile virtualFile) throws ProcessCanceledException {
-        return null;
+    public Object showGenerationSettings(VirtualFile baseDir) throws ProcessCanceledException {
+        PyNewProjectSettings settings = new PyNewProjectSettings();
+        if (PythonSdkType.isRemote(settings.getSdk())) {
+            PythonRemoteInterpreterManager manager = PythonRemoteInterpreterManager.getInstance();
+            assert manager != null;
+            return manager.showRemoteProjectSettingsDialog(baseDir, (RemoteSdkData) settings.getSdk().getSdkAdditionalData());
+        }
+        else {
+            return null;
+        }
     }
 
     @Override
-    public void generateProject(@NotNull Project project, @NotNull VirtualFile virtualFile, @Nullable Object o, @NotNull Module module) {
-        //To change body of implemented methods use File | Settings | File Templates.
+    public void generateProject(@NotNull Project project, @NotNull VirtualFile baseDir,
+                                @Nullable Object settings, @NotNull Module module) {
+        PyNewProjectSettings pySettings = new PyNewProjectSettings();
+        if (settings instanceof RemoteProjectSettings) {
+            PythonRemoteInterpreterManager manager = PythonRemoteInterpreterManager.getInstance();
+            assert manager != null;
+            manager.createDeployment(project, baseDir, (RemoteProjectSettings)settings,
+                    (RemoteSdkData)pySettings.getSdk().getSdkAdditionalData());
+        }
     }
 
     @NotNull
     @Override
     public ValidationResult validate(@NotNull String s) {
-        return null;  //To change body of implemented methods use File | Settings | File Templates.
+        PyNewProjectSettings pySettings = new PyNewProjectSettings();
+        if (PythonSdkType.isRemote(pySettings.getSdk())) {
+            if (PythonRemoteInterpreterManager.getInstance() == null) {
+                return new ValidationResult(PythonRemoteInterpreterManager.WEB_DEPLOYMENT_PLUGIN_IS_DISABLED);
+            }
+        }
+        return ValidationResult.OK;
     }
 }
