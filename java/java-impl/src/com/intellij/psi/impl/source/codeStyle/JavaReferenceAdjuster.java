@@ -133,8 +133,13 @@ public class JavaReferenceAdjuster implements ReferenceAdjuster {
     PsiJavaCodeReferenceElement ref = (PsiJavaCodeReferenceElement)element.getPsi();
 
     PsiElement qualifier = ref.getQualifier();
-    if (qualifier instanceof PsiJavaCodeReferenceElement && PsiTreeUtil.getChildOfType(qualifier, PsiAnnotation.class) != null) {
-      return true;
+    if (qualifier instanceof PsiJavaCodeReferenceElement) {
+      if (((PsiJavaCodeReferenceElement)qualifier).resolve() instanceof PsiPackage) {
+        return false;
+      }
+      if (PsiTreeUtil.getChildOfType(qualifier, PsiAnnotation.class) != null) {
+        return true;
+      }
     }
 
     PsiModifierList modifierList = PsiImplUtil.findNeighbourModifierList(ref);
