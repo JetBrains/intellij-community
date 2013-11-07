@@ -22,66 +22,53 @@ public class IntroduceVariableTemplateProvider extends TemplateProviderBase {
   public void createItems(@NotNull final PostfixTemplateAcceptanceContext context,
                           @NotNull final List<LookupElement> consumer) {
 
-    for (PrefixExpressionContext expression : context.expressions) {
+    // todo: support expressions
+    // todo: setup selection before refactoring? or context?
+
+    for (final PrefixExpressionContext expression : context.expressions) {
       if (expression.canBeStatement) {
-        consumer.add(new Foo(expression));
+        consumer.add(new IntroduceVarLookupElement(expression));
         break;
       }
     }
-
   }
 
-  static class Foo extends StatementPostfixLookupElement<PsiExpressionStatement> {
+  private static class IntroduceVarLookupElement
+    extends StatementPostfixLookupElement<PsiExpressionStatement> {
 
-    public Foo(@NotNull final PrefixExpressionContext context) {
+    public IntroduceVarLookupElement(@NotNull final PrefixExpressionContext context) {
       super("var", context);
     }
 
+    @NotNull @Override protected PsiExpressionStatement createNewStatement(
+      @NotNull final PsiElementFactory factory,
+      @NotNull final PsiExpression expression,
+      @NotNull final PsiFile context) {
 
+      final PsiExpressionStatement expressionStatement =
+        (PsiExpressionStatement) factory.createStatementFromText("expr", context);
 
-    @NotNull @Override
-    protected PsiExpressionStatement createNewStatement(
-      @NotNull PsiElementFactory factory,
-      @NotNull PsiExpression expression,
-      @NotNull PsiFile context) {
-
-
-
-
-      final PsiExpressionStatement expr = (PsiExpressionStatement)
-        factory.createStatementFromText("expr", context);
-
-      expr.getExpression().replace(expression);
-      //IntroduceVariableAction
-
-      return expr;
+      expressionStatement.getExpression().replace(expression);
+      return expressionStatement;
     }
 
-    @Override public void handleInsert(final InsertionContext context) {
-      // MMM?
+    @Override public void handleInsert(@NotNull final InsertionContext context) {
+      // execute insertion without undo manager enabled
       CommandProcessor.getInstance().runUndoTransparentAction(new Runnable() {
         @Override public void run() {
-          Foo.super.handleInsert(context);
+          IntroduceVarLookupElement.super.handleInsert(context);
         }
       });
     }
 
-    @Override
-    protected void postProcess(InsertionContext context, PsiExpressionStatement statement) {
-
-
-
-
+    @Override protected void postProcess(@NotNull final InsertionContext context,
+                                         @NotNull final PsiExpressionStatement statement) {
       final ActionManager manager = ActionManager.getInstance();
-      final AnAction introduceParameter =  manager.getAction("IntroduceVariable");
+      final AnAction introduceVariable =  manager.getAction("IntroduceVariable");
       final InputEvent event = ActionCommand.getInputEvent("IntroduceVariable");
 
-      ActionManager.getInstance().tryToExecute(introduceParameter, event,
-        null, ActionPlaces.UNKNOWN, true);
-
-      //manager.tryToExecute()
-
-      //IntroduceVariableAction.
+      ActionManager.getInstance().tryToExecute(
+        introduceVariable, event, null, ActionPlaces.UNKNOWN, true);
     }
   }
 }
