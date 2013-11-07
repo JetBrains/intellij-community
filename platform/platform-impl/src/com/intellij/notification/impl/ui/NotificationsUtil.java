@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -99,7 +99,7 @@ public class NotificationsUtil {
       case ERROR:
         return new JBColor(Color.gray, new Color(0xc8c8c8));
       case WARNING:
-        return new JBColor(Color.gray, new Color(0x977124));
+        return new JBColor(Color.gray, new Color(0x615f51));
       case INFORMATION:
       default:
         return new JBColor(Color.gray, new Color(0x205c00));
