@@ -45,9 +45,12 @@ public abstract class StatementPostfixLookupElement<TStatement extends PsiStatem
   }
 
   @Override public void handleInsert(@NotNull final InsertionContext context) {
-    // note: use 'postfix' string, to break expression like '0.postfix'
     final Document document = context.getDocument();
     final int startOffset = context.getStartOffset();
+    final PsiDocumentManager documentManager =
+      PsiDocumentManager.getInstance(context.getProject());
+
+    // note: use 'postfix' string, to break expression like '0.postfix'
     document.replaceString(startOffset, context.getTailOffset(), "postfix");
     context.commitDocument();
 
@@ -82,8 +85,6 @@ public abstract class StatementPostfixLookupElement<TStatement extends PsiStatem
         //noinspection unchecked
         TStatement newSt = (TStatement) targetStatement.replace(newStatement);
 
-        final PsiDocumentManager documentManager =
-          PsiDocumentManager.getInstance(context.getProject());
         documentManager.doPostponedOperationsAndUnblockDocument(document);
 
         final int offset = newSt.getTextRange().getEndOffset();

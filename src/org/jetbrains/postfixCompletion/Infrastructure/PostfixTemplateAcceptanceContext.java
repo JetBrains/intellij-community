@@ -6,16 +6,15 @@ import org.jetbrains.annotations.*;
 import java.util.*;
 
 public abstract class PostfixTemplateAcceptanceContext {
-  @NotNull public final PsiReferenceExpression referenceExpression;
+  // can be 'PsiReferenceExpression' or 'PsiJavaCodeReferenceElement'
+  @NotNull public final PsiElement postfixReference;
   @NotNull public final List<PrefixExpressionContext> expressions;
   public final boolean isForceMode;
 
-  public PostfixTemplateAcceptanceContext(
-    @NotNull final PsiReferenceExpression reference,
-    @NotNull final PsiExpression expression,
-    boolean forceMode) {
-
-    referenceExpression = reference;
+  public PostfixTemplateAcceptanceContext(@NotNull final PsiElement reference,
+                                          @NotNull final PsiExpression expression,
+                                          boolean forceMode) {
+    postfixReference = reference;
     isForceMode = forceMode;
 
     final ArrayList<PrefixExpressionContext> contexts = new ArrayList<>();

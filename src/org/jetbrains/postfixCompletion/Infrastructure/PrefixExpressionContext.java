@@ -25,7 +25,7 @@ public final class PrefixExpressionContext {
     PsiElement parent = expression.getParent();
 
     // escape from '.postfix' reference-expression
-    if (parent == parentContext.referenceExpression) {
+    if (parent == parentContext.postfixReference) {
       parent = parent.getParent();
     }
 
@@ -38,9 +38,18 @@ public final class PrefixExpressionContext {
 
   @NotNull private TextRange getExpressionRange() {
     final TextRange expressionRange = expression.getTextRange();
+    final PsiElement reference = parentContext.postfixReference;
 
-    // fix range from 'a > b.if' to 'a > b'
-    final PsiExpression qualifier = parentContext.referenceExpression.getQualifierExpression();
+    PsiElement qualifier = null;
+
+    if (reference instanceof PsiReferenceExpression) {
+      // fix range from 'a > b.if' to 'a > b'
+      qualifier = ((PsiReferenceExpression) reference).getQualifierExpression();
+    } else if (reference instanceof PsiJavaCodeReferenceElement) {
+      // fix range from 'o instanceof T.if' to 'o instanceof T'
+      qualifier = ((PsiJavaCodeReferenceElement) reference).getQualifier();
+    }
+
     if (qualifier != null && qualifier.isValid()) {
       final int qualifierEndRange = qualifier.getTextRange().getEndOffset();
       if (expressionRange.getEndOffset() > qualifierEndRange) {
