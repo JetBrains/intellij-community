@@ -17,7 +17,7 @@ package com.intellij.platform.templates;
 
 import com.intellij.ide.fileTemplates.impl.UrlUtil;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
-import com.intellij.ide.plugins.PluginManager;
+import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -48,7 +48,7 @@ public class ArchivedTemplatesFactory extends ProjectTemplatesFactory {
     @Override
     protected MultiMap<String, Pair<URL, ClassLoader>> compute() {
       MultiMap<String, Pair<URL, ClassLoader>> map = new MultiMap<String, Pair<URL, ClassLoader>>();
-      IdeaPluginDescriptor[] plugins = PluginManager.getPlugins();
+      IdeaPluginDescriptor[] plugins = PluginManagerCore.getPlugins();
       Map<URL, ClassLoader> urls = new HashMap<URL, ClassLoader>();
       for (IdeaPluginDescriptor plugin : plugins) {
         if (!plugin.isEnabled()) continue;
