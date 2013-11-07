@@ -9,6 +9,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -116,6 +117,9 @@ public class MavenResourceCompilerConfigurationGenerator {
       }
       addResources(resourceConfig.resources, mavenProject.getResources());
       addResources(resourceConfig.testResources, mavenProject.getTestResources());
+
+      addWebResources(resourceConfig.webResources, mavenProject);
+
       resourceConfig.filteringExclusions.addAll(MavenProjectsTree.getFilterExclusions(mavenProject));
 
       final Properties properties = getFilteringProperties(mavenProject);
@@ -217,6 +221,46 @@ public class MavenResourceCompilerConfigurationGenerator {
         props.excludes.add(exclude.trim());
       }
       container.add(props);
+    }
+  }
+
+  private static void addWebResources(final List<ResourceRootConfiguration> container, MavenProject mavenProject) {
+    Element warCfg = mavenProject.getPluginConfiguration("org.apache.maven.plugins", "maven-war-plugin");
+    if (warCfg == null) return;
+
+    Element webResources = warCfg.getChild("webResources");
+    if (webResources == null) return;
+
+    for (Element resource : webResources.getChildren("resource")) {
+      ResourceRootConfiguration r = new ResourceRootConfiguration();
+      String directory = resource.getChildTextTrim("directory");
+      if (StringUtil.isEmptyOrSpaces(directory)) continue;
+
+      r.directory = directory;
+      r.isFiltered = Boolean.parseBoolean(resource.getChildTextTrim("filtering"));
+      r.targetPath = resource.getChildTextTrim("targetPath");
+
+      Element includes = resource.getChild("includes");
+      if (includes != null) {
+        for (Element include : includes.getChildren("include")) {
+          String includeText = include.getTextTrim();
+          if (!includeText.isEmpty()) {
+            r.includes.add(includeText);
+          }
+        }
+      }
+
+      Element excludes = resource.getChild("excludes");
+      if (excludes != null) {
+        for (Element exclude : excludes.getChildren("exclude")) {
+          String excludeText = exclude.getTextTrim();
+          if (!excludeText.isEmpty()) {
+            r.excludes.add(excludeText);
+          }
+        }
+      }
+
+      container.add(r);
     }
   }
 

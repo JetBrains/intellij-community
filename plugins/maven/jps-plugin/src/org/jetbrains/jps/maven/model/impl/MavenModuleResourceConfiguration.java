@@ -71,6 +71,9 @@ public class MavenModuleResourceConfiguration {
   @AbstractCollection(surroundWithTag = false, elementTag = "resource")
   public List<ResourceRootConfiguration> testResources = new ArrayList<ResourceRootConfiguration>();
 
+  @Tag("web-resources")
+  @AbstractCollection(surroundWithTag = false, elementTag = "resource")
+  public List<ResourceRootConfiguration> webResources = new ArrayList<ResourceRootConfiguration>();
 
   public Set<String> getFilteringExcludedExtensions() {
     if (filteringExclusions.isEmpty()) {
