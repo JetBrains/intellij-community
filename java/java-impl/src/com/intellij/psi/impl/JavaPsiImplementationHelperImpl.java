@@ -119,7 +119,9 @@ public class JavaPsiImplementationHelperImpl extends JavaPsiImplementationHelper
     ProjectFileIndex projectFileIndex = ProjectFileIndex.SERVICE.getInstance(clsFile.getProject());
     final Set<VirtualFile> sourceRoots = ContainerUtil.newLinkedHashSet();
     for (OrderEntry orderEntry : projectFileIndex.getOrderEntriesForFile(vFile)) {
-      Collections.addAll(sourceRoots, orderEntry.getFiles(OrderRootType.SOURCES));
+      if (orderEntry instanceof LibraryOrSdkOrderEntry) {
+        Collections.addAll(sourceRoots, orderEntry.getFiles(OrderRootType.SOURCES));
+      }
     }
     for (VirtualFile root : sourceRoots) {
       VirtualFile source = root.findFileByRelativePath(relativeFilePath);
