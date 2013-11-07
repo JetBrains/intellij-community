@@ -381,6 +381,13 @@ public class ZenCodingTemplate implements CustomLiveTemplate {
     return applicableGenerator != null && applicableGenerator.isEnabled();
   }
 
+  @Override
+  public boolean hasCompletionItem(@NotNull PsiFile file, int offset) {
+    PsiElement element = CustomTemplateCallback.getContext(file, offset);
+    final ZenCodingGenerator applicableGenerator = findApplicableDefaultGenerator(element, false);
+    return applicableGenerator != null && applicableGenerator.isEnabled() && applicableGenerator.hasCompletionItem();
+  }
+
   public static void doWrap(final String selection, final String abbreviation, final CustomTemplateCallback callback) {
     final ZenCodingGenerator defaultGenerator = findApplicableDefaultGenerator(callback.getContext(), true);
     assert defaultGenerator != null;
