@@ -160,14 +160,16 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
 
   @Override
   public Dimension getPreferredSize() {
-    if (UISettings.getInstance().PRESENTATION_MODE) {
+    int w = getLineNumberAreaWidth() + getLineMarkerAreaWidth() + getFoldingAreaWidth() + getAnnotationsAreaWidth();
+
+    if (w > 0 && UISettings.getInstance().PRESENTATION_MODE) {
       final Dimension dimension = new Dimension(myEditor.getFontMetrics(Font.PLAIN).getHeight(), myEditor.getPreferredHeight());
       if (isLineMarkersShown()) {
         dimension.width += getLineNumberAreaWidth() + getLineMarkerAreaWidth();
       }
       return dimension;
     }
-    int w = getLineNumberAreaWidth() + getLineMarkerAreaWidth() + getFoldingAreaWidth() + getAnnotationsAreaWidth();
+
     myLastPreferredHeight = myEditor.getPreferredHeight();
     return new Dimension(w, myLastPreferredHeight);
   }
