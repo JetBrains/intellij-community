@@ -1215,7 +1215,8 @@ public class FileUtil extends FileUtilRt {
     return path;
   }
 
-  public static String expandUserHome(String path) {
+  @NotNull
+  public static String expandUserHome(@NotNull String path) {
     if (path.startsWith("~/") || path.startsWith("~\\")) {
       path = SystemProperties.getUserHome() + path.substring(1);
     }
