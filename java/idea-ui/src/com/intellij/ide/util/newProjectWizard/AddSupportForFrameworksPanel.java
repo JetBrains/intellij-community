@@ -253,7 +253,7 @@ public class AddSupportForFrameworksPanel implements Disposable {
 
   private List<LibraryCompositionSettings> getLibrariesCompositionSettingsList() {
     List<LibraryCompositionSettings> list = new ArrayList<LibraryCompositionSettings>();
-    List<FrameworkSupportNode> selected = getFrameworkNodes(true);
+    List<FrameworkSupportNode> selected = getSelectedNodes();
     for (FrameworkSupportNode node : selected) {
       ContainerUtil.addIfNotNull(list, getLibraryCompositionSettings(node));
     }
@@ -349,34 +349,33 @@ public class AddSupportForFrameworksPanel implements Disposable {
   }
 
   public boolean hasSelectedFrameworks() {
-    return !getFrameworkNodes(true).isEmpty();
+    return !getSelectedNodes().isEmpty();
   }
 
-  private List<FrameworkSupportNode> getFrameworkNodes(final boolean selectedOnly) {
+  private List<FrameworkSupportNode> getSelectedNodes() {
     List<FrameworkSupportNode> list = new ArrayList<FrameworkSupportNode>();
     if (myRoots != null) {
-      addChildFrameworks(myRoots, list, selectedOnly);
+      addChildFrameworks(myRoots, list);
     }
+    list.addAll(ContainerUtil.mapNotNull(myAssociatedFrameworks, new Function.InstanceOf<FrameworkSupportNodeBase, FrameworkSupportNode>(FrameworkSupportNode.class)));
     return list;
   }
 
-  private static void addChildFrameworks(final List<FrameworkSupportNodeBase> list, final List<FrameworkSupportNode> result,
-                                         final boolean selectedOnly) {
+  private static void addChildFrameworks(final List<FrameworkSupportNodeBase> list, final List<FrameworkSupportNode> result) {
     for (FrameworkSupportNodeBase node : list) {
-      if (!selectedOnly || node.isChecked() || node instanceof FrameworkGroupNode) {
+      if (node.isChecked() || node instanceof FrameworkGroupNode) {
         if (node instanceof FrameworkSupportNode) {
           result.add((FrameworkSupportNode)node);
         }
         //noinspection unchecked
-        addChildFrameworks(node.getChildren(), result, selectedOnly);
+        addChildFrameworks(node.getChildren(), result);
       }
     }
   }
 
   public void addSupport(final @NotNull Module module, final @NotNull ModifiableRootModel rootModel) {
     List<Library> addedLibraries = new ArrayList<Library>();
-    List<FrameworkSupportNode> selectedFrameworks = getFrameworkNodes(true);
-    selectedFrameworks.addAll(ContainerUtil.mapNotNull(myAssociatedFrameworks, new Function.InstanceOf<FrameworkSupportNodeBase, FrameworkSupportNode>(FrameworkSupportNode.class)));
+    List<FrameworkSupportNode> selectedFrameworks = getSelectedNodes();
     sortFrameworks(selectedFrameworks);
     List<FrameworkSupportConfigurable> selectedConfigurables = new ArrayList<FrameworkSupportConfigurable>();
     final IdeaModifiableModelsProvider modifiableModelsProvider = new IdeaModifiableModelsProvider();
