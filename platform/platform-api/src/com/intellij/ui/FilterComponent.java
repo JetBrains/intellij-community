@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,7 +34,7 @@ import java.util.List;
 public abstract class FilterComponent extends JPanel {
   private final SearchTextFieldWithStoredHistory myFilter;
   private final Alarm myUpdateAlarm = new Alarm();
-  private boolean myOnTheFly;
+  private final boolean myOnTheFly;
 
   public FilterComponent(@NonNls String propertyName, int historySize) {
     this(propertyName, historySize, true);
@@ -59,6 +59,12 @@ public abstract class FilterComponent extends JPanel {
       @Override
       protected Component getPopupLocationComponent() {
         return FilterComponent.this.getPopupLocationComponent();
+      }
+
+      @Override
+      protected void onFocusLost() {
+        addCurrentTextToHistory();
+        super.onFocusLost();
       }
     };
     myFilter.getTextEditor().addKeyListener(new KeyAdapter() {
