@@ -721,6 +721,8 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
 
   @Override
   public boolean suitableForFile(@NotNull final PsiFile file) {
+    if (file instanceof XmlFile) return true;
+
     for (PsiFile psiFile : file.getViewProvider().getAllFiles()) {
       if (psiFile instanceof XmlFile) {
         return true;
