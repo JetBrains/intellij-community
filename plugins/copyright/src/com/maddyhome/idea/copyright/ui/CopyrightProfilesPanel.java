@@ -35,6 +35,7 @@ import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.Consumer;
 import com.intellij.util.IconUtil;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.HashMap;
@@ -215,39 +216,41 @@ public class CopyrightProfilesPanel extends MasterDetailsComponent implements Se
           }
         };
         descriptor.setTitle("Choose file containing copyright notice");
-        final VirtualFile file = FileChooser.chooseFile(descriptor, myProject, null);
-        if (file == null) return;
-
-        final List<CopyrightProfile> copyrightProfiles = ExternalOptionHelper.loadOptions(VfsUtilCore.virtualToIoFile(file));
-        if (copyrightProfiles == null) return;
-        if (!copyrightProfiles.isEmpty()) {
-          if (copyrightProfiles.size() == 1) {
-            importProfile(copyrightProfiles.get(0));
-          }
-          else {
-            JBPopupFactory.getInstance()
-              .createListPopup(new BaseListPopupStep<CopyrightProfile>("Choose profile to import", copyrightProfiles) {
-                @Override
-                public PopupStep onChosen(final CopyrightProfile selectedValue, boolean finalChoice) {
-                  return doFinalStep(new Runnable() {
+        FileChooser.chooseFile(descriptor, myProject, null, new Consumer<VirtualFile>() {
+          @Override
+          public void consume(VirtualFile file) {
+            final List<CopyrightProfile> copyrightProfiles = ExternalOptionHelper.loadOptions(VfsUtilCore.virtualToIoFile(file));
+            if (copyrightProfiles == null) return;
+            if (!copyrightProfiles.isEmpty()) {
+              if (copyrightProfiles.size() == 1) {
+                importProfile(copyrightProfiles.get(0));
+              }
+              else {
+                JBPopupFactory.getInstance()
+                  .createListPopup(new BaseListPopupStep<CopyrightProfile>("Choose profile to import", copyrightProfiles) {
                     @Override
-                    public void run() {
-                      importProfile(selectedValue);
+                    public PopupStep onChosen(final CopyrightProfile selectedValue, boolean finalChoice) {
+                      return doFinalStep(new Runnable() {
+                        @Override
+                        public void run() {
+                          importProfile(selectedValue);
+                        }
+                      });
                     }
-                  });
-                }
 
-                @NotNull
-                @Override
-                public String getTextFor(CopyrightProfile value) {
-                  return value.getName();
-                }
-              }).showUnderneathOf(myNorthPanel);
+                    @NotNull
+                    @Override
+                    public String getTextFor(CopyrightProfile value) {
+                      return value.getName();
+                    }
+                  }).showUnderneathOf(myNorthPanel);
+              }
+            }
+            else {
+              Messages.showWarningDialog(myProject, "The selected file does not contain any copyright settings.", "Import Failure");
+            }
           }
-        }
-        else {
-          Messages.showWarningDialog(myProject, "The selected file does not contain any copyright settings.", "Import Failure");
-        }
+        });
       }
 
       private void importProfile(CopyrightProfile copyrightProfile) {
