@@ -19,9 +19,9 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.WaitForProgressToShow;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.dialogs.ServerSSHDialog;
 import org.jetbrains.idea.svn.dialogs.SimpleCredentialsDialog;
 import org.tmatesoft.svn.core.SVNURL;
@@ -122,33 +122,20 @@ public class TerminalSshModule extends LineCommandAdapter implements CommandRunt
 
   private boolean handleAuthPrompt(@NotNull final SimpleCredentialsDialog.Mode mode, @NotNull final String key) {
     final SVNURL repositoryUrl = myExecutor.getCommand().getRepositoryUrl();
-    final Project project = myRuntime.getVcs().getProject();
-    final Ref<String> answer = new Ref<String>();
 
-    Runnable command = new Runnable() {
-      public void run() {
-        SimpleCredentialsDialog dialog = new SimpleCredentialsDialog(project);
-        // TODO: repositoryUrl could be null for some cases, for instance for info command for file is invoked that requires
-        // TODO: authentication (like "svn info <file> -r HEAD"), if it is invoked before all working copy roots are resolved.
-        // TODO: resolving repositoryUrl logic should be updated so that repositoryUrl is not null here.
-        dialog.setup(mode, repositoryUrl != null ? repositoryUrl.toDecodedString() : "", key, true);
-        dialog.setTitle(SvnBundle.message("dialog.title.authentication.required"));
-        dialog.show();
-        if (dialog.isOK()) {
-          answer.set(dialog.getPassword());
-        }
-      }
-    };
+    // TODO: repositoryUrl could be null for some cases, for instance for info command for file is invoked that requires
+    // TODO: authentication (like "svn info <file> -r HEAD"), if it is invoked before all working copy roots are resolved.
+    // TODO: resolving repositoryUrl logic should be updated so that repositoryUrl is not null here.
+    String auth =
+      myRuntime.getAuthCallback().requestSshCredentials(repositoryUrl != null ? repositoryUrl.toDecodedString() : "", mode, key);
 
-    WaitForProgressToShow.runOrInvokeAndWaitAboveProgress(command);
-
-    if (!answer.isNull()) {
-      sendAnswer(answer.get());
+    if (!StringUtil.isEmpty(auth)) {
+      sendAnswer(auth);
     } else {
       myExecutor.destroyProcess("Authentication canceled for repository: " + repositoryUrl);
     }
 
-    return !answer.isNull();
+    return !StringUtil.isEmpty(auth);
   }
 
   private boolean sendAnswer(@NotNull String answer) {
