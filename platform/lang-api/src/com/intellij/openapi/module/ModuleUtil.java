@@ -51,6 +51,9 @@ public class ModuleUtil extends ModuleUtilCore {
 
   private ModuleUtil() {}
 
+  /**
+   * @deprecated use ModuleManager#getModuleDependentModules(com.intellij.openapi.module.Module) instead
+   */
   @Nullable
   public static Module getParentModuleOfType(ModuleType expectedModuleType, Module module) {
     if (module == null) return null;
@@ -59,6 +62,9 @@ public class ModuleUtil extends ModuleUtilCore {
     return parents.isEmpty() ? null : parents.get(0);
   }
 
+  /**
+   * @deprecated use ModuleManager#getModuleDependentModules(com.intellij.openapi.module.Module) instead
+   */
   @NotNull
   public static List<Module> getParentModulesOfType(ModuleType expectedModuleType, Module module) {
     final List<Module> parents = ModuleManager.getInstance(module.getProject()).getModuleDependentModules(module);
