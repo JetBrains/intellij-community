@@ -27,7 +27,6 @@ public class IntroduceVariableTemplateProvider extends TemplateProviderBase {
     // todo: support expressions
     // todo: setup selection before refactoring? or context?
     // todo: disable when qualifier type is unknown (what about broken, but fixable exprs?)
-    // todo: new T { }.var do not works now
     // todo: make it works on types
     // todo: 1 + new T.var  ????
 
@@ -74,7 +73,7 @@ public class IntroduceVariableTemplateProvider extends TemplateProviderBase {
 
     @Override protected void postProcess(
       @NotNull InsertionContext context, @NotNull PsiExpressionStatement statement) {
-      final IntroduceVariableHandler handler;
+      IntroduceVariableHandler handler;
       if (ApplicationManager.getApplication().isUnitTestMode()) {
         handler = getMockHandler();
       } else {
@@ -99,7 +98,7 @@ public class IntroduceVariableTemplateProvider extends TemplateProviderBase {
             @Override public PsiType getSelectedType() { return expr.getType(); }
             @Override public boolean isOK() { return true; }
           };
-        };
+        }
       };
     }
   }
