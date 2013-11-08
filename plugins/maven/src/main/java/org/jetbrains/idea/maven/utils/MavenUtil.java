@@ -711,6 +711,7 @@ public class MavenUtil {
     }
     if (result == null) {
       result = doResolveSuperPomFile(MavenServerManager.getMavenLibDirectory());
+      assert result != null : "Super pom not found in: " + MavenServerManager.getMavenLibDirectory();
     }
     return result;
   }
