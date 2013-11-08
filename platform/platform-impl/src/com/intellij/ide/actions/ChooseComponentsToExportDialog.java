@@ -155,7 +155,7 @@ public class ChooseComponentsToExportDialog extends DialogWrapper {
       for (final ExportableComponent tiedComponent : tiedComponents) {
         if (tiedComponent == component) continue;
         final ComponentElementProperties elementProperties = componentToContainingListElement.get(tiedComponent);
-        if (elementProperties != null && !exportFile.equals(file)) {
+        if (elementProperties != null && !FileUtil.filesEqual(exportFile, file)) {
           LOG.assertTrue(file == null, "Component " + component + " serialize itself into " + file + " and " + exportFile);
           // found
           elementProperties.addComponent(component);
