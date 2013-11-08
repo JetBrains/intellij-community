@@ -31,7 +31,7 @@ public final class IfStatementTemplateProvider extends BooleanTemplateProviderBa
     }
 
     @NotNull @Override protected PsiIfStatement createNewStatement(
-      @NotNull PsiElementFactory factory, @NotNull PsiExpression expression, @NotNull PsiFile context) {
+      @NotNull PsiElementFactory factory, @NotNull PsiExpression expression, @NotNull PsiElement context) {
 
       PsiIfStatement ifStatement = (PsiIfStatement) factory.createStatementFromText("if(expr)", context);
 

@@ -47,11 +47,22 @@ public final class PostfixTemplatesManager implements ApplicationComponent {
       if (qualifier != null) {
         return new PostfixTemplateAcceptanceContext(reference, qualifier, forceMode) {
           @Override @NotNull public PrefixExpressionContext fixUpExpression(@NotNull PrefixExpressionContext context) {
+            PsiExpression expression = context.expression;
+            PsiReferenceExpression referenceExpression = (PsiReferenceExpression) postfixReference;
+
             // replace 'expr.postfix' with 'expr'
-            PsiElement parent = context.expression.getParent();
-            if (parent instanceof PsiReferenceExpression && parent == this.postfixReference) {
-              PsiExpression newExpression = (PsiExpression) this.postfixReference.replace(context.expression);
+            if (expression.getParent() == referenceExpression) {
+              PsiExpression newExpression = (PsiExpression) referenceExpression.replace(expression);
               return new PrefixExpressionContext(this, newExpression);
+            }
+
+            // replace '0 > expr.postfix' with '0 > expr'
+            if (PsiTreeUtil.findCommonParent(referenceExpression, expression) == expression) {
+              PsiElement expr = referenceExpression.getQualifier();
+              assert expr != null : "expr != null";
+
+              referenceExpression.replace(expr);
+              return context; // yes, the same context
             }
 
             return context;

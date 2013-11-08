@@ -26,10 +26,12 @@ public final class ElseStatementTemplateProvider extends BooleanTemplateProvider
   }
 
   static final class ElseLookupItem extends StatementPostfixLookupElement<PsiIfStatement> {
-    public ElseLookupItem(@NotNull PrefixExpressionContext context) {  super("else", context); }
+    public ElseLookupItem(@NotNull PrefixExpressionContext context) {
+      super("else", context);
+    }
 
     @NotNull @Override protected PsiIfStatement createNewStatement(
-      @NotNull PsiElementFactory factory, @NotNull PsiExpression expression, @NotNull PsiFile context) {
+      @NotNull PsiElementFactory factory, @NotNull PsiExpression expression, @NotNull PsiElement context) {
 
       PsiIfStatement ifStatement = (PsiIfStatement) factory.createStatementFromText("if(expr)", context);
 
