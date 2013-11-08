@@ -14,10 +14,8 @@ import java.util.*;
   description = "Checks boolean expression to be 'false'",
   example = "if (!expr)")
 public final class ElseStatementTemplateProvider extends BooleanTemplateProviderBase {
-
   @Override public boolean createBooleanItems(
-    @NotNull final PrefixExpressionContext context,
-    @NotNull final List<LookupElement> consumer) {
+    @NotNull PrefixExpressionContext context, @NotNull List<LookupElement> consumer) {
 
     if (context.canBeStatement) {
       consumer.add(new ElseLookupItem(context));
@@ -27,25 +25,18 @@ public final class ElseStatementTemplateProvider extends BooleanTemplateProvider
     return false;
   }
 
-  private static final class ElseLookupItem
-    extends StatementPostfixLookupElement<PsiIfStatement> {
-
-    public ElseLookupItem(@NotNull PrefixExpressionContext context) {
-      super("else", context);
-    }
+  static final class ElseLookupItem extends StatementPostfixLookupElement<PsiIfStatement> {
+    public ElseLookupItem(@NotNull PrefixExpressionContext context) {  super("else", context); }
 
     @NotNull @Override protected PsiIfStatement createNewStatement(
-      @NotNull final PsiElementFactory factory,
-      @NotNull final PsiExpression expression,
-      @NotNull final PsiFile context) {
+      @NotNull PsiElementFactory factory, @NotNull PsiExpression expression, @NotNull PsiFile context) {
 
-      final PsiIfStatement ifStatement = (PsiIfStatement)
-        factory.createStatementFromText("if(expr)", context);
+      PsiIfStatement ifStatement = (PsiIfStatement) factory.createStatementFromText("if(expr)", context);
 
-      final PsiExpression condition = ifStatement.getCondition();
+      PsiExpression condition = ifStatement.getCondition();
       assert condition != null : "condition != null";
 
-      final PsiExpression inverted = CodeInsightServicesUtil.invertCondition(expression);
+      PsiExpression inverted = CodeInsightServicesUtil.invertCondition(expression);
       condition.replace(inverted);
 
       return ifStatement;

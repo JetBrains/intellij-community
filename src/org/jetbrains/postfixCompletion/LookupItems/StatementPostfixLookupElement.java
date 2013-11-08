@@ -18,8 +18,8 @@ public abstract class StatementPostfixLookupElement<TStatement extends PsiStatem
   @NotNull private final TextRange myExpressionRange;
   @NotNull private final String myLookupString;
 
-  public StatementPostfixLookupElement(@NotNull final String lookupString,
-                                       @NotNull final PrefixExpressionContext context) {
+  public StatementPostfixLookupElement(
+    @NotNull String lookupString, @NotNull PrefixExpressionContext context) {
     myLookupString = lookupString;
     myExpressionType = context.expression.getClass();
     myExpressionRange = context.expressionRange;
@@ -34,7 +34,7 @@ public abstract class StatementPostfixLookupElement<TStatement extends PsiStatem
   }
 
   @Override public final Set<String> getAllLookupStrings() {
-    final HashSet<String> set = new HashSet<String>();
+    HashSet<String> set = new HashSet<String>();
 
     // this hack prevents completion list from closing
     // when whole template name is typed
@@ -44,51 +44,47 @@ public abstract class StatementPostfixLookupElement<TStatement extends PsiStatem
     return set;
   }
 
-  @Override public void handleInsert(@NotNull final InsertionContext context) {
-    final Document document = context.getDocument();
-    final int startOffset = context.getStartOffset();
-    final PsiDocumentManager documentManager =
-      PsiDocumentManager.getInstance(context.getProject());
+  @Override public void handleInsert(@NotNull InsertionContext context) {
+    Document document = context.getDocument();
+    int startOffset = context.getStartOffset();
+    PsiDocumentManager documentManager = PsiDocumentManager.getInstance(context.getProject());
 
     // note: use 'postfix' string, to break expression like '0.postfix'
     document.replaceString(startOffset, context.getTailOffset(), "postfix");
     context.commitDocument();
 
-    final PsiFile file = context.getFile();
-    final PsiElement psiElement = file.findElementAt(startOffset);
+    PsiFile file = context.getFile();
+    PsiElement psiElement = file.findElementAt(startOffset);
     if (psiElement == null) return; // shit happens?
 
-    final PostfixTemplatesManager manager =
+    PostfixTemplatesManager manager =
       ApplicationManager.getApplication().getComponent(PostfixTemplatesManager.class);
-    final PostfixTemplateAcceptanceContext acceptanceContext = manager.isAvailable(psiElement, true);
+    PostfixTemplateAcceptanceContext acceptanceContext = manager.isAvailable(psiElement, true);
     if (acceptanceContext == null) return; // yes, shit happens
 
-    for (final PrefixExpressionContext expression : acceptanceContext.expressions) {
-      final PsiExpression expr = expression.expression;
+    for (PrefixExpressionContext expression : acceptanceContext.expressions) {
+      PsiExpression expr = expression.expression;
       if (myExpressionType.isInstance(expr) &&
           expression.expressionRange.equals(myExpressionRange)) {
 
         // get facade and factory while all elements are physical and valid
-        final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(expr.getProject());
-        final PsiElementFactory psiElementFactory = psiFacade.getElementFactory();
+        JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(expr.getProject());
+        PsiElementFactory psiElementFactory = psiFacade.getElementFactory();
 
         // fix up expression before template expansion
-        final PrefixExpressionContext fixedContext = expression.fixUp();
+        PrefixExpressionContext fixedContext = expression.fixUp();
 
         // get target statement to replace
-        final PsiStatement targetStatement = fixedContext.getContainingStatement();
+        PsiStatement targetStatement = fixedContext.getContainingStatement();
         assert targetStatement != null : "targetStatement != null";
 
-        final PsiExpression exprCopy = (PsiExpression) fixedContext.expression.copy();
-        final TStatement newStatement = createNewStatement(psiElementFactory, exprCopy, file);
+        PsiExpression exprCopy = (PsiExpression) fixedContext.expression.copy();
+        TStatement newStatement = createNewStatement(psiElementFactory, exprCopy, file);
 
         //noinspection unchecked
-        final TStatement statement = (TStatement) targetStatement.replace(newStatement);
+        TStatement statement = (TStatement) targetStatement.replace(newStatement);
 
         documentManager.doPostponedOperationsAndUnblockDocument(document);
-
-        final int offset = statement.getTextRange().getEndOffset();
-        context.getEditor().getCaretModel().moveToOffset(offset);
 
         postProcess(context, statement);
         break;
@@ -97,12 +93,10 @@ public abstract class StatementPostfixLookupElement<TStatement extends PsiStatem
   }
 
   @NotNull protected abstract TStatement createNewStatement(
-    @NotNull final PsiElementFactory factory,
-    @NotNull final PsiExpression expression,
-    @NotNull final PsiFile context);
+    @NotNull PsiElementFactory factory, @NotNull PsiExpression expression, @NotNull PsiFile context);
 
-  protected void postProcess(@NotNull final InsertionContext context,
-                             @NotNull final TStatement statement) {
-    // do nothing
+  protected void postProcess(@NotNull InsertionContext context, @NotNull TStatement statement) {
+    int offset = statement.getTextRange().getEndOffset();
+    context.getEditor().getCaretModel().moveToOffset(offset);
   }
 }

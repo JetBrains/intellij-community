@@ -4,9 +4,7 @@ import com.intellij.openapi.components.*;
 import org.jetbrains.annotations.*;
 import org.jetbrains.postfixCompletion.Infrastructure.*;
 
-public abstract class TemplateProviderBase
-  implements ApplicationComponent, PostfixTemplateProvider {
-
+public abstract class TemplateProviderBase implements ApplicationComponent, PostfixTemplateProvider {
   @Override public void initComponent() { }
   @Override public void disposeComponent() { }
 

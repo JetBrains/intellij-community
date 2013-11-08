@@ -11,8 +11,8 @@ public final class PrefixExpressionContext {
   @NotNull public final TextRange expressionRange;
   public final boolean canBeStatement;
 
-  public PrefixExpressionContext(@NotNull final PostfixTemplateAcceptanceContext parentContext,
-                                 @NotNull final PsiExpression expression) {
+  public PrefixExpressionContext(
+      @NotNull PostfixTemplateAcceptanceContext parentContext, @NotNull PsiExpression expression) {
     this.parentContext = parentContext;
     this.expression = expression;
     expressionType = expression.getType();
@@ -37,10 +37,8 @@ public final class PrefixExpressionContext {
   }
 
   @NotNull private TextRange getExpressionRange() {
-    final TextRange expressionRange = expression.getTextRange();
-    final PsiElement reference = parentContext.postfixReference;
-
-    PsiElement qualifier = null;
+    TextRange expressionRange = expression.getTextRange();
+    PsiElement reference = parentContext.postfixReference, qualifier = null;
 
     if (reference instanceof PsiReferenceExpression) {
       // fix range from 'a > b.if' to 'a > b'
@@ -51,7 +49,7 @@ public final class PrefixExpressionContext {
     }
 
     if (qualifier != null && qualifier.isValid()) {
-      final int qualifierEndRange = qualifier.getTextRange().getEndOffset();
+      int qualifierEndRange = qualifier.getTextRange().getEndOffset();
       if (expressionRange.getEndOffset() > qualifierEndRange) {
         return new TextRange(expressionRange.getStartOffset(), qualifierEndRange);
       }

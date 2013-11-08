@@ -18,35 +18,29 @@ import java.util.*;
   description = "Introduces variable for expression",
   example = "var x = expr;")
 public class IntroduceVariableTemplateProvider extends TemplateProviderBase {
-  @Override
-  public void createItems(@NotNull final PostfixTemplateAcceptanceContext context,
-                          @NotNull final List<LookupElement> consumer) {
+  @Override public void createItems(
+    @NotNull PostfixTemplateAcceptanceContext context, @NotNull List<LookupElement> consumer) {
 
     // todo: support expressions
     // todo: setup selection before refactoring? or context?
     // todo: disable when qualifier type is unknown (what about broken, but fixable exprs?)
 
-    for (final PrefixExpressionContext expression : context.expressions) {
+    for (PrefixExpressionContext expression : context.expressions)
       if (expression.canBeStatement) {
         consumer.add(new IntroduceVarLookupElement(expression));
         break;
       }
-    }
   }
 
-  private static class IntroduceVarLookupElement
-    extends StatementPostfixLookupElement<PsiExpressionStatement> {
-
-    public IntroduceVarLookupElement(@NotNull final PrefixExpressionContext context) {
+  private static class IntroduceVarLookupElement extends StatementPostfixLookupElement<PsiExpressionStatement> {
+    public IntroduceVarLookupElement(@NotNull PrefixExpressionContext context) {
       super("var", context);
     }
 
     @NotNull @Override protected PsiExpressionStatement createNewStatement(
-      @NotNull final PsiElementFactory factory,
-      @NotNull final PsiExpression expression,
-      @NotNull final PsiFile context) {
+      @NotNull PsiElementFactory factory, @NotNull PsiExpression expression, @NotNull PsiFile context) {
 
-      final PsiExpressionStatement expressionStatement =
+      PsiExpressionStatement expressionStatement =
         (PsiExpressionStatement) factory.createStatementFromText("expr", context);
 
       expressionStatement.getExpression().replace(expression);
@@ -62,11 +56,13 @@ public class IntroduceVariableTemplateProvider extends TemplateProviderBase {
       });
     }
 
-    @Override protected void postProcess(@NotNull final InsertionContext context,
-                                         @NotNull final PsiExpressionStatement statement) {
-      final ActionManager manager = ActionManager.getInstance();
-      final AnAction introduceVariable =  manager.getAction("IntroduceVariable");
-      final InputEvent event = ActionCommand.getInputEvent("IntroduceVariable");
+    public static final String INTRODUCE_VARIABLE = "IntroduceVariable";
+
+    @Override protected void postProcess(
+      @NotNull InsertionContext context, @NotNull PsiExpressionStatement statement) {
+      ActionManager manager = ActionManager.getInstance();
+      AnAction introduceVariable =  manager.getAction(INTRODUCE_VARIABLE);
+      InputEvent event = ActionCommand.getInputEvent(INTRODUCE_VARIABLE);
 
       ActionManager.getInstance().tryToExecute(
         introduceVariable, event, null, ActionPlaces.UNKNOWN, true);

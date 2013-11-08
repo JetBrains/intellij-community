@@ -6,7 +6,5 @@ import org.jetbrains.annotations.*;
 import java.util.*;
 
 public interface PostfixTemplateProvider {
-  void createItems(
-    @NotNull final PostfixTemplateAcceptanceContext context,
-    @NotNull final List<LookupElement> consumer);
+  void createItems(@NotNull PostfixTemplateAcceptanceContext context, @NotNull List<LookupElement> consumer);
 }

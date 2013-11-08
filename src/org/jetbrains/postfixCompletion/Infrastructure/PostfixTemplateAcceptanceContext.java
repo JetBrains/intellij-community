@@ -11,14 +11,13 @@ public abstract class PostfixTemplateAcceptanceContext {
   @NotNull public final List<PrefixExpressionContext> expressions;
   public final boolean isForceMode;
 
-  public PostfixTemplateAcceptanceContext(@NotNull final PsiElement reference,
-                                          @NotNull final PsiExpression expression,
-                                          boolean forceMode) {
+  public PostfixTemplateAcceptanceContext(
+    @NotNull PsiElement reference, @NotNull PsiExpression expression, boolean forceMode) {
     postfixReference = reference;
     isForceMode = forceMode;
 
-    final List<PrefixExpressionContext> contexts = new ArrayList<PrefixExpressionContext>();
-    final int referenceEndRange = reference.getTextRange().getEndOffset();
+    List<PrefixExpressionContext> contexts = new ArrayList<PrefixExpressionContext>();
+    int referenceEndRange = reference.getTextRange().getEndOffset();
 
     // build expression contexts
     for (PsiElement node = expression; node != null; node = node.getParent()) {
@@ -26,12 +25,12 @@ public abstract class PostfixTemplateAcceptanceContext {
 
       // handle only expressions, except 'reference'
       if (node instanceof PsiExpression && node != reference) {
-        final PsiExpression expr = (PsiExpression) node;
+        PsiExpression expr = (PsiExpression) node;
 
-        final int endOffset = expr.getTextRange().getEndOffset();
+        int endOffset = expr.getTextRange().getEndOffset();
         if (endOffset > referenceEndRange) break; // stop when 'a.var + b'
 
-        final PrefixExpressionContext context = new PrefixExpressionContext(this, expr);
+        PrefixExpressionContext context = new PrefixExpressionContext(this, expr);
         contexts.add(context);
 
         if (context.canBeStatement) break;
@@ -41,6 +40,5 @@ public abstract class PostfixTemplateAcceptanceContext {
     expressions = Collections.unmodifiableList(contexts);
   }
 
-  @NotNull public abstract PrefixExpressionContext fixUpExpression(
-    @NotNull final PrefixExpressionContext context);
+  @NotNull public abstract PrefixExpressionContext fixUpExpression(@NotNull PrefixExpressionContext context);
 }
