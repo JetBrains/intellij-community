@@ -26,11 +26,13 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.VerticalFlowLayout;
+import com.intellij.openapi.util.AsyncResult;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.FieldPanel;
+import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -86,11 +88,13 @@ public class ChooseComponentsToExportDialog extends DialogWrapper {
     final ActionListener browseAction = new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
-        String oldPath = myPathPanel.getText();
-        String path = chooseSettingsFile(oldPath, getWindow(), IdeBundle.message("title.export.file.location"),
-                                         IdeBundle.message("prompt.choose.export.settings.file.path"));
-        if (path == null) return;
-        myPathPanel.setText(FileUtil.toSystemDependentName(path));
+        chooseSettingsFile(myPathPanel.getText(), getWindow(), IdeBundle.message("title.export.file.location"), IdeBundle.message("prompt.choose.export.settings.file.path"))
+          .doWhenDone(new Consumer<String>() {
+            @Override
+            public void consume(String path) {
+              myPathPanel.setText(FileUtil.toSystemDependentName(path));
+            }
+          });
       }
     };
 
@@ -167,8 +171,8 @@ public class ChooseComponentsToExportDialog extends DialogWrapper {
     return file != null;
   }
 
-  @Nullable
-  public static String chooseSettingsFile(String oldPath, Component parent, final String title, final String description) {
+  @NotNull
+  public static AsyncResult<String> chooseSettingsFile(String oldPath, Component parent, final String title, final String description) {
     FileChooserDescriptor chooserDescriptor = FileChooserDescriptorFactory.createSingleLocalFileDescriptor();
     chooserDescriptor.setDescription(description);
     chooserDescriptor.setHideIgnored(false);
@@ -185,19 +189,25 @@ public class ChooseComponentsToExportDialog extends DialogWrapper {
     else {
       initialDir = null;
     }
-    final VirtualFile file = FileChooser.chooseFile(chooserDescriptor, parent, null, initialDir);
-    if (file == null) {
-      return null;
-    }
-    String path;
-    if (file.isDirectory()) {
-      String defaultName = new File(DEFAULT_PATH).getName();
-      path = file.getPath() + "/" + defaultName;
-    }
-    else {
-      path = file.getPath();
-    }
-    return path;
+    final AsyncResult<String> result = new AsyncResult<String>();
+    FileChooser.chooseFiles(chooserDescriptor, null, parent, initialDir, new FileChooser.FileChooserConsumer() {
+      @Override
+      public void consume(List<VirtualFile> files) {
+        VirtualFile file = files.get(0);
+        if (file.isDirectory()) {
+          result.setDone(file.getPath() + '/' + new File(DEFAULT_PATH).getName());
+        }
+        else {
+          result.setDone(file.getPath());
+        }
+      }
+
+      @Override
+      public void cancelled() {
+        result.setRejected();
+      }
+    });
+    return result;
   }
 
   @Override
