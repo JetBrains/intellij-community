@@ -28,33 +28,61 @@ public class IntroduceVariableTemplateProvider extends TemplateProviderBase {
     // todo: setup selection before refactoring? or context?
     // todo: disable when qualifier type is unknown (what about broken, but fixable exprs?)
     // todo: make it works on types
-    // todo: 1 + new T.var  ????
 
     for (PrefixExpressionContext expressionContext : context.expressions)
       if (expressionContext.canBeStatement) {
 
-        if (expressionContext.expression instanceof PsiReferenceExpression) {
-          final PsiElement element = ((PsiReferenceExpression) expressionContext.expression).resolve();
-          if (element instanceof PsiType) {
-            return;
+        PsiExpression expression = expressionContext.expression;
+        boolean invokedOnType = false;
+
+        if (expression instanceof PsiReferenceExpression) {
+          PsiElement element = ((PsiReferenceExpression) expression).resolve();
+
+          // todo: test with enums/classes
+          if (element instanceof PsiClass) {
+            invokedOnType = true;
+            // todo: check constructors accessibility
           }
+          else {
+            // filter out too simple locals references
+            if (element instanceof PsiVariable) continue;
+          }
+
+          // todo:
+        }
+
+        // disable this provider when expression type is unknown
+        PsiType expressionType = expression.getType();
+        if (expressionType == null && !invokedOnType) {
+          // for simple expressions like `expr.postfix`
+          if (context.expressions.size() == 1) break;
         }
 
         // todo: disable when qualifier resolves to type
         // todo: disable when only one expr and it is unresolved
 
-        consumer.add(new IntroduceVarLookupElement(expressionContext));
+        consumer.add(new IntroduceVarLookupElement(expressionContext, invokedOnType));
         break;
       }
   }
 
   private static class IntroduceVarLookupElement extends StatementPostfixLookupElement<PsiExpressionStatement> {
-    public IntroduceVarLookupElement(@NotNull PrefixExpressionContext context) {
+    private final boolean myInvokedOnType;
+
+    public IntroduceVarLookupElement(@NotNull PrefixExpressionContext context, boolean invokedOnType) {
       super("var", context);
+      myInvokedOnType = invokedOnType;
     }
 
     @NotNull @Override protected PsiExpressionStatement createNewStatement(
-      @NotNull PsiElementFactory factory, @NotNull PsiExpression expression, @NotNull PsiFile context) {
+      @NotNull PsiElementFactory factory, @NotNull PsiExpression expression, @NotNull PsiElement context) {
+
+      if (myInvokedOnType) {
+        expression = factory.createExpressionFromText("new " + expression.getText() + "()", context);
+
+        // todo: append " { }" for abstract types ?
+      }
+
       PsiExpressionStatement expressionStatement =
         (PsiExpressionStatement) factory.createStatementFromText("expr", context);
 
@@ -73,20 +101,24 @@ public class IntroduceVariableTemplateProvider extends TemplateProviderBase {
 
     @Override protected void postProcess(
       @NotNull InsertionContext context, @NotNull PsiExpressionStatement statement) {
-      IntroduceVariableHandler handler;
-      if (ApplicationManager.getApplication().isUnitTestMode()) {
-        handler = getMockHandler();
-      } else {
-        handler = new IntroduceVariableHandler();
-      }
+      boolean unitTestMode = ApplicationManager.getApplication().isUnitTestMode();
+      IntroduceVariableHandler handler = unitTestMode ? getMockHandler() : new IntroduceVariableHandler();
 
       handler.invoke(context.getProject(), context.getEditor(), statement.getExpression());
+
+      if (myInvokedOnType) {
+        // todo: place caret into ctor parameters if any
+        // todo: or inside { }
+      }
+
+      int value = 2 + 2;
+
     }
 
     @NotNull private IntroduceVariableHandler getMockHandler() {
       return new IntroduceVariableHandler() {
         // mock default settings
-        @Override public IntroduceVariableSettings getSettings(
+        @Override public final IntroduceVariableSettings getSettings(
           Project project, Editor editor, final PsiExpression expr, PsiExpression[] occurrences,
           TypeSelectorManagerImpl typeSelectorManager, boolean declareFinalIfAll, boolean anyAssignmentLHS,
           InputValidator validator, PsiElement anchor, OccurrencesChooser.ReplaceChoice replaceChoice) {
