@@ -132,6 +132,7 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
       else {
         String body = getHashText(commit) + "<br/>" + getAuthorText(commit) + "<p>" + getMessageText(commit) + "</p>";
         setText("<html><head>" + UIUtil.getCssFontDeclaration(UIUtil.getLabelFont()) + "</head><body>" + body + "</body></html>");
+        setCaretPosition(0);
       }
     }
 
