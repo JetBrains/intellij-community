@@ -48,6 +48,7 @@ public class LazyParseableElement extends CompositeElement {
   // Under no circumstances should you grab the PSI_LOCK while holding this lock.
   private final ChameleonLock lock = new ChameleonLock();
   private CharSequence myText; /** guarded by {@link #lock} */
+  private static final ThreadLocal<Boolean> ourSuppressEagerPsiCreation = new ThreadLocal<Boolean>();
 
   public LazyParseableElement(@NotNull IElementType type, CharSequence text) {
     super(type);
@@ -181,9 +182,11 @@ public class LazyParseableElement extends CompositeElement {
       super.rawAddChildrenWithoutNotifications((TreeElement)parsedNode);
     }
 
-    // create PSI all at once, to reduce contention of PsiLock in CompositeElement.getPsi()
-    // create PSI outside the 'lock' since this method grabs PSI_LOCK and deadlock is possible when someone else locks in the other order.
-    createAllChildrenPsiIfNecessary();
+    if (!Boolean.TRUE.equals(ourSuppressEagerPsiCreation.get())) {
+      // create PSI all at once, to reduce contention of PsiLock in CompositeElement.getPsi()
+      // create PSI outside the 'lock' since this method grabs PSI_LOCK and deadlock is possible when someone else locks in the other order.
+      createAllChildrenPsiIfNecessary();
+    }
   }
 
   @Override
@@ -221,5 +224,9 @@ public class LazyParseableElement extends CompositeElement {
   @TestOnly
   public static void setParsingAllowed(boolean allowed) {
     ourParsingAllowed = allowed;
+  }
+  
+  public static void setSuppressEagerPsiCreation(boolean suppress) {
+    ourSuppressEagerPsiCreation.set(suppress);
   }
 }

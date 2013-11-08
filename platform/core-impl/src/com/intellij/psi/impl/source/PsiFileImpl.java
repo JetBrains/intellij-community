@@ -202,7 +202,14 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     }
     treeElement.setPsi(this);
 
-    List<Pair<StubBasedPsiElementBase, CompositeElement>> bindings = calcStubAstBindings(treeElement, cachedDocument);
+    List<Pair<StubBasedPsiElementBase, CompositeElement>> bindings;
+    LazyParseableElement.setSuppressEagerPsiCreation(true);
+    try {
+      bindings = calcStubAstBindings(treeElement, cachedDocument);
+    }
+    finally {
+      LazyParseableElement.setSuppressEagerPsiCreation(false);
+    }
 
     synchronized (PsiLock.LOCK) {
       FileElement existing = derefTreeElement();
