@@ -28,6 +28,7 @@ import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.VcsLogBranchFilter;
+import com.intellij.vcs.log.data.VcsLogDateFilter;
 import com.intellij.vcs.log.data.VcsLogUserFilter;
 import com.intellij.vcs.log.impl.HashImpl;
 import com.intellij.vcs.log.impl.VcsRefImpl;
@@ -199,6 +200,18 @@ public class GitLogProvider implements VcsLogProvider {
         }
       });
       filterParameters.add(prepareParameter("author", authorFilter));
+    }
+
+    List<VcsLogDateFilter> dateFilters = ContainerUtil.findAll(filters, VcsLogDateFilter.class);
+    if (!dateFilters.isEmpty()) {
+      // assuming there is only one date filter, until filter expressions are defined
+      VcsLogDateFilter filter = dateFilters.iterator().next();
+      if (filter.getAfter() != null) {
+        filterParameters.add("--after=" + filter.getAfter().toString());
+      }
+      if (filter.getBefore() != null) {
+        filterParameters.add("--before=" + filter.getBefore().toString());
+      }
     }
 
     List<VcsLogTextFilter> textFilters = ContainerUtil.findAll(filters, VcsLogTextFilter.class);

@@ -57,15 +57,18 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUi {
 
     FilterPopupComponent branchFilter = new BranchFilterPopupComponent(this, ui);
     FilterPopupComponent userFilter = new UserFilterPopupComponent(this, ui.getLogDataHolder(), ui.getUiProperties());
+    FilterPopupComponent dateFilter = new DateFilterPopupComponent(this);
 
     myFilterPopupComponents = ContainerUtil.newArrayList();
     myFilterPopupComponents.add(branchFilter);
     myFilterPopupComponents.add(userFilter);
+    myFilterPopupComponents.add(dateFilter);
 
     myActionGroup = new DefaultActionGroup();
     myActionGroup.add(new TextFilterComponent(myTextFilter));
     myActionGroup.add(new FilterActionComponent(branchFilter));
     myActionGroup.add(new FilterActionComponent(userFilter));
+    myActionGroup.add(new FilterActionComponent(dateFilter));
   }
 
   @Override
