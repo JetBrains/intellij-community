@@ -65,7 +65,7 @@ public abstract class CloudGitServerRuntimeInstanceBase<
   @NotNull
   @Override
   public String getDeploymentName(@NotNull DeploymentSource source) {
-    return DEFAULT_NAME_PROVIDER.getDeploymentName(source);
+    return CloudDeploymentNameProvider.DEFAULT_NAME_PROVIDER.getDeploymentName(source);
   }
 
   public void connect(final ServerConnector.ConnectionCallback<DC> callback) {
