@@ -226,13 +226,18 @@ public class DirectoryIndexImpl extends DirectoryIndex {
         }
       }
 
-      if (parentInfo == null) return state;
-
-      Module module = parentInfo.getModule();
-
       for (DirectoryIndexExcludePolicy policy : myExcludePolicies) {
-        if (policy.isExcludeRoot(file)) return state;
+        if (policy.isExcludeRoot(file)) {
+          if (parentInfo == null || parentInfo.getContentRoot() == null) {
+            if (state == originalState) state = state.copy(null);
+            state.myProjectExcludeRoots.add(file.getId());
+          }
+          return state;
+        }
       }
+
+      if (parentInfo == null) return state;
+      Module module = parentInfo.getModule();
 
       if (state == originalState) state = state.copy(null);
       VirtualFile parentContentRoot = parentInfo.getContentRoot();
@@ -1471,7 +1476,7 @@ public class DirectoryIndexImpl extends DirectoryIndex {
           for (VirtualFile excludeRoot : contentEntry.getExcludeFolderFiles()) {
             // Output paths should be excluded (if marked as such) regardless if they're under corresponding module's content root
             if (excludeRoot instanceof NewVirtualFile) {
-              if (!FileUtil.startsWith(contentRoot.getUrl(), excludeRoot.getUrl())) {
+              if (!FileUtil.startsWith(excludeRoot.getUrl(), contentRoot.getUrl())) {
                 if (isExcludeRootForModule(module, excludeRoot)) {
                   putForFileAndAllAncestors((NewVirtualFile)excludeRoot, excludeRoot.getUrl());
                 }

@@ -412,7 +412,7 @@ public class DirectoryIndexTest extends IdeaTestCase {
     checkInfoNull(module2Output);
     checkInfoNull(module2TestOutput);
     
-    assertTrue(myIndex.isProjectExcludeRoot(excluded));
+    assertFalse(myIndex.isProjectExcludeRoot(excluded));
 
     excluded.delete(this);
     projectOutput.delete(this);
@@ -430,7 +430,7 @@ public class DirectoryIndexTest extends IdeaTestCase {
     };
     VirtualFileManager.getInstance().addVirtualFileListener(l, getTestRootDisposable());
     excluded = myModule1Dir.createChildDirectory(this, excluded.getName());
-    //todo assertTrue(myIndex.isProjectExcludeRoot(excluded));
+    assertFalse(myIndex.isProjectExcludeRoot(excluded));
     projectOutput = myModule1Dir.createChildDirectory(this, projectOutput.getName());
     module2Output = myModule1Dir.createChildDirectory(this, module2Output.getName());
     module2TestOutput = myModule2Dir.createChildDirectory(this, module2TestOutput.getName());
@@ -442,7 +442,7 @@ public class DirectoryIndexTest extends IdeaTestCase {
 
     assertEquals(created.toString(), 4, created.size());
 
-    assertTrue(myIndex.isProjectExcludeRoot(excluded));
+    assertFalse(myIndex.isProjectExcludeRoot(excluded));
   }
 
   public void testExcludesShouldBeRecognizedRightOnRefresh() throws Exception {
@@ -521,12 +521,24 @@ public class DirectoryIndexTest extends IdeaTestCase {
     checkInfo(myExcludedLibClsDir, null, true, false, "lib.cls.exc", null, myModule3);
   }
 
-
   public void testExcludeCompilerOutputOutsideOfContentRoot() throws Exception {
     final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
     assertTrue(fileIndex.isIgnored(myOutputDir));
     assertTrue(fileIndex.isIgnored(myModule1OutputDir));
     assertFalse(fileIndex.isIgnored(myOutputDir.getParent()));
+    assertTrue(myIndex.isProjectExcludeRoot(myOutputDir));
+    assertFalse(myIndex.isProjectExcludeRoot(myModule1OutputDir));
+    String moduleOutputUrl = myModule1OutputDir.getUrl();
+
+    myOutputDir.delete(this);
+
+    PsiTestUtil.setCompilerOutputPath(myModule, moduleOutputUrl, false);
+    myOutputDir = myRootVFile.createChildDirectory(this, "out");
+    myModule1OutputDir = myOutputDir.createChildDirectory(this, "module1");
+
+    assertTrue(myIndex.isProjectExcludeRoot(myOutputDir));
+    assertTrue(myIndex.isProjectExcludeRoot(myModule1OutputDir));
+    assertTrue(fileIndex.isIgnored(myModule1OutputDir));
   }
 
   private void checkInfo(VirtualFile dir,
