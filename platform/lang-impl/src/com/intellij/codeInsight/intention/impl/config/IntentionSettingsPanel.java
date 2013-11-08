@@ -19,7 +19,6 @@ package com.intellij.codeInsight.intention.impl.config;
 import com.intellij.ide.ui.search.SearchUtil;
 import com.intellij.ide.ui.search.SearchableOptionsRegistrar;
 import com.intellij.openapi.options.MasterDetails;
-import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.ui.DetailsComponent;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.GuiUtils;
@@ -189,11 +188,9 @@ public class IntentionSettingsPanel implements MasterDetails {
       }
       try {
         final TextDescriptor description = metaData.getDescription();
-        if (description != null) {
-          if (StringUtil.containsIgnoreCase(description.getText(), stripped)){
-            if (!forceInclude) return true;
-          } else if (forceInclude) return false;
-        }
+        if (StringUtil.containsIgnoreCase(description.getText(), stripped)){
+          if (!forceInclude) return true;
+        } else if (forceInclude) return false;
       }
       catch (IOException e) {
         //skip then
@@ -214,7 +211,7 @@ public class IntentionSettingsPanel implements MasterDetails {
     return forceInclude;
   }
 
-  public Runnable showOption(final SearchableConfigurable configurable, final String option) {
+  public Runnable showOption(final String option) {
     return new Runnable() {
       @Override
       public void run() {
@@ -222,8 +219,5 @@ public class IntentionSettingsPanel implements MasterDetails {
         myIntentionSettingsTree.setFilter(option);
       }
     };
-  }
-
-  public void clearSearch() {
   }
 }
