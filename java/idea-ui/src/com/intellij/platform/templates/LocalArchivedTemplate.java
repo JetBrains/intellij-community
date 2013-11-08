@@ -31,6 +31,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 import java.util.Collections;
@@ -52,10 +53,9 @@ public class LocalArchivedTemplate extends ArchivedProjectTemplate {
   private List<WizardInputField> myInputFields = Collections.emptyList();
   private Icon myIcon;
 
-  public LocalArchivedTemplate(@NotNull String displayName,
-                               @NotNull URL archivePath,
+  public LocalArchivedTemplate(@NotNull URL archivePath,
                                @NotNull ClassLoader classLoader) {
-    super(displayName);
+    super(getTemplateName(archivePath));
 
     myArchivePath = archivePath;
     myModuleType = computeModuleType(this);
@@ -78,6 +78,11 @@ public class LocalArchivedTemplate extends ArchivedProjectTemplate {
         throw new RuntimeException(e);
       }
     }
+  }
+
+  private static String getTemplateName(URL url) {
+    String fileName = new File(url.getPath()).getName();
+    return fileName.substring(0, fileName.length() - ArchivedTemplatesFactory.ZIP.length()).replace('_', ' ');
   }
 
   @Override

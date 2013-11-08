@@ -41,7 +41,7 @@ import java.util.*;
  */
 public class ArchivedTemplatesFactory extends ProjectTemplatesFactory {
 
-  private static final String ZIP = ".zip";
+  static final String ZIP = ".zip";
 
   private final ClearableLazyValue<MultiMap<String, Pair<URL, ClassLoader>>> myGroups = new ClearableLazyValue<MultiMap<String, Pair<URL, ClassLoader>>>() {
     @NotNull
@@ -83,7 +83,8 @@ public class ArchivedTemplatesFactory extends ProjectTemplatesFactory {
             if (index != -1) {
               child = child.substring(0, index);
             }
-            map.putValue(child.replace('_', ' '), Pair.create(new URL(url.getKey().toExternalForm() + "/" + child), url.getValue()));
+            String name = child.replace('_', ' ');
+            map.putValue(name, Pair.create(new URL(url.getKey().toExternalForm() + "/" + child), url.getValue()));
           }
         }
         catch (IOException e) {
@@ -132,8 +133,7 @@ public class ArchivedTemplatesFactory extends ProjectTemplatesFactory {
         for (String child : children) {
           if (child.endsWith(ZIP)) {
             URL templateUrl = new URL(url.first.toExternalForm() + "/" + child);
-            String name = getTemplateName(child);
-            templates.add(new LocalArchivedTemplate(name, templateUrl, url.second));
+            templates.add(new LocalArchivedTemplate(templateUrl, url.second));
           }
         }
       }
@@ -142,10 +142,6 @@ public class ArchivedTemplatesFactory extends ProjectTemplatesFactory {
       }
     }
     return templates.toArray(new ProjectTemplate[templates.size()]);
-  }
-
-  public static String getTemplateName(String child) {
-    return child.substring(0, child.length() - ZIP.length()).replace('_', ' ');
   }
 
   @Override

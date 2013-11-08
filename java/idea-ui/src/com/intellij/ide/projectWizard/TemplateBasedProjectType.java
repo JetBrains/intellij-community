@@ -17,12 +17,10 @@ package com.intellij.ide.projectWizard;
 
 import com.intellij.ide.util.projectWizard.ModuleBuilder;
 import com.intellij.platform.ProjectTemplate;
-import com.intellij.platform.templates.ArchivedTemplatesFactory;
 import com.intellij.platform.templates.LocalArchivedTemplate;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.io.File;
 import java.net.URL;
 
 /**
@@ -36,8 +34,7 @@ public class TemplateBasedProjectType extends ProjectCategory {
   public TemplateBasedProjectType(String templatePath) {
     URL resource = getClass().getResource(templatePath);
     assert resource != null : templatePath;
-    String name = ArchivedTemplatesFactory.getTemplateName(new File(templatePath).getName());
-    myTemplate = new LocalArchivedTemplate(name, resource, getClass().getClassLoader());
+    myTemplate = new LocalArchivedTemplate(resource, getClass().getClassLoader());
   }
 
   public TemplateBasedProjectType(ProjectTemplate template) {
