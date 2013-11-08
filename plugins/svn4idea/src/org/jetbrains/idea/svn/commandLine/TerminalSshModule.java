@@ -137,8 +137,6 @@ public class TerminalSshModule extends LineCommandAdapter implements CommandRunt
         if (dialog.isOK()) {
           answer.set(dialog.getPassword());
         }
-        // TODO: Correctly handle "cancel" - kill the process
-        // TODO: and perform "cleanup" on working copy
       }
     };
 
