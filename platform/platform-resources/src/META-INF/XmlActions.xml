@@ -79,5 +79,8 @@
       <add-to-group group-id="RunContextPopupGroup" anchor="last"/>
       <!--<add-to-group group-id="ProjectViewPopupMenu" anchor="after" relative-to-action="EditSource"/>-->
     </action>
+    
+    <action id="SurroundWithEmmet" class="com.intellij.codeInsight.template.emmet.SurroundWithEmmetAction" 
+            text="Surround with Emmet" description="Surround selected code with Emmet abbreviation"/>
   </actions>
 </component>
