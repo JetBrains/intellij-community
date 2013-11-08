@@ -1489,6 +1489,7 @@
     <xdebugger.breakpointType implementation="org.jetbrains.java.debugger.breakpoints.JavaBreakpointType"/>
 
     <refactoring.pullUpHelperFactory language="JAVA" implementationClass="com.intellij.refactoring.memberPullUp.JavaPullUpHelperFactory"/>
+    <hierarchy.referenceProcessor implementation="com.intellij.ide.hierarchy.call.JavaCallReferenceProcessor"/>
   </extensions>
 
   <actions>
