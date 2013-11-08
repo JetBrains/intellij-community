@@ -23,13 +23,13 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.SupportedRootTypes;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packageDependencies.ChangeListsScopesProvider;
@@ -54,6 +54,7 @@ import com.intellij.util.PlatformUtils;
 import com.intellij.util.TreeItem;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.model.java.JavaSourceRootType;
 
 import javax.swing.*;
 import java.awt.*;
@@ -238,7 +239,7 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton implements Dispo
       result.add(GlobalSearchScope.allScope(project));
     }
 
-    if (!PlatformUtils.isCidr()) { // TODO: fix these scopes in AppCode
+    if (!PlatformUtils.isCidr() && SupportedRootTypes.isSupported(JavaSourceRootType.TEST_SOURCE)) { // TODO: fix these scopes in AppCode
       result.add(GlobalSearchScopes.projectProductionScope(project));
       result.add(GlobalSearchScopes.projectTestScope(project));
     }
