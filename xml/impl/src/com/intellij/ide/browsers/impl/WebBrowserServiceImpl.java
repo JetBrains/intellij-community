@@ -123,7 +123,6 @@ public class WebBrowserServiceImpl extends WebBrowserService {
       return null;
     }
 
-    boolean isRemote = !url.isInLocalFileSystem();
-    return isRemote || HtmlUtil.isHtmlFile(virtualFile) ? url : null;
+    return !url.isInLocalFileSystem() || HtmlUtil.isHtmlFile(virtualFile) ? url : null;
   }
 }
