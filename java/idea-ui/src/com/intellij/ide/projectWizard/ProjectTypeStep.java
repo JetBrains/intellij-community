@@ -43,9 +43,7 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.platform.ProjectTemplate;
 import com.intellij.platform.ProjectTemplateEP;
 import com.intellij.platform.templates.LocalArchivedTemplate;
-import com.intellij.ui.CollectionListModel;
-import com.intellij.ui.ColoredListCellRenderer;
-import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.tabs.TabInfo;
 import com.intellij.ui.tabs.TabsListener;
@@ -77,6 +75,7 @@ public class ProjectTypeStep extends ModuleWizardStep implements Disposable {
   private final WizardContext myContext;
   private final NewProjectWizard myWizard;
   private final ModulesProvider myModulesProvider;
+  private final JTextPane myTemplateDescription;
   private JPanel myPanel;
   private JPanel myOptionsPanel;
   private JBList myProjectTypeList;
@@ -171,6 +170,8 @@ public class ProjectTypeStep extends ModuleWizardStep implements Disposable {
       @Override
       public void valueChanged(ListSelectionEvent e) {
         projectTypeChanged(false);
+        ProjectCategory type = (ProjectCategory)myTemplatesList.getSelectedValue();
+        myTemplateDescription.setText(type == null ? "" : type.getDescription());
       }
     });
 
@@ -183,7 +184,15 @@ public class ProjectTypeStep extends ModuleWizardStep implements Disposable {
     });
     myFrameworksTab = new TabInfo(myFrameworksPanel.getMainPanel()).setText("  Frameworks  ");
     myTabs.addTab(myFrameworksTab);
-    myTemplatesTab = new TabInfo(ScrollPaneFactory.createScrollPane(myTemplatesList)).setText("  Templates  ");
+
+    JPanel templatesPanel = new JPanel(new BorderLayout());
+    templatesPanel.add(ScrollPaneFactory.createScrollPane(myTemplatesList, SideBorder.BOTTOM));
+    myTemplateDescription = new JTextPane();
+    myTemplateDescription.setBorder(IdeBorderFactory.createEmptyBorder(5, 5, 5, 5));
+    Messages.installHyperlinkSupport(myTemplateDescription);
+    templatesPanel.add(myTemplateDescription, BorderLayout.SOUTH);
+
+    myTemplatesTab = new TabInfo(templatesPanel);
     myTabs.addTab(myTemplatesTab);
     myOptionsPanel.add(myTabs.getComponent(), FRAMEWORKS_CARD);
   }
@@ -254,6 +263,7 @@ public class ProjectTypeStep extends ModuleWizardStep implements Disposable {
         myTemplatesTab.setHidden(templates.isEmpty());
         if (!templates.isEmpty()) {
           myTemplatesList.setSelectedIndex(0);
+          myTemplatesTab.setText("  Templates (" + templates.size() + ")   ");
         }
       }
     }
