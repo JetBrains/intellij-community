@@ -13,11 +13,13 @@ import java.util.Date;
 public class GenericTask extends Task {
   private final String myId;
   private final String myDescription;
+  private final String myIssueUrl;
   private TaskRepository myRepository;
 
-  public GenericTask(final String id, final String description, final TaskRepository repository) {
+  public GenericTask(final String id, final String description, String issueUrl, final TaskRepository repository) {
     myId = id;
     myDescription = description;
+    myIssueUrl = issueUrl;
     myRepository = repository;
   }
 
@@ -82,7 +84,7 @@ public class GenericTask extends Task {
   @Nullable
   @Override
   public String getIssueUrl() {
-    return null;
+    return myIssueUrl;
   }
 
   @Nullable

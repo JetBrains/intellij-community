@@ -46,6 +46,8 @@ public class GenericRepositoryEditor<T extends GenericRepository> extends BaseRe
   private JRadioButton myJsonRadioButton;
   private JButton myManageTemplateVariablesButton;
   private JButton myResetToDefaultsButton;
+  private EditorTextField myTaskURLText;
+  private JBLabel myTaskURLTooltip;
 
   public GenericRepositoryEditor(final Project project,
                                  final T repository,
@@ -108,6 +110,7 @@ public class GenericRepositoryEditor<T extends GenericRepository> extends BaseRe
     installListener(myTasksListURLText.getDocument());
     installListener(myLoginURLText.getDocument());
     installListener(myTaskPatternText.getDocument());
+    installListener(myTaskURLText.getDocument());
 
     String useCompletionText = ". Use " +
                                KeymapUtil
@@ -119,6 +122,10 @@ public class GenericRepositoryEditor<T extends GenericRepository> extends BaseRe
                               QUERY_PLACEHOLDER + " (use for faster tasks search)" + useCompletionText + "</html>");
     myTaskPatternTooltip.setText(
       "<html>Task pattern should be a regexp with two matching groups: ({id}.+?) and ({summary}.+?)" + useCompletionText + "</html>");
+
+    myTaskURLTooltip.setText(
+      "<html>Task url should be a template with named placeholders from task pattern: {id}, {summary} or any other</html>"
+    );
 
     myTabbedPane.addTab("Additional", myPanel);
 
@@ -148,6 +155,7 @@ public class GenericRepositoryEditor<T extends GenericRepository> extends BaseRe
     myLoginURLText.setText(clone.getLoginURL());
     myTasksListURLText.setText(clone.getTasksListURL());
     myTaskPatternText.setText(clone.getTaskPattern());
+    myTaskURLText.setText(clone.getTaskURLPattern());
     myLoginMethodTypeComboBox.setSelectedItem(clone.getLoginMethodType());
     myTasksListMethodTypeComboBox.setSelectedItem(clone.getTasksListMethodType());
     switch (clone.getResponseType()) {
@@ -191,6 +199,7 @@ public class GenericRepositoryEditor<T extends GenericRepository> extends BaseRe
     myRepository.setLoginURL(myLoginURLText.getText());
     myRepository.setLoginMethodType((String)myLoginMethodTypeComboBox.getModel().getSelectedItem());
     myRepository.setTasksListMethodType((String)myTasksListMethodTypeComboBox.getModel().getSelectedItem());
+    myRepository.setTaskURLPattern(myTaskURLText.getText());
     myRepository.setResponseType(
       myXmlRadioButton.isSelected() ? ResponseType.XML : myJsonRadioButton.isSelected() ? ResponseType.JSON : ResponseType.HTML);
     super.apply();
@@ -205,11 +214,14 @@ public class GenericRepositoryEditor<T extends GenericRepository> extends BaseRe
     final ArrayList<String> completionList1 = ContainerUtil.newArrayList(SERVER_URL_PLACEHOLDER, QUERY_PLACEHOLDER, MAX_COUNT_PLACEHOLDER);
     myTasksListURLText = TextFieldWithAutoCompletion.create(myProject, completionList1, null, false, myRepository.getTasksListURL());
 
-    final Document document = EditorFactory.getInstance().createDocument(myRepository.getTaskPattern());
+    Document document = EditorFactory.getInstance().createDocument(myRepository.getTaskPattern());
     myTaskPatternText = new EditorTextField(document, myProject, myRepository.getResponseType().getFileType(), false, false);
     final ArrayList<String> completionList2 = ContainerUtil.newArrayList("({id}.+?)", "({summary}.+?)");
     TextFieldWithAutoCompletionContributor
       .installCompletion(document, myProject, new TextFieldWithAutoCompletion.StringsCompletionProvider(completionList2, null), true);
     myTaskPatternText.setFontInheritedFromLAF(false);
+
+    document = EditorFactory.getInstance().createDocument(myRepository.getTaskURLPattern());
+    myTaskURLText = new EditorTextField(document, myProject, myRepository.getResponseType().getFileType(), false, true);
   }
 }

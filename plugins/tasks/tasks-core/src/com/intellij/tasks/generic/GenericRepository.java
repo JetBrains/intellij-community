@@ -21,7 +21,9 @@ import org.apache.commons.httpclient.methods.PostMethod;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -34,11 +36,12 @@ public class GenericRepository extends BaseRepositoryImpl {
   private String myTasksListURL = "";
   private String myTaskPattern = "";
   private String myLoginURL = "";
+  private String myTaskURLPattern = "";
   private String myLoginMethodType = GenericRepositoryEditor.GET;
   private String myTasksListMethodType = GenericRepositoryEditor.GET;
   private ResponseType myResponseType = ResponseType.XML;
-  private List<TemplateVariable> myTemplateVariables = new ArrayList<TemplateVariable>();
 
+  private List<TemplateVariable> myTemplateVariables = new ArrayList<TemplateVariable>();
   final static String SERVER_URL_PLACEHOLDER = "{serverUrl}";
   final static String USERNAME_PLACEHOLDER = "{username}";
   final static String PASSWORD_PLACEHOLDER = "{password}";
@@ -69,6 +72,7 @@ public class GenericRepository extends BaseRepositoryImpl {
     myTasksListMethodType = other.getTasksListMethodType();
     myResponseType = other.getResponseType();
     myTemplateVariables = other.getTemplateVariables();
+    myTaskURLPattern = other.getTaskURLPattern();
   }
 
   @Override
@@ -102,10 +106,19 @@ public class GenericRepository extends BaseRepositoryImpl {
                Pattern.CASE_INSENSITIVE | Pattern.MULTILINE | Pattern.DOTALL | Pattern.UNICODE_CASE | Pattern.CANON_EQ)
       .matcher(response);
 
+    // extract groups {.*} from Task URL
+    Set<String> taskUrlPlaceholders = new HashSet<String>(getPlaceholders(getTaskURLPattern()));
+    taskUrlPlaceholders.retainAll(placeholders);
+
     List<Task> tasks = new ArrayList<Task>();
     while (matcher.find()) {
       String id = matcher.group(placeholders.indexOf(ID_PLACEHOLDER) + 1);
       String summary = matcher.group(placeholders.indexOf(SUMMARY_PLACEHOLDER) + 1);
+      // replace placeholders in Task URL to matched from Task Pattern
+      String taskUrl = getTaskURLPattern();
+      for (String placeholder : taskUrlPlaceholders) {
+        taskUrl = taskUrl.replace(placeholder, matcher.group(placeholders.indexOf(placeholder) + 1));
+      }
       if (myResponseType == ResponseType.XML && summary != null) {
         final String finalSummary = summary;
         summary = ApplicationManager.getApplication().runReadAction(new Computable<String>() {
@@ -117,7 +130,10 @@ public class GenericRepository extends BaseRepositoryImpl {
           }
         });
       }
-      tasks.add(new GenericTask(id, summary, this));
+      if (taskUrl.isEmpty()) {
+        taskUrl = null;
+      }
+      tasks.add(new GenericTask(id, summary, taskUrl, this));
     }
 
     final boolean searchSupported = getTasksListURL().contains(QUERY_PLACEHOLDER);
@@ -226,6 +242,7 @@ public class GenericRepository extends BaseRepositoryImpl {
     if (!Comparing.equal(getTasksListMethodType(), that.getTasksListMethodType())) return false;
     if (!Comparing.equal(getResponseType(), that.getResponseType())) return false;
     if (!Comparing.equal(getTemplateVariables(), that.getTemplateVariables())) return false;
+    if (!Comparing.equal(getTaskURLPattern(), that.getTaskURLPattern())) return false;
     return true;
   }
 
@@ -309,6 +326,14 @@ public class GenericRepository extends BaseRepositoryImpl {
     myTemplateVariables = templateVariables;
   }
 
+  public String getTaskURLPattern() {
+    return myTaskURLPattern;
+  }
+
+  public void setTaskURLPattern(String taskURLPattern) {
+    myTaskURLPattern = taskURLPattern;
+  }
+
   public void resetToDefaults() {
     myTasksListURL = getTasksListURLDefault();
     myTaskPattern = getTaskPatternDefault();
@@ -317,6 +342,7 @@ public class GenericRepository extends BaseRepositoryImpl {
     myTasksListMethodType = getTasksListMethodTypeDefault();
     myResponseType = getResponseTypeDefault();
     myTemplateVariables = getTemplateVariablesDefault();
+    myTaskURLPattern = getTaskURLPatternDefault();
   }
 
   protected List<TemplateVariable> getTemplateVariablesDefault() {
@@ -344,6 +370,10 @@ public class GenericRepository extends BaseRepositoryImpl {
   }
 
   protected String getTasksListURLDefault() {
+    return "";
+  }
+
+  protected String getTaskURLPatternDefault() {
     return "";
   }
 

@@ -64,5 +64,6 @@ public class AssemblaIntegrationTest extends TaskManagerTestCase {
 
     assertEquals(1, tasks.length);
     assertEquals("\u041F\u0440\u0438\u0432\u0435\u0442", tasks[0].getSummary());
+    assertEquals("http://www.assembla.com/spaces/ab1WOCMQar4QGgacwqjQWU/tickets/1", tasks[0].getIssueUrl());
   }
 }

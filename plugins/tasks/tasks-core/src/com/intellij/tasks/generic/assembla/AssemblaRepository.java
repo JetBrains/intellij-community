@@ -62,7 +62,12 @@ public class AssemblaRepository extends GenericRepository {
 
   @Override
   protected String getTaskPatternDefault() {
-    return "<ticket>.*?<number type=\"integer\">({id}.*?)</number>.*?<summary>({summary}.*?)</summary>.*?</ticket>";
+    return "<ticket>.*?<number type=\"integer\">({id}.*?)</number>.*?<space-id>({space}.*?)</space-id>.*?<summary>({summary}.*?)</summary>.*?</ticket>";
+  }
+
+  @Override
+  protected String getTaskURLPatternDefault() {
+    return "http://www.assembla.com/spaces/{space}/tickets/{id}";
   }
 
   @Override
