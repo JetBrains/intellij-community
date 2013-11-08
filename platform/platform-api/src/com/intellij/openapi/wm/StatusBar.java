@@ -85,6 +85,9 @@ public interface StatusBar extends StatusBarInfo, Disposable {
 
   void updateWidget(@NotNull String id);
 
+  @Nullable
+  StatusBarWidget getWidget(String id);
+
   void fireNotificationPopup(@NotNull JComponent content, Color backgroundColor);
 
   StatusBar createChild();
