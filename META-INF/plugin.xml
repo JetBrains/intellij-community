@@ -28,6 +28,9 @@
       <implementation-class>org.jetbrains.postfixCompletion.TemplateProviders.IfStatementTemplateProvider</implementation-class>
     </component>
     <component>
+      <implementation-class>org.jetbrains.postfixCompletion.TemplateProviders.ElseStatementTemplateProvider</implementation-class>
+    </component>
+    <component>
       <implementation-class>org.jetbrains.postfixCompletion.TemplateProviders.IntroduceVariableTemplateProvider</implementation-class>
     </component>
   </application-components>

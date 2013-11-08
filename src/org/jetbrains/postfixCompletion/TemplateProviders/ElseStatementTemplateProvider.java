@@ -1,5 +1,6 @@
 package org.jetbrains.postfixCompletion.TemplateProviders;
 
+import com.intellij.codeInsight.*;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.*;
@@ -9,28 +10,28 @@ import org.jetbrains.postfixCompletion.LookupItems.*;
 import java.util.*;
 
 @TemplateProvider(
-  templateName = "if",
-  description = "Checks boolean expression to be 'true'",
-  example = "if (expr)")
-public final class IfStatementTemplateProvider extends BooleanTemplateProviderBase {
+  templateName = "else",
+  description = "Checks boolean expression to be 'false'",
+  example = "if (!expr)")
+public final class ElseStatementTemplateProvider extends BooleanTemplateProviderBase {
 
   @Override public boolean createBooleanItems(
     @NotNull final PrefixExpressionContext context,
     @NotNull final List<LookupElement> consumer) {
 
     if (context.canBeStatement) {
-      consumer.add(new IfLookupItem(context));
+      consumer.add(new ElseLookupItem(context));
       return true;
     }
 
     return false;
   }
 
-  private static final class IfLookupItem
+  private static final class ElseLookupItem
     extends StatementPostfixLookupElement<PsiIfStatement> {
 
-    public IfLookupItem(@NotNull PrefixExpressionContext context) {
-      super("if", context);
+    public ElseLookupItem(@NotNull PrefixExpressionContext context) {
+      super("else", context);
     }
 
     @NotNull @Override protected PsiIfStatement createNewStatement(
@@ -43,10 +44,11 @@ public final class IfStatementTemplateProvider extends BooleanTemplateProviderBa
 
       final PsiExpression condition = ifStatement.getCondition();
       assert condition != null : "condition != null";
-      condition.replace(expression);
+
+      final PsiExpression inverted = CodeInsightServicesUtil.invertCondition(expression);
+      condition.replace(inverted);
 
       return ifStatement;
     }
   }
 }
-
