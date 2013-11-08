@@ -15,19 +15,19 @@
  */
 package com.intellij.codeInsight.template.impl.editorActions;
 
+import com.intellij.codeInsight.hint.actions.InjectionAwareEditorAction;
 import com.intellij.codeInsight.template.TemplateManager;
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.TemplateSettings;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler;
 import com.intellij.openapi.project.Project;
 
 /**
  * @author peter
  */
-public class ExpandLiveTemplateByTabAction extends EditorAction {
+public class ExpandLiveTemplateByTabAction extends InjectionAwareEditorAction {
   public ExpandLiveTemplateByTabAction() {
     super(new EditorWriteActionHandler() {
       @Override

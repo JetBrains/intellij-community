@@ -25,16 +25,16 @@
 package com.intellij.codeInsight.template.impl.actions;
 
 import com.intellij.codeInsight.CodeInsightBundle;
+import com.intellij.codeInsight.hint.actions.InjectionAwareEditorAction;
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.TemplateState;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler;
 
-public class PreviousVariableAction extends EditorAction {
+public class PreviousVariableAction extends InjectionAwareEditorAction {
   public PreviousVariableAction() {
     super(new Handler());
     setInjectedContext(true);
