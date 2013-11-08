@@ -40,11 +40,11 @@ public final class ChannelExceptionHandler extends ChannelInboundHandlerAdapter 
   public void exceptionCaught(ChannelHandlerContext context, Throwable cause) throws Exception {
     // don't report about errors while connecting
     // WEB-7727
-    if (!(cause instanceof ConnectException) && !"Connection reset".equals(cause.getMessage())) {
-      NettyUtil.log(cause, LOG);
+    if (cause instanceof ConnectException || (cause.getMessage() != null && cause.getMessage().startsWith("Connection reset"))) {
+      LOG.debug(cause);
     }
     else {
-      LOG.debug(cause);
+      NettyUtil.log(cause, LOG);
     }
   }
 }
