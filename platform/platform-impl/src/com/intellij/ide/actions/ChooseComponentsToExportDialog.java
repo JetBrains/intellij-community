@@ -84,6 +84,7 @@ public class ChooseComponentsToExportDialog extends DialogWrapper {
     });
 
     final ActionListener browseAction = new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         String oldPath = myPathPanel.getText();
         String path = chooseSettingsFile(oldPath, getWindow(), IdeBundle.message("title.export.file.location"),
@@ -199,18 +200,22 @@ public class ChooseComponentsToExportDialog extends DialogWrapper {
     return path;
   }
 
+  @Override
   public JComponent getPreferredFocusedComponent() {
     return myPathPanel.getTextField();
   }
 
+  @Override
   protected JComponent createNorthPanel() {
     return new JLabel(myDescription);
   }
 
+  @Override
   protected JComponent createCenterPanel() {
     return myChooser;
   }
 
+  @Override
   protected JComponent createSouthPanel() {
     final JComponent buttons = super.createSouthPanel();
     if (!myShowFilePath) return buttons;
@@ -236,11 +241,13 @@ public class ChooseComponentsToExportDialog extends DialogWrapper {
       return myComponents.add(component);
     }
 
+    @Override
     @Nullable
     public Icon getIcon() {
       return null;
     }
 
+    @Override
     @Nullable
     public Color getColor() {
       return null;
@@ -261,6 +268,7 @@ public class ChooseComponentsToExportDialog extends DialogWrapper {
     return new File(myPathPanel.getText());
   }
 
+  @Override
   protected String getDimensionServiceKey() {
     return "#com.intellij.ide.actions.ChooseComponentsToExportDialog";
   }
