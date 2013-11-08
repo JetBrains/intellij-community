@@ -49,11 +49,11 @@ public class WebBrowserServiceImpl extends WebBrowserService {
   public Set<Url> getUrlToOpen(@NotNull PsiElement psiElement, boolean preferLocalUrl) throws WebBrowserUrlProvider.BrowserException {
     final PsiFile psiFile = psiElement instanceof PsiFile ? (PsiFile)psiElement : psiElement.getContainingFile();
     if (psiFile == null) {
-      return null;
+      return Collections.emptySet();
     }
     VirtualFile virtualFile = psiFile.getVirtualFile();
     if (virtualFile == null) {
-      return null;
+      return Collections.emptySet();
     }
     if (virtualFile instanceof HttpVirtualFile) {
       return Collections.singleton(Urls.newFromVirtualFile(virtualFile));
