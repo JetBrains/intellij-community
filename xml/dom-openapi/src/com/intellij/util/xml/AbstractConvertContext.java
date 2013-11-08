@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@
 package com.intellij.util.xml;
 
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -52,7 +52,7 @@ public abstract class AbstractConvertContext extends ConvertContext {
     final DomFileElement<DomElement> fileElement = DomUtil.getFileElement(getInvocationElement());
     if (fileElement == null) {
       final XmlElement xmlElement = getInvocationElement().getXmlElement();
-      return xmlElement == null ? null : ModuleUtil.findModuleForPsiElement(xmlElement);
+      return xmlElement == null ? null : ModuleUtilCore.findModuleForPsiElement(xmlElement);
     }
     return fileElement.getRootElement().getModule();
   }
@@ -65,7 +65,7 @@ public abstract class AbstractConvertContext extends ConvertContext {
   public GlobalSearchScope getSearchScope() {
     GlobalSearchScope scope = null;
 
-    Module[] modules = getConvertContextModules(this);
+    Module[] modules = getConvertContextModules();
     if (modules.length != 0) {
 
       PsiFile file = getFile();
@@ -88,39 +88,14 @@ public abstract class AbstractConvertContext extends ConvertContext {
     return scope; // ??? scope == null ? GlobalSearchScope.allScope(getProject()) : scope; ???
   }
 
-  public static GlobalSearchScope getSearchScope(@NotNull ConvertContext context) {
-    Module[] modules = getConvertContextModules(context);
-    if (modules.length == 0) return null;
-
-    PsiFile file = context.getFile();
-    file = file.getOriginalFile();
-    VirtualFile virtualFile = file.getVirtualFile();
-    if (virtualFile == null) return null;
-    ProjectFileIndex fileIndex = ProjectRootManager.getInstance(file.getProject()).getFileIndex();
-    boolean tests = fileIndex.isInTestSourceContent(virtualFile);
-
-
-    GlobalSearchScope scope = null;
-    for (Module module : modules) {
-      if (scope == null) {
-        scope = module.getModuleRuntimeScope(tests);
-      }
-      else {
-        scope.union(module.getModuleRuntimeScope(tests));
-      }
-    }
-    return scope;
-  }
-
-
   @NotNull
-  private static Module[] getConvertContextModules(@NotNull ConvertContext context) {
-    Module[] modules = ModuleContextProvider.getModules(context.getFile());
+  private Module[] getConvertContextModules() {
+    Module[] modules = ModuleContextProvider.getModules(getFile());
     if (modules.length > 0) return modules;
 
-    final Module module = context.getModule();
+    final Module module = getModule();
     if (module != null) return new Module[]{module};
 
-    return new Module[0];
+    return Module.EMPTY_ARRAY;
   }
 }
