@@ -1092,10 +1092,10 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
           return !((Module)selected).isDisposed() ? selected : null;
         }
         else if (selected instanceof PsiDirectory) {
-          return moduleByContentRoot(((PsiDirectory)selected).getVirtualFile());
+          return moduleBySingleContentRoot(((PsiDirectory)selected).getVirtualFile());
         }
         else if (selected instanceof VirtualFile) {
-          return moduleByContentRoot((VirtualFile)selected);
+          return moduleBySingleContentRoot((VirtualFile)selected);
         }
         else {
           return null;
@@ -1203,11 +1203,11 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
           result.addAll(modules);
         }
         else if (element instanceof PsiDirectory) {
-          Module module = moduleByContentRoot(((PsiDirectory)element).getVirtualFile());
+          Module module = moduleBySingleContentRoot(((PsiDirectory)element).getVirtualFile());
           if (module != null) result.add(module);
         }
         else if (element instanceof VirtualFile) {
-          Module module = moduleByContentRoot((VirtualFile)element);
+          Module module = moduleBySingleContentRoot((VirtualFile)element);
           if (module != null) result.add(module);
         }
       }
@@ -1221,11 +1221,17 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     }
   }
 
+  /** Project view has the same node for module and its single content root 
+   *   => MODULE_CONTEXT data key should return the module when its content root is selected
+   *  When there are multiple content roots, they have different nodes under the module node
+   *   => MODULE_CONTEXT should be only available for the module node
+   *      otherwise VirtualFileArrayRule will return all module's content roots when just one of them is selected
+   */
   @Nullable
-  private Module moduleByContentRoot(VirtualFile file) {
+  private Module moduleBySingleContentRoot(VirtualFile file) {
     if (ProjectRootsUtil.isModuleContentRoot(file, myProject)) {
       Module module = ProjectRootManager.getInstance(myProject).getFileIndex().getModuleForFile(file);
-      if (module != null && !module.isDisposed()) {
+      if (module != null && !module.isDisposed() && ModuleRootManager.getInstance(module).getContentRoots().length == 1) {
         return module;
       }
     }
