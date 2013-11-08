@@ -954,6 +954,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
       final PsiElement parent = expr1.getUserData(ElementToWorkOn.PARENT);
       final RangeMarker rangeMarker = expr1.getUserData(ElementToWorkOn.TEXT_RANGE);
 
+      LOG.assertTrue(parent != null, expr1);
       return parent.replace(createReplacement(ref.getText(), project, prefix, suffix, parent, rangeMarker, new int[1]));
     }
   }
