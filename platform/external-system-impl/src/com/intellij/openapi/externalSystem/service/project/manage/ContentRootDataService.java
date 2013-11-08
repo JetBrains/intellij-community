@@ -113,8 +113,12 @@ public class ContentRootDataService implements ProjectDataService<ContentRootDat
               createSourceRootIfAbsent(contentEntry, path, module.getName(), JavaResourceRootType.TEST_RESOURCE, false);
               retainedPaths.add(ExternalSystemApiUtil.toCanonicalPath(path));
             }
-            for (String path : contentRoot.getPaths(ExternalSystemSourceType.GENERATED)) {
+            for (String path : contentRoot.getPaths(ExternalSystemSourceType.SOURCE_GENERATED)) {
               createSourceRootIfAbsent(contentEntry, path, module.getName(), JavaSourceRootType.SOURCE, true);
+              retainedPaths.add(ExternalSystemApiUtil.toCanonicalPath(path));
+            }
+            for (String path : contentRoot.getPaths(ExternalSystemSourceType.TEST_GENERATED)) {
+              createSourceRootIfAbsent(contentEntry, path, module.getName(), JavaSourceRootType.TEST_SOURCE, true);
               retainedPaths.add(ExternalSystemApiUtil.toCanonicalPath(path));
             }
             for (String path : contentRoot.getPaths(ExternalSystemSourceType.EXCLUDED)) {

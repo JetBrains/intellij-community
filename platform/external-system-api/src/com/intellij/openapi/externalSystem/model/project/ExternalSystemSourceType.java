@@ -15,7 +15,8 @@ public class ExternalSystemSourceType implements Serializable {
   @NotNull public static final ExternalSystemSourceType SOURCE   = new ExternalSystemSourceType("SOURCE");
   @NotNull public static final ExternalSystemSourceType TEST     = new ExternalSystemSourceType("TEST");
   @NotNull public static final ExternalSystemSourceType EXCLUDED = new ExternalSystemSourceType("EXCLUDED");
-  @NotNull public static final ExternalSystemSourceType GENERATED = new ExternalSystemSourceType("GENERATED");
+  @NotNull public static final ExternalSystemSourceType SOURCE_GENERATED = new ExternalSystemSourceType("SOURCE_GENERATED");
+  @NotNull public static final ExternalSystemSourceType TEST_GENERATED  = new ExternalSystemSourceType("TEST_GENERATED");
   @NotNull public static final ExternalSystemSourceType RESOURCE  = new ExternalSystemSourceType("RESOURCE");
   @NotNull public static final ExternalSystemSourceType TEST_RESOURCE  = new ExternalSystemSourceType("TEST_RESOURCE");
   
