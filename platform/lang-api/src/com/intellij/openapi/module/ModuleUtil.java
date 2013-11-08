@@ -19,13 +19,35 @@
  */
 package com.intellij.openapi.module;
 
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.util.Key;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.psi.util.ParameterizedCachedValue;
+import com.intellij.psi.util.ParameterizedCachedValueProvider;
+import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 public class ModuleUtil extends ModuleUtilCore {
+  private static final ParameterizedCachedValueProvider<MultiMap<ModuleType<?>,Module>,Project> MODULE_BY_TYPE_VALUE_PROVIDER =
+    new ParameterizedCachedValueProvider<MultiMap<ModuleType<?>, Module>, Project>() {
+      @Nullable
+      @Override
+      public CachedValueProvider.Result<MultiMap<ModuleType<?>, Module>> compute(Project param) {
+        MultiMap<ModuleType<?>, Module> map = new MultiMap<ModuleType<?>, Module>();
+        for (Module module : ModuleManager.getInstance(param).getModules()) {
+          map.putValue(ModuleType.get(module), module);
+        }
+        return CachedValueProvider.Result.createSingleDependency(map, ProjectRootManager.getInstance(param));
+      }
+    };
+  private static final Key<ParameterizedCachedValue<MultiMap<ModuleType<?>, Module>, Project>> MODULES_BY_TYPE_KEY = Key.create("MODULES_BY_TYPE");
 
   private ModuleUtil() {}
 
@@ -47,5 +69,15 @@ public class ModuleUtil extends ModuleUtilCore {
       }
     }
     return modules;
+  }
+
+  @NotNull
+  public static Collection<Module> getModulesOfType(@NotNull Project project, @NotNull ModuleType<?> moduleType) {
+    return CachedValuesManager.getManager(project).getParameterizedCachedValue(project, MODULES_BY_TYPE_KEY, MODULE_BY_TYPE_VALUE_PROVIDER,
+                                                                               false, project).get(moduleType);
+  }
+
+  public static boolean hasModulesOfType(@NotNull Project project, @NotNull ModuleType<?> module) {
+    return !getModulesOfType(project, module).isEmpty();
   }
 }

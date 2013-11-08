@@ -22,7 +22,7 @@ import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.TypedModuleService;
+import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -53,7 +53,7 @@ public class PluginConfigurationType implements ConfigurationType {
 
       @Override
       public boolean isApplicable(@NotNull Project project) {
-        return TypedModuleService.getInstance(project).hasModulesOfType(PluginModuleType.getInstance());
+        return ModuleUtil.hasModulesOfType(project, PluginModuleType.getInstance());
       }
 
       @Override
@@ -64,7 +64,8 @@ public class PluginConfigurationType implements ConfigurationType {
       public RunConfiguration createConfiguration(String name, RunConfiguration template) {
         final PluginRunConfiguration pluginRunConfiguration = (PluginRunConfiguration)template;
         if (pluginRunConfiguration.getModule() == null) {
-          final Collection<Module> modules = TypedModuleService.getInstance(pluginRunConfiguration.getProject()).getModulesOfType(PluginModuleType.getInstance());
+          final Collection<Module> modules = ModuleUtil
+            .getModulesOfType(pluginRunConfiguration.getProject(), PluginModuleType.getInstance());
           pluginRunConfiguration.setModule(ContainerUtil.getFirstItem(modules));
         }
         return super.createConfiguration(name, pluginRunConfiguration);
