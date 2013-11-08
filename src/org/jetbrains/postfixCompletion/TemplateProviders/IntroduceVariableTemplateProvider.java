@@ -24,6 +24,7 @@ public class IntroduceVariableTemplateProvider extends TemplateProviderBase {
 
     // todo: support expressions
     // todo: setup selection before refactoring? or context?
+    // todo: disable when qualifier type is unknown (what about broken, but fixable exprs?)
 
     for (final PrefixExpressionContext expression : context.expressions) {
       if (expression.canBeStatement) {

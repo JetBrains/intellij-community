@@ -34,7 +34,7 @@ public abstract class StatementPostfixLookupElement<TStatement extends PsiStatem
   }
 
   @Override public final Set<String> getAllLookupStrings() {
-    final HashSet<String> set = new HashSet<>();
+    final HashSet<String> set = new HashSet<String>();
 
     // this hack prevents completion list from closing
     // when whole template name is typed
@@ -83,14 +83,14 @@ public abstract class StatementPostfixLookupElement<TStatement extends PsiStatem
         final TStatement newStatement = createNewStatement(psiElementFactory, exprCopy, file);
 
         //noinspection unchecked
-        TStatement newSt = (TStatement) targetStatement.replace(newStatement);
+        final TStatement statement = (TStatement) targetStatement.replace(newStatement);
 
         documentManager.doPostponedOperationsAndUnblockDocument(document);
 
-        final int offset = newSt.getTextRange().getEndOffset();
+        final int offset = statement.getTextRange().getEndOffset();
         context.getEditor().getCaretModel().moveToOffset(offset);
 
-        postProcess(context, newSt);
+        postProcess(context, statement);
         break;
       }
     }

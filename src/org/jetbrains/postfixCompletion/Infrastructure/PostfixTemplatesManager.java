@@ -13,7 +13,7 @@ public final class PostfixTemplatesManager implements ApplicationComponent {
   @NotNull private final List<TemplateProviderInfo> myProviders;
 
   public PostfixTemplatesManager(@NotNull final PostfixTemplateProvider[] providers) {
-    myProviders = new ArrayList<>();
+    myProviders = new ArrayList<TemplateProviderInfo>();
 
     for (PostfixTemplateProvider provider : providers) {
       final TemplateProvider annotation =
@@ -160,7 +160,7 @@ public final class PostfixTemplatesManager implements ApplicationComponent {
   @NotNull public List<LookupElement> collectTemplates(
     @NotNull final PostfixTemplateAcceptanceContext context) {
 
-    final List<LookupElement> elements = new ArrayList<>();
+    final List<LookupElement> elements = new ArrayList<LookupElement>();
 
     for (final TemplateProviderInfo providerInfo : myProviders) {
       providerInfo.provider.createItems(context, elements);
@@ -178,6 +178,6 @@ public final class PostfixTemplatesManager implements ApplicationComponent {
   @NotNull
   @Override
   public String getComponentName() {
-    return PostfixTemplatesManager.class.getTypeName();
+    return PostfixTemplatesManager.class.getName();
   }
 }

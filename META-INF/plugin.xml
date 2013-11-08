@@ -1,7 +1,7 @@
 <idea-plugin version="2">
   <id>org.jetbrains.postfixCompletion</id>
-  <name>PostfixCompletion plugin for IntelliJ</name>
-  <version>1.0</version>
+  <name>PostfixCompletion for IntelliJ</name>
+  <version>0.1.0</version>
   <vendor email="alexander.shvedov@jetbrains.com"
           url="http://jetbrains.com">JetBrains</vendor>
 
@@ -15,7 +15,8 @@
       ]]>
   </change-notes>
 
-  <idea-version since-build="107.105"/>
+  <idea-version since-build="132.839"/>
+  <!--<idea-version since-build="107.105"/>-->
 
   <!-- <depends>com.intellij.modules.lang</depends> -->
 

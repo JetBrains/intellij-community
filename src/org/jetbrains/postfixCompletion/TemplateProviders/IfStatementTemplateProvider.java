@@ -18,11 +18,38 @@ public class IfStatementTemplateProvider extends TemplateProviderBase {
     @NotNull final PostfixTemplateAcceptanceContext context,
     @NotNull final List<LookupElement> consumer) {
 
+
+
+
+    /*
+    * foreach (var expressionContext in context.Expressions)
+      {
+        if (expressionContext.Type.IsBool() ||
+          IsBooleanExpression(expressionContext.Expression))
+        {
+          if (CreateBooleanItems(expressionContext, consumer)) return;
+        }
+      }
+
+      if (context.ForceMode)
+      {
+        foreach (var expressionContext in context.Expressions)
+        {
+          if (CreateBooleanItems(expressionContext, consumer)) return;
+        }
+      }
+    *
+    * */
+
+
+
     // todo: handle force mode
     // todo: handle unknown type?
     // todo: use InvertIfConditionAction for .else/.not
 
     for (final PrefixExpressionContext expressionContext : context.expressions) {
+      //expressionContext.expression instanceof PsiReferenceExpression.
+
       if (isBooleanExpression(expressionContext)) {
         consumer.add(new IfLookupItem(expressionContext));
         break;
@@ -30,7 +57,7 @@ public class IfStatementTemplateProvider extends TemplateProviderBase {
     }
   }
 
-  private static boolean isBooleanExpression(
+  public static boolean isBooleanExpression(
     @NotNull final PrefixExpressionContext context) {
 
     final PsiType expressionType = context.expressionType;
@@ -41,8 +68,9 @@ public class IfStatementTemplateProvider extends TemplateProviderBase {
     } else {
       final PsiExpression expression = context.expression;
       if (expression instanceof PsiBinaryExpression) {
-        final PsiJavaToken operationSign = ((PsiBinaryExpression) expression).getOperationSign();
-        final IElementType tokenType = operationSign.getTokenType();
+        final PsiBinaryExpression binary = (PsiBinaryExpression) expression;
+        final IElementType tokenType = binary.getOperationSign().getTokenType();
+
         if (tokenType == JavaTokenType.GE || // x >= y
             tokenType == JavaTokenType.LE || // x <= y
             tokenType == JavaTokenType.LT || // x < y
@@ -54,9 +82,9 @@ public class IfStatementTemplateProvider extends TemplateProviderBase {
             tokenType == JavaTokenType.OROR || // x || y
             //tokenType == JavaTokenType.OR || // x | y
             //tokenType == JavaTokenType.XOR || // x ^ y
-            tokenType == JavaTokenType.INSTANCEOF_KEYWORD // todo: make it work
+            tokenType == JavaTokenType.INSTANCEOF_KEYWORD
           ) {
-          return true; // TODO: other
+          return true; // TODO: other?
         }
       }
     }

@@ -17,7 +17,7 @@ public abstract class PostfixTemplateAcceptanceContext {
     postfixReference = reference;
     isForceMode = forceMode;
 
-    final ArrayList<PrefixExpressionContext> contexts = new ArrayList<>();
+    final List<PrefixExpressionContext> contexts = new ArrayList<PrefixExpressionContext>();
     final int referenceEndRange = reference.getTextRange().getEndOffset();
 
     // build expression contexts

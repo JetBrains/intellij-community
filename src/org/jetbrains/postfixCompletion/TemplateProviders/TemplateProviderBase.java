@@ -7,15 +7,10 @@ import org.jetbrains.postfixCompletion.Infrastructure.*;
 public abstract class TemplateProviderBase
   implements ApplicationComponent, PostfixTemplateProvider {
 
-  @Override
-  public void initComponent() { }
+  @Override public void initComponent() { }
+  @Override public void disposeComponent() { }
 
-  @Override
-  public void disposeComponent() { }
-
-  @NotNull
-  @Override
-  public String getComponentName() {
+  @NotNull @Override public String getComponentName() {
     return this.getClass().getName();
   }
 }
