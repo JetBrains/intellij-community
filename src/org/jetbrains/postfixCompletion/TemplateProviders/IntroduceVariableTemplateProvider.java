@@ -2,15 +2,18 @@ package org.jetbrains.postfixCompletion.TemplateProviders;
 
 import com.intellij.codeInsight.completion.*;
 import com.intellij.codeInsight.lookup.*;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.*;
 import com.intellij.openapi.command.*;
-import com.intellij.openapi.ui.playback.commands.*;
+import com.intellij.openapi.editor.*;
+import com.intellij.openapi.project.*;
 import com.intellij.psi.*;
+import com.intellij.refactoring.introduce.inplace.*;
+import com.intellij.refactoring.introduceVariable.*;
+import com.intellij.refactoring.ui.*;
 import org.jetbrains.annotations.*;
 import org.jetbrains.postfixCompletion.Infrastructure.*;
 import org.jetbrains.postfixCompletion.LookupItems.*;
 
-import java.awt.event.*;
 import java.util.*;
 
 @TemplateProvider(
@@ -24,10 +27,24 @@ public class IntroduceVariableTemplateProvider extends TemplateProviderBase {
     // todo: support expressions
     // todo: setup selection before refactoring? or context?
     // todo: disable when qualifier type is unknown (what about broken, but fixable exprs?)
+    // todo: new T { }.var do not works now
+    // todo: make it works on types
+    // todo: 1 + new T.var  ????
 
-    for (PrefixExpressionContext expression : context.expressions)
-      if (expression.canBeStatement) {
-        consumer.add(new IntroduceVarLookupElement(expression));
+    for (PrefixExpressionContext expressionContext : context.expressions)
+      if (expressionContext.canBeStatement) {
+
+        if (expressionContext.expression instanceof PsiReferenceExpression) {
+          final PsiElement element = ((PsiReferenceExpression) expressionContext.expression).resolve();
+          if (element instanceof PsiType) {
+            return;
+          }
+        }
+
+        // todo: disable when qualifier resolves to type
+        // todo: disable when only one expr and it is unresolved
+
+        consumer.add(new IntroduceVarLookupElement(expressionContext));
         break;
       }
   }
@@ -39,7 +56,6 @@ public class IntroduceVariableTemplateProvider extends TemplateProviderBase {
 
     @NotNull @Override protected PsiExpressionStatement createNewStatement(
       @NotNull PsiElementFactory factory, @NotNull PsiExpression expression, @NotNull PsiFile context) {
-
       PsiExpressionStatement expressionStatement =
         (PsiExpressionStatement) factory.createStatementFromText("expr", context);
 
@@ -56,16 +72,35 @@ public class IntroduceVariableTemplateProvider extends TemplateProviderBase {
       });
     }
 
-    public static final String INTRODUCE_VARIABLE = "IntroduceVariable";
-
     @Override protected void postProcess(
       @NotNull InsertionContext context, @NotNull PsiExpressionStatement statement) {
-      ActionManager manager = ActionManager.getInstance();
-      AnAction introduceVariable =  manager.getAction(INTRODUCE_VARIABLE);
-      InputEvent event = ActionCommand.getInputEvent(INTRODUCE_VARIABLE);
+      final IntroduceVariableHandler handler;
+      if (ApplicationManager.getApplication().isUnitTestMode()) {
+        handler = getMockHandler();
+      } else {
+        handler = new IntroduceVariableHandler();
+      }
 
-      ActionManager.getInstance().tryToExecute(
-        introduceVariable, event, null, ActionPlaces.UNKNOWN, true);
+      handler.invoke(context.getProject(), context.getEditor(), statement.getExpression());
+    }
+
+    @NotNull private IntroduceVariableHandler getMockHandler() {
+      return new IntroduceVariableHandler() {
+        // mock default settings
+        @Override public IntroduceVariableSettings getSettings(
+          Project project, Editor editor, final PsiExpression expr, PsiExpression[] occurrences,
+          TypeSelectorManagerImpl typeSelectorManager, boolean declareFinalIfAll, boolean anyAssignmentLHS,
+          InputValidator validator, PsiElement anchor, OccurrencesChooser.ReplaceChoice replaceChoice) {
+          return new IntroduceVariableSettings() {
+            @Override public String getEnteredName() { return "foo"; }
+            @Override public boolean isReplaceAllOccurrences() { return false; }
+            @Override public boolean isDeclareFinal() { return false; }
+            @Override public boolean isReplaceLValues() { return false; }
+            @Override public PsiType getSelectedType() { return expr.getType(); }
+            @Override public boolean isOK() { return true; }
+          };
+        };
+      };
     }
   }
 }

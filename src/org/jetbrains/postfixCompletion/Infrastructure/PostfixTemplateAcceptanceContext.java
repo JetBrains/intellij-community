@@ -9,6 +9,7 @@ public abstract class PostfixTemplateAcceptanceContext {
   // can be 'PsiReferenceExpression' or 'PsiJavaCodeReferenceElement'
   @NotNull public final PsiElement postfixReference;
   @NotNull public final List<PrefixExpressionContext> expressions;
+  @NotNull public final PrefixExpressionContext outerExpression, innerExpression;
   public final boolean isForceMode;
 
   public PostfixTemplateAcceptanceContext(
@@ -38,6 +39,8 @@ public abstract class PostfixTemplateAcceptanceContext {
     }
 
     expressions = Collections.unmodifiableList(contexts);
+    innerExpression = contexts.get(0);
+    outerExpression = contexts.get(contexts.size() - 1);
   }
 
   @NotNull public abstract PrefixExpressionContext fixUpExpression(@NotNull PrefixExpressionContext context);
