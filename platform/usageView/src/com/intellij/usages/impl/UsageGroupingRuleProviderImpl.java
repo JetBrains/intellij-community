@@ -164,7 +164,7 @@ public class UsageGroupingRuleProviderImpl implements UsageGroupingRuleProvider 
 
   private static class GroupByPackageAction extends RuleAction {
     private GroupByPackageAction(UsageViewImpl view) {
-      super(view, UsageViewBundle.message("action.group.by.package"), AllIcons.Actions.GroupByPackage);
+      super(view, DirectoryGroupingRule.getInstance(view.getProject()).getActionTitle(), AllIcons.Actions.GroupByPackage);
     }
     @Override
     protected boolean getOptionValue() {
