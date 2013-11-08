@@ -18,6 +18,8 @@ package com.intellij.openapi.vcs.roots;
 import com.intellij.ide.highlighter.ModuleFileType;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.extensions.ExtensionPoint;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.EmptyModuleType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -27,6 +29,11 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.impl.ModuleRootManagerImpl;
 import com.intellij.openapi.roots.impl.RootModelImpl;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import com.intellij.openapi.vcs.VcsKey;
+import com.intellij.openapi.vcs.VcsRootChecker;
+import com.intellij.openapi.vcs.changes.committed.MockAbstractVcs;
+import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -35,32 +42,36 @@ import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.HashSet;
 
-import static com.intellij.openapi.vcs.Executor.*;
+import static com.intellij.openapi.vcs.Executor.cd;
+import static com.intellij.openapi.vcs.Executor.mkdir;
 
 
 /**
  * @author Nadya Zabrodina
  */
-public abstract class VcsPlatformTest extends UsefulTestCase {
+public abstract class VcsRootPlatformTest extends UsefulTestCase {
 
+  private VcsRootChecker myExtension;
+  @NotNull protected ProjectLevelVcsManagerImpl myVcsManager;
+  @NotNull protected MockAbstractVcs myVcs;
+  @NotNull protected String myVcsName;
   protected Project myProject;
   protected VirtualFile myProjectRoot;
   protected VirtualFile myRepository;
   public static final String myRepositoryFolderName = "repository";
   private RootModelImpl myRootModel;
   protected static final Collection<File> myFilesToDelete = new HashSet<File>();
-  protected final static String myVcsName = "Git";       //now scanner test executed only for git  todo: create for all
-
   protected IdeaProjectTestFixture myProjectFixture;
 
   @SuppressWarnings("JUnitTestCaseWithNonTrivialConstructors")
-  protected VcsPlatformTest() {
+  protected VcsRootPlatformTest() {
     PlatformTestCase.initPlatformLangPrefix();
   }
 
@@ -78,10 +89,38 @@ public abstract class VcsPlatformTest extends UsefulTestCase {
     myRootModel = ((ModuleRootManagerImpl)ModuleRootManager.getInstance(module)).getRootModel();
     mkdir(myRepositoryFolderName);
     myRepository = myProjectRoot.findChild(myRepositoryFolderName);
+    myVcs = new MockAbstractVcs(myProject);
+    myVcsManager = (ProjectLevelVcsManagerImpl)ProjectLevelVcsManager.getInstance(myProject);
+    ExtensionPoint<VcsRootChecker> point = getExtensionPoint();
+    myExtension = new VcsRootChecker() {
+      @Override
+      public VcsKey getSupportedVcs() {
+        return myVcs.getKeyInstanceMethod();
+      }
+
+      @Override
+      public boolean isRoot(@NotNull String path) {
+        return new File(path, ".mock").exists();
+      }
+
+      @Override
+      public boolean isVcsDir(@Nullable String path) {
+        return path != null && path.toLowerCase().endsWith(".mock");
+      }
+    };
+    point.registerExtension(myExtension);
+    myVcsManager.registerVcs(myVcs);
+    myVcsName = myVcs.getName();
+  }
+
+  private static ExtensionPoint<VcsRootChecker> getExtensionPoint() {
+    return Extensions.getRootArea().getExtensionPoint(VcsRootChecker.EXTENSION_POINT_NAME);
   }
 
   @Override
   protected void tearDown() throws Exception {
+    getExtensionPoint().unregisterExtension(myExtension);
+    myVcsManager.unregisterVcs(myVcs);
     for (File file : myFilesToDelete) {
       delete(file);
     }
@@ -97,16 +136,16 @@ public abstract class VcsPlatformTest extends UsefulTestCase {
   }
 
   /**
-   * Creates the necessary temporary directories in the filesystem with empty ".git" directories for given roots.
+   * Creates the necessary temporary directories in the filesystem with empty ".mock" directories for given roots.
    * And creates an instance of the project.
    *
-   * @param gitRoots path to actual .git roots, relative to the project dir.
+   * @param mockRoots path to actual .mock roots, relative to the project dir.
    */
-  public void initProject(@NotNull Collection<String> gitRoots,
+  public void initProject(@NotNull Collection<String> mockRoots,
                           @NotNull Collection<String> projectStructure,
                           @NotNull Collection<String> contentRoots)
     throws IOException {
-    createDirs(gitRoots);
+    createDirs(mockRoots);
     createProjectStructure(myProject, projectStructure);
     createProjectStructure(myProject, contentRoots);
     if (!contentRoots.isEmpty()) {
@@ -152,30 +191,23 @@ public abstract class VcsPlatformTest extends UsefulTestCase {
   /**
    * @return path to the project
    */
-  private void createDirs(@NotNull Collection<String> gitRoots) throws IOException {
+  private void createDirs(@NotNull Collection<String> mockRoots) throws IOException {
     File baseDir;
-    if (gitRoots.isEmpty()) {
+    if (mockRoots.isEmpty()) {
       return;
     }
 
     baseDir = VfsUtilCore.virtualToIoFile(myProject.getBaseDir());
-    int maxDepth = findMaxDepthAboveProject(gitRoots);
+    int maxDepth = findMaxDepthAboveProject(mockRoots);
     File projectDir = createChild(baseDir, maxDepth - 1);
     cd(projectDir.getPath());
-    for (String path : gitRoots) {
+    for (String path : mockRoots) {
       File file = new File(projectDir, path);
       file.mkdirs();
-      File gitDir = new File(file, ".git");
-      gitDir.mkdirs();
-      myFilesToDelete.add(gitDir);
-      gitDir.deleteOnExit();
-      cd(gitDir.getPath());
-      touch("HEAD", "ref: refs/heads/master");
-      File head = new File(gitDir, "HEAD");
-      myFilesToDelete.add(head);
-      touch("config", "");
-      File config = new File(gitDir, "config");
-      myFilesToDelete.add(config);
+      File mockDir = new File(file, ".mock");
+      mockDir.mkdirs();
+      myFilesToDelete.add(mockDir);
+      mockDir.deleteOnExit();
     }
   }
 
