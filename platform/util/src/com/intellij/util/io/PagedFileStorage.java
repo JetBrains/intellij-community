@@ -490,6 +490,11 @@ public class PagedFileStorage implements Forceable {
           return mySize > mySizeLimit;
         }
 
+        @Override
+        protected boolean shouldMoveEntryToTopWhenReading() {
+          return true;
+        }
+
         @Nullable
         @Override
         public ByteBufferWrapper remove(Object key) {

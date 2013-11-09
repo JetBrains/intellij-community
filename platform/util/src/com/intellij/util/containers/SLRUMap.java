@@ -58,6 +58,12 @@ public class SLRUMap<K,V> {
 
         return false;
       }
+
+      @Override
+      protected boolean shouldMoveEntryToTopWhenReading() {
+        return true;
+      }
+
     };
 
     myProbationalQueue = new LinkedHashMap<K,V>(10, 0.6f, hashingStrategy) {
@@ -69,6 +75,12 @@ public class SLRUMap<K,V> {
         }
         return false;
       }
+
+      @Override
+      protected boolean shouldMoveEntryToTopWhenReading() {
+        return true;
+      }
+
     };
   }
 

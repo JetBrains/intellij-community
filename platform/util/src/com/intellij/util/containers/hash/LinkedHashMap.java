@@ -200,7 +200,15 @@ public class LinkedHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V> 
     size = 0;
   }
 
+  protected boolean shouldMoveEntryToTopWhenReading() {
+    return false;
+  }
+
   private void moveToTop(final Entry<K, V> e) {
+    if (!shouldMoveEntryToTopWhenReading()) {
+      return;
+    }
+
     final Entry<K, V> top = this.top;
     if (top != e) {
       final Entry<K, V> prev = e.previous;
