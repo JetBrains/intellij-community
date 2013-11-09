@@ -15,7 +15,7 @@
 
   <third-party url="http://www.jetbrains.org/"/>
 
-  <editor background-url="/idea_logo_background.png"/>
+  <editor background-url="/idea_logo_welcome.png"/>
 
   <update-urls check="http://www.jetbrains.com/updates/updates.xml"
                patches="http://download.jetbrains.com/idea/"/>
