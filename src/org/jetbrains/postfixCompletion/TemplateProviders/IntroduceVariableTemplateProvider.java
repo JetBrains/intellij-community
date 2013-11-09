@@ -43,7 +43,7 @@ public class IntroduceVariableTemplateProvider extends TemplateProviderBase {
           if (referenced instanceof PsiPackage) continue;
           // and 'too simple' expressions (except force mode)
           if (referenced instanceof PsiLocalVariable || referenced instanceof PsiParameter) {
-            if (forcedTarget == null) forcedTarget = expressionContext; else break;
+            forcedTarget = expressionContext;
             continue;
           }
         }
@@ -63,7 +63,7 @@ public class IntroduceVariableTemplateProvider extends TemplateProviderBase {
         consumer.add(new IntroduceVarStatementLookupElement(expressionContext, invokedOnType));
         return; // avoid multiple .var templates
       } else {
-        if (forcedTarget == null) forcedTarget = expressionContext; else break;
+        forcedTarget = expressionContext;
       }
     }
 
