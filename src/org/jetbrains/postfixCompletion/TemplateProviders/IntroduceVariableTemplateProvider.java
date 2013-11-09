@@ -33,19 +33,22 @@ public class IntroduceVariableTemplateProvider extends TemplateProviderBase {
       if (expressionContext.canBeStatement) {
 
         PsiExpression expression = expressionContext.expression;
-        boolean invokedOnType = false;
+        PsiClass invokedOnType = null;
 
         if (expression instanceof PsiReferenceExpression) {
-          PsiElement element = ((PsiReferenceExpression) expression).resolve();
+          PsiElement target = ((PsiReferenceExpression) expression).resolve();
 
           // todo: test with enums/classes
-          if (element instanceof PsiClass) {
-            invokedOnType = true;
-            // todo: check constructors accessibility
+          if (target instanceof PsiClass) {
+            invokedOnType = (PsiClass) target;
+
+
+            // todo: check constructors accessibility?
           }
           else {
             // filter out too simple locals references
-            if (element instanceof PsiVariable) continue;
+            // todo: enable in force mode
+            if (target instanceof PsiVariable) continue;
           }
 
           // todo:
@@ -53,7 +56,7 @@ public class IntroduceVariableTemplateProvider extends TemplateProviderBase {
 
         // disable this provider when expression type is unknown
         PsiType expressionType = expression.getType();
-        if (expressionType == null && !invokedOnType) {
+        if (expressionType == null && invokedOnType == null) {
           // for simple expressions like `expr.postfix`
           if (context.expressions.size() == 1) break;
         }
@@ -67,20 +70,22 @@ public class IntroduceVariableTemplateProvider extends TemplateProviderBase {
   }
 
   private static class IntroduceVarLookupElement extends StatementPostfixLookupElement<PsiExpressionStatement> {
-    private final boolean myInvokedOnType;
+    private final boolean myInvokedOnType, myIsAbstractType;
 
-    public IntroduceVarLookupElement(@NotNull PrefixExpressionContext context, boolean invokedOnType) {
+    public IntroduceVarLookupElement(@NotNull PrefixExpressionContext context, @Nullable PsiClass invokedOnType) {
       super("var", context);
-      myInvokedOnType = invokedOnType;
+      myInvokedOnType = (invokedOnType != null);
+      myIsAbstractType = myInvokedOnType &&
+        (invokedOnType.isInterface() || invokedOnType.hasModifierProperty(PsiModifier.ABSTRACT));
     }
 
     @NotNull @Override protected PsiExpressionStatement createNewStatement(
       @NotNull PsiElementFactory factory, @NotNull PsiExpression expression, @NotNull PsiElement context) {
 
       if (myInvokedOnType) {
-        expression = factory.createExpressionFromText("new " + expression.getText() + "()", context);
-
-        // todo: append " { }" for abstract types ?
+        String template = "new " + expression.getText() + "()";
+        if (myIsAbstractType) template += "{}";
+        expression = factory.createExpressionFromText(template, context);
       }
 
       PsiExpressionStatement expressionStatement =
@@ -110,9 +115,6 @@ public class IntroduceVariableTemplateProvider extends TemplateProviderBase {
         // todo: place caret into ctor parameters if any
         // todo: or inside { }
       }
-
-      int value = 2 + 2;
-
     }
 
     @NotNull private IntroduceVariableHandler getMockHandler() {
