@@ -24,7 +24,6 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import com.intellij.vcs.log.ui.VcsStructureChooser;
-import git4idea.GitVcs;
 
 import java.util.Collection;
 import java.util.Map;
@@ -57,7 +56,7 @@ public class StructureFilterAction extends BasePopupAction {
       @Override
       public void actionPerformed(AnActionEvent e) {
         final VcsStructureChooser vcsStructureChooser =
-          new VcsStructureChooser(GitVcs.getInstance(myProject), "Select folders to filter by", structureFilterI.getSelected(),
+          new VcsStructureChooser(myProject, "Select folders to filter by", structureFilterI.getSelected(),
                                   structureFilterI.getRoots());
         vcsStructureChooser.show();
         if (vcsStructureChooser.getExitCode() == DialogWrapper.CANCEL_EXIT_CODE) return;
@@ -118,7 +117,7 @@ public class StructureFilterAction extends BasePopupAction {
       myPanel.setToolTipText(STRUCTURE + " " + ALL);
     } else {
       final VcsStructureChooser vcsStructureChooser =
-        new VcsStructureChooser(GitVcs.getInstance(myProject), "Select folders to filter by", myStructureFilterI.getSelected(),
+        new VcsStructureChooser(myProject, "Select folders to filter by", myStructureFilterI.getSelected(),
                                 myStructureFilterI.getRoots());
       final Map<VirtualFile,String> modulesSet = vcsStructureChooser.getModulesSet();
       final String text = getText(selected, modulesSet);

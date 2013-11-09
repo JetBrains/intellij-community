@@ -31,7 +31,6 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.changes.ui.VirtualFileListCellRenderer;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -46,6 +45,7 @@ import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.hash.HashSet;
 import com.intellij.util.treeWithCheckedNodes.SelectionManager;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -70,7 +70,7 @@ public class VcsStructureChooser extends DialogWrapper {
   public static final Border BORDER = IdeBorderFactory.createBorder(SideBorder.TOP | SideBorder.LEFT);
   public static final String DEFAULT_TEXT = "<html>Selected:</html>";
   public static final String CAN_NOT_ADD_TEXT = "<html>Selected: <font color=red>(You have added " + MAX_FOLDERS + " elements. No more is allowed.)</font></html>";
-  private final AbstractVcs myVcs;
+  @NotNull private final Project myProject;
   private Set<VirtualFile> myRoots;
   private Map<VirtualFile, String> myModulesSet;
   private SelectionManager mySelectionManager;
@@ -80,14 +80,14 @@ public class VcsStructureChooser extends DialogWrapper {
   private Tree myTree;
   private final List<VirtualFile> myInitialRoots;
 
-  public VcsStructureChooser(final AbstractVcs vcs,
+  public VcsStructureChooser(@NotNull Project project,
                              final String title,
                              final Collection<VirtualFile> initialSelection,
                              List<VirtualFile> initialRoots) {
-    super(vcs.getProject(), true);
+    super(project, true);
     myInitialRoots = initialRoots;
     setTitle(title);
-    myVcs = vcs;
+    myProject = project;
     mySelectionManager = new SelectionManager(MAX_FOLDERS, 500, MyNodeConvertor.getInstance());
     init();
     mySelectionManager.setSelection(initialSelection);
@@ -95,7 +95,7 @@ public class VcsStructureChooser extends DialogWrapper {
   }
 
   private void calculateRoots() {
-    final ModuleManager moduleManager = ModuleManager.getInstance(myVcs.getProject());
+    final ModuleManager moduleManager = ModuleManager.getInstance(myProject);
     // assertion for read access inside
     final Module[] modules = ApplicationManager.getApplication().runReadAction(new Computable<Module[]>() {
       public Module[] compute() {
@@ -168,9 +168,9 @@ public class VcsStructureChooser extends DialogWrapper {
     myTree.setShowsRootHandles(true);
     myTree.setRootVisible(true);
     myTree.getExpandableItemsHandler().setEnabled(false);
-    final MyCheckboxTreeCellRenderer cellRenderer = new MyCheckboxTreeCellRenderer(mySelectionManager, myModulesSet, myVcs.getProject(),
+    final MyCheckboxTreeCellRenderer cellRenderer = new MyCheckboxTreeCellRenderer(mySelectionManager, myModulesSet, myProject,
                                                                                    myTree, myRoots);
-    final FileSystemTreeImpl fileSystemTree = new FileSystemTreeImpl(myVcs.getProject(), descriptor, myTree, cellRenderer, null, new Convertor<TreePath, String>() {
+    final FileSystemTreeImpl fileSystemTree = new FileSystemTreeImpl(myProject, descriptor, myTree, cellRenderer, null, new Convertor<TreePath, String>() {
       @Override
       public String convert(TreePath o) {
         final DefaultMutableTreeNode lastPathComponent = ((DefaultMutableTreeNode) o.getLastPathComponent());
@@ -244,7 +244,7 @@ public class VcsStructureChooser extends DialogWrapper {
     mySelectedLabel.setBorder(BorderFactory.createEmptyBorder(2, 0, 2, 0));
     wrapper.add(mySelectedLabel, BorderLayout.NORTH);
     mySelectedList = new JBList(new CollectionListModel(new ArrayList<VirtualFile>()));
-    mySelectedList.setCellRenderer(new WithModulesListCellRenderer(myVcs.getProject(), myModulesSet));
+    mySelectedList.setCellRenderer(new WithModulesListCellRenderer(myProject, myModulesSet));
     wrapper.add(ScrollPaneFactory.createScrollPane(mySelectedList), BorderLayout.CENTER);
     splitter.setSecondComponent(wrapper);
 
@@ -292,7 +292,7 @@ public class VcsStructureChooser extends DialogWrapper {
           final int[] idx = mySelectedList.getSelectedIndices();
           if (idx != null && idx.length > 0) {
             final int answer = Messages
-              .showYesNoDialog(myVcs.getProject(), "Remove selected paths from filter?", "Remove from filter", Messages.getQuestionIcon());
+              .showYesNoDialog(myProject, "Remove selected paths from filter?", "Remove from filter", Messages.getQuestionIcon());
             if (Messages.OK == answer) {
               Arrays.sort(idx);
               for (int i = idx.length - 1; i >= 0; --i) {
