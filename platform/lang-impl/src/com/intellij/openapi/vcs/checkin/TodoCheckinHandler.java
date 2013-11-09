@@ -184,24 +184,24 @@ public class TodoCheckinHandler extends CheckinHandler {
     final String text = createMessage(worker);
     final String[] buttons;
     final boolean thereAreTodoFound = worker.getAddedOrEditedTodos().size() + worker.getInChangedTodos().size() > 0;
+    int commitOption;
     if (thereAreTodoFound) {
       buttons = new String[]{VcsBundle.message("todo.in.new.review.button"), commitButtonText, CommonBundle.getCancelButtonText()};
+      commitOption = 1;
     }
     else {
       buttons = new String[]{commitButtonText, CommonBundle.getCancelButtonText()};
+      commitOption = 0;
     }
-
-    final int answer = Messages.showOkCancelDialog(myCheckinProjectPanel.getComponent(), text, "TODO", buttons[0], buttons[1], UIUtil.getWarningIcon());
+    final int answer = Messages.showDialog(myProject, text, "TODO", null, buttons, 0, 1, UIUtil.getWarningIcon());
     if (thereAreTodoFound && answer == Messages.OK) {
       showTodo(worker);
       return ReturnResult.CLOSE_WINDOW;
     }
-    if (!thereAreTodoFound && answer != Messages.OK) {
-      return ReturnResult.CANCEL;
-    }
-    else {
+    if (answer == commitOption) {
       return ReturnResult.COMMIT;
     }
+    return ReturnResult.CANCEL;
   }
 
   private void showTodo(final TodoCheckinHandlerWorker worker) {
