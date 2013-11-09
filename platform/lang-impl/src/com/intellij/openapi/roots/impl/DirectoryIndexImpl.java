@@ -1421,6 +1421,7 @@ public class DirectoryIndexImpl extends DirectoryIndex {
       fillMapWithOrderEntries(depEntries, libClassRootEntries, libSourceRootEntries, progress);
 
       internDirectoryInfos();
+      progress.popState();
     }
 
     private void internDirectoryInfos() {
