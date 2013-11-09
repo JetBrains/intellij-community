@@ -22,57 +22,71 @@ import java.util.*;
   example = "var x = expr;")
 public class IntroduceVariableTemplateProvider extends TemplateProviderBase {
   @Override public void createItems(
-    @NotNull PostfixTemplateAcceptanceContext context, @NotNull List<LookupElement> consumer) {
+      @NotNull PostfixTemplateAcceptanceContext context, @NotNull List<LookupElement> consumer) {
 
-    // todo: support expressions
-    // todo: setup selection before refactoring? or context?
-    // todo: disable when qualifier type is unknown (what about broken, but fixable exprs?)
-    // todo: make it works on types
+    // todo: support on expressions
 
-    for (PrefixExpressionContext expressionContext : context.expressions)
-      if (expressionContext.canBeStatement) {
+    PrefixExpressionContext forcedTarget = null;
+    PsiClass invokedOnType = null;
 
-        PsiExpression expression = expressionContext.expression;
-        PsiClass invokedOnType = null;
+    for (PrefixExpressionContext expressionContext : context.expressions) {
+      PsiExpression expression = expressionContext.expression;
+      PsiElement referenced = expressionContext.referencedElement;
 
-        if (expression instanceof PsiReferenceExpression) {
-          PsiElement target = ((PsiReferenceExpression) expression).resolve();
-
-          // todo: test with enums/classes
-          if (target instanceof PsiClass) {
-            invokedOnType = (PsiClass) target;
-
-
-            // todo: check constructors accessibility?
+      if (referenced != null) {
+        if (referenced instanceof PsiClass) {
+          invokedOnType = (PsiClass) referenced;
+          // enumerations can't be instantiated
+          if (invokedOnType.isEnum()) break;
+        } else {
+          // filter out packages
+          if (referenced instanceof PsiPackage) continue;
+          // and 'too simple' expressions (except force mode)
+          if (referenced instanceof PsiLocalVariable || referenced instanceof PsiParameter) {
+            if (forcedTarget == null) forcedTarget = expressionContext; else break;
+            continue;
           }
-          else {
-            // filter out too simple locals references
-            // todo: enable in force mode
-            if (target instanceof PsiVariable) continue;
-          }
-
-          // todo:
         }
-
-        // disable this provider when expression type is unknown
-        PsiType expressionType = expression.getType();
-        if (expressionType == null && invokedOnType == null) {
-          // for simple expressions like `expr.postfix`
-          if (context.expressions.size() == 1) break;
-        }
-
-        // todo: disable when qualifier resolves to type
-        // todo: disable when only one expr and it is unresolved
-
-        consumer.add(new IntroduceVarLookupElement(expressionContext, invokedOnType));
-        break;
       }
+
+      // disable this provider when expression type is unknown
+      PsiType expressionType = expression.getType();
+      if (expressionType == null && invokedOnType == null) {
+        // for simple expressions like `expr.postfix`
+        if (context.expressions.size() == 1) break;
+      }
+
+      // disable on expressions (invocations) of void type
+      if (expressionType != null && expressionType.equals(PsiType.VOID)) continue;
+
+      if (expressionContext.canBeStatement) {
+        consumer.add(new IntroduceVarStatementLookupElement(expressionContext, invokedOnType));
+        break;
+      } else {
+        if (forcedTarget == null) forcedTarget = expressionContext; else break;
+      }
+    }
+
+    // force mode - enable inside expressions/for locals/parameters/etc
+    if (forcedTarget != null && context.isForceMode) {
+      if (forcedTarget.referencedElement instanceof PsiClass) {
+        invokedOnType = (PsiClass) forcedTarget.referencedElement;
+      }
+
+      if (forcedTarget.canBeStatement) {
+        consumer.add(new IntroduceVarStatementLookupElement(forcedTarget, invokedOnType));
+      } else {
+        consumer.add(new IntroduceVarExpressionLookupElement(forcedTarget, invokedOnType));
+      }
+    }
   }
 
-  private static class IntroduceVarLookupElement extends StatementPostfixLookupElement<PsiExpressionStatement> {
+  private static class IntroduceVarStatementLookupElement
+    extends StatementPostfixLookupElement<PsiExpressionStatement> {
     private final boolean myInvokedOnType, myIsAbstractType;
 
-    public IntroduceVarLookupElement(@NotNull PrefixExpressionContext context, @Nullable PsiClass invokedOnType) {
+    public IntroduceVarStatementLookupElement(
+      @NotNull PrefixExpressionContext context, @Nullable PsiClass invokedOnType) {
       super("var", context);
       myInvokedOnType = (invokedOnType != null);
       myIsAbstractType = myInvokedOnType &&
@@ -99,7 +113,7 @@ public class IntroduceVariableTemplateProvider extends TemplateProviderBase {
       // execute insertion without undo manager enabled
       CommandProcessor.getInstance().runUndoTransparentAction(new Runnable() {
         @Override public void run() {
-          IntroduceVarLookupElement.super.handleInsert(context);
+          IntroduceVarStatementLookupElement.super.handleInsert(context);
         }
       });
     }
@@ -110,30 +124,67 @@ public class IntroduceVariableTemplateProvider extends TemplateProviderBase {
       IntroduceVariableHandler handler = unitTestMode ? getMockHandler() : new IntroduceVariableHandler();
 
       handler.invoke(context.getProject(), context.getEditor(), statement.getExpression());
+      // todo: somehow handle success introduce variable and place caret in a smart way
+    }
+  }
 
+  private static class IntroduceVarExpressionLookupElement
+    extends ExpressionPostfixLookupElement<PsiExpression> {
+    private final boolean myInvokedOnType, myIsAbstractType;
+
+    public IntroduceVarExpressionLookupElement(
+      @NotNull PrefixExpressionContext context, @Nullable PsiClass invokedOnType) {
+      super("var", context);
+      myInvokedOnType = (invokedOnType != null);
+      myIsAbstractType = myInvokedOnType &&
+        (invokedOnType.isInterface() || invokedOnType.hasModifierProperty(PsiModifier.ABSTRACT));
+    }
+
+    @NotNull @Override protected PsiExpression createNewExpression(
+      @NotNull PsiElementFactory factory, @NotNull PsiExpression expression, @NotNull PsiElement context) {
       if (myInvokedOnType) {
-        // todo: place caret into ctor parameters if any
-        // todo: or inside { }
+        String template = "new " + expression.getText() + "()";
+        if (myIsAbstractType) template += "{}";
+        expression = factory.createExpressionFromText(template, context);
       }
+
+      return expression;
     }
 
-    @NotNull private IntroduceVariableHandler getMockHandler() {
-      return new IntroduceVariableHandler() {
-        // mock default settings
-        @Override public final IntroduceVariableSettings getSettings(
-          Project project, Editor editor, final PsiExpression expr, PsiExpression[] occurrences,
-          TypeSelectorManagerImpl typeSelectorManager, boolean declareFinalIfAll, boolean anyAssignmentLHS,
-          InputValidator validator, PsiElement anchor, OccurrencesChooser.ReplaceChoice replaceChoice) {
-          return new IntroduceVariableSettings() {
-            @Override public String getEnteredName() { return "foo"; }
-            @Override public boolean isReplaceAllOccurrences() { return false; }
-            @Override public boolean isDeclareFinal() { return false; }
-            @Override public boolean isReplaceLValues() { return false; }
-            @Override public PsiType getSelectedType() { return expr.getType(); }
-            @Override public boolean isOK() { return true; }
-          };
+    @Override public void handleInsert(@NotNull final InsertionContext context) {
+      // execute insertion without undo manager enabled
+      CommandProcessor.getInstance().runUndoTransparentAction(new Runnable() {
+        @Override public void run() {
+          IntroduceVarExpressionLookupElement.super.handleInsert(context);
         }
-      };
+      });
     }
+
+    @Override protected void postProcess(
+      @NotNull InsertionContext context, @NotNull PsiExpression expression) {
+      boolean unitTestMode = ApplicationManager.getApplication().isUnitTestMode();
+      IntroduceVariableHandler handler = unitTestMode ? getMockHandler() : new IntroduceVariableHandler();
+
+      handler.invoke(context.getProject(), context.getEditor(), expression);
+    }
+  }
+
+  @NotNull private static IntroduceVariableHandler getMockHandler() {
+    return new IntroduceVariableHandler() {
+      // mock default settings
+      @Override public final IntroduceVariableSettings getSettings(
+        Project project, Editor editor, final PsiExpression expr, PsiExpression[] occurrences,
+        TypeSelectorManagerImpl typeSelectorManager, boolean declareFinalIfAll, boolean anyAssignmentLHS,
+        InputValidator validator, PsiElement anchor, OccurrencesChooser.ReplaceChoice replaceChoice) {
+        return new IntroduceVariableSettings() {
+          @Override public String getEnteredName() { return "foo"; }
+          @Override public boolean isReplaceAllOccurrences() { return false; }
+          @Override public boolean isDeclareFinal() { return false; }
+          @Override public boolean isReplaceLValues() { return false; }
+          @Override public PsiType getSelectedType() { return expr.getType(); }
+          @Override public boolean isOK() { return true; }
+        };
+      }
+    };
   }
 }

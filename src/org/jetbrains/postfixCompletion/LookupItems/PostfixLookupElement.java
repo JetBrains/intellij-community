@@ -11,7 +11,7 @@ import org.jetbrains.postfixCompletion.Infrastructure.*;
 
 import java.util.*;
 
-public abstract class PostfixLookupElement<TPsiElement> extends LookupElement {
+public abstract class PostfixLookupElement<TPsiElement extends PsiElement> extends LookupElement {
   @NotNull protected final Class<? extends PsiExpression> myExpressionType;
   @NotNull protected final TextRange myExpressionRange;
   @NotNull protected final String myLookupString;
@@ -63,9 +63,19 @@ public abstract class PostfixLookupElement<TPsiElement> extends LookupElement {
       if (myExpressionType.isInstance(expression.expression) &&
           expression.expressionRange.equals(myExpressionRange)) {
 
-        TPsiElement newStatement = handlePostfixInsert(context, expression);
+        TPsiElement newElement = handlePostfixInsert(context, expression);
+        assert newElement.isPhysical() : "newElement.isPhysical()";
+
+        SmartPointerManager pointerManager = SmartPointerManager.getInstance(context.getProject());
+        SmartPsiElementPointer<TPsiElement> pointer = pointerManager.createSmartPsiElementPointer(newElement);
+
         documentManager.doPostponedOperationsAndUnblockDocument(document);
-        postProcess(context, newStatement);
+
+        newElement = pointer.getElement();
+        if (newElement != null) {
+          postProcess(context, newElement);
+        }
+
         break;
       }
     }

@@ -8,6 +8,7 @@ public final class PrefixExpressionContext {
   @NotNull public final PostfixTemplateAcceptanceContext parentContext;
   @NotNull public final PsiExpression expression;
   @Nullable public final PsiType expressionType;
+  @Nullable public final PsiElement referencedElement;
   @NotNull public final TextRange expressionRange;
   public final boolean canBeStatement;
 
@@ -18,6 +19,12 @@ public final class PrefixExpressionContext {
     expressionType = expression.getType();
     expressionRange = getExpressionRange();
     canBeStatement = (getContainingStatement() != null);
+
+    if (expression instanceof PsiReferenceExpression) {
+      referencedElement = ((PsiReferenceExpression) expression).resolve();
+    } else {
+      referencedElement = null;
+    }
   }
 
   @Nullable public final PsiStatement getContainingStatement() {

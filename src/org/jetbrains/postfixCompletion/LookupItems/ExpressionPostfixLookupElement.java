@@ -6,15 +6,15 @@ import com.intellij.psi.*;
 import org.jetbrains.annotations.*;
 import org.jetbrains.postfixCompletion.Infrastructure.*;
 
-public abstract class StatementPostfixLookupElement<TStatement extends PsiStatement>
-  extends PostfixLookupElement<TStatement> {
+public abstract class ExpressionPostfixLookupElement<TExpression extends PsiExpression>
+  extends PostfixLookupElement<TExpression> {
 
-  public StatementPostfixLookupElement(
+  public ExpressionPostfixLookupElement(
     @NotNull String lookupString, @NotNull PrefixExpressionContext context) {
     super(lookupString, context);
   }
 
-  @Override @NotNull protected TStatement handlePostfixInsert(
+  @Override @NotNull protected TExpression handlePostfixInsert(
     @NotNull InsertionContext context, @NotNull PrefixExpressionContext expressionContext) {
     // get facade and factory while all elements are physical and valid
     Project project = expressionContext.expression.getProject();
@@ -23,23 +23,19 @@ public abstract class StatementPostfixLookupElement<TStatement extends PsiStatem
 
     // fix up expression before template expansion
     PrefixExpressionContext fixedContext = expressionContext.fixUp();
-
-    // get target statement to replace
-    PsiStatement targetStatement = fixedContext.getContainingStatement();
-    assert targetStatement != null : "targetStatement != null";
-
     PsiExpression exprCopy = (PsiExpression) fixedContext.expression.copy();
-    TStatement newStatement = createNewStatement(elementFactory, exprCopy, fixedContext.expression);
+
+    TExpression newExpression = createNewExpression(elementFactory, exprCopy, fixedContext.expression);
 
     //noinspection unchecked
-    return (TStatement) targetStatement.replace(newStatement);
+    return (TExpression) fixedContext.expression.replace(newExpression);
   }
 
-  @NotNull protected abstract TStatement createNewStatement(
+  @NotNull protected abstract TExpression createNewExpression(
     @NotNull PsiElementFactory factory, @NotNull PsiExpression expression, @NotNull PsiElement context);
 
   @Override protected void postProcess(
-    @NotNull InsertionContext context, @NotNull TStatement statement) {
+      @NotNull InsertionContext context, @NotNull TExpression statement) {
     int offset = statement.getTextRange().getEndOffset();
     context.getEditor().getCaretModel().moveToOffset(offset);
   }
