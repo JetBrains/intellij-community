@@ -61,7 +61,7 @@ public class IntroduceVariableTemplateProvider extends TemplateProviderBase {
 
       if (expressionContext.canBeStatement) {
         consumer.add(new IntroduceVarStatementLookupElement(expressionContext, invokedOnType));
-        break;
+        return; // avoid multiple .var templates
       } else {
         if (forcedTarget == null) forcedTarget = expressionContext; else break;
       }
