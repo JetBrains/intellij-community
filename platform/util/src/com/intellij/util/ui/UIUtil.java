@@ -2418,7 +2418,7 @@ public class UIUtil {
           final int bulletWidth = info.withBullet ? fm.stringWidth(" " + info.bulletChar) : 0;
           maxBulletWidth[0] = Math.max(maxBulletWidth[0], bulletWidth);
 
-          maxWidth[0] = Math.max(fm.stringWidth(pair.getFirst() + bulletWidth), maxWidth[0]);
+          maxWidth[0] = Math.max(fm.stringWidth(pair.getFirst().replace("<shortcut>", "").replace("</shortcut>", "") + bulletWidth), maxWidth[0]);
           height[0] += (fm.getHeight() + fm.getLeading()) * myLineSpacing;
 
           if (old != null) {
@@ -2437,6 +2437,12 @@ public class UIUtil {
         @Override
         public boolean process(final Pair<String, LineInfo> pair) {
           final LineInfo info = pair.getSecond();
+          String text = pair.first;
+          String shortcut = "";
+          if (pair.first.contains("<shortcut>")) {
+            shortcut = text.substring(text.indexOf("<shortcut>") + "<shortcut>".length(), text.indexOf("</shortcut>"));
+            text = text.substring(0, text.indexOf("<shortcut>"));
+          }
 
           Font old = null;
           if (info.smaller) {
@@ -2449,20 +2455,20 @@ public class UIUtil {
           final FontMetrics fm = g.getFontMetrics();
           int xOffset = x;
           if (info.center) {
-            xOffset = x + (maxWidth[0] - fm.stringWidth(pair.getFirst())) / 2;
+            xOffset = x + (maxWidth[0] - fm.stringWidth(text)) / 2;
           }
 
           if (myDrawShadow) {
             int xOff = isUnderDarcula() ? 1 : 0;
             int yOff = 1;
-            final Color oldColor = g.getColor();
+            Color oldColor = g.getColor();
             g.setColor(myShadowColor);
 
             if (info.withBullet) {
               g.drawString(info.bulletChar + " ", x - fm.stringWidth(" " + info.bulletChar) + xOff, yOffset[0] + yOff);
             }
 
-            g.drawString(pair.getFirst(), xOffset + xOff, yOffset[0] + yOff);
+            g.drawString(text, xOffset + xOff, yOffset[0] + yOff);
             g.setColor(oldColor);
           }
 
@@ -2470,7 +2476,15 @@ public class UIUtil {
             g.drawString(info.bulletChar + " ", x - fm.stringWidth(" " + info.bulletChar), yOffset[0]);
           }
 
-          g.drawString(pair.getFirst(), xOffset, yOffset[0]);
+          g.drawString(text, xOffset, yOffset[0]);
+          if (!StringUtil.isEmpty(shortcut)) {
+            Color oldColor = g.getColor();
+            if (isUnderDarcula()) {
+              g.setColor(new Color(60, 118, 249));
+            }
+            g.drawString(shortcut, xOffset + fm.stringWidth(text + (isUnderDarcula() ? " " : "")), yOffset[0]);
+            g.setColor(oldColor);
+          }
 
           if (info.underlined) {
             Color c = null;
@@ -2482,6 +2496,7 @@ public class UIUtil {
             g.drawLine(x - maxBulletWidth[0] - 10, yOffset[0] + fm.getDescent(), x + maxWidth[0] + 10, yOffset[0] + fm.getDescent());
             if (c != null) {
               g.setColor(c);
+
             }
 
             if (myDrawShadow) {
