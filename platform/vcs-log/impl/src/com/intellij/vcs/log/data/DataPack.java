@@ -136,6 +136,18 @@ public class DataPack {
   }
 
   @Nullable
+  public Node getNodeByPartOfHash(@NotNull String hash) {
+    Graph graph = getGraphModel().getGraph();
+    for (int i = 0; i < graph.getNodeRows().size(); i++) {
+      Node node = graph.getCommitNodeInRow(i);
+      if (node != null && node.getCommitHash().asString().startsWith(hash.toLowerCase())) {
+        return node;
+      }
+    }
+    return null;
+  }
+
+  @Nullable
   public Node getCommonParent(Node a, Node b) {
     List<Node> commitDiff = getCommitsDownToCommon(a, b);
     return commitDiff.isEmpty() ? null : commitDiff.get(commitDiff.size() - 1);

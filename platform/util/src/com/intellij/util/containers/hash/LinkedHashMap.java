@@ -29,7 +29,7 @@ public class LinkedHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V> 
   private int size;
   private final float loadFactor;
   private final EqualityPolicy<K> hashingStrategy;
-
+  private final boolean accessOrder;
 
   public LinkedHashMap() {
     this(0);
@@ -38,9 +38,16 @@ public class LinkedHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V> 
   public LinkedHashMap(int capacity) {
     this(capacity, HashUtil.DEFAULT_LOAD_FACTOR);
   }
+  public LinkedHashMap(int capacity, boolean accessOrder) {
+    this(capacity, HashUtil.DEFAULT_LOAD_FACTOR, accessOrder);
+  }
 
   public LinkedHashMap(int capacity, float loadFactor) {
     this(capacity, loadFactor, (EqualityPolicy)EqualityPolicy.CANONICAL);
+  }
+
+  public LinkedHashMap(int capacity, float loadFactor, boolean accessOrder) {
+    this(capacity, loadFactor, (EqualityPolicy)EqualityPolicy.CANONICAL, accessOrder);
   }
 
   public LinkedHashMap(EqualityPolicy hashingStrategy) {
@@ -48,9 +55,13 @@ public class LinkedHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V> 
   }
 
   public LinkedHashMap(int capacity, float loadFactor, EqualityPolicy<K> hashingStrategy) {
+    this(capacity, loadFactor, hashingStrategy, false);
+  }
+  public LinkedHashMap(int capacity, float loadFactor, EqualityPolicy<K> hashingStrategy, boolean accessOrder) {
     this.loadFactor = loadFactor;
     this.hashingStrategy = hashingStrategy;
     clear(capacity);
+    this.accessOrder = accessOrder;
   }
 
   @Override
@@ -200,12 +211,8 @@ public class LinkedHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V> 
     size = 0;
   }
 
-  protected boolean shouldMoveEntryToTopWhenReading() {
-    return false;
-  }
-
   private void moveToTop(final Entry<K, V> e) {
-    if (!shouldMoveEntryToTopWhenReading()) {
+    if (!accessOrder) {
       return;
     }
 

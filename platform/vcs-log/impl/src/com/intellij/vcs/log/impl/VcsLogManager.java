@@ -1,6 +1,9 @@
 package com.intellij.vcs.log.impl;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.DataKey;
+import com.intellij.openapi.actionSystem.DataSink;
+import com.intellij.openapi.actionSystem.TypeSafeDataProvider;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
@@ -124,7 +127,7 @@ public class VcsLogManager implements Disposable {
   public void dispose() {
   }
 
-  private static class VcsLogContainer extends JPanel {
+  private class VcsLogContainer extends JPanel implements TypeSafeDataProvider {
 
     private final JBLoadingPanel myLoadingPanel;
 
@@ -139,6 +142,14 @@ public class VcsLogManager implements Disposable {
       myLoadingPanel.add(mainComponent);
       myLoadingPanel.stopLoading();
     }
+
+    @Override
+    public void calcData(DataKey key, DataSink sink) {
+      if (myUi != null) {
+        myUi.getMainFrame().calcData(key, sink);
+      }
+    }
+
   }
 
   private static class PostponeableLogRefresher implements VcsLogRefresher, Disposable {

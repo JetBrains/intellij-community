@@ -135,17 +135,11 @@ public class LinkedHashMapTest {
 
   @Test
   public void lru2() {
-    final LinkedHashMap<Integer, String> tested = new LinkedHashMap<Integer, String>() {
+    final LinkedHashMap<Integer, String> tested = new LinkedHashMap<Integer, String>(0, true) {
       @Override
       protected boolean removeEldestEntry(Map.Entry<Integer, String> eldest) {
         return size() > 1000;
       }
-
-      @Override
-      protected boolean shouldMoveEntryToTopWhenReading() {
-        return true;
-      }
-
     };
     for (int i = 0; i < 1000; ++i) {
       tested.put(i, Integer.toString(i));
@@ -161,17 +155,11 @@ public class LinkedHashMapTest {
 
   @Test
   public void lru3() {
-    final LinkedHashMap<Integer, String> tested = new LinkedHashMap<Integer, String>() {
+    final LinkedHashMap<Integer, String> tested = new LinkedHashMap<Integer, String>(0, true) {
       @Override
       protected boolean removeEldestEntry(Map.Entry<Integer, String> eldest) {
         return size() > 1000;
       }
-
-      @Override
-      protected boolean shouldMoveEntryToTopWhenReading() {
-        return true;
-      }
-
     };
     for (int i = 0; i < 1000; ++i) {
       tested.put(i, Integer.toString(i));

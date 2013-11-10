@@ -25,6 +25,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.table.TableModel;
+import java.awt.*;
 import java.util.Collection;
 
 /**
@@ -205,6 +206,21 @@ public class VcsLogUI {
     }
   }
 
+  public void jumpToCommitByPartOfHash(final String hash) {
+    Node node = myLogDataHolder.getDataPack().getNodeByPartOfHash(hash);
+    if (node != null) {
+      jumpToRow(node.getRowIndex());
+    }
+    else if (!myLogDataHolder.isFullLogShowing()) {
+      myLogDataHolder.showFullLog(new Runnable() {
+        @Override
+        public void run() {
+          jumpToCommitByPartOfHash(hash);
+        }
+      });
+    }
+  }
+
   @NotNull
   public VcsLogColorManager getColorManager() {
     return myColorManager;
@@ -255,4 +271,7 @@ public class VcsLogUI {
     myMainFrame.setBranchesPanelVisible(visible);
   }
 
+  public Component getToolbar() {
+    return myMainFrame.getToolbar();
+  }
 }

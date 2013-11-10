@@ -484,15 +484,10 @@ public class PagedFileStorage implements Forceable {
       myDefaultStorageLockContext = new StorageLockContext(this, checkThreadAccess);
 
       mySizeLimit = UPPER_LIMIT;
-      mySegments = new LinkedHashMap<Integer, ByteBufferWrapper>(10, 0.75f) {
+      mySegments = new LinkedHashMap<Integer, ByteBufferWrapper>(10, 0.75f, true) {
         @Override
         protected boolean removeEldestEntry(Map.Entry<Integer, ByteBufferWrapper> eldest) {
           return mySize > mySizeLimit;
-        }
-
-        @Override
-        protected boolean shouldMoveEntryToTopWhenReading() {
-          return true;
         }
 
         @Nullable
