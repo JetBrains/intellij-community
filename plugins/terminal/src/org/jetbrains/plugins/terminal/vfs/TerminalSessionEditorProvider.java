@@ -38,7 +38,7 @@ public class TerminalSessionEditorProvider implements FileEditorProvider, DumbAw
   @NotNull
   @Override
   public FileEditor createEditor(@NotNull Project project, @NotNull VirtualFile file) {
-    return new TerminalSessionEditor((TerminalSessionVirtualFileImpl)file);
+    return new TerminalSessionEditor(project, (TerminalSessionVirtualFileImpl)file);
   }
 
   @Override

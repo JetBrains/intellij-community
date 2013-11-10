@@ -15,31 +15,83 @@
  */
 package org.jetbrains.plugins.terminal.vfs;
 
+import com.google.common.base.Predicate;
+import com.google.common.collect.Lists;
 import com.intellij.codeHighlighting.BackgroundEditorHighlighter;
 import com.intellij.ide.structureView.StructureViewBuilder;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorLocation;
 import com.intellij.openapi.fileEditor.FileEditorState;
 import com.intellij.openapi.fileEditor.FileEditorStateLevel;
+import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.UserDataHolderBase;
+import com.jediterm.terminal.TtyConnectorWaitFor;
+import com.jediterm.terminal.ui.TerminalAction;
+import com.jediterm.terminal.ui.TerminalActionProviderBase;
+import com.jediterm.terminal.ui.settings.TabbedSettingsProvider;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.event.KeyEvent;
 import java.beans.PropertyChangeListener;
+import java.util.List;
+import java.util.concurrent.Executors;
 
 /**
  * @author traff
  */
 public class TerminalSessionEditor extends UserDataHolderBase implements FileEditor {
 
+  private Project myProject;
   private final TerminalSessionVirtualFileImpl myFile;
+  private final TtyConnectorWaitFor myWaitFor;
 
-  public TerminalSessionEditor(@NotNull TerminalSessionVirtualFileImpl terminalFile) {
+  public TerminalSessionEditor(Project project, @NotNull TerminalSessionVirtualFileImpl terminalFile) {
+    myProject = project;
     myFile = terminalFile;
+
+    final TabbedSettingsProvider settings = myFile.getSettingsProvider();
+
+    myFile.getTerminal().setNextProvider(new TerminalActionProviderBase() {
+      @Override
+      public List<TerminalAction> getActions() {
+        return Lists.newArrayList(
+          new TerminalAction("Close Session", settings.getCloseSessionKeyStrokes(), new Predicate<KeyEvent>() {
+            @Override
+            public boolean apply(KeyEvent input) {
+              handleCloseSession();
+              return true;
+            }
+          }).withMnemonicKey(KeyEvent.VK_S)
+        );
+      }
+    });
+
+    myWaitFor = new TtyConnectorWaitFor(myFile.getTerminal().getTtyConnector(), Executors.newSingleThreadExecutor());
+
+    myWaitFor
+      .setTerminationCallback(new Predicate<Integer>() {
+        @Override
+        public boolean apply(Integer integer) {
+          ApplicationManager.getApplication().invokeLater(new Runnable() {
+            @Override
+            public void run() {
+              FileEditorManagerEx.getInstanceEx(myProject).closeFile(myFile);
+            }
+          });
+
+          return true;
+        }
+      });
   }
 
+  private void handleCloseSession() {
+    myFile.getTerminal().close();
+  }
 
   @NotNull
   @Override
@@ -121,6 +173,7 @@ public class TerminalSessionEditor extends UserDataHolderBase implements FileEdi
   @Override
   public void dispose() {
     Boolean closingToReopen = myFile.getUserData(FileEditorManagerImpl.CLOSING_TO_REOPEN);
+    myWaitFor.detach();
     if (closingToReopen == null || !closingToReopen) {
       myFile.getTerminal().close();
     }

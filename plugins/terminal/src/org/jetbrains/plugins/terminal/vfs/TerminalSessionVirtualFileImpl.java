@@ -21,6 +21,7 @@ package org.jetbrains.plugins.terminal.vfs;
 
 import com.intellij.testFramework.LightVirtualFile;
 import com.jediterm.terminal.ui.JediTermWidget;
+import com.jediterm.terminal.ui.settings.TabbedSettingsProvider;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -28,12 +29,14 @@ import org.jetbrains.annotations.NotNull;
  */
 public class TerminalSessionVirtualFileImpl extends LightVirtualFile {
   private final JediTermWidget myTerminal;
+  private TabbedSettingsProvider mySettingsProvider;
 
   private final String myName;
-
-  public TerminalSessionVirtualFileImpl(String name, JediTermWidget terminal) {
+  
+  public TerminalSessionVirtualFileImpl(String name, JediTermWidget terminal, TabbedSettingsProvider settingsProvider) {
     myName = name;
     myTerminal = terminal;
+    mySettingsProvider = settingsProvider;
     setFileType(TerminalSessionFileType.INSTANCE);
     setWritable(true);
   }
@@ -45,5 +48,9 @@ public class TerminalSessionVirtualFileImpl extends LightVirtualFile {
   @NotNull
   public String getName() {
     return myName;
+  }
+
+  public TabbedSettingsProvider getSettingsProvider() {
+    return mySettingsProvider;
   }
 }
