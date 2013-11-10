@@ -284,6 +284,7 @@ public class TerminalView {
       if (content.getKey() instanceof TerminalSessionVirtualFileImpl) {
         TerminalSessionVirtualFileImpl terminalFile = (TerminalSessionVirtualFileImpl)content.getKey();
         myTerminalWidget.addTab(terminalFile.getName(), terminalFile.getTerminal());
+        terminalFile.getTerminal().setNextProvider(myTerminalWidget);
       }
     }
 
