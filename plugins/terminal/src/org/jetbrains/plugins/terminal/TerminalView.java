@@ -94,6 +94,7 @@ public class TerminalView {
     if (myDockContainer == null) {
       myDockContainer = new TerminalDockContainer(toolWindow);
 
+      Disposer.register(myProject, myDockContainer);
       DockManager.getInstance(myProject).register(myDockContainer);
     }
   }
