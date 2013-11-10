@@ -30,7 +30,7 @@ public abstract class PostfixLookupElement<TPsiElement extends PsiElement> exten
     return true; // thx IDEA folks for implementing this!
   }
 
-  @Override public final Set<String> getAllLookupStrings() {
+  @Override public Set<String> getAllLookupStrings() {
     HashSet<String> set = new HashSet<String>();
 
     // this hack prevents completion list from closing

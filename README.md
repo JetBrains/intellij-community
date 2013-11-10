@@ -15,13 +15,13 @@ Currently available templates:
 * `.if` – checks boolean expression to be true `if (expr)`
 * `.else` – checks boolean expression to be false `if (!expr)`
 * `.var` – initialize new variable with expression `T x = expr;`
+* `.null` – checks nullable expression to be null `if (expr == null)`
+* `.notnull` – checks expression to be non-null `if (expr != null)`
 
 Upcoming templates:
 
 * `.arg` – helps surround argument with invocation `method(expr)`
 * `.cast` – surrounds expression with cast `(SomeType) expr`
-* `.null` – checks nullable expression to be null `if (expr == null)`
-* `.notnull` – checks expression to be non-null `if (expr != null)`
 * `.for` – iterates over collection `for (T item : collection)`
 * `.fori` – surrounds with loop `for (int i = 0; i < expr.length; i++)`
 * `.forr` – reverse loop `for (int i = expr.length; i >= 0; i--)`
