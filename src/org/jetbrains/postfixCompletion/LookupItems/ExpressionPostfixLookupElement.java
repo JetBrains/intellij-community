@@ -35,8 +35,8 @@ public abstract class ExpressionPostfixLookupElement<TExpression extends PsiExpr
     @NotNull PsiElementFactory factory, @NotNull PsiExpression expression, @NotNull PsiElement context);
 
   @Override protected void postProcess(
-      @NotNull InsertionContext context, @NotNull TExpression statement) {
-    int offset = statement.getTextRange().getEndOffset();
+      @NotNull InsertionContext context, @NotNull TExpression expression) {
+    int offset = expression.getTextRange().getEndOffset();
     context.getEditor().getCaretModel().moveToOffset(offset);
   }
 }

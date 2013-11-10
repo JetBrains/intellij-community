@@ -30,5 +30,11 @@ public class PostfixCompletionTest extends LightCodeInsightFixtureTestCase {
   public void testVar07() { test("var\n"); }
   public void testVar08() { test("var\n"); }
   public void testVar09() { test("var\n"); }
+
+  public void testNotNull01() { test("nn\n"); }
+  public void testNull01() { test("null\n"); }
+
+  public void testNot01() { test("not\n"); }
+  public void testNot02() { test("not\n"); }
 }
 

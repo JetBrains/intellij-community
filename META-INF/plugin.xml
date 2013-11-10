@@ -39,6 +39,9 @@
     <component>
       <implementation-class>org.jetbrains.postfixCompletion.TemplateProviders.IsNullCheckTemplateProvider</implementation-class>
     </component>
+    <component>
+      <implementation-class>org.jetbrains.postfixCompletion.TemplateProviders.NotExpressionTemplateProvider</implementation-class>
+    </component>
   </application-components>
 
   <module-components>
