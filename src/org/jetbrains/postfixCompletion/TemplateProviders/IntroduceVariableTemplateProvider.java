@@ -16,6 +16,8 @@ import org.jetbrains.postfixCompletion.LookupItems.*;
 
 import java.util.*;
 
+// toso: support ArrayList<Integer>.var
+
 @TemplateProvider(
   templateName = "var",
   description = "Introduces variable for expression",

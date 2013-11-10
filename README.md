@@ -17,15 +17,15 @@ Currently available templates:
 * `.var` – initialize new variable with expression `T x = expr;`
 * `.null` – checks nullable expression to be null `if (expr == null)`
 * `.notnull` – checks expression to be non-null `if (expr != null)`
+* `.not` – negates value of inner boolean expression `!expr`
+* `.for` – iterates over collection `for (T item : collection)`
 
 Upcoming templates:
 
 * `.arg` – helps surround argument with invocation `method(expr)`
 * `.cast` – surrounds expression with cast `(SomeType) expr`
-* `.for` – iterates over collection `for (T item : collection)`
 * `.fori` – surrounds with loop `for (int i = 0; i < expr.length; i++)`
 * `.forr` – reverse loop `for (int i = expr.length; i >= 0; i--)`
-* `.not` – negates value of inner boolean expression `!expr`
 * `.field` – introduces field for expression `_field = expr;`
 * `.new` – produces instantiation expression for type `new T()`
 * `.par` – surrounds outer expression with parentheses `(expr)`

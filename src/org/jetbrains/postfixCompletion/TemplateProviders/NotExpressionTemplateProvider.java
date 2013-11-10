@@ -11,6 +11,8 @@ import org.jetbrains.postfixCompletion.LookupItems.*;
 
 import java.util.*;
 
+// TODO: disable on types/packages
+
 @TemplateProvider(
   templateName = "not",
   description = "Negates boolean expression",
@@ -29,7 +31,6 @@ public final class NotExpressionTemplateProvider extends BooleanTemplateProvider
 
     @NotNull @Override protected PsiExpression createNewExpression(
       @NotNull PsiElementFactory factory, @NotNull PsiExpression expression, @NotNull PsiElement context) {
-
       return CodeInsightServicesUtil.invertCondition(expression);
     }
 
@@ -53,8 +54,8 @@ public final class NotExpressionTemplateProvider extends BooleanTemplateProvider
     }
 
     private boolean isUnaryNegation(@Nullable PsiElement element) {
-      return element instanceof PsiPrefixExpression &&
-        ((PsiPrefixExpression) element).getOperationTokenType() == JavaTokenType.EXCL;
+      return (element instanceof PsiPrefixExpression)
+          && ((PsiPrefixExpression) element).getOperationTokenType() == JavaTokenType.EXCL;
     }
   }
 }

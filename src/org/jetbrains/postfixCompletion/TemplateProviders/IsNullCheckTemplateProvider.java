@@ -16,6 +16,9 @@ public class IsNullCheckTemplateProvider extends TemplateProviderBase {
   @Override public void createItems(
       @NotNull PostfixTemplateAcceptanceContext context, @NotNull List<LookupElement> consumer) {
     PrefixExpressionContext expression = context.outerExpression;
+
+    if (expression.referencedElement instanceof PsiClass) return;
+    if (expression.referencedElement instanceof PsiPackage) return;
     if (!expression.canBeStatement) return;
 
     PsiType expressionType = expression.expressionType;
