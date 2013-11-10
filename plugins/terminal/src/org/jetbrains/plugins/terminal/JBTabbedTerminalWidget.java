@@ -194,8 +194,9 @@ public class JBTabbedTerminalWidget extends TabbedTerminalWidget {
     }
 
     private TabInfo createTabInfo(String name, JediTermWidget terminal) {
-      return new TabInfo(terminal).setText(name).setDragOutDelegate(myDragDelegate)
-        .setObject(new TerminalSessionVirtualFileImpl(name, terminal, mySettingsProvider));
+      TabInfo tabInfo = new TabInfo(terminal).setText(name).setDragOutDelegate(myDragDelegate);
+      return tabInfo
+        .setObject(new TerminalSessionVirtualFileImpl(tabInfo, terminal, mySettingsProvider));
     }
 
     public String getTitleAt(int i) {
