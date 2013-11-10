@@ -5,11 +5,17 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.fileEditor.impl.EditorTabbedContainer;
+import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.components.JBTextField;
+import com.intellij.ui.docking.DockContainer;
+import com.intellij.ui.docking.DockManager;
+import com.intellij.ui.docking.DragSession;
 import com.intellij.ui.tabs.TabInfo;
 import com.intellij.ui.tabs.TabsListener;
 import com.intellij.ui.tabs.impl.JBEditorTabs;
@@ -19,6 +25,7 @@ import com.jediterm.terminal.ui.*;
 import com.jediterm.terminal.ui.settings.SettingsProvider;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.terminal.vfs.TerminalSessionVirtualFileImpl;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -85,6 +92,8 @@ public class JBTabbedTerminalWidget extends TabbedTerminalWidget {
 
   public class JBTerminalTabs implements TerminalTabs {
     private final JBEditorTabs myTabs;
+
+    private TabInfo.DragOutDelegate myDragDelegate = new MyDragOutDelegate();
 
     private final CopyOnWriteArraySet<ChangeListener> myListeners = new CopyOnWriteArraySet<ChangeListener>();
 
@@ -170,7 +179,7 @@ public class JBTabbedTerminalWidget extends TabbedTerminalWidget {
     }
 
     @Override
-    public Component getComponent() {
+    public JComponent getComponent() {
       return myTabs.getComponent();
     }
 
@@ -181,7 +190,12 @@ public class JBTabbedTerminalWidget extends TabbedTerminalWidget {
 
     @Override
     public void addTab(String name, JediTermWidget terminal) {
-      myTabs.addTab(new TabInfo(terminal).setText(name));
+      myTabs.addTab(createTabInfo(name, terminal));
+    }
+
+    private TabInfo createTabInfo(String name, JediTermWidget terminal) {
+      return new TabInfo(terminal).setText(name).setDragOutDelegate(myDragDelegate)
+        .setObject(new TerminalSessionVirtualFileImpl(name, terminal));
     }
 
     public String getTitleAt(int i) {
@@ -289,7 +303,7 @@ public class JBTabbedTerminalWidget extends TabbedTerminalWidget {
           @Override
           public void setComponent(Component c) {
             myTabs.setTabDraggingEnabled(!(c instanceof JBTextField));
-              
+
             setPlaceholderContent(true, (JComponent)c);
           }
 
@@ -298,6 +312,70 @@ public class JBTabbedTerminalWidget extends TabbedTerminalWidget {
             setTitleAt(index, name);
           }
         });
+      }
+    }
+
+    class MyDragOutDelegate implements TabInfo.DragOutDelegate {
+
+      private TerminalSessionVirtualFileImpl myFile;
+      private DragSession mySession;
+
+      @Override
+      public void dragOutStarted(MouseEvent mouseEvent, TabInfo info) {
+        final TabInfo previousSelection = info.getPreviousSelection();
+        final Image img = JBTabsImpl.getComponentImage(info);
+        info.setHidden(true);
+        if (previousSelection != null) {
+          myTabs.select(previousSelection, true);
+        }
+
+        myFile = (TerminalSessionVirtualFileImpl)info.getObject();
+        Presentation presentation = new Presentation(info.getText());
+        presentation.setIcon(info.getIcon());
+        mySession = getDockManager()
+          .createDragSession(mouseEvent, new EditorTabbedContainer.DockableEditor(myProject, img, myFile, presentation,
+                                                                                  info.getComponent().getPreferredSize(), false));
+      }
+
+      private DockManager getDockManager() {
+        return DockManager.getInstance(myProject);
+      }
+
+      @Override
+      public void processDragOut(MouseEvent event, TabInfo source) {
+        mySession.process(event);
+      }
+
+      @Override
+      public void dragOutFinished(MouseEvent event, TabInfo source) {
+        boolean copy =
+          com.intellij.util.ui.UIUtil.isControlKeyDown(event) || mySession.getResponse(event) == DockContainer.ContentResponse.ACCEPT_COPY;
+        if (!copy) {
+          myFile.putUserData(FileEditorManagerImpl.CLOSING_TO_REOPEN, Boolean.TRUE);
+          //                    FileEditorManagerEx.getInstanceEx(myProject).closeFile(myFile, myWindow); TODO
+        }
+        else {
+          source.setHidden(false);
+        }
+
+        mySession.process(event);
+        if (!copy) {
+          myFile.putUserData(FileEditorManagerImpl.CLOSING_TO_REOPEN, null);
+        }
+
+        myFile = null;
+        mySession = null;
+      }
+
+      @Override
+      public void dragOutCancelled(TabInfo source) {
+        source.setHidden(false);
+        if (mySession != null) {
+          mySession.cancel();
+        }
+
+        myFile = null;
+        mySession = null;
       }
     }
   }

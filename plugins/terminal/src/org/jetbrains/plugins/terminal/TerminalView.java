@@ -12,8 +12,13 @@ import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener;
+import com.intellij.ui.awt.RelativePoint;
+import com.intellij.ui.awt.RelativeRectangle;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
+import com.intellij.ui.docking.DockContainer;
+import com.intellij.ui.docking.DockManager;
+import com.intellij.ui.docking.DockableContent;
 import com.intellij.util.ui.UIUtil;
 import com.jediterm.terminal.ui.JediTermWidget;
 import com.jediterm.terminal.ui.TabbedTerminalWidget;
@@ -21,8 +26,10 @@ import com.jediterm.terminal.ui.TerminalWidget;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.terminal.vfs.TerminalSessionVirtualFileImpl;
 
 import javax.swing.*;
+import java.awt.*;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 
@@ -34,6 +41,8 @@ public class TerminalView {
   private JBTabbedTerminalWidget myTerminalWidget;
 
   private final Project myProject;
+
+  private TerminalDockContainer myDockContainer;
 
   public TerminalView(Project project) {
     myProject = project;
@@ -81,6 +90,12 @@ public class TerminalView {
         }
       });
     }
+
+    if (myDockContainer == null) {
+      myDockContainer = new TerminalDockContainer(toolWindow);
+
+      DockManager.getInstance(myProject).register(myDockContainer);
+    }
   }
 
   private Content createTerminalInContentPanel(@Nullable LocalTerminalDirectRunner terminalRunner,
@@ -118,7 +133,6 @@ public class TerminalView {
     toolbar.setTargetComponent(panel);
     panel.setToolbar(toolbar.getComponent());
 
-    
 
     content.setPreferredFocusableComponent(myTerminalWidget.getComponent());
 
@@ -230,6 +244,93 @@ public class TerminalView {
       myTerminal.closeCurrentSession();
 
       hideIfNoActiveSessions(myToolWindow, myTerminal);
+    }
+  }
+
+  /**
+   * @author traff
+   */
+  public class TerminalDockContainer implements DockContainer {
+    private ToolWindow myTerminalToolWindow;
+  
+    public TerminalDockContainer(ToolWindow toolWindow) {
+      myTerminalToolWindow = toolWindow;
+    }
+  
+    @Override
+    public RelativeRectangle getAcceptArea() {
+      return new RelativeRectangle(myTerminalToolWindow.getComponent());
+    }
+  
+    @NotNull
+    @Override
+    public ContentResponse getContentResponse(@NotNull DockableContent content, RelativePoint point) {
+      return ContentResponse.ACCEPT_MOVE;
+    }
+  
+    @Override
+    public JComponent getContainerComponent() {
+      return myTerminalToolWindow.getComponent();
+    }
+  
+    @Override
+    public void add(@NotNull DockableContent content, RelativePoint dropTarget) {
+      if (content.getKey() instanceof TerminalSessionVirtualFileImpl) {
+        TerminalSessionVirtualFileImpl terminalFile = (TerminalSessionVirtualFileImpl)content.getKey();
+        myTerminalWidget.addTab(terminalFile.getName(), terminalFile.getTerminal());
+      }
+    }
+  
+    @Override
+    public void closeAll() {
+  
+    }
+  
+    @Override
+    public void addListener(Listener listener, Disposable parent) {
+  
+    }
+  
+    @Override
+    public boolean isEmpty() {
+      return false;
+    }
+  
+    @Nullable
+    @Override
+    public Image startDropOver(@NotNull DockableContent content, RelativePoint point) {
+      return null;
+    }
+  
+    @Nullable
+    @Override
+    public Image processDropOver(@NotNull DockableContent content, RelativePoint point) {
+      return null;
+    }
+  
+    @Override
+    public void resetDropOver(@NotNull DockableContent content) {
+  
+    }
+  
+    @Override
+    public boolean isDisposeWhenEmpty() {
+      return false;
+    }
+  
+    @Override
+    public void showNotify() {
+  
+    }
+  
+    @Override
+    public void hideNotify() {
+  
+    }
+  
+    @Override
+    public void dispose() {
+  
     }
   }
 }
