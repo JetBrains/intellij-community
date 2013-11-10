@@ -21,8 +21,8 @@ import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorLocation;
 import com.intellij.openapi.fileEditor.FileEditorState;
 import com.intellij.openapi.fileEditor.FileEditorStateLevel;
+import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
 import com.intellij.openapi.util.UserDataHolderBase;
-import com.jediterm.terminal.ui.JediTermWidget;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -34,31 +34,29 @@ import java.beans.PropertyChangeListener;
  */
 public class TerminalSessionEditor extends UserDataHolderBase implements FileEditor {
 
-  private final JediTermWidget myTerminal;
-  private final String myName;
+  private final TerminalSessionVirtualFileImpl myFile;
 
   public TerminalSessionEditor(@NotNull TerminalSessionVirtualFileImpl terminalFile) {
-    myTerminal = terminalFile.getTerminal();
-    myName = terminalFile.getName();
+    myFile = terminalFile;
   }
 
 
   @NotNull
   @Override
   public JComponent getComponent() {
-    return myTerminal;
+    return myFile.getTerminal();
   }
 
   @Nullable
   @Override
   public JComponent getPreferredFocusedComponent() {
-    return myTerminal;
+    return myFile.getTerminal();
   }
 
   @NotNull
   @Override
   public String getName() {
-    return myName;
+    return myFile.getName();
   }
 
   @NotNull
@@ -122,6 +120,8 @@ public class TerminalSessionEditor extends UserDataHolderBase implements FileEdi
 
   @Override
   public void dispose() {
-    myTerminal.close();
+    if (!myFile.getUserData(FileEditorManagerImpl.CLOSING_TO_REOPEN)) {
+      myFile.getTerminal().close();
+    }
   }
 }

@@ -13,7 +13,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.components.JBTextField;
-import com.intellij.ui.docking.DockContainer;
 import com.intellij.ui.docking.DockManager;
 import com.intellij.ui.docking.DragSession;
 import com.intellij.ui.tabs.TabInfo;
@@ -28,8 +27,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.terminal.vfs.TerminalSessionVirtualFileImpl;
 
 import javax.swing.*;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.List;
@@ -95,7 +92,7 @@ public class JBTabbedTerminalWidget extends TabbedTerminalWidget {
 
     private TabInfo.DragOutDelegate myDragDelegate = new MyDragOutDelegate();
 
-    private final CopyOnWriteArraySet<ChangeListener> myListeners = new CopyOnWriteArraySet<ChangeListener>();
+    private final CopyOnWriteArraySet<TabChangeListener> myListeners = new CopyOnWriteArraySet<TabChangeListener>();
 
     public JBTerminalTabs(@NotNull Project project, @NotNull Disposable parent) {
       final ActionManager actionManager = ActionManager.getInstance();
@@ -109,17 +106,20 @@ public class JBTabbedTerminalWidget extends TabbedTerminalWidget {
       myTabs.addListener(new TabsListener.Adapter() {
         @Override
         public void selectionChanged(TabInfo oldSelection, TabInfo newSelection) {
-          fireChanged(new ChangeEvent(myTabs));
+          for (TabChangeListener each : myListeners) {
+            each.selectionChanged();
+          }
+        }
+
+        @Override
+        public void tabRemoved(TabInfo tabInfo) {
+          for (TabChangeListener each : myListeners) {
+            each.tabRemoved();
+          }
         }
       });
 
       myTabs.setTabDraggingEnabled(true);
-    }
-
-    private void fireChanged(ChangeEvent event) {
-      for (ChangeListener each : myListeners) {
-        each.stateChanged(event);
-      }
     }
 
     @Override
@@ -161,7 +161,7 @@ public class JBTabbedTerminalWidget extends TabbedTerminalWidget {
     }
 
     @Override
-    public void addChangeListener(ChangeListener listener) {
+    public void addChangeListener(TabChangeListener listener) {
       myListeners.add(listener);
     }
 
@@ -348,20 +348,15 @@ public class JBTabbedTerminalWidget extends TabbedTerminalWidget {
 
       @Override
       public void dragOutFinished(MouseEvent event, TabInfo source) {
-        boolean copy =
-          com.intellij.util.ui.UIUtil.isControlKeyDown(event) || mySession.getResponse(event) == DockContainer.ContentResponse.ACCEPT_COPY;
-        if (!copy) {
-          myFile.putUserData(FileEditorManagerImpl.CLOSING_TO_REOPEN, Boolean.TRUE);
-          //                    FileEditorManagerEx.getInstanceEx(myProject).closeFile(myFile, myWindow); TODO
-        }
-        else {
-          source.setHidden(false);
-        }
-
+        myFile.putUserData(FileEditorManagerImpl.CLOSING_TO_REOPEN, Boolean.TRUE);
+        
+        
+        myTabs.removeTab(source);
+        
         mySession.process(event);
-        if (!copy) {
-          myFile.putUserData(FileEditorManagerImpl.CLOSING_TO_REOPEN, null);
-        }
+
+        myFile.putUserData(FileEditorManagerImpl.CLOSING_TO_REOPEN, null);
+        
 
         myFile = null;
         mySession = null;

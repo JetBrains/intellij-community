@@ -236,7 +236,7 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
 
     myComponent.setContent(wrappper);
 
-    myTabs.addListener(new TabsListener() {
+    myTabs.addListener(new TabsListener.Adapter() {
 
       @Override
       public void beforeSelectionChanged(TabInfo oldSelection, TabInfo newSelection) {
