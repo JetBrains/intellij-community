@@ -983,16 +983,14 @@
     <langCodeStyleSettingsProvider implementation="com.intellij.ide.JavaLanguageCodeStyleSettingsProvider"/>
 
 
-    <stacktrace.fold substring="at java.awt.EventDispatchThread.pumpEventsForFilter("/>
-    <stacktrace.fold substring="at java.awt.EventDispatchThread.pumpEventsForHierarchy("/>
-    <stacktrace.fold substring="at java.awt.EventDispatchThread.pumpEvents("/>
+    <stacktrace.fold substring="at java.awt.EventDispatchThread"/>
     <stacktrace.fold substring="at java.awt.Window.dispatchEventImpl("/>
     <stacktrace.fold substring="at java.awt.Container.dispatchEventImpl("/>
     <stacktrace.fold substring="at java.awt.LightweightDispatcher."/>
     <stacktrace.fold substring="at java.awt.Component.dispatchEvent("/>
-    <stacktrace.fold substring="at java.awt.EventQueue.dispatchEvent("/>
+    <stacktrace.fold substring="at java.awt.event.InvocationEvent.dispatch("/>
+    <stacktrace.fold substring="at java.awt.EventQueue"/>
     <stacktrace.fold substring="at java.awt.Component.dispatchEventImpl("/>
-    <stacktrace.fold substring="at java.awt.EventDispatchThread.pumpOneEventForFilters("/>
     <stacktrace.fold substring="at java.awt.Container.processEvent("/>
     <stacktrace.fold substring="at javax.swing.JComponent.processMouseEvent("/>
     <stacktrace.fold substring="at javax.swing.plaf.basic.BasicMenuItemUI"/>
@@ -1004,12 +1002,10 @@
     <stacktrace.fold substring="at javax.swing.DefaultButtonModel.setPressed("/>
     <stacktrace.fold substring="at javax.swing.AbstractButton.fireActionPerformed("/>
     <stacktrace.fold substring="at javax.swing.AbstractButton$Handler.actionPerformed("/>
-    <stacktrace.fold substring="at java.awt.EventQueue$1.run("/>
     <stacktrace.fold substring="at java.security.AccessControlContext$1.doIntersectionPrivilege("/>
     <stacktrace.fold substring="at java.awt.EventQueue.dispatchEventImpl("/>
     <stacktrace.fold substring="at java.security.AccessController.doPrivileged(Native Method)"/>
-    <stacktrace.fold substring="at java.awt.EventQueue$2.run("/>
-    <stacktrace.fold substring="at java.awt.EventQueue.access$000("/>
+    <stacktrace.fold substring="at java.security.ProtectionDomain$1.doIntersectionPrivilege("/>
     <stacktrace.fold substring="at com.jgoodies.binding.beans.ExtendedPropertyChangeSupport.firePropertyChange0("/>
     <stacktrace.fold substring="at javax.swing.plaf.basic.BasicComboPopup$Handler.mouseReleased("/>
 
