@@ -58,4 +58,10 @@ public class RefsModel {
   public Collection<VcsRef> getBranches() {
     return myBranches;
   }
+
+  @NotNull
+  public Collection<VcsRef> getAllRefs() {
+    return new ArrayList<VcsRef>(myRefsToHashes.values());
+  }
+
 }
