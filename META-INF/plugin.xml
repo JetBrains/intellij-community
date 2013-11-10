@@ -1,9 +1,9 @@
 <idea-plugin version="2">
   <id>org.jetbrains.postfixCompletion</id>
-  <name>PostfixCompletion for IntelliJ</name>
+  <name>Postfix Completion</name>
   <version>0.1.0</version>
   <vendor email="alexander.shvedov@jetbrains.com"
-          url="http://jetbrains.com">JetBrains</vendor>
+          url="https://github.com/controlflow">Alexander Shvedov</vendor>
 
   <description><![CDATA[
       Enter short description for your plugin here.<br>

@@ -23,11 +23,11 @@ public class IsNullCheckTemplateProvider extends TemplateProviderBase {
       if (expressionType instanceof PsiPrimitiveType) return;
     }
 
-    consumer.add(new CheckNotNullLookupElement(expression));
+    consumer.add(new CheckIsNullLookupElement(expression));
   }
 
-  private static final class CheckNotNullLookupElement extends NullCheckLookupElementBase {
-    public CheckNotNullLookupElement(@NotNull PrefixExpressionContext context) {
+  private static final class CheckIsNullLookupElement extends NullCheckLookupElementBase {
+    public CheckIsNullLookupElement(@NotNull PrefixExpressionContext context) {
       super("null", context);
     }
 
