@@ -23,10 +23,13 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsKey;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.Consumer;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.VcsLogBranchFilter;
+import com.intellij.vcs.log.data.VcsLogDateFilter;
+import com.intellij.vcs.log.data.VcsLogStructureFilter;
 import com.intellij.vcs.log.data.VcsLogUserFilter;
 import com.intellij.vcs.log.impl.HashImpl;
 import com.intellij.vcs.log.impl.VcsRefImpl;
@@ -66,7 +69,7 @@ public class GitLogProvider implements VcsLogProvider {
     myProject = project;
     myRepositoryManager = repositoryManager;
     myRefSorter = new GitRefManager(myRepositoryManager);
-    myVcsObjectsFactory = ServiceManager.getService(VcsLogObjectsFactory.class);
+    myVcsObjectsFactory = ServiceManager.getService(myProject, VcsLogObjectsFactory.class);
   }
 
   @NotNull
@@ -83,8 +86,8 @@ public class GitLogProvider implements VcsLogProvider {
 
   @NotNull
   @Override
-  public List<TimedVcsCommit> readAllHashes(@NotNull VirtualFile root) throws VcsException {
-    return GitHistoryUtils.readAllHashes(myProject, root);
+  public List<TimedVcsCommit> readAllHashes(@NotNull VirtualFile root, @NotNull Consumer<VcsUser> userRegistry) throws VcsException {
+    return GitHistoryUtils.readAllHashes(myProject, root, userRegistry);
   }
 
   @NotNull
@@ -200,6 +203,18 @@ public class GitLogProvider implements VcsLogProvider {
       filterParameters.add(prepareParameter("author", authorFilter));
     }
 
+    List<VcsLogDateFilter> dateFilters = ContainerUtil.findAll(filters, VcsLogDateFilter.class);
+    if (!dateFilters.isEmpty()) {
+      // assuming there is only one date filter, until filter expressions are defined
+      VcsLogDateFilter filter = dateFilters.iterator().next();
+      if (filter.getAfter() != null) {
+        filterParameters.add("--after=" + filter.getAfter().toString());
+      }
+      if (filter.getBefore() != null) {
+        filterParameters.add("--before=" + filter.getBefore().toString());
+      }
+    }
+
     List<VcsLogTextFilter> textFilters = ContainerUtil.findAll(filters, VcsLogTextFilter.class);
     if (textFilters.size() > 1) {
       LOG.warn("Expected only one text filter: " + textFilters);
@@ -209,7 +224,19 @@ public class GitLogProvider implements VcsLogProvider {
       filterParameters.add(prepareParameter("grep", textFilter));
     }
 
-    filterParameters.add("--regexp-ignore-case"); // affects case sensitivity of any filter
+    filterParameters.add("--regexp-ignore-case"); // affects case sensitivity of any filter (except file filter)
+
+    // note: this filter must be the last parameter, because it uses "--" which separates parameters from paths
+    List<VcsLogStructureFilter> structureFilters = ContainerUtil.findAll(filters, VcsLogStructureFilter.class);
+    if (!structureFilters.isEmpty()) {
+      filterParameters.add("--");
+      for (VcsLogStructureFilter filter : structureFilters) {
+        for (VirtualFile file : filter.getFiles(root)) {
+          filterParameters.add(file.getPath());
+        }
+      }
+    }
+
     return GitHistoryUtils.getAllDetails(myProject, root, filterParameters);
   }
 
@@ -217,7 +244,8 @@ public class GitLogProvider implements VcsLogProvider {
   @Override
   public VcsUser getCurrentUser(@NotNull VirtualFile root) throws VcsException {
     String userName = GitConfigUtil.getValue(myProject, root, GitConfigUtil.USER_NAME);
-    return userName == null ? null : myVcsObjectsFactory.createUser(userName);
+    String userEmail = StringUtil.notNullize(GitConfigUtil.getValue(myProject, root, GitConfigUtil.USER_EMAIL));
+    return userName == null ? null : myVcsObjectsFactory.createUser(userName, userEmail);
   }
 
   private static String prepareParameter(String paramName, String value) {

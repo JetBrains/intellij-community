@@ -34,6 +34,7 @@ public abstract class InvokeThread<E extends PrioritizedTask> {
   public static final class WorkerThreadRequest<E extends PrioritizedTask> implements Runnable {
     private final InvokeThread<E> myOwner;
     private volatile Future<?> myRequestFuture;
+    private volatile boolean myStopRequested = false;
 
     WorkerThreadRequest(InvokeThread<E> owner) {
       myOwner = owner;
@@ -60,13 +61,16 @@ public abstract class InvokeThread<E extends PrioritizedTask> {
     }
 
     public void interrupt() {
-      assert myRequestFuture != null;
-      myRequestFuture.cancel( true );  
+      final Future<?> future = myRequestFuture;
+      assert future != null;
+      myStopRequested = true;
+      future.cancel(true);
     }
 
     public boolean isInterrupted() {
-      assert myRequestFuture != null;
-      return myRequestFuture.isCancelled() || myRequestFuture.isDone();
+      final Future<?> future = myRequestFuture;
+      assert future != null;
+      return myStopRequested || future.isCancelled() || future.isDone();
     }
 
     public void join() throws InterruptedException, ExecutionException {
@@ -189,15 +193,15 @@ public abstract class InvokeThread<E extends PrioritizedTask> {
     return myEvents.pushBack(r, r.getPriority().ordinal());
   }
 
-  protected void switchToRequest(WorkerThreadRequest newWorkerThread) {
-    final WorkerThreadRequest request = getCurrentThreadRequest();
-    LOG.assertTrue(request != null);
-    myCurrentRequest = newWorkerThread;
+  protected void switchToRequest(WorkerThreadRequest newRequest) {
+    final WorkerThreadRequest currentThreadRequest = getCurrentThreadRequest();
+    LOG.assertTrue(currentThreadRequest != null);
+    myCurrentRequest = newRequest;
     if (LOG.isDebugEnabled()) {
-      LOG.debug("Closing " + request + " new request = " + newWorkerThread);
+      LOG.debug("Closing " + currentThreadRequest + " new request = " + newRequest);
     }
 
-    request.interrupt();
+    currentThreadRequest.interrupt();
   }
 
   public WorkerThreadRequest getCurrentRequest() {

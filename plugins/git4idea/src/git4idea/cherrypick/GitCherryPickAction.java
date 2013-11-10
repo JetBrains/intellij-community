@@ -198,7 +198,7 @@ public class GitCherryPickAction extends DumbAwareAction {
     return ContainerUtil.map(commits, new Function<GitHeavyCommit, VcsFullCommitDetails>() {
       @Override
       public VcsFullCommitDetails fun(GitHeavyCommit commit) {
-        final VcsLogObjectsFactory factory = ServiceManager.getService(VcsLogObjectsFactory.class);
+        final VcsLogObjectsFactory factory = ServiceManager.getService(project, VcsLogObjectsFactory.class);
         List<Hash> parents = ContainerUtil.map(commit.getParentsHashes(), new Function<String, Hash>() {
           @Override
           public Hash fun(String hashValue) {

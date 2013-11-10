@@ -27,6 +27,8 @@ import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.xml.XmlBundle;
 import com.intellij.xml.util.HtmlUtil;
 
+import java.util.Set;
+
 class SelectInDefaultBrowserTarget extends SelectInTargetBase {
   private static final Logger LOG = Logger.getInstance(SelectInDefaultBrowserTarget.class);
 
@@ -44,7 +46,7 @@ class SelectInDefaultBrowserTarget extends SelectInTargetBase {
       return false;
     }
 
-    Pair<WebBrowserUrlProvider, Url> browserUrlProvider = WebBrowserServiceImpl.getProvider(file);
+    Pair<WebBrowserUrlProvider, Set<Url>> browserUrlProvider = WebBrowserServiceImpl.getProvider(file);
     currentName = XmlBundle.message("browser.select.in.default.name");
     if (browserUrlProvider == null) {
       return HtmlUtil.isHtmlFile(file) && !(file.getVirtualFile() instanceof LightVirtualFile);
@@ -69,7 +71,7 @@ class SelectInDefaultBrowserTarget extends SelectInTargetBase {
     LOG.assertTrue(psiElement != null);
     PsiFile psiFile = psiElement.getContainingFile();
     LOG.assertTrue(psiFile != null);
-    OpenFileInDefaultBrowserAction.doOpen(psiFile, false);
+    OpenFileInDefaultBrowserAction.doOpen(psiFile, false, null);
   }
 
   @Override

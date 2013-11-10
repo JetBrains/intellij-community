@@ -49,6 +49,7 @@ import org.jetbrains.plugins.gradle.remote.impl.GradleLibraryNamesMixer;
 import org.jetbrains.plugins.gradle.settings.ClassHolder;
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
+import org.jetbrains.plugins.gradle.util.GradleEnvironment;
 
 import java.util.*;
 
@@ -152,6 +153,11 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
       resolverCtx.getSettings(), resolverCtx.getListener(),
       parametersList.getParameters(), resolverCtx.getConnection());
 
+    // TODO [vlad] remove the check
+    if (GradleEnvironment.USE_ENHANCED_TOOLING_API) {
+      GradleExecutionHelper.setInitScript(buildActionExecutor);
+    }
+
     ProjectImportAction.AllModels allModels;
     try {
       allModels = buildActionExecutor.run();
@@ -220,6 +226,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
     for (final Pair<DataNode<ModuleData>, IdeaModule> pair : moduleMap.values()) {
       final DataNode<ModuleData> moduleDataNode = pair.first;
       final IdeaModule ideaModule = pair.second;
+      projectResolverChain.populateModuleExtraModels(ideaModule, moduleDataNode);
       projectResolverChain.populateModuleContentRoots(ideaModule, moduleDataNode);
       projectResolverChain.populateModuleCompileOutputSettings(ideaModule, moduleDataNode);
       projectResolverChain.populateModuleDependencies(ideaModule, moduleDataNode, projectDataNode);
@@ -251,7 +258,8 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
   private static BuildEnvironment getBuildEnvironment(@NotNull ProjectResolverContext resolverCtx) {
     try {
       return resolverCtx.getConnection().getModel(BuildEnvironment.class);
-    } catch (Exception e) {
+    }
+    catch (Exception e) {
       return null;
     }
   }

@@ -20,4 +20,10 @@ public class RngHtml5SchemaProvider extends Html5SchemaProvider {
   public URL getXhtmlSchemaLocation() {
     return RngHtml5SchemaProvider.class.getResource("/resources/html5-schema/xhtml5.rnc");
   }
+
+  @NotNull
+  @Override
+  public URL getCharsLocation() {
+    return RngHtml5SchemaProvider.class.getResource("/resources/html5-schema/html5chars.ent");
+  }
 }

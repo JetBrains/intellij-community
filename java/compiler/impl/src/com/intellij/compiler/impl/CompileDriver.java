@@ -913,7 +913,7 @@ public class CompileDriver {
         lfs.refreshIoFiles(outputs, _status == ExitStatus.CANCELLED, false, null);
         indicator.setText("");
       }
-      if (compileContext.isAnnotationProcessorsEnabled()) {
+      if (compileContext.isAnnotationProcessorsEnabled() && !myProject.isDisposed()) {
         final Set<File> genSourceRoots = new THashSet<File>(FileUtil.FILE_HASHING_STRATEGY);
         final CompilerConfiguration config = CompilerConfiguration.getInstance(myProject);
         for (Module module : affectedModules) {

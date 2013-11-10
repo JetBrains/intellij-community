@@ -8,8 +8,7 @@ import javax.swing.*;
 import javax.swing.tree.DefaultTreeModel;
 
 /**
- * Created by IntelliJ IDEA.
- * User: michael.golubev
+ * @author michael.golubev
  */
 public class TreeBuilderBase extends AbstractTreeBuilder {
   public TreeBuilderBase(JTree tree, AbstractTreeStructureBase structure, DefaultTreeModel treeModel) {

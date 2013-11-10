@@ -413,7 +413,8 @@
     <langCodeStyleSettingsProvider implementation="org.jetbrains.plugins.groovy.codeStyle.GroovyLanguageCodeStyleSettingsProvider"/>
     <codeStyleSettingsProvider implementation="org.jetbrains.plugins.groovy.codeStyle.GroovyCodeStyleSettingsProvider"/>
 
-    <typeHierarchyProvider language="Groovy" implementationClass="org.jetbrains.plugins.groovy.lang.GroovyTypeHierarchyProvider"/>
+    <typeHierarchyProvider language="Groovy" implementationClass="org.jetbrains.plugins.groovy.hierarchy.type.GroovyTypeHierarchyProvider"/>
+    <callHierarchyProvider language="Groovy" implementationClass="org.jetbrains.plugins.groovy.hierarchy.call.GrCallHierarchyProvider"/>
 
     <lang.unwrapDescriptor language="Groovy" implementationClass="org.jetbrains.plugins.groovy.unwrap.GroovyUnwrapDescriptor"/>
 
@@ -985,14 +986,6 @@
                      displayName="Method parameter naming convention"
                      groupName="Naming Conventions" enabledByDefault="false" level="WARNING"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.naming.GroovyParameterNamingConventionInspection"/>
-    <localInspection language="Groovy" groupPath="Groovy" shortName="GroovyGetterCallCanBePropertyAccess"
-                     displayName="Getter call can be property access"
-                     groupName="GPath inspections" enabledByDefault="false" level="WARNING"
-                     implementationClass="org.jetbrains.plugins.groovy.codeInspection.gpath.GroovyGetterCallCanBePropertyAccessInspection"/>
-    <localInspection language="Groovy" groupPath="Groovy" shortName="GroovySetterCallCanBePropertyAccess"
-                     displayName="Setter call can be property access"
-                     groupName="GPath inspections" enabledByDefault="false" level="WARNING"
-                     implementationClass="org.jetbrains.plugins.groovy.codeInspection.gpath.GroovySetterCallCanBePropertyAccessInspection"/>
     <localInspection language="Groovy" groupPath="Groovy" shortName="GroovyMapGetCanBeKeyedAccess"
                      displayName="Call to Map.get can be keyed access"
                      groupName="GPath inspections" enabledByDefault="false" level="WARNING"
@@ -1458,6 +1451,7 @@
     <refactoring.pullUpHelperFactory language="Groovy"
                                      implementationClass="org.jetbrains.plugins.groovy.refactoring.memberPullUp.GrPullUpHelperFactory"/>
     <classTypePointerFactory implementation="org.jetbrains.plugins.groovy.lang.psi.impl.smartPointers.GrClassReferenceTypePointerFactory"/>
+    <hierarchy.referenceProcessor implementation="org.jetbrains.plugins.groovy.hierarchy.call.GrCallReferenceProcessor"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij.debugger">

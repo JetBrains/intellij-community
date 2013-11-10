@@ -182,7 +182,7 @@ public class Messages {
   public static int showDialog(Project project,
                                String message,
                                @NotNull String title,
-                               String moreInfo,
+                               @Nullable String moreInfo,
                                @NotNull String[] options,
                                int defaultOptionIndex,
                                int focusedOptionIndex,
@@ -1055,12 +1055,12 @@ public class Messages {
   }
 
     private static class MoreInfoMessageDialog extends MessageDialog {
-    private final String myInfoText;
+    @Nullable private final String myInfoText;
 
     public MoreInfoMessageDialog(Project project,
                                  String message,
                                  String title,
-                                 String moreInfo,
+                                 @Nullable String moreInfo,
                                  @NotNull String[] options,
                                  int defaultOptionIndex, int focusedOptionIndex, Icon icon) {
       super(project);
@@ -1075,6 +1075,9 @@ public class Messages {
 
     @Override
     protected JComponent createCenterPanel() {
+      if (myInfoText == null) {
+        return null;
+      }
       final JPanel panel = new JPanel(new BorderLayout());
       final JTextArea area = new JTextArea(myInfoText);
       area.setEditable(false);

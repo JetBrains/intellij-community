@@ -101,8 +101,8 @@ import java.util.List;
 
 public class CtrlMouseHandler extends AbstractProjectComponent {
   private static final AbstractDocumentationTooltipAction[] ourTooltipActions = {new ShowQuickDocAtPinnedWindowFromTooltipAction()};
-  private static Key<Boolean> ourDebuggerHighlighterKey;
-  private static Key<Boolean> ourXDebuggerHighlighterKey;
+  private static Key<?> ourDebuggerHighlighterKey;
+  private static Key<?> ourXDebuggerHighlighterKey;
   private final EditorColorsManager myEditorColorsManager;
 
   private       HighlightersSet myHighlighter;
@@ -914,13 +914,13 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
    * Patches attributes to be visible under debugger active line
    */
   @SuppressWarnings("UseJBColor")
-  private static TextAttributes patchAttributesColor(TextAttributes attributes, TextRange range, Editor editor, Key<Boolean> key) {
+  private static TextAttributes patchAttributesColor(TextAttributes attributes, TextRange range, Editor editor, Key<?> key) {
     if (key != null) {
       int line = editor.offsetToLogicalPosition(range.getStartOffset()).line;
       for (RangeHighlighter highlighter : editor.getMarkupModel().getAllHighlighters()) {
 
-        Boolean hasKey = highlighter.getUserData(key);
-        if (hasKey != null && hasKey) {
+        Object hasKey = highlighter.getUserData(key);
+        if (hasKey instanceof Boolean && ((Boolean)hasKey).booleanValue()) {
           if (editor.offsetToLogicalPosition(highlighter.getStartOffset()).line == line) {
             TextAttributes clone = attributes.clone();
             clone.setForegroundColor(Color.orange);
@@ -933,13 +933,13 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
     return attributes;
   }
 
-  private static Key<Boolean> getOrInitDebuggerHighlighterKey() {
+  private static Key<?> getOrInitDebuggerHighlighterKey() {
     if (ourDebuggerHighlighterKey == null) {
       ourDebuggerHighlighterKey = Key.findKeyByName("HIGHLIGHTER_USERDATA_KEY");
     }
     return ourDebuggerHighlighterKey;
   }
-  private static Key<Boolean> getOrInitXDebuggerHighlighterKey() {
+  private static Key<?> getOrInitXDebuggerHighlighterKey() {
     if (ourXDebuggerHighlighterKey == null) {
       ourXDebuggerHighlighterKey = Key.findKeyByName("EXECUTION_POINT_HIGHLIGHTER_KEY");
     }

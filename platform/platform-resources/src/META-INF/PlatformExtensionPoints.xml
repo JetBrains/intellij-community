@@ -98,6 +98,8 @@
 
     <extensionPoint name="projectTemplatesFactory"
                     interface="com.intellij.platform.ProjectTemplatesFactory"/>
+    <extensionPoint name="projectTemplate"
+                    beanClass="com.intellij.platform.ProjectTemplateEP"/>
 
     <extensionPoint name="ApplicationLoadListener" interface="com.intellij.ide.ApplicationLoadListener"/>
 

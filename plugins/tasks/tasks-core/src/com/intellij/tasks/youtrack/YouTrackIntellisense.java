@@ -61,6 +61,11 @@ public class YouTrackIntellisense {
     }
 
     @Override
+    protected boolean shouldMoveEntryToTopWhenReading() {
+      return true;
+    }
+
+    @Override
     protected boolean removeEldestEntry(Map.Entry<K, V> eldest, K key, V value) {
       return size() > myMaxSize;
     }

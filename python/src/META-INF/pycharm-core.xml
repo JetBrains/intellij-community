@@ -75,6 +75,9 @@
 
     <renameHandler implementation="com.intellij.platform.renameProject.RenameProjectHandler"/>
     <renameHandler implementation="com.intellij.platform.renameProject.ProjectFolderRenameHandler"/>
+
+    <applicationService serviceInterface="com.intellij.openapi.roots.SupportedRootTypes"
+                        serviceImplementation="com.jetbrains.python.PySupportedRootTypes"/>
   </extensions>
 
   <actions>

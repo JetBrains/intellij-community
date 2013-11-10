@@ -69,16 +69,15 @@ public class InferenceSession {
   }
   
   public InferenceSession(PsiTypeParameter[] typeParams,
-                          PsiParameter[] parameters, 
-                          PsiExpression[] args,
                           PsiSubstitutor siteSubstitutor,
-                          PsiElement parent,
                           PsiManager manager) {
     myManager = manager;
     mySiteSubstitutor = siteSubstitutor;
 
     initBounds(typeParams);
+  }
 
+  public void initExpressionConstraints(PsiParameter[] parameters, PsiExpression[] args, PsiElement parent) {
     final Pair<PsiMethod, PsiCallExpression> pair = getPair(parent);
     if (parameters.length > 0) {
       for (int i = 0; i < args.length; i++) {
@@ -427,16 +426,17 @@ public class InferenceSession {
             inferenceVariable.setInstantiation(null);
             continue;
           }
-          PsiType bound = null;
-          for (PsiType eqBound : eqBounds) {
-            if (eqBound == null) continue;
-            if (bound != null && !isProperType(eqBound)) continue;
-            bound = acceptBoundsWithRecursiveDependencies(typeParameter, eqBound, substitutor);
-          }
-          if (bound != null) {
-            if (bound instanceof PsiCapturedWildcardType && eqBounds.size() > 1) {
-              continue;
+          if (eqBounds.size() > 1) {
+            for (Iterator<PsiType> iterator = eqBounds.iterator(); iterator.hasNext(); ) {
+              PsiType eqBound = iterator.next();
+              if (PsiUtil.resolveClassInType(eqBound) == typeParameter) {
+                iterator.remove();
+              }
             }
+            if (eqBounds.size() > 1) continue;
+          }
+          PsiType bound = eqBounds.isEmpty() ? null :  acceptBoundsWithRecursiveDependencies(typeParameter, eqBounds.get(0), substitutor);
+          if (bound != null) {
             inferenceVariable.setInstantiation(bound);
           } else {
             PsiType lub = null;

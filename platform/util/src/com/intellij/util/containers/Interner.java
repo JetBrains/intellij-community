@@ -17,6 +17,8 @@ package com.intellij.util.containers;
 
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Set;
+
 public class Interner<T> {
 
   private final OpenTHashSet<T> mySet = new OpenTHashSet<T>();
@@ -36,6 +38,11 @@ public class Interner<T> {
 
   public void clear() {
     mySet.clear();
+  }
+
+  @NotNull
+  public Set<T> getValues() {
+    return mySet;
   }
 
 }

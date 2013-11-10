@@ -25,13 +25,7 @@ public interface VcsFullCommitDetails extends VcsShortCommitDetails {
   Collection<Change> getChanges();
 
   @NotNull
-  String getAuthorEmail();
-
-  @NotNull
-  String getCommitterName();
-
-  @NotNull
-  String getCommitterEmail();
+  VcsUser getCommitter();
 
   long getCommitTime();
 

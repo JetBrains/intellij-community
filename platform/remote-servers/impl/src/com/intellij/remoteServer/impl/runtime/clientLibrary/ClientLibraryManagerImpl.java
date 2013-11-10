@@ -31,8 +31,7 @@ import java.net.URL;
 import java.util.*;
 
 /**
- * Created by IntelliJ IDEA.
- * User: michael.golubev
+ * @author michael.golubev
  */
 @State(
   name = "RemoteServerClientLibraries",

@@ -17,6 +17,7 @@ package org.jetbrains.idea.maven.project;
 
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
@@ -32,6 +33,8 @@ import com.intellij.util.containers.Stack;
 import gnu.trove.THashSet;
 import gnu.trove.TObjectHashingStrategy;
 import org.jdom.Element;
+import org.jdom.output.Format;
+import org.jdom.output.XMLOutputter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -49,6 +52,9 @@ import java.util.regex.Pattern;
 import java.util.zip.CRC32;
 
 public class MavenProjectsTree {
+
+  private static final Logger LOG = Logger.getInstance(MavenProjectsTree.class);
+
   private static final String STORAGE_VERSION = MavenProjectsTree.class.getSimpleName() + ".6";
 
   private final Object myStateLock = new Object();
@@ -884,7 +890,7 @@ public class MavenProjectsTree {
 
     readLock();
     try {
-      CRC32 crc = new CRC32();
+      final CRC32 crc = new CRC32();
 
       Set<String> profiles = myExplicitProfiles;
       if (profiles != null) {
@@ -919,7 +925,7 @@ public class MavenProjectsTree {
         updateCrc(crc, mavenProject.getDirectory());
         updateCrc(crc, MavenFilteredPropertyPsiReferenceProvider.getDelimitersPattern(mavenProject).pattern());
         updateCrc(crc, mavenProject.getModelMap().hashCode());
-        updateCrc(crc, mavenProject.getResources().hashCode() + 1); // @todo remove '+1' after 01.05.2013 (when 12.0.1 become out of date)
+        updateCrc(crc, mavenProject.getResources().hashCode());
         updateCrc(crc, mavenProject.getTestResources().hashCode());
         updateCrc(crc, getFilterExclusions(mavenProject).hashCode());
         updateCrc(crc, mavenProject.getProperties().hashCode());
@@ -929,9 +935,41 @@ public class MavenProjectsTree {
           updateCrc(crc, file.lastModified());
         }
 
-        Element pluginConfiguration = mavenProject.getPluginConfiguration("org.apache.maven.plugins", "maven-resources-plugin");
-        updateCrc(crc, MavenJDOMUtil.findChildValueByPath(pluginConfiguration, "escapeString"));
-        updateCrc(crc, MavenJDOMUtil.findChildValueByPath(pluginConfiguration, "escapeWindowsPaths"));
+        XMLOutputter outputter = new XMLOutputter(Format.getCompactFormat());
+
+        Writer crcWriter = new Writer() {
+          @Override
+          public void write(char[] cbuf, int off, int len) throws IOException {
+            for (int i = off, end = off + len; i < end; i++) {
+              crc.update(cbuf[i]);
+            }
+          }
+
+          @Override
+          public void flush() throws IOException {
+
+          }
+
+          @Override
+          public void close() throws IOException {
+
+          }
+        };
+
+        try {
+          Element resourcePluginCfg = mavenProject.getPluginConfiguration("org.apache.maven.plugins", "maven-resources-plugin");
+          if (resourcePluginCfg != null) {
+            outputter.output(resourcePluginCfg, crcWriter);
+          }
+
+          Element warPluginCfg = mavenProject.getPluginConfiguration("org.apache.maven.plugins", "maven-war-plugin");
+          if (warPluginCfg != null) {
+            outputter.output(warPluginCfg, crcWriter);
+          }
+        }
+        catch (IOException e) {
+          LOG.error(e);
+        }
       }
 
       return (int)crc.getValue();

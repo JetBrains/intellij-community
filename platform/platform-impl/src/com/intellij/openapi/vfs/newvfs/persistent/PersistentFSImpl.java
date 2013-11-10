@@ -635,19 +635,18 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
                                       final Object requestor,
                                       final long modStamp,
                                       final long timeStamp) throws IOException {
-    final VFileContentChangeEvent event = new VFileContentChangeEvent(requestor, file, file.getModificationStamp(), modStamp, false);
-
-    final List<VFileContentChangeEvent> events = Collections.singletonList(event);
-
-    final BulkFileListener publisher = myEventsBus.syncPublisher(VirtualFileManager.VFS_CHANGES);
-    publisher.before(events);
-
     return new ByteArrayOutputStream() {
       private boolean closed; // protection against user calling .close() twice
+
       @Override
       public void close() throws IOException {
         if (closed) return;
         super.close();
+
+        VFileContentChangeEvent event = new VFileContentChangeEvent(requestor, file, file.getModificationStamp(), modStamp, false);
+        List<VFileContentChangeEvent> events = Collections.singletonList(event);
+        BulkFileListener publisher = myEventsBus.syncPublisher(VirtualFileManager.VFS_CHANGES);
+        publisher.before(events);
 
         NewVirtualFileSystem delegate = getDelegate(file);
         OutputStream ioFileStream = delegate.getOutputStream(file, requestor, modStamp, timeStamp);
@@ -665,6 +664,7 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
             closed = true;
             persistenceStream.close();
             ioFileStream.close();
+
             executeTouch(file, false, event.getModificationStamp());
             publisher.after(events);
           }
@@ -770,6 +770,7 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
       VirtualFile changedParent = null;
       if (event instanceof VFileCreateEvent) {
         changedParent = ((VFileCreateEvent)event).getParent();
+        ((VFileCreateEvent)event).resetCache();
       }
       else if (event instanceof VFileDeleteEvent) {
         changedParent = ((VFileDeleteEvent)event).getFile().getParent();

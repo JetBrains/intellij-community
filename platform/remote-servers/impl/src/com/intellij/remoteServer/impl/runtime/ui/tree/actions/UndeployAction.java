@@ -9,8 +9,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 
 /**
- * Created by IntelliJ IDEA.
- * User: michael.golubev
+ * @author michael.golubev
  */
 public class UndeployAction extends DeploymentActionBase {
   public UndeployAction() {

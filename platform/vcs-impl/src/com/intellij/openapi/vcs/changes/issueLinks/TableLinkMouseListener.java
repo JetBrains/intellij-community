@@ -18,11 +18,9 @@ package com.intellij.openapi.vcs.changes.issueLinks;
 import com.intellij.ui.ColoredTableCellRenderer;
 import com.intellij.ui.dualView.DualView;
 import com.intellij.ui.dualView.TreeTableView;
-import com.intellij.util.containers.Convertor;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableCellRenderer;
 import java.awt.*;
 import java.awt.event.MouseEvent;
@@ -32,7 +30,7 @@ import java.awt.event.MouseEvent;
  */
 public class TableLinkMouseListener extends AbstractBaseTagMouseListener {
   @Nullable
-  protected Object getTagAt(final MouseEvent e) {
+  public Object getTagAt(final MouseEvent e) {
     // TODO[yole]: don't update renderer on every event, like it's done in TreeLinkMouseListener
     Object tag = null;
     JTable table = (JTable)e.getSource();

@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.vcs.roots;
 
-import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsDirectoryMapping;
 import com.intellij.openapi.vcs.VcsRootError;
 import com.intellij.openapi.vcs.VcsTestUtil;
@@ -28,20 +27,18 @@ import java.util.*;
 /**
  * @author Nadya Zabrodina
  */
-public class VcsRootErrorsFinderTest extends VcsPlatformTest {
+public class VcsRootErrorsFinderTest extends VcsRootPlatformTest {
 
   static final String PROJECT = VcsDirectoryMapping.PROJECT_CONSTANT;
-  @NotNull private ProjectLevelVcsManager myVcsManager;
 
   @Override
   public void setUp() throws Exception {
     super.setUp();
-    myVcsManager = ProjectLevelVcsManager.getInstance(myProject);
   }
 
   public void testNoRootsThenNoErrors() throws IOException {
     Map<String, Collection<String>> map = new HashMap<String, Collection<String>>();
-    map.put("git", Collections.<String>emptyList());
+    map.put("mock", Collections.<String>emptyList());
     map.put("roots", Collections.<String>emptyList());
     map.put("content_roots", Collections.<String>emptyList());
     doTest(map, Collections.<String, Collection<String>>emptyMap());
@@ -49,7 +46,7 @@ public class VcsRootErrorsFinderTest extends VcsPlatformTest {
 
   public void testSameOneRootInBothThenNoErrors() throws IOException {
     Map<String, Collection<String>> map = new HashMap<String, Collection<String>>();
-    map.put("git", Arrays.asList("."));
+    map.put("mock", Arrays.asList("."));
     map.put("roots", Arrays.asList("."));
     map.put("content_roots", Collections.<String>emptyList());
     doTest(map, Collections.<String, Collection<String>>emptyMap());
@@ -57,15 +54,15 @@ public class VcsRootErrorsFinderTest extends VcsPlatformTest {
 
   public void testSameTwoRootsInBothThenNoErrors() throws IOException {
     Map<String, Collection<String>> map = new HashMap<String, Collection<String>>();
-    map.put("git", Arrays.asList(".", "community"));
+    map.put("mock", Arrays.asList(".", "community"));
     map.put("roots", Arrays.asList(".", "community"));
     map.put("content_roots", Collections.<String>emptyList());
     doTest(map, Collections.<String, Collection<String>>emptyMap());
   }
 
-  public void testOneGitNoVCSRootsThenError() throws IOException {
+  public void testOneMockRootNoVCSRootsThenError() throws IOException {
     Map<String, Collection<String>> map = new HashMap<String, Collection<String>>();
-    map.put("git", Arrays.asList("."));
+    map.put("mock", Arrays.asList("."));
     map.put("roots", Collections.<String>emptyList());
     map.put("content_roots", Collections.<String>emptyList());
     Map<String, Collection<String>> errorsMap = new HashMap<String, Collection<String>>();
@@ -73,10 +70,10 @@ public class VcsRootErrorsFinderTest extends VcsPlatformTest {
     doTest(map, errorsMap);
   }
 
-  public void testOneVCSRootNoGitsThenError() throws IOException {
+  public void testOneVCSRootNoMockRootsThenError() throws IOException {
     Map<String, Collection<String>> map = new HashMap<String, Collection<String>>();
     map.put("roots", Arrays.asList("."));
-    map.put("git", Collections.<String>emptyList());
+    map.put("mock", Collections.<String>emptyList());
     map.put("content_roots", Collections.<String>emptyList());
     Map<String, Collection<String>> errorsMap = new HashMap<String, Collection<String>>();
     errorsMap.put("extra", Arrays.asList("."));
@@ -85,7 +82,7 @@ public class VcsRootErrorsFinderTest extends VcsPlatformTest {
 
   public void testOneRootButDifferentThenTwoErrors() throws IOException {
     Map<String, Collection<String>> map = new HashMap<String, Collection<String>>();
-    map.put("git", Arrays.asList("."));
+    map.put("mock", Arrays.asList("."));
     map.put("roots", Arrays.asList("community"));
     map.put("content_roots", Collections.<String>emptyList());
     Map<String, Collection<String>> errorsMap = new HashMap<String, Collection<String>>();
@@ -96,7 +93,7 @@ public class VcsRootErrorsFinderTest extends VcsPlatformTest {
 
   public void testTwoRootsOneMatchingOneDifferentThenTwoErrors() throws IOException {
     Map<String, Collection<String>> map = new HashMap<String, Collection<String>>();
-    map.put("git", Arrays.asList(".", "community"));
+    map.put("mock", Arrays.asList(".", "community"));
     map.put("roots", Arrays.asList(".", "contrib"));
     map.put("content_roots", Collections.<String>emptyList());
     Map<String, Collection<String>> errorsMap = new HashMap<String, Collection<String>>();
@@ -105,9 +102,9 @@ public class VcsRootErrorsFinderTest extends VcsPlatformTest {
     doTest(map, errorsMap);
   }
 
-  public void testTwoRootsInGitOneMatchingInVCSThenError() throws IOException {
+  public void testTwoRootsInMockRootOneMatchingInVCSThenError() throws IOException {
     Map<String, Collection<String>> map = new HashMap<String, Collection<String>>();
-    map.put("git", Arrays.asList(".", "community"));
+    map.put("mock", Arrays.asList(".", "community"));
     map.put("roots", Arrays.asList("."));
     map.put("content_roots", Collections.<String>emptyList());
     Map<String, Collection<String>> errorsMap = new HashMap<String, Collection<String>>();
@@ -117,7 +114,7 @@ public class VcsRootErrorsFinderTest extends VcsPlatformTest {
 
   public void testTwoRootsBothNotMatchingThenFourErrors() throws IOException {
     Map<String, Collection<String>> map = new HashMap<String, Collection<String>>();
-    map.put("git", Arrays.asList(".", "community"));
+    map.put("mock", Arrays.asList(".", "community"));
     map.put("roots", Arrays.asList("another", "contrib"));
     map.put("content_roots", Collections.<String>emptyList());
     Map<String, Collection<String>> errorsMap = new HashMap<String, Collection<String>>();
@@ -126,9 +123,9 @@ public class VcsRootErrorsFinderTest extends VcsPlatformTest {
     doTest(map, errorsMap);
   }
 
-  public void testProjectRootNoGitsThenErrorAboutExtraRoot() throws IOException {
+  public void testProjectRootNoMockRootsThenErrorAboutExtraRoot() throws IOException {
     Map<String, Collection<String>> map = new HashMap<String, Collection<String>>();
-    map.put("git", Collections.<String>emptyList());
+    map.put("mock", Collections.<String>emptyList());
     map.put("roots", Arrays.asList(PROJECT));
     map.put("content_roots", Collections.<String>emptyList());
     Map<String, Collection<String>> errorsMap = new HashMap<String, Collection<String>>();
@@ -136,17 +133,17 @@ public class VcsRootErrorsFinderTest extends VcsPlatformTest {
     doTest(map, errorsMap);
   }
 
-  public void testProjectRootFullUnderGitThenCorrect() throws IOException {
+  public void testProjectRootFullUnderMockRootThenCorrect() throws IOException {
     Map<String, Collection<String>> map = new HashMap<String, Collection<String>>();
-    map.put("git", Arrays.asList("."));
+    map.put("mock", Arrays.asList("."));
     map.put("roots", Arrays.asList(".", PROJECT));
     map.put("content_roots", Collections.<String>emptyList());
     doTest(map, Collections.<String, Collection<String>>emptyMap());
   }
 
-  public void testProjectRootGitForAContentRootBelowProjectThenError() throws IOException {
+  public void testProjectRootMockRootForAContentRootBelowProjectThenError() throws IOException {
     Map<String, Collection<String>> map = new HashMap<String, Collection<String>>();
-    map.put("git", Arrays.asList("content_root"));
+    map.put("mock", Arrays.asList("content_root"));
     map.put("roots", Arrays.asList(PROJECT));
     map.put("content_roots", Arrays.asList("content_root"));
     Map<String, Collection<String>> errorsMap = new HashMap<String, Collection<String>>();
@@ -155,10 +152,10 @@ public class VcsRootErrorsFinderTest extends VcsPlatformTest {
     doTest(map, errorsMap);
   }
 
-  public void testProjectRootGitBelowProjectFolderNotInAContentRootThenUnregisteredRootError() throws IOException {
-    // this is to be fixed: auto-detection of Git repositories in subfolders for the <Project> mapping
+  public void testProjectRootMockRootBelowProjectFolderNotInAContentRootThenUnregisteredRootError() throws IOException {
+    // this is to be fixed: auto-detection of MockRoot repositories in subfolders for the <Project> mapping
     Map<String, Collection<String>> map = new HashMap<String, Collection<String>>();
-    map.put("git", Arrays.asList("community"));
+    map.put("mock", Arrays.asList("community"));
     map.put("roots", Arrays.asList(PROJECT));
     map.put("content_roots", Arrays.asList("."));
     Map<String, Collection<String>> errorsMap = new HashMap<String, Collection<String>>();
@@ -167,9 +164,9 @@ public class VcsRootErrorsFinderTest extends VcsPlatformTest {
     doTest(map, errorsMap);
   }
 
-  public void testProjectRootGitForFullProjectContentRootLinkedSourceFolderBelowProjectThenErrors() throws IOException {
+  public void testProjectRootMockRootForFullProjectContentRootLinkedSourceFolderBelowProjectThenErrors() throws IOException {
     Map<String, Collection<String>> map = new HashMap<String, Collection<String>>();
-    map.put("git", Arrays.asList(".", "content_root", "../linked_source_root", "folder"));
+    map.put("mock", Arrays.asList(".", "content_root", "../linked_source_root", "folder"));
     map.put("roots", Arrays.asList(PROJECT));
     map.put("content_roots", Arrays.asList(".", "content_root", "../linked_source_root"));
     Map<String, Collection<String>> errorsMap = new HashMap<String, Collection<String>>();
@@ -177,9 +174,9 @@ public class VcsRootErrorsFinderTest extends VcsPlatformTest {
     doTest(map, errorsMap);
   }
 
-  public void testProjectRootRootForFolderGitForFullProjectContentRootLinkedSourceFolderBelowProjectThenErrors() throws IOException {
+  public void testProjectRootForFolderMockRootForFullProjectContentRootLinkedSourceFolderBelowProjectThenErrors() throws IOException {
     Map<String, Collection<String>> map = new HashMap<String, Collection<String>>();
-    map.put("git", Arrays.asList(".", "content_root", "../linked_source_root", "folder"));
+    map.put("mock", Arrays.asList(".", "content_root", "../linked_source_root", "folder"));
     map.put("roots", Arrays.asList(PROJECT, "folder"));
     map.put("content_roots", Arrays.asList(".", "content_root", "../linked_source_root"));
     Map<String, Collection<String>> errorsMap = new HashMap<String, Collection<String>>();
@@ -187,9 +184,9 @@ public class VcsRootErrorsFinderTest extends VcsPlatformTest {
     doTest(map, errorsMap);
   }
 
-  public void testProjectRootGitLikeInIDEAProjectThenError() throws IOException {
+  public void testProjectRootMockRootLikeInIDEAProjectThenError() throws IOException {
     Map<String, Collection<String>> map = new HashMap<String, Collection<String>>();
-    map.put("git", Arrays.asList(".", "community", "contrib"));
+    map.put("mock", Arrays.asList(".", "community", "contrib"));
     map.put("roots", Arrays.asList(PROJECT));
     map.put("content_roots", Arrays.asList(".", "community", "contrib"));
     Map<String, Collection<String>> errorsMap = new HashMap<String, Collection<String>>();
@@ -197,10 +194,10 @@ public class VcsRootErrorsFinderTest extends VcsPlatformTest {
     doTest(map, errorsMap);
   }
 
-  public void testRealGitRootDeeperThanThreeLevelsShouldBeDetected() throws IOException {
+  public void testRealMockRootRootDeeperThanThreeLevelsShouldBeDetected() throws IOException {
 
     Map<String, Collection<String>> map = new HashMap<String, Collection<String>>();
-    map.put("git", Arrays.asList(".", "community", "contrib", "community/level1/level2/level3"));
+    map.put("mock", Arrays.asList(".", "community", "contrib", "community/level1/level2/level3"));
     map.put("roots", Arrays.asList(PROJECT, "community/level1/level2/level3"));
     map.put("content_roots", Arrays.asList(".", "community", "contrib"));
     Map<String, Collection<String>> errorsMap = new HashMap<String, Collection<String>>();
@@ -209,7 +206,7 @@ public class VcsRootErrorsFinderTest extends VcsPlatformTest {
   }
 
   private void doTest(@NotNull Map<String, Collection<String>> map, @NotNull Map<String, Collection<String>> errors) throws IOException {
-    initProject(map.get("git"), Collections.<String>emptyList(), map.get("content_roots"));
+    initProject(map.get("mock"), Collections.<String>emptyList(), map.get("content_roots"));
     addVcsRoots(map.get("roots"));
 
     Collection<VcsRootError> expected = new ArrayList<VcsRootError>();

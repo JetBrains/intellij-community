@@ -128,8 +128,9 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
     myIconOnTheRight = iconOnTheRight;
   }
 
-  public final void append(@NotNull String fragment) {
+  public final SimpleColoredComponent append(@NotNull String fragment) {
     append(fragment, SimpleTextAttributes.REGULAR_ATTRIBUTES);
+    return this;
   }
 
   /**

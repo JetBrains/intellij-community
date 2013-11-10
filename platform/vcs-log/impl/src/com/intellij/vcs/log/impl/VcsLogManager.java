@@ -20,7 +20,6 @@ import com.intellij.ui.content.ContentManagerEvent;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
-import com.intellij.vcs.log.VcsLogObjectsFactory;
 import com.intellij.vcs.log.VcsLogProvider;
 import com.intellij.vcs.log.VcsLogRefresher;
 import com.intellij.vcs.log.VcsLogSettings;
@@ -45,7 +44,6 @@ public class VcsLogManager implements Disposable {
 
   @NotNull private final Project myProject;
   @NotNull private final ProjectLevelVcsManager myVcsManager;
-  @NotNull private final VcsLogObjectsFactory myLogObjectsFactory;
   @NotNull private final VcsLogSettings mySettings;
   @NotNull private final VcsLogUiProperties myUiProperties;
 
@@ -54,11 +52,10 @@ public class VcsLogManager implements Disposable {
   private VcsLogUI myUi;
 
   public VcsLogManager(@NotNull Project project, @NotNull ProjectLevelVcsManager vcsManager,
-                       @NotNull VcsLogObjectsFactory logObjectsFactory, @NotNull VcsLogSettings settings,
+                       @NotNull VcsLogSettings settings,
                        @NotNull VcsLogUiProperties uiProperties) {
     myProject = project;
     myVcsManager = vcsManager;
-    myLogObjectsFactory = logObjectsFactory;
     mySettings = settings;
     myUiProperties = uiProperties;
     Disposer.register(myProject, this);
@@ -69,7 +66,8 @@ public class VcsLogManager implements Disposable {
     final Map<VirtualFile, VcsLogProvider> logProviders = findLogProviders();
     final VcsLogContainer mainPanel = new VcsLogContainer(myProject);
 
-    VcsLogDataHolder.init(myProject, myLogObjectsFactory, logProviders, mySettings, new Consumer<VcsLogDataHolder>() {
+    myLogDataHolder = new VcsLogDataHolder(myProject, logProviders, mySettings);
+    myLogDataHolder.initialize(new Consumer<VcsLogDataHolder>() {
       @Override
       public void consume(VcsLogDataHolder vcsLogDataHolder) {
         Disposer.register(VcsLogManager.this, vcsLogDataHolder);
@@ -117,6 +115,7 @@ public class VcsLogManager implements Disposable {
     return myLogDataHolder;
   }
 
+  @NotNull
   public VcsLogUI getLogUi() {
     return myUi;
   }

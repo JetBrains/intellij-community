@@ -21,11 +21,19 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author gregsh
  */
-public interface EventLogCategory {
-  ExtensionPointName<EventLogCategory> EP_NAME = ExtensionPointName.create("com.intellij.eventLogCategory");
+public abstract class EventLogCategory {
+  public static final ExtensionPointName<EventLogCategory> EP_NAME = ExtensionPointName.create("com.intellij.eventLogCategory");
+
+  private final String myDisplayName;
+
+  protected EventLogCategory(@NotNull String displayName) {
+    myDisplayName = displayName;
+  }
 
   @NotNull
-  String getDisplayName();
+  public final String getDisplayName() {
+    return myDisplayName;
+  }
 
-  boolean acceptsNotification(@NotNull String groupId);
+  public abstract boolean acceptsNotification(@NotNull String groupId);
 }

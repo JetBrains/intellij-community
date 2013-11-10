@@ -63,7 +63,7 @@ public class HgRepositoryReaderTest extends HgPlatformTest {
     FileUtil.copy(testTagFile, new File(myHgDir.getParentFile(), ".hgtags"));
     FileUtil.copy(testLocalTagFile, new File(myHgDir, "localtags"));
 
-    myRepositoryReader = new HgRepositoryReader(myHgDir);
+    myRepositoryReader = new HgRepositoryReader(myProject, myHgDir);
     myBranches = readBranches();
     myBookmarks = readRefs(testBookmarkFile);
     myTags = readRefs(testTagFile);

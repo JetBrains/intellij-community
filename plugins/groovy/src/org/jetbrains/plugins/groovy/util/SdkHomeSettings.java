@@ -36,19 +36,22 @@ import java.util.List;
  */
 public abstract class SdkHomeSettings implements PersistentStateComponent<SdkHomeConfigurable.SdkHomeBean> {
   private final PsiModificationTrackerImpl myTracker;
-  private SdkHomeConfigurable.SdkHomeBean mySdkPath;
+  private SdkHomeConfigurable.SdkHomeBean mySdkHome;
 
   protected SdkHomeSettings(Project project) {
     myTracker = (PsiModificationTrackerImpl)PsiManager.getInstance(project).getModificationTracker();
   }
 
   public SdkHomeConfigurable.SdkHomeBean getState() {
-    return mySdkPath;
+    return mySdkHome;
   }
 
   public void loadState(SdkHomeConfigurable.SdkHomeBean state) {
-    mySdkPath = state;
-    myTracker.incCounter();
+    SdkHomeConfigurable.SdkHomeBean oldState = mySdkHome;
+    mySdkHome = state;
+    if (oldState != null) {
+      myTracker.incCounter();
+    }
   }
 
   @Nullable
@@ -67,7 +70,7 @@ public abstract class SdkHomeSettings implements PersistentStateComponent<SdkHom
 
   @Nullable
   public VirtualFile getSdkHome() {
-    return calcHome(mySdkPath);
+    return calcHome(mySdkHome);
   }
 
   public List<VirtualFile> getClassRoots() {

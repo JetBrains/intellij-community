@@ -41,7 +41,7 @@ public class HgRealRepositoryReaderTest extends HgPlatformTest {
     File hgDir = new File(myRepository.getPath(), ".hg");
     assertTrue(hgDir.exists());
     createBranchesAndTags();
-    myRepositoryReader = new HgRepositoryReader(hgDir);
+    myRepositoryReader = new HgRepositoryReader(myProject, hgDir);
   }
 
   public void testMergeState() {

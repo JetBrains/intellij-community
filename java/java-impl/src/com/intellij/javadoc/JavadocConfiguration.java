@@ -30,6 +30,7 @@ import com.intellij.ide.BrowserUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdk;
@@ -57,6 +58,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 
 /**
  * @author Eugene Zhuravlev
@@ -228,13 +230,24 @@ public class JavadocConfiguration implements ModuleRunProfile, JDOMExternalizabl
 
       parameters.addParametersString(OTHER_OPTIONS);
 
+      final Set<Module> modules = new HashSet<Module>();
+      myGenerationOptions.accept(new PsiRecursiveElementWalkingVisitor() {
+        @Override
+        public void visitFile(PsiFile file) {
+          final Module module = ModuleUtilCore.findModuleForPsiElement(file);
+          if (module != null) {
+            modules.add(module);
+          }
+        }
+      });
       final PathsList classPath;
+      final OrderEnumerator orderEnumerator = ProjectRootManager.getInstance(myProject).orderEntries(modules);
       if (jdk.getSdkType() instanceof JavaSdk) {
-        classPath = OrderEnumerator.orderEntries(myProject).withoutSdk().withoutModuleSourceEntries().getPathsList();
+        classPath = orderEnumerator.withoutSdk().withoutModuleSourceEntries().getPathsList();
       }
       else {
         //libraries are included into jdk
-        classPath = OrderEnumerator.orderEntries(myProject).withoutModuleSourceEntries().getPathsList();
+        classPath = orderEnumerator.withoutModuleSourceEntries().getPathsList();
       }
       final String classPathString = classPath.getPathsString();
       if (classPathString.length() > 0) {

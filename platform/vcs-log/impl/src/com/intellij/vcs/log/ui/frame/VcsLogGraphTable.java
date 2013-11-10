@@ -85,7 +85,6 @@ public class VcsLogGraphTable extends JBTable implements TypeSafeDataProvider, C
     addMouseListener(mouseAdapter);
 
     PopupHandler.installPopupHandler(this, VcsLogUI.POPUP_ACTION_GROUP, VcsLogUI.VCS_LOG_TABLE_PLACE);
-    new TableLinkMouseListener().installOn(this);
 
     getColumnModel().addColumnModelListener(new TableColumnModelListener() {
       @Override
@@ -226,6 +225,11 @@ public class VcsLogGraphTable extends JBTable implements TypeSafeDataProvider, C
   private class MyMouseAdapter extends MouseAdapter {
     private final Cursor DEFAULT_CURSOR = new Cursor(Cursor.DEFAULT_CURSOR);
     private final Cursor HAND_CURSOR = new Cursor(Cursor.HAND_CURSOR);
+    private final TableLinkMouseListener myTableListener;
+
+    MyMouseAdapter() {
+      myTableListener = new TableLinkMouseListener();
+    }
 
     @Nullable
     private GraphPrintCell getGraphPrintCell(MouseEvent e) {
@@ -273,18 +277,23 @@ public class VcsLogGraphTable extends JBTable implements TypeSafeDataProvider, C
           myUI.click(PositionUtil.getRowIndex(e));
         }
       }
+      myTableListener.onClick(e, e.getClickCount());
     }
 
     @Override
     public void mouseMoved(MouseEvent e) {
       Node jumpToNode = arrowToNode(e);
-      if (jumpToNode != null) {
+      if (jumpToNode != null || isAboveLink(e)) {
         setCursor(HAND_CURSOR);
       }
       else {
         setCursor(DEFAULT_CURSOR);
       }
       myUI.over(overCell(e));
+    }
+
+    private boolean isAboveLink(MouseEvent e) {
+      return myTableListener.getTagAt(e) != null;
     }
 
     @Override

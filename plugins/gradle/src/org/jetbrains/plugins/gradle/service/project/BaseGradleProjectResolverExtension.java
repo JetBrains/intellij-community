@@ -127,8 +127,12 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
     return new ModuleData(GradleConstants.SYSTEM_ID,
                           StdModuleTypes.JAVA.getId(),
                           moduleName,
-                          projectData.getIdeProjectFileDirectoryPath(),
+                          moduleConfigPath,
                           moduleConfigPath);
+  }
+
+  @Override
+  public void populateModuleExtraModels(@NotNull IdeaModule gradleModule, @NotNull DataNode<ModuleData> ideModule) {
   }
 
   @Override
@@ -139,13 +143,11 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
       return;
     }
     for (IdeaContentRoot gradleContentRoot : contentRoots) {
-      if (gradleContentRoot == null) {
-        continue;
-      }
+      if (gradleContentRoot == null) continue;
+
       File rootDirectory = gradleContentRoot.getRootDirectory();
-      if (rootDirectory == null) {
-        continue;
-      }
+      if (rootDirectory == null) continue;
+
       ContentRootData ideContentRoot = new ContentRootData(GradleConstants.SYSTEM_ID, rootDirectory.getAbsolutePath());
       ideModule.getData().setModuleFileDirectoryPath(ideContentRoot.getRootPath());
       populateContentRoot(ideContentRoot, ExternalSystemSourceType.SOURCE, gradleContentRoot.getSourceDirectories());

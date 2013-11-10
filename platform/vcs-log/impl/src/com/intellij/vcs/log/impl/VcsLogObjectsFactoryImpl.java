@@ -3,6 +3,7 @@ package com.intellij.vcs.log.impl;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcs.log.*;
+import com.intellij.vcs.log.data.VcsLogDataHolder;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -11,6 +12,12 @@ import java.util.List;
  * @author Kirill Likhodedov
  */
 public class VcsLogObjectsFactoryImpl implements VcsLogObjectsFactory {
+
+  @NotNull private final VcsLogManager myLogManager;
+
+  public VcsLogObjectsFactoryImpl(@NotNull VcsLogManager logManager) {
+    myLogManager = logManager;
+  }
 
   @NotNull
   @Override
@@ -33,8 +40,10 @@ public class VcsLogObjectsFactoryImpl implements VcsLogObjectsFactory {
   @NotNull
   @Override
   public VcsShortCommitDetails createShortDetails(@NotNull Hash hash, @NotNull List<Hash> parents, long timeStamp,
-                                                  @NotNull VirtualFile root, @NotNull String subject, @NotNull String authorName) {
-    return new VcsShortCommitDetailsImpl(hash, parents, timeStamp, root, subject, authorName);
+                                                  @NotNull VirtualFile root, @NotNull String subject,
+                                                  @NotNull String authorName, String authorEmail) {
+    VcsUser author = createUser(authorName, authorEmail);
+    return new VcsShortCommitDetailsImpl(hash, parents, timeStamp, root, subject, author);
   }
 
   @NotNull
@@ -44,14 +53,20 @@ public class VcsLogObjectsFactoryImpl implements VcsLogObjectsFactory {
                                                 @NotNull String message, @NotNull String committerName,
                                                 @NotNull String committerEmail, long commitTime, @NotNull List<Change> changes,
                                                 @NotNull ContentRevisionFactory contentRevisionFactory) {
-    return new VcsFullCommitDetailsImpl(hash, parents, authorTime, root, subject, authorName, authorEmail, message, committerName,
-                                        committerEmail, commitTime, changes, contentRevisionFactory);
+    VcsUser author = createUser(authorName, authorEmail);
+    VcsUser committer = createUser(committerName, committerEmail);
+    return new VcsFullCommitDetailsImpl(hash, parents, authorTime, root, subject, author, message, committer, commitTime,
+                                        changes, contentRevisionFactory);
   }
 
   @NotNull
   @Override
-  public VcsUser createUser(@NotNull String name) {
-    return new VcsUserImpl(name);
+  public VcsUser createUser(@NotNull String name, @NotNull String email) {
+    VcsLogDataHolder dataHolder = myLogManager.getDataHolder();
+    if (dataHolder == null) {
+      return new VcsUserImpl(name, email);
+    }
+    return dataHolder.getUserRegistry().createUser(name, email);
   }
 
 }

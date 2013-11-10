@@ -16,6 +16,7 @@
 package com.intellij.vcs.log.data;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.BackgroundTaskQueue;
@@ -153,8 +154,9 @@ public class VcsLogDataHolder implements Disposable {
    * It is reinitialized on full refresh.
    */
   private CountDownLatch myEntireLogLoadWaiter;
+  private final VcsUserRegistry myUserRegistry;
 
-  public VcsLogDataHolder(@NotNull Project project, @NotNull VcsLogObjectsFactory logObjectsFactory,
+  public VcsLogDataHolder(@NotNull Project project,
                           @NotNull Map<VirtualFile, VcsLogProvider> logProviders, @NotNull VcsLogSettings settings) {
     myProject = project;
     myLogProviders = logProviders;
@@ -163,29 +165,12 @@ public class VcsLogDataHolder implements Disposable {
     myDetailsGetter = new CommitDetailsGetter(this, logProviders);
     myLogJoiner = new VcsLogJoiner();
     myMultiRepoJoiner = new VcsLogMultiRepoJoiner();
-    myFactory = logObjectsFactory;
+    myFactory = ServiceManager.getService(myProject, VcsLogObjectsFactory.class);
     mySettings = settings;
+    myUserRegistry = new VcsUserRegistry();
   }
 
-  /**
-   * Initializes the VcsLogDataHolder in background in the following sequence:
-   * <ul>
-   * <li>Loads the first part of the log with details.</li>
-   * <li>Invokes the Consumer to initialize the UI with the initial data pack.</li>
-   * <li>Loads the whole log in background. When completed, substitutes the data and tells the UI to refresh itself.</li>
-   * </ul>
-   *
-   * @param settings
-   * @param onInitialized This is called when the holder is initialized with the initial data received from the VCS.
-   */
-  public static void init(@NotNull final Project project, @NotNull VcsLogObjectsFactory logObjectsFactory,
-                          @NotNull Map<VirtualFile, VcsLogProvider> logProviders,
-                          @NotNull VcsLogSettings settings, @NotNull final Consumer<VcsLogDataHolder> onInitialized) {
-    final VcsLogDataHolder dataHolder = new VcsLogDataHolder(project, logObjectsFactory, logProviders, settings);
-    dataHolder.initialize(onInitialized);
-  }
-
-  private void initialize(@NotNull final Consumer<VcsLogDataHolder> onInitialized) {
+  public void initialize(@NotNull final Consumer<VcsLogDataHolder> onInitialized) {
     // complete refresh => other scheduled refreshes are not interesting
     // TODO: interrupt the current task as well instead of waiting for it to finish, since the result is invalid anyway
     myDataLoaderQueue.clear();
@@ -248,12 +233,18 @@ public class VcsLogDataHolder implements Disposable {
       @Override
       public void consume(ProgressIndicator indicator) throws VcsException {
         try {
+          Consumer<VcsUser> userRegistry = new Consumer<VcsUser>() {
+            @Override
+            public void consume(VcsUser user) {
+              myUserRegistry.addUser(user);
+            }
+          };
           Map<VirtualFile, List<TimedVcsCommit>> logs = ContainerUtil.newHashMap();
           Map<VirtualFile, Collection<VcsRef>> refs = ContainerUtil.newHashMap();
           for (Map.Entry<VirtualFile, VcsLogProvider> entry : myLogProviders.entrySet()) {
             VirtualFile root = entry.getKey();
             VcsLogProvider logProvider = entry.getValue();
-            logs.put(root, logProvider.readAllHashes(root));
+            logs.put(root, logProvider.readAllHashes(root, userRegistry));
             refs.put(root, logProvider.readAllRefs(root));
           }
           DataPack existingDataPack = myLogData.getDataPack();
@@ -405,11 +396,24 @@ public class VcsLogDataHolder implements Disposable {
       List<? extends VcsFullCommitDetails> firstBlockDetails = logProvider.readFirstBlock(root, ordered, commitsCount);
       Collection<VcsRef> newRefs = logProvider.readAllRefs(root);
       storeTopCommitsDetailsInCache(firstBlockDetails);
+      storeUsers(firstBlockDetails);
       List<TimedVcsCommit> firstBlockCommits = getCommitsFromDetails(firstBlockDetails);
 
       infoByRoot.put(root, new RecentCommitsInfo(firstBlockCommits, newRefs));
     }
     return infoByRoot.entrySet();
+  }
+
+  private void storeUsers(@NotNull List<? extends VcsFullCommitDetails> details) {
+    for (VcsFullCommitDetails detail : details) {
+      myUserRegistry.addUser(detail.getAuthor());
+      myUserRegistry.addUser(detail.getCommitter());
+    }
+  }
+
+  @NotNull
+  public Set<VcsUser> getAllUsers() {
+    return myUserRegistry.getUsers();
   }
 
   public void getFilteredDetailsFromTheVcs(final Collection<VcsLogFilter> filters, final Consumer<List<VcsFullCommitDetails>> success) {
@@ -472,6 +476,15 @@ public class VcsLogDataHolder implements Disposable {
   @NotNull
   public Project getProject() {
     return myProject;
+  }
+
+  public VcsUserRegistry getUserRegistry() {
+    return myUserRegistry;
+  }
+
+  @NotNull
+  public Collection<VirtualFile> getRoots() {
+    return myLogProviders.keySet();
   }
 
   private static class RecentCommitsInfo {

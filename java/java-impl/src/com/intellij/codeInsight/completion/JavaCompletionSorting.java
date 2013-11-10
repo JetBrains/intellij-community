@@ -227,7 +227,7 @@ public class JavaCompletionSorting {
 
   private static int calcMatch(final List<String> words, int max, ExpectedTypeInfo[] myExpectedInfos) {
     for (ExpectedTypeInfo myExpectedInfo : myExpectedInfos) {
-      String expectedName = ((ExpectedTypeInfoImpl)myExpectedInfo).getExpectedName().compute();
+      String expectedName = ((ExpectedTypeInfoImpl)myExpectedInfo).getExpectedName();
       if (expectedName == null) continue;
       max = calcMatch(expectedName, words, max);
       max = calcMatch(truncDigits(expectedName), words, max);
@@ -504,7 +504,7 @@ public class JavaCompletionSorting {
         int max = 0;
         final List<String> wordsNoDigits = NameUtil.nameToWordsLowerCase(truncDigits(name));
         for (ExpectedTypeInfo myExpectedInfo : myExpectedTypes) {
-          String expectedName = ((ExpectedTypeInfoImpl)myExpectedInfo).getExpectedName().compute();
+          String expectedName = ((ExpectedTypeInfoImpl)myExpectedInfo).getExpectedName();
           if (expectedName != null) {
             final THashSet<String> set = new THashSet<String>(NameUtil.nameToWordsLowerCase(truncDigits(expectedName)));
             set.retainAll(wordsNoDigits);

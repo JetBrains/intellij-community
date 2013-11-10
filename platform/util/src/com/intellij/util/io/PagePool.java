@@ -54,6 +54,11 @@ public class PagePool {
         }
         return false;
       }
+
+      @Override
+      protected boolean shouldMoveEntryToTopWhenReading() {
+        return true;
+      }
     };
 
     myProtectedQueue = new LinkedHashMap<PoolPageKey, Page>(protectedPagesLimit, 0.6f) {
@@ -64,6 +69,10 @@ public class PagePool {
           return true;
         }
         return false;
+      }
+      @Override
+      protected boolean shouldMoveEntryToTopWhenReading() {
+        return true;
       }
     };
   }

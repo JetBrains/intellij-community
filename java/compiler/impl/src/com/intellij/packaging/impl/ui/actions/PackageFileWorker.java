@@ -87,6 +87,7 @@ public class PackageFileWorker {
           for (final VirtualFile file : files) {
             indicator.checkCanceled();
             new ReadAction() {
+              @Override
               protected void run(final Result result) {
                 try {
                   packageFile(file, project, artifacts, packIntoArchives);

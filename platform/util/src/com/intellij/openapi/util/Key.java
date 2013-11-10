@@ -103,7 +103,7 @@ public class Key<T> {
   }
 
   @Nullable
-  public static <T> Key<T> findKeyByName(String name) {
+  public static Key<?> findKeyByName(String name) {
     for (StripedLockIntObjectConcurrentHashMap.IntEntry<Key> key : allKeys.entries()) {
       if (name.equals(key.getValue().myName)) {
         //noinspection unchecked

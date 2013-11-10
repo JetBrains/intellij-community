@@ -12,8 +12,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Set;
 
 /**
- * Created by IntelliJ IDEA.
- * User: michael.golubev
+ * @author michael.golubev
  */
 public class DeployAction extends ServersTreeActionBase {
   public DeployAction() {

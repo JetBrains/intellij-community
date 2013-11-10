@@ -24,6 +24,7 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsKey;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.Consumer;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.*;
@@ -41,10 +42,7 @@ import org.zmlx.hg4idea.repo.HgRepository;
 import org.zmlx.hg4idea.repo.HgRepositoryManager;
 import org.zmlx.hg4idea.util.HgHistoryUtil;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author Nadya Zabrodina
@@ -62,25 +60,21 @@ public class HgLogProvider implements VcsLogProvider {
     myProject = project;
     myRepositoryManager = repositoryManager;
     myRefSorter = new HgRefManager();
-    myVcsObjectsFactory = ServiceManager.getService(VcsLogObjectsFactory.class);
+    myVcsObjectsFactory = ServiceManager.getService(project, VcsLogObjectsFactory.class);
   }
 
   @NotNull
   @Override
   public List<? extends VcsFullCommitDetails> readFirstBlock(@NotNull VirtualFile root,
                                                              boolean ordered, int commitCount) throws VcsException {
-    String[] params = {"--encoding=UTF-8"};
-    if (!ordered) {
-      params = ArrayUtil.append(params, "-r");
-      params = ArrayUtil.append(params, "0:tip");
-    }
+    String[] params = ordered ? ArrayUtil.EMPTY_STRING_ARRAY : new String[]{"-r", "0:tip"};
     return HgHistoryUtil.history(myProject, root, commitCount, params);
   }
 
   @NotNull
   @Override
-  public List<TimedVcsCommit> readAllHashes(@NotNull VirtualFile root) throws VcsException {
-    return HgHistoryUtil.readAllHashes(myProject, root);
+  public List<TimedVcsCommit> readAllHashes(@NotNull VirtualFile root, @NotNull Consumer<VcsUser> userRegistry) throws VcsException {
+    return HgHistoryUtil.readAllHashes(myProject, root, userRegistry);
   }
 
   @NotNull
@@ -206,7 +200,7 @@ public class HgLogProvider implements VcsLogProvider {
     if (userName == null) {
       userName = System.getenv("HGUSER");
     }
-    return userName == null ? null : myVcsObjectsFactory.createUser(userName);
+    return userName == null ? null : myVcsObjectsFactory.createUser(userName, "");
   }
 
   private static String prepareParameter(String paramName, String value) {

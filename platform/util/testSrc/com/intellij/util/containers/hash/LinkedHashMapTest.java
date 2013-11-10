@@ -140,6 +140,12 @@ public class LinkedHashMapTest {
       protected boolean removeEldestEntry(Map.Entry<Integer, String> eldest) {
         return size() > 1000;
       }
+
+      @Override
+      protected boolean shouldMoveEntryToTopWhenReading() {
+        return true;
+      }
+
     };
     for (int i = 0; i < 1000; ++i) {
       tested.put(i, Integer.toString(i));
@@ -160,6 +166,12 @@ public class LinkedHashMapTest {
       protected boolean removeEldestEntry(Map.Entry<Integer, String> eldest) {
         return size() > 1000;
       }
+
+      @Override
+      protected boolean shouldMoveEntryToTopWhenReading() {
+        return true;
+      }
+
     };
     for (int i = 0; i < 1000; ++i) {
       tested.put(i, Integer.toString(i));

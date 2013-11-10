@@ -146,6 +146,7 @@ public class ClasspathBootstrap {
     cp.add(getResourcePath(NotNullVerifyingInstrumenter.class));  // not-null
     cp.add(getResourcePath(IXMLBuilder.class));  // nano-xml
     cp.add(getResourcePath(SequenceLock.class));  // jsr166
+    //don't forget to update layoutCommunityJps() in layouts.gant accordingly
 
     if (!isLauncherUsed) {
       appendJavaCompilerClasspath(cp);

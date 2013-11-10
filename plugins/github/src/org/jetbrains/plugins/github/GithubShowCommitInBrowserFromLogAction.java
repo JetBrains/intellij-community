@@ -70,7 +70,7 @@ public class GithubShowCommitInBrowserFromLogAction extends GithubShowCommitInBr
   private static VcsShortCommitDetails getCurrentlySelectedCommitInTheLog(AnActionEvent e) {
     GitHeavyCommit heavyCommit = e.getData(GitVcs.GIT_COMMIT);
     if (heavyCommit != null) {
-      final VcsLogObjectsFactory factory = ServiceManager.getService(VcsLogObjectsFactory.class);
+      final VcsLogObjectsFactory factory = ServiceManager.getService(e.getProject(), VcsLogObjectsFactory.class);
       List<Hash> parents = ContainerUtil.map(heavyCommit.getParentsHashes(), new Function<String, Hash>() {
         @Override
         public Hash fun(String s) {
@@ -78,7 +78,8 @@ public class GithubShowCommitInBrowserFromLogAction extends GithubShowCommitInBr
         }
       });
       return factory.createShortDetails(factory.createHash(heavyCommit.getHash().getValue()), parents, heavyCommit.getAuthorTime(),
-                                        heavyCommit.getRoot(), heavyCommit.getSubject(), heavyCommit.getAuthor());
+                                        heavyCommit.getRoot(), heavyCommit.getSubject(), heavyCommit.getAuthor(),
+                                        heavyCommit.getAuthorEmail());
     }
     VcsLog log = e.getData(VcsLogDataKeys.VSC_LOG);
     if (log == null) {

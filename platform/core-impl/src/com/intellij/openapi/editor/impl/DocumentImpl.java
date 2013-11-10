@@ -556,11 +556,14 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
 
   @NotNull
   private DocumentEvent doBeforeChangedUpdate(int offset, CharSequence oldString, CharSequence newString, boolean wholeTextReplaced) {
-    FileDocumentManager manager = FileDocumentManager.getInstance();
-    if (manager != null) {
-      VirtualFile file = manager.getFile(this);
-      if (file != null && !file.isValid()) {
-        LOG.error("File of this document has been deleted.");
+    Application app = ApplicationManager.getApplication();
+    if (app != null) {
+      FileDocumentManager manager = FileDocumentManager.getInstance();
+      if (manager != null) {
+        VirtualFile file = manager.getFile(this);
+        if (file != null && !file.isValid()) {
+          LOG.error("File of this document has been deleted.");
+        }
       }
     }
 

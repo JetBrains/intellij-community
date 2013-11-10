@@ -171,7 +171,15 @@ public final class ThreadReferenceProxyImpl extends ObjectReferenceProxyImpl imp
         myFrameCount = 0;
       }
       catch (IncompatibleThreadStateException e) {
-        if (!threadReference.isSuspended()) {
+        final boolean isSuspended;
+        try {
+          isSuspended = threadReference.isSuspended();
+        }
+        catch (Throwable th) {
+          // unable to determine whether the thread is actually suspended, so propagating original exception
+          throw EvaluateExceptionUtil.createEvaluateException(e);
+        }
+        if (!isSuspended) {
           // give up because it seems to be really resumed
           throw EvaluateExceptionUtil.createEvaluateException(e);
         }

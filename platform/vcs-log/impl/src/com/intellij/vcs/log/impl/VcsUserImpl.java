@@ -18,18 +18,29 @@ package com.intellij.vcs.log.impl;
 import com.intellij.vcs.log.VcsUser;
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * Note: users are considered equal if they have the same name, even if the e-mail is different.
+ */
 public class VcsUserImpl implements VcsUser {
 
-  @NotNull private String myName;
+  @NotNull private final String myName;
+  @NotNull private final String myEmail;
 
-  public VcsUserImpl(@NotNull String name) {
+  public VcsUserImpl(@NotNull String name, @NotNull String email) {
     myName = name;
+    myEmail = email;
   }
 
   @NotNull
   @Override
   public String getName() {
     return myName;
+  }
+
+  @NotNull
+  @Override
+  public String getEmail() {
+    return myEmail;
   }
 
   @Override
@@ -51,7 +62,7 @@ public class VcsUserImpl implements VcsUser {
 
   @Override
   public String toString() {
-    return myName;
+    return myName + "<" + myEmail + ">";
   }
 
 }

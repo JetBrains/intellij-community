@@ -33,7 +33,7 @@ public class VcsRootErrorsFinder {
     Collection<VcsRoot> vcsRoots = new VcsRootDetector(myProject).detect().getRoots();
 
     Collection<VcsRootError> errors = new ArrayList<VcsRootError>();
-    errors.addAll(findExtraMappings(mappings, vcsRoots.isEmpty()));
+    errors.addAll(findExtraMappings(mappings));
     errors.addAll(findUnregisteredRoots(mappings, vcsRoots));
     return errors;
   }
@@ -57,7 +57,7 @@ public class VcsRootErrorsFinder {
   }
 
   @NotNull
-  private Collection<VcsRootError> findExtraMappings(@NotNull List<VcsDirectoryMapping> mappings, boolean isEmptyVcsRoots) {
+  private Collection<VcsRootError> findExtraMappings(@NotNull List<VcsDirectoryMapping> mappings) {
     Collection<VcsRootError> errors = new ArrayList<VcsRootError>();
     for (VcsDirectoryMapping mapping : mappings) {
       if (!hasVcsChecker(mapping.getVcs())) {
