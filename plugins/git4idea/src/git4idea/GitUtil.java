@@ -664,6 +664,7 @@ public class GitUtil {
               catch (UnsupportedEncodingException e1) {
                 throw new IllegalStateException("The file name encoding is unsuported: " + encoding);
               }
+              i--;
             }
             else {
               throw new VcsException("Unknown escape sequence '\\" + path.charAt(i) + "' in the path: " + path);
