@@ -491,6 +491,11 @@ public class VcsLogDataHolder implements Disposable {
     return myLogProviders.keySet();
   }
 
+  @NotNull
+  public Collection<VcsLogProvider> getLogProviders() {
+    return myLogProviders.values();
+  }
+
   private static class RecentCommitsInfo {
     List<TimedVcsCommit> firstBlockCommits;
     Collection<VcsRef> newRefs;

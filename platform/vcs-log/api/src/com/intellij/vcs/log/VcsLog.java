@@ -72,4 +72,10 @@ public interface VcsLog {
   @NotNull
   Component getToolbar();
 
+  /**
+   * Returns {@link VcsLogProvider VcsLogProviders} which are active in this log, i.e. which VCS roots are shown in the log.
+   */
+  @NotNull
+  Collection<VcsLogProvider> getLogProviders();
+
 }

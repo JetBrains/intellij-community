@@ -18,10 +18,7 @@ package com.intellij.vcs.log.impl;
 import com.intellij.openapi.util.Condition;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.vcs.log.Hash;
-import com.intellij.vcs.log.VcsFullCommitDetails;
-import com.intellij.vcs.log.VcsLog;
-import com.intellij.vcs.log.VcsRef;
+import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.VcsLogDataHolder;
 import com.intellij.vcs.log.ui.VcsLogUI;
 import com.intellij.vcs.log.ui.tables.AbstractVcsLogTableModel;
@@ -115,4 +112,11 @@ public class VcsLogImpl implements VcsLog {
   public Component getToolbar() {
     return myUi.getToolbar();
   }
+
+  @NotNull
+  @Override
+  public Collection<VcsLogProvider> getLogProviders() {
+    return myDataHolder.getLogProviders();
+  }
+
 }
