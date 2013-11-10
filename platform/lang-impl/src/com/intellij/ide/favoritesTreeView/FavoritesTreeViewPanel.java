@@ -796,6 +796,11 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider, Dock
     return new RelativeRectangle(myTree);
   }
 
+  @Override
+  public RelativeRectangle getAcceptAreaFallback() {
+    return getAcceptArea();
+  }
+
   @NotNull
   @Override
   public ContentResponse getContentResponse(@NotNull DockableContent content, RelativePoint point) {

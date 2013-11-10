@@ -449,6 +449,11 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
     return new RelativeRectangle(myTabs.getComponent());
   }
 
+  @Override
+  public RelativeRectangle getAcceptAreaFallback() {
+    return getAcceptArea();
+  }
+
   @NotNull
   @Override
   public ContentResponse getContentResponse(@NotNull DockableContent content, RelativePoint point) {

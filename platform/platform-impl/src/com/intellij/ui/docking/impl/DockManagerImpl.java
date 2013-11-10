@@ -346,6 +346,13 @@ public class DockManagerImpl extends DockManager implements PersistentStateCompo
       }
     }
 
+    for (DockContainer each : myContainers) {
+      RelativeRectangle rec = each.getAcceptAreaFallback();
+      if (rec.contains(point) && each.getContentResponse(content, point).canAccept()) {
+        return each;
+      }
+    }
+
     return null;
   }
 

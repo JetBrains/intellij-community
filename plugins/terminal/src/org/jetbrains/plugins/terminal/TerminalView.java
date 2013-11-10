@@ -252,27 +252,32 @@ public class TerminalView {
    */
   public class TerminalDockContainer implements DockContainer {
     private ToolWindow myTerminalToolWindow;
-  
+
     public TerminalDockContainer(ToolWindow toolWindow) {
       myTerminalToolWindow = toolWindow;
     }
-  
+
     @Override
     public RelativeRectangle getAcceptArea() {
       return new RelativeRectangle(myTerminalToolWindow.getComponent());
     }
-  
+
+    @Override
+    public RelativeRectangle getAcceptAreaFallback() {
+      return getAcceptArea();
+    }
+
     @NotNull
     @Override
     public ContentResponse getContentResponse(@NotNull DockableContent content, RelativePoint point) {
       return ContentResponse.ACCEPT_MOVE;
     }
-  
+
     @Override
     public JComponent getContainerComponent() {
       return myTerminalToolWindow.getComponent();
     }
-  
+
     @Override
     public void add(@NotNull DockableContent content, RelativePoint dropTarget) {
       if (content.getKey() instanceof TerminalSessionVirtualFileImpl) {
@@ -280,57 +285,57 @@ public class TerminalView {
         myTerminalWidget.addTab(terminalFile.getName(), terminalFile.getTerminal());
       }
     }
-  
+
     @Override
     public void closeAll() {
-  
+
     }
-  
+
     @Override
     public void addListener(Listener listener, Disposable parent) {
-  
+
     }
-  
+
     @Override
     public boolean isEmpty() {
       return false;
     }
-  
+
     @Nullable
     @Override
     public Image startDropOver(@NotNull DockableContent content, RelativePoint point) {
       return null;
     }
-  
+
     @Nullable
     @Override
     public Image processDropOver(@NotNull DockableContent content, RelativePoint point) {
       return null;
     }
-  
+
     @Override
     public void resetDropOver(@NotNull DockableContent content) {
-  
+
     }
-  
+
     @Override
     public boolean isDisposeWhenEmpty() {
       return false;
     }
-  
+
     @Override
     public void showNotify() {
-  
+
     }
-  
+
     @Override
     public void hideNotify() {
-  
+
     }
-  
+
     @Override
     public void dispose() {
-  
+
     }
   }
 }
