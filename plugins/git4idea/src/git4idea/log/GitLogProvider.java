@@ -29,6 +29,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.VcsLogBranchFilter;
 import com.intellij.vcs.log.data.VcsLogDateFilter;
+import com.intellij.vcs.log.data.VcsLogStructureFilter;
 import com.intellij.vcs.log.data.VcsLogUserFilter;
 import com.intellij.vcs.log.impl.HashImpl;
 import com.intellij.vcs.log.impl.VcsRefImpl;
@@ -223,7 +224,19 @@ public class GitLogProvider implements VcsLogProvider {
       filterParameters.add(prepareParameter("grep", textFilter));
     }
 
-    filterParameters.add("--regexp-ignore-case"); // affects case sensitivity of any filter
+    filterParameters.add("--regexp-ignore-case"); // affects case sensitivity of any filter (except file filter)
+
+    // note: this filter must be the last parameter, because it uses "--" which separates parameters from paths
+    List<VcsLogStructureFilter> structureFilters = ContainerUtil.findAll(filters, VcsLogStructureFilter.class);
+    if (!structureFilters.isEmpty()) {
+      filterParameters.add("--");
+      for (VcsLogStructureFilter filter : structureFilters) {
+        for (VirtualFile file : filter.getFiles(root)) {
+          filterParameters.add(file.getPath());
+        }
+      }
+    }
+
     return GitHistoryUtils.getAllDetails(myProject, root, filterParameters);
   }
 
