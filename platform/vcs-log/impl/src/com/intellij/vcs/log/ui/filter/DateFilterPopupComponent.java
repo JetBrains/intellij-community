@@ -67,7 +67,7 @@ class DateFilterPopupComponent extends FilterPopupComponent {
   @Nullable
   @Override
   protected VcsLogFilter getFilter() {
-    return new VcsLogDateFilter(myAfter, myBefore);
+    return myAfter == null && myBefore == null ? null : new VcsLogDateFilter(myAfter, myBefore);
   }
 
   private void setOnlyAfter(Date after) {
