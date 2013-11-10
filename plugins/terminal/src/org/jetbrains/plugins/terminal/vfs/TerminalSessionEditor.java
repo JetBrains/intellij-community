@@ -120,7 +120,8 @@ public class TerminalSessionEditor extends UserDataHolderBase implements FileEdi
 
   @Override
   public void dispose() {
-    if (!myFile.getUserData(FileEditorManagerImpl.CLOSING_TO_REOPEN)) {
+    Boolean closingToReopen = myFile.getUserData(FileEditorManagerImpl.CLOSING_TO_REOPEN);
+    if (closingToReopen == null || !closingToReopen) {
       myFile.getTerminal().close();
     }
   }
