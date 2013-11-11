@@ -55,7 +55,7 @@ public class LocalArchivedTemplate extends ArchivedProjectTemplate {
 
   public LocalArchivedTemplate(@NotNull URL archivePath,
                                @NotNull ClassLoader classLoader) {
-    super(getTemplateName(archivePath));
+    super(getTemplateName(archivePath), null);
 
     myArchivePath = archivePath;
     myModuleType = computeModuleType(this);

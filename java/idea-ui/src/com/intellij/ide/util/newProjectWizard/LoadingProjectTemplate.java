@@ -27,7 +27,7 @@ import javax.swing.*;
 * @author Dmitry Avdeev
 *         Date: 11/28/12
 */
-class LoadingProjectTemplate implements ProjectTemplate {
+public class LoadingProjectTemplate implements ProjectTemplate {
   @NotNull
   @Override
   public String getName() {

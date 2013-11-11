@@ -35,9 +35,11 @@ import java.util.zip.ZipInputStream;
 public abstract class ArchivedProjectTemplate implements ProjectTemplate {
 
   protected final String myDisplayName;
+  @Nullable private final String myCategory;
 
-  public ArchivedProjectTemplate(@NotNull String displayName) {
+  public ArchivedProjectTemplate(@NotNull String displayName, @Nullable String category) {
     myDisplayName = displayName;
+    myCategory = category;
   }
 
   @NotNull
@@ -67,4 +69,9 @@ public abstract class ArchivedProjectTemplate implements ProjectTemplate {
   }
 
   public abstract ZipInputStream getStream() throws IOException;
+
+  @Nullable
+  public String getCategory() {
+    return myCategory;
+  }
 }
