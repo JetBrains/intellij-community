@@ -216,6 +216,12 @@ private layoutFull(Map args, String target, Set usedJars) {
         module("util-rt")
       }
 
+      dir("libpty") {
+        fileset(dir: "$home/community/lib/libpty") {
+          exclude(name: "*.txt")
+        }
+      }
+
       jar("openapi.jar") {
         openapiModules.each { module it }
       }
