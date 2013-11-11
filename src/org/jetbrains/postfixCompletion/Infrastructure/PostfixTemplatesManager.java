@@ -9,6 +9,8 @@ import org.jetbrains.annotations.*;
 
 import java.util.*;
 
+// todo: check usages of PsiBinaryExpression with PsiPolyadicExpression (2 + 2 + 2)
+
 public final class PostfixTemplatesManager implements ApplicationComponent {
   @NotNull private final List<TemplateProviderInfo> myProviders;
 
@@ -40,7 +42,7 @@ public final class PostfixTemplatesManager implements ApplicationComponent {
 
     final PsiElement parent = positionElement.getParent();
     if (parent instanceof PsiReferenceExpression) {
-      PsiReferenceExpression reference = (PsiReferenceExpression) parent;
+      final PsiReferenceExpression reference = (PsiReferenceExpression) parent;
 
       // easy case: 'expr.postfix'
       PsiExpression qualifier = reference.getQualifierExpression();
@@ -70,66 +72,95 @@ public final class PostfixTemplatesManager implements ApplicationComponent {
         };
       }
 
-      // hard case: 'x > 0.if' (two expression statements, broken literal)
+      // cases like 'x > 0.if' and '2.var + 2' (two expression-statement and broken literal)
       if (reference.getFirstChild() instanceof PsiReferenceParameterList &&
-        reference.getLastChild() == positionElement) {
-        final PsiElement statement = reference.getParent();
-        if (!(statement instanceof PsiExpressionStatement)) return null;
+          reference.getLastChild() == positionElement) {
+        // find enclosing expression-statement through expressions
+        PsiElement parentElement = reference.getParent();
+        while (parentElement instanceof PsiBinaryExpression ||
+               parentElement instanceof PsiPolyadicExpression) {
+          parentElement = parentElement.getParent();
+        }
 
-        // todo: will it handle 'a instanceof T.if' - ES;Error;ES;?
-        PsiStatement prevStatement = PsiTreeUtil.getPrevSiblingOfType(statement, PsiStatement.class);
-        if (!(prevStatement instanceof PsiExpressionStatement)) return null;
+        if (parentElement instanceof PsiExpressionStatement) {
+          final PsiStatement prevStatement = PsiTreeUtil.getPrevSiblingOfType(parentElement, PsiStatement.class);
+          if (!(prevStatement instanceof PsiExpressionStatement)) return null;
 
-        PsiElement lastErrorChild = prevStatement.getLastChild();
-        if (lastErrorChild instanceof PsiErrorElement) {
-          PsiExpression expression = ((PsiExpressionStatement) prevStatement).getExpression();
-          if (prevStatement.getFirstChild() == expression &&
-            lastErrorChild.getPrevSibling() == expression) {
+          PsiElement errorChild = prevStatement.getLastChild();
+          if (errorChild instanceof PsiErrorElement) {
+            final PsiExpression expression = ((PsiExpressionStatement) prevStatement).getExpression();
+            if (prevStatement.getFirstChild() == expression && errorChild.getPrevSibling() == expression) {
+              final PsiLiteralExpression brokenLiteral = findBrokenLiteral(expression);
+              if (brokenLiteral != null) {
+                return new PostfixTemplateAcceptanceContext(reference, brokenLiteral, forceMode) {
+                  @Override @NotNull public PrefixExpressionContext fixUpExpression(
+                      @NotNull PrefixExpressionContext context) {
+                    // fix broken double literal by cutting of "." suffix
+                    Project project = context.expression.getProject();
+                    String literalText = brokenLiteral.getText();
+                    String fixedText = literalText.substring(0, literalText.length() - 1);
+                    PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
+                    PsiElement newLiteral = brokenLiteral.replace(factory.createExpressionFromText(fixedText, null));
 
-            final PsiLiteralExpression brokenLiteral = findBrokenLiteral(expression);
-            if (brokenLiteral != null) {
-              return new PostfixTemplateAcceptanceContext(reference, brokenLiteral, forceMode) {
-                @Override @NotNull public PrefixExpressionContext fixUpExpression(
-                    @NotNull PrefixExpressionContext context) {
-                  statement.delete(); // remove extra statement
+                    // replace reference with fixed literal or it's containing expression
+                    PsiExpression newExpression = (PsiExpression) reference.replace(
+                      (expression == brokenLiteral) ? (PsiExpression) newLiteral : expression);
 
-                  // fix broken double literal by cutting of "." suffix
-                  Project project = context.expression.getProject();
-                  PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
-                  String literalText = brokenLiteral.getText();
-                  String fixedText = literalText.substring(0, literalText.length() - 1);
-                  PsiLiteralExpression fixedLiteral = (PsiLiteralExpression)
-                    factory.createExpressionFromText(fixedText, null);
-
-                  brokenLiteral.replace(fixedLiteral);
-                  return context;
-                }
-              };
+                    prevStatement.delete(); // drop statement with broken literal
+                    return new PrefixExpressionContext(this, newExpression);
+                  }
+                };
+              }
             }
           }
         }
       }
     } else if (parent instanceof PsiJavaCodeReferenceElement) {
-      // TODO: prettify
+      // check for qualifier of '.postfix' parsed as code-reference-element
       final PsiElement qualifier = ((PsiJavaCodeReferenceElement) parent).getQualifier();
-      if (!(qualifier instanceof PsiJavaCodeReferenceElement)) {
-        return null;
-      }
+      if (!(qualifier instanceof PsiJavaCodeReferenceElement)) return null;
 
-      // handle 'foo instanceof Bar.postfix' expressions
       PsiElement referenceParent = parent.getParent();
       if (referenceParent instanceof PsiTypeElement) {
-        PsiElement expression = referenceParent.getParent();
-        if (expression instanceof PsiInstanceOfExpression) {
-          PsiExpression instanceOfExpression = (PsiInstanceOfExpression) expression;
+        final PsiElement psiElement = referenceParent.getParent();
+        // handle 'foo instanceof Bar.postfix' expressions
+        // todo: wrong? skips 'Bar' as a type
+        if (psiElement instanceof PsiInstanceOfExpression) {
+          PsiExpression instanceOfExpression = (PsiInstanceOfExpression) psiElement;
           return new PostfixTemplateAcceptanceContext(parent, instanceOfExpression, forceMode) {
             @NotNull @Override public PrefixExpressionContext
                 fixUpExpression(@NotNull PrefixExpressionContext context) {
-
               parent.replace(qualifier);
-              assert context.expression.isValid(); // ?
-
+              assert context.expression.isValid();
               return context;
+            }
+          };
+        }
+
+        // handle 'Bar<T>.postfix' type expressions (parsed as declaration-statement)
+        if (psiElement instanceof PsiDeclarationStatement &&
+            psiElement.getLastChild() instanceof PsiErrorElement && // only simple
+            psiElement.getFirstChild() == referenceParent) {
+          // copy and fix type usage from '.postfix' suffix
+          PsiTypeElement refParentCopy = (PsiTypeElement) referenceParent.copy();
+          PsiJavaCodeReferenceElement referenceElement = refParentCopy.getInnermostComponentReferenceElement();
+          assert referenceElement != null : "referenceElement != null";
+
+          PsiElement referenceQualifier = referenceElement.getQualifier();
+          assert referenceQualifier != null : "referenceQualifier != null";
+          referenceElement.replace(referenceQualifier); // remove '.postfix'
+
+          // reinterpret type usages as 'new T();' expression-statement
+          PsiElementFactory factory = JavaPsiFacade.getElementFactory(psiElement.getProject());
+          final PsiExpressionStatement statement = (PsiExpressionStatement)
+            factory.createStatementFromText("new " + refParentCopy.getText() + "()", psiElement);
+
+          // todo: somehow mark that this is not real new-expression
+          return new PostfixTemplateAcceptanceContext(parent, statement.getExpression(), forceMode) {
+            @NotNull @Override public PrefixExpressionContext
+                fixUpExpression(@NotNull PrefixExpressionContext context) {
+              PsiExpressionStatement newStatement = (PsiExpressionStatement) psiElement.replace(statement);
+              return new PrefixExpressionContext(this, newStatement.getExpression());
             }
           };
         }

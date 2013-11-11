@@ -16,7 +16,7 @@ import org.jetbrains.postfixCompletion.LookupItems.*;
 
 import java.util.*;
 
-// toso: support ArrayList<Integer>.var
+// todo: support ArrayList<Integer>.var
 
 @TemplateProvider(
   templateName = "var",
@@ -121,12 +121,19 @@ public class IntroduceVariableTemplateProvider extends TemplateProviderBase {
     }
 
     @Override protected void postProcess(
-      @NotNull InsertionContext context, @NotNull PsiExpressionStatement statement) {
-      boolean unitTestMode = ApplicationManager.getApplication().isUnitTestMode();
-      IntroduceVariableHandler handler = unitTestMode ? getMockHandler() : new IntroduceVariableHandler();
+      @NotNull final InsertionContext context, @NotNull final PsiExpressionStatement statement) {
 
-      handler.invoke(context.getProject(), context.getEditor(), statement.getExpression());
-      // todo: somehow handle success introduce variable and place caret in a smart way
+      context.setLaterRunnable(new Runnable() {
+        @Override public void run() {
+          boolean unitTestMode = ApplicationManager.getApplication().isUnitTestMode();
+          IntroduceVariableHandler handler = unitTestMode ? getMockHandler() : new IntroduceVariableHandler();
+
+          handler.invoke(context.getProject(), context.getEditor(), statement.getExpression());
+          // todo: somehow handle success introduce variable and place caret in a smart way
+        }
+      });
+
+
     }
   }
 

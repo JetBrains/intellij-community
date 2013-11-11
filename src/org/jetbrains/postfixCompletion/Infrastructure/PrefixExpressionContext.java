@@ -1,5 +1,6 @@
 package org.jetbrains.postfixCompletion.Infrastructure;
 
+import com.intellij.codeInsight.completion.*;
 import com.intellij.openapi.util.*;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.*;
@@ -29,15 +30,34 @@ public final class PrefixExpressionContext {
 
   @Nullable public final PsiStatement getContainingStatement() {
     // look for expression-statement parent
-    PsiElement parent = expression.getParent();
+    PsiElement element = expression.getParent();
 
     // escape from '.postfix' reference-expression
-    if (parent == parentContext.postfixReference) {
-      parent = parent.getParent();
+    if (element == parentContext.postfixReference) {
+
+      // sometimes IDEA idea completion breaks expression in the middle into statement
+      if (element instanceof PsiReferenceExpression) {
+        // check we are invoked from code completion
+        String referenceName = ((PsiReferenceExpression) element).getReferenceName();
+        if (referenceName != null && referenceName.endsWith(CompletionUtilCore.DUMMY_IDENTIFIER_TRIMMED)) {
+          PsiElement referenceParent = element.getParent(); // find separated expression-statement
+          if (referenceParent instanceof PsiExpressionStatement) {
+            PsiElement nextSibling = referenceParent.getNextSibling();
+            if (nextSibling instanceof PsiExpressionStatement) { // find next expression-statement
+              PsiExpression brokenExpression = ((PsiExpressionStatement) nextSibling).getExpression();
+              // check next expression is likely broken invocation expression
+              if (brokenExpression instanceof PsiParenthesizedExpression) return null;
+              if (brokenExpression instanceof PsiMethodCallExpression) return null;
+            }
+          }
+        }
+      }
+
+      element = element.getParent();
     }
 
-    if (parent instanceof PsiExpressionStatement) {
-      return (PsiStatement) parent;
+    if (element instanceof PsiExpressionStatement) {
+      return (PsiStatement) element;
     }
 
     return null;
@@ -57,15 +77,17 @@ public final class PrefixExpressionContext {
 
     if (qualifier != null && qualifier.isValid()) {
       int qualifierEndRange = qualifier.getTextRange().getEndOffset();
-      if (expressionRange.getEndOffset() > qualifierEndRange) {
+      if (expressionRange.getEndOffset() > qualifierEndRange)
         return new TextRange(expressionRange.getStartOffset(), qualifierEndRange);
-      }
     }
 
     return expressionRange;
   }
 
   @NotNull public final PrefixExpressionContext fixUp() {
-    return parentContext.fixUpExpression(this);
+    PrefixExpressionContext fixedContext = parentContext.fixUpExpression(this);
+    assert fixedContext.expression.isPhysical() : "fixedContext.expression.isPhysical()";
+
+    return fixedContext;
   }
 }
