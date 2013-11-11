@@ -29,6 +29,7 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.Function;
+import com.intellij.util.SmartList;
 import com.intellij.util.ThrowableConsumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
@@ -38,6 +39,7 @@ import com.intellij.vcs.log.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -155,6 +157,7 @@ public class VcsLogDataHolder implements Disposable {
    */
   private CountDownLatch myEntireLogLoadWaiter;
   private final VcsUserRegistry myUserRegistry;
+  private final VcsLogHashMap myHashMap;
 
   public VcsLogDataHolder(@NotNull Project project,
                           @NotNull Map<VirtualFile, VcsLogProvider> logProviders, @NotNull VcsLogSettings settings) {
@@ -168,6 +171,36 @@ public class VcsLogDataHolder implements Disposable {
     myFactory = ServiceManager.getService(myProject, VcsLogObjectsFactory.class);
     mySettings = settings;
     myUserRegistry = new VcsUserRegistry();
+
+    try {
+      myHashMap = new VcsLogHashMap(myProject);
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e); // TODO: show a message to the user & fallback to using in-memory Hashes
+    }
+  }
+
+  @NotNull
+  public Hash getHash(int commitIndex) {
+    try {
+      Hash hash = myHashMap.getHash(commitIndex);
+      if (hash == null) {
+        throw new RuntimeException("Unknown commit index: " + commitIndex); // TODO this shouldn't happen => need to recreate the map
+      }
+      return hash;
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e); // TODO map is corrupted => need to recreate it
+    }
+  }
+
+  private int putHash(@NotNull Hash hash) {
+    try {
+      return myHashMap.getOrPut(hash);
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e); // TODO the map is corrupted => need to rebuild
+    }
   }
 
   public void initialize(@NotNull final Consumer<VcsLogDataHolder> onInitialized) {
@@ -244,7 +277,7 @@ public class VcsLogDataHolder implements Disposable {
           for (Map.Entry<VirtualFile, VcsLogProvider> entry : myLogProviders.entrySet()) {
             VirtualFile root = entry.getKey();
             VcsLogProvider logProvider = entry.getValue();
-            logs.put(root, logProvider.readAllHashes(root, userRegistry));
+            logs.put(root, compactHashes(logProvider.readAllHashes(root, userRegistry)));
             refs.put(root, logProvider.readAllRefs(root));
           }
           DataPack existingDataPack = myLogData.getDataPack();
@@ -257,6 +290,15 @@ public class VcsLogDataHolder implements Disposable {
         }
       }
     }, "Loading log structure...");
+  }
+
+  private List<TimedVcsCommit> compactHashes(List<TimedVcsCommit> commits) {
+    return ContainerUtil.map(commits, new Function<TimedVcsCommit, TimedVcsCommit>() {
+      @Override
+      public TimedVcsCommit fun(final TimedVcsCommit commit) {
+        return new CompactCommit(commit);
+      }
+    });
   }
 
   /**
@@ -535,7 +577,7 @@ public class VcsLogDataHolder implements Disposable {
     return ContainerUtil.map(firstBlockDetails, new Function<VcsFullCommitDetails, TimedVcsCommit>() {
       @Override
       public TimedVcsCommit fun(VcsFullCommitDetails details) {
-        return myFactory.createTimedCommit(details.getHash(), details.getParents(), details.getAuthorTime());
+        return new CompactCommit(details.getHash(), details.getParents(), details.getAuthorTime());
       }
     });
   }
@@ -851,6 +893,82 @@ public class VcsLogDataHolder implements Disposable {
     @NotNull
     public List<TimedVcsCommit> getTopCommits() {
       return myCompoundTopCommits;
+    }
+  }
+
+  private class CompactCommit implements TimedVcsCommit {
+    private final int myHashIndex;
+    private final int myParent; // there is almost always one parent
+    private final int[] myOtherParents;
+    private final long myAuthorTime;
+
+    public CompactCommit(TimedVcsCommit commit) {
+      this(commit.getHash(), commit.getParents(), commit.getAuthorTime());
+    }
+
+    public CompactCommit(Hash hash, List<Hash> parents, long time) {
+      myHashIndex = putHash(hash);
+      myAuthorTime = time;
+
+      if (!parents.isEmpty()) {
+        myParent = putHash(parents.get(0));
+        if (parents.size() > 1) {
+          myOtherParents = new int[parents.size() - 1];
+          for (int i = 0; i < parents.size() - 1; i++) {
+            myOtherParents[i]= putHash(parents.get(i + 1));
+          }
+        }
+        else {
+          myOtherParents = null;
+        }
+      }
+      else {
+        myParent = -1;
+        myOtherParents = null;
+      }
+    }
+
+    @Override
+    public long getAuthorTime() {
+      return myAuthorTime;
+    }
+
+    @NotNull
+    @Override
+    public Hash getHash() {
+      return VcsLogDataHolder.this.getHash(myHashIndex);
+    }
+
+    @NotNull
+    @Override
+    public List<Hash> getParents() {
+      List<Hash> parents = new SmartList<Hash>();
+      if (myParent > -1) {
+        parents.add(VcsLogDataHolder.this.getHash(myParent));
+      }
+      if (myOtherParents != null) {
+        for (int parent : myOtherParents) {
+          parents.add(VcsLogDataHolder.this.getHash(parent));
+        }
+      }
+      return parents;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+
+      CompactCommit commit = (CompactCommit)o;
+
+      if (myHashIndex != commit.myHashIndex) return false;
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      return myHashIndex;
     }
   }
 
