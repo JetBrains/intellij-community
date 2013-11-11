@@ -39,7 +39,7 @@ import java.awt.event.ComponentEvent;
 /**
  * @author Alexander Lobas
  */
-public final class DesignerToolWindow implements LightToolWindowContent {
+public final class DesignerToolWindow implements DesignerToolWindowContent {
   private final Splitter myToolWindowPanel;
   private ComponentTree myComponentTree;
   private ComponentTreeBuilder myTreeBuilder;
@@ -138,12 +138,14 @@ public final class DesignerToolWindow implements LightToolWindowContent {
     return myPropertyTablePanel.getPropertyTable();
   }
 
+  @Override
   public void expandFromState() {
     if (myTreeBuilder != null) {
       myTreeBuilder.expandFromState();
     }
   }
 
+  @Override
   public void refresh(boolean updateProperties) {
     if (myTreeBuilder != null) {
       if (updateProperties) {
@@ -155,6 +157,7 @@ public final class DesignerToolWindow implements LightToolWindowContent {
     }
   }
 
+  @Override
   public void updateInspections() {
     if (myComponentTree != null) {
       myComponentTree.updateInspections();
