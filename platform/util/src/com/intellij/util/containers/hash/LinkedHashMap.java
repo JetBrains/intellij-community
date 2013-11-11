@@ -211,11 +211,11 @@ public class LinkedHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V> 
     size = 0;
   }
 
-  public K getLastAddedKey() {
+  public K getLastKey() {
     return top != null ? top.key : null;
   }
 
-  public V getLastAddedValue() {
+  public V getLastValue() {
     return top != null ? top.value : null;
   }
 

@@ -382,7 +382,7 @@ public class FileDownloaderImpl implements FileDownloader {
       }
       else {
         myText2Stack.remove(subTask);
-        String prev = myText2Stack.getLastAddedValue();
+        String prev = myText2Stack.getLastValue();
         if (prev != null) {
           myParent.setText2(prev);
         }

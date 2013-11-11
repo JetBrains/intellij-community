@@ -201,17 +201,17 @@ public class LinkedHashMapTest {
     map.put(3, "c");
     map.get(1);
     map.get(2);
-    assertEquals(3, map.getLastAddedKey().intValue());
-    assertEquals("c", map.getLastAddedValue());
+    assertEquals(3, map.getLastKey().intValue());
+    assertEquals("c", map.getLastValue());
     map.remove(2);
-    assertEquals(3, map.getLastAddedKey().intValue());
-    assertEquals("c", map.getLastAddedValue());
+    assertEquals(3, map.getLastKey().intValue());
+    assertEquals("c", map.getLastValue());
     map.remove(3);
-    assertEquals(1, map.getLastAddedKey().intValue());
-    assertEquals("a", map.getLastAddedValue());
+    assertEquals(1, map.getLastKey().intValue());
+    assertEquals("a", map.getLastValue());
     map.remove(1);
-    assertNull(map.getLastAddedKey());
-    assertNull(map.getLastAddedValue());
+    assertNull(map.getLastKey());
+    assertNull(map.getLastValue());
   }
 
   //@Test
