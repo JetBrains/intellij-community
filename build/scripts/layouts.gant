@@ -327,6 +327,9 @@ public def layoutCommunityPlugins(String home) {
       jar("git4idea-rt.jar") {
         module("git4idea-rt")
       }
+      jar("remote-servers-git.jar") {
+        module("remote-servers-git")
+      }
       fileset(dir: "$home/plugins/git4idea/lib") {
         include(name: "trilead-ssh2.jar")
       }
