@@ -15,6 +15,7 @@
  */
 package com.intellij.psi.impl.source.xml;
 
+import com.intellij.codeInsight.completion.PrioritizedLookupElement;
 import com.intellij.codeInsight.completion.XmlTagInsertHandler;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
@@ -69,11 +70,10 @@ public class DefaultXmlTagNameProvider implements XmlTagNameProvider {
         lookupElement = lookupElement.withIcon(((PsiPresentableMetaData)descriptor).getIcon());
       }
       if (xmlExtension.useXmlTagInsertHandler()) {
-        elements.add(lookupElement.withInsertHandler(XmlTagInsertHandler.INSTANCE));
+        lookupElement = lookupElement.withInsertHandler(XmlTagInsertHandler.INSTANCE);
       }
-      else {
-        elements.add(lookupElement);
-      }
+
+      elements.add(PrioritizedLookupElement.withPriority(lookupElement, separator > 0 ? 0 : 1));
     }
   }
 
