@@ -15,16 +15,17 @@
  */
 package org.intellij.lang.xpath.xslt.impl;
 
-import com.intellij.formatting.CustomFormattingModelBuilder;
-import com.intellij.formatting.FormattingModel;
-import com.intellij.formatting.FormattingModelBuilder;
+import com.intellij.formatting.*;
+import com.intellij.ide.highlighter.XmlFileType;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.ide.highlighter.XmlFileType;
+import com.intellij.psi.formatter.xml.XmlBlock;
+import com.intellij.psi.formatter.xml.XmlPolicy;
+import com.intellij.psi.xml.XmlTag;
 import org.intellij.lang.xpath.xslt.XsltSupport;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -55,6 +56,45 @@ class XsltFormattingModelBuilder implements CustomFormattingModelBuilder {
 
   @NotNull
   public FormattingModel createModel(final PsiElement element, final CodeStyleSettings settings) {
-    return new XslTextFormattingModel(myBuilder.createModel(element, settings), settings);
+    FormattingModel baseModel = myBuilder.createModel(element, settings);
+    return new DelegatingFormattingModel(baseModel, getDelegatingBlock(settings, baseModel));
   }
+
+  static Block getDelegatingBlock(final CodeStyleSettings settings, FormattingModel baseModel) {
+    final Block block = baseModel.getRootBlock();
+    if (block instanceof XmlBlock) {
+      final XmlBlock xmlBlock = (XmlBlock)block;
+
+      final XmlPolicy xmlPolicy = new XmlPolicy(settings, baseModel.getDocumentModel()) {
+        @Override
+        public boolean keepWhiteSpacesInsideTag(XmlTag xmlTag) {
+          return super.keepWhiteSpacesInsideTag(xmlTag) || isXslTextTag(xmlTag);
+        }
+
+        @Override
+        public boolean isTextElement(XmlTag tag) {
+          return super.isTextElement(tag) || isXslTextTag(tag) || isXslValueOfTag(tag);
+        }
+      };
+
+      final ASTNode node = xmlBlock.getNode();
+      final Wrap wrap = xmlBlock.getWrap();
+      final Alignment alignment = xmlBlock.getAlignment();
+      final Indent indent = xmlBlock.getIndent();
+      final TextRange textRange = xmlBlock.getTextRange();
+
+      return new XmlBlock(node, wrap, alignment, xmlPolicy, indent, textRange);
+    } else {
+      return block;
+    }
+  }
+
+  private static boolean isXslTextTag(XmlTag xmlTag) {
+    return "text".equals(xmlTag.getLocalName()) && XsltSupport.XSLT_NS.equals(xmlTag.getNamespace());
+  }
+
+  private static boolean isXslValueOfTag(XmlTag xmlTag) {
+    return "value-of".equals(xmlTag.getLocalName()) && XsltSupport.XSLT_NS.equals(xmlTag.getNamespace());
+  }
+
 }
