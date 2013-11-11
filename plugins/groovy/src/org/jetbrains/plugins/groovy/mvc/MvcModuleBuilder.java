@@ -15,13 +15,6 @@
  */
 package org.jetbrains.plugins.groovy.mvc;
 
-import com.intellij.ide.util.projectWizard.ModuleWizardStep;
-import com.intellij.ide.util.projectWizard.SdkSettingsStep;
-import com.intellij.ide.util.projectWizard.SettingsStep;
-import com.intellij.openapi.projectRoots.SdkTypeId;
-import com.intellij.openapi.util.Condition;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.config.GroovyAwareModuleBuilder;
 
 import javax.swing.*;
@@ -41,16 +34,5 @@ public class MvcModuleBuilder extends GroovyAwareModuleBuilder {
   @Override
   protected MvcFramework getFramework() {
     return myFramework;
-  }
-
-  @Nullable
-  @Override
-  public ModuleWizardStep modifySettingsStep(@NotNull SettingsStep settingsStep) {
-    return new SdkSettingsStep(settingsStep, this, new Condition<SdkTypeId>() {
-          @Override
-          public boolean value(SdkTypeId sdkType) {
-            return isSuitableSdkType(sdkType);
-          }
-        });
   }
 }

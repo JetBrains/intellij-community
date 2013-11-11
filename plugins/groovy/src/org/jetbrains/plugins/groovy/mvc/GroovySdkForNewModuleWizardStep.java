@@ -39,7 +39,7 @@ public class GroovySdkForNewModuleWizardStep extends GroovySdkWizardStepBase {
     moduleBuilder.addModuleConfigurationUpdater(createModuleConfigurationUpdater());
     if (settingsStep != null) {
       myJavaStep = JavaModuleType.getModuleType().modifySettingsStep(settingsStep, moduleBuilder);
-      settingsStep.addSettingsField("\u001BGroovy library:", getPanel().getSimplePanel());
+      settingsStep.addSettingsField("\u001B" + framework.getDisplayName() + " library:", getPanel().getSimplePanel());
     }
   }
 
