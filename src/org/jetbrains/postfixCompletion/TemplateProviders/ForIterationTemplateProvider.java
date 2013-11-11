@@ -29,7 +29,7 @@ public class ForIterationTemplateProvider extends TemplateProviderBase {
     if (expression.referencedElement instanceof PsiPackage) return;
 
     PsiType type = expression.expressionType;
-    if (type != null && !context.isForceMode) {
+    if (type != null && !context.executionContext.isForceMode) {
       // check type to be Iterable-derived or array type
       if (!(type instanceof PsiArrayType) &&
           !InheritanceUtil.isInheritor(type, CommonClassNames.JAVA_LANG_ITERABLE)) return;

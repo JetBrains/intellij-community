@@ -1,13 +1,26 @@
 package org.jetbrains.postfixCompletion;
 
 import com.intellij.codeInsight.completion.*;
-import com.intellij.patterns.*;
+import org.jetbrains.annotations.*;
 import org.jetbrains.postfixCompletion.Infrastructure.*;
 
 public final class PostfixCompletionContributor extends CompletionContributor {
-  public PostfixCompletionContributor() {
-    extend(CompletionType.BASIC,
-      PlatformPatterns.psiElement(),
-      PostfixItemsCompletionProvider.instance);
+  @NotNull private final Object myDummyIdentifierLock = new Object();
+  @NotNull private String myDummyIdentifier = CompletionUtilCore.DUMMY_IDENTIFIER_TRIMMED;
+
+  @Override public void duringCompletion(@NotNull CompletionInitializationContext context) {
+    synchronized (myDummyIdentifierLock) {
+      myDummyIdentifier = context.getDummyIdentifier();
+    }
+  }
+
+  @Override public void fillCompletionVariants(CompletionParameters parameters, CompletionResultSet result) {
+    final String dummyIdentifier;
+    synchronized (myDummyIdentifierLock) { dummyIdentifier = myDummyIdentifier; }
+
+    PostfixExecutionContext executionContext =
+      new PostfixExecutionContext(!parameters.isAutoPopup(), dummyIdentifier);
+
+    PostfixItemsCompletionProvider.addCompletions(parameters, result, executionContext);
   }
 }

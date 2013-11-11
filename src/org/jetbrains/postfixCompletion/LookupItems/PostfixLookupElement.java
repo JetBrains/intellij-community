@@ -12,11 +12,13 @@ import org.jetbrains.postfixCompletion.Infrastructure.*;
 import java.util.*;
 
 public abstract class PostfixLookupElement<TPsiElement extends PsiElement> extends LookupElement {
-  @NotNull protected final Class<? extends PsiExpression> myExpressionType;
-  @NotNull protected final TextRange myExpressionRange;
-  @NotNull protected final String myLookupString;
+  @NotNull private final PostfixExecutionContext myExecutionContext;
+  @NotNull private final Class<? extends PsiExpression> myExpressionType;
+  @NotNull private final TextRange myExpressionRange;
+  @NotNull private final String myLookupString;
 
   public PostfixLookupElement(@NotNull String lookupString, @NotNull PrefixExpressionContext context) {
+    myExecutionContext = context.parentContext.executionContext;
     myExpressionType = context.expression.getClass();
     myLookupString = lookupString;
     myExpressionRange = context.expressionRange;
@@ -47,7 +49,7 @@ public abstract class PostfixLookupElement<TPsiElement extends PsiElement> exten
     PsiDocumentManager documentManager = PsiDocumentManager.getInstance(context.getProject());
 
     // note: use 'postfix' string, to break expression like '0.postfix'
-    document.replaceString(startOffset, context.getTailOffset(), "postfix");
+    document.replaceString(startOffset, context.getTailOffset(), myExecutionContext.dummyIdentifier);
     context.commitDocument();
 
     PsiFile file = context.getFile();
@@ -56,7 +58,7 @@ public abstract class PostfixLookupElement<TPsiElement extends PsiElement> exten
 
     PostfixTemplatesManager manager =
       ApplicationManager.getApplication().getComponent(PostfixTemplatesManager.class);
-    PostfixTemplateAcceptanceContext acceptanceContext = manager.isAvailable(psiElement, true);
+    PostfixTemplateAcceptanceContext acceptanceContext = manager.isAvailable(psiElement, myExecutionContext);
     if (acceptanceContext == null) return; // yes, shit happens
 
     for (PrefixExpressionContext expression : acceptanceContext.expressions) {

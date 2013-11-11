@@ -4,29 +4,22 @@ import com.intellij.codeInsight.completion.*;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.openapi.application.*;
 import com.intellij.psi.*;
-import com.intellij.util.*;
 import org.jetbrains.annotations.*;
 
-public final class PostfixItemsCompletionProvider
-  extends CompletionProvider<CompletionParameters> {
+public final class PostfixItemsCompletionProvider {
 
-  @NotNull public static final PostfixItemsCompletionProvider instance = new PostfixItemsCompletionProvider();
+  public static void addCompletions(
+    @NotNull CompletionParameters parameters, @NotNull CompletionResultSet resultSet,
+    @NotNull PostfixExecutionContext executionContext) {
 
-  private PostfixItemsCompletionProvider() { }
-
-  public void addCompletions(
-    @NotNull CompletionParameters parameters, @NotNull ProcessingContext context,
-    @NotNull CompletionResultSet resultSet) {
-
-    PostfixTemplatesManager manager = ApplicationManager.getApplication().getComponent(PostfixTemplatesManager.class);
+    Application application = ApplicationManager.getApplication();
+    PostfixTemplatesManager manager = application.getComponent(PostfixTemplatesManager.class);
 
     PsiElement positionElement = parameters.getPosition();
-    boolean forceMode = !parameters.isAutoPopup();
+    PostfixTemplateAcceptanceContext acceptanceContext = manager.isAvailable(positionElement, executionContext);
 
-    PostfixTemplateAcceptanceContext acceptance = manager.isAvailable(positionElement, forceMode);
-
-    if (acceptance != null)
-      for (LookupElement lookupElement : manager.collectTemplates(acceptance))
+    if (acceptanceContext != null)
+      for (LookupElement lookupElement : manager.collectTemplates(acceptanceContext))
         resultSet.addElement(lookupElement);
   }
 }

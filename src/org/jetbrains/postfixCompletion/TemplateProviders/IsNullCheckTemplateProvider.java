@@ -22,7 +22,7 @@ public class IsNullCheckTemplateProvider extends TemplateProviderBase {
     if (!expression.canBeStatement) return;
 
     PsiType expressionType = expression.expressionType;
-    if (expressionType != null && !context.isForceMode) {
+    if (expressionType != null && !context.executionContext.isForceMode) {
       if (expressionType instanceof PsiPrimitiveType) return;
     }
 

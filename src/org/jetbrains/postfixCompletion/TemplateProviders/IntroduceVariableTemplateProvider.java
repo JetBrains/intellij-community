@@ -70,7 +70,7 @@ public class IntroduceVariableTemplateProvider extends TemplateProviderBase {
     }
 
     // force mode - enable inside expressions/for locals/parameters/etc
-    if (forcedTarget != null && context.isForceMode) {
+    if (forcedTarget != null && context.executionContext.isForceMode) {
       if (forcedTarget.referencedElement instanceof PsiClass) {
         invokedOnType = (PsiClass) forcedTarget.referencedElement;
       }
@@ -161,18 +161,22 @@ public class IntroduceVariableTemplateProvider extends TemplateProviderBase {
     }
 
     @Override public void handleInsert(@NotNull final InsertionContext context) {
+      final Runnable runnable = new Runnable() {
+        @Override public void run() {
+          IntroduceVarExpressionLookupElement.super.handleInsert(context);
+        }
+      };
+
+      // normally - execute immediately
+      if (!ApplicationManager.getApplication().isUnitTestMode()) {
+        CommandProcessor.getInstance().runUndoTransparentAction(runnable);
+        return;
+      }
+
+      // execute postponed to workaround watching completion context
       context.setLaterRunnable(new Runnable() {
         @Override public void run() {
-          ApplicationManager.getApplication().runWriteAction(new Runnable() {
-            @Override public void run() {
-              // execute insertion without undo manager enabled
-              CommandProcessor.getInstance().runUndoTransparentAction(new Runnable() {
-                @Override public void run() {
-                  IntroduceVarExpressionLookupElement.super.handleInsert(context);
-                }
-              });
-            }
-          });
+          ApplicationManager.getApplication().runWriteAction(runnable);
         }
       });
     }

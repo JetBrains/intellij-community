@@ -10,12 +10,13 @@ public abstract class PostfixTemplateAcceptanceContext {
   @NotNull public final PsiElement postfixReference;
   @NotNull public final List<PrefixExpressionContext> expressions;
   @NotNull public final PrefixExpressionContext outerExpression, innerExpression;
-  public final boolean isForceMode;
+  @NotNull public final PostfixExecutionContext executionContext;
 
   public PostfixTemplateAcceptanceContext(
-    @NotNull PsiElement reference, @NotNull PsiExpression expression, boolean forceMode) {
+    @NotNull PsiElement reference, @NotNull PsiExpression expression,
+    @NotNull PostfixExecutionContext executionContext) {
     postfixReference = reference;
-    isForceMode = forceMode;
+    this.executionContext = executionContext;
 
     List<PrefixExpressionContext> contexts = new ArrayList<PrefixExpressionContext>();
     int referenceEndRange = reference.getTextRange().getEndOffset();
@@ -56,6 +57,7 @@ public abstract class PostfixTemplateAcceptanceContext {
     outerExpression = contexts.get(contexts.size() - 1);
   }
 
-  @NotNull public abstract PrefixExpressionContext fixUpExpression(@NotNull PrefixExpressionContext context);
+  @NotNull public abstract PrefixExpressionContext fixExpression(@NotNull PrefixExpressionContext context);
   public boolean isBrokenStatement(@NotNull PsiStatement statement) { return false; }
+  public boolean isFakeContextFromType() { return false; }
 }

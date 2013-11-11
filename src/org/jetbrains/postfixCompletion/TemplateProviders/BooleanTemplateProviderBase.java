@@ -19,7 +19,7 @@ public abstract class BooleanTemplateProviderBase extends TemplateProviderBase {
       if (isBooleanExpression(expression) &&
           createBooleanItems(expression, consumer)) return;
 
-    if (context.isForceMode)
+    if (context.executionContext.isForceMode)
       for (PrefixExpressionContext expression : context.expressions)
         if (createBooleanItems(expression, consumer)) return;
   }

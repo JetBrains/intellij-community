@@ -30,14 +30,15 @@ public final class PostfixTemplatesManager implements ApplicationComponent {
     @NotNull public final PostfixTemplateProvider provider;
     @NotNull public final TemplateProvider annotation;
 
-    public TemplateProviderInfo(@NotNull PostfixTemplateProvider provider, @NotNull TemplateProvider annotation) {
+    public TemplateProviderInfo(
+        @NotNull PostfixTemplateProvider provider, @NotNull TemplateProvider annotation) {
       this.provider = provider;
       this.annotation = annotation;
     }
   }
 
   @Nullable public final PostfixTemplateAcceptanceContext isAvailable(
-      @NotNull PsiElement positionElement, boolean forceMode) {
+      @NotNull PsiElement positionElement, @NotNull PostfixExecutionContext executionContext) {
 
     // postfix name always is identifier
     if (!(positionElement instanceof PsiIdentifier)) return null;
@@ -49,8 +50,9 @@ public final class PostfixTemplatesManager implements ApplicationComponent {
       // easy case: 'expr.postfix'
       PsiExpression qualifier = reference.getQualifierExpression();
       if (qualifier != null) {
-        return new PostfixTemplateAcceptanceContext(reference, qualifier, forceMode) {
-          @Override @NotNull public PrefixExpressionContext fixUpExpression(@NotNull PrefixExpressionContext context) {
+        return new PostfixTemplateAcceptanceContext(reference, qualifier, executionContext) {
+          @Override @NotNull
+          public PrefixExpressionContext fixExpression(@NotNull PrefixExpressionContext context) {
             PsiExpression expression = context.expression;
             PsiReferenceExpression referenceExpression = (PsiReferenceExpression) postfixReference;
 
@@ -85,9 +87,9 @@ public final class PostfixTemplatesManager implements ApplicationComponent {
           final PsiLiteralExpression brokenLiteral = findBrokenLiteral(lhsExpression);
           if (lhsExpression != null && brokenLiteral != null) {
             final boolean isComplexRhs = !(reference.getParent() instanceof PsiExpressionStatement);
-            return new PostfixTemplateAcceptanceContext(reference, brokenLiteral, forceMode) {
-              @Override @NotNull public PrefixExpressionContext fixUpExpression(
-                  @NotNull PrefixExpressionContext context) {
+            return new PostfixTemplateAcceptanceContext(reference, brokenLiteral, executionContext) {
+              @Override @NotNull
+              public PrefixExpressionContext fixExpression(@NotNull PrefixExpressionContext context) {
                 PsiExpression newExpression = fixCompletelyBrokenCase(
                   context.expression, brokenLiteral, reference, lhsExpression);
 
@@ -112,12 +114,11 @@ public final class PostfixTemplatesManager implements ApplicationComponent {
       if (referenceParent instanceof PsiTypeElement) {
         final PsiElement psiElement = referenceParent.getParent();
         // handle 'foo instanceof Bar.postfix' expressions
-        // todo: wrong? skips 'Bar' as a type
         if (psiElement instanceof PsiInstanceOfExpression) {
           PsiExpression instanceOfExpression = (PsiInstanceOfExpression) psiElement;
-          return new PostfixTemplateAcceptanceContext(parent, instanceOfExpression, forceMode) {
+          return new PostfixTemplateAcceptanceContext(parent, instanceOfExpression, executionContext) {
             @NotNull @Override public PrefixExpressionContext
-                fixUpExpression(@NotNull PrefixExpressionContext context) {
+            fixExpression(@NotNull PrefixExpressionContext context) {
               parent.replace(qualifier);
               assert context.expression.isValid();
               return context;
@@ -143,13 +144,14 @@ public final class PostfixTemplatesManager implements ApplicationComponent {
           final PsiExpressionStatement statement = (PsiExpressionStatement)
             factory.createStatementFromText("new " + refParentCopy.getText() + "()", psiElement);
 
-          // todo: somehow mark that this is not real new-expression
-          return new PostfixTemplateAcceptanceContext(parent, statement.getExpression(), forceMode) {
-            @NotNull @Override public PrefixExpressionContext
-                fixUpExpression(@NotNull PrefixExpressionContext context) {
+          return new PostfixTemplateAcceptanceContext(parent, statement.getExpression(), executionContext) {
+            @NotNull @Override
+            public PrefixExpressionContext fixExpression(@NotNull PrefixExpressionContext context) {
               PsiExpressionStatement newStatement = (PsiExpressionStatement) psiElement.replace(statement);
               return new PrefixExpressionContext(this, newStatement.getExpression());
             }
+
+            @Override public boolean isFakeContextFromType() { return true; }
           };
         }
       }

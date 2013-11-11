@@ -90,7 +90,7 @@ public final class PrefixExpressionContext {
   }
 
   @NotNull public final PrefixExpressionContext fixUp() {
-    PrefixExpressionContext fixedContext = parentContext.fixUpExpression(this);
+    PrefixExpressionContext fixedContext = parentContext.fixExpression(this);
     assert fixedContext.expression.isPhysical() : "fixedContext.expression.isPhysical()";
 
     return fixedContext;
