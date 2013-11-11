@@ -1285,6 +1285,13 @@ public class UIUtil {
     final Composite oldComposite = g.getComposite();
     g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.7f));
     g.setPaint(getGradientPaint(startX, 2, c1, startX, height - 5, c2));
+
+    if (isRetina()) {
+      g.fillRoundRect(startX - 1, 3, endX - startX + 2, height - 5, 5, 5);
+      g.setComposite(oldComposite);
+      return;
+    }
+
     g.fillRect(startX, 3, endX - startX, height - 5);
 
     if (drawRound) {
