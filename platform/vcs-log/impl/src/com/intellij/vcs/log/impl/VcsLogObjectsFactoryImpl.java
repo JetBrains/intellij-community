@@ -69,4 +69,10 @@ public class VcsLogObjectsFactoryImpl implements VcsLogObjectsFactory {
     return dataHolder.getUserRegistry().createUser(name, email);
   }
 
+  @NotNull
+  @Override
+  public VcsRef createRef(@NotNull Hash commitHash, @NotNull String name, @NotNull VcsRefType type, @NotNull VirtualFile root) {
+    return new VcsRefImpl(commitHash, name, type, root);
+  }
+
 }

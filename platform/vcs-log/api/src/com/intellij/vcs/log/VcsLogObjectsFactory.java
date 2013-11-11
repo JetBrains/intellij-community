@@ -36,4 +36,8 @@ public interface VcsLogObjectsFactory {
 
   @NotNull
   VcsUser createUser(@NotNull String name, @NotNull String email);
+
+  @NotNull
+  VcsRef createRef(@NotNull Hash commitHash, @NotNull String name, @NotNull VcsRefType type, @NotNull VirtualFile root);
+
 }
