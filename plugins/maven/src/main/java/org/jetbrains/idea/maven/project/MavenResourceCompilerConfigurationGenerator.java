@@ -17,6 +17,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.XmlSerializer;
 import org.jdom.Document;
 import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.dom.references.MavenFilteredPropertyPsiReferenceProvider;
 import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.model.MavenResource;
@@ -118,7 +119,7 @@ public class MavenResourceCompilerConfigurationGenerator {
       addResources(resourceConfig.resources, mavenProject.getResources());
       addResources(resourceConfig.testResources, mavenProject.getTestResources());
 
-      addWebResources(resourceConfig.webResources, mavenProject);
+      addWebResources(module, resourceConfig, mavenProject);
 
       resourceConfig.filteringExclusions.addAll(MavenProjectsTree.getFilterExclusions(mavenProject));
 
@@ -224,20 +225,27 @@ public class MavenResourceCompilerConfigurationGenerator {
     }
   }
 
-  private static void addWebResources(final List<ResourceRootConfiguration> container, MavenProject mavenProject) {
+  private static void addWebResources(@NotNull Module module, MavenModuleResourceConfiguration moduleCfg, MavenProject mavenProject) {
     Element warCfg = mavenProject.getPluginConfiguration("org.apache.maven.plugins", "maven-war-plugin");
     if (warCfg == null) return;
 
     Element webResources = warCfg.getChild("webResources");
     if (webResources == null) return;
 
+    moduleCfg.webArtifactName = MavenUtil.getArtifactName("war", module, true);
+
     for (Element resource : webResources.getChildren("resource")) {
       ResourceRootConfiguration r = new ResourceRootConfiguration();
       String directory = resource.getChildTextTrim("directory");
       if (StringUtil.isEmptyOrSpaces(directory)) continue;
 
+      if (!FileUtil.isAbsolute(directory)) {
+        directory = mavenProject.getDirectory() + '/' + directory;
+      }
+
       r.directory = directory;
       r.isFiltered = Boolean.parseBoolean(resource.getChildTextTrim("filtering"));
+
       r.targetPath = resource.getChildTextTrim("targetPath");
 
       Element includes = resource.getChild("includes");
@@ -260,7 +268,7 @@ public class MavenResourceCompilerConfigurationGenerator {
         }
       }
 
-      container.add(r);
+      moduleCfg.webResources.add(r);
     }
   }
 
