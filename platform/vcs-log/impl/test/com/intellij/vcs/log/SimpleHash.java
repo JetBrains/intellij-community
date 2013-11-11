@@ -13,9 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.vcs.log.parser;
+package com.intellij.vcs.log;
 
-import com.intellij.vcs.log.Hash;
 import org.jetbrains.annotations.NotNull;
 
 /**

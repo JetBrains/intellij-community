@@ -7,7 +7,7 @@ import com.intellij.util.NotNullFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.impl.VcsRefImpl;
-import com.intellij.vcs.log.parser.SimpleHash;
+import com.intellij.vcs.log.SimpleHash;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
 

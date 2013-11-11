@@ -18,7 +18,6 @@ package com.intellij.vcs.log;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.parser.CommitParser;
-import com.intellij.vcs.log.parser.SimpleHash;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
