@@ -211,6 +211,14 @@ public class LinkedHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V> 
     size = 0;
   }
 
+  public K getLastAddedKey() {
+    return top != null ? top.key : null;
+  }
+
+  public V getLastAddedValue() {
+    return top != null ? top.value : null;
+  }
+
   private void moveToTop(final Entry<K, V> e) {
     if (!accessOrder) {
       return;
