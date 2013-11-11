@@ -104,7 +104,10 @@ STRING=                         '([^']|(''))*?'?
                                     yybegin(braceCount == 0 ? previousState: BRACES);
                                     return LBRACE;
                                 }
-"}"                             {   braceCount--;
+"}"                             {   if (braceCount == 0) {
+                                      return TEXT;
+                                    }
+                                    braceCount--;
                                     if (yystate() == BRACES && braceCount == 0){
                                       yybegin(previousState);
                                     }
@@ -117,7 +120,10 @@ STRING=                         '([^']|(''))*?'?
                                     yybegin(braceCount == 0 ? previousState: BRACES);
                                     return LBRACKET;
                                 }
-"]"                             {   braceCount--;
+"]"                             {   if (braceCount == 0) {
+                                      return TEXT;
+                                    }
+                                    braceCount--;
                                     if (yystate() == BRACES && braceCount == 0){
                                       yybegin(previousState);
                                     }
