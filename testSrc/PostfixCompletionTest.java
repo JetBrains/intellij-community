@@ -1,6 +1,9 @@
 import com.intellij.testFramework.fixtures.*;
 import org.jetbrains.annotations.*;
 
+// todo: test with statements after
+// todo: dump caret position after completion
+
 public class PostfixCompletionTest extends LightCodeInsightFixtureTestCase {
   @Override protected String getTestDataPath() {
     return PostfixTestUtils.BASE_TEST_DATA_PATH + "/completion";

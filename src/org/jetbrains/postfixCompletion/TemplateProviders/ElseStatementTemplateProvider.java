@@ -9,6 +9,8 @@ import org.jetbrains.postfixCompletion.LookupItems.*;
 
 import java.util.*;
 
+// todo: caret position like in .if
+
 @TemplateProvider(
   templateName = "else",
   description = "Checks boolean expression to be 'false'",
@@ -16,7 +18,6 @@ import java.util.*;
 public final class ElseStatementTemplateProvider extends BooleanTemplateProviderBase {
   @Override public boolean createBooleanItems(
     @NotNull PrefixExpressionContext context, @NotNull List<LookupElement> consumer) {
-
     if (context.canBeStatement) {
       consumer.add(new ElseLookupItem(context));
       return true;
