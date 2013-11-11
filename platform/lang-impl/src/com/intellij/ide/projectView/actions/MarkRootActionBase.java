@@ -19,7 +19,6 @@ import com.intellij.ide.projectView.impl.ProjectRootsUtil;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.LangDataKeys;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -82,13 +81,14 @@ public abstract class MarkRootActionBase extends DumbAwareAction {
 
   @Override
   public void update(AnActionEvent e) {
+    Module module = e.getData(LangDataKeys.MODULE);
     RootsSelection selection = getSelection(e);
-    boolean enabled = (!selection.mySelectedRoots.isEmpty() || !selection.mySelectedFiles.isEmpty()) && isEnabled(selection);
+    boolean enabled = module != null && (!selection.mySelectedRoots.isEmpty() || !selection.mySelectedDirectories.isEmpty()) && isEnabled(selection, module);
     e.getPresentation().setVisible(enabled);
     e.getPresentation().setEnabled(enabled);
   }
 
-  protected abstract boolean isEnabled(@NotNull RootsSelection selection);
+  protected abstract boolean isEnabled(@NotNull RootsSelection selection, @NotNull Module module);
 
   protected static RootsSelection getSelection(AnActionEvent e) {
     Module module = e.getData(LangDataKeys.MODULE);
@@ -111,7 +111,7 @@ public abstract class MarkRootActionBase extends DumbAwareAction {
         selection.mySelectedRoots.add(folder);
       }
       else {
-        selection.mySelectedFiles.add(file);
+        selection.mySelectedDirectories.add(file);
         if (fileIndex.isInSourceContent(file)) {
           selection.myHaveSelectedFilesUnderSourceRoots = true;
         }
@@ -124,7 +124,7 @@ public abstract class MarkRootActionBase extends DumbAwareAction {
     public static final RootsSelection EMPTY = new RootsSelection();
 
     public List<SourceFolder> mySelectedRoots = new ArrayList<SourceFolder>();
-    public List<VirtualFile> mySelectedFiles = new ArrayList<VirtualFile>();
+    public List<VirtualFile> mySelectedDirectories = new ArrayList<VirtualFile>();
     public boolean myHaveSelectedFilesUnderSourceRoots;
   }
 }

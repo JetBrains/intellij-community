@@ -15,37 +15,35 @@
  */
 package com.intellij.ide.projectView.actions;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.module.JavaModuleType;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.project.ProjectBundle;
+import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.SourceFolder;
-import com.intellij.openapi.roots.ui.configuration.ModuleSourceRootEditHandler;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
+import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
+import org.jetbrains.jps.model.java.JavaSourceRootProperties;
+import org.jetbrains.jps.model.java.JavaSourceRootType;
+import org.jetbrains.jps.model.java.JpsJavaExtensionService;
 
 /**
  * @author nik
  */
-public class MarkSourceRootAction extends MarkRootActionBase {
-  private final JpsModuleSourceRootType<?> myRootType;
-
-  public MarkSourceRootAction(@NotNull JpsModuleSourceRootType<?> type) {
-    myRootType = type;
+public class MarkGeneratedSourceRootAction extends MarkRootActionBase {
+  public MarkGeneratedSourceRootAction() {
     Presentation presentation = getTemplatePresentation();
-    ModuleSourceRootEditHandler<?> editHandler = ModuleSourceRootEditHandler.getEditHandler(type);
-    presentation.setIcon(editHandler.getRootIcon());
-    presentation.setText(editHandler.getRootTypeName() + " Root");
-    presentation.setDescription(ProjectBundle.message("module.toggle.sources.action.description", editHandler.getRootTypeName()));
-  }
-
-  protected void modifyRoots(VirtualFile vFile, ContentEntry entry) {
-    entry.addSourceFolder(vFile, myRootType);
+    presentation.setIcon(AllIcons.Modules.SourceRoot);
+    presentation.setText("Generated Sources Root");
+    presentation.setDescription("Mark directory as a source root for generated files");
   }
 
   @Override
   protected boolean isEnabled(@NotNull RootsSelection selection, @NotNull Module module) {
+    if (!(ModuleType.get(module) instanceof JavaModuleType)) return false;
+
     if (selection.myHaveSelectedFilesUnderSourceRoots) {
       return false;
     }
@@ -55,10 +53,17 @@ public class MarkSourceRootAction extends MarkRootActionBase {
     }
 
     for (SourceFolder root : selection.mySelectedRoots) {
-      if (!myRootType.equals(root.getRootType())) {
+      JavaSourceRootProperties properties = root.getJpsElement().getProperties(JavaModuleSourceRootTypes.SOURCES);
+      if (properties != null && !properties.isForGeneratedSources()) {
         return true;
       }
     }
     return false;
+  }
+
+  @Override
+  protected void modifyRoots(VirtualFile vFile, ContentEntry entry) {
+    JavaSourceRootProperties properties = JpsJavaExtensionService.getInstance().createSourceRootProperties("", true);
+    entry.addSourceFolder(vFile, JavaSourceRootType.SOURCE, properties);
   }
 }
