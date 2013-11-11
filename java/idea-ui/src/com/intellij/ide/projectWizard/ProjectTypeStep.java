@@ -181,12 +181,6 @@ public class ProjectTypeStep extends ModuleWizardStep implements Disposable {
     });
 
     myTabs = new JBTabsImpl(null, IdeFocusManager.findInstance(), this);
-    myTabs.addListener(new TabsListener.Adapter() {
-      @Override
-      public void selectionChanged(TabInfo oldSelection, TabInfo newSelection) {
-        projectTypeChanged(false);
-      }
-    });
     myFrameworksTab = new TabInfo(myFrameworksPanel.getMainPanel()).setText("  Frameworks  ");
     myTabs.addTab(myFrameworksTab);
 
@@ -200,6 +194,13 @@ public class ProjectTypeStep extends ModuleWizardStep implements Disposable {
     myTemplatesTab = new TabInfo(templatesPanel).setText("   Templates   ");
     myTabs.addTab(myTemplatesTab);
     myOptionsPanel.add(myTabs.getComponent(), FRAMEWORKS_CARD);
+
+    myTabs.addListener(new TabsListener.Adapter() {
+      @Override
+      public void selectionChanged(TabInfo oldSelection, TabInfo newSelection) {
+        projectTypeChanged(false);
+      }
+    });
   }
 
   // new category or template is selected
@@ -222,9 +223,12 @@ public class ProjectTypeStep extends ModuleWizardStep implements Disposable {
 
   @Nullable
   public ProjectCategory getSelectedProjectType() {
-    return myTabs.getSelectedInfo() == myFrameworksTab ?
-           myProjectTypesList.getSelectedType() :
-           (ProjectCategory)myTemplatesList.getSelectedValue();
+    if (myTabs.getSelectedInfo() == myFrameworksTab) {
+      return myProjectTypesList.getSelectedType();
+    }
+    else {
+      return (ProjectCategory)myTemplatesList.getSelectedValue();
+    }
   }
 
   @Nullable
@@ -262,14 +266,14 @@ public class ProjectTypeStep extends ModuleWizardStep implements Disposable {
       myFrameworksPanel.setProviders(matched,
                                      new HashSet<String>(Arrays.asList(projectCategory.getAssociatedFrameworkIds())),
                                      new HashSet<String>(Arrays.asList(projectCategory.getPreselectedFrameworkIds())));
-      myFrameworksTab.setEnabled(!matched.isEmpty());
 
-      updateTemplates(projectCategory, true);
+      boolean hasTemplates = updateTemplates(projectCategory, true);
+      myFrameworksTab.setEnabled(!matched.isEmpty() || !hasTemplates);
     }
     ((CardLayout)myOptionsPanel.getLayout()).show(myOptionsPanel, card);
   }
 
-  private void updateTemplates(ProjectCategory projectCategory, boolean initial) {
+  private boolean updateTemplates(ProjectCategory projectCategory, boolean initial) {
     List<ProjectCategory> templates = ContainerUtil.map(myTemplates.get(projectCategory.getId()), new Function<ProjectTemplate, ProjectCategory>() {
       @Override
       public ProjectCategory fun(ProjectTemplate template) {
@@ -283,6 +287,7 @@ public class ProjectTypeStep extends ModuleWizardStep implements Disposable {
     if (initial && !templates.isEmpty()) {
       myTemplatesList.setSelectedIndex(0);
     }
+    return !templates.isEmpty();
   }
 
   private boolean matchFramework(ProjectCategory projectCategory, FrameworkSupportInModuleProvider framework) {
