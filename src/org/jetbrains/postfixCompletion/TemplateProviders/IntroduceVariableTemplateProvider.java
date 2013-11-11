@@ -161,10 +161,18 @@ public class IntroduceVariableTemplateProvider extends TemplateProviderBase {
     }
 
     @Override public void handleInsert(@NotNull final InsertionContext context) {
-      // execute insertion without undo manager enabled
-      CommandProcessor.getInstance().runUndoTransparentAction(new Runnable() {
+      context.setLaterRunnable(new Runnable() {
         @Override public void run() {
-          IntroduceVarExpressionLookupElement.super.handleInsert(context);
+          ApplicationManager.getApplication().runWriteAction(new Runnable() {
+            @Override public void run() {
+              // execute insertion without undo manager enabled
+              CommandProcessor.getInstance().runUndoTransparentAction(new Runnable() {
+                @Override public void run() {
+                  IntroduceVarExpressionLookupElement.super.handleInsert(context);
+                }
+              });
+            }
+          });
         }
       });
     }
@@ -174,6 +182,7 @@ public class IntroduceVariableTemplateProvider extends TemplateProviderBase {
       boolean unitTestMode = ApplicationManager.getApplication().isUnitTestMode();
       IntroduceVariableHandler handler = unitTestMode ? getMockHandler() : new IntroduceVariableHandler();
 
+      //String text = context.getDocument().getText();
       handler.invoke(context.getProject(), context.getEditor(), expression);
     }
   }

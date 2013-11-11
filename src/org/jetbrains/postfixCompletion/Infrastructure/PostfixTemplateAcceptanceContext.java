@@ -57,4 +57,5 @@ public abstract class PostfixTemplateAcceptanceContext {
   }
 
   @NotNull public abstract PrefixExpressionContext fixUpExpression(@NotNull PrefixExpressionContext context);
+  public boolean isBrokenStatement(@NotNull PsiStatement statement) { return false; }
 }

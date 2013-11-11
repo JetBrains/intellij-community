@@ -13,6 +13,8 @@ import org.jetbrains.postfixCompletion.LookupItems.*;
 
 import java.util.*;
 
+// TODO: int i = 1 + 2.for + 3 + 4 + 5 - why available?
+
 @TemplateProvider(
   templateName = "for",
   description = "Iterates over enumerable collection",

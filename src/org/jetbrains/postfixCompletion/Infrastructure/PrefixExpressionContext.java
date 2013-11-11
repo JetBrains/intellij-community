@@ -15,6 +15,8 @@ public final class PrefixExpressionContext {
 
   public PrefixExpressionContext(
       @NotNull PostfixTemplateAcceptanceContext parentContext, @NotNull PsiExpression expression) {
+    assert expression.isValid() : "expression.isValid()";
+
     this.parentContext = parentContext;
     this.expression = expression;
     expressionType = expression.getType();
@@ -57,6 +59,9 @@ public final class PrefixExpressionContext {
     }
 
     if (element instanceof PsiExpressionStatement) {
+      // ignore expression-statements produced by broken expr like '2.var + 2'
+      if (parentContext.isBrokenStatement((PsiStatement) element)) return null;
+
       return (PsiStatement) element;
     }
 

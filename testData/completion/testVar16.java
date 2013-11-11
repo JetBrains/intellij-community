@@ -1,6 +1,5 @@
 public class Foo {
     void m() {
-        int foo = 1;
-        foo + 2
+        int i = 2.<caret> + 2;
     }
 }

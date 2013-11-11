@@ -3,6 +3,7 @@ package org.jetbrains.postfixCompletion.Infrastructure;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.project.*;
+import com.intellij.openapi.util.*;
 import com.intellij.psi.*;
 import com.intellij.psi.util.*;
 import org.jetbrains.annotations.*;
@@ -10,6 +11,7 @@ import org.jetbrains.annotations.*;
 import java.util.*;
 
 // todo: check usages of PsiBinaryExpression with PsiPolyadicExpression (2 + 2 + 2)
+// todo: support '2 + 2 .var' (with spacing)
 
 public final class PostfixTemplatesManager implements ApplicationComponent {
   @NotNull private final List<TemplateProviderInfo> myProviders;
@@ -76,41 +78,61 @@ public final class PostfixTemplatesManager implements ApplicationComponent {
       if (reference.getFirstChild() instanceof PsiReferenceParameterList &&
           reference.getLastChild() == positionElement) {
         // find enclosing expression-statement through expressions
-        PsiElement parentElement = reference.getParent();
-        while (parentElement instanceof PsiBinaryExpression ||
-               parentElement instanceof PsiPolyadicExpression) {
-          parentElement = parentElement.getParent();
-        }
+        final PsiExpressionStatement exprStatement = findContainingExprStatement(reference.getParent());
 
-        if (parentElement instanceof PsiExpressionStatement) {
-          final PsiStatement prevStatement = PsiTreeUtil.getPrevSiblingOfType(parentElement, PsiStatement.class);
-          if (!(prevStatement instanceof PsiExpressionStatement)) return null;
+        // TODO: 2 + 2.var + 2 + 2
 
-          PsiElement errorChild = prevStatement.getLastChild();
-          if (errorChild instanceof PsiErrorElement) {
-            final PsiExpression expression = ((PsiExpressionStatement) prevStatement).getExpression();
-            if (prevStatement.getFirstChild() == expression && errorChild.getPrevSibling() == expression) {
-              final PsiLiteralExpression brokenLiteral = findBrokenLiteral(expression);
-              if (brokenLiteral != null) {
-                return new PostfixTemplateAcceptanceContext(reference, brokenLiteral, forceMode) {
-                  @Override @NotNull public PrefixExpressionContext fixUpExpression(
-                      @NotNull PrefixExpressionContext context) {
-                    // fix broken double literal by cutting of "." suffix
-                    Project project = context.expression.getProject();
-                    String literalText = brokenLiteral.getText();
-                    String fixedText = literalText.substring(0, literalText.length() - 1);
-                    PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
-                    PsiElement newLiteral = brokenLiteral.replace(factory.createExpressionFromText(fixedText, null));
+        if (exprStatement != null) {
+          final PsiStatement prevStatement = PsiTreeUtil.getPrevSiblingOfType(exprStatement, PsiStatement.class);
+          final PsiExpression expression = findUnfinishedExpression(prevStatement);
+          if (expression != null) {
+            final PsiLiteralExpression brokenLiteral = findBrokenLiteral(expression);
+            if (brokenLiteral != null) {
+              return new PostfixTemplateAcceptanceContext(reference, brokenLiteral, forceMode) {
+                @Override @NotNull public PrefixExpressionContext fixUpExpression(
+                    @NotNull PrefixExpressionContext context) {
+                  // fix broken double literal by cutting of "." suffix
+                  Project project = context.expression.getProject();
+                  String literalText = brokenLiteral.getText();
+                  String fixedText = literalText.substring(0, literalText.length() - 1);
+                  PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
+                  PsiLiteralExpression newLiteral = (PsiLiteralExpression)
+                    factory.createExpressionFromText(fixedText, null);
 
-                    // replace reference with fixed literal or it's containing expression
-                    PsiExpression newExpression = (PsiExpression) reference.replace(
-                      (expression == brokenLiteral) ? (PsiExpression) newLiteral : expression);
-
-                    prevStatement.delete(); // drop statement with broken literal
-                    return new PrefixExpressionContext(this, newExpression);
+                  PsiExpression newExpression, oldExpression;
+                  if (expression == brokenLiteral) {
+                    oldExpression = brokenLiteral;
+                    newExpression = (PsiExpression) reference.replace(newLiteral);
+                  } else {
+                    brokenLiteral.replace(newLiteral);
+                    oldExpression = expression;
+                    newExpression = (PsiExpression) reference.replace(expression.copy());
                   }
-                };
-              }
+
+                  assert newExpression.isPhysical() : "newExpression.isPhysical()";
+                  assert oldExpression.isPhysical() : "oldExpression.isPhysical()";
+
+                  PsiExpressionStatement statement = findContainingExprStatement(newExpression.getParent());
+                  if (statement != null) {
+                    newExpression.putCopyableUserData(marker, marker);
+
+                    PsiExpression outerExpression = statement.getExpression();
+                    newExpression = (PsiExpression) oldExpression.replace(outerExpression);
+
+                    PsiExpression marked = findMarkedExpression(newExpression);
+                    if (marked != null) newExpression = marked;
+                  } else {
+                    newExpression = (PsiExpression) oldExpression.replace(newExpression);
+                  }
+
+                  exprStatement.delete();
+                  return new PrefixExpressionContext(this, newExpression);
+                }
+
+                @Override public boolean isBrokenStatement(@NotNull PsiStatement statement) {
+                  return statement == prevStatement;
+                }
+              };
             }
           }
         }
@@ -190,6 +212,49 @@ public final class PostfixTemplatesManager implements ApplicationComponent {
 
     return null;
   }
+
+  @Nullable private static PsiExpression findUnfinishedExpression(@NotNull PsiStatement statement) {
+    PsiElement lastChild = statement.getLastChild();
+    if (statement instanceof PsiExpressionStatement) {
+      if (lastChild instanceof PsiErrorElement && lastChild.getPrevSibling() instanceof PsiExpression) {
+        return ((PsiExpressionStatement) statement).getExpression();
+      }
+    } else if (statement instanceof PsiDeclarationStatement) {
+      if (lastChild instanceof PsiLocalVariable && lastChild.getLastChild() instanceof PsiErrorElement) {
+        return ((PsiLocalVariable) lastChild).getInitializer();
+      }
+    }
+
+    return null;
+  }
+
+  @Nullable private static PsiExpressionStatement findContainingExprStatement(@NotNull PsiElement element) {
+    while (element instanceof PsiBinaryExpression ||
+           element instanceof PsiPolyadicExpression) {
+      element = element.getParent();
+    }
+
+    if (element instanceof PsiExpressionStatement) {
+      return (PsiExpressionStatement) element;
+    }
+
+    return null;
+  }
+
+  @Nullable private static PsiExpression findMarkedExpression(@NotNull PsiExpression expression) {
+    if (expression.getCopyableUserData(marker) != null) return expression;
+
+    for (PsiElement node = expression.getFirstChild(); node != null; node = node.getNextSibling()) {
+      if (node instanceof PsiExpression) {
+        PsiExpression markedExpression = findMarkedExpression((PsiExpression) node);
+        if (markedExpression != null) return markedExpression;
+      }
+    }
+
+    return null;
+  }
+
+  static final com.intellij.openapi.util.Key marker = new Key(PostfixTemplatesManager.class.getName());
 
   @NotNull public List<LookupElement> collectTemplates(@NotNull PostfixTemplateAcceptanceContext context) {
     List<LookupElement> elements = new ArrayList<LookupElement>();
