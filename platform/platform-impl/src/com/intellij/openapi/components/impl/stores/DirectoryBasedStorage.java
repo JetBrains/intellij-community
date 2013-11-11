@@ -40,27 +40,24 @@ import java.util.*;
 import static com.intellij.util.io.fs.FileSystem.FILE_SYSTEM;
 
 //todo: support missing plugins
-
 //todo: support storage data
 public class DirectoryBasedStorage implements StateStorage, Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.components.impl.stores.DirectoryBasedStorage");
+  private static final IFile[] EMPTY_FILES = new IFile[0];
 
   private final TrackingPathMacroSubstitutor myPathMacroSubstitutor;
   private final IFile myDir;
   private final StateSplitter mySplitter;
+  private final FileTypeManager myFileTypeManager;
 
   private Object mySession;
   private DirectoryStorageData myStorageData = null;
 
-  private static final IFile[] EMPTY_FILES = new IFile[0];
-
-  private final FileTypeManager myFileTypeManager;
-
-  public DirectoryBasedStorage(final TrackingPathMacroSubstitutor pathMacroSubstitutor,
-                               final String dir,
-                               final StateSplitter splitter,
-                               Disposable parentDisposable,
-                               final PicoContainer picoContainer) {
+  public DirectoryBasedStorage(@Nullable TrackingPathMacroSubstitutor pathMacroSubstitutor,
+                               @NotNull String dir,
+                               @NotNull StateSplitter splitter,
+                               @NotNull Disposable parentDisposable,
+                               @NotNull PicoContainer picoContainer) {
     assert !dir.contains("$") : dir;
     myPathMacroSubstitutor = pathMacroSubstitutor;
     myDir = FILE_SYSTEM.createFile(dir);
@@ -70,12 +67,9 @@ public class DirectoryBasedStorage implements StateStorage, Disposable {
     VirtualFileTracker virtualFileTracker = (VirtualFileTracker)picoContainer.getComponentInstanceOfType(VirtualFileTracker.class);
     MessageBus messageBus = (MessageBus)picoContainer.getComponentInstanceOfType(MessageBus.class);
 
-
     if (virtualFileTracker != null && messageBus != null) {
       final String path = myDir.getAbsolutePath();
       final String fileUrl = LocalFileSystem.PROTOCOL_PREFIX + path.replace(File.separatorChar, '/');
-
-
       final Listener listener = messageBus.syncPublisher(STORAGE_TOPIC);
       virtualFileTracker.addTracker(fileUrl, new VirtualFileAdapter() {
         @Override
