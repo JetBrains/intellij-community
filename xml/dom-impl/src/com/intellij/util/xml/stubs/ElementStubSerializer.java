@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,10 +15,12 @@
  */
 package com.intellij.util.xml.stubs;
 
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.stubs.IndexSink;
 import com.intellij.psi.stubs.ObjectStubSerializer;
 import com.intellij.psi.stubs.StubInputStream;
 import com.intellij.psi.stubs.StubOutputStream;
+import com.intellij.util.xml.stubs.index.DomNamespaceKeyIndex;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -46,6 +48,10 @@ public class ElementStubSerializer implements ObjectStubSerializer<ElementStub, 
 
   @Override
   public void indexStub(@NotNull ElementStub stub, @NotNull IndexSink sink) {
+    final String namespaceKey = stub.getNamespaceKey();
+    if (StringUtil.isNotEmpty(namespaceKey)) {
+      sink.occurrence(DomNamespaceKeyIndex.KEY, namespaceKey);
+    }
   }
 
   @NotNull
