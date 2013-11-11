@@ -156,7 +156,7 @@ public class AllClassesGetter {
 
       @Override
       public boolean process(PsiClass psiClass) {
-        if (parameters.getInvocationCount() <= 2 && PsiReferenceExpressionImpl.seemsScrambled(psiClass)) {
+        if (parameters.getInvocationCount() < 2 && PsiReferenceExpressionImpl.seemsScrambled(psiClass)) {
           return true;
         }
 
