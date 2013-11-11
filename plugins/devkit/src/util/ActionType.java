@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,8 +19,9 @@ package org.jetbrains.idea.devkit.util;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.keymap.KeymapManager;
-import com.intellij.psi.PsiClass;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.IncorrectOperationException;
@@ -83,10 +84,10 @@ public enum ActionType {
       XmlTag actionTag = (XmlTag)actions.add(actions.createChildTag(myName, actions.getNamespace(), null, false));
       actionTag.setAttribute("id", dialog.getActionId());
       actionTag.setAttribute("class", klass.getQualifiedName());
-      actionTag.setAttribute("text", dialog.getActionText());
+      actionTag.setAttribute("text", StringUtil.escapeXml(dialog.getActionText()));
       String description = dialog.getActionDescription();
       if (description != null && description.length() > 0) {
-        actionTag.setAttribute("description", description);
+        actionTag.setAttribute("description", StringUtil.escapeXml(description));
       }
 
       String groupId = dialog.getSelectedGroupId();
