@@ -16,6 +16,7 @@
 package com.intellij.execution.console;
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
+import com.intellij.execution.impl.ConsoleViewImpl;
 import com.intellij.execution.impl.ConsoleViewUtil;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.ide.DataManager;
@@ -26,10 +27,7 @@ import com.intellij.lang.Language;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actions.EditorActionUtil;
 import com.intellij.openapi.editor.colors.EditorColors;
@@ -37,7 +35,6 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.impl.DelegateColorScheme;
 import com.intellij.openapi.editor.event.*;
-import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.FocusChangeListener;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
@@ -64,9 +61,7 @@ import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.SideBorder;
 import com.intellij.util.FileContentUtil;
-import com.intellij.util.Function;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.AbstractLayoutManager;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.MergingUpdateQueue;
@@ -89,7 +84,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * In case of REPL consider to use {@link com.intellij.execution.runners.LanguageConsoleBuilder}
  */
 public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
-  private static final Logger LOG = Logger.getInstance("#" + LanguageConsoleImpl.class.getName());
   private static final int SEPARATOR_THICKNESS = 1;
   private final Project myProject;
 
@@ -391,57 +385,6 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
     this.myTitle = title;
   }
 
-  public void printToHistory(@NotNull final List<Pair<String, TextAttributes>> attributedText) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
-    if (LOG.isDebugEnabled()) {
-      LOG.debug("printToHistory(): " + attributedText.size());
-    }
-    final boolean scrollToEnd = shouldScrollHistoryToEnd();
-    final int[] offsets = new int[attributedText.size() + 1];
-    int i = 0;
-    offsets[i] = 0;
-    final StringBuilder sb = new StringBuilder();
-    for (final Pair<String, TextAttributes> pair : attributedText) {
-      sb.append(StringUtil.convertLineSeparators(pair.getFirst()));
-      offsets[++i] = sb.length();
-    }
-    final DocumentEx history = myHistoryViewer.getDocument();
-    final int oldHistoryLength = history.getTextLength();
-    appendToHistoryDocument(history, sb);
-
-    assert oldHistoryLength + offsets[i] >= history.getTextLength()
-      : "unexpected history length " + oldHistoryLength + " " + offsets[i] + " " + history.getTextLength();
-
-    if (oldHistoryLength + offsets[i] != history.getTextLength()) {
-      // due to usage of cyclic buffer old text can be dropped
-      final int correction = oldHistoryLength + offsets[i] - history.getTextLength();
-      for (i = 0; i < offsets.length; ++i) {
-        offsets[i] -= correction;
-      }
-    }
-    LOG.debug("printToHistory(): text processed");
-    final MarkupModel markupModel = DocumentMarkupModel.forDocument(history, myProject, true);
-    i = 0;
-    for (final Pair<String, TextAttributes> pair : attributedText) {
-      if (offsets[i] >= 0) {
-        markupModel.addRangeHighlighter(
-          oldHistoryLength + offsets[i],
-          oldHistoryLength + offsets[i+1],
-          HighlighterLayer.SYNTAX,
-          pair.getSecond(),
-          HighlighterTargetArea.EXACT_RANGE
-        );
-      }
-      ++i;
-    }
-    LOG.debug("printToHistory(): markup added");
-    if (scrollToEnd) {
-      scrollHistoryToEnd();
-    }
-    queueUiUpdate(scrollToEnd);
-    LOG.debug("printToHistory(): completed");
-  }
-
   public void printToHistory(@NotNull CharSequence text, @NotNull TextAttributes attributes) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     text = StringUtilRt.unifyLineSeparators(text);
@@ -705,74 +648,18 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
     });
   }
 
-  public static void printToConsole(
-    @NotNull final LanguageConsoleImpl console,
-    @NotNull final ConsoleViewContentType mainType,
-    @NotNull final List<Pair<String, ConsoleViewContentType>> textToPrint)
-  {
-    final List<Pair<String, TextAttributes>> attributedText = ContainerUtil.map(
-      textToPrint,
-      new Function<Pair<String, ConsoleViewContentType>, Pair<String, TextAttributes>>() {
-        @Override
-        public Pair<String, TextAttributes> fun(Pair<String, ConsoleViewContentType> input) {
-          final TextAttributes mainAttributes = mainType.getAttributes();
-          final TextAttributes attributes;
-          if (input.getSecond() == null) {
-            attributes = mainAttributes;
-          }
-          else {
-            attributes = input.getSecond().getAttributes().clone();
-            attributes.setBackgroundColor(mainAttributes.getBackgroundColor());
-          }
-          return Pair.create(input.getFirst(), attributes);
-        }
+  /**
+   * todo ruby plugin compatibility. Remove on the next update.
+   */
+  @Deprecated
+  public static void printToConsole(@NotNull LanguageConsoleImpl console, @NotNull ConsoleViewContentType mainType,
+                                    @NotNull List<Pair<String, ConsoleViewContentType>> textToPrint) {
+    ConsoleViewImpl consoleView = console.getHistoryViewer().getUserData(ConsoleViewImpl.CONSOLE_VIEW_IN_EDITOR_VIEW);
+    if (consoleView != null) {
+      for (Pair<String, ConsoleViewContentType> pair : textToPrint) {
+        consoleView.print(pair.first, ObjectUtils.chooseNotNull(pair.second, mainType));
       }
-    );
-
-    Application application = ApplicationManager.getApplication();
-    if (application.isDispatchThread()) {
-      console.printToHistory(attributedText);
     }
-    else {
-      application.invokeLater(new Runnable() {
-        @Override
-        public void run() {
-          console.printToHistory(attributedText);
-        }
-      }, ModalityState.stateForComponent(console.getComponent()));
-    }
-  }
-
-  public void printToHistoryOnEdt(@NotNull final CharSequence text, @NotNull final TextAttributes attributes) {
-    Application application = ApplicationManager.getApplication();
-    if (application.isDispatchThread()) {
-      printToHistory(text, attributes);
-    }
-    else {
-      application.invokeLater(new Runnable() {
-        @Override
-        public void run() {
-          printToHistory(text, attributes);
-        }
-      }, ModalityState.stateForComponent(getComponent()));
-    }
-  }
-
-  public static void printToConsole(@NotNull final LanguageConsoleImpl console,
-                                    @NotNull final CharSequence string,
-                                    @NotNull final ConsoleViewContentType mainType,
-                                    @Nullable ConsoleViewContentType additionalType) {
-    final TextAttributes mainAttributes = mainType.getAttributes();
-    final TextAttributes attributes;
-    if (additionalType == null) {
-      attributes = mainAttributes;
-    }
-    else {
-      attributes = additionalType.getAttributes().clone();
-      attributes.setBackgroundColor(mainAttributes.getBackgroundColor());
-    }
-
-    console.printToHistoryOnEdt(string, attributes);
   }
 
   @NotNull
