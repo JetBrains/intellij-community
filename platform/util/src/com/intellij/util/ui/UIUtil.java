@@ -626,14 +626,6 @@ public class UIUtil {
     LookAndFeel.installBorder(contentPane, "PopupMenu.border");
   }
 
-  /**
-   * @deprecated Motif is gone (to remove in IDEA 13)
-   */
-  @SuppressWarnings("UnusedDeclaration")
-  public static boolean isMotifLookAndFeel() {
-    return false;
-  }
-
   public static Color getTreeSelectionBorderColor() {
     return UIManager.getColor("Tree.selectionBorderColor");
   }
@@ -962,14 +954,6 @@ public class UIUtil {
     return UIManager.getColor("OptionPane.background");
   }
 
-  /**
-   * @deprecated Quaqua is gone (to remove in IDEA 13)
-   */
-  @SuppressWarnings("UnusedDeclaration")
-  public static boolean isUnderQuaquaLookAndFeel() {
-    return false;
-  }
-
   @SuppressWarnings({"HardCodedStringLiteral"})
   public static boolean isUnderAlloyLookAndFeel() {
     return UIManager.getLookAndFeel().getName().contains("Alloy");
@@ -990,14 +974,6 @@ public class UIUtil {
     return UIManager.getLookAndFeel().getName().equals("Windows Classic");
   }
 
-  /**
-   * @deprecated Metal is gone (to remove in IDEA 13)
-   */
-  @SuppressWarnings("UnusedDeclaration")
-  public static boolean isUnderMetalLookAndFeel() {
-    return false;
-  }
-
   @SuppressWarnings({"HardCodedStringLiteral"})
   public static boolean isUnderNimbusLookAndFeel() {
     return UIManager.getLookAndFeel().getName().contains("Nimbus");
@@ -1016,14 +992,6 @@ public class UIUtil {
   @SuppressWarnings({"HardCodedStringLiteral"})
   public static boolean isUnderAquaBasedLookAndFeel() {
     return SystemInfo.isMac && (isUnderAquaLookAndFeel() || isUnderDarcula());
-  }
-
-  /**
-   * @deprecated Motif is gone (to remove in IDEA 13)
-   */
-  @SuppressWarnings("UnusedDeclaration")
-  public static boolean isUnderMotif() {
-    return false;
   }
 
   @SuppressWarnings({"HardCodedStringLiteral"})
@@ -1118,13 +1086,6 @@ public class UIUtil {
 
   public static boolean isToUseDottedCellBorder() {
     return !isUnderNativeMacLookAndFeel();
-  }
-
-  /**
-   * @deprecated Quaqua is gone (to remove in IDEA 13)
-   */
-  @SuppressWarnings("UnusedDeclaration")
-  public static void removeQuaquaVisualMarginsIn(Component component) {
   }
 
   public static boolean isControlKeyDown(MouseEvent mouseEvent) {
@@ -1873,24 +1834,6 @@ public class UIUtil {
       if (eachParent.getParent() == null) return eachParent;
       eachParent = eachParent.getParent();
     }
-  }
-
-  /** @deprecated use {@linkplain Dialog#setModalityType(Dialog.ModalityType)} (to remove in IDEA 13) */
-  @SuppressWarnings("UnusedDeclaration")
-  public static void setToolkitModal(final JDialog dialog) {
-    dialog.setModalityType(Dialog.ModalityType.TOOLKIT_MODAL);
-  }
-
-  /** @deprecated use {@linkplain Window#setIconImages(List)} (to remove in IDEA 13) */
-  @SuppressWarnings("UnusedDeclaration")
-  public static void updateDialogIcon(final JDialog dialog, final List<Image> images) {
-    dialog.setIconImages(images);
-  }
-
-  /** @deprecated outdated (to remove in IDEA 13) */
-  @SuppressWarnings("UnusedDeclaration")
-  public static boolean hasJdk6Dialogs() {
-    return true;
   }
 
   public static Color getHeaderActiveColor() {

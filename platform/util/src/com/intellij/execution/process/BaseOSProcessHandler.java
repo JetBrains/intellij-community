@@ -189,9 +189,6 @@ public class BaseOSProcessHandler extends ProcessHandler implements TaskExecutor
     return myProcess.getOutputStream();
   }
 
-  /**
-   * @deprecated internal use only (to remove in IDEA 13)
-   */
   @Nullable
   public String getCommandLine() {
     return myCommandLine;
@@ -206,7 +203,8 @@ public class BaseOSProcessHandler extends ProcessHandler implements TaskExecutor
     private static final ExecutorService ourThreadExecutorsService = createServiceImpl();
 
     private static ThreadPoolExecutor createServiceImpl() {
-      return new ThreadPoolExecutor(10, Integer.MAX_VALUE, 60L, TimeUnit.SECONDS, new SynchronousQueue<Runnable>(), ConcurrencyUtil.newNamedThreadFactory("OSProcessHandler pooled thread"));
+      ThreadFactory factory = ConcurrencyUtil.newNamedThreadFactory("OSProcessHandler pooled thread");
+      return new ThreadPoolExecutor(10, Integer.MAX_VALUE, 60L, TimeUnit.SECONDS, new SynchronousQueue<Runnable>(), factory);
     }
 
     public static Future<?> submit(Runnable task) {
@@ -215,7 +213,6 @@ public class BaseOSProcessHandler extends ProcessHandler implements TaskExecutor
   }
 
   private class SimpleOutputReader extends BaseOutputReader {
-
     private final Key myProcessOutputType;
 
     private SimpleOutputReader(@NotNull Reader reader, @NotNull Key processOutputType, SleepingPolicy sleepingPolicy) {

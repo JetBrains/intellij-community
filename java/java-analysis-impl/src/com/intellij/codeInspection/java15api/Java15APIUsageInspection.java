@@ -19,7 +19,6 @@ import com.intellij.ToolExtensionPoints;
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.*;
-import com.intellij.ide.ui.ListCellRendererWrapper;
 import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
@@ -175,9 +174,13 @@ public class Java15APIUsageInspection extends BaseJavaBatchLocalInspectionTool {
     gr.add(projectRb);
     gr.add(customRb);
 
-
     final DefaultComboBoxModel cModel = new DefaultComboBoxModel();
-    final JComboBox llCombo = new JComboBox(cModel){
+    for (LanguageLevel level : LanguageLevel.values()) {
+      //noinspection unchecked
+      cModel.addElement(level);
+    }
+
+    @SuppressWarnings("unchecked") final JComboBox llCombo = new JComboBox(cModel) {
       @Override
       public void setEnabled(boolean b) {
         if (b == customRb.isSelected()) {
@@ -185,16 +188,16 @@ public class Java15APIUsageInspection extends BaseJavaBatchLocalInspectionTool {
         }
       }
     };
-    for (LanguageLevel level : LanguageLevel.values()) {
-      cModel.addElement(level);
-    }
     llCombo.setSelectedItem(myEffectiveLanguageLevel != null ? myEffectiveLanguageLevel : LanguageLevel.JDK_1_3);
-    llCombo.setRenderer(new ListCellRendererWrapper(llCombo) {
+    //noinspection unchecked
+    llCombo.setRenderer(new DefaultListCellRenderer() {
       @Override
-      public void customize(JList list, Object value, int index, boolean selected, boolean hasFocus) {
-        if (value instanceof LanguageLevel) {
-          setText(((LanguageLevel)value).getPresentableText());
+      public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+        Component component = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+        if (value instanceof LanguageLevel && component instanceof JLabel) {
+          ((JLabel)component).setText(((LanguageLevel)value).getPresentableText());
         }
+        return component;
       }
     });
     llCombo.addActionListener(new ActionListener() {
@@ -299,7 +302,7 @@ public class Java15APIUsageInspection extends BaseJavaBatchLocalInspectionTool {
                                                                                 getJdkName(languageLevel)));
                   break;
                 }
-              } 
+              }
             }
           }
         }

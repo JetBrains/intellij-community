@@ -2062,12 +2062,6 @@ public class StringUtil extends StringUtilRt {
     }
   }
 
-  @SuppressWarnings("UnusedDeclaration")
-  /** @deprecated use {@linkplain #getOccurrenceCount(String, char)} (to remove in IDEA 13) */
-  public static int getOccurenceCount(@NotNull String text, final char c) {
-    return getOccurrenceCount(text, c);
-  }
-
   public static int getOccurrenceCount(@NotNull String text, final char c) {
     int res = 0;
     int i = 0;

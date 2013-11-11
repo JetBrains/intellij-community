@@ -1176,20 +1176,11 @@ public class FileUtil extends FileUtilRt {
     return null;
   }
 
-  /**
-   * @deprecated use {@linkplain #isAbsolute(String)} (to remove in IDEA 13)
-   */
-  @SuppressWarnings("UnusedDeclaration")
-  public static boolean isAbsoluteFilePath(String path) {
-    return isAbsolute(path);
-  }
-
-  public static boolean isAbsolutePlatformIndependent(String path) {
+  public static boolean isAbsolutePlatformIndependent(@NotNull String path) {
     return isUnixAbsolutePath(path) || isWindowsAbsolutePath(path);
   }
 
-
-  public static boolean isUnixAbsolutePath(String path) {
+  public static boolean isUnixAbsolutePath(@NotNull String path) {
     return path.startsWith("/");
   }
 

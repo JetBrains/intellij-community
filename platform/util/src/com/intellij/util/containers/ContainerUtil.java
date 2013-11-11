@@ -601,28 +601,6 @@ public class ContainerUtil extends ContainerUtilRt {
     return map;
   }
 
-  /** @deprecated use {@linkplain #newMapFromValues(java.util.Iterator, Convertor)} (to remove in IDEA 13) */
-  @NotNull
-  public static <K, V> com.intellij.util.containers.HashMap<K, V> assignKeys(@NotNull Iterator<V> iterator, @NotNull Convertor<V, K> keyConvertor) {
-    com.intellij.util.containers.HashMap<K, V> hashMap = new com.intellij.util.containers.HashMap<K, V>();
-    while (iterator.hasNext()) {
-      V value = iterator.next();
-      hashMap.put(keyConvertor.convert(value), value);
-    }
-    return hashMap;
-  }
-
-  /** @deprecated use {@linkplain #newMapFromKeys(java.util.Iterator, Convertor)} (to remove in IDEA 13) */
-  @NotNull
-  public static <K, V> com.intellij.util.containers.HashMap<K, V> assignValues(@NotNull Iterator<K> iterator, @NotNull Convertor<K, V> valueConvertor) {
-    com.intellij.util.containers.HashMap<K, V> hashMap = new com.intellij.util.containers.HashMap<K, V>();
-    while (iterator.hasNext()) {
-      K key = iterator.next();
-      hashMap.put(key, valueConvertor.convert(key));
-    }
-    return hashMap;
-  }
-
   @NotNull
   public static <K, V> Map<K, Set<V>> classify(@NotNull Iterator<V> iterator, @NotNull Convertor<V, K> keyConvertor) {
     Map<K, Set<V>> hashMap = new LinkedHashMap<K, Set<V>>();
