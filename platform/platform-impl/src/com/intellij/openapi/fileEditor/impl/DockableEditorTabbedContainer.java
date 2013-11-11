@@ -88,6 +88,10 @@ public class DockableEditorTabbedContainer implements DockContainer.Persistent {
 
   @Override
   public RelativeRectangle getAcceptArea() {
+    return new RelativeRectangle(mySplitters);
+  }
+  
+  public RelativeRectangle getAcceptAreaFallback() {
     JRootPane root = mySplitters.getRootPane();
     return root != null ? new RelativeRectangle(root) : new RelativeRectangle(mySplitters);
   }

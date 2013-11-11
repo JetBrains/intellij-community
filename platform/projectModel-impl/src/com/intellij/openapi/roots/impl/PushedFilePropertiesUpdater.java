@@ -150,6 +150,7 @@ public class PushedFilePropertiesUpdater {
   public void pushAll(final FilePropertyPusher... pushers) {
     ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
     if (indicator != null) {
+      indicator.pushState();
       indicator.setText("Updating file properties...");
     }
     Module[] modules = ModuleManager.getInstance(myProject).getModules();
@@ -175,7 +176,7 @@ public class PushedFilePropertiesUpdater {
       }
     }
     if (indicator != null) {
-      indicator.setText("");
+      indicator.popState();
     }
 
   }

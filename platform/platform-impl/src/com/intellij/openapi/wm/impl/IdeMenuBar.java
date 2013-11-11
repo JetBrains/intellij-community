@@ -30,6 +30,8 @@ import com.intellij.openapi.actionSystem.impl.WeakTimerListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.ex.IdeFrameEx;
 import com.intellij.openapi.wm.impl.status.ClockPanel;
 import com.intellij.ui.Gray;
@@ -37,6 +39,7 @@ import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.util.ui.Animator;
 import com.intellij.util.ui.UIUtil;
+import org.java.ayatana.ApplicationMenu;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -554,6 +557,17 @@ public class IdeMenuBar extends JMenuBar implements IdeEventQueue.EventDispatche
       }
 
       super.mouseClicked(e);
+    }
+  }
+
+  public static void installAppMenuIfNeeded(@NotNull final JFrame frame) {
+    if (SystemInfo.isLinux && Registry.is("linux.native.menu") && "Unity".equals(System.getenv("XDG_CURRENT_DESKTOP"))) {
+      //noinspection SSBasedInspection
+      SwingUtilities.invokeLater(new Runnable() {
+        public void run() {
+          ApplicationMenu.tryInstall(frame);
+        }
+      });
     }
   }
 }

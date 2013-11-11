@@ -4,6 +4,8 @@
       <root url="jar://$PROJECT_DIR$/lib/jayatana-1.2.4.jar!/" />
     </CLASSES>
     <JAVADOC />
-    <SOURCES />
+    <SOURCES>
+      <root url="jar://$PROJECT_DIR$/lib/src/jayatana-1.2.4-src.zip!/" />
+    </SOURCES>
   </library>
 </component>

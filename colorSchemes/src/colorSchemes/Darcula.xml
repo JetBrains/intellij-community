@@ -1,4 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<!--
+  How to make changes in Darcula.xml
+  Open Settings -> Editor -> Colors & Fonts and make a copy of Darcula scheme. Say 'Darcula_copy'
+  In 'Colors & Fonts' settings panel make changes in 'Darcula_copy' scheme and save it
+  Open <IDEA_SETTINGS>/config/colors/Darcula_copy.icls and copy it's content into clipboard
+  Open Darcula.xml in editor and call 'Compare with Clipboard'
+  Apply necessary changes and commit
+-->
 <scheme name="Darcula" version="1" parent_scheme="Default">
   <option name="LINE_SPACING" value="1.0" />
   <option name="EDITOR_FONT_SIZE" value="12" linux="14"/>

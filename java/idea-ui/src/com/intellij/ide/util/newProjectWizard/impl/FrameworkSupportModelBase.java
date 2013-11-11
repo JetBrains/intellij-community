@@ -167,7 +167,7 @@ public abstract class FrameworkSupportModelBase extends UserDataHolderBase imple
     return myLibraryProvider;
   }
 
-  public void setLibraryProvider(FrameworkLibraryProvider libraryProvider) {
+  public void setLibraryProvider(@Nullable FrameworkLibraryProvider libraryProvider) {
     myLibraryProvider = libraryProvider;
     for (FrameworkSupportOptionsComponent optionsComponent : myOptionsComponentsMap.values()) {
       optionsComponent.updateLibrariesPanel();

@@ -112,6 +112,7 @@ public class PythonFormattingModelBuilder implements FormattingModelBuilderEx, C
       .before(SEMICOLON).spaceIf(commonSettings.SPACE_BEFORE_SEMICOLON)
       .withinPairInside(LPAR, RPAR, ARGUMENT_LIST).spaceIf(commonSettings.SPACE_WITHIN_METHOD_CALL_PARENTHESES)
       .withinPairInside(LPAR, RPAR, PARAMETER_LIST).spaceIf(commonSettings.SPACE_WITHIN_METHOD_PARENTHESES)
+      .withinPairInside(LPAR, RPAR, FROM_IMPORT_STATEMENT).spaces(0)
       .before(LBRACKET).spaceIf(pySettings.SPACE_BEFORE_LBRACKET)
 
       .withinPair(LBRACE, RBRACE).spaceIf(pySettings.SPACE_WITHIN_BRACES)

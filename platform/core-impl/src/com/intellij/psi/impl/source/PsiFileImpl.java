@@ -268,35 +268,41 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     final List<Pair<StubBasedPsiElementBase, CompositeElement>> result = ContainerUtil.newArrayList();
     final StubBuilder builder = ((IStubFileElementType)getContentElementType()).getBuilder();
 
-    ((TreeElement)root).acceptTree(new RecursiveTreeElementWalkingVisitor() {
-      @Override
-      protected void visitNode(TreeElement node) {
-        CompositeElement parent = node.getTreeParent();
-        if (parent != null && TreeUtil.skipNode(builder, parent, node)) {
-          return;
-        }
-
-
-        IElementType type = node.getElementType();
-        if (type instanceof IStubElementType && ((IStubElementType)type).shouldCreateStub(node)) {
-          if (!stubs.hasNext()) {
-            reportStubAstMismatch("Stub list is less than AST, last AST element: " + node.getElementType() + " " + node, stubTree, cachedDocument);
+    LazyParseableElement.setSuppressEagerPsiCreation(true);
+    try {
+      ((TreeElement)root).acceptTree(new RecursiveTreeElementWalkingVisitor() {
+        @Override
+        protected void visitNode(TreeElement node) {
+          CompositeElement parent = node.getTreeParent();
+          if (parent != null && TreeUtil.skipNode(builder, parent, node)) {
+            return;
           }
-
-          final StubElement stub = stubs.next();
-          if (stub.getStubType() != node.getElementType()) {
-            reportStubAstMismatch("Stub and PSI element type mismatch in " + getName() + ": stub " + stub + ", AST " +
-                                  node.getElementType() + "; " + node, stubTree, cachedDocument);
+  
+  
+          IElementType type = node.getElementType();
+          if (type instanceof IStubElementType && ((IStubElementType)type).shouldCreateStub(node)) {
+            if (!stubs.hasNext()) {
+              reportStubAstMismatch("Stub list is less than AST, last AST element: " + node.getElementType() + " " + node, stubTree, cachedDocument);
+            }
+  
+            final StubElement stub = stubs.next();
+            if (stub.getStubType() != node.getElementType()) {
+              reportStubAstMismatch("Stub and PSI element type mismatch in " + getName() + ": stub " + stub + ", AST " +
+                                    node.getElementType() + "; " + node, stubTree, cachedDocument);
+            }
+  
+            PsiElement psi = stub.getPsi();
+            assert psi != null : "Stub " + stub + " (" + stub.getClass() + ") has returned null PSI";
+            result.add(Pair.create((StubBasedPsiElementBase)psi, (CompositeElement)node));
           }
-
-          PsiElement psi = stub.getPsi();
-          assert psi != null : "Stub " + stub + " (" + stub.getClass() + ") has returned null PSI";
-          result.add(Pair.create((StubBasedPsiElementBase)psi, (CompositeElement)node));
+  
+          super.visitNode(node);
         }
-
-        super.visitNode(node);
-      }
-    });
+      });
+    }
+    finally {
+      LazyParseableElement.setSuppressEagerPsiCreation(false);
+    }
     if (stubs.hasNext()) {
       reportStubAstMismatch("Stub list in " + getName() + " has more elements than PSI", stubTree, cachedDocument);
     }

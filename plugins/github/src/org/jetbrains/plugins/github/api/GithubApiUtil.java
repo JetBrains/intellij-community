@@ -671,7 +671,7 @@ public class GithubApiUtil {
                                                    @NotNull String repo,
                                                    @Nullable String query) throws IOException {
     try {
-      query = URLEncoder.encode("@" + user + "/" + repo + " " + query, "UTF-8");
+      query = URLEncoder.encode("repo:" + user + "/" + repo + " " + query, "UTF-8");
       String path = "/search/issues?q=" + query;
 
       //TODO: Use bodyHtml for issues - GitHub does not support this feature for SearchApi yet

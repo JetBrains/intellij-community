@@ -4,7 +4,6 @@ import com.intellij.icons.AllIcons;
 import com.intellij.notification.EventLog;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
@@ -13,8 +12,13 @@ import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener;
+import com.intellij.ui.awt.RelativePoint;
+import com.intellij.ui.awt.RelativeRectangle;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
+import com.intellij.ui.docking.DockContainer;
+import com.intellij.ui.docking.DockManager;
+import com.intellij.ui.docking.DockableContent;
 import com.intellij.util.ui.UIUtil;
 import com.jediterm.terminal.ui.JediTermWidget;
 import com.jediterm.terminal.ui.TabbedTerminalWidget;
@@ -22,6 +26,7 @@ import com.jediterm.terminal.ui.TerminalWidget;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.terminal.vfs.TerminalSessionVirtualFileImpl;
 
 import javax.swing.*;
 import java.awt.*;
@@ -36,6 +41,8 @@ public class TerminalView {
   private JBTabbedTerminalWidget myTerminalWidget;
 
   private final Project myProject;
+
+  private TerminalDockContainer myDockContainer;
 
   public TerminalView(Project project) {
     myProject = project;
@@ -52,22 +59,7 @@ public class TerminalView {
     toolWindow.setToHideOnEmptyContent(true);
 
     if (terminalRunner != null) {
-      myTerminalWidget = terminalRunner.createTerminalWidget();
-      myTerminalWidget.addTabListener(new TabbedTerminalWidget.TabListener() {
-        @Override
-        public void tabClosed(JediTermWidget terminal) {
-          UIUtil.invokeLaterIfNeeded(new Runnable() {
-            @Override
-            public void run() {
-              hideIfNoActiveSessions(toolWindow, myTerminalWidget);
-            }
-          });
-        }
-      });
-    }
-
-    if (myTerminalWidget != null) {
-      Content content = createToolWindowContentPanel(terminalRunner, myTerminalWidget, toolWindow);
+      Content content = createTerminalInContentPanel(terminalRunner, toolWindow);
 
       toolWindow.getContentManager().addContent(content);
 
@@ -98,11 +90,17 @@ public class TerminalView {
         }
       });
     }
+
+    if (myDockContainer == null) {
+      myDockContainer = new TerminalDockContainer(toolWindow);
+
+      Disposer.register(myProject, myDockContainer);
+      DockManager.getInstance(myProject).register(myDockContainer);
+    }
   }
 
-  private Content createToolWindowContentPanel(@Nullable LocalTerminalDirectRunner terminalRunner,
-                                               @NotNull JBTabbedTerminalWidget terminalWidget,
-                                               @NotNull ToolWindow toolWindow) {
+  private Content createTerminalInContentPanel(@Nullable LocalTerminalDirectRunner terminalRunner,
+                                               final @NotNull ToolWindow toolWindow) {
     SimpleToolWindowPanel panel = new SimpleToolWindowPanel(false, true) {
       @Override
       public Object getData(@NonNls String dataId) {
@@ -110,18 +108,34 @@ public class TerminalView {
       }
     };
 
-    panel.setContent(terminalWidget.getComponent());
+    final Content content = ContentFactory.SERVICE.getInstance().createContent(panel, "", false);
+    content.setCloseable(true);
+
+    myTerminalWidget = terminalRunner.createTerminalWidget(content);
+    myTerminalWidget.addTabListener(new TabbedTerminalWidget.TabListener() {
+      @Override
+      public void tabClosed(JediTermWidget terminal) {
+        UIUtil.invokeLaterIfNeeded(new Runnable() {
+          @Override
+          public void run() {
+            if (myTerminalWidget != null) {
+              hideIfNoActiveSessions(toolWindow, myTerminalWidget);
+            }
+          }
+        });
+      }
+    });
+
+    panel.setContent(myTerminalWidget.getComponent());
     panel.addFocusListener(createFocusListener());
 
-    ActionToolbar toolbar = createToolbar(terminalRunner, terminalWidget, toolWindow);
+    ActionToolbar toolbar = createToolbar(terminalRunner, myTerminalWidget, toolWindow);
     toolbar.getComponent().addFocusListener(createFocusListener());
     toolbar.setTargetComponent(panel);
     panel.setToolbar(toolbar.getComponent());
 
-    final Content content = ContentFactory.SERVICE.getInstance().createContent(panel, "", false);
-    content.setCloseable(true);
 
-    content.setPreferredFocusableComponent(terminalWidget.getComponent());
+    content.setPreferredFocusableComponent(myTerminalWidget.getComponent());
 
     return content;
   }
@@ -152,11 +166,10 @@ public class TerminalView {
     openSession(terminal, terminalRunner);
   }
 
-  private void openSession(ToolWindow toolWindow, AbstractTerminalRunner terminalRunner) {
+  private void openSession(@NotNull ToolWindow toolWindow, @NotNull AbstractTerminalRunner terminalRunner) {
     if (myTerminalWidget == null) {
-      myTerminalWidget = terminalRunner.createTerminalWidget();
       toolWindow.getContentManager().removeAllContents(true);
-      final Content content = createToolWindowContentPanel(null, myTerminalWidget, toolWindow);
+      final Content content = createTerminalInContentPanel(null, toolWindow);
       toolWindow.getContentManager().addContent(content);
     }
     else {
@@ -194,7 +207,7 @@ public class TerminalView {
     }, true);
   }
 
-  private static void hideIfNoActiveSessions(final ToolWindow toolWindow, JBTabbedTerminalWidget terminal) {
+  private static void hideIfNoActiveSessions(@NotNull final ToolWindow toolWindow, @NotNull JBTabbedTerminalWidget terminal) {
     if (terminal.isNoActiveSessions()) {
       toolWindow.getContentManager().removeAllContents(true);
     }
@@ -232,6 +245,99 @@ public class TerminalView {
       myTerminal.closeCurrentSession();
 
       hideIfNoActiveSessions(myToolWindow, myTerminal);
+    }
+  }
+
+  /**
+   * @author traff
+   */
+  public class TerminalDockContainer implements DockContainer {
+    private ToolWindow myTerminalToolWindow;
+
+    public TerminalDockContainer(ToolWindow toolWindow) {
+      myTerminalToolWindow = toolWindow;
+    }
+
+    @Override
+    public RelativeRectangle getAcceptArea() {
+      return new RelativeRectangle(myTerminalToolWindow.getComponent());
+    }
+
+    @Override
+    public RelativeRectangle getAcceptAreaFallback() {
+      return getAcceptArea();
+    }
+
+    @NotNull
+    @Override
+    public ContentResponse getContentResponse(@NotNull DockableContent content, RelativePoint point) {
+      return ContentResponse.ACCEPT_MOVE;
+    }
+
+    @Override
+    public JComponent getContainerComponent() {
+      return myTerminalToolWindow.getComponent();
+    }
+
+    @Override
+    public void add(@NotNull DockableContent content, RelativePoint dropTarget) {
+      if (content.getKey() instanceof TerminalSessionVirtualFileImpl) {
+        TerminalSessionVirtualFileImpl terminalFile = (TerminalSessionVirtualFileImpl)content.getKey();
+        myTerminalWidget.addTab(terminalFile.getName(), terminalFile.getTerminal());
+        terminalFile.getTerminal().setNextProvider(myTerminalWidget);
+      }
+    }
+
+    @Override
+    public void closeAll() {
+
+    }
+
+    @Override
+    public void addListener(Listener listener, Disposable parent) {
+
+    }
+
+    @Override
+    public boolean isEmpty() {
+      return false;
+    }
+
+    @Nullable
+    @Override
+    public Image startDropOver(@NotNull DockableContent content, RelativePoint point) {
+      return null;
+    }
+
+    @Nullable
+    @Override
+    public Image processDropOver(@NotNull DockableContent content, RelativePoint point) {
+      return null;
+    }
+
+    @Override
+    public void resetDropOver(@NotNull DockableContent content) {
+
+    }
+
+    @Override
+    public boolean isDisposeWhenEmpty() {
+      return false;
+    }
+
+    @Override
+    public void showNotify() {
+
+    }
+
+    @Override
+    public void hideNotify() {
+
+    }
+
+    @Override
+    public void dispose() {
+
     }
   }
 }

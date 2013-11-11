@@ -48,7 +48,7 @@ public class SLRUMap<K,V> {
     myProtectedQueueSize = protectedQueueSize * FACTOR;
     myProbationalQueueSize = probationalQueueSize * FACTOR;
 
-    myProtectedQueue = new LinkedHashMap<K,V>(10, 0.6f, hashingStrategy) {
+    myProtectedQueue = new LinkedHashMap<K,V>(10, 0.6f, hashingStrategy, true) {
       @Override
       protected boolean removeEldestEntry(Map.Entry<K, V> eldest, K key, V value) {
         if (size() > myProtectedQueueSize) {
@@ -60,7 +60,7 @@ public class SLRUMap<K,V> {
       }
     };
 
-    myProbationalQueue = new LinkedHashMap<K,V>(10, 0.6f, hashingStrategy) {
+    myProbationalQueue = new LinkedHashMap<K,V>(10, 0.6f, hashingStrategy, true) {
       @Override
       protected boolean removeEldestEntry(final Map.Entry<K, V> eldest, K key, V value) {
         if (size() > myProbationalQueueSize) {

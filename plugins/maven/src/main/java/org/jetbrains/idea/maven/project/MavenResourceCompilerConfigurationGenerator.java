@@ -3,6 +3,7 @@ package org.jetbrains.idea.maven.project;
 import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.compiler.CompilerConfigurationImpl;
 import com.intellij.compiler.server.BuildManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
@@ -17,15 +18,13 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.XmlSerializer;
 import org.jdom.Document;
 import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.dom.references.MavenFilteredPropertyPsiReferenceProvider;
 import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.model.MavenResource;
 import org.jetbrains.idea.maven.utils.MavenJDOMUtil;
 import org.jetbrains.idea.maven.utils.MavenUtil;
-import org.jetbrains.jps.maven.model.impl.MavenIdBean;
-import org.jetbrains.jps.maven.model.impl.MavenModuleResourceConfiguration;
-import org.jetbrains.jps.maven.model.impl.MavenProjectConfiguration;
-import org.jetbrains.jps.maven.model.impl.ResourceRootConfiguration;
+import org.jetbrains.jps.maven.model.impl.*;
 
 import java.io.*;
 import java.util.*;
@@ -36,6 +35,8 @@ import java.util.regex.Pattern;
  * @author Sergey Evdokimov
  */
 public class MavenResourceCompilerConfigurationGenerator {
+
+  private static Logger LOG = Logger.getInstance(MavenResourceCompilerConfigurationGenerator.class);
 
   private static final Pattern SIMPLE_NEGATIVE_PATTERN = Pattern.compile("!\\?(\\*\\.\\w+)");
 
@@ -118,7 +119,7 @@ public class MavenResourceCompilerConfigurationGenerator {
       addResources(resourceConfig.resources, mavenProject.getResources());
       addResources(resourceConfig.testResources, mavenProject.getTestResources());
 
-      addWebResources(resourceConfig.webResources, mavenProject);
+      addWebResources(module, projectConfig, mavenProject);
 
       resourceConfig.filteringExclusions.addAll(MavenProjectsTree.getFilterExclusions(mavenProject));
 
@@ -224,20 +225,37 @@ public class MavenResourceCompilerConfigurationGenerator {
     }
   }
 
-  private static void addWebResources(final List<ResourceRootConfiguration> container, MavenProject mavenProject) {
+  private static void addWebResources(@NotNull Module module, MavenProjectConfiguration projectCfg, MavenProject mavenProject) {
     Element warCfg = mavenProject.getPluginConfiguration("org.apache.maven.plugins", "maven-war-plugin");
     if (warCfg == null) return;
 
     Element webResources = warCfg.getChild("webResources");
     if (webResources == null) return;
 
+    String webArtifactName = MavenUtil.getArtifactName("war", module, true);
+
+    MavenArtifactResourceConfiguration artifactResourceCfg = projectCfg.artifactsResources.get(webArtifactName);
+    if (artifactResourceCfg == null) {
+      artifactResourceCfg = new MavenArtifactResourceConfiguration();
+      artifactResourceCfg.webArtifactName = webArtifactName;
+      projectCfg.artifactsResources.put(webArtifactName, artifactResourceCfg);
+    }
+    else {
+      LOG.error("MavenArtifactResourceConfiguration already exists.");
+    }
+
     for (Element resource : webResources.getChildren("resource")) {
       ResourceRootConfiguration r = new ResourceRootConfiguration();
       String directory = resource.getChildTextTrim("directory");
       if (StringUtil.isEmptyOrSpaces(directory)) continue;
 
+      if (!FileUtil.isAbsolute(directory)) {
+        directory = mavenProject.getDirectory() + '/' + directory;
+      }
+
       r.directory = directory;
       r.isFiltered = Boolean.parseBoolean(resource.getChildTextTrim("filtering"));
+
       r.targetPath = resource.getChildTextTrim("targetPath");
 
       Element includes = resource.getChild("includes");
@@ -260,7 +278,7 @@ public class MavenResourceCompilerConfigurationGenerator {
         }
       }
 
-      container.add(r);
+      artifactResourceCfg.webResources.add(r);
     }
   }
 

@@ -891,6 +891,15 @@ public class JBTabsImpl extends JComponent
     }
   }
 
+
+  void fireTabRemoved(TabInfo info) {
+    for (TabsListener eachListener : myTabListeners) {
+      if (eachListener != null) {
+        eachListener.tabRemoved(info);
+      }
+    }
+  }
+
   @NotNull
   private ActionCallback requestFocus(final JComponent toFocus) {
     if (toFocus == null) return new ActionCallback.Done();
@@ -2438,6 +2447,8 @@ public class JBTabsImpl extends JComponent
     }
 
     revalidateAndRepaint(true);
+    
+    fireTabRemoved(info);
 
     return result;
   }

@@ -1651,6 +1651,7 @@ public abstract class ChooseByNameBase {
       final String prefixPattern = myFindUsagesTitle + " \'" + myTextField.getText().trim() + "\'";
       final String nonPrefixPattern = myFindUsagesTitle + " \'*" + myTextField.getText().trim() + "*\'";
       presentation.setCodeUsagesString(prefixPattern);
+      presentation.setUsagesInGeneratedCodeString(prefixPattern + " in generated code");
       presentation.setDynamicUsagesString(nonPrefixPattern);
       presentation.setTabName(prefixPattern);
       presentation.setTabText(prefixPattern);

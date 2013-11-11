@@ -31,6 +31,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Stack;
+import com.siyeh.ig.numeric.UnnecessaryExplicitNumericCastInspection;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -1874,7 +1875,13 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
 
     final PsiTypeElement typeElement = castExpression.getCastType();
     if (typeElement != null && operand != null) {
-      addInstruction(new TypeCastInstruction(castExpression, operand, typeElement.getType()));
+      if (typeElement.getType() instanceof PsiPrimitiveType &&
+          UnnecessaryExplicitNumericCastInspection.isPrimitiveNumericCastNecessary(castExpression)) {
+        addInstruction(new PopInstruction());
+        pushUnknown();
+      } else {
+        addInstruction(new TypeCastInstruction(castExpression, operand, typeElement.getType()));
+      }
     }
     finishElement(castExpression);
   }

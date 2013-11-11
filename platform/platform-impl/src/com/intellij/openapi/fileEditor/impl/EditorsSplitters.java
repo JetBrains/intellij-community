@@ -165,22 +165,22 @@ public class EditorsSplitters extends IdePanePanel {
       g.setFont(UIUtil.getLabelFont().deriveFont(isDarkBackground ? 24f : 20f));
 
       final UIUtil.TextPainter painter = new UIUtil.TextPainter().withLineSpacing(1.5f);
-      painter.withShadow(true, new JBColor(Gray._200.withAlpha(100), Gray._0.withAlpha(200)));
+      painter.withShadow(true, new JBColor(Gray._200.withAlpha(100), Gray._0.withAlpha(255)));
 
-      painter.appendLine("No files are open").underlined(new JBColor(isDarkBackground ? Gray._210 : Gray._150, Gray._100));
+      painter.appendLine("No files are open").underlined(new JBColor(Gray._150, Gray._180));
 
       final Shortcut[] shortcuts = KeymapManager.getInstance().getActiveKeymap().getShortcuts(IdeActions.ACTION_SEARCH_EVERYWHERE);
       final String everywhere;
       if (shortcuts.length == 0) {
-        everywhere = "Search Everywhere with Double " + (SystemInfo.isMac ? MacKeymapUtil.SHIFT : "Shift");
+        everywhere = "Search Everywhere with <shortcut>Double " + (SystemInfo.isMac ? MacKeymapUtil.SHIFT : "Shift");
       } else {
-        everywhere = "Search Everywhere " + KeymapUtil.getShortcutsText(shortcuts);
+        everywhere = "Search Everywhere <shortcut>" + KeymapUtil.getShortcutsText(shortcuts);
       }
-      painter.appendLine(everywhere).smaller().withBullet();
+      painter.appendLine(everywhere + "</shortcut>").smaller().withBullet();
 
       if (!isProjectViewVisible()) {
-        painter.appendLine("Open Project View with " + KeymapUtil.getShortcutText(new KeyboardShortcut(
-          KeyStroke.getKeyStroke((SystemInfo.isMac ? "meta" : "alt") + " 1"), null))).smaller().withBullet();
+        painter.appendLine("Open Project View with <shortcut>" + KeymapUtil.getShortcutText(new KeyboardShortcut(
+          KeyStroke.getKeyStroke((SystemInfo.isMac ? "meta" : "alt") + " 1"), null)) + "</shortcut>").smaller().withBullet();
       }
 
       painter.appendLine("Open a file by name with " + getActionShortcutText("GotoFile")).smaller().withBullet()
@@ -207,7 +207,7 @@ public class EditorsSplitters extends IdePanePanel {
       }
     }
 
-    return shortcutText;
+    return "<shortcut>" + shortcutText + "</shortcut>";
   }
 
   public void writeExternal(final Element element) {

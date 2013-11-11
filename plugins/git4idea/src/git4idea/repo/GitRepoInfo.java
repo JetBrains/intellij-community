@@ -16,8 +16,11 @@
 package git4idea.repo;
 
 import com.intellij.dvcs.repo.Repository;
+import git4idea.GitBranch;
 import git4idea.GitLocalBranch;
 import git4idea.GitRemoteBranch;
+import gnu.trove.THashSet;
+import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -97,8 +100,8 @@ public class GitRepoInfo {
     if (myCurrentBranch != null ? !myCurrentBranch.equals(info.myCurrentBranch) : info.myCurrentBranch != null) return false;
     if (!myRemotes.equals(info.myRemotes)) return false;
     if (!myBranchTrackInfos.equals(info.myBranchTrackInfos)) return false;
-    if (!myLocalBranches.equals(info.myLocalBranches)) return false;
-    if (!myRemoteBranches.equals(info.myRemoteBranches)) return false;
+    if (!areEqual(myLocalBranches, info.myLocalBranches)) return false;
+    if (!areEqual(myRemoteBranches, info.myRemoteBranches)) return false;
 
     return true;
   }
@@ -120,4 +123,32 @@ public class GitRepoInfo {
     return String.format("GitRepoInfo{current=%s, remotes=%s, localBranches=%s, remoteBranches=%s, trackInfos=%s}",
                          myCurrentBranch, myRemotes, myLocalBranches, myRemoteBranches, myBranchTrackInfos);
   }
+
+  private static <T extends GitBranch> boolean areEqual(Collection<T> c1, Collection<T> c2) {
+    // GitBranch has perverted equals contract (see the comment there)
+    // until GitBranch is created only from a single place with correctly defined Hash, we can't change its equals
+    THashSet<GitBranch> set1 = new THashSet<GitBranch>(c1, new BranchesComparingStrategy());
+    THashSet<GitBranch> set2 = new THashSet<GitBranch>(c2, new BranchesComparingStrategy());
+    return set1.equals(set2);
+  }
+
+  private static class BranchesComparingStrategy implements TObjectHashingStrategy<GitBranch> {
+
+    @Override
+    public int computeHashCode(@NotNull GitBranch branch) {
+      return 31 * branch.getName().hashCode() + branch.getHash().hashCode();
+    }
+
+    @Override
+    public boolean equals(@NotNull GitBranch b1, @NotNull GitBranch b2) {
+      if (b1 == b2) {
+        return true;
+      }
+      if (b1.getClass() != b2.getClass()) {
+        return false;
+      }
+      return b1.getName().equals(b2.getName()) && b1.getHash().equals(b2.getHash());
+    }
+  }
+
 }

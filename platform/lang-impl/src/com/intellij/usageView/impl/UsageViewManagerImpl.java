@@ -83,6 +83,7 @@ public class UsageViewManagerImpl extends UsageViewManager {
     content.setTabName(tabName);
     content.setToolwindowTitle(toolwindowTitle);
     content.putUserData(contentKey, Boolean.TRUE);
+    content.putUserData(ToolWindow.SHOW_CONTENT_ICON, Boolean.TRUE);
 
     myFindContentManager.addContent(content);
     myFindContentManager.setSelectedContent(content);

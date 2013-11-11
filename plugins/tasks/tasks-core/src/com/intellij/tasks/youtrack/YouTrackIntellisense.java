@@ -56,7 +56,7 @@ public class YouTrackIntellisense {
     private final int myMaxSize;
 
     private SizeLimitedCache(int max) {
-      super((int)(max / 0.75) + 1);
+      super((int)(max / 0.75) + 1, true);
       myMaxSize = max;
     }
 

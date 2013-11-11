@@ -20,10 +20,10 @@ import com.intellij.find.FindSettings;
 import com.intellij.ide.util.scopeChooser.ScopeChooserCombo;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.roots.SupportedRootTypes;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
@@ -112,7 +112,7 @@ public class BaseAnalysisActionDialog extends DialogWrapper {
 
     //include test option
     myInspectTestSource.setSelected(myAnalysisOptions.ANALYZE_TEST_SOURCES);
-    myInspectTestSource.setVisible(SupportedRootTypes.isSupported(JavaSourceRootType.TEST_SOURCE));
+    myInspectTestSource.setVisible(ModuleUtil.isSupportedRootType(myProject, JavaSourceRootType.TEST_SOURCE));
 
     //module scope if applicable
     myModuleButton.setText(AnalysisScopeBundle.message("scope.option.module.with.mnemonic", myModuleName));

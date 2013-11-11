@@ -132,6 +132,7 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
       else {
         String body = getHashText(commit) + "<br/>" + getAuthorText(commit) + "<p>" + getMessageText(commit) + "</p>";
         setText("<html><head>" + UIUtil.getCssFontDeclaration(UIUtil.getLabelFont()) + "</head><body>" + body + "</body></html>");
+        setCaretPosition(0);
       }
     }
 
@@ -157,6 +158,9 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
           commitTime = "";
         }
         authorText += " (committed by " + commit.getCommitter().getName() + commitTime + ")";
+      }
+      else if (commit.getCommitTime() != commit.getAuthorTime()) {
+        authorText += " (committed at " + DateFormatUtil.formatDateTime(commit.getCommitTime()) + ")";
       }
       return authorText;
     }

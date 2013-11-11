@@ -15,20 +15,16 @@
  */
 package com.intellij.openapi.roots;
 
-import com.intellij.openapi.components.ServiceManager;
-import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
+import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 
 /**
- * @author yole
+ * @author nik
  */
-public abstract class SupportedRootTypes {
-  public abstract boolean isSupportedRootType(JpsModuleSourceRootType sourceRootType);
+public abstract class GeneratedSourcesFilter {
+  public static final ExtensionPointName<GeneratedSourcesFilter> EP_NAME = ExtensionPointName.create("com.intellij.generatedSourcesFilter");
 
-  public static boolean isSupported(JpsModuleSourceRootType sourceRootType) {
-    SupportedRootTypes service = ServiceManager.getService(SupportedRootTypes.class);
-    if (service != null) {
-      return service.isSupportedRootType(sourceRootType);
-    }
-    return true;
-  }
+  public abstract boolean isGeneratedSource(@NotNull VirtualFile file, @NotNull Project project);
 }

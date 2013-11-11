@@ -83,7 +83,7 @@ public abstract class GitLogSingleCommitAction extends DumbAwareAction {
     }
 
     boolean isValid() {
-      return project != null && log != null;
+      return project != null && log != null && GitUtil.logHasGitRoot(log);
     }
   }
 

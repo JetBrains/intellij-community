@@ -147,7 +147,7 @@ public class RemoteTemplatesFactory extends ProjectTemplatesFactory {
         final String path = element.getChildText("path", ns);
         final String description = element.getChildTextTrim("description", ns);
         String name = element.getChildTextTrim("name", ns);
-        return new ArchivedProjectTemplate(name) {
+        return new ArchivedProjectTemplate(name, element.getChildTextTrim("category")) {
           @Override
           protected ModuleType getModuleType() {
             return moduleType;

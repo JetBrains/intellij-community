@@ -305,6 +305,10 @@ public class VcsLogDataHolder implements Disposable {
     }, "Building full log...");
   }
 
+  public boolean isFullLogShowing() {
+    return myFullLogShowing;
+  }
+
   /**
    * Queries the VCS for the number of recent unordered commits, orders them and connects to the existing log structure.
    * This is done after refresh, when the whole log skeleton has been loaded.
@@ -480,6 +484,16 @@ public class VcsLogDataHolder implements Disposable {
 
   public VcsUserRegistry getUserRegistry() {
     return myUserRegistry;
+  }
+
+  @NotNull
+  public Collection<VirtualFile> getRoots() {
+    return myLogProviders.keySet();
+  }
+
+  @NotNull
+  public Collection<VcsLogProvider> getLogProviders() {
+    return myLogProviders.values();
   }
 
   private static class RecentCommitsInfo {

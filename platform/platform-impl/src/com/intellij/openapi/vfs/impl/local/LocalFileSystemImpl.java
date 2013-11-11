@@ -82,21 +82,9 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Ap
       return FileUtil.toSystemIndependentName(myFSRootPath);
     }
 
-    /** @deprecated implementation details (to remove in IDEA 13) */
-    @Override
-    public String getFileSystemRootPath() {
-      return myFSRootPath;
-    }
-
     @Override
     public boolean isToWatchRecursively() {
       return myToWatchRecursively;
-    }
-
-    /** @deprecated implementation details (to remove in IDEA 13) */
-    @Override
-    public boolean dominates(@NotNull WatchRequest other) {
-      return LocalFileSystemImpl.dominates(this, (WatchRequestImpl)other);
     }
 
     @Override
@@ -136,19 +124,6 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Ap
   @NotNull
   public String getComponentName() {
     return "LocalFileSystem";
-  }
-
-  @TestOnly
-  public void cleanupForNextTest() {
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        FileDocumentManager.getInstance().saveAllDocuments();
-      }
-    });
-    PersistentFS.getInstance().clearIdCache();
-
-    myRootsToWatch.clear();
   }
 
   private WatchRequestImpl[] normalizeRootsForRefresh() {
@@ -265,14 +240,6 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Ap
     // if we reach here it means that the exact path is already present in the graph -
     // then this request is assumed to be present only if it is not being watched recursively
     return !request.isToWatchRecursively() && currentNode.watchRequest != null;
-  }
-
-  private static boolean dominates(final WatchRequestImpl request, final WatchRequestImpl other) {
-    if (request.myToWatchRecursively) {
-      return other.myFSRootPath.startsWith(request.myFSRootPath);
-    }
-
-    return !other.myToWatchRecursively && request.myFSRootPath.equals(other.myFSRootPath);
   }
 
   private void storeRefreshStatusToFiles() {
@@ -558,5 +525,17 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Ap
   @NonNls
   public String toString() {
     return "LocalFileSystem";
+  }
+
+  @TestOnly
+  public void cleanupForNextTest() {
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
+      public void run() {
+        FileDocumentManager.getInstance().saveAllDocuments();
+      }
+    });
+    PersistentFS.getInstance().clearIdCache();
+    myRootsToWatch.clear();
   }
 }

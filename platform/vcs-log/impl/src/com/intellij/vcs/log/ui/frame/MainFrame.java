@@ -49,6 +49,7 @@ public class MainFrame extends JPanel implements TypeSafeDataProvider {
   @NotNull private final BranchesPanel myBranchesPanel;
   @NotNull private final DetailsPanel myDetailsPanel;
   @NotNull private final Splitter myDetailsSplitter;
+  private final JComponent myToolbar;
 
   public MainFrame(@NotNull VcsLogDataHolder logDataHolder, @NotNull VcsLogUI vcsLogUI, @NotNull Project project,
                    @NotNull VcsLogSettings settings, @NotNull VcsLogUiProperties uiProperties, @NotNull VcsLog log) {
@@ -78,14 +79,14 @@ public class MainFrame extends JPanel implements TypeSafeDataProvider {
     updateWhenDetailsAreLoaded(selectionChangeListener);
 
     // layout
-    JComponent toolbar = createActionsToolbar();
+    myToolbar = createActionsToolbar();
 
     myDetailsSplitter = new Splitter(true, 0.7f);
     myDetailsSplitter.setFirstComponent(ScrollPaneFactory.createScrollPane(myGraphTable));
     setupDetailsSplitter(myUiProperties.isShowDetails());
 
     JComponent toolbars = new JPanel(new BorderLayout());
-    toolbars.add(toolbar, BorderLayout.NORTH);
+    toolbars.add(myToolbar, BorderLayout.NORTH);
     toolbars.add(myBranchesPanel, BorderLayout.CENTER);
     JComponent toolbarsAndTable = new JPanel(new BorderLayout());
     toolbarsAndTable.add(toolbars, BorderLayout.NORTH);
@@ -232,6 +233,10 @@ public class MainFrame extends JPanel implements TypeSafeDataProvider {
         }
       }
     }
+  }
+
+  public Component getToolbar() {
+    return myToolbar;
   }
 
   private class CommitSelectionListener implements ListSelectionListener {

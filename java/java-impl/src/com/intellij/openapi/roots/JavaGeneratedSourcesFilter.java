@@ -13,18 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.jetbrains.python;
+package com.intellij.openapi.roots;
 
-import com.intellij.openapi.roots.SupportedRootTypes;
-import org.jetbrains.jps.model.java.JavaSourceRootType;
-import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 
 /**
- * @author yole
+ * @author nik
  */
-public class PySupportedRootTypes extends SupportedRootTypes {
+public class JavaGeneratedSourcesFilter extends GeneratedSourcesFilter {
   @Override
-  public boolean isSupportedRootType(JpsModuleSourceRootType sourceRootType) {
-    return sourceRootType == JavaSourceRootType.SOURCE;
+  public boolean isGeneratedSource(@NotNull VirtualFile file, @NotNull Project project) {
+    return JavaProjectRootsUtil.isInGeneratedCode(file, project);
   }
 }

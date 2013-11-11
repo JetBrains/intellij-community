@@ -1,32 +1,54 @@
 package org.jetbrains.plugins.terminal;
 
 import com.google.common.base.Predicate;
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.fileEditor.impl.EditorTabbedContainer;
+import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
 import com.intellij.openapi.project.DumbAwareAction;
-import com.jediterm.terminal.ui.JediTermWidget;
-import com.jediterm.terminal.ui.TabbedTerminalWidget;
-import com.jediterm.terminal.ui.TerminalAction;
-import com.jediterm.terminal.ui.TerminalWidget;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.ui.SimpleColoredComponent;
+import com.intellij.ui.components.JBTextField;
+import com.intellij.ui.docking.DockManager;
+import com.intellij.ui.docking.DragSession;
+import com.intellij.ui.tabs.TabInfo;
+import com.intellij.ui.tabs.TabsListener;
+import com.intellij.ui.tabs.impl.JBEditorTabs;
+import com.intellij.ui.tabs.impl.JBTabsImpl;
+import com.intellij.ui.tabs.impl.TabLabel;
+import com.jediterm.terminal.ui.*;
 import com.jediterm.terminal.ui.settings.SettingsProvider;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.terminal.vfs.TerminalSessionVirtualFileImpl;
 
 import javax.swing.*;
-import java.awt.event.KeyEvent;
+import java.awt.*;
+import java.awt.event.*;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArraySet;
 
 /**
  * @author traff
  */
 public class JBTabbedTerminalWidget extends TabbedTerminalWidget {
 
+  private Project myProject;
   private final JBTerminalSystemSettingsProvider mySettingsProvider;
+  private Disposable myParent;
 
-  public JBTabbedTerminalWidget(@NotNull JBTerminalSystemSettingsProvider settingsProvider, @NotNull Predicate<TerminalWidget> createNewSessionAction) {
+  public JBTabbedTerminalWidget(@NotNull Project project,
+                                @NotNull JBTerminalSystemSettingsProvider settingsProvider,
+                                @NotNull Predicate<TerminalWidget> createNewSessionAction, @NotNull Disposable parent) {
     super(settingsProvider, createNewSessionAction);
-    
+    myProject = project;
+
     mySettingsProvider = settingsProvider;
+    myParent = parent;
 
     convertActions(this, getActions());
   }
@@ -58,5 +80,299 @@ public class JBTabbedTerminalWidget extends TabbedTerminalWidget {
   @Override
   protected JediTermWidget createInnerTerminalWidget(SettingsProvider settingsProvider) {
     return new JBTerminalWidget(mySettingsProvider);
+  }
+
+  @Override
+  protected TerminalTabs createTabbedPane() {
+    return new JBTerminalTabs(myProject, myParent);
+  }
+
+  public class JBTerminalTabs implements TerminalTabs {
+    private final JBEditorTabs myTabs;
+
+    private TabInfo.DragOutDelegate myDragDelegate = new MyDragOutDelegate();
+
+    private final CopyOnWriteArraySet<TabChangeListener> myListeners = new CopyOnWriteArraySet<TabChangeListener>();
+
+    public JBTerminalTabs(@NotNull Project project, @NotNull Disposable parent) {
+      final ActionManager actionManager = ActionManager.getInstance();
+      myTabs = new JBEditorTabs(project, actionManager, IdeFocusManager.getInstance(project), parent) {
+        @Override
+        protected TabLabel createTabLabel(TabInfo info) {
+          return new TerminalTabLabel(this, info);
+        }
+      };
+
+      myTabs.addListener(new TabsListener.Adapter() {
+        @Override
+        public void selectionChanged(TabInfo oldSelection, TabInfo newSelection) {
+          for (TabChangeListener each : myListeners) {
+            each.selectionChanged();
+          }
+        }
+
+        @Override
+        public void tabRemoved(TabInfo tabInfo) {
+          for (TabChangeListener each : myListeners) {
+            each.tabRemoved();
+          }
+        }
+      });
+
+      myTabs.setTabDraggingEnabled(true);
+    }
+
+    @Override
+    public int getSelectedIndex() {
+      return myTabs.getIndexOf(myTabs.getSelectedInfo());
+    }
+
+    @Override
+    public void setSelectedIndex(int index) {
+      myTabs.select(myTabs.getTabAt(index), true);
+    }
+
+    @Override
+    public void setTabComponentAt(int index, Component component) {
+      //nop
+    }
+
+    @Override
+    public int indexOfTabComponent(Component component) {
+      return 0; //nop
+    }
+
+
+    private TabInfo getTabAt(int index) {
+      checkIndex(index);
+      return myTabs.getTabAt(index);
+    }
+
+    private void checkIndex(int index) {
+      if (index < 0 || index >= getTabCount()) {
+        throw new ArrayIndexOutOfBoundsException("tabCount=" + getTabCount() + " index=" + index);
+      }
+    }
+
+
+    @Override
+    public JediTermWidget getComponentAt(int i) {
+      return (JediTermWidget)getTabAt(i).getComponent();
+    }
+
+    @Override
+    public void addChangeListener(TabChangeListener listener) {
+      myListeners.add(listener);
+    }
+
+    @Override
+    public void setTitleAt(int index, String title) {
+      getTabAt(index).setText(title);
+    }
+
+    @Override
+    public void setSelectedComponent(JediTermWidget terminal) {
+      TabInfo info = myTabs.findInfo(terminal);
+      if (info != null) {
+        myTabs.select(info, true);
+      }
+    }
+
+    @Override
+    public JComponent getComponent() {
+      return myTabs.getComponent();
+    }
+
+    @Override
+    public int getTabCount() {
+      return myTabs.getTabCount();
+    }
+
+    @Override
+    public void addTab(String name, JediTermWidget terminal) {
+      myTabs.addTab(createTabInfo(name, terminal));
+    }
+
+    private TabInfo createTabInfo(String name, JediTermWidget terminal) {
+      TabInfo tabInfo = new TabInfo(terminal).setText(name).setDragOutDelegate(myDragDelegate);
+      return tabInfo
+        .setObject(new TerminalSessionVirtualFileImpl(tabInfo, terminal, mySettingsProvider));
+    }
+
+    public String getTitleAt(int i) {
+      return getTabAt(i).getText();
+    }
+
+    public void removeAll() {
+      myTabs.removeAllTabs();
+    }
+
+    @Override
+    public void remove(JediTermWidget terminal) {
+      TabInfo info = myTabs.findInfo(terminal);
+      if (info != null) {
+        myTabs.removeTab(info);
+      }
+    }
+
+    private class TerminalTabLabel extends TabLabel {
+      public TerminalTabLabel(final JBTabsImpl tabs, TabInfo info) {
+        super(tabs, info);
+
+        setOpaque(false);
+
+        setFocusable(false);
+
+        SimpleColoredComponent label = myLabel;
+
+        //add more space between the label and the button
+        label.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 5));
+
+        label.addMouseListener(new MouseAdapter() {
+
+          @Override
+          public void mouseReleased(MouseEvent event) {
+            handleMouse(event);
+          }
+
+          @Override
+          public void mousePressed(MouseEvent event) {
+            handleMouse(event);
+          }
+
+          private void handleMouse(MouseEvent event) {
+            if (event.isPopupTrigger()) {
+              JPopupMenu menu = createPopup();
+              menu.show(event.getComponent(), event.getX(), event.getY());
+            }
+            else {
+              myTabs.select(getInfo(), true);
+
+              if (event.getClickCount() == 2 && !event.isConsumed()) {
+                event.consume();
+                renameTab();
+              }
+            }
+          }
+        });
+      }
+
+      protected JPopupMenu createPopup() {
+        JPopupMenu popupMenu = new JPopupMenu();
+
+        TerminalAction.addToMenu(popupMenu, JBTabbedTerminalWidget.this);
+
+        JMenuItem rename = new JMenuItem("Rename Tab");
+
+        rename.addActionListener(new ActionListener() {
+          @Override
+          public void actionPerformed(ActionEvent actionEvent) {
+            renameTab();
+          }
+        });
+
+        popupMenu.add(rename);
+
+        return popupMenu;
+      }
+
+      private void renameTab() {
+        new TabRenamer() {
+          @Override
+          protected JTextField createTextField() {
+            JBTextField textField = new JBTextField() {
+              private int myMinimalWidth;
+
+              @Override
+              public Dimension getPreferredSize() {
+                Dimension size = super.getPreferredSize();
+                if (size.width > myMinimalWidth) {
+                  myMinimalWidth = size.width;
+                }
+
+                return wider(size, myMinimalWidth);
+              }
+
+              private Dimension wider(Dimension size, int minimalWidth) {
+                return new Dimension(minimalWidth + 10, size.height);
+              }
+            };
+            textField.setOpaque(true);
+            return textField;
+          }
+        }.install(getSelectedIndex(), getInfo().getText(), myLabel, new TabRenamer.RenameCallBack() {
+          @Override
+          public void setComponent(Component c) {
+            myTabs.setTabDraggingEnabled(!(c instanceof JBTextField));
+
+            setPlaceholderContent(true, (JComponent)c);
+          }
+
+          @Override
+          public void setNewName(int index, String name) {
+            setTitleAt(index, name);
+          }
+        });
+      }
+    }
+
+    class MyDragOutDelegate implements TabInfo.DragOutDelegate {
+
+      private TerminalSessionVirtualFileImpl myFile;
+      private DragSession mySession;
+
+      @Override
+      public void dragOutStarted(MouseEvent mouseEvent, TabInfo info) {
+        final TabInfo previousSelection = info.getPreviousSelection();
+        final Image img = JBTabsImpl.getComponentImage(info);
+        info.setHidden(true);
+        if (previousSelection != null) {
+          myTabs.select(previousSelection, true);
+        }
+
+        myFile = (TerminalSessionVirtualFileImpl)info.getObject();
+        Presentation presentation = new Presentation(info.getText());
+        presentation.setIcon(info.getIcon());
+        mySession = getDockManager()
+          .createDragSession(mouseEvent, new EditorTabbedContainer.DockableEditor(myProject, img, myFile, presentation,
+                                                                                  info.getComponent().getPreferredSize(), false));
+      }
+
+      private DockManager getDockManager() {
+        return DockManager.getInstance(myProject);
+      }
+
+      @Override
+      public void processDragOut(MouseEvent event, TabInfo source) {
+        mySession.process(event);
+      }
+
+      @Override
+      public void dragOutFinished(MouseEvent event, TabInfo source) {
+        myFile.putUserData(FileEditorManagerImpl.CLOSING_TO_REOPEN, Boolean.TRUE);
+        
+        
+        myTabs.removeTab(source);
+        
+        mySession.process(event);
+
+        myFile.putUserData(FileEditorManagerImpl.CLOSING_TO_REOPEN, null);
+        
+
+        myFile = null;
+        mySession = null;
+      }
+
+      @Override
+      public void dragOutCancelled(TabInfo source) {
+        source.setHidden(false);
+        if (mySession != null) {
+          mySession.cancel();
+        }
+
+        myFile = null;
+        mySession = null;
+      }
+    }
   }
 }

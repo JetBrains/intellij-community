@@ -927,4 +927,9 @@ public class MavenUtil {
     return (V)res;
   }
 
+  public static String getArtifactName(String packaging, Module module, boolean exploded) {
+    final String baseName = module.getName() + ":" + packaging;
+    return exploded ? baseName + " exploded" : baseName;
+  }
+
 }
