@@ -135,7 +135,7 @@ public class GraphTableModel extends AbstractVcsLogTableModel<GraphCommitCell> {
   @Override
   public Hash getHashAtRow(int row) {
     Node node = myDataPack.getGraphModel().getGraph().getCommitNodeInRow(row);
-    return node == null ? null : node.getCommitHash();
+    return node == null ? null : myDataHolder.getHash(node.getCommitIndex());
     
   }
 }

@@ -32,7 +32,6 @@ import com.intellij.vcs.log.data.VcsLogDateFilter;
 import com.intellij.vcs.log.data.VcsLogStructureFilter;
 import com.intellij.vcs.log.data.VcsLogUserFilter;
 import com.intellij.vcs.log.impl.HashImpl;
-import com.intellij.vcs.log.impl.VcsRefImpl;
 import com.intellij.vcs.log.ui.filter.VcsLogTextFilter;
 import git4idea.GitLocalBranch;
 import git4idea.GitRemoteBranch;
@@ -117,15 +116,15 @@ public class GitLogProvider implements VcsLogProvider {
     Collection<GitRemoteBranch> remoteBranches = repository.getBranches().getRemoteBranches();
     Collection<VcsRef> refs = new ArrayList<VcsRef>(localBranches.size() + remoteBranches.size());
     for (GitLocalBranch localBranch : localBranches) {
-      refs.add(new VcsRefImpl(HashImpl.build(localBranch.getHash()), localBranch.getName(), GitRefManager.LOCAL_BRANCH, root));
+      refs.add(myVcsObjectsFactory.createRef(HashImpl.build(localBranch.getHash()), localBranch.getName(), GitRefManager.LOCAL_BRANCH, root));
     }
     for (GitRemoteBranch remoteBranch : remoteBranches) {
-      refs.add(new VcsRefImpl(HashImpl.build(remoteBranch.getHash()), remoteBranch.getNameForLocalOperations(),
+      refs.add(myVcsObjectsFactory.createRef(HashImpl.build(remoteBranch.getHash()), remoteBranch.getNameForLocalOperations(),
                           GitRefManager.REMOTE_BRANCH, root));
     }
     String currentRevision = repository.getCurrentRevision();
     if (currentRevision != null) { // null => fresh repository
-      refs.add(new VcsRefImpl(HashImpl.build(currentRevision), "HEAD", GitRefManager.HEAD, root));
+      refs.add(myVcsObjectsFactory.createRef(HashImpl.build(currentRevision), "HEAD", GitRefManager.HEAD, root));
     }
 
     refs.addAll(readTags(root));
@@ -141,7 +140,7 @@ public class GitLogProvider implements VcsLogProvider {
     Collection<VcsRef> refs = new ArrayList<VcsRef>();
     for (String record : out.split(GitLogParser.RECORD_START)) {
       if (!StringUtil.isEmptyOrSpaces(record)) {
-        refs.addAll(RefParser.parseCommitRefs(record.trim(), root));
+        refs.addAll(new RefParser(myVcsObjectsFactory).parseCommitRefs(record.trim(), root));
       }
     }
     return refs;

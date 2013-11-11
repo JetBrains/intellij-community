@@ -44,7 +44,7 @@ public class VcsLogJoiner {
    * @return Total saved log with new commits properly attached to it + number of new commits attached to the log.
    */
   @NotNull
-  public Pair<List<TimedVcsCommit>, Integer> addCommits(@NotNull List<TimedVcsCommit> savedLog,
+  public Pair<List<TimedVcsCommit>, Integer> addCommits(@NotNull List<? extends TimedVcsCommit> savedLog,
                                                            @NotNull Collection<VcsRef> previousRefs,
                                                            @NotNull List<? extends TimedVcsCommit> firstBlock,
                                                            @NotNull Collection<VcsRef> newRefs) {
@@ -87,7 +87,7 @@ public class VcsLogJoiner {
 
   // return Pair(-1, null) if something bad :'(
   @NotNull
-  private static Pair<Integer, Set<TimedVcsCommit>> getNewCommitsAndSavedGreenIndex(@NotNull List<TimedVcsCommit> savedLog,
+  private static Pair<Integer, Set<TimedVcsCommit>> getNewCommitsAndSavedGreenIndex(@NotNull List<? extends TimedVcsCommit> savedLog,
                                                                                     @NotNull Collection<Hash> previousRefs,
                                                                                     @NotNull List<? extends TimedVcsCommit> firstBlock,
                                                                                     @NotNull Collection<Hash> newRefs) {
@@ -109,7 +109,7 @@ public class VcsLogJoiner {
     return new Pair<Integer, Set<TimedVcsCommit>>(saveGreenIndex, getAllNewCommits(savedLog.subList(0, saveGreenIndex), firstBlock));
   }
 
-  private static int getFirstUnTrackedIndex(@NotNull List<TimedVcsCommit> commits, @NotNull Set<Hash> searchHashes) {
+  private static int getFirstUnTrackedIndex(@NotNull List<? extends TimedVcsCommit> commits, @NotNull Set<Hash> searchHashes) {
     int lastIndex = 0;
     for (VcsCommit commit : commits) {
       if (searchHashes.size() == 0)
@@ -122,8 +122,8 @@ public class VcsLogJoiner {
     return searchHashes.size() == 0 ? lastIndex : -1;
   }
 
-  private static Set<TimedVcsCommit> getAllNewCommits(@NotNull List<TimedVcsCommit> unsafeGreenPartSavedLog,
-                                                         @NotNull List<? extends TimedVcsCommit> firstBlock) {
+  private static Set<TimedVcsCommit> getAllNewCommits(@NotNull List<? extends TimedVcsCommit> unsafeGreenPartSavedLog,
+                                                      @NotNull List<? extends TimedVcsCommit> firstBlock) {
     Set<Hash> existedCommitHashes = new HashSet<Hash>();
     for (VcsCommit commit : unsafeGreenPartSavedLog) {
       existedCommitHashes.add(commit.getHash());
@@ -139,7 +139,7 @@ public class VcsLogJoiner {
 
   // return Pair(-1, null) if something bad :'(
   @NotNull
-  private static Pair<Integer, Set<Hash>> getRedCommitsAndSavedRedIndex(@NotNull List<TimedVcsCommit> savedLog,
+  private static Pair<Integer, Set<Hash>> getRedCommitsAndSavedRedIndex(@NotNull List<? extends TimedVcsCommit> savedLog,
                                                                      @NotNull Collection<Hash> previousRefs,
                                                                      @NotNull List<? extends TimedVcsCommit> firstBlock,
                                                                      @NotNull Collection<Hash> newRefs) {

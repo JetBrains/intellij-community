@@ -33,13 +33,13 @@ public class GroovySdkForNewModuleWizardStep extends GroovySdkWizardStepBase {
 
   public GroovySdkForNewModuleWizardStep(ModuleBuilder moduleBuilder,
                                          WizardContext wizardContext,
-                                         final MvcFramework framework,
+                                         @Nullable MvcFramework framework,
                                          SettingsStep settingsStep) {
     super(framework, wizardContext, moduleBuilder.getContentEntryPath());
     moduleBuilder.addModuleConfigurationUpdater(createModuleConfigurationUpdater());
     if (settingsStep != null) {
       myJavaStep = JavaModuleType.getModuleType().modifySettingsStep(settingsStep, moduleBuilder);
-      settingsStep.addSettingsField("\u001B" + framework.getDisplayName() + " library:", getPanel().getSimplePanel());
+      settingsStep.addSettingsField("\u001B" + (framework == null ? "Groovy" : framework.getDisplayName()) + " library:", getPanel().getSimplePanel());
     }
   }
 

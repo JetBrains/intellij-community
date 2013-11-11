@@ -2,8 +2,7 @@ package com.intellij.vcs.log.graphmodel.impl;
 
 import com.intellij.util.Consumer;
 import com.intellij.util.Function;
-import com.intellij.vcs.log.Hash;
-import com.intellij.vcs.log.VcsCommit;
+import com.intellij.vcs.log.GraphCommit;
 import com.intellij.vcs.log.VcsRef;
 import com.intellij.vcs.log.compressedlist.UpdateRequest;
 import com.intellij.vcs.log.graph.Graph;
@@ -95,7 +94,7 @@ public class GraphModelImpl implements GraphModel {
   }
 
   @Override
-  public void appendCommitsToGraph(@NotNull List<? extends VcsCommit> commitParentses) {
+  public void appendCommitsToGraph(@NotNull List<GraphCommit> commitParentses) {
     int oldSize = graph.getNodeRows().size();
     new GraphAppendBuilder(graph, myRefs).appendToGraph(commitParentses);
     visibleNodes.setVisibleNodes(visibleNodes.generateVisibleBranchesNodes(isStartedBranchVisibilityNode));
@@ -116,7 +115,7 @@ public class GraphModelImpl implements GraphModel {
   }
 
   @Override
-  public boolean isNodeOfHashVisible(@NotNull Hash hash) {
+  public boolean isNodeOfHashVisible(int hash) {
     return visibleNodes.isNodeVisible(hash);
   }
 

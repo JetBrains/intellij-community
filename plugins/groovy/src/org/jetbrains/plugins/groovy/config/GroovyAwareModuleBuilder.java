@@ -83,6 +83,7 @@ public class GroovyAwareModuleBuilder extends JavaModuleBuilder {
     return "Groovy";
   }
 
+  @Nullable
   protected MvcFramework getFramework() {
     return null;
   }
