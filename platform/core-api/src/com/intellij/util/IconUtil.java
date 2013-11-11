@@ -93,6 +93,30 @@ public class IconUtil {
     return new ImageIcon(img);
   }
 
+  public static Icon cropIcon(@NotNull Icon icon, Rectangle area) {
+    if (!new Rectangle(icon.getIconWidth(), icon.getIconHeight()).contains(area)) {
+      return icon;
+    }
+
+    final BufferedImage image = GraphicsEnvironment
+      .getLocalGraphicsEnvironment()
+      .getDefaultScreenDevice()
+      .getDefaultConfiguration()
+      .createCompatibleImage(icon.getIconWidth(), icon.getIconHeight(), Transparency.TRANSLUCENT);
+    final Graphics2D g = image.createGraphics();
+    icon.paintIcon(new JPanel(), g, 0, 0);
+    g.dispose();
+
+    final BufferedImage img = UIUtil.createImage(area.width, area.height, Transparency.TRANSLUCENT);
+    for (int col = 0; col < area.width; col++) {
+      for (int row = 0; row < area.height; row++) {
+        img.setRGB(col, row, image.getRGB(col + area.x, row + area.y));
+      }
+    }
+
+    return new ImageIcon(img);
+  }
+
   @NotNull
   public static Icon flip(@NotNull Icon icon, boolean horizontal) {
     int w = icon.getIconWidth();
