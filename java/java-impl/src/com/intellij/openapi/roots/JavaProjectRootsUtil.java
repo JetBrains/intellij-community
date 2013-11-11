@@ -38,13 +38,35 @@ public class JavaProjectRootsUtil {
     for (Module module : ModuleManager.getInstance(project).getModules()) {
       for (ContentEntry entry : ModuleRootManager.getInstance(module).getContentEntries()) {
         for (SourceFolder sourceFolder : entry.getSourceFolders(JavaModuleSourceRootTypes.SOURCES)) {
-          JavaSourceRootProperties properties = sourceFolder.getJpsElement().getProperties(JavaModuleSourceRootTypes.SOURCES);
-          if (properties != null && !properties.isForGeneratedSources()) {
+          if (!isForGeneratedSources(sourceFolder)) {
             ContainerUtil.addIfNotNull(roots, sourceFolder.getFile());
           }
         }
       }
     }
     return roots;
+  }
+
+  private static boolean isForGeneratedSources(SourceFolder sourceFolder) {
+    JavaSourceRootProperties properties = sourceFolder.getJpsElement().getProperties(JavaModuleSourceRootTypes.SOURCES);
+    return properties != null && properties.isForGeneratedSources();
+  }
+
+  public static boolean isInGeneratedCode(@NotNull VirtualFile file, @NotNull Project project) {
+    ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
+    Module module = fileIndex.getModuleForFile(file);
+    if (module == null) return false;
+
+    VirtualFile sourceRoot = fileIndex.getSourceRootForFile(file);
+    if (sourceRoot == null) return false;
+
+    for (ContentEntry entry : ModuleRootManager.getInstance(module).getContentEntries()) {
+      for (SourceFolder folder : entry.getSourceFolders()) {
+        if (sourceRoot.equals(folder.getFile())) {
+          return isForGeneratedSources(folder);
+        }
+      }
+    }
+    return false;
   }
 }

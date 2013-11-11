@@ -42,7 +42,7 @@ public class UsageGroupingRuleProviderImpl implements UsageGroupingRuleProvider 
   @NotNull
   public UsageGroupingRule[] getActiveRules(Project project) {
     List<UsageGroupingRule> rules = new ArrayList<UsageGroupingRule>();
-    rules.add(new NonCodeUsageGroupingRule());
+    rules.add(new NonCodeUsageGroupingRule(project));
     if (UsageViewSettings.getInstance().GROUP_BY_SCOPE) {
       rules.add(new UsageScopeGroupingRule());
     }
