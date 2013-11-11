@@ -897,8 +897,7 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
     List<RangeHighlighter> highlighters = new ArrayList<RangeHighlighter>();
     TextAttributes attributes = myEditorColorsManager.getGlobalScheme().getAttributes(EditorColors.REFERENCE_HYPERLINK_COLOR);
     for (TextRange range : info.getRanges()) {
-      TextAttributes attr = patchAttributesColor(attributes, range, editor, getOrInitDebuggerHighlighterKey());
-      attr = patchAttributesColor(attributes, range, editor, getOrInitXDebuggerHighlighterKey());
+      TextAttributes attr = patchAttributesColor(attributes, range, editor);
       final RangeHighlighter highlighter = editor.getMarkupModel().addRangeHighlighter(range.getStartOffset(), range.getEndOffset(),
                                                                                        HighlighterLayer.SELECTION + 1,
                                                                                        attr,
@@ -914,14 +913,15 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
    * Patches attributes to be visible under debugger active line
    */
   @SuppressWarnings("UseJBColor")
-  private static TextAttributes patchAttributesColor(TextAttributes attributes, TextRange range, Editor editor, Key<?> key) {
-    if (key != null) {
-      int line = editor.offsetToLogicalPosition(range.getStartOffset()).line;
-      for (RangeHighlighter highlighter : editor.getMarkupModel().getAllHighlighters()) {
-
-        Object hasKey = highlighter.getUserData(key);
-        if (hasKey instanceof Boolean && ((Boolean)hasKey).booleanValue()) {
-          if (editor.offsetToLogicalPosition(highlighter.getStartOffset()).line == line) {
+  private static TextAttributes patchAttributesColor(TextAttributes attributes, TextRange range, Editor editor) {
+    int line = editor.offsetToLogicalPosition(range.getStartOffset()).line;
+    for (RangeHighlighter highlighter : editor.getMarkupModel().getAllHighlighters()) {
+      if (highlighter.getTargetArea() == HighlighterTargetArea.LINES_IN_RANGE &&
+          editor.offsetToLogicalPosition(highlighter.getStartOffset()).line == line) {
+        TextAttributes textAttributes = highlighter.getTextAttributes();
+        if (textAttributes != null) {
+          Color color = textAttributes.getBackgroundColor();
+          if (color.getBlue() > 128 && color.getRed() < 128 && color.getGreen() < 128) {
             TextAttributes clone = attributes.clone();
             clone.setForegroundColor(Color.orange);
             clone.setEffectColor(Color.orange);
@@ -933,18 +933,6 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
     return attributes;
   }
 
-  private static Key<?> getOrInitDebuggerHighlighterKey() {
-    if (ourDebuggerHighlighterKey == null) {
-      ourDebuggerHighlighterKey = Key.findKeyByName("HIGHLIGHTER_USERDATA_KEY");
-    }
-    return ourDebuggerHighlighterKey;
-  }
-  private static Key<?> getOrInitXDebuggerHighlighterKey() {
-    if (ourXDebuggerHighlighterKey == null) {
-      ourXDebuggerHighlighterKey = Key.findKeyByName("EXECUTION_POINT_HIGHLIGHTER_KEY");
-    }
-    return ourXDebuggerHighlighterKey;
-  }
 
   private class HighlightersSet {
     private final List<RangeHighlighter> myHighlighters;

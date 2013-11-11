@@ -34,7 +34,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class Key<T> {
   private static final AtomicInteger ourKeysCounter = new AtomicInteger();
   private final int myIndex = ourKeysCounter.getAndIncrement();
-  private final String myName;
+  private final String myName; // for debug purposes only
   private static final ConcurrentWeakValueIntObjectHashMap<Key> allKeys = new ConcurrentWeakValueIntObjectHashMap<Key>();
 
   public Key(@NotNull @NonNls String name) {
@@ -102,6 +102,9 @@ public class Key<T> {
     return (Key<T>)allKeys.get(index);
   }
 
+  /**
+   * @deprecated access to Key via its name is a kind of hack, use Key instance directly instead
+   */
   @Nullable
   public static Key<?> findKeyByName(String name) {
     for (StripedLockIntObjectConcurrentHashMap.IntEntry<Key> key : allKeys.entries()) {
