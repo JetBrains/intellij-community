@@ -79,61 +79,27 @@ public final class PostfixTemplatesManager implements ApplicationComponent {
           reference.getLastChild() == positionElement) {
         // find enclosing expression-statement through expressions
         final PsiExpressionStatement exprStatement = findContainingExprStatement(reference.getParent());
-
-        // TODO: 2 + 2.var + 2 + 2
-
         if (exprStatement != null) {
-          final PsiStatement prevStatement = PsiTreeUtil.getPrevSiblingOfType(exprStatement, PsiStatement.class);
-          final PsiExpression expression = findUnfinishedExpression(prevStatement);
-          if (expression != null) {
-            final PsiLiteralExpression brokenLiteral = findBrokenLiteral(expression);
-            if (brokenLiteral != null) {
-              return new PostfixTemplateAcceptanceContext(reference, brokenLiteral, forceMode) {
-                @Override @NotNull public PrefixExpressionContext fixUpExpression(
-                    @NotNull PrefixExpressionContext context) {
-                  // fix broken double literal by cutting of "." suffix
-                  Project project = context.expression.getProject();
-                  String literalText = brokenLiteral.getText();
-                  String fixedText = literalText.substring(0, literalText.length() - 1);
-                  PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
-                  PsiLiteralExpression newLiteral = (PsiLiteralExpression)
-                    factory.createExpressionFromText(fixedText, null);
+          final PsiStatement lhsStatement = PsiTreeUtil.getPrevSiblingOfType(exprStatement, PsiStatement.class);
+          final PsiExpression lhsExpression = findUnfinishedExpression(lhsStatement);
+          final PsiLiteralExpression brokenLiteral = findBrokenLiteral(lhsExpression);
+          if (lhsExpression != null && brokenLiteral != null) {
+            final boolean isComplexRhs = !(reference.getParent() instanceof PsiExpressionStatement);
+            return new PostfixTemplateAcceptanceContext(reference, brokenLiteral, forceMode) {
+              @Override @NotNull public PrefixExpressionContext fixUpExpression(
+                  @NotNull PrefixExpressionContext context) {
+                PsiExpression newExpression = fixCompletelyBrokenCase(
+                  context.expression, brokenLiteral, reference, lhsExpression);
 
-                  PsiExpression newExpression, oldExpression;
-                  if (expression == brokenLiteral) {
-                    oldExpression = brokenLiteral;
-                    newExpression = (PsiExpression) reference.replace(newLiteral);
-                  } else {
-                    brokenLiteral.replace(newLiteral);
-                    oldExpression = expression;
-                    newExpression = (PsiExpression) reference.replace(expression.copy());
-                  }
+                exprStatement.delete();
+                return new PrefixExpressionContext(this, newExpression);
+              }
 
-                  assert newExpression.isPhysical() : "newExpression.isPhysical()";
-                  assert oldExpression.isPhysical() : "oldExpression.isPhysical()";
-
-                  PsiExpressionStatement statement = findContainingExprStatement(newExpression.getParent());
-                  if (statement != null) {
-                    newExpression.putCopyableUserData(marker, marker);
-
-                    PsiExpression outerExpression = statement.getExpression();
-                    newExpression = (PsiExpression) oldExpression.replace(outerExpression);
-
-                    PsiExpression marked = findMarkedExpression(newExpression);
-                    if (marked != null) newExpression = marked;
-                  } else {
-                    newExpression = (PsiExpression) oldExpression.replace(newExpression);
-                  }
-
-                  exprStatement.delete();
-                  return new PrefixExpressionContext(this, newExpression);
-                }
-
-                @Override public boolean isBrokenStatement(@NotNull PsiStatement statement) {
-                  return statement == prevStatement;
-                }
-              };
-            }
+              @Override public boolean isBrokenStatement(@NotNull PsiStatement statement) {
+                assert lhsStatement.isValid() : "lhsStatement.isValid()";
+                return isComplexRhs && (statement == lhsStatement);
+              }
+            };
           }
         }
       }
@@ -192,7 +158,50 @@ public final class PostfixTemplatesManager implements ApplicationComponent {
     return null;
   }
 
-  @Nullable private PsiLiteralExpression findBrokenLiteral(@NotNull PsiExpression expr) {
+  @NotNull private static PsiExpression fixCompletelyBrokenCase(
+    @NotNull PsiExpression expressionToFix, @NotNull PsiLiteralExpression brokenLiteral,
+    @NotNull PsiReferenceExpression reference, @NotNull PsiExpression rhsExpression) {
+
+    // fix broken double literal by cutting of "." suffix
+    Project project = expressionToFix.getProject();
+    String literalText = brokenLiteral.getText();
+    String fixedText = literalText.substring(0, literalText.length() - 1);
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
+    PsiLiteralExpression newLiteral = (PsiLiteralExpression)
+      factory.createExpressionFromText(fixedText, null);
+
+    //
+    PsiExpression newExpression, oldExpression;
+    if (rhsExpression == brokenLiteral) {
+      oldExpression = brokenLiteral;
+      newExpression = (PsiExpression) reference.replace(newLiteral);
+    } else {
+      brokenLiteral.replace(newLiteral);
+      oldExpression = rhsExpression;
+      newExpression = (PsiExpression) reference.replace(rhsExpression.copy());
+    }
+
+    assert newExpression.isPhysical() : "newExpression.isPhysical()";
+    assert oldExpression.isPhysical() : "oldExpression.isPhysical()";
+
+    PsiExpressionStatement statement = findContainingExprStatement(newExpression.getParent());
+    if (statement != null) {
+      newExpression.putCopyableUserData(marker, marker);
+
+      PsiExpression outerExpression = statement.getExpression();
+      newExpression = (PsiExpression) oldExpression.replace(outerExpression);
+
+      PsiExpression marked = findMarkedExpression(newExpression);
+      if (marked != null) newExpression = marked;
+    } else {
+      newExpression = (PsiExpression) oldExpression.replace(newExpression);
+    }
+    return newExpression;
+  }
+
+  @Nullable private PsiLiteralExpression findBrokenLiteral(@Nullable PsiExpression expr) {
+    if (expr == null) return null;
+
     PsiExpression expression = expr;
     do {
       // look for double literal broken by dot at end
