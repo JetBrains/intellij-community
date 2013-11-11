@@ -140,8 +140,9 @@ public class GradleExecutionHelper {
     jvmArgs.addAll(extraJvmArgs);
 
     if (!jvmArgs.isEmpty()) {
-      List<String> args = connection.getModel(BuildEnvironment.class).getJava().getJvmArguments();
-      List<String> merged = mergeJvmArgs(args, jvmArgs);
+      BuildEnvironment buildEnvironment = getBuildEnvironment(connection);
+      List<String> merged =
+        buildEnvironment != null ? mergeJvmArgs(buildEnvironment.getJava().getJvmArguments(), jvmArgs) : jvmArgs;
       operation.setJvmArguments(ArrayUtilRt.toStringArray(merged));
     }
 
@@ -377,6 +378,17 @@ public class GradleExecutionHelper {
     }
     catch (Exception e) {
       LOG.warn("Can't use IJ gradle init script", e);
+    }
+  }
+
+  @Nullable
+  private static BuildEnvironment getBuildEnvironment(@NotNull ProjectConnection connection) {
+    try {
+      return connection.getModel(BuildEnvironment.class);
+    }
+    catch (Exception e) {
+      LOG.warn("can not get BuildEnvironment model", e);
+      return null;
     }
   }
 }
