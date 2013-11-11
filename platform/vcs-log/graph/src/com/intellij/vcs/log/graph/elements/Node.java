@@ -1,6 +1,5 @@
 package com.intellij.vcs.log.graph.elements;
 
-import com.intellij.vcs.log.Hash;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -26,8 +25,7 @@ public interface Node extends GraphElement {
    *         if type == EDGE_NODE - common Parent
    *         if type == END_COMMIT_NODE - parent of This Commit
    */
-  @NotNull
-  Hash getCommitHash();
+  int getCommitIndex();
 
   enum NodeType {
     COMMIT_NODE,

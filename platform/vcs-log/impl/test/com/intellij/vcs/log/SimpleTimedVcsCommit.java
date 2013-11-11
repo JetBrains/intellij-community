@@ -13,32 +13,39 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.vcs.log.parser;
+package com.intellij.vcs.log;
 
-import com.intellij.vcs.log.Hash;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author Kirill Likhodedov
- */
-public class SimpleHash implements Hash {
+import java.util.List;
 
-  private final String myHash;
+public class SimpleTimedVcsCommit implements TimedVcsCommit {
 
-  public SimpleHash(String hash) {
-    myHash = hash;
+  private final Hash myHash;
+  private final List<Hash> myParents;
+  private final long myTime;
+
+  public SimpleTimedVcsCommit(Hash commitHash, List<Hash> parentHashes, long time) {
+    myHash = commitHash;
+    myParents = parentHashes;
+    myTime = time;
+  }
+
+  @Override
+  public long getAuthorTime() {
+    return myTime;
   }
 
   @NotNull
   @Override
-  public String asString() {
+  public Hash getHash() {
     return myHash;
   }
 
   @NotNull
   @Override
-  public String toShortString() {
-    return myHash.substring(0, 7);
+  public List<Hash> getParents() {
+    return myParents;
   }
 
   @Override
@@ -46,9 +53,9 @@ public class SimpleHash implements Hash {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
 
-    SimpleHash that = (SimpleHash)o;
+    SimpleTimedVcsCommit commit = (SimpleTimedVcsCommit)o;
 
-    if (myHash != null ? !myHash.equals(that.myHash) : that.myHash != null) return false;
+    if (myHash != null ? !myHash.equals(commit.myHash) : commit.myHash != null) return false;
 
     return true;
   }
@@ -57,5 +64,4 @@ public class SimpleHash implements Hash {
   public int hashCode() {
     return myHash != null ? myHash.hashCode() : 0;
   }
-
 }

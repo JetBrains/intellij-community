@@ -12,7 +12,7 @@ import java.util.*;
 class VcsLogMultiRepoJoiner {
 
   @NotNull
-  public List<TimedVcsCommit> join(@NotNull Collection<List<TimedVcsCommit>> logsFromRepos) {
+  public List<TimedVcsCommit> join(@NotNull Collection<List<? extends TimedVcsCommit>> logsFromRepos) {
     int size = 0;
     for (List<? extends TimedVcsCommit> repo : logsFromRepos) {
       size += repo.size();

@@ -1,7 +1,7 @@
 package com.intellij.vcs.log.graph.mutable;
 
-import com.intellij.vcs.log.VcsCommit;
-import com.intellij.vcs.log.Hash;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.vcs.log.GraphCommit;
 import com.intellij.vcs.log.VcsRef;
 import com.intellij.vcs.log.graph.mutable.elements.MutableNode;
 import com.intellij.vcs.log.graph.mutable.elements.MutableNodeRow;
@@ -56,8 +56,8 @@ public class GraphAppendBuilder {
     }
   }
 
-  private Map<Hash, MutableNode> fixUnderdoneNodes(@NotNull Hash firstHash) {
-    Map<Hash, MutableNode> underdoneNodes = new HashMap<Hash, MutableNode>();
+  private Map<Integer, MutableNode> fixUnderdoneNodes(int firstHash) {
+    Map<Integer, MutableNode> underdoneNodes = ContainerUtil.newHashMap();
     List<MutableNode> nodesInLaseRow = getLastRowInGraph().getInnerNodeList();
     MutableNode node;
     for (Iterator<MutableNode> iterator = nodesInLaseRow.iterator(); iterator.hasNext(); ) {
@@ -68,34 +68,34 @@ public class GraphAppendBuilder {
       }
       // i.e. it is EDGE_NODE
       if (node.getInnerUpEdges().size() > 1) {
-        if (node.getCommitHash().equals(firstHash)) {
+        if (node.getCommitIndex() == firstHash) {
           iterator.remove();
           underdoneNodes.put(firstHash, node);
         }
         else {
           node.setType(EDGE_NODE);
-          MutableNode newParentNode = new MutableNode(node.getBranch(), node.getCommitHash());
+          MutableNode newParentNode = new MutableNode(node.getBranch(), node.getCommitIndex());
           GraphBuilder.createUsualEdge(node, newParentNode, node.getBranch());
-          underdoneNodes.put(node.getCommitHash(), newParentNode);
+          underdoneNodes.put(node.getCommitIndex(), newParentNode);
         }
       }
       else {
         iterator.remove();
-        underdoneNodes.put(node.getCommitHash(), node);
+        underdoneNodes.put(node.getCommitIndex(), node);
       }
     }
 
     return underdoneNodes;
   }
 
-  private void simpleAppend(@NotNull List<? extends VcsCommit> commitParentses,
+  private void simpleAppend(@NotNull List<GraphCommit> commitParentses,
                             @NotNull MutableNodeRow nextRow,
-                            @NotNull Map<Hash, MutableNode> underdoneNodes) {
+                            @NotNull Map<Integer, MutableNode> underdoneNodes) {
     int startIndex = nextRow.getRowIndex();
 
-    Map<Hash, Integer> commitLogIndexes = new HashMap<Hash, Integer>(commitParentses.size());
+    Map<Integer, Integer> commitLogIndexes = new HashMap<Integer, Integer>(commitParentses.size());
     for (int i = 0; i < commitParentses.size(); i++) {
-      commitLogIndexes.put(commitParentses.get(i).getHash(), i + startIndex);
+      commitLogIndexes.put(commitParentses.get(i).getIndex(), i + startIndex);
     }
 
     GraphBuilder builder = createGraphBuilder(commitParentses, nextRow, underdoneNodes, startIndex, commitLogIndexes);
@@ -103,21 +103,21 @@ public class GraphAppendBuilder {
   }
 
   @NotNull
-  protected GraphBuilder createGraphBuilder(List<? extends VcsCommit> commitParentses, MutableNodeRow nextRow,
-                                            Map<Hash, MutableNode> underdoneNodes, int startIndex, Map<Hash, Integer> commitLogIndexes) {
+  protected GraphBuilder createGraphBuilder(List<GraphCommit> commitParentses, MutableNodeRow nextRow, Map<Integer, MutableNode> underdoneNodes,
+                                            int startIndex, Map<Integer, Integer> commitLogIndexes) {
     return new GraphBuilder(commitParentses.size() + startIndex - 1, commitLogIndexes, graph, underdoneNodes, nextRow, myRefs);
   }
 
-  public void appendToGraph(@NotNull List<? extends VcsCommit> commitParentses) {
+  public void appendToGraph(@NotNull List<GraphCommit> commitParentses) {
     if (commitParentses.size() == 0) {
       throw new IllegalArgumentException("Empty list commitParentses");
     }
     if (isSimpleEndOfGraph()) {
       int startIndex = getLastRowInGraph().getRowIndex() + 1;
-      simpleAppend(commitParentses, new MutableNodeRow(graph, startIndex), new HashMap<Hash, MutableNode>());
+      simpleAppend(commitParentses, new MutableNodeRow(graph, startIndex), new HashMap<Integer, MutableNode>());
     }
     else {
-      Map<Hash, MutableNode> underdoneNodes = fixUnderdoneNodes(commitParentses.get(0).getHash());
+      Map<Integer, MutableNode> underdoneNodes = fixUnderdoneNodes(commitParentses.get(0).getIndex());
       MutableNodeRow lastRow = getLastRowInGraph();
       graph.getAllRows().remove(graph.getAllRows().size() - 1);
       simpleAppend(commitParentses, lastRow, underdoneNodes);

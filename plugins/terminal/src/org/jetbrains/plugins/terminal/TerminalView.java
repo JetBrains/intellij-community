@@ -271,7 +271,7 @@ public class TerminalView {
     @NotNull
     @Override
     public ContentResponse getContentResponse(@NotNull DockableContent content, RelativePoint point) {
-      return ContentResponse.ACCEPT_MOVE;
+      return isTerminalSessionContent(content) ? ContentResponse.ACCEPT_MOVE : ContentResponse.DENY;
     }
 
     @Override
@@ -281,11 +281,15 @@ public class TerminalView {
 
     @Override
     public void add(@NotNull DockableContent content, RelativePoint dropTarget) {
-      if (content.getKey() instanceof TerminalSessionVirtualFileImpl) {
+      if (isTerminalSessionContent(content)) {
         TerminalSessionVirtualFileImpl terminalFile = (TerminalSessionVirtualFileImpl)content.getKey();
         myTerminalWidget.addTab(terminalFile.getName(), terminalFile.getTerminal());
         terminalFile.getTerminal().setNextProvider(myTerminalWidget);
       }
+    }
+
+    private boolean isTerminalSessionContent(DockableContent content) {
+      return content.getKey() instanceof TerminalSessionVirtualFileImpl;
     }
 
     @Override
