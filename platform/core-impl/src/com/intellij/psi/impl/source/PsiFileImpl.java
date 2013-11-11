@@ -274,28 +274,28 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
         @Override
         protected void visitNode(TreeElement node) {
           CompositeElement parent = node.getTreeParent();
-          if (parent != null && TreeUtil.skipNode(builder, parent, node)) {
+          if (parent != null && builder.skipChildProcessingWhenBuildingStubs(parent, node)) {
             return;
           }
-  
-  
+
+
           IElementType type = node.getElementType();
           if (type instanceof IStubElementType && ((IStubElementType)type).shouldCreateStub(node)) {
             if (!stubs.hasNext()) {
               reportStubAstMismatch("Stub list is less than AST, last AST element: " + node.getElementType() + " " + node, stubTree, cachedDocument);
             }
-  
+
             final StubElement stub = stubs.next();
             if (stub.getStubType() != node.getElementType()) {
               reportStubAstMismatch("Stub and PSI element type mismatch in " + getName() + ": stub " + stub + ", AST " +
                                     node.getElementType() + "; " + node, stubTree, cachedDocument);
             }
-  
+
             PsiElement psi = stub.getPsi();
             assert psi != null : "Stub " + stub + " (" + stub.getClass() + ") has returned null PSI";
             result.add(Pair.create((StubBasedPsiElementBase)psi, (CompositeElement)node));
           }
-  
+
           super.visitNode(node);
         }
       });
@@ -319,7 +319,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     msg += ", modStamp=" + getModificationStamp();
     msg += "\n stub debugInfo=" + stubTree.getDebugInfo();
     msg += "\n document before=" + cachedDocument;
-    
+
     ObjectStubTree latestIndexedStub = StubTreeLoader.getInstance().readFromVFile(getProject(), getVirtualFile());
     msg += "\nlatestIndexedStub=" + latestIndexedStub;
     if (latestIndexedStub != null) {
@@ -330,7 +330,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     FileViewProvider viewProvider = getViewProvider();
     msg += "\n viewProvider=" + viewProvider;
     msg += "\n viewProvider stamp: " + viewProvider.getModificationStamp();
-    
+
     VirtualFile file = viewProvider.getVirtualFile();
     msg += "; file stamp: " + file.getModificationStamp();
     msg += "; file modCount: " + file.getModificationCount();
@@ -698,7 +698,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     if (getTreeElement() != null) return null;
 
     if (!(getContentElementType() instanceof IStubFileElementType)) return null;
-    
+
     final VirtualFile vFile = getVirtualFile();
     if (!(vFile instanceof VirtualFileWithId)) return null;
 

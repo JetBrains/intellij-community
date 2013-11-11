@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,10 +44,6 @@ public interface IProjectStore extends IComponentStore {
   @Nullable
   String getProjectBasePath();
 
-  /** @deprecated please use {@linkplain #getPresentableUrl()} or {@linkplain #getProjectBaseDir()} (to remove in IDEA 13) */
-  @Nullable
-  String getLocation();
-
   @NotNull
   String getProjectName();
 
@@ -62,6 +58,7 @@ public interface IProjectStore extends IComponentStore {
   boolean reload(@NotNull Set<Pair<VirtualFile,StateStorage>> changedFiles) throws StateStorageException, IOException;
 
   //------ This methods should be got rid of
+  /** @deprecated to remove in IDEA 14 */
   void loadProject() throws IOException, JDOMException, InvalidDataException, StateStorageException;
 
   @Nullable
@@ -71,10 +68,6 @@ public interface IProjectStore extends IComponentStore {
   VirtualFile getWorkspaceFile();
 
   void loadProjectFromTemplate(@NotNull ProjectImpl project);
-
-  /** @deprecated please use {@linkplain #getProjectFile()} (to remove in IDEA 13) */
-  @NotNull
-  String getProjectFileName();
 
   @NotNull
   String getProjectFilePath();

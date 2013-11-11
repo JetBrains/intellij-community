@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,16 +40,11 @@ public abstract class ListCellRendererWrapper<T> implements ListCellRenderer {
   private Color myBackground;
   private Font myFont;
 
+  @SuppressWarnings("UndesirableClassUsage")
   public ListCellRendererWrapper() {
     myDefaultRenderer = new JComboBox().getRenderer();
     assert myDefaultRenderer != null : "LaF: " + UIManager.getLookAndFeel();
   }
-
-  /** @deprecated please use {@linkplain #ListCellRendererWrapper()} (to remove in IDEA 13) */
-  @SuppressWarnings("UnusedDeclaration") public ListCellRendererWrapper(final JComboBox comboBox) { this(); }
-
-  /** @deprecated please use {@linkplain #ListCellRendererWrapper()} (to remove in IDEA 13) */
-  @SuppressWarnings("UnusedDeclaration") public ListCellRendererWrapper(final ListCellRenderer listCellRenderer) { this(); }
 
   public final Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
     mySeparator = false;
@@ -75,7 +70,7 @@ public abstract class ListCellRendererWrapper<T> implements ListCellRenderer {
       return separator;
     }
 
-    final Component component = myDefaultRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+    @SuppressWarnings("unchecked") final Component component = myDefaultRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
     if (component instanceof JLabel) {
       final JLabel label = (JLabel)component;
       label.setIcon(myIcon);

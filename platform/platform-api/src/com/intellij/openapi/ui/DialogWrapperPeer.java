@@ -16,6 +16,7 @@
 package com.intellij.openapi.ui;
 
 import com.intellij.openapi.util.ActionCallback;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -23,7 +24,6 @@ import java.awt.*;
 import java.awt.event.KeyListener;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
-import java.util.List;
 
 public abstract class DialogWrapperPeer {
   public static Object HAVE_INITIAL_SELECTION = new Object();
@@ -151,15 +151,11 @@ public abstract class DialogWrapperPeer {
   public abstract void repaint();
   public abstract void pack();
 
-  /** @deprecated use {@linkplain Window#setIconImages(List)} (to remove in IDEA 13) */
-  @SuppressWarnings("UnusedDeclaration")
-  public abstract void setIconImages(List<Image> image);
-
   public abstract void setAppIcons();
 
   public abstract boolean isHeadless();
 
   public Object[] getCurrentModalEntities() {
-    return new Object[0];
+    return ArrayUtil.EMPTY_OBJECT_ARRAY;
   }
 }

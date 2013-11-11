@@ -357,12 +357,6 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
   }
 
   @Override
-  @SuppressWarnings("UnusedDeclaration")
-  public void setIconImages(final List<Image> images) {
-    myDialog.getWindow().setIconImages(images);
-  }
-
-  @Override
   public void setAppIcons() {
     AppUIUtil.updateWindowIcon(getWindow());
   }

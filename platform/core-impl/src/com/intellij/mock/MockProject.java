@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -97,13 +97,6 @@ public class MockProject extends MockComponentManager implements Project {
   @NonNls
   public String getLocationHash() {
     return "mock";
-  }
-
-  @Override
-  @Nullable
-  @NonNls
-  public String getLocation() {
-    throw new UnsupportedOperationException("Method getLocation not implemented in " + getClass());
   }
 
   @Override

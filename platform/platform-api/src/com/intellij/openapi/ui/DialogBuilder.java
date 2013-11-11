@@ -93,12 +93,6 @@ public class DialogBuilder implements Disposable {
     myTitle = title;
   }
 
-  /** @deprecated use {@linkplain #setPreferredFocusComponent(JComponent)} (to remove in IDEA 13) */
-  @SuppressWarnings({"UnusedDeclaration", "SpellCheckingInspection"})
-  public void setPreferedFocusComponent(JComponent component) {
-    setPreferredFocusComponent(component);
-  }
-
   public void setPreferredFocusComponent(JComponent component) {
     myPreferedFocusComponent = component;
   }

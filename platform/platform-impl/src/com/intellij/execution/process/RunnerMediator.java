@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -107,16 +107,6 @@ public class RunnerMediator {
       commandLine.getParametersList().addAt(0, commandLine.getExePath());
       commandLine.setExePath(path);
     }
-  }
-
-  /** @deprecated use {@link SystemInfo#isUnix} (to remove in IDEA 13) */
-  public static boolean isUnix() {
-    return SystemInfo.isUnix;
-  }
-
-  /** @deprecated use {@link SystemInfo#isWindows} (to remove in IDEA 13) */
-  public static boolean isWindows() {
-    return SystemInfo.isWindows;
   }
 
   /**

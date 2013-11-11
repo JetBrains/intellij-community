@@ -114,9 +114,6 @@ public abstract class WindowManager {
   @NotNull
   public abstract IdeFrame[] getAllProjectFrames();
 
-  /** @deprecated Use {@linkplain #getAllProjectFrames()} instead (to remove in IDEA 13) */
-  @SuppressWarnings("UnusedDeclaration") public IdeFrame[] getAllFrames() { return getAllProjectFrames(); }
-
   public abstract JFrame findVisibleFrame();
 
   public abstract void addListener(WindowManagerListener listener);
