@@ -26,6 +26,7 @@ import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.keymap.impl.KeymapImpl;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
@@ -33,6 +34,7 @@ import com.intellij.ui.*;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.ui.treeStructure.treetable.TreeTableModel;
 import com.intellij.util.ui.EmptyIcon;
+import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.PlatformColors;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -531,6 +533,8 @@ public class ActionsTree {
       shortcuts = myKeymap.getShortcuts(((QuickList)data).getActionId());
     }
 
+    final GraphicsConfig config = GraphicsUtil.setupAAPainting(g);
+
     int totalWidth = 0;
     final FontMetrics metrics = tree.getFontMetrics(tree.getFont());
     if (shortcuts != null && shortcuts.length > 0) {
@@ -585,5 +589,7 @@ public class ActionsTree {
       }
       g.translate(0, -bounds.y + 1);
     }
+
+    config.restore();
   }
 }
