@@ -18,10 +18,6 @@ package com.intellij.spellchecker.engine;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.PerformInBackgroundOption;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.startup.StartupManager;
@@ -103,70 +99,48 @@ public class BaseSpellChecker implements SpellCheckerEngine {
     final Runnable runnable = new Runnable() {
       @Override
       public void run() {
-        if (myProject.isDisposed()) return;
         LOG.debug("Loading " + loader.getName());
-        ProgressManager.getInstance()
-          .run(new Task.Backgroundable(myProject, "Loading spellchecker dictionaries...", false,
-                                       new PerformInBackgroundOption() {
-                                         @Override
-                                         public boolean shouldStartInBackground() {
-                                           return true;
-                                         }
+        ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+          @Override
+          public void run() {
+            if (ApplicationManager.getApplication().isDisposed()) return;
+            
+            final CompressedDictionary dictionary = CompressedDictionary.create(loader, transform);
+            LOG.debug(loader.getName() + " loaded!");
+            consumer.consume(dictionary);
 
-                                         @Override
-                                         public void processSentToBackground() {
-                                         }
-                                       }) {
-            @Override
-            public void run(@NotNull ProgressIndicator indicator) {
-              indicator.setText(String.format("Loading %s...", loader.getName()));
-              final CompressedDictionary dictionary = CompressedDictionary.create(loader, transform);
-              LOG.debug(loader.getName() + " loaded!");
-              consumer.consume(dictionary);
+            while (!myDictionariesToLoad.isEmpty()) {
+              if (ApplicationManager.getApplication().isDisposed()) return;
+              
+              final Pair<Loader, Consumer<Dictionary>> nextDictionary = myDictionariesToLoad.remove(0);
+              Loader nextDictionaryLoader = nextDictionary.getFirst();
+              CompressedDictionary dictionary1 = CompressedDictionary.create(nextDictionaryLoader, transform);
+              LOG.debug(nextDictionaryLoader.getName() + " loaded!");
+              nextDictionary.getSecond().consume(dictionary1);
+            }
 
-              while (!myDictionariesToLoad.isEmpty()) {
-                final Pair<Loader, Consumer<Dictionary>> nextDictionary = myDictionariesToLoad.remove(0);
-                Loader nextDictionaryLoader = nextDictionary.getFirst();
-                indicator.setText(String.format("Loading %s...", nextDictionaryLoader.getName()));
-                CompressedDictionary dictionary1 = CompressedDictionary.create(nextDictionaryLoader, transform);
-                LOG.debug(nextDictionaryLoader.getName() + " loaded!");
-                nextDictionary.getSecond().consume(dictionary1);
-              }
-
-              LOG.debug("Loading finished, restarting daemon...");
-              myLoadingDictionaries.set(false);
-              final Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
-              for (final Project project : openProjects) {
-                if (project.isInitialized() && project.isOpen() && !project.isDefault()) {
-                  UIUtil.invokeLaterIfNeeded(new Runnable() {
-                    @Override
-                    public void run() {
-                      if (project.isDisposed()) return;
-                      final DaemonCodeAnalyzer instance = DaemonCodeAnalyzer.getInstance(project);
-                      if (instance != null) instance.restart();
-                    }
-                  });
+            LOG.debug("Loading finished, restarting daemon...");
+            myLoadingDictionaries.set(false);
+            UIUtil.invokeLaterIfNeeded(new Runnable() {
+              @Override
+              public void run() {
+                if (ApplicationManager.getApplication().isDisposed()) return;
+                
+                for (final Project project : ProjectManager.getInstance().getOpenProjects()) {
+                  if (project.isInitialized() && project.isOpen() && !project.isDefault()) {
+                    final DaemonCodeAnalyzer instance = DaemonCodeAnalyzer.getInstance(project);
+                    if (instance != null) instance.restart();
+                  }
                 }
               }
-            }
-          });
+            });
+          }
+        });
       }
     };
 
 
-    if (!myProject.isInitialized()) {
-      StartupManager.getInstance(myProject).runWhenProjectIsInitialized(
-        new Runnable() {
-          @Override
-          public void run() {
-            UIUtil.invokeLaterIfNeeded(runnable);
-          }
-        }
-      );
-    }
-    else {
-      UIUtil.invokeLaterIfNeeded(runnable);
-    }
+    StartupManager.getInstance(myProject).runWhenProjectIsInitialized(runnable);
   }
 
   private void queueDictionaryLoad(final Loader loader, final Consumer<Dictionary> consumer) {
