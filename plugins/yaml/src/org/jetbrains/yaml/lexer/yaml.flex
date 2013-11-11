@@ -143,6 +143,15 @@ STRING=                         '([^']|(''))*?'?
 
 <YYINITIAL, BRACES, VALUE_OR_KEY> {
 
+
+{STRING} ":" {
+  return SCALAR_KEY;
+}
+
+{DSTRING} ":" {
+  return SCALAR_KEY;
+}
+
 {KEY} / ({WHITE_SPACE} | {EOL}) {   yybegin(VALUE);
                                     return SCALAR_KEY;
                                 }

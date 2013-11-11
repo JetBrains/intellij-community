@@ -125,4 +125,8 @@ public class YAMLLexerTest extends LexerTestCase {
   public void testClosing_braces_in_value() {
     doFileTest("yml");
   }
+
+  public void testQuoted_keys() {
+    doFileTest("yml");
+  }
 }
