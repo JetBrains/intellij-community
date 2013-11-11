@@ -1,5 +1,7 @@
 package org.jetbrains.plugins.terminal;
 
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.components.JBScrollBar;
 import com.jediterm.terminal.TerminalStarter;
 import com.jediterm.terminal.TtyConnector;
@@ -12,19 +14,23 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-public class JBTerminalWidget extends JediTermWidget {
+public class JBTerminalWidget extends JediTermWidget implements Disposable{
 
-  public JBTerminalWidget(JBTerminalSystemSettingsProvider settingsProvider) {
+  public JBTerminalWidget(JBTerminalSystemSettingsProvider settingsProvider, Disposable parent) {
     super(settingsProvider);
 
     JBTabbedTerminalWidget.convertActions(this, getActions());
+
+    Disposer.register(parent, this);
   }
 
   @Override
   protected JBTerminalPanel createTerminalPanel(@NotNull SettingsProvider settingsProvider,
                                                 @NotNull StyleState styleState,
                                                 @NotNull BackBuffer backBuffer) {
-    return new JBTerminalPanel((JBTerminalSystemSettingsProvider)settingsProvider, backBuffer, styleState);
+    JBTerminalPanel panel = new JBTerminalPanel((JBTerminalSystemSettingsProvider)settingsProvider, backBuffer, styleState);
+    Disposer.register(this, panel);
+    return panel;
   }
 
   @Override
@@ -35,5 +41,9 @@ public class JBTerminalWidget extends JediTermWidget {
   @Override
   protected JScrollBar createScrollBar() {
     return new JBScrollBar();
+  }
+
+  @Override
+  public void dispose() {
   }
 }

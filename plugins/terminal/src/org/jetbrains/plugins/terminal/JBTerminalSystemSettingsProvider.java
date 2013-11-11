@@ -1,8 +1,10 @@
 package org.jetbrains.plugins.terminal;
 
-import com.intellij.application.options.OptionsConstants;
+import com.google.common.collect.Sets;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.ide.ui.UISettings;
+import com.intellij.ide.ui.UISettingsListener;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.KeyboardShortcut;
 import com.intellij.openapi.actionSystem.Shortcut;
 import com.intellij.openapi.editor.colors.*;
@@ -25,20 +27,37 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.ArrayList;
-import java.util.EnumMap;
+import java.util.*;
 import java.util.List;
-import java.util.Map;
 
 /**
  * @author traff
  */
-class JBTerminalSystemSettingsProvider extends DefaultTabbedSettingsProvider {
-
-  private final EditorColorsScheme myColorScheme;
+class JBTerminalSystemSettingsProvider extends DefaultTabbedSettingsProvider implements Disposable {
+  private Set<TerminalSettingsListener> myListeners = Sets.newHashSet();
+  
+  private final MyColorSchemeDelegate myColorScheme;
 
   JBTerminalSystemSettingsProvider() {
     myColorScheme = createBoundColorSchemeDelegate(null);
+
+    UISettings.getInstance().addUISettingsListener(new UISettingsListener() {
+      @Override
+      public void uiSettingsChanged(UISettings source) {
+        int size;
+        if (UISettings.getInstance().PRESENTATION_MODE) {
+          size = UISettings.getInstance().PRESENTATION_MODE_FONT_SIZE;
+        }
+        else {
+          size = myColorScheme.getGlobal().getConsoleFontSize();
+        }
+
+        if (myColorScheme.getConsoleFontSize() != size) {
+          myColorScheme.setConsoleFontSize(size);
+          fireFontChanged();
+        }
+      }
+    }, this);
   }
 
   @Override
@@ -191,8 +210,13 @@ class JBTerminalSystemSettingsProvider extends DefaultTabbedSettingsProvider {
   }
 
   @NotNull
-  public EditorColorsScheme createBoundColorSchemeDelegate(@Nullable final EditorColorsScheme customGlobalScheme) {
+  private static MyColorSchemeDelegate createBoundColorSchemeDelegate(@Nullable final EditorColorsScheme customGlobalScheme) {
     return new MyColorSchemeDelegate(customGlobalScheme);
+  }
+
+  @Override
+  public void dispose() {
+
   }
 
   private static class MyColorSchemeDelegate implements EditorColorsScheme {
@@ -202,14 +226,15 @@ class JBTerminalSystemSettingsProvider extends DefaultTabbedSettingsProvider {
     private final HashMap<ColorKey, Color> myOwnColors = new HashMap<ColorKey, Color>();
     private final EditorColorsScheme myCustomGlobalScheme;
     private Map<EditorFontType, Font> myFontsMap = null;
-    private int myMaxFontSize = OptionsConstants.MAX_EDITOR_FONT_SIZE;
-    private int myFontSize = -1;
     private String myFaceName = null;
     private EditorColorsScheme myGlobalScheme;
+
+    private int myConsoleFontSize = -1;
 
     private MyColorSchemeDelegate(@Nullable final EditorColorsScheme globalScheme) {
       myCustomGlobalScheme = globalScheme;
       updateGlobalScheme();
+      initFonts();
     }
 
     private EditorColorsScheme getGlobal() {
@@ -223,17 +248,17 @@ class JBTerminalSystemSettingsProvider extends DefaultTabbedSettingsProvider {
 
 
     protected void initFonts() {
-      String editorFontName = getEditorFontName();
-      int editorFontSize = getEditorFontSize();
+      String consoleFontName = getConsoleFontName();
+      int consoleFontSize = getConsoleFontSize();
       myFontPreferences.clear();
-      myFontPreferences.register(editorFontName, editorFontSize);
+      myFontPreferences.register(consoleFontName, consoleFontSize);
 
       myFontsMap = new EnumMap<EditorFontType, Font>(EditorFontType.class);
 
-      Font plainFont = new Font(editorFontName, Font.PLAIN, editorFontSize);
-      Font boldFont = new Font(editorFontName, Font.BOLD, editorFontSize);
-      Font italicFont = new Font(editorFontName, Font.ITALIC, editorFontSize);
-      Font boldItalicFont = new Font(editorFontName, Font.BOLD | Font.ITALIC, editorFontSize);
+      Font plainFont = new Font(consoleFontName, Font.PLAIN, consoleFontSize);
+      Font boldFont = new Font(consoleFontName, Font.BOLD, consoleFontSize);
+      Font italicFont = new Font(consoleFontName, Font.ITALIC, consoleFontSize);
+      Font boldItalicFont = new Font(consoleFontName, Font.BOLD | Font.ITALIC, consoleFontSize);
 
       myFontsMap.put(EditorFontType.PLAIN, plainFont);
       myFontsMap.put(EditorFontType.BOLD, boldFont);
@@ -284,29 +309,22 @@ class JBTerminalSystemSettingsProvider extends DefaultTabbedSettingsProvider {
     @NotNull
     @Override
     public FontPreferences getFontPreferences() {
-      return myFontPreferences;
+      return myGlobalScheme.getFontPreferences();
     }
 
     @Override
     public void setFontPreferences(@NotNull FontPreferences preferences) {
-      preferences.copyTo(myFontPreferences);
-      initFonts();
+      throw new IllegalStateException();      
     }
 
     @Override
     public int getEditorFontSize() {
-      if (myFontSize == -1) {
-        return getGlobal().getEditorFontSize();
-      }
-      return myFontSize;
+      return getGlobal().getEditorFontSize();
     }
 
     @Override
     public void setEditorFontSize(int fontSize) {
-      if (fontSize < 8) fontSize = 8;
-      if (fontSize > myMaxFontSize) fontSize = myMaxFontSize;
-      myFontSize = fontSize;
-      initFonts();
+
     }
 
     @Override
@@ -321,16 +339,12 @@ class JBTerminalSystemSettingsProvider extends DefaultTabbedSettingsProvider {
 
     @Override
     public String getEditorFontName() {
-      if (myFaceName == null) {
-        return getGlobal().getEditorFontName();
-      }
-      return myFaceName;
+      return getGlobal().getEditorFontName();
     }
 
     @Override
     public void setEditorFontName(String fontName) {
-      myFaceName = fontName;
-      initFonts();
+      throw new IllegalStateException();
     }
 
     @Override
@@ -376,39 +390,50 @@ class JBTerminalSystemSettingsProvider extends DefaultTabbedSettingsProvider {
 
     public void updateGlobalScheme() {
       myGlobalScheme = myCustomGlobalScheme == null ? EditorColorsManager.getInstance().getGlobalScheme() : myCustomGlobalScheme;
-      int globalFontSize = getGlobal().getEditorFontSize();
-      myMaxFontSize = Math.max(OptionsConstants.MAX_EDITOR_FONT_SIZE, globalFontSize);
     }
 
     @NotNull
     @Override
     public FontPreferences getConsoleFontPreferences() {
-      return getGlobal().getConsoleFontPreferences();
+      return myFontPreferences;
     }
 
     @Override
     public void setConsoleFontPreferences(@NotNull FontPreferences preferences) {
-      getGlobal().setConsoleFontPreferences(preferences);
+      preferences.copyTo(myFontPreferences);
+      initFonts();
     }
 
     @Override
     public String getConsoleFontName() {
-      return getGlobal().getConsoleFontName();
+      if (myFaceName == null) {
+        return getGlobal().getConsoleFontName();
+      }
+      else {
+        return myFaceName;
+      }
     }
 
     @Override
     public void setConsoleFontName(String fontName) {
-      getGlobal().setConsoleFontName(fontName);
+      myFaceName = fontName;
+      initFonts();
     }
 
     @Override
     public int getConsoleFontSize() {
-      return getGlobal().getConsoleFontSize();
+      if (myConsoleFontSize == -1) {
+        return getGlobal().getConsoleFontSize();
+      }
+      else {
+        return myConsoleFontSize;
+      }
     }
 
     @Override
     public void setConsoleFontSize(int fontSize) {
-      getGlobal().setConsoleFontSize(fontSize);
+      myConsoleFontSize = fontSize;
+      initFonts();
     }
 
     @Override
@@ -419,6 +444,20 @@ class JBTerminalSystemSettingsProvider extends DefaultTabbedSettingsProvider {
     @Override
     public void setConsoleLineSpacing(float lineSpacing) {
       getGlobal().setConsoleLineSpacing(lineSpacing);
+    }
+  }
+
+  public void addListener(TerminalSettingsListener listener) {
+    myListeners.add(listener);
+  }
+
+  public void removeListener(TerminalSettingsListener listener) {
+    myListeners.remove(listener);
+  }
+
+  public void fireFontChanged() {
+    for (TerminalSettingsListener l : myListeners) {
+      l.fontChanged();
     }
   }
 }

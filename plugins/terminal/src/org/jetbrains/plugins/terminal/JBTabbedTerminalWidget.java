@@ -10,6 +10,7 @@ import com.intellij.openapi.fileEditor.impl.EditorTabbedContainer;
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.components.JBTextField;
@@ -35,7 +36,7 @@ import java.util.concurrent.CopyOnWriteArraySet;
 /**
  * @author traff
  */
-public class JBTabbedTerminalWidget extends TabbedTerminalWidget {
+public class JBTabbedTerminalWidget extends TabbedTerminalWidget implements Disposable{
 
   private Project myProject;
   private final JBTerminalSystemSettingsProvider mySettingsProvider;
@@ -51,6 +52,9 @@ public class JBTabbedTerminalWidget extends TabbedTerminalWidget {
     myParent = parent;
 
     convertActions(this, getActions());
+
+    Disposer.register(parent, this);
+    Disposer.register(this, settingsProvider);
   }
 
   public static void convertActions(@NotNull JComponent component,
@@ -79,7 +83,7 @@ public class JBTabbedTerminalWidget extends TabbedTerminalWidget {
 
   @Override
   protected JediTermWidget createInnerTerminalWidget(SettingsProvider settingsProvider) {
-    return new JBTerminalWidget(mySettingsProvider);
+    return new JBTerminalWidget(mySettingsProvider, myParent);
   }
 
   @Override

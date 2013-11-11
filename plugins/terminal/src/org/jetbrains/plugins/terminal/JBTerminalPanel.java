@@ -22,6 +22,7 @@ package org.jetbrains.plugins.terminal;
 import com.google.common.base.Predicate;
 import com.intellij.ide.GeneralSettings;
 import com.intellij.ide.ui.UISettings;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.impl.ComplementaryFontsRegistry;
 import com.intellij.openapi.editor.impl.FontInfo;
@@ -52,7 +53,7 @@ import java.awt.image.BufferedImage;
 import java.awt.image.ImageObserver;
 import java.io.IOException;
 
-public class JBTerminalPanel extends TerminalPanel implements FocusListener {
+public class JBTerminalPanel extends TerminalPanel implements FocusListener, TerminalSettingsListener, Disposable {
   private final JBTerminalSystemSettingsProvider mySettingsProvider;
 
   public JBTerminalPanel(@NotNull JBTerminalSystemSettingsProvider settingsProvider,
@@ -73,6 +74,8 @@ public class JBTerminalPanel extends TerminalPanel implements FocusListener {
     registerKeymapActions(this);
 
     addFocusListener(this);
+    
+    mySettingsProvider.addListener(this);
   }
 
   private static void registerKeymapActions(final TerminalPanel terminalPanel) {
@@ -199,6 +202,16 @@ public class JBTerminalPanel extends TerminalPanel implements FocusListener {
 
   public FontInfo fontForChar(final char c, @JdkConstants.FontStyle int style) {
     return ComplementaryFontsRegistry.getFontAbleToDisplay(c, style, mySettingsProvider.getColorScheme().getConsoleFontPreferences());
+  }
+
+  @Override
+  public void fontChanged() {
+    reinitFontAndResize();
+  }
+
+  @Override
+  public void dispose() {
+    mySettingsProvider.removeListener(this);
   }
 }
 
