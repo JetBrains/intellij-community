@@ -26,6 +26,7 @@ import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
 import javax.swing.*;
 
@@ -114,5 +115,9 @@ public abstract class ModuleType<T extends ModuleBuilder> {
   @NotNull
   public FrameworkRole getDefaultAcceptableRole() {
     return myFrameworkRole;
+  }
+
+  public boolean isSupportedRootType(JpsModuleSourceRootType type) {
+    return true;
   }
 }

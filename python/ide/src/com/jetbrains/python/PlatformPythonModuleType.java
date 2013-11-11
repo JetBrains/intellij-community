@@ -18,6 +18,8 @@ package com.jetbrains.python;
 import com.intellij.ide.util.projectWizard.EmptyModuleBuilder;
 import com.intellij.openapi.module.ModuleType;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.jps.model.java.JavaSourceRootType;
+import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
 /**
  * @author yole
@@ -32,5 +34,10 @@ public class PlatformPythonModuleType extends PythonModuleTypeBase<EmptyModuleBu
         return getInstance();
       }
     };
+  }
+
+  @Override
+  public boolean isSupportedRootType(JpsModuleSourceRootType type) {
+    return type == JavaSourceRootType.SOURCE;
   }
 }

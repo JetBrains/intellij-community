@@ -27,9 +27,9 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.SupportedRootTypes;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packageDependencies.ChangeListsScopesProvider;
@@ -239,7 +239,7 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton implements Dispo
       result.add(GlobalSearchScope.allScope(project));
     }
 
-    if (!PlatformUtils.isCidr() && SupportedRootTypes.isSupported(JavaSourceRootType.TEST_SOURCE)) { // TODO: fix these scopes in AppCode
+    if (!PlatformUtils.isCidr() && ModuleUtil.isSupportedRootType(project, JavaSourceRootType.TEST_SOURCE)) { // TODO: fix these scopes in AppCode
       result.add(GlobalSearchScopes.projectProductionScope(project));
       result.add(GlobalSearchScopes.projectTestScope(project));
     }

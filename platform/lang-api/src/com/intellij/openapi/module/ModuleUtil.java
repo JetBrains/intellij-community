@@ -29,6 +29,7 @@ import com.intellij.psi.util.ParameterizedCachedValueProvider;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -85,5 +86,15 @@ public class ModuleUtil extends ModuleUtilCore {
 
   public static boolean hasModulesOfType(@NotNull Project project, @NotNull ModuleType<?> module) {
     return !getModulesOfType(project, module).isEmpty();
+  }
+
+  public static boolean isSupportedRootType(Project project, JpsModuleSourceRootType sourceRootType) {
+    Module[] modules = ModuleManager.getInstance(project).getModules();
+    for (Module module : modules) {
+      if (ModuleType.get(module).isSupportedRootType(sourceRootType)) {
+        return true;
+      }
+    }
+    return modules.length == 0;
   }
 }
