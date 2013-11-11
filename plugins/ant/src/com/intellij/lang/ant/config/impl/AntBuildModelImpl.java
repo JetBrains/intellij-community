@@ -189,14 +189,20 @@ public class AntBuildModelImpl implements AntBuildModelBase {
           for (AntDomIncludingDirective incl : allIncludes) {
             final PsiFileSystemItem includedFile = incl.getFile().getValue();
             if (includedFile instanceof PsiFile) {
+              final PsiFile included = includedFile.getContainingFile().getOriginalFile();
+              dependencies.add(included);
               final AntDomProject includedProject = AntSupport.getAntDomProject((PsiFile)includedFile);
               if (includedProject != null) {
-                final PsiFile included = includedFile.getContainingFile().getOriginalFile();
-                dependencies.add(included);
                 fillTargets(list, model, includedProject, included.getVirtualFile());
               }
             }
-
+            else {
+              if (includedFile == null) {
+                // if not resolved yet, it's possible that the file will be created later,
+                // thus we need to recalculate the cached value
+                dependencies.add(PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
+              }
+            }
           }
     
         }
