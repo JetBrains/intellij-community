@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,7 +38,10 @@ import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.keymap.ex.KeymapManagerEx;
 import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.ActionCallback;
+import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -101,6 +104,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Applicat
   @NonNls public static final String COMPACT_ATTR_NAME = "compact";
   @NonNls public static final String SEPARATOR_ELEMENT_NAME = "separator";
   @NonNls public static final String REFERENCE_ELEMENT_NAME = "reference";
+  @NonNls public static final String ABBREVIATION_ELEMENT_NAME = "abbreviation";
   @NonNls public static final String GROUPID_ATTR_NAME = "group-id";
   @NonNls public static final String ANCHOR_ELEMENT_NAME = "anchor";
   @NonNls public static final String FIRST = "first";
@@ -116,6 +120,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Applicat
   @NonNls public static final String KEYMAP_ATTR_NAME = "keymap";
   @NonNls public static final String KEYSTROKE_ATTR_NAME = "keystroke";
   @NonNls public static final String REF_ATTR_NAME = "ref";
+  @NonNls public static final String VALUE_ATTR_NAME = "value";
   @NonNls public static final String ACTIONS_BUNDLE = "messages.ActionsBundle";
   @NonNls public static final String USE_SHORTCUT_OF_ATTR_NAME = "use-shortcut-of";
 
@@ -395,6 +400,9 @@ public final class ActionManagerImpl extends ActionManagerEx implements Applicat
       else if (MOUSE_SHORTCUT_ELEMENT_NAME.equals(e.getName())) {
         processMouseShortcutNode(e, id, pluginId);
       }
+      else if (ABBREVIATION_ELEMENT_NAME.equals(e.getName())) {
+        processAbbreviationNode(e, id);
+      }
       else {
         reportActionError(pluginId, "unexpected name of element \"" + e.getName() + "\"");
         return null;
@@ -407,6 +415,14 @@ public final class ActionManagerImpl extends ActionManagerEx implements Applicat
     // register action
     registerAction(id, stub, pluginId);
     return stub;
+  }
+
+  private static void processAbbreviationNode(Element e, String id) {
+    final String abbr = e.getAttributeValue(VALUE_ATTR_NAME);
+    if (!StringUtil.isEmpty(abbr)) {
+      final AbbreviationManagerImpl abbreviationManager = ((AbbreviationManagerImpl)AbbreviationManager.getInstance());
+      abbreviationManager.register(abbr, id, true);
+    }
   }
 
   @Nullable

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,6 +48,7 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.packageDependencies.ui.TreeExpansionMonitor;
 import com.intellij.ui.DocumentAdapter;
@@ -953,6 +954,7 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
     DefaultActionGroup group = new DefaultActionGroup();
 
     final Shortcut[] shortcuts = mySelectedKeymap.getShortcuts(actionId);
+    final Set<String> abbreviations = AbbreviationManager.getInstance().getAbbreviations(actionId);
 
     group.add(new DumbAwareAction("Add Keyboard Shortcut") {
       @Override
@@ -983,6 +985,26 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
       }
     });
 
+    if (Registry.is("actionSystem.enableAbbreviations")) {
+      group.add(new DumbAwareAction("Add Abbreviation") {
+        @Override
+        public void actionPerformed(AnActionEvent e) {
+          final String abbr = Messages.showInputDialog("Enter new abbreviation:", "Abbreviation", null);
+          if (abbr != null) {
+            String actionId = myActionsTree.getSelectedActionId();
+            AbbreviationManager.getInstance().register(abbr, actionId);
+            repaintLists();
+          }
+        }
+
+        @Override
+        public void update(AnActionEvent e) {
+          final boolean enabled = myActionsTree.getSelectedActionId() != null;
+          e.getPresentation().setEnabledAndVisible(enabled);
+        }
+      });
+    }
+
     group.addSeparator();
 
     for (final Shortcut shortcut : shortcuts) {
@@ -992,6 +1014,23 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
           removeShortcut(shortcut);
         }
       });
+    }
+
+    if (Registry.is("actionSystem.enableAbbreviations")) {
+      for (final String abbreviation : abbreviations) {
+        group.addAction(new DumbAwareAction("Remove Abbreviation '" + abbreviation + "'") {
+          @Override
+          public void actionPerformed(AnActionEvent e) {
+            AbbreviationManager.getInstance().remove(abbreviation, actionId);
+            repaintLists();
+          }
+
+          @Override
+          public void update(AnActionEvent e) {
+            super.update(e);
+          }
+        });
+      }
     }
 
     if (e instanceof MouseEvent && ((MouseEvent)e).isPopupTrigger()) {

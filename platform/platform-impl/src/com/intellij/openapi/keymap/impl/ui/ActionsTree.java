@@ -46,6 +46,7 @@ import javax.swing.tree.*;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.Enumeration;
+import java.util.Set;
 
 public class ActionsTree {
   private static final Icon EMPTY_ICON = EmptyIcon.ICON_18;
@@ -519,20 +520,20 @@ public class ActionsTree {
   }
   
   private void paintRowData(Tree tree, Object data, Rectangle bounds, Graphics2D g) {
-    Shortcut[] shortcuts;
+    Shortcut[] shortcuts = null;
+    Set<String> abbreviations = null;
     if (data instanceof String) {
-      shortcuts = myKeymap.getShortcuts((String)data);            
+      final String actionId = (String)data;
+      shortcuts = myKeymap.getShortcuts(actionId);
+      abbreviations = AbbreviationManager.getInstance().getAbbreviations(actionId);
     }
     else if (data instanceof QuickList) {
       shortcuts = myKeymap.getShortcuts(((QuickList)data).getActionId());
     }
-    else {
-      shortcuts = null;
-    }
 
+    int totalWidth = 0;
+    final FontMetrics metrics = tree.getFontMetrics(tree.getFont());
     if (shortcuts != null && shortcuts.length > 0) {
-      int totalWidth = 0;
-      final FontMetrics metrics = tree.getFontMetrics(tree.getFont());
       for (Shortcut shortcut : shortcuts) {
         totalWidth += metrics.stringWidth(KeymapUtil.getShortcutText(shortcut));
         totalWidth += 10;
@@ -552,6 +553,32 @@ public class ActionsTree {
         UIUtil.drawSearchMatch(g, x, x + width, bounds.height, c1, c2);
         g.setColor(Gray._50);
         g.drawString(KeymapUtil.getShortcutText(shortcut), x, fontHeight);
+
+        x += width;
+        x += 10;
+      }
+      g.translate(0, -bounds.y + 1);
+    }
+    if (Registry.is("actionSystem.enableAbbreviations") && abbreviations != null && abbreviations.size() > 0) {
+      for (String abbreviation : abbreviations) {
+        totalWidth += metrics.stringWidth(abbreviation);
+        totalWidth += 10;
+      }
+      totalWidth -= 5;
+
+      int x = bounds.x + bounds.width - totalWidth;
+      int fontHeight = (int)metrics.getMaxCharBounds(g).getHeight();
+
+      Color c1 = new Color(206, 234, 176);
+      Color c2 = new Color(126, 208, 82);
+
+      g.translate(0, bounds.y - 1);
+
+      for (String abbreviation : abbreviations) {
+        int width = metrics.stringWidth(abbreviation);
+        UIUtil.drawSearchMatch(g, x, x + width, bounds.height, c1, c2);
+        g.setColor(Gray._50);
+        g.drawString(abbreviation, x, fontHeight);
 
         x += width;
         x += 10;
