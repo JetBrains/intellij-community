@@ -192,7 +192,7 @@ public class Java15APIUsageInspection extends BaseJavaBatchLocalInspectionTool {
     //noinspection unchecked
     llCombo.setRenderer(new DefaultListCellRenderer() {
       @Override
-      public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+      public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
         Component component = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
         if (value instanceof LanguageLevel && component instanceof JLabel) {
           ((JLabel)component).setText(((LanguageLevel)value).getPresentableText());
