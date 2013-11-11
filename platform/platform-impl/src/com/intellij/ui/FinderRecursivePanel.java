@@ -9,6 +9,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
@@ -128,6 +129,17 @@ public abstract class FinderRecursivePanel<T> extends JBSplitter implements Data
 
   protected boolean hasChildren(T t) {
     return false;
+  }
+
+  /**
+   * To determine item list background color (if enabled).
+   *
+   * @param t Current item.
+   * @return Containing file.
+   */
+  @Nullable
+  protected VirtualFile getContainingFile(T t) {
+    return null;
   }
 
   @Nullable
@@ -291,6 +303,8 @@ public abstract class FinderRecursivePanel<T> extends JBSplitter implements Data
   protected ListCellRenderer createListCellRenderer() {
     return new ColoredListCellRenderer() {
 
+      private final FileColorManager myFileColorManager = FileColorManager.getInstance(getProject());
+
       public Component getListCellRendererComponent(JList list,
                                                     Object value,
                                                     int index,
@@ -311,6 +325,10 @@ public abstract class FinderRecursivePanel<T> extends JBSplitter implements Data
         doCustomizeCellRenderer(this, list, t, index, isSelected, cellHasFocus);
 
         Color bg = isSelected ? UIUtil.getTreeSelectionBackground(cellHasFocus) : UIUtil.getTreeTextBackground();
+        if (!isSelected && myFileColorManager.isEnabled()) {
+          final Color fileBgColor = myFileColorManager.getRendererBackground(getContainingFile(t));
+          bg = fileBgColor == null ? bg : fileBgColor;
+        }
         setBackground(bg);
 
         if (hasChildren(t)) {
