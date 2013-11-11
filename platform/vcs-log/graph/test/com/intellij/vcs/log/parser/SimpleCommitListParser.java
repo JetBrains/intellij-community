@@ -1,19 +1,19 @@
 package com.intellij.vcs.log.parser;
 
-import com.intellij.vcs.log.VcsCommit;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.vcs.log.GraphCommit;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.StringReader;
-import java.util.ArrayList;
 import java.util.List;
 
 /**
  * @author erokhins
  */
 public class SimpleCommitListParser {
-  public static List<VcsCommit> parseCommitList(@NotNull String input) {
+  public static List<GraphCommit> parseCommitList(@NotNull String input) {
     SimpleCommitListParser parser = new SimpleCommitListParser(new StringReader(input));
     try {
       return parser.readAllCommits();
@@ -29,9 +29,9 @@ public class SimpleCommitListParser {
     this.bufferedReader = new BufferedReader(bufferedReader);
   }
 
-  public List<VcsCommit> readAllCommits() throws IOException {
+  public List<GraphCommit> readAllCommits() throws IOException {
     String line;
-    List<VcsCommit> vcsCommitParentses = new ArrayList<VcsCommit>();
+    List<GraphCommit> vcsCommitParentses = ContainerUtil.newArrayList();
     while ((line = bufferedReader.readLine()) != null) {
       vcsCommitParentses.add(CommitParser.parseCommitParents(line));
     }

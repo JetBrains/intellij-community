@@ -16,10 +16,10 @@ public class GraphStrUtils {
 
   public static String toStr(Branch branch) {
     if (branch.getUpCommitHash() == branch.getDownCommitHash()) {
-      return branch.getUpCommitHash().asString();
+      return Integer.toHexString(branch.getUpCommitHash());
     }
     else {
-      return branch.getUpCommitHash().asString() + '#' + branch.getDownCommitHash().asString();
+      return Integer.toHexString(branch.getUpCommitHash()) + '#' + Integer.toHexString(branch.getDownCommitHash());
     }
   }
 
@@ -30,8 +30,8 @@ public class GraphStrUtils {
    */
   public static String toStr(Edge edge) {
     StringBuilder s = new StringBuilder();
-    s.append(edge.getUpNode().getCommitHash().asString()).append(":");
-    s.append(edge.getDownNode().getCommitHash().asString()).append(":");
+    s.append(Integer.toHexString(edge.getUpNode().getCommitIndex())).append(":");
+    s.append(Integer.toHexString(edge.getDownNode().getCommitIndex())).append(":");
     s.append(edge.getType()).append(":");
     s.append(toStr(edge.getBranch()));
     return s.toString();
@@ -65,7 +65,7 @@ public class GraphStrUtils {
 
   public static String toStr(Node node) {
     StringBuilder s = new StringBuilder();
-    s.append(node.getCommitHash().asString()).append("|-");
+    s.append(Integer.toHexString(node.getCommitIndex())).append("|-");
     s.append(toStr(node.getUpEdges())).append("|-");
     s.append(toStr(node.getDownEdges())).append("|-");
     s.append(node.getType()).append("|-");

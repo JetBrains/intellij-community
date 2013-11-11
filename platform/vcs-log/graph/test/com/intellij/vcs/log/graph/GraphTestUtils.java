@@ -1,8 +1,7 @@
 package com.intellij.vcs.log.graph;
 
 import com.intellij.openapi.vfs.newvfs.impl.StubVirtualFile;
-import com.intellij.vcs.log.Hash;
-import com.intellij.vcs.log.VcsCommit;
+import com.intellij.vcs.log.GraphCommit;
 import com.intellij.vcs.log.VcsRef;
 import com.intellij.vcs.log.graph.elements.Branch;
 import com.intellij.vcs.log.graph.elements.Node;
@@ -36,7 +35,7 @@ public class GraphTestUtils {
   @NotNull
   public static MutableGraph getNewMutableGraph(@NotNull String inputStr) {
     SimpleCommitListParser parser = new SimpleCommitListParser(new StringReader(inputStr));
-    List<VcsCommit> vcsCommitParentses;
+    List<GraphCommit> vcsCommitParentses;
     try {
       vcsCommitParentses = parser.readAllCommits();
     }
@@ -47,11 +46,11 @@ public class GraphTestUtils {
   }
 
   @NotNull
-  public static MutableGraph buildGraph(@NotNull List<VcsCommit> commitParentses, @NotNull List<VcsRef> refs) {
+  public static MutableGraph buildGraph(@NotNull List<GraphCommit> commitParentses, @NotNull List<VcsRef> refs) {
     GraphBuilder builder = new GraphBuilder(commitParentses.size() - 1, GraphBuilder.calcCommitLogIndices(commitParentses), refs) {
       @NotNull
       @Override
-      protected Branch createBranch(@NotNull Hash commitHash, @NotNull Collection<VcsRef> refs) {
+      protected Branch createBranch(int commitHash, @NotNull Collection<VcsRef> refs) {
         // allow no refs in tests
         return createBranchWithFakeRoot(commitHash, refs);
       }
@@ -60,7 +59,7 @@ public class GraphTestUtils {
   }
 
   @NotNull
-  public static Branch createBranchWithFakeRoot(@NotNull Hash commitHash, @NotNull Collection<VcsRef> refs) {
+  public static Branch createBranchWithFakeRoot(int commitHash, @NotNull Collection<VcsRef> refs) {
     return new Branch(commitHash, refs, new StubVirtualFile());
   }
 
