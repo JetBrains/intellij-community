@@ -341,6 +341,10 @@ public class PyFormatterTest extends PyTestCase {
     doTest(true);
   }
 
+  public void testSpacesInImportParentheses() {  // PY-11359
+    doTest();
+  }
+
   private void doTest() {
     doTest(false);
   }
