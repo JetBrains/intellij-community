@@ -1,9 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="5b978c1f-e03c-4c14-b72c-970392c23907" name="Default" comment="Notes&#10;">
+    <list default="true" id="5b978c1f-e03c-4c14-b72c-970392c23907" name="Default" comment="">
       <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.gitignore" afterPath="$PROJECT_DIR$/.gitignore" />
     </list>
     <ignored path="intellij-postfix.iws" />
     <ignored path=".idea/workspace.xml" />
@@ -961,7 +960,11 @@
       <created>1384213196398</created>
       <updated>1384213196398</updated>
     </task>
-    <option name="localTasksCounter" value="47" />
+    <task id="LOCAL-00047" summary=".gitignore">
+      <created>1384213537519</created>
+      <updated>1384213537519</updated>
+    </task>
+    <option name="localTasksCounter" value="48" />
     <servers />
   </component>
   <component name="TodoView" selected-index="4">
@@ -1030,7 +1033,6 @@
     <option name="myTodoPanelSettings">
       <TodoPanelSettings />
     </option>
-    <MESSAGE value="Optimize usings" />
     <MESSAGE value="Tests all green" />
     <MESSAGE value="Support for &quot;o is T.if&quot; expressions" />
     <MESSAGE value="Downgrade project to java 1.6" />
@@ -1055,7 +1057,8 @@
     <MESSAGE value="Decompose, fix issues with &quot;xs.length &gt; 0&quot;" />
     <MESSAGE value="Extract PostfixExecutionContext, get and store dummyIdentifier, all tests green." />
     <MESSAGE value="Notes" />
-    <option name="LAST_COMMIT_MESSAGE" value="Notes" />
+    <MESSAGE value=".gitignore" />
+    <option name="LAST_COMMIT_MESSAGE" value=".gitignore" />
     <option name="OPTIMIZE_IMPORTS_BEFORE_PROJECT_COMMIT" value="true" />
   </component>
   <component name="XDebuggerManager">
