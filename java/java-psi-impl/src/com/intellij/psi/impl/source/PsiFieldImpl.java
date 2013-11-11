@@ -124,11 +124,6 @@ public class PsiFieldImpl extends JavaStubPsiElement<PsiFieldStub> implements Ps
   }
 
   @Override
-  public PsiType getTypeNoResolve() {
-    return getType();
-  }
-
-  @Override
   @NotNull
   public PsiType getType() {
     final PsiFieldStub stub = getStub();

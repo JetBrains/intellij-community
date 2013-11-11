@@ -135,16 +135,6 @@ public class ClsTypeElementImpl extends ClsElementImpl implements PsiTypeElement
     return null;
   }
 
-  @Override
-  public PsiAnnotationOwner getOwner(PsiAnnotation annotation) {
-    return this; //todo
-  }
-
-  @Override
-  public PsiType getTypeNoResolve(@NotNull PsiElement context) {
-    return getType();
-  }
-
   private ClsElementImpl calculateChild() {
     if (JavaPsiFacade.getInstance(getProject()).getElementFactory().createPrimitiveType(myTypeText) != null) {
       return null;

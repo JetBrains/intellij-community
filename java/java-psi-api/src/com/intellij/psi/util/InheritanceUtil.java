@@ -28,11 +28,6 @@ import java.util.Set;
 public class InheritanceUtil {
   private InheritanceUtil() { }
 
-  /** @deprecated Use {@link PsiClass#isInheritor(com.intellij.psi.PsiClass, boolean)} instead (to remove in IDEA 13) */
-  public static boolean isInheritor(@NotNull PsiClass candidateClass, @NotNull PsiClass baseClass, boolean checkDeep) {
-    return candidateClass.isInheritor(baseClass, checkDeep);
-  }
-
   /**
    * @param aClass     a class to check.
    * @param baseClass  supposed base class.
@@ -43,11 +38,6 @@ public class InheritanceUtil {
     if (aClass == null || baseClass == null) return false;
     PsiManager manager = aClass.getManager();
     return manager.areElementsEquivalent(baseClass, aClass) || aClass.isInheritor(baseClass, checkDeep);
-  }
-
-  /** @deprecated use {@linkplain #isInheritorOrSelf(com.intellij.psi.PsiClass, com.intellij.psi.PsiClass, boolean) (to remove in IDEA 13)} */
-  public static boolean isCorrectDescendant(@Nullable PsiClass aClass, @Nullable PsiClass baseClass, boolean checkDeep) {
-    return isInheritorOrSelf(aClass, baseClass, checkDeep);
   }
 
   public static boolean processSupers(@Nullable PsiClass aClass, boolean includeSelf, @NotNull Processor<PsiClass> superProcessor) {

@@ -17,7 +17,6 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.types;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
@@ -50,10 +49,5 @@ public class GrArrayTypeElementImpl extends GroovyPsiElementImpl implements GrAr
   @NotNull
   public PsiType getType() {
     return getComponentTypeElement().getType().createArrayType();
-  }
-
-  @Override
-  public PsiType getTypeNoResolve(PsiElement context) {
-    return getType();
   }
 }

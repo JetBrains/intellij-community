@@ -109,11 +109,6 @@ public class LightField extends LightElement implements PsiField {
   }
 
   @Override
-  public PsiType getTypeNoResolve() {
-    return getType();
-  }
-
-  @Override
   public PsiModifierList getModifierList() {
     return myField.getModifierList();
   }
