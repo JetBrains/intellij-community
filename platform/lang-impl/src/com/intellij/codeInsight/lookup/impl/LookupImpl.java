@@ -415,7 +415,6 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     }
     requestResize();
     refreshUi(false, true);
-    ensureSelectionVisible();
   }
 
   public void setStartCompletionWhenNothingMatches(boolean startCompletionWhenNothingMatches) {
@@ -426,10 +425,23 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     return myStartCompletionWhenNothingMatches;
   }
 
-  public void ensureSelectionVisible() {
-    if (!isSelectionVisible()) {
-      ListScrollingUtil.ensureIndexIsVisible(myList, myList.getSelectedIndex(), 1);
+  public void ensureSelectionVisible(boolean forceTopSelection) {
+    if (isSelectionVisible() && !forceTopSelection) {
+      return;
     }
+
+    // selected item should be at the top of the visible list 
+    int top = myList.getSelectedIndex();
+    if (top > 0) {
+      top--; // show one element above the selected one to give the hint that there are more available via scrolling
+    }
+    
+    int firstVisibleIndex = myList.getFirstVisibleIndex();
+    if (firstVisibleIndex == top) {
+      return;
+    }
+    
+    ListScrollingUtil.ensureRangeIsVisible(myList, top, top + myList.getLastVisibleIndex() - firstVisibleIndex);
   }
 
   boolean truncatePrefix(boolean preserveSelection) {
@@ -449,7 +461,6 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     requestResize();
     if (shouldUpdate) {
       refreshUi(false, true);
-      ensureSelectionVisible();
     }
 
     return true;
@@ -1300,7 +1311,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
       HintManagerImpl.updateLocation(this, myEditor, rectangle.getLocation());
 
       if (reused || selectionVisible || onExplicitAction) {
-        ensureSelectionVisible();
+        ensureSelectionVisible(onExplicitAction);
       }
     }
   }
