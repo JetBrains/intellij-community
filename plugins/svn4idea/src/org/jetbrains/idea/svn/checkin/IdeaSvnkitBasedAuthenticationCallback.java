@@ -25,6 +25,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.WaitForProgressToShow;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.net.HttpConfigurable;
 import com.intellij.util.proxy.CommonProxy;
@@ -56,6 +57,7 @@ import java.security.cert.X509Certificate;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Created with IntelliJ IDEA.
@@ -69,10 +71,12 @@ public class IdeaSvnkitBasedAuthenticationCallback implements AuthenticationCall
   private File myTempDirectory;
   private boolean myProxyCredentialsWereReturned;
   private SvnConfiguration myConfiguration;
+  private final Set<String> myRequestedCredentials;
 
   public IdeaSvnkitBasedAuthenticationCallback(SvnVcs vcs) {
     myVcs = vcs;
     myConfiguration = SvnConfiguration.getInstance(myVcs.getProject());
+    myRequestedCredentials = ContainerUtil.newHashSet();
   }
 
   @Override
@@ -92,9 +96,10 @@ public class IdeaSvnkitBasedAuthenticationCallback implements AuthenticationCall
       String realm = repositoryUrl.toDecodedString();
       Object data = SvnConfiguration.RUNTIME_AUTH_CACHE.getData(type, realm);
 
-      if (data != null && data instanceof SVNAuthentication) {
+      if (data != null && data instanceof SVNAuthentication && !myRequestedCredentials.contains(getKey(realm, type))) {
         // we already have credentials in memory cache
         authentication = (SVNAuthentication)data;
+        myRequestedCredentials.add(getKey(realm, type));
       } else {
         // ask user for credentials
         authentication = myVcs.getSvnConfiguration().getInteractiveManager(myVcs).getInnerProvider()
@@ -103,6 +108,7 @@ public class IdeaSvnkitBasedAuthenticationCallback implements AuthenticationCall
         if (authentication != null) {
           // save user credentials to memory cache
           myVcs.getSvnConfiguration().acknowledge(type, realm, authentication);
+          myRequestedCredentials.add(getKey(realm, type));
         }
       }
     }
@@ -112,6 +118,11 @@ public class IdeaSvnkitBasedAuthenticationCallback implements AuthenticationCall
     }
 
     return authentication;
+  }
+
+  @NotNull
+  private static String getKey(@NotNull String realm, @NotNull String type) {
+    return type + "$" + realm;
   }
 
   @Override
