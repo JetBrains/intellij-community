@@ -92,10 +92,6 @@ public class InferenceSession {
         }
       }
     }
-
-    if (pair != null) {
-      initReturnTypeConstraint(pair.first, (PsiCallExpression)parent);
-    }
   }
 
   private static Pair<PsiMethod, PsiCallExpression> getPair(PsiElement parent) {
@@ -202,11 +198,17 @@ public class InferenceSession {
     repeatInferencePhases();
 
     mySiteSubstitutor = resolveBounds(myInferenceVariables.values(), mySiteSubstitutor, false);
+    
+    final Pair<PsiMethod, PsiCallExpression> pair = getPair(parent);
+    if (pair != null) {
+      initReturnTypeConstraint(pair.first, (PsiCallExpression)parent);
+      repeatInferencePhases();
+      mySiteSubstitutor = resolveBounds(myInferenceVariables.values(), mySiteSubstitutor, false);
+    }
 
     if (parameters != null && args != null) {
       final Set<ConstraintFormula> additionalConstraints = new HashSet<ConstraintFormula>();
       if (parameters.length > 0) {
-        final Pair<PsiMethod, PsiCallExpression> pair = getPair(parent);
         for (int i = 0; i < args.length; i++) {
           PsiType parameterType = getParameterType(parameters, args, i, mySiteSubstitutor);
           if (args[i] != null) {
