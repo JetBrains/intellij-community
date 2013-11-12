@@ -189,6 +189,7 @@ public class IdeaSvnkitBasedAuthenticationCallback implements AuthenticationCall
            (instance.USE_HTTP_PROXY || instance.USE_PROXY_PAC);
   }
 
+  // TODO: not used - should be removed.
   @Override
   public boolean persistDataToTmpConfig(final SVNURL repositoryUrl) throws IOException {
     // TODO: Make repositoryUrl @NotNull after SvnLineCommand.runWithAuthenticationAttempt refactored
@@ -208,6 +209,16 @@ public class IdeaSvnkitBasedAuthenticationCallback implements AuthenticationCall
 
   @Nullable
   public static Proxy getIdeaDefinedProxy(@NotNull final SVNURL url) {
+    // SVNKit authentication implementation sets repositories as noProxy() to provide custom proxy authentication logic - see for instance,
+    // SvnAuthenticationManager.getProxyManager(). But noProxy() setting is not cleared correctly in all cases - so if svn command
+    // (for command line) is executed on thread where repository url was added as noProxy() => proxies are not retrieved for such commands
+    // and execution logic is incorrect.
+
+    // To prevent such behavior repositoryUrl is manually removed from noProxy() list (for current thread).
+    // NOTE, that current method is only called from code flows for executing commands through command line client and should not be called
+    // from SVNKit code flows.
+    CommonProxy.getInstance().removeNoProxy(url.getProtocol(), url.getHost(), url.getPort());
+
     final List<Proxy> proxies = CommonProxy.getInstance().select(URI.create(url.toString()));
     if (proxies != null && ! proxies.isEmpty()) {
       for (Proxy proxy : proxies) {
@@ -253,6 +264,7 @@ public class IdeaSvnkitBasedAuthenticationCallback implements AuthenticationCall
     return authentication;
   }
 
+  // TODO: not used - should be removed.
   @Override
   public boolean askProxyCredentials(SVNURL repositoryUrl) {
     if (repositoryUrl == null) {
