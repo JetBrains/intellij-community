@@ -360,4 +360,6 @@ GParsExecutorsPool oi
 ''')
   }
 
+  void testGDocAfterImports() { doTest() }
+  void testGDocAfterImports2() { doTest() }
 }

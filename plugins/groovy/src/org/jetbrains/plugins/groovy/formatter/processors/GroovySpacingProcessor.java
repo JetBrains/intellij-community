@@ -181,10 +181,11 @@ public class GroovySpacingProcessor extends GroovyElementVisitor {
 
   private boolean manageComments() {
     if (mySettings.KEEP_FIRST_COLUMN_COMMENT && COMMENT_SET.contains(myType2)) {
-      if (myType1 != IMPORT_STATEMENT) {
+      if (!isAfterElementOrSemi(IMPORT_STATEMENT)) {
         myResult = Spacing.createKeepingFirstColumnSpacing(0, Integer.MAX_VALUE, true, 1);
+        return true;
       }
-      return true;
+      return false;
     }
 
     ASTNode prev = FormatterUtil.getPreviousNonWhitespaceLeaf(myChild2);
@@ -387,7 +388,7 @@ public class GroovySpacingProcessor extends GroovyElementVisitor {
   }
 
   private boolean isAfterElementOrSemi(final IElementType elementType) {
-    return myType1 == elementType && myType2 != mSEMI || isSemiAfter(PACKAGE_DEFINITION);
+    return myType1 == elementType && myType2 != mSEMI || isSemiAfter(elementType);
   }
 
   private boolean isSemiAfter(@NotNull IElementType statement) {
