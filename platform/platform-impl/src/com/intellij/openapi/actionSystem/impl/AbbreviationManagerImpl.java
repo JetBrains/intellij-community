@@ -146,7 +146,8 @@ public class AbbreviationManagerImpl extends AbbreviationManager implements
 
   @Override
   public List<String> findActions(String abbreviation) {
-    return Collections.unmodifiableList(myAbbreviation2ActionId.get(abbreviation));
+    final List<String> actions = myAbbreviation2ActionId.get(abbreviation);
+    return actions == null ? Collections.<String>emptyList() : Collections.unmodifiableList(actions);
   }
 
 
