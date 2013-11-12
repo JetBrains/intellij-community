@@ -54,7 +54,7 @@ public class AntStringResolver extends PropertyProviderFinder{
       return valueString;
     }
     
-    final Map<String, String> cached = context.getUserData(RESOLVED_STRINGS_MAP_KEY);
+    final Map<String, String> cached = RESOLVED_STRINGS_MAP_KEY.get(context);
     if (cached != null) {
       expander.acceptProvider(new CachedPropertiesProvider(cached));
       if (!expander.hasPropertiesToExpand()) {
