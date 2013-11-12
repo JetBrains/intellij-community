@@ -22,7 +22,7 @@ import java.util.*;
   example = "var x = expr;")
 public class IntroduceVariableTemplateProvider extends TemplateProviderBase {
   @Override public void createItems(
-      @NotNull PostfixTemplateAcceptanceContext context, @NotNull List<LookupElement> consumer) {
+      @NotNull PostfixTemplateContext context, @NotNull List<LookupElement> consumer) {
 
     // todo: support on expressions
 

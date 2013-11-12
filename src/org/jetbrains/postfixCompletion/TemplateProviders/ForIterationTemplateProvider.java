@@ -21,7 +21,7 @@ import java.util.*;
   example = "for (T item : collection)")
 public class ForIterationTemplateProvider extends TemplateProviderBase {
   @Override public void createItems(
-    @NotNull PostfixTemplateAcceptanceContext context, @NotNull List<LookupElement> consumer) {
+    @NotNull PostfixTemplateContext context, @NotNull List<LookupElement> consumer) {
 
     PrefixExpressionContext expression = context.outerExpression;
 

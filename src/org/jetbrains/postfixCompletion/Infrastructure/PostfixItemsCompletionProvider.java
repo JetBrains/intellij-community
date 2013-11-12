@@ -16,7 +16,7 @@ public final class PostfixItemsCompletionProvider {
     PostfixTemplatesManager manager = application.getComponent(PostfixTemplatesManager.class);
 
     PsiElement positionElement = parameters.getPosition();
-    PostfixTemplateAcceptanceContext acceptanceContext = manager.isAvailable(positionElement, executionContext);
+    PostfixTemplateContext acceptanceContext = manager.isAvailable(positionElement, executionContext);
 
     if (acceptanceContext != null)
       for (LookupElement lookupElement : manager.collectTemplates(acceptanceContext))

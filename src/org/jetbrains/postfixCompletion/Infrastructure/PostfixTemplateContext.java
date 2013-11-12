@@ -5,14 +5,14 @@ import org.jetbrains.annotations.*;
 
 import java.util.*;
 
-public abstract class PostfixTemplateAcceptanceContext {
+public abstract class PostfixTemplateContext {
   // can be 'PsiReferenceExpression' or 'PsiJavaCodeReferenceElement'
   @NotNull public final PsiElement postfixReference;
   @NotNull public final List<PrefixExpressionContext> expressions;
   @NotNull public final PrefixExpressionContext outerExpression, innerExpression;
   @NotNull public final PostfixExecutionContext executionContext;
 
-  public PostfixTemplateAcceptanceContext(
+  public PostfixTemplateContext(
     @NotNull PsiElement reference, @NotNull PsiExpression expression,
     @NotNull PostfixExecutionContext executionContext) {
     postfixReference = reference;
@@ -29,21 +29,8 @@ public abstract class PostfixTemplateAcceptanceContext {
       if (node instanceof PsiExpression && node != reference) {
         PsiExpression expr = (PsiExpression) node;
 
-        if (expr.isPhysical()) {
-          // do this ever happens?
-          int endOffset = expr.getTextRange().getEndOffset();
-          if (endOffset > referenceEndRange) break; // stop when 'a.var + b'
-        } else {
-          // check we are not escaping to the right of reference
-          if (expr instanceof PsiReferenceExpression &&
-            ((PsiReferenceExpression) expr).getQualifier() == reference) break;
-          if (expr instanceof PsiMethodCallExpression &&
-            ((PsiMethodCallExpression) expr).getMethodExpression() == reference) break;
-          if (expr instanceof PsiBinaryExpression &&
-            ((PsiBinaryExpression) expr).getLOperand() == reference) break;
-          if (expr instanceof PsiPostfixExpression &&
-            ((PsiPostfixExpression) expr).getOperand() == reference) break;
-        }
+        int endOffset = expr.getTextRange().getEndOffset();
+        if (endOffset > referenceEndRange) break; // stop when 'a.var + b'
 
         PrefixExpressionContext context = new PrefixExpressionContext(this, expr);
         contexts.add(context);
@@ -58,6 +45,8 @@ public abstract class PostfixTemplateAcceptanceContext {
   }
 
   @NotNull public abstract PrefixExpressionContext fixExpression(@NotNull PrefixExpressionContext context);
+
   public boolean isBrokenStatement(@NotNull PsiStatement statement) { return false; }
+  // todo: use me (when? in .new template?)
   public boolean isFakeContextFromType() { return false; }
 }

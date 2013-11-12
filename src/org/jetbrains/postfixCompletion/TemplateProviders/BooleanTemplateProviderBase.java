@@ -13,7 +13,7 @@ public abstract class BooleanTemplateProviderBase extends TemplateProviderBase {
     @NotNull PrefixExpressionContext context, @NotNull List<LookupElement> consumer);
 
   @Override public void createItems(
-    @NotNull PostfixTemplateAcceptanceContext context, @NotNull List<LookupElement> consumer) {
+    @NotNull PostfixTemplateContext context, @NotNull List<LookupElement> consumer) {
 
     for (PrefixExpressionContext expression : context.expressions)
       if (isBooleanExpression(expression) &&

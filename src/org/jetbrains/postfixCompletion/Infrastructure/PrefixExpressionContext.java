@@ -6,7 +6,7 @@ import com.intellij.psi.*;
 import org.jetbrains.annotations.*;
 
 public final class PrefixExpressionContext {
-  @NotNull public final PostfixTemplateAcceptanceContext parentContext;
+  @NotNull public final PostfixTemplateContext parentContext;
   @NotNull public final PsiExpression expression;
   @Nullable public final PsiType expressionType;
   @Nullable public final PsiElement referencedElement;
@@ -14,7 +14,7 @@ public final class PrefixExpressionContext {
   public final boolean canBeStatement;
 
   public PrefixExpressionContext(
-      @NotNull PostfixTemplateAcceptanceContext parentContext, @NotNull PsiExpression expression) {
+      @NotNull PostfixTemplateContext parentContext, @NotNull PsiExpression expression) {
     assert expression.isValid() : "expression.isValid()";
 
     this.parentContext = parentContext;

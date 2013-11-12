@@ -58,7 +58,7 @@ public abstract class PostfixLookupElement<TPsiElement extends PsiElement> exten
 
     PostfixTemplatesManager manager =
       ApplicationManager.getApplication().getComponent(PostfixTemplatesManager.class);
-    PostfixTemplateAcceptanceContext acceptanceContext = manager.isAvailable(psiElement, myExecutionContext);
+    PostfixTemplateContext acceptanceContext = manager.isAvailable(psiElement, myExecutionContext);
     if (acceptanceContext == null) return; // yes, shit happens
 
     for (PrefixExpressionContext expression : acceptanceContext.expressions) {

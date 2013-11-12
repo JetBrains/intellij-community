@@ -14,7 +14,7 @@ import java.util.*;
   example = "if (expr == null)")
 public class IsNullCheckTemplateProvider extends TemplateProviderBase {
   @Override public void createItems(
-      @NotNull PostfixTemplateAcceptanceContext context, @NotNull List<LookupElement> consumer) {
+      @NotNull PostfixTemplateContext context, @NotNull List<LookupElement> consumer) {
     PrefixExpressionContext expression = context.outerExpression;
 
     if (expression.referencedElement instanceof PsiClass) return;

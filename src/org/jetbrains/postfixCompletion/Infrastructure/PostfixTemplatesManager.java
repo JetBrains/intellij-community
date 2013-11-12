@@ -37,7 +37,7 @@ public final class PostfixTemplatesManager implements ApplicationComponent {
     }
   }
 
-  @Nullable public final PostfixTemplateAcceptanceContext isAvailable(
+  @Nullable public final PostfixTemplateContext isAvailable(
       @NotNull PsiElement positionElement, @NotNull PostfixExecutionContext executionContext) {
 
     // postfix name always is identifier
@@ -50,7 +50,7 @@ public final class PostfixTemplatesManager implements ApplicationComponent {
       // easy case: 'expr.postfix'
       PsiExpression qualifier = reference.getQualifierExpression();
       if (qualifier != null) {
-        return new PostfixTemplateAcceptanceContext(reference, qualifier, executionContext) {
+        return new PostfixTemplateContext(reference, qualifier, executionContext) {
           @Override @NotNull
           public PrefixExpressionContext fixExpression(@NotNull PrefixExpressionContext context) {
             PsiExpression expression = context.expression;
@@ -87,7 +87,7 @@ public final class PostfixTemplatesManager implements ApplicationComponent {
           final PsiLiteralExpression brokenLiteral = findBrokenLiteral(lhsExpression);
           if (lhsExpression != null && brokenLiteral != null) {
             final boolean isComplexRhs = !(reference.getParent() instanceof PsiExpressionStatement);
-            return new PostfixTemplateAcceptanceContext(reference, brokenLiteral, executionContext) {
+            return new PostfixTemplateContext(reference, brokenLiteral, executionContext) {
               @Override @NotNull
               public PrefixExpressionContext fixExpression(@NotNull PrefixExpressionContext context) {
                 PsiExpression newExpression = fixCompletelyBrokenCase(
@@ -116,7 +116,7 @@ public final class PostfixTemplatesManager implements ApplicationComponent {
         // handle 'foo instanceof Bar.postfix' expressions
         if (psiElement instanceof PsiInstanceOfExpression) {
           PsiExpression instanceOfExpression = (PsiInstanceOfExpression) psiElement;
-          return new PostfixTemplateAcceptanceContext(parent, instanceOfExpression, executionContext) {
+          return new PostfixTemplateContext(parent, instanceOfExpression, executionContext) {
             @NotNull @Override public PrefixExpressionContext
             fixExpression(@NotNull PrefixExpressionContext context) {
               parent.replace(qualifier);
@@ -144,7 +144,7 @@ public final class PostfixTemplatesManager implements ApplicationComponent {
           final PsiExpressionStatement statement = (PsiExpressionStatement)
             factory.createStatementFromText("new " + refParentCopy.getText() + "()", psiElement);
 
-          return new PostfixTemplateAcceptanceContext(parent, statement.getExpression(), executionContext) {
+          return new PostfixTemplateContext(parent, statement.getExpression(), executionContext) {
             @NotNull @Override
             public PrefixExpressionContext fixExpression(@NotNull PrefixExpressionContext context) {
               PsiExpressionStatement newStatement = (PsiExpressionStatement) psiElement.replace(statement);
@@ -267,7 +267,7 @@ public final class PostfixTemplatesManager implements ApplicationComponent {
 
   static final com.intellij.openapi.util.Key marker = new Key(PostfixTemplatesManager.class.getName());
 
-  @NotNull public List<LookupElement> collectTemplates(@NotNull PostfixTemplateAcceptanceContext context) {
+  @NotNull public List<LookupElement> collectTemplates(@NotNull PostfixTemplateContext context) {
     List<LookupElement> elements = new ArrayList<LookupElement>();
 
     for (TemplateProviderInfo providerInfo : myProviders)
