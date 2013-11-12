@@ -22,27 +22,25 @@ import com.jetbrains.python.PyTokenTypes;
 import java.util.List;
 
 /**
-* @author yole
-*/
-class FollowingCommentBinder implements WhitespacesAndCommentsBinder {
-  static final FollowingCommentBinder INSTANCE = new FollowingCommentBinder();
+ * @author yole
+ */
+public class LeadingCommentsBinder implements WhitespacesAndCommentsBinder {
+  public static final LeadingCommentsBinder INSTANCE = new LeadingCommentsBinder();
 
   @Override
   public int getEdgePosition(List<IElementType> tokens, boolean atStreamEdge, TokenTextGetter getter) {
-    if (tokens.size() <= 1) return 0;
-    int pos = 0;
-    // TODO[yole] handle more cases?
-    while (pos < tokens.size() && tokens.get(pos) == PyTokenTypes.LINE_BREAK) {
-      final CharSequence charSequence = getter.get(pos);
-      if (charSequence.length() == 0 || charSequence.charAt(charSequence.length()-1) != ' ') {
-        break;
+    if (tokens.size() > 1) {
+      boolean seenLF = false;
+      for (int i = 0; i < tokens.size(); i++) {
+        IElementType token = tokens.get(i);
+        if (token == PyTokenTypes.LINE_BREAK) {
+          seenLF = true;
+        }
+        else if (token == PyTokenTypes.END_OF_LINE_COMMENT && seenLF) {
+          return i;
+        }
       }
-      pos++;
-      if (pos == tokens.size() || tokens.get(pos) != PyTokenTypes.END_OF_LINE_COMMENT) {
-        break;
-      }
-      pos++;
     }
-    return pos;
+    return tokens.size();
   }
 }
