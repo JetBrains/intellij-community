@@ -45,6 +45,7 @@ public class CommandExecutor {
   private boolean myIsDestroyed;
   private boolean myNeedsDestroy;
   private volatile String myDestroyReason;
+  private volatile boolean myWasCancelled;
   protected final GeneralCommandLine myCommandLine;
   protected Process myProcess;
   protected OSProcessHandler myHandler;
@@ -181,7 +182,7 @@ public class CommandExecutor {
     boolean finished;
     do {
       finished = waitFor(500);
-      if (!finished && (wasError() || needsDestroy() || wasCancelled())) {
+      if (!finished && (wasError() || needsDestroy() || checkCancelled())) {
         waitFor(1000);
         doDestroyProcess();
         break;
@@ -204,20 +205,22 @@ public class CommandExecutor {
     }
   }
 
-  private boolean wasCancelled() {
-    boolean result = false;
-
-    if (myCommand.getCanceller() != null) {
+  private boolean checkCancelled() {
+    if (!myWasCancelled && myCommand.getCanceller() != null) {
       try {
         myCommand.getCanceller().checkCancelled();
       }
       catch (SVNCancelException e) {
         // indicates command should be cancelled
-        result = true;
+        myWasCancelled = true;
       }
     }
 
-    return result;
+    return myWasCancelled;
+  }
+
+  public boolean wasCancelled() {
+    return myWasCancelled;
   }
 
   public void destroyProcess() {

@@ -15,6 +15,7 @@
  */
 package org.jetbrains.idea.svn.commandLine;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.IdeaSVNConfigFile;
@@ -30,6 +31,8 @@ import java.net.Proxy;
  * @author Konstantin Kolosovsky.
  */
 public class ProxyModule extends BaseCommandRuntimeModule {
+
+  private static final Logger LOG = Logger.getInstance(ProxyModule.class);
 
   public ProxyModule(@NotNull CommandRuntime runtime) {
     super(runtime);
@@ -59,6 +62,8 @@ public class ProxyModule extends BaseCommandRuntimeModule {
         command.put("--config-option");
         command.put(String.format("servers:%s:http-proxy-port=%s", hostGroup, address.getPort()));
       }
+    } else {
+      LOG.info("Configured proxy should be used, but repository url is null for command - " + command.getText());
     }
   }
 
