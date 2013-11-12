@@ -151,6 +151,7 @@ public final class PostfixTemplatesManager implements ApplicationComponent {
               return new PrefixExpressionContext(this, newStatement.getExpression());
             }
 
+            // todo: override referencedElement
             @Override public boolean isFakeContextFromType() { return true; }
           };
         }
@@ -172,12 +173,12 @@ public final class PostfixTemplatesManager implements ApplicationComponent {
     PsiLiteralExpression newLiteral = (PsiLiteralExpression)
       factory.createExpressionFromText(fixedText, null);
 
-    //
+    // 'int a = 2.|var + 3;' => 'int a = 2.|2 + 3;'
     PsiExpression newExpression, oldExpression;
     if (rhsExpression == brokenLiteral) {
       oldExpression = brokenLiteral;
       newExpression = (PsiExpression) reference.replace(newLiteral);
-    } else {
+    } else { // 'int a = 1 + 2.|var + 3;' => 'int a = 1 + 2.|1 + 2 + 3;'
       brokenLiteral.replace(newLiteral);
       oldExpression = rhsExpression;
       newExpression = (PsiExpression) reference.replace(rhsExpression.copy());
@@ -186,6 +187,7 @@ public final class PostfixTemplatesManager implements ApplicationComponent {
     assert newExpression.isPhysical() : "newExpression.isPhysical()";
     assert oldExpression.isPhysical() : "oldExpression.isPhysical()";
 
+    // 'int a = 1 + 2.|1 + 2 + 3;' => 'int a = 1 + 2 + 3;'
     PsiExpressionStatement statement = findContainingExprStatement(newExpression.getParent());
     if (statement != null) {
       newExpression.putCopyableUserData(marker, marker);
@@ -195,9 +197,10 @@ public final class PostfixTemplatesManager implements ApplicationComponent {
 
       PsiExpression marked = findMarkedExpression(newExpression);
       if (marked != null) newExpression = marked;
-    } else {
+    } else { // 'int a = 1 + 2.|1 + 2;' => 'int a = 1 + 2;'
       newExpression = (PsiExpression) oldExpression.replace(newExpression);
     }
+
     return newExpression;
   }
 
@@ -268,10 +271,20 @@ public final class PostfixTemplatesManager implements ApplicationComponent {
   static final com.intellij.openapi.util.Key marker = new Key(PostfixTemplatesManager.class.getName());
 
   @NotNull public List<LookupElement> collectTemplates(@NotNull PostfixTemplateContext context) {
+    // disable all providers over package names
+    PsiElement referencedElement = context.innerExpression.referencedElement;
+    if (referencedElement instanceof PsiPackage) return Collections.emptyList();
+
+    // check we invoked on type
+    boolean invokedOnType = (referencedElement instanceof PsiClass);
     List<LookupElement> elements = new ArrayList<LookupElement>();
 
     for (TemplateProviderInfo providerInfo : myProviders)
+    {
+      if (invokedOnType && !providerInfo.annotation.worksOnTypes()) continue;
+
       providerInfo.provider.createItems(context, elements);
+    }
 
     return elements;
   }

@@ -25,9 +25,6 @@ public class ForIterationTemplateProvider extends TemplateProviderBase {
 
     PrefixExpressionContext expression = context.outerExpression;
 
-    if (expression.referencedElement instanceof PsiClass) return;
-    if (expression.referencedElement instanceof PsiPackage) return;
-
     PsiType type = expression.expressionType;
     if (type != null && !context.executionContext.isForceMode) {
       // check type to be Iterable-derived or array type

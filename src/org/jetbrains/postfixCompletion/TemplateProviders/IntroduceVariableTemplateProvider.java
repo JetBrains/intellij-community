@@ -19,7 +19,7 @@ import java.util.*;
 @TemplateProvider(
   templateName = "var",
   description = "Introduces variable for expression",
-  example = "var x = expr;")
+  example = "var x = expr;", worksOnTypes = true)
 public class IntroduceVariableTemplateProvider extends TemplateProviderBase {
   @Override public void createItems(
       @NotNull PostfixTemplateContext context, @NotNull List<LookupElement> consumer) {
@@ -31,8 +31,14 @@ public class IntroduceVariableTemplateProvider extends TemplateProviderBase {
 
     for (PrefixExpressionContext expressionContext : context.expressions) {
       PsiExpression expression = expressionContext.expression;
-      PsiElement referenced = expressionContext.referencedElement;
+      // filter out from 'this' and 'super'
+      if (expression instanceof PsiThisExpression ||
+          expression instanceof PsiSuperExpression) {
+        forcedTarget = expressionContext;
+        continue;
+      }
 
+      PsiElement referenced = expressionContext.referencedElement;
       if (referenced != null) {
         if (referenced instanceof PsiClass) {
           invokedOnType = (PsiClass) referenced;
@@ -42,7 +48,8 @@ public class IntroduceVariableTemplateProvider extends TemplateProviderBase {
           // filter out packages
           if (referenced instanceof PsiPackage) continue;
           // and 'too simple' expressions (except force mode)
-          if (referenced instanceof PsiLocalVariable || referenced instanceof PsiParameter) {
+          if (referenced instanceof PsiLocalVariable ||
+              referenced instanceof PsiParameter) {
             forcedTarget = expressionContext;
             continue;
           }
@@ -121,17 +128,19 @@ public class IntroduceVariableTemplateProvider extends TemplateProviderBase {
     @Override protected void postProcess(
       @NotNull final InsertionContext context, @NotNull final PsiExpressionStatement statement) {
 
-      context.setLaterRunnable(new Runnable() {
-        @Override public void run() {
-          boolean unitTestMode = ApplicationManager.getApplication().isUnitTestMode();
-          IntroduceVariableHandler handler = unitTestMode ? getMockHandler() : new IntroduceVariableHandler();
+      if (ApplicationManager.getApplication().isUnitTestMode()) {
+        context.setLaterRunnable(new Runnable() {
+          @Override public void run() {
+            IntroduceVariableHandler handler = getMockHandler();
+            handler.invoke(context.getProject(), context.getEditor(), statement.getExpression());
+          }
+        });
+      } else {
+        IntroduceVariableHandler handler = new IntroduceVariableHandler();
+        handler.invoke(context.getProject(), context.getEditor(), statement.getExpression());
+      }
 
-          handler.invoke(context.getProject(), context.getEditor(), statement.getExpression());
-          // todo: somehow handle success introduce variable and place caret in a smart way
-        }
-      });
-
-
+      // todo: somehow handle success introduce variable and place caret in a smart way
     }
   }
 

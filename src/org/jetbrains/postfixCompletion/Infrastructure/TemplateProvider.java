@@ -10,4 +10,5 @@ public @interface TemplateProvider {
   @NotNull String templateName();
   @NotNull String description();
   @NotNull String example();
+  boolean worksOnTypes() default false;
 }

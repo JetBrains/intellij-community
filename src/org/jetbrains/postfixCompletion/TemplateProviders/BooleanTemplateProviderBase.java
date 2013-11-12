@@ -42,10 +42,20 @@ public abstract class BooleanTemplateProviderBase extends TemplateProviderBase {
     if (expression instanceof PsiBinaryExpression) {
       PsiBinaryExpression binary = (PsiBinaryExpression) expression;
       sign = binary.getOperationSign().getTokenType();
-    } else if (expression instanceof PsiPolyadicExpression) {
+    }
+    else if (expression instanceof PsiPolyadicExpression) {
       PsiPolyadicExpression polyadic = (PsiPolyadicExpression) expression;
       sign = polyadic.getOperationTokenType();
-    } else return false;
+    }
+    else if (expression instanceof PsiPrefixExpression) {
+      PsiPrefixExpression prefix = (PsiPrefixExpression) expression;
+      return prefix.getOperationSign() == JavaTokenType.EXCL; // !x
+    }
+    else if (expression instanceof PsiParenthesizedExpression) {
+      PsiParenthesizedExpression parenthesized = (PsiParenthesizedExpression) expression;
+      return isBooleanExpression(parenthesized.getExpression());
+    }
+    else return false;
 
     // expressions always of boolean type
     if (sign == JavaTokenType.GE     || // x >= y

@@ -1,7 +1,6 @@
 package org.jetbrains.postfixCompletion.TemplateProviders;
 
 import com.intellij.codeInsight.lookup.*;
-import com.intellij.psi.*;
 import org.jetbrains.annotations.*;
 import org.jetbrains.postfixCompletion.Infrastructure.*;
 import org.jetbrains.postfixCompletion.LookupItems.*;
@@ -15,18 +14,15 @@ import java.util.*;
 public class IsNullCheckTemplateProvider extends TemplateProviderBase {
   @Override public void createItems(
       @NotNull PostfixTemplateContext context, @NotNull List<LookupElement> consumer) {
-    PrefixExpressionContext expression = context.outerExpression;
 
-    if (expression.referencedElement instanceof PsiClass) return;
-    if (expression.referencedElement instanceof PsiPackage) return;
+    PrefixExpressionContext expression = context.outerExpression;
     if (!expression.canBeStatement) return;
 
-    PsiType expressionType = expression.expressionType;
-    if (expressionType != null && !context.executionContext.isForceMode) {
-
-      // todo: more complex check
-      // list.contains("abc") | list.isEmpty(). - disable here
-      if (expressionType instanceof PsiPrimitiveType) return;
+    Boolean isNullable = NotNullCheckTemplateProvider.isNullableExpression(expression);
+    if (isNullable != null) {
+      if (!isNullable) return;
+    } else { // unknown nullability
+      if (!context.executionContext.isForceMode) return;
     }
 
     consumer.add(new CheckIsNullLookupElement(expression));

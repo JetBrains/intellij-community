@@ -17,17 +17,47 @@ public class NotNullCheckTemplateProvider extends TemplateProviderBase {
     @NotNull PostfixTemplateContext context, @NotNull List<LookupElement> consumer) {
 
     PrefixExpressionContext expression = context.outerExpression;
-
-    if (expression.referencedElement instanceof PsiClass) return;
-    if (expression.referencedElement instanceof PsiPackage) return;
     if (!expression.canBeStatement) return;
 
-    PsiType expressionType = expression.expressionType;
-    if (expressionType != null && !context.executionContext.isForceMode) {
-      if (expressionType instanceof PsiPrimitiveType) return;
+    Boolean isNullable = isNullableExpression(expression);
+    if (isNullable != null) {
+      if (!isNullable) return;
+    } else { // unknown nullability
+      if (!context.executionContext.isForceMode) return;
     }
 
     consumer.add(new CheckNotNullLookupElement(expression));
+  }
+
+  @Nullable public static Boolean isNullableExpression(@NotNull PrefixExpressionContext context) {
+    return isNullableExpression(context.expression, context.expressionType);
+  }
+
+  @Nullable private static Boolean isNullableExpression(@Nullable PsiExpression expression) {
+    if (expression == null) return null;
+    return isNullableExpression(expression, expression.getType());
+  }
+
+  @Nullable private static Boolean isNullableExpression(
+    @NotNull PsiExpression expression, @Nullable PsiType expressionType) {
+    if (expressionType != null) {
+      return !(expressionType instanceof PsiPrimitiveType);
+    }
+
+    if (expression instanceof PsiPostfixExpression) return false;
+    if (expression instanceof PsiPrefixExpression) return false;
+    if (expression instanceof PsiBinaryExpression) return false;
+    if (expression instanceof PsiPolyadicExpression) return false;
+    if (expression instanceof PsiThisExpression) return false;
+    if (expression instanceof PsiSuperExpression) return false;
+    if (expression instanceof PsiClassObjectAccessExpression) return false;
+
+    if (expression instanceof PsiParenthesizedExpression) {
+      return isNullableExpression(((PsiParenthesizedExpression) expression).getExpression());
+    }
+
+    // todo: support ?: expression?
+    return null;
   }
 
   private static final class CheckNotNullLookupElement extends NullCheckLookupElementBase {
