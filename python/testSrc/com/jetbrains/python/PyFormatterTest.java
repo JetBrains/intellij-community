@@ -350,6 +350,10 @@ public class PyFormatterTest extends PyTestCase {
     doTest();
   }
 
+  public void testCommentAfterBlock() {  // PY-9542
+    doTest();
+  }
+
   private void doTest() {
     doTest(false);
   }

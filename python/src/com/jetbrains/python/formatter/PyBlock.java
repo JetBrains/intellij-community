@@ -241,7 +241,8 @@ public class PyBlock implements ASTBlock {
       }
     }
 
-    if (isAfterStatementList(child) && !hasLineBreaksBefore(child, 2)) {  // maybe enter was pressed and cut us from a previous (nested) statement list
+    if (isAfterStatementList(child) && !hasLineBreaksBefore(child, 2) && child.getElementType() != PyTokenTypes.END_OF_LINE_COMMENT) {
+      // maybe enter was pressed and cut us from a previous (nested) statement list
       childIndent = Indent.getNormalIndent();
     }
 
