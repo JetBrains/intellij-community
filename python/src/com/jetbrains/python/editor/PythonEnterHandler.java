@@ -20,6 +20,7 @@ import com.intellij.codeInsight.editorActions.AutoHardWrapHandler;
 import com.intellij.codeInsight.editorActions.enter.EnterHandlerDelegateAdapter;
 import com.intellij.ide.DataManager;
 import com.intellij.injected.editor.EditorWindow;
+import com.intellij.lang.ASTNode;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Document;
@@ -29,6 +30,7 @@ import com.intellij.openapi.editor.actions.SplitLineAction;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyTokenTypes;
@@ -192,8 +194,17 @@ public class PythonEnterHandler extends EnterHandlerDelegateAdapter {
         return false;
       }
     }
-    PsiElement statementBefore = findStatementBeforeCaret(file, offset);
-    PsiElement statementAfter = findStatementAfterCaret(file, offset);
+    PsiElement atCaret = file.findElementAt(offset);
+    if (atCaret == null) {
+      return false;
+    }
+    ASTNode nodeAtCaret = atCaret.getNode();
+    return needInsertBackslash(nodeAtCaret, autoWrapInProgress);
+  }
+
+  public static boolean needInsertBackslash(ASTNode nodeAtCaret, boolean autoWrapInProgress) {
+    PsiElement statementBefore = findStatementBeforeCaret(nodeAtCaret);
+    PsiElement statementAfter = findStatementAfterCaret(nodeAtCaret);
     if (statementBefore != statementAfter) {  // Enter pressed at statement break
       return false;
     }
@@ -209,12 +220,12 @@ public class PythonEnterHandler extends EnterHandlerDelegateAdapter {
       // if we're in middle of typing, it's expected that we will have error elements
     }
 
-    if (inFromImportParentheses(statementBefore, offset)) {
+    if (inFromImportParentheses(statementBefore, nodeAtCaret.getTextRange().getStartOffset())) {
       return false;
     }
 
-    PsiElement wrappableBefore = findWrappable(file, offset, true);
-    PsiElement wrappableAfter = findWrappable(file, offset, false);
+    PsiElement wrappableBefore = findWrappable(nodeAtCaret, true);
+    PsiElement wrappableAfter = findWrappable(nodeAtCaret, false);
     if (!(wrappableBefore instanceof PsiComment)) {
       while (wrappableBefore != null) {
         PsiElement next = PsiTreeUtil.getParentOfType(wrappableBefore, WRAPPABLE_CLASSES);
@@ -258,14 +269,14 @@ public class PythonEnterHandler extends EnterHandlerDelegateAdapter {
   }
 
   @Nullable
-  private static PsiElement findWrappable(PsiFile file, int offset, boolean before) {
+  private static PsiElement findWrappable(ASTNode nodeAtCaret, boolean before) {
     PsiElement wrappable = before
-                                 ? findBeforeCaret(file, offset, WRAPPABLE_CLASSES)
-                                 : findAfterCaret(file, offset, WRAPPABLE_CLASSES);
+                                 ? findBeforeCaret(nodeAtCaret, WRAPPABLE_CLASSES)
+                                 : findAfterCaret(nodeAtCaret, WRAPPABLE_CLASSES);
     if (wrappable == null) {
       PsiElement emptyTuple = before
-                              ? findBeforeCaret(file, offset, PyTupleExpression.class)
-                              : findAfterCaret(file, offset, PyTupleExpression.class);
+                              ? findBeforeCaret(nodeAtCaret, PyTupleExpression.class)
+                              : findAfterCaret(nodeAtCaret, PyTupleExpression.class);
       if (emptyTuple != null && emptyTuple.getNode().getFirstChildNode().getElementType() == PyTokenTypes.LPAR) {
         wrappable = emptyTuple;
       }
@@ -274,35 +285,31 @@ public class PythonEnterHandler extends EnterHandlerDelegateAdapter {
   }
 
   @Nullable
-  private static PsiElement findStatementBeforeCaret(PsiFile file, int offset) {
-    return findBeforeCaret(file, offset, PyStatement.class);
+  private static PsiElement findStatementBeforeCaret(ASTNode node) {
+    return findBeforeCaret(node, PyStatement.class);
   }
 
   @Nullable
-  private static PsiElement findStatementAfterCaret(PsiFile file, int offset) {
-    return findAfterCaret(file, offset, PyStatement.class);
+  private static PsiElement findStatementAfterCaret(ASTNode node) {
+    return findAfterCaret(node, PyStatement.class);
   }
 
-  @Nullable
-  private static PsiElement findBeforeCaret(PsiFile file, int offset, Class<? extends PsiElement>... classes) {
-    while(offset > 0) {
-      offset--;
-      final PsiElement element = file.findElementAt(offset);
-      if (element != null && !(element instanceof PsiWhiteSpace)) {
-        return getNonStrictParentOfType(element, classes);
+  private static PsiElement findBeforeCaret(ASTNode atCaret, Class<? extends PsiElement>... classes) {
+    while (atCaret != null) {
+      atCaret = TreeUtil.prevLeaf(atCaret);
+      if (atCaret != null && atCaret.getElementType() != TokenType.WHITE_SPACE) {
+        return getNonStrictParentOfType(atCaret.getPsi(), classes);
       }
     }
     return null;
   }
 
-  @Nullable
-  private static PsiElement findAfterCaret(PsiFile file, int offset, Class<? extends PsiElement>... classes) {
-    while(offset < file.getTextLength()) {
-      final PsiElement element = file.findElementAt(offset);
-      if (element != null && !(element instanceof PsiWhiteSpace)) {
-        return getNonStrictParentOfType(element, classes);
+  private static PsiElement findAfterCaret(ASTNode atCaret, Class<? extends PsiElement>... classes) {
+    while (atCaret != null) {
+      if (atCaret.getElementType() != TokenType.WHITE_SPACE) {
+        return getNonStrictParentOfType(atCaret.getPsi(), classes);
       }
-      offset++;
+      atCaret = TreeUtil.nextLeaf(atCaret);
     }
     return null;
   }
