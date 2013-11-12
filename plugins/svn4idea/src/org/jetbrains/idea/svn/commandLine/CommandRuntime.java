@@ -105,7 +105,8 @@ public class CommandRuntime {
         // handle authentication
         final String errText = executor.getErrorOutput().trim();
         final AuthCallbackCase callback = executor instanceof TerminalExecutor ? null : createCallback(errText, command.getRepositoryUrl());
-        if (callback != null) {
+        // do not handle possible authentication errors if command was manually cancelled
+        if (!executor.wasCancelled() && callback != null) {
           if (callback.getCredentials(errText)) {
             if (myAuthCallback.getSpecialConfigDir() != null) {
               command.setConfigDir(myAuthCallback.getSpecialConfigDir());
