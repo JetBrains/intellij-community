@@ -18,7 +18,9 @@ package com.intellij.codeInsight.lookup;
 
 import com.intellij.codeInsight.completion.InsertHandler;
 import com.intellij.codeInsight.completion.InsertionContext;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.ObjectUtils;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
@@ -64,14 +66,19 @@ public final class LookupElementBuilder extends LookupElement {
   }
 
   public static LookupElementBuilder create(@NotNull PsiNamedElement element) {
+    PsiUtilCore.ensureValid(element);
     return new LookupElementBuilder(ObjectUtils.assertNotNull(element.getName()), element);
   }
 
   public static LookupElementBuilder createWithIcon(@NotNull PsiNamedElement element) {
+    PsiUtilCore.ensureValid(element);
     return create(element).withIcon(element.getIcon(0));
   }
 
   public static LookupElementBuilder create(@NotNull Object lookupObject, @NotNull String lookupString) {
+    if (lookupObject instanceof PsiElement) {
+      PsiUtilCore.ensureValid((PsiElement)lookupObject);
+    }
     return new LookupElementBuilder(lookupString, lookupObject);
   }
 
