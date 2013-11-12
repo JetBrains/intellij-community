@@ -329,7 +329,7 @@ public class PyFormatterTest extends PyTestCase {
 
   public void testWrapInBinaryExpression() {  // PY-9032
     settings().RIGHT_MARGIN = 80;
-    doTest();
+    doTest(true);
   }
 
   public void testSpaceWithinDeclarationParentheses() {  // PY-8818
