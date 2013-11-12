@@ -128,7 +128,7 @@ class Maps {
 class Client {
     void f(Date d) {
         //this call should be OK
-        Maps.asMap(Maps.entry(fieldName(), "Test"),
+        <warning descr="Unchecked generics array creation for varargs parameter">Maps.asMap</warning>(Maps.entry(fieldName(), "Test"),
                    Maps.entry(fieldName(), 1),
                    Maps.entry(fieldName(), d));
     }
