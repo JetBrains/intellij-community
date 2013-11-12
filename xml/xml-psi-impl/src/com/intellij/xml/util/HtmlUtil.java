@@ -423,6 +423,15 @@ public class HtmlUtil {
     return base != null ? base.getAttributeValue("href") : null;
   }
 
+  public static boolean isOwnHtmlAttribute(XmlAttributeDescriptor descriptor) {
+    // common html attributes are defined mostly in common.rnc, core-scripting.rnc, etc
+    // while own tag attributes are defined in meta.rnc
+    final PsiElement declaration = descriptor.getDeclaration();
+    final PsiFile file = declaration != null ? declaration.getContainingFile() : null;
+    final String name = file != null ? file.getName() : null;
+    return "meta.rnc".equals(name);
+  }
+
   private static class TerminateException extends RuntimeException {
     private static final TerminateException INSTANCE = new TerminateException();
   }
