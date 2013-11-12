@@ -20,6 +20,7 @@ import com.intellij.remoteServer.agent.util.log.LogListener;
 /**
  * @author michael.golubev
  */
-public interface CloudGitLoggingHandler extends CloudAgentLoggingHandler, LogListener {
+public interface CloudLoggingHandler extends CloudAgentLoggingHandler {
 
+  LogListener getOrCreateLogListener(String pipeName);
 }
