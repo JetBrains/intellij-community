@@ -1,6 +1,6 @@
 public class Foo {
     void m(boolean x, boolean y, boolean z) {
-        x & y & z.<caret>
+        foo() & y & z.<caret>
         Type t = new Type();
     }
 }

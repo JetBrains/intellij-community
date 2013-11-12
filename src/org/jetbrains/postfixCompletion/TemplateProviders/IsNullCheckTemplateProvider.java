@@ -23,6 +23,9 @@ public class IsNullCheckTemplateProvider extends TemplateProviderBase {
 
     PsiType expressionType = expression.expressionType;
     if (expressionType != null && !context.executionContext.isForceMode) {
+
+      // todo: more complex check
+      // list.contains("abc") | list.isEmpty(). - disable here
       if (expressionType instanceof PsiPrimitiveType) return;
     }
 
