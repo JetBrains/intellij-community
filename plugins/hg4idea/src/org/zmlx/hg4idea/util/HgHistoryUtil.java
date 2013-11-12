@@ -133,7 +133,7 @@ public class HgHistoryUtil {
                                  }
                                  return factory.createShortDetails(factory.createHash(revNumber.getChangeset()), parents,
                                                                    record.getCommitDate().getTime(), root,
-                                                                   revNumber.getSubject(), revNumber.getAuthor(), "");
+                                                                   revNumber.getSubject(), revNumber.getAuthor(), revNumber.getEmail());
                                }
                              });
   }
@@ -151,7 +151,7 @@ public class HgHistoryUtil {
         for (HgRevisionNumber parent : revNumber.getParents()) {
           parents.add(factory.createHash(parent.getChangeset()));
         }
-        userRegistry.consume(factory.createUser(record.getRevision().getAuthor(), ""));
+        userRegistry.consume(factory.createUser(record.getRevision().getAuthor(), revNumber.getEmail()));
         return factory.createTimedCommit(factory.createHash(revNumber.getChangeset()),
                                          parents, record.getCommitDate().getTime());
       }
@@ -188,7 +188,7 @@ public class HgHistoryUtil {
     });
     return factory.createFullDetails(factory.createHash(revNumber.getChangeset()), parents, record.getCommitDate().getTime(), root,
                                      revNumber.getSubject(),
-                                     revNumber.getAuthor(), "", revNumber.getCommitMessage(), record.getCommitterName(),
+                                     revNumber.getAuthor(), revNumber.getEmail(), revNumber.getCommitMessage(), record.getCommitterName(),
                                      "", record.getCommitDate().getTime(),
                                      ContainerUtil.newArrayList(record.getChanges()), HgContentRevisionFactory.getInstance(project));
   }

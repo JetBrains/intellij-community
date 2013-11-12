@@ -75,7 +75,8 @@ public class FileWatcherTest extends PlatformLangTestCase {
   };
   private final Object myWaiter = new Object();
   private int myTimeout = NATIVE_PROCESS_DELAY;
-  private final List<VFileEvent> myEvents = new ArrayList<VFileEvent>();
+  private final List<VFileEvent> myEvents = ContainerUtil.newArrayList();
+  private final List<String> myAcceptedDirectories = ContainerUtil.newArrayList();
 
   @Override
   protected void setUp() throws Exception {
@@ -106,6 +107,9 @@ public class FileWatcherTest extends PlatformLangTestCase {
     });
 
     ((LocalFileSystemImpl)myFileSystem).cleanupForNextTest();
+
+    myAcceptedDirectories.clear();
+    myAcceptedDirectories.add(FileUtil.getTempDirectory());
 
     LOG = FileWatcher.getLog();
     LOG.debug("================== setting up " + getName() + " ==================");
@@ -441,6 +445,7 @@ public class FileWatcherTest extends PlatformLangTestCase {
       File substFile = new File(substDir, file.getName());
       refresh(targetDir);
       refresh(substDir);
+      myAcceptedDirectories.add(substDir.getPath());
 
       LocalFileSystem.WatchRequest request = watch(substDir);
       try {
@@ -760,11 +765,29 @@ public class FileWatcherTest extends PlatformLangTestCase {
     LOG.debug("** waited for " + (System.currentTimeMillis() - start) + " of " + timeout);
     myFileSystem.refresh(false);
 
-    ArrayList<VFileEvent> result;
+    List<VFileEvent> result;
     synchronized (myEvents) {
-      result = new ArrayList<VFileEvent>(myEvents);
+      result = ContainerUtil.newArrayList(myEvents);
       myEvents.clear();
     }
+
+    if (!result.isEmpty()) {
+      nextEvent:
+      for (Iterator<VFileEvent> iterator = result.iterator(); iterator.hasNext(); ) {
+        VFileEvent event = iterator.next();
+        VirtualFile file = event.getFile();
+        if (file != null) {
+          for (String acceptedDirectory : myAcceptedDirectories) {
+            if (FileUtil.isAncestor(acceptedDirectory, file.getPath(), false)) {
+              continue nextEvent;
+            }
+          }
+          LOG.debug("~~ not accepted: " + event);
+          iterator.remove();
+        }
+      }
+    }
+
     LOG.debug("** events: " + result.size());
     return result;
   }

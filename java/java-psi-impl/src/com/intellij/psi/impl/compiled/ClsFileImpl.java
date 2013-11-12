@@ -456,7 +456,7 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub>
       myStub = null;
       if (stubTree != null) {
         //noinspection unchecked
-        ((PsiFileStubImpl)stubTree.getRoot()).setPsi(null);
+        ((PsiFileStubImpl)stubTree.getRoot()).clearPsi("cls onContentReload");
       }
     }
 

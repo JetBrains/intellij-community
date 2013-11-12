@@ -224,6 +224,7 @@ public class HgLogProvider implements VcsLogProvider {
     if (userName == null) {
       userName = System.getenv("HGUSER");
     }
+    //todo need to separate username from email
     return userName == null ? null : myVcsObjectsFactory.createUser(userName, "");
   }
 

@@ -179,7 +179,7 @@ public class StubBasedPsiElementBase<T extends StubElement> extends ASTDelegateP
       ApplicationManager.getApplication().assertReadAccessAllowed();
       synchronized (PsiLock.LOCK) {
         if (myStub != null) {
-          throw new PsiInvalidElementAccessException(this, "no psi for file stub " + stub, null);
+          throw new PsiInvalidElementAccessException(this, "no psi for file stub " + stub + ", invalidation reason=" + ((PsiFileStubImpl<?>) stub).getInvalidationReason(), null);
         }
       }
     }

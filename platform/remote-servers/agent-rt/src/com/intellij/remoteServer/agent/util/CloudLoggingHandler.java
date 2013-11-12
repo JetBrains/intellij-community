@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,18 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.lang.ant.misc;
+package com.intellij.remoteServer.agent.util;
 
-import com.intellij.util.containers.StringInterner;
+import com.intellij.remoteServer.agent.util.log.LogListener;
 
-public class AntStringInterner {
+/**
+ * @author michael.golubev
+ */
+public interface CloudLoggingHandler extends CloudAgentLoggingHandler {
 
-  private static final StringInterner ourInterner = new StringInterner();
-
-  public static String intern(final String str) {
-    return ourInterner.intern(str);
-  }
-
-  private AntStringInterner() {
-  }
+  LogListener getOrCreateLogListener(String pipeName);
 }

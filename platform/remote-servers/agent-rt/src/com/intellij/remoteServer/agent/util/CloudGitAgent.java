@@ -32,5 +32,5 @@ public interface CloudGitAgent<C extends CloudAgentConfigBase, D extends CloudGi
   DeploymentData[] getDeployments();
 
   @ChildCall
-  D createDeployment(String deploymentName, CloudGitLoggingHandler loggingHandler);
+  D createDeployment(String deploymentName, CloudLoggingHandler loggingHandler);
 }

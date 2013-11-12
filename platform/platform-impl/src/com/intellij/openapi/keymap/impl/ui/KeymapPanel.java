@@ -437,7 +437,7 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
 
     group.add(new DumbAwareAction(KeyMapBundle.message("filter.shortcut.action.text"),
                            KeyMapBundle.message("filter.shortcut.action.text"),
-                           AllIcons.Ant.ShortcutFilter) {
+                           AllIcons.Actions.ShortcutFilter) {
       public void actionPerformed(AnActionEvent e) {
         myFilterComponent.reset();
         if (myPopup == null || myPopup.getContent() == null){

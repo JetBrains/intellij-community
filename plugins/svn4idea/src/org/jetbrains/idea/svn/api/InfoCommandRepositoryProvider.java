@@ -15,11 +15,9 @@
  */
 package org.jetbrains.idea.svn.api;
 
-import com.intellij.openapi.diagnostic.Logger;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnVcs;
-import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.wc.SVNInfo;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 
@@ -27,8 +25,6 @@ import org.tmatesoft.svn.core.wc2.SvnTarget;
 * @author Konstantin Kolosovsky.
 */
 public class InfoCommandRepositoryProvider extends BaseRepositoryProvider {
-
-  private static final Logger LOG = Logger.getInstance(InfoCommandRepositoryProvider.class);
 
   public InfoCommandRepositoryProvider(@NotNull SvnVcs vcs, @NotNull SvnTarget target) {
     super(vcs, target);
@@ -45,23 +41,8 @@ public class InfoCommandRepositoryProvider extends BaseRepositoryProvider {
       result = new Repository(myTarget.getURL());
     }
     else {
-      SVNInfo info = getInfo();
+      SVNInfo info = myVcs.getInfo(myTarget.getFile());
       result = info != null ? new Repository(info.getRepositoryRootURL()) : null;
-    }
-
-    return result;
-  }
-
-  @Nullable
-  private SVNInfo getInfo() {
-    SVNInfo result = null;
-
-    try {
-      result = myTarget.isFile() ? myVcs.getInfo(myTarget.getFile()) : myVcs.getInfo(myTarget.getURL(), null);
-    }
-    catch (SVNException e) {
-      // TODO: Update this to more precise handling of exception codes
-      LOG.debug(e);
     }
 
     return result;

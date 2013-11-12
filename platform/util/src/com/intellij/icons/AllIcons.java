@@ -133,6 +133,7 @@ public class AllIcons {
     public static final Icon Search = IconLoader.getIcon("/actions/search.png"); // 16x16
     public static final Icon Selectall = IconLoader.getIcon("/actions/selectall.png"); // 16x16
     public static final Icon Share = IconLoader.getIcon("/actions/share.png"); // 14x14
+    public static final Icon ShortcutFilter = IconLoader.getIcon("/actions/shortcutFilter.png"); // 16x16
     public static final Icon ShowAsTree = IconLoader.getIcon("/actions/showAsTree.png"); // 16x16
     public static final Icon ShowChangesOnly = IconLoader.getIcon("/actions/showChangesOnly.png"); // 16x16
     public static final Icon ShowHiddens = IconLoader.getIcon("/actions/showHiddens.png"); // 16x16
@@ -158,20 +159,6 @@ public class AllIcons {
     public static final Icon Unselectall = IconLoader.getIcon("/actions/unselectall.png"); // 16x16
     public static final Icon Unshare = IconLoader.getIcon("/actions/unshare.png"); // 14x14
     public static final Icon UP = IconLoader.getIcon("/actions/up.png"); // 16x16
-
-  }
-  
-  public static class Ant {
-    public static final Icon AntInstallation = IconLoader.getIcon("/ant/antInstallation.png"); // 16x16
-    public static final Icon Build = IconLoader.getIcon("/ant/build.png"); // 16x16
-    public static final Icon ChangeView = IconLoader.getIcon("/ant/changeView.png"); // 16x16
-    public static final Icon Message = IconLoader.getIcon("/ant/message.png"); // 16x16
-    public static final Icon MetaTarget = IconLoader.getIcon("/ant/metaTarget.png"); // 16x16
-    public static final Icon Properties = IconLoader.getIcon("/ant/properties.png"); // 16x16
-    public static final Icon ShortcutFilter = IconLoader.getIcon("/ant/shortcutFilter.png"); // 16x16
-    public static final Icon Target = IconLoader.getIcon("/ant/target.png"); // 16x16
-    public static final Icon Task = IconLoader.getIcon("/ant/task.png"); // 16x16
-    public static final Icon Verbose = IconLoader.getIcon("/ant/verbose.png"); // 16x16
 
   }
   

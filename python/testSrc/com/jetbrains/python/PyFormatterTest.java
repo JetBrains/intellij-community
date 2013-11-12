@@ -248,7 +248,7 @@ public class PyFormatterTest extends PyTestCase {
       "        desired_response_parameters,\n" +
       "        inverse_filter_length,\n" +
       "        observed_impulse_response):\n" +
-      "#  Extract from here to ...\n" +
+      "    #  Extract from here to ...\n" +
       "    desired_impulse_response = {'dirac, '\n" +
       "    gaussian\n" +
       "    ', logistic_derivative'}\n" +
@@ -329,7 +329,7 @@ public class PyFormatterTest extends PyTestCase {
 
   public void testWrapInBinaryExpression() {  // PY-9032
     settings().RIGHT_MARGIN = 80;
-    doTest();
+    doTest(true);
   }
 
   public void testSpaceWithinDeclarationParentheses() {  // PY-8818
@@ -337,11 +337,24 @@ public class PyFormatterTest extends PyTestCase {
     doTest();
   }
 
-  public void _testWrapBeforeElse() {  // PY-10319
+  public void testWrapBeforeElse() {  // PY-10319
     doTest(true);
   }
 
   public void testSpacesInImportParentheses() {  // PY-11359
+    doTest();
+  }
+
+  public void testWrapImports() {  // PY-9163
+    settings().RIGHT_MARGIN = 80;
+    doTest();
+  }
+
+  public void testCommentAfterBlock() {  // PY-9542
+    doTest();
+  }
+
+  public void testWrapOnDot() {  // PY-6359
     doTest();
   }
 

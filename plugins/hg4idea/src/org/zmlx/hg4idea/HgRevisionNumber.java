@@ -24,6 +24,7 @@ public class HgRevisionNumber implements VcsRevisionNumber {
   private final String changeset;
   private final String commitMessage;
   private final String author;
+  private final String email;
   private final List<HgRevisionNumber> parents;
   private final String mySubject;
 
@@ -58,9 +59,20 @@ public class HgRevisionNumber implements VcsRevisionNumber {
     return new HgRevisionNumber(revision, "", "", "", Collections.<HgRevisionNumber>emptyList());
   }
 
-  public HgRevisionNumber(String revision, String changeset, String author, String commitMessage, List<HgRevisionNumber> parents) {
+  //todo author and email should be split at all
+  private HgRevisionNumber(String revision, String changeset, String author, String commitMessage, List<HgRevisionNumber> parents) {
+    this(revision, changeset, author, "", commitMessage, parents);
+  }
+
+  public HgRevisionNumber(String revision,
+                          String changeset,
+                          String author,
+                          String email,
+                          String commitMessage,
+                          List<HgRevisionNumber> parents) {
     this.commitMessage = commitMessage;
     this.author = author;
+    this.email = email;
     this.parents = parents;
     this.revision = revision.trim();
     this.changeset = changeset.trim();
@@ -172,5 +184,9 @@ public class HgRevisionNumber implements VcsRevisionNumber {
 
   public String getSubject() {
     return mySubject;
+  }
+
+  public String getEmail() {
+    return email;
   }
 }

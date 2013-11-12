@@ -39,12 +39,14 @@ public class HgLogCommand {
 
   private static final Logger LOG = Logger.getInstance(HgLogCommand.class.getName());
   private static final String[] SHORT_TEMPLATE_ITEMS =
-    {"{rev}", "{node}", "{parents}", "{date|isodatesec}", "{author}", "{branch}", "{desc}"};
+    {"{rev}", "{node}", "{parents}", "{date|isodatesec}", "{author|user}", "{author|email}", "{branch}", "{desc}"};
   private static final String[] LONG_TEMPLATE_ITEMS =
-    {"{rev}", "{node}", "{parents}", "{date|isodatesec}", "{author}", "{branch}", "{desc}", "{file_adds}", "{file_mods}",
+    {"{rev}", "{node}", "{parents}", "{date|isodatesec}", "{author|user}", "{author|email}", "{branch}", "{desc}", "{file_adds}",
+      "{file_mods}",
       "{file_dels}", "{join(file_copies,'" + HgChangesetUtil.FILE_SEPARATOR + "')}"};
   private static final String[] LONG_TEMPLATE_FOR_OLD_VERSIONS =
-    {"{rev}", "{node}", "{parents}", "{date|isodatesec}", "{author}", "{branch}", "{desc}", "{file_adds}", "{file_mods}",
+    {"{rev}", "{node}", "{parents}", "{date|isodatesec}", "{author|user}", "{author|email}", "{branch}", "{desc}", "{file_adds}",
+      "{file_mods}",
       "{file_dels}", "{file_copies}"};
   private static final int REVISION_INDEX = 0;
   private static final int CHANGESET_INDEX = 1;
@@ -52,12 +54,13 @@ public class HgLogCommand {
 
   private static final int DATE_INDEX = 3;
   private static final int AUTHOR_INDEX = 4;
-  private static final int BRANCH_INDEX = 5;
-  private static final int MESSAGE_INDEX = 6;
-  private static final int FILES_ADDED_INDEX = 7;
-  private static final int FILES_MODIFIED_INDEX = 8;
-  private static final int FILES_DELETED_INDEX = 9;
-  private static final int FILES_COPIED_INDEX = 10;
+  private static final int AUTHOR_EMAIL_INDEX = 5;
+  private static final int BRANCH_INDEX = 6;
+  private static final int MESSAGE_INDEX = 7;
+  private static final int FILES_ADDED_INDEX = 8;
+  private static final int FILES_MODIFIED_INDEX = 9;
+  private static final int FILES_DELETED_INDEX = 10;
+  private static final int FILES_COPIED_INDEX = 11;
 
   private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss Z");
 
@@ -181,10 +184,11 @@ public class HgLogCommand {
 
         Date revisionDate = DATE_FORMAT.parse(attributes[DATE_INDEX]);
         String author = attributes[AUTHOR_INDEX];
+        String email = attributes[AUTHOR_EMAIL_INDEX];
         String branchName = attributes[BRANCH_INDEX];
         String commitMessage = attributes[MESSAGE_INDEX];
 
-        final HgRevisionNumber vcsRevisionNumber = new HgRevisionNumber(revisionString, changeset, author, commitMessage, parents);
+        final HgRevisionNumber vcsRevisionNumber = new HgRevisionNumber(revisionString, changeset, author, email, commitMessage, parents);
 
         Set<String> filesAdded = Collections.emptySet();
         Set<String> filesModified = Collections.emptySet();
@@ -222,7 +226,8 @@ public class HgLogCommand {
         }
 
         revisions.add(
-          new HgFileRevision(myProject, hgFile, vcsRevisionNumber, branchName, revisionDate, author, commitMessage, filesModified,
+          new HgFileRevision(myProject, hgFile, vcsRevisionNumber, branchName, revisionDate, author + " " + email, commitMessage,
+                             filesModified,
                              filesAdded,
                              filesDeleted, copies));
       }

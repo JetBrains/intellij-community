@@ -71,20 +71,22 @@ public interface WhiteSpaceFormattingStrategy {
    * document symbols sub-sequence if necessary.
    *
    *
+   *
    * @param whiteSpaceText    white space text to use by default for replacing sub-sequence of the given text
    * @param text              target text which region is to be replaced by the given white space symbols
    * @param startOffset       start offset to use with the given text (inclusive)
    * @param endOffset         end offset to use with the given text (exclusive)
    * @param codeStyleSettings the code style settings
+   * @param nodeAfter         the AST node following the whitespace, if known
    * @return                  symbols to use for replacing <code>[startOffset; endOffset)</code> sub-sequence of the given text
    */
   @NotNull
   CharSequence adjustWhiteSpaceIfNecessary(@NotNull CharSequence whiteSpaceText, @NotNull CharSequence text, int startOffset,
-                                           int endOffset, CodeStyleSettings codeStyleSettings);
+                                           int endOffset, CodeStyleSettings codeStyleSettings, ASTNode nodeAfter);
 
             
   /**
-   * PSI-based version of {@link #adjustWhiteSpaceIfNecessary(CharSequence, CharSequence, int, int, com.intellij.psi.codeStyle.CodeStyleSettings)}.
+   * PSI-based version of {@link #adjustWhiteSpaceIfNecessary(CharSequence, CharSequence, int, int, com.intellij.psi.codeStyle.CodeStyleSettings, com.intellij.lang.ASTNode)}.
    * <p/>
    * There is a possible case that particular changes are performed to PSI tree and it's not yet synchronized with the underlying
    * document. Hence, we can't directly work with document char sequence but need to traverse PSI tree instead. I.e. we start with

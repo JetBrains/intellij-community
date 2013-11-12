@@ -35,7 +35,7 @@ public class InferenceIncorporationPhase {
 
   public void incorporate() {
     for (InferenceVariable inferenceVariable : mySession.getInferenceVariables()) {
-      if (inferenceVariable.getInstantiation() != PsiType.NULL || inferenceVariable.isCaptured()) continue;
+      if (inferenceVariable.getInstantiation() != PsiType.NULL) continue;
       final List<PsiType> eqBounds = inferenceVariable.getBounds(InferenceBound.EQ);
       final List<PsiType> upperBounds = inferenceVariable.getBounds(InferenceBound.UPPER);
       final List<PsiType> lowerBounds = inferenceVariable.getBounds(InferenceBound.LOWER);
@@ -88,7 +88,6 @@ public class InferenceIncorporationPhase {
     for (PsiType eqBound : eqBounds) {
       final InferenceVariable inferenceVar = mySession.getInferenceVariable(eqBound);
       if (inferenceVar != null) {
-        if (inferenceVar.isCaptured()) continue;
         //inferenceVar.addBound(inferenceVariable.qType, InferenceVariable.InferenceBound.EQ);
         for (InferenceBound inferenceBound : InferenceBound.values()) {
           for (PsiType bound : inferenceVariable.getBounds(inferenceBound)) {
@@ -122,7 +121,6 @@ public class InferenceIncorporationPhase {
     for (PsiType upperBound : upperBounds) {
       final InferenceVariable inferenceVar = mySession.getInferenceVariable(upperBound);
       if (inferenceVar != null) {
-        if (inferenceVar.isCaptured()) continue;
         //todo inferenceVar.addBound(inferenceVariable.qType, inferenceBound);
         for (PsiType lowerBound : lowerBounds) {
           result |= inferenceVar.addBound(lowerBound, inferenceBound);

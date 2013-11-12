@@ -29,6 +29,7 @@ class FollowingCommentBinder implements WhitespacesAndCommentsBinder {
 
   @Override
   public int getEdgePosition(List<IElementType> tokens, boolean atStreamEdge, TokenTextGetter getter) {
+    if (tokens.size() <= 1) return 0;
     int pos = 0;
     // TODO[yole] handle more cases?
     while (pos < tokens.size() && tokens.get(pos) == PyTokenTypes.LINE_BREAK) {

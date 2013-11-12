@@ -15,13 +15,13 @@
  */
 package com.intellij.lang.ant.config.actions;
 
-import com.intellij.icons.AllIcons;
 import com.intellij.lang.ant.AntBundle;
 import com.intellij.lang.ant.config.explorer.AntExplorer;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonShortcuts;
 import com.intellij.openapi.actionSystem.Presentation;
+import icons.AntIcons;
 
 public final class AntBuildFilePropertiesAction extends AnAction {
   private final AntExplorer myAntExplorer;
@@ -29,7 +29,7 @@ public final class AntBuildFilePropertiesAction extends AnAction {
   public AntBuildFilePropertiesAction(AntExplorer antExplorer) {
     super(AntBundle.message("build.file.properties.action.name"),
           AntBundle.message("build.file.properties.action.description"),
-          AllIcons.Ant.Properties);
+          AntIcons.Properties);
     myAntExplorer = antExplorer;
     registerCustomShortcutSet(CommonShortcuts.ALT_ENTER, myAntExplorer);
   }

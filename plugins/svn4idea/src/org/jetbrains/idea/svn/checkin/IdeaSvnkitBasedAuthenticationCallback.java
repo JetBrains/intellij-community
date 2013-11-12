@@ -19,19 +19,23 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.popup.util.PopupUtil;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.util.ThrowableRunnable;
+import com.intellij.util.WaitForProgressToShow;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.net.HttpConfigurable;
 import com.intellij.util.proxy.CommonProxy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnAuthenticationManager;
+import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnConfiguration;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.commandLine.AuthenticationCallback;
+import org.jetbrains.idea.svn.dialogs.SimpleCredentialsDialog;
 import org.tmatesoft.svn.core.*;
 import org.tmatesoft.svn.core.auth.*;
 import org.tmatesoft.svn.core.internal.util.SVNBase64;
@@ -108,6 +112,51 @@ public class IdeaSvnkitBasedAuthenticationCallback implements AuthenticationCall
     }
 
     return authentication;
+  }
+
+  @Override
+  @Nullable
+  public String requestSshCredentials(@NotNull final String realm,
+                                      @NotNull final SimpleCredentialsDialog.Mode mode,
+                                      @NotNull final String key) {
+    String result;
+
+    Object data = SvnConfiguration.RUNTIME_AUTH_CACHE.getData(ISVNAuthenticationManager.SSH, realm);
+    result = data != null && data instanceof String ? (String)data : requestSshCredentialsFromUser(realm, mode, key);
+
+    return result;
+  }
+
+  private String requestSshCredentialsFromUser(@NotNull final String realm,
+                                               @NotNull final SimpleCredentialsDialog.Mode mode,
+                                               @NotNull final String key) {
+    String result;
+    final Ref<String> answer = new Ref<String>();
+    final Ref<Boolean> save = new Ref<Boolean>();
+
+    Runnable command = new Runnable() {
+      public void run() {
+        SimpleCredentialsDialog dialog = new SimpleCredentialsDialog(myVcs.getProject());
+
+        dialog.setup(mode, realm, key, true);
+        dialog.setTitle(SvnBundle.message("dialog.title.authentication.required"));
+        dialog.show();
+        if (dialog.isOK()) {
+          answer.set(dialog.getPassword());
+          save.set(dialog.isSaveAllowed());
+        }
+      }
+    };
+
+    WaitForProgressToShow.runOrInvokeAndWaitAboveProgress(command);
+
+    result = answer.get();
+
+    if (!save.isNull() && save.get()) {
+      // save user credentials to memory cache
+      myVcs.getSvnConfiguration().acknowledge(ISVNAuthenticationManager.SSH, realm, result);
+    }
+    return result;
   }
 
   @Override
