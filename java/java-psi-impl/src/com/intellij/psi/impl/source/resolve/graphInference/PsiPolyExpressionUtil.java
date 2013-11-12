@@ -59,9 +59,7 @@ public class PsiPolyExpressionUtil {
         }
       }
     } else if (expression instanceof PsiMethodCallExpression) {
-      final PsiLambdaExpression lambdaExpression = PsiTreeUtil.getParentOfType(expression, PsiLambdaExpression.class);
-      final boolean isLambdaReturnStmt = lambdaExpression != null && LambdaUtil.getReturnExpressions(lambdaExpression).contains(expression);
-      return isMethodCallPolyExpression(expression, isLambdaReturnStmt ? null : ((PsiMethodCallExpression)expression).resolveMethod());
+      return isMethodCallPolyExpression(expression, dependsOnLambdaParams(expression) ? null : ((PsiMethodCallExpression)expression).resolveMethod());
     }
     else if (expression instanceof PsiConditionalExpression) {
       final ConditionalKind conditionalKind = isBooleanOrNumeric(expression);
@@ -70,6 +68,33 @@ public class PsiPolyExpressionUtil {
       }
     }
     return false;
+  }
+
+  private static boolean dependsOnLambdaParams(PsiExpression expression) {
+    final PsiLambdaExpression lambdaExpression = PsiTreeUtil.getParentOfType(expression, PsiLambdaExpression.class);
+    boolean isLambdaReturnStmt = lambdaExpression != null && LambdaUtil.getReturnExpressions(lambdaExpression).contains(expression);
+    if (isLambdaReturnStmt) {
+      final boolean [] dependsOnParams = new boolean[] {false};
+      expression.accept(new JavaRecursiveElementWalkingVisitor() {
+        @Override
+        public void visitElement(PsiElement element) {
+          if (dependsOnParams[0]) return;
+          super.visitElement(element);
+        }
+
+        @Override
+        public void visitReferenceExpression(PsiReferenceExpression expression) {
+          if (dependsOnParams[0]) return;
+          super.visitReferenceExpression(expression);
+          final PsiElement resolve = expression.resolve();
+          if (resolve instanceof PsiParameter && ((PsiParameter)resolve).getDeclarationScope() == lambdaExpression) {
+            dependsOnParams[0] = true;
+          }
+        }
+      });
+      isLambdaReturnStmt = dependsOnParams[0];
+    }
+    return isLambdaReturnStmt;
   }
 
   public static boolean isMethodCallPolyExpression(PsiExpression expression, final PsiMethod method) {
