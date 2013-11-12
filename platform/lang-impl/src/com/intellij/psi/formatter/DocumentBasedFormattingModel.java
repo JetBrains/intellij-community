@@ -161,8 +161,8 @@ public class DocumentBasedFormattingModel implements FormattingModelEx {
   }
 
   private int shiftIndentInside(final TextRange elementRange, final int shift) {
-    final StringBuffer buffer = new StringBuffer();
-    StringBuffer afterWhiteSpace = new StringBuffer();
+    final StringBuilder buffer = new StringBuilder();
+    StringBuilder afterWhiteSpace = new StringBuilder();
     int whiteSpaceLength = 0;
     boolean insideWhiteSpace = true;
     int line = 0;
@@ -176,7 +176,7 @@ public class DocumentBasedFormattingModel implements FormattingModelEx {
           buffer.append(afterWhiteSpace.toString());
           insideWhiteSpace = true;
           whiteSpaceLength = 0;
-          afterWhiteSpace = new StringBuffer();
+          afterWhiteSpace = new StringBuilder();
           buffer.append(c);
           line++;
           break;
@@ -210,7 +210,7 @@ public class DocumentBasedFormattingModel implements FormattingModelEx {
     return buffer.length();
   }
 
-  private void createWhiteSpace(final int whiteSpaceLength, StringBuffer buffer) {
+  private void createWhiteSpace(final int whiteSpaceLength, StringBuilder buffer) {
     if (whiteSpaceLength < 0) return;
     final CommonCodeStyleSettings.IndentOptions indentOptions = getIndentOptions();
     if (indentOptions.USE_TAB_CHARACTER) {
