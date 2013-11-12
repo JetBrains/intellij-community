@@ -415,6 +415,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     }
     requestResize();
     refreshUi(false, true);
+    ensureSelectionVisible(true);
   }
 
   public void setStartCompletionWhenNothingMatches(boolean startCompletionWhenNothingMatches) {
@@ -427,6 +428,11 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
 
   public void ensureSelectionVisible(boolean forceTopSelection) {
     if (isSelectionVisible() && !forceTopSelection) {
+      return;
+    }
+
+    if (!forceTopSelection) {
+      ListScrollingUtil.ensureIndexIsVisible(myList, myList.getSelectedIndex(), 1);
       return;
     }
 
@@ -461,6 +467,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     requestResize();
     if (shouldUpdate) {
       refreshUi(false, true);
+      ensureSelectionVisible(true);
     }
 
     return true;
@@ -1311,7 +1318,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
       HintManagerImpl.updateLocation(this, myEditor, rectangle.getLocation());
 
       if (reused || selectionVisible || onExplicitAction) {
-        ensureSelectionVisible(onExplicitAction);
+        ensureSelectionVisible(false);
       }
     }
   }
