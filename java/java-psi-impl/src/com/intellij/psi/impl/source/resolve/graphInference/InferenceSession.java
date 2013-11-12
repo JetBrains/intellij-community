@@ -495,7 +495,7 @@ public class InferenceSession {
             if (lub != null) {
               inferenceVariable.setInstantiation(lub instanceof PsiCapturedWildcardType ? ((PsiCapturedWildcardType)lub).getWildcard() : lub);
             }
-            else if (acceptObject || upperBounds.size() > 1 || !upperBounds.get(0).equalsToText(CommonClassNames.JAVA_LANG_OBJECT)) {
+            else {
               PsiType glb = null;
               if (isThrowable(upperBounds)) {
                 glb = PsiType.getJavaLangRuntimeException(myManager, GlobalSearchScope.allScope(myManager.getProject()));
@@ -512,7 +512,7 @@ public class InferenceSession {
                   }
                 }
               }
-              if (glb != null) {
+              if (glb != null && (acceptObject || !glb.equalsToText(CommonClassNames.JAVA_LANG_OBJECT))) {
                 inferenceVariable.setInstantiation(glb);
               }
             }
