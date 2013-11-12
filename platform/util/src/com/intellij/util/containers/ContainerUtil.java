@@ -94,6 +94,11 @@ public class ContainerUtil extends ContainerUtilRt {
     return new THashMap<K, V>(strategy);
   }
 
+  @NotNull
+  public static <K extends Enum<K>, V> EnumMap<K, V> newEnumMap(@NotNull Class<K> keyType) {
+    return new EnumMap<K, V>(keyType);
+  }
+
   @SuppressWarnings("unchecked")
   @NotNull
   public static <T> TObjectHashingStrategy<T> canonicalStrategy() {

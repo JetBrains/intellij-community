@@ -25,7 +25,6 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.EffectiveLanguageLevelUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
-import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vfs.CharsetToolkit;
@@ -36,37 +35,35 @@ import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.reference.SoftReference;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.hash.HashSet;
-import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.UnsupportedEncodingException;
 import java.lang.ref.Reference;
-import java.util.EnumMap;
 import java.util.Map;
 import java.util.Set;
 
 /**
  * @author max
  */
-public class Java15APIUsageInspection extends BaseJavaBatchLocalInspectionTool {
-  @NonNls public static final String SHORT_NAME = "Since15";
+public class Java15APIUsageInspectionBase extends BaseJavaBatchLocalInspectionTool {
+  public static final String SHORT_NAME = "Since15";
+  public static final ExtensionPointName<FileCheckingInspection> EP_NAME =
+    ExtensionPointName.create(ToolExtensionPoints.JAVA15_INSPECTION_TOOL);
 
-  private static final Map<LanguageLevel, Reference<Set<String>>> ourForbiddenAPI = new EnumMap<LanguageLevel, Reference<Set<String>>>(LanguageLevel.class);
+  private static final String EFFECTIVE_LL = "effectiveLL";
+
+  private static final Map<LanguageLevel, Reference<Set<String>>> ourForbiddenAPI = ContainerUtil.newEnumMap(LanguageLevel.class);
   private static final Set<String> ourIgnored16ClassesAPI = new THashSet<String>(10);
-  private static final Map<LanguageLevel, String> ourPresentableShortMessage = new EnumMap<LanguageLevel, String>(LanguageLevel.class);
-  @NonNls private static final String EFFECTIVE_LL = "effectiveLL";
-
-  private LanguageLevel myEffectiveLanguageLevel = null;
-
+  private static final Map<LanguageLevel, String> ourPresentableShortMessage = ContainerUtil.newEnumMap(LanguageLevel.class);
   static {
     ourPresentableShortMessage.put(LanguageLevel.JDK_1_3, "1.4");
     ourPresentableShortMessage.put(LanguageLevel.JDK_1_4, "1.5");
@@ -81,6 +78,8 @@ public class Java15APIUsageInspection extends BaseJavaBatchLocalInspectionTool {
     ourGenerifiedClasses.add("javax.swing.JComboBox");
     ourGenerifiedClasses.add("javax.swing.ListModel");
   }
+
+  protected LanguageLevel myEffectiveLanguageLevel = null;
 
   @Nullable
   private static Set<String> getForbiddenApi(@NotNull LanguageLevel languageLevel) {
@@ -97,8 +96,8 @@ public class Java15APIUsageInspection extends BaseJavaBatchLocalInspectionTool {
 
   private static void loadForbiddenApi(@NonNls String fileName, Set<String> set) {
     try {
-      final InputStream stream = Java15APIUsageInspection.class.getResourceAsStream(fileName);
-      final BufferedReader reader = new BufferedReader(new InputStreamReader(stream, CharsetToolkit.UTF8_CHARSET));
+      Class<?> aClass = Java15APIUsageInspectionBase.class;
+      BufferedReader reader = new BufferedReader(new InputStreamReader(aClass.getResourceAsStream(fileName), CharsetToolkit.UTF8_CHARSET));
       try {
         do {
           String line = reader.readLine();
@@ -162,75 +161,6 @@ public class Java15APIUsageInspection extends BaseJavaBatchLocalInspectionTool {
   }
 
   @Override
-  public JComponent createOptionsPanel() {
-    final JPanel panel = new JPanel(new VerticalFlowLayout(VerticalFlowLayout.TOP, 0, 5, true, false));
-    panel.add(new JLabel("Forbid API usages:"));
-
-    final JRadioButton projectRb = new JRadioButton("Respecting to project language level settings");
-    panel.add(projectRb);
-    final JRadioButton customRb = new JRadioButton("Higher than:");
-    panel.add(customRb);
-    final ButtonGroup gr = new ButtonGroup();
-    gr.add(projectRb);
-    gr.add(customRb);
-
-    final DefaultComboBoxModel cModel = new DefaultComboBoxModel();
-    for (LanguageLevel level : LanguageLevel.values()) {
-      //noinspection unchecked
-      cModel.addElement(level);
-    }
-
-    @SuppressWarnings("unchecked") final JComboBox llCombo = new JComboBox(cModel) {
-      @Override
-      public void setEnabled(boolean b) {
-        if (b == customRb.isSelected()) {
-          super.setEnabled(b);
-        }
-      }
-    };
-    llCombo.setSelectedItem(myEffectiveLanguageLevel != null ? myEffectiveLanguageLevel : LanguageLevel.JDK_1_3);
-    //noinspection unchecked
-    llCombo.setRenderer(new DefaultListCellRenderer() {
-      @Override
-      public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
-        Component component = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-        if (value instanceof LanguageLevel && component instanceof JLabel) {
-          ((JLabel)component).setText(((LanguageLevel)value).getPresentableText());
-        }
-        return component;
-      }
-    });
-    llCombo.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        myEffectiveLanguageLevel = (LanguageLevel)llCombo.getSelectedItem();
-      }
-    });
-    final JPanel comboPanel = new JPanel(new BorderLayout());
-    comboPanel.setBorder(BorderFactory.createEmptyBorder(0, 20, 0, 0));
-    comboPanel.add(llCombo, BorderLayout.WEST);
-    panel.add(comboPanel);
-
-    final ActionListener actionListener = new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        if (projectRb.isSelected()) {
-          myEffectiveLanguageLevel = null;
-        } else {
-          myEffectiveLanguageLevel = (LanguageLevel)llCombo.getSelectedItem();
-        }
-        UIUtil.setEnabled(comboPanel, !projectRb.isSelected(), true);
-      }
-    };
-    projectRb.addActionListener(actionListener);
-    customRb.addActionListener(actionListener);
-    projectRb.setSelected(myEffectiveLanguageLevel == null);
-    customRb.setSelected(myEffectiveLanguageLevel != null);
-    UIUtil.setEnabled(comboPanel, !projectRb.isSelected(), true);
-    return panel;
-  }
-
-  @Override
   @NotNull
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new MyVisitor(holder, isOnTheFly);
@@ -244,7 +174,6 @@ public class Java15APIUsageInspection extends BaseJavaBatchLocalInspectionTool {
     return ourPresentableShortMessage.get(languageLevel);
   }
 
-  public static final ExtensionPointName<FileCheckingInspection> EP_NAME = ExtensionPointName.create(ToolExtensionPoints.JAVA15_INSPECTION_TOOL);
   private class MyVisitor extends JavaElementVisitor {
     private final ProblemsHolder myHolder;
     private final boolean myOnTheFly;
@@ -298,8 +227,8 @@ public class Java15APIUsageInspection extends BaseJavaBatchLocalInspectionTool {
             if (parameterList != null && parameterList.getTypeParameterElements().length > 0) {
               for (String generifiedClass : ourGenerifiedClasses) {
                 if (InheritanceUtil.isInheritor((PsiClass)resolved, generifiedClass)) {
-                  myHolder.registerProblem(reference, InspectionsBundle.message("inspection.1.7.problem.descriptor",
-                                                                                getJdkName(languageLevel)));
+                  String message = InspectionsBundle.message("inspection.1.7.problem.descriptor", getJdkName(languageLevel));
+                  myHolder.registerProblem(reference, message);
                   break;
                 }
               }
