@@ -45,10 +45,14 @@ public class PyWhiteSpaceFormattingStrategy extends StaticSymbolWhiteSpaceDefini
     CharSequence whiteSpace =  super.adjustWhiteSpaceIfNecessary(whiteSpaceText, startElement, startOffset, endOffset, codeStyleSettings);
     if (whiteSpace.length() > 0 && whiteSpace.charAt(0) == '\n' && !StringUtil.contains(whiteSpace, 0, whiteSpace.length(), '\\') &&
         PythonEnterHandler.needInsertBackslash(startElement.getContainingFile(), startOffset, false)) {
-      PyCodeStyleSettings settings = codeStyleSettings.getCustomSettings(PyCodeStyleSettings.class);
-      return (settings.SPACE_BEFORE_BACKSLASH ? " \\" : "\\") + whiteSpace.toString();
+      return addBackslashPrefix(whiteSpace, codeStyleSettings);
     }
     return whiteSpace;
+  }
+
+  private static String addBackslashPrefix(CharSequence whiteSpace, CodeStyleSettings settings) {
+    PyCodeStyleSettings pySettings = settings.getCustomSettings(PyCodeStyleSettings.class);
+    return (pySettings.SPACE_BEFORE_BACKSLASH ? " \\" : "\\") + whiteSpace.toString();
   }
 
   /**
@@ -78,8 +82,7 @@ public class PyWhiteSpaceFormattingStrategy extends StaticSymbolWhiteSpaceDefini
     if (initialBackSlashes.isEmpty()) {
       if (nodeAfter != null && whiteSpaceText.length() > 0 && whiteSpaceText.charAt(0) == '\n' &&
         PythonEnterHandler.needInsertBackslash(nodeAfter, false)) {
-        PyCodeStyleSettings settings = codeStyleSettings.getCustomSettings(PyCodeStyleSettings.class);
-        return (settings.SPACE_BEFORE_BACKSLASH ? " \\" : "\\") + whiteSpaceText;
+        return addBackslashPrefix(whiteSpaceText, codeStyleSettings);
       }
       return whiteSpaceText;
     }
