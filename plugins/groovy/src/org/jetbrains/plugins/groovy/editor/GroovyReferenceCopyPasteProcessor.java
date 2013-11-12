@@ -22,6 +22,7 @@ import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
@@ -125,9 +126,10 @@ public class GroovyReferenceCopyPasteProcessor extends CopyPasteReferenceProcess
           }
           else {
             LOG.assertTrue(reference instanceof GrReferenceExpression);
-            PsiMethod[] members = refClass.findMethodsByName(refData.staticMemberName, true);
-            if (members.length == 0) return;
-            ((GrReferenceExpression)reference).bindToElementViaStaticImport(members[0]);
+            PsiMember member = findMember(refData, refClass);
+            if (member != null) {
+              ((GrReferenceExpression)reference).bindToElementViaStaticImport(member);
+            }
           }
         }
       }
@@ -137,5 +139,19 @@ public class GroovyReferenceCopyPasteProcessor extends CopyPasteReferenceProcess
     }
   }
 
-  
+
+  @Nullable
+  private static PsiMember findMember(ReferenceData refData, PsiClass refClass) {
+    PsiField field = refClass.findFieldByName(refData.staticMemberName, true);
+    if (field != null) {
+      return field;
+    }
+
+    PsiMethod[] methods = refClass.findMethodsByName(refData.staticMemberName, true);
+    if (methods.length != 0) {
+      return methods[0];
+    }
+
+    return null;
+  }
 }
