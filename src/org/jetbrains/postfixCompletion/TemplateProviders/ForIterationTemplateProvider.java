@@ -13,8 +13,6 @@ import org.jetbrains.postfixCompletion.LookupItems.*;
 
 import java.util.*;
 
-// TODO: int i = 1 + 2.for + 3 + 4 + 5 - why available?
-
 @TemplateProvider(
   templateName = "for",
   description = "Iterates over enumerable collection",
@@ -25,11 +23,17 @@ public class ForIterationTemplateProvider extends TemplateProviderBase {
 
     PrefixExpressionContext expression = context.outerExpression;
 
-    PsiType type = expression.expressionType;
-    if (type != null && !context.executionContext.isForceMode) {
-      // check type to be Iterable-derived or array type
-      if (!(type instanceof PsiArrayType) &&
-          !InheritanceUtil.isInheritor(type, CommonClassNames.JAVA_LANG_ITERABLE)) return;
+    if (!context.executionContext.isForceMode) {
+      PsiType expressionType = expression.expressionType;
+      if (expressionType == null) {
+        // filter out expression of primitive types
+        Boolean isNullable = NotNullCheckTemplateProvider.isNullableExpression(expression);
+        if (isNullable != null && !isNullable) return;
+      } else {
+        // for-statements can take expressions of array or Iterable<T>-derived types
+        if (!(expressionType instanceof PsiArrayType) &&
+          !InheritanceUtil.isInheritor(expressionType, CommonClassNames.JAVA_LANG_ITERABLE)) return;
+      }
     }
 
     consumer.add(new ForeachLookupElement(expression));

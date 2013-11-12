@@ -1,3 +1,4 @@
+// Items: else, if, not, var
 public class Foo {
     boolean m(Object o) {
         if (o instanceof T1) return true;

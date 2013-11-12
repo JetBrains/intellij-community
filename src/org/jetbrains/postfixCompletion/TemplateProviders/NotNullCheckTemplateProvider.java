@@ -14,8 +14,7 @@ import java.util.*;
   example = "if (expr != null)")
 public class NotNullCheckTemplateProvider extends TemplateProviderBase {
   @Override public void createItems(
-    @NotNull PostfixTemplateContext context, @NotNull List<LookupElement> consumer) {
-
+      @NotNull PostfixTemplateContext context, @NotNull List<LookupElement> consumer) {
     PrefixExpressionContext expression = context.outerExpression;
     if (!expression.canBeStatement) return;
 
@@ -51,7 +50,8 @@ public class NotNullCheckTemplateProvider extends TemplateProviderBase {
     if (expression instanceof PsiNewExpression) return false;
 
     if (expression instanceof PsiParenthesizedExpression) {
-      return isNullableExpression(((PsiParenthesizedExpression) expression).getExpression());
+      PsiParenthesizedExpression parenthesized = (PsiParenthesizedExpression) expression;
+      return isNullableExpression(parenthesized.getExpression());
     }
 
     // todo: support ?: expression?

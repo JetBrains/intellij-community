@@ -24,8 +24,6 @@ public class IntroduceVariableTemplateProvider extends TemplateProviderBase {
   @Override public void createItems(
       @NotNull PostfixTemplateContext context, @NotNull List<LookupElement> consumer) {
 
-    // todo: support on expressions
-
     PrefixExpressionContext forcedTarget = null;
     PsiClass invokedOnType = null;
 
@@ -102,7 +100,6 @@ public class IntroduceVariableTemplateProvider extends TemplateProviderBase {
 
     @NotNull @Override protected PsiExpressionStatement createNewStatement(
       @NotNull PsiElementFactory factory, @NotNull PsiExpression expression, @NotNull PsiElement context) {
-
       if (myInvokedOnType) {
         String template = "new " + expression.getText() + "()";
         if (myIsAbstractType) template += "{}";

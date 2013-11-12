@@ -15,13 +15,17 @@ public abstract class BooleanTemplateProviderBase extends TemplateProviderBase {
   @Override public void createItems(
     @NotNull PostfixTemplateContext context, @NotNull List<LookupElement> consumer) {
 
-    for (PrefixExpressionContext expression : context.expressions)
-      if (isBooleanExpression(expression) &&
-          createBooleanItems(expression, consumer)) return;
-
-    if (context.executionContext.isForceMode)
-      for (PrefixExpressionContext expression : context.expressions)
+    for (PrefixExpressionContext expression : context.expressions) {
+      if (isBooleanExpression(expression)) {
         if (createBooleanItems(expression, consumer)) return;
+      }
+    }
+
+    if (context.executionContext.isForceMode) {
+      for (PrefixExpressionContext expression : context.expressions) {
+        if (createBooleanItems(expression, consumer)) return;
+      }
+    }
   }
 
   public static boolean isBooleanExpression(@NotNull PrefixExpressionContext context) {

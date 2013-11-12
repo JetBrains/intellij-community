@@ -11,8 +11,6 @@ import org.jetbrains.postfixCompletion.LookupItems.*;
 
 import java.util.*;
 
-// TODO: disable on types/packages
-
 @TemplateProvider(
   templateName = "not",
   description = "Negates boolean expression",
