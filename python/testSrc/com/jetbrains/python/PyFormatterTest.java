@@ -354,6 +354,10 @@ public class PyFormatterTest extends PyTestCase {
     doTest();
   }
 
+  public void testWrapOnDot() {  // PY-6359
+    doTest();
+  }
+
   private void doTest() {
     doTest(false);
   }
