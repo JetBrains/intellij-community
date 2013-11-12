@@ -29,6 +29,7 @@ import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.VcsLogBranchFilter;
+import com.intellij.vcs.log.data.VcsLogDateFilter;
 import com.intellij.vcs.log.data.VcsLogUserFilter;
 import com.intellij.vcs.log.ui.filter.VcsLogTextFilter;
 import org.jetbrains.annotations.NotNull;
@@ -41,6 +42,7 @@ import org.zmlx.hg4idea.repo.HgRepository;
 import org.zmlx.hg4idea.repo.HgRepositoryManager;
 import org.zmlx.hg4idea.util.HgHistoryUtil;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -181,6 +183,26 @@ public class HgLogProvider implements VcsLogProvider {
         }
       });
       filterParameters.add(prepareParameter("user", authorFilter));
+    }
+
+    List<VcsLogDateFilter> dateFilters = ContainerUtil.findAll(filters, VcsLogDateFilter.class);
+    if (!dateFilters.isEmpty()) {
+      StringBuilder args = new StringBuilder();
+      final SimpleDateFormat dateFormatter = new SimpleDateFormat("yyyy-MM-dd HH:mm");
+      filterParameters.add("-r");
+      VcsLogDateFilter filter = dateFilters.iterator().next();
+      if (filter.getAfter() != null) {
+        args.append("date('>").append(dateFormatter.format(filter.getAfter())).append("')");
+      }
+
+      if (filter.getBefore() != null) {
+        if (args.length() > 0) {
+          args.append(" and ");
+        }
+
+        args.append("date('<").append(dateFormatter.format(filter.getBefore())).append("')");
+      }
+      filterParameters.add(args.toString());
     }
 
     List<VcsLogTextFilter> textFilters = ContainerUtil.findAll(filters, VcsLogTextFilter.class);
