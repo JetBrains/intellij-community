@@ -149,6 +149,8 @@
     relative-to-action CDATA #IMPLIED>
 <!ELEMENT separator EMPTY>
 
+<!ELEMENT abbreviation EMPTY>
+
 <!-- helpset is a name of file from PLUGIN/help/ folder
   Example: <helpset file="myhelp.jar" path="/Help.hs"/>
  -->

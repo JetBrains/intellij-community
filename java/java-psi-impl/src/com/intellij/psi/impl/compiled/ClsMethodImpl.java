@@ -338,11 +338,6 @@ public class ClsMethodImpl extends ClsMemberImpl<PsiMethodStub> implements PsiAn
   }
 
   @Override
-  public PsiType getReturnTypeNoResolve() {
-    return getReturnType();
-  }
-
-  @Override
   protected boolean isVisibilitySupported() {
     return true;
   }

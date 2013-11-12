@@ -538,10 +538,6 @@ public abstract class GrMethodBaseImpl extends GrStubElementBase<GrMethodStub> i
     return visitor.getResult();
   }
 
-  public PsiType getReturnTypeNoResolve() {
-    return getReturnType();
-  }
-
   @Override
   public boolean isEquivalentTo(PsiElement another) {
     return PsiClassImplUtil.isMethodEquivalentTo(this, another);

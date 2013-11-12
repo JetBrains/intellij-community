@@ -109,10 +109,9 @@ public class ProcessCandidateParameterTypeInferencePolicy extends DefaultParamet
             return substitutor.substitute(finalParameter.getType());
           }
         });
-        PsiResolveHelperImpl resolveHelper = (PsiResolveHelperImpl)JavaPsiFacade.getInstance(method.getProject()).getResolveHelper();
         final LanguageLevel languageLevel = PsiUtil.getLanguageLevel(finalParameter);
         final Pair<PsiType, ConstraintType> constraint =
-          ((PsiOldInferenceHelper)resolveHelper.getInferenceHelper(languageLevel)).getSubstitutionForTypeParameterConstraint(typeParameter, innerReturnType, type, false, languageLevel);
+          new PsiOldInferenceHelper(element.getManager()).getSubstitutionForTypeParameterConstraint(typeParameter, innerReturnType, type, false, languageLevel);
         if (constraint != null) return constraint;
       }
     }

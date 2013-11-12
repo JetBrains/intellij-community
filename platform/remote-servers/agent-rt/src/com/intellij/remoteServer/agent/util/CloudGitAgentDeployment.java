@@ -25,8 +25,4 @@ public interface CloudGitAgentDeployment {
   CloudGitApplication findApplication();
 
   void deleteApplication();
-
-  void startOrContinueListeningLog();
-
-  void stopListeningLog();
 }

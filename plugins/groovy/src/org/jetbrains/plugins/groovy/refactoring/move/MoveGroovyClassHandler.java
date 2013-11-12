@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -123,7 +123,7 @@ public class MoveGroovyClassHandler implements MoveClassHandler {
         correctSelfReferences(aClass, newPackage);
 
         final PsiFile fromTemplate =
-          GroovyTemplatesFactory.createFromTemplate(moveDestination, aClass.getName(), aClass.getName() + NewGroovyActionBase.GROOVY_EXTENSION, GroovyTemplates.GROOVY_CLASS);
+          GroovyTemplatesFactory.createFromTemplate(moveDestination, aClass.getName(), aClass.getName() + NewGroovyActionBase.GROOVY_EXTENSION, GroovyTemplates.GROOVY_CLASS, true);
         final PsiClass created = ((GroovyFile)fromTemplate).getClasses()[0];
         PsiDocComment docComment = aClass.getDocComment();
         if (docComment != null) {

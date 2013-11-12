@@ -366,10 +366,18 @@ public abstract class BaseRefactoringProcessor implements Runnable {
     nonCodeFiles.remove(null);
     dynamicUsagesCodeFiles.remove(null);
 
-    presentation.setCodeUsagesString(descriptor.getCodeReferencesText(codeUsageCount, codeFiles.size()));
+    String codeReferencesText = descriptor.getCodeReferencesText(codeUsageCount, codeFiles.size());
+    presentation.setCodeUsagesString(codeReferencesText);
     presentation.setNonCodeUsagesString(descriptor.getCommentReferencesText(nonCodeUsageCount, nonCodeFiles.size()));
     presentation.setDynamicUsagesString("Dynamic " + StringUtil.decapitalize(descriptor.getCodeReferencesText(dynamicUsagesCount, dynamicUsagesCodeFiles.size())));
-    presentation.setUsagesInGeneratedCodeString(descriptor.getCodeReferencesText(codeUsageCount, codeFiles.size()) + " in generated code");
+    String generatedCodeString;
+    if (codeReferencesText.contains("in code")) {
+      generatedCodeString = StringUtil.replace(codeReferencesText, "in code", "in generated code");
+    }
+    else {
+      generatedCodeString = codeReferencesText + " in generated code";
+    }
+    presentation.setUsagesInGeneratedCodeString(generatedCodeString);
     return presentation;
   }
 

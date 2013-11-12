@@ -49,4 +49,6 @@ public interface VcsRef {
   @NotNull
   VirtualFile getRoot();
 
+  // TODO this is to be removed: temporary method to simplify Hash->int transition in Graph
+  int getCommitIndex();
 }

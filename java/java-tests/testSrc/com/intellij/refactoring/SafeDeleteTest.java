@@ -10,9 +10,11 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.safeDelete.SafeDeleteHandler;
-import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.testFramework.PsiTestUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.jps.model.java.JavaSourceRootType;
+import org.jetbrains.jps.model.java.JpsJavaExtensionService;
 
 import java.io.File;
 
@@ -135,8 +137,7 @@ public class SafeDeleteTest extends MultiFileTestCase {
     }
     catch (BaseRefactoringProcessor.ConflictsInTestsException e) {
       String message = e.getMessage();
-      assertTrue(message, message.equals("method <b><code>Super.foo()</code></b> has 1 usage that is not safe to delete.\n" +
-                                         "Of those 0 usages are in strings, comments, or non-code files."));
+      assertEquals("method <b><code>Super.foo()</code></b> has 1 usage that is not safe to delete.", message);
     }
   }
 
@@ -157,9 +158,13 @@ public class SafeDeleteTest extends MultiFileTestCase {
     }
     catch (BaseRefactoringProcessor.ConflictsInTestsException e) {
       String message = e.getMessage();
-      assertTrue(message, message.startsWith("local variable <b><code>varName</code></b> has 1 usage that is not safe to delete.\n" +
-                                             "Of those 0 usages are in strings, comments, or non-code files."));
+      assertEquals("local variable <b><code>varName</code></b> has 1 usage that is not safe to delete.", message);
     }
+  }
+
+  public void testUsageInGenerated() throws Exception {
+    myDoCompare = false;
+    doTest("A");
   }
 
   public void testLastResourceVariable() throws Exception {
@@ -194,6 +199,22 @@ public class SafeDeleteTest extends MultiFileTestCase {
         PlatformTestUtil.assertDirectoriesEqual(rootAfter, myRootBefore);
       }
     });
+  }
+
+  @Override
+  protected void prepareProject(VirtualFile rootDir) {
+    VirtualFile src = rootDir.findChild("src");
+    if (src == null) {
+      super.prepareProject(rootDir);
+    }
+    else {
+      PsiTestUtil.addContentRoot(myModule, rootDir);
+      PsiTestUtil.addSourceRoot(myModule, src);
+    }
+    VirtualFile gen = rootDir.findChild("gen");
+    if (gen != null) {
+      PsiTestUtil.addSourceRoot(myModule, gen, JavaSourceRootType.SOURCE, JpsJavaExtensionService.getInstance().createSourceRootProperties("", true));
+    }
   }
 
   private void doSingleFileTest() throws Exception {

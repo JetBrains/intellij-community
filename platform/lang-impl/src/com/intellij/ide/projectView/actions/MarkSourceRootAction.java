@@ -16,6 +16,7 @@
 package com.intellij.ide.projectView.actions;
 
 import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.SourceFolder;
@@ -44,12 +45,12 @@ public class MarkSourceRootAction extends MarkRootActionBase {
   }
 
   @Override
-  protected boolean isEnabled(@NotNull RootsSelection selection) {
+  protected boolean isEnabled(@NotNull RootsSelection selection, @NotNull Module module) {
     if (selection.myHaveSelectedFilesUnderSourceRoots) {
       return false;
     }
 
-    if (!selection.mySelectedFiles.isEmpty()) {
+    if (!selection.mySelectedDirectories.isEmpty()) {
       return true;
     }
 

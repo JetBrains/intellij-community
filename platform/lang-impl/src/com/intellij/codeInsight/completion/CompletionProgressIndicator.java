@@ -355,7 +355,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     myLookup.refreshUi(true, justShown);
     hideAutopopupIfMeaningless();
     if (justShown) {
-      myLookup.ensureSelectionVisible();
+      myLookup.ensureSelectionVisible(true);
     }
     return true;
   }

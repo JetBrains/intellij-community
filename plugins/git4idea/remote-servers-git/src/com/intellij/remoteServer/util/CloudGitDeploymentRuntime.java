@@ -191,8 +191,6 @@ public abstract class CloudGitDeploymentRuntime<DC extends CloudDeploymentNameCo
     repository.update();
 
     pushApplication(getRemoteName(), application.getGitUrl());
-
-    myDeployment.startOrContinueListeningLog();
   }
 
   @Override
@@ -224,7 +222,6 @@ public abstract class CloudGitDeploymentRuntime<DC extends CloudDeploymentNameCo
         return null;
       }
     });
-    myDeployment.stopListeningLog();
   }
 
   public boolean isDeployed() throws ServerRuntimeException {

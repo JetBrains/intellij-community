@@ -529,12 +529,69 @@ mGSTRING_LITERAL = \"\"
 
 <IN_REGEX_DOLLAR> {
 
+  "package"                               {  return( kPACKAGE );  }
+  "strictfp"                              {  return( kSTRICTFP );  }
+  "import"                                {  return( kIMPORT );  }
+  "static"                                {  return( kSTATIC );  }
+  "def"                                   {  return( kDEF );  }
+  "class"                                 {  return( kCLASS );  }
+  "interface"                             {  return( kINTERFACE );  }
+  "enum"                                  {  return( kENUM );  }
+  "extends"                               {  return( kEXTENDS );  }
+  "super"                                 {  return( kSUPER );  }
+  "void"                                  {  return( kVOID );  }
+  "boolean"                               {  return( kBOOLEAN );  }
+  "byte"                                  {  return( kBYTE );  }
+  "char"                                  {  return( kCHAR );  }
+  "short"                                 {  return( kSHORT );  }
+  "int"                                   {  return( kINT );  }
+  "float"                                 {  return( kFLOAT );  }
+  "long"                                  {  return( kLONG );  }
+  "double"                                {  return( kDOUBLE );  }
+  "as"                                    {  return( kAS );  }
+  "private"                               {  return( kPRIVATE );  }
+  "abstract"                              {  return( kABSTRACT );  }
+  "public"                                {  return( kPUBLIC );  }
+  "protected"                             {  return( kPROTECTED );  }
+  "transient"                             {  return( kTRANSIENT );  }
+  "native"                                {  return( kNATIVE );  }
+  "synchronized"                          {  return( kSYNCHRONIZED );  }
+  "volatile"                              {  return( kVOLATILE );  }
+  "default"                               {  return( kDEFAULT );  }
+  "do"                                    {  return( kDO );  }
+  "throws"                                {  return( kTHROWS );  }
+  "implements"                            {  return( kIMPLEMENTS );  }
+  "this"                                  {  return( kTHIS );  }
+  "if"                                    {  return( kIF );  }
+  "else"                                  {  return( kELSE );  }
+  "while"                                 {  return( kWHILE );  }
+  "switch"                                {  return( kSWITCH );  }
+  "for"                                   {  return( kFOR );  }
+  "in"                                    {  return( kIN );  }
+  "return"                                {  return( kRETURN );  }
+  "break"                                 {  return( kBREAK );  }
+  "continue"                              {  return( kCONTINUE );  }
+  "throw"                                 {  return( kTHROW );  }
+  "assert"                                {  return( kASSERT );  }
+  "case"                                  {  return( kCASE );  }
+  "try"                                   {  return( kTRY );  }
+  "finally"                               {  return( kFINALLY );  }
+  "catch"                                 {  return( kCATCH );  }
+  "instanceof"                            {  return( kINSTANCEOF );  }
+  "new"                                   {  return( kNEW );  }
+  "true"                                  {  return( kTRUE );  }
+  "false"                                 {  return( kFALSE );  }
+  "null"                                  {  return( kNULL );  }
+  "final"                                 {  return( kFINAL );  }
+
   {mIDENT_NOBUCKS}                        {  yybegin(IN_REGEX_DOT);
                                              return mIDENT; }
   "{"                                     {  blockStack.push(mDIV);
                                              braceCount.push(mLCURLY);
                                              yybegin(NLS_AFTER_LBRACE);
                                              return mLCURLY; }
+  [^]                                     {  yypushback(1);
+                                             yybegin(IN_REGEX); }
 }
 
 <IN_REGEX_DOT>{
@@ -575,12 +632,70 @@ mGSTRING_LITERAL = \"\"
 
 <IN_DOLLAR_SLASH_REGEX_DOLLAR> {
 
+  "package"                               {  return( kPACKAGE );  }
+  "strictfp"                              {  return( kSTRICTFP );  }
+  "import"                                {  return( kIMPORT );  }
+  "static"                                {  return( kSTATIC );  }
+  "def"                                   {  return( kDEF );  }
+  "class"                                 {  return( kCLASS );  }
+  "interface"                             {  return( kINTERFACE );  }
+  "enum"                                  {  return( kENUM );  }
+  "extends"                               {  return( kEXTENDS );  }
+  "super"                                 {  return( kSUPER );  }
+  "void"                                  {  return( kVOID );  }
+  "boolean"                               {  return( kBOOLEAN );  }
+  "byte"                                  {  return( kBYTE );  }
+  "char"                                  {  return( kCHAR );  }
+  "short"                                 {  return( kSHORT );  }
+  "int"                                   {  return( kINT );  }
+  "float"                                 {  return( kFLOAT );  }
+  "long"                                  {  return( kLONG );  }
+  "double"                                {  return( kDOUBLE );  }
+  "as"                                    {  return( kAS );  }
+  "private"                               {  return( kPRIVATE );  }
+  "abstract"                              {  return( kABSTRACT );  }
+  "public"                                {  return( kPUBLIC );  }
+  "protected"                             {  return( kPROTECTED );  }
+  "transient"                             {  return( kTRANSIENT );  }
+  "native"                                {  return( kNATIVE );  }
+  "synchronized"                          {  return( kSYNCHRONIZED );  }
+  "volatile"                              {  return( kVOLATILE );  }
+  "default"                               {  return( kDEFAULT );  }
+  "do"                                    {  return( kDO );  }
+  "throws"                                {  return( kTHROWS );  }
+  "implements"                            {  return( kIMPLEMENTS );  }
+  "this"                                  {  return( kTHIS );  }
+  "if"                                    {  return( kIF );  }
+  "else"                                  {  return( kELSE );  }
+  "while"                                 {  return( kWHILE );  }
+  "switch"                                {  return( kSWITCH );  }
+  "for"                                   {  return( kFOR );  }
+  "in"                                    {  return( kIN );  }
+  "return"                                {  return( kRETURN );  }
+  "break"                                 {  return( kBREAK );  }
+  "continue"                              {  return( kCONTINUE );  }
+  "throw"                                 {  return( kTHROW );  }
+  "assert"                                {  return( kASSERT );  }
+  "case"                                  {  return( kCASE );  }
+  "try"                                   {  return( kTRY );  }
+  "finally"                               {  return( kFINALLY );  }
+  "catch"                                 {  return( kCATCH );  }
+  "instanceof"                            {  return( kINSTANCEOF );  }
+  "new"                                   {  return( kNEW );  }
+  "true"                                  {  return( kTRUE );  }
+  "false"                                 {  return( kFALSE );  }
+  "null"                                  {  return( kNULL );  }
+  "final"                                 {  return( kFINAL );  }
+
   {mIDENT_NOBUCKS}                        {  yybegin(IN_DOLLAR_SLASH_REGEX_DOT);
                                              return mIDENT; }
   "{"                                     {  blockStack.push(mDOLLAR);
                                              braceCount.push(mLCURLY);
                                              yybegin(NLS_AFTER_LBRACE);
                                              return mLCURLY; }
+
+[^]                                     {  yypushback(1);
+                                           yybegin(IN_DOLLAR_SLASH_REGEX); }
 }
 
 <IN_DOLLAR_SLASH_REGEX_DOT>{

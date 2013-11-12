@@ -200,7 +200,4 @@ public interface PsiMethod extends PsiMember, PsiNameIdentifierOwner, PsiModifie
 
   @NotNull
   HierarchicalMethodSignature getHierarchicalMethodSignature();
-
-  /** @deprecated use {@link #getReturnType()} (to remove in IDEA 13) */
-  PsiType getReturnTypeNoResolve();
 }

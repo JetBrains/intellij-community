@@ -71,7 +71,7 @@ public class GroovyTestGenerator implements TestGenerator {
                 d.getClassName(),
                 PsiManager.getInstance(project),
                 null,
-                GroovyTemplates.GROOVY_CLASS);
+                GroovyTemplates.GROOVY_CLASS, true);
               if (targetClass == null) return null;
 
               addSuperClass(targetClass, project, d.getSuperClassName());

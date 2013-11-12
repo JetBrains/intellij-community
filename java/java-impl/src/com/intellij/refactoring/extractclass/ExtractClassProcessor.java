@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -770,7 +770,7 @@ public class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
     final PsiManager manager = aClass.getManager();
     final GlobalSearchScope scope = GlobalSearchScope.allScope(project);
     final PsiClass cloneable = JavaPsiFacade.getInstance(manager.getProject()).findClass("java.lang.Cloneable", scope);
-    if (!InheritanceUtil.isCorrectDescendant(aClass, cloneable, true)) {
+    if (!InheritanceUtil.isInheritorOrSelf(aClass, cloneable, true)) {
       return false;
     }
     final PsiMethod[] methods = aClass.findMethodsByName("clone", false);
@@ -789,7 +789,7 @@ public class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
     final PsiManager manager = aClass.getManager();
     final GlobalSearchScope scope = GlobalSearchScope.allScope(project);
     final PsiClass serializable = JavaPsiFacade.getInstance(manager.getProject()).findClass("java.io.Serializable", scope);
-    if (!InheritanceUtil.isCorrectDescendant(aClass, serializable, true)) {
+    if (!InheritanceUtil.isInheritorOrSelf(aClass, serializable, true)) {
       return false;
     }
     final PsiMethod[] methods = aClass.findMethodsByName("writeObject", false);

@@ -94,6 +94,11 @@ public class ContainerUtil extends ContainerUtilRt {
     return new THashMap<K, V>(strategy);
   }
 
+  @NotNull
+  public static <K extends Enum<K>, V> EnumMap<K, V> newEnumMap(@NotNull Class<K> keyType) {
+    return new EnumMap<K, V>(keyType);
+  }
+
   @SuppressWarnings("unchecked")
   @NotNull
   public static <T> TObjectHashingStrategy<T> canonicalStrategy() {
@@ -599,28 +604,6 @@ public class ContainerUtil extends ContainerUtilRt {
       map.put(keyConvertor.convert(value), value);
     }
     return map;
-  }
-
-  /** @deprecated use {@linkplain #newMapFromValues(java.util.Iterator, Convertor)} (to remove in IDEA 13) */
-  @NotNull
-  public static <K, V> com.intellij.util.containers.HashMap<K, V> assignKeys(@NotNull Iterator<V> iterator, @NotNull Convertor<V, K> keyConvertor) {
-    com.intellij.util.containers.HashMap<K, V> hashMap = new com.intellij.util.containers.HashMap<K, V>();
-    while (iterator.hasNext()) {
-      V value = iterator.next();
-      hashMap.put(keyConvertor.convert(value), value);
-    }
-    return hashMap;
-  }
-
-  /** @deprecated use {@linkplain #newMapFromKeys(java.util.Iterator, Convertor)} (to remove in IDEA 13) */
-  @NotNull
-  public static <K, V> com.intellij.util.containers.HashMap<K, V> assignValues(@NotNull Iterator<K> iterator, @NotNull Convertor<K, V> valueConvertor) {
-    com.intellij.util.containers.HashMap<K, V> hashMap = new com.intellij.util.containers.HashMap<K, V>();
-    while (iterator.hasNext()) {
-      K key = iterator.next();
-      hashMap.put(key, valueConvertor.convert(key));
-    }
-    return hashMap;
   }
 
   @NotNull

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -106,11 +106,6 @@ public interface Project extends ComponentManager, AreaInstance {
   @NotNull
   @NonNls
   String getLocationHash();
-
-  /** @deprecated please use {@linkplain #getPresentableUrl()} or {@linkplain #getBasePath()} (to remove in IDEA 13) */
-  @Nullable
-  @NonNls
-  String getLocation();
 
   /**
    * Should be invoked under WriteAction.

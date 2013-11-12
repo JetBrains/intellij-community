@@ -2,7 +2,6 @@ package com.intellij.vcs.log.data;
 
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.VcsRef;
 import org.jetbrains.annotations.NotNull;
 
@@ -10,16 +9,16 @@ import java.util.Collection;
 
 public class VcsLogBranchFilter implements VcsLogGraphFilter {
 
-  @NotNull private final Collection<Hash> myMatchingHeads;
+  @NotNull private final Collection<Integer> myMatchingHeads;
   @NotNull private final String myBranchName;
 
   public VcsLogBranchFilter(@NotNull Collection<VcsRef> allRefs, @NotNull final String selectedBranchName) {
     myBranchName = selectedBranchName;
-    myMatchingHeads = ContainerUtil.mapNotNull(allRefs, new Function<VcsRef, Hash>() {
+    myMatchingHeads = ContainerUtil.mapNotNull(allRefs, new Function<VcsRef, Integer>() {
       @Override
-      public Hash fun(VcsRef ref) {
+      public Integer fun(VcsRef ref) {
         if (ref.getName().equals(selectedBranchName)) {
-          return ref.getCommitHash();
+          return ref.getCommitIndex();
         }
         return null;
       }
@@ -27,7 +26,7 @@ public class VcsLogBranchFilter implements VcsLogGraphFilter {
   }
 
   @Override
-  public boolean matches(@NotNull Hash hash) {
+  public boolean matches(int hash) {
     return myMatchingHeads.contains(hash);
   }
 

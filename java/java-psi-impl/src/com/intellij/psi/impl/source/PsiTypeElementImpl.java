@@ -184,11 +184,6 @@ public class PsiTypeElementImpl extends CompositePsiElement implements PsiTypeEl
   }
 
   @Override
-  public PsiType getTypeNoResolve(@NotNull PsiElement context) {
-    return getType();
-  }
-
-  @Override
   public PsiJavaCodeReferenceElement getInnermostComponentReferenceElement() {
     TreeElement firstChildNode = getFirstChildNode();
     if (firstChildNode == null) return null;
@@ -198,11 +193,6 @@ public class PsiTypeElementImpl extends CompositePsiElement implements PsiTypeEl
     else {
       return getReferenceElement();
     }
-  }
-
-  @Override
-  public PsiAnnotationOwner getOwner(@NotNull PsiAnnotation annotation) {
-    return this;
   }
 
   @Nullable

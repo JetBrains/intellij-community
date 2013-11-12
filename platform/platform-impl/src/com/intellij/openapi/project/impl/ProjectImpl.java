@@ -280,15 +280,6 @@ public class ProjectImpl extends ComponentManagerImpl implements ProjectEx {
     return prefix + Integer.toHexString(str.hashCode());
   }
 
-  @SuppressWarnings("deprecation")
-  @Nullable
-  @NonNls
-  @Override
-  public String getLocation() {
-    if (myName == null) return null; // was called before initialized
-    return isDisposed() ? null : getStateStore().getLocation();
-  }
-
   @Override
   @Nullable
   public VirtualFile getWorkspaceFile() {

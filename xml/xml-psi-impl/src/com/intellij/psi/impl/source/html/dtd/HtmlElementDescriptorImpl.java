@@ -95,8 +95,8 @@ public class HtmlElementDescriptorImpl extends BaseXmlElementDescriptorImpl {
   }
 
   public XmlAttributeDescriptor getAttributeDescriptor(String attributeName, final XmlTag context) {
-    if (!myCaseSensitive) attributeName = attributeName.toLowerCase();
-    XmlAttributeDescriptor descriptor = super.getAttributeDescriptor(attributeName, context);
+    String caseSensitiveAttributeName =  !myCaseSensitive ? attributeName.toLowerCase() : attributeName;
+    XmlAttributeDescriptor descriptor = super.getAttributeDescriptor(caseSensitiveAttributeName, context);
     if (descriptor == null) descriptor = RelaxedHtmlFromSchemaElementDescriptor.getAttributeDescriptorFromFacelets(attributeName, context);
     
     if (descriptor == null) {
@@ -106,7 +106,7 @@ public class HtmlElementDescriptorImpl extends BaseXmlElementDescriptorImpl {
         XmlNSDescriptor nsdescriptor = context.getNSDescriptor(XmlUtil.XML_NAMESPACE_URI, true);
         if (nsdescriptor instanceof XmlNSDescriptorImpl) {
           descriptor = ((XmlNSDescriptorImpl)nsdescriptor).getAttribute(
-            XmlUtil.findLocalNameByQualifiedName(attributeName), XmlUtil.XML_NAMESPACE_URI, context);
+            XmlUtil.findLocalNameByQualifiedName(caseSensitiveAttributeName), XmlUtil.XML_NAMESPACE_URI, context);
         }
       }
     }

@@ -89,7 +89,4 @@ public interface PsiVariable extends PsiModifierListOwner, PsiNameIdentifierOwne
 
   @Override
   PsiElement setName(@NonNls @NotNull String name) throws IncorrectOperationException;
-
-  /** @deprecated use {@link #getType()} (to remove in IDEA 13) */
-  PsiType getTypeNoResolve();
 }

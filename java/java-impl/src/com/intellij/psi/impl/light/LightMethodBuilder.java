@@ -391,12 +391,6 @@ public class LightMethodBuilder extends LightElement implements PsiMethod, Origi
   }
 
   @Override
-  @Nullable
-  public PsiType getReturnTypeNoResolve() {
-    return getReturnType();
-  }
-
-  @Override
   public boolean equals(Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;

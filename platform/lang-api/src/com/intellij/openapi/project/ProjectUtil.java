@@ -25,7 +25,6 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFilePathWrapper;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -35,9 +34,6 @@ import javax.swing.*;
  * @author max
  */
 public class ProjectUtil {
-  /** @deprecated use {@linkplain Project#DIRECTORY_STORE_FOLDER} (to remove in IDEA 13) */
-  @SuppressWarnings("UnusedDeclaration") @NonNls public static final String DIRECTORY_BASED_PROJECT_DIR = Project.DIRECTORY_STORE_FOLDER;
-
   private ProjectUtil() { }
 
   @Nullable

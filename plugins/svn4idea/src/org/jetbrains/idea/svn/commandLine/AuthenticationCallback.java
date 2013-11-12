@@ -17,6 +17,7 @@ package org.jetbrains.idea.svn.commandLine;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.svn.dialogs.SimpleCredentialsDialog;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.auth.SVNAuthentication;
 
@@ -69,6 +70,11 @@ public interface AuthenticationCallback {
    */
   @Nullable
   File getSpecialConfigDir();
+
+  @Nullable
+  String requestSshCredentials(@NotNull String realm,
+                               @NotNull SimpleCredentialsDialog.Mode mode,
+                               @NotNull String key);
 
   /**
    * Ask user or read from memory storage whether server certificate should be accepted

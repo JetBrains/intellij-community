@@ -853,6 +853,13 @@ public class StringUtil extends StringUtilRt {
   }
 
   @NotNull
+  public static String trimLeading(@NotNull String string, char symbol) {
+    int index = 0;
+    while (index < string.length() && string.charAt(index) == symbol) index++;
+    return string.substring(index);
+  }
+
+  @NotNull
   public static String trimTrailing(@NotNull String string) {
     int index = string.length() - 1;
     while (index >= 0 && Character.isWhitespace(string.charAt(index))) index--;
@@ -2060,12 +2067,6 @@ public class StringUtil extends StringUtilRt {
       }
       return 0;
     }
-  }
-
-  @SuppressWarnings("UnusedDeclaration")
-  /** @deprecated use {@linkplain #getOccurrenceCount(String, char)} (to remove in IDEA 13) */
-  public static int getOccurenceCount(@NotNull String text, final char c) {
-    return getOccurrenceCount(text, c);
   }
 
   public static int getOccurrenceCount(@NotNull String text, final char c) {

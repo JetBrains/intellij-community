@@ -105,7 +105,7 @@ public class VcsLogFilterer {
             return !ContainerUtil.exists(onGraphFilters, new Condition<VcsLogGraphFilter>() {
               @Override
               public boolean value(VcsLogGraphFilter filter) {
-                return !filter.matches(node.getCommitHash());
+                return !filter.matches(node.getCommitIndex());
               }
             });
           }
@@ -124,7 +124,7 @@ public class VcsLogFilterer {
             return !filter.matches(details);
           }
         });
-        return graphModel.isNodeOfHashVisible(details.getHash()) && allFilterMatch;
+        return graphModel.isNodeOfHashVisible(myLogDataHolder.putHash(details.getHash())) && allFilterMatch;
       }
     });
   }

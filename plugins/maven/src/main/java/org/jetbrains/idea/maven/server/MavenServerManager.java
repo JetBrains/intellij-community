@@ -25,6 +25,7 @@ import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.rmi.RemoteProcessSupport;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.project.Project;
@@ -79,7 +80,7 @@ public class MavenServerManager extends RemoteObjectWrapper<MavenServer> impleme
 
   private final Alarm myShutdownAlarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
 
-  private boolean useMaven2 = true;
+  private boolean useMaven2 = false;
   private String mavenEmbedderVMOptions = DEFAULT_VM_OPTIONS;
   private String embedderJdk = MavenRunnerSettings.USE_INTERNAL_JAVA;
 
@@ -294,19 +295,24 @@ public class MavenServerManager extends RemoteObjectWrapper<MavenServer> impleme
     return new File(pluginFileOrDir.getParentFile(), "maven3");
   }
 
-  public static List<File> collectClassPathAndLibsFolder() {
+  public List<File> collectClassPathAndLibsFolder() {
     File pluginFileOrDir = new File(PathUtil.getJarPathForClass(MavenServerManager.class));
 
     List<File> classpath = new ArrayList<File>();
 
     String root = pluginFileOrDir.getParent();
 
+    boolean useMaven2 = this.useMaven2;
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      useMaven2 = true;
+    }
+
     if (pluginFileOrDir.isDirectory()) {
       classpath.add(new File(root, "maven-server-api"));
 
       File luceneLib = new File(PathUtil.getJarPathForClass(Query.class));
 
-      if (getInstance().isUseMaven2()) {
+      if (useMaven2) {
         classpath.add(new File(root, "maven2-server-impl"));
         addDir(classpath, new File(luceneLib.getParentFile().getParentFile().getParentFile(), "maven2-server-impl/lib"));
       }
@@ -326,7 +332,7 @@ public class MavenServerManager extends RemoteObjectWrapper<MavenServer> impleme
     else {
       classpath.add(new File(root, "maven-server-api.jar"));
 
-      if (getInstance().isUseMaven2()) {
+      if (useMaven2) {
         classpath.add(new File(root, "maven2-server-impl.jar"));
 
         addDir(classpath, new File(root, "maven2"));
@@ -499,7 +505,7 @@ public class MavenServerManager extends RemoteObjectWrapper<MavenServer> impleme
   @Override
   public Element getState() {
     final Element element = new Element("maven-version");
-    element.setAttribute("version", useMaven2 ? "2" : "3");
+    element.setAttribute("version", useMaven2 ? "2.x" : "3.x");
     element.setAttribute("vmOptions", mavenEmbedderVMOptions);
     return element;
   }
@@ -507,7 +513,7 @@ public class MavenServerManager extends RemoteObjectWrapper<MavenServer> impleme
   @Override
   public void loadState(Element state) {
     String version = state.getAttributeValue("version");
-    useMaven2 = !"3".equals(version);
+    useMaven2 = "2.x".equals(version);
 
     String vmOptions = state.getAttributeValue("vmOptions");
     mavenEmbedderVMOptions = vmOptions == null ? DEFAULT_VM_OPTIONS : vmOptions;

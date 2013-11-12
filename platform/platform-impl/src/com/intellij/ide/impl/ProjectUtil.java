@@ -274,14 +274,6 @@ public class ProjectUtil {
     }
   }
 
-  /**
-   * @deprecated use {@linkplain com.intellij.openapi.project.ProjectUtil#isProjectOrWorkspaceFile(com.intellij.openapi.vfs.VirtualFile)} (to remove in IDEA 13)
-   */
-  @SuppressWarnings("UnusedDeclaration")
-  public static boolean isProjectOrWorkspaceFile(final VirtualFile file) {
-    return com.intellij.openapi.project.ProjectUtil.isProjectOrWorkspaceFile(file);
-  }
-
   public static String getBaseDir() {
     final String lastProjectLocation = GeneralSettings.getInstance().getLastProjectCreationLocation();
     if (lastProjectLocation != null) {

@@ -272,21 +272,6 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
     return myScheme == StorageScheme.DEFAULT ? file.getParent() : file.getParentFile().getParent();
   }
 
-  @Override
-  public String getLocation() {
-    if (myCachedLocation == null) {
-      if (myScheme == StorageScheme.DEFAULT) {
-        myCachedLocation = getProjectFilePath();
-      }
-      else {
-        final VirtualFile baseDir = getProjectBaseDir();
-        myCachedLocation = baseDir == null ? null : baseDir.getPath();
-      }
-    }
-
-    return myCachedLocation;
-  }
-
   @NotNull
   @Override
   public String getProjectName() {
@@ -328,6 +313,13 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
       }
       return temp;
     }
+  }
+
+  @NotNull
+  private String getProjectFileName() {
+    final FileBasedStorage storage = (FileBasedStorage)getStateStorageManager().getFileStateStorage(StoragePathMacros.PROJECT_FILE);
+    assert storage != null;
+    return storage.getFileName();
   }
 
   @NotNull
@@ -386,14 +378,6 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
     if (element != null) {
       xmlElementStorage.setDefaultState(element);
     }
-  }
-
-  @NotNull
-  @Override
-  public String getProjectFileName() {
-    final FileBasedStorage storage = (FileBasedStorage)getStateStorageManager().getFileStateStorage(StoragePathMacros.PROJECT_FILE);
-    assert storage != null;
-    return storage.getFileName();
   }
 
   @NotNull

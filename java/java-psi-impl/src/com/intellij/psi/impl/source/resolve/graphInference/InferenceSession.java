@@ -293,12 +293,15 @@ public class InferenceSession {
           final PsiElement parentMethod = pair != null ? pair.first : resolveResult.getElement();
           if (parentMethod instanceof PsiMethod) {
             final PsiParameter[] parameters = ((PsiMethod)parentMethod).getParameterList().getParameters();
+            if (parameters.length == 0) return null;
             PsiElement arg = context;
             while (arg.getParent() instanceof PsiParenthesizedExpression) {
               arg = arg.getParent();
             }
             final PsiExpression[] args = argumentList.getExpressions();
-            return getParameterType(parameters, args, ArrayUtilRt.find(args, arg), pair != null ? pair.second : resolveResult.getSubstitutor());
+            final int i = ArrayUtilRt.find(args, arg);
+            if (i < 0) return null;
+            return getParameterType(parameters, args, i, pair != null ? pair.second : resolveResult.getSubstitutor());
           }
         }
       }

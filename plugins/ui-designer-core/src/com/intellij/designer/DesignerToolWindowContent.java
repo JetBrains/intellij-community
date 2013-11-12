@@ -13,20 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.util;
+package com.intellij.designer;
 
-import com.intellij.reference.SoftReference;
+public interface DesignerToolWindowContent extends LightToolWindowContent {
+  void refresh(boolean updateProperties);
 
-import java.lang.ref.ReferenceQueue;
+  void expandFromState();
 
-/** @deprecated use {@link SoftReference} (to remove in IDEA 13) */
-@SuppressWarnings("UnusedDeclaration")
-public class PatchedSoftReference<T> extends SoftReference<T> {
-  public PatchedSoftReference(final T referent) {
-    super(referent);
-  }
-
-  public PatchedSoftReference(final T referent, final ReferenceQueue<? super T> q) {
-    super(referent, q);
-  }
+  void updateInspections();
 }

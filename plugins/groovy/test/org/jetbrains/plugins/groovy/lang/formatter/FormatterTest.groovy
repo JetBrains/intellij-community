@@ -18,6 +18,7 @@ package org.jetbrains.plugins.groovy.lang.formatter
 
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings
+import org.jetbrains.plugins.groovy.GroovyFileType
 import org.jetbrains.plugins.groovy.codeStyle.GroovyCodeStyleSettings
 import org.jetbrains.plugins.groovy.util.TestUtils
 /**
@@ -761,15 +762,37 @@ def foo() {
     checkFormatting('foo in  bar', 'foo in bar')
   }
 
-  private void doGeeseTest() {
-    GroovyCodeStyleSettings customSettings = myTempSettings.getCustomSettings(GroovyCodeStyleSettings.class);
-    boolean oldvalue = customSettings.USE_FLYING_GEESE_BRACES;
+  void testGDocAfterImports() { doTest() }
+  void testGDocAfterImports2() { doTest() }
+
+  void testRegexExpressions() { doTest() }
+
+  void testLabelWithDescription() {
+    GroovyCodeStyleSettings customSettings = myTempSettings.getCustomSettings(GroovyCodeStyleSettings.class)
+    CommonCodeStyleSettings commonSettings = myTempSettings.getCommonSettings(GroovyFileType.GROOVY_LANGUAGE)
+
+    boolean indentLabelBlocks = customSettings.INDENT_LABEL_BLOCKS
+    int labelIndentSize = commonSettings.indentOptions.LABEL_INDENT_SIZE
     try {
-      customSettings.USE_FLYING_GEESE_BRACES = true;
-      doTest();
+      customSettings.INDENT_LABEL_BLOCKS = true
+      commonSettings.indentOptions.LABEL_INDENT_SIZE = 2
+      doTest()
     }
     finally {
-      customSettings.USE_FLYING_GEESE_BRACES = oldvalue;
+      customSettings.INDENT_LABEL_BLOCKS = indentLabelBlocks
+      commonSettings.indentOptions.LABEL_INDENT_SIZE = labelIndentSize
+    }
+  }
+
+  private void doGeeseTest() {
+    GroovyCodeStyleSettings customSettings = myTempSettings.getCustomSettings(GroovyCodeStyleSettings.class)
+    boolean oldvalue = customSettings.USE_FLYING_GEESE_BRACES
+    try {
+      customSettings.USE_FLYING_GEESE_BRACES = true
+      doTest()
+    }
+    finally {
+      customSettings.USE_FLYING_GEESE_BRACES = oldvalue
     }
   }
 }

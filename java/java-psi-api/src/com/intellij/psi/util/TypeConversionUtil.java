@@ -1031,7 +1031,7 @@ public class TypeConversionUtil {
    * <code>InheritanceUtil.isInheritor(derivedClass, superClass, true)</code>
    *
    * @return substitutor (never returns <code>null</code>)
-   * @see InheritanceUtil#isInheritor(PsiClass, PsiClass, boolean)
+   * @see PsiClass#isInheritor(PsiClass, PsiClass, boolean)
    */
   @NotNull
   public static PsiSubstitutor getSuperClassSubstitutor(@NotNull PsiClass superClass,

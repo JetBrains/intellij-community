@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,9 +13,32 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.vfs.watcher;
+package com.intellij.vcs.log;
 
-/** @deprecated not an API (to remove in IDEA 13) */
-@SuppressWarnings("UnusedDeclaration")
-public class NotAvailableException extends RuntimeException {
+import org.jetbrains.annotations.NotNull;
+
+/**
+ *
+ */
+public class SimpleCommit implements GraphCommit {
+
+  private final int myIndex;
+  private final int[] myParents;
+
+  public SimpleCommit(int index, int[] parents) {
+    myIndex = index;
+    myParents = parents;
+  }
+
+  @Override
+  public int getIndex() {
+    return myIndex;
+  }
+
+  @NotNull
+  @Override
+  public int[] getParentIndices() {
+    return myParents;
+  }
+
 }

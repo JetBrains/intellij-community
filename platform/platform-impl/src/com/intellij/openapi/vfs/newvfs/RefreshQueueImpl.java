@@ -136,11 +136,6 @@ public class RefreshQueueImpl extends RefreshQueue {
   }
 
   @Override
-  public void refreshLocalRoots(boolean async, @Nullable Runnable postAction, @NotNull ModalityState modalityState) {
-    RefreshQueue.getInstance().refresh(async, true, postAction, modalityState, ManagingFS.getInstance().getLocalRoots());
-  }
-
-  @Override
   public void processSingleEvent(@NotNull VFileEvent event) {
     new RefreshSessionImpl(Collections.singletonList(event)).launch();
   }

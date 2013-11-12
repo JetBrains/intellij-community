@@ -2,6 +2,7 @@ package com.intellij.vcs.log.impl;
 
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.NotNullFunction;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.VcsLogDataHolder;
 import org.jetbrains.annotations.NotNull;
@@ -67,6 +68,18 @@ public class VcsLogObjectsFactoryImpl implements VcsLogObjectsFactory {
       return new VcsUserImpl(name, email);
     }
     return dataHolder.getUserRegistry().createUser(name, email);
+  }
+
+  @NotNull
+  @Override
+  public VcsRef createRef(@NotNull Hash commitHash, @NotNull String name, @NotNull VcsRefType type, @NotNull VirtualFile root) {
+    return new VcsRefImpl(new NotNullFunction<Hash, Integer>() {
+      @NotNull
+      @Override
+      public Integer fun(Hash hash) {
+        return myLogManager.getDataHolder().putHash(hash);
+      }
+    }, commitHash, name, type, root);
   }
 
 }

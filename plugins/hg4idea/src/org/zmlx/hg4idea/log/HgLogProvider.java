@@ -29,8 +29,8 @@ import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.VcsLogBranchFilter;
+import com.intellij.vcs.log.data.VcsLogDateFilter;
 import com.intellij.vcs.log.data.VcsLogUserFilter;
-import com.intellij.vcs.log.impl.VcsRefImpl;
 import com.intellij.vcs.log.ui.filter.VcsLogTextFilter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -42,7 +42,11 @@ import org.zmlx.hg4idea.repo.HgRepository;
 import org.zmlx.hg4idea.repo.HgRepositoryManager;
 import org.zmlx.hg4idea.util.HgHistoryUtil;
 
-import java.util.*;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * @author Nadya Zabrodina
@@ -109,21 +113,21 @@ public class HgLogProvider implements VcsLogProvider {
     Collection<VcsRef> refs = new ArrayList<VcsRef>(branches.size() + bookmarks.size());
 
     for (HgNameWithHashInfo branchInfo : branches) {
-      refs.add(new VcsRefImpl(myVcsObjectsFactory.createHash(branchInfo.getHash()), branchInfo.getName(), HgRefManager.BRANCH, root));
+      refs.add(myVcsObjectsFactory.createRef(myVcsObjectsFactory.createHash(branchInfo.getHash()), branchInfo.getName(), HgRefManager.BRANCH, root));
     }
     for (HgNameWithHashInfo bookmarkInfo : bookmarks) {
-      refs.add(new VcsRefImpl(myVcsObjectsFactory.createHash(bookmarkInfo.getHash()), bookmarkInfo.getName(),
+      refs.add(myVcsObjectsFactory.createRef(myVcsObjectsFactory.createHash(bookmarkInfo.getHash()), bookmarkInfo.getName(),
                          HgRefManager.BOOKMARK, root));
     }
     String currentRevision = repository.getCurrentRevision();
     if (currentRevision != null) { // null => fresh repository
-      refs.add(new VcsRefImpl(myVcsObjectsFactory.createHash(currentRevision), "HEAD", HgRefManager.HEAD, root));
+      refs.add(myVcsObjectsFactory.createRef(myVcsObjectsFactory.createHash(currentRevision), "HEAD", HgRefManager.HEAD, root));
     }
     for (HgNameWithHashInfo tagInfo : tags) {
-      refs.add(new VcsRefImpl(myVcsObjectsFactory.createHash(tagInfo.getHash()), tagInfo.getName(), HgRefManager.TAG, root));
+      refs.add(myVcsObjectsFactory.createRef(myVcsObjectsFactory.createHash(tagInfo.getHash()), tagInfo.getName(), HgRefManager.TAG, root));
     }
     for (HgNameWithHashInfo localTagInfo : localTags) {
-      refs.add(new VcsRefImpl(myVcsObjectsFactory.createHash(localTagInfo.getHash()), localTagInfo.getName(),
+      refs.add(myVcsObjectsFactory.createRef(myVcsObjectsFactory.createHash(localTagInfo.getHash()), localTagInfo.getName(),
                               HgRefManager.LOCAL_TAG, root));
     }
     return refs;
@@ -179,6 +183,26 @@ public class HgLogProvider implements VcsLogProvider {
         }
       });
       filterParameters.add(prepareParameter("user", authorFilter));
+    }
+
+    List<VcsLogDateFilter> dateFilters = ContainerUtil.findAll(filters, VcsLogDateFilter.class);
+    if (!dateFilters.isEmpty()) {
+      StringBuilder args = new StringBuilder();
+      final SimpleDateFormat dateFormatter = new SimpleDateFormat("yyyy-MM-dd HH:mm");
+      filterParameters.add("-r");
+      VcsLogDateFilter filter = dateFilters.iterator().next();
+      if (filter.getAfter() != null) {
+        args.append("date('>").append(dateFormatter.format(filter.getAfter())).append("')");
+      }
+
+      if (filter.getBefore() != null) {
+        if (args.length() > 0) {
+          args.append(" and ");
+        }
+
+        args.append("date('<").append(dateFormatter.format(filter.getBefore())).append("')");
+      }
+      filterParameters.add(args.toString());
     }
 
     List<VcsLogTextFilter> textFilters = ContainerUtil.findAll(filters, VcsLogTextFilter.class);

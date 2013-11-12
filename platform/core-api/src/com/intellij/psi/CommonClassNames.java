@@ -99,10 +99,4 @@ public interface CommonClassNames {
   @NonNls String JAVA_LANG_INVOKE_MH_POLYMORPHIC = "java.lang.invoke.MethodHandle.PolymorphicSignature";
 
   @NonNls String CLASS_FILE_EXTENSION = ".class";
-
-  /** @deprecated not that common (to remove in IDEA 13) */
-  @SuppressWarnings("UnusedDeclaration") @NonNls String JAVA_SQL_DATE = "java.sql.Date";
-
-  /** @deprecated use {@link #JAVA_LANG_ANNOTATION_TARGET} (to remove in IDEA 14) */
-  @SuppressWarnings("UnusedDeclaration") @NonNls String TARGET_ANNOTATION_FQ_NAME = JAVA_LANG_ANNOTATION_TARGET;
 }

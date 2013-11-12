@@ -436,7 +436,7 @@ public class GrIntroduceConstantDialog extends DialogWrapper
       final AccessToken lock = ApplicationManager.getApplication().acquireWriteActionLock(GrIntroduceConstantDialog.class);
       try {
         final GroovyFile file =
-          (GroovyFile)GroovyTemplatesFactory.createFromTemplate(psiDirectory, shortName, fileName, GroovyTemplates.GROOVY_CLASS);
+          (GroovyFile)GroovyTemplatesFactory.createFromTemplate(psiDirectory, shortName, fileName, GroovyTemplates.GROOVY_CLASS, true);
         return file.getTypeDefinitions()[0];
       }
       finally {

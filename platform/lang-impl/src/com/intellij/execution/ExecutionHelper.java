@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@ package com.intellij.execution;
 
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.executors.DefaultRunExecutor;
-import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.process.ProcessOutput;
 import com.intellij.execution.ui.RunContentDescriptor;
@@ -255,23 +254,6 @@ public class ExecutionHelper {
         }
       }
     }
-  }
-
-  /** @deprecated use lookup by user data (to remove in IDEA 13) */
-  public static Collection<RunContentDescriptor> findRunningConsoleByCmdLine(final Project project,
-                                                                             @NotNull final NotNullFunction<String, Boolean> cmdLineMatcher) {
-    return findRunningConsole(project, new NotNullFunction<RunContentDescriptor, Boolean>() {
-      @NotNull
-      @Override
-      public Boolean fun(RunContentDescriptor selectedContent) {
-        final ProcessHandler processHandler = selectedContent.getProcessHandler();
-        if (processHandler instanceof OSProcessHandler && !processHandler.isProcessTerminated()) {
-          final String commandLine = ((OSProcessHandler)processHandler).getCommandLine();
-          return cmdLineMatcher.fun(commandLine);
-        }
-        return false;
-      }
-    });
   }
 
   public static Collection<RunContentDescriptor> findRunningConsoleByTitle(final Project project,

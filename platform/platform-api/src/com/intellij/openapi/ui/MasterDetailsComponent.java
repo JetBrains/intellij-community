@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -264,12 +264,6 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
 
   public void addItemsChangeListener(ItemsChangeListener l) {
     myListeners.add(l);
-  }
-
-  /** @deprecated use {@linkplain #getPanelPreferredSize()} (to remove in IDEA 13) */
-  @SuppressWarnings("UnusedDeclaration")
-  protected Dimension getPanelPrefferedSize() {
-    return getPanelPreferredSize();
   }
 
   protected Dimension getPanelPreferredSize() {
@@ -582,13 +576,6 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
       return configurable.getEditableObject();
     }
     return null;
-  }
-
-  /** @deprecated use {@linkplain #getSelectedConfigurable()} (to remove in IDEA 13) */
-  @SuppressWarnings("UnusedDeclaration")
-  @Nullable
-  public NamedConfigurable getSelectedConfugurable() {
-    return getSelectedConfigurable();
   }
 
   @Nullable

@@ -97,24 +97,7 @@ public class IconUtil {
     if (!new Rectangle(icon.getIconWidth(), icon.getIconHeight()).contains(area)) {
       return icon;
     }
-
-    final BufferedImage image = GraphicsEnvironment
-      .getLocalGraphicsEnvironment()
-      .getDefaultScreenDevice()
-      .getDefaultConfiguration()
-      .createCompatibleImage(icon.getIconWidth(), icon.getIconHeight(), Transparency.TRANSLUCENT);
-    final Graphics2D g = image.createGraphics();
-    icon.paintIcon(new JPanel(), g, 0, 0);
-    g.dispose();
-
-    final BufferedImage img = UIUtil.createImage(area.width, area.height, Transparency.TRANSLUCENT);
-    for (int col = 0; col < area.width; col++) {
-      for (int row = 0; row < area.height; row++) {
-        img.setRGB(col, row, image.getRGB(col + area.x, row + area.y));
-      }
-    }
-
-    return new ImageIcon(img);
+    return new CropIcon(icon, area);
   }
 
   @NotNull
@@ -356,6 +339,31 @@ public class IconUtil {
     @Override
     public int getIconHeight() {
       return myHeight;
+    }
+  }
+
+  private static class CropIcon implements Icon {
+    private final Icon mySrc;
+    private final Rectangle myCrop;
+
+    private CropIcon(@NotNull Icon src, Rectangle crop) {
+      mySrc = src;
+      myCrop = crop;
+    }
+
+    @Override
+    public void paintIcon(Component c, Graphics g, int x, int y) {
+      mySrc.paintIcon(c, g, x - myCrop.x, y - myCrop.y);
+    }
+
+    @Override
+    public int getIconWidth() {
+      return myCrop.width;
+    }
+
+    @Override
+    public int getIconHeight() {
+      return myCrop.height;
     }
   }
 }

@@ -16,6 +16,7 @@
 package com.intellij.ide.projectView.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.SourceFolder;
 import com.intellij.openapi.roots.ui.configuration.ModuleSourceRootEditHandler;
@@ -55,8 +56,8 @@ public class UnmarkRootAction extends MarkRootActionBase {
   }
 
   @Override
-  protected boolean isEnabled(@NotNull RootsSelection selection) {
-    return selection.mySelectedFiles.isEmpty() && !selection.mySelectedRoots.isEmpty();
+  protected boolean isEnabled(@NotNull RootsSelection selection, @NotNull Module module) {
+    return selection.mySelectedDirectories.isEmpty() && !selection.mySelectedRoots.isEmpty();
   }
 
   protected void modifyRoots(VirtualFile vFile, ContentEntry entry) {

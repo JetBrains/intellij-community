@@ -388,10 +388,4 @@ public class GuiUtils {
       invokeAndWait(runnable);
     }
   }
-
-  /** @deprecated call {@link Application#invokeAndWait(Runnable, ModalityState)} directly (to remove in IDEA 13). */
-  @SuppressWarnings("UnusedDeclaration")
-  public static void invokeAndWaitIfNeeded(@NotNull Runnable runnable, @NotNull ModalityState modalityState) {
-    ApplicationManager.getApplication().invokeAndWait(runnable, modalityState);
-  }
 }
