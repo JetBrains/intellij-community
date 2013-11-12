@@ -26,9 +26,11 @@ import java.net.URI;
 import java.net.URISyntaxException;
 
 public final class UrlImpl implements Url {
-  private String raw;
+  private String externalForm;
 
+  @Nullable
   private final String scheme;
+
   private final String authority;
 
   private final String path;
@@ -38,12 +40,15 @@ public final class UrlImpl implements Url {
 
   private String externalFormWithoutParameters;
 
-  public UrlImpl(@NotNull String scheme, @Nullable String authority, @Nullable String path) {
-    this(null, scheme, authority, path, null);
+  public UrlImpl(@Nullable String path) {
+    this(null, null, path, null);
   }
 
-  public UrlImpl(@Nullable String raw, @NotNull String scheme, @Nullable String authority, @Nullable String path, @Nullable String parameters) {
-    this.raw = raw;
+  public UrlImpl(@NotNull String scheme, @Nullable String authority, @Nullable String path) {
+    this(scheme, authority, path, null);
+  }
+
+  public UrlImpl(@Nullable String scheme, @Nullable String authority, @Nullable String path, @Nullable String parameters) {
     this.scheme = scheme;
     this.authority = StringUtil.nullize(authority);
     this.path = StringUtil.isEmpty(path) ? "/" : path;
@@ -115,8 +120,8 @@ public final class UrlImpl implements Url {
   @NotNull
   public String toExternalForm(boolean skipQueryAndFragment) {
     if (parameters == null || !skipQueryAndFragment) {
-      if (raw != null) {
-        return raw;
+      if (externalForm != null) {
+        return externalForm;
       }
     }
     else if (externalFormWithoutParameters != null) {
@@ -127,14 +132,14 @@ public final class UrlImpl implements Url {
     if (skipQueryAndFragment) {
       externalFormWithoutParameters = result;
       if (parameters == null) {
-        raw = externalFormWithoutParameters;
+        externalForm = externalFormWithoutParameters;
       }
     }
     else {
       if (parameters != null) {
         result += parameters;
       }
-      raw = result;
+      externalForm = result;
     }
     return result;
   }
@@ -147,7 +152,7 @@ public final class UrlImpl implements Url {
 
   @Override
   public String toString() {
-    return raw;
+    return toExternalForm(false);
   }
 
   @Override
@@ -176,7 +181,7 @@ public final class UrlImpl implements Url {
     }
 
     UrlImpl url = (UrlImpl)o;
-    if (!scheme.equals(url.scheme)) {
+    if (scheme == null ? url.scheme == null : !scheme.equals(url.scheme)) {
       return false;
     }
     if (authority == null ? url.authority != null : !authority.equals(url.authority)) {
@@ -191,7 +196,7 @@ public final class UrlImpl implements Url {
 
   @Override
   public int hashCode() {
-    int result = scheme.hashCode();
+    int result = scheme == null ? 0 : scheme.hashCode();
     result = 31 * result + (authority != null ? authority.hashCode() : 0);
     String decodedPath = getPath();
     result = 31 * result + decodedPath.hashCode();
