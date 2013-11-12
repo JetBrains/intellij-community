@@ -40,10 +40,7 @@ public class NotNullCheckTemplateProvider extends TemplateProviderBase {
 
   @Nullable private static Boolean isNullableExpression(
     @NotNull PsiExpression expression, @Nullable PsiType expressionType) {
-    if (expressionType != null) {
-      return !(expressionType instanceof PsiPrimitiveType);
-    }
-
+    // filter out some known non-nullable expressions
     if (expression instanceof PsiPostfixExpression) return false;
     if (expression instanceof PsiPrefixExpression) return false;
     if (expression instanceof PsiBinaryExpression) return false;
@@ -51,12 +48,18 @@ public class NotNullCheckTemplateProvider extends TemplateProviderBase {
     if (expression instanceof PsiThisExpression) return false;
     if (expression instanceof PsiSuperExpression) return false;
     if (expression instanceof PsiClassObjectAccessExpression) return false;
+    if (expression instanceof PsiNewExpression) return false;
 
     if (expression instanceof PsiParenthesizedExpression) {
       return isNullableExpression(((PsiParenthesizedExpression) expression).getExpression());
     }
 
     // todo: support ?: expression?
+
+    if (expressionType != null) {
+      return !(expressionType instanceof PsiPrimitiveType);
+    }
+
     return null;
   }
 

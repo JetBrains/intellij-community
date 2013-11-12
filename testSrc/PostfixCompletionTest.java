@@ -1,5 +1,12 @@
+import com.intellij.codeInsight.completion.*;
+import com.intellij.codeInsight.lookup.*;
+import com.intellij.openapi.application.*;
+import com.intellij.openapi.editor.*;
 import com.intellij.testFramework.fixtures.*;
+import com.intellij.util.*;
 import org.jetbrains.annotations.*;
+import org.jetbrains.postfixCompletion.LookupItems.*;
+import org.jetbrains.postfixCompletion.*;
 
 // todo: test with statements after
 // todo: dump caret position after completion
@@ -9,11 +16,59 @@ public class PostfixCompletionTest extends LightCodeInsightFixtureTestCase {
     return PostfixTestUtils.BASE_TEST_DATA_PATH + "/completion";
   }
 
-  private void test(@NotNull final String typingChars) {
-    final StackTraceElement[] trace = Thread.currentThread().getStackTrace();
-    final String name = trace[2].getMethodName();
+  // todo: force mode flag
+  private void test(@NotNull String typingChars) {
+    test(typingChars, false);
+  }
 
-    myFixture.testCompletionTyping(name + ".java", typingChars, name + "-out.java");
+  private void testForce(@NotNull String typingChars) {
+    test(typingChars, true);
+  }
+
+  private void test(@NotNull String typingChars, boolean useBasic) {
+    StackTraceElement[] trace = Thread.currentThread().getStackTrace();
+    String name = trace[3].getMethodName();
+
+    myFixture.configureByFile(name + ".java");
+
+    PostfixCompletionContributor.behaveAsAutoPopupForTests = !useBasic;
+
+    myFixture.complete(CompletionType.BASIC);
+    final LookupElement[] autoItems = myFixture.getLookupElements();
+
+    PostfixCompletionContributor.behaveAsAutoPopupForTests = false;
+
+    // type item name
+    for (int index = 0; index < typingChars.length(); index++) {
+      myFixture.type(typingChars.charAt(index));
+    }
+
+    // dump caret position and available items
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override public void run() {
+        Editor editor = myFixture.getEditor();
+        editor.getDocument().insertString(0, dumpItems(autoItems));
+      }
+    });
+
+    myFixture.checkResultByFile(name + "-out.java");
+  }
+
+  @NotNull private String dumpItems(@Nullable LookupElement[] elements) {
+    StringBuilder builder = new StringBuilder("// Items: ");
+
+    if (elements != null && elements.length > 0) {
+      boolean first = true;
+      for (LookupElement item : elements) {
+        if (item instanceof PostfixLookupElement) {
+          if (first) first = false; else builder.append(", ");
+          builder.append(item.getLookupString());
+        }
+      }
+    } else builder.append("<no items>");
+
+    builder.append(SystemProperties.getLineSeparator());
+    return builder.toString();
   }
 
   public void testIf01() { test("if\n"); }
@@ -35,16 +90,16 @@ public class PostfixCompletionTest extends LightCodeInsightFixtureTestCase {
   public void testVar04() { test("var\n"); }
   public void testVar05() { test("var\n"); }
   public void testVar06() { test("var\n"); }
-  public void testVar07() { test("var\n"); }
+  public void testVar07() { testForce("var\n"); }
   public void testVar08() { test("var\n"); }
-  public void testVar09() { test("var\n"); }
+  public void testVar09() { testForce("var\n"); }
   public void testVar10() { test("var\n"); }
-  public void testVar11() { test("var\n"); }
-  public void testVar12() { test("var\n"); }
-  public void testVar13() { test("ar\n"); }
+  public void testVar11() { testForce("var\n"); }
+  public void testVar12() { testForce("var\n"); }
+  public void testVar13() { testForce("ar\n"); }
   public void testVar14() { test("var\n"); }
-  public void testVar15() { test("var\n"); }
-  public void testVar16() { test("var\n"); }
+  public void testVar15() { testForce("var\n"); }
+  public void testVar16() { testForce("var\n"); }
 
   public void testNotNull01() { test("nn\n"); }
   public void testNull01() { test("null\n"); }

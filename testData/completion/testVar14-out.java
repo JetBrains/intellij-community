@@ -1,5 +1,6 @@
+// Items: var
 public class Foo {
     void m() {
-        int foo = 1;
+        int foo = 1;<caret>
     }
 }

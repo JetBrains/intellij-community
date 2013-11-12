@@ -1,6 +1,7 @@
+// Items: <no items>
 public class Foo {
     void m() {
-        if (bar())
+        if (bar())<caret>
     }
 
     boolean bar() {

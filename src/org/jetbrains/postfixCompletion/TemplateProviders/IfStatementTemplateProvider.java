@@ -43,9 +43,7 @@ public final class IfStatementTemplateProvider extends BooleanTemplateProviderBa
       return ifStatement;
     }
 
-    @Override protected void postProcess(
-      @NotNull InsertionContext context, @NotNull PsiIfStatement statement) {
-      // todo: can we do better?
+    @Override protected void postProcess(@NotNull InsertionContext context, @NotNull PsiIfStatement statement) {
       PsiJavaToken rParenth = statement.getRParenth();
       assert rParenth != null : "rParenth != null";
 

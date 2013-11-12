@@ -1,5 +1,6 @@
+// Items: else, if, not, var
 public class Foo {
     void m(Object o) {
-        if (o instanceof String)
+        if (o instanceof String)<caret>
     }
 }

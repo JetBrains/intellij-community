@@ -1,5 +1,6 @@
+// Items: notnull, null
 public class Foo {
     void m(Object o) {
-        if (o == null)
+        if (o == null)<caret>
     }
 }

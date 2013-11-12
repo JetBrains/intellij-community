@@ -1,6 +1,7 @@
+// Items: not
 public class Foo {
     void m(boolean b) {
-        if (b) {
+        if (b<caret>) {
 
         }
     }

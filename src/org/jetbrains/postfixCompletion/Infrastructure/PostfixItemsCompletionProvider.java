@@ -7,7 +7,6 @@ import com.intellij.psi.*;
 import org.jetbrains.annotations.*;
 
 public final class PostfixItemsCompletionProvider {
-
   public static void addCompletions(
     @NotNull CompletionParameters parameters, @NotNull CompletionResultSet resultSet,
     @NotNull PostfixExecutionContext executionContext) {

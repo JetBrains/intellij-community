@@ -227,7 +227,9 @@ public final class PostfixTemplatesManager implements ApplicationComponent {
     return null;
   }
 
-  @Nullable private static PsiExpression findUnfinishedExpression(@NotNull PsiStatement statement) {
+  @Nullable private static PsiExpression findUnfinishedExpression(@Nullable PsiStatement statement) {
+    if (statement == null) return null;
+
     PsiElement lastChild = statement.getLastChild();
     if (statement instanceof PsiExpressionStatement) {
       if (lastChild instanceof PsiErrorElement && lastChild.getPrevSibling() instanceof PsiExpression) {
@@ -245,6 +247,7 @@ public final class PostfixTemplatesManager implements ApplicationComponent {
   @Nullable private static PsiExpressionStatement findContainingExprStatement(@NotNull PsiElement element) {
     while (element instanceof PsiBinaryExpression ||
            element instanceof PsiPolyadicExpression) {
+      // todo: check with postfix/prefix expressions
       element = element.getParent();
     }
 

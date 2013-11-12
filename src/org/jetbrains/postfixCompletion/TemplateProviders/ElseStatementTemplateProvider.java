@@ -1,6 +1,7 @@
 package org.jetbrains.postfixCompletion.TemplateProviders;
 
 import com.intellij.codeInsight.*;
+import com.intellij.codeInsight.completion.*;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.*;
@@ -43,6 +44,14 @@ public final class ElseStatementTemplateProvider extends BooleanTemplateProvider
       condition.replace(inverted);
 
       return ifStatement;
+    }
+
+    @Override protected void postProcess(@NotNull InsertionContext context, @NotNull PsiIfStatement statement) {
+      PsiJavaToken rParenth = statement.getRParenth();
+      assert rParenth != null : "rParenth != null";
+
+      int offset = rParenth.getTextRange().getEndOffset();
+      context.getEditor().getCaretModel().moveToOffset(offset);
     }
   }
 }
