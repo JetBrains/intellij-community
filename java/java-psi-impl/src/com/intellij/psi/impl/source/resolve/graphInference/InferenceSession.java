@@ -195,43 +195,53 @@ public class InferenceSession {
   public PsiSubstitutor infer(@Nullable PsiParameter[] parameters,
                               @Nullable PsiExpression[] args,
                               @Nullable PsiElement parent) {
+    return infer(parameters, args, parent, false);
+  }
+
+  @NotNull
+  public PsiSubstitutor infer(@Nullable PsiParameter[] parameters,
+                              @Nullable PsiExpression[] args,
+                              @Nullable PsiElement parent,
+                              boolean applicabilityOnly) {
     repeatInferencePhases();
 
     mySiteSubstitutor = resolveBounds(myInferenceVariables.values(), mySiteSubstitutor, false);
-    
-    final Pair<PsiMethod, PsiCallExpression> pair = getPair(parent);
-    if (pair != null) {
-      initReturnTypeConstraint(pair.first, (PsiCallExpression)parent);
-      repeatInferencePhases();
-      mySiteSubstitutor = resolveBounds(myInferenceVariables.values(), mySiteSubstitutor, false);
-    }
 
-    if (parameters != null && args != null) {
-      final Set<ConstraintFormula> additionalConstraints = new HashSet<ConstraintFormula>();
-      if (parameters.length > 0) {
-        for (int i = 0; i < args.length; i++) {
-          PsiType parameterType = getParameterType(parameters, args, i, mySiteSubstitutor);
-          if (args[i] != null) {
-            if (pair == null || !isPertinentToApplicability(args[i], pair.first, mySiteSubstitutor, parameterType, this) || !isProperType(LambdaUtil.getFunctionalInterfaceReturnType(parameterType))) {
-              additionalConstraints.add(new ExpressionCompatibilityConstraint(args[i], parameterType));
+    if (!applicabilityOnly) {
+      final Pair<PsiMethod, PsiCallExpression> pair = getPair(parent);
+      if (pair != null) {
+        initReturnTypeConstraint(pair.first, (PsiCallExpression)parent);
+        repeatInferencePhases();
+        mySiteSubstitutor = resolveBounds(myInferenceVariables.values(), mySiteSubstitutor, false);
+      }
+
+      if (parameters != null && args != null) {
+        final Set<ConstraintFormula> additionalConstraints = new HashSet<ConstraintFormula>();
+        if (parameters.length > 0) {
+          for (int i = 0; i < args.length; i++) {
+            PsiType parameterType = getParameterType(parameters, args, i, mySiteSubstitutor);
+            if (args[i] != null) {
+              if (pair == null || !isPertinentToApplicability(args[i], pair.first, mySiteSubstitutor, parameterType, this) || !isProperType(LambdaUtil.getFunctionalInterfaceReturnType(parameterType))) {
+                additionalConstraints.add(new ExpressionCompatibilityConstraint(args[i], parameterType));
+              }
+              additionalConstraints.add(new CheckedExceptionCompatibilityConstraint(args[i], parameterType));
             }
-            additionalConstraints.add(new CheckedExceptionCompatibilityConstraint(args[i], parameterType));
           }
         }
-      }
-
-      if (!additionalConstraints.isEmpty()) {
-        for (InferenceVariable inferenceVariable : myInferenceVariables.values()) {
-          inferenceVariable.ignoreInstantiation();
+  
+        if (!additionalConstraints.isEmpty()) {
+          for (InferenceVariable inferenceVariable : myInferenceVariables.values()) {
+            inferenceVariable.ignoreInstantiation();
+          }
+          proceedWithAdditionalConstraints(additionalConstraints);
         }
-        proceedWithAdditionalConstraints(additionalConstraints);
       }
-    }
 
-    for (InferenceVariable inferenceVariable : myInferenceVariables.values()) {
-      inferenceVariable.ignoreInstantiation();
+      for (InferenceVariable inferenceVariable : myInferenceVariables.values()) {
+        inferenceVariable.ignoreInstantiation();
+      }
+      mySiteSubstitutor = resolveBounds(myInferenceVariables.values(), mySiteSubstitutor, true);
     }
-    mySiteSubstitutor = resolveBounds(myInferenceVariables.values(), mySiteSubstitutor, true);
 
     for (InferenceVariable inferenceVariable : myInferenceVariables.values()) {
       final PsiTypeParameter typeParameter = inferenceVariable.getParameter();

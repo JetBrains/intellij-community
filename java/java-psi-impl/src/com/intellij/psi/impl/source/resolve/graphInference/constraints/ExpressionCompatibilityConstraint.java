@@ -105,8 +105,15 @@ public class ExpressionCompatibilityConstraint extends InputOutputConstraintForm
           for (PsiTypeParameter typeParam : typeParams) {
             session.addCapturedVariable(typeParam);
           }
-
-          constraints.add(new TypeCompatibilityConstraint(GenericsUtil.eliminateWildcards(myT, false), resolveResult instanceof MethodCandidateInfo ? ((MethodCandidateInfo)resolveResult).getSiteSubstitutor().substitute(returnType) : returnType));
+          PsiSubstitutor substitutor = PsiSubstitutor.EMPTY;
+          if (method != null) {
+            InferenceSession callSession = new InferenceSession(typeParams, ((MethodCandidateInfo)resolveResult).getSiteSubstitutor(), myExpression.getManager());
+            final PsiExpression[] args = argumentList.getExpressions();
+            final PsiParameter[] parameters = method.getParameterList().getParameters();
+            callSession.initExpressionConstraints(parameters, args, myExpression);
+            substitutor = callSession.infer(parameters, args, myExpression, true);
+          }
+          constraints.add(new TypeCompatibilityConstraint(GenericsUtil.eliminateWildcards(myT, false), substitutor.substitute(returnType)));
         }
       }
       return true;
