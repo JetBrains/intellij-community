@@ -39,6 +39,7 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
@@ -773,9 +774,9 @@ public class XDebugSessionImpl implements XDebugSession {
     final Editor editor = getEditor(position);
     if (editor != null) {
       JComponent component = editor.getComponent();
-      Object o = component.getClientProperty(Editor.IGNORE_MOUSE_TRACKING);
+      Object o = component.getClientProperty(EditorImpl.IGNORE_MOUSE_TRACKING);
       Integer value = ((o instanceof Integer) ? (Integer)o : 0) + increment;
-      component.putClientProperty(Editor.IGNORE_MOUSE_TRACKING, value > 0 ? value : null);
+      component.putClientProperty(EditorImpl.IGNORE_MOUSE_TRACKING, value > 0 ? value : null);
     }
   }
 
