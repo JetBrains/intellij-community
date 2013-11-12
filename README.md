@@ -19,6 +19,7 @@ Currently available templates:
 * `.notnull` – checks expression to be non-null `if (expr != null)`
 * `.not` – negates value of inner boolean expression `!expr`
 * `.for` – iterates over collection `for (T item : collection)`
+* `.while` – uses expression as loop condition `while (expr)`
 
 Upcoming templates:
 
@@ -32,13 +33,18 @@ Upcoming templates:
 * `.return` – returns value from method/property `return expr;`
 * `.switch` – produces switch over integral/string type `switch (expr)`
 * `.throw` – throws value of Exception type `throw expr;`
-* `.while` – uses expression as loop condition `while (expr)`
 
 Possible templates:
 
 * `.assert` - creates assertion statement from expression `assert expr`
 * `.sync` – surrounds expression with statement `synchronized (expr)`
 * `.try` – surrounds resource expression with `try (T x = resource)`
+
+Other todo:
+
+* Disable statement-based providers in debugger evaluate window
+* Control braces insertion?
+* Settings page
 
 #### Feedback
 

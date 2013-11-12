@@ -53,6 +53,9 @@
     <component>
       <implementation-class>org.jetbrains.postfixCompletion.TemplateProviders.ForIterationTemplateProvider</implementation-class>
     </component>
+    <component>
+      <implementation-class>org.jetbrains.postfixCompletion.TemplateProviders.WhileStatementTemplateProvider</implementation-class>
+    </component>
   </application-components>
 
   <module-components>

@@ -107,5 +107,7 @@ public class PostfixCompletionTest extends LightCodeInsightFixtureTestCase {
 
   public void testNot01() { test("not\n"); }
   public void testNot02() { test("not\n"); }
+
+  public void testWhile01() { test("while\n"); }
 }
 

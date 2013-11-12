@@ -1,4 +1,4 @@
-// Items: else, if, not, var
+// Items: else, if, not, var, while
 package completion;
 
 public class Foo {
