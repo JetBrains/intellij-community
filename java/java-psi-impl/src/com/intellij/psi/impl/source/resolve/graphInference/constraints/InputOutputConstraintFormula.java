@@ -65,7 +65,7 @@ public abstract class InputOutputConstraintFormula implements ConstraintFormula 
             if (psiExpression instanceof PsiLambdaExpression && !((PsiLambdaExpression)psiExpression).hasFormalParameterTypes() || 
                 psiExpression instanceof PsiMethodReferenceExpression && !((PsiMethodReferenceExpression)psiExpression).isExact()) {
               for (PsiParameter parameter : interfaceMethod.getParameterList().getParameters()) {
-                session.collectDependencies(substitutor.substitute(parameter.getType()), result, true);
+                session.collectDependencies(substitutor.substitute(parameter.getType()), result);
               }
             }
 
@@ -104,7 +104,7 @@ public abstract class InputOutputConstraintFormula implements ConstraintFormula 
   public Set<InferenceVariable> getOutputVariables(Set<InferenceVariable> inputVariables, InferenceSession session) {
     if (PsiPolyExpressionUtil.isPolyExpression(getExpression())) {
       final HashSet<InferenceVariable> mentionedVariables = new HashSet<InferenceVariable>();
-      session.collectDependencies(getT(), mentionedVariables, true);
+      session.collectDependencies(getT(), mentionedVariables);
       if (inputVariables != null) {
         mentionedVariables.removeAll(inputVariables);
       }
