@@ -685,6 +685,28 @@ public class FileWatcherTest extends PlatformLangTestCase {
     LocalFileSystemTest.doTestPartialRefresh(top);
   }
 
+  public void testUnicodePaths() throws Exception {
+    if (!SystemInfo.isUnix || SystemInfo.isMac) {
+      System.err.println("Ignored: well-defined FS required");
+      return;
+    }
+
+    File topDir = createTestDir("top");
+    File testDir = createTestDir(topDir, "тест");
+    File testFile = createTestFile(testDir, "файл.txt");
+    refresh(topDir);
+
+    LocalFileSystem.WatchRequest request = watch(topDir);
+    try {
+      myAccept = true;
+      FileUtil.writeToFile(testFile, "abc");
+      assertEvent(VFileContentChangeEvent.class, testFile.getPath());
+    }
+    finally {
+      unwatch(request);
+    }
+  }
+
 
   @NotNull
   private LocalFileSystem.WatchRequest watch(File watchFile) {
