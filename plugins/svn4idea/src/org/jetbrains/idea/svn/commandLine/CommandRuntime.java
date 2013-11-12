@@ -106,7 +106,10 @@ public class CommandRuntime {
         final String errText = executor.getErrorOutput().trim();
         final AuthCallbackCase callback = executor instanceof TerminalExecutor ? null : createCallback(errText, command.getRepositoryUrl());
         // do not handle possible authentication errors if command was manually cancelled
-        if (!executor.wasCancelled() && callback != null) {
+        // force checking if command is cancelled and not just use corresponding value from executor - as there could be cases when command
+        // finishes quickly but with some auth error - this way checkCancelled() is not called by executor itself and so command is repeated
+        // "infinite" times despite it was cancelled.
+        if (!executor.checkCancelled() && callback != null) {
           if (callback.getCredentials(errText)) {
             if (myAuthCallback.getSpecialConfigDir() != null) {
               command.setConfigDir(myAuthCallback.getSpecialConfigDir());

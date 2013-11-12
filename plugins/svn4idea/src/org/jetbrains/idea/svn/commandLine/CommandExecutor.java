@@ -205,7 +205,7 @@ public class CommandExecutor {
     }
   }
 
-  private boolean checkCancelled() {
+  public boolean checkCancelled() {
     if (!myWasCancelled && myCommand.getCanceller() != null) {
       try {
         myCommand.getCanceller().checkCancelled();
@@ -216,10 +216,6 @@ public class CommandExecutor {
       }
     }
 
-    return myWasCancelled;
-  }
-
-  public boolean wasCancelled() {
     return myWasCancelled;
   }
 
