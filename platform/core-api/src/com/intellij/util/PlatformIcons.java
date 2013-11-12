@@ -93,7 +93,6 @@ public interface PlatformIcons {
   Icon OPEN_EDIT_DIALOG_ICON = AllIcons.Actions.ShowViewer;
   Icon FLATTEN_PACKAGES_ICON = AllIcons.ObjectBrowser.FlattenPackages;
   Icon EDIT_IN_SECTION_ICON = AllIcons.General.EditItemInSection;
-  Icon TASK_ICON = AllIcons.Ant.Task;
   Icon CLASS_INITIALIZER = AllIcons.Nodes.ClassInitializer;
 
   Icon CLOSED_MODULE_GROUP_ICON = AllIcons.Nodes.ModuleGroup;
