@@ -86,6 +86,11 @@ public class JavaChainLookupElement extends LookupElementDecorator<LookupElement
   }
 
   @Override
+  public boolean isValid() {
+    return super.isValid() && myQualifier.isValid();
+  }
+
+  @Override
   public void renderElement(LookupElementPresentation presentation) {
     super.renderElement(presentation);
     final LookupElementPresentation qualifierPresentation = new LookupElementPresentation();
