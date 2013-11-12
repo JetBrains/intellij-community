@@ -15,6 +15,7 @@
  */
 package com.jetbrains.python.formatter;
 
+import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
@@ -61,6 +62,7 @@ public class PyWhiteSpaceFormattingStrategy extends StaticSymbolWhiteSpaceDefini
    * @param startOffset       start offset to use with the given text (inclusive)
    * @param endOffset         end offset to use with the given text (exclusive)
    * @param codeStyleSettings the code style settings
+   * @param nodeAfter
    * @return                  symbols to use for replacing <code>[startOffset; endOffset)</code> sub-sequence of the given text
    */
   @NotNull
@@ -69,11 +71,16 @@ public class PyWhiteSpaceFormattingStrategy extends StaticSymbolWhiteSpaceDefini
                                                   @NotNull CharSequence text,
                                                   int startOffset,
                                                   int endOffset,
-                                                  CodeStyleSettings codeStyleSettings)
+                                                  CodeStyleSettings codeStyleSettings, ASTNode nodeAfter)
   {
     // The general idea is that '\' symbol before line feed should be preserved.
     TIntIntHashMap initialBackSlashes = countBackSlashes(text, startOffset, endOffset);
     if (initialBackSlashes.isEmpty()) {
+      if (nodeAfter != null && whiteSpaceText.length() > 0 && whiteSpaceText.charAt(0) == '\n' &&
+        PythonEnterHandler.needInsertBackslash(nodeAfter, false)) {
+        PyCodeStyleSettings settings = codeStyleSettings.getCustomSettings(PyCodeStyleSettings.class);
+        return (settings.SPACE_BEFORE_BACKSLASH ? " \\" : "\\") + whiteSpaceText;
+      }
       return whiteSpaceText;
     }
 

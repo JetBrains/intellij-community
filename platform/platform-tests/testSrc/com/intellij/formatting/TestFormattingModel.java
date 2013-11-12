@@ -1,5 +1,6 @@
 package com.intellij.formatting;
 
+import com.intellij.lang.ASTNode;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.impl.DocumentImpl;
@@ -106,7 +107,7 @@ public class TestFormattingModel implements FormattingModel, FormattingDocumentM
   @NotNull
   @Override
   public CharSequence adjustWhiteSpaceIfNecessary(@NotNull CharSequence whiteSpaceText, int startOffset, int endOffset,
-                                                  boolean changedViaPsi) {
+                                                  ASTNode nodeAfter, boolean changedViaPsi) {
     return whiteSpaceText;
   }
 

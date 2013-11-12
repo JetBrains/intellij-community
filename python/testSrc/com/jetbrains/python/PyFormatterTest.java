@@ -337,7 +337,7 @@ public class PyFormatterTest extends PyTestCase {
     doTest();
   }
 
-  public void _testWrapBeforeElse() {  // PY-10319
+  public void testWrapBeforeElse() {  // PY-10319
     doTest(true);
   }
 

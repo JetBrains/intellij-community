@@ -15,13 +15,14 @@
  */
 package com.intellij.formatting;
 
+import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.TextRange;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author yole
  */
-public class DelegatingFormattingModel implements FormattingModel {
+public class DelegatingFormattingModel implements FormattingModelEx {
   private final FormattingModel myBaseModel;
   private final Block myRootBlock;
 
@@ -44,6 +45,14 @@ public class DelegatingFormattingModel implements FormattingModel {
 
   @Override
   public TextRange replaceWhiteSpace(TextRange textRange, String whiteSpace) {
+    return myBaseModel.replaceWhiteSpace(textRange, whiteSpace);
+  }
+
+  @Override
+  public TextRange replaceWhiteSpace(TextRange textRange, ASTNode nodeAfter, String whiteSpace) {
+    if (myBaseModel instanceof FormattingModelEx) {
+      return ((FormattingModelEx) myBaseModel).replaceWhiteSpace(textRange, nodeAfter, whiteSpace);
+    }
     return myBaseModel.replaceWhiteSpace(textRange, whiteSpace);
   }
 

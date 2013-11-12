@@ -18,21 +18,21 @@ package com.intellij.psi.formatter;
 
 import com.intellij.formatting.Block;
 import com.intellij.formatting.FormattingDocumentModel;
-import com.intellij.formatting.FormattingModel;
+import com.intellij.formatting.FormattingModelEx;
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.TokenType;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class PsiBasedFormattingModel implements FormattingModel {
+public class PsiBasedFormattingModel implements FormattingModelEx {
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.formatter.PsiBasedFormattingModel");
 
@@ -50,12 +50,19 @@ public class PsiBasedFormattingModel implements FormattingModel {
 
   }
 
+
+
   @Override
   public TextRange replaceWhiteSpace(TextRange textRange, String whiteSpace) {
+    return replaceWhiteSpace(textRange, null, whiteSpace);
+  }
+
+  @Override
+  public TextRange replaceWhiteSpace(TextRange textRange, ASTNode nodeAfter, String whiteSpace) {
     String whiteSpaceToUse
-      = myDocumentModel.adjustWhiteSpaceIfNecessary(whiteSpace, textRange.getStartOffset(), textRange.getEndOffset(), true).toString();
+      = myDocumentModel.adjustWhiteSpaceIfNecessary(whiteSpace, textRange.getStartOffset(), textRange.getEndOffset(), nodeAfter, true).toString();
     final String wsReplaced = replaceWithPSI(textRange, whiteSpaceToUse);
-    
+
     if (wsReplaced != null){
       return new TextRange(textRange.getStartOffset(), textRange.getStartOffset() + wsReplaced.length());
     } else {

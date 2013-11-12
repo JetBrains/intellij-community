@@ -69,6 +69,7 @@ public class PythonEnterHandler extends EnterHandlerDelegateAdapter {
     PyFunction.class,
     PySliceExpression.class,
     PySubscriptionExpression.class,
+    PyGeneratorExpression.class
   };
 
   @Override
