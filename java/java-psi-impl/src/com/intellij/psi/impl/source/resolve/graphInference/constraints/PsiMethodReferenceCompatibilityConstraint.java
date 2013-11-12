@@ -55,6 +55,7 @@ public class PsiMethodReferenceCompatibilityConstraint implements ConstraintForm
     final PsiParameter[] targetParameters = interfaceMethod.getParameterList().getParameters();
     final PsiType returnType = substitutor.substitute(interfaceMethod.getReturnType());
     LOG.assertTrue(returnType != null, interfaceMethod);
+    final PsiType[] typeParameters = myExpression.getTypeParameters();
     if (!myExpression.isExact()) {
       for (PsiParameter parameter : targetParameters) {
         if (!session.isProperType(substitutor.substitute(parameter.getType()))) {
@@ -63,9 +64,13 @@ public class PsiMethodReferenceCompatibilityConstraint implements ConstraintForm
       }
     } else {
       final PsiMethodReferenceUtil.QualifierResolveResult qualifierResolveResult = PsiMethodReferenceUtil.getQualifierResolveResult(myExpression);
-      final PsiSubstitutor psiSubstitutor = qualifierResolveResult.getSubstitutor();
+      PsiSubstitutor psiSubstitutor = qualifierResolveResult.getSubstitutor();
       final PsiMember applicableMember = ((PsiMethodReferenceExpressionImpl)myExpression).getPotentiallyApplicableMember();
       LOG.assertTrue(applicableMember != null);
+      int idx = 0;
+      for (PsiTypeParameter param : ((PsiTypeParameterListOwner)applicableMember).getTypeParameters()) {
+        psiSubstitutor = psiSubstitutor.put(param, typeParameters[idx++]);
+      }
       final PsiParameter[] parameters = applicableMember instanceof PsiMethod ? ((PsiMethod)applicableMember).getParameterList().getParameters() : PsiParameter.EMPTY_ARRAY;
       if (targetParameters.length == parameters.length + 1) {
         final PsiTypeElement qualifierTypeElement = myExpression.getQualifierType();
@@ -133,7 +138,7 @@ public class PsiMethodReferenceCompatibilityConstraint implements ConstraintForm
       }
       LOG.assertTrue(referencedMethodReturnType != null, method);
 
-      if (myExpression.getTypeParameters().length == 0 &&
+      if (typeParameters.length == 0 &&
           ((PsiMethod)resolve).getTypeParameters().length > 0 && 
           PsiPolyExpressionUtil.mentionsTypeParameters(returnType, new HashSet<PsiTypeParameter>(Arrays.asList(interfaceMethod.getTypeParameters())))) {
         //todo target type constraint
