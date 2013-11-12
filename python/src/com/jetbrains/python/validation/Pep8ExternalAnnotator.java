@@ -52,6 +52,7 @@ import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.codeInsight.imports.OptimizeImportsQuickFix;
 import com.jetbrains.python.inspections.PyPep8Inspection;
 import com.jetbrains.python.inspections.quickfix.ReformatFix;
+import com.jetbrains.python.quickFixes.RemoveTrailingBlankLinesFix;
 import com.jetbrains.python.sdk.PreferredSdkComparator;
 import com.jetbrains.python.sdk.PySdkUtil;
 import com.jetbrains.python.sdk.PythonSdkType;
@@ -252,6 +253,9 @@ public class Pep8ExternalAnnotator extends ExternalAnnotator<Pep8ExternalAnnotat
         }
         if (problem.myCode.equals("E401")) {
           annotation.registerUniversalFix(new OptimizeImportsQuickFix(), null, null);
+        }
+        else if (problem.myCode.equals("W391")) {
+          annotation.registerUniversalFix(new RemoveTrailingBlankLinesFix(), null, null);
         }
         else {
           annotation.registerUniversalFix(new ReformatFix(), null, null);
