@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -744,11 +744,12 @@ public class DocumentWindowImpl extends UserDataHolderBase implements Disposable
     synchronized (myLock) {
       Segment hostRangeMarker = myShreds.get(0).getHostRangeMarker();
       if (hostRangeMarker == null || end - start > hostRangeMarker.getEndOffset() - hostRangeMarker.getStartOffset()) return false;
+      ProperTextRange query = new ProperTextRange(start, end);
       for (PsiLanguageInjectionHost.Shred shred : myShreds) {
         Segment hostRange = shred.getHostRangeMarker();
         if (hostRange == null) continue;
         TextRange textRange = ProperTextRange.create(hostRange);
-        if (textRange.contains(new ProperTextRange(start, end))) return true;
+        if (textRange.contains(query)) return true;
       }
       return false;
     }
