@@ -40,7 +40,7 @@ public class TypeCompatibilityConstraint implements ConstraintFormula {
   @Override
   public boolean reduce(InferenceSession session, List<ConstraintFormula> constraints) {
     if (session.isProperType(myT) && session.isProperType(myS)) {
-      return TypeConversionUtil.isAssignable(myS, myT);
+      return TypeConversionUtil.isAssignable(myT, myS);
     }
     if (myS instanceof PsiPrimitiveType) {
       final PsiClassType boxedType = ((PsiPrimitiveType)myS).getBoxedType(session.getManager(), session.getScope());
