@@ -761,6 +761,9 @@ def foo() {
     checkFormatting('foo in  bar', 'foo in bar')
   }
 
+  void testGDocAfterImports() { doTest() }
+  void testGDocAfterImports2() { doTest() }
+
   private void doGeeseTest() {
     GroovyCodeStyleSettings customSettings = myTempSettings.getCustomSettings(GroovyCodeStyleSettings.class);
     boolean oldvalue = customSettings.USE_FLYING_GEESE_BRACES;
