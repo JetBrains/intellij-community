@@ -89,7 +89,10 @@ public final class UrlImpl implements Url {
 
   @Override
   public String toDecodedForm(boolean skipQueryAndFragment) {
-    StringBuilder builder = new StringBuilder().append(scheme).append("://");
+    StringBuilder builder = new StringBuilder();
+    if (scheme != null) {
+      builder.append(scheme).append("://");
+    }
     if (authority != null) {
       builder.append(authority);
     }
