@@ -746,7 +746,7 @@ public class FileWatcherTest extends PlatformLangTestCase {
       action.run();
     }
 
-    int timeout = myTimeout;
+    long timeout = myTimeout, start = System.currentTimeMillis();
     try {
       synchronized (myWaiter) {
         //noinspection WaitNotInLoop
@@ -757,7 +757,7 @@ public class FileWatcherTest extends PlatformLangTestCase {
       LOG.warn(e);
     }
 
-    LOG.debug("** waited for " + timeout);
+    LOG.debug("** waited for " + (System.currentTimeMillis() - start) + " of " + timeout);
     myFileSystem.refresh(false);
 
     ArrayList<VFileEvent> result;
