@@ -146,7 +146,8 @@ public class PyBlock implements ASTBlock {
         childIndent = Indent.getNormalIndent();
       }
     }
-    else if (childType == PyElementTypes.IMPORT_ELEMENT && hasLineBreaksBefore(child, 1)) {
+    else if (childType == PyElementTypes.IMPORT_ELEMENT) {
+      wrap = Wrap.createWrap(WrapType.NORMAL, true);
       childIndent = Indent.getNormalIndent();
     }
     if (ourListElementTypes.contains(parentType)) {

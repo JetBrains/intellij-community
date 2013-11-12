@@ -345,6 +345,11 @@ public class PyFormatterTest extends PyTestCase {
     doTest();
   }
 
+  public void testWrapImports() {  // PY-9163
+    settings().RIGHT_MARGIN = 80;
+    doTest();
+  }
+
   private void doTest() {
     doTest(false);
   }
