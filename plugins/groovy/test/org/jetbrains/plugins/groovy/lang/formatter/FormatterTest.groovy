@@ -764,6 +764,8 @@ def foo() {
   void testGDocAfterImports() { doTest() }
   void testGDocAfterImports2() { doTest() }
 
+  void testRegexExpressions() { doTest() }
+
   private void doGeeseTest() {
     GroovyCodeStyleSettings customSettings = myTempSettings.getCustomSettings(GroovyCodeStyleSettings.class);
     boolean oldvalue = customSettings.USE_FLYING_GEESE_BRACES;
