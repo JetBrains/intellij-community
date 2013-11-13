@@ -762,12 +762,12 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
           queue.getKeyEventDispatcher().resetState();
         }
 
-        if (myProject != null) {
-          Project project = myProject.get();
-          if (project != null && !project.isDisposed() && project.isInitialized()) {
-            IdeFocusManager.findInstanceByComponent(this).requestFocus(new MyFocusCommand(dialogWrapper), true);
-          }
-        }
+       // if (myProject != null) {
+       //   Project project = myProject.get();
+          //if (project != null && !project.isDisposed() && project.isInitialized()) {
+          // // IdeFocusManager.findInstanceByComponent(this).requestFocus(new MyFocusCommand(dialogWrapper), true);
+          //}
+       // }
       }
 
       if (SystemInfo.isMac && myProject != null && Registry.is("ide.mac.fix.dialog.showing") && !dialogWrapper.isModalProgress()) {
@@ -783,6 +783,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
         loc.y = Splash.BOUNDS.y + Splash.BOUNDS.height;
         setLocation(loc);
       }
+      UIUtil.setAutoRequestFocus(this, false);
       super.show();
     }
 
