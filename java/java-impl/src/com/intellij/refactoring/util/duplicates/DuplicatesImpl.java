@@ -192,11 +192,11 @@ public class DuplicatesImpl {
       if (duplicates.size() == 1) {
         previewMatch(project, duplicates.get(0), editor);
       }
-      final int answer = ApplicationManager.getApplication().isUnitTestMode() ? 0 : Messages.showYesNoDialog(project,
+      final int answer = ApplicationManager.getApplication().isUnitTestMode() ? Messages.YES : Messages.showYesNoDialog(project,
         RefactoringBundle.message("0.has.detected.1.code.fragments.in.this.file.that.can.be.replaced.with.a.call.to.extracted.method",
         ApplicationNamesInfo.getInstance().getProductName(), duplicates.size()),
         "Process Duplicates", Messages.getQuestionIcon());
-      if (answer == 0) {
+      if (answer == Messages.YES) {
         invoke(project, editor, provider);
       }
     }

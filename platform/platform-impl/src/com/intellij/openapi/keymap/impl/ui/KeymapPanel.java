@@ -778,7 +778,7 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
     }
     int result = Messages.showYesNoDialog(this, KeyMapBundle.message("delete.keymap.dialog.message"),
                                           KeyMapBundle.message("delete.keymap.dialog.title"), Messages.getWarningIcon());
-    if (result != 0) {
+    if (result != Messages.YES) {
       return;
     }
     myKeymapListModel.removeElement(myKeymapList.getSelectedItem());

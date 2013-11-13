@@ -86,7 +86,7 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
       String message = ProjectBundle.message("project.convert.old.prompt", projectFile.getName(),
                                              appNamesInfo.getProductName(),
                                              name + OLD_PROJECT_SUFFIX + projectFile.getExtension());
-      if (Messages.showYesNoDialog(message, CommonBundle.getWarningTitle(), Messages.getWarningIcon()) != 0) return false;
+      if (Messages.showYesNoDialog(message, CommonBundle.getWarningTitle(), Messages.getWarningIcon()) != Messages.YES) return false;
 
       final ArrayList<String> conversionProblems = getConversionProblemsStorage();
       if (conversionProblems != null && !conversionProblems.isEmpty()) {
@@ -137,7 +137,7 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
       String message =
         ProjectBundle.message("project.load.new.version.warning", myProject.getName(), appNamesInfo.getProductName());
 
-      if (Messages.showYesNoDialog(message, CommonBundle.getWarningTitle(), Messages.getWarningIcon()) != 0) return false;
+      if (Messages.showYesNoDialog(message, CommonBundle.getWarningTitle(), Messages.getWarningIcon()) != Messages.YES) return false;
     }
 
     return true;

@@ -30,7 +30,6 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.LangDataKeys;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
@@ -147,7 +146,7 @@ public class CreateSnapShotAction extends AnAction {
     if (!connected) {
       int rc = Messages.showYesNoDialog(project, UIDesignerBundle.message("snapshot.run.prompt"),
                                         UIDesignerBundle.message("snapshot.title"), Messages.getQuestionIcon());
-      if (rc == 1) return;
+      if (rc == Messages.NO) return;
       final ApplicationConfiguration appConfig = (ApplicationConfiguration) snapshotConfiguration.getConfiguration();
       final SnapShooterConfigurationSettings settings = SnapShooterConfigurationSettings.get(appConfig);
       settings.setNotifyRunnable(new Runnable() {
@@ -289,7 +288,7 @@ public class CreateSnapShotAction extends AnAction {
         UIDesignerBundle.message("snapshot.confirm.configuration.prompt", configurations.get(0).getConfiguration().getName()),
         UIDesignerBundle.message("snapshot.title"),
         Messages.getQuestionIcon());
-      if (rc == 1) {
+      if (rc == Messages.NO) {
         return null;
       }
       snapshotConfiguration = configurations.get(0);
@@ -512,7 +511,7 @@ public class CreateSnapShotAction extends AnAction {
         }
         builder.append(UIDesignerBundle.message("snapshot.unknown.layout.prompt"));
         return Messages.showYesNoDialog(myProject, builder.toString(),
-                                        UIDesignerBundle.message("snapshot.title"), Messages.getQuestionIcon()) == 0;
+                                        UIDesignerBundle.message("snapshot.title"), Messages.getQuestionIcon()) == Messages.YES;
       }
       return true;
     }

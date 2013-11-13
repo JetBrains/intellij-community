@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -93,7 +93,7 @@ public class SubmitPerformanceReportAction extends AnAction implements DumbAware
     int rc = Messages.showYesNoDialog(project, "The performance report has been saved to\n" + reportPath +
                                                "\n\nWould you like to submit it to JetBrains?", MESSAGE_TITLE,
                                       Messages.getQuestionIcon());
-    if (rc == 0) {
+    if (rc == Messages.YES) {
       ProgressManager.getInstance().run(new Task.Backgroundable(project, "Uploading Performance Report") {
         public void run(@NotNull final ProgressIndicator indicator) {
           final String error = uploadFileToFTP(reportPath, "ftp.intellij.net", ".uploads", indicator);

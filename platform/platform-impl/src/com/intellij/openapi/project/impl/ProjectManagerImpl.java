@@ -655,7 +655,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
         message += ApplicationNamesInfo.getInstance().getProductName() + "?";
 
         if (Messages.showYesNoDialog(message,
-                                     "Application Configuration Reload", Messages.getQuestionIcon()) == 0) {
+                                     "Application Configuration Reload", Messages.getQuestionIcon()) == Messages.YES) {
           for (Pair<VirtualFile, StateStorage> cause : causes) {
             StateStorage stateStorage = cause.getSecond();
             if (stateStorage instanceof XmlElementStorage) {

@@ -830,7 +830,7 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
       }
     };
 
-    return DialogWrapper.OK_EXIT_CODE == Messages.showYesNoDialog("Delete " + count + " items?", "Confirm Delete",
+    return Messages.YES == Messages.showYesNoDialog("Delete " + count + " items?", "Confirm Delete",
                                                                   "Delete",
                                                                   CommonBundle.message("button.cancel"),
                                                                   Messages.getQuestionIcon(),

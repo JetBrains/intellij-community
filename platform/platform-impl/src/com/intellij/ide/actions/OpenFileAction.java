@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -123,7 +123,7 @@ public class OpenFileAction extends AnAction implements DumbAware {
                                               IdeBundle.message("message.open.file.is.project", file.getName()),
                                               IdeBundle.message("title.open.project"),
                                               Messages.getQuestionIcon());
-        if (answer == 0) {
+        if (answer == Messages.YES) {
           FileChooserUtil.setLastOpenedFile(ProjectUtil.openOrImport(file.getPath(), project, false), file);
           return;
         }

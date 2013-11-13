@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,7 +39,7 @@ public class ProjectCheckoutListener implements CheckoutListener {
       int rc = Messages
         .showYesNoDialog(project, VcsBundle.message("checkout.open.project.prompt", getProductNameWithArticle(), files[0].getPath()),
                          VcsBundle.message("checkout.title"), Messages.getQuestionIcon());
-      if (rc == 0) {
+      if (rc == Messages.YES) {
         ProjectUtil.openProject(files[0].getPath(), project, false);
       }
       return true;

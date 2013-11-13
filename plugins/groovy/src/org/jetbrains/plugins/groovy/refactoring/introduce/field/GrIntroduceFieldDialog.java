@@ -17,6 +17,7 @@ package org.jetbrains.plugins.groovy.refactoring.introduce.field;
 
 import com.intellij.codeInsight.TestFrameworks;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -463,7 +464,7 @@ public class GrIntroduceFieldDialog extends DialogWrapper implements GrIntroduce
     final String name = getName();
     String message = RefactoringBundle.message("field.exists", name, clazz.getQualifiedName());
     if (clazz.findFieldByName(name, true) != null &&
-        showYesNoDialog(myContext.getProject(), message, REFACTORING_NAME, getWarningIcon()) != 0) {
+        showYesNoDialog(myContext.getProject(), message, REFACTORING_NAME, getWarningIcon()) != Messages.YES) {
       return;
     }
     super.doOKAction();

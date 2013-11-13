@@ -305,7 +305,7 @@ public class MavenProjectImporter {
       }
     });
 
-    if (result[0] == 1) return false;// NO
+    if (result[0] == Messages.NO) return false;// NO
 
     for (Module each : obsoleteModules) {
       if (!each.isDisposed()) {

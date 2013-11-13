@@ -489,7 +489,7 @@ public class RepositoryBrowserDialog extends DialogWrapper {
       if (url != null) {
         int rc = Messages.showYesNoDialog(myBrowserComponent.getProject(), SvnBundle.message("repository.browser.discard.location.prompt", url.toString()),
                                           SvnBundle.message("repository.browser.discard.location.title"), Messages.getQuestionIcon());
-        if (rc != 0) {
+        if (rc != Messages.YES) {
           return;
         }
         SvnApplicationSettings.getInstance().removeCheckoutURL(url.toString());

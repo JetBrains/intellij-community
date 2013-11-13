@@ -201,7 +201,7 @@ public class DeleteHandler {
               if (!readOnlyFiles.isEmpty()) {
                 String message = IdeBundle.message("prompt.directory.contains.read.only.files", virtualFile.getPresentableUrl());
                 int _result = Messages.showYesNoDialog(project, message, IdeBundle.message("title.delete"), Messages.getQuestionIcon());
-                if (_result != 0) continue;
+                if (_result != Messages.YES) continue;
 
                 boolean success = true;
                 for (VirtualFile file : readOnlyFiles) {
@@ -222,7 +222,7 @@ public class DeleteHandler {
                   .setTitle(IdeBundle.message("title.delete"))
                   .appendMessage(IdeBundle.message("prompt.delete.it.anyway"))
                   .askYesNo();
-                if (_result != 0) continue;
+                if (_result != Messages.YES) continue;
 
                 boolean success = clearReadOnlyFlag(virtualFile, project);
                 if (!success) continue;

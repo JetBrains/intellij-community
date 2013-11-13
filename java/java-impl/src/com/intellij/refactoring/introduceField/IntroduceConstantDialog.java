@@ -457,7 +457,7 @@ class IntroduceConstantDialog extends DialogWrapper {
                 IntroduceFieldHandler.REFACTORING_NAME,
                 Messages.getWarningIcon()
         );
-        if (answer != 0) {
+        if (answer != Messages.YES) {
           return;
         }
       }

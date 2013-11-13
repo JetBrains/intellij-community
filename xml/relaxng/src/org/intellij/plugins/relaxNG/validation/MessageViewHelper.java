@@ -196,7 +196,7 @@ public class MessageViewHelper {
             myContentName + " is still running. Close anyway?",
               Messages.getQuestionIcon()
           );
-          if (result != 0) {
+          if (result != Messages.YES) {
             event.consume();
           }
         }

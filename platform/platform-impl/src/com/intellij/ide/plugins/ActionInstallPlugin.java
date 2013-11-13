@@ -229,13 +229,13 @@ public class ActionInstallPlugin extends AnAction implements DumbAware {
         }
         message += "?</body></html>";
         result = Messages.showYesNoDialog(message, CommonBundle.getWarningTitle(), Messages.getQuestionIcon());
-        if (result == DialogWrapper.CANCEL_EXIT_CODE) return false;
+        if (result == Messages.NO) return false;
       }
 
-      if (result == DialogWrapper.OK_EXIT_CODE) {
+      if (result == Messages.YES) {
         disabled.addAll(disabledDependants);
         pluginsModel.enableRows(disabled.toArray(new IdeaPluginDescriptor[disabled.size()]), true);
-      } else if (result == DialogWrapper.CANCEL_EXIT_CODE && !disabled.isEmpty()) {
+      } else if (result == Messages.NO && !disabled.isEmpty()) {
         pluginsModel.enableRows(disabled.toArray(new IdeaPluginDescriptor[disabled.size()]), true);
       }
       return true;
@@ -283,6 +283,6 @@ public class ActionInstallPlugin extends AnAction implements DumbAware {
       message = IdeBundle.message("prompt.install.several.plugins", selection.length);
     }
 
-    return Messages.showYesNoDialog(host.getMainPanel(), message, IdeBundle.message("action.download.and.install.plugin"), Messages.getQuestionIcon()) == 0;
+    return Messages.showYesNoDialog(host.getMainPanel(), message, IdeBundle.message("action.download.and.install.plugin"), Messages.getQuestionIcon()) == Messages.YES;
   }
 }

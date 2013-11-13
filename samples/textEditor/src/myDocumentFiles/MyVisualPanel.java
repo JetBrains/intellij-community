@@ -116,7 +116,7 @@ public class MyVisualPanel extends DialogWrapper {
         }
         if (!initialFileContent.equals(myFileEditor.getText())) {
             if (Messages.showYesNoDialog("The file " + selectedVFile.getName() +
-                    " has been changed. Are you sure you want to overwrite it?", "File Changed", Messages.getQuestionIcon()) == 0) {
+                    " has been changed. Are you sure you want to overwrite it?", "File Changed", Messages.getQuestionIcon()) == Messages.YES) {
                 if (docFile.isWritable()) {
                     docFile.setText(myFileEditor.getText());
                 } else {

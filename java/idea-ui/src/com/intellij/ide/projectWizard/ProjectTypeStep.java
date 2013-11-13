@@ -332,7 +332,7 @@ public class ProjectTypeStep extends ModuleWizardStep implements Disposable {
         int answer = Messages.showYesNoDialog(getComponent(),
                                               ProjectBundle.message("warning.message.some.required.libraries.wasn.t.downloaded"),
                                               CommonBundle.getWarningTitle(), Messages.getWarningIcon());
-        if (answer != 0) {
+        if (answer != Messages.YES) {
           throw new CommitStepException(null);
         }
       }

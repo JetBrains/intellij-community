@@ -110,7 +110,7 @@ public class ConvertProjectDialog extends DialogWrapper {
                                                                                    filesString),
                                                                  IdeBundle.message("dialog.title.convert.project"),
                                                                  Messages.getQuestionIcon());
-      if (res != 0) {
+      if (res != Messages.YES) {
         super.doOKAction();
         return;
       }

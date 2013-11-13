@@ -23,7 +23,6 @@ import com.intellij.notification.Notifications;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.updateSettings.impl.PluginDownloader;
 import com.intellij.openapi.updateSettings.impl.UpdateChecker;
@@ -113,7 +112,7 @@ public class PluginInstaller {
             public void run() {
               String title = IdeBundle.message("plugin.manager.dependencies.detected.title");
               String message = IdeBundle.message("plugin.manager.dependencies.detected.message", depends.size(), buf.substring(0, buf.length() - 1));
-              proceed[0] = Messages.showYesNoDialog(message, title, Messages.getWarningIcon()) == DialogWrapper.OK_EXIT_CODE;
+              proceed[0] = Messages.showYesNoDialog(message, title, Messages.getWarningIcon()) == Messages.YES;
             }
           });
         }
@@ -143,7 +142,7 @@ public class PluginInstaller {
                 Messages.showYesNoDialog(IdeBundle.message("plugin.manager.optional.dependencies.detected.message", optionalDeps.size(),
                                                            buf.substring(0, buf.length() - 1)),
                                          IdeBundle.message("plugin.manager.dependencies.detected.title"),
-                                         Messages.getWarningIcon()) == DialogWrapper.OK_EXIT_CODE;
+                                         Messages.getWarningIcon()) == Messages.YES;
             }
           });
         }

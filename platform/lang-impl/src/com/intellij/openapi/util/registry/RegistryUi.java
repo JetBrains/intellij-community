@@ -327,7 +327,7 @@ public class RegistryUi implements Disposable {
 
   private void restoreDefaults() {
     final int r = Messages.showYesNoDialog(myContent, "Are you sure you want to revert registry settings to default values?", "Revert To Defaults", Messages.getQuestionIcon());
-    if (r == 0) {
+    if (r == Messages.YES) {
       Registry.getInstance().restoreDefaults();
       myModel.fireChanged();
       revaliateActions();

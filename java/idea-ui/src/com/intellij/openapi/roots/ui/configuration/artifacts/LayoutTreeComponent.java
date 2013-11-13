@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -282,7 +282,7 @@ public class LayoutTreeComponent implements DnDTarget, Disposable {
         message = "The selected node belongs to " + nodes.size() + " elements. Do you want to remove all these elements from the artifact?";
       }
       final int answer = Messages.showYesNoDialog(myArtifactsEditor.getMainComponent(), message, "Remove Elements", null);
-      if (answer != 0) return false;
+      if (answer != Messages.YES) return false;
     }
     return true;
   }

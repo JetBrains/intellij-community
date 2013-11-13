@@ -348,7 +348,7 @@ public class MoveMembersDialog extends RefactoringDialog implements MoveMembersO
             MoveMembersImpl.REFACTORING_NAME,
             Messages.getQuestionIcon()
     );
-    if (answer != 0) return null;
+    if (answer != Messages.YES) return null;
     final Ref<IncorrectOperationException> eRef = new Ref<IncorrectOperationException>();
     final PsiClass newClass = ApplicationManager.getApplication().runWriteAction(new Computable<PsiClass>() {
           public PsiClass compute() {

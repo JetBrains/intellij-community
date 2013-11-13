@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -239,7 +239,7 @@ public class RenameJavaVariableProcessor extends RenameJavaMemberProcessor {
   private static boolean askToRenameAccesors(PsiMethod getter, PsiMethod setter, String newName, final Project project) {
     if (ApplicationManager.getApplication().isUnitTestMode()) return false;
     String text = RefactoringMessageUtil.getGetterSetterMessage(newName, RefactoringBundle.message("rename.title"), getter, setter);
-    return Messages.showYesNoDialog(project, text, RefactoringBundle.message("rename.title"), Messages.getQuestionIcon()) != 0;
+    return Messages.showYesNoDialog(project, text, RefactoringBundle.message("rename.title"), Messages.getQuestionIcon()) != Messages.YES;
   }
 
   private static void addOverriddenAndImplemented(PsiMethod methodPrototype, final String newName, final Map<PsiElement, String> allRenames) {
