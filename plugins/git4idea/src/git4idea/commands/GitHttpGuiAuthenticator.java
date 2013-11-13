@@ -26,6 +26,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.AuthData;
+import com.intellij.util.UriUtil;
 import com.intellij.util.io.URLUtil;
 import com.intellij.vcsUtil.AuthDialog;
 import git4idea.jgit.GitHttpAuthDataProvider;
@@ -172,7 +173,7 @@ class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
 
   @NotNull
   private static String getHost(@NotNull String url) {
-    Pair<String, String> split = URLUtil.splitScheme(url);
+    Pair<String, String> split = UriUtil.splitScheme(url);
     String scheme = split.getFirst();
     String urlItself = split.getSecond();
     int pathStart = urlItself.indexOf("/");
@@ -229,7 +230,7 @@ class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
    */
   @NotNull
   private static String makeKey(@NotNull String url, @NotNull String login) {
-    Pair<String,String> pair = URLUtil.splitScheme(url);
+    Pair<String,String> pair = UriUtil.splitScheme(url);
     String scheme = pair.getFirst();
     if (StringUtil.isEmpty(scheme)) {
       return scheme + URLUtil.SCHEME_SEPARATOR + login + "@" + pair.getSecond();
