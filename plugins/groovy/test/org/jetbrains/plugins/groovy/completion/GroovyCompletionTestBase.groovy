@@ -56,7 +56,7 @@ abstract public class GroovyCompletionTestBase extends LightCodeInsightFixtureTe
     }
   }
 
-  protected void doVariantableTest(String before = null, String type = "", CompletionType ct, CompletionResult testType = CompletionResult.equal, String... variants) {
+  protected void doVariantableTest(String before = null, String type = "", CompletionType ct, CompletionResult testType = CompletionResult.equal, int completionCount = 1, String... variants) {
     if (before == null) {
       myFixture.configureByFile(getTestName(false) + ".groovy")
     }
@@ -64,7 +64,7 @@ abstract public class GroovyCompletionTestBase extends LightCodeInsightFixtureTe
       myFixture.configureByText(getTestName(false) + ".groovy", before)
     }
 
-    myFixture.complete(ct)
+    myFixture.complete(ct, completionCount)
     type.each { myFixture.type(it) }
 
     assertNotNull(myFixture.lookupElements)
