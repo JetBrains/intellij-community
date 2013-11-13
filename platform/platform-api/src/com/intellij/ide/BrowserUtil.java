@@ -159,7 +159,9 @@ public class BrowserUtil {
    */
   public static void browse(@NotNull URI uri) {
     LOG.debug("Launch browser: [" + uri + "]");
-    if (getGeneralSettingsInstance().isUseDefaultBrowser()) {
+
+    GeneralSettings settings = getGeneralSettingsInstance();
+    if (settings.isUseDefaultBrowser()) {
       if (isDesktopActionSupported(Desktop.Action.BROWSE)) {
         try {
           Desktop.getDesktop().browse(uri);
@@ -178,10 +180,10 @@ public class BrowserUtil {
       }
     }
 
-    String browserPath = getGeneralSettingsInstance().getBrowserPath();
+    String browserPath = settings.getBrowserPath();
     if (StringUtil.isEmptyOrSpaces(browserPath)) {
-      showErrorMessage(IdeBundle.message("error.please.specify.path.to.web.browser", CommonBundle.settingsActionPath()),
-                       IdeBundle.message("title.browser.not.found"));
+      String message = IdeBundle.message("error.please.specify.path.to.web.browser", CommonBundle.settingsActionPath());
+      showErrorMessage(message, IdeBundle.message("title.browser.not.found"));
       return;
     }
 
@@ -194,7 +196,14 @@ public class BrowserUtil {
   }
 
   private static GeneralSettings getGeneralSettingsInstance() {
-    return ApplicationManager.getApplication() != null ? GeneralSettings.getInstance() : new GeneralSettings();
+    if (ApplicationManager.getApplication() != null) {
+      GeneralSettings settings = GeneralSettings.getInstance();
+      if (settings != null) {
+        return settings;
+      }
+    }
+
+    return new GeneralSettings();
   }
 
   public static boolean canStartDefaultBrowser() {
