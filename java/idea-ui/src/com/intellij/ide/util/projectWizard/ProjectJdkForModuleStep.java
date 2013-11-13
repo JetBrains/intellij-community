@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -197,7 +197,7 @@ public class ProjectJdkForModuleStep extends ModuleWizardStep {
     if (jdk == null) {
       int result = Messages.showOkCancelDialog(IdeBundle.message("prompt.confirm.project.no.jdk"),
                                                IdeBundle.message("title.no.jdk.specified"), Messages.getWarningIcon());
-      if (result != 0) {
+      if (result != Messages.OK) {
         return false;
       }
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -84,7 +84,7 @@ public final class GenerateGroovyDocDialog extends DialogWrapper {
       int choice = Messages.showOkCancelDialog(myProject,
                                                GroovyDocBundle.message("groovydoc.generate.directory.not.exists", dirName),
                                                GroovyDocBundle.message("groovydoc.generate.message.title"), Messages.getWarningIcon());
-      if (choice != 0) return false;
+      if (choice != Messages.OK) return false;
       if (!dir.mkdirs()) {
         showError(GroovyDocBundle.message("groovydoc.generate.directory.creation.failed", dirName));
         return false;

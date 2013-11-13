@@ -558,7 +558,7 @@ public class PyExtractMethodUtil {
           throw new CommonRefactoringUtil.RefactoringErrorHintException(error);
         }
         if (Messages.showOkCancelDialog(error + ". " + RefactoringBundle.message("do.you.wish.to.continue"),
-                                        RefactoringBundle.message("warning.title"), Messages.getWarningIcon()) != 0){
+                                        RefactoringBundle.message("warning.title"), Messages.getWarningIcon()) != Messages.OK){
           throw new CommonRefactoringUtil.RefactoringErrorHintException(error);
         }
       }

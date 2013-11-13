@@ -100,7 +100,7 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
         final int result = Messages.showOkCancelDialog(myProject, buffer.toString(), ProjectBundle.message("project.convert.problems.title"),
                                                ProjectBundle.message("project.convert.problems.help.button"),
                                                  CommonBundle.getCloseButtonText(), Messages.getWarningIcon());
-        if (result == 0) {
+        if (result == Messages.OK) {
           HelpManager.getInstance().invokeHelp("project.migrationProblems");
         }
       }

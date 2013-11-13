@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -314,7 +314,7 @@ public class RegistryUi implements Disposable {
           , Messages.getQuestionIcon());
 
 
-      if (r == 0) {
+      if (r == Messages.OK) {
         LaterInvocator.invokeLater(new Runnable() {
           @Override
           public void run() {

@@ -159,6 +159,6 @@ public class QuickMergeInteractionImpl implements QuickMergeInteraction {
   }
 
   private boolean prompt(final String question) {
-    return Messages.showOkCancelDialog(myProject, question, myTitle, Messages.getQuestionIcon()) == 0;
+    return Messages.showOkCancelDialog(myProject, question, myTitle, Messages.getQuestionIcon()) == Messages.OK;
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -784,7 +784,7 @@ public class CompileDriver {
               myProject, "You are about to rebuild the whole project.\nRun 'Make Project' instead?", "Confirm Project Rebuild",
               "Make", "Rebuild", Messages.getQuestionIcon()
           );
-          if (rv == 0 /*yes, please, do run make*/) {
+          if (rv == Messages.OK /*yes, please, do run make*/) {
             startup(scope, false, false, callback, null, checkCachesVersion);
             return;
           }

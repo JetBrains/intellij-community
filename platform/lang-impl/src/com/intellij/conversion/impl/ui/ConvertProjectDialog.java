@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -162,7 +162,7 @@ public class ConvertProjectDialog extends DialogWrapper {
                                                ApplicationNamesInfo.getInstance().getFullProductName(),
                                                getFilesString(files));
       final String[] options = {CommonBundle.getContinueButtonText(), CommonBundle.getCancelButtonText()};
-      if (Messages.showOkCancelDialog(myMainPanel, message, IdeBundle.message("dialog.title.convert.project"), options[0], options[1], null) != 0) {
+      if (Messages.showOkCancelDialog(myMainPanel, message, IdeBundle.message("dialog.title.convert.project"), options[0], options[1], null) != Messages.OK) {
         return false;
       }
       unlockFiles(files);

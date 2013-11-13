@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vcs.CheckinProjectPanel;
 import com.intellij.openapi.vcs.CodeSmellDetector;
@@ -142,7 +141,7 @@ public class CodeAnalysisBeforeCheckinHandler extends CheckinHandler {
                                 "Code analysis can't be performed while IntelliJ IDEA updates the indices in background.\n" +
                                 "You can commit the changes without running inspections, or you can wait until indices are built.",
                                 "Code analysis is not possible right now",
-                                "&Wait", "&Commit", null) == DialogWrapper.OK_EXIT_CODE) {
+                                "&Wait", "&Commit", null) == Messages.OK) {
           return ReturnResult.CANCEL;
         }
         return ReturnResult.COMMIT;
@@ -164,7 +163,7 @@ public class CodeAnalysisBeforeCheckinHandler extends CheckinHandler {
         LOG.error(e);
         if (Messages.showOkCancelDialog(myProject,
                                 "Code analysis failed with exception: " + e.getClass().getName() + ": " + e.getMessage(),
-                                "Code analysis failed", "&Commit", "&Cancel", null) == DialogWrapper.OK_EXIT_CODE) {
+                                "Code analysis failed", "&Commit", "&Cancel", null) == Messages.OK) {
           return ReturnResult.COMMIT;
         }
         return ReturnResult.CANCEL;

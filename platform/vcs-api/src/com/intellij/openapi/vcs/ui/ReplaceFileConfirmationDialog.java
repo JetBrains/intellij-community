@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,18 +15,17 @@
  */
 package com.intellij.openapi.vcs.ui;
 
+import com.intellij.CommonBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ui.FilePathSplittingPolicy;
-import com.intellij.CommonBundle;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -62,7 +61,7 @@ public class ReplaceFileConfirmationDialog {
     return Messages.showOkCancelDialog(createMessage(modifiedFiles), myActionName,
                                     createOwerriteButtonName(modifiedFiles), getCancelButtonText(),
                                Messages.getWarningIcon()) ==
-                DialogWrapper.OK_EXIT_CODE;
+           Messages.OK;
 
   }
 

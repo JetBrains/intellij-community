@@ -293,7 +293,7 @@ public class MergeRequestImpl extends MergeRequest {
                             DiffBundle.message("all.changes.processed.dialog.title"),
                             DiffBundle.message("merge.save.and.finish.button"), DiffBundle.message("merge.continue.button"),
                             Messages.getQuestionIcon());
-      if (doApply != 0) return;
+      if (doApply != Messages.OK) return;
       myDialogWrapper.close(DialogWrapper.OK_EXIT_CODE);
     }
 
