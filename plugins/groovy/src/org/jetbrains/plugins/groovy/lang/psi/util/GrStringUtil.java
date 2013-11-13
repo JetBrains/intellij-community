@@ -44,13 +44,13 @@ import static org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes.GSTRIN
 public class GrStringUtil {
   private static final Logger LOG = Logger.getInstance(GrStringUtil.class);
 
-  private static final String TRIPLE_QUOTES = "'''";
-  private static final String QUOTE = "'";
-  private static final String DOUBLE_QUOTES = "\"";
-  private static final String TRIPLE_DOUBLE_QUOTES = "\"\"\"";
-  private static final String SLASH = "/";
-  private static final String DOLLAR_SLASH = "$/";
-  private static final String SLASH_DOLLAR = "/$";
+  public static final String TRIPLE_QUOTES = "'''";
+  public static final String QUOTE = "'";
+  public static final String DOUBLE_QUOTES = "\"";
+  public static final String TRIPLE_DOUBLE_QUOTES = "\"\"\"";
+  public static final String SLASH = "/";
+  public static final String DOLLAR_SLASH = "$/";
+  public static final String SLASH_DOLLAR = "/$";
 
   private GrStringUtil() {
   }
