@@ -1,7 +1,6 @@
 package org.jetbrains.postfixCompletion.TemplateProviders;
 
 import com.intellij.codeInsight.*;
-import com.intellij.codeInsight.completion.*;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.*;
@@ -27,31 +26,18 @@ public final class ElseStatementTemplateProvider extends BooleanTemplateProvider
     return false;
   }
 
-  static final class ElseLookupItem extends StatementPostfixLookupElement<PsiIfStatement> {
+  static final class ElseLookupItem extends IfStatementPostfixLookupItem {
     public ElseLookupItem(@NotNull PrefixExpressionContext context) {
       super("else", context);
     }
 
-    @NotNull @Override protected PsiIfStatement createNewStatement(
-      @NotNull PsiElementFactory factory, @NotNull PsiExpression expression, @NotNull PsiElement context) {
-
-      PsiIfStatement ifStatement = (PsiIfStatement) factory.createStatementFromText("if(expr)", context);
-
+    @Override protected void processStatement(
+        @NotNull PsiElementFactory factory, @NotNull PsiIfStatement ifStatement, @NotNull PsiExpression expression) {
       PsiExpression condition = ifStatement.getCondition();
       assert condition != null : "condition != null";
 
       PsiExpression inverted = CodeInsightServicesUtil.invertCondition(expression);
       condition.replace(inverted);
-
-      return ifStatement;
-    }
-
-    @Override protected void postProcess(@NotNull InsertionContext context, @NotNull PsiIfStatement statement) {
-      PsiJavaToken rParenth = statement.getRParenth();
-      assert rParenth != null : "rParenth != null";
-
-      int offset = rParenth.getTextRange().getEndOffset();
-      context.getEditor().getCaretModel().moveToOffset(offset);
     }
   }
 }

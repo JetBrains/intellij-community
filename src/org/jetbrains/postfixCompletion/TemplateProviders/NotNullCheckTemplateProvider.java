@@ -76,7 +76,7 @@ public class NotNullCheckTemplateProvider extends TemplateProviderBase {
       return strings;
     }
 
-    @Override protected String getTemplate() {
+    @NotNull @Override protected String getTemplate() {
       return "if(expr!=null)";
     }
   }

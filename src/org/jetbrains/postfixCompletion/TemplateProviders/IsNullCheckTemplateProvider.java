@@ -33,6 +33,6 @@ public class IsNullCheckTemplateProvider extends TemplateProviderBase {
       super("null", context);
     }
 
-    @Override protected String getTemplate() { return "if(expr==null)"; }
+    @NotNull @Override protected String getTemplate() { return "if(expr==null)"; }
   }
 }
