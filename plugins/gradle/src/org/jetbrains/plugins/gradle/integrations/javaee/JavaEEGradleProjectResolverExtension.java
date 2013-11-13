@@ -47,6 +47,8 @@ public class JavaEEGradleProjectResolverExtension extends AbstractProjectResolve
       WarModelData warModelData = new WarModelData(GradleConstants.SYSTEM_ID, warModel.getWebAppDirName(), warModel.getWebAppDir());
       warModelData.setWebXml(warModel.getWebXml());
       warModelData.setWebRoots(warModel.getWebRoots());
+      warModelData.setClasspath(warModel.getClasspath());
+      warModelData.setManifestContent(warModel.getManifestContent());
       ideModule.createChild(WarModelData.KEY, warModelData);
     }
 

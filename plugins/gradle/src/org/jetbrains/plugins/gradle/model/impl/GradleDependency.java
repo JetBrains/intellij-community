@@ -13,27 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.plugins.gradle.model;
+package org.jetbrains.plugins.gradle.model.impl;
 
-import java.io.File;
+import org.gradle.tooling.model.Dependency;
+
 import java.io.Serializable;
-import java.util.Map;
-import java.util.Set;
 
 /**
  * @author Vladislav.Soroka
- * @since 11/5/13
+ * @since 11/8/13
  */
-public interface WarModel extends Serializable {
-  String getWebAppDirName();
+public interface GradleDependency extends Dependency, Serializable {
+  String getConfigurationName();
 
-  File getWebAppDir();
+  String getDependencyName();
 
-  File getWebXml();
+  String getDependencyGroup();
 
-  Map<String, Set<String>> getWebRoots();
-
-  Set<File> getClasspath();
-
-  String getManifestContent();
+  String getDependencyVersion();
 }

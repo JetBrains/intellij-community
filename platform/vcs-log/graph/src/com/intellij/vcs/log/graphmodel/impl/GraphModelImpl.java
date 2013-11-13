@@ -114,11 +114,6 @@ public class GraphModelImpl implements GraphModel {
     fullUpdate();
   }
 
-  @Override
-  public boolean isNodeOfHashVisible(int hash) {
-    return visibleNodes.isNodeVisible(hash);
-  }
-
   @NotNull
   @Override
   public FragmentManager getFragmentManager() {

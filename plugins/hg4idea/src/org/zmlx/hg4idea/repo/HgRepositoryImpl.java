@@ -140,7 +140,7 @@ public class HgRepositoryImpl extends RepositoryImpl implements HgRepository {
     HgRepoInfo currentInfo = readRepoInfo();
     // update only if something changed!!!   if update every time - new log will be refreshed every time, too.
     // Then blinking and do not work properly;
-    if (!Disposer.isDisposed(getProject()) && currentInfo != null && !currentInfo.equals(myInfo)) {
+    if (!Disposer.isDisposed(getProject()) && !currentInfo.equals(myInfo)) {
       myInfo = currentInfo;
       getProject().getMessageBus().syncPublisher(HgVcs.STATUS_TOPIC).update(getProject(), getRoot());
     }
@@ -152,7 +152,7 @@ public class HgRepositoryImpl extends RepositoryImpl implements HgRepository {
     return String.format("HgRepository " + getRoot() + " : " + myInfo);
   }
 
-  @Nullable
+  @NotNull
   private HgRepoInfo readRepoInfo() {
     myIsFresh = myIsFresh && myReader.checkIsFresh();
     //in GitRepositoryImpl there are temporary state object for reader fields storing! Todo Check;

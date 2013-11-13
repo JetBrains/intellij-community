@@ -1,6 +1,8 @@
 package com.intellij.vcs.log.data;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Ref;
 import com.intellij.util.Consumer;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
@@ -14,12 +16,15 @@ import com.intellij.vcs.log.ui.tables.AbstractVcsLogTableModel;
 import com.intellij.vcs.log.ui.tables.GraphTableModel;
 import com.intellij.vcs.log.ui.tables.NoGraphTableModel;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.List;
 
 public class VcsLogFilterer {
 
+  private static final Logger LOG = Logger.getInstance(VcsLogFilterer.class);
+  
   private static final Function<Node,Boolean> ALL_NODES_VISIBLE = new Function<Node, Boolean>() {
     @Override
     public Boolean fun(Node node) {
@@ -115,18 +120,49 @@ public class VcsLogFilterer {
   }
 
   private List<VcsFullCommitDetails> filterByDetails(final GraphModel graphModel, final List<VcsLogDetailsFilter> detailsFilters) {
-    return ContainerUtil.filter(myLogDataHolder.getTopCommitDetails(), new Condition<VcsFullCommitDetails>() {
+    List<VcsFullCommitDetails> result = ContainerUtil.newArrayList();
+    int topCommits = myLogDataHolder.getSettings().getRecentCommitsCount();
+    for (int i = 0; i < topCommits && i < graphModel.getGraph().getNodeRows().size(); i++) {
+      Node node = graphModel.getGraph().getCommitNodeInRow(i);
+      if (node == null) {
+        // there can be nodes which contain no commits (IDEA-115442, branch filter case)
+        continue;
+      }
+      final VcsFullCommitDetails details = getDetailsFromCache(node);
+      if (details == null) {
+        // Details for recent commits should be available in the cache.
+        // However if they are not there for some reason, we stop filtering.
+        // If we continue, if this commit without details matches filters,
+        // if details of an older commit are found in the cache, and if this older commit matches the filter,
+        // then we will return the list which incorrectly misses some matching commit in the middle.
+        // => Instead we rather will return a smaller list: this is not a problem,
+        // because the VCS will be requested for filtered details if there are not enough of them.
+        LOG.debug("No details found for a recent commit " + myLogDataHolder.getHash(node.getCommitIndex()));
+        break;
+      }
+      boolean allFiltersMatch = !ContainerUtil.exists(detailsFilters, new Condition<VcsLogDetailsFilter>() {
+        @Override
+        public boolean value(VcsLogDetailsFilter filter) {
+          return !filter.matches(details);
+        }
+      });
+      if (allFiltersMatch) {
+        result.add(details);
+      }
+    }
+    return result;
+  }
+
+  @Nullable
+  private VcsFullCommitDetails getDetailsFromCache(@NotNull final Node node) {
+    final Ref<VcsFullCommitDetails> ref = Ref.create();
+    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
       @Override
-      public boolean value(final VcsFullCommitDetails details) {
-        boolean allFilterMatch = !ContainerUtil.exists(detailsFilters, new Condition<VcsLogDetailsFilter>() {
-          @Override
-          public boolean value(VcsLogDetailsFilter filter) {
-            return !filter.matches(details);
-          }
-        });
-        return graphModel.isNodeOfHashVisible(myLogDataHolder.putHash(details.getHash())) && allFilterMatch;
+      public void run() {
+        ref.set(myLogDataHolder.getCommitDetailsGetter().getCommitData(node));
       }
     });
+    return ref.get();
   }
 
 }

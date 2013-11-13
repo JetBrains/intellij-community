@@ -1875,4 +1875,17 @@ foooo ()<caret>
 
     }
   }
+
+  void testNoClassNamesInComments() {
+    doVariantableTest("""\
+class drop{}
+class dropX{}
+
+class A {
+/*
+    print dr<caret>
+*/
+}
+""", "o", CompletionType.BASIC, CompletionResult.equal, 0)
+  }
 }

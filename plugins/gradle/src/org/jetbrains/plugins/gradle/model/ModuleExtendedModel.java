@@ -17,23 +17,38 @@ package org.jetbrains.plugins.gradle.model;
 
 import java.io.File;
 import java.io.Serializable;
-import java.util.Map;
-import java.util.Set;
+import java.util.List;
 
 /**
  * @author Vladislav.Soroka
  * @since 11/5/13
  */
-public interface WarModel extends Serializable {
-  String getWebAppDirName();
+public interface ModuleExtendedModel extends Serializable {
+  /**
+   * The group of the module.
+   *
+   * @return module group
+   */
+  String getGroup();
 
-  File getWebAppDir();
+  /**
+   * The name of the module.
+   *
+   * @return module name
+   */
+  String getName();
 
-  File getWebXml();
+  /**
+   * The version of the module
+   *
+   * @return module version
+   */
+  String getVersion();
 
-  Map<String, Set<String>> getWebRoots();
-
-  Set<File> getClasspath();
-
-  String getManifestContent();
+  /**
+   * The paths where the artifacts is constructed
+   *
+   * @return
+   */
+  List<File> getArtifacts();
 }
