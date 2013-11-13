@@ -211,7 +211,7 @@ public class CoverageDataManagerImpl extends CoverageDataManager {
         message += "and traces directory \'" + FileUtil.getNameWithoutExtension(new File(fileName)) + "\' ";
       }
       message += "on disk?";
-      if (Messages.showYesNoDialog(myProject, message, CommonBundle.getWarningTitle(), Messages.getWarningIcon()) == DialogWrapper.OK_EXIT_CODE) {
+      if (Messages.showYesNoDialog(myProject, message, CommonBundle.getWarningTitle(), Messages.getWarningIcon()) == Messages.YES) {
         deleteCachedCoverage(fileName, deleteTraces);
       }
     } else {
