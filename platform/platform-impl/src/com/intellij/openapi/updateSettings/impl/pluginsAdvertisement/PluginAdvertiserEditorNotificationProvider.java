@@ -62,7 +62,7 @@ public class PluginAdvertiserEditorNotificationProvider extends EditorNotificati
 
     final String extension = file.getExtension();
     final String fileName = file.getName();
-    if (extension != null && isIgnored(extension) || isIgnored(fileName)) return null;
+    if (extension != null && isIgnored("*." + extension) || isIgnored(fileName)) return null;
 
     final PluginsAdvertiser.KnownExtensions knownExtensions = PluginsAdvertiser.loadExtensions();
     if (knownExtensions != null) {
