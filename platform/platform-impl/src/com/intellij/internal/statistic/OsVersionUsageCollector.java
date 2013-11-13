@@ -32,7 +32,21 @@ public class OsVersionUsageCollector extends UsagesCollector {
   @NotNull
   @Override
   public Set<UsageDescriptor> getUsages(@Nullable Project project) throws CollectUsagesException {
-    return Collections.singleton(new UsageDescriptor(SystemInfo.OS_NAME + " " + SystemInfo.OS_VERSION, 1));
+    UsageDescriptor descriptor = null;
+
+    if (SystemInfo.isUnix && !SystemInfo.isMac) {
+      String releaseName = SystemInfo.getUnixReleaseName();
+      String releaseVersion = SystemInfo.getUnixReleaseVersion();
+      if (releaseName != null && releaseVersion != null) {
+        descriptor = new UsageDescriptor(SystemInfo.OS_NAME + " " + releaseName + " " + releaseVersion, 1);
+      }
+    }
+
+    if (descriptor == null) {
+      descriptor = new UsageDescriptor(SystemInfo.OS_NAME + " " + SystemInfo.OS_VERSION, 1);
+    }
+
+    return Collections.singleton(descriptor);
   }
 
   @NotNull
