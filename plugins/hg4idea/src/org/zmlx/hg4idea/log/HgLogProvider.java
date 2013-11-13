@@ -30,6 +30,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.VcsLogBranchFilter;
 import com.intellij.vcs.log.data.VcsLogDateFilter;
+import com.intellij.vcs.log.data.VcsLogStructureFilter;
 import com.intellij.vcs.log.data.VcsLogUserFilter;
 import com.intellij.vcs.log.ui.filter.VcsLogTextFilter;
 import org.jetbrains.annotations.NotNull;
@@ -213,6 +214,15 @@ public class HgLogProvider implements VcsLogProvider {
     else if (!textFilters.isEmpty()) {
       String textFilter = textFilters.iterator().next().getText();
       filterParameters.add(prepareParameter("keyword", textFilter));
+    }
+
+    List<VcsLogStructureFilter> structureFilters = ContainerUtil.findAll(filters, VcsLogStructureFilter.class);
+    if (!structureFilters.isEmpty()) {
+      for (VcsLogStructureFilter filter : structureFilters) {
+        for (VirtualFile file : filter.getFiles(root)) {
+          filterParameters.add(file.getPath());
+        }
+      }
     }
 
     return HgHistoryUtil.history(myProject, root, -1, ArrayUtil.toStringArray(filterParameters));
