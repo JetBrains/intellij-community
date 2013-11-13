@@ -35,22 +35,27 @@ public class WarModelData extends AbstractExternalEntityData {
   private static final long serialVersionUID = 1L;
 
   @NotNull
-  public static final Key<WarModelData> KEY = Key.create(WarModelData.class, ProjectKeys.MODULE.getProcessingWeight() + 1);
+  public static final Key<WarModelData> KEY = Key.create(WarModelData.class, ProjectKeys.LIBRARY_DEPENDENCY.getProcessingWeight() + 1);
   @NotNull
   private final String myWebAppDirName;
-  @Nullable
+  @NotNull
   private final File myWebAppDir;
   @Nullable
   private File myWebXml;
   @NotNull
   private Map<String, Set<String>> myWebRoots;
+  @NotNull
+  private Set<File> myClasspath;
+  @Nullable
+  private String myManifestContent;
 
 
-  public WarModelData(@NotNull ProjectSystemId owner, @NotNull String webAppDirName, @Nullable File webAppDir) {
+  public WarModelData(@NotNull ProjectSystemId owner, @NotNull String webAppDirName, @NotNull File webAppDir) {
     super(owner);
     myWebAppDirName = webAppDirName;
     myWebAppDir = webAppDir;
     myWebRoots = Collections.emptyMap();
+    myClasspath = Collections.emptySet();
   }
 
   @NotNull
@@ -58,7 +63,7 @@ public class WarModelData extends AbstractExternalEntityData {
     return myWebAppDirName;
   }
 
-  @Nullable
+  @NotNull
   public File getWebAppDir() {
     return myWebAppDir;
   }
@@ -81,6 +86,24 @@ public class WarModelData extends AbstractExternalEntityData {
     return myWebRoots;
   }
 
+  public void setClasspath(@Nullable Set<File> classpath) {
+    myClasspath = classpath == null ? Collections.<File>emptySet() : classpath;
+  }
+
+  @NotNull
+  public Set<File> getClasspath() {
+    return myClasspath;
+  }
+
+  public void setManifestContent(@Nullable String manifestContent) {
+    myManifestContent = manifestContent;
+  }
+
+  @Nullable
+  public String getManifestContent() {
+    return myManifestContent;
+  }
+
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
@@ -89,7 +112,6 @@ public class WarModelData extends AbstractExternalEntityData {
 
     WarModelData that = (WarModelData)o;
 
-    if (myWebAppDir != null ? !myWebAppDir.equals(that.myWebAppDir) : that.myWebAppDir != null) return false;
     if (!myWebAppDirName.equals(that.myWebAppDirName)) return false;
     if (!myWebRoots.equals(that.myWebRoots)) return false;
 

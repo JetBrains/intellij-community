@@ -30,6 +30,8 @@ public class WarModelImpl implements WarModel {
   private final File myWebAppDir;
   private File myWebXml;
   private Map<String, Set<String>> myWebRoots;
+  private Set<File> myClasspath;
+  private String myManifestContent;
 
   public WarModelImpl(String webAppDirName, File webAppDir) {
     myWebAppDirName = webAppDirName;
@@ -62,5 +64,23 @@ public class WarModelImpl implements WarModel {
 
   public void setWebRoots(Map<String, Set<String>> webRoots) {
     myWebRoots = webRoots;
+  }
+
+  public void setClasspath(Set<File> classpath) {
+    myClasspath = classpath;
+  }
+
+  @Override
+  public Set<File> getClasspath() {
+    return myClasspath;
+  }
+
+  public void setManifestContent(String manifestContent) {
+    myManifestContent = manifestContent;
+  }
+
+  @Override
+  public String getManifestContent() {
+    return myManifestContent;
   }
 }

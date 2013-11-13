@@ -21,6 +21,7 @@ import org.gradle.api.Task;
 import org.gradle.api.file.FileVisitDetails;
 import org.gradle.api.file.FileVisitor;
 import org.gradle.api.internal.file.copy.CopySpecInternal;
+import org.gradle.api.java.archives.Manifest;
 import org.gradle.api.plugins.WarPlugin;
 import org.gradle.api.tasks.bundling.War;
 import org.jetbrains.annotations.Nullable;
@@ -28,6 +29,7 @@ import org.jetbrains.plugins.gradle.model.ModelBuilderService;
 import org.jetbrains.plugins.gradle.model.WarModel;
 
 import java.io.File;
+import java.io.StringWriter;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.Map;
@@ -56,7 +58,9 @@ public class WarModelBuilderImpl implements ModelBuilderService {
     final String webAppDirName = !project.hasProperty(WEB_APP_DIR_NAME_PROPERTY) ?
                                  "src/main/webapp" : String.valueOf(project.property(WEB_APP_DIR_NAME_PROPERTY));
 
-    final File webAppDir = !project.hasProperty(WEB_APP_DIR_PROPERTY) ? null : (File)project.property(WEB_APP_DIR_PROPERTY);
+    final File webAppDir = !project.hasProperty(WEB_APP_DIR_PROPERTY)
+                           ? new File(project.getProjectDir(), webAppDirName)
+                           : (File)project.property(WEB_APP_DIR_PROPERTY);
 
     WarModelImpl warModel = new WarModelImpl(webAppDirName, webAppDir);
 
@@ -66,6 +70,8 @@ public class WarModelBuilderImpl implements ModelBuilderService {
         warModel.setWebXml(warTask.getWebXml());
 
         final Map<String, Set<String>> webRoots = new HashMap<String, Set<String>>();
+        addPath(webRoots, "", webAppDir.getPath());
+
         warTask.getRootSpec().walk(new Action<CopySpecInternal>() {
           @Override
           public void execute(CopySpecInternal internal) {
@@ -96,6 +102,14 @@ public class WarModelBuilderImpl implements ModelBuilderService {
         });
 
         warModel.setWebRoots(webRoots);
+        warModel.setClasspath(warTask.getClasspath().getFiles());
+
+        Manifest manifest = warTask.getManifest();
+        if(manifest != null) {
+          StringWriter writer = new StringWriter();
+          manifest.writeTo(writer);
+          warModel.setManifestContent(writer.toString());
+        }
         break;
       }
     }

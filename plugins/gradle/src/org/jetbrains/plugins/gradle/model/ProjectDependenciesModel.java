@@ -15,25 +15,19 @@
  */
 package org.jetbrains.plugins.gradle.model;
 
-import java.io.File;
+import org.jetbrains.plugins.gradle.model.impl.GradleDependency;
+import org.jetbrains.plugins.gradle.model.impl.GradleDependencyImpl;
+
 import java.io.Serializable;
-import java.util.Map;
-import java.util.Set;
+import java.util.List;
 
 /**
  * @author Vladislav.Soroka
  * @since 11/5/13
  */
-public interface WarModel extends Serializable {
-  String getWebAppDirName();
+public interface ProjectDependenciesModel extends Serializable {
 
-  File getWebAppDir();
+  String getProjectName();
 
-  File getWebXml();
-
-  Map<String, Set<String>> getWebRoots();
-
-  Set<File> getClasspath();
-
-  String getManifestContent();
+  List<GradleDependency> getDependencies();
 }
