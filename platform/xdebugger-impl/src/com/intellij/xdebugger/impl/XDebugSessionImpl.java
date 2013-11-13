@@ -46,7 +46,6 @@ import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.ui.AppUIUtil;
 import com.intellij.util.EventDispatcher;
@@ -144,6 +143,7 @@ public class XDebugSessionImpl implements XDebugSession {
   @NotNull
   public RunContentDescriptor getRunContentDescriptor() {
     assertSessionTabInitialized();
+    //noinspection ConstantConditions
     return mySessionTab.getRunContentDescriptor();
   }
 
@@ -747,19 +747,10 @@ public class XDebugSessionImpl implements XDebugSession {
     myDispatcher.getMulticaster().sessionPaused();
   }
 
+  @Nullable
   private Editor getEditor(@NotNull XSourcePosition position) {
-    final VirtualFile psiFile = position.getFile();
-    if (!psiFile.isValid()) {
-      return null;
-    }
-
-    final int offset = position.getOffset();
-    if (offset < 0 || offset > psiFile.getLength()) {
-      LOG.error("Incorrect offset " + offset + " in file " + psiFile.getName());
-      return null;
-    }
-
-    return FileEditorManager.getInstance(myProject).openTextEditor(new OpenFileDescriptor(myProject, psiFile, offset), false);
+    OpenFileDescriptor descriptor = XSourcePositionImpl.createOpenFileDescriptor(myProject, position);
+    return descriptor.canNavigate() ? FileEditorManager.getInstance(myProject).openTextEditor(descriptor, false) : null;
   }
 
   private void adjustMouseTrackingCounter(@NotNull XSourcePosition position, int increment) {
