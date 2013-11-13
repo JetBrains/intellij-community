@@ -45,7 +45,7 @@ public class ActivateToolWindowAction extends AnAction implements DumbAware {
   public void update(AnActionEvent event){
     Presentation presentation = event.getPresentation();
     Project project = event.getData(CommonDataKeys.PROJECT);
-    if (project == null) {
+    if (project == null || project.isDisposed()) {
       presentation.setEnabled(false);
       presentation.setVisible(false);
       return;
