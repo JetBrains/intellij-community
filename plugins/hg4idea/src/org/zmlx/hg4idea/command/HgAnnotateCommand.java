@@ -76,7 +76,7 @@ public class HgAnnotateCommand {
     for (String line : outputLines) {
       Matcher matcher = LINE_PATTERN.matcher(line);
       if (matcher.matches()) {
-        String user = matcher.group(USER_GROUP);
+        String user = matcher.group(USER_GROUP).trim();
         HgRevisionNumber rev = HgRevisionNumber.getInstance(matcher.group(REVISION_GROUP), matcher.group(CHANGESET_GROUP));
         String dateGroup = matcher.group(DATE_GROUP).trim();
         SimpleDateFormat dateFormat = new SimpleDateFormat("EEE MMM dd HH:mm:ss yyyy", Locale.US);
