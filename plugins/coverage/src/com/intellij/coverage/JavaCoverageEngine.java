@@ -28,8 +28,10 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.roots.*;
-import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.roots.CompilerModuleExtension;
+import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.ProjectFileIndex;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.io.FileUtil;
@@ -201,7 +203,7 @@ public class JavaCoverageEngine extends CoverageEngine {
         public void run() {
           if (Messages.showOkCancelDialog(
             "Project class files are out of date. Would you like to recompile? The refusal to do it will result in incomplete coverage information",
-            "Project is out of date", Messages.getWarningIcon()) == DialogWrapper.OK_EXIT_CODE) {
+            "Project is out of date", Messages.getWarningIcon()) == Messages.OK) {
             final CompilerManager compilerManager = CompilerManager.getInstance(project);
             compilerManager.make(compilerManager.createProjectCompileScope(project), new CompileStatusNotification() {
               public void finished(final boolean aborted, final int errors, final int warnings, final CompileContext compileContext) {
