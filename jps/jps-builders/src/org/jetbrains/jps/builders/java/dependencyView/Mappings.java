@@ -1751,6 +1751,8 @@ public class Mappings {
           myPresent.appendDependents(c, state.myDependants);
           debug("Adding usages of class ", c.name);
           state.myAffectedUsages.add(c.createUsage());
+          debug("Affecting usages of removed class ", c.name);
+          affectAll(c.name, myAffectedFiles, myFilter);
         }
       }
       debug("End of removed classes processing.");
