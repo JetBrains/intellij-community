@@ -113,7 +113,10 @@ public class ExpressionCompatibilityConstraint extends InputOutputConstraintForm
             callSession.initExpressionConstraints(parameters, args, myExpression);
             substitutor = callSession.infer(parameters, args, myExpression, true);
           }
-          constraints.add(new TypeCompatibilityConstraint(GenericsUtil.eliminateWildcards(myT, false), substitutor.substitute(returnType)));
+          final PsiType capturedReturnType = myExpression instanceof PsiMethodCallExpression
+                                             ? PsiMethodCallExpressionImpl.captureReturnType((PsiMethodCallExpression)myExpression, method, returnType, substitutor)
+                                             : substitutor.substitute(returnType);
+          constraints.add(new TypeCompatibilityConstraint(GenericsUtil.eliminateWildcards(myT, false), capturedReturnType));
         }
       }
       return true;
