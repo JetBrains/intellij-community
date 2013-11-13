@@ -19,6 +19,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.popup.util.PopupUtil;
+import com.intellij.openapi.util.Getter;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -89,28 +91,21 @@ public class IdeaSvnkitBasedAuthenticationCallback implements AuthenticationCall
 
   @Nullable
   @Override
-  public SVNAuthentication requestCredentials(SVNURL repositoryUrl, String type) {
+  public SVNAuthentication requestCredentials(final SVNURL repositoryUrl, final String type) {
     SVNAuthentication authentication = null;
 
     if (repositoryUrl != null) {
-      String realm = repositoryUrl.toDecodedString();
-      Object data = SvnConfiguration.RUNTIME_AUTH_CACHE.getData(type, realm);
+      final String realm = repositoryUrl.toDecodedString();
 
-      if (data != null && data instanceof SVNAuthentication && !myRequestedCredentials.contains(getKey(realm, type))) {
-        // we already have credentials in memory cache
-        authentication = (SVNAuthentication)data;
-        myRequestedCredentials.add(getKey(realm, type));
-      } else {
-        // ask user for credentials
-        authentication = myVcs.getSvnConfiguration().getInteractiveManager(myVcs).getInnerProvider()
-          .requestClientAuthentication(type, repositoryUrl, realm, null, null, true);
+      authentication = requestCredentials(realm, type, new Getter<Pair<SVNAuthentication, Boolean>>() {
+        @Override
+        public Pair<SVNAuthentication, Boolean> get() {
+          SVNAuthentication result = myVcs.getSvnConfiguration().getInteractiveManager(myVcs).getInnerProvider()
+            .requestClientAuthentication(type, repositoryUrl, realm, null, null, true);
 
-        if (authentication != null) {
-          // save user credentials to memory cache
-          myVcs.getSvnConfiguration().acknowledge(type, realm, authentication);
-          myRequestedCredentials.add(getKey(realm, type));
+          return new Pair<SVNAuthentication, Boolean>(result, true);
         }
-      }
+      });
     }
 
     if (authentication == null) {
@@ -118,6 +113,32 @@ public class IdeaSvnkitBasedAuthenticationCallback implements AuthenticationCall
     }
 
     return authentication;
+  }
+
+  @Nullable
+  private <T> T requestCredentials(@NotNull String realm, @NotNull String type, @NotNull Getter<Pair<T, Boolean>> fromUserProvider) {
+    T result;
+    Object data = SvnConfiguration.RUNTIME_AUTH_CACHE.getData(type, realm);
+
+    // we return credentials from cache if they are asked for the first time during command execution, otherwise - user is asked
+    if (data != null && !myRequestedCredentials.contains(getKey(realm, type))) {
+      // we already have credentials in memory cache
+      result = (T) data;
+      myRequestedCredentials.add(getKey(realm, type));
+    }
+    else {
+      // ask user for credentials
+      Pair<T, Boolean> userData = fromUserProvider.get();
+      result = userData.first;
+
+      if (result != null && userData.second) {
+        // save user credentials to memory cache
+        myVcs.getSvnConfiguration().acknowledge(type, realm, result);
+        myRequestedCredentials.add(getKey(realm, type));
+      }
+    }
+
+    return result;
   }
 
   @NotNull
@@ -130,44 +151,31 @@ public class IdeaSvnkitBasedAuthenticationCallback implements AuthenticationCall
   public String requestSshCredentials(@NotNull final String realm,
                                       @NotNull final SimpleCredentialsDialog.Mode mode,
                                       @NotNull final String key) {
-    String result;
+    return requestCredentials(realm, ISVNAuthenticationManager.SSH, new Getter<Pair<String, Boolean>>() {
+      @Override
+      public Pair<String, Boolean> get() {
+        final Ref<String> answer = new Ref<String>();
+        final Ref<Boolean> save = new Ref<Boolean>();
 
-    Object data = SvnConfiguration.RUNTIME_AUTH_CACHE.getData(ISVNAuthenticationManager.SSH, realm);
-    result = data != null && data instanceof String ? (String)data : requestSshCredentialsFromUser(realm, mode, key);
+        Runnable command = new Runnable() {
+          public void run() {
+            SimpleCredentialsDialog dialog = new SimpleCredentialsDialog(myVcs.getProject());
 
-    return result;
-  }
+            dialog.setup(mode, realm, key, true);
+            dialog.setTitle(SvnBundle.message("dialog.title.authentication.required"));
+            dialog.show();
+            if (dialog.isOK()) {
+              answer.set(dialog.getPassword());
+              save.set(dialog.isSaveAllowed());
+            }
+          }
+        };
 
-  private String requestSshCredentialsFromUser(@NotNull final String realm,
-                                               @NotNull final SimpleCredentialsDialog.Mode mode,
-                                               @NotNull final String key) {
-    String result;
-    final Ref<String> answer = new Ref<String>();
-    final Ref<Boolean> save = new Ref<Boolean>();
+        WaitForProgressToShow.runOrInvokeAndWaitAboveProgress(command);
 
-    Runnable command = new Runnable() {
-      public void run() {
-        SimpleCredentialsDialog dialog = new SimpleCredentialsDialog(myVcs.getProject());
-
-        dialog.setup(mode, realm, key, true);
-        dialog.setTitle(SvnBundle.message("dialog.title.authentication.required"));
-        dialog.show();
-        if (dialog.isOK()) {
-          answer.set(dialog.getPassword());
-          save.set(dialog.isSaveAllowed());
-        }
+        return new Pair<String, Boolean>(answer.get(), !save.isNull() && save.get());
       }
-    };
-
-    WaitForProgressToShow.runOrInvokeAndWaitAboveProgress(command);
-
-    result = answer.get();
-
-    if (!save.isNull() && save.get()) {
-      // save user credentials to memory cache
-      myVcs.getSvnConfiguration().acknowledge(ISVNAuthenticationManager.SSH, realm, result);
-    }
-    return result;
+    });
   }
 
   @Override
