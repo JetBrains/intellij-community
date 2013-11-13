@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -369,8 +369,8 @@ public final class InsertComponentProcessor extends EventProcessor {
       UIDesignerBundle.message("add.module.dependency.prompt", item.getClassName(), ownerModule.getName(), myEditor.getModule().getName()),
       UIDesignerBundle.message("add.module.dependency.title"),
       Messages.getQuestionIcon());
-    if (rc == 2) return false;
-    if (rc == 0) {
+    if (rc == Messages.CANCEL) return false;
+    if (rc == Messages.YES) {
       ModuleRootModificationUtil.addDependency(myEditor.getModule(), ownerModule);
     }
     return true;
@@ -383,8 +383,8 @@ public final class InsertComponentProcessor extends EventProcessor {
                                myEditor.getModule().getName()),
       UIDesignerBundle.message("add.library.dependency.title"),
       Messages.getQuestionIcon());
-    if (rc == 2) return false;
-    if (rc == 0) {
+    if (rc == Messages.CANCEL) return false;
+    if (rc == Messages.YES) {
       ApplicationManager.getApplication().runWriteAction(new Runnable() {
         public void run() {
           final ModifiableRootModel model = ModuleRootManager.getInstance(myEditor.getModule()).getModifiableModel();

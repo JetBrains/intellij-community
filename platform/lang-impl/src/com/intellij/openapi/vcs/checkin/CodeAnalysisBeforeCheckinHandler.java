@@ -113,11 +113,11 @@ public class CodeAnalysisBeforeCheckinHandler extends CheckinHandler {
       VcsBundle.message("before.commit.files.contain.code.smells.edit.them.confirm.text", errorCount, warningCount),
       VcsBundle.message("code.smells.error.messages.tab.name"), VcsBundle.message("code.smells.review.button"),
       commitButtonText, CommonBundle.getCancelButtonText(), UIUtil.getWarningIcon());
-    if (answer == 0) {
+    if (answer == Messages.YES) {
       CodeSmellDetector.getInstance(myProject).showCodeSmellErrors(codeSmells);
       return ReturnResult.CLOSE_WINDOW;
     }
-    else if (answer == 2 || answer == -1) {
+    else if (answer == Messages.CANCEL) {
       return ReturnResult.CANCEL;
     }
     else {

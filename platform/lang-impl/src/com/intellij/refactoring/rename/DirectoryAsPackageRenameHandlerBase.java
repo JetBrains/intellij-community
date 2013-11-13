@@ -157,9 +157,9 @@ public abstract class DirectoryAsPackageRenameHandlerBase<T extends PsiDirectory
                           RefactoringBundle.message("rename.current.directory"),
                             RefactoringBundle.message("rename.directories"), CommonBundle.getCancelButtonText(),
                           Messages.getWarningIcon());
-            if (ret == 2) return;
+            if (ret == Messages.CANCEL) return;
             renameDirs(project, nameSuggestionContext, editor, psiDirectory, aPackage,
-                       ret == 0 ? (moduleDirs == null ? new PsiDirectory[]{psiDirectory} : moduleDirs) : projectDirectories);
+                       ret == Messages.YES ? (moduleDirs == null ? new PsiDirectory[]{psiDirectory} : moduleDirs) : projectDirectories);
           }
           else {
             if (Messages.showOkCancelDialog(project, promptMessage + "?", RefactoringBundle.message("warning.title"),
@@ -178,10 +178,10 @@ public abstract class DirectoryAsPackageRenameHandlerBase<T extends PsiDirectory
                                         RefactoringBundle.message("rename.package.button.text"),
                                           RefactoringBundle.message("rename.directory.button.text"), CommonBundle.getCancelButtonText(),
                                         Messages.getWarningIcon());
-          if (ret == 0) {
+          if (ret == Messages.YES) {
             PsiElementRenameHandler.rename(aPackage, project, nameSuggestionContext, editor);
           }
-          else if (ret == 1) {
+          else if (ret == Messages.NO) {
             renameDirs(project, nameSuggestionContext, editor, psiDirectory, aPackage, psiDirectory);
           }
         }

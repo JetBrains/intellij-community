@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,8 +19,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vcs.AbstractVcsHelper;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsException;
@@ -41,7 +39,6 @@ import org.tmatesoft.svn.core.wc.SVNEventAction;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Iterator;
 import java.util.List;
 
 public class SvnFormatWorker extends Task.Backgroundable {
@@ -63,30 +60,6 @@ public class SvnFormatWorker extends Task.Backgroundable {
 
   public SvnFormatWorker(final Project project, final WorkingCopyFormat newFormat, final WCInfo wcInfo) {
     this(project, newFormat, Collections.singletonList(wcInfo));
-  }
-
-  public void checkForOutsideCopies() {
-    boolean canceled = false;
-    for (Iterator<WCInfo> iterator = myWcInfos.iterator(); iterator.hasNext();) {
-      final WCInfo wcInfo = iterator.next();
-      if (! wcInfo.isIsWcRoot()) {
-        File path = new File(wcInfo.getPath());
-        path = SvnUtil.getWorkingCopyRoot(path);
-        int result = Messages.showYesNoCancelDialog(SvnBundle.message("upgrade.format.clarify.for.outside.copies.text", path),
-                                                    SvnBundle.message("action.change.wcopy.format.task.title"),
-                                                    Messages.getWarningIcon());
-        if (DialogWrapper.CANCEL_EXIT_CODE == result) {
-          canceled = true;
-          break;
-        } else if (DialogWrapper.OK_EXIT_CODE != result) {
-          // no - for this copy only. maybe other
-          iterator.remove();
-        }
-      }
-    }
-    if (canceled) {
-      myWcInfos.clear();
-    }
   }
 
   public boolean haveStuffToConvert() {

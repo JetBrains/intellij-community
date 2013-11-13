@@ -166,12 +166,12 @@ public class AddSupportForSingleFrameworkDialog extends DialogWrapper {
       }
       final int result = Messages.showYesNoCancelDialog(rootModel.getProject(), message, "Library Already Exists",
                                                         "&Replace", "&Add", "&Cancel", null);
-      if (result == 0) {
+      if (result == Messages.YES) {
         for (OrderEntry entry : existingEntries) {
           rootModel.removeOrderEntry(entry);
         }
       }
-      else if (result != 1) {
+      else if (result != Messages.NO) {
         return false;
       }
     }

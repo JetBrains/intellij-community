@@ -224,8 +224,8 @@ public class ProjectUtil {
                                                       CommonBundle.getCancelButtonText(),
                                                       Messages.getQuestionIcon(),
                                                       new ProjectNewWindowDoNotAskOption());
-        return exitCode == 0 ? GeneralSettings.OPEN_PROJECT_SAME_WINDOW :
-               exitCode == 1 ? GeneralSettings.OPEN_PROJECT_NEW_WINDOW : Messages.CANCEL;
+        return exitCode == Messages.YES ? GeneralSettings.OPEN_PROJECT_SAME_WINDOW :
+               exitCode == Messages.NO ? GeneralSettings.OPEN_PROJECT_NEW_WINDOW : Messages.CANCEL;
       }
     }
     return confirmOpenNewProject;

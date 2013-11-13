@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -100,10 +100,10 @@ public final class DataBindingWizardAction extends AnAction{
           variants[0], variants[1], variants[2],
           Messages.getQuestionIcon()
         );
-        if (result == 0) {
+        if (result == Messages.YES) {
           // do nothing here
         }
-        else if (result == 1) {
+        else if (result == Messages.NO) {
           wizardData.myBindToNewBean = true;
         }
         else {

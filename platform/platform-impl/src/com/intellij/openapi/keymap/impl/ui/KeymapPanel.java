@@ -577,14 +577,14 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
           KeyMapBundle.message("conflict.shortcut.dialog.cancel.button"),
         Messages.getWarningIcon());
 
-      if(result == 0) {
+      if(result == Messages.YES) {
         for (String id : conflicts.keySet()) {
           for (KeyboardShortcut s : conflicts.get(id)) {
             mySelectedKeymap.removeShortcut(id, s);
           }
         }
       }
-      else if (result != 1) {
+      else if (result != Messages.NO) {
         return;
       }
     }
@@ -649,12 +649,12 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
           KeyMapBundle.message("conflict.shortcut.dialog.cancel.button"),
         Messages.getWarningIcon());
 
-      if(result == 0) {
+      if(result == Messages.YES) {
         for (String id : actionIds) {
           mySelectedKeymap.removeShortcut(id, mouseShortcut);
         }
       }
-      else if (result != 1) {
+      else if (result != Messages.NO) {
         return;
       }
     }

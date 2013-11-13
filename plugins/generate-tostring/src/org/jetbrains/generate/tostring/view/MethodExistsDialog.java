@@ -21,8 +21,6 @@ import org.jetbrains.generate.tostring.config.ConflictResolutionPolicy;
 import org.jetbrains.generate.tostring.config.DuplicatePolicy;
 import org.jetbrains.generate.tostring.config.ReplacePolicy;
 
-import javax.swing.*;
-
 /**
  * This is a dialog when the <code>toString()</code> method already exists.
  * <p/>
@@ -52,11 +50,13 @@ public class MethodExistsDialog {
      */
     public static ConflictResolutionPolicy showDialog(String targetMethodName) {
         int exit = Messages.showYesNoCancelDialog("Replace existing " + targetMethodName + " method", "Method Already Exists", Messages.getQuestionIcon());
-        if (exit == JOptionPane.CLOSED_OPTION || exit == JOptionPane.CANCEL_OPTION) {
+        if (exit == Messages.CANCEL) {
             return CancelPolicy.getInstance();
-        } else if (exit == JOptionPane.YES_OPTION) {
+        }
+        if (exit == Messages.YES) {
             return ReplacePolicy.getInstance();
-        } else if (exit == JOptionPane.NO_OPTION) {
+        }
+        if (exit == Messages.NO) {
             return DuplicatePolicy.getInstance();
         }
 

@@ -22,7 +22,6 @@ import com.intellij.codeInsight.intention.impl.CreateSubclassAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
@@ -105,7 +104,7 @@ public class PushDownProcessor extends BaseRefactoringProcessor {
                               RefactoringBundle.message("class.0.does.not.have.inheritors", myClass.getQualifiedName());
         final String message = noInheritors + "\n" + RefactoringBundle.message("push.down.will.delete.members");
         final int answer = Messages.showYesNoCancelDialog(message, JavaPushDownHandler.REFACTORING_NAME, Messages.getWarningIcon());
-        if (answer == DialogWrapper.OK_EXIT_CODE) {
+        if (answer == Messages.YES) {
           myCreateClassDlg = CreateSubclassAction.chooseSubclassToCreate(myClass);
           if (myCreateClassDlg != null) {
             pushDownConflicts.checkTargetClassConflicts(null, false, myCreateClassDlg.getTargetDirectory());
@@ -113,7 +112,7 @@ public class PushDownProcessor extends BaseRefactoringProcessor {
           } else {
             return false;
           }
-        } else if (answer != 1) return false;
+        } else if (answer != Messages.NO) return false;
       }
     }
     Runnable runnable = new Runnable() {

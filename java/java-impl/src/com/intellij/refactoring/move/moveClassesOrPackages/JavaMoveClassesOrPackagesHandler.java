@@ -168,10 +168,10 @@ public class JavaMoveClassesOrPackagesHandler extends MoveHandlerDelegate {
                       RefactoringBundle.message("move.current.directory"),
                       RefactoringBundle.message("move.directories"),
                       CommonBundle.getCancelButtonText(), Messages.getWarningIcon());
-      if (ret == 0) {
+      if (ret == Messages.YES) {
         moveAsDirectory(project, targetContainer, callback, directories);
       }
-      else if (ret == 1) {
+      else if (ret == Messages.NO) {
         moveAsDirectory(project, targetContainer, callback, projectDirectories);
       }
     }
