@@ -41,6 +41,7 @@ import org.zmlx.hg4idea.repo.HgConfig;
 import org.zmlx.hg4idea.repo.HgRepository;
 import org.zmlx.hg4idea.repo.HgRepositoryManager;
 import org.zmlx.hg4idea.util.HgHistoryUtil;
+import org.zmlx.hg4idea.util.HgUtil;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -224,8 +225,8 @@ public class HgLogProvider implements VcsLogProvider {
     if (userName == null) {
       userName = System.getenv("HGUSER");
     }
-    //todo need to separate username from email
-    return userName == null ? null : myVcsObjectsFactory.createUser(userName, "");
+    List<String> userArgs = HgUtil.parseUserNameAndEmail(userName);
+    return userName == null ? null : myVcsObjectsFactory.createUser(userArgs.get(0), userArgs.get(1));
   }
 
   private static String prepareParameter(String paramName, String value) {

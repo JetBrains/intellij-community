@@ -14,6 +14,7 @@ package org.zmlx.hg4idea;
 
 import com.google.common.base.Objects;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
+import org.zmlx.hg4idea.util.HgUtil;
 
 import java.util.Collections;
 import java.util.List;
@@ -59,20 +60,15 @@ public class HgRevisionNumber implements VcsRevisionNumber {
     return new HgRevisionNumber(revision, "", "", "", Collections.<HgRevisionNumber>emptyList());
   }
 
-  //todo author and email should be split at all
-  private HgRevisionNumber(String revision, String changeset, String author, String commitMessage, List<HgRevisionNumber> parents) {
-    this(revision, changeset, author, "", commitMessage, parents);
-  }
-
   public HgRevisionNumber(String revision,
                           String changeset,
-                          String author,
-                          String email,
+                          String authorInfo,
                           String commitMessage,
                           List<HgRevisionNumber> parents) {
     this.commitMessage = commitMessage;
-    this.author = author;
-    this.email = email;
+    List<String> authorArgs = HgUtil.parseUserNameAndEmail(authorInfo);
+    this.author = authorArgs.get(0);
+    this.email = authorArgs.get(1);
     this.parents = parents;
     this.revision = revision.trim();
     this.changeset = changeset.trim();
