@@ -388,7 +388,7 @@ class FormatProcessor {
     final String newWhiteSpace = _newWhiteSpace.toString();
     TextRange newWhiteSpaceRange = model instanceof FormattingModelEx
                                    ? ((FormattingModelEx) model).replaceWhiteSpace(wsRange, block.getNode(), newWhiteSpace)
-                                   : model.replaceWhiteSpace(textRange, newWhiteSpace);
+                                   : model.replaceWhiteSpace(wsRange, newWhiteSpace);
 
     shift += newWhiteSpaceRange.getLength() - textRange.getLength();
 
