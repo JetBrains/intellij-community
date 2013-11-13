@@ -488,13 +488,13 @@ public class InferenceSession {
             }
             if (eqBounds.size() > 1) continue;
           }
-          PsiType bound = eqBounds.isEmpty() ? null :  acceptBoundsWithRecursiveDependencies(typeParameter, eqBounds.get(0), substitutor);
+          PsiType bound = eqBounds.isEmpty() ? null :  acceptBoundsWithRecursiveDependencies(inferenceVariable, eqBounds.get(0), substitutor);
           if (bound != null) {
             inferenceVariable.setInstantiation(bound);
           } else {
             PsiType lub = null;
             for (PsiType lowerBound : lowerBounds) {
-              lowerBound = acceptBoundsWithRecursiveDependencies(typeParameter, lowerBound, substitutor);
+              lowerBound = acceptBoundsWithRecursiveDependencies(inferenceVariable, lowerBound, substitutor);
               if (isProperType(lowerBound)) {
                 if (lub == null) {
                   lub = lowerBound;
@@ -513,7 +513,7 @@ public class InferenceSession {
                 glb = PsiType.getJavaLangRuntimeException(myManager, GlobalSearchScope.allScope(myManager.getProject()));
               } else {
                 for (PsiType upperBound : upperBounds) {
-                  upperBound = acceptBoundsWithRecursiveDependencies(typeParameter, upperBound, substitutor);
+                  upperBound = acceptBoundsWithRecursiveDependencies(inferenceVariable, upperBound, substitutor);
                   if (isProperType(upperBound)) {
                     if (glb == null) {
                       glb = upperBound;
@@ -555,9 +555,11 @@ public class InferenceSession {
     return commonThrowable;
   }
 
-  private PsiType acceptBoundsWithRecursiveDependencies(PsiTypeParameter typeParameter, PsiType bound, PsiSubstitutor substitutor) {
-    if (!isProperType(bound)) {
-      final PsiSubstitutor subst = PsiUtil.resolveClassInType(bound) != typeParameter ? substitutor.put(typeParameter, null) : substitutor;
+  private PsiType acceptBoundsWithRecursiveDependencies(InferenceVariable inferenceVariable, PsiType bound, PsiSubstitutor substitutor) {
+    final HashSet<InferenceVariable> dependencies = new HashSet<InferenceVariable>();
+    final boolean collectDependencies = collectDependencies(bound, dependencies);
+    if (collectDependencies) {
+      final PsiSubstitutor subst = !dependencies.contains(inferenceVariable) ? substitutor.put(inferenceVariable.getParameter(), null) : substitutor;
       return subst.substitute(bound);
     }
     return bound;
