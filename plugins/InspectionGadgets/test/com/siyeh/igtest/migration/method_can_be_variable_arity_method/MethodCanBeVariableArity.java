@@ -25,3 +25,6 @@ class Sub extends MethodCanBeVariableArity {
     super.convertMe(ss);
   }
 }
+class Annotated {
+  public void nullable(@org.jetbrains.annotations.Nullable String[] ss) {}
+}
