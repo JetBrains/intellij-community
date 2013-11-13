@@ -14,3 +14,5 @@
 # limitations under the License.
 #
 org.jetbrains.plugins.gradle.model.impl.WarModelBuilderImpl
+org.jetbrains.plugins.gradle.model.impl.ModelDependenciesBuilderImpl
+org.jetbrains.plugins.gradle.model.impl.ModuleExtendedModelBuilderImpl
