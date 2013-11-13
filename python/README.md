@@ -6,10 +6,18 @@ IntelliJ IDEA Community Edition.
 ## Skeletons
 
 In order to successfully run the full test suite for PyCharm Community Edition and to build a fully working distribution, you need to
-check out the library skeletons, which are stored in a separate Git repository. To do this, you need to change to the 'helpers'
-directory and run the following command:
+check out the library skeletons, which are stored in a separate Git repository. To do this, you can either clone the `jetbrains-community`
+repository using the `--recursive` flag or (when you are ready to use the skeletons) issue the following command:
 
-    git clone https://github.com/JetBrains/python-skeletons.git
+    git submodule init
+    git submodule update
+
+In git, submodules are an entirely separate repository with its own lifecycle.
+Thus, you very likely will not need to concern yourself with that directory (or
+those commands) again. Only in the case where the skeletons have been updated
+will `git pull` show the skeletons directory as "dirty" and you will need to
+run `git submodule update` to bring it back into alignment. More of the details
+are available in the [submodules chapter](http://git-scm.com/book/en/Git-Tools-Submodules) of the Pro Git book.
 
 ## Building and Running
 
