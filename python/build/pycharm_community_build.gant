@@ -209,6 +209,8 @@ private String appInfoFile(String classesPath) {
 private layoutFull(Map args, String target, Set usedJars) {
   def openapiModules = pycharmPlatformApiModules()
   def superLayouts = includeFile("$ch/build/scripts/layouts.gant")
+  def libptyDir = new File("$home/community/lib/libpty")
+  def helpDir = new File("$home/python/help")
   def result = layout(target) {
     dir("lib") {
       jar("util.jar") {
@@ -216,9 +218,11 @@ private layoutFull(Map args, String target, Set usedJars) {
         module("util-rt")
       }
 
-      dir("libpty") {
-        fileset(dir: "$home/community/lib/libpty") {
-          exclude(name: "*.txt")
+      if (libptyDir.exists() && libptyDir.isDirectory()) {
+        dir("libpty") {
+          fileset(dir: "$home/community/lib/libpty") {
+            exclude(name: "*.txt")
+          }
         }
       }
 
@@ -294,9 +298,11 @@ private layoutFull(Map args, String target, Set usedJars) {
       }
     }
 
-    dir("help") {
-      fileset(dir: "$home/python/help") {
-        include(name: "*.pdf")
+    if (helpDir.exists() && helpDir.isDirectory()) {
+      dir("help") {
+        fileset(dir: "$home/python/help") {
+          include(name: "*.pdf")
+        }
       }
     }
 
@@ -387,3 +393,5 @@ private layoutMac(Map _args, String target) {
   args."idea.properties" = ["idea.no.jre.check": true, "ide.mac.useNativeClipboard": "false"];
   layoutMacApp(target, ch, args)
 }
+
+// vim: set st=2 sts=2 sw=2 expandtab ft=groovy:
