@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,7 @@ import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyParser;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.blocks.OpenOrClosableBlock;
-import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.StrictContextExpression;
+import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.ExpressionStatement;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
 
 /**
@@ -39,7 +39,7 @@ public class SynchronizedStatement implements GroovyElementTypes {
       return false;
     }
 
-    if (!StrictContextExpression.parse(builder, parser)) {
+    if (!ExpressionStatement.argParse(builder, parser)) {
       builder.error(GroovyBundle.message("expression.expected"));
     }
 

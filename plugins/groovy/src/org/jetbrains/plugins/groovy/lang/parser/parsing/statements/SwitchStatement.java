@@ -23,7 +23,7 @@ import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyParser;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.AssignmentExpression;
-import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.StrictContextExpression;
+import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.ExpressionStatement;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
 
 /**
@@ -41,7 +41,7 @@ public class SwitchStatement implements GroovyElementTypes {
       marker.done(SWITCH_STATEMENT);
       return;
     }
-    if (!StrictContextExpression.parse(builder, parser)) {
+    if (!ExpressionStatement.argParse(builder, parser)) {
       builder.error(GroovyBundle.message("expression.expected"));
     }
     ParserUtils.getToken(builder, mNLS);
