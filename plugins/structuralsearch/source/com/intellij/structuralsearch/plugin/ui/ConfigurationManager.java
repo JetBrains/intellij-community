@@ -156,7 +156,7 @@ public class ConfigurationManager {
         AllIcons.General.QuestionDialog
       );
 
-      if (i == 0) {
+      if (i == Messages.YES) {
         configurations.remove(config);
         break;
       }
