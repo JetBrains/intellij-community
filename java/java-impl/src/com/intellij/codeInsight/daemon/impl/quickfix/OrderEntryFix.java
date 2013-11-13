@@ -180,7 +180,7 @@ public abstract class OrderEntryFix implements IntentionAction, LocalQuickFix {
     if (allowedDependencies.isEmpty()) {
       return result;
     }
-    classes = allowedDependencies.toArray(new PsiClass[allowedDependencies.size()]);dn
+    classes = allowedDependencies.toArray(new PsiClass[allowedDependencies.size()]);
     final OrderEntryFix moduleDependencyFix = new AddModuleDependencyFix(currentModule, classVFile, classes, reference);
     registrar.register(moduleDependencyFix);
     result.add(moduleDependencyFix);
