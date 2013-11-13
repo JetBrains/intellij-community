@@ -231,9 +231,9 @@ public class UIUtil {
             return ourRetina.get();
           }
         } else if (SystemInfo.isJavaVersionAtLeast("1.7.0_40") && SystemInfo.isOracleJvm) {
-            GraphicsEnvironment env = GraphicsEnvironment.getLocalGraphicsEnvironment();
-            final GraphicsDevice device = env.getDefaultScreenDevice();
             try {
+              GraphicsEnvironment env = GraphicsEnvironment.getLocalGraphicsEnvironment();
+              final GraphicsDevice device = env.getDefaultScreenDevice();
               Field field = device.getClass().getDeclaredField("scale");
               if (field != null) {
                 field.setAccessible(true);
