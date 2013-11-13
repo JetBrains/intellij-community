@@ -217,7 +217,7 @@ private layoutFull(Map args, String target, Set usedJars) {
       }
 
       dir("libpty") {
-        fileset(dir: "$home/community/lib/libpty") {
+        fileset(dir: "$home/lib/libpty") {
           exclude(name: "*.txt")
         }
       }
