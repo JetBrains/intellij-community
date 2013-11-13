@@ -1,0 +1,3 @@
+[submodule "python-skeletons"]
+	path = python/helpers/python-skeletons
+	url = https://github.com/JetBrains/python-skeletons.git
