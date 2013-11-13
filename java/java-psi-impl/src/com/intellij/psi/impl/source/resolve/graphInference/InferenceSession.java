@@ -301,7 +301,7 @@ public class InferenceSession {
     }
   }
 
-  private static PsiType getTargetType(final PsiExpression context) {
+  private PsiType getTargetType(final PsiExpression context) {
     final PsiElement parent = PsiUtil.skipParenthesizedExprUp(context.getParent());
     if (parent instanceof PsiExpressionList) {
       final PsiElement gParent = parent.getParent();
@@ -340,31 +340,15 @@ public class InferenceSession {
               return null;
             }
             final JavaResolveResult[] results = processor.getResult();
-            resolveResult = results.length == 1 ? results[0] : null;
-          }
-          else {
-            resolveResult = null;
-          }
-          final PsiElement parentMethod = pair != null ? pair.first : resolveResult != null ? resolveResult.getElement() : null;
-          if (parentMethod instanceof PsiMethod) {
-            final PsiParameter[] parameters = ((PsiMethod)parentMethod).getParameterList().getParameters();
-            if (parameters.length == 0) return null;
-            PsiElement arg = context;
-            while (arg.getParent() instanceof PsiParenthesizedExpression) {
-              arg = arg.getParent();
+            for (JavaResolveResult result : results) {
+              final PsiType type = getTypeByMethod(context, argumentList, null, result, result.getElement());
+              if (type != null) {
+                return type;
+              }
             }
-            final PsiExpression[] args = argumentList.getExpressions();
-            final int i = ArrayUtilRt.find(args, arg);
-            if (i < 0) return null;
-            if (pair != null) {
-              return getParameterType(parameters, args, i, pair.second);
-            }
-            else {
-              args[i] = null;
-              final PsiSubstitutor substitutor = ((MethodCandidateInfo)resolveResult).inferSubstitutorFromArgs(DefaultParameterTypeInferencePolicy.INSTANCE, args);
-              return getParameterType(parameters, args, i, substitutor);
-            }
+            return null;
           }
+          return getTypeByMethod(context, argumentList, pair, null, pair.first);
         }
       }
     } else if (parent instanceof PsiConditionalExpression) {
@@ -376,6 +360,39 @@ public class InferenceSession {
     }
     else if (parent instanceof PsiLambdaExpression) {
       return LambdaUtil.getFunctionalInterfaceReturnType(((PsiLambdaExpression)parent).getFunctionalInterfaceType());
+    }
+    return null;
+  }
+
+  private PsiType getTypeByMethod(PsiExpression context,
+                                  PsiExpressionList argumentList,
+                                  Pair<PsiMethod, PsiSubstitutor> pair,
+                                  JavaResolveResult result, PsiElement parentMethod) {
+    if (parentMethod instanceof PsiMethod) {
+      final PsiParameter[] parameters = ((PsiMethod)parentMethod).getParameterList().getParameters();
+      if (parameters.length == 0) return null;
+      PsiElement arg = context;
+      while (arg.getParent() instanceof PsiParenthesizedExpression) {
+        arg = arg.getParent();
+      }
+      final PsiExpression[] args = argumentList.getExpressions();
+      final int i = ArrayUtilRt.find(args, arg);
+      if (i < 0) return null;
+      if (pair != null) {
+        return getParameterType(parameters, args, i, pair.second);
+      }
+      else {
+        args[i] = null;
+        final PsiTypeParameter[] typeParameters = ((PsiMethod)parentMethod).getTypeParameters();
+       // initBounds(typeParameters);
+        final InferenceSession inferenceSession = new InferenceSession(typeParameters, PsiSubstitutor.EMPTY, parentMethod.getManager());
+        inferenceSession.initExpressionConstraints(parameters, args, argumentList.getParent());
+        inferenceSession.infer(parameters, args, argumentList.getParent(), true);
+        //final PsiSubstitutor substitutor =  inferenceSession.infer(parameters, args, argumentList.getParent(), true);
+        final PsiSubstitutor substitutor = ((MethodCandidateInfo)result).inferSubstitutorFromArgs(
+          DefaultParameterTypeInferencePolicy.INSTANCE, args);
+        return getParameterType(parameters, args, i, substitutor);
+      }
     }
     return null;
   }
