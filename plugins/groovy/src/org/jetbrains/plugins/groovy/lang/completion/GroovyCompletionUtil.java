@@ -173,7 +173,7 @@ public class GroovyCompletionUtil {
    * return true, if the element is first element after modifiers and there is no type element
    */
   public static boolean isFirstElementAfterPossibleModifiersInVariableDeclaration(PsiElement element, boolean acceptParameter) {
-    if (element.getParent() instanceof GrTypeDefinitionBody) {
+    if (element.getParent() instanceof GrTypeDefinitionBody && !(element instanceof PsiComment)) {
       //is first on the line?
       String text = element.getContainingFile().getText();
       int i = CharArrayUtil.shiftBackward(text, element.getTextRange().getStartOffset() - 1, " \t");
