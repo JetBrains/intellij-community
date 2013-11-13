@@ -20,8 +20,10 @@ import com.intellij.openapi.vcs.VcsKey;
 import com.intellij.openapi.vcs.checkin.BaseCheckinHandlerFactory;
 import com.intellij.openapi.vcs.checkin.CheckinHandlerFactory;
 import com.intellij.openapi.vcs.checkin.VcsCheckinHandlerFactory;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -42,7 +44,8 @@ public class CheckinHandlersManagerImpl extends CheckinHandlersManager {
 
   @Override
   public List<BaseCheckinHandlerFactory> getRegisteredCheckinHandlerFactories(AbstractVcs<?>[] allActiveVcss) {
-    final List<BaseCheckinHandlerFactory> list = new ArrayList<BaseCheckinHandlerFactory>(myRegisteredBeforeCheckinHandlers.size() + allActiveVcss.length);
+    final List<BaseCheckinHandlerFactory> list =
+      new ArrayList<BaseCheckinHandlerFactory>(myRegisteredBeforeCheckinHandlers.size() + allActiveVcss.length);
     list.addAll(myRegisteredBeforeCheckinHandlers);
     for (AbstractVcs vcs : allActiveVcss) {
       final Collection<VcsCheckinHandlerFactory> factories = myVcsMap.get(vcs.getKeyInstanceMethod());
@@ -51,5 +54,27 @@ public class CheckinHandlersManagerImpl extends CheckinHandlersManager {
       }
     }
     return list;
+  }
+
+  @Override
+  public List<VcsCheckinHandlerFactory> getMatchingVcsFactories(@NotNull List<AbstractVcs> vcsList) {
+    final List<VcsCheckinHandlerFactory> result = new SmartList<VcsCheckinHandlerFactory>();
+    for (AbstractVcs vcs : vcsList) {
+      final Collection<VcsCheckinHandlerFactory> factories = myVcsMap.get(vcs.getKeyInstanceMethod());
+      if (!factories.isEmpty()) {
+        result.addAll(factories);
+      }
+    }
+    return result;
+  }
+
+  @Override
+  public void registerCheckinHandlerFactory(BaseCheckinHandlerFactory factory) {
+    myRegisteredBeforeCheckinHandlers.add(factory);
+  }
+
+  @Override
+  public void unregisterCheckinHandlerFactory(BaseCheckinHandlerFactory handler) {
+    myRegisteredBeforeCheckinHandlers.remove(handler);
   }
 }
