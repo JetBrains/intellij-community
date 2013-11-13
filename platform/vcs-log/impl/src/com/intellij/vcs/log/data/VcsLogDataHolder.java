@@ -558,6 +558,11 @@ public class VcsLogDataHolder implements Disposable {
     return myLogProviders.values();
   }
 
+  @NotNull
+  public VcsLogSettings getSettings() {
+    return mySettings;
+  }
+
   private static class RecentCommitsInfo {
     List<TimedVcsCommit> firstBlockCommits;
     Collection<VcsRef> newRefs;

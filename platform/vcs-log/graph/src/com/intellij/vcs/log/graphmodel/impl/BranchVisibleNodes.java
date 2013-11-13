@@ -1,7 +1,6 @@
 package com.intellij.vcs.log.graphmodel.impl;
 
 import com.intellij.util.Function;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.graph.elements.Edge;
 import com.intellij.vcs.log.graph.elements.Node;
 import com.intellij.vcs.log.graph.mutable.MutableGraph;
@@ -20,7 +19,6 @@ public class BranchVisibleNodes {
 
   @NotNull private final MutableGraph myGraph;
   @NotNull private Set<Node> myVisibleNodes = Collections.emptySet();
-  @NotNull private Set<Integer> myVisibleHashes = Collections.emptySet();
 
   public BranchVisibleNodes(@NotNull MutableGraph graph) {
     myGraph = graph;
@@ -46,12 +44,6 @@ public class BranchVisibleNodes {
 
   public void setVisibleNodes(@NotNull Set<Node> visibleNodes) {
     myVisibleNodes = visibleNodes;
-    myVisibleHashes = ContainerUtil.map2Set(myVisibleNodes, new Function<Node, Integer>() {
-      @Override
-      public Integer fun(Node node) {
-        return node.getCommitIndex();
-      }
-    });
   }
 
   public Set<Node> getVisibleNodes() {
@@ -61,9 +53,4 @@ public class BranchVisibleNodes {
   public boolean isVisibleNode(@NotNull Node node) {
     return myVisibleNodes.contains(node);
   }
-
-  public boolean isNodeVisible(final int hash) {
-    return myVisibleHashes.contains(hash);
-  }
-
 }
