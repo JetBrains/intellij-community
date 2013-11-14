@@ -108,7 +108,12 @@ public class TipUIUtil {
           path += suffix + ".png";
           URL url = ResourceUtil.getResource(providerClass, "/tips/", path);
           if (url != null) {
-            text.insert(index + endIndex, suffix);
+            String newImgTag = "<img src=\"" + path + "\" ";
+            if (retina) {
+              newImgTag += "width=\"50%\" height=\"50%\"";
+            }
+            newImgTag += "/>";
+            text.replace(index, end + 1, newImgTag);
           }
         }
       }
