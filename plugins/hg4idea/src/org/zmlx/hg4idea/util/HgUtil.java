@@ -620,12 +620,14 @@ public abstract class HgUtil {
   }
 
   public static List<String> getNamesWithoutHashes(Collection<HgNameWithHashInfo> namesWithHashes) {
-    return ContainerUtil.map(namesWithHashes, new Function<HgNameWithHashInfo, String>() {
-      @Override
-      public String fun(HgNameWithHashInfo info) {
-        return info.getName();
+    //return names without duplication (actually for several heads in one branch)
+    List<String> names = new ArrayList<String>();
+    for (HgNameWithHashInfo hash : namesWithHashes) {
+      if (!names.contains(hash.getName())) {
+        names.add(hash.getName());
       }
-    });
+    }
+    return names;
   }
 
   @NotNull

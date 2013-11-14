@@ -164,7 +164,7 @@ public class TestDataNavigationHandler implements GutterIconNavigationHandler<Ps
     else {
       int rc = Messages.showYesNoDialog(project, "The referenced testdata file " + path + " does not exist. Would you like to create it?",
                                         "Create Testdata File", Messages.getQuestionIcon());
-      if (rc == 0) {
+      if (rc == Messages.YES) {
         VirtualFile vFile = createFileByName(project, path);
         new OpenFileDescriptor(project, vFile).navigate(true);
       }

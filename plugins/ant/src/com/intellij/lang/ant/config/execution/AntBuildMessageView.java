@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -279,11 +279,11 @@ public final class AntBuildMessageView extends JPanel implements DataProvider, O
                                                   AntBundle.message("starting.ant.build.dialog.title"), Messages.getQuestionIcon());
 
       switch (result) {
-        case 0:  // yes
+        case Messages.YES:  // yes
           buildMessageView.stopProcess();
           ijMessageView.getContentManager().removeContent(content, true);
           continue;
-        case 1: // no
+        case Messages.NO: // no
           continue;
         default: // cancel
           return null;

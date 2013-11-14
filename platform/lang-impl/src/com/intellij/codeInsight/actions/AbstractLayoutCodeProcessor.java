@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -345,7 +345,7 @@ public abstract class AbstractLayoutCodeProcessor {
       if (writeables.isEmpty()) return;
       int res = Messages.showOkCancelDialog(myProject, CodeInsightBundle.message("error.dialog.readonly.files.message", where),
                                             CodeInsightBundle.message("error.dialog.readonly.files.title"), Messages.getQuestionIcon());
-      if (res != 0) {
+      if (res != Messages.OK) {
         return;
       }
 

@@ -25,7 +25,6 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
@@ -175,7 +174,7 @@ public class DeleteHandler {
         int result = Messages.showOkCancelDialog(project, warningMessage, IdeBundle.message("title.delete"),
                                                  ApplicationBundle.message("button.delete"), CommonBundle.getCancelButtonText(),
                                                  Messages.getQuestionIcon());
-        if (result != 0) return;
+        if (result != Messages.OK) return;
       }
     }
 
@@ -202,7 +201,7 @@ public class DeleteHandler {
               if (!readOnlyFiles.isEmpty()) {
                 String message = IdeBundle.message("prompt.directory.contains.read.only.files", virtualFile.getPresentableUrl());
                 int _result = Messages.showYesNoDialog(project, message, IdeBundle.message("title.delete"), Messages.getQuestionIcon());
-                if (_result != 0) continue;
+                if (_result != Messages.YES) continue;
 
                 boolean success = true;
                 for (VirtualFile file : readOnlyFiles) {
@@ -223,7 +222,7 @@ public class DeleteHandler {
                   .setTitle(IdeBundle.message("title.delete"))
                   .appendMessage(IdeBundle.message("prompt.delete.it.anyway"))
                   .askYesNo();
-                if (_result != 0) continue;
+                if (_result != Messages.YES) continue;
 
                 boolean success = clearReadOnlyFlag(virtualFile, project);
                 if (!success) continue;

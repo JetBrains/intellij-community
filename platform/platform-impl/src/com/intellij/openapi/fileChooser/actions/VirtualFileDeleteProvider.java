@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -51,7 +51,7 @@ public final class VirtualFileDeleteProvider implements DeleteProvider {
     String message = createConfirmationMessage(files);
     int returnValue = Messages.showOkCancelDialog(message, UIBundle.message("delete.dialog.title"), ApplicationBundle.message("button.delete"),
       CommonBundle.getCancelButtonText(), Messages.getQuestionIcon());
-    if (returnValue != 0) return;
+    if (returnValue != Messages.OK) return;
 
     Arrays.sort(files, FileComparator.getInstance());
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,7 +49,7 @@ public class SaveAsDirectoryBasedFormatAction extends AnAction implements DumbAw
         final int result = Messages.showOkCancelDialog(project,
                                                        "Project will be saved and reopened in new Directory-Based format.\nAre you sure you want to continue?",
                                                        "Save project to Directory-Based format", Messages.getWarningIcon());
-        if (result == 0) {
+        if (result == Messages.OK) {
           final VirtualFile baseDir = project.getBaseDir();
           assert baseDir != null;
 

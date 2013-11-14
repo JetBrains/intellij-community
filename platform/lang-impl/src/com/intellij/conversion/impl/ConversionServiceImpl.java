@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -318,7 +318,7 @@ public class ConversionServiceImpl extends ConversionService {
 
     final int res = Messages.showYesNoDialog(project, IdeBundle.message("message.module.file.has.an.older.format.do.you.want.to.convert.it"),
                                              IdeBundle.message("dialog.title.convert.module"), Messages.getQuestionIcon());
-    if (res != 0) {
+    if (res != Messages.YES) {
       return ConversionResultImpl.CONVERSION_CANCELED;
     }
     if (!moduleFile.canWrite()) {

@@ -398,7 +398,7 @@ public class ProjectSettingsStep extends ModuleWizardStep implements SettingsSte
       int answer = Messages.showYesNoDialog(IdeBundle.message("prompt.overwrite.project.file", moduleFile.getAbsolutePath(),
                                                               IdeBundle.message("project.new.wizard.module.identification")),
                                             IdeBundle.message("title.file.already.exists"), Messages.getQuestionIcon());
-      if (answer != 0) {
+      if (answer != Messages.YES) {
         return false;
       }
     }

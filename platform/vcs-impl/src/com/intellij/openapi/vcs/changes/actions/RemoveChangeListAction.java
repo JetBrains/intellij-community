@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,10 +26,8 @@ import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsDataKeys;
@@ -69,7 +67,6 @@ public class RemoveChangeListAction extends AnAction implements DumbAware {
     if (! canRemoveChangeLists(project, lists)) {
       return;
     }
-    int rc;
 
     for(ChangeList list: lists) {
       if (((LocalChangeList) list).isDefault()) {
@@ -78,9 +75,10 @@ public class RemoveChangeListAction extends AnAction implements DumbAware {
       }
     }
 
+    int rc;
     if (lists.length == 1) {
       final LocalChangeList list = (LocalChangeList)lists[0];
-      rc = list.getChanges().size() == 0 ? DialogWrapper.OK_EXIT_CODE :
+      rc = list.getChanges().size() == 0 ? Messages.YES :
                Messages.showYesNoDialog(project,
                                         VcsBundle.message("changes.removechangelist.warning.text", list.getName()),
                                         VcsBundle.message("changes.removechangelist.warning.title"),
@@ -91,13 +89,13 @@ public class RemoveChangeListAction extends AnAction implements DumbAware {
       for (ChangeList list : lists) {
         notEmpty |= (list.getChanges().size() > 0);
       }
-      rc = (! notEmpty) ? DialogWrapper.OK_EXIT_CODE : Messages.showYesNoDialog(project,
+      rc = (! notEmpty) ? Messages.YES : Messages.showYesNoDialog(project,
                                     VcsBundle.message("changes.removechangelist.multiple.warning.text", lists.length),
                                     VcsBundle.message("changes.removechangelist.warning.title"),
                                     Messages.getQuestionIcon());
     }
 
-    if (rc == DialogWrapper.OK_EXIT_CODE) {
+    if (rc == Messages.YES) {
       for(ChangeList list: lists) {
         ChangeListManager.getInstance(project).removeChangeList(list.getName());
       }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,7 +35,7 @@ public abstract class ActionButtonPresentation {
       if (Messages.showYesNoDialog(dialog.getRootPane(),
                                    DiffBundle.message("merge.dialog.exit.without.applying.changes.confirmation.message"),
                                    DiffBundle.message("cancel.visual.merge.dialog.title"),
-                                   Messages.getQuestionIcon()) == 0) {
+                                   Messages.getQuestionIcon()) == Messages.YES) {
         dialog.close(DialogWrapper.CANCEL_EXIT_CODE);
       }
     }

@@ -227,7 +227,7 @@ public abstract class RecentProjectsManagerBase implements PersistentStateCompon
                                                      "Clear Recent Projects List",
                                                      Messages.getQuestionIcon());
 
-          if (rc == 0) {
+          if (rc == Messages.OK) {
             synchronized (myStateLock) {
               myState.recentPaths.clear();
             }

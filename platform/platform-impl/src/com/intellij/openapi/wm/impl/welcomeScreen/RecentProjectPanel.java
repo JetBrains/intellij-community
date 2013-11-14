@@ -111,7 +111,7 @@ public class RecentProjectPanel extends JPanel {
                                                      "' from recent projects list?",
                                                      "Remove Recent Project",
                                                      Messages.getQuestionIcon());
-          if (rc == 0) {
+          if (rc == Messages.OK) {
             final RecentProjectsManagerBase manager = RecentProjectsManagerBase.getInstance();
             for (Object projectAction : selection) {
               manager.removePath(((ReopenProjectAction)projectAction).getProjectPath());

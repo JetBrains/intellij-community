@@ -24,6 +24,8 @@ public class CmdContentClient extends BaseSvnClient implements ContentClient {
     // TODO: rewrite this to provide output as Stream
     // TODO: rewrite without conversion from String to byte[]
     // TODO: Also implement max size constraint like in SvnKitContentClient
+    // TODO: Could not use export to get content of scheduled for deletion file - use cat command, but write special binary handler
+
     List<String> parameters = new ArrayList<String>();
     CommandUtil.put(parameters, target.getPathOrUrlString(), pegRevision);
     CommandUtil.put(parameters, revision);

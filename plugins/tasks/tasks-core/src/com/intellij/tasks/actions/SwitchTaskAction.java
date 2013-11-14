@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -243,9 +243,9 @@ public class SwitchTaskAction extends BaseTaskAction {
                                                       "Do you want to remove it and move the changes to the active changelist?",
                                                       "Changelist Not Empty", Messages.getWarningIcon());
           switch (result) {
-            case 0:
+            case Messages.YES:
               break l;
-            case 1:
+            case Messages.NO:
               removeIt = false;
               break;
             default:

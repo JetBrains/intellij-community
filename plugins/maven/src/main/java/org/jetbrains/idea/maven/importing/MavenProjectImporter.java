@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -240,7 +240,7 @@ public class MavenProjectImporter {
       }
     });
 
-    if (result[0] == 0) {
+    if (result[0] == Messages.OK) {
       for (Pair<MavenProject, Module> each : incompatibleNotMavenized) {
         myFileToModuleMapping.remove(each.first.getFile());
         myModuleModel.disposeModule(each.second);
@@ -305,7 +305,7 @@ public class MavenProjectImporter {
       }
     });
 
-    if (result[0] == 1) return false;// NO
+    if (result[0] == Messages.NO) return false;// NO
 
     for (Module each : obsoleteModules) {
       if (!each.isDisposed()) {

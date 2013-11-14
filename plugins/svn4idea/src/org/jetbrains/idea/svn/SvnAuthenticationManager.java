@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -789,7 +789,7 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager im
   @CalledInAwt
   private boolean askToStoreUnencrypted(String title, String message) {
     final int answer = Messages.showYesNoDialog(myProject, message, title, Messages.getQuestionIcon());
-    return answer == 0;
+    return answer == Messages.YES;
   }
 
   public void setInteraction(SvnAuthenticationInteraction interaction) {
@@ -823,7 +823,7 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager im
       final int answer = Messages.showYesNoDialog(myProject, String.format("Your password for authentication realm:\n" +
         "%s\ncan only be stored to disk unencrypted. Would you like to store it in plaintext?", realm),
         "Store the password in plaintext?", Messages.getQuestionIcon());
-      return answer == 0;
+      return answer == Messages.YES;
     }
 
     @Override
@@ -837,7 +837,7 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager im
         String.format("Your passphrase for " + certificateName + ":\n%s\ncan only be stored to disk unencrypted. Would you like to store it in plaintext?",
                                                             certificateFile.getPath()),
         "Store the passphrase in plaintext?", Messages.getQuestionIcon());
-      return answer == 0;
+      return answer == Messages.YES;
     }
 
     @Override

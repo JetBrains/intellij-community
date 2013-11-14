@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -132,11 +132,11 @@ public class ModulesDetectionStep extends AbstractStepWithProgress<List<ModuleDe
                                                         IdeBundle.message("warning.text.0.do.you.want.to.overwrite.these.files",
                                                                           StringUtil.join(errors.keySet(), "\n"), errors.size()),
                                                         IdeBundle.message("title.file.already.exists"), "Overwrite", "Reuse", "Cancel", Messages.getQuestionIcon());
-      if (answer == 2) {
+      if (answer == Messages.CANCEL) {
         return false;
       }
 
-      if (answer != 0) {
+      if (answer != Messages.YES) {
         for (ModuleDescriptor moduleDescriptor : errors.values()) {
           moduleDescriptor.reuseExisting(true);
         }

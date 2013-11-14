@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,6 @@ package com.intellij.ide.util.scopeChooser;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.options.ex.SingleConfigurableEditor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.InputValidator;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.packageDependencies.DependencyValidationManager;
@@ -55,8 +54,7 @@ public class EditScopesDialog extends SingleConfigurableEditor {
       NamedScope scope = manager.getScope(mySelectedScope.getName());
       if (scope == null) {
         if (Messages.showYesNoDialog(IdeBundle.message("scope.unable.to.save.scope.message"),
-                                     IdeBundle.message("scope.unable.to.save.scope.title"), Messages.getErrorIcon()) == DialogWrapper
-          .OK_EXIT_CODE) {
+                                     IdeBundle.message("scope.unable.to.save.scope.title"), Messages.getErrorIcon()) == Messages.YES) {
           final String newName = Messages.showInputDialog(project, IdeBundle.message("add.scope.name.label"),
                                                           IdeBundle.message("scopes.save.dialog.title.shared"), Messages.getQuestionIcon(),
                                                           mySelectedScope.getName(), new InputValidator() {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,6 @@ import com.intellij.cvsSupport2.ui.ChangeKeywordSubstitutionPanel;
 import com.intellij.openapi.options.CancelledConfigurationException;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.vcs.FilePath;
@@ -135,7 +134,7 @@ public class UpdateOptionsPanel {
     if (myCleanCopy.isSelected()) {
       if (Messages.showYesNoDialog(
         CvsBundle.message("confirmation.clean.copy"),
-        CvsBundle.message("confirmation.title.clean.copy"), Messages.getWarningIcon()) == DialogWrapper.OK_EXIT_CODE) {
+        CvsBundle.message("confirmation.title.clean.copy"), Messages.getWarningIcon()) == Messages.YES) {
         configuration.CLEAN_COPY = true;
       } else {
         throw new CancelledConfigurationException();

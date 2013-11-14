@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,7 +35,6 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
@@ -124,7 +123,7 @@ public class DuplicatesImpl {
         showAll.set(allChosen);
         if (allChosen && confirmDuplicatePrompt != null && prompt == null) {
           if (Messages.showOkCancelDialog(project, "In order to replace all occurrences method signature will be changed. Proceed?", CommonBundle.getWarningTitle(), Messages.getWarningIcon()) !=
-              DialogWrapper.OK_EXIT_CODE) return true;
+              Messages.OK) return true;
         }
         if (promptDialog.getExitCode() == FindManager.PromptResult.SKIP) return false;
         if (promptDialog.getExitCode() == FindManager.PromptResult.CANCEL) return true;
@@ -193,11 +192,11 @@ public class DuplicatesImpl {
       if (duplicates.size() == 1) {
         previewMatch(project, duplicates.get(0), editor);
       }
-      final int answer = ApplicationManager.getApplication().isUnitTestMode() ? 0 : Messages.showYesNoDialog(project,
+      final int answer = ApplicationManager.getApplication().isUnitTestMode() ? Messages.YES : Messages.showYesNoDialog(project,
         RefactoringBundle.message("0.has.detected.1.code.fragments.in.this.file.that.can.be.replaced.with.a.call.to.extracted.method",
         ApplicationNamesInfo.getInstance().getProductName(), duplicates.size()),
         "Process Duplicates", Messages.getQuestionIcon());
-      if (answer == 0) {
+      if (answer == Messages.YES) {
         invoke(project, editor, provider);
       }
     }

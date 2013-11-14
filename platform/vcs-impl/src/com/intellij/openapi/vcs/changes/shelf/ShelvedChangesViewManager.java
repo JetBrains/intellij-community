@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -495,7 +495,7 @@ public class ShelvedChangesViewManager implements ProjectComponent {
         ? VcsBundle.message("shelve.changes.delete.confirm", shelvedChangeLists.get(0).DESCRIPTION)
         : VcsBundle.message("shelve.changes.delete.multiple.confirm", shelvedChangeLists.size());
       int rc = Messages.showOkCancelDialog(myProject, message, VcsBundle.message("shelvedChanges.delete.title"), CommonBundle.message("button.delete"), CommonBundle.getCancelButtonText(), Messages.getWarningIcon());
-      if (rc != 0) return;
+      if (rc != Messages.OK) return;
       for(ShelvedChangeList changeList: shelvedChangeLists) {
         ShelveChangesManager.getInstance(myProject).deleteChangeList(changeList);
       }
@@ -536,7 +536,7 @@ public class ShelvedChangesViewManager implements ProjectComponent {
       final String message = VcsBundle.message("shelve.changes.delete.files.from.list", (changes == null ? 0 : changes.size()) +
                                                                                         (binaryFiles == null ? 0 : binaryFiles.size()));
       int rc = Messages.showOkCancelDialog(myProject, message, VcsBundle.message("shelve.changes.delete.files.from.list.title"), Messages.getWarningIcon());
-      if (rc != 0) return;
+      if (rc != Messages.OK) return;
 
       final ArrayList<ShelvedBinaryFile> oldBinaries = new ArrayList<ShelvedBinaryFile>(list.getBinaryFiles());
       final ArrayList<ShelvedChange> oldChanges = new ArrayList<ShelvedChange>(list.getChanges(project));

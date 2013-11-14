@@ -489,7 +489,7 @@ public class RepositoryBrowserDialog extends DialogWrapper {
       if (url != null) {
         int rc = Messages.showYesNoDialog(myBrowserComponent.getProject(), SvnBundle.message("repository.browser.discard.location.prompt", url.toString()),
                                           SvnBundle.message("repository.browser.discard.location.title"), Messages.getQuestionIcon());
-        if (rc != 0) {
+        if (rc != Messages.YES) {
           return;
         }
         SvnApplicationSettings.getInstance().removeCheckoutURL(url.toString());
@@ -661,7 +661,7 @@ public class RepositoryBrowserDialog extends DialogWrapper {
             final int result =
               Messages.showOkCancelDialog(myProject, "You are about to move folder named '" + lastFolder +
                                                      "'. Are you sure?", SvnBundle.message(myDialogTitleKey), Messages.getWarningIcon());
-            if (DialogWrapper.CANCEL_EXIT_CODE == result) return;
+            if (Messages.OK == result) return;
           }
         }
         String message = dialog.getCommitMessage();

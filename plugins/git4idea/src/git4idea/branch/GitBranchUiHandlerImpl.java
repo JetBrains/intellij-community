@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -95,7 +95,7 @@ public class GitBranchUiHandlerImpl implements GitBranchUiHandler {
           description.append(message).append("<br/>");
         }
         description.append(rollbackProposal);
-        ok.set(Messages.OK == MessageManager.showYesNoDialog(myProject, XmlStringUtil.wrapInHtml(description), title,
+        ok.set(Messages.YES == MessageManager.showYesNoDialog(myProject, XmlStringUtil.wrapInHtml(description), title,
                                                              "Rollback", "Don't rollback", Messages.getErrorIcon()));
       }
     });
@@ -133,7 +133,7 @@ public class GitBranchUiHandlerImpl implements GitBranchUiHandler {
                                            operationName, rollbackProposal);
         // suppressing: this message looks ugly if capitalized by words
         //noinspection DialogTitleCapitalization
-        ok.set(Messages.OK == MessageManager.showYesNoDialog(myProject, description, unmergedFilesErrorTitle(operationName),
+        ok.set(Messages.YES == MessageManager.showYesNoDialog(myProject, description, unmergedFilesErrorTitle(operationName),
                                                              "Rollback", "Don't rollback", Messages.getErrorIcon()));
       }
     });

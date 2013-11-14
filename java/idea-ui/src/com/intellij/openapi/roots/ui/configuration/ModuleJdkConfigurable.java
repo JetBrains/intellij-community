@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,6 @@ import com.intellij.openapi.roots.ui.configuration.projectRoot.ModuleStructureCo
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigurableContext;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ModuleProjectStructureElement;
-import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Condition;
@@ -137,7 +136,7 @@ public abstract class ModuleJdkConfigurable implements Disposable {
                                        ProjectBundle.message("project.roots.no.jdk.on.project.message"),
                                        ProjectBundle.message("project.roots.no.jdk.on.project.title"),
                                        Messages.getInformationIcon());
-            if (res == DialogWrapper.OK_EXIT_CODE) {
+            if (res == Messages.YES) {
               myJdksModel.setProjectSdk(jdk);
               return true;
             }

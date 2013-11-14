@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -536,7 +536,7 @@ public class CompilerTask extends Task.Backgroundable {
           CompilerBundle.message("compiler.running.dialog.title"),
           Messages.getQuestionIcon()
         );
-        if (result != 0) {
+        if (result != Messages.OK) {
           return false; // veto closing
         }
         myUserAcceptedCancel = true;
@@ -589,7 +589,7 @@ public class CompilerTask extends Task.Backgroundable {
             CompilerBundle.message("compiler.running.dialog.title"),
             Messages.getQuestionIcon()
           );
-          if (result != 0) {
+          if (result != Messages.OK) {
             event.consume(); // veto closing
           }
           myUserAcceptedCancel = true;

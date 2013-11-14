@@ -51,6 +51,7 @@ import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.project.impl.ProjectManagerImpl;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.MessageBuilder;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
@@ -880,9 +881,8 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
         .message(hasUnsafeBgTasks ? "exit.confirm.prompt.tasks" : "exit.confirm.prompt",
                  ApplicationNamesInfo.getInstance().getFullProductName());
 
-      if (DialogWrapper.OK_EXIT_CODE != Messages.showYesNoDialog(message, ApplicationBundle.message("exit.confirm.title"),
-                                        ApplicationBundle.message("command.exit"), CommonBundle.message("button.cancel"),
-                                        Messages.getQuestionIcon(), option)) {
+      if (MessageBuilder.yesNo(ApplicationBundle.message("exit.confirm.title"), message).yesText(ApplicationBundle.message("command.exit")).noText(CommonBundle.message("button.cancel"))
+            .doNotAsk(option).show() != Messages.YES) {
         return false;
       }
     }

@@ -487,7 +487,7 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
                                                ".\nWould you like to configure it now?",
                                                "Python External Documentation",
                                                Messages.getQuestionIcon());
-          if (rc == 0) {
+          if (rc == Messages.OK) {
             ShowSettingsUtilImpl.showSettingsDialog(project, PythonDocumentationConfigurable.ID, "");
           }
         }

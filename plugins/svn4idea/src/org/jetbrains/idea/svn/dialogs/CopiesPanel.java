@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -223,7 +223,7 @@ public class CopiesPanel {
                                                         "This will update your working copy to HEAD revision as well.",
                                     "Set Working Copy Infinity Depth",
                                     Messages.getWarningIcon());
-              if (result == 0) {
+              if (result == Messages.OK) {
                 // update of view will be triggered by roots changed event
                 SvnCheckoutProvider.checkout(myVcs.getProject(), new File(wcInfo.getPath()), wcInfo.getRootUrl(), SVNRevision.HEAD,
                                              SVNDepth.INFINITY, false, null, wcInfo.getFormat());

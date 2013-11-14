@@ -15,12 +15,18 @@
  */
 package com.intellij.openapi.util;
 
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.SystemProperties;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.io.IOException;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 @SuppressWarnings({"HardCodedStringLiteral", "UtilityClassWithoutPrivateConstructor", "UnusedDeclaration"})
 public class SystemInfo extends SystemInfoRt {
@@ -53,6 +59,42 @@ public class SystemInfo extends SystemInfoRt {
   public static final boolean isWin7OrNewer = isWindows && isOsVersionAtLeast("6.1");
 
   public static final boolean isXWindow = isUnix && !isMac;
+
+  // http://www.freedesktop.org/software/systemd/man/os-release.html
+  private static NotNullLazyValue<Map<String, String>> ourOsReleaseInfo = new AtomicNotNullLazyValue<Map<String, String>>() {
+    @NotNull
+    @Override
+    protected Map<String, String> compute() {
+      if (isUnix && !isMac) {
+        try {
+          List<String> lines = FileUtil.loadLines("/etc/os-release");
+          Map<String, String> info = ContainerUtil.newHashMap();
+          for (String line : lines) {
+            int p = line.indexOf('=');
+            if (p > 0) {
+              String name = line.substring(0, p);
+              String value = StringUtil.unquoteString(line.substring(p + 1));
+              if (!StringUtil.isEmptyOrSpaces(name) && !StringUtil.isEmptyOrSpaces(value)) {
+                info.put(name, value);
+              }
+            }
+          }
+          return info;
+        }
+        catch (IOException ignored) { }
+      }
+
+      return Collections.emptyMap();
+    }
+  };
+  @Nullable
+  public static String getUnixReleaseName() {
+    return ourOsReleaseInfo.getValue().get("NAME");
+  }
+  @Nullable
+  public static String getUnixReleaseVersion() {
+    return ourOsReleaseInfo.getValue().get("VERSION");
+  }
 
   public static final boolean isMacSystemMenu = isMac && "true".equals(System.getProperty("apple.laf.useScreenMenuBar"));
 
