@@ -1,10 +1,11 @@
 package org.jetbrains.postfixCompletion.LookupItems;
 
+import com.intellij.codeInsight.completion.*;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.*;
 import org.jetbrains.postfixCompletion.Infrastructure.*;
 
-public abstract class NullCheckLookupElementBase extends IfStatementPostfixLookupItem {
+public abstract class NullCheckLookupElementBase extends StatementPostfixLookupElement<PsiIfStatement> {
   public NullCheckLookupElementBase(@NotNull String lookupString, @NotNull PrefixExpressionContext context) {
     super(lookupString, context);
   }
@@ -22,4 +23,12 @@ public abstract class NullCheckLookupElementBase extends IfStatementPostfixLooku
   }
 
   @NotNull protected abstract String getTemplate();
+
+  @Override protected void postProcess(@NotNull InsertionContext context, @NotNull PsiIfStatement statement) {
+    PsiJavaToken rParenth = statement.getRParenth();
+    assert rParenth != null : "rParenth != null";
+
+    int offset = rParenth.getTextRange().getEndOffset();
+    context.getEditor().getCaretModel().moveToOffset(offset);
+  }
 }
