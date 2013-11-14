@@ -20,13 +20,30 @@
         <li> <b>.for</b> – iterates over collection <b>for (T item : collection)</b></li>
       </ul>
 
-      <table>
+<table>
+  <tr>
+    <th>Shortcut</th>
+    <th>Purpose</th>
+    <th>Example</th>
+  </tr>
+  <tr>
+    <td><b>.if</b></td>
+    <td>checks boolean expression to be true</td>
+    <td><pre>if (expr)</pre></td>
+  <tr/>
+  <tr>
+    <td><b>.var</b></td>
+    <td>initialize new variable with expression</td>
+    <td><pre>T x = expr;</pre></td>
+  <tr/>
+</table>
 
-      </table>
 ]]></description>
 
   <change-notes><![CDATA[
-      <b>v0.2.1</b> tests and a lot of various fixes
+      <b>v0.2.2</b><br/>
+      Small fixes. Template <b>.for</b> now should works when standard
+      IDEA's surround template "I" (Iterate) do not exists.
 ]]></change-notes>
 
   <idea-version since-build="130.754"/>

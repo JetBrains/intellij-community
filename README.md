@@ -10,19 +10,18 @@ what you are going to do and after finish with statement of some type.
 #### Download
 
 Plugin currently is under development.
-
 Pre-release versions are available for download in [IntelliJ IDEA plugin repository](http://plugins.jetbrains.com/plugin/7342).
-To install from IDEA simply go `Preferences` – `Plugins` – `Browse repositories` and search for *"postfix"*.
+To install into IDEA simply go *Preferences* – *Plugins* – *Browse repositories...* and search for *"postfix"*.
 
 #### Version
 
-Currently plugin tested and works well with IDEA 13 (since first preview build v130.754),
+Currently plugin tested and works well with IDEA 13 CE (since first preview build v130.754),
 but you can easily build it against IDEA 12 SDK. When main development phase will be finished,
 I'll investigate ability to work in IDEA 12 and lower the required version if possible.
 
 #### Features
 
-Currently available templates:
+Available templates:
 
 * `.if` – checks boolean expression to be true `if (expr)`
 * `.else` – checks boolean expression to be false `if (!expr)`
