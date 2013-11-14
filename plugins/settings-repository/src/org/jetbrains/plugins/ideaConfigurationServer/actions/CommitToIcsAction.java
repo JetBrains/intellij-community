@@ -5,6 +5,7 @@ import com.intellij.openapi.components.StorageScheme;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.MessageBuilder;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vcs.CheckinProjectPanel;
 import com.intellij.openapi.vcs.FilePath;
@@ -24,7 +25,10 @@ import com.intellij.util.Consumer;
 import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.ideaConfigurationServer.*;
+import org.jetbrains.plugins.ideaConfigurationServer.CommitToIcsDialog;
+import org.jetbrains.plugins.ideaConfigurationServer.IcsBundle;
+import org.jetbrains.plugins.ideaConfigurationServer.IcsManager;
+import org.jetbrains.plugins.ideaConfigurationServer.ProjectId;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -115,7 +119,7 @@ class CommitToIcsAction extends CommonCheckinFilesAction {
   private static String getProjectId(@NotNull Project project) {
     ProjectId projectId = ServiceManager.getService(project, ProjectId.class);
     if (projectId.uid == null) {
-      if (MessageBuilder.yesNo("Settings Server Project Mapping", "Project is not mapped on Settings Server. Would you like to map?").project(project).icon(Messages.getQuestionIcon()).doNotAskOption(
+      if (MessageBuilder.yesNo("Settings Server Project Mapping", "Project is not mapped on Settings Server. Would you like to map?").project(project).doNotAsk(
         new DialogWrapper.PropertyDoNotAskOption("") {
           @Override
           public void setToBeShown(boolean value, int exitCode) {
