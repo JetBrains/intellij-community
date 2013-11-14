@@ -357,7 +357,7 @@ public class EventLog {
       createNewContent(DEFAULT_CATEGORY);
 
       for (Notification notification : myInitial) {
-        printNotification(notification);
+        doPrintNotification(notification, ObjectUtils.assertNotNull(getConsole(notification)));
       }
       myInitial.clear();
     }
@@ -372,19 +372,22 @@ public class EventLog {
       StatusBar.Info.set("", null, LOG_REQUESTOR);
     }
 
-    private void printNotification(final Notification notification) {
-      final EventLogConsole console = getConsole(notification);
-      if (console == null) {
-        myInitial.add(notification);
-        return;
-      }
-
+    private void printNotification(Notification notification) {
       if (!NotificationsConfigurationImpl.getSettings(notification.getGroupId()).isShouldLog()) {
         return;
       }
-
       myProjectModel.addNotification(notification);
 
+      EventLogConsole console = getConsole(notification);
+      if (console == null) {
+        myInitial.add(notification);
+      }
+      else {
+        doPrintNotification(notification, console);
+      }
+    }
+
+    private void doPrintNotification(@NotNull final Notification notification, @NotNull final EventLogConsole console) {
       StartupManager.getInstance(myProject).runWhenProjectIsInitialized(new DumbAwareRunnable() {
         @Override
         public void run() {
