@@ -71,9 +71,8 @@ public class AntCreatePropertyFix implements LocalQuickFix {
     Navigatable result = null;
     if (myPropFile != null) {
       final IProperty generatedProperty = myPropFile.addProperty(myCanonicalText, "");
-      final PsiElement lastChild = generatedProperty.getPsiElement().getLastChild();
       final VirtualFile vFile = myPropFile.getVirtualFile();
-      result = vFile != null? new OpenFileDescriptor(project, vFile, lastChild.getTextRange().getEndOffset()) : generatedProperty;
+      result = vFile != null? new OpenFileDescriptor(project, vFile, generatedProperty.getPsiElement().getTextRange().getEndOffset()) : generatedProperty;
     }
     else {
       if (containingFile instanceof XmlFile) {
@@ -84,9 +83,9 @@ public class AntCreatePropertyFix implements LocalQuickFix {
           propTag.setAttribute(NAME_ATTR, myCanonicalText);
           propTag.setAttribute(VALUE_ATTR, "");
           final DomElement contextElement = DomUtil.getDomElement(descriptor.getPsiElement());
-          PsiElement generated = null;
+          PsiElement generated;
           if (contextElement == null) {
-            generated = rootTag.add(propTag);
+            generated = rootTag.addSubTag(propTag, true);
           }
           else {
             final AntDomTarget containingTarget = contextElement.getParentOfType(AntDomTarget.class, false);
