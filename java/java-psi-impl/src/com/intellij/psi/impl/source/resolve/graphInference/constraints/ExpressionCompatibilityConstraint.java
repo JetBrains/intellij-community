@@ -15,7 +15,6 @@
  */
 package com.intellij.psi.impl.source.resolve.graphInference.constraints;
 
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceSession;
@@ -23,11 +22,11 @@ import com.intellij.psi.impl.source.resolve.graphInference.InferenceVariable;
 import com.intellij.psi.impl.source.resolve.graphInference.PsiPolyExpressionUtil;
 import com.intellij.psi.impl.source.tree.java.PsiMethodCallExpressionImpl;
 import com.intellij.psi.infos.MethodCandidateInfo;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.List;
+import java.util.Set;
 
 /**
  * User: anna
@@ -144,16 +143,13 @@ public class ExpressionCompatibilityConstraint extends InputOutputConstraintForm
     ExpressionCompatibilityConstraint that = (ExpressionCompatibilityConstraint)o;
 
     if (!myExpression.equals(that.myExpression)) return false;
-    if (!myT.equals(that.myT)) return false;
 
     return true;
   }
 
   @Override
   public int hashCode() {
-    int result = myExpression.hashCode();
-    result = 31 * result + myT.hashCode();
-    return result;
+    return myExpression.hashCode();
   }
 
   @Override
