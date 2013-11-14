@@ -163,7 +163,7 @@ public final class PostfixTemplatesManager implements ApplicationComponent {
 
   @NotNull private static PsiExpression fixCompletelyBrokenCase(
     @NotNull PsiExpression expressionToFix, @NotNull PsiLiteralExpression brokenLiteral,
-    @NotNull PsiReferenceExpression reference, @NotNull PsiExpression rhsExpression) {
+    @NotNull PsiReferenceExpression reference, @NotNull PsiExpression lhsExpression) {
 
     // fix broken double literal by cutting of "." suffix
     Project project = expressionToFix.getProject();
@@ -175,24 +175,24 @@ public final class PostfixTemplatesManager implements ApplicationComponent {
 
     // 'int a = 2.|var + 3;' => 'int a = 2.|2 + 3;'
     PsiExpression newExpression, oldExpression;
-    if (rhsExpression == brokenLiteral) {
+    if (lhsExpression == brokenLiteral) {
       oldExpression = brokenLiteral;
       newExpression = (PsiExpression) reference.replace(newLiteral);
     } else { // 'int a = 1 + 2.|var + 3;' => 'int a = 1 + 2.|1 + 2 + 3;'
       brokenLiteral.replace(newLiteral);
-      oldExpression = rhsExpression;
-      newExpression = (PsiExpression) reference.replace(rhsExpression.copy());
+      oldExpression = lhsExpression;
+      newExpression = (PsiExpression) reference.replace(lhsExpression.copy());
     }
 
     assert newExpression.isPhysical() : "newExpression.isPhysical()";
     assert oldExpression.isPhysical() : "oldExpression.isPhysical()";
 
     // 'int a = 1 + 2.|1 + 2 + 3;' => 'int a = 1 + 2 + 3;'
-    PsiExpressionStatement statement = findContainingExprStatement(newExpression.getParent());
-    if (statement != null) {
+    PsiStatement statement = PsiTreeUtil.getParentOfType(newExpression, PsiStatement.class);
+    if (statement instanceof PsiExpressionStatement) {
       newExpression.putCopyableUserData(marker, marker);
 
-      PsiExpression outerExpression = statement.getExpression();
+      PsiExpression outerExpression = ((PsiExpressionStatement) statement).getExpression();
       newExpression = (PsiExpression) oldExpression.replace(outerExpression);
 
       PsiExpression marked = findMarkedExpression(newExpression);
