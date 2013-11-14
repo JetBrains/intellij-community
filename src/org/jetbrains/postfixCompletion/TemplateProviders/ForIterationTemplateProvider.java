@@ -23,7 +23,6 @@ import java.util.*;
 public class ForIterationTemplateProvider extends TemplateProviderBase {
   @Override public void createItems(
     @NotNull PostfixTemplateContext context, @NotNull List<LookupElement> consumer) {
-
     PrefixExpressionContext expression = context.outerExpression;
 
     if (!context.executionContext.isForceMode) {
@@ -116,8 +115,8 @@ public class ForIterationTemplateProvider extends TemplateProviderBase {
               CaretModel caretModel = editor.getCaretModel();
               caretModel.moveToOffset(statement.getTextRange().getStartOffset());
 
-              TemplateManager templateManager = TemplateManager.getInstance(context.getProject());
-              templateManager.startTemplate(editor, template);
+              TemplateManager manager = TemplateManager.getInstance(context.getProject());
+              manager.startTemplate(editor, template);
             }
           });
         }

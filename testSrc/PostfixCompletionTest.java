@@ -8,15 +8,11 @@ import org.jetbrains.annotations.*;
 import org.jetbrains.postfixCompletion.LookupItems.*;
 import org.jetbrains.postfixCompletion.*;
 
-// todo: test with statements after
-// todo: dump caret position after completion
-
 public class PostfixCompletionTest extends LightCodeInsightFixtureTestCase {
   @Override protected String getTestDataPath() {
     return PostfixTestUtils.BASE_TEST_DATA_PATH + "/completion";
   }
 
-  // todo: force mode flag
   private void test(@NotNull String typingChars) {
     test(typingChars, false);
   }
@@ -70,6 +66,8 @@ public class PostfixCompletionTest extends LightCodeInsightFixtureTestCase {
     builder.append(SystemProperties.getLineSeparator());
     return builder.toString();
   }
+
+  public void testArg01() { test("arg\n"); }
 
   public void testIf01() { test("if\n"); }
   public void testIf02() { test(""); }

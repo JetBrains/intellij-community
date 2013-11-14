@@ -1,49 +1,33 @@
 <idea-plugin version="2">
   <id>org.jetbrains.postfixCompletion</id>
   <name>Postfix Completion</name>
-  <version>0.2.2</version>
+  <version>0.2.5-alpha</version>
   <vendor email="alexander.shvedov@jetbrains.com"
           url="https://github.com/controlflow">Alexander Shvedov</vendor>
 
   <description><![CDATA[
-      The basic idea is to prevent caret jumps backwards while typing Java code,
-      let you start code with the expression and finish with statement.<br/><br/>
+      The basic idea is to prevent caret jumps backward while typing code,
+      let you start with the some expression, explore some APIs, think about
+      what you are going to do and after finish with statement of some type.<br/><br/>
 
-      <b>Currently available templates:</b><br/>
+      <b>Available templates:</b><br/><br/>
+
       <ul>
-        <li> <b>.if</b> – checks boolean expression to be true <b>if (expr)</b></li>
-        <li> <b>.else</b> – checks boolean expression to be false <b>if (!expr)</b></li>
-        <li> <b>.var</b> – initialize new variable with expression <b>T x = expr;</b></li>
-        <li> <b>.null</b> – checks nullable expression to be null <b>if (expr == null)</b></li>
-        <li> <b>.notnull</b> – checks expression to be non-null <b>if (expr != null)</b></li>
-        <li> <b>.not</b> – negates value of inner boolean expression <b>!expr</b></li>
-        <li> <b>.for</b> – iterates over collection <b>for (T item : collection)</b></li>
+        <li> <b>.if</b> – checks boolean expression to be true – <b>if (expr)</b></li>
+        <li> <b>.else</b> – checks boolean expression to be false – <b>if (!expr)</b></li>
+        <li> <b>.var</b> – initialize new variable with expression – <b>T x = expr;</b></li>
+        <li> <b>.null</b> – checks nullable expression to be null – <b>if (expr == null)</b></li>
+        <li> <b>.notnull</b> – checks expression to be non-null – <b>if (expr != null)</b></li>
+        <li> <b>.not</b> – negates value of inner boolean expression – <b>!expr</b></li>
+        <li> <b>.for</b> – iterates over collection – <b>for (T item : collection)</b></li>
+        <li> <b>.while</b> – uses expression as loop condition – <b>while (expr)</b></li>
       </ul>
-
-<table>
-  <tr>
-    <th>Shortcut</th>
-    <th>Purpose</th>
-    <th>Example</th>
-  </tr>
-  <tr>
-    <td><b>.if</b></td>
-    <td>checks boolean expression to be true</td>
-    <td><pre>if (expr)</pre></td>
-  <tr/>
-  <tr>
-    <td><b>.var</b></td>
-    <td>initialize new variable with expression</td>
-    <td><pre>T x = expr;</pre></td>
-  <tr/>
-</table>
-
 ]]></description>
 
   <change-notes><![CDATA[
-      <b>v0.2.2</b><br/>
-      Small fixes. Template <b>.for</b> now should works when standard
-      IDEA's surround template "I" (Iterate) do not exists.
+      <b>Version 0.2.5</b><br/>
+      Small fixes in <b>.var</b> over expressions.
+      New templates: <b>.while</b>, <b>.arg</b>...
 ]]></change-notes>
 
   <idea-version since-build="130.754"/>
@@ -75,6 +59,9 @@
     </component>
     <component>
       <implementation-class>org.jetbrains.postfixCompletion.TemplateProviders.WhileStatementTemplateProvider</implementation-class>
+    </component>
+    <component>
+      <implementation-class>org.jetbrains.postfixCompletion.TemplateProviders.ArgumentExpressionTemplateProvider</implementation-class>
     </component>
   </application-components>
 

@@ -1,7 +1,7 @@
 // Items: arg, else, if, not, var, while
 public class Foo {
     void m() {
-        if (bar())<caret>
+        (bar()<caret>)
     }
 
     boolean bar() {

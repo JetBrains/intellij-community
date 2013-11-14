@@ -1,4 +1,4 @@
-// Items: for, not, var
+// Items: arg, for, not, var
 public class Foo {
     Foo f;
     Foo m() {
