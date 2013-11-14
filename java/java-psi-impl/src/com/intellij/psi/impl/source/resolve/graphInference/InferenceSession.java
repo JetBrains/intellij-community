@@ -356,11 +356,12 @@ public class InferenceSession {
     if (parentMethod instanceof PsiMethod) {
       final PsiParameter[] parameters = ((PsiMethod)parentMethod).getParameterList().getParameters();
       if (parameters.length == 0) return null;
+      final PsiExpression[] args = argumentList.getExpressions();
+      if (!((PsiMethod)parentMethod).isVarArgs() && parameters.length != args.length) return null;
       PsiElement arg = context;
       while (arg.getParent() instanceof PsiParenthesizedExpression) {
         arg = arg.getParent();
       }
-      final PsiExpression[] args = argumentList.getExpressions();
       final int i = ArrayUtilRt.find(args, arg);
       if (i < 0) return null;
       if (pair != null) {
