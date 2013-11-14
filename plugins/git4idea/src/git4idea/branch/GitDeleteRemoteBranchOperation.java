@@ -10,6 +10,7 @@ package git4idea.branch;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.MessageBuilder;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
@@ -214,7 +215,7 @@ class GitDeleteRemoteBranchOperation extends GitBranchOperation {
     boolean delete;
     final boolean deleteTracking;
     if (trackingBranches.isEmpty()) {
-      delete = Messages.showYesNoDialog(myProject, message, title, "Delete", "Cancel", Messages.getQuestionIcon()) == Messages.OK;
+      delete = Messages.showYesNoDialog(myProject, message, title, "Delete", "Cancel", Messages.getQuestionIcon()) == Messages.YES;
       deleteTracking = false;
     }
     else {
@@ -230,7 +231,7 @@ class GitDeleteRemoteBranchOperation extends GitBranchOperation {
       }
 
       final AtomicBoolean deleteChoice = new AtomicBoolean();
-      delete = Messages.OK == Messages.showYesNoDialog(message, title, "Delete", "Cancel", Messages.getQuestionIcon(), new DialogWrapper.DoNotAskOption() {
+      delete = MessageBuilder.yesNo(title, message).project(myProject).yesText("Delete").noText("Cancel").doNotAsk(new DialogWrapper.DoNotAskOption() {
         @Override
         public boolean isToBeShown() {
           return true;
@@ -255,7 +256,7 @@ class GitDeleteRemoteBranchOperation extends GitBranchOperation {
         public String getDoNotShowMessage() {
           return checkboxMessage;
         }
-      });
+      }).show() == Messages.YES;
       deleteTracking = deleteChoice.get();
     }
     return new DeleteRemoteBranchDecision(delete, deleteTracking);
