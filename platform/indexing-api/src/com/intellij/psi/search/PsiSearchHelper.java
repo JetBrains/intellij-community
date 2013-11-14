@@ -169,6 +169,13 @@ public interface PsiSearchHelper {
                                   short searchContext,
                                   boolean caseSensitive);
 
+  boolean processElementsWithWord(@NotNull TextOccurenceProcessor processor,
+                                  @NotNull SearchScope searchScope,
+                                  @NotNull String text,
+                                  short searchContext,
+                                  boolean caseSensitive,
+                                  boolean processInjectedPsi);
+
   @NotNull
   AsyncFuture<Boolean> processElementsWithWordAsync(
                                        @NotNull TextOccurenceProcessor processor,
