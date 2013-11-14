@@ -224,7 +224,6 @@ class GitDeleteRemoteBranchOperation extends GitBranchOperation {
     final boolean deleteTracking;
     if (trackingBranches.isEmpty()) {
       delete = Messages.showYesNoDialog(myProject, message, title, "Delete", "Cancel", Messages.getQuestionIcon()) == Messages.YES;
-      delete = Messages.showYesNoDialog(myProject, message, title, "Delete", "Cancel", Messages.getQuestionIcon()) == Messages.YES;
       deleteTracking = false;
     }
     else {
