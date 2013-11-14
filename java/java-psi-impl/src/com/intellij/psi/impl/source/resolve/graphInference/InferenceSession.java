@@ -16,6 +16,7 @@
 package com.intellij.psi.impl.source.resolve.graphInference;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
@@ -480,16 +481,19 @@ public class InferenceSession {
             inferenceVariable.setInstantiation(null);
             continue;
           }
+          PsiType bound = null;
           if (eqBounds.size() > 1) {
             for (Iterator<PsiType> iterator = eqBounds.iterator(); iterator.hasNext(); ) {
-              PsiType eqBound = iterator.next();
-              if (PsiUtil.resolveClassInType(eqBound) == typeParameter) {
+              PsiType eqBound = acceptBoundsWithRecursiveDependencies(inferenceVariable, iterator.next(), substitutor);
+              if (PsiUtil.resolveClassInType(eqBound) == typeParameter || Comparing.equal(bound, eqBound)) {
                 iterator.remove();
+              } else if (bound == null) {
+                bound = eqBound; 
               }
             }
             if (eqBounds.size() > 1) continue;
           }
-          PsiType bound = eqBounds.isEmpty() ? null :  acceptBoundsWithRecursiveDependencies(inferenceVariable, eqBounds.get(0), substitutor);
+          bound = eqBounds.isEmpty() ? null :  acceptBoundsWithRecursiveDependencies(inferenceVariable, eqBounds.get(0), substitutor);
           if (bound != null) {
             inferenceVariable.setInstantiation(bound);
           } else {
