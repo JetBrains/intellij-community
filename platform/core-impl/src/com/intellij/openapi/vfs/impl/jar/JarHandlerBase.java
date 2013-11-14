@@ -141,8 +141,8 @@ public class JarHandlerBase {
               return new MyJarEntry(entry);
             }
           }
-          catch (IllegalArgumentException e) {
-            LOG.warn(e);
+          catch (RuntimeException e) {
+            LOG.warn("corrupted: " + zipFile.getName(), e);
           }
           return null;
         }
@@ -170,8 +170,8 @@ public class JarHandlerBase {
                   return new MyJarEntry(entry);
                 }
               }
-              catch (IllegalArgumentException e) {
-                LOG.warn(e);
+              catch (RuntimeException e) {
+                LOG.warn("corrupted: " + zipFile.getName(), e);
               }
               return null;
             }
