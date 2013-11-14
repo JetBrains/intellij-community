@@ -29,7 +29,9 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
+import javax.imageio.ImageIO;
 import javax.swing.*;
+import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.io.StringReader;
 import java.net.URL;
@@ -110,7 +112,14 @@ public class TipUIUtil {
           if (url != null) {
             String newImgTag = "<img src=\"" + path + "\" ";
             if (retina) {
-              newImgTag += "width=\"50%\" height=\"50%\"";
+              try {
+                final BufferedImage image = ImageIO.read(url.openStream());
+                final int w = image.getWidth() / 2;
+                final int h = image.getHeight() / 2;
+                newImgTag += "width=\"" + w + "\" height=\"" + h + "\"";
+              } catch (Exception ignore) {
+                newImgTag += "width=\"400\" height=\"200\"";
+              }
             }
             newImgTag += "/>";
             text.replace(index, end + 1, newImgTag);
