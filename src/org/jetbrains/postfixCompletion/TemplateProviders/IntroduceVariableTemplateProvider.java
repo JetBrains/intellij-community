@@ -125,6 +125,9 @@ public class IntroduceVariableTemplateProvider extends TemplateProviderBase {
     @Override protected void postProcess(
       @NotNull final InsertionContext context, @NotNull final PsiExpressionStatement statement) {
 
+      context.getEditor().getCaretModel().moveToOffset(
+        statement.getExpression().getTextRange().getEndOffset());
+
       if (ApplicationManager.getApplication().isUnitTestMode()) {
         context.setLaterRunnable(new Runnable() {
           @Override public void run() {
@@ -187,6 +190,10 @@ public class IntroduceVariableTemplateProvider extends TemplateProviderBase {
 
     @Override protected void postProcess(
       @NotNull InsertionContext context, @NotNull PsiExpression expression) {
+
+      context.getEditor().getCaretModel().moveToOffset(
+        expression.getTextRange().getEndOffset());
+
       boolean unitTestMode = ApplicationManager.getApplication().isUnitTestMode();
       IntroduceVariableHandler handler = unitTestMode ? getMockHandler() : new IntroduceVariableHandler();
 

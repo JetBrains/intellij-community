@@ -93,7 +93,31 @@ public final class PostfixTemplatesManager implements ApplicationComponent {
                 PsiExpression newExpression = fixCompletelyBrokenCase(
                   context.expression, brokenLiteral, reference, lhsExpression);
 
+                // todo: prevent from loosing comments and semicolons
+                //exprStatement.getExpression().delete();
+
+                PsiExpression expression = exprStatement.getExpression();
+
+                PsiElement target = lhsStatement;
+                if (lhsStatement instanceof PsiDeclarationStatement) {
+                  for (PsiElement element : ((PsiDeclarationStatement) lhsStatement).getDeclaredElements())
+                    if (element instanceof PsiLocalVariable) target = element;
+                }
+
+                PsiElement node = expression;
+                while ((node = node.getNextSibling()) != null) {
+                  target.addBefore(node.copy(), null);
+
+                  if (node instanceof PsiJavaToken && ((PsiJavaToken) node).getTokenType() == JavaTokenType.SEMICOLON) {
+                    if (target instanceof PsiLocalVariable) {
+                      target = target.getParent();
+                    }
+                  }
+                }
+
                 exprStatement.delete();
+
+
                 return new PrefixExpressionContext(this, newExpression);
               }
 

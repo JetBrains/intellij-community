@@ -2,6 +2,6 @@
 public class Foo {
     void m() {
         int foo = 1;
-        foo + 2<caret>
+        foo<caret> + 2 /* comment */; // comment2
     }
 }
