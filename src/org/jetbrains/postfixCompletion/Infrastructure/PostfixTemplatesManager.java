@@ -92,31 +92,7 @@ public final class PostfixTemplatesManager implements ApplicationComponent {
               public PrefixExpressionContext fixExpression(@NotNull PrefixExpressionContext context) {
                 PsiExpression newExpression = fixCompletelyBrokenCase(
                   context.expression, brokenLiteral, reference, lhsExpression);
-
-                // todo: prevent from loosing comments and semicolons
-                //exprStatement.getExpression().delete();
-
-                PsiExpression expression = exprStatement.getExpression();
-
-                PsiElement target = lhsStatement;
-                if (lhsStatement instanceof PsiDeclarationStatement) {
-                  for (PsiElement element : ((PsiDeclarationStatement) lhsStatement).getDeclaredElements())
-                    if (element instanceof PsiLocalVariable) target = element;
-                }
-
-                PsiElement node = expression;
-                while ((node = node.getNextSibling()) != null) {
-                  target.addBefore(node.copy(), null);
-
-                  if (node instanceof PsiJavaToken && ((PsiJavaToken) node).getTokenType() == JavaTokenType.SEMICOLON) {
-                    if (target instanceof PsiLocalVariable) {
-                      target = target.getParent();
-                    }
-                  }
-                }
-
-                exprStatement.delete();
-
+                removeStatementPreventingExtraTokens(exprStatement, lhsStatement);
 
                 return new PrefixExpressionContext(this, newExpression);
               }
@@ -226,6 +202,28 @@ public final class PostfixTemplatesManager implements ApplicationComponent {
     }
 
     return newExpression;
+  }
+
+  private void removeStatementPreventingExtraTokens(
+      @NotNull PsiExpressionStatement statementToRemove, @NotNull PsiStatement targetStatement) {
+
+    PsiElement target = targetStatement;
+    if (targetStatement instanceof PsiDeclarationStatement) {
+      for (PsiElement element : ((PsiDeclarationStatement) targetStatement).getDeclaredElements())
+        if (element instanceof PsiLocalVariable) target = element;
+    }
+
+    PsiElement node = statementToRemove.getExpression();
+    while ((node = node.getNextSibling()) != null) {
+      target.addBefore(node.copy(), null);
+
+      if (node instanceof PsiJavaToken && target instanceof PsiLocalVariable) {
+        if (((PsiJavaToken) node).getTokenType() == JavaTokenType.SEMICOLON)
+          target = target.getParent();
+      }
+    }
+
+    statementToRemove.delete();
   }
 
   @Nullable private PsiLiteralExpression findBrokenLiteral(@Nullable PsiExpression expr) {
