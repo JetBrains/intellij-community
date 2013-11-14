@@ -2,7 +2,7 @@
 <idea-plugin version="2" url="http://code.google.com/p/lombok-intellij-plugin">
   <id>Lombook Plugin</id>
   <name>Lombok Plugin</name>
-  <vendor url="http://code.google.com/p/lombok-intellij-plugin" email="lombokplugin@plushnikov.de">Michail Plushnikov
+  <vendor url="https://github.com/mplushnikov/lombok-intellij-plugin" email="lombokplugin@plushnikov.de">Michail Plushnikov
   </vendor>
   <version>0.7.4</version>
   <idea-version since-build="123.72"/>
