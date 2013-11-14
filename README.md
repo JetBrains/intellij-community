@@ -1,12 +1,24 @@
 IntelliJ IDEA Postfix Completion plugin
 ---------------------------------------
 
-The basic idea is to prevent caret jumps backwards while typing Java code,
-let you start code with the expression and finish with statement.
+The basic idea is to prevent caret jumps backward while typing code,
+let you start with the some expression, explore some APIs, think about
+what you are going to do and after finish with statement of some type.
+
+![options](/content/example.png)
 
 #### Download
 
-This plugins is currently under development and do not available as a deployment binary.
+Plugin currently is under development.
+
+Pre-release versions are available for download in [IntelliJ IDEA plugin repository](http://plugins.jetbrains.com/plugin/7342).
+To install from IDEA simply go `Preferences` – `Plugins` – `Browse repositories` and search for *"postfix"*.
+
+#### Version
+
+Currently plugin tested and works well with IDEA 13 (since first preview build v130.754),
+but you can easily build it against IDEA 12 SDK. When main development phase will be finished,
+I'll investigate ability to work in IDEA 12 and lower the required version if possible.
 
 #### Features
 
@@ -40,11 +52,12 @@ Possible templates:
 * `.sync` – surrounds expression with statement `synchronized (expr)`
 * `.try` – surrounds resource expression with `try (T x = resource)`
 
-Other todo:
+Future work:
 
 * Disable statement-based providers in debugger evaluate window
-* Control braces insertion?
-* Settings page
+* Settings page to disable/enable templates
+* Control braces insertion for statements (use code style settings?)
+* Support non-Java languages, of course :)
 
 #### Feedback
 

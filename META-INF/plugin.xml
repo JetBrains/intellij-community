@@ -1,7 +1,7 @@
 <idea-plugin version="2">
   <id>org.jetbrains.postfixCompletion</id>
   <name>Postfix Completion</name>
-  <version>0.2.1-alpha</version>
+  <version>0.2.2</version>
   <vendor email="alexander.shvedov@jetbrains.com"
           url="https://github.com/controlflow">Alexander Shvedov</vendor>
 
@@ -19,14 +19,17 @@
         <li> <b>.not</b> – negates value of inner boolean expression <b>!expr</b></li>
         <li> <b>.for</b> – iterates over collection <b>for (T item : collection)</b></li>
       </ul>
+
+      <table>
+
+      </table>
 ]]></description>
 
   <change-notes><![CDATA[
       <b>v0.2.1</b> tests and a lot of various fixes
 ]]></change-notes>
 
-  <idea-version since-build="132.839"/>
-  <!--<idea-version since-build="107.105"/>-->
+  <idea-version since-build="130.754"/>
 
   <application-components>
      <component>
@@ -59,7 +62,6 @@
   </application-components>
 
   <module-components>
-
   </module-components>
 
   <project-components>
