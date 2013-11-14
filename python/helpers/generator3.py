@@ -122,6 +122,18 @@ def is_module(d, root):
             os.path.exists(os.path.join(root, d, "__init__.pyo")))
 
 
+def walk_python_path(path):
+    for root, dirs, files in os.walk(path):
+        if root.endswith('__pycache__'):
+            continue
+        dirs_copy = list(dirs)
+        for d in dirs_copy:
+            if d.endswith('__pycache__') or not is_module(d, root):
+                dirs.remove(d)
+        # some files show up but are actually non-existent symlinks
+        yield root, [f for f in files if os.path.exists(os.path.join(root, f))]
+
+
 def list_binaries(paths):
     """
     Finds binaries in the given list of paths.
@@ -139,13 +151,7 @@ def list_binaries(paths):
     paths = sorted_no_case(paths)
     for path in paths:
         if path == os.path.dirname(sys.argv[0]): continue
-        for root, dirs, files in os.walk(path):
-            if root.endswith('__pycache__'): continue
-            dirs_copy = list(dirs)
-            for d in dirs_copy:
-                if d.endswith("__pycache__") or not is_module(d, root):
-                    dirs.remove(d)
-
+        for root, files in walk_python_path(path):
             cutpoint = path.rfind(SEP)
             if cutpoint > 0:
                 preprefix = path[(cutpoint + len(SEP)):] + '.'
@@ -180,17 +186,10 @@ def list_sources(paths):
 
             path = os.path.normpath(path)
 
-            for root, dirs, files in os.walk(path):
-                if root.endswith('__pycache__'): continue
-                dirs_copy = list(dirs)
-                for d in dirs_copy:
-                    if d.endswith("__pycache__") or not is_module(d, root):
-                        dirs.remove(d)
+            for root, files in walk_python_path(path):
                 for name in files:
                     if name.endswith('.py'):
                         file_path = os.path.join(root, name)
-                        # some files show up but are actually non-existent symlinks
-                        if not os.path.exists(file_path): continue
                         say("%s\t%s\t%d", os.path.normpath(file_path), path, os.path.getsize(file_path))
         say('END')
         sys.stdout.flush()
