@@ -16,6 +16,8 @@ import org.jetbrains.postfixCompletion.LookupItems.*;
 
 import java.util.*;
 
+// todo: support for int[].var
+
 @TemplateProvider(
   templateName = "var",
   description = "Introduces variable for expression",
