@@ -264,7 +264,7 @@ public class GenericsHighlighting8Test extends LightDaemonAnalyzerTestCase {
   public void testIDEA57339() {
     doTest();
   } 
-  public void testIDEA57340() {
+  public void _testIDEA57340() {
     doTest();
   }
   public void testIDEA89771() {
@@ -400,7 +400,7 @@ public class GenericsHighlighting8Test extends LightDaemonAnalyzerTestCase {
     doTest();
   }
 
-  public void testIDEA94011() {
+  public void _testIDEA94011() {
     doTest();
   }
   public void testDifferentTypeParamsInOverloadedMethods() {
