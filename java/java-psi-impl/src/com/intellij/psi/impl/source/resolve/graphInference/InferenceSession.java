@@ -608,7 +608,8 @@ public class InferenceSession {
       final Set<InferenceVariable> outputVariables = new HashSet<InferenceVariable>();
       for (ConstraintFormula constraint : additionalConstraints) {
         if (constraint instanceof InputOutputConstraintFormula) {
-          final Set<InferenceVariable> outputVars = ((InputOutputConstraintFormula)constraint).getOutputVariables(((InputOutputConstraintFormula)constraint).getInputVariables(this), this);
+          final Set<InferenceVariable> inputVariables = ((InputOutputConstraintFormula)constraint).getInputVariables(this);
+          final Set<InferenceVariable> outputVars = ((InputOutputConstraintFormula)constraint).getOutputVariables(inputVariables, this);
           if (outputVars != null) {
             outputVariables.addAll(outputVars);
           }
@@ -635,7 +636,15 @@ public class InferenceSession {
               varsToResolve.addAll(inputVariables);
             }
           }
-        } else {
+          else {
+            subset.add(constraint);
+            Set<InferenceVariable> outputVars = ((InputOutputConstraintFormula)constraint).getOutputVariables(null, this);
+            if (outputVars != null) {
+              varsToResolve.addAll(outputVars);
+            }
+          }
+        }
+        else {
           subset.add(constraint);
         }
       }
@@ -649,7 +658,7 @@ public class InferenceSession {
         return false;
       }
 
-      PsiSubstitutor substitutor = resolveBounds(varsToResolve, mySiteSubstitutor, true);
+      PsiSubstitutor substitutor = resolveBounds(varsToResolve, mySiteSubstitutor, false);
 
       for (ConstraintFormula additionalConstraint : additionalConstraints) {
         additionalConstraint.apply(substitutor);
