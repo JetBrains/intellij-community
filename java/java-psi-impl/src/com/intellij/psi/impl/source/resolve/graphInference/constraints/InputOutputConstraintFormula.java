@@ -44,56 +44,54 @@ public abstract class InputOutputConstraintFormula implements ConstraintFormula 
 
   public Set<InferenceVariable> getInputVariables(InferenceSession session) {
     final PsiExpression psiExpression = getExpression();
-    if (PsiPolyExpressionUtil.isPolyExpression(psiExpression)) {
-      final PsiType type = getT();
-      if (psiExpression instanceof PsiLambdaExpression || psiExpression instanceof PsiMethodReferenceExpression) {
-        final InferenceVariable inferenceVariable = session.getInferenceVariable(type);
-        if (inferenceVariable != null) {
-          return Collections.singleton(inferenceVariable);
-        }
-        if (LambdaHighlightingUtil.checkInterfaceFunctional(type) == null) {
-          final PsiType functionType =
-            psiExpression instanceof PsiLambdaExpression
-            ? FunctionalInterfaceParameterizationUtil.getFunctionalType(type, (PsiLambdaExpression)psiExpression)
-            : type;
-          final PsiClassType.ClassResolveResult resolveResult = PsiUtil.resolveGenericsClassInType(functionType);
-          final PsiMethod interfaceMethod = LambdaUtil.getFunctionalInterfaceMethod(resolveResult);
-          if (interfaceMethod != null) {
+    final PsiType type = getT();
+    if (psiExpression instanceof PsiLambdaExpression || psiExpression instanceof PsiMethodReferenceExpression) {
+      final InferenceVariable inferenceVariable = session.getInferenceVariable(type);
+      if (inferenceVariable != null) {
+        return Collections.singleton(inferenceVariable);
+      }
+      if (LambdaHighlightingUtil.checkInterfaceFunctional(type) == null) {
+        final PsiType functionType =
+          psiExpression instanceof PsiLambdaExpression
+          ? FunctionalInterfaceParameterizationUtil.getFunctionalType(type, (PsiLambdaExpression)psiExpression)
+          : type;
+        final PsiClassType.ClassResolveResult resolveResult = PsiUtil.resolveGenericsClassInType(functionType);
+        final PsiMethod interfaceMethod = LambdaUtil.getFunctionalInterfaceMethod(resolveResult);
+        if (interfaceMethod != null) {
 
-            final Set<InferenceVariable> result = new HashSet<InferenceVariable>();
-            final PsiSubstitutor substitutor = LambdaUtil.getSubstitutor(interfaceMethod, resolveResult);
-            if (psiExpression instanceof PsiLambdaExpression && !((PsiLambdaExpression)psiExpression).hasFormalParameterTypes() || 
-                psiExpression instanceof PsiMethodReferenceExpression && !((PsiMethodReferenceExpression)psiExpression).isExact()) {
-              for (PsiParameter parameter : interfaceMethod.getParameterList().getParameters()) {
-                session.collectDependencies(substitutor.substitute(parameter.getType()), result);
-              }
+          final Set<InferenceVariable> result = new HashSet<InferenceVariable>();
+          final PsiSubstitutor substitutor = LambdaUtil.getSubstitutor(interfaceMethod, resolveResult);
+          if (psiExpression instanceof PsiLambdaExpression && !((PsiLambdaExpression)psiExpression).hasFormalParameterTypes() || 
+              psiExpression instanceof PsiMethodReferenceExpression && !((PsiMethodReferenceExpression)psiExpression).isExact()) {
+            for (PsiParameter parameter : interfaceMethod.getParameterList().getParameters()) {
+              session.collectDependencies(substitutor.substitute(parameter.getType()), result);
             }
-
-            collectReturnTypeVariables(session, psiExpression, substitutor.substitute(interfaceMethod.getReturnType()), result);
-
-            return result;
           }
+
+          collectReturnTypeVariables(session, psiExpression, substitutor.substitute(interfaceMethod.getReturnType()), result);
+
+          return result;
         }
       }
+    }
 
-      if (psiExpression instanceof PsiParenthesizedExpression) {
-        final PsiExpression expression = ((PsiParenthesizedExpression)psiExpression).getExpression();
-        return expression != null ? createSelfConstraint(type, expression).getInputVariables(session) : null;
-      }
+    if (psiExpression instanceof PsiParenthesizedExpression) {
+      final PsiExpression expression = ((PsiParenthesizedExpression)psiExpression).getExpression();
+      return expression != null ? createSelfConstraint(type, expression).getInputVariables(session) : null;
+    }
 
-      if (psiExpression instanceof PsiConditionalExpression) {
-        final PsiExpression thenExpression = ((PsiConditionalExpression)psiExpression).getThenExpression();
-        final PsiExpression elseExpression = ((PsiConditionalExpression)psiExpression).getElseExpression();
-        final Set<InferenceVariable> thenResult = thenExpression != null ? createSelfConstraint(type, thenExpression).getInputVariables(session) : null;
-        final Set<InferenceVariable> elseResult = elseExpression != null ? createSelfConstraint(type, elseExpression).getInputVariables(session) : null;
-        if (thenResult == null) {
-          return elseResult;
-        } else if (elseResult == null) {
-          return thenResult;
-        } else {
-          thenResult.addAll(elseResult);
-          return thenResult;
-        }
+    if (psiExpression instanceof PsiConditionalExpression) {
+      final PsiExpression thenExpression = ((PsiConditionalExpression)psiExpression).getThenExpression();
+      final PsiExpression elseExpression = ((PsiConditionalExpression)psiExpression).getElseExpression();
+      final Set<InferenceVariable> thenResult = thenExpression != null ? createSelfConstraint(type, thenExpression).getInputVariables(session) : null;
+      final Set<InferenceVariable> elseResult = elseExpression != null ? createSelfConstraint(type, elseExpression).getInputVariables(session) : null;
+      if (thenResult == null) {
+        return elseResult;
+      } else if (elseResult == null) {
+        return thenResult;
+      } else {
+        thenResult.addAll(elseResult);
+        return thenResult;
       }
     }
     return null;
@@ -102,15 +100,12 @@ public abstract class InputOutputConstraintFormula implements ConstraintFormula 
 
   @Nullable
   public Set<InferenceVariable> getOutputVariables(Set<InferenceVariable> inputVariables, InferenceSession session) {
-    if (PsiPolyExpressionUtil.isPolyExpression(getExpression())) {
-      final HashSet<InferenceVariable> mentionedVariables = new HashSet<InferenceVariable>();
-      session.collectDependencies(getT(), mentionedVariables);
-      if (inputVariables != null) {
-        mentionedVariables.removeAll(inputVariables);
-      }
-      return mentionedVariables;
+    final HashSet<InferenceVariable> mentionedVariables = new HashSet<InferenceVariable>();
+    session.collectDependencies(getT(), mentionedVariables);
+    if (inputVariables != null) {
+      mentionedVariables.removeAll(inputVariables);
     }
-    return null;
+    return mentionedVariables.isEmpty() ? null : mentionedVariables;
   }
 
   @Override
