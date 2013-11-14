@@ -64,7 +64,7 @@ public class LambdaExpressionCompatibilityConstraint implements ConstraintFormul
           return false;
         }
         for (PsiExpression returnExpression : returnExpressions) {
-          constraints.add(new ExpressionCompatibilityConstraint(returnExpression, substitutor.substitute(returnType)));
+          constraints.add(new ExpressionCompatibilityConstraint(returnExpression, GenericsUtil.eliminateWildcards(substitutor.substitute(returnType))));
         }
       }
     }
