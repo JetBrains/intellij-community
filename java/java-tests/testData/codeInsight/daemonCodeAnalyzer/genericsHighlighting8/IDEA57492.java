@@ -3,7 +3,7 @@ abstract class A<T>{
     <S extends Number & Comparable<? extends Number>> void baz(A<S> a){}
 
     void bar(A<Long> x, A<Integer> y){
-        baz<error descr="'baz(A<java.lang.Number & java.lang.Comparable<? extends java.lang.Number>>)' in 'A' cannot be applied to '(A<capture<? extends java.lang.Number & java.lang.Comparable<? extends java.lang.Comparable<?>>>>)'">(foo(x, y))</error>;
+        <error descr="Inferred type 'capture<? extends java.lang.Number & java.lang.Comparable<? extends java.lang.Comparable<?>>>' for type parameter 'S' is not within its bound; should implement 'java.lang.Comparable<? extends java.lang.Number>'">baz(foo(x, y))</error>;
     }
 }
 
@@ -12,6 +12,6 @@ abstract class A1<T>{
     <T extends Number & Comparable<?>, S extends Number & Comparable<? extends T>> void baz(A1<S> a){}
 
     void bar(A1<Long> x, A1<Integer> y){
-        baz<error descr="'baz(A1<java.lang.Number & java.lang.Comparable<? extends java.lang.Number & java.lang.Comparable<?>>>)' in 'A1' cannot be applied to '(A1<capture<? extends java.lang.Number & java.lang.Comparable<? extends java.lang.Comparable<?>>>>)'">(foo(x, y))</error>;
+        <error descr="Inferred type 'capture<? extends java.lang.Number & java.lang.Comparable<? extends java.lang.Comparable<?>>>' for type parameter 'S' is not within its bound; should implement 'java.lang.Comparable<? extends java.lang.Number & java.lang.Comparable<?>>'">baz(foo(x, y))</error>;
     }
 }
