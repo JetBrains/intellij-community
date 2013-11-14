@@ -468,6 +468,9 @@ public final class WindowManagerImpl extends WindowManagerEx implements Applicat
     IdeFrame frame = null;
     if (project != null) {
       frame = project.isDefault() ? WelcomeFrame.getInstance() : getFrame(project);
+      if (frame == null) {
+          frame =  myProject2Frame.get(null);
+      }
     }
     else {
       Container eachParent = getMostRecentFocusedWindow();
@@ -573,12 +576,16 @@ public final class WindowManagerImpl extends WindowManagerEx implements Applicat
     }
   }
 
+  private IdeFrameImpl getDefaultEmptyIdeFrame() {
+    return myProject2Frame.get(null);
+  }
+
   public final IdeFrameImpl allocateFrame(final Project project) {
     LOG.assertTrue(!myProject2Frame.containsKey(project));
 
     final IdeFrameImpl frame;
     if (myProject2Frame.containsKey(null)) {
-      frame = myProject2Frame.get(null);
+      frame = getDefaultEmptyIdeFrame();
       myProject2Frame.remove(null);
       myProject2Frame.put(project, frame);
       frame.setProject(project);
