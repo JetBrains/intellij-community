@@ -45,8 +45,7 @@ public class CheckedExceptionCompatibilityConstraint extends InputOutputConstrai
 
   @Override
   public boolean reduce(InferenceSession session, List<ConstraintFormula> constraints) {
-    if (!PsiPolyExpressionUtil.isPolyExpression(myExpression) ||
-        myExpression instanceof PsiCallExpression) {
+    if (myExpression instanceof PsiCallExpression || !PsiPolyExpressionUtil.isPolyExpression(myExpression)) {
       return true;
     }
     if (myExpression instanceof PsiParenthesizedExpression) {
