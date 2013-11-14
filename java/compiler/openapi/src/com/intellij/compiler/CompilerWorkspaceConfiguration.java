@@ -69,4 +69,13 @@ public class CompilerWorkspaceConfiguration implements PersistentStateComponent<
   public boolean allowAutoMakeWhileRunningApplication() {
     return false;/*ALLOW_AUTOMAKE_WHILE_RUNNING_APPLICATION*/
   }
+
+  public int getProcessHeapSize(final int javacPreferredHeapSize) {
+    final int heapSize = COMPILER_PROCESS_HEAP_SIZE;
+    if (heapSize != DEFAULT_COMPILE_PROCESS_HEAP_SIZE) {
+      return heapSize;
+    }
+    // compatibility with older builds: if javac is set to use larger heap, and if so, use it.
+    return Math.max(heapSize, javacPreferredHeapSize);
+  }
 }
