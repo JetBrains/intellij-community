@@ -84,6 +84,7 @@ public class ClosureParameterEnhancer extends AbstractClosureParameterEnhancer {
     simpleTypes.put("replaceAll", "java.util.regex.Matcher");
     simpleTypes.put("replaceFirst", "java.util.regex.Matcher");
     simpleTypes.put("splitEachLine", "java.util.List<java.lang.String>");
+    simpleTypes.put("withBatch", "groovy.sql.BatchingStatementWrapper");
 
     iterations.add("each");
     iterations.add("any");
