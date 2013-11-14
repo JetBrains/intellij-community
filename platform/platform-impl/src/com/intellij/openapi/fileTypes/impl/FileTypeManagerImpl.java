@@ -286,6 +286,9 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
     for (final StandardFileType pair : myStandardFileTypes.values()) {
       registerFileTypeWithoutNotification(pair.fileType, pair.matchers);
     }
+    for (StandardFileType pair : myStandardFileTypes.values()) {
+      registerReDetectedMappings(pair);
+    }
     // Resolve unresolved mappings initialized before certain plugin initialized.
     for (final StandardFileType pair : myStandardFileTypes.values()) {
       bindUnresolvedMappings(pair.fileType);
@@ -891,9 +894,6 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
     for (FileNameMatcher matcher : new THashSet<FileNameMatcher>(myUnresolvedRemovedMappings.keySet())) {
       Trinity<String, String, Boolean> trinity = myUnresolvedRemovedMappings.get(matcher);
       if (Comparing.equal(trinity.getFirst(), fileType.getName())) {
-        if (trinity.getSecond() == null || PlainTextFileType.INSTANCE.getName().equals(trinity.getSecond())) {
-          myRemovedMappings.put(matcher, Pair.create(fileType, trinity.getThird()));
-        }
         removeAssociation(fileType, matcher, false);
         myUnresolvedRemovedMappings.remove(matcher);
       }
@@ -1131,6 +1131,18 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
   @Override
   public FileType getKnownFileTypeOrAssociate(@NotNull VirtualFile file, @NotNull Project project) {
     return FileTypeChooser.getKnownFileTypeOrAssociate(file, project);
+  }
+
+  private void registerReDetectedMappings(StandardFileType pair) {
+    FileType fileType = pair.fileType;
+    if (fileType == PlainTextFileType.INSTANCE) return;
+    for (FileNameMatcher matcher : pair.matchers) {
+      String typeName = myUnresolvedMappings.get(matcher);
+      if (typeName != null && !typeName.equals(fileType.getName())) {
+        Trinity<String, String, Boolean> trinity = myUnresolvedRemovedMappings.get(matcher);
+        myRemovedMappings.put(matcher, Pair.create(fileType, trinity != null && trinity.third));
+      }
+    }
   }
 
   Map<FileNameMatcher, Pair<FileType, Boolean>> getRemovedMappings() {
