@@ -100,8 +100,11 @@ public final class LoadTextUtil {
       result = buffer;
     }
     else {
-      // in Mac JDK CharBuffer.subSequence() signature differs from Oracle
-      result = buffer.subSequence(0, dst);
+      // in Mac JDK CharBuffer.subSequence() signature differs from Oracle's
+      // more than that, the signature has changed between jd6 and jdk7,
+      // so use more generic CharSequence.subSequence() just in case
+      @SuppressWarnings("UnnecessaryLocalVariable") CharSequence seq = buffer;
+      result = seq.subSequence(0, dst);
     }
     return Pair.create(result, detectedLineSeparator);
   }
