@@ -41,9 +41,6 @@
     <localInspection language="XML" shortName="AntMissingPropertiesFileInspection" bundle="messages.AntBundle" key="ant.missing.properties.file.inspection"
                      groupKey="ant.inspections.display.name" enabledByDefault="true" level="ERROR"
                      implementationClass="com.intellij.lang.ant.validation.AntMissingPropertiesFileInspection"/>
-    <localInspection language="XML" shortName="AntMissingPropertyInspection" bundle="messages.AntBundle" key="ant.missing.property.inspection"
-                     groupKey="ant.inspections.display.name" enabledByDefault="true" level="ERROR"
-                     implementationClass="com.intellij.lang.ant.validation.AntMissingPropertyInspection"/>
     <localInspection language="XML" shortName="AntResolveInspection" displayName="Ant references resolve problems" bundle="messages.AntBundle"
                      groupKey="ant.inspections.display.name"
                      enabledByDefault="true" level="ERROR" implementationClass="com.intellij.lang.ant.dom.AntResolveInspection"/>
