@@ -382,8 +382,8 @@ public class PsiLiteralExpressionImpl
   @Override
   @NotNull
   public PsiReference[] getReferences() {
-    PsiReference[] references = PsiReferenceService.getService().getContributedReferences(this);
-    return references;
+    if (textMatches(PsiKeyword.NULL)) return PsiReference.EMPTY_ARRAY;
+    return PsiReferenceService.getService().getContributedReferences(this);
   }
 
   @Override
