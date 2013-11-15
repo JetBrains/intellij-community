@@ -70,6 +70,10 @@ public class NewMethodRefHighlightingTest extends LightDaemonAnalyzerTestCase {
     doTest(false);
   }
 
+  public void testIDEA116359() throws Exception {
+    doTest(false);
+  }
+
   private void doTest() {
     doTest(false);
   }
