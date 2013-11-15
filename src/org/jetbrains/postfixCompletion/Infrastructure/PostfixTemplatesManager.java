@@ -2,6 +2,7 @@ package org.jetbrains.postfixCompletion.Infrastructure;
 
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.openapi.components.*;
+import com.intellij.openapi.diagnostic.*;
 import com.intellij.openapi.project.*;
 import com.intellij.openapi.util.*;
 import com.intellij.psi.*;
@@ -308,11 +309,17 @@ public final class PostfixTemplatesManager implements ApplicationComponent {
     {
       if (invokedOnType && !providerInfo.annotation.worksOnTypes()) continue;
 
-      providerInfo.provider.createItems(context, elements);
+      try {
+        providerInfo.provider.createItems(context, elements);
+      } catch (Exception ex) {
+        LOG.error(ex);
+      }
     }
 
     return elements;
   }
+
+  private static final Logger LOG = Logger.getInstance("#org.jetbrains.postfixCompletion");
 
   @Override public void initComponent() { }
   @Override public void disposeComponent() { }

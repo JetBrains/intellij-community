@@ -32,9 +32,7 @@ public class ArgumentExpressionTemplateProvider extends TemplateProviderBase {
     }
   }
 
-  private static class ArgumentLookupElement
-    extends ExpressionPostfixLookupElement<PsiMethodCallExpression> {
-
+  private static class ArgumentLookupElement extends ExpressionPostfixLookupElement<PsiMethodCallExpression> {
     public ArgumentLookupElement(@NotNull PrefixExpressionContext context) {
       super("arg", context);
     }
