@@ -185,7 +185,7 @@ public abstract class FinderRecursivePanel<T> extends JBSplitter implements Data
     });
     ListScrollingUtil.installActions(list);
 
-//    installSpeedSearch(list); // TODO
+    //    installSpeedSearch(list); // TODO
 
     installEditOnDoubleClick(list);
     return list;
@@ -451,11 +451,14 @@ public abstract class FinderRecursivePanel<T> extends JBSplitter implements Data
       }
     }
     // add items
-    List<T> items = listModel.getItems();
     for (int i = 0; i < newItems.size(); i++) {
       T newItem = newItems.get(i);
-      if (!items.contains(newItem)) {
-        listModel.add(i, newItem);
+      if (i < listModel.getSize()) {
+        if (!listModel.getElementAt(i).equals(newItem)) {
+          listModel.add(i, newItem);
+        }
+      }  else {
+        listModel.add(newItem);
       }
     }
   }
