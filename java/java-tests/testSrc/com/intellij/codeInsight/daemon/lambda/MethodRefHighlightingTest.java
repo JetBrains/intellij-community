@@ -89,6 +89,10 @@ public class MethodRefHighlightingTest extends LightDaemonAnalyzerTestCase {
     doTest();
   }
 
+  public void _testExactReferencesToArrayCreation() {
+    doTest();
+  }
+
   private void doTest() {
     doTest(false);
   }

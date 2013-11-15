@@ -101,7 +101,7 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
             return parameterList != null && parameterList.getTypeParameterElements().length > 0 ? psiMethod : null;
           }
         }
-        if (containingClass.hasTypeParameters()) {
+        if (containingClass.isPhysical() && containingClass.hasTypeParameters()) {
           final PsiElement qualifier = getQualifier();
           if (qualifier instanceof PsiTypeElement) {
             final PsiJavaCodeReferenceElement referenceElement = ((PsiTypeElement)qualifier).getInnermostComponentReferenceElement();
