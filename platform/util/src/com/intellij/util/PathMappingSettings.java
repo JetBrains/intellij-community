@@ -32,6 +32,7 @@ import java.util.List;
 /**
  * @author traff
  */
+@Tag("path-mapping-settings")
 public class PathMappingSettings implements Cloneable {
   @NotNull
   private List<PathMapping> myPathMappings;
