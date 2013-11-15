@@ -39,6 +39,6 @@ class MyTest1 {
     static void foo(I3 i) {}
 
     static {
-        foo<error descr="Cannot resolve method 'foo(<method reference>)'">(Foo::new)</error>;
+        foo<error descr="Ambiguous method call: both 'MyTest1.foo(I1)' and 'MyTest1.foo(I2)' match">(Foo::new)</error>;
     }
 }

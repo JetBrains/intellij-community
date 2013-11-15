@@ -16,6 +16,7 @@ public class Autoboxing {
     {
       Object data = 1;
       boolean is1 = <error descr="Operator '==' cannot be applied to 'java.lang.Object', 'int'">data == 1</error>;
+      boolean is2 = <error descr="Operator '==' cannot be applied to 'int', 'java.lang.Object'">1 == data</error>;
     }
 
     //IDEADEV-5549: Short and double are convertible
