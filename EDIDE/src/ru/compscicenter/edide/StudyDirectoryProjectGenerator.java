@@ -58,7 +58,7 @@ public class StudyDirectoryProjectGenerator implements DirectoryProjectGenerator
             @Override
             public void run() {
                 try {
-                    final VirtualFile vf = baseDir.createChildData(this, "helloworld.py");
+                    VirtualFile vf = baseDir.createChildDirectory(this, "tasks").createChildData(this, "helloworld.py");
                     vf.setWritable(true);
                     InputStream ip = StudyDirectoryProjectGenerator.class.getResourceAsStream("helloworld.py");
                     BufferedReader bf = new BufferedReader(new InputStreamReader(ip));
@@ -68,8 +68,20 @@ public class StudyDirectoryProjectGenerator implements DirectoryProjectGenerator
                     }
                     ip.close();
                     os.close();
+
+                    vf = baseDir.createChildDirectory(this, "resources").createChildData(this, "utrunner.py");
+                    vf.setWritable(true);
+                    ip = StudyDirectoryProjectGenerator.class.getResourceAsStream("utrunner.py");
+                    bf = new BufferedReader(new InputStreamReader(ip));
+                    os = vf.getOutputStream(this);
+                    while (bf.ready()) {
+                        os.write(bf.readLine().getBytes());
+                    }
+                    ip.close();
+                    os.close();
+
                 } catch (IOException e) {
-                    Log.print("Problems with creating file");
+                    Log.print("Problems with creating files");
                     Log.print(e.toString());
                     Log.flush();
                 }

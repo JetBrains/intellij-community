@@ -11,12 +11,12 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 
 public class EDIDEConfigurationType implements ConfigurationType {
-    public static final String ID = "mytests";
+    public static final String ID = "edidetests";
 
     private final EDIDEConfigurationFactory myFactory = new EDIDEConfigurationFactory(this);
 
     public String getDisplayName(){
-        return "My Python Unit Test configuration";
+        return "EDIDE Unit Test configuration";
     }
 
     public String getConfigurationTypeDescription() {
@@ -45,7 +45,7 @@ public class EDIDEConfigurationType implements ConfigurationType {
 
         @Override
         public String getName() {
-            return "Python test";
+            return "EDIDE test";
         }
     }
 
