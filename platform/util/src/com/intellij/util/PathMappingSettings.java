@@ -213,6 +213,23 @@ public class PathMappingSettings implements Cloneable {
     myPathMappings.addAll(settings.getPathMappings());
   }
 
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    PathMappingSettings settings = (PathMappingSettings)o;
+
+    if (!myPathMappings.equals(settings.myPathMappings)) return false;
+
+    return true;
+  }
+
+  @Override
+  public int hashCode() {
+    return myPathMappings.hashCode();
+  }
+
   @Tag("mapping")
   public static class PathMapping {
     private String myLocalRoot;
@@ -308,6 +325,26 @@ public class PathMappingSettings implements Cloneable {
     @Override
     public PathMapping clone() {
       return new PathMapping(myLocalRoot, myRemoteRoot);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+
+      PathMapping mapping = (PathMapping)o;
+
+      if (myLocalRoot != null ? !myLocalRoot.equals(mapping.myLocalRoot) : mapping.myLocalRoot != null) return false;
+      if (myRemoteRoot != null ? !myRemoteRoot.equals(mapping.myRemoteRoot) : mapping.myRemoteRoot != null) return false;
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      int result = myLocalRoot != null ? myLocalRoot.hashCode() : 0;
+      result = 31 * result + (myRemoteRoot != null ? myRemoteRoot.hashCode() : 0);
+      return result;
     }
   }
 }
