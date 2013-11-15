@@ -25,6 +25,7 @@ import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.containers.IntArrayList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -77,6 +78,26 @@ public class PsiLambdaExpressionImpl extends ExpressionPsiElement implements Psi
         int startOffset = controlFlow.getStartOffset(body);
         int endOffset = controlFlow.getEndOffset(body);
         return startOffset != -1 && endOffset != -1 && !ControlFlowUtil.canCompleteNormally(controlFlow, startOffset, endOffset);
+      }
+      catch (AnalysisCanceledException e) {
+        return true;
+      }
+    }
+    return true;
+  }
+
+  @Override
+  public boolean isValueCompatible() {
+    final PsiElement body = getBody();
+    if (body != null) {
+      try {
+        final ControlFlow controlFlow =
+          ControlFlowFactory.getInstance(getProject()).getControlFlow(body, LocalsOrMyInstanceFieldsControlFlowPolicy.getInstance(), false);
+        if (ControlFlowUtil.findExitPointsAndStatements(controlFlow, 0, controlFlow.getSize(), new IntArrayList(),
+                                                        PsiReturnStatement.class,
+                                                        PsiThrowStatement.class).isEmpty()) {
+          return false;
+        }
       }
       catch (AnalysisCanceledException e) {
         return true;
