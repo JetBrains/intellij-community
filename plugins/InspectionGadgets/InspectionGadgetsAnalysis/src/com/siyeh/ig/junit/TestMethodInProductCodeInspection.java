@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2009 Dave Griffith, Bas Leijdekkers
+ * Copyright 2006-2013 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -56,7 +56,7 @@ public class TestMethodInProductCodeInspection extends BaseInspection {
     @Override
     public void visitMethod(PsiMethod method) {
       final PsiClass containingClass = method.getContainingClass();
-      if (TestUtils.isTest(containingClass) ||
+      if (TestUtils.isInTestSourceContent(containingClass) ||
           !TestUtils.isJUnit4TestMethod(method)) {
         return;
       }
