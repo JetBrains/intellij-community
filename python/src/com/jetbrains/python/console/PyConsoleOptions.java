@@ -21,6 +21,8 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.PathMappingSettings;
 import com.intellij.util.containers.ComparatorUtil;
+import com.intellij.util.xmlb.annotations.Attribute;
+import com.intellij.util.xmlb.annotations.Tag;
 import com.jetbrains.python.run.AbstractPyCommonOptionsForm;
 
 import java.util.List;
@@ -82,6 +84,7 @@ public class PyConsoleOptions implements PersistentStateComponent<PyConsoleOptio
     public boolean myShowSeparatorLine = true;
   }
 
+  @Tag("console-settings")
   public static class PyConsoleSettings {
     public String myCustomStartScript = "";
     public String mySdkHome = null;
@@ -93,14 +96,6 @@ public class PyConsoleOptions implements PersistentStateComponent<PyConsoleOptio
     public boolean myAddContentRoots = true;
     public boolean myAddSourceRoots;
     private List<PathMappingSettings.PathMapping> myMappings;
-
-    public String getCustomStartScript() {
-      return myCustomStartScript;
-    }
-
-    public String getSdkHome() {
-      return mySdkHome;
-    }
 
     public void apply(AbstractPyCommonOptionsForm form) {
       mySdkHome = form.getSdkHome();
@@ -148,31 +143,47 @@ public class PyConsoleOptions implements PersistentStateComponent<PyConsoleOptio
         myModuleName = form.getModule().getName();
       }
 
-      form.setWorkingDirectory(form.getWorkingDirectory());
+      form.setWorkingDirectory(myWorkingDirectory);
 
       form.setMappingSettings(myMappings != null ? new PathMappingSettings(myMappings) : null);
     }
 
+    @Attribute("custom-start-script")
+    public String getCustomStartScript() {
+      return myCustomStartScript;
+    }
+
+    @Attribute("sdk-home")
+    public String getSdkHome() {
+      return mySdkHome;
+    }
+
+    @Attribute("module-name")
     public String getModuleName() {
       return myModuleName;
     }
 
+    @Attribute("working-directory")
     public String getWorkingDirectory() {
       return myWorkingDirectory;
     }
 
+    @Attribute("is-module-sdk")
     public boolean isUseModuleSdk() {
       return myUseModuleSdk;
     }
 
+    @Attribute("envs")
     public Map<String, String> getEnvs() {
       return myEnvs;
     }
 
+    @Attribute("add-content-roots")
     public boolean addContentRoots() {
       return myAddContentRoots;
     }
 
+    @Attribute("add-source-roots")
     public boolean addSourceRoots() {
       return myAddSourceRoots;
     }
