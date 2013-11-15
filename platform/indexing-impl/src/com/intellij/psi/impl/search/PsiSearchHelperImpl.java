@@ -123,8 +123,18 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
                                          @NotNull String text,
                                          short searchContext,
                                          boolean caseSensitive) {
+    return processElementsWithWord(processor, searchScope, text, searchContext, caseSensitive, true);
+  }
+
+  @Override
+  public boolean processElementsWithWord(@NotNull TextOccurenceProcessor processor,
+                                         @NotNull SearchScope searchScope,
+                                         @NotNull String text,
+                                         short searchContext,
+                                         boolean caseSensitive,
+                                         boolean processInjectedPsi) {
     final AsyncFuture<Boolean> result =
-      processElementsWithWordAsync(processor, searchScope, text, searchContext, caseSensitive);
+      processElementsWithWordAsync(processor, searchScope, text, searchContext, caseSensitive, processInjectedPsi, null);
     return AsyncUtil.get(result);
   }
 
@@ -135,7 +145,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
                                                            @NotNull final String text,
                                                            final short searchContext,
                                                            final boolean caseSensitively) {
-    return processElementsWithWordAsync(processor, searchScope, text, searchContext, caseSensitively, null);
+    return processElementsWithWordAsync(processor, searchScope, text, searchContext, caseSensitively, true, null);
   }
 
   @NotNull
@@ -144,7 +154,8 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
                                                             @NotNull final String text,
                                                             final short searchContext,
                                                             final boolean caseSensitively,
-                                                            String containerName) {
+                                                            boolean processInjectedPsi,
+                                                            @Nullable String containerName) {
     if (text.isEmpty()) {
       return AsyncFutureFactory.wrapException(new IllegalArgumentException("Cannot search for elements with empty text"));
     }
@@ -155,11 +166,13 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
       return processElementsWithTextInGlobalScopeAsync(processor,
                                                        (GlobalSearchScope)searchScope,
                                                        searcher,
-                                                       searchContext, caseSensitively, containerName, progress);
+                                                       searchContext, caseSensitively, containerName, progress, processInjectedPsi);
     }
     LocalSearchScope scope = (LocalSearchScope)searchScope;
     PsiElement[] scopeElements = scope.getScope();
-    final boolean processInjectedPsi = !scope.isIgnoreInjectedPsi();
+    if (scope.isIgnoreInjectedPsi()) {
+      processInjectedPsi = false;
+    }
 
     final StringSearcher searcher = new StringSearcher(text, caseSensitively, true, searchContext == UsageSearchContext.IN_STRINGS);
     Processor<PsiElement> localProcessor = localProcessor(processor, progress, processInjectedPsi, searcher);
@@ -196,7 +209,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
                                                                          final short searchContext,
                                                                          final boolean caseSensitively,
                                                                          String containerName,
-                                                                         final ProgressIndicator progress) {
+                                                                         final ProgressIndicator progress, final boolean processInjectedPsi) {
     if (Thread.holdsLock(PsiLock.LOCK)) {
       throw new AssertionError("You must not run search from within updating PSI activity. Please consider invokeLatering it instead.");
     }
@@ -213,7 +226,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
       progress.setText(PsiBundle.message("psi.search.for.word.progress", text));
     }
 
-    final Processor<PsiElement> localProcessor = localProcessor(processor, progress, true, searcher);
+    final Processor<PsiElement> localProcessor = localProcessor(processor, progress, processInjectedPsi, searcher);
     if (containerName != null) {
       List<VirtualFile> intersectionWithContainerFiles = new ArrayList<VirtualFile>();
       // intersectionWithContainerFiles holds files containing words from both `text` and `containerName`
@@ -988,7 +1001,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
   @NotNull
   private AsyncFuture<Boolean> processSingleRequestAsync(@NotNull PsiSearchRequest single, @NotNull Processor<PsiReference> consumer) {
     return processElementsWithWordAsync(adaptProcessor(single, consumer), single.searchScope, single.word, single.searchContext,
-                                        single.caseSensitive, single.containerName);
+                                        single.caseSensitive, true, single.containerName);
   }
 
   @NotNull

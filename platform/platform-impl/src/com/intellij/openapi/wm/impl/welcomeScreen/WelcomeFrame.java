@@ -81,6 +81,7 @@ public class WelcomeFrame extends JFrame implements IdeFrame {
     setupCloseAction();
     new MnemonicHelper().register(this);
     myScreen.setupFrame(this);
+    UIUtil.setAutoRequestFocus(this, false);
   }
 
   public static IdeFrame getInstance() {
