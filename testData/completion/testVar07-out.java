@@ -1,4 +1,4 @@
-// Items: arg, for, not, var
+// Items: arg, cast, for, not, var
 public class Foo {
     Foo m() {
         Foo foo = m().m();

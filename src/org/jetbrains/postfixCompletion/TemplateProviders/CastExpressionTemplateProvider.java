@@ -27,7 +27,7 @@ public class CastExpressionTemplateProvider extends TemplateProviderBase {
     PrefixExpressionContext bestContext = context.outerExpression;
     List<PrefixExpressionContext> expressions = context.expressions;
 
-    for (int index = expressions.size(); index >= 0; index--) {
+    for (int index = expressions.size() - 1; index >= 0; index--) {
       PrefixExpressionContext expressionContext = expressions.get(index);
       if (CommonUtils.isNiceExpression(expressionContext.expression)) {
         bestContext = expressionContext;
@@ -75,8 +75,8 @@ public class CastExpressionTemplateProvider extends TemplateProviderBase {
               PsiTypeElement castType = castExpression.getCastType();
               assert castType != null : "castType != null";
 
-              builder.replaceElement(castType, new MacroCallNode(new ExpectedTypeMacro()));
-              builder.setEndVariableAfter(castExpression.getOperand());
+              builder.replaceElement(castType, new MacroCallNode(new ExpectedTypeMacro()), true);
+              builder.setEndVariableAfter(castExpression);
 
               Template template = builder.buildInlineTemplate();
 
