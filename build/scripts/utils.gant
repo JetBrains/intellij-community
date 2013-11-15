@@ -396,6 +396,8 @@ binding.setVariable("layoutMacApp", { String path, String ch, Map args ->
   if (args.inspect_script != null && args.inspect_script != "inspect") {
     ant.move(file: "$path/bin/inspect.sh", tofile: "$path/bin/${args.inspect_script}.sh")
   }
+
+  ant.fixcrlf(srcdir: "$path/bin", includes: "*.sh", eol: "unix")
 })
 
 binding.setVariable("winScripts", { String target, String home, String name, Map args ->
