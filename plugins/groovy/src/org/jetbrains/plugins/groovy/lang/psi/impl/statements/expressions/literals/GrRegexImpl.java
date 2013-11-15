@@ -84,7 +84,7 @@ public class GrRegexImpl extends GrStringImpl implements GrRegex {
   @NotNull
   @Override
   public LiteralTextEscaper<? extends PsiLanguageInjectionHost> createLiteralTextEscaper() {
-    return null;
+    return new GrLiteralEscaper(this);
   }
 }
 
