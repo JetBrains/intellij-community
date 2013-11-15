@@ -19,9 +19,11 @@ import com.google.common.collect.Maps;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.util.PathMappingSettings;
 import com.intellij.util.containers.ComparatorUtil;
 import com.jetbrains.python.run.AbstractPyCommonOptionsForm;
 
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -90,6 +92,7 @@ public class PyConsoleOptions implements PersistentStateComponent<PyConsoleOptio
     public String myWorkingDirectory = "";
     public boolean myAddContentRoots = true;
     public boolean myAddSourceRoots;
+    private List<PathMappingSettings.PathMapping> myMappings;
 
     public String getCustomStartScript() {
       return myCustomStartScript;
@@ -109,6 +112,7 @@ public class PyConsoleOptions implements PersistentStateComponent<PyConsoleOptio
 
       myAddContentRoots = form.addContentRoots();
       myAddSourceRoots = form.addSourceRoots();
+      myMappings = form.getMappingSettings() != null ? form.getMappingSettings().getPathMappings() : null;
     }
 
     public boolean isModified(AbstractPyCommonOptionsForm form) {
@@ -119,7 +123,8 @@ public class PyConsoleOptions implements PersistentStateComponent<PyConsoleOptio
              myAddContentRoots != form.addContentRoots() ||
              myAddSourceRoots != form.addSourceRoots()
              || !ComparatorUtil.equalsNullable(myModuleName, form.getModule() == null ? null : form.getModule().getName())
-             || !myWorkingDirectory.equals(form.getWorkingDirectory());
+             || !myWorkingDirectory.equals(form.getWorkingDirectory())
+             || (myMappings != null && !new PathMappingSettings(myMappings).equals(form.getMappingSettings()));
     }
 
     public void reset(Project project, AbstractPyCommonOptionsForm form) {
@@ -144,6 +149,8 @@ public class PyConsoleOptions implements PersistentStateComponent<PyConsoleOptio
       }
 
       form.setWorkingDirectory(form.getWorkingDirectory());
+
+      form.setMappingSettings(myMappings != null ? new PathMappingSettings(myMappings) : null);
     }
 
     public String getModuleName() {
@@ -169,7 +176,6 @@ public class PyConsoleOptions implements PersistentStateComponent<PyConsoleOptio
     public boolean addSourceRoots() {
       return myAddSourceRoots;
     }
-
   }
 }
 
