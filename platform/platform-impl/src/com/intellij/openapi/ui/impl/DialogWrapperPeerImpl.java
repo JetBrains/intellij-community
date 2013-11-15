@@ -783,7 +783,6 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
         loc.y = Splash.BOUNDS.y + Splash.BOUNDS.height;
         setLocation(loc);
       }
-      UIUtil.setAutoRequestFocus(this, false);
       super.show();
     }
 
@@ -1197,5 +1196,9 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
   @Override
   public void centerInParent() {
     myDialog.centerInParent();
+  }
+
+  public void setAutoRequestFocus(boolean b) {
+    UIUtil.setAutoRequestFocus((JDialog)myDialog, b);
   }
 }

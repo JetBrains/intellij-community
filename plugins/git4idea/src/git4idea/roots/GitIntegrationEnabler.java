@@ -62,7 +62,7 @@ public class GitIntegrationEnabler {
       @Override
       public boolean value(VcsRoot root) {
         AbstractVcs gitVcs = root.getVcs();
-        return gitVcs != null && gitVcs.getKeyInstanceMethod().equals(GitVcs.getKey());
+        return gitVcs != null && gitVcs.getName().equals(GitVcs.NAME);
       }
     });
     Collection<VirtualFile> roots = VcsRootErrorsFinder.vcsRootsToVirtualFiles(gitRoots);

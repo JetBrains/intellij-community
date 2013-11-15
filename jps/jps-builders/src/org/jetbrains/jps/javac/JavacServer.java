@@ -175,7 +175,7 @@ public class JavacServer {
   @ChannelHandler.Sharable
   private class CompilationRequestsHandler extends SimpleChannelInboundHandler<JavacRemoteProto.Message> {
     @Override
-    public void channelRead0(final ChannelHandlerContext context, JavacRemoteProto.Message message) throws Exception {
+    public void messageReceived(final ChannelHandlerContext context, JavacRemoteProto.Message message) throws Exception {
       final UUID sessionId = JavacProtoUtil.fromProtoUUID(message.getSessionId());
       final JavacRemoteProto.Message.Type messageType = message.getMessageType();
 

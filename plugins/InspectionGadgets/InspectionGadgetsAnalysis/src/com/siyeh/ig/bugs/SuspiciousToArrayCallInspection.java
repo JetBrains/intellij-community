@@ -1,5 +1,5 @@
 /*
- * Copyright 2005-2011 Bas Leijdekkers
+ * Copyright 2005-2013 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,17 +28,14 @@ public class SuspiciousToArrayCallInspection extends BaseInspection {
   @Override
   @NotNull
   public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "suspicious.to.array.call.display.name");
+    return InspectionGadgetsBundle.message("suspicious.to.array.call.display.name");
   }
 
   @Override
   @NotNull
   protected String buildErrorString(Object... infos) {
     final PsiType type = (PsiType)infos[0];
-    return InspectionGadgetsBundle.message(
-      "suspicious.to.array.call.problem.descriptor",
-      type.getPresentableText());
+    return InspectionGadgetsBundle.message("suspicious.to.array.call.problem.descriptor", type.getCanonicalText());
   }
 
   @Override
@@ -51,8 +48,7 @@ public class SuspiciousToArrayCallInspection extends BaseInspection {
     return new SuspiciousToArrayCallVisitor();
   }
 
-  private static class SuspiciousToArrayCallVisitor
-    extends BaseInspectionVisitor {
+  private static class SuspiciousToArrayCallVisitor extends BaseInspectionVisitor {
 
     @Override
     public void visitMethodCallExpression(
@@ -110,9 +106,11 @@ public class SuspiciousToArrayCallInspection extends BaseInspection {
           return;
         }
         final PsiType castType = castTypeElement.getType();
-        if (!castType.equals(arrayType)) {
-          registerError(argument, arrayType.getComponentType());
+        if (castType.equals(arrayType) || !(castType instanceof PsiArrayType)) {
+          return;
         }
+        final PsiArrayType castArrayType = (PsiArrayType)castType;
+        registerError(argument, castArrayType.getComponentType());
       }
       else {
         if (!collectionType.hasParameters()) {
@@ -123,9 +121,10 @@ public class SuspiciousToArrayCallInspection extends BaseInspection {
           return;
         }
         final PsiType parameter = parameters[0];
-        if (!componentType.isAssignableFrom(parameter)) {
-          registerError(argument, parameter);
+        if (componentType.isAssignableFrom(parameter)) {
+          return;
         }
+        registerError(argument, parameter);
       }
     }
   }
