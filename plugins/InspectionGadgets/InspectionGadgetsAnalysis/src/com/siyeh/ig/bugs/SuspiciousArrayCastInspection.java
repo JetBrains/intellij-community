@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.siyeh.ig.bugs;
 
 import com.intellij.psi.*;
+import com.intellij.psi.util.InheritanceUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -81,13 +82,31 @@ public class SuspiciousArrayCastInspection extends BaseInspection {
       }
       final PsiClassType classType = (PsiClassType)componentType;
       final PsiClass aClass = classType.resolve();
-      if (aClass == null) {
-        return;
-      }
-      if (!castClass.isInheritor(aClass, true)) {
+      if (aClass == null || !castClass.isInheritor(aClass, true) || isCollectionToArrayCall(operand)) {
         return;
       }
       registerError(typeElement);
+    }
+
+    private static boolean isCollectionToArrayCall(PsiExpression expression) {
+      if (!(expression instanceof PsiMethodCallExpression)) {
+        return false;
+      }
+      final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)expression;
+      final PsiExpressionList argumentList = methodCallExpression.getArgumentList();
+      if (argumentList.getExpressions().length != 1) {
+        return false;
+      }
+      final PsiReferenceExpression methodExpression = methodCallExpression.getMethodExpression();
+      if (!"toArray".equals(methodExpression.getReferenceName())) {
+        return false;
+      }
+      final PsiMethod method = methodCallExpression.resolveMethod();
+      if (method == null) {
+        return false;
+      }
+      final PsiClass containingClass = method.getContainingClass();
+      return !(containingClass == null || !InheritanceUtil.isInheritor(containingClass, CommonClassNames.JAVA_UTIL_COLLECTION));
     }
   }
 }
