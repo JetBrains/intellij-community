@@ -37,6 +37,7 @@ public abstract class AbstractExternalProjectSettingsControl<S extends ExternalP
   @NotNull private S myInitialSettings;
 
   private JBCheckBox myUseAutoImportBox;
+  private boolean myHideUseAutoImportBox;
 
   protected AbstractExternalProjectSettingsControl(@NotNull S initialSettings) {
     myInitialSettings = initialSettings;
@@ -47,9 +48,14 @@ public abstract class AbstractExternalProjectSettingsControl<S extends ExternalP
     return myInitialSettings;
   }
 
+  public void hideUseAutoImportBox() {
+    myHideUseAutoImportBox = true;
+  }
+
   @Override
   public void fillUi(@NotNull PaintAwarePanel canvas, int indentLevel) {
     myUseAutoImportBox = new JBCheckBox(ExternalSystemBundle.message("settings.label.use.auto.import"));
+    myUseAutoImportBox.setVisible(!myHideUseAutoImportBox);
     canvas.add(myUseAutoImportBox, ExternalSystemUiUtil.getFillLineConstraints(indentLevel));
     fillExtraControls(canvas, indentLevel); 
   }
