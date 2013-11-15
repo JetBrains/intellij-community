@@ -303,11 +303,13 @@ public final class PostfixTemplatesManager implements ApplicationComponent {
 
     // check we invoked on type
     boolean invokedOnType = (referencedElement instanceof PsiClass);
+    boolean insideCodeFragment = context.insideCodeFragment;
     List<LookupElement> elements = new ArrayList<LookupElement>();
 
     for (TemplateProviderInfo providerInfo : myProviders)
     {
       if (invokedOnType && !providerInfo.annotation.worksOnTypes()) continue;
+      if (insideCodeFragment && !providerInfo.annotation.worksInsideFragments()) continue;
 
       try {
         providerInfo.provider.createItems(context, elements);

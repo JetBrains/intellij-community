@@ -21,7 +21,9 @@ import java.util.*;
 @TemplateProvider(
   templateName = "var",
   description = "Introduces variable for expression",
-  example = "var x = expr;", worksOnTypes = true)
+  example = "var x = expr;",
+  worksOnTypes = true,
+  worksInsideFragments = false)
 public class IntroduceVariableTemplateProvider extends TemplateProviderBase {
   @Override public void createItems(
       @NotNull PostfixTemplateContext context, @NotNull List<LookupElement> consumer) {

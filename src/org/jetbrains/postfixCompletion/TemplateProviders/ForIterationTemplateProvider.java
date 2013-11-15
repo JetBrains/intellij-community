@@ -19,7 +19,8 @@ import java.util.*;
 @TemplateProvider(
   templateName = "for",
   description = "Iterates over enumerable collection",
-  example = "for (T item : collection)")
+  example = "for (T item : collection)",
+  worksInsideFragments = false)
 public class ForIterationTemplateProvider extends TemplateProviderBase {
   @Override public void createItems(
     @NotNull PostfixTemplateContext context, @NotNull List<LookupElement> consumer) {

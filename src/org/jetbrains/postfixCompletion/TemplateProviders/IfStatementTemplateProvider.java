@@ -11,7 +11,8 @@ import java.util.*;
 @TemplateProvider(
   templateName = "if",
   description = "Checks boolean expression to be 'true'",
-  example = "if (expr)")
+  example = "if (expr)",
+  worksInsideFragments = false)
 public final class IfStatementTemplateProvider extends BooleanTemplateProviderBase {
   @Override public boolean createBooleanItems(
     @NotNull PrefixExpressionContext context, @NotNull List<LookupElement> consumer) {

@@ -10,7 +10,8 @@ import java.util.*;
 @TemplateProvider(
   templateName = "null",
   description = "Checks expression to be null",
-  example = "if (expr == null)")
+  example = "if (expr == null)",
+  worksInsideFragments = false)
 public class IsNullCheckTemplateProvider extends TemplateProviderBase {
   @Override public void createItems(
       @NotNull PostfixTemplateContext context, @NotNull List<LookupElement> consumer) {
