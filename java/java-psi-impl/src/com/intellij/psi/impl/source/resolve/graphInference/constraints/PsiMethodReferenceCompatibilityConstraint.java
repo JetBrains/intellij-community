@@ -19,9 +19,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceSession;
 import com.intellij.psi.impl.source.resolve.graphInference.PsiPolyExpressionUtil;
-import com.intellij.psi.impl.source.tree.java.PsiMethodCallExpressionImpl;
 import com.intellij.psi.impl.source.tree.java.PsiMethodReferenceExpressionImpl;
-import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.util.PsiUtil;
 
 import java.util.Arrays;
@@ -71,7 +69,9 @@ public class PsiMethodReferenceCompatibilityConstraint implements ConstraintForm
       LOG.assertTrue(applicableMember != null);
       int idx = 0;
       for (PsiTypeParameter param : ((PsiTypeParameterListOwner)applicableMember).getTypeParameters()) {
-        psiSubstitutor = psiSubstitutor.put(param, typeParameters[idx++]);
+        if (idx < typeParameters.length) {
+          psiSubstitutor = psiSubstitutor.put(param, typeParameters[idx++]);
+        }
       }
       final PsiParameter[] parameters = applicableMember instanceof PsiMethod ? ((PsiMethod)applicableMember).getParameterList().getParameters() : PsiParameter.EMPTY_ARRAY;
       if (targetParameters.length == parameters.length + 1) {
