@@ -62,7 +62,7 @@ public class IntroduceLocalVariableTest extends GrIntentionTestCase {
 
   static class MockGrIntroduceLocalVariableIntention extends GrIntroduceLocalVariableIntention {
     @Override
-    protected void processIntention(PsiElement element, Project project, Editor editor) throws IncorrectOperationException {
+    protected void processIntention(@NotNull PsiElement element, Project project, Editor editor) throws IncorrectOperationException {
       setSelection(editor, getTargetExpression(element));
       MockSettings settings = new MockSettings(false, "varName", null, false)
       new MockGrIntroduceVariableHandler(settings).invoke(project, editor, element.containingFile, null);
