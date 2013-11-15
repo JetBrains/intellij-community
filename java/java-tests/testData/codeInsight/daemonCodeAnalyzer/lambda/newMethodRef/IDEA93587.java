@@ -10,4 +10,8 @@ class Disfunction {
     public static <C, A extends C, B, D extends B> Eff<Eff<C, D>, Eff<A, B>> vary() {
         return Disfunction::<A, B>vary;
     }
+
+    public static <C, A extends C, B, D extends B> Eff<Eff<C, D>, Eff<A, B>> vary1() {
+        return Disfunction::vary;
+    }
 }
