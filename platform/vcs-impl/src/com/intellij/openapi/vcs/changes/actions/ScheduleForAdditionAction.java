@@ -35,6 +35,7 @@ import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.changes.ChangeListManagerImpl;
 import com.intellij.openapi.vcs.changes.ui.ChangesListView;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.BooleanFunction;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -59,10 +60,15 @@ public class ScheduleForAdditionAction extends AnAction implements DumbAware {
       return;
     }
     final ChangeListManagerImpl changeListManager = ChangeListManagerImpl.getInstanceImpl(e.getData(PlatformDataKeys.PROJECT));
-    changeListManager.addUnversionedFiles(changeListManager.getDefaultChangeList(), unversionedFiles);
+    changeListManager.addUnversionedFiles(changeListManager.getDefaultChangeList(), unversionedFiles, new BooleanFunction<FileStatus>() {
+      @Override
+      public boolean fun(FileStatus status) {
+        return isStatusForAddition(status);
+      }
+    });
   }
 
-  private static boolean thereAreUnversionedFiles(AnActionEvent e) {
+  private boolean thereAreUnversionedFiles(AnActionEvent e) {
     List<VirtualFile> unversionedFiles = getFromChangesView(e);
     if (unversionedFiles != null && !unversionedFiles.isEmpty()) {
       return true;
@@ -83,7 +89,7 @@ public class ScheduleForAdditionAction extends AnAction implements DumbAware {
   }
 
   @NotNull
-  private static List<VirtualFile> getUnversionedFiles(final AnActionEvent e) {
+  private List<VirtualFile> getUnversionedFiles(final AnActionEvent e) {
     List<VirtualFile> unversionedFiles = getFromChangesView(e);
     if (unversionedFiles != null && !unversionedFiles.isEmpty()) {
       return unversionedFiles;
@@ -105,11 +111,15 @@ public class ScheduleForAdditionAction extends AnAction implements DumbAware {
     return unversionedFiles;
   }
 
-  private static boolean isFileUnversioned(@NotNull VirtualFile file,
-                                           @NotNull ProjectLevelVcsManager vcsManager, @NotNull FileStatusManager fileStatusManager) {
+  private boolean isFileUnversioned(@NotNull VirtualFile file,
+                                    @NotNull ProjectLevelVcsManager vcsManager, @NotNull FileStatusManager fileStatusManager) {
     AbstractVcs vcs = vcsManager.getVcsFor(file);
     return vcs != null && !vcs.areDirectoriesVersionedItems() && file.isDirectory() ||
-           fileStatusManager.getStatus(file) == FileStatus.UNKNOWN;
+           isStatusForAddition(fileStatusManager.getStatus(file));
+  }
+
+  protected boolean isStatusForAddition(FileStatus status) {
+    return status == FileStatus.UNKNOWN;
   }
 
   @Nullable
