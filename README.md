@@ -32,10 +32,10 @@ Available templates:
 * `.for` – iterates over collection `for (T item : collection)`
 * `.while` – uses expression as loop condition `while (expr)`
 * `.arg` – helps surround argument with invocation `method(expr)`
+* `.cast` – surrounds expression with cast `(SomeType) expr`
 
 Upcoming templates:
 
-* `.cast` – surrounds expression with cast `(SomeType) expr`
 * `.fori` – surrounds with loop `for (int i = 0; i < expr.length; i++)`
 * `.forr` – reverse loop `for (int i = expr.length; i >= 0; i--)`
 * `.field` – introduces field for expression `_field = expr;`

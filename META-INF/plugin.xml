@@ -1,7 +1,7 @@
 <idea-plugin version="2">
   <id>org.jetbrains.postfixCompletion</id>
   <name>Postfix Completion</name>
-  <version>0.2.5-alpha</version>
+  <version>0.2.5-beta</version>
   <vendor email="alexander.shvedov@jetbrains.com"
           url="https://github.com/controlflow">Alexander Shvedov</vendor>
 
@@ -21,13 +21,14 @@
         <li> <b>.not</b> – negates value of inner boolean expression – <b>!expr</b></li>
         <li> <b>.for</b> – iterates over collection – <b>for (T item : collection)</b></li>
         <li> <b>.while</b> – uses expression as loop condition – <b>while (expr)</b></li>
+        <li> <b>.cast</b> – surrounds expression with cast – <b>(SomeType) expr</b></li>
       </ul>
 ]]></description>
 
   <change-notes><![CDATA[
       <b>Version 0.2.5</b><br/>
       Small fixes in <b>.var</b> over expressions.
-      New templates: <b>.while</b>, <b>.arg</b>...
+      New templates: <b>.while</b>, <b>.arg</b>, <b>.cast</b>...
 ]]></change-notes>
 
   <idea-version since-build="130.754"/>
@@ -76,6 +77,6 @@
 
   <extensions defaultExtensionNs="com.intellij">
     <completion.contributor language="JAVA"
-      implementationClass="org.jetbrains.postfixCompletion.PostfixCompletionContributor" />
+                            implementationClass="org.jetbrains.postfixCompletion.PostfixCompletionContributor" />
   </extensions>
 </idea-plugin>
