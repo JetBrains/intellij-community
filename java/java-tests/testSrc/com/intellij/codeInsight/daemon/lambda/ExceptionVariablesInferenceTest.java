@@ -37,6 +37,10 @@ public class ExceptionVariablesInferenceTest extends LightDaemonAnalyzerTestCase
     doTest();
   }
 
+  public void testIDEA116441() throws Exception {
+    doTest();
+  }
+
   private void doTest() throws Exception {
     doTest(false);
   }
