@@ -94,15 +94,9 @@ public class PsiMethodReferenceCompatibilityConstraint implements ConstraintForm
           }
         }
 
-        if (myExpression.isConstructor()) {
-          applicableMethodReturnType = qualifierType;
-        }
-
-        if (!(qualifierType instanceof PsiArrayType && myExpression.isConstructor())) {
-          constraints.add(new SubtypingConstraint(qualifierType, GenericsUtil.eliminateWildcards(substitutor.substitute(targetParameters[0].getType())), true));
-          for (int i = 1; i < targetParameters.length; i++) {
-            constraints.add(new TypeCompatibilityConstraint(psiSubstitutor.substitute(parameters[i - 1].getType()), GenericsUtil.eliminateWildcards(substitutor.substitute(targetParameters[i].getType()))));
-          }
+        constraints.add(new SubtypingConstraint(qualifierType, GenericsUtil.eliminateWildcards(substitutor.substitute(targetParameters[0].getType())), true));
+        for (int i = 1; i < targetParameters.length; i++) {
+          constraints.add(new TypeCompatibilityConstraint(psiSubstitutor.substitute(parameters[i - 1].getType()), GenericsUtil.eliminateWildcards(substitutor.substitute(targetParameters[i].getType()))));
         }
       } else {
         for (int i = 0; i < targetParameters.length; i++) {
