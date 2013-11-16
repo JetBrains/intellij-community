@@ -1117,9 +1117,9 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
 
   @Override
   public void addUnversionedFiles(final LocalChangeList list, @NotNull final List<VirtualFile> files) {
-    addUnversionedFiles(list, files, new BooleanFunction<FileStatus>() {
+    addUnversionedFiles(list, files, new Condition<FileStatus>() {
       @Override
-      public boolean fun(FileStatus status) {
+      public boolean value(FileStatus status) {
         return status == FileStatus.UNKNOWN;
       }
     });
@@ -1129,8 +1129,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   // (which should introduce something like VcsAddRemoveEnvironment)
   @Deprecated
   public void addUnversionedFiles(final LocalChangeList list, @NotNull final List<VirtualFile> files,
-                                  final BooleanFunction<FileStatus> statusChecker) {
-
+                                  final Condition<FileStatus> statusChecker) {
     final List<VcsException> exceptions = new ArrayList<VcsException>();
     final Set<VirtualFile> allProcessedFiles = new HashSet<VirtualFile>();
     ChangesUtil.processVirtualFilesByVcs(myProject, files, new ChangesUtil.PerVcsProcessor<VirtualFile>() {
@@ -1142,7 +1141,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
             final Processor<VirtualFile> addProcessor = new Processor<VirtualFile>() {
               @Override
               public boolean process(VirtualFile file) {
-                if (statusChecker.fun(getStatus(file))) {
+                if (statusChecker.value(getStatus(file))) {
                   descendant.add(file);
                 }
                 return true;
