@@ -4,8 +4,8 @@ import com.intellij.codeInsight.completion.*;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.codeInsight.template.*;
 import com.intellij.codeInsight.template.impl.*;
-import com.intellij.codeInsight.template.macro.*;
 import com.intellij.openapi.application.*;
+import com.intellij.openapi.command.*;
 import com.intellij.openapi.editor.*;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.*;
@@ -51,34 +51,39 @@ public class ArgumentExpressionTemplateProvider extends TemplateProviderBase {
 
     @Override protected void postProcess(
       @NotNull final InsertionContext context, @NotNull PsiMethodCallExpression expression) {
-
       SmartPointerManager pointerManager = SmartPointerManager.getInstance(context.getProject());
       final SmartPsiElementPointer<PsiMethodCallExpression> pointer =
         pointerManager.createSmartPsiElementPointer(expression);
+
+      final Runnable runnable = new Runnable() {
+        @Override public void run() {
+          PsiMethodCallExpression callExpression = pointer.getElement();
+          if (callExpression == null) return;
+
+          TemplateBuilderImpl builder = new TemplateBuilderImpl(callExpression);
+
+          builder.replaceElement(
+            callExpression.getMethodExpression(), new TextExpression("method"));
+
+          PsiExpressionList argumentList = callExpression.getArgumentList();
+          builder.setEndVariableAfter(argumentList.getExpressions()[0]);
+
+          Template template = builder.buildInlineTemplate();
+
+          Editor editor = context.getEditor();
+          editor.getCaretModel().moveToOffset(
+            callExpression.getTextRange().getStartOffset());
+
+          TemplateManager manager = TemplateManager.getInstance(context.getProject());
+          manager.startTemplate(editor, template);
+        }
+      };
 
       context.setLaterRunnable(new Runnable() {
         @Override public void run() {
           ApplicationManager.getApplication().runWriteAction(new Runnable() {
             @Override public void run() {
-              PsiMethodCallExpression callExpression = pointer.getElement();
-              if (callExpression == null) return;
-
-              TemplateBuilderImpl builder = new TemplateBuilderImpl(callExpression);
-
-              builder.replaceElement(
-                callExpression.getMethodExpression(), new MacroCallNode(new CompleteMacro()));
-
-              PsiExpressionList argumentList = callExpression.getArgumentList();
-              builder.setEndVariableAfter(argumentList.getExpressions()[0]);
-
-              Template template = builder.buildInlineTemplate();
-
-              Editor editor = context.getEditor();
-              editor.getCaretModel().moveToOffset(
-                callExpression.getTextRange().getStartOffset());
-
-              TemplateManager manager = TemplateManager.getInstance(context.getProject());
-              manager.startTemplate(editor, template);
+              CommandProcessor.getInstance().runUndoTransparentAction(runnable);
             }
           });
         }

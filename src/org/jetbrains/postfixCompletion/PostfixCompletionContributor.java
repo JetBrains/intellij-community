@@ -19,6 +19,9 @@ public final class PostfixCompletionContributor extends CompletionContributor {
     final String dummyIdentifier;
     synchronized (myDummyIdentifierLock) { dummyIdentifier = myDummyIdentifier; }
 
+    // todo: make this configurable?
+    result.runRemainingContributors(parameters, true);
+
     boolean isForceMode = !parameters.isAutoPopup() && !behaveAsAutoPopupForTests;
 
     CompletionType completionType = parameters.getCompletionType();

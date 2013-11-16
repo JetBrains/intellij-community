@@ -6,6 +6,7 @@ import com.intellij.codeInsight.template.*;
 import com.intellij.codeInsight.template.impl.*;
 import com.intellij.codeInsight.template.macro.*;
 import com.intellij.openapi.application.*;
+import com.intellij.openapi.command.*;
 import com.intellij.openapi.editor.*;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.*;
@@ -47,7 +48,7 @@ public class CastExpressionTemplateProvider extends TemplateProviderBase {
       @NotNull PsiElementFactory factory, @NotNull PsiExpression expression, @NotNull PsiElement context) {
 
       PsiTypeCastExpression typeCastExpression = (PsiTypeCastExpression)
-        factory.createExpressionFromText("(SomeType) expr", context);
+        factory.createExpressionFromText("(T) expr", context);
 
       PsiExpression operand = typeCastExpression.getOperand();
       assert operand != null : "operand != null";
@@ -63,29 +64,35 @@ public class CastExpressionTemplateProvider extends TemplateProviderBase {
       final SmartPsiElementPointer<PsiTypeCastExpression> pointer =
         pointerManager.createSmartPsiElementPointer(expression);
 
+      final Runnable runnable = new Runnable() {
+        @Override public void run() {
+          PsiTypeCastExpression castExpression = pointer.getElement();
+          if (castExpression == null) return;
+
+          TemplateBuilderImpl builder = new TemplateBuilderImpl(castExpression);
+
+          PsiTypeElement castType = castExpression.getCastType();
+          assert castType != null : "castType != null";
+
+          builder.replaceElement(castType, new MacroCallNode(new ExpectedTypeMacro()), true);
+          builder.setEndVariableAfter(castExpression);
+
+          Template template = builder.buildInlineTemplate();
+
+          Editor editor = context.getEditor();
+          editor.getCaretModel().moveToOffset(
+            castExpression.getTextRange().getStartOffset());
+
+          TemplateManager manager = TemplateManager.getInstance(context.getProject());
+          manager.startTemplate(editor, template);
+        }
+      };
+
       context.setLaterRunnable(new Runnable() {
         @Override public void run() {
           ApplicationManager.getApplication().runWriteAction(new Runnable() {
             @Override public void run() {
-              PsiTypeCastExpression castExpression = pointer.getElement();
-              if (castExpression == null) return;
-
-              TemplateBuilderImpl builder = new TemplateBuilderImpl(castExpression);
-
-              PsiTypeElement castType = castExpression.getCastType();
-              assert castType != null : "castType != null";
-
-              builder.replaceElement(castType, new MacroCallNode(new ExpectedTypeMacro()), true);
-              builder.setEndVariableAfter(castExpression);
-
-              Template template = builder.buildInlineTemplate();
-
-              Editor editor = context.getEditor();
-              editor.getCaretModel().moveToOffset(
-                castExpression.getTextRange().getStartOffset());
-
-              TemplateManager manager = TemplateManager.getInstance(context.getProject());
-              manager.startTemplate(editor, template);
+              CommandProcessor.getInstance().runUndoTransparentAction(runnable);
             }
           });
         }
