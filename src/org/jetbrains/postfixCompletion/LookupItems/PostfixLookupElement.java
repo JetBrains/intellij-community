@@ -23,7 +23,6 @@ public abstract class PostfixLookupElement<TPsiElement extends PsiElement> exten
     myExpressionType = context.expression.getClass();
     myLookupString = lookupString;
     myExpressionRange = context.expressionRange;
-
     myContextIndex = context.parentContext.expressions.indexOf(context);
   }
 
@@ -61,31 +60,40 @@ public abstract class PostfixLookupElement<TPsiElement extends PsiElement> exten
 
     PostfixTemplatesManager manager =
       ApplicationManager.getApplication().getComponent(PostfixTemplatesManager.class);
-    PostfixTemplateContext acceptanceContext = manager.isAvailable(psiElement, myExecutionContext);
-    if (acceptanceContext == null) return; // yes, shit happens
+    PostfixTemplateContext templateContext = manager.isAvailable(psiElement, myExecutionContext);
+    if (templateContext == null) return; // yes, shit happens
 
-    int index = 0;
-    for (PrefixExpressionContext expression : acceptanceContext.expressions) {
-      //if (myExpressionType.isInstance(expression.expression) &&
-      //    expression.expressionRange.equals(myExpressionRange)) {
-      if (myContextIndex == index++) {
+    PrefixExpressionContext originalExpression = findOriginalContext(templateContext);
+    if (originalExpression != null) {
+      TPsiElement newElement = handlePostfixInsert(context, originalExpression);
+      assert newElement.isPhysical() : "newElement.isPhysical()";
 
-        TPsiElement newElement = handlePostfixInsert(context, expression);
-        assert newElement.isPhysical() : "newElement.isPhysical()";
+      SmartPointerManager pointerManager = SmartPointerManager.getInstance(context.getProject());
+      SmartPsiElementPointer<TPsiElement> pointer = pointerManager.createSmartPsiElementPointer(newElement);
 
-        SmartPointerManager pointerManager = SmartPointerManager.getInstance(context.getProject());
-        SmartPsiElementPointer<TPsiElement> pointer = pointerManager.createSmartPsiElementPointer(newElement);
+      documentManager.doPostponedOperationsAndUnblockDocument(document);
 
-        documentManager.doPostponedOperationsAndUnblockDocument(document);
-
-        newElement = pointer.getElement();
-        if (newElement != null) {
-          postProcess(context, newElement);
-        }
-
-        break;
+      newElement = pointer.getElement();
+      if (newElement != null) {
+        postProcess(context, newElement);
       }
     }
+  }
+
+  @Nullable private PrefixExpressionContext findOriginalContext(@NotNull PostfixTemplateContext context) {
+    for (PrefixExpressionContext expressionContext : context.expressions) {
+      if (myExpressionType.isInstance(expressionContext.expression) &&
+          expressionContext.expressionRange.equals(myExpressionRange))
+        return expressionContext;
+    }
+
+    int index = 0;
+    for (PrefixExpressionContext expressionContext : context.expressions) {
+      if (myContextIndex == index++)
+        return expressionContext;
+    }
+
+    return null;
   }
 
   @NotNull protected abstract TPsiElement handlePostfixInsert(

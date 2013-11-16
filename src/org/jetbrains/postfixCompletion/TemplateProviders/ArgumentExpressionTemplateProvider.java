@@ -26,7 +26,9 @@ public class ArgumentExpressionTemplateProvider extends TemplateProviderBase {
     if (context.executionContext.isForceMode) {
       consumer.add(new ArgumentLookupElement(expression));
     } else if (expression.canBeStatement) {
+      if (expression.expressionType == null) return; // do not show over unresolved symbols
       if (!CommonUtils.isNiceExpression(expression.expression)) return;
+
       // foo.bar().baz.arg
       consumer.add(new ArgumentLookupElement(expression));
     }

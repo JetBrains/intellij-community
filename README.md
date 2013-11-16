@@ -34,6 +34,10 @@ Available templates:
 * `.arg` – helps surround argument with invocation `method(expr)`
 * `.cast` – surrounds expression with cast `(SomeType) expr`
 
+Other features:
+
+* Supports IDEA's chained code completion
+
 Upcoming templates:
 
 * `.fori` – surrounds with loop `for (int i = 0; i < expr.length; i++)`
@@ -52,6 +56,8 @@ Possible templates:
 * `.try` – surrounds resource expression with `try (T x = resource)`
 
 Future work:
+
+
 
 * Support IDEA's soft selection completion without commit on [.]
 * Disable statement-based providers in debugger evaluate window

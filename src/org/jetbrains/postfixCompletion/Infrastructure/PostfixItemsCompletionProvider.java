@@ -34,7 +34,6 @@ public final class PostfixItemsCompletionProvider {
     PsiElement positionElement = parameters.getPosition();
     PostfixTemplateContext acceptanceContext = manager.isAvailable(positionElement, executionContext);
 
-
     if (acceptanceContext != null) {
       acceptanceContext.outerExpression.expressionType = exprType;
       return manager.collectTemplates(acceptanceContext);
