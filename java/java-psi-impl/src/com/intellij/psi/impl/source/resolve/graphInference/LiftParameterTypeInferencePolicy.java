@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,19 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.codeInsight.daemon.lambda;
+package com.intellij.psi.impl.source.resolve.graphInference;
 
-import com.intellij.codeInsight.daemon.LightDaemonAnalyzerTestCase;
-import org.jetbrains.annotations.NonNls;
+import com.intellij.psi.impl.source.resolve.DefaultParameterTypeInferencePolicy;
 
-public class Diamond8HighlightingTest extends LightDaemonAnalyzerTestCase {
-  @NonNls static final String BASE_PATH = "/codeInsight/daemonCodeAnalyzer/lambda/diamond";
+/**
+ * User: anna
+ * Date: 11/16/13
+ */
+public class LiftParameterTypeInferencePolicy extends DefaultParameterTypeInferencePolicy {
+  public static final LiftParameterTypeInferencePolicy INSTANCE = new LiftParameterTypeInferencePolicy();
 
-  public void testIDEA97294() throws Exception {
-    doTest();
-  }
-
-  private void doTest() throws Exception {
-    doTestNewInference(BASE_PATH + "/" + getTestName(false) + ".java", false, false);
+  @Override
+  public boolean allowPostponeInference() {
+    return true;
   }
 }
