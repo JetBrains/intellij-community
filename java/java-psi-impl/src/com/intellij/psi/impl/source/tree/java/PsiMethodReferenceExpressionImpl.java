@@ -23,6 +23,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiManagerEx;
+import com.intellij.psi.impl.light.LightMethod;
 import com.intellij.psi.impl.source.resolve.ParameterTypeInferencePolicy;
 import com.intellij.psi.impl.source.resolve.ResolveCache;
 import com.intellij.psi.impl.source.tree.ChildRole;
@@ -74,6 +75,17 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
   }
 
   public PsiMember getPotentiallyApplicableMember() {
+    return CachedValuesManager.getCachedValue(this, new CachedValueProvider<PsiMember>() {
+      @Nullable
+      @Override
+      public Result<PsiMember> compute() {
+        return Result.createSingleDependency(getPotentiallyApplicableMemberInternal(),
+                                             PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
+      }
+    });
+  }
+
+  private PsiMember getPotentiallyApplicableMemberInternal() {
     final PsiElement element = getReferenceNameElement();
     final PsiMethodReferenceUtil.QualifierResolveResult qualifierResolveResult = PsiMethodReferenceUtil.getQualifierResolveResult(this);
     final PsiClass containingClass = qualifierResolveResult.getContainingClass();
@@ -83,7 +95,15 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
         methods = containingClass.findMethodsByName(element.getText(), false);
       }
       else if (isConstructor()) {
-        methods = containingClass.getConstructors();
+        final PsiElementFactory factory = JavaPsiFacade.getElementFactory(getProject());
+        final PsiClass arrayClass = factory.getArrayClass(PsiUtil.getLanguageLevel(this));
+        if (arrayClass == containingClass) {
+          final PsiType componentType = qualifierResolveResult.getSubstitutor().substitute(arrayClass.getTypeParameters()[0]);
+          LOG.assertTrue(componentType != null, qualifierResolveResult.getSubstitutor());
+          methods = new PsiMethod[] {factory.createMethodFromText("public " + componentType.createArrayType().getCanonicalText() + " __array__(int i) {return null;}", this)};
+        } else {
+          methods = containingClass.getConstructors();
+        }
       }
       if (methods != null) {
         PsiMethod psiMethod = null;
