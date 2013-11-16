@@ -28,6 +28,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.FileStatusManager;
@@ -35,7 +36,6 @@ import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.changes.ChangeListManagerImpl;
 import com.intellij.openapi.vcs.changes.ui.ChangesListView;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.BooleanFunction;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -60,9 +60,9 @@ public class ScheduleForAdditionAction extends AnAction implements DumbAware {
       return;
     }
     final ChangeListManagerImpl changeListManager = ChangeListManagerImpl.getInstanceImpl(e.getData(PlatformDataKeys.PROJECT));
-    changeListManager.addUnversionedFiles(changeListManager.getDefaultChangeList(), unversionedFiles, new BooleanFunction<FileStatus>() {
+    changeListManager.addUnversionedFiles(changeListManager.getDefaultChangeList(), unversionedFiles, new Condition<FileStatus>() {
       @Override
-      public boolean fun(FileStatus status) {
+      public boolean value(FileStatus status) {
         return isStatusForAddition(status);
       }
     });
