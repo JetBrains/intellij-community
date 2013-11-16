@@ -22,6 +22,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.source.resolve.DefaultParameterTypeInferencePolicy;
+import com.intellij.psi.impl.source.resolve.ParameterTypeInferencePolicy;
 import com.intellij.psi.impl.source.resolve.graphInference.constraints.*;
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.scope.MethodProcessorSetupFailedException;
@@ -177,56 +178,51 @@ public class InferenceSession {
   public PsiSubstitutor infer(@Nullable PsiParameter[] parameters,
                               @Nullable PsiExpression[] args,
                               @Nullable PsiElement parent) {
-    return infer(parameters, args, parent, false);
+    return infer(parameters, args, parent, DefaultParameterTypeInferencePolicy.INSTANCE);
   }
 
   @NotNull
   public PsiSubstitutor infer(@Nullable PsiParameter[] parameters,
                               @Nullable PsiExpression[] args,
                               @Nullable PsiElement parent,
-                              boolean applicabilityOnly) {
+                              ParameterTypeInferencePolicy policy) {
     repeatInferencePhases();
 
-    final PsiSubstitutor b1Substitutor = resolveBounds(myInferenceVariables.values(), mySiteSubstitutor, false);
-    if (applicabilityOnly) {
-      mySiteSubstitutor = b1Substitutor;
+    resolveBounds(myInferenceVariables.values(), mySiteSubstitutor, false);
+
+    final Pair<PsiMethod, PsiCallExpression> pair = getPair(parent);
+    if (pair != null) {
+      initReturnTypeConstraint(pair.first, (PsiCallExpression)parent);
+      repeatInferencePhases();
+      resolveBounds(myInferenceVariables.values(), mySiteSubstitutor, false);
     }
 
-    if (!applicabilityOnly) {
-      final Pair<PsiMethod, PsiCallExpression> pair = getPair(parent);
-      if (pair != null) {
-        initReturnTypeConstraint(pair.first, (PsiCallExpression)parent);
-        repeatInferencePhases();
-        resolveBounds(myInferenceVariables.values(), mySiteSubstitutor, false);
-      }
-
-      if (parameters != null && args != null) {
-        final Set<ConstraintFormula> additionalConstraints = new HashSet<ConstraintFormula>();
-        if (parameters.length > 0) {
-          for (int i = 0; i < args.length; i++) {
-            if (args[i] != null) {
-              PsiType parameterType = getParameterType(parameters, args, i, mySiteSubstitutor);
-              if (pair == null || !isPertinentToApplicability(args[i], pair.first)) {
-                additionalConstraints.add(new ExpressionCompatibilityConstraint(args[i], parameterType));
-              }
-              additionalConstraints.add(new CheckedExceptionCompatibilityConstraint(args[i], parameterType));
+    if (parameters != null && args != null) {
+      final Set<ConstraintFormula> additionalConstraints = new HashSet<ConstraintFormula>();
+      if (parameters.length > 0) {
+        for (int i = 0; i < args.length; i++) {
+          if (args[i] != null) {
+            PsiType parameterType = getParameterType(parameters, args, i, mySiteSubstitutor);
+            if (pair == null || !isPertinentToApplicability(args[i], pair.first)) {
+              additionalConstraints.add(new ExpressionCompatibilityConstraint(args[i], parameterType));
             }
+            additionalConstraints.add(new CheckedExceptionCompatibilityConstraint(args[i], parameterType));
           }
-        }
-  
-        if (!additionalConstraints.isEmpty()) {
-          for (InferenceVariable inferenceVariable : myInferenceVariables.values()) {
-            inferenceVariable.ignoreInstantiation();
-          }
-          proceedWithAdditionalConstraints(additionalConstraints);
         }
       }
 
-      for (InferenceVariable inferenceVariable : myInferenceVariables.values()) {
-        inferenceVariable.ignoreInstantiation();
+      if (!additionalConstraints.isEmpty()) {
+        for (InferenceVariable inferenceVariable : myInferenceVariables.values()) {
+          inferenceVariable.ignoreInstantiation();
+        }
+        proceedWithAdditionalConstraints(additionalConstraints);
       }
-      mySiteSubstitutor = resolveBounds(myInferenceVariables.values(), mySiteSubstitutor, true);
     }
+
+    for (InferenceVariable inferenceVariable : myInferenceVariables.values()) {
+      inferenceVariable.ignoreInstantiation();
+    }
+    mySiteSubstitutor = resolveBounds(myInferenceVariables.values(), mySiteSubstitutor, !policy.allowPostponeInference());
 
     for (InferenceVariable inferenceVariable : myInferenceVariables.values()) {
       final PsiTypeParameter typeParameter = inferenceVariable.getParameter();
@@ -242,6 +238,7 @@ public class InferenceSession {
 
   private void initBounds(PsiTypeParameter... typeParameters) {
     for (PsiTypeParameter parameter : typeParameters) {
+      if (myInferenceVariables.containsKey(parameter)) continue;
       InferenceVariable variable = new InferenceVariable(parameter);
       boolean added = false;
       final PsiClassType[] extendsListTypes = parameter.getExtendsListTypes();
@@ -370,13 +367,8 @@ public class InferenceSession {
       else {
         args[i] = null;
         final PsiTypeParameter[] typeParameters = ((PsiMethod)parentMethod).getTypeParameters();
-       // initBounds(typeParameters);
-        final InferenceSession inferenceSession = new InferenceSession(typeParameters, PsiSubstitutor.EMPTY, parentMethod.getManager());
-        inferenceSession.initExpressionConstraints(parameters, args, argumentList.getParent());
-        inferenceSession.infer(parameters, args, argumentList.getParent(), true);
-        //final PsiSubstitutor substitutor =  inferenceSession.infer(parameters, args, argumentList.getParent(), true);
-        final PsiSubstitutor substitutor = ((MethodCandidateInfo)result).inferSubstitutorFromArgs(
-          DefaultParameterTypeInferencePolicy.INSTANCE, args);
+        initBounds(typeParameters);
+        final PsiSubstitutor substitutor = ((MethodCandidateInfo)result).inferSubstitutorFromArgs(LiftParameterTypeInferencePolicy.INSTANCE, args);
         return getParameterType(parameters, args, i, substitutor);
       }
     }
