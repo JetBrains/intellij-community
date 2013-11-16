@@ -8,7 +8,7 @@ import org.jetbrains.annotations.*;
 public final class PrefixExpressionContext {
   @NotNull public final PostfixTemplateContext parentContext;
   @NotNull public final PsiExpression expression;
-  @Nullable public final PsiType expressionType;
+  @Nullable public PsiType expressionType; // todo: bring back 'final'
   @Nullable public final PsiElement referencedElement;
   @NotNull public final TextRange expressionRange;
   public final boolean canBeStatement;

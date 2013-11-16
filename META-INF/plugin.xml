@@ -76,7 +76,7 @@
   </project-components>
 
   <extensions defaultExtensionNs="com.intellij">
-    <completion.contributor language="JAVA"
+    <completion.contributor language="JAVA" order="FIRST"
                             implementationClass="org.jetbrains.postfixCompletion.PostfixCompletionContributor" />
   </extensions>
 </idea-plugin>

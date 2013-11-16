@@ -53,6 +53,7 @@ Possible templates:
 
 Future work:
 
+* Support IDEA's soft selection completion without commit on [.]
 * Disable statement-based providers in debugger evaluate window
 * Settings page to disable/enable templates
 * Control braces insertion for statements (use code style settings?)

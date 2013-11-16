@@ -16,12 +16,15 @@ public abstract class PostfixLookupElement<TPsiElement extends PsiElement> exten
   @NotNull private final Class<? extends PsiExpression> myExpressionType;
   @NotNull private final TextRange myExpressionRange;
   @NotNull private final String myLookupString;
+  private final int myContextIndex;
 
   public PostfixLookupElement(@NotNull String lookupString, @NotNull PrefixExpressionContext context) {
     myExecutionContext = context.parentContext.executionContext;
     myExpressionType = context.expression.getClass();
     myLookupString = lookupString;
     myExpressionRange = context.expressionRange;
+
+    myContextIndex = context.parentContext.expressions.indexOf(context);
   }
 
   @NotNull @Override public final String getLookupString() {
@@ -61,9 +64,11 @@ public abstract class PostfixLookupElement<TPsiElement extends PsiElement> exten
     PostfixTemplateContext acceptanceContext = manager.isAvailable(psiElement, myExecutionContext);
     if (acceptanceContext == null) return; // yes, shit happens
 
+    int index = 0;
     for (PrefixExpressionContext expression : acceptanceContext.expressions) {
-      if (myExpressionType.isInstance(expression.expression) &&
-          expression.expressionRange.equals(myExpressionRange)) {
+      //if (myExpressionType.isInstance(expression.expression) &&
+      //    expression.expressionRange.equals(myExpressionRange)) {
+      if (myContextIndex == index++) {
 
         TPsiElement newElement = handlePostfixInsert(context, expression);
         assert newElement.isPhysical() : "newElement.isPhysical()";
