@@ -44,6 +44,9 @@ public class ClsMirrorBuildingTest extends LightIdeaTestCase {
   public void testClassRefs() { doTest(); }
   public void testEA46236() { doTest("ValuedEnum"); }
   public void testKotlinFunList() { doTest(); }
+  public void testMiddle$Buck() { doTest(); }
+  public void testDefaultPackage() { doTest(); }
+  public void testLocalClass() { doTest(); }
 
   private void doTest() {
     doTest(getTestName(false));

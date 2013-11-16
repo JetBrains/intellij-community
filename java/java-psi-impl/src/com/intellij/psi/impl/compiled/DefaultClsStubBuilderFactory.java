@@ -41,7 +41,7 @@ public class DefaultClsStubBuilderFactory extends ClsStubBuilderFactory {
     try {
       final ClassReader reader = new ClassReader(bytes);
       final StubBuildingVisitor<VirtualFile> classVisitor =
-        new StubBuildingVisitor<VirtualFile>(vFile, VirtualFileInnerClassStrategy.INSTANCE, file, 0, null);
+        new StubBuildingVisitor<VirtualFile>(vFile, VirtualFileInnerClassStrategy.INSTANCE, file, 0, vFile.getNameWithoutExtension());
       try {
         reader.accept(classVisitor, ClassReader.SKIP_FRAMES);
       }
