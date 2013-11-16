@@ -67,6 +67,7 @@ public class PsiMethodReferenceCompatibilityConstraint implements ConstraintForm
       PsiSubstitutor psiSubstitutor = qualifierResolveResult.getSubstitutor();
       final PsiMember applicableMember = ((PsiMethodReferenceExpressionImpl)myExpression).getPotentiallyApplicableMember();
       LOG.assertTrue(applicableMember != null);
+      PsiType applicableMethodReturnType = applicableMember instanceof PsiMethod ? ((PsiMethod)applicableMember).getReturnType() : null;
       int idx = 0;
       for (PsiTypeParameter param : ((PsiTypeParameterListOwner)applicableMember).getTypeParameters()) {
         if (idx < typeParameters.length) {
@@ -92,9 +93,16 @@ public class PsiMethodReferenceCompatibilityConstraint implements ConstraintForm
             }
           }
         }
-        constraints.add(new SubtypingConstraint(qualifierType, GenericsUtil.eliminateWildcards(substitutor.substitute(targetParameters[0].getType())), true));
-        for (int i = 1; i < targetParameters.length; i++) {
-          constraints.add(new TypeCompatibilityConstraint(psiSubstitutor.substitute(parameters[i - 1].getType()), GenericsUtil.eliminateWildcards(substitutor.substitute(targetParameters[i].getType()))));
+
+        if (myExpression.isConstructor()) {
+          applicableMethodReturnType = qualifierType;
+        }
+
+        if (!(qualifierType instanceof PsiArrayType && myExpression.isConstructor())) {
+          constraints.add(new SubtypingConstraint(qualifierType, GenericsUtil.eliminateWildcards(substitutor.substitute(targetParameters[0].getType())), true));
+          for (int i = 1; i < targetParameters.length; i++) {
+            constraints.add(new TypeCompatibilityConstraint(psiSubstitutor.substitute(parameters[i - 1].getType()), GenericsUtil.eliminateWildcards(substitutor.substitute(targetParameters[i].getType()))));
+          }
         }
       } else {
         for (int i = 0; i < targetParameters.length; i++) {
@@ -102,7 +110,6 @@ public class PsiMethodReferenceCompatibilityConstraint implements ConstraintForm
         }
       }
       if (returnType != PsiType.VOID) {
-        final PsiType applicableMethodReturnType = applicableMember instanceof PsiMethod ? ((PsiMethod)applicableMember).getReturnType() : null;
         if (applicableMethodReturnType == PsiType.VOID) {
           return false;
         }
