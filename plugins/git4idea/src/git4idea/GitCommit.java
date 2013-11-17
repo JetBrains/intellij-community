@@ -33,10 +33,10 @@ import java.util.List;
  */
 public final class GitCommit extends VcsFullCommitDetailsImpl {
 
-  public GitCommit(final Project project, @NotNull Hash hash, @NotNull List<Hash> parents, long authorTime, @NotNull VirtualFile root,
+  public GitCommit(final Project project, @NotNull Hash hash, @NotNull List<Hash> parents, long time, @NotNull VirtualFile root,
                    @NotNull String subject, @NotNull VcsUser author, @NotNull String message, @NotNull VcsUser committer,
-                   long commitTime, @NotNull List<Change> changes) {
-    super(hash, parents, authorTime, root, subject, author, message, committer, commitTime, changes,
+                   long authorTime, @NotNull List<Change> changes) {
+    super(hash, parents, time, root, subject, author, message, committer, authorTime, changes,
           GitContentRevisionFactory.getInstance(project));
 
   }
