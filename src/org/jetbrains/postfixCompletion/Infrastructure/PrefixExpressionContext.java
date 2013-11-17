@@ -7,7 +7,7 @@ import org.jetbrains.annotations.*;
 
 public class PrefixExpressionContext {
   @NotNull public final PostfixTemplateContext parentContext;
-  @NotNull public final PsiExpression expression;
+  @NotNull public final PsiElement expression;
   @Nullable public final PsiType expressionType;
   @Nullable public final PsiElement referencedElement;
   @NotNull public final TextRange expressionRange;
@@ -64,7 +64,11 @@ public class PrefixExpressionContext {
   }
 
   @Nullable protected PsiType calculateExpressionType() {
-    return expression.getType();
+    if (expression instanceof PsiExpression) {
+      return ((PsiExpression) expression).getType();
+    }
+
+    return null;
   }
 
   @Nullable protected PsiElement calculateReferencedElement() {
@@ -77,15 +81,11 @@ public class PrefixExpressionContext {
 
   @NotNull protected TextRange calculateExpressionRange() {
     TextRange expressionRange = expression.getTextRange();
-    PsiElement reference = parentContext.postfixReference, qualifier = null;
+    PsiJavaCodeReferenceElement reference = parentContext.postfixReference;
 
-    if (reference instanceof PsiReferenceExpression) {
-      // fix range from 'a > b.if' to 'a > b'
-      qualifier = ((PsiReferenceExpression) reference).getQualifierExpression();
-    } else if (reference instanceof PsiJavaCodeReferenceElement) {
-      // fix range from 'o instanceof T.if' to 'o instanceof T'
-      qualifier = ((PsiJavaCodeReferenceElement) reference).getQualifier();
-    }
+    // fix range from 'a > b.if' to 'a > b'
+    // fix range from 'o instanceof T.if' to 'o instanceof T'
+    PsiElement qualifier = reference.getQualifier();
 
     if (qualifier != null && qualifier.isValid()) {
       int qualifierEndRange = qualifier.getTextRange().getEndOffset();
@@ -98,7 +98,7 @@ public class PrefixExpressionContext {
 
   @NotNull public final PrefixExpressionContext fixExpression() {
     PrefixExpressionContext fixedContext = parentContext.fixExpression(this);
-    PsiExpression fixedExpression = fixedContext.expression;
+    PsiElement fixedExpression = fixedContext.expression;
 
     assert fixedExpression.isPhysical() : "fixedExpression.isPhysical()";
 

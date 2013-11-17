@@ -29,7 +29,11 @@ public abstract class BooleanTemplateProviderBase extends TemplateProviderBase {
   }
 
   public static boolean isBooleanExpression(@NotNull PrefixExpressionContext context) {
-    return isBooleanExpression(context.expression, context.expressionType);
+    if (context.expression instanceof PsiExpression) {
+      return isBooleanExpression((PsiExpression) context.expression, context.expressionType);
+    }
+
+    return false;
   }
 
   private static boolean isBooleanExpression(@Nullable PsiExpression expression) {

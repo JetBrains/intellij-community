@@ -55,7 +55,7 @@ public final class PostfixTemplatesManager implements ApplicationComponent {
         return new PostfixTemplateContext(reference, qualifier, executionContext) {
           @Override @NotNull
           public PrefixExpressionContext fixExpression(@NotNull PrefixExpressionContext context) {
-            PsiExpression expression = context.expression;
+            PsiExpression expression = (PsiExpression) context.expression;
             PsiReferenceExpression referenceExpression = (PsiReferenceExpression) postfixReference;
 
             // replace 'expr.postfix' with 'expr'
@@ -93,7 +93,7 @@ public final class PostfixTemplatesManager implements ApplicationComponent {
               @Override @NotNull
               public PrefixExpressionContext fixExpression(@NotNull PrefixExpressionContext context) {
                 PsiExpression newExpression = fixCompletelyBrokenCase(
-                  context.expression, brokenLiteral, reference, lhsExpression);
+                  (PsiExpression) context.expression, brokenLiteral, reference, lhsExpression);
                 removeStatementPreventingExtraTokens(exprStatement, lhsStatement);
 
                 return new PrefixExpressionContext(this, newExpression);

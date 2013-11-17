@@ -30,7 +30,11 @@ public class NotNullCheckTemplateProvider extends TemplateProviderBase {
   }
 
   @Nullable public static Boolean isNullableExpression(@NotNull PrefixExpressionContext context) {
-    return isNullableExpression(context.expression, context.expressionType);
+    if (context.expression instanceof PsiExpression) {
+      return isNullableExpression((PsiExpression) context.expression, context.expressionType);
+    }
+
+    return Boolean.FALSE;
   }
 
   @Nullable private static Boolean isNullableExpression(@Nullable PsiExpression expression) {

@@ -13,7 +13,7 @@ import java.util.*;
 
 public abstract class PostfixLookupElement<TPsiElement extends PsiElement> extends LookupElement {
   @NotNull private final PostfixExecutionContext myExecutionContext;
-  @NotNull private final Class<? extends PsiExpression> myExpressionType;
+  @NotNull private final Class<?> myExpressionType;
   @NotNull private final TextRange myExpressionRange;
   @NotNull private final String myLookupString;
   private final int myContextIndex;
