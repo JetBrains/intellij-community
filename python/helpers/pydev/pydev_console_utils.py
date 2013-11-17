@@ -165,8 +165,6 @@ class BaseInterpreterInterface:
 
 
     def addExec(self, line):
-        #f_opened = open('c:/temp/a.txt', 'a')
-        #f_opened.write(line+'\n')
         original_in = sys.stdin
         try:
             help = None
