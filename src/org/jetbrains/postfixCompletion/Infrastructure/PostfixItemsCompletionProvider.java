@@ -6,19 +6,19 @@ import com.intellij.openapi.application.*;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.*;
 
-public final class PostfixItemsCompletionProvider {
-  public static void addCompletions(
-      @NotNull CompletionParameters parameters, @NotNull CompletionResultSet resultSet,
-      @NotNull PostfixExecutionContext executionContext) {
+import java.util.*;
+
+public abstract class PostfixItemsCompletionProvider {
+  @NotNull public static List<LookupElement> addCompletions(
+      @NotNull CompletionParameters parameters, @NotNull PostfixExecutionContext executionContext) {
     Application application = ApplicationManager.getApplication();
     PostfixTemplatesManager templatesManager = application.getComponent(PostfixTemplatesManager.class);
 
-    PsiElement positionElement = parameters.getPosition();
-    PostfixTemplateContext context = templatesManager.isAvailable(positionElement, executionContext);
+    PsiElement position = parameters.getPosition();
 
-    if (context != null) {
-      for (LookupElement postfixElement : templatesManager.collectTemplates(context))
-        resultSet.addElement(postfixElement);
-    }
+    PostfixTemplateContext context = templatesManager.isAvailable(position, executionContext);
+    if (context == null) return Collections.emptyList();
+
+    return templatesManager.collectTemplates(context);
   }
 }

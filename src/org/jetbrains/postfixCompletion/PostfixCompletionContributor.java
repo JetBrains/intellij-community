@@ -36,7 +36,11 @@ public final class PostfixCompletionContributor extends CompletionContributor {
     boolean isForceMode = !parameters.isAutoPopup() && !behaveAsAutoPopupForTests;
 
     PostfixExecutionContext executionContext = new PostfixExecutionContext(isForceMode, dummyIdentifier);
-    PostfixItemsCompletionProvider.addCompletions(parameters, result, executionContext);
+
+    List<LookupElement> elements = PostfixItemsCompletionProvider.addCompletions(parameters, executionContext);
+    for (LookupElement element : elements) {
+      result.addElement(element);
+    }
 
     suggestChainedCalls(parameters, result);
   }
