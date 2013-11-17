@@ -72,8 +72,8 @@ public class PrefixExpressionContext {
   }
 
   @Nullable protected PsiElement calculateReferencedElement() {
-    if (expression instanceof PsiReferenceExpression) {
-      return ((PsiReferenceExpression) expression).resolve();
+    if (expression instanceof PsiJavaCodeReferenceElement) {
+      return ((PsiJavaCodeReferenceElement) expression).resolve();
     }
 
     return null;
