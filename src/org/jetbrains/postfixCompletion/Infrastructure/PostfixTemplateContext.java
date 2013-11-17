@@ -1,7 +1,6 @@
 package org.jetbrains.postfixCompletion.Infrastructure;
 
 import com.intellij.psi.*;
-import com.intellij.psi.util.*;
 import org.jetbrains.annotations.*;
 
 import java.util.*;
@@ -19,7 +18,7 @@ public abstract class PostfixTemplateContext {
     @NotNull PostfixExecutionContext executionContext) {
     postfixReference = reference;
     this.executionContext = executionContext;
-    insideCodeFragment = (PsiTreeUtil.getParentOfType(reference, PsiCodeFragment.class) != null);
+    insideCodeFragment = reference.getContainingFile() instanceof PsiCodeFragment;
 
     List<PrefixExpressionContext> contexts = new ArrayList<PrefixExpressionContext>();
     int referenceEndRange = reference.getTextRange().getEndOffset();

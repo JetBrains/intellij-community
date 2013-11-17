@@ -22,8 +22,9 @@ public final class PostfixTemplatesManager implements ApplicationComponent {
 
     for (PostfixTemplateProvider provider : providers) {
       TemplateProvider annotation = provider.getClass().getAnnotation(TemplateProvider.class);
-      if (annotation != null)
+      if (annotation != null) {
         myProviders.add(new TemplateProviderInfo(provider, annotation));
+      }
     }
   }
 
