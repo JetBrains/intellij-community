@@ -27,6 +27,6 @@ public interface VcsFullCommitDetails extends VcsShortCommitDetails {
   @NotNull
   VcsUser getCommitter();
 
-  long getCommitTime();
+  long getAuthorTime();
 
 }
