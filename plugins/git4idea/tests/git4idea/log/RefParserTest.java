@@ -97,7 +97,7 @@ public class RefParserTest {
     public VcsFullCommitDetails createFullDetails(@NotNull Hash hash, @NotNull List<Hash> parents, long time, VirtualFile root,
                                                   @NotNull String subject, @NotNull String authorName, @NotNull String authorEmail,
                                                   @NotNull String message, @NotNull String committerName, @NotNull String committerEmail,
-                                                  long commitTime, @NotNull List<Change> changes,
+                                                  long authorTime, @NotNull List<Change> changes,
                                                   @NotNull ContentRevisionFactory contentRevisionFactory) {
       throw new UnsupportedOperationException();
     }
