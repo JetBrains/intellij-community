@@ -76,7 +76,9 @@ public final class PostfixCompletionContributor extends CompletionContributor {
           // todo:
 
           List<LookupElement> elements = PostfixItemsCompletionProvider.addCompletions2(
-            parameters, new PostfixExecutionContext(false, "postfix"), type);
+            parameters, new PostfixExecutionContext(false, "postfix"), ref);
+
+
 
           for (LookupElement postfixElement : elements) {
 

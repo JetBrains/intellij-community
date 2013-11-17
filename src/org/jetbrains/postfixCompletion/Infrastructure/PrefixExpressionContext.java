@@ -8,7 +8,7 @@ import org.jetbrains.annotations.*;
 public final class PrefixExpressionContext {
   @NotNull public final PostfixTemplateContext parentContext;
   @NotNull public final PsiExpression expression;
-  @Nullable public PsiType expressionType; // todo: bring back 'final'
+  @Nullable public final PsiType expressionType;
   @Nullable public final PsiElement referencedElement;
   @NotNull public final TextRange expressionRange;
   public final boolean canBeStatement;
@@ -19,15 +19,11 @@ public final class PrefixExpressionContext {
 
     this.parentContext = parentContext;
     this.expression = expression;
-    expressionType = expression.getType();
-    expressionRange = getExpressionRange();
-    canBeStatement = (getContainingStatement() != null);
+    this.expressionType = calculateExpressionType();
+    this.referencedElement = calculateReferencedElement();
 
-    if (expression instanceof PsiReferenceExpression) {
-      referencedElement = ((PsiReferenceExpression) expression).resolve();
-    } else {
-      referencedElement = null;
-    }
+    expressionRange = calculateExpressionRange();
+    canBeStatement = (getContainingStatement() != null);
   }
 
   @Nullable public final PsiStatement getContainingStatement() {
@@ -36,8 +32,7 @@ public final class PrefixExpressionContext {
 
     // escape from '.postfix' reference-expression
     if (element == parentContext.postfixReference) {
-
-      // sometimes IDEA idea completion breaks expression in the middle into statement
+      // sometimes IDEA's code completion breaks expression in the middle into statement
       if (element instanceof PsiReferenceExpression) {
         // check we are invoked from code completion
         String referenceName = ((PsiReferenceExpression) element).getReferenceName();
@@ -48,8 +43,8 @@ public final class PrefixExpressionContext {
             if (nextSibling instanceof PsiExpressionStatement) { // find next expression-statement
               PsiExpression brokenExpression = ((PsiExpressionStatement) nextSibling).getExpression();
               // check next expression is likely broken invocation expression
-              if (brokenExpression instanceof PsiParenthesizedExpression) return null;
-              if (brokenExpression instanceof PsiMethodCallExpression) return null;
+              if (brokenExpression instanceof PsiParenthesizedExpression) return null; // foo;();
+              if (brokenExpression instanceof PsiMethodCallExpression) return null;    // fo;o();
             }
           }
         }
@@ -68,7 +63,19 @@ public final class PrefixExpressionContext {
     return null;
   }
 
-  @NotNull private TextRange getExpressionRange() {
+  @Nullable protected PsiType calculateExpressionType() {
+    return expression.getType();
+  }
+
+  @Nullable protected PsiElement calculateReferencedElement() {
+    if (expression instanceof PsiReferenceExpression) {
+      return ((PsiReferenceExpression) expression).resolve();
+    }
+
+    return null;
+  }
+
+  @NotNull protected TextRange calculateExpressionRange() {
     TextRange expressionRange = expression.getTextRange();
     PsiElement reference = parentContext.postfixReference, qualifier = null;
 
@@ -89,9 +96,11 @@ public final class PrefixExpressionContext {
     return expressionRange;
   }
 
-  @NotNull public final PrefixExpressionContext fixUp() {
+  @NotNull public final PrefixExpressionContext fixExpression() {
     PrefixExpressionContext fixedContext = parentContext.fixExpression(this);
-    assert fixedContext.expression.isPhysical() : "fixedContext.expression.isPhysical()";
+    PsiExpression fixedExpression = fixedContext.expression;
+
+    assert fixedExpression.isPhysical() : "fixedExpression.isPhysical()";
 
     return fixedContext;
   }

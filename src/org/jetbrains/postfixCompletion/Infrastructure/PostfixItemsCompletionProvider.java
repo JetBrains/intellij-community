@@ -26,16 +26,18 @@ public final class PostfixItemsCompletionProvider {
   }
 
   public static List<LookupElement> addCompletions2(
-    @NotNull CompletionParameters parameters, @NotNull PostfixExecutionContext executionContext, PsiType exprType) {
+    @NotNull CompletionParameters parameters, @NotNull PostfixExecutionContext executionContext,
+    PsiReferenceExpression mockExpression) {
 
     Application application = ApplicationManager.getApplication();
     PostfixTemplatesManager manager = application.getComponent(PostfixTemplatesManager.class);
 
     PsiElement positionElement = parameters.getPosition();
-    PostfixTemplateContext acceptanceContext = manager.isAvailable(positionElement, executionContext);
+    PostfixTemplateContext acceptanceContext = manager.isAvailable(
+      mockExpression.getReferenceNameElement(), executionContext);
 
     if (acceptanceContext != null) {
-      acceptanceContext.outerExpression.expressionType = exprType;
+      //acceptanceContext.outerExpression.setExpressionType(exprType);
       return manager.collectTemplates(acceptanceContext);
     }
 

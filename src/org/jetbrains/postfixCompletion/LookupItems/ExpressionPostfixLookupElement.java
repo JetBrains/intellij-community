@@ -22,7 +22,7 @@ public abstract class ExpressionPostfixLookupElement<TExpression extends PsiExpr
     PsiElementFactory elementFactory = psiFacade.getElementFactory();
 
     // fix up expression before template expansion
-    PrefixExpressionContext fixedContext = expressionContext.fixUp();
+    PrefixExpressionContext fixedContext = expressionContext.fixExpression();
     PsiExpression exprCopy = (PsiExpression) fixedContext.expression.copy();
 
     TExpression newExpression = createNewExpression(elementFactory, exprCopy, fixedContext.expression);

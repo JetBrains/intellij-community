@@ -18,7 +18,7 @@ public abstract class PostfixTemplateContext {
     @NotNull PostfixExecutionContext executionContext) {
     postfixReference = reference;
     this.executionContext = executionContext;
-    insideCodeFragment = reference.getContainingFile() instanceof PsiCodeFragment;
+    insideCodeFragment = (reference.getContainingFile() instanceof PsiCodeFragment);
 
     List<PrefixExpressionContext> contexts = new ArrayList<PrefixExpressionContext>();
     int referenceEndRange = reference.getTextRange().getEndOffset();

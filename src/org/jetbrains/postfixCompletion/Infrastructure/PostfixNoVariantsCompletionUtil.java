@@ -17,6 +17,8 @@ import java.util.*;
 import java.util.LinkedHashSet;
 
 public abstract class PostfixNoVariantsCompletionUtil {
+
+
   @NotNull public static Set<LookupElement> suggestQualifierItems(
     @NotNull CompletionParameters parameters, @NotNull PsiJavaCodeReferenceElement qualifier) {
 

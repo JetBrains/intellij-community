@@ -22,7 +22,7 @@ public abstract class StatementPostfixLookupElement<TStatement extends PsiStatem
     PsiElementFactory elementFactory = psiFacade.getElementFactory();
 
     // fix up expression before template expansion
-    PrefixExpressionContext fixedContext = expressionContext.fixUp();
+    PrefixExpressionContext fixedContext = expressionContext.fixExpression();
 
     // get target statement to replace
     PsiStatement targetStatement = fixedContext.getContainingStatement();
