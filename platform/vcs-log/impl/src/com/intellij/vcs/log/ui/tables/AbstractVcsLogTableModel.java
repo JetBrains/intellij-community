@@ -60,11 +60,11 @@ public abstract class AbstractVcsLogTableModel<T> extends AbstractTableModel {
           return data.getAuthor().getName();
         }
       case DATE_COLUMN:
-        if (data == null || data.getAuthorTime() < 0) {
+        if (data == null || data.getTime() < 0) {
           return "";
         }
         else {
-          return DateFormatUtil.formatDateTime(data.getAuthorTime());
+          return DateFormatUtil.formatDateTime(data.getTime());
         }
       default:
         throw new IllegalArgumentException("columnIndex is " + columnIndex + " > " + (COLUMN_COUNT - 1));

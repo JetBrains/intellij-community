@@ -25,6 +25,6 @@ public interface TimedVcsCommit extends VcsCommit {
   /**
    * Returns the timestamp indicating the date & time when this commit was made.
    */
-  long getAuthorTime();
+  long getTime();
 
 }

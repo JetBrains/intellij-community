@@ -148,10 +148,10 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
     }
 
     private static String getAuthorText(VcsFullCommitDetails commit) {
-      String authorText = commit.getAuthor().getName() + " at " + DateFormatUtil.formatDateTime(commit.getAuthorTime());
+      String authorText = commit.getAuthor().getName() + " at " + DateFormatUtil.formatDateTime(commit.getTime());
       if (!commit.getAuthor().equals(commit.getCommitter())) {
         String commitTime;
-        if (commit.getCommitTime() != commit.getAuthorTime()) {
+        if (commit.getCommitTime() != commit.getTime()) {
           commitTime = " at " + DateFormatUtil.formatDateTime(commit.getCommitTime());
         }
         else {
@@ -159,7 +159,7 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
         }
         authorText += " (committed by " + commit.getCommitter().getName() + commitTime + ")";
       }
-      else if (commit.getCommitTime() != commit.getAuthorTime()) {
+      else if (commit.getCommitTime() != commit.getTime()) {
         authorText += " (committed at " + DateFormatUtil.formatDateTime(commit.getCommitTime()) + ")";
       }
       return authorText;

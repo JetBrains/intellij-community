@@ -94,7 +94,7 @@ public class RefParserTest {
 
     @NotNull
     @Override
-    public VcsFullCommitDetails createFullDetails(@NotNull Hash hash, @NotNull List<Hash> parents, long authorTime, VirtualFile root,
+    public VcsFullCommitDetails createFullDetails(@NotNull Hash hash, @NotNull List<Hash> parents, long time, VirtualFile root,
                                                   @NotNull String subject, @NotNull String authorName, @NotNull String authorEmail,
                                                   @NotNull String message, @NotNull String committerName, @NotNull String committerEmail,
                                                   long commitTime, @NotNull List<Change> changes,
