@@ -5,7 +5,7 @@ import com.intellij.openapi.util.*;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.*;
 
-public final class PrefixExpressionContext {
+public class PrefixExpressionContext {
   @NotNull public final PostfixTemplateContext parentContext;
   @NotNull public final PsiExpression expression;
   @Nullable public final PsiType expressionType;

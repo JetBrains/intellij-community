@@ -7,6 +7,8 @@ import java.util.*;
 
 public abstract class PostfixTemplateContext {
   // can be 'PsiReferenceExpression' or 'PsiJavaCodeReferenceElement'
+
+  // todo: use PsiJavaCodeReferenceElement everywhere
   @NotNull public final PsiElement postfixReference;
   @NotNull public final List<PrefixExpressionContext> expressions;
   @NotNull public final PrefixExpressionContext outerExpression, innerExpression;
@@ -20,6 +22,15 @@ public abstract class PostfixTemplateContext {
     this.executionContext = executionContext;
     insideCodeFragment = (reference.getContainingFile() instanceof PsiCodeFragment);
 
+    List<PrefixExpressionContext> contexts = buildExpressionContexts(reference, expression);
+
+    expressions = Collections.unmodifiableList(contexts);
+    innerExpression = contexts.get(0);
+    outerExpression = contexts.get(contexts.size() - 1);
+  }
+
+  @NotNull protected List<PrefixExpressionContext> buildExpressionContexts(
+      @NotNull PsiElement reference, @NotNull PsiExpression expression) {
     List<PrefixExpressionContext> contexts = new ArrayList<PrefixExpressionContext>();
     int referenceEndRange = reference.getTextRange().getEndOffset();
 
@@ -41,14 +52,13 @@ public abstract class PostfixTemplateContext {
       }
     }
 
-    expressions = Collections.unmodifiableList(contexts);
-    innerExpression = contexts.get(0);
-    outerExpression = contexts.get(contexts.size() - 1);
+    return contexts;
   }
 
   @NotNull public abstract PrefixExpressionContext fixExpression(@NotNull PrefixExpressionContext context);
 
   public boolean isBrokenStatement(@NotNull PsiStatement statement) { return false; }
+
   // todo: use me (when? in .new template?)
   public boolean isFakeContextFromType() { return false; }
 }

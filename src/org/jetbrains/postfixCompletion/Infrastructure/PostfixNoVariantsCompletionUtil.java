@@ -16,6 +16,8 @@ import org.jetbrains.annotations.*;
 import java.util.*;
 import java.util.LinkedHashSet;
 
+// todo: fix 'scn.nn' prefix matching
+
 public abstract class PostfixNoVariantsCompletionUtil {
 
 
