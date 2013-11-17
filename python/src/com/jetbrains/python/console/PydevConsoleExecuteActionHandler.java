@@ -67,10 +67,10 @@ public class PydevConsoleExecuteActionHandler extends ConsoleExecuteActionHandle
 
   @Override
   public void processLine(final String text) {
-    processLine(text, true);
+    processLine(text, false);
   }
 
-  public void processLine(final String text, boolean execAnyway) {
+  public void processLine(@NotNull final String text, boolean execAnyway) {
     int indentBefore = myCurrentIndentSize;
     if (text.isEmpty()) {
       processOneLine(text);
