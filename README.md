@@ -36,9 +36,11 @@ Available templates:
 
 Other features:
 
-* Supports IDEA's chained code completion
+* Support for IDEA chained code completion (`st.new` => `new SomeType()`)
+* Works inside code fragments, like 'evaluate expression' debugger window
 
-Upcoming templates:
+
+Future work:
 
 * `.fori` – surrounds with loop `for (int i = 0; i < expr.length; i++)`
 * `.forr` – reverse loop `for (int i = expr.length; i >= 0; i--)`
@@ -48,19 +50,11 @@ Upcoming templates:
 * `.return` – returns value from method/property `return expr;`
 * `.switch` – produces switch over integral/string type `switch (expr)`
 * `.throw` – throws value of Exception type `throw expr;`
-
-Possible templates:
-
 * `.assert` - creates assertion statement from expression `assert expr`
 * `.sync` – surrounds expression with statement `synchronized (expr)`
 * `.try` – surrounds resource expression with `try (T x = resource)`
 
-Future work:
-
-
-
 * Support IDEA's soft selection completion without commit on [.]
-* Disable statement-based providers in debugger evaluate window
 * Settings page to disable/enable templates
 * Control braces insertion for statements (use code style settings?)
 * Support non-Java languages, of course :)

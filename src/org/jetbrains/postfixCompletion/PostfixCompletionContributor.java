@@ -75,7 +75,7 @@ public final class PostfixCompletionContributor extends CompletionContributor {
         if (ref != null) {
           // todo:
 
-          List<LookupElement> elements = PostfixItemsCompletionProvider.addCompletions2(
+          List<LookupElement> elements = PostfixNoVariantsCompletionUtil.addCompletions2(
             parameters, new PostfixExecutionContext(false, "postfix"), ref);
 
 

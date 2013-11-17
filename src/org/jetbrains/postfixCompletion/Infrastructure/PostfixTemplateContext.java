@@ -9,14 +9,14 @@ public abstract class PostfixTemplateContext {
   // can be 'PsiReferenceExpression' or 'PsiJavaCodeReferenceElement'
 
   // todo: use PsiJavaCodeReferenceElement everywhere
-  @NotNull public final PsiElement postfixReference;
+  @NotNull public final PsiJavaCodeReferenceElement postfixReference;
   @NotNull public final List<PrefixExpressionContext> expressions;
   @NotNull public final PrefixExpressionContext outerExpression, innerExpression;
   @NotNull public final PostfixExecutionContext executionContext;
   public final boolean insideCodeFragment;
 
   public PostfixTemplateContext(
-    @NotNull PsiElement reference, @NotNull PsiExpression expression,
+    @NotNull PsiJavaCodeReferenceElement reference, @NotNull PsiExpression expression,
     @NotNull PostfixExecutionContext executionContext) {
     postfixReference = reference;
     this.executionContext = executionContext;
@@ -59,6 +59,7 @@ public abstract class PostfixTemplateContext {
 
   public boolean isBrokenStatement(@NotNull PsiStatement statement) { return false; }
 
-  // todo: use me (when? in .new template?)
+  // todo: use me (when? in .new/.throw template?)
+  // todo: drop me :O
   public boolean isFakeContextFromType() { return false; }
 }

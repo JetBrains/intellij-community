@@ -4,6 +4,8 @@ import com.intellij.codeInsight.completion.*;
 import com.intellij.codeInsight.completion.impl.*;
 import com.intellij.codeInsight.completion.scope.*;
 import com.intellij.codeInsight.lookup.*;
+import com.intellij.openapi.application.*;
+import com.intellij.openapi.util.*;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.*;
 import com.intellij.psi.impl.source.resolve.reference.impl.*;
@@ -19,7 +21,69 @@ import java.util.LinkedHashSet;
 // todo: fix 'scn.nn' prefix matching
 
 public abstract class PostfixNoVariantsCompletionUtil {
+  public static void addCompletions(
+    @NotNull CompletionParameters parameters, @NotNull CompletionResultSet resultSet,
+    @NotNull PostfixExecutionContext executionContext) {
 
+
+
+  }
+
+  public static List<LookupElement> addCompletions2(
+    @NotNull CompletionParameters parameters, @NotNull PostfixExecutionContext executionContext,
+    final PsiReferenceExpression mockExpression) {
+
+    Application application = ApplicationManager.getApplication();
+    PostfixTemplatesManager manager = application.getComponent(PostfixTemplatesManager.class);
+
+    PsiElement positionElement = parameters.getPosition();
+
+    PsiElement reference = positionElement.getParent();
+
+    PostfixTemplateContext acceptanceContext = new PostfixTemplateContext(
+      (PsiJavaCodeReferenceElement) reference, (PsiExpression) reference, executionContext) {
+
+
+      @NotNull @Override protected List<PrefixExpressionContext> buildExpressionContexts(
+        @NotNull PsiElement reference, @NotNull PsiExpression expression) {
+
+        final PsiReferenceExpression qualifier = (PsiReferenceExpression) mockExpression.getQualifier();
+
+        return Collections.<PrefixExpressionContext>singletonList(
+          new PrefixExpressionContext(this, expression) {
+            @Nullable @Override protected PsiType calculateExpressionType() {
+              return qualifier.getType();
+            }
+
+            @Nullable @Override protected PsiElement calculateReferencedElement() {
+              return qualifier.resolve();
+            }
+
+            @NotNull @Override protected TextRange calculateExpressionRange() {
+              return super.calculateExpressionRange();
+            }
+          }
+          // mock type, mock referenced element?
+        );
+
+      }
+
+      @NotNull @Override public PrefixExpressionContext fixExpression(@NotNull PrefixExpressionContext context) {
+        return context;
+      }
+
+      @Override public boolean isBrokenStatement(@NotNull PsiStatement statement) {
+        return super.isBrokenStatement(statement);
+      }
+    };
+
+    if (acceptanceContext != null) {
+      //acceptanceContext.outerExpression.setExpressionType(exprType);
+      return manager.collectTemplates(acceptanceContext);
+    }
+
+    return Collections.emptyList();
+  }
 
   @NotNull public static Set<LookupElement> suggestQualifierItems(
     @NotNull CompletionParameters parameters, @NotNull PsiJavaCodeReferenceElement qualifier) {
@@ -73,7 +137,7 @@ public abstract class PostfixNoVariantsCompletionUtil {
     return Collections.emptySet();
   }
 
-  private static class MyElementFilter implements ElementFilter {
+  static final class MyElementFilter implements ElementFilter {
     @NotNull private final ElementFilter myFilter;
     public MyElementFilter(@NotNull ElementFilter filter) { myFilter = filter; }
 
