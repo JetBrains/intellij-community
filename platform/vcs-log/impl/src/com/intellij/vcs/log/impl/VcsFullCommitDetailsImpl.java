@@ -27,11 +27,11 @@ public class VcsFullCommitDetailsImpl extends VcsShortCommitDetailsImpl implemen
 
   @NotNull private final Collection<LightChange> myChanges;
 
-  public VcsFullCommitDetailsImpl(@NotNull Hash hash, @NotNull List<Hash> parents, long authorTime, @NotNull VirtualFile root,
+  public VcsFullCommitDetailsImpl(@NotNull Hash hash, @NotNull List<Hash> parents, long time, @NotNull VirtualFile root,
                                   @NotNull String subject, @NotNull VcsUser author, @NotNull String message,
                                   @NotNull VcsUser committer, long commitTime,
                                   @NotNull List<Change> changes, @NotNull final ContentRevisionFactory contentRevisionFactory) {
-    super(hash, parents, authorTime, root, subject, author);
+    super(hash, parents, time, root, subject, author);
     myCommitter = committer;
     myCommitTime = commitTime;
     myFullMessage = message;

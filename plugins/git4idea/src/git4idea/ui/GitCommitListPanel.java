@@ -206,7 +206,7 @@ public class GitCommitListPanel extends JPanel implements TypeSafeDataProvider {
   }
 
   private static String getTime(GitCommit commit) {
-    return DateFormatUtil.formatPrettyDateTime(commit.getAuthorTime());
+    return DateFormatUtil.formatPrettyDateTime(commit.getTime());
   }
 
   private abstract static class GitCommitColumnInfo extends ColumnInfo<GitCommit, String> {
