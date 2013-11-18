@@ -49,6 +49,13 @@ public final class Urls {
     return new UrlImpl("http", authority, path);
   }
 
+  @NotNull
+  public static Url newFromIdea(@NotNull String url) {
+    Url result = parseFromIdea(url);
+    LOG.assertTrue(result != null, url);
+    return result;
+  }
+
   // java.net.URI.create cannot parse "file:///Test Stuff" - but you don't need to worry about it - this method is aware
   @Nullable
   public static Url parseFromIdea(@NotNull String url) {
