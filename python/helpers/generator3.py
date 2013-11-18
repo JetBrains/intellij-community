@@ -38,12 +38,12 @@ def build_output_name(dirname, qualified_name):
     return fname
 
 
-def redo_module(mod_name, outfile, module_file_name, doing_builtins):
+def redo_module(module_name, outfile, module_file_name, doing_builtins):
     # gobject does 'del _gobject' in its __init__.py, so the chained attribute lookup code
     # fails to find 'gobject._gobject'. thus we need to pull the module directly out of
     # sys.modules
-    mod = sys.modules.get(mod_name)
-    mod_path = mod_name.split('.')
+    mod = sys.modules.get(module_name)
+    mod_path = module_name.split('.')
     if not mod and sys.platform == 'cli':
         # "import System.Collections" in IronPython 2.7 doesn't actually put System.Collections in sys.modules
         # instead, sys.modules['System'] get set to a Microsoft.Scripting.Actions.NamespaceTracker and Collections can be
@@ -54,16 +54,16 @@ def redo_module(mod_name, outfile, module_file_name, doing_builtins):
                 mod = getattr(mod, component)
             except AttributeError:
                 mod = None
-                report("Failed to find CLR module " + mod_name)
+                report("Failed to find CLR module " + module_name)
                 break
     if mod:
         action("restoring")
         r = ModuleRedeclarator(mod, outfile, module_file_name, doing_builtins=doing_builtins)
-        r.redo(mod_name, ".".join(mod_path[:-1]) in MODULES_INSPECT_DIR)
+        r.redo(module_name, ".".join(mod_path[:-1]) in MODULES_INSPECT_DIR)
         action("flushing")
         r.flush()
     else:
-        report("Failed to find imported module in sys.modules " + mod_name)
+        report("Failed to find imported module in sys.modules " + module_name)
 
 # find_binaries functionality
 def cut_binary_lib_suffix(path, f):
