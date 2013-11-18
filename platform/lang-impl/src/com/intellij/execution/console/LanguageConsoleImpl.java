@@ -16,7 +16,6 @@
 package com.intellij.execution.console;
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
-import com.intellij.execution.impl.ConsoleViewImpl;
 import com.intellij.execution.impl.ConsoleViewUtil;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.ide.DataManager;
@@ -50,7 +49,10 @@ import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -76,7 +78,6 @@ import java.awt.event.ComponentEvent;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.util.Collections;
-import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -646,20 +647,6 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
         myConsoleEditor.getDocument().setText(query);
       }
     });
-  }
-
-  /**
-   * todo ruby plugin compatibility. Remove on the next update.
-   */
-  @Deprecated
-  public static void printToConsole(@NotNull LanguageConsoleImpl console, @NotNull ConsoleViewContentType mainType,
-                                    @NotNull List<Pair<String, ConsoleViewContentType>> textToPrint) {
-    ConsoleViewImpl consoleView = console.getHistoryViewer().getUserData(ConsoleViewImpl.CONSOLE_VIEW_IN_EDITOR_VIEW);
-    if (consoleView != null) {
-      for (Pair<String, ConsoleViewContentType> pair : textToPrint) {
-        consoleView.print(pair.first, ObjectUtils.chooseNotNull(pair.second, mainType));
-      }
-    }
   }
 
   @NotNull
