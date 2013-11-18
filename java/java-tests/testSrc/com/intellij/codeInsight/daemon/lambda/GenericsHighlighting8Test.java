@@ -77,7 +77,7 @@ public class GenericsHighlighting8Test extends LightDaemonAnalyzerTestCase {
   public void testInferenceWithUpperBoundPromotion() {
     doTest();
   }
-  public void _testVariance() {//todo
+  public void testVariance() {
     doTest();
   }
   public void testForeachTypes() {
@@ -321,9 +321,13 @@ public class GenericsHighlighting8Test extends LightDaemonAnalyzerTestCase {
   public void testIDEA57486() {
     doTest();
   }
-  public void testIDEA57492() {
+
+  //compiles with java 6
+  public void _testIDEA57492() {
     doTest();
   }
+  
+  //compiles with java 6
   public void _testIDEA57493() {
     doTest();
   }
