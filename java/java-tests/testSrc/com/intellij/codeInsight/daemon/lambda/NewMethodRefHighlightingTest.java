@@ -58,7 +58,7 @@ public class NewMethodRefHighlightingTest extends LightDaemonAnalyzerTestCase {
     doTest(false);
   }
 
-  public void _testInexactMethodReferencePrimitiveBound() throws Exception {
+  public void testInexactMethodReferencePrimitiveBound() throws Exception {
     doTest(false);
   }
 

@@ -110,18 +110,23 @@ public class SubtypingConstraint implements ConstraintFormula {
         if (tBound == null) {
           return true;
         }
+
+        if (myS instanceof PsiCapturedWildcardType) {
+          myS = ((PsiCapturedWildcardType)myS).getWildcard();
+        }
+
         if (((PsiWildcardType)myT).isExtends()) {
           if (tBound.equalsToText(CommonClassNames.JAVA_LANG_OBJECT)) {
             return true;
           }
 
-          if (myS instanceof PsiCapturedWildcardType) {
-            myS = ((PsiCapturedWildcardType)myS).getWildcard();
-          }
-
           if (myS instanceof PsiWildcardType) {
             final PsiType sBound = ((PsiWildcardType)myS).getBound();
-            if (sBound != null && ((PsiWildcardType)myS).isExtends()) {
+            if (sBound == null) {
+              return true;
+            }
+
+            if (((PsiWildcardType)myS).isExtends()) {
               constraints.add(new SubtypingConstraint(tBound, sBound, true));
               return true;
             }
@@ -131,10 +136,6 @@ public class SubtypingConstraint implements ConstraintFormula {
           }
           return false;
         } else {
-
-          if (myS instanceof PsiCapturedWildcardType) {
-            myS = ((PsiCapturedWildcardType)myS).getWildcard();
-          }
 
           if (myS instanceof PsiWildcardType) {
             final PsiType sBound = ((PsiWildcardType)myS).getBound();
