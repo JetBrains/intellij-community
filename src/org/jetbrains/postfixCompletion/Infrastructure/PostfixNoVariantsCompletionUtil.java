@@ -56,6 +56,7 @@ public abstract class PostfixNoVariantsCompletionUtil {
       final PsiElement mockReferenceQualifier = mockReference.getQualifier();
       if (mockReferenceQualifier == null) continue;
 
+      // todo: EXTRACT ME PLZ
       PostfixTemplateContext mockTemplateContext = new PostfixTemplateContext(
           (PsiJavaCodeReferenceElement) parent, qualifierReference, executionContext) {
         @NotNull @Override

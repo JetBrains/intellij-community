@@ -52,6 +52,7 @@ Future work:
 * `.assert` - creates assertion statement from expression `assert expr`
 * `.sync` – surrounds expression with statement `synchronized (expr)`
 * `.try` – surrounds resource expression with `try (T resource = expr)`
+* Template expansion by `Tab` keyboard key
 * Settings page to disable/enable templates
 * Control braces insertion for statements (use code style settings?)
 * Support non-Java languages, of course :)
