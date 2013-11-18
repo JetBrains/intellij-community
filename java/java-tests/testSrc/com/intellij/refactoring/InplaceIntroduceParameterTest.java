@@ -122,7 +122,7 @@ public class InplaceIntroduceParameterTest extends AbstractJavaInplaceIntroduceT
       });
     }
     catch (BaseRefactoringProcessor.ConflictsInTestsException e) {
-      assertEquals("There is already a parameter <b><code>p</code></b>. It will conflict with an introduced parameter", e.getMessage());
+      assertEquals("There is already a parameter <b><code>p</code></b>. It will conflict with the introduced parameter", e.getMessage());
       return;
     }
     fail("Conflict expected");
