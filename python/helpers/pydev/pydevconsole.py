@@ -74,20 +74,20 @@ except ImportError:
 
 
 class Command:
-    def __init__(self, interpreter, command):
+    def __init__(self, interpreter, code_fragment):
         """
-        :type command: object
+        :type code_fragment: CodeFragment
         :type interpreter: InteractiveConsole
         """
         self.interpreter = interpreter
-        self.command = command
+        self.code_fragment = code_fragment
         self.more = None
 
     def run(self):
-        if self.command.is_single_line:
-            self.more = self.interpreter.push(self.command.code)
+        if self.code_fragment.is_single_line:
+            self.more = self.interpreter.push(self.code_fragment.text)
         else:
-            self.more = self.interpreter.runsource(self.command.code, '<input>', 'exec')
+            self.more = self.interpreter.runsource(self.code_fragment.text, '<input>', 'exec')
 
 def Sync(runnable):
     runnable.run()
