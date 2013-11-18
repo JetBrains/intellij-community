@@ -5,7 +5,6 @@ import com.intellij.codeInsight.completion.impl.*;
 import com.intellij.codeInsight.completion.scope.*;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.openapi.application.*;
-import com.intellij.openapi.util.*;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.*;
 import com.intellij.psi.impl.source.resolve.reference.impl.*;
@@ -21,65 +20,9 @@ import java.util.LinkedHashSet;
 // todo: fix 'scn.nn' prefix matching
 
 public abstract class PostfixNoVariantsCompletionUtil {
-  @NotNull private static List<LookupElement> addCompletions(
-    @NotNull CompletionParameters parameters, @NotNull PostfixExecutionContext executionContext,
-    final PsiReferenceExpression mockExpression) {
-
-
-
-    Application application = ApplicationManager.getApplication();
-    PostfixTemplatesManager manager = application.getComponent(PostfixTemplatesManager.class);
-
-    PsiElement positionElement = parameters.getPosition();
-    PsiElement reference = positionElement.getParent();
-
-    PostfixTemplateContext acceptanceContext = new PostfixTemplateContext(
-      (PsiJavaCodeReferenceElement) reference, (PsiExpression) reference, executionContext) {
-
-
-      @NotNull @Override protected List<PrefixExpressionContext> buildExpressionContexts(
-        @NotNull PsiElement reference, @NotNull PsiExpression expression) {
-
-        final PsiReferenceExpression qualifier = (PsiReferenceExpression) mockExpression.getQualifier();
-
-        return Collections.<PrefixExpressionContext>singletonList(
-          new PrefixExpressionContext(this, expression) {
-            @Nullable @Override protected PsiType calculateExpressionType() {
-              return qualifier.getType();
-            }
-
-            @Nullable @Override protected PsiElement calculateReferencedElement() {
-              return qualifier.resolve();
-            }
-
-            @NotNull @Override protected TextRange calculateExpressionRange() {
-              return super.calculateExpressionRange();
-            }
-          }
-          // mock type, mock referenced element?
-        );
-
-      }
-
-      @NotNull @Override public PrefixExpressionContext fixExpression(@NotNull PrefixExpressionContext context) {
-        return context;
-      }
-
-      @Override public boolean isBrokenStatement(@NotNull PsiStatement statement) {
-        return super.isBrokenStatement(statement);
-      }
-    };
-
-    if (acceptanceContext != null) {
-      //acceptanceContext.outerExpression.setExpressionType(exprType);
-      return manager.collectTemplates(acceptanceContext);
-    }
-
-    return Collections.emptyList();
-  }
-
   public static void suggestChainedCalls(
-    @NotNull CompletionParameters parameters, @NotNull CompletionResultSet result) {
+    @NotNull CompletionParameters parameters, @NotNull CompletionResultSet resultSet,
+    @NotNull PostfixExecutionContext executionContext) {
 
     PsiElement position = parameters.getPosition(), parent = position.getParent();
     if ((!(parent instanceof PsiJavaCodeReferenceElement))) return;
@@ -97,39 +40,56 @@ public abstract class PostfixNoVariantsCompletionUtil {
     if (file instanceof PsiJavaCodeReferenceCodeFragment) return;
 
     // "prefix."
-    String fullPrefix = parent.getText().substring(
-      0, parameters.getOffset() - parent.getTextRange().getStartOffset());
+    int startOffset = parent.getTextRange().getStartOffset();
+    String fullPrefix = parent.getText().substring(0, parameters.getOffset() - startOffset);
 
-    CompletionResultSet qualifiedCollector = result.withPrefixMatcher(fullPrefix);
+    CompletionResultSet filteredResultSet = resultSet.withPrefixMatcher(fullPrefix);
 
+    Application application = ApplicationManager.getApplication();
+    PostfixTemplatesManager templatesManager = application.getComponent(PostfixTemplatesManager.class);
 
-    for (LookupElement base : PostfixNoVariantsCompletionUtil.suggestQualifierItems(parameters, qualifierReference)) {
+    for (LookupElement qualifierElement : suggestQualifierItems(parameters, qualifierReference)) {
+      PsiType type = JavaCompletionUtil.getLookupElementType(qualifierElement);
+      if (type == null || PsiType.VOID.equals(type)) continue;
 
-      PsiType type = JavaCompletionUtil.getLookupElementType(base);
-      if (type != null && !PsiType.VOID.equals(type)) {
-        PsiReferenceExpression ref = ReferenceExpressionCompletionContributor.createMockReference(position, type, base);
-        if (ref != null) {
-          // todo:
+      final PsiReferenceExpression mockReference =
+        ReferenceExpressionCompletionContributor.createMockReference(position, type, qualifierElement);
+      if (mockReference == null) continue;
 
-          List<LookupElement> elements = addCompletions(
-            parameters, new PostfixExecutionContext(false, "postfix"), ref);
+      PostfixTemplateContext templateContext = new PostfixTemplateContext(
+        (PsiJavaCodeReferenceElement) parent, qualifierReference, executionContext) {
 
+        @NotNull @Override protected List<PrefixExpressionContext> buildExpressionContexts(
+          @NotNull PsiElement reference, @NotNull PsiElement expression) {
 
+          final PsiReferenceExpression qualifier = (PsiReferenceExpression) mockReference.getQualifier();
 
-          for (LookupElement postfixElement : elements) {
+          return Collections.<PrefixExpressionContext>singletonList(
+            new PrefixExpressionContext(this, expression) {
+              @Nullable @Override protected PsiType calculateExpressionType(@NotNull PsiElement expression) {
+                return super.calculateExpressionType(qualifier);
+              }
 
-            JavaChainLookupElement chainedPostfix =
-              new JavaChainLookupElement(base, postfixElement) {
-                @Override public PsiType getType() {
-                  return null;
-                }
-              };
-
-            qualifiedCollector.addElement(chainedPostfix);
-          }
-
-          // TODO: create chain here
+              @Nullable @Override protected PsiElement calculateReferencedElement(@NotNull PsiElement expression) {
+                return super.calculateReferencedElement(qualifier);
+              }
+            }
+            // mock type, mock referenced element?
+          );
         }
+
+        @NotNull @Override
+        public PrefixExpressionContext fixExpression(@NotNull PrefixExpressionContext context) {
+          return context;
+        }
+      };
+
+      for (LookupElement postfixElement : templatesManager.collectTemplates(templateContext)) {
+        JavaChainLookupElement chainedPostfix = new JavaChainLookupElement(qualifierElement, postfixElement) {
+          @Override public PsiType getType() { return null; }
+        };
+
+        filteredResultSet.addElement(chainedPostfix);
       }
     }
   }

@@ -2,6 +2,7 @@ package org.jetbrains.postfixCompletion;
 
 import com.intellij.codeInsight.completion.*;
 import com.intellij.codeInsight.lookup.*;
+import com.intellij.psi.*;
 import org.jetbrains.annotations.*;
 import org.jetbrains.postfixCompletion.Infrastructure.*;
 
@@ -29,20 +30,23 @@ public final class PostfixCompletionContributor extends CompletionContributor {
     CompletionType completionType = parameters.getCompletionType();
     if (completionType != CompletionType.BASIC) return;
 
-
     LinkedHashSet<CompletionResult> results = result.runRemainingContributors(parameters, true);
 
+    // build PostfixExecutionContext
     boolean isForceMode = !parameters.isAutoPopup() && !behaveAsAutoPopupForTests;
+    boolean insideCodeFragment = (parameters.getPosition().getContainingFile() instanceof PsiCodeFragment);
 
-    PostfixExecutionContext executionContext = new PostfixExecutionContext(isForceMode, dummyIdentifier);
+    PostfixExecutionContext executionContext =
+      new PostfixExecutionContext(isForceMode, dummyIdentifier, insideCodeFragment);
 
-    List<LookupElement> elements = PostfixItemsCompletionProvider.addCompletions(parameters, executionContext);
+    // add normal postfix items
+    List<LookupElement> elements = PostfixItemsCompletionProvider.getItems(parameters, executionContext);
     for (LookupElement element : elements) {
       result.addElement(element);
     }
 
     if (results.isEmpty()) {
-      PostfixNoVariantsCompletionUtil.suggestChainedCalls(parameters, result);
+      PostfixNoVariantsCompletionUtil.suggestChainedCalls(parameters, result, executionContext);
     }
   }
 

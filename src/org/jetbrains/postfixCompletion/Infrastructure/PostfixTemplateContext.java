@@ -16,7 +16,7 @@ public abstract class PostfixTemplateContext {
   public final boolean insideCodeFragment;
 
   public PostfixTemplateContext(
-    @NotNull PsiJavaCodeReferenceElement reference, @NotNull PsiExpression expression,
+    @NotNull PsiJavaCodeReferenceElement reference, @NotNull PsiElement expression,
     @NotNull PostfixExecutionContext executionContext) {
     postfixReference = reference;
     this.executionContext = executionContext;
@@ -30,7 +30,7 @@ public abstract class PostfixTemplateContext {
   }
 
   @NotNull protected List<PrefixExpressionContext> buildExpressionContexts(
-      @NotNull PsiElement reference, @NotNull PsiExpression expression) {
+      @NotNull PsiElement reference, @NotNull PsiElement expression) {
     List<PrefixExpressionContext> contexts = new ArrayList<PrefixExpressionContext>();
     int referenceEndRange = reference.getTextRange().getEndOffset();
 
@@ -50,6 +50,8 @@ public abstract class PostfixTemplateContext {
 
         if (context.canBeStatement) break;
       }
+
+      // todo: node instanceof PsiTypeElement?
     }
 
     return contexts;

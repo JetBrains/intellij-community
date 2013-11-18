@@ -14,13 +14,13 @@ public class PrefixExpressionContext {
   public final boolean canBeStatement;
 
   public PrefixExpressionContext(
-      @NotNull PostfixTemplateContext parentContext, @NotNull PsiExpression expression) {
+      @NotNull PostfixTemplateContext parentContext, @NotNull PsiElement expression) {
     assert expression.isValid() : "expression.isValid()";
 
     this.parentContext = parentContext;
     this.expression = expression;
-    this.expressionType = calculateExpressionType();
-    this.referencedElement = calculateReferencedElement();
+    this.expressionType = calculateExpressionType(expression);
+    this.referencedElement = calculateReferencedElement(expression);
 
     expressionRange = calculateExpressionRange();
     canBeStatement = (getContainingStatement() != null);
@@ -63,7 +63,7 @@ public class PrefixExpressionContext {
     return null;
   }
 
-  @Nullable protected PsiType calculateExpressionType() {
+  @Nullable protected PsiType calculateExpressionType(@NotNull PsiElement expression) {
     if (expression instanceof PsiExpression) {
       return ((PsiExpression) expression).getType();
     }
@@ -71,7 +71,7 @@ public class PrefixExpressionContext {
     return null;
   }
 
-  @Nullable protected PsiElement calculateReferencedElement() {
+  @Nullable protected PsiElement calculateReferencedElement(@NotNull PsiElement expression) {
     if (expression instanceof PsiJavaCodeReferenceElement) {
       return ((PsiJavaCodeReferenceElement) expression).resolve();
     }

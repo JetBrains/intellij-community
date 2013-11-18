@@ -9,8 +9,8 @@ import org.jetbrains.annotations.*;
 import java.util.*;
 
 public abstract class PostfixItemsCompletionProvider {
-  @NotNull public static List<LookupElement> addCompletions(
-      @NotNull CompletionParameters parameters, @NotNull PostfixExecutionContext executionContext) {
+  @NotNull public static List<LookupElement> getItems(
+    @NotNull CompletionParameters parameters, @NotNull PostfixExecutionContext executionContext) {
     Application application = ApplicationManager.getApplication();
     PostfixTemplatesManager templatesManager = application.getComponent(PostfixTemplatesManager.class);
 
