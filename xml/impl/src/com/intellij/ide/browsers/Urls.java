@@ -15,7 +15,6 @@
  */
 package com.intellij.ide.browsers;
 
-import com.google.common.base.CharMatcher;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -35,15 +34,13 @@ import java.util.regex.Pattern;
 public final class Urls {
   private static final Logger LOG = Logger.getInstance(Urls.class);
 
-  public static final CharMatcher SLASH_MATCHER = CharMatcher.is('/');
-
   // about ";" see WEB-100359
   private static final Pattern URI_PATTERN = Pattern.compile("^([^:/?#]+)://([^/?#]*)([^?#;]*)(.*)");
 
   @NotNull
   public static Url newFromEncoded(@NotNull String url) {
     Url result = parse(url, true);
-    LOG.assertTrue(result != null);
+    LOG.assertTrue(result != null, url);
     return result;
   }
 
