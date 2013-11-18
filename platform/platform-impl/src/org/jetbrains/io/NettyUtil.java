@@ -95,7 +95,8 @@ public final class NettyUtil {
 
     return (throwable instanceof IOException && message.equals("An existing connection was forcibly closed by the remote host")) ||
            (throwable instanceof ChannelException && message.startsWith("Failed to bind to: ")) ||
-           throwable instanceof BindException;
+           throwable instanceof BindException ||
+           (message.startsWith("Connection reset") || message.equals("Operation timed out") || message.equals("Connection timed out"));
   }
 
   // applicable only in case of ClientBootstrap&OioClientSocketChannelFactory
