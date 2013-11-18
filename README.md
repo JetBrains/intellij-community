@@ -37,8 +37,7 @@ Available templates:
 Other features:
 
 * Support for IDEA chained code completion (`st.new` => `new SomeType()`)
-* Works inside code fragments, like 'evaluate expression' debugger window
-
+* Works inside code fragments, like *evaluate expression* debugger window
 
 Future work:
 
@@ -52,9 +51,7 @@ Future work:
 * `.throw` – throws value of Exception type `throw expr;`
 * `.assert` - creates assertion statement from expression `assert expr`
 * `.sync` – surrounds expression with statement `synchronized (expr)`
-* `.try` – surrounds resource expression with `try (T x = resource)`
-
-* Support IDEA's soft selection completion without commit on [.]
+* `.try` – surrounds resource expression with `try (T resource = expr)`
 * Settings page to disable/enable templates
 * Control braces insertion for statements (use code style settings?)
 * Support non-Java languages, of course :)
@@ -62,4 +59,4 @@ Future work:
 #### Feedback
 
 Feel free to post any issues or feature requests here on github or
-contact me directly: *alexander.shvedov[at]jetbrains.com*
+* contact me directly: *alexander.shvedov[at]jetbrains.com*
