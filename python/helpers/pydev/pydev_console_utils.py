@@ -316,8 +316,9 @@ class BaseInterpreterInterface:
 
     def execLine(self, line):
         try:
+            more = self.needMore(self.buffer, line)
             self.exec_queue.put(CodeFragment(line, True))
-            return self.needMore(self.buffer, line)
+            return more
         except:
             traceback.print_exc()
             return False
@@ -325,8 +326,9 @@ class BaseInterpreterInterface:
 
     def execMultipleLines(self, lines):
         try:
+            more = self.needMoreForCode(lines)
             self.exec_queue.put(CodeFragment(lines, False))
-            return self.needMoreForCode(lines)
+            return more
         except:
             traceback.print_exc()
             return False
