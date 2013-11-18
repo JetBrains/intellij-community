@@ -10,7 +10,7 @@ import java.util.*;
 
 public abstract class PostfixItemsCompletionProvider {
   @NotNull public static List<LookupElement> getItems(
-    @NotNull CompletionParameters parameters, @NotNull PostfixExecutionContext executionContext) {
+      @NotNull CompletionParameters parameters, @NotNull PostfixExecutionContext executionContext) {
     Application application = ApplicationManager.getApplication();
     PostfixTemplatesManager templatesManager = application.getComponent(PostfixTemplatesManager.class);
 

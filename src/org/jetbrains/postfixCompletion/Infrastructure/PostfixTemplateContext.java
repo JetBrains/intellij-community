@@ -1,14 +1,12 @@
 package org.jetbrains.postfixCompletion.Infrastructure;
 
+import com.intellij.codeInsight.completion.*;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.*;
 
 import java.util.*;
 
 public abstract class PostfixTemplateContext {
-  // can be 'PsiReferenceExpression' or 'PsiJavaCodeReferenceElement'
-
-  // todo: use PsiJavaCodeReferenceElement everywhere
   @NotNull public final PsiJavaCodeReferenceElement postfixReference;
   @NotNull public final List<PrefixExpressionContext> expressions;
   @NotNull public final PrefixExpressionContext outerExpression, innerExpression;
@@ -59,9 +57,41 @@ public abstract class PostfixTemplateContext {
 
   @NotNull public abstract PrefixExpressionContext fixExpression(@NotNull PrefixExpressionContext context);
 
-  public boolean isBrokenStatement(@NotNull PsiStatement statement) { return false; }
-
   // todo: use me (when? in .new/.throw template?)
   // todo: drop me :O
   public boolean isFakeContextFromType() { return false; }
+
+  @Nullable public PsiStatement getContainingStatement(@NotNull PrefixExpressionContext expressionContext) {
+    // look for expression-statement parent
+    PsiElement element = expressionContext.expression.getParent();
+
+    // escape from '.postfix' reference-expression
+    if (element == postfixReference) {
+      // sometimes IDEA's code completion breaks expression in the middle into statement
+      if (element instanceof PsiReferenceExpression) {
+        // check we are invoked from code completion
+        String referenceName = ((PsiReferenceExpression) element).getReferenceName();
+        if (referenceName != null && referenceName.endsWith(CompletionUtilCore.DUMMY_IDENTIFIER_TRIMMED)) {
+          PsiElement referenceParent = element.getParent(); // find separated expression-statement
+          if (referenceParent instanceof PsiExpressionStatement) {
+            PsiElement nextSibling = referenceParent.getNextSibling();
+            if (nextSibling instanceof PsiExpressionStatement) { // find next expression-statement
+              PsiExpression brokenExpression = ((PsiExpressionStatement) nextSibling).getExpression();
+              // check next expression is likely broken invocation expression
+              if (brokenExpression instanceof PsiParenthesizedExpression) return null; // foo;();
+              if (brokenExpression instanceof PsiMethodCallExpression) return null;    // fo;o();
+            }
+          }
+        }
+      }
+
+      element = element.getParent();
+    }
+
+    if (element instanceof PsiExpressionStatement) {
+      return (PsiStatement) element;
+    }
+
+    return null;
+  }
 }

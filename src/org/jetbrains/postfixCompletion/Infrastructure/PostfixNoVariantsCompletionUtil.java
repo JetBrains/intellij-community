@@ -56,16 +56,15 @@ public abstract class PostfixNoVariantsCompletionUtil {
       final PsiElement mockReferenceQualifier = mockReference.getQualifier();
       if (mockReferenceQualifier == null) continue;
 
-      PostfixTemplateContext templateContext = new PostfixTemplateContext(
+      PostfixTemplateContext mockTemplateContext = new PostfixTemplateContext(
         (PsiJavaCodeReferenceElement) parent, qualifierReference, executionContext) {
 
-        @NotNull @Override protected List<PrefixExpressionContext> buildExpressionContexts(
-          @NotNull PsiElement reference, @NotNull PsiElement expression) {
-
-
-
+        @NotNull @Override
+        protected List<PrefixExpressionContext> buildExpressionContexts(
+            @NotNull PsiElement reference, @NotNull PsiElement expression) {
           return Collections.<PrefixExpressionContext>singletonList(
             new PrefixExpressionContext(this, expression) {
+              // mock expression's type and referenced element
               @Nullable @Override protected PsiType calculateExpressionType(@NotNull PsiElement expression) {
                 return super.calculateExpressionType(mockReferenceQualifier);
               }
@@ -79,11 +78,11 @@ public abstract class PostfixNoVariantsCompletionUtil {
 
         @NotNull @Override
         public PrefixExpressionContext fixExpression(@NotNull PrefixExpressionContext context) {
-          return context;
+          return context; // is it right?
         }
       };
 
-      for (LookupElement postfixElement : templatesManager.collectTemplates(templateContext)) {
+      for (LookupElement postfixElement : templatesManager.collectTemplates(mockTemplateContext)) {
         JavaChainLookupElement chainedPostfix = new JavaChainLookupElement(qualifierElement, postfixElement) {
           @Override public PsiType getType() { return null; }
         };

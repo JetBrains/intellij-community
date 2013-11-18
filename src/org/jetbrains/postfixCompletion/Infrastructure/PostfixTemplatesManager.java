@@ -99,9 +99,16 @@ public final class PostfixTemplatesManager implements ApplicationComponent {
                 return new PrefixExpressionContext(this, newExpression);
               }
 
-              @Override public boolean isBrokenStatement(@NotNull PsiStatement statement) {
-                assert lhsStatement.isValid() : "lhsStatement.isValid()";
-                return isComplexRhs && (statement == lhsStatement);
+              @Nullable @Override
+              public PsiStatement getContainingStatement(@NotNull PrefixExpressionContext expressionContext) {
+                PsiStatement statement = super.getContainingStatement(expressionContext);
+                if (statement != null) {
+                  // ignore expression-statements produced by broken expr like '2.var + 2'
+                  assert lhsStatement.isValid() : "lhsStatement.isValid()";
+                  if (isComplexRhs && (statement == lhsStatement)) return null;
+                }
+
+                return statement;
               }
             };
           }
