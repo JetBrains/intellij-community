@@ -24,7 +24,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-public final class MessageBuilder {
+public final class MessageDialogBuilder {
   private final String myMessage;
   private final String myTitle;
 
@@ -35,16 +35,16 @@ public final class MessageBuilder {
   private Icon myIcon;
   private DialogWrapper.DoNotAskOption myDoNotAskOption;
 
-  private MessageBuilder(@NotNull String title, @NotNull String message) {
+  private MessageDialogBuilder(@NotNull String title, @NotNull String message) {
     myTitle = title;
     myMessage = message;
   }
 
-  public static MessageBuilder yesNo(@NotNull String title, @NotNull String message) {
-    return new MessageBuilder(title, message).icon(Messages.getQuestionIcon());
+  public static MessageDialogBuilder yesNo(@NotNull String title, @NotNull String message) {
+    return new MessageDialogBuilder(title, message).icon(Messages.getQuestionIcon());
   }
 
-  public MessageBuilder project(@Nullable Project project) {
+  public MessageDialogBuilder project(@Nullable Project project) {
     myProject = project;
     return this;
   }
@@ -55,22 +55,22 @@ public final class MessageBuilder {
    * @see {@link com.intellij.openapi.ui.Messages#getErrorIcon()}
    * @see {@link com.intellij.openapi.ui.Messages#getQuestionIcon()}
    */
-  public MessageBuilder icon(@Nullable Icon icon) {
+  public MessageDialogBuilder icon(@Nullable Icon icon) {
     myIcon = icon;
     return this;
   }
 
-  public MessageBuilder doNotAsk(@NotNull DialogWrapper.DoNotAskOption doNotAskOption) {
+  public MessageDialogBuilder doNotAsk(@NotNull DialogWrapper.DoNotAskOption doNotAskOption) {
     myDoNotAskOption = doNotAskOption;
     return this;
   }
 
-  public MessageBuilder yesText(@NotNull String yesText) {
+  public MessageDialogBuilder yesText(@NotNull String yesText) {
     myYesText = yesText;
     return this;
   }
 
-  public MessageBuilder noText(@NotNull String noText) {
+  public MessageDialogBuilder noText(@NotNull String noText) {
     myNoText = noText;
     return this;
   }
