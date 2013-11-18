@@ -973,7 +973,6 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
         updatePopup();
       }
       catch (Exception ignore) {
-        ignore.printStackTrace();
       }
       finally {
         myList.getEmptyText().setText(StatusText.DEFAULT_EMPTY_TEXT);
