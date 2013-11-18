@@ -353,7 +353,6 @@ public class UsageViewManagerImpl extends UsageViewManager {
           ProgressIndicator indicator = ProgressWrapper.unwrap(ProgressManager.getInstance().getProgressIndicator());
           if (indicator != null && indicator.isCanceled()) return false;
           TooManyUsagesStatus tooManyUsagesStatus = TooManyUsagesStatus.getFrom(indicator);
-          tooManyUsagesStatus.pauseProcessingIfTooManyUsages();
           boolean incrementCounter = !isSelfUsage(usage, mySearchFor);
 
           if (incrementCounter) {
