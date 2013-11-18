@@ -15,30 +15,15 @@
  */
 package com.intellij.codeInsight.template;
 
-import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-/**
- * @author Eugene.Kudelevsky
- */
-public interface CustomLiveTemplate {
-  ExtensionPointName<CustomLiveTemplate> EP_NAME = ExtensionPointName.create("com.intellij.customLiveTemplate");
-
-  @Nullable
-  String computeTemplateKey(@NotNull CustomTemplateCallback callback);
-
-  boolean isApplicable(PsiFile file, int offset, boolean wrapping);
-
-  boolean supportsWrapping();
-
-  void expand(String key, @NotNull CustomTemplateCallback callback);
-
-  void wrap(String selection, @NotNull CustomTemplateCallback callback);
-
-  @NotNull
-  String getTitle();
-
-  char getShortcut();
+abstract public class CustomLiveTemplateBase implements CustomLiveTemplate {
+  /**
+   * Implementation should returns {@code true} if it has own lookup item in completion autopopup
+   * and it is supposed that template should be expanded while completion auto-popup is active.
+   */
+  public boolean hasCompletionItem(@NotNull PsiFile file, int offset) {
+    return false;
+  }
 }
