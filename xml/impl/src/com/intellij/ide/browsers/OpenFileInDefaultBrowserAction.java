@@ -32,6 +32,7 @@ import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.Consumer;
+import com.intellij.util.Url;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.XmlBundle;
 import com.intellij.xml.util.HtmlUtil;
