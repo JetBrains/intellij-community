@@ -50,6 +50,7 @@ public class ActionInstallPlugin extends AnAction implements DumbAware {
     this.installed = installed;
   }
 
+  @Override
   public void update(AnActionEvent e) {
     Presentation presentation = e.getPresentation();
     IdeaPluginDescriptor[] selection = getPluginTable().getSelectedObjects();
@@ -80,6 +81,7 @@ public class ActionInstallPlugin extends AnAction implements DumbAware {
     presentation.setEnabled(enabled);
   }
 
+  @Override
   public void actionPerformed(AnActionEvent e) {
     install();
   }
@@ -224,6 +226,7 @@ public class ActionInstallPlugin extends AnAction implements DumbAware {
           message += "updated plugin" + (disabled.size() > 1 ? "s" : "");
         }
         else {
+          //noinspection SpellCheckingInspection
           message += "plugin dependenc" + (disabledDependants.size() > 1 ? "ies" : "y");
         }
         message += "?</body></html>";
