@@ -18,7 +18,7 @@ import java.util.*;
 import java.util.LinkedHashSet;
 
 // todo: fix 'scn.nn' prefix matching
-
+// NOTE: copy & paste from IDEA CE chained code completion :((
 public abstract class PostfixNoVariantsCompletionUtil {
   public static void suggestChainedCalls(
     @NotNull CompletionParameters parameters, @NotNull CompletionResultSet resultSet,
@@ -26,6 +26,7 @@ public abstract class PostfixNoVariantsCompletionUtil {
 
     PsiElement position = parameters.getPosition(), parent = position.getParent();
     if ((!(parent instanceof PsiJavaCodeReferenceElement))) return;
+    if (executionContext.insideCodeFragment) return;
 
     PsiElement qualifier = ((PsiJavaCodeReferenceElement) parent).getQualifier();
     if (!(qualifier instanceof PsiJavaCodeReferenceElement)) return;
@@ -36,11 +37,7 @@ public abstract class PostfixNoVariantsCompletionUtil {
     PsiElement target = qualifierReference.resolve();
     if (target != null && !(target instanceof PsiPackage)) return;
 
-    PsiFile file = position.getContainingFile();
-    if (file instanceof PsiJavaCodeReferenceCodeFragment) return;
-
-    // "prefix."
-    int startOffset = parent.getTextRange().getStartOffset();
+    int startOffset = parent.getTextRange().getStartOffset(); // "prefix."
     String fullPrefix = parent.getText().substring(0, parameters.getOffset() - startOffset);
 
     CompletionResultSet filteredResultSet = resultSet.withPrefixMatcher(fullPrefix);
@@ -56,25 +53,27 @@ public abstract class PostfixNoVariantsCompletionUtil {
         ReferenceExpressionCompletionContributor.createMockReference(position, type, qualifierElement);
       if (mockReference == null) continue;
 
+      final PsiElement mockReferenceQualifier = mockReference.getQualifier();
+      if (mockReferenceQualifier == null) continue;
+
       PostfixTemplateContext templateContext = new PostfixTemplateContext(
         (PsiJavaCodeReferenceElement) parent, qualifierReference, executionContext) {
 
         @NotNull @Override protected List<PrefixExpressionContext> buildExpressionContexts(
           @NotNull PsiElement reference, @NotNull PsiElement expression) {
 
-          final PsiReferenceExpression qualifier = (PsiReferenceExpression) mockReference.getQualifier();
+
 
           return Collections.<PrefixExpressionContext>singletonList(
             new PrefixExpressionContext(this, expression) {
               @Nullable @Override protected PsiType calculateExpressionType(@NotNull PsiElement expression) {
-                return super.calculateExpressionType(qualifier);
+                return super.calculateExpressionType(mockReferenceQualifier);
               }
 
               @Nullable @Override protected PsiElement calculateReferencedElement(@NotNull PsiElement expression) {
-                return super.calculateReferencedElement(qualifier);
+                return super.calculateReferencedElement(mockReferenceQualifier);
               }
             }
-            // mock type, mock referenced element?
           );
         }
 
