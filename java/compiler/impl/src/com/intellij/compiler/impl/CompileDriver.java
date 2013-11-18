@@ -2359,6 +2359,9 @@ public class CompileDriver {
   }
 
   private boolean executeCompileTasks(final CompileContext context, final boolean beforeTasks) {
+    if (myProject.isDisposed()) {
+      return false;
+    }
     final CompilerManager manager = CompilerManager.getInstance(myProject);
     final ProgressIndicator progressIndicator = context.getProgressIndicator();
     progressIndicator.pushState();
