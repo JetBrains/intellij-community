@@ -94,5 +94,9 @@ public class PostfixCompletionTest extends LightCodeInsightFixtureTestCase {
 
   public void testNoVariants01() { test(""); }
   public void testNoVariants02() { test("nn\n"); }
+  public void testNoVariants03() { test(""); }
+  public void testNoVariants04() { test("nul\n"); }
+  public void testNoVariants05() { test("var\n"); }
+  public void testNoVariants06() { test("var\n"); }
 }
 

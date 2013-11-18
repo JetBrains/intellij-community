@@ -29,7 +29,8 @@ public class ArgumentExpressionTemplateProvider extends TemplateProviderBase {
       consumer.add(new ArgumentLookupElement(expression));
     } else if (expression.canBeStatement) {
       if (expression.expressionType == null) return; // do not show over unresolved symbols
-      if (!CommonUtils.isNiceExpression(expression.expression)) return;
+      if (expression.referencedElement instanceof PsiClass) return; // do not show over types
+      if (!CommonUtils.isNiceExpression(expression.expression)) return; // void expressions and etc.
 
       // foo.bar().baz.arg
       consumer.add(new ArgumentLookupElement(expression));

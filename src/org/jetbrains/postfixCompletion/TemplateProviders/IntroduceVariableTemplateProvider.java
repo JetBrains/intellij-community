@@ -7,6 +7,7 @@ import com.intellij.openapi.command.*;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.project.*;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.light.*;
 import com.intellij.refactoring.introduce.inplace.*;
 import com.intellij.refactoring.introduceVariable.*;
 import com.intellij.refactoring.ui.*;
@@ -51,7 +52,8 @@ public class IntroduceVariableTemplateProvider extends TemplateProviderBase {
           if (referenced instanceof PsiPackage) continue;
           // and 'too simple' expressions (except force mode)
           if (referenced instanceof PsiLocalVariable ||
-              referenced instanceof PsiParameter) {
+              referenced instanceof PsiParameter ||
+              referenced instanceof LightElement) {
             forcedTarget = expressionContext;
             continue;
           }

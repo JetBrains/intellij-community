@@ -21,25 +21,15 @@ public class PostfixTestUtils {
     StringBuilder builder = new StringBuilder("// Items: ");
 
     if (elements != null && elements.length > 0) {
-      int totalLength = 0;
-      for (LookupElement element : elements) {
-        totalLength += element.getLookupString().length();
+      boolean first = true;
+      for (LookupElement item : elements) {
+        if (first) first = false;
+        else builder.append(", ");
+        builder.append(item.getLookupString());
       }
-
-      if (totalLength > 60) {
-        for (LookupElement item : elements) {
-          builder
-            .append(SystemProperties.getLineSeparator())
-            .append("//  ").append(item.getLookupString());
-        }
-      } else {
-        boolean first = true;
-        for (LookupElement item : elements) {
-          if (first) first = false; else builder.append(", ");
-          builder.append(item.getLookupString());
-        }
-      }
-    } else builder.append("<no items>");
+    } else {
+      builder.append("<no items>");
+    }
 
     builder.append(SystemProperties.getLineSeparator());
     return builder.toString();
