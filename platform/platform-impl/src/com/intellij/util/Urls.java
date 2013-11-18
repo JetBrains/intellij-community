@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.ide.browsers;
+package com.intellij.util;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
@@ -51,7 +51,7 @@ public final class Urls {
 
   // java.net.URI.create cannot parse "file:///Test Stuff" - but you don't need to worry about it - this method is aware
   @Nullable
-  public static Url newFromIdea(@NotNull String url) {
+  public static Url parseFromIdea(@NotNull String url) {
     return URLUtil.containsScheme(url) ? parseUrl(url) : new LocalFileUrl(url);
   }
 

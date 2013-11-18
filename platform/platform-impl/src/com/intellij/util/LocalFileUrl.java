@@ -1,4 +1,4 @@
-package com.intellij.ide.browsers;
+package com.intellij.util;
 
 import com.intellij.openapi.util.SystemInfo;
 import org.jetbrains.annotations.NotNull;
