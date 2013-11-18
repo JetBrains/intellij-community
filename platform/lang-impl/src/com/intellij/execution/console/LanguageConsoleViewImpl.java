@@ -41,7 +41,7 @@ public class LanguageConsoleViewImpl extends ConsoleViewImpl implements Language
   }
 
   public LanguageConsoleViewImpl(@NotNull LanguageConsoleImpl console, boolean usePredefinedMessageFilter) {
-    super(console.getProject(), GlobalSearchScope.allScope(console.getProject()), true, null, usePredefinedMessageFilter);
+    super(console.getProject(), GlobalSearchScope.allScope(console.getProject()), true, usePredefinedMessageFilter);
 
     myConsole = console;
     Disposer.register(this, myConsole);
