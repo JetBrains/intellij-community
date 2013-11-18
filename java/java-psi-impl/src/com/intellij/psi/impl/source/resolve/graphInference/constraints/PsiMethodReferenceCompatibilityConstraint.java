@@ -98,10 +98,12 @@ public class PsiMethodReferenceCompatibilityConstraint implements ConstraintForm
         for (int i = 1; i < targetParameters.length; i++) {
           constraints.add(new TypeCompatibilityConstraint(psiSubstitutor.substitute(parameters[i - 1].getType()), GenericsUtil.eliminateWildcards(substitutor.substitute(targetParameters[i].getType()))));
         }
-      } else {
+      } else if (targetParameters.length == parameters.length) {
         for (int i = 0; i < targetParameters.length; i++) {
           constraints.add(new TypeCompatibilityConstraint(psiSubstitutor.substitute(parameters[i].getType()), GenericsUtil.eliminateWildcards(substitutor.substitute(targetParameters[i].getType()))));
         }
+      } else {
+        return false;
       }
       if (returnType != PsiType.VOID) {
         if (applicableMethodReturnType == PsiType.VOID) {
