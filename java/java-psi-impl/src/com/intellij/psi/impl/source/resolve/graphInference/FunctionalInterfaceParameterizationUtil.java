@@ -38,7 +38,6 @@ public class FunctionalInterfaceParameterizationUtil {
       }
       return false;
     }
-    LOG.error("Unexpected type: " + classType);
     return false;
   }
 

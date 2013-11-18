@@ -125,7 +125,7 @@ public class ProjectTypesList implements Disposable {
   void resetSelection() {
     if (myList.getSelectedIndex() != -1) return;
     SelectTemplateSettings settings = SelectTemplateSettings.getInstance();
-    if (settings.getLastGroup() == null || !setSelectedTemplate(settings.getLastGroup(), settings.getLastTemplate())) {
+    if (settings.getLastGroup() == null || !setSelectedType(settings.getLastGroup(), settings.getLastTemplate())) {
       myList.setSelectedIndex(0);
     }
   }
@@ -151,12 +151,12 @@ public class ProjectTypesList implements Disposable {
   }
 
   @Nullable
-  public ProjectCategory getSelectedTemplate() {
+  public ProjectCategory getSelectedType() {
     Object value = myList.getSelectedValue();
     return value instanceof TemplateItem ? ((TemplateItem)value).myTemplate : null;
   }
 
-  public boolean setSelectedTemplate(@Nullable String group, @Nullable String name) {
+  public boolean setSelectedType(@Nullable String group, @Nullable String name) {
     for (int i = 0; i < myList.getModel().getSize(); i++) {
       Object o = myList.getModel().getElementAt(i);
       if (o instanceof TemplateItem && ((TemplateItem)o).myGroup.equals(group) && ((TemplateItem)o).getName().equals(name)) {
@@ -173,7 +173,7 @@ public class ProjectTypesList implements Disposable {
   public void dispose() {
   }
 
-  class TemplateItem {
+  static class TemplateItem {
 
     private final ProjectCategory myTemplate;
     private final String myGroup;

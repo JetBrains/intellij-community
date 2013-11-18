@@ -71,10 +71,13 @@ public class ExistingLibraryEditor extends LibraryEditorBase implements Disposab
 
   private LibraryType detectType() {
     if (!myDetectedTypeComputed) {
-      final Pair<LibraryType<?>,LibraryProperties<?>> pair = LibraryDetectionManager.getInstance().detectType(Arrays.asList(getFiles(OrderRootType.CLASSES)));
-      if (pair != null) {
-        myDetectedType = pair.getFirst();
-        myDetectedLibraryProperties = pair.getSecond();
+      LibraryTable libraryTable = myLibrary.getTable();
+      if (libraryTable == null || libraryTable.isEditable()) {
+        final Pair<LibraryType<?>,LibraryProperties<?>> pair = LibraryDetectionManager.getInstance().detectType(Arrays.asList(getFiles(OrderRootType.CLASSES)));
+        if (pair != null) {
+          myDetectedType = pair.getFirst();
+          myDetectedLibraryProperties = pair.getSecond();
+        }
       }
       myDetectedTypeComputed = true;
     }

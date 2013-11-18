@@ -121,7 +121,7 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
     final PsiPackageStatement packageStatement = getPackageStatement();
     final PsiElementFactory factory = JavaPsiFacade.getInstance(getProject()).getElementFactory();
     if (packageStatement != null) {
-      if (packageName.length() > 0) {
+      if (!packageName.isEmpty()) {
         final PsiJavaCodeReferenceElement reference = packageStatement.getPackageReference();
         reference.replace(factory.createReferenceFromText(packageName, packageStatement));
       }
@@ -130,7 +130,7 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
       }
     }
     else {
-      if (packageName.length() > 0) {
+      if (!packageName.isEmpty()) {
         addBefore(factory.createPackageStatement(packageName), getFirstChild());
       }
     }

@@ -100,7 +100,7 @@ public class FrameworkSupportOptionsComponent {
       myLibraryOptionsPanel = new LibraryOptionsPanel(description, myModel.getBaseDirectoryForLibrariesPath(), createLibraryVersionFilter(),
                                                       container, !myConfigurable.isOnlyLibraryAdded()) {
         @Override
-        protected void onVersionChanged(FrameworkLibraryVersion version) {
+        protected void onVersionChanged(@Nullable String version) {
           if (myFrameworkVersionComponent == null) {
             myModel.setSelectedLibraryVersion(provider.getId(), version);
           }

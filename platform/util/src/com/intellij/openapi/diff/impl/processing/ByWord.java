@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,6 +34,7 @@ public class ByWord implements DiffPolicy{
     myComparisonPolicy = comparisonPolicy;
   }
 
+  @Override
   public DiffFragment[] buildFragments(String text1, String text2) throws FilesTooBigForDiffException {
     Word[] words1 = buildWords(text1, myComparisonPolicy);
     Word[] words2 = buildWords(text2, myComparisonPolicy);
@@ -55,7 +56,7 @@ public class ByWord implements DiffPolicy{
       } else {
         String prefix1 = version1.getCurrentWordPrefix();
         String prefix2 = version2.getCurrentWordPrefix();
-        if (prefix1.length() > 0 || prefix2.length() > 0)
+        if (!prefix1.isEmpty() || !prefix2.isEmpty())
           result.add(myComparisonPolicy.createFragment(prefix1, prefix2));
         result.addChangedWords(change.deleted, change.inserted);
       }
@@ -124,7 +125,7 @@ public class ByWord implements DiffPolicy{
 
   static Word[] buildWords(String text, ComparisonPolicy policy) {
     ArrayList<Word> words = new ArrayList<Word>();
-    if (text.length() == 0 || !Character.isWhitespace(text.charAt(0)))
+    if (text.isEmpty() || !Character.isWhitespace(text.charAt(0)))
       words.add(policy.createFormatting(text, TextRange.EMPTY_RANGE));
     int start = 0;
     boolean withinFormatting = true;
@@ -194,7 +195,7 @@ public class ByWord implements DiffPolicy{
       String text2 = fragment.getText2();
       if (text1 != null) myVersion1.addOffset(text1.length());
       if (text2 != null) myVersion2.addOffset(text2.length());
-      if (fragment.isEqual() && myFragments.size() > 0) {
+      if (fragment.isEqual() && !myFragments.isEmpty()) {
         int lastIndex = myFragments.size() - 1;
         DiffFragment prevFragment = myFragments.get(lastIndex);
         if (prevFragment.isEqual()) {
@@ -221,7 +222,7 @@ public class ByWord implements DiffPolicy{
     }
 
     private DiffFragment[] fragmentsByChar(String text1, String text2) throws FilesTooBigForDiffException {
-      if (text1.length() == 0 && text2.length() == 0) {
+      if (text1.isEmpty() && text2.isEmpty()) {
         return DiffFragment.EMPTY_ARRAY;
       }
       final String side1 = myVersion1.getPrevChar() + text1;
@@ -271,9 +272,9 @@ public class ByWord implements DiffPolicy{
     public void addTails() throws FilesTooBigForDiffException {
       String tail1 = myVersion1.getNotProcessedTail();
       String tail2 = myVersion2.getNotProcessedTail();
-      if (tail1.length() == 0 && tail2.length() == 0) return;
+      if (tail1.isEmpty() && tail2.isEmpty()) return;
       DiffFragment[] fragments = fragmentsByChar(tail1, tail2);
-      if (myFragments.size() > 0) {
+      if (!myFragments.isEmpty()) {
         DiffFragment lastFragment = myFragments.get(myFragments.size() - 1);
         if (lastFragment.isChange()) {
           int oneSideCount = 0;
@@ -365,7 +366,7 @@ public class ByWord implements DiffPolicy{
       }
 
       public void addOneSide(String prefix, int wordCount) {
-        if (prefix.length() > 0) myBuilder.addOneSide(prefix, mySide);
+        if (!prefix.isEmpty()) myBuilder.addOneSide(prefix, mySide);
         myBuilder.addOneSide(getWordSequence(wordCount), mySide);
         incCurrentWord(wordCount);
       }

@@ -64,10 +64,7 @@ public abstract class RootModelBase implements ModuleRootModel {
   public String[] getExcludeRootUrls() {
     final List<String> result = new SmartList<String>();
     for (ContentEntry contentEntry : getContent()) {
-      final ExcludeFolder[] excludeFolders = contentEntry.getExcludeFolders();
-      for (ExcludeFolder excludeFolder : excludeFolders) {
-        result.add(excludeFolder.getUrl());
-      }
+      result.addAll(contentEntry.getExcludeFolderUrls());
     }
     return ArrayUtil.toStringArray(result);
   }
@@ -77,13 +74,7 @@ public abstract class RootModelBase implements ModuleRootModel {
   public VirtualFile[] getExcludeRoots() {
     final List<VirtualFile> result = new SmartList<VirtualFile>();
     for (ContentEntry contentEntry : getContent()) {
-      final ExcludeFolder[] excludeFolders = contentEntry.getExcludeFolders();
-      for (ExcludeFolder excludeFolder : excludeFolders) {
-        final VirtualFile file = excludeFolder.getFile();
-        if (file != null) {
-          result.add(file);
-        }
-      }
+      Collections.addAll(result, contentEntry.getExcludeFolderFiles());
     }
     return VfsUtilCore.toVirtualFileArray(result);
   }

@@ -48,7 +48,6 @@ import org.zmlx.hg4idea.ui.HgBookmarkDialog;
 import org.zmlx.hg4idea.util.HgErrorUtil;
 import org.zmlx.hg4idea.util.HgUtil;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -75,10 +74,10 @@ public class HgBranchPopupActions {
     }
 
     popupGroup.addSeparator("Bookmarks");
-    List<String> bookmarks = new ArrayList<String>(myRepository.getBookmarks());
+    List<String> bookmarkNames = HgUtil.getNamesWithoutHashes(myRepository.getBookmarks());
     String currentBookmark = myRepository.getCurrentBookmark();
-    Collections.sort(bookmarks);
-    for (String bookmark : bookmarks) {
+    Collections.sort(bookmarkNames);
+    for (String bookmark : bookmarkNames) {
       AnAction bookmarkAction = new BranchActions(myProject, bookmark, myRepository);
       if (bookmark.equals(currentBookmark)) {
         bookmarkAction.getTemplatePresentation().setIcon(PlatformIcons.CHECK_ICON);
@@ -87,9 +86,9 @@ public class HgBranchPopupActions {
     }
 
     popupGroup.addSeparator("Branches");
-    List<String> branches = new ArrayList<String>(myRepository.getBranches());
-    Collections.sort(branches);
-    for (String branch : branches) {
+    List<String> branchNames = HgUtil.getNamesWithoutHashes(myRepository.getBranches());
+    Collections.sort(branchNames);
+    for (String branch : branchNames) {
       if (!branch.equals(myRepository.getCurrentBranch())) { // don't show current branch in the list
         popupGroup.add(new BranchActions(myProject, branch, myRepository));
       }

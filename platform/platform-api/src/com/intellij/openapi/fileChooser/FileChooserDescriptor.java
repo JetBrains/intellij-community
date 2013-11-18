@@ -233,19 +233,6 @@ public class FileChooserDescriptor implements Cloneable {
     myRoots.addAll(roots);
   }
 
-  /** @deprecated use {@linkplain #setRoots(com.intellij.openapi.vfs.VirtualFile...)} (to remove in IDEA 13) */
-  @SuppressWarnings("UnusedDeclaration")
-  public final void setRoot(VirtualFile root) {
-    myRoots.clear();
-    myRoots.add(root);
-  }
-
-  /** @deprecated use {@linkplain #setRoots(com.intellij.openapi.vfs.VirtualFile...)} (to remove in IDEA 13) */
-  @SuppressWarnings("UnusedDeclaration")
-  public final void addRoot(VirtualFile root) {
-    myRoots.add(root);
-  }
-
   public boolean isTreeRootVisible() {
     return myIsTreeRootVisible;
   }

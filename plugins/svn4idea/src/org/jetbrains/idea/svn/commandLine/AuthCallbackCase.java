@@ -19,8 +19,6 @@ import org.jetbrains.annotations.NotNull;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 
-import java.util.List;
-
 /**
  * @author Konstantin Kolosovsky.
  */
@@ -38,7 +36,7 @@ public abstract class AuthCallbackCase {
 
   abstract boolean getCredentials(final String errText) throws SvnBindException;
 
-  public void updateParameters(List<String> parameters) {
+  public void updateParameters(@NotNull Command command) {
   }
 
   protected SVNURL parseUrl(String urlValue) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,12 +37,15 @@ public abstract class JspContextManager {
 
   public abstract void setContextFile(@NotNull PsiFile file, @Nullable BaseJspFile contextFile);
 
-  public abstract @Nullable
+  @Nullable
+  public abstract
   BaseJspFile getContextFile(@NotNull PsiFile file);
 
-  public abstract @Nullable JspFile getConfiguredContextFile(@NotNull PsiFile file);
+  @Nullable
+  public abstract JspFile getConfiguredContextFile(@NotNull PsiFile file);
 
-  public @NotNull
+  @NotNull
+  public
   BaseJspFile getRootContextFile(@NotNull BaseJspFile file) {
     BaseJspFile rootContext = file;
     HashSet<BaseJspFile> recursionPreventer = new HashSet<BaseJspFile>();

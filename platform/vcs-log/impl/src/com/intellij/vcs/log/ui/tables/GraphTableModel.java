@@ -54,6 +54,13 @@ public class GraphTableModel extends AbstractVcsLogTableModel<GraphCommitCell> {
     return commitNode == null ? null : myDataHolder.getMiniDetailsGetter().getCommitData(commitNode);
   }
 
+  @Nullable
+  @Override
+  public VcsFullCommitDetails getFullCommitDetails(int row) {
+    Node node = myDataPack.getGraphModel().getGraph().getCommitNodeInRow(row);
+    return node == null ? null : myDataHolder.getCommitDetailsGetter().getCommitData(node);
+  }
+
   @Override
   public void requestToLoadMore() {
     myDataHolder.showFullLog(EmptyRunnable.INSTANCE);
@@ -100,13 +107,7 @@ public class GraphTableModel extends AbstractVcsLogTableModel<GraphCommitCell> {
   @Override
   protected VirtualFile getRoot(int rowIndex) {
     Node commitNode = myDataPack.getGraphModel().getGraph().getCommitNodeInRow(rowIndex);
-    if (commitNode != null) {
-      return commitNode.getBranch().getRepositoryRoot();
-    }
-    else {
-      LOG.error("Couldn't identify commit node at " + rowIndex);
-      return UNKNOWN_ROOT;
-    }
+    return commitNode != null ? commitNode.getBranch().getRepositoryRoot() : FAKE_ROOT;
   }
 
   @NotNull
@@ -121,12 +122,20 @@ public class GraphTableModel extends AbstractVcsLogTableModel<GraphCommitCell> {
       message = details.getSubject();
       refs = (List<VcsRef>)myDataPack.getRefsModel().refsToCommit(details.getHash());
     }
-    return new GraphCommitCell(hash, graphPrintCell, message, refs);
+    return new GraphCommitCell(graphPrintCell, message, refs);
   }
 
   @NotNull
   @Override
   protected Class<GraphCommitCell> getCommitColumnClass() {
     return GraphCommitCell.class;
+  }
+
+  @Nullable
+  @Override
+  public Hash getHashAtRow(int row) {
+    Node node = myDataPack.getGraphModel().getGraph().getCommitNodeInRow(row);
+    return node == null ? null : myDataHolder.getHash(node.getCommitIndex());
+    
   }
 }

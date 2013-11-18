@@ -25,6 +25,7 @@ import com.intellij.refactoring.RefactoringFactory;
 import com.intellij.refactoring.RenameRefactoring;
 import com.intellij.refactoring.rename.RenameHandler;
 import com.intellij.refactoring.rename.RenameHandlerRegistry;
+import com.intellij.util.Consumer;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.InspectionGadgetsFix;
 import org.jetbrains.annotations.NonNls;
@@ -78,9 +79,9 @@ public class RenameFix extends InspectionGadgetsFix {
     final PsiElement elementToRename = nameIdentifier.getParent();
     if (m_targetName == null) {
       final AsyncResult<DataContext> contextFromFocus = DataManager.getInstance().getDataContextFromFocus();
-      contextFromFocus.doWhenDone(new AsyncResult.Handler<DataContext>() {
+      contextFromFocus.doWhenDone(new Consumer<DataContext>() {
         @Override
-        public void run(DataContext context) {
+        public void consume(DataContext context) {
           final RenameHandler renameHandler = RenameHandlerRegistry.getInstance().getRenameHandler(context);
           if (renameHandler == null) {
             return;

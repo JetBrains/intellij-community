@@ -60,4 +60,9 @@ public interface PaletteItem {
    * Returns the associated {@link com.intellij.designer.model.MetaModel}, if known
    */
   MetaModel getMetaModel();
+
+  /**
+   * Sets the associated {@link com.intellij.designer.model.MetaModel}, if known
+   */
+  void setMetaModel(MetaModel metaModel);
 }

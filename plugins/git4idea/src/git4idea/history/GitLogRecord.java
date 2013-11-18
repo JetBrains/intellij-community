@@ -101,7 +101,7 @@ class GitLogRecord {
     return GitUtil.parseTimestampWithNFEReport(myOptions.get(COMMIT_TIME), myHandler, myOptions.toString());
   }
 
-  long getLongTimeStamp() {
+  long getCommitTime() {
     return Long.parseLong(myOptions.get(COMMIT_TIME).trim()) * 1000;
   }
 

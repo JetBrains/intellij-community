@@ -16,17 +16,17 @@
 package com.intellij.openapi.vfs.local;
 
 import com.intellij.ide.GeneralSettings;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileAttributes;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.IoTestUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
-import com.intellij.openapi.vfs.newvfs.ManagingFS;
-import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
-import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
-import com.intellij.openapi.vfs.newvfs.RefreshQueue;
+import com.intellij.openapi.vfs.newvfs.*;
+import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent;
+import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.openapi.vfs.newvfs.impl.FakeVirtualFile;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualDirectoryImpl;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry;
@@ -34,13 +34,40 @@ import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl;
 import com.intellij.testFramework.PlatformLangTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.util.messages.MessageBusConnection;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Locale;
 
 public class LocalFileSystemTest extends PlatformLangTestCase {
+  @Override
+  protected void setUp() throws Exception {
+    super.setUp();
+
+    MessageBusConnection connection = ApplicationManager.getApplication().getMessageBus().connect(myTestRootDisposable);
+    connection.subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
+      @Override public void before(@NotNull List<? extends VFileEvent> events) { checkFiles(events, true); }
+
+      @Override public void after(@NotNull List<? extends VFileEvent> events) { checkFiles(events, false); }
+
+      private void checkFiles(List<? extends VFileEvent> events, boolean before) {
+        for (VFileEvent event : events) {
+          VirtualFile file = event.getFile();
+          if (file != null) {
+            boolean shouldBeInvalid =
+              event instanceof VFileCreateEvent && before && !((VFileCreateEvent)event).isReCreation() ||
+              event instanceof VFileDeleteEvent && !before;
+            assertEquals(event.toString(), !shouldBeInvalid, file.isValid());
+          }
+        }
+      }
+    });
+  }
+
   public void testChildrenAccessedButNotCached() throws Exception {
     File dir = createTempDirectory(false);
     ManagingFS managingFS = ManagingFS.getInstance();
@@ -473,5 +500,45 @@ public class LocalFileSystemTest extends PlatformLangTestCase {
     assertFalse(topDir.isDirty());
     assertFalse(subFile.isDirty());
     assertFalse(subDir.isDirty());
+  }
+
+  public void testSymlinkTargetBlink() throws Exception {
+    if (!SystemInfo.areSymLinksSupported) {
+      System.err.println("Ignored: symlinks not supported");
+      return;
+    }
+
+    File top = createTempDirectory(true);
+    File target = IoTestUtil.createTestDir(top, "target");
+    File link = IoTestUtil.createSymLink(target.getPath(), top.getPath() + "/link");
+
+    LocalFileSystem lfs = LocalFileSystem.getInstance();
+    VirtualFile vTop = lfs.refreshAndFindFileByIoFile(top);
+    assertNotNull(vTop);
+    assertTrue(vTop.isValid());
+    VirtualFile vTarget = lfs.refreshAndFindFileByIoFile(target);
+    assertNotNull(vTarget);
+    assertTrue(vTarget.isValid());
+    VirtualFile vLink = lfs.refreshAndFindFileByIoFile(link);
+    assertNotNull(vLink);
+    assertTrue(vLink.isValid());
+    assertTrue(vLink.isDirectory());
+
+    FileUtil.delete(target);
+    vTop.refresh(false, true);
+    assertFalse(vTarget.isValid());
+    assertFalse(vLink.isValid());
+    vLink = lfs.refreshAndFindFileByIoFile(link);
+    assertNotNull(vLink);
+    assertTrue(vLink.isValid());
+    assertFalse(vLink.isDirectory());
+
+    FileUtil.createDirectory(target);
+    vTop.refresh(false, true);
+    assertFalse(vLink.isValid());
+    vLink = lfs.refreshAndFindFileByIoFile(link);
+    assertNotNull(vLink);
+    assertTrue(vLink.isValid());
+    assertTrue(vLink.isDirectory());
   }
 }

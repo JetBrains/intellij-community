@@ -61,7 +61,7 @@ public class GantRunner extends GroovyScriptRunner {
       int result = Messages
         .showOkCancelDialog("Gant is not configured. Do you want to configure it?", "Configure Gant SDK",
                             JetgroovyIcons.Groovy.Gant_16x16);
-      if (result == 0) {
+      if (result == Messages.OK) {
         ShowSettingsUtil.getInstance().editConfigurable(project, new GantConfigurable(project));
       }
       if (!(GantUtils.getSDKInstallPath(module, project).length() > 0)) {

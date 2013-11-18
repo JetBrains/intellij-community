@@ -261,7 +261,7 @@ public class PyPackageManagerImpl extends PyPackageManager {
             }
           }, ModalityState.current());
         }
-        if (warning[0] != 0) return true;
+        if (warning[0] != Messages.YES) return true;
       }
       catch (PyExternalProcessException e) {
         LOG.info("Error loading packages dependents: " + e.getMessage(), e);

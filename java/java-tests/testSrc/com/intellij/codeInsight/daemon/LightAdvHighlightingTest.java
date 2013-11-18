@@ -389,6 +389,6 @@ public class LightAdvHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testInsane() throws IOException {
     configureFromFileText("x.java", "class X { \nxxxx\n }");
     List<HighlightInfo> infos = highlightErrors();
-    assertTrue(infos.size() != 0);
+    assertTrue(!infos.isEmpty());
   }
 }

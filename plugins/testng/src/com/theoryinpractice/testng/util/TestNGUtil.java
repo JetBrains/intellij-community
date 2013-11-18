@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,13 +19,12 @@ import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.roots.libraries.JarVersionDetectionUtil;
-import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.*;
@@ -163,9 +162,15 @@ public class TestNGUtil
 
   public static boolean isTestNGAnnotation(PsiAnnotation annotation) {
     String qName = annotation.getQualifiedName();
-    if (qName.equals(TEST_ANNOTATION_FQN)) return true;
-    for (String qn : CONFIG_ANNOTATIONS_FQN) {
-      if (qName.equals(qn)) return true;
+    if (qName != null) {
+      if (qName.equals(TEST_ANNOTATION_FQN)) return true;
+      for (String qn : CONFIG_ANNOTATIONS_FQN) {
+        if (qName.equals(qn)) return true;
+      }
+      if (qName.equals(TEST_ANNOTATION_FQN)) return true;
+      for (String qn : CONFIG_ANNOTATIONS_FQN) {
+        if (qName.equals(qn)) return true;
+      }
     }
     return false;
   }
@@ -472,11 +477,11 @@ public class TestNGUtil
     if (JavaPsiFacade.getInstance(manager.getProject()).findClass(TestNG.class.getName(), psiElement.getResolveScope()) == null) {
       if (!ApplicationManager.getApplication().isUnitTestMode()) {
         if (Messages.showOkCancelDialog(psiElement.getProject(), "TestNG will be added to module classpath", "Unable to convert.", Messages.getWarningIcon()) !=
-            DialogWrapper.OK_EXIT_CODE) {
+            Messages.OK) {
           return false;
         }
       }
-      final Module module = ModuleUtil.findModuleForPsiElement(psiElement);
+      final Module module = ModuleUtilCore.findModuleForPsiElement(psiElement);
       if (module == null) return false;
       String url = VfsUtil.getUrlForLibraryRoot(new File(PathUtil.getJarPathForClass(Assert.class)));
       ModuleRootModificationUtil.addModuleLibrary(module, url);

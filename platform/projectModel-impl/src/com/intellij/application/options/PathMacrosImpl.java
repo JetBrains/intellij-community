@@ -129,7 +129,8 @@ public class PathMacrosImpl extends PathMacros implements ApplicationComponent, 
     "SelectionStartLine",
     "SelectionEndLine",
     "SelectionStartColumn",
-    "SelectionEndColumn"
+    "SelectionEndColumn",
+    "PyInterpreterDirectory"
   );
 
   public PathMacrosImpl() {

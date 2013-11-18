@@ -29,7 +29,6 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -158,10 +157,10 @@ public abstract class DumbService {
   @NotNull
   public <T> List<T> filterByDumbAwareness(@NotNull Collection<T> collection) {
     if (isDumb()) {
-      final ArrayList<T> result = new ArrayList<T>(collection);
-      for (Iterator<T> iterator = result.iterator(); iterator.hasNext();) {
-        if (!isDumbAware(iterator.next())) {
-          iterator.remove();
+      final ArrayList<T> result = new ArrayList<T>(collection.size());
+      for (T element : collection) {
+        if (isDumbAware(element)) {
+          result.add(element);
         }
       }
       return result;

@@ -15,6 +15,8 @@
  */
 package com.intellij.ide.structureView;
 
+import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.extensions.KeyedFactoryEPBean;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileTypes.FileTypeExtensionFactory;
 import com.intellij.openapi.project.Project;
@@ -32,8 +34,10 @@ import org.jetbrains.annotations.NotNull;
  */
 
 public interface StructureViewBuilder {
+  ExtensionPointName<KeyedFactoryEPBean> EP_NAME = ExtensionPointName.create("com.intellij.structureViewBuilder");
+
   StructureViewBuilderProvider PROVIDER =
-    new FileTypeExtensionFactory<StructureViewBuilderProvider>(StructureViewBuilderProvider.class, "com.intellij.structureViewBuilder").get();
+    new FileTypeExtensionFactory<StructureViewBuilderProvider>(StructureViewBuilderProvider.class, EP_NAME).get();
 
   /**
    * Returns the structure view implementation for the file displayed in the specified

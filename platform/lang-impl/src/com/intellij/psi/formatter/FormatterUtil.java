@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -291,7 +291,7 @@ public class FormatterUtil {
   public static void replaceWhiteSpace(final String whiteSpace,
                                        final ASTNode leafElement,
                                        final IElementType whiteSpaceToken,
-                                       final @Nullable TextRange textRange) {
+                                       @Nullable final TextRange textRange) {
     final CharTable charTable = SharedImplUtil.findCharTableByTree(leafElement);
 
     ASTNode treePrev = findPreviousWhiteSpace(leafElement, whiteSpaceToken);
@@ -300,11 +300,10 @@ public class FormatterUtil {
     }
 
     if (treePrev != null &&
-        treePrev.getText().trim().length() == 0 &&
+        treePrev.getText().trim().isEmpty() &&
         treePrev.getElementType() != whiteSpaceToken &&
         treePrev.getTextLength() > 0 &&
-        whiteSpace.length() >
-        0) {
+        !whiteSpace.isEmpty()) {
       LeafElement whiteSpaceElement =
         Factory.createSingleLeafElement(treePrev.getElementType(), whiteSpace, charTable, SharedImplUtil.getManagerByTree(leafElement));
 
@@ -316,20 +315,20 @@ public class FormatterUtil {
         Factory.createSingleLeafElement(whiteSpaceToken, whiteSpace, charTable, SharedImplUtil.getManagerByTree(leafElement));
 
       if (treePrev == null) {
-        if (whiteSpace.length() > 0) {
+        if (!whiteSpace.isEmpty()) {
           addWhiteSpace(leafElement, whiteSpaceElement);
         }
       }
       else {
         if (!(treePrev.getElementType() == whiteSpaceToken)) {
-          if (whiteSpace.length() > 0) {
+          if (!whiteSpace.isEmpty()) {
             addWhiteSpace(treePrev, whiteSpaceElement);
           }
         }
         else {
           if (treePrev.getElementType() == whiteSpaceToken) {
             final CompositeElement treeParent = (CompositeElement)treePrev.getTreeParent();
-            if (whiteSpace.length() > 0) {
+            if (!whiteSpace.isEmpty()) {
               //          LOG.assertTrue(textRange == null || treeParent.getTextRange().equals(textRange));
               treeParent.replaceChild(treePrev, whiteSpaceElement);
             }
@@ -438,10 +437,10 @@ public class FormatterUtil {
     if (lastWS != null && !lastWS.getTextRange().equals(textRange)) {
       return;
     }
-    if (whiteSpace.length() == 0 && lastWS == null) {
+    if (whiteSpace.isEmpty() && lastWS == null) {
       return;
     }
-    if (lastWS != null && whiteSpace.length() == 0) {
+    if (lastWS != null && whiteSpace.isEmpty()) {
       lastWS.getTreeParent().removeRange(lastWS, null);
       return;
     }

@@ -194,11 +194,8 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
     final HashMap<PsiElement,UsageHolder> elementsToUsageHolders = sortUsages(usages);
     final Collection<UsageHolder> usageHolders = elementsToUsageHolders.values();
     for (UsageHolder usageHolder : usageHolders) {
-      if (usageHolder.getNonCodeUsagesNumber() != usageHolder.getUnsafeUsagesNumber()) {
-        final String description = usageHolder.getDescription();
-        if (description != null) {
-          conflicts.add(description);
-        }
+      if (usageHolder.hasUnsafeUsagesInCode()) {
+        conflicts.add(usageHolder.getDescription());
       }
     }
 
@@ -244,6 +241,7 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
     presentation.setShowReadOnlyStatusAsRed(true);
     presentation.setShowCancelButton(true);
     presentation.setCodeUsagesString(RefactoringBundle.message("references.found.in.code"));
+    presentation.setUsagesInGeneratedCodeString(RefactoringBundle.message("references.found.in.generated.code"));
     presentation.setNonCodeUsagesString(RefactoringBundle.message("occurrences.found.in.comments.strings.and.non.java.files"));
     presentation.setUsagesString(RefactoringBundle.message("usageView.usagesText"));
 
@@ -351,9 +349,8 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
 
   @Override
   protected boolean isPreviewUsages(UsageInfo[] usages) {
-    if(myPreviewNonCodeUsages && UsageViewUtil.hasNonCodeUsages(usages)) {
-      WindowManager.getInstance().getStatusBar(myProject).setInfo(
-        RefactoringBundle.message("occurrences.found.in.comments.strings.and.non.java.files"));
+    if(myPreviewNonCodeUsages && (UsageViewUtil.hasNonCodeUsages(usages) || UsageViewUtil.hasUsagesInGeneratedCode(usages, myProject))) {
+      WindowManager.getInstance().getStatusBar(myProject).setInfo(RefactoringBundle.message("occurrences.found.in.comments.strings.non.java.files.and.generated.code"));
       return true;
     }
 

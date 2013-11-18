@@ -68,6 +68,7 @@ import com.intellij.ui.docking.DockContainer;
 import com.intellij.ui.docking.DockManager;
 import com.intellij.ui.docking.impl.DockManagerImpl;
 import com.intellij.ui.tabs.impl.JBTabsImpl;
+import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.messages.impl.MessageListenerList;
@@ -523,9 +524,9 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
   @NotNull
   private AsyncResult<EditorWindow> _getActiveWindow(boolean now) {
     final AsyncResult<EditorWindow> result = new AsyncResult<EditorWindow>();
-    getActiveSplitters(now).doWhenDone(new AsyncResult.Handler<EditorsSplitters>() {
+    getActiveSplitters(now).doWhenDone(new Consumer<EditorsSplitters>() {
       @Override
-      public void run(EditorsSplitters editorsSplitters) {
+      public void consume(EditorsSplitters editorsSplitters) {
         result.setDone(editorsSplitters.getCurrentWindow());
       }
     });
@@ -794,7 +795,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
         try {
           final FileEditorProvider provider = providers[i];
           LOG.assertTrue(provider != null);
-          LOG.assertTrue(provider.accept(myProject, file));
+          LOG.assertTrue(provider.accept(myProject, file), "Provider " + provider + " doesn't accept file " + file);
           final FileEditor editor = provider.createEditor(myProject, file);
           LOG.assertTrue(editor != null);
           LOG.assertTrue(editor.isValid());

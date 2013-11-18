@@ -16,6 +16,7 @@
 package com.jetbrains.python.validation;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.jetbrains.python.psi.PyStringLiteralExpression;
 import com.jetbrains.python.psi.impl.PyStringLiteralExpressionImpl;
@@ -65,7 +66,15 @@ public class StringLiteralQuotesAnnotator extends PyAnnotator {
 
   private boolean checkTripleQuotedString(ASTNode stringNode, String text, final String quotes) {
     if (text.length() < 6  || !text.endsWith(quotes)) {
-      getHolder().createErrorAnnotation(stringNode, "Missing closing triple quotes");
+      int startOffset = StringUtil.trimTrailing(stringNode.getText()).lastIndexOf('\n');
+      if (startOffset < 0) {
+        startOffset = stringNode.getTextRange().getStartOffset();
+      }
+      else {
+        startOffset = stringNode.getTextRange().getStartOffset() + startOffset + 1;
+      }
+      TextRange highlightRange = new TextRange(startOffset, stringNode.getTextRange().getEndOffset());
+      getHolder().createErrorAnnotation(highlightRange, "Missing closing triple quotes");
       return true;
     }
     return false;

@@ -114,6 +114,7 @@ public class DefaultPaletteItem implements PaletteItem {
     return myMetaModel;
   }
 
+  @Override
   public void setMetaModel(MetaModel metaModel) {
     myMetaModel = metaModel;
   }

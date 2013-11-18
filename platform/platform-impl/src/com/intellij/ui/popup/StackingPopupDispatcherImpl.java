@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,19 +28,21 @@ import java.awt.*;
 import java.awt.event.AWTEventListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
+import java.util.List;
 import java.util.Stack;
 
 public class StackingPopupDispatcherImpl extends StackingPopupDispatcher implements AWTEventListener, KeyEventDispatcher {
 
   private final Stack<JBPopup> myStack = new Stack<JBPopup>();
-  private final WeakList<JBPopup> myPersistentPopups = new WeakList<JBPopup>();
+  private final List<JBPopup> myPersistentPopups = new WeakList<JBPopup>();
 
-  private final WeakList<JBPopup> myAllPopups = new WeakList<JBPopup>();
+  private final List<JBPopup> myAllPopups = new WeakList<JBPopup>();
 
 
   private StackingPopupDispatcherImpl() {
   }
 
+  @Override
   public void onPopupShown(JBPopup popup, boolean inStack) {
     if (inStack) {
       myStack.push(popup);
@@ -54,6 +56,7 @@ public class StackingPopupDispatcherImpl extends StackingPopupDispatcher impleme
     myAllPopups.add(popup);
   }
 
+  @Override
   public void onPopupHidden(JBPopup popup) {
     boolean wasInStack = myStack.remove(popup);
     myPersistentPopups.remove(popup);
@@ -67,8 +70,9 @@ public class StackingPopupDispatcherImpl extends StackingPopupDispatcher impleme
     myAllPopups.remove(popup);
   }
 
+  @Override
   public void hidePersistentPopups() {
-    final WeakList<JBPopup> list = myPersistentPopups;
+    List<JBPopup> list = myPersistentPopups;
     for (JBPopup each : list) {
       if (each.isNativePopup()) {
         each.setUiVisible(false);
@@ -76,8 +80,9 @@ public class StackingPopupDispatcherImpl extends StackingPopupDispatcher impleme
     }
   }
 
+  @Override
   public void restorePersistentPopups() {
-    final WeakList<JBPopup> list = myPersistentPopups;
+    List<JBPopup> list = myPersistentPopups;
     for (JBPopup each : list) {
       if (each.isNativePopup()) {
         each.setUiVisible(true);
@@ -85,10 +90,12 @@ public class StackingPopupDispatcherImpl extends StackingPopupDispatcher impleme
     }
   }
 
+  @Override
   public void eventDispatched(AWTEvent event) {
     dispatchMouseEvent(event);
   }
 
+  @Override
   protected boolean dispatchMouseEvent(AWTEvent event) {
     if (event.getID() != MouseEvent.MOUSE_PRESSED) {
       return false;
@@ -100,7 +107,7 @@ public class StackingPopupDispatcherImpl extends StackingPopupDispatcher impleme
 
     AbstractPopup popup = (AbstractPopup)findPopup();
 
-    final MouseEvent mouseEvent = ((MouseEvent) event);
+    final MouseEvent mouseEvent = (MouseEvent) event;
 
     Point point = (Point) mouseEvent.getPoint().clone();
     SwingUtilities.convertPointToScreen(point, mouseEvent.getComponent());
@@ -141,6 +148,7 @@ public class StackingPopupDispatcherImpl extends StackingPopupDispatcher impleme
     }
   }
 
+  @Override
   protected JBPopup findPopup() {
     while(true) {
       if (myStack.isEmpty()) break;
@@ -155,35 +163,30 @@ public class StackingPopupDispatcherImpl extends StackingPopupDispatcher impleme
     return null;
   }
 
+  @Override
   public boolean dispatchKeyEvent(final KeyEvent e) {
     final boolean closeRequest = AbstractPopup.isCloseRequest(e);
 
-    JBPopup popup;
-
-    if (closeRequest) {
-      popup = findPopup();
-    } else {
-      popup = getFocusedPopup();
-    }
+    JBPopup popup = closeRequest ? findPopup() : getFocusedPopup();
     return popup != null && popup.dispatchKeyEvent(e);
   }
 
 
+  @Override
   @Nullable
   public Component getComponent() {
-    return myStack.size() > 0 ?myStack.peek().getContent() : null;
+    return myStack.isEmpty() ? null : myStack.peek().getContent();
   }
 
+  @Override
   public boolean dispatch(AWTEvent event) {
    if (event instanceof KeyEvent) {
-      return dispatchKeyEvent(((KeyEvent) event));
-   } else if (event instanceof MouseEvent) {
-     return dispatchMouseEvent(event);
-   } else {
-     return false;
+      return dispatchKeyEvent((KeyEvent) event);
    }
+    return event instanceof MouseEvent && dispatchMouseEvent(event);
   }
 
+  @Override
   public boolean requestFocus() {
     if (myStack.isEmpty()) return false;
 
@@ -191,10 +194,12 @@ public class StackingPopupDispatcherImpl extends StackingPopupDispatcher impleme
     return popup.requestFocus();
   }
 
+  @Override
   public boolean close() {
     return closeActivePopup();
   }
 
+  @Override
   public boolean closeActivePopup() {
     if (myStack.isEmpty()) return false;
 
@@ -206,6 +211,7 @@ public class StackingPopupDispatcherImpl extends StackingPopupDispatcher impleme
     return false;
   }
 
+  @Override
   public boolean isPopupFocused() {
     return getFocusedPopup() != null;
   }

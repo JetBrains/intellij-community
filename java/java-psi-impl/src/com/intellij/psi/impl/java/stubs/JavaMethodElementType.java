@@ -92,7 +92,7 @@ public abstract class JavaMethodElementType extends JavaStubElementType<PsiMetho
       }
       else if (type == JavaElementType.PARAMETER_LIST) {
         final List<LighterASTNode> params = LightTreeUtil.getChildrenOfType(tree, child, JavaElementType.PARAMETER);
-        if (params.size() > 0) {
+        if (!params.isEmpty()) {
           final LighterASTNode pType = LightTreeUtil.firstChildOfType(tree, params.get(params.size() - 1), JavaElementType.TYPE);
           if (pType != null) {
             isVarArgs = (LightTreeUtil.firstChildOfType(tree, pType, JavaTokenType.ELLIPSIS) != null);

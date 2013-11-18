@@ -1,7 +1,6 @@
 package com.intellij.vcs.log.graph.mutable;
 
-import com.intellij.vcs.log.Hash;
-import com.intellij.vcs.log.VcsCommit;
+import com.intellij.vcs.log.GraphCommit;
 import com.intellij.vcs.log.VcsRef;
 import com.intellij.vcs.log.graph.GraphTestUtils;
 import com.intellij.vcs.log.graph.elements.Branch;
@@ -24,7 +23,7 @@ import static junit.framework.Assert.assertEquals;
  */
 public class GraphAppendBuildTest {
   public void runTest(String firstPart, String firstPartStr, String secondPart, String secondPartStr) {
-    List<VcsCommit> vcsCommitParentses = SimpleCommitListParser.parseCommitList(firstPart);
+    List<GraphCommit> vcsCommitParentses = SimpleCommitListParser.parseCommitList(firstPart);
     final MutableGraph graph = GraphTestUtils.buildGraph(vcsCommitParentses, Collections.<VcsRef>emptyList());
     assertEquals(firstPartStr, toStr(graph));
 
@@ -32,14 +31,14 @@ public class GraphAppendBuildTest {
     new GraphAppendBuilder(graph, makeRefs(firstPart)) {
       @NotNull
       @Override
-      protected GraphBuilder createGraphBuilder(List<? extends VcsCommit> commitParentses, MutableNodeRow nextRow,
-                                                Map<Hash, MutableNode> underdoneNodes, int startIndex,
-                                                Map<Hash, Integer> commitLogIndexes) {
+      protected GraphBuilder createGraphBuilder(List<GraphCommit> commitParentses, MutableNodeRow nextRow,
+                                                Map<Integer, MutableNode> underdoneNodes, int startIndex,
+                                                Map<Integer, Integer> commitLogIndexes) {
         return new GraphBuilder(commitParentses.size() + startIndex - 1, commitLogIndexes, graph, underdoneNodes, nextRow,
                                 Collections.<VcsRef>emptyList()) {
           @NotNull
           @Override
-          protected Branch createBranch(@NotNull Hash commitHash, @NotNull Collection<VcsRef> refs) {
+          protected Branch createBranch(int commitHash, @NotNull Collection<VcsRef> refs) {
             return GraphTestUtils.createBranchWithFakeRoot(commitHash, refs);
           }
         };

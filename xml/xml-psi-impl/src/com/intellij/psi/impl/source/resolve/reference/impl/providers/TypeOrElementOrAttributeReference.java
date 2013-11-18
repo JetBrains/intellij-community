@@ -1,3 +1,18 @@
+/*
+ * Copyright 2000-2013 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.psi.impl.source.resolve.reference.impl.providers;
 
 import com.intellij.openapi.util.TextRange;
@@ -48,7 +63,7 @@ public class TypeOrElementOrAttributeReference implements PsiReference {
     this.nsPrefix = prefix;
   }
 
-  private final @Nullable ReferenceType myType;
+  @Nullable private final ReferenceType myType;
 
   protected TypeOrElementOrAttributeReference(PsiElement element, TextRange range, @Nullable ReferenceType type) {
     myElement = element;
@@ -220,7 +235,7 @@ public class TypeOrElementOrAttributeReference implements PsiReference {
   private static String getNamespace(final XmlTag tag, final String text) {
     final String namespacePrefix = XmlUtil.findPrefixByQualifiedName(text);
     final String namespaceByPrefix = tag.getNamespaceByPrefix(namespacePrefix);
-    if (namespaceByPrefix.length() > 0) return namespaceByPrefix;
+    if (!namespaceByPrefix.isEmpty()) return namespaceByPrefix;
     final XmlTag rootTag = ((XmlFile)tag.getContainingFile()).getRootTag();
 
     if (rootTag != null &&
@@ -232,7 +247,7 @@ public class TypeOrElementOrAttributeReference implements PsiReference {
         final String targetNsPrefix = rootTag.getPrefixByNamespace(targetNS);
 
         if (namespacePrefix.equals(targetNsPrefix) ||
-            (namespaceByPrefix.length() == 0 && targetNsPrefix == null)) {
+            (namespaceByPrefix.isEmpty() && targetNsPrefix == null)) {
           return targetNS;
         }
       }
@@ -244,7 +259,7 @@ public class TypeOrElementOrAttributeReference implements PsiReference {
   public String getCanonicalText() {
     final String text = myElement.getText();
     String name = myRange.getEndOffset() <= text.length() ? myRange.substring(text) : "";
-    if (name.length() > 0 && nsPrefix != null && nsPrefix.length() > 0) {
+    if (!name.isEmpty() && nsPrefix != null && !nsPrefix.isEmpty()) {
       name = nsPrefix + ":" + name;
     }
     return name;
@@ -366,7 +381,7 @@ public class TypeOrElementOrAttributeReference implements PsiReference {
     public boolean execute(@NotNull final XmlTag element) {
       String name = element.getAttributeValue(SchemaReferencesProvider.NAME_ATTR_NAME);
       final String prefixByNamespace = tag.getPrefixByNamespace(namespace);
-      if (prefixByNamespace != null && prefixByNamespace.length() > 0 && prefix == null) {
+      if (prefixByNamespace != null && !prefixByNamespace.isEmpty() && prefix == null) {
         name = prefixByNamespace + ":" + name;
       }
       myElements.add( name );

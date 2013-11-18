@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -142,7 +142,7 @@ public class PluginManagerConfigurable extends BaseConfigurable implements Searc
       final ApplicationEx app = ApplicationManagerEx.getApplicationEx();
 
       int response = app.isRestartCapable() ? showRestartIDEADialog() : showShutDownIDEADialog();
-      if (response == 0) {
+      if (response == Messages.YES) {
         app.restart(true);
       }
       else {
@@ -158,20 +158,24 @@ public class PluginManagerConfigurable extends BaseConfigurable implements Searc
     return myPluginManagerMain;
   }
 
+  @Messages.YesNoResult
   public static int showShutDownIDEADialog() {
     return showShutDownIDEADialog(IdeBundle.message("title.plugins.changed"));
   }
 
-  public static int showShutDownIDEADialog(final String title) {
+  @Messages.YesNoResult
+  private static int showShutDownIDEADialog(final String title) {
     String message = IdeBundle.message("message.idea.shutdown.required", ApplicationNamesInfo.getInstance().getFullProductName());
     return Messages.showYesNoDialog(message, title, "Shut Down", POSTPONE, Messages.getQuestionIcon());
   }
 
+  @Messages.YesNoResult
   public static int showRestartIDEADialog() {
     return showRestartIDEADialog(IdeBundle.message("title.plugins.changed"));
   }
 
-  public static int showRestartIDEADialog(final String title) {
+  @Messages.YesNoResult
+  private static int showRestartIDEADialog(final String title) {
     String message = IdeBundle.message("message.idea.restart.required", ApplicationNamesInfo.getInstance().getFullProductName());
     return Messages.showYesNoDialog(message, title, "Restart", POSTPONE, Messages.getQuestionIcon());
   }
@@ -179,7 +183,7 @@ public class PluginManagerConfigurable extends BaseConfigurable implements Searc
   public static void shutdownOrRestartApp(String title) {
     final ApplicationEx app = ApplicationManagerEx.getApplicationEx();
     int response = app.isRestartCapable() ? showRestartIDEADialog(title) : showShutDownIDEADialog(title);
-    if (response == 0) app.restart(true);
+    if (response == Messages.YES) app.restart(true);
   }
 
   public boolean isModified() {

@@ -23,6 +23,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModifiableRootModel;
+import com.intellij.openapi.roots.SourceFolder;
 import com.intellij.openapi.roots.impl.ModifiableModelCommitter;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -36,7 +37,9 @@ import org.jetbrains.idea.maven.model.MavenResource;
 import org.jetbrains.idea.maven.project.MavenImportingSettings;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
+import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 import org.jetbrains.jps.model.java.JavaResourceRootType;
+import org.jetbrains.jps.model.java.JavaSourceRootProperties;
 import org.jetbrains.jps.model.java.JavaSourceRootType;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
@@ -258,9 +261,15 @@ public class MavenFoldersImporter {
   }
 
   private void addAsGeneratedSourceFolder(@NotNull File dir, final JavaSourceRootType rootType) {
-    if (!myModel.hasRegisteredSourceSubfolder(dir)) {
+    SourceFolder folder = myModel.getSourceFolder(dir);
+    if (!myModel.hasRegisteredSourceSubfolder(dir) || folder != null && !isGenerated(folder)) {
       myModel.addGeneratedJavaSourceFolder(dir.getPath(), rootType);
     }
+  }
+
+  private static boolean isGenerated(@NotNull  SourceFolder folder) {
+    JavaSourceRootProperties properties = folder.getJpsElement().getProperties(JavaModuleSourceRootTypes.SOURCES);
+    return properties != null && properties.isForGeneratedSources();
   }
 
   private void addAllSubDirsAsGeneratedSources(@NotNull File dir, final JavaSourceRootType rootType) {

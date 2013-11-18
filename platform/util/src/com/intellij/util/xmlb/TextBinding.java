@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,7 @@ public class TextBinding implements Binding {
     myAccessor = accessor;
   }
 
+  @Override
   public Object serialize(Object o, Object context, SerializationFilter filter) {
     final Object v = myAccessor.read(o);
     final Object node = myBinding.serialize(v, context, filter);
@@ -36,6 +37,7 @@ public class TextBinding implements Binding {
     return new Text(((Content)node).getValue());
   }
 
+  @Override
   @Nullable
   public Object deserialize(Object context, @NotNull Object... nodes) {
     assert nodes.length == 1;
@@ -46,14 +48,17 @@ public class TextBinding implements Binding {
     return context;
   }
 
+  @Override
   public boolean isBoundTo(Object node) {
     return node instanceof Text;
   }
 
+  @Override
   public Class getBoundNodeType() {
     return Text.class;
   }
 
+  @Override
   public void init() {
     myBinding = XmlSerializerImpl.getBinding(myAccessor);
     if (!Text.class.isAssignableFrom(myBinding.getBoundNodeType())) {

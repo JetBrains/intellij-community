@@ -40,6 +40,7 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.refactoring.PackageWrapper;
@@ -215,13 +216,47 @@ public class CreateTestDialog extends DialogWrapper {
     updateMethodsTable();
   }
 
+  private boolean isSuperclassSelectedManually() {
+    String superClass = mySuperClassField.getText();
+    if (StringUtil.isEmptyOrSpaces(superClass)) {
+      return false;
+    }
+
+    for (TestFramework framework : TestFramework.EXTENSION_NAME.getExtensions()) {
+      if (superClass.equals(framework.getDefaultSuperClass())) {
+        return false;
+      }
+    }
+
+    return true;
+  }
+
   private void onLibrarySelected(TestFramework descriptor) {
-    String text = CodeInsightBundle.message("intention.create.test.dialog.library.not.found", descriptor.getName());
-    myFixLibraryLabel.setText(text);
-    myFixLibraryPanel.setVisible(!descriptor.isLibraryAttached(myTargetModule));
+    if (descriptor.isLibraryAttached(myTargetModule)) {
+      myFixLibraryPanel.setVisible(false);
+    }
+    else {
+      myFixLibraryPanel.setVisible(true);
+      String text = CodeInsightBundle.message("intention.create.test.dialog.library.not.found", descriptor.getName());
+      myFixLibraryLabel.setText(text);
+
+      myFixLibraryButton.setVisible(descriptor.getLibraryPath() != null);
+    }
 
     String superClass = descriptor.getDefaultSuperClass();
-    mySuperClassField.appendItem(superClass == null ? "" : superClass);
+
+    if (isSuperclassSelectedManually()) {
+      if (superClass != null) {
+        String currentSuperClass = mySuperClassField.getText();
+        mySuperClassField.appendItem(superClass);
+        mySuperClassField.setText(currentSuperClass);
+      }
+    }
+    else {
+      mySuperClassField.appendItem(StringUtil.notNullize(superClass));
+      mySuperClassField.getChildComponent().setSelectedItem(StringUtil.notNullize(superClass));
+    }
+
     mySelectedFramework = descriptor;
   }
 
@@ -524,7 +559,10 @@ public class CreateTestDialog extends DialogWrapper {
       dialog.showDialog();
       PsiClass aClass = dialog.getSelected();
       if (aClass != null) {
-        mySuperClassField.setText(aClass.getQualifiedName());
+        String superClass = aClass.getQualifiedName();
+
+        mySuperClassField.appendItem(superClass);
+        mySuperClassField.getChildComponent().setSelectedItem(superClass);
       }
     }
   }

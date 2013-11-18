@@ -2,7 +2,9 @@ package com.intellij.openapi.externalSystem.model.task;
 
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.Serializable;
 import java.util.concurrent.atomic.AtomicLong;
@@ -60,7 +62,16 @@ public class ExternalSystemTaskId implements Serializable {
 
   @NotNull
   public static String getProjectId(@NotNull Project project) {
-    return project.getName() + ":" + project.getLocationHash();
+    return project.isDisposed() ? project.getName() : project.getName() + ":" + project.getLocationHash();
+  }
+
+  @Nullable
+  public Project findProject() {
+    final ProjectManager projectManager = ProjectManager.getInstance();
+    for (Project project : projectManager.getOpenProjects()) {
+      if (myProjectId.equals(getProjectId(project))) return project;
+    }
+    return null;
   }
 
   @NotNull

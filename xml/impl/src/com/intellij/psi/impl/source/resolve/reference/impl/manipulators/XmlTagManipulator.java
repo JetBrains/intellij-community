@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -66,10 +66,11 @@ public class XmlTagManipulator extends AbstractElementManipulator<XmlTag> {
     final String trimmed = value.trim();
     final int i = value.indexOf(trimmed);
     final int start = xmlText.displayToPhysical(i) + offset;    
-    return trimmed.length() == 0 ? new TextRange(start, start) : new TextRange(start, xmlText.displayToPhysical(i + trimmed.length() - 1) + offset + 1);
+    return trimmed.isEmpty()
+           ? new TextRange(start, start) : new TextRange(start, xmlText.displayToPhysical(i + trimmed.length() - 1) + offset + 1);
   }
 
-  public static TextRange[] getValueRanges(final @NotNull XmlTag tag) {
+  public static TextRange[] getValueRanges(@NotNull final XmlTag tag) {
     final XmlTagValue value = tag.getValue();
     final XmlText[] texts = value.getTextElements();
     if (texts.length == 0) {

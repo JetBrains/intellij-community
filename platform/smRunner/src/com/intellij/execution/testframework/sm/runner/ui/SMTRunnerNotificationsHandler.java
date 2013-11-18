@@ -16,6 +16,7 @@
 package com.intellij.execution.testframework.sm.runner.ui;
 
 import com.intellij.execution.testframework.TestConsoleProperties;
+import com.intellij.execution.testframework.TestStatusListener;
 import com.intellij.execution.testframework.TestsUIUtil;
 import com.intellij.execution.testframework.sm.SMTestsRunnerBundle;
 import com.intellij.execution.testframework.sm.runner.SMTRunnerEventsAdapter;

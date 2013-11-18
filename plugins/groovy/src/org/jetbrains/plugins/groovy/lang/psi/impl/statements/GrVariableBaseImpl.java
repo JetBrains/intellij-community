@@ -279,11 +279,6 @@ public abstract class GrVariableBaseImpl<T extends StubElement> extends GrStubEl
     return JetgroovyIcons.Groovy.Variable;
   }
 
-  public PsiType getTypeNoResolve() {
-    return getType();
-  }
-
-
   @Nullable
   private GrVariableDeclaration getDeclaration() {
     PsiElement parent = getParent();

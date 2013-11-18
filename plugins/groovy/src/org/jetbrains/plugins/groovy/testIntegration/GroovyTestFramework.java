@@ -122,7 +122,6 @@ public class GroovyTestFramework extends JavaTestFramework {
     return JetgroovyIcons.Groovy.Groovy_16x16;
   }
 
-  @NotNull
   @Override
   public String getLibraryPath() {
     return GroovyUtils.getBundledGroovyJar().getAbsolutePath();

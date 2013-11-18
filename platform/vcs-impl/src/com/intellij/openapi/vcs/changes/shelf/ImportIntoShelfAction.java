@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,13 +17,11 @@ package com.intellij.openapi.vcs.changes.shelf;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vcs.AbstractVcsHelper;
@@ -77,7 +75,7 @@ public class ImportIntoShelfAction extends DumbAwareAction {
                                              (patchTypeFiles.size() + " patch files.")) +
                                  "\nContinue with import?";
           final int toImport = Messages.showYesNoDialog(project, message, "Import Patches", Messages.getQuestionIcon());
-          if (DialogWrapper.CANCEL_EXIT_CODE == toImport) return;
+          if (Messages.NO == toImport) return;
         }
         pm.runProcessWithProgressSynchronously(new Runnable() {
           @Override

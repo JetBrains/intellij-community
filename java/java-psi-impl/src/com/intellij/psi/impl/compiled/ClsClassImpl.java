@@ -336,7 +336,7 @@ public class ClsClassImpl extends ClsMemberImpl<PsiClassStub<?>> implements PsiE
     List<PsiMethod> methods = getOwnMethods();
     List<PsiClass> classes = getOwnInnerClasses();
 
-    if (fields.size() > 0) {
+    if (!fields.isEmpty()) {
       goNextLine(newIndentLevel, buffer);
 
       for (int i = 0; i < fields.size(); i++) {
@@ -365,8 +365,8 @@ public class ClsClassImpl extends ClsMemberImpl<PsiClassStub<?>> implements PsiE
       buffer.append(";");
     }
 
-    if (methods.size() > 0) {
-      if (isEnum() || fields.size() > 0) {
+    if (!methods.isEmpty()) {
+      if (isEnum() || !fields.isEmpty()) {
         buffer.append('\n');
       }
       goNextLine(newIndentLevel, buffer);
@@ -381,7 +381,7 @@ public class ClsClassImpl extends ClsMemberImpl<PsiClassStub<?>> implements PsiE
       }
     }
 
-    if (classes.size() > 0) {
+    if (!classes.isEmpty()) {
       if (fields.size() + methods.size() > 0) {
         buffer.append('\n');
       }

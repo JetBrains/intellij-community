@@ -17,9 +17,9 @@ package com.jetbrains.python.sdk.flavors;
 
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -67,7 +67,7 @@ public class VirtualEnvSdkFlavor extends CPythonSdkFlavor {
   public static VirtualFile getDefaultLocation() {
     final String path = System.getenv().get("WORKON_HOME");
     if (!StringUtil.isEmpty(path)) {
-      return LocalFileSystem.getInstance().findFileByPath(path.replace('\\','/'));
+      return LocalFileSystem.getInstance().findFileByPath(FileUtil.expandUserHome(path).replace('\\','/'));
     }
 
     final VirtualFile userHome = LocalFileSystem.getInstance().findFileByPath(SystemProperties.getUserHome().replace('\\','/'));

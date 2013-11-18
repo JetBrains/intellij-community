@@ -28,8 +28,7 @@ import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.CollectionQuery;
-import com.intellij.util.Query;
+import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import gnu.trove.TObjectIntHashMap;
@@ -42,15 +41,16 @@ import java.util.*;
 
 class RootIndex {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.impl.RootIndex");
+  private static final DirectoryInfo NULL_INFO = DirectoryInfo.createNew();
 
   private final Set<VirtualFile> myProjectExcludedRoots = ContainerUtil.newHashSet();
   private final Set<VirtualFile> myLibraryExcludedRoots = ContainerUtil.newHashSet();
-  private final Map<VirtualFile, DirectoryInfo> myRoots = ContainerUtil.newHashMap();
+  private final Map<VirtualFile, DirectoryInfo> myRoots = ContainerUtil.newTroveMap();
   private final Map<String, HashSet<VirtualFile>> myPackagePrefixRoots = ContainerUtil.newHashMap();
 
   private final Map<String, List<VirtualFile>> myDirectoriesByPackageNameCache = ContainerUtil.newConcurrentMap();
   private final Map<String, List<VirtualFile>> myDirectoriesByPackageNameCacheWithLibSrc = ContainerUtil.newConcurrentMap();
-  private final Map<VirtualFile, Boolean> myIgnoredCache = ContainerUtil.newConcurrentMap();
+  private final Map<VirtualFile, DirectoryInfo> myInfoCache = ContainerUtil.newConcurrentMap();
   private final List<JpsModuleSourceRootType<?>> myRootTypes = ContainerUtil.newArrayList();
   private final TObjectIntHashMap<JpsModuleSourceRootType<?>> myRootTypeId = new TObjectIntHashMap<JpsModuleSourceRootType<?>>();
 
@@ -71,12 +71,7 @@ class RootIndex {
 
       for (ContentEntry contentEntry : contentEntries) {
         // Init excluded roots
-        for (ExcludeFolder excludeRoot : contentEntry.getExcludeFolders()) {
-          final VirtualFile excludeRootFile = excludeRoot.getFile();
-          if (excludeRootFile != null) {
-            myProjectExcludedRoots.add(excludeRootFile);
-          }
-        }
+        Collections.addAll(myProjectExcludedRoots, contentEntry.getExcludeFolderFiles());
 
         // Init module sources
         SourceFolder[] sourceFolders = contentEntry.getSourceFolders();
@@ -324,21 +319,29 @@ class RootIndex {
     int count = 0;
     for (VirtualFile root = dir; root != null; root = root.getParent()) {
       if (++count > 1000) {
-        throw new IllegalStateException("Possible loop in tree");
+        throw new IllegalStateException("Possible loop in tree, started at " + dir.getName());
       }
-      final DirectoryInfo info = myRoots.get(root);
+      DirectoryInfo info = myInfoCache.get(root);
       if (info != null) {
+        if (dir != root) {
+          myInfoCache.put(dir, info);
+        }
+        return info == NULL_INFO ? null : info;
+      }
+      
+      info = myRoots.get(root);
+      if (info != null) {
+        myInfoCache.put(dir, info);
         return info;
       }
-      Boolean ignored = myIgnoredCache.get(root);
-      if (ignored == null) {
-        myIgnoredCache.put(root, ignored = isAnyExcludeRoot(root) || FileTypeManager.getInstance().isFileIgnored(root));
-      }
-      if (ignored.booleanValue()) {
+      
+      if (isAnyExcludeRoot(root) || FileTypeManager.getInstance().isFileIgnored(root)) {
+        myInfoCache.put(dir, NULL_INFO);
         return null;
       }
     }
 
+    myInfoCache.put(dir, NULL_INFO);
     return null;
   }
 
@@ -351,50 +354,40 @@ class RootIndex {
   }
 
   @NotNull
-  public Query<VirtualFile> getDirectoriesByPackageName(@NotNull final String packageName, final boolean includeLibrarySources) {
+  List<VirtualFile> getDirectoriesByPackageName(@NotNull final String packageName, final boolean includeLibrarySources) {
     Map<String, List<VirtualFile>> cacheMap = includeLibrarySources ? 
                                               myDirectoriesByPackageNameCacheWithLibSrc : 
                                               myDirectoriesByPackageNameCache;
     final List<VirtualFile> cachedResult = cacheMap.get(packageName);
     if (cachedResult != null) {
-      return new CollectionQuery<VirtualFile>(cachedResult);
+      return cachedResult;
     }
 
     final ArrayList<VirtualFile> result = ContainerUtil.newArrayList();
-    for (Map.Entry<String, HashSet<VirtualFile>> entry : myPackagePrefixRoots.entrySet()) {
-      if (!packageName.startsWith(entry.getKey())) {
-        continue;
-      }
-
-      if (packageName.equals(entry.getKey())) {
-        for (VirtualFile file : entry.getValue()) {
-          if (isValidPackageDirectory(includeLibrarySources, file)) {
-            result.add(file);
-          }
-        }
-        continue;
-      }
-
-      final String nestedPackageName = entry.getKey().isEmpty() ? packageName : packageName.substring( entry.getKey().length());
-      final List<String> nestedPackages = StringUtil.split(nestedPackageName, ".");
-
-      for (final VirtualFile root : entry.getValue()) {
-        VirtualFile file = root;
-        for (String name : nestedPackages) {
-          file = file.findChild(name);
-          if (file == null) {
-            break;
-          }
-        }
-
+    Set<VirtualFile> packagePrefixRoots = myPackagePrefixRoots.get(packageName);
+    if (packagePrefixRoots != null) {
+      for (VirtualFile file : packagePrefixRoots) {
         if (isValidPackageDirectory(includeLibrarySources, file)) {
           result.add(file);
         }
       }
     }
 
-    cacheMap.put(packageName, result);
-    return new CollectionQuery<VirtualFile>(result);
+    if (StringUtil.isNotEmpty(packageName) && !packageName.startsWith(".")) {
+      String parentPackage = StringUtil.getPackageName(packageName);
+      String shortName = StringUtil.getShortName(packageName);
+      for (VirtualFile parentDir : getDirectoriesByPackageName(parentPackage, includeLibrarySources)) {
+        VirtualFile child = parentDir.findChild(shortName);
+        if (isValidPackageDirectory(includeLibrarySources, child) && child.isDirectory()) {
+          result.add(child);
+        }
+      }
+    }
+
+    if (!result.isEmpty()) {
+      cacheMap.put(packageName, result);
+    }
+    return result;
   }
 
   private boolean isValidPackageDirectory(boolean includeLibrarySources, @Nullable VirtualFile file) {
@@ -436,6 +429,16 @@ class RootIndex {
   @Nullable
   public JpsModuleSourceRootType<?> getSourceRootType(@NotNull DirectoryInfo directoryInfo) {
     return myRootTypes.get(directoryInfo.getSourceRootTypeId());
+  }
+
+  boolean handleAfterEvent(List<? extends VFileEvent> events) {
+    for (VFileEvent event : events) {
+      VirtualFile file = event.getFile();
+      if (file == null || file.isDirectory()) {
+        return false;
+      }
+    }
+    return true;
   }
 
 }

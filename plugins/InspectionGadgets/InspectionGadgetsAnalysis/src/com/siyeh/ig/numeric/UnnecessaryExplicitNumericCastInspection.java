@@ -140,7 +140,7 @@ public class UnnecessaryExplicitNumericCastInspection extends BaseInspection {
     }
   }
 
-  static boolean isPrimitiveNumericCastNecessary(PsiTypeCastExpression expression) {
+  public static boolean isPrimitiveNumericCastNecessary(PsiTypeCastExpression expression) {
     final PsiType castType = expression.getType();
     if (castType == null) {
       return true;

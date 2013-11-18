@@ -66,9 +66,6 @@ public class AnalysisScope {
   public static final int VIRTUAL_FILES = 9;
   public static final int UNCOMMITTED_FILES = 10;
 
-  /** @deprecated use {@linkplain #UNCOMMITTED_FILES} (to remove in IDEA 13) */
-  @SuppressWarnings("UnusedDeclaration") public static final int UNCOMMITED_FILES = UNCOMMITTED_FILES;
-
   @MagicConstant(intValues = {PROJECT, DIRECTORY, FILE, MODULE, INVALID, MODULES, CUSTOM, VIRTUAL_FILES, UNCOMMITTED_FILES})
   public @interface Type { }
 

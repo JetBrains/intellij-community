@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -81,7 +81,7 @@ public class PatchHunk {
   }
 
   public boolean isNoNewLineAtEnd() {
-    if (myLines.size() == 0) {
+    if (myLines.isEmpty()) {
       return false;
     }
     return myLines.get(myLines.size()-1).isSuppressNewLine();

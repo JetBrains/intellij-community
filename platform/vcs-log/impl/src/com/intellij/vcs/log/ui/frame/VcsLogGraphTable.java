@@ -1,12 +1,19 @@
 package com.intellij.vcs.log.ui.frame;
 
+import com.intellij.ide.CopyProvider;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.ide.CopyPasteManager;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.changes.issueLinks.TableLinkMouseListener;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.table.JBTable;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.data.VcsLogDataHolder;
 import com.intellij.vcs.log.graph.elements.Edge;
 import com.intellij.vcs.log.graph.elements.GraphElement;
@@ -22,13 +29,13 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
+import javax.swing.event.*;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
 import javax.swing.table.TableModel;
 import java.awt.*;
+import java.awt.datatransfer.StringSelection;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.List;
@@ -38,22 +45,25 @@ import static com.intellij.vcs.log.graph.render.PrintParameters.HEIGHT_CELL;
 /**
  * @author erokhins
  */
-public class VcsLogGraphTable extends JBTable {
+public class VcsLogGraphTable extends JBTable implements TypeSafeDataProvider, CopyProvider {
 
   private static final Logger LOG = Logger.getInstance(VcsLogGraphTable.class);
   private static final int ROOT_INDICATOR_WIDTH = 5;
 
   @NotNull private final VcsLogUI myUI;
-  @NotNull private final GraphCellPainter myGraphPainter = new SimpleGraphCellPainter();
+  @NotNull private final GraphCellPainter myGraphPainter;
+
+  private  volatile boolean myRepaintFreezed;
 
   public VcsLogGraphTable(@NotNull VcsLogUI UI, final VcsLogDataHolder logDataHolder) {
     super();
     myUI = UI;
 
-    setTableHeader(null);
+    myGraphPainter = new SimpleGraphCellPainter(logDataHolder.isMultiRoot());
+
     setDefaultRenderer(VirtualFile.class, new RootCellRenderer(myUI));
     setDefaultRenderer(GraphCommitCell.class, new GraphCommitCellRender(myGraphPainter, logDataHolder, myUI.getColorManager()));
-    setDefaultRenderer(CommitCell.class, new CommitCellRender(myUI.getColorManager()));
+    setDefaultRenderer(CommitCell.class, new CommitCellRender(myUI.getColorManager(), logDataHolder.getProject()));
     setDefaultRenderer(String.class, new StringCellRenderer());
 
     setRowHeight(HEIGHT_CELL);
@@ -75,6 +85,47 @@ public class VcsLogGraphTable extends JBTable {
     addMouseListener(mouseAdapter);
 
     PopupHandler.installPopupHandler(this, VcsLogUI.POPUP_ACTION_GROUP, VcsLogUI.VCS_LOG_TABLE_PLACE);
+
+    getColumnModel().addColumnModelListener(new TableColumnModelListener() {
+      @Override
+      public void columnAdded(TableColumnModelEvent e) {
+        if (e.getToIndex() == AbstractVcsLogTableModel.ROOT_COLUMN) {
+          myGraphPainter.setRootColumn(getColumnModel().getColumn(AbstractVcsLogTableModel.ROOT_COLUMN));
+        }
+      }
+
+      @Override
+      public void columnRemoved(TableColumnModelEvent e) {
+      }
+
+      @Override
+      public void columnMoved(TableColumnModelEvent e) {
+      }
+
+      @Override
+      public void columnMarginChanged(ChangeEvent e) {
+      }
+
+      @Override
+      public void columnSelectionChanged(ListSelectionEvent e) {
+      }
+    });
+  }
+
+  @Override
+  public String getToolTipText(@NotNull MouseEvent event) {
+    int row = rowAtPoint(event.getPoint());
+    int column = columnAtPoint(event.getPoint());
+    if (column < 0 || row < 0) {
+      return null;
+    }
+    if (column == AbstractVcsLogTableModel.ROOT_COLUMN) {
+      Object at = getValueAt(row, column);
+      if (at instanceof VirtualFile) {
+        return ((VirtualFile)at).getPresentableUrl();
+      }
+    }
+    return null;
   }
 
   public void setPreferredColumnWidths() {
@@ -94,6 +145,27 @@ public class VcsLogGraphTable extends JBTable {
     scrollRectToVisible(getCellRect(rowIndex, 0, false));
     setRowSelectionInterval(rowIndex, rowIndex);
     scrollRectToVisible(getCellRect(rowIndex, 0, false));
+  }
+
+  @Override
+  protected void paintComponent(Graphics g) {
+    if (myRepaintFreezed) {
+      return;
+    }
+    super.paintComponent(g);
+  }
+
+  /**
+   * Freeze repaint to avoid repainting during changing the Graph.
+   */
+  public void executeWithoutRepaint(@NotNull Runnable action) {
+    myRepaintFreezed = true;
+    try {
+      action.run();
+    }
+    finally {
+      myRepaintFreezed = false;
+    }
   }
 
   @Nullable
@@ -119,9 +191,45 @@ public class VcsLogGraphTable extends JBTable {
     return ((AbstractVcsLogTableModel)model).getSelectedChanges(getSelectedRows());
   }
 
+  @Override
+  public void calcData(DataKey key, DataSink sink) {
+    if (PlatformDataKeys.COPY_PROVIDER == key) {
+      sink.put(key, this);
+    }
+  }
+
+  @Override
+  public void performCopy(@NotNull DataContext dataContext) {
+    List<String> hashes = ContainerUtil.newArrayList();
+    for (int row : getSelectedRows()) {
+      Hash hash = ((AbstractVcsLogTableModel)getModel()).getHashAtRow(row);
+      if (hash != null) {
+        hashes.add(hash.asString());
+      }
+    }
+    if (!hashes.isEmpty()) {
+      CopyPasteManager.getInstance().setContents(new StringSelection(StringUtil.join(hashes, "\n")));
+    }
+  }
+
+  @Override
+  public boolean isCopyEnabled(@NotNull DataContext dataContext) {
+    return getSelectedRowCount() > 0;
+  }
+
+  @Override
+  public boolean isCopyVisible(@NotNull DataContext dataContext) {
+    return true;
+  }
+
   private class MyMouseAdapter extends MouseAdapter {
     private final Cursor DEFAULT_CURSOR = new Cursor(Cursor.DEFAULT_CURSOR);
     private final Cursor HAND_CURSOR = new Cursor(Cursor.HAND_CURSOR);
+    private final TableLinkMouseListener myTableListener;
+
+    MyMouseAdapter() {
+      myTableListener = new TableLinkMouseListener();
+    }
 
     @Nullable
     private GraphPrintCell getGraphPrintCell(MouseEvent e) {
@@ -169,18 +277,23 @@ public class VcsLogGraphTable extends JBTable {
           myUI.click(PositionUtil.getRowIndex(e));
         }
       }
+      myTableListener.onClick(e, e.getClickCount());
     }
 
     @Override
     public void mouseMoved(MouseEvent e) {
       Node jumpToNode = arrowToNode(e);
-      if (jumpToNode != null) {
+      if (jumpToNode != null || isAboveLink(e)) {
         setCursor(HAND_CURSOR);
       }
       else {
         setCursor(DEFAULT_CURSOR);
       }
       myUI.over(overCell(e));
+    }
+
+    private boolean isAboveLink(MouseEvent e) {
+      return myTableListener.getTagAt(e) != null;
     }
 
     @Override
@@ -220,7 +333,6 @@ public class VcsLogGraphTable extends JBTable {
         myColor = myUi.getColorManager().getRootColor((VirtualFile)value);
       }
       else {
-        LOG.error("Incorrect value " + value + " specified in row #" + row + ", column #");
         myColor = UIUtil.getTableBackground(isSelected);
       }
       return this;

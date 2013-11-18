@@ -25,6 +25,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
+import com.intellij.psi.impl.source.tree.java.PsiReferenceExpressionImpl;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.AllClassesSearch;
 import com.intellij.util.Consumer;
@@ -155,6 +156,10 @@ public class AllClassesGetter {
 
       @Override
       public boolean process(PsiClass psiClass) {
+        if (parameters.getInvocationCount() < 2 && PsiReferenceExpressionImpl.seemsScrambled(psiClass)) {
+          return true;
+        }
+
         assert psiClass != null;
         if (isAcceptableInContext(context, psiClass, filterByScope, pkgContext)) {
           String qName = psiClass.getQualifiedName();

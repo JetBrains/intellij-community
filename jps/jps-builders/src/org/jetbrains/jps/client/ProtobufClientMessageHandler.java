@@ -47,7 +47,7 @@ final class ProtobufClientMessageHandler<T extends ProtobufResponseHandler> exte
   }
 
   @Override
-  public final void channelRead0(ChannelHandlerContext context, MessageLite message) throws Exception {
+  public final void messageReceived(ChannelHandlerContext context, MessageLite message) throws Exception {
     final UUID messageUUID = myUuidGetter.getSessionUUID((JavacRemoteProto.Message)message);
     final RequestFuture<T> future = myHandlers.get(messageUUID);
     final T handler = future != null ? future.getMessageHandler() : null;

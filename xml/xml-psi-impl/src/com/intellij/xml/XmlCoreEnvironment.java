@@ -12,15 +12,20 @@ import com.intellij.lang.LanguageASTFactory;
 import com.intellij.lang.LanguageParserDefinitions;
 import com.intellij.lang.dtd.DTDLanguage;
 import com.intellij.lang.dtd.DTDParserDefinition;
+import com.intellij.lang.dtd.DtdSyntaxHighlighterFactory;
 import com.intellij.lang.html.HTMLLanguage;
 import com.intellij.lang.html.HTMLParserDefinition;
+import com.intellij.lang.html.HtmlSyntaxHighlighterFactory;
 import com.intellij.lang.xhtml.XHTMLLanguage;
 import com.intellij.lang.xhtml.XHTMLParserDefinition;
+import com.intellij.lang.xhtml.XhtmlSyntaxHighlighterFactory;
 import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.lang.xml.XMLParserDefinition;
 import com.intellij.lang.xml.XmlASTFactory;
+import com.intellij.lang.xml.XmlSyntaxHighlighterFactory;
 import com.intellij.lexer.HtmlEmbeddedTokenTypesProvider;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.fileTypes.SyntaxHighlighterFactory;
 import com.intellij.psi.impl.cache.impl.id.IdIndexers;
 import com.intellij.psi.impl.cache.impl.idCache.XmlIdIndexer;
 import com.intellij.psi.impl.source.xml.XmlElementDescriptorProvider;
@@ -42,6 +47,11 @@ public class XmlCoreEnvironment {
       appEnvironment.registerFileType(DTDFileType.INSTANCE, "dtd;ent;mod;elt");
 
       appEnvironment.registerFileType(XmlFileType.INSTANCE, "xml;xsd;tld;xsl;jnlp;wsdl;jhm;ant;xul;xslt;rng;fxml");
+
+      SyntaxHighlighterFactory.LANGUAGE_FACTORY.addExplicitExtension(XMLLanguage.INSTANCE, new XmlSyntaxHighlighterFactory());
+      SyntaxHighlighterFactory.LANGUAGE_FACTORY.addExplicitExtension(DTDLanguage.INSTANCE, new DtdSyntaxHighlighterFactory());
+      SyntaxHighlighterFactory.LANGUAGE_FACTORY.addExplicitExtension(HTMLLanguage.INSTANCE, new HtmlSyntaxHighlighterFactory());
+      SyntaxHighlighterFactory.LANGUAGE_FACTORY.addExplicitExtension(XHTMLLanguage.INSTANCE, new XhtmlSyntaxHighlighterFactory());
 
       appEnvironment.addExplicitExtension(LanguageParserDefinitions.INSTANCE, XMLLanguage.INSTANCE, new XMLParserDefinition());
       appEnvironment.addExplicitExtension(LanguageParserDefinitions.INSTANCE, DTDLanguage.INSTANCE, new DTDParserDefinition());

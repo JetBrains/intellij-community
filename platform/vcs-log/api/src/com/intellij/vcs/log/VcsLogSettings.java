@@ -18,4 +18,11 @@ public interface VcsLogSettings {
    */
   int getRecentCommitsCount();
 
+  /**
+   * Checks if the branches panel should be displayed or hidden.
+   */
+  boolean isShowBranchesPanel();
+
+  void setShowBranchesPanel(boolean show);
+
 }

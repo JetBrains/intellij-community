@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
@@ -46,7 +45,10 @@ import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.targets.AliasingPsiTarget;
 import com.intellij.psi.targets.AliasingPsiTargetMapper;
-import com.intellij.psi.util.*;
+import com.intellij.psi.util.MethodSignature;
+import com.intellij.psi.util.PropertyUtil;
+import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.refactoring.util.JavaNonCodeSearchElementDescriptionProvider;
 import com.intellij.refactoring.util.NonCodeSearchDescriptionLocation;
@@ -106,7 +108,7 @@ public class JavaFindUsagesHandler extends FindUsagesHandler{
                                FindBundle.message("find.parameter.usages.in.overriding.methods.prompt", parameter.getName()),
                                FindBundle.message("find.parameter.usages.in.overriding.methods.title"),
                                CommonBundle.getYesButtonText(), CommonBundle.getNoButtonText(),
-                               Messages.getQuestionIcon()) == 0;
+                               Messages.getQuestionIcon()) == Messages.OK;
   }
 
   @NotNull
@@ -184,7 +186,7 @@ public class JavaFindUsagesHandler extends FindUsagesHandler{
                                                                FindBundle.message("find.field.accessors.title"),
                                                                CommonBundle.getYesButtonText(),
                                                                CommonBundle.getNoButtonText(), Messages.getQuestionIcon()) ==
-                                   DialogWrapper.OK_EXIT_CODE;
+                                   Messages.OK;
           if (doSearch) {
             final Set<PsiElement> elements = new THashSet<PsiElement>();
             for (PsiMethod accessor : accessors) {

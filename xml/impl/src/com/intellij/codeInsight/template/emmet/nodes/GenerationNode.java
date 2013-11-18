@@ -279,10 +279,10 @@ public class GenerationNode extends UserDataHolderBase {
     if (tag != null) {
       for (Pair<String, String> pair : attr2value) {
         if (Strings.isNullOrEmpty(pair.second)) {
-          template.addVariable(pair.first, "", "", true);
+          template.addVariable(prepareVariableName(pair.first), "", "", true);
         }
       }
-      XmlTag tag1 = hasChildren ? expandEmptyTagIfNeccessary(tag) : tag;
+      XmlTag tag1 = hasChildren ? expandEmptyTagIfNecessary(tag) : tag;
       setAttributeValues(tag1, attr2value);
       XmlFile physicalFile = (XmlFile)fileFactory.createFileFromText("dummy.xml", StdFileTypes.XML, tag1.getContainingFile().getText(),
                                                                      LocalTimeCounter.currentTime(), true);
@@ -296,6 +296,10 @@ public class GenerationNode extends UserDataHolderBase {
     template = zenCodingGenerator.generateTemplate(token, hasChildren, callback.getContext());
     removeVariablesWhichHasNoSegment(template);
     return template;
+  }
+
+  private static String prepareVariableName(@NotNull String attributeName) {
+    return StringUtil.replaceChar(attributeName, '-', '_');
   }
 
   @NotNull
@@ -317,7 +321,7 @@ public class GenerationNode extends UserDataHolderBase {
   }
 
   @NotNull
-  private static XmlTag expandEmptyTagIfNeccessary(@NotNull XmlTag tag) {
+  private static XmlTag expandEmptyTagIfNecessary(@NotNull XmlTag tag) {
     StringBuilder builder = new StringBuilder();
     boolean flag = false;
 
@@ -411,7 +415,7 @@ public class GenerationNode extends UserDataHolderBase {
         }
         tag.setAttribute(pair.first,
                          Strings.isNullOrEmpty(pair.second)
-                         ? "$" + pair.first + "$"
+                         ? "$" + prepareVariableName(pair.first) + "$"
                          : ZenCodingUtil.getValue(pair.second, myNumberInIteration, myTotalIterations, mySurroundedText));
         iterator.remove();
       }

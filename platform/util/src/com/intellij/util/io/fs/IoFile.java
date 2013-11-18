@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,46 +30,57 @@ class IoFile implements IFile {
     myFile = file;
   }
 
+  @Override
   public boolean exists() {
     return myFile.exists();
   }
 
+  @Override
   public byte[] loadBytes() throws IOException {
     return FileUtil.loadFileBytes(myFile);
   }
 
+  @Override
   public InputStream openInputStream() throws FileNotFoundException {
     return new FileInputStream(myFile);
   }
 
+  @Override
   public OutputStream openOutputStream() throws FileNotFoundException {
     return new FileOutputStream(myFile);
   }
 
+  @Override
   public boolean delete() {
     return myFile.delete();
   }
 
+  @Override
   public void renameTo(final IFile newFile) throws IOException {
     FileUtil.rename(myFile, ((IoFile)newFile).myFile);
   }
 
+  @Override
   public void createParentDirs() {
     FileUtil.createParentDirs(myFile);
   }
 
+  @Override
   public IFile getParentFile() {
     return new IoFile(myFile.getParentFile());
   }
 
+  @Override
   public String getName() {
     return myFile.getName();
   }
 
+  @Override
   public String getPath() {
     return myFile.getPath();
   }
 
+  @Override
   public String getCanonicalPath() {
     if (SystemInfo.isFileSystemCaseSensitive) {
       return myFile.getAbsolutePath(); // fixes problem with symlinks under Unix (however does not under Windows!)
@@ -84,22 +95,27 @@ class IoFile implements IFile {
     }
   }
 
+  @Override
   public String getAbsolutePath() {
     return myFile.getAbsolutePath();
   }
 
+  @Override
   public long length() {
     return myFile.length();
   }
 
+  @Override
   public IFile getChild(final String childName) {
     return new IoFile(new File(myFile, childName)); 
   }
 
+  @Override
   public boolean isDirectory() {
     return myFile.isDirectory();
   }
 
+  @Override
   public IFile[] listFiles() {
     final File[] files = myFile.listFiles();
     if (files == null) return EMPTY_ARRAY;
@@ -113,10 +129,12 @@ class IoFile implements IFile {
     return result;
   }
 
+  @Override
   public void mkDir() {
     myFile.mkdir();
   }
 
+  @Override
   public long getTimeStamp() {
     return myFile.lastModified();
   }

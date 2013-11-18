@@ -224,10 +224,10 @@ SIMPLE_VALUE_RE = re.compile(
 
 ###########################   parsing   ###########################################################
 if version[0] < 3:
-    from pyparsing import *
+    from pycharm_generator_utils.pyparsing import *
 else:
     #noinspection PyUnresolvedReferences
-    from pyparsing_py3 import *
+    from pycharm_generator_utils.pyparsing_py3 import *
 
 # grammar to parse parameter lists
 

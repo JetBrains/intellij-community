@@ -197,7 +197,7 @@ public class PluginManager extends PluginManagerCore {
     return null;
   }
 
-  public static void handleComponentError(Throwable t, String componentClassName, ComponentConfig config) {
+  public static void handleComponentError(Throwable t, @Nullable String componentClassName, @Nullable ComponentConfig config) {
     if (t instanceof StartupAbortedException) {
       throw (StartupAbortedException)t;
     }
@@ -207,7 +207,9 @@ public class PluginManager extends PluginManagerCore {
       pluginId = config.getPluginId();
     }
     if (pluginId == null || CORE_PLUGIN_ID.equals(pluginId.getIdString())) {
-      pluginId = getPluginByClassName(componentClassName);
+      if (componentClassName != null) {
+        pluginId = getPluginByClassName(componentClassName);
+      }
     }
     if (pluginId == null || CORE_PLUGIN_ID.equals(pluginId.getIdString())) {
       if (t instanceof PicoPluginExtensionInitializationException) {

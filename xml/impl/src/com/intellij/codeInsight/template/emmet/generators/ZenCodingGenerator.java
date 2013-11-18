@@ -179,4 +179,8 @@ public abstract class ZenCodingGenerator {
   public UnnamedConfigurable createConfigurable() {
     return null;
   }
+
+  public boolean hasCompletionItem() {
+    return false;
+  }
 }

@@ -133,8 +133,11 @@ public class ClsParsingUtil {
       return new ClsPrefixExpressionImpl(parent, operation, literal);
     }
     if (expr instanceof PsiClassObjectAccessExpression) {
-      final String canonicalClassText = ((PsiClassObjectAccessExpression)expr).getOperand().getType().getCanonicalText();
-      return new ClsClassObjectAccessExpressionImpl(parent, canonicalClassText);
+      String exprText = expr.getText();
+      if (StringUtil.endsWith(exprText, ".class")) {
+        String classText = exprText.substring(0, exprText.length() - 6);
+        return new ClsClassObjectAccessExpressionImpl(parent, classText);
+      }
     }
     if (expr instanceof PsiReferenceExpression) {
       return new ClsReferenceExpressionImpl(parent, (PsiReferenceExpression)expr);
@@ -159,7 +162,7 @@ public class ClsParsingUtil {
       }
     }
 
-    LOG.error("Unable to compute expression value: " + expr);
+    LOG.error("Unable to compute expression value: " + expr + " [" + expr.getText() + "]");
     return null;
   }
 

@@ -33,10 +33,10 @@ import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.JpsElement;
 import org.jetbrains.jps.model.JpsElementFactory;
 import org.jetbrains.jps.model.java.JavaSourceRootType;
@@ -149,35 +149,35 @@ public class ContentEntryImpl extends RootModelComponentBase implements ContentE
   @Override
   public ExcludeFolder[] getExcludeFolders() {
     //assert !isDisposed();
-    final ArrayList<ExcludeFolder> result = new ArrayList<ExcludeFolder>(myExcludeFolders);
-    for (DirectoryIndexExcludePolicy excludePolicy : Extensions.getExtensions(DirectoryIndexExcludePolicy.EP_NAME, getRootModel().getProject())) {
-      final VirtualFilePointer[] files = excludePolicy.getExcludeRootsForModule(getRootModel());
-      for (VirtualFilePointer file : files) {
-        addExcludeForOutputPath(file, result);
-      }
-    }
-    return result.toArray(new ExcludeFolder[result.size()]);
+    return myExcludeFolders.toArray(new ExcludeFolder[myExcludeFolders.size()]);
   }
 
-  private void addExcludeForOutputPath(@Nullable final VirtualFilePointer outputPath, @NotNull ArrayList<ExcludeFolder> result) {
-    if (outputPath == null) return;
-    final VirtualFile outputPathFile = outputPath.getFile();
-    final VirtualFile file = myRoot.getFile();
-    if (outputPathFile != null && file != null /* TODO: ??? && VfsUtil.isAncestor(file, outputPathFile, false) */) {
-      result.add(new ExcludedOutputFolderImpl(this, outputPath));
+  @NotNull
+  @Override
+  public List<String> getExcludeFolderUrls() {
+    List<String> excluded = new ArrayList<String>();
+    for (ExcludeFolder folder : myExcludeFolders) {
+      excluded.add(folder.getUrl());
     }
+    for (DirectoryIndexExcludePolicy excludePolicy : Extensions.getExtensions(DirectoryIndexExcludePolicy.EP_NAME, getRootModel().getProject())) {
+      for (VirtualFilePointer pointer : excludePolicy.getExcludeRootsForModule(getRootModel())) {
+        excluded.add(pointer.getUrl());
+      }
+    }
+    return excluded;
   }
 
   @Override
   @NotNull
   public VirtualFile[] getExcludeFolderFiles() {
     assert !isDisposed();
-    final ExcludeFolder[] excludeFolders = getExcludeFolders();
     ArrayList<VirtualFile> result = new ArrayList<VirtualFile>();
-    for (ExcludeFolder excludeFolder : excludeFolders) {
-      final VirtualFile file = excludeFolder.getFile();
-      if (file != null) {
-        result.add(file);
+    for (ExcludeFolder excludeFolder : getExcludeFolders()) {
+      ContainerUtil.addIfNotNull(result, excludeFolder.getFile());
+    }
+    for (DirectoryIndexExcludePolicy excludePolicy : Extensions.getExtensions(DirectoryIndexExcludePolicy.EP_NAME, getRootModel().getProject())) {
+      for (VirtualFilePointer pointer : excludePolicy.getExcludeRootsForModule(getRootModel())) {
+        ContainerUtil.addIfNotNull(result, pointer.getFile());
       }
     }
     return VfsUtilCore.toVirtualFileArray(result);
@@ -293,6 +293,18 @@ public class ContentEntryImpl extends RootModelComponentBase implements ContentE
   }
 
   @Override
+  public boolean removeExcludeFolder(@NotNull String url) {
+    for (ExcludeFolder folder : myExcludeFolders) {
+      if (folder.getUrl().equals(url)) {
+        myExcludeFolders.remove(folder);
+        Disposer.dispose((Disposable)folder);
+        return true;
+      }
+    }
+    return false;
+  }
+
+  @Override
   public void clearExcludeFolders() {
     assert !isDisposed();
     getRootModel().assertWritable();
@@ -354,7 +366,7 @@ public class ContentEntryImpl extends RootModelComponentBase implements ContentE
     element.setAttribute(URL_ATTRIBUTE, myRoot.getUrl());
     for (final SourceFolder sourceFolder : mySourceFolders) {
       if (sourceFolder instanceof SourceFolderImpl) {
-        JpsModuleRootModelSerializer.saveSourceRoot(element, sourceFolder.getUrl(), ((SourceFolderImpl)sourceFolder).getJpsElement().asTyped());
+        JpsModuleRootModelSerializer.saveSourceRoot(element, sourceFolder.getUrl(), sourceFolder.getJpsElement().asTyped());
       }
     }
 

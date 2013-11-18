@@ -270,16 +270,13 @@ public class GenericsUtil {
             continue;
           }
           final PsiType extendsBound = ((PsiWildcardType)substituted).getExtendsBound();
-          if (Comparing.equal(TypeConversionUtil.erasure(extendsType), TypeConversionUtil.erasure(extendsBound))) {
-            if (extendsBound instanceof PsiClassType) {
-              if (acceptExtendsBound((PsiClassType)extendsBound, 0)) continue;
-            } else if (extendsBound instanceof PsiIntersectionType) {
-              for (PsiType psiType : ((PsiIntersectionType)extendsBound).getConjuncts()) {
-                if (psiType instanceof PsiClassType) {
-                  if (acceptExtendsBound((PsiClassType)psiType, 0)) continue nextTypeParam;
-                }
-              }
-            }
+          if (acceptExtendsBound(extendsType, extendsBound)) {
+            continue nextTypeParam;
+          }
+        }
+        else if (substituted instanceof PsiIntersectionType) {
+          for (PsiType extendsBound : ((PsiIntersectionType)substituted).getConjuncts()) {
+            if (acceptExtendsBound(extendsType, extendsBound)) continue nextTypeParam;
           }
         }
         if (extendsType != null && !TypeConversionUtil.isAssignable(extendsType, substituted, allowUncheckedConversion)) {
@@ -288,6 +285,22 @@ public class GenericsUtil {
       }
     }
     return null;
+  }
+
+  public static boolean acceptExtendsBound(PsiType extendsType, PsiType extendsBound) {
+    if (Comparing.equal(TypeConversionUtil.erasure(extendsType), TypeConversionUtil.erasure(extendsBound))) {
+      if (extendsBound instanceof PsiClassType) {
+        if (acceptExtendsBound((PsiClassType)extendsBound, 0)) return true;
+      }
+      else if (extendsBound instanceof PsiIntersectionType) {
+        for (PsiType psiType : ((PsiIntersectionType)extendsBound).getConjuncts()) {
+          if (psiType instanceof PsiClassType) {
+            if (acceptExtendsBound((PsiClassType)psiType, 0)) return true;
+          }
+        }
+      }
+    }
+    return false;
   }
 
   private static boolean acceptExtendsBound(PsiClassType extendsBound, int depth) {
@@ -302,6 +315,13 @@ public class GenericsUtil {
         final PsiType bound = ((PsiWildcardType)argType).getExtendsBound();
         if (bound instanceof PsiClassType && TypeConversionUtil.erasure(bound).equals(TypeConversionUtil.erasure(extendsBound))) {
           return acceptExtendsBound((PsiClassType)bound, depth + 1);
+        }
+        if (bound instanceof PsiIntersectionType) {
+          for (PsiType extendsType : ((PsiIntersectionType)bound).getConjuncts()) {
+            if (acceptExtendsBound(extendsBound, extendsType)) {
+              return true;
+            }
+          }
         }
       }
     }

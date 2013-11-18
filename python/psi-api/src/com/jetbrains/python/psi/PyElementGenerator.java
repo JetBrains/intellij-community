@@ -29,7 +29,7 @@ public abstract class PyElementGenerator {
     return ServiceManager.getService(project, PyElementGenerator.class);
   }
 
-  public abstract ASTNode createNameIdentifier(String name);
+  public abstract ASTNode createNameIdentifier(String name, LanguageLevel languageLevel);
 
   /**
    * str must have quotes around it and be fully escaped.

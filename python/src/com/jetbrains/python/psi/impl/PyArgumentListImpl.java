@@ -269,8 +269,13 @@ public class PyArgumentListImpl extends PyElementImpl implements PyArgumentList 
     // following the spec: http://docs.python.org/ref/calls.html
     PyCallExpression call = getCallExpression();
     if (call != null) {
-      PyCallExpression.PyMarkedCallee resolved_callee = call.resolveCallee(resolveContext, offset);
-      if (resolved_callee != null) ret.mapArguments(resolved_callee, resolveContext.getTypeEvalContext());
+      PyCallExpression.PyMarkedCallee resolvedCallee = call.resolveCallee(resolveContext, offset);
+      if (resolvedCallee != null) {
+        ret.mapArguments(resolvedCallee, resolveContext.getTypeEvalContext());
+      }
+      else {
+        ret.verifyArguments();
+      }
     }
     return ret;
   }

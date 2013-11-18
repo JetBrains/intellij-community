@@ -93,6 +93,13 @@ public class IconUtil {
     return new ImageIcon(img);
   }
 
+  public static Icon cropIcon(@NotNull Icon icon, Rectangle area) {
+    if (!new Rectangle(icon.getIconWidth(), icon.getIconHeight()).contains(area)) {
+      return icon;
+    }
+    return new CropIcon(icon, area);
+  }
+
   @NotNull
   public static Icon flip(@NotNull Icon icon, boolean horizontal) {
     int w = icon.getIconWidth();
@@ -332,6 +339,31 @@ public class IconUtil {
     @Override
     public int getIconHeight() {
       return myHeight;
+    }
+  }
+
+  private static class CropIcon implements Icon {
+    private final Icon mySrc;
+    private final Rectangle myCrop;
+
+    private CropIcon(@NotNull Icon src, Rectangle crop) {
+      mySrc = src;
+      myCrop = crop;
+    }
+
+    @Override
+    public void paintIcon(Component c, Graphics g, int x, int y) {
+      mySrc.paintIcon(c, g, x - myCrop.x, y - myCrop.y);
+    }
+
+    @Override
+    public int getIconWidth() {
+      return myCrop.width;
+    }
+
+    @Override
+    public int getIconHeight() {
+      return myCrop.height;
     }
   }
 }

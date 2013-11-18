@@ -75,7 +75,7 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
   private DomParentStrategy myParentStrategy;
   private volatile long myLastModCount;
 
-  private final DomElement myProxy;
+  private volatile DomElement myProxy;
   private DomGenericInfoEx myGenericInfo;
   private final InvocationCache myInvocationCache;
   private volatile Converter myScalarConverter = null;
@@ -97,14 +97,7 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
 
     myType = narrowType(type);
 
-    final Class<?> rawType = getRawType();
-    myInvocationCache = manager.getApplicationComponent().getInvocationCache(rawType);
-    Class<? extends DomElement> implementation = manager.getApplicationComponent().getImplementation(rawType);
-    final boolean isInterface = ReflectionCache.isInterface(rawType);
-    if (implementation == null && !isInterface) {
-      implementation = (Class<? extends DomElement>)rawType;
-    }
-    myProxy = AdvancedProxy.createProxy(this, implementation, isInterface ? new Class[]{rawType} : ArrayUtil.EMPTY_CLASS_ARRAY);
+    myInvocationCache = manager.getApplicationComponent().getInvocationCache(getRawType());
     refreshGenericInfo(dynamic);
     if (stub != null) {
       stub.setHandler(this);
@@ -206,7 +199,7 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
     });
 
     if (!myManager.getSemService().isInsideAtomicChange()) {
-      myManager.fireEvent(new DomEvent(myProxy, false));
+      myManager.fireEvent(new DomEvent(getProxy(), false));
     }
   }
 
@@ -517,7 +510,18 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
 
   @NotNull
   public final DomElement getProxy() {
-    return myProxy;
+    DomElement proxy = myProxy;
+    if (proxy == null) {
+      Class<?> rawType = getRawType();
+      Class<? extends DomElement> implementation = myManager.getApplicationComponent().getImplementation(rawType);
+      final boolean isInterface = ReflectionCache.isInterface(rawType);
+      if (implementation == null && !isInterface) {
+        //noinspection unchecked
+        implementation = (Class<? extends DomElement>)rawType;
+      }
+      myProxy = proxy = AdvancedProxy.createProxy(this, implementation, isInterface ? new Class[]{rawType} : ArrayUtil.EMPTY_CLASS_ARRAY);
+    }
+    return proxy;
   }
 
   @NotNull
@@ -692,7 +696,7 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
     return myType.toString() + " @" + hashCode();
   }
 
-  protected final Class<?> getRawType() {
+  public final Class<?> getRawType() {
     return ReflectionUtil.getRawType(myType);
   }
 

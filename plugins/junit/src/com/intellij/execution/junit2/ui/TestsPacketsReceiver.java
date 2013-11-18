@@ -33,6 +33,7 @@ import com.intellij.execution.junit2.ui.model.JUnitRunningModel;
 import com.intellij.execution.junit2.ui.properties.JUnitConsoleProperties;
 import com.intellij.execution.testframework.AbstractTestProxy;
 import com.intellij.execution.testframework.Printable;
+import com.intellij.execution.testframework.TestStatusListener;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -201,6 +202,7 @@ public class TestsPacketsReceiver implements OutputPacketProcessor, Disposable {
     final JUnitRunningModel model = getModel();
     if (model != null) {
       model.getNotifier().fireRunnerStateChanged(new CompletionEvent(true, reader.readInt()));
+      TestStatusListener.notifySuiteFinished(model.getRoot());
       terminateStillRunning(model);
     }
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -54,6 +54,7 @@ public class ReorderJarsMain {
         final List<JBZipEntry> entries = zipFile.getEntries();
         final List<String> orderedEntries = toReorder.get(jarUrl);
         Collections.sort(entries, new Comparator<JBZipEntry>() {
+          @Override
           public int compare(JBZipEntry o1, JBZipEntry o2) {
             if ("META-INF/plugin.xml".equals(o2.getName())) return Integer.MAX_VALUE;
             if ("META-INF/plugin.xml".equals(o1.getName())) return -Integer.MAX_VALUE;

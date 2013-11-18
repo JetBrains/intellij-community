@@ -18,6 +18,7 @@ package com.intellij.externalSystem;
 import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.Key;
 import com.intellij.openapi.externalSystem.service.project.manage.ProjectDataService;
+import com.intellij.openapi.externalSystem.util.DisposeAwareProjectChange;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdk;
@@ -105,9 +106,9 @@ public class JavaProjectDataService implements ProjectDataService<JavaProjectDat
     if (languageLevelExtension.getLanguageLevel().isAtLeast(languageLevel)) {
       return;
     }
-    ExternalSystemApiUtil.executeProjectChangeAction(synchronous, new Runnable() {
+    ExternalSystemApiUtil.executeProjectChangeAction(synchronous, new DisposeAwareProjectChange(project) {
       @Override
-      public void run() {
+      public void execute() {
         languageLevelExtension.setLanguageLevel(languageLevel);
       }
     });

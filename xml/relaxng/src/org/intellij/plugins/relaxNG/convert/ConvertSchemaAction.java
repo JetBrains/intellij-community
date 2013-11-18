@@ -45,7 +45,7 @@ public class ConvertSchemaAction extends AnAction {
 
   public void update(AnActionEvent e) {
     final VirtualFile[] files = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY);
-    final Project project = e.getData(PlatformDataKeys.PROJECT);
+    final Project project = e.getData(CommonDataKeys.PROJECT);
     if (files != null && project != null) {
       final SchemaType type = getInputType(project, files);
       e.getPresentation().setEnabled(type != null);
@@ -95,7 +95,7 @@ public class ConvertSchemaAction extends AnAction {
 
   public void actionPerformed(AnActionEvent e) {
     final VirtualFile file = e.getData(CommonDataKeys.VIRTUAL_FILE);
-    final Project project = e.getData(PlatformDataKeys.PROJECT);
+    final Project project = e.getData(CommonDataKeys.PROJECT);
     if (file != null && project != null) {
       final VirtualFile[] files = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY);
       assert files != null;

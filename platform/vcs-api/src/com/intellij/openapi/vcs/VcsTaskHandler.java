@@ -36,15 +36,26 @@ public abstract class VcsTaskHandler {
     public TaskInfo(MultiMap<String, String> branches) {
       this.branches = branches;
     }
+
+    public String getName() {
+      return branches.isEmpty() ? null : branches.keySet().iterator().next();
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+      return branches.equals(((TaskInfo)obj).branches);
+    }
   }
 
   private static final ExtensionPointName<VcsTaskHandler> EXTENSION_POINT_NAME = ExtensionPointName.create("com.intellij.vcs.taskHandler");
 
   public abstract TaskInfo startNewTask(String taskName);
 
-  public abstract void switchToTask(TaskInfo taskInfo);
+  public abstract void switchToTask(TaskInfo taskInfo, Runnable invokeAfter);
 
   public abstract void closeTask(TaskInfo taskInfo, TaskInfo original);
 
   public abstract TaskInfo getActiveTask();
+
+  public abstract TaskInfo[] getCurrentTasks();
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -158,10 +158,12 @@ public class InjectedLanguageUtil {
     SelectionModel selectionModel = hostEditor.getSelectionModel();
     if (selectionModel.hasSelection()) {
       int selstart = selectionModel.getSelectionStart();
-      int selend = selectionModel.getSelectionEnd();
-      if (!documentWindow.containsRange(selstart, selend)) {
-        // selection spreads out the injected editor range
-        return hostEditor;
+      if (selstart != -1) {
+        int selend = Math.max(selstart, selectionModel.getSelectionEnd());
+        if (!documentWindow.containsRange(selstart, selend)) {
+          // selection spreads out the injected editor range
+          return hostEditor;
+        }
       }
     }
     if (!documentWindow.isValid()) return hostEditor; // since the moment we got hold of injectedFile and this moment call, document may have been dirtied

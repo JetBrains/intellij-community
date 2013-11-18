@@ -772,6 +772,7 @@ public class ExpressionParsing extends Parsing {
       PsiBuilder.Marker starExpr = myBuilder.mark();
       nextToken();
       if (!parseBitwiseORExpression(isTargetExpression)) {
+        myBuilder.error(message("PARSE.expected.expression"));
         starExpr.drop();
         return false;
       }

@@ -56,13 +56,13 @@ def layoutFull(String home, String targetDirectory, String patchedDescriptorDir 
     "java-analysis-api",
     "java-indexing-api",
     "java-psi-api",
+    "js-analysis-api",
     "jsp-openapi",
     "jsp-base-openapi",
     "openapi",
     "remote-servers-api",
     "remote-servers-java-api",
     "testFramework-java",
-    "xml-analysis-api",
   ].flatten()
 
   //noinspection GroovyAssignabilityCheck
@@ -78,6 +78,7 @@ def layoutFull(String home, String targetDirectory, String patchedDescriptorDir 
     "java-indexing-impl",
     "java-impl",
     "java-psi-impl",
+    "js-analysis-impl",
     "jsp-spi",
     "manifest",
     "platform-main",
@@ -85,7 +86,6 @@ def layoutFull(String home, String targetDirectory, String patchedDescriptorDir 
     "remote-servers-java-impl",
     "testFramework",
     "tests_bootstrap",
-    "xml-analysis-impl",
           ].flatten()
 
   ant.patternset(id: "resources.included") {
@@ -117,6 +117,12 @@ def layoutFull(String home, String targetDirectory, String patchedDescriptorDir 
       dir("groovy") {
         dir("lib") {
           fileset(dir:"$home/lib/groovy/lib")
+        }
+      }
+
+      dir("libpty") {
+        fileset(dir: "$home/lib/libpty") {
+          exclude(name: "readme.txt")
         }
       }
 
@@ -321,6 +327,11 @@ public def layoutCommunityPlugins(String home) {
       jar("git4idea-rt.jar") {
         module("git4idea-rt")
       }
+      if (!isDefined("pluginFilter")) {//temporary fix to exclude remote-servers-git module from layout for small IDEs because corresponding module isn't compiled
+        jar("remote-servers-git.jar") {
+          module("remote-servers-git")
+        }
+      }
       fileset(dir: "$home/plugins/git4idea/lib") {
         include(name: "trilead-ssh2.jar")
       }
@@ -478,10 +489,6 @@ public def layoutCommunityPlugins(String home) {
       fileset(dir: "$home/plugins/terminal/lib") {
         include(name: "*.jar")
         include(name: "*.in")
-        include(name: "**/*.dll")
-        include(name: "**/*.exe")
-        include(name: "**/*.dylib")
-        include(name: "**/*.so")
       }
     }
   }
@@ -715,6 +722,7 @@ def layoutCommunityJps(String home, String target) {
       include(name: "log4j.jar")
       include(name: "jgoodies-forms.jar")
       include(name: "ecj*.jar")
+      include(name: "jsr166e.jar")
     }
     dir("test") {
       jar("jps-build-test.jar") {

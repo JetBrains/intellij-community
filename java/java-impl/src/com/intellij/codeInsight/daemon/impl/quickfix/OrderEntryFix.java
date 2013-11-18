@@ -37,6 +37,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.packageDependencies.DependencyValidationManager;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiShortNamesCache;
@@ -174,7 +175,12 @@ public abstract class OrderEntryFix implements IntentionAction, LocalQuickFix {
     List<LocalQuickFix> result = new ArrayList<LocalQuickFix>();
     Set<Object> librariesToAdd = new THashSet<Object>();
     final JavaPsiFacade facade = JavaPsiFacade.getInstance(psiElement.getProject());
-    final PsiClass[] classes = PsiShortNamesCache.getInstance(project).getClassesByName(referenceName, GlobalSearchScope.allScope(project));
+    PsiClass[] classes = PsiShortNamesCache.getInstance(project).getClassesByName(referenceName, GlobalSearchScope.allScope(project));
+    List<PsiClass> allowedDependencies = filterAllowedDependencies(psiElement, classes);
+    if (allowedDependencies.isEmpty()) {
+      return result;
+    }
+    classes = allowedDependencies.toArray(new PsiClass[allowedDependencies.size()]);
     final OrderEntryFix moduleDependencyFix = new AddModuleDependencyFix(currentModule, classVFile, classes, reference);
     registrar.register(moduleDependencyFix);
     result.add(moduleDependencyFix);
@@ -234,6 +240,18 @@ public abstract class OrderEntryFix implements IntentionAction, LocalQuickFix {
           registrar.register(fix);
           result.add(fix);
         }
+      }
+    }
+    return result;
+  }
+
+  private static List<PsiClass> filterAllowedDependencies(PsiElement element, PsiClass[] classes) {
+    DependencyValidationManager dependencyValidationManager = DependencyValidationManager.getInstance(element.getProject());
+    PsiFile fromFile = element.getContainingFile();
+    List<PsiClass> result = new ArrayList<PsiClass>();
+    for (PsiClass psiClass : classes) {
+      if (dependencyValidationManager.getViolatorDependencyRule(fromFile, psiClass.getContainingFile()) == null) {
+        result.add(psiClass);
       }
     }
     return result;

@@ -3,18 +3,16 @@ package com.intellij.compilerOutputIndex.api.indexer;
 import com.intellij.compilerOutputIndex.api.fs.CompilerOutputFilesUtil;
 import com.intellij.compilerOutputIndex.api.fs.FileVisitorService;
 import com.intellij.openapi.compiler.CompilationStatusAdapter;
-import com.intellij.openapi.compiler.CompileContext;
-import com.intellij.openapi.compiler.CompileTask;
 import com.intellij.openapi.compiler.CompilerManager;
 import com.intellij.openapi.components.AbstractProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.openapi.util.registry.RegistryValueListener;
@@ -24,10 +22,7 @@ import com.intellij.util.containers.ConcurrentHashSet;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.ID;
 import com.intellij.util.indexing.IndexInfrastructure;
-import com.intellij.util.io.DataExternalizer;
-import com.intellij.util.io.EnumeratorStringDescriptor;
-import com.intellij.util.io.PersistentEnumeratorDelegate;
-import com.intellij.util.io.PersistentHashMap;
+import com.intellij.util.io.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -159,10 +154,16 @@ public class CompilerOutputIndexer extends AbstractProjectComponent {
   private void doEnable() {
     if (myInitialized.compareAndSet(false, true)) {
       initTimestampIndex();
+      final File storageFile =
+        IndexInfrastructure.getStorageFile(CompilerOutputIndexUtil.generateIndexId("compilerOutputIndexFileId.enum", myProject));
+
       try {
-        myFileEnumerator = new PersistentEnumeratorDelegate<String>(
-          IndexInfrastructure.getStorageFile(CompilerOutputIndexUtil.generateIndexId("compilerOutputIndexFileId.enum", myProject)),
-          new EnumeratorStringDescriptor(), 2048);
+        myFileEnumerator = IOUtil.openCleanOrResetBroken(new ThrowableComputable<PersistentEnumeratorDelegate<String>, IOException>() {
+          @Override
+          public PersistentEnumeratorDelegate<String> compute() throws IOException {
+            return new PersistentEnumeratorDelegate<String>(storageFile, new EnumeratorStringDescriptor(), 2048);
+          }
+        }, storageFile);
       }
       catch (IOException e) {
         throw new RuntimeException(e);
@@ -187,29 +188,35 @@ public class CompilerOutputIndexer extends AbstractProjectComponent {
   }
 
   private void initTimestampIndex() {
-    for (int attempts = 0; attempts < 2; attempts++) {
-      try {
-        myFileTimestampsIndex = new PersistentHashMap<String, Long>(IndexInfrastructure.getStorageFile(getFileTimestampsIndexId()),
-                                                                    new EnumeratorStringDescriptor(), new DataExternalizer<Long>() {
+    final File storageFile = IndexInfrastructure.getStorageFile(getFileTimestampsIndexId());
+    try {
+      myFileTimestampsIndex = IOUtil.openCleanOrResetBroken(
+        new ThrowableComputable<PersistentHashMap<String, Long>, IOException>() {
           @Override
-          public void save(final DataOutput out, final Long value) throws IOException {
-            out.writeLong(value);
-          }
+          public PersistentHashMap<String, Long> compute() throws IOException {
+            return new PersistentHashMap<String, Long>(storageFile,
+                                                       new EnumeratorStringDescriptor(), new DataExternalizer<Long>() {
+              @Override
+              public void save(final DataOutput out, final Long value) throws IOException {
+                out.writeLong(value);
+              }
 
-          @Override
-          public Long read(final DataInput in) throws IOException {
-            return in.readLong();
+              @Override
+              public Long read(final DataInput in) throws IOException {
+                return in.readLong();
+              }
+            });
           }
-        });
-      }
-      catch (IOException e) {
-        FileUtil.delete(IndexInfrastructure.getIndexRootDir(getFileTimestampsIndexId()));
-      }
-      if (myFileTimestampsIndex != null) {
-        return;
-      }
+        },
+        new Runnable() {
+          public void run() {
+            FileUtil.delete(IndexInfrastructure.getIndexRootDir(getFileTimestampsIndexId()));
+          }
+        }
+      );
+    } catch (IOException ex) {
+      throw new RuntimeException("Timestamps index not initialized", ex);
     }
-    throw new RuntimeException("Timestamps index not initialized");
   }
 
   public void reindex(final FileVisitorService visitorService, final @NotNull ProgressIndicator indicator) {

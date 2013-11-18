@@ -79,7 +79,7 @@ public class PsiParserFacadeImpl implements PsiParserFacade {
   public PsiComment createLineOrBlockCommentFromText(@NotNull Language lang, @NotNull String text)
     throws IncorrectOperationException {
     Commenter commenter = LanguageCommenters.INSTANCE.forLanguage(lang);
-    assert commenter != null;
+    assert commenter != null:lang;
     String prefix = commenter.getLineCommentPrefix();
     final String blockCommentPrefix = commenter.getBlockCommentPrefix();
     final String blockCommentSuffix = commenter.getBlockCommentSuffix();

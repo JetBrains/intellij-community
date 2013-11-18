@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,7 +39,7 @@ import org.jetbrains.annotations.Nullable;
  */
 public abstract class CreateBeanPropertyFix implements LocalQuickFix, IntentionAction {
 
-  private final static Logger LOG = Logger.getInstance("#com.intellij.psi.impl.beanProperties.CreateBeanPropertyFix");
+  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.beanProperties.CreateBeanPropertyFix");
   private static final CreateBeanPropertyFix[] NO_FIXES = new CreateBeanPropertyFix[0];
 
   protected final String myPropertyName;

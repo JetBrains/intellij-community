@@ -530,7 +530,7 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
         if (Messages.showYesNoDialog(parent,
                                      ProjectBundle.message("project.roots.replace.library.entry.message", entry.getPresentableName()),
                                      ProjectBundle.message("project.roots.replace.library.entry.title"),
-                                     Messages.getInformationIcon()) == DialogWrapper.OK_EXIT_CODE) {
+                                     Messages.getInformationIcon()) == Messages.YES) {
           modelProxy.removeOrderEntry(entry);
           break;
         }

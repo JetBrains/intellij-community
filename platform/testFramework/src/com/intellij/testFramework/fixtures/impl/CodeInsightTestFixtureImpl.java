@@ -51,6 +51,7 @@ import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.internal.DumpLookupElementWeights;
 import com.intellij.lang.LanguageStructureViewBuilder;
+import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
@@ -1489,6 +1490,17 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
       file = InjectedLanguageUtil.getTopLevelFile(file);
     }
     return instantiateAndRun(file, editor, ArrayUtil.EMPTY_INT_ARRAY, myAllowDirt);
+  }
+
+  @NotNull
+  @Override
+  public List<HighlightInfo> doHighlighting(final HighlightSeverity minimalSeverity) {
+    return ContainerUtil.filter(doHighlighting(), new Condition<HighlightInfo>() {
+      @Override
+      public boolean value(HighlightInfo info) {
+        return info.getSeverity().compareTo(minimalSeverity) >= 0;
+      }
+    });
   }
 
   @NotNull

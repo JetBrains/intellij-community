@@ -4,7 +4,6 @@ import com.intellij.openapi.externalSystem.service.project.PlatformFacade;
 import com.intellij.openapi.externalSystem.util.ExternalSystemConstants;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.roots.OrderEnumerator;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
@@ -407,15 +406,27 @@ public class GradleInstallationManager {
 
       File src = new File(gradleHome, "src");
       if (src.isDirectory()) {
-        final VirtualFile virtualFile = localFileSystem.refreshAndFindFileByIoFile(src);
-        if (virtualFile != null) {
-          result.add(0, virtualFile);
+        if(new File(src, "org").isDirectory()) {
+          addRoots(localFileSystem, result, src);
+        } else {
+          addRoots(localFileSystem, result, src.listFiles());
         }
       }
 
       return result;
     }
     return null;
+  }
+
+  private void addRoots(@NotNull LocalFileSystem localFileSystem, @NotNull List<VirtualFile> result, @Nullable File... files) {
+    if(files == null) return;
+    for (File file : files) {
+      if(file == null || !file.isDirectory()) continue;
+      final VirtualFile virtualFile = localFileSystem.refreshAndFindFileByIoFile(file);
+      if (virtualFile != null) {
+        result.add(0, virtualFile);
+      }
+    }
   }
 
   private File getWrappedGradleHome(String linkedProjectPath, @Nullable final WrapperConfiguration wrapperConfiguration) {

@@ -16,10 +16,7 @@
 package com.intellij.openapi.fileEditor.impl.http;
 
 import com.intellij.icons.AllIcons;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.ActionPlaces;
-import com.intellij.openapi.actionSystem.ActionToolbar;
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.TextEditor;
@@ -259,7 +256,7 @@ public class RemoteFilePanel implements PropertyChangeListener {
       myProgressUpdatesQueue.queue(new Update("fraction") {
         @Override
         public void run() {
-          myProgressBar.setValue((int)Math.round(100*fraction));
+          myProgressBar.setValue((int)Math.round(100 * fraction));
         }
       });
     }

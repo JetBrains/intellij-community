@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,10 +29,12 @@ public class Page {
   public static final int PAGE_SIZE = 4 * 1024;
 
   private static final LimitedPool<ByteBuffer> ourBufferPool = new LimitedPool<ByteBuffer>(10, new LimitedPool.ObjectFactory<ByteBuffer>() {
+    @Override
     public ByteBuffer create() {
       return ByteBuffer.allocate(PAGE_SIZE);
     }
 
+    @Override
     public void cleanup(final ByteBuffer byteBuffer) {
     }
   });

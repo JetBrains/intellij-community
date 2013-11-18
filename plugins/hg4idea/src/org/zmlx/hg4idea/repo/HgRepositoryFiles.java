@@ -36,6 +36,8 @@ public class HgRepositoryFiles {
   public static final String MERGE = "merge";
   public static final String BRANCH = "branch";
   public static final String BOOKMARKS = "bookmarks";
+  public static final String LOCAL_TAGS = "localtags";
+  public static final String TAGS = ".hgtags";
   public static final String CURRENT_BOOKMARK = "bookmarks.current";
   public static final String CONFIG_HGRC = "hgrc";
 
@@ -45,6 +47,8 @@ public class HgRepositoryFiles {
   @NotNull private final String myMergePath;
   @NotNull private final String myBranchPath;
   @NotNull private final String myBookmarksPath;
+  @NotNull private final String myTagsPath;
+  @NotNull private final String myLocalTagsPath;
   @NotNull private final String myCurrentBookmarkPath;
   @NotNull private final String myConfigHgrcPath;
 
@@ -59,6 +63,8 @@ public class HgRepositoryFiles {
     myBranchPath = hgDir.getPath() + slash(BRANCH);
     myMergePath = hgDir.getPath() + slash(MERGE);
     myBookmarksPath = hgDir.getPath() + slash(BOOKMARKS);
+    myTagsPath = hgDir.getParent().getPath() + slash(TAGS);
+    myLocalTagsPath = hgDir.getPath() + slash(LOCAL_TAGS);
     myCurrentBookmarkPath = hgDir.getPath() + slash(CURRENT_BOOKMARK);
     myConfigHgrcPath = hgDir.getPath() + slash(CONFIG_HGRC);
   }
@@ -103,5 +109,13 @@ public class HgRepositoryFiles {
 
   public boolean isConfigHgrcFile(String filePath) {
     return filePath.equals(myConfigHgrcPath);
+  }
+
+  public boolean isTagsFile(String filePath) {
+    return filePath.equals(myTagsPath);
+  }
+
+  public boolean isLocalTagsFile(String filePath) {
+    return filePath.equals(myLocalTagsPath);
   }
 }

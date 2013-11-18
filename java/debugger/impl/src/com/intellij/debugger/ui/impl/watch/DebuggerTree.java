@@ -32,10 +32,7 @@ import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
 import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.impl.DebuggerSession;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
-import com.intellij.debugger.jdi.LocalVariableProxyImpl;
-import com.intellij.debugger.jdi.StackFrameProxyImpl;
-import com.intellij.debugger.jdi.ThreadGroupReferenceProxyImpl;
-import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
+import com.intellij.debugger.jdi.*;
 import com.intellij.debugger.settings.NodeRendererSettings;
 import com.intellij.debugger.settings.ThreadsViewSettings;
 import com.intellij.debugger.ui.breakpoints.Breakpoint;
@@ -462,8 +459,10 @@ public abstract class DebuggerTree extends DebuggerTreeBase implements DataProvi
             final ReferenceType thisRefType = thisObjectReference.referenceType();
             if (thisRefType instanceof ClassType && thisRefType.equals(location.declaringType()) && thisRefType.name().contains("$")) { // makes sense for nested classes only
               final ClassType clsType = (ClassType)thisRefType;
+              final DebugProcessImpl debugProcess = getDebuggerContext().getDebugProcess();
+              final VirtualMachineProxyImpl vm = debugProcess.getVirtualMachineProxy();
               for (Field field : clsType.fields()) {
-                if (field.isSynthetic() && StringUtil.startsWith(field.name(), FieldDescriptorImpl.OUTER_LOCAL_VAR_FIELD_PREFIX)) {
+                if ((!vm.canGetSyntheticAttribute() || field.isSynthetic()) && StringUtil.startsWith(field.name(), FieldDescriptorImpl.OUTER_LOCAL_VAR_FIELD_PREFIX)) {
                   final FieldDescriptorImpl fieldDescriptor = myNodeManager.getFieldDescriptor(stackDescriptor, thisObjectReference, field);
                   myChildren.add(myNodeManager.createNode(fieldDescriptor, evaluationContext));
                 }

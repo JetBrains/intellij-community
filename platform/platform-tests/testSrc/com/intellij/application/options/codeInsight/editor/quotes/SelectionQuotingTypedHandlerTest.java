@@ -87,6 +87,10 @@ public class SelectionQuotingTypedHandlerTest extends LightPlatformCodeInsightFi
     doTest('"', "<selection><caret>a</selection>aa\nbbb\n\n", "\"a\"aa\nbbb\n\n");
   }
 
+  public void testWithBacktick() {
+    doTest('`', "<selection><caret>a</selection>aa\nbbb\n\n", "`a`aa\nbbb\n\n");
+  }
+
   public void testChangeQuotes() {
     doTest('\'', "<selection><caret>\"aaa\"</selection>\nbbb\n\n", "'aaa'\nbbb\n\n");
   }

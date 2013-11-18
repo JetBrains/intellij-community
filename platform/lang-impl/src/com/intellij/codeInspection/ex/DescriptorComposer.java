@@ -27,6 +27,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.text.CharArrayUtil;
+import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.net.MalformedURLException;
@@ -178,7 +179,7 @@ public class DescriptorComposer extends HTMLComposerImpl {
       anchor.append("</font>");
     }
 
-    String descriptionTemplate = description.getDescriptionTemplate();
+    String descriptionTemplate = XmlStringUtil.stripHtml(description.getDescriptionTemplate());
     //noinspection HardCodedStringLiteral
     final String reference = "#ref";
     final boolean containsReference = descriptionTemplate.contains(reference);
@@ -211,7 +212,7 @@ public class DescriptorComposer extends HTMLComposerImpl {
       }
       res = res.replaceAll(location, lineAnchor.toString());
     }
-    buf.append(res);
+    buf.append(res.replace("#end", "").replace("#treeend",""));
     buf.append(BR).append(BR);
     composeAdditionalDescription(buf, refElement);
   }

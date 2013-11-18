@@ -430,11 +430,6 @@ public abstract class AbstractVcs<ComList extends CommittedChangeList> extends S
   }
 
   @Nullable
-  public VcsRootChecker getRootChecker() {
-    return null;
-  }
-
-  @Nullable
   public VcsRootSettings createEmptyVcsRootSettings() {
     return null;
   }

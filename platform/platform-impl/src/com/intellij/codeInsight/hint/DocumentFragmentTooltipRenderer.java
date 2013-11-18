@@ -72,6 +72,7 @@ public class DocumentFragmentTooltipRenderer implements TooltipRenderer {
     if (endLine - startLine > maxLineCount) {
       endOffset = doc.getLineEndOffset(Math.max(0, Math.min(startLine + maxLineCount, doc.getLineCount() - 1)));
     }
+    if (endOffset < startOffset) return null;
 
     FoldingModelEx foldingModel = (FoldingModelEx)editor.getFoldingModel();
     foldingModel.setFoldingEnabled(false);

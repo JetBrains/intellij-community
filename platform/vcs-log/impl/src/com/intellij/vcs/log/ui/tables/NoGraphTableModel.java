@@ -4,6 +4,7 @@ import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.VcsFullCommitDetails;
 import com.intellij.vcs.log.VcsRef;
 import com.intellij.vcs.log.VcsShortCommitDetails;
@@ -40,6 +41,12 @@ public class NoGraphTableModel extends AbstractVcsLogTableModel<CommitCell> {
   @Nullable
   @Override
   protected VcsShortCommitDetails getShortDetails(int rowIndex) {
+    return getFullCommitDetails(rowIndex);
+  }
+
+  @Nullable
+  @Override
+  public VcsFullCommitDetails getFullCommitDetails(int rowIndex) {
     VcsFullCommitDetails commits = myCommits.get(rowIndex);
     if (commits == null) {
       LOG.error("Couldn't identify details for commit at " + rowIndex, new Attachment("loaded_commits", myCommits.toString()));
@@ -83,7 +90,7 @@ public class NoGraphTableModel extends AbstractVcsLogTableModel<CommitCell> {
     }
     else {
       LOG.error("Couldn't identify root for commit at " + rowIndex, new Attachment("loaded_commits", myCommits.toString()));
-      return UNKNOWN_ROOT;
+      return FAKE_ROOT;
     }
   }
 
@@ -96,13 +103,19 @@ public class NoGraphTableModel extends AbstractVcsLogTableModel<CommitCell> {
       subject = details.getSubject();
       refs = myRefsModel.refsToCommit(details.getHash());
     }
-    return new CommitCell(myCommits.get(index).getHash(), subject, refs);
+    return new CommitCell(subject, refs);
   }
 
   @NotNull
   @Override
   protected Class<CommitCell> getCommitColumnClass() {
     return CommitCell.class;
+  }
+
+  @Nullable
+  @Override
+  public Hash getHashAtRow(int row) {
+    return myCommits.get(row).getHash();
   }
 
 }

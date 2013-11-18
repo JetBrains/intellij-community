@@ -328,13 +328,9 @@ public class PsiLocalVariableImpl extends CompositePsiElement implements PsiLoca
     final RowIcon baseIcon = ElementPresentationUtil.createLayeredIcon(PlatformIcons.VARIABLE_ICON, this, false);
     return ElementPresentationUtil.addVisibilityIcon(this, flags, baseIcon);
   }
+
   @Override
   protected boolean isVisibilitySupported() {
     return true;
-  }
-
-  @Override
-  public PsiType getTypeNoResolve() {
-    return getType();
   }
 }

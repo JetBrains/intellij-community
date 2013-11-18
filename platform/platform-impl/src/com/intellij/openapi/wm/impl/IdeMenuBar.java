@@ -16,6 +16,7 @@
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.ide.DataManager;
+import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.impl.DataManagerImpl;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
@@ -29,6 +30,8 @@ import com.intellij.openapi.actionSystem.impl.WeakTimerListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.ex.IdeFrameEx;
 import com.intellij.openapi.wm.impl.status.ClockPanel;
 import com.intellij.ui.Gray;
@@ -36,6 +39,7 @@ import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.util.ui.Animator;
 import com.intellij.util.ui.UIUtil;
+import org.java.ayatana.ApplicationMenu;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -43,7 +47,10 @@ import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.awt.geom.AffineTransform;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
@@ -54,7 +61,7 @@ import java.util.List;
  * @author Anton Katilin
  * @author Vladimir Kondratyev
  */
-public class IdeMenuBar extends JMenuBar {
+public class IdeMenuBar extends JMenuBar implements IdeEventQueue.EventDispatcher {
   private static final int COLLAPSED_HEIGHT = 2;
 
   private enum State {
@@ -91,7 +98,6 @@ public class IdeMenuBar extends JMenuBar {
 
     if (WindowManagerImpl.isFloatingMenuBarSupported()) {
       myAnimator = new MyAnimator();
-      Toolkit.getDefaultToolkit().addAWTEventListener(new MyAWTEventListener(), AWTEvent.MOUSE_MOTION_EVENT_MASK | AWTEvent.MOUSE_EVENT_MASK);
       myActivationWatcher = new Timer(100, new MyActionListener());
       myClockPanel = new ClockPanel();
       add(myClockPanel);
@@ -126,7 +132,7 @@ public class IdeMenuBar extends JMenuBar {
       return new EmptyBorder(0, 0, 1, 0);
     }
 
-    return super.getBorder();
+    return UISettings.getInstance().SHOW_MAIN_TOOLBAR || UISettings.getInstance().SHOW_NAVIGATION_BAR ? super.getBorder() : null;
   }
 
   @Override
@@ -267,6 +273,7 @@ public class IdeMenuBar extends JMenuBar {
     };
     UISettings.getInstance().addUISettingsListener(UISettingsListener, myDisposable);
     Disposer.register(ApplicationManager.getApplication(), myDisposable);
+    IdeEventQueue.getInstance().addDispatcher(this, myDisposable);
   }
 
   @Override
@@ -278,6 +285,45 @@ public class IdeMenuBar extends JMenuBar {
       Disposer.dispose(myDisposable);
     }
     super.removeNotify();
+  }
+
+  @Override
+  public boolean dispatch(AWTEvent e) {
+    if (e instanceof MouseEvent) {
+      MouseEvent mouseEvent = (MouseEvent)e;
+      Component component = findActualComponent(mouseEvent);
+
+      if (myState != State.EXPANDED /*&& !myState.isInProgress()*/) {
+        boolean mouseInside = myActivated || isDescendingFrom(component, this);
+        if (e.getID() == MouseEvent.MOUSE_EXITED && e.getSource() == SwingUtilities.windowForComponent(this) && !myActivated) mouseInside = false;
+        if (mouseInside && myState == State.COLLAPSED) {
+          setState(State.EXPANDING);
+          restartAnimator();
+        }
+        else if (!mouseInside && myState != State.COLLAPSING && myState != State.COLLAPSED) {
+          setState(State.COLLAPSING);
+          restartAnimator();
+        }
+      }
+    }
+    return false;
+  }
+
+  private Component findActualComponent(MouseEvent mouseEvent) {
+    Component component = mouseEvent.getComponent();
+    Component deepestComponent;
+    if (myState != State.EXPANDED &&
+        !myState.isInProgress() &&
+        contains(SwingUtilities.convertPoint(component, mouseEvent.getPoint(), this))) {
+      deepestComponent = this;
+    }
+    else {
+      deepestComponent = SwingUtilities.getDeepestComponentAt(mouseEvent.getComponent(), mouseEvent.getX(), mouseEvent.getY());
+    }
+    if (deepestComponent != null) {
+      component = deepestComponent;
+    }
+    return component;
   }
 
   void updateMenuActions() {
@@ -328,7 +374,7 @@ public class IdeMenuBar extends JMenuBar {
   @Override
   protected void paintComponent(Graphics g) {
     super.paintComponent(g);
-    if (UIUtil.isUnderDarcula()) {
+    if (UIUtil.isUnderDarcula() || UIUtil.isUnderIntelliJLaF()) {
       g.setColor(UIManager.getColor("MenuItem.background"));
       g.fillRect(0, 0, getWidth(), getHeight());
     }
@@ -475,43 +521,6 @@ public class IdeMenuBar extends JMenuBar {
     }
   }
 
-  private class MyAWTEventListener implements AWTEventListener {
-    @Override
-    public void eventDispatched(AWTEvent event) {
-      MouseEvent mouseEvent = (MouseEvent)event;
-      Component component = findActualComponent(mouseEvent);
-
-      if (myState != State.EXPANDED && !myState.isInProgress()) {
-        boolean mouseInside = myActivated || isDescendingFrom(component, IdeMenuBar.this);
-        if (mouseInside && myState == State.COLLAPSED) {
-          setState(State.EXPANDING);
-          restartAnimator();
-        }
-        else if (!mouseInside && myState != State.COLLAPSING && myState != State.COLLAPSED) {
-          setState(State.COLLAPSING);
-          restartAnimator();
-        }
-      }
-    }
-
-    private Component findActualComponent(MouseEvent mouseEvent) {
-      Component component = mouseEvent.getComponent();
-      Component deepestComponent;
-      if (myState != State.EXPANDED &&
-          !myState.isInProgress() &&
-          contains(SwingUtilities.convertPoint(component, mouseEvent.getPoint(), IdeMenuBar.this))) {
-        deepestComponent = IdeMenuBar.this;
-      }
-      else {
-        deepestComponent = SwingUtilities.getDeepestComponentAt(mouseEvent.getComponent(), mouseEvent.getX(), mouseEvent.getY());
-      }
-      if (deepestComponent != null) {
-        component = deepestComponent;
-      }
-      return component;
-    }
-  }
-
   private class MyActionListener implements ActionListener {
     @Override
     public void actionPerformed(ActionEvent e) {
@@ -551,6 +560,17 @@ public class IdeMenuBar extends JMenuBar {
       }
 
       super.mouseClicked(e);
+    }
+  }
+
+  public static void installAppMenuIfNeeded(@NotNull final JFrame frame) {
+    if (SystemInfo.isLinux && Registry.is("linux.native.menu") && "Unity".equals(System.getenv("XDG_CURRENT_DESKTOP"))) {
+      //noinspection SSBasedInspection
+      SwingUtilities.invokeLater(new Runnable() {
+        public void run() {
+          ApplicationMenu.tryInstall(frame);
+        }
+      });
     }
   }
 }

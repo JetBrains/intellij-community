@@ -318,7 +318,7 @@ public class HighlightControlFlowUtil {
             return null;
           }
           final PsiField anotherField = PsiTreeUtil.getTopmostParentOfType(expression, PsiField.class);
-          if (anotherField != null && anotherField.getContainingClass() == aClass) {
+          if (anotherField != null && anotherField.getContainingClass() == aClass && !field.hasModifierProperty(PsiModifier.STATIC)) {
             startOffset = 0;
           }
           block = null;

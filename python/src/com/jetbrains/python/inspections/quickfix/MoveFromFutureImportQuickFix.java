@@ -21,14 +21,13 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.documentation.DocStringUtil;
 import com.jetbrains.python.psi.PyFile;
+import com.jetbrains.python.psi.PyStringLiteralExpression;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Created by IntelliJ IDEA.
- * Author: Alexey.Ivanov
- * Date:   24.03.2010
- * Time:   20:15:23
+ * @author Alexey.Ivanov
  */
 public class MoveFromFutureImportQuickFix implements LocalQuickFix {
   @NotNull
@@ -46,7 +45,13 @@ public class MoveFromFutureImportQuickFix implements LocalQuickFix {
     PsiFile psiFile = problemElement.getContainingFile();
     if (psiFile instanceof PyFile) {
       PyFile file = (PyFile)psiFile;
-      file.addBefore(problemElement, file.getStatements().get(0));
+      PyStringLiteralExpression docString = DocStringUtil.findDocStringExpression(file);
+      if (docString != null) {
+        file.addAfter(problemElement, docString.getParent() /* PyExpressionStatement */);
+      }
+      else {
+        file.addBefore(problemElement, file.getStatements().get(0));
+      }
       problemElement.delete();
     }
   }

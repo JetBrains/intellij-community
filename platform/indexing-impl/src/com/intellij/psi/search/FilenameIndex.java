@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -92,7 +92,7 @@ public class FilenameIndex extends ScalarIndexExtension<String> {
     return (PsiFile[])getFilesByName(project, name, scope, false);
   }
 
-  public static boolean processFilesByName(final @NotNull String name,
+  public static boolean processFilesByName(@NotNull final String name,
                                            boolean includeDirs,
                                            @NotNull Processor<? super PsiFileSystemItem> processor,
                                            @NotNull GlobalSearchScope scope,
@@ -134,7 +134,7 @@ public class FilenameIndex extends ScalarIndexExtension<String> {
 
   public static PsiFileSystemItem[] getFilesByName(final Project project,
                                          final String name,
-                                         final @NotNull GlobalSearchScope scope,
+                                         @NotNull final GlobalSearchScope scope,
                                          boolean includeDirs) {
     SmartList<PsiFileSystemItem> result = new SmartList<PsiFileSystemItem>();
     processFilesByName(name, includeDirs, new CommonProcessors.CollectProcessor<PsiFileSystemItem>(result), scope, project, null);

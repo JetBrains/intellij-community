@@ -85,11 +85,11 @@ public class CompositeWhiteSpaceFormattingStrategy implements WhiteSpaceFormatti
   public CharSequence adjustWhiteSpaceIfNecessary(@NotNull CharSequence whiteSpaceText,
                                                   @NotNull CharSequence text,
                                                   int startOffset,
-                                                  int endOffset, CodeStyleSettings codeStyleSettings)
+                                                  int endOffset, CodeStyleSettings codeStyleSettings, ASTNode nodeAfter)
   {
     CharSequence result = whiteSpaceText;
     for (WhiteSpaceFormattingStrategy strategy : myStrategies) {
-      result = strategy.adjustWhiteSpaceIfNecessary(result, text, startOffset, endOffset, codeStyleSettings);
+      result = strategy.adjustWhiteSpaceIfNecessary(result, text, startOffset, endOffset, codeStyleSettings, nodeAfter);
     }
     return result;
   }

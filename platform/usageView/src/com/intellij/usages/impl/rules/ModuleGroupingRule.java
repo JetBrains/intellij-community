@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -90,7 +90,7 @@ public class ModuleGroupingRule implements UsageGroupingRule {
     }
 
     @Override
-    public int compareTo(UsageGroup usageGroup) {
+    public int compareTo(@NotNull UsageGroup usageGroup) {
       if (usageGroup instanceof ModuleUsageGroup) return 1;
       return getText(null).compareToIgnoreCase(usageGroup.getText(null));
     }
@@ -181,7 +181,7 @@ public class ModuleGroupingRule implements UsageGroupingRule {
     }
 
     @Override
-    public int compareTo(UsageGroup o) {
+    public int compareTo(@NotNull UsageGroup o) {
       if (o instanceof LibraryUsageGroup) return -1;
       return getText(null).compareToIgnoreCase(o.getText(null));
     }

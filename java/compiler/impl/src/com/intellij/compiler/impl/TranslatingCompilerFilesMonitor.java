@@ -1398,7 +1398,10 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
     public void projectClosed(final Project project) {
       final int projectId = getProjectId(project);
       terminateAsyncScan(projectId, true);
-      myConnections.remove(project).disconnect();
+      final MessageBusConnection connection = myConnections.remove(project);
+      if (connection != null) {
+        connection.disconnect();
+      }
       synchronized (myDataLock) {
         mySourcesToRecompile.remove(projectId);
         myOutputsToDelete.remove(projectId);  // drop cache to save memory

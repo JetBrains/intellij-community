@@ -85,6 +85,9 @@ public class PyImportOptimizer implements ImportOptimizer {
       }
       LanguageLevel langLevel = LanguageLevel.forElement(myFile);
       for (PyImportStatementBase importStatement : myImportBlock) {
+        if (importStatement instanceof PyFromImportStatement && ((PyFromImportStatement)importStatement).isFromFuture()) {
+          continue;
+        }
         if (importStatement instanceof PyImportStatement && importStatement.getImportElements().length > 1) {
           for (PyImportElement importElement : importStatement.getImportElements()) {
             myMissorted = true;
@@ -96,7 +99,7 @@ public class PyImportOptimizer implements ImportOptimizer {
         else {
           PsiElement toImport;
           if (importStatement instanceof PyFromImportStatement) {
-            toImport = ((PyFromImportStatement) importStatement).resolveImportSource();
+            toImport = ((PyFromImportStatement)importStatement).resolveImportSource();
           }
           else {
             toImport = importStatement.getImportElements()[0].resolve();
@@ -104,9 +107,17 @@ public class PyImportOptimizer implements ImportOptimizer {
           prioritize(importStatement, toImport);
         }
       }
-      if (myMissorted) {
+      if (myMissorted || needBlankLinesBetweenGroups()) {
         applyResults();
       }
+    }
+
+    private boolean needBlankLinesBetweenGroups() {
+      int nonEmptyGroups = 0;
+      if (myBuiltinImports.size() > 0) nonEmptyGroups++;
+      if (myThirdPartyImports.size() > 0) nonEmptyGroups++;
+      if (myProjectImports.size() > 0) nonEmptyGroups++;
+      return nonEmptyGroups > 1;
     }
 
     private void prioritize(PyImportStatementBase importStatement, @Nullable PsiElement toImport) {
@@ -140,10 +151,22 @@ public class PyImportOptimizer implements ImportOptimizer {
       addImports(myThirdPartyImports);
       addImports(myProjectImports);
       PsiElement lastElement = myImportBlock.get(myImportBlock.size()-1);
-      myFile.deleteChildRange(myImportBlock.get(0), lastElement);
+      PyImportStatementBase firstNonFutureImport = findFirstNonFutureImport();
+      if (firstNonFutureImport != null) {
+        myFile.deleteChildRange(firstNonFutureImport, lastElement);
+      }
       for (PyImportStatementBase anImport : myBuiltinImports) {
         anImport.putCopyableUserData(PyBlock.IMPORT_GROUP_BEGIN, null);
       }
+    }
+
+    private PyImportStatementBase findFirstNonFutureImport() {
+      for (PyImportStatementBase importStatement: myImportBlock) {
+        if (!(importStatement instanceof PyFromImportStatement && ((PyFromImportStatement)importStatement).isFromFuture())) {
+          return importStatement;
+        }
+      }
+      return null;
     }
 
     private static void markGroupBegin(List<PyImportStatementBase> imports) {
@@ -154,7 +177,7 @@ public class PyImportOptimizer implements ImportOptimizer {
 
     private void addImports(final List<PyImportStatementBase> imports) {
       for (PyImportStatementBase newImport: imports) {
-        myFile.addBefore(newImport, myImportBlock.get(0));
+        myFile.addBefore(newImport, findFirstNonFutureImport());
       }
     }
   }

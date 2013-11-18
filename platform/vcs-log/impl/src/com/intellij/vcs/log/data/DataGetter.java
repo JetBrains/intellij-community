@@ -69,7 +69,7 @@ public abstract class DataGetter<T extends VcsShortCommitDetails> implements Dis
   @NotNull
   public T getCommitData(@NotNull final Node node) {
     assert EventQueue.isDispatchThread();
-    Hash hash = node.getCommitHash();
+    Hash hash = myDataHolder.getHash(node.getCommitIndex());
     T details = getFromCache(hash);
     if (details != null) {
       return details;
@@ -80,7 +80,7 @@ public abstract class DataGetter<T extends VcsShortCommitDetails> implements Dis
   @NotNull
   private T loadingDetails(Node node, Hash hash) {
     TaskDescriptor descriptor = runLoadAroundCommitData(node);
-    T loadingDetails = (T)new LoadingDetails(hash, descriptor.getTaskNum());
+    T loadingDetails = (T)new LoadingDetails(hash, descriptor.getTaskNum(), node.getBranch().getRepositoryRoot());
     return loadingDetails;
   }
 
@@ -140,12 +140,12 @@ public abstract class DataGetter<T extends VcsShortCommitDetails> implements Dis
       Node commitNode = getCommitNodeInRow(i);
       if (commitNode != null) {
         nodes.add(commitNode);
-        Hash hash = commitNode.getCommitHash();
+        Hash hash = myDataHolder.getHash(commitNode.getCommitIndex());
 
         // fill the cache with temporary "Loading" values to avoid producing queries for each commit that has not been cached yet,
         // even if it will be loaded within a previous query
         if (!myCache.isKeyCached(hash)) {
-          myCache.put(hash, (T)new LoadingDetails(hash, taskNumber));
+          myCache.put(hash, (T)new LoadingDetails(hash, taskNumber, commitNode.getBranch().getRepositoryRoot()));
         }
       }
     }
@@ -158,7 +158,7 @@ public abstract class DataGetter<T extends VcsShortCommitDetails> implements Dis
     MultiMap<VirtualFile, String> hashesByRoots = new MultiMap<VirtualFile, String>();
     for (Node node : nodes) {
       VirtualFile root = node.getBranch().getRepositoryRoot();
-      hashesByRoots.putValue(root, node.getCommitHash().asString());
+      hashesByRoots.putValue(root, myDataHolder.getHash(node.getCommitIndex()).asString());
     }
 
     for (Map.Entry<VirtualFile, Collection<String>> entry : hashesByRoots.entrySet()) {

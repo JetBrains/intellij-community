@@ -183,6 +183,10 @@ public class PythonHighlightingTest extends PyTestCase {
     doTest(false, false);
   }
 
+  public void testStarInGenerator() {  // PY-10177
+    doTest(LanguageLevel.PYTHON33, false, false);
+  }
+
   public void testStarArgs() {  // PY-6456
     doTest(LanguageLevel.PYTHON32, true, false);
   }

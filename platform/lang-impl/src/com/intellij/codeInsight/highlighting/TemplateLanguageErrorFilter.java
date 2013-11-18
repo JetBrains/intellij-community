@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,19 +35,19 @@ public abstract class TemplateLanguageErrorFilter extends HighlightErrorFilter {
 
   private final Set<Language> knownLanguageSet;
 
-  private final static Key<Class> TEMPLATE_VIEW_PROVIDER_CLASS_KEY = Key.create("TEMPLATE_VIEW_PROVIDER_CLASS");
+  private static final Key<Class> TEMPLATE_VIEW_PROVIDER_CLASS_KEY = Key.create("TEMPLATE_VIEW_PROVIDER_CLASS");
 
   protected TemplateLanguageErrorFilter(
-    final @NotNull TokenSet templateExpressionStartTokens,
-    final @NotNull Class templateFileViewProviderClass)
+    @NotNull final TokenSet templateExpressionStartTokens,
+    @NotNull final Class templateFileViewProviderClass)
   {
     this(templateExpressionStartTokens, templateFileViewProviderClass, new String[0]);
   }
 
   protected TemplateLanguageErrorFilter(
-    final @NotNull TokenSet templateExpressionStartTokens,
-    final @NotNull Class templateFileViewProviderClass,
-    final @NotNull String... knownSubLanguageNames)
+    @NotNull final TokenSet templateExpressionStartTokens,
+    @NotNull final Class templateFileViewProviderClass,
+    @NotNull final String... knownSubLanguageNames)
   {
     myTemplateExpressionStartTokens = TokenSet.create(templateExpressionStartTokens.getTypes());
     myTemplateFileViewProviderClass = templateFileViewProviderClass;
@@ -105,7 +105,7 @@ public abstract class TemplateLanguageErrorFilter extends HighlightErrorFilter {
     return false;
   }
 
-  protected boolean isKnownSubLanguage(final @NotNull Language language) {
+  protected boolean isKnownSubLanguage(@NotNull final Language language) {
     for (Language knownLanguage : knownLanguageSet) {
       if (language.is(knownLanguage)) {
         return true;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -59,7 +59,8 @@ public class MoveClassToNewFileIntention extends Intention {
       }
     }
 
-    final GroovyFile newFile = (GroovyFile)GroovyTemplatesFactory.createFromTemplate(dir, name, newFileName, GroovyTemplates.GROOVY_CLASS);
+    final GroovyFile newFile = (GroovyFile)GroovyTemplatesFactory.createFromTemplate(dir, name, newFileName, GroovyTemplates.GROOVY_CLASS,
+                                                                                     true);
     final GrTypeDefinition template = newFile.getTypeDefinitions()[0];
     final PsiElement newClass = template.replace(psiClass);
     final GrDocComment docComment = psiClass.getDocComment();

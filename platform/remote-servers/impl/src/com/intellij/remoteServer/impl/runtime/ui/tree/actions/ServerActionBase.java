@@ -9,8 +9,7 @@ import javax.swing.*;
 import java.util.Set;
 
 /**
- * Created by IntelliJ IDEA.
- * User: michael.golubev
+ * @author michael.golubev
  */
 public abstract class ServerActionBase extends ServersTreeActionBase {
 
@@ -35,7 +34,7 @@ public abstract class ServerActionBase extends ServersTreeActionBase {
   }
 
   @Override
-  protected void doActionPerformed(@NotNull ServersToolWindowContent content) {
+  protected void doActionPerformed(@NotNull ServersToolWindowContent content, AnActionEvent e) {
     for (ServerNode node : content.getSelectedServerNodes()) {
       performAction(node);
     }

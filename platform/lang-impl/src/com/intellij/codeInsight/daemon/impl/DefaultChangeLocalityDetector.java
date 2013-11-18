@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeInsight.daemon.ChangeLocalityDetector;
-import com.intellij.codeInspection.SuppressionUtil;
+import com.intellij.codeInspection.SuppressionUtilCore;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiWhiteSpace;
@@ -27,7 +27,7 @@ public class DefaultChangeLocalityDetector implements ChangeLocalityDetector {
   public PsiElement getChangeHighlightingDirtyScopeFor(@NotNull PsiElement changedElement) {
     if (changedElement instanceof PsiWhiteSpace ||
         changedElement instanceof PsiComment
-        && !changedElement.getText().contains(SuppressionUtil.SUPPRESS_INSPECTIONS_TAG_NAME)) {
+        && !changedElement.getText().contains(SuppressionUtilCore.SUPPRESS_INSPECTIONS_TAG_NAME)) {
       return changedElement;
     }
     return null;

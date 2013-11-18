@@ -25,8 +25,8 @@ public abstract class VcsLogUserFilter implements VcsLogDetailsFilter {
 
     @Override
     public boolean matches(@NotNull VcsFullCommitDetails detail) {
-      return detail.getAuthorName().toLowerCase().contains(myUser.toLowerCase()) ||
-             detail.getAuthorEmail().toLowerCase().contains(myUser.toLowerCase());
+      return detail.getAuthor().getName().toLowerCase().contains(myUser.toLowerCase()) ||
+             detail.getAuthor().getEmail().toLowerCase().contains(myUser.toLowerCase());
     }
 
     @NotNull
@@ -51,7 +51,7 @@ public abstract class VcsLogUserFilter implements VcsLogDetailsFilter {
     @Override
     public boolean matches(@NotNull VcsFullCommitDetails details) {
       VcsUser meInThisRoot = myMeData.get(details.getRoot());
-      return meInThisRoot != null && meInThisRoot.getName().equalsIgnoreCase(details.getAuthorName());
+      return meInThisRoot != null && meInThisRoot.equals(details.getAuthor());
     }
 
     @NotNull

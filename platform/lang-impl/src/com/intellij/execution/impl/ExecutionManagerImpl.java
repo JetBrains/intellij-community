@@ -364,23 +364,8 @@ public class ExecutionManagerImpl extends ExecutionManager implements ProjectCom
                             @Nullable RunContentDescriptor descriptor) {
     Runnable restarter = descriptor != null ? descriptor.getRestarter() : null;
     if (runner != null && runProfile != null) {
-      try {
-        ExecutionEnvironmentBuilder builder = new ExecutionEnvironmentBuilder(project, executor);
-        builder.setRunProfile(runProfile).setRunnerSettings(runnerSettings).setContentToReuse(descriptor)
-          .setTarget(target).setConfigurationSettings(configurationPerRunnerSettings).setDataContext(context);
-        if (configuration != null)        {
-          builder.setRunnerAndSettings(runner, configuration);
-        } else {
-          builder.setRunnerId(runner.getRunnerId());
-        }
-
-        runner.execute(builder.build());
-      }
-      catch (RunCanceledByUserException ignore) {
-      }
-      catch (ExecutionException e1) {
-        Messages.showErrorDialog(project, e1.getMessage(), ExecutionBundle.message("restart.error.message.title"));
-      }
+      ProgramRunnerUtil.executeConfiguration(project, context, configuration, executor, target, descriptor,
+                                             configuration != null && configuration.isEditBeforeRun(), runner, runProfile, false);
     }
     else if (configuration != null) {
       ProgramRunnerUtil.executeConfiguration(project, context, configuration, executor, target, descriptor, true);

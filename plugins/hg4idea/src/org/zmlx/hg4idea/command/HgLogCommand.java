@@ -14,7 +14,6 @@ package org.zmlx.hg4idea.command;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
@@ -32,7 +31,6 @@ import org.zmlx.hg4idea.util.HgChangesetUtil;
 import org.zmlx.hg4idea.util.HgUtil;
 import org.zmlx.hg4idea.util.HgVersion;
 
-import java.io.File;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -41,14 +39,15 @@ public class HgLogCommand {
 
   private static final Logger LOG = Logger.getInstance(HgLogCommand.class.getName());
   private static final String[] SHORT_TEMPLATE_ITEMS =
-    {"{rev}", "{node|short}", "{parents}", "{date|isodatesec}", "{author}", "{branches}", "{desc}"};
+    {"{rev}", "{node}", "{parents}", "{date|isodatesec}", "{author}", "{branch}", "{desc}"};
   private static final String[] LONG_TEMPLATE_ITEMS =
-    {"{rev}", "{node|short}", "{parents}", "{date|isodatesec}", "{author}", "{branches}", "{desc}", "{file_adds}", "{file_mods}",
+    {"{rev}", "{node}", "{parents}", "{date|isodatesec}", "{author}", "{branch}", "{desc}", "{file_adds}",
+      "{file_mods}",
       "{file_dels}", "{join(file_copies,'" + HgChangesetUtil.FILE_SEPARATOR + "')}"};
   private static final String[] LONG_TEMPLATE_FOR_OLD_VERSIONS =
-    {"{rev}", "{node|short}", "{parents}", "{date|isodatesec}", "{author}", "{branches}", "{desc}", "{file_adds}", "{file_mods}",
+    {"{rev}", "{node}", "{parents}", "{date|isodatesec}", "{author}", "{branch}", "{desc}", "{file_adds}",
+      "{file_mods}",
       "{file_dels}", "{file_copies}"};
-
   private static final int REVISION_INDEX = 0;
   private static final int CHANGESET_INDEX = 1;
   private static final int PARENTS_INDEX = 2;
@@ -181,12 +180,13 @@ public class HgLogCommand {
             }
           }
         }
-        final HgRevisionNumber vcsRevisionNumber = HgRevisionNumber.getInstance(revisionString, changeset, parents);
 
         Date revisionDate = DATE_FORMAT.parse(attributes[DATE_INDEX]);
         String author = attributes[AUTHOR_INDEX];
         String branchName = attributes[BRANCH_INDEX];
         String commitMessage = attributes[MESSAGE_INDEX];
+
+        final HgRevisionNumber vcsRevisionNumber = new HgRevisionNumber(revisionString, changeset, author, commitMessage, parents);
 
         Set<String> filesAdded = Collections.emptySet();
         Set<String> filesModified = Collections.emptySet();
@@ -224,7 +224,9 @@ public class HgLogCommand {
         }
 
         revisions.add(
-          new HgFileRevision(myProject, hgFile, vcsRevisionNumber, branchName, revisionDate, author, commitMessage, filesModified, filesAdded,
+          new HgFileRevision(myProject, hgFile, vcsRevisionNumber, branchName, revisionDate, author, commitMessage,
+                             filesModified,
+                             filesAdded,
                              filesDeleted, copies));
       }
       catch (NumberFormatException e) {
@@ -352,50 +354,4 @@ public class HgLogCommand {
     return -1;
   }
 
-  @NotNull
-  public HgFile getNameThroughCopies(@NotNull final HgFile hgFile, @NotNull HgRevisionNumber vcsRevisionNumber) throws HgCommandException {
-    String targetName = FileUtil.toSystemIndependentName(hgFile.getRelativePath());
-    String revNumber = vcsRevisionNumber.getRevisionNumber();
-    if (StringUtil.isEmptyOrSpaces(revNumber)) {
-      LOG.info("Revision Number shouldn't be empty, may be vcsDirectory mapping problem for: " + hgFile.getRepo().getPath());
-      return hgFile;
-    }
-    int targetRevNumber = Integer.valueOf(revNumber);
-    String[] COPIES_TEMPLATE =
-      myBuiltInSupported
-      ? new String[]{"{rev}", "{join(file_copies,'" + HgChangesetUtil.FILE_SEPARATOR + "')}"}
-      : new String[]{"{rev}", "{file_copies}"};
-    String template = HgChangesetUtil.makeTemplate(COPIES_TEMPLATE);
-    HgCommandResult result = execute(hgFile.getRepo(), template, -1, hgFile, Arrays.asList("-r", ".:0"));
-    if (result == null) {
-      throw new HgCommandException("Could not execute log command.");
-    }
-
-    List<String> errors = result.getErrorLines();
-    if (errors != null && !errors.isEmpty()) {
-      throw new HgCommandException(errors.toString());
-    }
-    String output = result.getRawOutput();
-    String[] changeSets = output.split(HgChangesetUtil.CHANGESET_SEPARATOR);
-    for (String line : changeSets) {
-      String[] attributes = line.split(HgChangesetUtil.ITEM_SEPARATOR);
-      //if there are no moved/renamed files in the revision, then this revision should be skipped
-      if (attributes.length != 2) {
-        continue;
-      }
-
-      if (Integer.valueOf(attributes[0]) <= targetRevNumber) {
-        break;
-      }
-      Map<String, String> copies = myBuiltInSupported ? parseCopiesFileList(attributes[1]) : parseCopiesFileListAsOldVersion(attributes[1]);
-      for (Map.Entry<String, String> entry : copies.entrySet()) {
-        if (entry.getValue().equals(targetName)) {
-          targetName = entry.getKey();
-          break;
-        }
-      }
-    }
-    VirtualFile root = hgFile.getRepo();
-    return new HgFile(root, new File(root.getPath(), targetName));
-  }
 }

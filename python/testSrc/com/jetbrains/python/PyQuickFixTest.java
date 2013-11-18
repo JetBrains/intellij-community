@@ -27,28 +27,26 @@ import com.jetbrains.python.psi.LanguageLevel;
 import org.jetbrains.annotations.NonNls;
 
 /**
- * Test actions that various inspections add.
- * User: dcheryasov
- * Date: Nov 29, 2008 12:47:08 AM
+ * @author dcheryasov
  */
 @TestDataPath("$CONTENT_ROOT/../testData/inspections/")
 public class PyQuickFixTest extends PyTestCase {
 
   public void testAddImport() {
-    doInspectionTest(new String[] { "AddImport.py", "ImportTarget.py" }, PyUnresolvedReferencesInspection.class, PyBundle.message("ACT.NAME.use.import"), true, true);
+    doInspectionTest(new String[] { "AddImport.py", "ImportTarget.py" }, PyUnresolvedReferencesInspection.class, "Import 'ImportTarget'", true, true);
   }
 
   public void testAddImportDoc() {
-    doInspectionTest(new String[] { "AddImportDoc.py", "ImportTarget.py" }, PyUnresolvedReferencesInspection.class, PyBundle.message("ACT.NAME.use.import"), true, true);
+    doInspectionTest(new String[] { "AddImportDoc.py", "ImportTarget.py" }, PyUnresolvedReferencesInspection.class, "Import 'ImportTarget'", true, true);
   }
 
   public void testAddImportDocComment() {  // PY-728
-    doInspectionTest(new String[] { "AddImportDocComment.py", "ImportTarget.py" }, PyUnresolvedReferencesInspection.class, PyBundle.message("ACT.NAME.use.import"), true, true);
+    doInspectionTest(new String[] { "AddImportDocComment.py", "ImportTarget.py" }, PyUnresolvedReferencesInspection.class, "Import 'ImportTarget'", true, true);
   }
 
   public void testImportFromModule() {
     doInspectionTest(new String[] { "importFromModule/foo/bar.py", "importFromModule/foo/baz.py", "importFromModule/foo/__init__.py" },
-                     PyUnresolvedReferencesInspection.class, PyBundle.message("ACT.NAME.use.import"), true, true);
+                     PyUnresolvedReferencesInspection.class, "Import 'importFromModule.foo.baz'", true, true);
   }
 
   public void testImportFromModuleStar() {  // PY-6302
@@ -56,7 +54,7 @@ public class PyQuickFixTest extends PyTestCase {
     myFixture.copyDirectoryToProject("importFromModuleStar", "");
     myFixture.configureFromTempProjectFile("source.py");
     myFixture.checkHighlighting(true, false, false);
-    final IntentionAction intentionAction = myFixture.findSingleIntention(PyBundle.message("ACT.NAME.use.import"));
+    final IntentionAction intentionAction = myFixture.findSingleIntention("Import 'target.xyzzy()'");
     assertNotNull(intentionAction);
     myFixture.launchAction(intentionAction);
     myFixture.checkResultByFile("importFromModuleStar/source_after.py");
@@ -82,7 +80,7 @@ public class PyQuickFixTest extends PyTestCase {
     boolean oldHighlightUnused = settings.HIGHLIGHT_UNUSED_IMPORTS;
     settings.HIGHLIGHT_UNUSED_IMPORTS = false;
     try {
-      doInspectionTest(new String[]{"AddToImportFromList.py", "AddToImportFromFoo.py"}, PyUnresolvedReferencesInspection.class, PyBundle.message("ACT.NAME.use.import"), true, true);
+      doInspectionTest(new String[]{"AddToImportFromList.py", "AddToImportFromFoo.py"}, PyUnresolvedReferencesInspection.class, "Import 'foo(a) from AddToImportFromFoo'", true, true);
     }
     finally {
       settings.HIGHLIGHT_UNUSED_IMPORTS = oldHighlightUnused;
@@ -158,6 +156,11 @@ public class PyQuickFixTest extends PyTestCase {
 
   public void testFromFutureImportQuickFix() {
     doInspectionTest("MoveFromFutureImport.py", PyFromFutureImportInspection.class,
+                     PyBundle.message("QFIX.move.from.future.import"), true, true);
+  }
+
+  public void testFromFutureImportQuickFixDocString() {  // PY-10080
+    doInspectionTest("MoveFromFutureImportDocString.py", PyFromFutureImportInspection.class,
                      PyBundle.message("QFIX.move.from.future.import"), true, true);
   }
 

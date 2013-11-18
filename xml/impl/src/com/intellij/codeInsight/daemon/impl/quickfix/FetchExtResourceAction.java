@@ -67,11 +67,11 @@ import java.util.*;
  */
 public class FetchExtResourceAction extends BaseExtResourceAction implements WatchedRootsProvider {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.intention.FetchDtdAction");
-  private static final @NonNls String HTML_MIME = "text/html";
-  private static final @NonNls String HTTP_PROTOCOL = "http://";
-  private static final @NonNls String HTTPS_PROTOCOL = "https://";
-  private static final @NonNls String FTP_PROTOCOL = "ftp://";
-  private static final @NonNls String EXT_RESOURCES_FOLDER = "extResources";
+  @NonNls private static final String HTML_MIME = "text/html";
+  @NonNls private static final String HTTP_PROTOCOL = "http://";
+  @NonNls private static final String HTTPS_PROTOCOL = "https://";
+  @NonNls private static final String FTP_PROTOCOL = "ftp://";
+  @NonNls private static final String EXT_RESOURCES_FOLDER = "extResources";
   private final boolean myForceResultIsValid;
 
   public FetchExtResourceAction() {
@@ -281,7 +281,7 @@ public class FetchExtResourceAction extends BaseExtResourceAction implements Wat
     }
   }
 
-  private static VirtualFile findFileByPath(final String resPath, final @Nullable String dtdUrl, ProgressIndicator indicator) {
+  private static VirtualFile findFileByPath(final String resPath, @Nullable final String dtdUrl, ProgressIndicator indicator) {
     final Ref<VirtualFile> ref = new Ref<VirtualFile>();
     ApplicationManager.getApplication().invokeAndWait(new Runnable() {
       @Override

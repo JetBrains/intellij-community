@@ -266,6 +266,12 @@ private layoutFull(Map args, String target, Set usedJars) {
         fileset(file: it)
       }
 
+      dir("libpty") {
+        fileset(dir: "$ch/lib/libpty") {
+          exclude(name: "*.txt")
+        }
+      }
+
       dir("ext") {
         fileset(dir: "$ch/lib") {
           include(name: "cglib*.jar")

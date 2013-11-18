@@ -22,6 +22,7 @@ import com.intellij.openapi.externalSystem.model.ProjectKeys;
 import com.intellij.openapi.externalSystem.model.project.*;
 import com.intellij.openapi.externalSystem.service.project.PlatformFacade;
 import com.intellij.openapi.externalSystem.service.project.ProjectStructureHelper;
+import com.intellij.openapi.externalSystem.util.DisposeAwareProjectChange;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemConstants;
 import com.intellij.openapi.externalSystem.util.Order;
@@ -100,9 +101,9 @@ public class LibraryDependencyDataService extends AbstractDependencyDataService<
                          @NotNull final Module module,
                          final boolean synchronous)
   {
-    ExternalSystemApiUtil.executeProjectChangeAction(synchronous, new Runnable() {
+    ExternalSystemApiUtil.executeProjectChangeAction(synchronous, new DisposeAwareProjectChange(module) {
       @Override
-      public void run() {
+      public void execute() {
         importMissingProjectLibraries(module, nodesToImport, synchronous);
         
         // The general idea is to import all external project library dependencies and module libraries which don't present at the

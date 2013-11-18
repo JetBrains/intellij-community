@@ -178,22 +178,6 @@ public class ArrayUtil extends ArrayUtilRt {
     return ret;
   }
 
-  /** @deprecated use {@linkplain #mergeArrays(Object[], Object[], com.intellij.util.ArrayFactory)} (to remove in IDEA 13) */
-  @NotNull
-  public static <T> T[] mergeArrays(@NotNull T[] a1, @NotNull T[] a2, @NotNull Class<T> aClass) {
-    if (a1.length == 0) {
-      return a2;
-    }
-    if (a2.length == 0) {
-      return a1;
-    }
-
-    @SuppressWarnings("unchecked") T[] result = (T[])Array.newInstance(aClass, a1.length + a2.length);
-    System.arraycopy(a1, 0, result, 0, a1.length);
-    System.arraycopy(a2, 0, result, a1.length, a2.length);
-    return result;
-  }
-
   @NotNull
   public static <T> T[] mergeArrays(@NotNull T[] a1, @NotNull T[] a2) {
     if (a1.length == 0) {

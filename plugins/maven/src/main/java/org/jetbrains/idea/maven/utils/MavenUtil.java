@@ -711,6 +711,7 @@ public class MavenUtil {
     }
     if (result == null) {
       result = doResolveSuperPomFile(MavenServerManager.getMavenLibDirectory());
+      assert result != null : "Super pom not found in: " + MavenServerManager.getMavenLibDirectory();
     }
     return result;
   }
@@ -924,6 +925,11 @@ public class MavenUtil {
     }
 
     return (V)res;
+  }
+
+  public static String getArtifactName(String packaging, Module module, boolean exploded) {
+    final String baseName = module.getName() + ":" + packaging;
+    return exploded ? baseName + " exploded" : baseName;
   }
 
 }

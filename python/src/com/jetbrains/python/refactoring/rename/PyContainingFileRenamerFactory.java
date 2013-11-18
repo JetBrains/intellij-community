@@ -22,6 +22,7 @@ import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.rename.naming.AutomaticRenamer;
 import com.intellij.refactoring.rename.naming.AutomaticRenamerFactory;
+import com.intellij.refactoring.rename.naming.NameSuggester;
 import com.intellij.usageView.UsageInfo;
 import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
@@ -106,6 +107,14 @@ public class PyContainingFileRenamerFactory implements AutomaticRenamerFactory {
     @Override
     public boolean isSelectedByDefault() {
       return true;
+    }
+
+    @Override
+    protected String suggestNameForElement(PsiNamedElement element, NameSuggester suggester, String newClassName, String oldClassName) {
+      if (element instanceof PyFile && element.getName().equals(oldClassName.toLowerCase() + ".py")) {
+        return newClassName.toLowerCase() + ".py";
+      }
+      return super.suggestNameForElement(element, suggester, newClassName, oldClassName);
     }
   }
 }

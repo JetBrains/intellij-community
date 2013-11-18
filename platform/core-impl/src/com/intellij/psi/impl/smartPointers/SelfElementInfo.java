@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -166,7 +166,11 @@ public class SelfElementInfo implements SmartPointerElementInfo {
     return restoreFileFromVirtual(myVirtualFile, myProject, myLanguage);
   }
 
-  protected static PsiElement findElementInside(@NotNull PsiFile file, int syncStartOffset, int syncEndOffset, @NotNull Class type, @NotNull Language language) {
+  protected static PsiElement findElementInside(@NotNull PsiFile file,
+                                                int syncStartOffset,
+                                                int syncEndOffset,
+                                                @NotNull Class type,
+                                                @NotNull Language language) {
     PsiElement anchor = file.getViewProvider().findElementAt(syncStartOffset, language);
     if (anchor == null) return null;
 
@@ -185,8 +189,7 @@ public class SelfElementInfo implements SmartPointerElementInfo {
       range = anchor.getTextRange();
     }
 
-    if (range.getEndOffset() == syncEndOffset) return anchor;
-    return null;
+    return range.getEndOffset() == syncEndOffset ? anchor : null;
   }
 
   private RangeMarker getMarker() {

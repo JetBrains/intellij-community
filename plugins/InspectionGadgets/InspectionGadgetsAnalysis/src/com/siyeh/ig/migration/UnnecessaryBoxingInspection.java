@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2013 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.siyeh.ig.migration;
 
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -25,16 +26,21 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.psiutils.ExpectedTypeUtils;
 import com.siyeh.ig.psiutils.MethodCallUtils;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.util.HashMap;
 import java.util.Map;
 
 public class UnnecessaryBoxingInspection extends BaseInspection {
+
+  @SuppressWarnings("PublicField")
+  public boolean onlyReportSuperfluouslyBoxed = false;
 
   @NonNls static final Map<String, String> boxedPrimitiveMap = new HashMap<String, String>(8);
 
@@ -58,6 +64,13 @@ public class UnnecessaryBoxingInspection extends BaseInspection {
   @Override
   public boolean isEnabledByDefault() {
     return true;
+  }
+
+  @Nullable
+  @Override
+  public JComponent createOptionsPanel() {
+    return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message("unnecessary.boxing.superfluous.option"),
+                                          this, "onlyReportSuperfluouslyBoxed");
   }
 
   @Override
@@ -109,7 +122,7 @@ public class UnnecessaryBoxingInspection extends BaseInspection {
         return;
       }
       final int precedence = ParenthesesUtils.getPrecedence(unboxedExpression);
-      if (cast.length() > 0 && precedence > ParenthesesUtils.TYPE_CAST_PRECEDENCE) {
+      if (!cast.isEmpty() && precedence > ParenthesesUtils.TYPE_CAST_PRECEDENCE) {
         replaceExpression(expression, cast + '(' + unboxedExpression.getText() + ')');
       }
       else {
@@ -139,7 +152,7 @@ public class UnnecessaryBoxingInspection extends BaseInspection {
     return new UnnecessaryBoxingVisitor();
   }
 
-  private static class UnnecessaryBoxingVisitor extends BaseInspectionVisitor {
+  private class UnnecessaryBoxingVisitor extends BaseInspectionVisitor {
 
     @Override
     public void visitNewExpression(@NotNull PsiNewExpression expression) {
@@ -173,6 +186,12 @@ public class UnnecessaryBoxingInspection extends BaseInspection {
       }
       if (!canBeUnboxed(expression)) {
         return;
+      }
+      if (onlyReportSuperfluouslyBoxed) {
+        final PsiType expectedType = ExpectedTypeUtils.findExpectedType(expression, false, true);
+        if (!(expectedType instanceof PsiPrimitiveType)) {
+          return;
+        }
       }
       registerError(expression);
     }
@@ -212,7 +231,7 @@ public class UnnecessaryBoxingInspection extends BaseInspection {
       registerError(expression);
     }
 
-    private static boolean canBeUnboxed(PsiExpression expression) {
+    private boolean canBeUnboxed(PsiExpression expression) {
       PsiElement parent = expression.getParent();
       while (parent instanceof PsiParenthesizedExpression) {
         parent = parent.getParent();
@@ -279,7 +298,7 @@ public class UnnecessaryBoxingInspection extends BaseInspection {
     }
 
     @Nullable
-    private static PsiMethodCallExpression getParentMethodCallExpression(@NotNull PsiElement expression) {
+    private PsiMethodCallExpression getParentMethodCallExpression(@NotNull PsiElement expression) {
       final PsiElement parent = expression.getParent();
       if (parent instanceof PsiParenthesizedExpression || parent instanceof PsiExpressionList) {
         return getParentMethodCallExpression(parent);
@@ -292,8 +311,8 @@ public class UnnecessaryBoxingInspection extends BaseInspection {
       }
     }
 
-    private static boolean isSameMethodCalledWithoutBoxing(@NotNull PsiMethodCallExpression methodCallExpression,
-      @NotNull PsiExpression boxingExpression) {
+    private boolean isSameMethodCalledWithoutBoxing(@NotNull PsiMethodCallExpression methodCallExpression,
+                                                    @NotNull PsiExpression boxingExpression) {
       final PsiExpressionList argumentList = methodCallExpression.getArgumentList();
       final PsiExpression[] expressions = argumentList.getExpressions();
       final PsiReferenceExpression methodExpression = methodCallExpression.getMethodExpression();
@@ -323,7 +342,7 @@ public class UnnecessaryBoxingInspection extends BaseInspection {
         }
       }
       final PsiMethod[] methods = containingClass.findMethodsByName(name, true);
-      for (PsiMethod method : methods) {
+      for (final PsiMethod method : methods) {
         if (!originalMethod.equals(method)) {
           if (MethodCallUtils.isApplicable(method, PsiSubstitutor.EMPTY, types)) {
             return false;

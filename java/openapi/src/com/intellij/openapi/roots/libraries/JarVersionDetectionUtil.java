@@ -26,13 +26,13 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
 import java.util.jar.Attributes;
 import java.util.jar.JarFile;
 import java.util.jar.Manifest;
-import java.util.zip.ZipEntry;
 
 public class JarVersionDetectionUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.libraries.JarVersionDetectionUtil");
@@ -105,6 +105,29 @@ public class JarVersionDetectionUtil {
         }
       }
     return null;
+  }
+
+  private static String getJarAttribute(@NotNull File jar, @NotNull String attributeName, @Nullable String entryName) throws IOException {
+    JarFile runJar = new JarFile(jar);
+    try {
+      Attributes attributes = entryName == null ? runJar.getManifest().getMainAttributes() : runJar.getManifest().getAttributes(entryName);
+      return attributes.getValue(attributeName);
+    }
+    finally {
+      runJar.close();
+    }
+  }
+
+  public static String getBundleVersion(@NotNull File jar) throws IOException {
+    return getJarAttribute(jar, "Bundle-Version", null);
+  }
+
+  public static String getImplementationVersion(@NotNull File jar) throws IOException {
+    return getJarAttributeVersion(jar, Attributes.Name.IMPLEMENTATION_VERSION, null);
+  }
+
+  public static String getJarAttributeVersion(@NotNull File jar, @NotNull Attributes.Name attributeName, @Nullable String entryName) throws IOException {
+    return getJarAttribute(jar, attributeName.toString(), entryName);
   }
 }
 

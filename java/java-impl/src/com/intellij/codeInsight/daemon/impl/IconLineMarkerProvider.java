@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -50,7 +50,7 @@ import java.util.*;
  * @author Konstantin Bulenkov
  */
 public class IconLineMarkerProvider implements LineMarkerProvider {
-  private static final @NonNls String JAVAX_SWING_ICON = "javax.swing.Icon";
+  @NonNls private static final String JAVAX_SWING_ICON = "javax.swing.Icon";
   private static final int ICON_MAX_WEIGHT = 16;
   private static final int ICON_MAX_HEIGHT = 16;
   private static final int ICON_MAX_SIZE = 2 * 1024 * 1024; //2Kb

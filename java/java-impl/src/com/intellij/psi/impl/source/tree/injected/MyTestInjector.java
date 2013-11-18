@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -293,7 +293,7 @@ public class MyTestInjector {
             if (!method.hasModifierProperty(PsiModifier.NATIVE) || !method.hasModifierProperty(PsiModifier.PUBLIC)) return;
             String paramList = "";
             for (PsiParameter parameter : method.getParameterList().getParameters()) {
-              if (paramList.length()!=0) paramList += ",";
+              if (!paramList.isEmpty()) paramList += ",";
               paramList += parameter.getName();
             }
             @NonNls String header = "function " + method.getName() + "("+paramList+") {";

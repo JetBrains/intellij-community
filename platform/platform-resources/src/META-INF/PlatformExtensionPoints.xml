@@ -98,6 +98,8 @@
 
     <extensionPoint name="projectTemplatesFactory"
                     interface="com.intellij.platform.ProjectTemplatesFactory"/>
+    <extensionPoint name="projectTemplate"
+                    beanClass="com.intellij.platform.ProjectTemplateEP"/>
 
     <extensionPoint name="ApplicationLoadListener" interface="com.intellij.ide.ApplicationLoadListener"/>
 
@@ -168,6 +170,8 @@
     <extensionPoint name="statusBarComponent" interface="com.intellij.openapi.wm.StatusBarCustomComponentFactory"/>
 
     <extensionPoint name="checkinHandlerFactory" interface="com.intellij.openapi.vcs.checkin.CheckinHandlerFactory"/>
+
+    <extensionPoint name="eventLogCategory" interface="com.intellij.notification.EventLogCategory"/>
 
     <extensionPoint name="writingAccessProvider" area="IDEA_PROJECT" interface="com.intellij.openapi.vfs.WritingAccessProvider"/>
     <extensionPoint name="editorNotificationProvider" area="IDEA_PROJECT" interface="com.intellij.ui.EditorNotifications$Provider"/>

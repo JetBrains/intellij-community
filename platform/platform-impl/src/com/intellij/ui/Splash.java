@@ -79,6 +79,7 @@ public class Splash extends JDialog implements StartupProgress {
     setSize(size);
     pack();
     setLocationRelativeTo(null);
+    UIUtil.setAutoRequestFocus(this, false);
   }
 
   public Splash(ApplicationInfoEx info) {

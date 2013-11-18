@@ -458,6 +458,7 @@ public abstract class GitHandler {
       startHandlingStreams();
     }
     catch (Throwable t) {
+      LOG.error(t);
       cleanupEnv();
       myListeners.getMulticaster().startFailed(t);
     }

@@ -32,6 +32,7 @@ public class WebEditorOptionsProvider implements EditorOptionsProvider {
   private JCheckBox myAutomaticallyInsertRequiredSubTagsCheckBox;
   private JCheckBox myAutomaticallyStartAttributeAfterCheckBox;
   private JBCheckBox mySelectWholeSelectorOnDoubleClick;
+  private JBCheckBox myAddQuotasForAttributeValue;
 
 
   public String getDisplayName() {
@@ -46,15 +47,14 @@ public class WebEditorOptionsProvider implements EditorOptionsProvider {
     return myWholePanel;
   }
 
-
-
   public boolean isModified() {
     final WebEditorOptions xmlEditorOptions = WebEditorOptions.getInstance();
     return xmlEditorOptions.isAutomaticallyInsertClosingTag() != myAutomaticallyInsertClosingTagCheckBox.isSelected() ||
            xmlEditorOptions.isAutomaticallyInsertRequiredAttributes() != myAutomaticallyInsertRequiredAttributesCheckBox.isSelected() ||
            xmlEditorOptions.isAutomaticallyStartAttribute() != myAutomaticallyStartAttributeAfterCheckBox.isSelected() ||
            xmlEditorOptions.isSelectWholeCssSelectorSuffixOnDoubleClick() != mySelectWholeSelectorOnDoubleClick.isSelected() ||
-           xmlEditorOptions.isAutomaticallyInsertRequiredSubTags() != myAutomaticallyInsertRequiredSubTagsCheckBox.isSelected();
+           xmlEditorOptions.isAutomaticallyInsertRequiredSubTags() != myAutomaticallyInsertRequiredSubTagsCheckBox.isSelected() ||
+           xmlEditorOptions.isInsertQuotesForAttributeValue() != myAddQuotasForAttributeValue.isSelected();
   }
 
   public void apply() throws ConfigurationException {
@@ -64,6 +64,7 @@ public class WebEditorOptionsProvider implements EditorOptionsProvider {
     xmlEditorOptions.setAutomaticallyInsertRequiredSubTags(myAutomaticallyInsertRequiredSubTagsCheckBox.isSelected());
     xmlEditorOptions.setAutomaticallyStartAttribute(myAutomaticallyStartAttributeAfterCheckBox.isSelected());
     xmlEditorOptions.setSelectWholeCssSelectorSuffixOnDoubleClick(mySelectWholeSelectorOnDoubleClick.isSelected());
+    xmlEditorOptions.setInsertQuotesForAttributeValue(myAddQuotasForAttributeValue.isSelected());
   }
 
   public void reset() {
@@ -73,6 +74,7 @@ public class WebEditorOptionsProvider implements EditorOptionsProvider {
     myAutomaticallyInsertRequiredSubTagsCheckBox.setSelected(xmlEditorOptions.isAutomaticallyInsertRequiredSubTags());
     myAutomaticallyStartAttributeAfterCheckBox.setSelected(xmlEditorOptions.isAutomaticallyStartAttribute());
     mySelectWholeSelectorOnDoubleClick.setSelected(xmlEditorOptions.isSelectWholeCssSelectorSuffixOnDoubleClick());
+    myAddQuotasForAttributeValue.setSelected(xmlEditorOptions.isInsertQuotesForAttributeValue());
   }
 
   public void disposeUIResources() {

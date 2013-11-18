@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,14 +24,17 @@ public class BooleanDataDescriptor extends InlineKeyDescriptor<Boolean> {
   private BooleanDataDescriptor() {
   }
 
+  @Override
   public Boolean fromInt(int n) {
     return n != 0 ? Boolean.TRUE : Boolean.FALSE;
   }
 
+  @Override
   public int toInt(Boolean aBoolean) {
     return aBoolean == Boolean.TRUE ? 1 : 0;
   }
 
+  @Override
   protected boolean isCompactFormat() {
     return true;
   }

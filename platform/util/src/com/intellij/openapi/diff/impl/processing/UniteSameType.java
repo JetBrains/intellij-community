@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import com.intellij.util.diff.FilesTooBigForDiffException;
 class UniteSameType implements DiffCorrection {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.diff.impl.processing.UniteSameType");
   public static final DiffCorrection INSTANCE = new UniteSameType();
+  @Override
   public DiffFragment[] correct(DiffFragment[] fragments) {
     return unitSameTypes(covertSequentialOneSideToChange(unitSameTypes(fragments)));
   }
@@ -34,7 +35,7 @@ class UniteSameType implements DiffCorrection {
     DiffFragment previous = fragments[0];
     for (int i = 1; i < fragments.length; i++) {
       DiffFragment fragment = fragments[i];
-      if (!fragment.isOneSide() && fragment.getText1().length() == 0 && fragment.getText2().length() == 0) continue;
+      if (!fragment.isOneSide() && fragment.getText1().isEmpty() && fragment.getText2().isEmpty()) continue;
       if (Util.isSameType(previous, fragment)) {
         previous = Util.unite(previous, fragment);
       } else {

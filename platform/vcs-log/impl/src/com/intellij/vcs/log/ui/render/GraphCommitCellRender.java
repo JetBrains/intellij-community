@@ -1,3 +1,18 @@
+/*
+ * Copyright 2000-2013 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.vcs.log.ui.render;
 
 import com.intellij.openapi.vfs.VirtualFile;
@@ -30,6 +45,7 @@ public class GraphCommitCellRender extends AbstractPaddingCellRender {
 
   public GraphCommitCellRender(@NotNull GraphCellPainter graphPainter, @NotNull VcsLogDataHolder logDataHolder,
                                @NotNull VcsLogColorManager colorManager) {
+    super(logDataHolder.getProject());
     this.graphPainter = graphPainter;
     myDataHolder = logDataHolder;
     refPainter = new RefPainter(colorManager, false);
@@ -56,7 +72,7 @@ public class GraphCommitCellRender extends AbstractPaddingCellRender {
   protected String getCellText(@Nullable Object value) {
     GraphCommitCell cell = (GraphCommitCell)value;
     if (cell == null) {
-      return "!!! No cell for value: " + value;
+      return "";
     }
     else {
       return cell.getText();
@@ -85,6 +101,6 @@ public class GraphCommitCellRender extends AbstractPaddingCellRender {
     }
     refPainter.draw(g2, refs, padding, -1); // TODO think how to behave if there are too many refs here (even if tags are collapsed)
 
-    g.drawImage(image, 0, 0, null);
+    UIUtil.drawImage(g, image, 0, 0, null);
   }
 }

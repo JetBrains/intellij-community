@@ -15,6 +15,8 @@
  */
 package com.siyeh.ig.bugs;
 
+import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.codeInspection.dataFlow.ControlFlowAnalyzer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.*;
@@ -146,6 +148,13 @@ public class IgnoreResultOfCallInspectionBase extends BaseInspection {
         registerMethodCallError(call, aClass);
         return;
       }
+      
+      PsiAnnotation contractAnnotation = ControlFlowAnalyzer.findContractAnnotation(method);
+      if (contractAnnotation != null && Boolean.TRUE.equals(AnnotationUtil.getBooleanAttributeValue(contractAnnotation, "pure"))) {
+        registerMethodCallError(call, aClass);
+        return;
+      }
+
       final PsiReferenceExpression methodExpression = call.getMethodExpression();
       final String methodName = methodExpression.getReferenceName();
       if (methodName == null) {

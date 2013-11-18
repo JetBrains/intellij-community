@@ -25,6 +25,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -90,12 +91,6 @@ public class DialogBuilder implements Disposable {
 
   public void setTitle(String title) {
     myTitle = title;
-  }
-
-  /** @deprecated use {@linkplain #setPreferredFocusComponent(JComponent)} (to remove in IDEA 13) */
-  @SuppressWarnings({"UnusedDeclaration", "SpellCheckingInspection"})
-  public void setPreferedFocusComponent(JComponent component) {
-    setPreferredFocusComponent(component);
   }
 
   public void setPreferredFocusComponent(JComponent component) {
@@ -315,6 +310,12 @@ public class DialogBuilder implements Disposable {
 
     public void setHelpId(String helpId) {
       myHelpId = helpId;
+    }
+
+    @Nullable
+    @Override
+    protected String getHelpId() {
+      return myHelpId;
     }
 
     public void init() { super.init(); }

@@ -61,11 +61,6 @@ public abstract class ModuleSourceRootEditHandler<P extends JpsElement> {
   public abstract Icon getFolderUnderRootIcon();
 
   @Nullable
-  public String getMarkRootGroupName() {
-    return null;
-  }
-
-  @Nullable
   public abstract CustomShortcutSet getMarkRootShortcutSet();
 
   @NotNull

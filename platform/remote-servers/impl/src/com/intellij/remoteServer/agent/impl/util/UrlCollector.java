@@ -10,8 +10,7 @@ import java.util.Collection;
 import java.util.List;
 
 /**
- * Created by IntelliJ IDEA.
- * User: michael.golubev
+ * @author michael.golubev
  */
 public class UrlCollector {
 

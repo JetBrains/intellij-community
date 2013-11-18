@@ -43,11 +43,19 @@ import java.lang.annotation.*;
  * <code>@Contract("_, null -> null; _, !null -> !null")</code> - method returns null if its second argument is null and not-null otherwise<br/>
  * <code>@Contract("true -> fail")</code> - a typical assertFalse method which throws an exception if <code>true</code> is passed to it<br/> 
  * 
- * @author peter
  */
 @Documented
 @Retention(RetentionPolicy.CLASS)
 @Target(ElementType.METHOD)
 public @interface Contract {
-  String value();
+  /**
+   * Contains the contract clauses describing causal relations between call arguments and the returned value 
+   */
+  String value() default "";
+
+  /**
+   * Specifies if this method is pure, i.e. has no visible side effects. This may be used for more precise data flow analysis, and 
+   * to check that the method's return value is actually used in the call place.
+   */
+  boolean pure() default false;
 }

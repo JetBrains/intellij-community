@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2013 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,10 +18,9 @@ package com.siyeh.ipp.asserttoif;
 import com.intellij.psi.PsiAssertStatement;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
-import com.intellij.util.IncorrectOperationException;
+import com.siyeh.ig.psiutils.BoolUtils;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
-import com.siyeh.ipp.psiutils.BoolUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -34,24 +33,16 @@ public class AssertToIfIntention extends Intention {
   }
 
   @Override
-  public void processIntention(@NotNull PsiElement element)
-    throws IncorrectOperationException {
+  public void processIntention(@NotNull PsiElement element) {
     final PsiAssertStatement assertStatement = (PsiAssertStatement)element;
+    @NonNls final StringBuilder newStatement = new StringBuilder();
     final PsiExpression condition = assertStatement.getAssertCondition();
-    final PsiExpression description =
-      assertStatement.getAssertDescription();
-    final String negatedConditionString =
-      BoolUtils.getNegatedExpressionText(condition);
-    @NonNls final String newStatement;
-    if (description == null) {
-      newStatement = "if(" + negatedConditionString +
-                     "){ throw new java.lang.AssertionError();}";
+    newStatement.append("if(").append(BoolUtils.getNegatedExpressionText(condition)).append(") throw new java.lang.AssertionError(");
+    final PsiExpression description = assertStatement.getAssertDescription();
+    if (description != null) {
+      newStatement.append(description.getText());
     }
-    else {
-      newStatement = "if(" + negatedConditionString +
-                     "){ throw new java.lang.AssertionError(" +
-                     description.getText() + ");}";
-    }
-    replaceStatement(newStatement, assertStatement);
+    newStatement.append(");");
+    replaceStatement(newStatement.toString(), assertStatement);
   }
 }

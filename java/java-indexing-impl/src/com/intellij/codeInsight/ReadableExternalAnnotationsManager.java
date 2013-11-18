@@ -23,9 +23,7 @@ import com.intellij.psi.PsiManager;
 import com.intellij.util.ThreeState;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 public class ReadableExternalAnnotationsManager extends BaseExternalAnnotationsManager {
   @NotNull private volatile ThreeState myHasAnyAnnotationsRoots = ThreeState.UNSURE;
@@ -56,13 +54,13 @@ public class ReadableExternalAnnotationsManager extends BaseExternalAnnotationsM
   @NotNull
   protected List<VirtualFile> getExternalAnnotationsRoots(@NotNull VirtualFile libraryFile) {
     ProjectFileIndex fileIndex = ProjectRootManager.getInstance(myPsiManager.getProject()).getFileIndex();
-    List<VirtualFile> result = new ArrayList<VirtualFile>();
+    Set<VirtualFile> result = new LinkedHashSet<VirtualFile>();
     for (OrderEntry entry : fileIndex.getOrderEntriesForFile(libraryFile)) {
       if (!(entry instanceof ModuleOrderEntry)) {
         Collections.addAll(result, AnnotationOrderRootType.getFiles(entry));
       }
     }
-    return result;
+    return new ArrayList<VirtualFile>(result);
   }
 
   @Override

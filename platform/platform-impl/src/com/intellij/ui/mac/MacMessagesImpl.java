@@ -27,7 +27,6 @@ import com.intellij.ui.mac.foundation.ID;
 import com.intellij.ui.mac.foundation.MacUtil;
 import com.intellij.util.ui.UIUtil;
 import com.sun.jna.Callback;
-import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -36,6 +35,7 @@ import java.awt.*;
 import java.awt.event.InputEvent;
 import java.lang.reflect.Method;
 import java.util.HashMap;
+import java.util.Map;
 
 import static com.intellij.ui.mac.foundation.Foundation.*;
 
@@ -51,22 +51,21 @@ public class MacMessagesImpl extends MacMessages {
       myReturnCode = returnCode;
       mySuppress = suppress;
     }
-    int myReturnCode;
-    boolean mySuppress;
+    private final int myReturnCode;
+    private final boolean mySuppress;
   }
 
-  private static final  HashMap<Window, MessageResult> resultsFromDocumentRoot = new HashMap<Window, MessageResult> ();
-  private static final  HashMap<Window, MacMessagesQueue<Runnable>> queuesFromDocumentRoot =
-    new HashMap<Window, MacMessagesQueue<Runnable>>();
+  private static final Map<Window, MessageResult> resultsFromDocumentRoot = new HashMap<Window, MessageResult> ();
+  private static final Map<Window, MacMessagesQueue<Runnable>> queuesFromDocumentRoot = new HashMap<Window, MacMessagesQueue<Runnable>>();
 
   private static final Callback SHEET_DID_END = new Callback() {
+    @SuppressWarnings("UnusedDeclaration")
     public void callback(ID self, String selector, ID alert, ID returnCode, ID contextInfo) {
       synchronized (lock) {
         Window documentRoot = windowFromId.get(contextInfo.longValue());
         processResult(documentRoot);
         ID suppressState = invoke(invoke(alert, "suppressionButton"), "state");
-        resultsFromDocumentRoot.put(documentRoot, new MessageResult(returnCode.intValue(),
-                                                                    suppressState.intValue() == 1));
+        resultsFromDocumentRoot.put(documentRoot, new MessageResult(returnCode.intValue(), suppressState.intValue() == 1));
         queuesFromDocumentRoot.get(windowFromId.get(contextInfo.longValue())).runFromQueue();
       }
       cfRelease(self);
@@ -74,6 +73,7 @@ public class MacMessagesImpl extends MacMessages {
   };
 
   private static final Callback VARIABLE_BUTTONS_SHEET_PANEL = new Callback() {
+    @SuppressWarnings("UnusedDeclaration")
     public void callback(ID self, String selector, ID params) {
       ID title = invoke(params, "objectAtIndex:", 0);
       ID message = invoke(params, "objectAtIndex:", 1);
@@ -130,6 +130,7 @@ public class MacMessagesImpl extends MacMessages {
   };
 
   private static final Callback SIMPLE_SHEET_PANEL = new Callback() {
+    @SuppressWarnings("UnusedDeclaration")
     public void callback(ID self, String selector, ID params) {
       ID title = invoke(params, "objectAtIndex:", 0);
       ID defaultText = invoke(params, "objectAtIndex:", 1);
@@ -214,36 +215,38 @@ public class MacMessagesImpl extends MacMessages {
   }
 
   @Override
-  public void showOkMessageDialog(String title, String message, String okText, @Nullable Window window) {
-    showMessageDialog(title, okText, null, null, message, window);
+  public void showOkMessageDialog(@NotNull String title, String message, @NotNull String okText, @Nullable Window window) {
+    showAlertDialog(title, okText, null, null, message, window);
   }
 
   @Override
-  public void showOkMessageDialog(String title, String message, String okText) {
-    showMessageDialog(title, okText, null, null, message, null);
+  public void showOkMessageDialog(@NotNull String title, String message, @NotNull String okText) {
+    showAlertDialog(title, okText, null, null, message, null);
   }
 
   @Override
-  public int showYesNoDialog(String title, String message, String yesButton, String noButton, @Nullable Window window) {
-    return showMessageDialog(title, yesButton, null, noButton, message, window);
+  @Messages.YesNoResult
+  public int showYesNoDialog(@NotNull String title, String message, @NotNull String yesButton, @NotNull String noButton, @Nullable Window window) {
+    return showAlertDialog(title, yesButton, null, noButton, message, window) == Messages.YES ? Messages.YES : Messages.NO;
   }
 
   @Override
-  public int showYesNoDialog(String title, String message, String yesButton, String noButton, @Nullable Window window,
+  @Messages.YesNoResult
+  public int showYesNoDialog(@NotNull String title, String message, @NotNull String yesButton, @NotNull String noButton, @Nullable Window window,
                              @Nullable DialogWrapper.DoNotAskOption doNotAskDialogOption) {
-    //noinspection MagicConstant
-    return showAlertDialog(title, yesButton, null, noButton, message, window, false, doNotAskDialogOption);
+    return showAlertDialog(title, yesButton, null, noButton, message, window, false, doNotAskDialogOption) == Messages.YES ? Messages.YES : Messages.NO;
   }
 
   @Override
-  public void showErrorDialog(String title, String message, String okButton, @Nullable Window window) {
+  public void showErrorDialog(@NotNull String title, String message, @NotNull String okButton, @Nullable Window window) {
     showAlertDialog(title, okButton, null, null, message, window, true, null);
   }
 
   @Override
-  public int showYesNoCancelDialog(String title,
+  @Messages.YesNoCancelResult
+  public int showYesNoCancelDialog(@NotNull String title,
                                    String message,
-                                   String defaultButton,
+                                   @NotNull String defaultButton,
                                    String alternateButton,
                                    String otherButton,
                                    Window window,
@@ -251,11 +254,11 @@ public class MacMessagesImpl extends MacMessages {
     return showAlertDialog(title, defaultButton, alternateButton, otherButton, message, window, false, doNotAskOption);
   }
 
-  final private static Object lock = new Object();
+  private static final Object lock = new Object();
 
-  final private static HashMap<Window, Integer> blockedDocumentRoots = new HashMap<Window, Integer>();
+  private static final HashMap<Window, Integer> blockedDocumentRoots = new HashMap<Window, Integer>();
 
-  final private static HashMap<Long, Window> windowFromId = new HashMap<Long, Window>();
+  private static final HashMap<Long, Window> windowFromId = new HashMap<Long, Window>();
 
   public static void pumpEventsDocumentExclusively (Window documentRoot) {
 
@@ -263,10 +266,9 @@ public class MacMessagesImpl extends MacMessages {
 
     EventQueue theQueue = documentRoot.getToolkit().getSystemEventQueue();
 
-    AWTEvent event;
     do {
       try {
-        event = theQueue.getNextEvent();
+        AWTEvent event = theQueue.getNextEvent();
         boolean eventOk = true;
         if (event instanceof InputEvent) {
           final Object s = event.getSource();
@@ -304,7 +306,7 @@ public class MacMessagesImpl extends MacMessages {
 
   private static Window findDocumentRoot (final Component c) {
     if (c == null) return null;
-    Window w = (c instanceof Window) ? (Window)c : getContainingWindow(c);
+    Window w = c instanceof Window ? (Window)c : getContainingWindow(c);
     synchronized (c.getTreeLock()) {
       while (w.getOwner() != null) {
         w = w.getOwner();
@@ -358,15 +360,15 @@ public class MacMessagesImpl extends MacMessages {
 
   private static class DialogParamsWrapper {
     private ID window = null;
-    private HashMap params = null;
-    private DialogType dialogType = null;
+    private final Map<Enum, Object> params;
+    private final DialogType dialogType;
 
     private enum DialogType {
       alert,
       message
     }
 
-    private DialogParamsWrapper(@NotNull DialogType t, @NotNull HashMap p) {
+    private DialogParamsWrapper(@NotNull DialogType t, @NotNull Map<Enum, Object> p) {
       dialogType = t;
       params = p;
     }
@@ -382,20 +384,18 @@ public class MacMessagesImpl extends MacMessages {
       ID paramsAsID = null;
 
       switch (dialogType) {
-        case alert: {
+        case alert:
           paramsAsID = getParamsForAlertDialog(params);
           break;
-        }
-        case message: {
+        case message:
           paramsAsID = getParamsForMessageDialog(params);
           break;
-        }
       }
       return paramsAsID;
     }
 
 
-    private static ID getParamsForAlertDialog(HashMap params) {
+    private static ID getParamsForAlertDialog(@NotNull Map<Enum, Object> params) {
       return invoke("NSArray", "arrayWithObjects:",
                     params.get(COMMON_DIALOG_PARAM_TYPE.title),
                     params.get(ALERT_DIALOG_PARAM_TYPE.defaultText),
@@ -410,7 +410,7 @@ public class MacMessagesImpl extends MacMessages {
                     null);
     }
 
-    private static ID getParamsForMessageDialog(HashMap params) {
+    private static ID getParamsForMessageDialog(@NotNull Map<Enum, Object> params) {
       return invoke("NSArray", "arrayWithObjects:",
                     params.get(COMMON_DIALOG_PARAM_TYPE.title),
                     params.get(COMMON_DIALOG_PARAM_TYPE.message),
@@ -426,21 +426,20 @@ public class MacMessagesImpl extends MacMessages {
     }
   }
 
-  @MagicConstant(intValues = {Messages.YES, Messages.NO, Messages.CANCEL, Messages.OK, OPERATION_CANCELED})
-  public static int showAlertDialog(final String title,
-                                    final String defaultText,
+  @Messages.YesNoCancelResult
+  public static int showAlertDialog(@NotNull String title,
+                                    @NotNull String defaultText,
                                     @Nullable final String alternateText,
                                     @Nullable final String otherText,
                                     final String message,
-                                    @Nullable Window window ,
+                                    @Nullable Window window,
                                     final boolean errorStyle,
                                     @Nullable final DialogWrapper.DoNotAskOption doNotAskDialogOption) {
 
-    HashMap params  = new HashMap ();
+    Map<Enum, Object> params  = new HashMap<Enum, Object> ();
 
     ID pool = invoke(invoke("NSAutoreleasePool", "alloc"), "init");
     try {
-
       params.put(COMMON_DIALOG_PARAM_TYPE.title, nsString(title));
       params.put(ALERT_DIALOG_PARAM_TYPE.defaultText, nsString(UIUtil.removeMnemonic(defaultText)));
       params.put(ALERT_DIALOG_PARAM_TYPE.alternateText, nsString(otherText == null ? "-1" : UIUtil.removeMnemonic(otherText)));
@@ -457,12 +456,10 @@ public class MacMessagesImpl extends MacMessages {
       MessageResult result = resultsFromDocumentRoot.remove(showDialog(window, "showSheet:",
                                                                        new DialogParamsWrapper(DialogParamsWrapper.DialogType.alert, params)));
 
-      Integer convertedResult = convertReturnCodeFromNativeAlertDialog(result.myReturnCode, alternateText);
-
-      boolean operationCanceled = (alternateText == null && convertedResult == 1)
-                                  || (alternateText != null && convertedResult == 2);
+      int convertedResult = convertReturnCodeFromNativeAlertDialog(result.myReturnCode, alternateText);
 
       if (doNotAskDialogOption != null && doNotAskDialogOption.canBeHidden()) {
+        boolean operationCanceled = convertedResult == Messages.CANCEL;
         if (!operationCanceled || doNotAskDialogOption.shouldSaveOptionsOnCancel()) {
           doNotAskDialogOption.setToBeShown(!result.mySuppress, convertedResult);
         }
@@ -475,18 +472,15 @@ public class MacMessagesImpl extends MacMessages {
     }
   }
 
-  private final static int OPERATION_CANCELED = 444;
-
-  public int showMessageDialog(final String title,
+  @Override
+  public int showMessageDialog(@NotNull final String title,
                                final String message,
-                               final String[] buttons,
+                               @NotNull final String[] buttons,
                                final boolean errorStyle,
                                @Nullable Window window,
                                final int defaultOptionIndex,
                                final int focusedOptionIndex,
-                               @Nullable final DialogWrapper.DoNotAskOption doNotAskDialogOption)
-  {
-
+                               @Nullable final DialogWrapper.DoNotAskOption doNotAskDialogOption) {
     ID pool = invoke(invoke("NSAutoreleasePool", "alloc"), "init");
     try {
       final ID buttonsArray = invoke("NSMutableArray", "array");
@@ -495,7 +489,7 @@ public class MacMessagesImpl extends MacMessages {
         invoke(buttonsArray, "addObject:", s1);
       }
 
-      HashMap params  = new HashMap ();
+      Map<Enum, Object> params  = new HashMap<Enum, Object>();
 
       params.put(COMMON_DIALOG_PARAM_TYPE.title, nsString(title));
       // replace % -> %% to avoid formatted parameters (causes SIGTERM)
@@ -532,8 +526,7 @@ public class MacMessagesImpl extends MacMessages {
   }
 
   //title, message, errorStyle, window, paramsArray, doNotAskDialogOption, "showVariableButtonsSheet:"
-  private static Window showDialog(@Nullable Window window,
-                                   final String methodName, DialogParamsWrapper paramsWrapper) {
+  private static Window showDialog(@Nullable Window window, final String methodName, DialogParamsWrapper paramsWrapper) {
 
     Window foremostWindow = getForemostWindow(window);
 
@@ -582,8 +575,8 @@ public class MacMessagesImpl extends MacMessages {
     return windowTitle;
   }
 
-  @MagicConstant(intValues = {Messages.YES, Messages.NO, Messages.CANCEL, Messages.OK, OPERATION_CANCELED})
-  private static int convertReturnCodeFromNativeAlertDialog(Integer returnCode, String alternateText) {
+  @Messages.YesNoCancelResult
+  private static int convertReturnCodeFromNativeAlertDialog(int returnCode, String alternateText) {
     // DEFAULT = 1
     // ALTERNATE = 0
     // OTHER = -1 (cancel)
@@ -596,10 +589,6 @@ public class MacMessagesImpl extends MacMessages {
       // CANCEL = 2
 
       cancelCode = Messages.CANCEL;
-
-      if (returnCode == null) {
-        returnCode = Messages.CANCEL;
-      }
 
       switch (returnCode) {
         case 1:
@@ -620,10 +609,6 @@ public class MacMessagesImpl extends MacMessages {
 
       cancelCode = 1;
 
-      if (returnCode == null) {
-        returnCode = -1;
-      }
-
       switch (returnCode) {
         case 1:
           code = Messages.YES;
@@ -635,7 +620,11 @@ public class MacMessagesImpl extends MacMessages {
       }
     }
 
-    return cancelCode == code ? OPERATION_CANCELED : code;
+    if (cancelCode == code) {
+      code = Messages.CANCEL;
+    }
+    LOG.assertTrue(code == Messages.YES || code == Messages.NO || code == Messages.CANCEL, code);
+    return code;
   }
 
   private static void runOrPostponeForWindow(Window documentRoot, Runnable task) {
@@ -707,12 +696,13 @@ public class MacMessagesImpl extends MacMessages {
     return findDocumentRoot(window);
   }
 
-  public static int showMessageDialog(String title,
-                                      String okText,
-                                      @Nullable String alternateText,
-                                      @Nullable String cancelText,
-                                      String message,
-                                      @Nullable Window window) {
+  @Messages.YesNoCancelResult
+  private static int showAlertDialog(@NotNull String title,
+                                     @NotNull String okText,
+                                     @Nullable String alternateText,
+                                     @Nullable String cancelText,
+                                     String message,
+                                     @Nullable Window window) {
     return showAlertDialog(title, okText, alternateText, cancelText, message, window, false, null);
   }
 }

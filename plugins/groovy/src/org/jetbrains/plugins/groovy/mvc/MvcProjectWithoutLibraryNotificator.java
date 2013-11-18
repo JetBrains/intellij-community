@@ -27,38 +27,43 @@ public class MvcProjectWithoutLibraryNotificator implements StartupActivity, Dum
 
   @Override
   public void runActivity(@NotNull final Project project) {
-    AccessToken accessToken = ApplicationManager.getApplication().acquireReadActionLock();
+    ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+      @Override
+      public void run() {
+        AccessToken accessToken = ApplicationManager.getApplication().acquireReadActionLock();
 
-    try {
-      if (JavaPsiFacade.getInstance(project).findClass(CommonClassNames.JAVA_LANG_OBJECT, GlobalSearchScope.allScope(project)) == null) {
-        return; // If indexes is corrupted JavaPsiFacade.findClass() can't find classes during StartupActivity (may be it's a bug).
-                // So we can't determine whether exists Grails library or not.
+        try {
+          if (JavaPsiFacade.getInstance(project).findClass(CommonClassNames.JAVA_LANG_OBJECT, GlobalSearchScope.allScope(project)) == null) {
+            return; // If indexes is corrupted JavaPsiFacade.findClass() can't find classes during StartupActivity (may be it's a bug).
+                    // So we can't determine whether exists Grails library or not.
+          }
+
+          Pair<Module, MvcFramework> pair = findModuleWithoutLibrary(project);
+
+          if (pair != null) {
+            final MvcFramework framework = pair.second;
+            final Module module = pair.first;
+
+            new Notification(framework.getFrameworkName() + ".Configure",
+                             framework.getFrameworkName() + " SDK not found.",
+                             "<html><body>Module '" +
+                             module.getName() +
+                             "' has no " +
+                             framework.getFrameworkName() +
+                             " SDK. <a href='create'>Configure SDK</a></body></html>", NotificationType.INFORMATION,
+                             new NotificationListener.Adapter() {
+                               @Override
+                               protected void hyperlinkActivated(@NotNull Notification notification, @NotNull HyperlinkEvent e) {
+                                 MvcConfigureNotification.configure(framework, module);
+                               }
+                             }).notify(project);
+          }
+        }
+        finally {
+          accessToken.finish();
+        }
       }
-
-      Pair<Module, MvcFramework> pair = findModuleWithoutLibrary(project);
-
-      if (pair != null) {
-        final MvcFramework framework = pair.second;
-        final Module module = pair.first;
-
-        new Notification(framework.getFrameworkName() + ".Configure",
-                         framework.getFrameworkName() + " SDK not found.",
-                         "<html><body>Module '" +
-                         module.getName() +
-                         "' has no " +
-                         framework.getFrameworkName() +
-                         " SDK. <a href='create'>Configure SDK</a></body></html>", NotificationType.INFORMATION,
-                         new NotificationListener.Adapter() {
-                           @Override
-                           protected void hyperlinkActivated(@NotNull Notification notification, @NotNull HyperlinkEvent e) {
-                             MvcConfigureNotification.configure(framework, module);
-                           }
-                         }).notify(project);
-      }
-    }
-    finally {
-      accessToken.finish();
-    }
+    });
   }
 
   @Nullable

@@ -68,7 +68,6 @@ public class ProjectTypesList implements Disposable {
       }
     }.setComparator(new SpeedSearchComparator(false));
     List<TemplateItem> items = buildItems(map);
-    final RemoteTemplatesFactory factory = new RemoteTemplatesFactory();
     final TemplatesGroup samplesGroup = new TemplatesGroup("Loading Templates...", "", null, 0);
     myLoadingItem = new TemplateItem(new LoadingProjectTemplate(), samplesGroup) {
       @Override
@@ -84,6 +83,7 @@ public class ProjectTypesList implements Disposable {
     items.add(myLoadingItem);
     myModel = new CollectionListModel<TemplateItem>(items);
 
+    final RemoteTemplatesFactory factory = new RemoteTemplatesFactory();
     ProgressManager.getInstance().run(new Task.Backgroundable(context.getProject(), "Loading Templates") {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {

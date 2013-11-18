@@ -73,7 +73,7 @@ public class JDParser {
     for (int i = 0; i < size; i++) {
       String line = l.get(i);
       line = line.trim();
-      if (line.length() > 0) {
+      if (!line.isEmpty()) {
         if (line.charAt(0) == '*') {
           if ((markers.get(i)).booleanValue()) {
             if (line.length() > 1 && line.charAt(1) == ' ') {
@@ -95,7 +95,7 @@ public class JDParser {
     String tag = null;
     for (int i = 0; i <= size; i++) {
       String line = i == size ? null : l.get(i);
-      if (i == size || line.length() > 0) {
+      if (i == size || !line.isEmpty()) {
         if (i == size || line.charAt(0) == '@') {
           if (tag == null) {
             comment.setDescription(sb.toString());
@@ -157,7 +157,7 @@ public class JDParser {
   private List<String> toArray(@Nullable String s, @NotNull String separators, @Nullable List<Boolean> markers) {
     if (s == null) return null;
     s = s.trim();
-    if (s.length() == 0) return null;
+    if (s.isEmpty()) return null;
     boolean p2nl = markers != null && mySettings.JD_P_AT_EMPTY_LINES;
     List<String> list = new ArrayList<String>();
     StringTokenizer st = new StringTokenizer(s, separators, true);
@@ -232,7 +232,7 @@ public class JDParser {
       String seq = pair.getFirst();
       boolean isMarked = pair.getSecond();
 
-      if (seq.length() == 0) {
+      if (seq.isEmpty()) {
         // keep empty lines
         list.add("");
         continue;
@@ -514,9 +514,9 @@ public class JDParser {
       boolean insidePreTag = false;
       for (int i = 0; i < list.size(); i++) {
         String line = list.get(i);
-        if (line.length() == 0 && !mySettings.JD_KEEP_EMPTY_LINES) continue;
+        if (line.isEmpty() && !mySettings.JD_KEEP_EMPTY_LINES) continue;
         if (i != 0) sb.append(prefix);
-        if (line.length() == 0 && mySettings.JD_P_AT_EMPTY_LINES && !insidePreTag) {
+        if (line.isEmpty() && mySettings.JD_P_AT_EMPTY_LINES && !insidePreTag) {
           if (myLanguageLevel.isAtLeast(LanguageLevel.JDK_1_8)) {
             //Self-closing elements are not allowed for javadoc tool from JDK8
             sb.append(P_START_TAG);

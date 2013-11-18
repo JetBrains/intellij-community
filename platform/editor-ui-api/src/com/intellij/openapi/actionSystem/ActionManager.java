@@ -161,19 +161,7 @@ public abstract class ActionManager implements ApplicationComponent {
 
   public abstract void addTransparentTimerListener(int delay, TimerListener listener);
 
-  /** @deprecated use {@linkplain #addTransparentTimerListener(int, TimerListener)} (to remove in IDEA 13) */
-  @SuppressWarnings("UnusedDeclaration")
-  public void addTransparrentTimerListener(int delay, TimerListener listener) {
-    addTransparentTimerListener(delay, listener);
-  }
-
   public abstract void removeTransparentTimerListener(TimerListener listener);
-
-  /** @deprecated use {@linkplain #removeTransparentTimerListener(TimerListener)} (to remove in IDEA 13) */
-  @SuppressWarnings("UnusedDeclaration")
-  public void removeTransparrentTimerListener(TimerListener listener) {
-    removeTransparentTimerListener(listener);
-  }
 
   public abstract ActionCallback tryToExecute(@NotNull AnAction action, @NotNull InputEvent inputEvent, @Nullable Component contextComponent,
                                               @Nullable String place, boolean now);

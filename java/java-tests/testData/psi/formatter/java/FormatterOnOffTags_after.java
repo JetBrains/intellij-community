@@ -1,6 +1,13 @@
 import java.util.*;
 
 public class CollectionTest {
+    /**
+     * Normal JavaDoc, can
+     * be
+     * formatted.
+     *
+     * @param args Arguments.
+     */
     public static void main(String[] args) {
         int size;
         HashSet collection = new HashSet();
@@ -22,4 +29,35 @@ public class CollectionTest {
             System.out.print(iterator.next() + " ");
         }
     }
+
+    // @formatter:off
+  /**
+   * And please don't touch this:
+   *   @param   x
+   *     These are my nice comments.
+   *   @param   y
+   *     And yet another one.
+   */
+  public void doSomething(String x, String y) {
+  }
+  // @formatter:on
+
+    /**
+     * It's OK to format this comment.
+     *
+     * @param z Parameter Z.
+     */
+    public void doSomethingElse(String z) {
+    }
+
+    // @formatter:off
+  /**
+   *   This comment must be preserved too.
+   *   @param i
+   *      Parameter I.
+   *   @param j
+   *      Parameter J.
+   */
+  public void evenMore(int i, int j) {}
+  // @formatter:on
 }

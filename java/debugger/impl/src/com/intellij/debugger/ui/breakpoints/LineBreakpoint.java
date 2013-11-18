@@ -31,6 +31,7 @@ import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.icons.AllIcons;
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -211,7 +212,8 @@ public class LineBreakpoint extends BreakpointWithHighlighter {
 
   protected boolean acceptLocation(DebugProcessImpl debugProcess, ReferenceType classType, Location loc) {
     final OwnerMethod owner = myOwnerMethod;
-    if (owner != null) {
+    if (owner != null && owner.isJavaFile) {
+      // Additional filtering applicable to java files only.
       // Consider:
       //  proc(()->{System.out.println("Task 1");}, ()->{System.out.println("Task 2");});  <breakpoint at this line>
       //
@@ -445,7 +447,7 @@ public class LineBreakpoint extends BreakpointWithHighlighter {
         @Override
         public OwnerMethod compute() {
           final PsiMethod method = DebuggerUtilsEx.findPsiMethod(file, offset);
-          return method != null? new OwnerMethod(method) : null;
+          return method != null? new OwnerMethod(method, file instanceof PsiJavaFile && JavaLanguage.INSTANCE.equals(file.getLanguage())) : null;
         }
       });
     }
@@ -583,14 +585,16 @@ public class LineBreakpoint extends BreakpointWithHighlighter {
     @NotNull
     final String name;
     final boolean isConstructor;
+    final boolean isJavaFile;
 
-    OwnerMethod(@NotNull PsiMethod method) {
-      this(method.getName(), method.isConstructor());
+    OwnerMethod(@NotNull PsiMethod method, boolean isJavaFile) {
+      this(method.getName(), method.isConstructor(), isJavaFile);
     }
 
-    OwnerMethod(@NotNull String name, boolean isConstructor) {
+    OwnerMethod(@NotNull String name, boolean isConstructor, boolean isJavaFile) {
       this.name = name;
       this.isConstructor = isConstructor;
+      this.isJavaFile = isJavaFile;
     }
 
     boolean matches(Location loc) {

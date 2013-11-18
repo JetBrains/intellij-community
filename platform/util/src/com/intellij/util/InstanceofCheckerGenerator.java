@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,6 +49,7 @@ public class InstanceofCheckerGenerator {
     protected Condition<Object> create(final Class key) {
       if (key.isAnonymousClass() || Modifier.isPrivate(key.getModifiers())) {
         return new Condition<Object>() {
+          @Override
           public boolean value(Object o) {
             return key.isInstance(o);
           }
@@ -96,6 +97,7 @@ public class InstanceofCheckerGenerator {
       return instance;
     }
 
+    @Override
     public void generateClass(ClassVisitor classVisitor) throws Exception {
       ClassEmitter cv = new ClassEmitter(classVisitor);
 

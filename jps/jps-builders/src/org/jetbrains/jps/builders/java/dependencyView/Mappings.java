@@ -799,7 +799,7 @@ public class Mappings {
   }
 
   private class Differential {
-    private static final int DESPERATE_MASK = Opcodes.ACC_STATIC | Opcodes.ACC_FINAL;
+    private static final int DESPERATE_MASK = Opcodes.ACC_FINAL;
 
     final Mappings myDelta;
     final Collection<File> myFilesToCompile;
@@ -1752,6 +1752,8 @@ public class Mappings {
           myPresent.appendDependents(c, state.myDependants);
           debug("Adding usages of class ", c.name);
           state.myAffectedUsages.add(c.createUsage());
+          debug("Affecting usages of removed class ", c.name);
+          affectAll(c.name, myAffectedFiles, myFilter);
         }
       }
       debug("End of removed classes processing.");

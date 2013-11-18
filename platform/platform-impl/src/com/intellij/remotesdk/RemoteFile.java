@@ -70,7 +70,9 @@ public class RemoteFile {
   }
 
   public static boolean isWindowsPath(@NotNull String path) {
-    return path.contains("\\") || (path.length() > 1 && path.charAt(1) == ':');
+    path = RemoteSdkDataHolder.getInterpreterPathFromFullPath(path);
+
+    return (path.length() > 1 && path.charAt(1) == ':');
   }
 
   private static String toSystemDependent(@NotNull String path, boolean isWin) {

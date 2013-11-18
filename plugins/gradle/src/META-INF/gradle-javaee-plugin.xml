@@ -1,0 +1,8 @@
+<idea-plugin>
+  <extensions defaultExtensionNs="com.intellij">
+    <externalProjectDataService implementation="org.jetbrains.plugins.gradle.service.project.data.javaee.WebModuleGradleDataService"/>
+  </extensions>
+  <extensions defaultExtensionNs="org.jetbrains.plugins.gradle">
+    <projectResolve implementation="org.jetbrains.plugins.gradle.integrations.javaee.JavaEEGradleProjectResolverExtension"/>
+  </extensions>
+</idea-plugin>

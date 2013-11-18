@@ -31,6 +31,7 @@ import com.intellij.openapi.vfs.VirtualFileSystem;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.ResolveCache;
 import com.intellij.psi.impl.source.resolve.reference.impl.CachingReference;
+import com.intellij.psi.impl.source.resolve.reference.impl.PsiMultiReference;
 import com.intellij.psi.search.PsiFileSystemItemProcessor;
 import com.intellij.refactoring.rename.BindablePsiReference;
 import com.intellij.util.ArrayUtil;
@@ -69,6 +70,26 @@ public class FileReference implements PsiFileReference, FileReferenceOwner, PsiP
 
   public FileReference(final FileReference original) {
     this(original.myFileReferenceSet, original.myRange, original.myIndex, original.myText);
+  }
+
+  @Nullable
+  public static FileReference findFileReference(@NotNull final PsiReference original) {
+    if (original instanceof PsiMultiReference) {
+      final PsiMultiReference multiReference = (PsiMultiReference)original;
+      for (PsiReference reference : multiReference.getReferences()) {
+        if (reference instanceof FileReference) {
+          return (FileReference)reference;
+        }
+      }
+    }
+    else if (original instanceof FileReferenceOwner) {
+      final PsiFileReference fileReference = ((FileReferenceOwner)original).getLastFileReference();
+      if (fileReference instanceof FileReference) {
+        return (FileReference)fileReference;
+      }
+    }
+
+    return null;
   }
 
   @NotNull
@@ -163,46 +184,45 @@ public class FileReference implements PsiFileReference, FileReferenceOwner, PsiP
       }
       else {
         final String decoded = decode(text);
-        if (decoded != null) {
 
-          if (context instanceof PackagePrefixFileSystemItem) {
-            context = ((PackagePrefixFileSystemItem)context).getDirectory();
+        if (context instanceof PackagePrefixFileSystemItem) {
+          context = ((PackagePrefixFileSystemItem)context).getDirectory();
+        }
+
+        if (context instanceof PsiDirectory && caseSensitivityApplies((PsiDirectory)context, caseSensitive)) {
+          // optimization: do not load all children into VFS
+          PsiDirectory directory = (PsiDirectory)context;
+          PsiFileSystemItem child = directory.findFile(decoded);
+          if (child == null) child = directory.findSubdirectory(decoded);
+          if (child != null) {
+            result.add(new PsiElementResolveResult(getOriginalFile(child)));
           }
-
-          if (context instanceof PsiDirectory && caseSensitivityApplies((PsiDirectory)context, caseSensitive)) {
-            // optimization: do not load all children into VFS
-            PsiDirectory directory = (PsiDirectory)context;
-            PsiFileSystemItem child = directory.findFile(decoded);
-            if (child == null) child = directory.findSubdirectory(decoded);
-            if (child != null) {
-              result.add(new PsiElementResolveResult(getOriginalFile(child)));
+        }
+        else {
+          processVariants(context, new PsiFileSystemItemProcessor() {
+            @Override
+            public boolean acceptItem(String name, boolean isDirectory) {
+              return caseSensitive ? decoded.equals(name) : decoded.compareToIgnoreCase(name) == 0;
             }
-          }
-          else {
-            processVariants(context, new PsiFileSystemItemProcessor() {
-              @Override
-              public boolean acceptItem(String name, boolean isDirectory) {
-                return caseSensitive ? decoded.equals(name) : decoded.compareToIgnoreCase(name) == 0;
-              }
 
-              @Override
-              public boolean execute(@NotNull PsiFileSystemItem element) {
-                result.add(new PsiElementResolveResult(getOriginalFile(element)));
-                return true;
-              }
-            });
-          }
+            @Override
+            public boolean execute(@NotNull PsiFileSystemItem element) {
+              result.add(new PsiElementResolveResult(getOriginalFile(element)));
+              return true;
+            }
+          });
         }
       }
     }
   }
 
+  @NotNull
   public String getFileNameToCreate() {
     return decode(getCanonicalText());
   }
 
-  public
   @Nullable
+  public
   String getNewFileTemplateName() {
     return null;
   }
@@ -218,8 +238,8 @@ public class FileReference implements PsiFileReference, FileReferenceOwner, PsiP
             !myFileReferenceSet.isEndingSlashNotAllowed() && myIndex > 0);
   }
 
-  @Nullable
-  public String decode(final String text) {
+  @NotNull
+  public String decode(@NotNull final String text) {
     // strip http get parameters
     String _text = text;
     if (text.indexOf('?') >= 0) {
@@ -228,7 +248,7 @@ public class FileReference implements PsiFileReference, FileReferenceOwner, PsiP
 
     if (myFileReferenceSet.isUrlEncoded()) {
       try {
-        return new URI(_text).getPath();
+        return StringUtil.notNullize(new URI(_text).getPath(), text);
       }
       catch (Exception e) {
         return text;
@@ -504,7 +524,7 @@ public class FileReference implements PsiFileReference, FileReferenceOwner, PsiP
   public String getUnresolvedMessagePattern() {
     return LangBundle.message("error.cannot.resolve")
            + " " + (isLast() ? LangBundle.message("terms.file") : LangBundle.message("terms.directory"))
-           + " '" + StringUtil.escapePattern(StringUtil.notNullize(decode(getCanonicalText()))) + "'";
+           + " '" + StringUtil.escapePattern(decode(getCanonicalText())) + "'";
   }
 
   public final boolean isLast() {

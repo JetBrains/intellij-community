@@ -584,7 +584,7 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
       PsiModifierList modifierList = PsiImplUtil.findNeighbourModifierList(this);
       if (modifierList != null) {
         List<PsiAnnotation> typeAnnotations = PsiImplUtil.getTypeUseAnnotations(modifierList);
-        if (typeAnnotations != null && typeAnnotations.size() > 0) {
+        if (typeAnnotations != null && !typeAnnotations.isEmpty()) {
           annotations.addAll(typeAnnotations);
         }
       }
@@ -848,10 +848,6 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
   private boolean isInCode() {
     if (isCodeFragmentType(getTreeParent().getElementType()) || getParent() instanceof PsiAnnotation) {
       return false;
-    }
-
-    if (isQualified()) {
-      return true;
     }
 
     PsiElement superParent = getParent();

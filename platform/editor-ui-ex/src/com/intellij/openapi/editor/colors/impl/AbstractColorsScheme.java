@@ -625,12 +625,11 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme {
   @Override
   public int getConsoleFontSize() {
     String font = getConsoleFontName();
-    if (myConsoleFontPreferences.hasSize(font)) {
+    UISettings uiSettings = UISettings.getInstance();
+    if ((uiSettings == null || !uiSettings.PRESENTATION_MODE) && myConsoleFontPreferences.hasSize(font)) {
       return myConsoleFontPreferences.getSize(font);
     }
-    else {
-      return getEditorFontSize();
-    }
+    return getEditorFontSize();
   }
 
   @Override

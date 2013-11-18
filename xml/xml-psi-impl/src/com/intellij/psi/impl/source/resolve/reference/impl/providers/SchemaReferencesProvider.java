@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -212,14 +212,15 @@ public class SchemaReferencesProvider extends PsiReferenceProvider {
     if (element instanceof XmlAttributeValue) {
       final XmlAttributeValue attributeValue = (XmlAttributeValue)element;
       final String prefix = XmlUtil.findPrefixByQualifiedName(attributeValue.getValue());
-      if (prefix.length() > 0) {
+      if (!prefix.isEmpty()) {
         return new SchemaPrefixReference(attributeValue, TextRange.from(1, prefix.length()), prefix, null);
       }
     }
     return null;
   }
 
-  public static @Nullable XmlNSDescriptorImpl findRedefinedDescriptor(XmlTag tag, String text) {
+  @Nullable
+  public static XmlNSDescriptorImpl findRedefinedDescriptor(XmlTag tag, String text) {
     final String localName = XmlUtil.findLocalNameByQualifiedName(text);
     for(XmlTag parentTag = tag.getParentTag(); parentTag != null; parentTag = parentTag.getParentTag()) {
 

@@ -44,12 +44,7 @@ public class FunctionParsing extends Parsing {
 
   protected void parseFunctionInnards(PsiBuilder.Marker functionMarker) {
     myBuilder.advanceLexer();
-    if (myBuilder.getTokenType() == PyTokenTypes.IDENTIFIER) {
-      myBuilder.advanceLexer();
-    }
-    else {
-      myBuilder.error(message("PARSE.expected.func.name"));
-    }
+    checkMatchesOrSkip(PyTokenTypes.IDENTIFIER, message("PARSE.expected.func.name"));
     parseParameterList();
     parseReturnTypeAnnotation();
     checkMatches(PyTokenTypes.COLON, message("PARSE.expected.colon"));
@@ -85,10 +80,18 @@ public class FunctionParsing extends Parsing {
         getExpressionParser().parseArgumentList();
       }
       else { // empty arglist node, so we always have it
-        myBuilder.mark().done(PyElementTypes.ARGUMENT_LIST);
+        PsiBuilder.Marker argListMarker = myBuilder.mark();
+        argListMarker.setCustomEdgeTokenBinders(LeftBiasedWhitespaceBinder.INSTANCE, null);
+        argListMarker.done(PyElementTypes.ARGUMENT_LIST);
       }
-      checkMatches(PyTokenTypes.STATEMENT_BREAK, message("PARSE.expected.statement.break"));
-      decoratorMarker.done(PyElementTypes.DECORATOR_CALL);
+      if (atToken(PyTokenTypes.STATEMENT_BREAK)) {
+        decoratorMarker.done(PyElementTypes.DECORATOR_CALL);
+        nextToken();
+      }
+      else {
+        myBuilder.error(message("PARSE.expected.statement.break"));
+        decoratorMarker.done(PyElementTypes.DECORATOR_CALL);
+      }
       decorated = true;
     }
     if (decorated) decoListMarker.done(PyElementTypes.DECORATOR_LIST);
@@ -217,7 +220,7 @@ public class FunctionParsing extends Parsing {
         nextToken();
       }
       invalidElements.error(message("PARSE.expected.formal.param.name"));
-      return false;
+      return atToken(endToken) || atToken(PyTokenTypes.COMMA);
     }
     return true;
   }

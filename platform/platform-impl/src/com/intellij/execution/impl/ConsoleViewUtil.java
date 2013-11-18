@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.intellij.execution.impl;
 
 import com.intellij.execution.ui.ConsoleViewContentType;
+import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
@@ -66,6 +67,9 @@ public class ConsoleViewUtil {
         editor.putUserData(EDITOR_IS_CONSOLE_VIEW, true);
 
         final DelegateColorScheme scheme = updateConsoleColorScheme(editor.getColorsScheme());
+        if (UISettings.getInstance().PRESENTATION_MODE) {
+          scheme.setEditorFontSize(UISettings.getInstance().PRESENTATION_MODE_FONT_SIZE);
+        }
         editor.setColorsScheme(scheme);
         scheme.setColor(EditorColors.CARET_ROW_COLOR, null);
         scheme.setColor(EditorColors.RIGHT_MARGIN_COLOR, null);

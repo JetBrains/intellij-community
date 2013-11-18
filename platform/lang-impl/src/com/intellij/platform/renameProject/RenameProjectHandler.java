@@ -32,6 +32,7 @@ import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.ui.InputValidator;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Ref;
+import com.intellij.platform.ModuleAttachProcessor;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.refactoring.RefactoringBundle;
@@ -79,7 +80,7 @@ public class RenameProjectHandler implements RenameHandler, TitledHandler {
     LOG.assertTrue(module != null);
     Messages.showInputDialog(project, RefactoringBundle.message("enter.new.project.name"), RefactoringBundle.message("rename.project"),
                              Messages.getQuestionIcon(),
-                             project.getName(),
+                             module.getName(),
                              new MyInputValidator((ProjectEx)project, module));
   }
 
@@ -100,7 +101,7 @@ public class RenameProjectHandler implements RenameHandler, TitledHandler {
 
     @Override
     public boolean canClose(final String inputString) {
-      if (!inputString.equals(myProject.getName())) {
+      if (!inputString.equals(myProject.getName()) && (myModule == null || myModule == ModuleAttachProcessor.getPrimaryModule(myProject))) {
         myProject.setProjectName(inputString);
         myProject.save();
       }

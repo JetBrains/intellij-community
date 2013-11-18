@@ -51,7 +51,9 @@ public class ImportFromGradleControl
   @NotNull
   @Override
   protected ExternalSystemSettingsControl<GradleProjectSettings> createProjectSettingsControl(@NotNull GradleProjectSettings settings) {
-    return new GradleProjectSettingsControl(settings);
+    GradleProjectSettingsControl settingsControl = new GradleProjectSettingsControl(settings);
+    settingsControl.hideUseAutoImportBox();
+    return settingsControl;
   }
 
   @Nullable

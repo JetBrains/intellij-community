@@ -131,7 +131,7 @@ public class TagNameVariantCollector {
       // If there are tags from default namespace they will be handled via
       // their element descriptors (prev if section)
       if (namespace == null) return;
-      if(namespace.length() == 0 && !visited.isEmpty()) return;
+      if(namespace.isEmpty() && !visited.isEmpty()) return;
 
       XmlNSDescriptor nsDescriptor = getDescriptor(element, namespace, true, extension);
       if (nsDescriptor == null) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -136,7 +136,7 @@ public class JavaChildWrapArranger {
       }
       if (role == ChildRole.LOOP_BODY) {
         final boolean dontWrap = (childType == JavaElementType.CODE_BLOCK || childType == JavaElementType.BLOCK_STATEMENT) &&
-                                 settings.BRACE_STYLE == CodeStyleSettings.END_OF_LINE;
+                                 settings.BRACE_STYLE == CommonCodeStyleSettings.END_OF_LINE;
         return Wrap.createWrap(dontWrap ? WrapType.NONE : WrapType.NORMAL, true);
       }
       else {

@@ -12,7 +12,7 @@ import java.util.*;
 class VcsLogMultiRepoJoiner {
 
   @NotNull
-  public List<TimedVcsCommit> join(@NotNull Collection<List<TimedVcsCommit>> logsFromRepos) {
+  public List<TimedVcsCommit> join(@NotNull Collection<List<? extends TimedVcsCommit>> logsFromRepos) {
     int size = 0;
     for (List<? extends TimedVcsCommit> repo : logsFromRepos) {
       size += repo.size();
@@ -46,8 +46,8 @@ class VcsLogMultiRepoJoiner {
     long maxTimeStamp = 0;
     TimedVcsCommit lastCommit = null;
     for (TimedVcsCommit commit : commits) {
-      if (commit.getAuthorTime() > maxTimeStamp) {
-        maxTimeStamp = commit.getAuthorTime();
+      if (commit.getTime() > maxTimeStamp) {
+        maxTimeStamp = commit.getTime();
         lastCommit = commit;
       }
     }

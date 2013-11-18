@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,20 +30,24 @@ public abstract class InlineKeyDescriptor<T> implements KeyDescriptor<T> {
     return false;
   }
 
+  @Override
   public final int getHashCode(T value) {
     return toInt(value);
   }
 
+  @Override
   public final boolean isEqual(T val1, T val2) {
     return toInt(val1) == toInt(val2);
   }
 
+  @Override
   public final void save(DataOutput out, T value) throws IOException {
     int v = toInt(value);
     if (myCompactFormat) DataInputOutputUtil.writeINT(out, v);
     else out.writeInt(v);
   }
 
+  @Override
   public final T read(DataInput in) throws IOException {
     int n;
     if (myCompactFormat) n = DataInputOutputUtil.readINT(in);

@@ -17,16 +17,12 @@ package com.jetbrains.python.codeInsight.stdlib;
 
 import com.google.common.collect.ImmutableSet;
 import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.util.QualifiedName;
 import com.jetbrains.python.PyNames;
-import com.jetbrains.python.PythonHelpersLocator;
-import com.jetbrains.python.documentation.DocStringUtil;
-import com.jetbrains.python.psi.StructuredDocString;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
-import com.intellij.psi.util.QualifiedName;
 import com.jetbrains.python.psi.impl.PyTypeProvider;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
@@ -34,19 +30,13 @@ import com.jetbrains.python.psi.types.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
 import java.util.Map;
-import java.util.Properties;
 import java.util.Set;
 
 /**
  * @author yole
  */
 public class PyStdlibTypeProvider extends PyTypeProviderBase {
-  @NotNull private Properties myStdlibTypes = new Properties();
-
   private static final Set<String> OPEN_FUNCTIONS = ImmutableSet.of("__builtin__.open", "io.open", "os.fdopen");
   private static final String BINARY_FILE_TYPE = "io.FileIO[bytes]";
   private static final String TEXT_FILE_TYPE = "io.TextIOWrapper[unicode]";
@@ -104,54 +94,6 @@ public class PyStdlibTypeProvider extends PyTypeProviderBase {
           }
         }
       }
-      return getReturnTypeByQName(qname, function, context);
-    }
-    return null;
-  }
-
-  @Nullable
-  public PyType getConstructorType(@NotNull PyClass cls, @NotNull TypeEvalContext context) {
-    final String classQName = cls.getQualifiedName();
-    if (classQName != null) {
-      final QualifiedName
-        canonicalQName = PyStdlibCanonicalPathProvider.restoreStdlibCanonicalPath(QualifiedName.fromDottedString(classQName));
-      if (canonicalQName != null) {
-        final QualifiedName qname = canonicalQName.append(PyNames.INIT);
-        return getReturnTypeByQName(qname.toString(), cls, context);
-      }
-    }
-    return null;
-  }
-
-  @Nullable
-  private PyType getReturnTypeByQName(@NotNull String qname, @NotNull PsiElement anchor, @NotNull TypeEvalContext context) {
-    final LanguageLevel level = LanguageLevel.forElement(anchor);
-    final String key = String.format("Python%d/%s.return", level.getVersion(), qname);
-    final PyBuiltinCache cache = PyBuiltinCache.getInstance(anchor);
-    final Ref<PyType> cached = cache.getStdlibType(key, context);
-    if (cached != null) {
-      return cached.get();
-    }
-    final StructuredDocString docString = getStructuredDocString(qname);
-    if (docString == null) {
-      return null;
-    }
-    final String s = docString.getReturnType();
-    if (s == null) {
-      return null;
-    }
-    final PyType result = PyTypeParser.getTypeByName(anchor, s);
-    cache.storeStdlibType(key, result);
-    return result;
-  }
-
-  @Nullable
-  @Override
-  public PyType getParameterType(@NotNull PyNamedParameter param, @NotNull PyFunction func, @NotNull TypeEvalContext context) {
-    final String name = param.getName();
-    final String qname = getQualifiedName(func, param);
-    if (qname != null && name != null) {
-      return getParameterTypeByQName(qname, name, func, context);
     }
     return null;
   }
@@ -216,38 +158,6 @@ public class PyStdlibTypeProvider extends PyTypeProviderBase {
   }
 
   @Nullable
-  private PyType getParameterTypeByQName(@NotNull String functionQName,
-                                         @NotNull String name,
-                                         @NotNull PsiElement anchor,
-                                         @NotNull TypeEvalContext context) {
-    final LanguageLevel level = LanguageLevel.forElement(anchor);
-    final String key = String.format("Python%d/%s.%s", level.getVersion(), functionQName, name);
-    final PyBuiltinCache cache = PyBuiltinCache.getInstance(anchor);
-    final Ref<PyType> cached = cache.getStdlibType(key, context);
-    if (cached != null) {
-      return cached.get();
-    }
-    final StructuredDocString docString = getStructuredDocString(functionQName);
-    if (docString == null) {
-      return null;
-    }
-    final String s = docString.getParamType(name);
-    if (s == null) {
-      return null;
-    }
-    final PyType result = PyTypeParser.getTypeByName(anchor, s);
-    cache.storeStdlibType(key, result);
-    return result;
-  }
-
-  @Nullable
-  private StructuredDocString getStructuredDocString(@NotNull String qualifiedName) {
-    final Properties db = getStdlibTypes();
-    final String docString = db.getProperty(qualifiedName);
-    return DocStringUtil.parse(docString);
-  }
-
-  @Nullable
   private static String getQualifiedName(@NotNull PyFunction f, @Nullable PsiElement callSite) {
     if (!f.isValid()) {
       return null;
@@ -270,22 +180,5 @@ public class PyStdlibTypeProvider extends PyTypeProviderBase {
       }
     }
     return result;
-  }
-
-  @NotNull
-  private Properties getStdlibTypes() {
-    if (myStdlibTypes.isEmpty()) {
-      try {
-        final InputStream s = new FileInputStream(PythonHelpersLocator.getHelperFile("StdlibTypes.properties"));
-        try {
-          myStdlibTypes.load(s);
-        }
-        finally {
-          s.close();
-        }
-      }
-      catch (IOException ignored) {}
-    }
-    return myStdlibTypes;
   }
 }

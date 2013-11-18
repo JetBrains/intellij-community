@@ -127,7 +127,7 @@ public class PyEditingTest extends PyTestCase {
   }
 
   public void testEnterInLineComment() {  // PY-1739
-    doTestEnter("# foo <caret>bar", "# foo \n# bar");
+    doTestEnter("# foo <caret>bar", "# foo \n# <caret>bar");
   }
 
   public void testEnterInPrefixString() {  // PY-5058
@@ -318,7 +318,8 @@ public class PyEditingTest extends PyTestCase {
   private void doTestEnter(String before, final String after) {
     int pos = before.indexOf("<caret>");
     before = before.replace("<caret>", "");
-    assertEquals(after, doTestTyping(before, pos, '\n'));
+    doTestTyping(before, pos, '\n');
+    myFixture.checkResult(after);
   }
 
   private String doTestTyping(final String text, final int offset, final char character) {

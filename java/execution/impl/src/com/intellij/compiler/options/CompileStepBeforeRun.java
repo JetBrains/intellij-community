@@ -47,8 +47,8 @@ import javax.swing.*;
 public class CompileStepBeforeRun extends BeforeRunTaskProvider<CompileStepBeforeRun.MakeBeforeRunTask> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.options.CompileStepBeforeRun");
   public static final Key<MakeBeforeRunTask> ID = Key.create("Make");
-  private static final Key<RunConfiguration> RUN_CONFIGURATION = Key.create("RUN_CONFIGURATION");
-  private static final Key<String> RUN_CONFIGURATION_TYPE_ID = Key.create("RUN_CONFIGURATION_TYPE_ID");
+  public static final Key<RunConfiguration> RUN_CONFIGURATION = Key.create("RUN_CONFIGURATION");
+  public static final Key<String> RUN_CONFIGURATION_TYPE_ID = Key.create("RUN_CONFIGURATION_TYPE_ID");
 
   @NonNls protected static final String MAKE_PROJECT_ON_RUN_KEY = "makeProjectOnRun";
 

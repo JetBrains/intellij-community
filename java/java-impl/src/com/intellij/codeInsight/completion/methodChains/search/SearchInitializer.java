@@ -1,6 +1,5 @@
 package com.intellij.codeInsight.completion.methodChains.search;
 
-import com.intellij.codeInsight.completion.methodChains.Constants;
 import com.intellij.compilerOutputIndex.impl.MethodIncompleteSignature;
 import com.intellij.compilerOutputIndex.impl.UsageIndexValue;
 import com.intellij.psi.PsiMethod;
@@ -12,6 +11,8 @@ import java.util.*;
  * @author Dmitry Batkovich <dmitry.batkovich@jetbrains.com>
  */
 public class SearchInitializer {
+  private final static int CHAIN_SEARCH_MAGIC_RATIO = 12;
+
   private final List<WeightAware<MethodIncompleteSignature>> myVertices;
   private final LinkedHashMap<MethodIncompleteSignature, MethodsChain> myChains;
   private final FactoryMap<MethodIncompleteSignature, PsiMethod[]> myResolver;
@@ -35,7 +36,7 @@ public class SearchInitializer {
         if (bestOccurrences == -1) {
           bestOccurrences = occurrences;
         }
-        else if (bestOccurrences > occurrences * Constants.CHAIN_SEARCH_MAGIC_RATIO) {
+        else if (bestOccurrences > occurrences * CHAIN_SEARCH_MAGIC_RATIO) {
           return;
         }
       }

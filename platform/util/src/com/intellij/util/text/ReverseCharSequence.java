@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,14 +25,17 @@ public class ReverseCharSequence implements CharSequence{
     mySequence = sequence;
   }
 
+  @Override
   public int length() {
     return mySequence.length();
   }
 
+  @Override
   public char charAt(int index) {
     return mySequence.charAt(mySequence.length()-index-1);
   }
 
+  @Override
   public CharSequence subSequence(int start, int end) {
     int length = mySequence.length();
     return new ReverseCharSequence(mySequence.subSequence(length - end, length - start));

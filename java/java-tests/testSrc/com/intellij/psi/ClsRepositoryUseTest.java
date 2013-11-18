@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,6 @@ import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.util.io.FileUtil;
@@ -555,7 +554,7 @@ public class ClsRepositoryUseTest extends PsiTestCase {
     assertEquals("java.util.Map.Entry", setTypeResolveResultElement.getQualifiedName());
     final PsiTypeParameter[] typeParameters = setTypeResolveResultElement.getTypeParameters();
     assertEquals(2, typeParameters.length);
-    PsiType[] mapParams = new PsiType[]{
+    PsiType[] mapParams = {
       setTypeResolveResult.getSubstitutor().substitute(typeParameters[0]),
       setTypeResolveResult.getSubstitutor().substitute(typeParameters[1])
     };

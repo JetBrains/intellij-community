@@ -138,6 +138,8 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase {
     @Nullable
     @Override
     public ExecutionResult execute(Executor executor, @NotNull ProgramRunner runner) throws ExecutionException {
+      if(myProject.isDisposed()) return null;
+
       ExternalSystemUtil.updateRecentTasks(new ExternalTaskExecutionInfo(mySettings.clone(), executor.getId()), myProject);
       ConsoleView console = new TextConsoleBuilderImpl(myProject).getConsole();
       final List<ExternalTaskPojo> tasks = ContainerUtilRt.newArrayList();

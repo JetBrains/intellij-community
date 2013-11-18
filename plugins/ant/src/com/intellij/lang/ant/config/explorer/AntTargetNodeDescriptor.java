@@ -16,7 +16,6 @@
 package com.intellij.lang.ant.config.explorer;
 
 import com.intellij.execution.RunManagerEx;
-import com.intellij.icons.AllIcons;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.lang.ant.config.*;
 import com.intellij.lang.ant.config.impl.AntBeforeRunTask;
@@ -39,6 +38,7 @@ import com.intellij.ui.JBColor;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.ui.UIUtil;
+import icons.AntIcons;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
@@ -68,7 +68,7 @@ final class AntTargetNodeDescriptor extends AntNodeDescriptor {
     final CompositeAppearance oldText = myHighlightedText;
     final boolean isMeta = myTarget instanceof MetaTarget;
 
-    setIcon(isMeta ? AllIcons.Ant.MetaTarget : AllIcons.Ant.Target);
+    setIcon(isMeta ? AntIcons.MetaTarget : AntIcons.Target);
 
     myHighlightedText = new CompositeAppearance();
 

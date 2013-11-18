@@ -3,6 +3,7 @@ package com.intellij.remoteServer.impl.runtime;
 import com.intellij.execution.ExecutionException;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.remoteServer.configuration.RemoteServer;
 import com.intellij.remoteServer.configuration.deployment.DeploymentConfiguration;
 import com.intellij.remoteServer.configuration.deployment.DeploymentSource;
@@ -136,36 +137,40 @@ public class ServerConnectionImpl<D extends DeploymentConfiguration> implements 
     connectIfNeeded(new ConnectionCallbackBase<D>() {
       @Override
       public void connected(@NotNull ServerRuntimeInstance<D> instance) {
-        instance.computeDeployments(new ServerRuntimeInstance.ComputeDeploymentsCallback() {
-          private final List<Deployment> myDeployments = new ArrayList<Deployment>();
+        computeDeployments(instance, onFinished);
+      }
+    });
+  }
 
-          @Override
-          public void addDeployment(@NotNull String deploymentName) {
-            myDeployments.add(new DeploymentImpl(deploymentName, DeploymentStatus.DEPLOYED, null, null, null));
-          }
+  private void computeDeployments(ServerRuntimeInstance<D> instance, final Runnable onFinished) {
+    instance.computeDeployments(new ServerRuntimeInstance.ComputeDeploymentsCallback() {
+      private final List<Deployment> myDeployments = new ArrayList<Deployment>();
 
-          @Override
-          public void succeeded() {
-            synchronized (myRemoteDeployments) {
-              myRemoteDeployments.clear();
-              for (Deployment deployment : myDeployments) {
-                myRemoteDeployments.put(deployment.getName(), deployment);
-              }
-            }
-            myEventDispatcher.queueDeploymentsChanged(ServerConnectionImpl.this);
-            onFinished.run();
-          }
+      @Override
+      public void addDeployment(@NotNull String deploymentName) {
+        myDeployments.add(new DeploymentImpl(deploymentName, DeploymentStatus.DEPLOYED, null, null, null));
+      }
 
-          @Override
-          public void errorOccurred(@NotNull String errorMessage) {
-            synchronized (myRemoteDeployments) {
-              myRemoteDeployments.clear();
-            }
-            myStatusText = "Cannot obtain deployments: " + errorMessage;
-            myEventDispatcher.queueDeploymentsChanged(ServerConnectionImpl.this);
-            onFinished.run();
+      @Override
+      public void succeeded() {
+        synchronized (myRemoteDeployments) {
+          myRemoteDeployments.clear();
+          for (Deployment deployment : myDeployments) {
+            myRemoteDeployments.put(deployment.getName(), deployment);
           }
-        });
+        }
+        myEventDispatcher.queueDeploymentsChanged(ServerConnectionImpl.this);
+        onFinished.run();
+      }
+
+      @Override
+      public void errorOccurred(@NotNull String errorMessage) {
+        synchronized (myRemoteDeployments) {
+          myRemoteDeployments.clear();
+        }
+        myStatusText = "Cannot obtain deployments: " + errorMessage;
+        myEventDispatcher.queueDeploymentsChanged(ServerConnectionImpl.this);
+        onFinished.run();
       }
     });
   }
@@ -196,6 +201,7 @@ public class ServerConnectionImpl<D extends DeploymentConfiguration> implements 
         }
         myLogManagers.remove(deploymentName);
         myEventDispatcher.queueDeploymentsChanged(ServerConnectionImpl.this);
+        computeDeployments(myRuntimeInstance, EmptyRunnable.INSTANCE);
       }
 
       @Override

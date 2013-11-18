@@ -29,7 +29,7 @@ import java.util.List;
 public class SubtypingConstraint implements ConstraintFormula {
   private PsiType myS;
   private PsiType myT;
-  private boolean myIsRefTypes;
+  private final boolean myIsRefTypes;
 
   public SubtypingConstraint(PsiType t, PsiType s, boolean isRefTypes) {
     myT = t;
@@ -50,7 +50,7 @@ public class SubtypingConstraint implements ConstraintFormula {
         return true;
       }
       if (PsiType.NULL.equals(myS)) return true;
-      inferenceVariable = session.getInferenceVariable(myT, false);
+      inferenceVariable = session.getInferenceVariable(myT);
       if (inferenceVariable != null) {
         inferenceVariable.addBound(myS, InferenceBound.LOWER);
         return true;
@@ -114,6 +114,11 @@ public class SubtypingConstraint implements ConstraintFormula {
           if (tBound.equalsToText(CommonClassNames.JAVA_LANG_OBJECT)) {
             return true;
           }
+
+          if (myS instanceof PsiCapturedWildcardType) {
+            myS = ((PsiCapturedWildcardType)myS).getWildcard();
+          }
+
           if (myS instanceof PsiWildcardType) {
             final PsiType sBound = ((PsiWildcardType)myS).getBound();
             if (sBound != null && ((PsiWildcardType)myS).isExtends()) {
@@ -146,15 +151,16 @@ public class SubtypingConstraint implements ConstraintFormula {
       } else {
         InferenceVariable inferenceVariable = session.getInferenceVariable(myT);
         if (myS instanceof PsiWildcardType) {
-          return inferenceVariable != null && inferenceVariable.isCaptured();
+          return inferenceVariable != null;
         } else {
-          if (inferenceVariable != null) {
-            inferenceVariable.addBound(myS, InferenceBound.EQ);
+          final InferenceVariable inferenceVariableS = session.getInferenceVariable(myS);
+          if (inferenceVariableS != null) {
+            inferenceVariableS.addBound(myT, InferenceBound.EQ);
             return true;
           }
-          inferenceVariable = session.getInferenceVariable(myS);
+
           if (inferenceVariable != null) {
-            inferenceVariable.addBound(myT, InferenceBound.EQ);
+            inferenceVariable.addBound(myS, InferenceBound.EQ);
             return true;
           }
           constraints.add(new SubtypingConstraint(myT, myS, true));

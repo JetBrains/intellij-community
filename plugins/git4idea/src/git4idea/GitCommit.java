@@ -15,10 +15,13 @@
  */
 package git4idea;
 
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcs.log.Hash;
+import com.intellij.vcs.log.VcsUser;
 import com.intellij.vcs.log.impl.VcsFullCommitDetailsImpl;
+import git4idea.log.GitContentRevisionFactory;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -30,10 +33,11 @@ import java.util.List;
  */
 public final class GitCommit extends VcsFullCommitDetailsImpl {
 
-  public GitCommit(@NotNull Hash hash, @NotNull List<Hash> parents, long authorTime, @NotNull VirtualFile root, @NotNull String subject,
-                   @NotNull String authorName,
-                   @NotNull String authorEmail, @NotNull String message, @NotNull String committerName, @NotNull String committerEmail,
-                   long commitTime, @NotNull List<Change> changes) {
-    super(hash, parents, authorTime, root, subject, authorName, authorEmail, message, committerName, committerEmail, commitTime, changes);
+  public GitCommit(final Project project, @NotNull Hash hash, @NotNull List<Hash> parents, long time, @NotNull VirtualFile root,
+                   @NotNull String subject, @NotNull VcsUser author, @NotNull String message, @NotNull VcsUser committer,
+                   long authorTime, @NotNull List<Change> changes) {
+    super(hash, parents, time, root, subject, author, message, committer, authorTime, changes,
+          GitContentRevisionFactory.getInstance(project));
+
   }
 }

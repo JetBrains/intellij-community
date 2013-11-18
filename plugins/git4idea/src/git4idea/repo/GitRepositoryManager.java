@@ -16,13 +16,11 @@
 package git4idea.repo;
 
 import com.intellij.dvcs.repo.AbstractRepositoryManager;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.GitPlatformFacade;
 import git4idea.GitUtil;
-import git4idea.roots.GitRootScanner;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -32,19 +30,10 @@ public class GitRepositoryManager extends AbstractRepositoryManager<GitRepositor
 
   @NotNull private final GitPlatformFacade myPlatformFacade;
 
-  public GitRepositoryManager(@NotNull Project project,
-                              @NotNull GitPlatformFacade platformFacade,
+  public GitRepositoryManager(@NotNull Project project, @NotNull GitPlatformFacade platformFacade,
                               @NotNull ProjectLevelVcsManager vcsManager) {
     super(project, vcsManager, platformFacade.getVcs(project), GitUtil.DOT_GIT);
     myPlatformFacade = platformFacade;
-  }
-
-  @Override
-  public void initComponent() {
-    super.initComponent();
-    if (!ApplicationManager.getApplication().isUnitTestMode()) {
-      GitRootScanner.start(myProject);
-    }
   }
 
   @NotNull
@@ -52,5 +41,4 @@ public class GitRepositoryManager extends AbstractRepositoryManager<GitRepositor
   protected GitRepository createRepository(@NotNull VirtualFile root) {
     return GitRepositoryImpl.getFullInstance(root, myProject, myPlatformFacade, this);
   }
-
 }

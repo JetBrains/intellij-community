@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2013 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.ClassUtils;
+import com.siyeh.ig.psiutils.ExceptionUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -97,7 +98,7 @@ public class ThrowCaughtLocallyInspection extends BaseInspection {
                 (PsiCatchSection)parameter.getParent();
               final PsiCodeBlock catchBlock =
                 section.getCatchBlock();
-              if (isExceptionRethrown(parameter, catchBlock)) {
+              if (ExceptionUtils.isThrowableRethrown(parameter, catchBlock)) {
                 return;
               }
             }
@@ -114,29 +115,6 @@ public class ThrowCaughtLocallyInspection extends BaseInspection {
           PsiTreeUtil.getParentOfType(containingTryStatement,
                                       PsiTryStatement.class);
       }
-    }
-
-    private boolean isExceptionRethrown(PsiParameter parameter,
-                                        PsiCodeBlock catchBlock) {
-      final PsiStatement[] statements = catchBlock.getStatements();
-      if (statements.length <= 0) {
-        return false;
-      }
-      final PsiStatement lastStatement =
-        statements[statements.length - 1];
-      if (!(lastStatement instanceof PsiThrowStatement)) {
-        return false;
-      }
-      final PsiThrowStatement throwStatement =
-        (PsiThrowStatement)lastStatement;
-      final PsiExpression expression = throwStatement.getException();
-      if (!(expression instanceof PsiReferenceExpression)) {
-        return false;
-      }
-      final PsiReferenceExpression referenceExpression =
-        (PsiReferenceExpression)expression;
-      final PsiElement element = referenceExpression.resolve();
-      return parameter.equals(element);
     }
   }
 }

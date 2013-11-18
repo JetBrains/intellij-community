@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -159,7 +159,7 @@ public class PaletteGroupHeader extends JCheckBox implements DataProvider {
   @Nullable public Object getData(String dataId) {
     Object data = myPaletteWindow.getData(dataId);
     if (data != null) return data;
-    Project project = PlatformDataKeys.PROJECT.getData(myPaletteWindow);
+    Project project = CommonDataKeys.PROJECT.getData(myPaletteWindow);
     return myGroup.getData(project, dataId);
   }
 

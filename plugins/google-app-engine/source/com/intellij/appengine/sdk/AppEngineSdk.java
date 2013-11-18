@@ -18,6 +18,7 @@ package com.intellij.appengine.sdk;
 import com.intellij.execution.configurations.ParametersList;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 
@@ -36,6 +37,9 @@ public interface AppEngineSdk {
   File[] getLibraries();
 
   boolean isClassInWhiteList(@NotNull String className);
+
+  @Nullable
+  String getVersion();
 
   boolean isMethodInBlacklist(@NotNull String className, @NotNull String methodName);
 

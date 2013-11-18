@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,12 +18,14 @@ package com.intellij.usageView;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.lang.LangBundle;
+import com.intellij.psi.util.PsiFormatUtilBase;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author yole
  */
 public class JavaUsageViewDescriptionProvider implements ElementDescriptionProvider {
+  @Override
   public String getElementDescription(@NotNull final PsiElement element, @NotNull final ElementDescriptionLocation location) {
     if (location instanceof UsageViewShortNameLocation) {
       if (element instanceof PsiThrowStatement) {
@@ -53,7 +55,7 @@ public class JavaUsageViewDescriptionProvider implements ElementDescriptionProvi
       else if (element instanceof PsiMethod) {
         PsiMethod psiMethod = (PsiMethod)element;
         return PsiFormatUtil.formatMethod(psiMethod, PsiSubstitutor.EMPTY,
-                                          PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_PARAMETERS, PsiFormatUtil.SHOW_TYPE);
+                                          PsiFormatUtilBase.SHOW_NAME | PsiFormatUtilBase.SHOW_PARAMETERS, PsiFormatUtilBase.SHOW_TYPE);
       }
     }
 

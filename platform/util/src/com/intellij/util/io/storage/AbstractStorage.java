@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -198,6 +198,7 @@ public abstract class AbstractStorage implements Disposable, Forceable {
     }
   }
 
+  @Override
   public void force() {
     synchronized (myLock) {
       myDataTable.force();
@@ -214,6 +215,7 @@ public abstract class AbstractStorage implements Disposable, Forceable {
     }
   }
 
+  @Override
   public boolean isDirty() {
     synchronized (myLock) {
       return myDataTable.isDirty() || myRecordsTable.isDirty();
@@ -311,6 +313,7 @@ public abstract class AbstractStorage implements Disposable, Forceable {
     myRecordsTable.deleteRecord(record);
   }
 
+  @Override
   public void dispose() {
     synchronized (myLock) {
       myRecordsTable.dispose();
@@ -340,6 +343,7 @@ public abstract class AbstractStorage implements Disposable, Forceable {
       myFixedSize = fixedSize;
     }
 
+    @Override
     public void close() throws IOException {
       super.close();
       final BufferExposingByteArrayOutputStream byteStream = getByteStream();
@@ -350,6 +354,7 @@ public abstract class AbstractStorage implements Disposable, Forceable {
       return ((BufferExposingByteArrayOutputStream)out);
     }
 
+    @Override
     public int getRecordId() {
       return myRecordId;
     }
@@ -363,6 +368,7 @@ public abstract class AbstractStorage implements Disposable, Forceable {
       myRecordId = recordId;
     }
 
+    @Override
     public void close() throws IOException {
       super.close();
       final BufferExposingByteArrayOutputStream _out = (BufferExposingByteArrayOutputStream)out;

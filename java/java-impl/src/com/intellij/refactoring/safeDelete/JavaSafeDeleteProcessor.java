@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.TextRange;
@@ -140,7 +139,7 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
       if (parametersToDelete.size() > 1 && !ApplicationManager.getApplication().isUnitTestMode()) {
         String message = RefactoringBundle.message("0.is.a.part.of.method.hierarchy.do.you.want.to.delete.multiple.parameters", UsageViewUtil.getLongName(method));
         if (Messages.showYesNoDialog(project, message, SafeDeleteHandler.REFACTORING_NAME,
-            Messages.getQuestionIcon()) != DialogWrapper.OK_EXIT_CODE) return null;
+            Messages.getQuestionIcon()) != Messages.YES) return null;
       }
       return parametersToDelete;
     }
@@ -204,7 +203,7 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
         if (askUser && (getters != null || setter != null)) {
           final String message =
             RefactoringMessageUtil.getGetterSetterMessage(field.getName(), RefactoringBundle.message("delete.title"), getters != null ? getters[0] : null, setter);
-          if (!ApplicationManager.getApplication().isUnitTestMode() && Messages.showYesNoDialog(project, message, RefactoringBundle.message("safe.delete.title"), Messages.getQuestionIcon()) != 0) {
+          if (!ApplicationManager.getApplication().isUnitTestMode() && Messages.showYesNoDialog(project, message, RefactoringBundle.message("safe.delete.title"), Messages.getQuestionIcon()) != Messages.YES) {
             getters = null;
             setter = null;
           }

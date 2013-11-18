@@ -206,8 +206,6 @@
       <with attribute="implementationClass" implements="com.intellij.lang.TokenSeparatorGenerator"/>
     </extensionPoint>
 
-    <extensionPoint name="lang.psiAugmentProvider" interface="com.intellij.psi.augment.PsiAugmentProvider"/>
-
     <extensionPoint name="lang.fileViewProviderFactory" beanClass="com.intellij.lang.LanguageExtensionPoint">
       <with attribute="implementationClass" implements="com.intellij.psi.FileViewProviderFactory"/>
     </extensionPoint>
@@ -232,6 +230,8 @@
     <extensionPoint name="useScopeEnlarger" interface="com.intellij.psi.search.UseScopeEnlarger"/>
     <extensionPoint name="resolveScopeEnlarger" interface="com.intellij.psi.ResolveScopeEnlarger"/>
     <extensionPoint name="resolveScopeProvider" interface="com.intellij.psi.ResolveScopeProvider"/>
+
+    <extensionPoint name="generatedSourcesFilter" interface="com.intellij.openapi.roots.GeneratedSourcesFilter"/>
 
     <extensionPoint name="gotoClassContributor"
                     interface="com.intellij.navigation.ChooseByNameContributor"/>

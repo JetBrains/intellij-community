@@ -17,6 +17,7 @@ package com.intellij.debugger.engine;
 
 import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
+import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
 import com.intellij.psi.PsiCodeBlock;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLambdaExpression;
@@ -44,11 +45,11 @@ public class LambdaMethodFilter implements BreakpointStepMethodFilter{
     final PsiElement body = lambda.getBody();
     if (body instanceof PsiCodeBlock) {
       final PsiStatement[] statements = ((PsiCodeBlock)body).getStatements();
-      final int statementCount = statements.length;
-      if (statementCount > 0) {
+      if (statements.length > 0) {
         firstStatementPosition = SourcePosition.createFromElement(statements[0]);
-        if (statementCount > 1) {
-          lastStatementPosition = SourcePosition.createFromElement(statements[statementCount - 1]);
+        if (firstStatementPosition != null) {
+          final PsiStatement lastStatement = statements[statements.length - 1];
+          lastStatementPosition = SourcePosition.createFromOffset(firstStatementPosition.getFile(), lastStatement.getTextRange().getEndOffset());
         }
       }
     }
@@ -68,15 +69,13 @@ public class LambdaMethodFilter implements BreakpointStepMethodFilter{
     return myFirstStatementPosition;
   }
 
-  /**
-   * @return a zero-based line number of the last lambda statement, or -1 if not available
-   */
   public int getLastStatementLine() {
     return myLastStatementLine;
   }
 
   public boolean locationMatches(DebugProcessImpl process, Location location) throws EvaluateException {
+    final VirtualMachineProxyImpl vm = process.getVirtualMachineProxy();
     final Method method = location.method();
-    return method.name().startsWith(LAMBDA_METHOD_PREFIX) && method.isSynthetic();
+    return method.name().startsWith(LAMBDA_METHOD_PREFIX) && (!vm.canGetSyntheticAttribute() || method.isSynthetic());
   }
 }

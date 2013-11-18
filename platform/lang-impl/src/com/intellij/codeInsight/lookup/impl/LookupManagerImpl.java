@@ -140,7 +140,10 @@ public class LookupManagerImpl extends LookupManager {
     final Runnable request = new Runnable() {
       @Override
       public void run() {
-        if (myActiveLookup == lookup && lookup.getCurrentItem() != null) {
+        if (myActiveLookup != lookup) return;
+        
+        LookupElement currentItem = lookup.getCurrentItem();
+        if (currentItem != null && currentItem.isValid()) {
           final CompletionProcess completion = CompletionService.getCompletionService().getCurrentCompletion();
           if (completion != null && !completion.isAutopopupCompletion()) {
             try {

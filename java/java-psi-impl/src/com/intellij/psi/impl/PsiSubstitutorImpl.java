@@ -137,7 +137,7 @@ public class PsiSubstitutorImpl implements PsiSubstitutor {
   private abstract static class SubstitutionVisitorBase extends PsiTypeVisitorEx<PsiType> {
     @Override
     public PsiType visitType(PsiType type) {
-      LOG.assertTrue(false);
+      LOG.error(type);
       return null;
     }
 

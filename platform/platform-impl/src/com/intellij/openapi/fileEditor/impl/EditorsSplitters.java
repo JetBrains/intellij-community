@@ -31,7 +31,6 @@ import com.intellij.openapi.keymap.MacKeymapUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.*;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.*;
@@ -163,27 +162,31 @@ public class EditorsSplitters extends IdePanePanel {
       UIUtil.applyRenderingHints(g);
       GraphicsUtil.setupAntialiasing(g, true, false);
       g.setColor(new JBColor(isDarkBackground ? Gray._230 : Gray._80, Gray._160));
-      g.setFont(UIUtil.getLabelFont().deriveFont(24f));
+      g.setFont(UIUtil.getLabelFont().deriveFont(isDarkBackground ? 24f : 20f));
 
       final UIUtil.TextPainter painter = new UIUtil.TextPainter().withLineSpacing(1.5f);
-      painter.withShadow(true, new JBColor(Gray._200.withAlpha(100), Gray._0.withAlpha(200)));
+      painter.withShadow(true, new JBColor(Gray._200.withAlpha(100), Gray._0.withAlpha(255)));
 
-      painter.appendLine("No files are open").underlined(new JBColor(isDarkBackground ? Gray._210 : Gray._150, Gray._100));
+      painter.appendLine("No files are open").underlined(new JBColor(Gray._150, Gray._180));
 
-      if (Registry.is("search.everywhere.enabled")) {
-        painter.appendLine("Search Everywhere with Double " + (SystemInfo.isMac ? MacKeymapUtil.SHIFT : "Shift"))
-          .smaller().withBullet();
+      final Shortcut[] shortcuts = KeymapManager.getInstance().getActiveKeymap().getShortcuts(IdeActions.ACTION_SEARCH_EVERYWHERE);
+      final String everywhere;
+      if (shortcuts.length == 0) {
+        everywhere = "Search Everywhere with <shortcut>Double " + (SystemInfo.isMac ? MacKeymapUtil.SHIFT : "Shift");
+      } else {
+        everywhere = "Search Everywhere <shortcut>" + KeymapUtil.getShortcutsText(shortcuts);
       }
+      painter.appendLine(everywhere + "</shortcut>").smaller().withBullet();
 
       if (!isProjectViewVisible()) {
-        painter.appendLine("Open Project View with " + KeymapUtil.getShortcutText(new KeyboardShortcut(
-          KeyStroke.getKeyStroke((SystemInfo.isMac ? "meta" : "alt") + " 1"), null))).smaller().withBullet();
+        painter.appendLine("Open Project View with <shortcut>" + KeymapUtil.getShortcutText(new KeyboardShortcut(
+          KeyStroke.getKeyStroke((SystemInfo.isMac ? "meta" : "alt") + " 1"), null)) + "</shortcut>").smaller().withBullet();
       }
 
       painter.appendLine("Open a file by name with " + getActionShortcutText("GotoFile")).smaller().withBullet()
         .appendLine("Open Recent files with " + getActionShortcutText(IdeActions.ACTION_RECENT_FILES)).smaller().withBullet()
         .appendLine("Open Navigation Bar with " + getActionShortcutText("ShowNavBar")).smaller().withBullet()
-        .appendLine("Drag'n'Drop file(s) here from " + ShowFilePathAction.getFileManagerName()).smaller().withBullet()
+        .appendLine("Drag and Drop file(s) here from " + ShowFilePathAction.getFileManagerName()).smaller().withBullet()
         .draw(g, new PairFunction<Integer, Integer, Pair<Integer, Integer>>() {
           @Override
           public Pair<Integer, Integer> fun(Integer width, Integer height) {
@@ -204,7 +207,7 @@ public class EditorsSplitters extends IdePanePanel {
       }
     }
 
-    return shortcutText;
+    return "<shortcut>" + shortcutText + "</shortcut>";
   }
 
   public void writeExternal(final Element element) {

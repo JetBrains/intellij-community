@@ -15,8 +15,11 @@
  */
 package com.intellij.codeInsight.daemon.impl.analysis;
 
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
+import com.intellij.psi.xml.XmlFile;
 import com.intellij.xml.util.AnchorReference;
+import com.intellij.xml.util.HtmlUtil;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -36,6 +39,12 @@ public class HtmlUnknownTargetInspection extends XmlPathReferenceInspection {
 
   @Override
   protected boolean needToCheckRef(PsiReference reference) {
-    return !(reference instanceof AnchorReference);
+    return !(reference instanceof AnchorReference) && notRemoteBase(reference);
+  }
+
+  static boolean notRemoteBase(PsiReference reference) {
+    final PsiFile file = reference.getElement().getContainingFile();
+    final String basePath = file instanceof XmlFile ? HtmlUtil.getHrefBase((XmlFile)file) : null;
+    return basePath == null || !HtmlUtil.hasHtmlPrefix(basePath);
   }
 }

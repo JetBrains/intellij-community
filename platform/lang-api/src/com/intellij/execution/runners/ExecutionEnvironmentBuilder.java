@@ -77,7 +77,6 @@ public final class ExecutionEnvironmentBuilder {
 
   public ExecutionEnvironmentBuilder setRunnerAndSettings(@NotNull ProgramRunner programRunner,
                                                           @NotNull RunnerAndConfigurationSettings settings) {
-    check(myRunnerAndConfigurationSettings, "RunnerAndConfigurationSettings");
     myRunnerAndConfigurationSettings = settings;
     setRunProfile(settings.getConfiguration());
     setRunnerSettings(settings.getRunnerSettings(programRunner));
@@ -87,25 +86,21 @@ public final class ExecutionEnvironmentBuilder {
   }
 
   public ExecutionEnvironmentBuilder setRunnerSettings(@Nullable RunnerSettings runnerSettings) {
-    check(myRunnerSettings, "RunnerSettings");
     myRunnerSettings = runnerSettings;
     return this;
   }
 
   public ExecutionEnvironmentBuilder setConfigurationSettings(@Nullable ConfigurationPerRunnerSettings configurationSettings) {
-    check(myConfigurationSettings, "ConfigurationPerRunnerSettings");
     myConfigurationSettings = configurationSettings;
     return this;
   }
 
   public ExecutionEnvironmentBuilder setContentToReuse(@Nullable RunContentDescriptor contentToReuse) {
-    check(myContentToReuse, "RunContentDescriptor");
     myContentToReuse = contentToReuse;
     return this;
   }
 
   public ExecutionEnvironmentBuilder setRunProfile(@NotNull RunProfile runProfile) {
-    check(myRunProfile, "RunProfile");
     myRunProfile = runProfile;
     return this;
   }
@@ -137,10 +132,5 @@ public final class ExecutionEnvironmentBuilder {
       environment.setDataContext(myDataContext);
     }
     return environment;
-  }
-
-  private static void check(Object obj, String key) {
-    if (obj != null) LOG.warn("Value of " + key + " has been already set");
-    //throw new IllegalStateException("Value of " + key + " has been already set");
   }
 }

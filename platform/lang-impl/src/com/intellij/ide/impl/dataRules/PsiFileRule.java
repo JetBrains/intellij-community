@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,7 +32,7 @@ public class PsiFileRule implements GetDataRule {
     if (element != null) {
       return element.getContainingFile();
     }
-    Project project = PlatformDataKeys.PROJECT.getData(dataProvider);
+    Project project = CommonDataKeys.PROJECT.getData(dataProvider);
     if (project != null) {
       VirtualFile vFile = CommonDataKeys.VIRTUAL_FILE.getData(dataProvider);
       if (vFile != null) {

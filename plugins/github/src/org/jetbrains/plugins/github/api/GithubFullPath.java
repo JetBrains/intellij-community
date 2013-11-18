@@ -41,7 +41,7 @@ public class GithubFullPath {
   }
 
   @NotNull
-  public String toString() {
+  public String getFullName() {
     return myUserName + '/' + myRepositoryName;
   }
 

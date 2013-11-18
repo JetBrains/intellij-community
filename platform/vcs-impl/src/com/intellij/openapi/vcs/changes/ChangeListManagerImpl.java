@@ -1115,7 +1115,21 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     myChangesViewManager.scheduleRefresh();
   }
 
+  @Override
   public void addUnversionedFiles(final LocalChangeList list, @NotNull final List<VirtualFile> files) {
+    addUnversionedFiles(list, files, new Condition<FileStatus>() {
+      @Override
+      public boolean value(FileStatus status) {
+        return status == FileStatus.UNKNOWN;
+      }
+    });
+  }
+
+  // TODO this is for quick-fix for GitAdd problem. To be removed after proper fix
+  // (which should introduce something like VcsAddRemoveEnvironment)
+  @Deprecated
+  public void addUnversionedFiles(final LocalChangeList list, @NotNull final List<VirtualFile> files,
+                                  final Condition<FileStatus> statusChecker) {
     final List<VcsException> exceptions = new ArrayList<VcsException>();
     final Set<VirtualFile> allProcessedFiles = new HashSet<VirtualFile>();
     ChangesUtil.processVirtualFilesByVcs(myProject, files, new ChangesUtil.PerVcsProcessor<VirtualFile>() {
@@ -1127,7 +1141,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
             final Processor<VirtualFile> addProcessor = new Processor<VirtualFile>() {
               @Override
               public boolean process(VirtualFile file) {
-                if (getStatus(file) == FileStatus.UNKNOWN) {
+                if (statusChecker.value(getStatus(file))) {
                   descendant.add(file);
                 }
                 return true;

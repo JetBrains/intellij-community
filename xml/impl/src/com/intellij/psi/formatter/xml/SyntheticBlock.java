@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -69,15 +69,15 @@ public class SyntheticBlock extends AbstractSyntheticBlock implements Block, Rea
       return Spacing.getReadOnlySpacing();
     }
 
-    if (type1 == XmlElementType.XML_CDATA_START || type2 == XmlElementType.XML_CDATA_END) {
+    if (type1 == XmlTokenType.XML_CDATA_START || type2 == XmlTokenType.XML_CDATA_END) {
       if (myXmlFormattingPolicy.getKeepWhiteSpacesInsideCDATA()) {
         return Spacing.getReadOnlySpacing();
       }
-      if (type1 == XmlElementType.XML_CDATA_START && type2 == XmlElementType.XML_CDATA_END) {
+      if (type1 == XmlTokenType.XML_CDATA_START && type2 == XmlTokenType.XML_CDATA_END) {
         return Spacing.createSpacing(0, 0, 0, myXmlFormattingPolicy.getShouldKeepLineBreaks(), myXmlFormattingPolicy.getKeepBlankLines()); 
       }
-      if (type1 == XmlElementType.XML_CDATA_START && child2 instanceof AnotherLanguageBlockWrapper ||
-          type2 == XmlElementType.XML_CDATA_END && child1 instanceof AnotherLanguageBlockWrapper) {
+      if (type1 == XmlTokenType.XML_CDATA_START && child2 instanceof AnotherLanguageBlockWrapper ||
+          type2 == XmlTokenType.XML_CDATA_END && child1 instanceof AnotherLanguageBlockWrapper) {
         return Spacing.createSpacing(0, 0, 1, myXmlFormattingPolicy.getShouldKeepLineBreaks(), 0);
       }
     }
@@ -106,7 +106,7 @@ public class SyntheticBlock extends AbstractSyntheticBlock implements Block, Rea
       }
     }
 
-    if (type2 == XmlElementType.XML_EMPTY_ELEMENT_END && myXmlFormattingPolicy.addSpaceIntoEmptyTag()) {
+    if (type2 == XmlTokenType.XML_EMPTY_ELEMENT_END && myXmlFormattingPolicy.addSpaceIntoEmptyTag()) {
       return Spacing.createSpacing(1, 1, 0,
                                    myXmlFormattingPolicy.getShouldKeepLineBreaks(),
                                    myXmlFormattingPolicy.getKeepBlankLines());
@@ -185,8 +185,8 @@ public class SyntheticBlock extends AbstractSyntheticBlock implements Block, Rea
   }
 
   private boolean shouldAddSpaceAroundTagName(final ASTNode node1, final ASTNode node2) {
-    if (node1.getElementType() == XmlElementType.XML_START_TAG_START && node1.textContains('%')) return true;
-    if (node2.getElementType() == XmlElementType.XML_EMPTY_ELEMENT_END && node2.textContains('%')) return true;
+    if (node1.getElementType() == XmlTokenType.XML_START_TAG_START && node1.textContains('%')) return true;
+    if (node2.getElementType() == XmlTokenType.XML_EMPTY_ELEMENT_END && node2.textContains('%')) return true;
     return myXmlFormattingPolicy.getShouldAddSpaceAroundTagName();
   }
 
@@ -208,7 +208,7 @@ public class SyntheticBlock extends AbstractSyntheticBlock implements Block, Rea
   protected boolean isTextFragment(final ASTNode node) {
     final ASTNode parent = node.getTreeParent();
     return parent != null && parent.getElementType() == XmlElementType.XML_TEXT
-           || node.getElementType() == XmlElementType.XML_DATA_CHARACTERS
+           || node.getElementType() == XmlTokenType.XML_DATA_CHARACTERS
            
       ;
   }

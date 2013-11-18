@@ -15,17 +15,19 @@
  */
 package com.intellij.ui;
 
+import com.intellij.idea.Bombed;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.testFramework.LightPlatformTestCase;
+import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.ui.components.JBList;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.Arrays;
+import java.util.Calendar;
 import java.util.List;
 
-public class FinderRecursivePanelTest extends LightPlatformTestCase {
+public class FinderRecursivePanelTest extends PlatformTestCase {
 
   public void testListModelMerge1() {
     assertMerge(new String[]{"a", "b", "c", "d"}, 0, 0, "a");
@@ -36,15 +38,15 @@ public class FinderRecursivePanelTest extends LightPlatformTestCase {
   }
 
   public void testListModelMerge3() {
-    assertMerge(new String[]{"a", "b", "c", "d"}, 0, -1, new String[0]);
+    assertMerge(new String[]{"a", "b", "c", "d"}, 0, -1 /* nothing */);
   }
 
   public void testListModelMerge4() {
-    assertMerge(new String[]{"a", "b", "c", "d"}, 2, 2, new String[]{"a", "b", "c", "d"});
+    assertMerge(new String[]{"a", "b", "c", "d"}, 2, 2, "a", "b", "c", "d");
   }
 
   public void _testListModelMerge5() {
-    assertMerge(new String[]{"a", "b", "c", "d"}, new String[]{"d", "c", "b", "a"});
+    assertMerge(new String[]{"a", "b", "c", "d"}, "d", "c", "b", "a");
   }
 
   public void testListModelMerge6() {
@@ -68,25 +70,25 @@ public class FinderRecursivePanelTest extends LightPlatformTestCase {
   }
 
   private static void assertMerge(String[] items, int startSelection, int expectedSelection, String... newItems) {
-
     CollectionListModel<String> model = new CollectionListModel<String>();
     model.add(Arrays.asList(items));
     JBList list = new JBList(model);
     list.setSelectedIndex(startSelection);
 
     FinderRecursivePanel.mergeListItems(model, Arrays.asList(newItems));
-    assertEquals(model.getSize(), newItems.length);
+    assertEquals(newItems.length, model.getSize());
     for (int i = 0; i < newItems.length; i++) {
       assertEquals(newItems[i], model.getElementAt(i));
     }
-    assertEquals(list.getSelectedIndex(), expectedSelection);
+    assertEquals(expectedSelection, list.getSelectedIndex());
   }
 
   private static void assertMerge(String[] items, String... newItems) {
     assertMerge(items, -1, -1, newItems);
   }
 
-  public void testUpdate() {
+  @Bombed(year = 2013, month = Calendar.DECEMBER, day = 01, user = "Yann Cebron")
+  public void testUpdate() throws InterruptedException {
     StringFinderRecursivePanel panel_0 = new StringFinderRecursivePanel(getProject()) {
       @NotNull
       @Override
@@ -106,29 +108,32 @@ public class FinderRecursivePanelTest extends LightPlatformTestCase {
         };
       }
     };
-    Disposer.register(myTestRootDisposable, panel_0);
-    panel_0.getList().setSelectedIndex(0);
+    disposeOnTearDown(panel_0);
+
+    panel_0.setTestSelectedIndex(0);
     //panel_0.updateRightComponent(true);
 
-    StringFinderRecursivePanel panel_1 = (StringFinderRecursivePanel)panel_0.getChildPanel();
-    panel_1.getList().setSelectedIndex(1);
+    StringFinderRecursivePanel panel_1 = (StringFinderRecursivePanel)panel_0.getSecondComponent();
+    panel_1.setTestSelectedIndex(1);
 
-    StringFinderRecursivePanel panel_2 = (StringFinderRecursivePanel)panel_1.getChildPanel();
-    panel_2.getList().setSelectedIndex(2);
+    StringFinderRecursivePanel panel_2 = (StringFinderRecursivePanel)panel_1.getSecondComponent();
+    panel_2.setTestSelectedIndex(2);
 
-    StringFinderRecursivePanel panel_3 = (StringFinderRecursivePanel)panel_2.getChildPanel();
-    panel_3.getList().setSelectedIndex(3);
+    StringFinderRecursivePanel panel_3 = (StringFinderRecursivePanel)panel_2.getSecondComponent();
+    panel_3.setTestSelectedIndex(3);
 
     panel_0.updatePanel();
 
-    assertEquals(panel_0.getSelectedValue(), "a");
-    assertEquals(panel_1.getSelectedValue(), "b");
-    assertEquals(panel_2.getSelectedValue(), "c");
-    assertEquals(panel_3.getSelectedValue(), "d");
+    assertEquals("a", panel_0.getSelectedValue());
+    assertEquals("b", panel_1.getSelectedValue());
+    assertEquals("c", panel_2.getSelectedValue());
+    assertEquals("d", panel_3.getSelectedValue());
   }
 
 
   private class StringFinderRecursivePanel extends FinderRecursivePanel<String> {
+
+    private JBList myList;
 
     private StringFinderRecursivePanel(Project project) {
       super(project, "fooPanel");
@@ -146,11 +151,27 @@ public class FinderRecursivePanelTest extends LightPlatformTestCase {
       return Arrays.asList("a", "b", "c", "d");
     }
 
+    @NotNull
+    @Override
+    protected String getItemText(String s) {
+      return s;
+    }
+
+    @Nullable
+    @Override
+    protected JComponent createRightComponent(String s) {
+      return null;
+    }
+
     @Override
     protected JBList createList() {
-      JBList list = super.createList();
-      ((CollectionListModel)list.getModel()).replaceAll(getListItems());
-      return list;
+      myList = super.createList();
+      ((CollectionListModel)myList.getModel()).replaceAll(getListItems());
+      return myList;
+    }
+
+    private void setTestSelectedIndex(int index) {
+      myList.setSelectedIndex(index);
     }
   }
 }

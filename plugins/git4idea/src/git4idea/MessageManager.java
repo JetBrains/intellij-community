@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,11 +32,13 @@ public class MessageManager {
     return ServiceManager.getService(project, MessageManager.class);
   }
 
+  @Messages.YesNoResult
   public static int showYesNoDialog(Project project, String description, String title, String yesText, String noText, @Nullable Icon icon) {
     return getInstance(project).doShowYesNoDialog(project, description, title, yesText, noText, icon);
   }
 
   @SuppressWarnings("MethodMayBeStatic")
+  @Messages.YesNoResult
   protected int doShowYesNoDialog(Project project, String description, String title, String yesText, String noText, @Nullable Icon icon) {
     return Messages.showYesNoDialog(project, description, title, yesText, noText, icon);
   }

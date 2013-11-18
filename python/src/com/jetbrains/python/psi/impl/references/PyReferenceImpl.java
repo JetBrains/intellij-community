@@ -398,7 +398,7 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
       newElementName = newElementName.substring(0, newElementName.length() - PyNames.DOT_PY.length());
     }
     if (nameElement != null && PyNames.isIdentifier(newElementName)) {
-      final ASTNode newNameElement = PyElementGenerator.getInstance(myElement.getProject()).createNameIdentifier(newElementName);
+      final ASTNode newNameElement = PyUtil.createNewName(myElement, newElementName);
       myElement.getNode().replaceChild(nameElement, newNameElement);
     }
     return myElement;

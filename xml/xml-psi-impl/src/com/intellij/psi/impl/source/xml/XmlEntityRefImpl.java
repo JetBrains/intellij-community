@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,8 +26,10 @@ import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.*;
 import com.intellij.util.ArrayUtil;
+import com.intellij.xml.Html5SchemaProvider;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.impl.schema.AnyXmlElementDescriptor;
+import com.intellij.xml.util.HtmlUtil;
 import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -98,13 +100,13 @@ public class XmlEntityRefImpl extends XmlElementImpl implements XmlEntityRef {
     try {
       targetElement.putUserData(EVALUATION_IN_PROCESS, "");
       final List<PsiElement> deps = new ArrayList<PsiElement>();
-      final XmlEntityDecl[] result = new XmlEntityDecl[]{null};
+      final XmlEntityDecl[] result = {null};
 
       PsiElementProcessor processor = new PsiElementProcessor() {
         public boolean execute(@NotNull PsiElement element) {
           if (element instanceof XmlDoctype) {
             XmlDoctype xmlDoctype = (XmlDoctype)element;
-            final String dtdUri = XmlUtil.getDtdUri(xmlDoctype);
+            final String dtdUri = getDtdForEntity(xmlDoctype);
             if (dtdUri != null) {
               XmlFile file = XmlUtil.getContainingFile(element);
               if (file == null) return true;
@@ -155,7 +157,8 @@ public class XmlEntityRefImpl extends XmlElementImpl implements XmlEntityRef {
           final XmlElementDescriptor descriptor = rootTag.getDescriptor();
 
             if (descriptor != null && !(descriptor instanceof AnyXmlElementDescriptor)) {
-              PsiElement element = descriptor.getDeclaration();
+              PsiElement element = !HtmlUtil.isHtml5Context(rootTag) ? descriptor.getDeclaration() :
+                                   XmlUtil.findXmlFile((XmlFile)targetElement, Html5SchemaProvider.getCharsDtdLocation());
               final PsiFile containingFile = element != null ? element.getContainingFile():null;
               final XmlFile descriptorFile = containingFile instanceof XmlFile ? (XmlFile)containingFile:null;
 
@@ -177,6 +180,10 @@ public class XmlEntityRefImpl extends XmlElementImpl implements XmlEntityRef {
     finally {
       targetElement.putUserData(EVALUATION_IN_PROCESS, null);
     }
+  }
+
+  private static String getDtdForEntity(XmlDoctype xmlDoctype) {
+    return HtmlUtil.isHtml5Doctype(xmlDoctype) ? Html5SchemaProvider.getCharsDtdLocation() : XmlUtil.getDtdUri(xmlDoctype);
   }
 
   public XmlTag getParentTag() {

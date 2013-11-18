@@ -397,6 +397,7 @@ public class TestNGResults extends TestResultsPanel implements TestFrameworkRunn
           myStatusLine.setStatusColor(ColorProgressBar.GREEN);
         }
         rootNode.setInProgress(false);
+        TestStatusListener.notifySuiteFinished(rootNode);
         if (TestNGConsoleProperties.SELECT_FIRST_DEFECT.value(myProperties)) {
           selectTest(rootNode.getFirstDefect());
         }

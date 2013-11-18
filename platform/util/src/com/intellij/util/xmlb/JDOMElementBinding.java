@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,6 +34,7 @@ class JDOMElementBinding implements Binding {
     myTagName = tag.value();
   }
 
+  @Override
   public Object serialize(Object o, Object context, SerializationFilter filter) {
     Object value = myAccessor.read(o);
     if (value == null) {
@@ -57,6 +58,7 @@ class JDOMElementBinding implements Binding {
     throw new XmlSerializationException("org.jdom.Element expected but " + value + " found");
   }
 
+  @Override
   @Nullable
   public Object deserialize(Object context, @NotNull Object... nodes) {
     Element[] result = new Element[nodes.length];
@@ -73,14 +75,17 @@ class JDOMElementBinding implements Binding {
     return context;
   }
 
+  @Override
   public boolean isBoundTo(Object node) {
     return node instanceof Element && ((Element)node).getName().equals(myTagName);
   }
 
+  @Override
   public Class getBoundNodeType() {
     throw new UnsupportedOperationException("Method getBoundNodeType is not supported in " + getClass());
   }
 
+  @Override
   public void init() {
   }
 }

@@ -54,6 +54,7 @@ public class TitlePanel extends CaptionPanel {
     setActive(false);
   }
 
+  @Override
   public void setActive(final boolean active) {
     super.setActive(active);
     myLabel.setIcon(active ? myRegular : myInactive);
@@ -71,9 +72,10 @@ public class TitlePanel extends CaptionPanel {
     return new Dimension(10, getPreferredSize().height);
   }
 
+  @Override
   public Dimension getPreferredSize() {
     final String text = myLabel.getText();
-    if (text == null || text.trim().length() == 0) {
+    if (text == null || text.trim().isEmpty()) {
       return new Dimension(0, 0);
     }
 

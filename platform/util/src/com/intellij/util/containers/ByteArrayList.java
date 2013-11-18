@@ -472,6 +472,7 @@ public class ByteArrayList implements  Cloneable {
      *
      * @return a deep clone of the list.
      */
+    @Override
     public Object clone() {
         ByteArrayList clone = null;
         try {
@@ -849,6 +850,7 @@ public class ByteArrayList implements  Cloneable {
     public String toString() {
         final StringBuffer buf = new StringBuffer("{");
         forEach(new TIntProcedure() {
+                @Override
                 public boolean execute(int val) {
                     buf.append(val);
                     buf.append(", ");

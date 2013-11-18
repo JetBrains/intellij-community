@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -55,10 +55,12 @@ public interface PopupBorder extends Border {
       myPassiveColor = passiveColor;
     }
 
+    @Override
     public void setActive(final boolean active) {
       myActive = active;
     }
 
+    @Override
     public void paintBorder(final Component c, final Graphics g, final int x, final int y, final int width, final int height) {
       if (!myVisible) return;
 
@@ -67,10 +69,12 @@ public interface PopupBorder extends Border {
       g.drawRect(x, y, width - 1, height - 1);
     }
 
+    @Override
     public Insets getBorderInsets(final Component c) {
       return myVisible ? new Insets(1, 1, 1, 1) : new Insets(0, 0, 0, 0);
     }
 
+    @Override
     public boolean isBorderOpaque() {
       return true;
     }

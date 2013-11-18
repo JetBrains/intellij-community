@@ -23,13 +23,15 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsKey;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.Consumer;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.VcsLogBranchFilter;
+import com.intellij.vcs.log.data.VcsLogDateFilter;
+import com.intellij.vcs.log.data.VcsLogStructureFilter;
 import com.intellij.vcs.log.data.VcsLogUserFilter;
 import com.intellij.vcs.log.impl.HashImpl;
-import com.intellij.vcs.log.impl.VcsRefImpl;
 import com.intellij.vcs.log.ui.filter.VcsLogTextFilter;
 import git4idea.GitLocalBranch;
 import git4idea.GitRemoteBranch;
@@ -66,7 +68,7 @@ public class GitLogProvider implements VcsLogProvider {
     myProject = project;
     myRepositoryManager = repositoryManager;
     myRefSorter = new GitRefManager(myRepositoryManager);
-    myVcsObjectsFactory = ServiceManager.getService(VcsLogObjectsFactory.class);
+    myVcsObjectsFactory = ServiceManager.getService(myProject, VcsLogObjectsFactory.class);
   }
 
   @NotNull
@@ -83,8 +85,8 @@ public class GitLogProvider implements VcsLogProvider {
 
   @NotNull
   @Override
-  public List<TimedVcsCommit> readAllHashes(@NotNull VirtualFile root) throws VcsException {
-    return GitHistoryUtils.readAllHashes(myProject, root);
+  public List<TimedVcsCommit> readAllHashes(@NotNull VirtualFile root, @NotNull Consumer<VcsUser> userRegistry) throws VcsException {
+    return GitHistoryUtils.readAllHashes(myProject, root, userRegistry);
   }
 
   @NotNull
@@ -114,15 +116,15 @@ public class GitLogProvider implements VcsLogProvider {
     Collection<GitRemoteBranch> remoteBranches = repository.getBranches().getRemoteBranches();
     Collection<VcsRef> refs = new ArrayList<VcsRef>(localBranches.size() + remoteBranches.size());
     for (GitLocalBranch localBranch : localBranches) {
-      refs.add(new VcsRefImpl(HashImpl.build(localBranch.getHash()), localBranch.getName(), GitRefManager.LOCAL_BRANCH, root));
+      refs.add(myVcsObjectsFactory.createRef(HashImpl.build(localBranch.getHash()), localBranch.getName(), GitRefManager.LOCAL_BRANCH, root));
     }
     for (GitRemoteBranch remoteBranch : remoteBranches) {
-      refs.add(new VcsRefImpl(HashImpl.build(remoteBranch.getHash()), remoteBranch.getNameForLocalOperations(),
+      refs.add(myVcsObjectsFactory.createRef(HashImpl.build(remoteBranch.getHash()), remoteBranch.getNameForLocalOperations(),
                           GitRefManager.REMOTE_BRANCH, root));
     }
     String currentRevision = repository.getCurrentRevision();
     if (currentRevision != null) { // null => fresh repository
-      refs.add(new VcsRefImpl(HashImpl.build(currentRevision), "HEAD", GitRefManager.HEAD, root));
+      refs.add(myVcsObjectsFactory.createRef(HashImpl.build(currentRevision), "HEAD", GitRefManager.HEAD, root));
     }
 
     refs.addAll(readTags(root));
@@ -132,12 +134,13 @@ public class GitLogProvider implements VcsLogProvider {
   // TODO this is to be removed when tags will be supported by the GitRepositoryReader
   private Collection<? extends VcsRef> readTags(@NotNull VirtualFile root) throws VcsException {
     GitSimpleHandler tagHandler = new GitSimpleHandler(myProject, root, GitCommand.LOG);
+    tagHandler.setSilent(true);
     tagHandler.addParameters("--tags", "--no-walk", "--format=%H%d" + GitLogParser.RECORD_START_GIT, "--decorate=full");
     String out = tagHandler.run();
     Collection<VcsRef> refs = new ArrayList<VcsRef>();
     for (String record : out.split(GitLogParser.RECORD_START)) {
       if (!StringUtil.isEmptyOrSpaces(record)) {
-        refs.addAll(RefParser.parseCommitRefs(record.trim(), root));
+        refs.addAll(new RefParser(myVcsObjectsFactory).parseCommitRefs(record.trim(), root));
       }
     }
     return refs;
@@ -199,6 +202,18 @@ public class GitLogProvider implements VcsLogProvider {
       filterParameters.add(prepareParameter("author", authorFilter));
     }
 
+    List<VcsLogDateFilter> dateFilters = ContainerUtil.findAll(filters, VcsLogDateFilter.class);
+    if (!dateFilters.isEmpty()) {
+      // assuming there is only one date filter, until filter expressions are defined
+      VcsLogDateFilter filter = dateFilters.iterator().next();
+      if (filter.getAfter() != null) {
+        filterParameters.add("--after=" + filter.getAfter().toString());
+      }
+      if (filter.getBefore() != null) {
+        filterParameters.add("--before=" + filter.getBefore().toString());
+      }
+    }
+
     List<VcsLogTextFilter> textFilters = ContainerUtil.findAll(filters, VcsLogTextFilter.class);
     if (textFilters.size() > 1) {
       LOG.warn("Expected only one text filter: " + textFilters);
@@ -208,7 +223,19 @@ public class GitLogProvider implements VcsLogProvider {
       filterParameters.add(prepareParameter("grep", textFilter));
     }
 
-    filterParameters.add("--regexp-ignore-case"); // affects case sensitivity of any filter
+    filterParameters.add("--regexp-ignore-case"); // affects case sensitivity of any filter (except file filter)
+
+    // note: this filter must be the last parameter, because it uses "--" which separates parameters from paths
+    List<VcsLogStructureFilter> structureFilters = ContainerUtil.findAll(filters, VcsLogStructureFilter.class);
+    if (!structureFilters.isEmpty()) {
+      filterParameters.add("--");
+      for (VcsLogStructureFilter filter : structureFilters) {
+        for (VirtualFile file : filter.getFiles(root)) {
+          filterParameters.add(file.getPath());
+        }
+      }
+    }
+
     return GitHistoryUtils.getAllDetails(myProject, root, filterParameters);
   }
 
@@ -216,7 +243,8 @@ public class GitLogProvider implements VcsLogProvider {
   @Override
   public VcsUser getCurrentUser(@NotNull VirtualFile root) throws VcsException {
     String userName = GitConfigUtil.getValue(myProject, root, GitConfigUtil.USER_NAME);
-    return userName == null ? null : myVcsObjectsFactory.createUser(userName);
+    String userEmail = StringUtil.notNullize(GitConfigUtil.getValue(myProject, root, GitConfigUtil.USER_EMAIL));
+    return userName == null ? null : myVcsObjectsFactory.createUser(userName, userEmail);
   }
 
   private static String prepareParameter(String paramName, String value) {

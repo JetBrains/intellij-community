@@ -26,19 +26,17 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.vcs.log.Hash;
-import com.intellij.vcs.log.VcsFullCommitDetails;
-import com.intellij.vcs.log.VcsLog;
-import com.intellij.vcs.log.VcsLogObjectsFactory;
-import com.intellij.vcs.log.impl.VcsLogImpl;
+import com.intellij.vcs.log.*;
 import git4idea.GitLocalBranch;
 import git4idea.GitPlatformFacade;
+import git4idea.GitUtil;
 import git4idea.GitVcs;
 import git4idea.commands.Git;
 import git4idea.config.GitVcsSettings;
 import git4idea.history.browser.GitHeavyCommit;
 import git4idea.history.wholeTree.AbstractHash;
 import git4idea.history.wholeTree.GitCommitDetailsProvider;
+import git4idea.log.GitContentRevisionFactory;
 import git4idea.repo.GitRepository;
 import icons.Git4ideaIcons;
 import org.jetbrains.annotations.NotNull;
@@ -134,7 +132,13 @@ public class GitCherryPickAction extends DumbAwareAction {
   @Override
   public void update(AnActionEvent e) {
     super.update(e);
-    e.getPresentation().setEnabled(enabled(e));
+    final VcsLog log = getVcsLog(e);
+    if (log != null && !GitUtil.logHasGitRoot(log)) {
+      e.getPresentation().setEnabledAndVisible(false);
+    }
+    else {
+      e.getPresentation().setEnabled(enabled(e));
+    }
   }
 
   private boolean enabled(AnActionEvent e) {
@@ -166,15 +170,15 @@ public class GitCherryPickAction extends DumbAwareAction {
   // TODO remove after removing the old Vcs Log implementation
   @Nullable
   private List<? extends VcsFullCommitDetails> getSelectedCommits(AnActionEvent e) {
-    List<GitHeavyCommit> commits = e.getData(GitVcs.SELECTED_COMMITS);
-    if (commits != null) {
-      return convertHeavyCommitToFullDetails(commits);
-    }
     final Project project = e.getProject();
     if (project == null) {
       return null;
     }
-    final VcsLog log = getVcsLog(project);
+    List<GitHeavyCommit> commits = e.getData(GitVcs.SELECTED_COMMITS);
+    if (commits != null) {
+      return convertHeavyCommitToFullDetails(commits, project);
+    }
+    final VcsLog log = getVcsLog(e);
     if (log == null) {
       return null;
     }
@@ -197,11 +201,11 @@ public class GitCherryPickAction extends DumbAwareAction {
     return selectedDetails;
   }
 
-  private static List<? extends VcsFullCommitDetails> convertHeavyCommitToFullDetails(List<GitHeavyCommit> commits) {
+  private static List<? extends VcsFullCommitDetails> convertHeavyCommitToFullDetails(List<GitHeavyCommit> commits, final Project project) {
     return ContainerUtil.map(commits, new Function<GitHeavyCommit, VcsFullCommitDetails>() {
       @Override
       public VcsFullCommitDetails fun(GitHeavyCommit commit) {
-        final VcsLogObjectsFactory factory = ServiceManager.getService(VcsLogObjectsFactory.class);
+        final VcsLogObjectsFactory factory = ServiceManager.getService(project, VcsLogObjectsFactory.class);
         List<Hash> parents = ContainerUtil.map(commit.getParentsHashes(), new Function<String, Hash>() {
           @Override
           public Hash fun(String hashValue) {
@@ -211,15 +215,14 @@ public class GitCherryPickAction extends DumbAwareAction {
         return factory.createFullDetails(
           factory.createHash(commit.getHash().getValue()), parents, commit.getAuthorTime(), commit.getRoot(), commit.getSubject(),
           commit.getAuthor(), commit.getAuthorEmail(), commit.getDescription(), commit.getCommitter(), commit.getCommitterEmail(),
-          commit.getDate().getTime(), commit.getChanges()
+          commit.getDate().getTime(), commit.getChanges(), GitContentRevisionFactory.getInstance(project)
         );
       }
     });
   }
 
-  private static VcsLog getVcsLog(@NotNull Project project) {
-    VcsLog logService = ServiceManager.getService(project, VcsLog.class);
-    return logService != null && ((VcsLogImpl)logService).isReady() ? logService : null;
+  private static VcsLog getVcsLog(@NotNull AnActionEvent event) {
+    return event.getData(VcsLogDataKeys.VSC_LOG);
   }
 
   // TODO remove after removing the old Vcs Log implementation
@@ -232,7 +235,7 @@ public class GitCherryPickAction extends DumbAwareAction {
     if (event.getProject() == null) {
       return null;
     }
-    VcsLog log = getVcsLog(event.getProject());
+    VcsLog log = getVcsLog(event);
     if (log == null) {
       return null;
     }

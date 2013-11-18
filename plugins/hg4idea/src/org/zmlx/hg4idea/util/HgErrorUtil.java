@@ -93,4 +93,16 @@ public final class HgErrorUtil {
       }
     };
   }
+
+  public static boolean isUnknownEncodingError(@Nullable HgCommandResult result) {
+    if (result == null) {
+      return false;
+    }
+    List<String> errorLines = result.getErrorLines();
+    if (errorLines.isEmpty()) {
+      return false;
+    }
+    String line = errorLines.get(0);
+    return !StringUtil.isEmptyOrSpaces(line) && (line.contains("abort") && line.contains("unknown encoding"));
+  }
 }

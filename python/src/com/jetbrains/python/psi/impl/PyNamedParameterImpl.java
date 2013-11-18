@@ -31,7 +31,6 @@ import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.PythonDialectsTokenSetProvider;
-import com.jetbrains.python.codeInsight.stdlib.PyStdlibTypeProvider;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.stubs.PyNamedParameterStub;
@@ -92,7 +91,7 @@ public class PyNamedParameterImpl extends PyPresentableElementImpl<PyNamedParame
   public PsiElement setName(@NotNull String name) throws IncorrectOperationException {
     final ASTNode oldNameIdentifier = getNameIdentifierNode();
     if (oldNameIdentifier != null) {
-      final ASTNode nameElement = PyElementGenerator.getInstance(getProject()).createNameIdentifier(name);
+      final ASTNode nameElement = PyUtil.createNewName(this, name);
       getNode().replaceChild(oldNameIdentifier, nameElement);
     }
     return this;
@@ -213,12 +212,6 @@ public class PyNamedParameterImpl extends PyPresentableElementImpl<PyNamedParame
                   final PyType elementType = ((PyCollectionType)initType).getElementType(context);
                   return new PyCollectionTypeImpl(containingClass, false, elementType);
                 }
-              }
-            }
-            else {
-              final PyStdlibTypeProvider stdlib = PyStdlibTypeProvider.getInstance();
-              if (stdlib != null) {
-                initType = stdlib.getConstructorType(containingClass, context);
               }
             }
             if (initType != null && !(initType instanceof PyNoneType)) {

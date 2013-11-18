@@ -25,6 +25,6 @@ public class CmdDeleteClient extends BaseSvnClient implements DeleteClient {
 
     // for now parsing of the output is not required as command is executed only for one file
     // and will be either successful or exception will be thrown
-    CommandUtil.execute(myVcs, SvnTarget.fromFile(path), SvnCommandName.delete, parameters, null);
+    CommandUtil.execute(myVcs, SvnTarget.fromFile(path), CommandUtil.getHomeDirectory(), SvnCommandName.delete, parameters, null);
   }
 }

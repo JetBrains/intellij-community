@@ -5,8 +5,7 @@ import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.icons.AllIcons;
 
 /**
- * Created by IntelliJ IDEA.
- * User: michael.golubev
+ * @author michael.golubev
  */
 public class RunServerAction extends RunServerActionBase {
 

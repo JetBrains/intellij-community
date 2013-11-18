@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,7 @@ package com.intellij.ide.projectView.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.FileUtil;
@@ -35,7 +35,7 @@ public class MarkExcludeRootAction extends MarkRootActionBase {
     String message = files.length == 1 ? FileUtil.toSystemDependentName(files[0].getPath()) : files.length + " selected files";
     final int rc = Messages.showOkCancelDialog(e.getData(CommonDataKeys.PROJECT), getPromptText(message), "Mark as Excluded",
                                                Messages.getQuestionIcon());
-    if (rc != 0) {
+    if (rc != Messages.OK) {
       return;
     }
     super.actionPerformed(e);
@@ -51,7 +51,7 @@ public class MarkExcludeRootAction extends MarkRootActionBase {
   }
 
   @Override
-  protected boolean isEnabled(@NotNull RootsSelection selection) {
+  protected boolean isEnabled(@NotNull RootsSelection selection, @NotNull Module module) {
     return true;
   }
 }

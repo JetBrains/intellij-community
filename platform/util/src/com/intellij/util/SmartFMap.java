@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -190,7 +190,7 @@ public class SmartFMap<K,V> implements Map<K,V> {
 
   @Override
   @Deprecated
-  public void putAll(Map<? extends K, ? extends V> m) {
+  public void putAll(@NotNull Map<? extends K, ? extends V> m) {
     throw new UnsupportedOperationException();
   }
 
@@ -200,6 +200,7 @@ public class SmartFMap<K,V> implements Map<K,V> {
     throw new UnsupportedOperationException();
   }
 
+  @NotNull
   @Override
   public Set<K> keySet() {
     LinkedHashSet<K> result = new LinkedHashSet<K>();
@@ -209,6 +210,7 @@ public class SmartFMap<K,V> implements Map<K,V> {
     return Collections.unmodifiableSet(result);
   }
 
+  @NotNull
   @Override
   public Collection<V> values() {
     ArrayList<V> result = new ArrayList<V>();
@@ -237,6 +239,7 @@ public class SmartFMap<K,V> implements Map<K,V> {
     return size() == 0;
   }
 
+  @NotNull
   @Override
   public Set<Entry<K, V>> entrySet() {
     LinkedHashSet<Entry<K, V>> set = new LinkedHashSet<Entry<K, V>>();

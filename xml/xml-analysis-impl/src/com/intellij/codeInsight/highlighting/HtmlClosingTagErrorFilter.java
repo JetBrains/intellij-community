@@ -15,13 +15,13 @@
  */
 package com.intellij.codeInsight.highlighting;
 
+import com.intellij.codeInsight.daemon.XmlErrorMessages;
 import com.intellij.lang.html.HTMLLanguage;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiErrorElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.xml.XmlToken;
 import com.intellij.psi.xml.XmlTokenType;
-import com.intellij.codeInsight.daemon.XmlErrorMessages;
 import org.jetbrains.annotations.NotNull;
 
 /**

@@ -70,7 +70,7 @@ abstract class BaseExtResourceAction extends BaseIntentionAction {
     doInvoke(file, offset, uri, editor);
   }
 
-  protected abstract void doInvoke(final @NotNull PsiFile file, final int offset, final @NotNull String uri, final Editor editor)
+  protected abstract void doInvoke(@NotNull final PsiFile file, final int offset, @NotNull final String uri, final Editor editor)
     throws IncorrectOperationException;
 
   @Nullable

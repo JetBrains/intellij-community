@@ -129,4 +129,11 @@ public class StringBufferReplaceableByString {
   class Repository { public String name() { return "name"; } }
   public String testName() { return "test"; }
   class TestDataFile { public TestDataFile(String s, String s1) { } }
+
+  String methodCallArgumentToConstructor(String a, String b, String c) {
+    final StringBuilder builder = new StringBuilder(a.substring(1));
+    builder.append(b).append(' ');
+    builder.append(c);
+    return builder.toString();
+  }
 }

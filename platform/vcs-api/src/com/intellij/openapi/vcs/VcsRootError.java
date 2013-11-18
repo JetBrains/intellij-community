@@ -20,24 +20,24 @@ import org.jetbrains.annotations.NotNull;
 /**
  * Incorrect VCS root definition: either an unregistered, or an incorrectly registered VCS root.
  *
- * @see VcsRootChecker
- * @see AbstractVcs#getRootChecker
- *
  * @author Kirill Likhodedov
+ * @see VcsRootChecker
  */
 public class VcsRootError {
 
   private final @NotNull Type myType;
   private final @NotNull String myMapping;
+  private final @NotNull VcsKey myVcsKey;
 
   public enum Type {
     EXTRA_MAPPING,
     UNREGISTERED_ROOT
   }
 
-  public VcsRootError(@NotNull Type type, @NotNull String mapping) {
+  public VcsRootError(@NotNull Type type, @NotNull String mapping, @NotNull String key) {
     myType = type;
     myMapping = mapping;
+    myVcsKey = new VcsKey(key);
   }
 
   @NotNull
@@ -48,6 +48,11 @@ public class VcsRootError {
   @NotNull
   public String getMapping() {
     return myMapping;
+  }
+
+  @NotNull
+  public VcsKey getVcsKey() {
+    return myVcsKey;
   }
 
   @Override

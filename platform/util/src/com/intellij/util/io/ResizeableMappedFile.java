@@ -138,10 +138,12 @@ public class ResizeableMappedFile implements Forceable {
     }
   }
 
+  @Override
   public boolean isDirty() {
     return myStorage.isDirty();
   }
 
+  @Override
   public void force() {
     if (isDirty()) {
       writeLength(myLogicalSize);

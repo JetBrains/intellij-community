@@ -562,6 +562,7 @@ public class JBTabsImpl extends JComponent
       if (!mySingleRowLayout.isTabHidden(each)) continue;
       final JBMenuItem item = new JBMenuItem(each.getText(), each.getIcon());
       item.setForeground(each.getDefaultForeground());
+      item.setBackground(each.getTabColor());
       mySingleRowLayout.myMorePopup.add(item);
       item.addActionListener(new ActionListener() {
         @Override
@@ -886,6 +887,15 @@ public class JBTabsImpl extends JComponent
     for (TabsListener eachListener : myTabListeners) {
       if (eachListener != null) {
         eachListener.tabsMoved();
+      }
+    }
+  }
+
+
+  void fireTabRemoved(TabInfo info) {
+    for (TabsListener eachListener : myTabListeners) {
+      if (eachListener != null) {
+        eachListener.tabRemoved(info);
       }
     }
   }
@@ -2437,6 +2447,8 @@ public class JBTabsImpl extends JComponent
     }
 
     revalidateAndRepaint(true);
+    
+    fireTabRemoved(info);
 
     return result;
   }

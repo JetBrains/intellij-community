@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,12 +26,13 @@ import java.awt.*;
 import java.util.Arrays;
 
 public class ComboBoxTableCellRenderer extends JPanel implements TableCellRenderer {
-  public final static TableCellRenderer INSTANCE = new ComboBoxTableCellRenderer();
+  public static final TableCellRenderer INSTANCE = new ComboBoxTableCellRenderer();
 
   /**
    * DefaultTableCellRenderer, that displays JComboBox on selected value.
    */
-  public final static TableCellRenderer COMBO_WHEN_SELECTED_RENDERER = new DefaultTableCellRenderer() {
+  public static final TableCellRenderer COMBO_WHEN_SELECTED_RENDERER = new DefaultTableCellRenderer() {
+    @Override
     public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
       if (isSelected) {
         value = new ListWithSelection<Object>(Arrays.asList(value));
@@ -51,6 +52,7 @@ public class ComboBoxTableCellRenderer extends JPanel implements TableCellRender
         new GridBagConstraints(0, 0, 1, 1, 1, 1, GridBagConstraints.CENTER, GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0));
   }
 
+  @Override
   public JComponent getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
     if (value instanceof ListWithSelection) {
       final ListWithSelection tags = (ListWithSelection)value;

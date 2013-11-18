@@ -42,26 +42,8 @@ import java.awt.event.MouseEvent;
 import java.awt.image.BufferedImage;
 
 public class TabLabel extends JPanel {
-  protected final SimpleColoredComponent myLabel = new SimpleColoredComponent() {
-    @Override
-    protected boolean shouldDrawMacShadow() {
-      return SystemInfo.isMac || UIUtil.isUnderDarcula();
-    }
+  protected final SimpleColoredComponent myLabel;
 
-    @Override
-    protected boolean shouldDrawDimmed() {
-      return myTabs.getSelectedInfo() != myInfo || myTabs.useBoldLabels();
-    }
-
-    @Override
-    public Font getFont() {
-      if (isFontSet() || !myTabs.useSmallLabels()) {
-        return super.getFont();
-      }
-      return UIUtil.getLabelFont(UIUtil.FontSize.SMALL);
-    }
-  };
-  
   private final LayeredIcon myIcon;
   private Icon myOverlayedIcon;
 
@@ -80,11 +62,9 @@ public class TabLabel extends JPanel {
 
     myTabs = tabs;
     myInfo = info;
-    myLabel.setOpaque(false);
-    myLabel.setBorder(null);
-    myLabel.setIconTextGap(tabs.isEditorTabs() ? 2 : new JLabel().getIconTextGap());
-    myLabel.setIconOpaque(false);
-    myLabel.setIpad(new Insets(0, 0, 0, 0));
+    
+    myLabel = createLabel(tabs);
+    
     setOpaque(false);
     setLayout(new BorderLayout());
 
@@ -123,6 +103,35 @@ public class TabLabel extends JPanel {
     });
   }
 
+  private SimpleColoredComponent createLabel(JBTabsImpl tabs) {
+    SimpleColoredComponent label = new SimpleColoredComponent() {
+      @Override
+      protected boolean shouldDrawMacShadow() {
+        return SystemInfo.isMac || UIUtil.isUnderDarcula();
+      }
+
+      @Override
+      protected boolean shouldDrawDimmed() {
+        return myTabs.getSelectedInfo() != myInfo || myTabs.useBoldLabels();
+      }
+
+      @Override
+      public Font getFont() {
+        if (isFontSet() || !myTabs.useSmallLabels()) {
+          return super.getFont();
+        }
+        return UIUtil.getLabelFont(UIUtil.FontSize.SMALL);
+      }
+    };
+    label.setOpaque(false);
+    label.setBorder(null);
+    label.setIconTextGap(tabs.isEditorTabs() ? 2 : new JLabel().getIconTextGap());
+    label.setIconOpaque(false);
+    label.setIpad(new Insets(0, 0, 0, 0));
+
+    return label;
+  }
+
   @Override
   public Insets getInsets() {
     Insets insets = super.getInsets();
@@ -131,27 +140,34 @@ public class TabLabel extends JPanel {
         return new Insets(insets.top, insets.left, insets.bottom, 3);
       }
     }
-    
+
     return insets;
   }
 
   public void setAlignmentToCenter(boolean toCenter) {
-    if (myCentered == toCenter && myLabel.getParent() != null) return;
+    if (myCentered == toCenter && getLabelComponent().getParent() != null) return;
 
+    setPlaceholderContent(toCenter, getLabelComponent());
+  }
+
+  protected void setPlaceholderContent(boolean toCenter, JComponent component) {
     myLabelPlaceholder.removeAll();
 
     if (toCenter) {
-      final Centerizer center = new Centerizer(myLabel);
+      final Centerizer center = new Centerizer(component);
       myLabelPlaceholder.setContent(center);
-    } else {
-      myLabelPlaceholder.setContent(myLabel);
+    }
+    else {
+      myLabelPlaceholder.setContent(component);
     }
 
     myCentered = toCenter;
   }
+  
+  
 
   public void paintOffscreen(Graphics g) {
-    synchronized(getTreeLock()) {
+    synchronized (getTreeLock()) {
       validateTree();
     }
     doPaint(g);
@@ -205,12 +221,13 @@ public class TabLabel extends JPanel {
         dYs = selected;
         break;
     }
-    
+
     if (!myTabs.isDropTarget(myInfo)) {
       if (myTabs.getSelectedInfo() != myInfo) {
-        consumer.consume(dX,  dY);
-      } else {
-        consumer.consume(dXs,  dYs);
+        consumer.consume(dX, dY);
+      }
+      else {
+        consumer.consume(dXs, dYs);
       }
     }
   }
@@ -259,7 +276,10 @@ public class TabLabel extends JPanel {
       case bottom:
         if (myTabs.hasUnderline()) size.height += TabsUtil.ACTIVE_TAB_UNDERLINE_HEIGHT - 1;
         break;
-      case left: case right: size.width += getSelectedOffset(); break;
+      case left:
+      case right:
+        size.width += getSelectedOffset();
+        break;
     }
 
     return size;
@@ -280,7 +300,8 @@ public class TabLabel extends JPanel {
       toShow.addSeparator();
     }
 
-    JBTabsImpl tabs = JBTabsImpl.NAVIGATION_ACTIONS_KEY.getData(DataManager.getInstance().getDataContext(e.getComponent(), e.getX(), e.getY()));
+    JBTabsImpl tabs =
+      JBTabsImpl.NAVIGATION_ACTIONS_KEY.getData(DataManager.getInstance().getDataContext(e.getComponent(), e.getX(), e.getY()));
     if (tabs == myTabs && myTabs.myAddNavigationGroup) {
       toShow.addAll(myTabs.myNavigationActions);
     }
@@ -313,17 +334,17 @@ public class TabLabel extends JPanel {
 
 
   private void invalidateIfNeeded() {
-    if (myLabel.getRootPane() == null) return;
+    if (getLabelComponent().getRootPane() == null) return;
 
-    Dimension d = myLabel.getSize();
-    Dimension pref = myLabel.getPreferredSize();
+    Dimension d = getLabelComponent().getSize();
+    Dimension pref = getLabelComponent().getPreferredSize();
     if (d != null && d.equals(pref)) {
       return;
     }
 
     setInactiveStateImage(null);
 
-    myLabel.invalidate();
+    getLabelComponent().invalidate();
 
     if (myActionPanel != null) {
       myActionPanel.invalidate();
@@ -346,19 +367,20 @@ public class TabLabel extends JPanel {
         break;
       }
     }
-    
+
     return hasIcons;
   }
-  
+
   private void setIcon(@Nullable final Icon icon, int layer) {
     LayeredIcon layeredIcon = getLayeredIcon();
     layeredIcon.setIcon(icon, layer);
     if (hasIcons()) {
       myLabel.setIcon(layeredIcon);
-    } else {
+    }
+    else {
       myLabel.setIcon(null);
     }
-    
+
     invalidateIfNeeded();
   }
 
@@ -373,7 +395,7 @@ public class TabLabel extends JPanel {
   public void apply(UiDecorator.UiDecoration decoration) {
     if (decoration.getLabelFont() != null) {
       setFont(decoration.getLabelFont());
-      myLabel.setFont(decoration.getLabelFont());
+      getLabelComponent().setFont(decoration.getLabelFont());
     }
 
     Insets insets = decoration.getLabelInsets();
@@ -420,14 +442,14 @@ public class TabLabel extends JPanel {
 
   public boolean updateTabActions() {
     return myActionPanel != null && myActionPanel.update();
-
   }
 
   private void setAttractionIcon(@Nullable Icon icon) {
     if (myIcon.getIcon(0) == null) {
       setIcon(null, 1);
       myOverlayedIcon = icon;
-    } else {
+    }
+    else {
       setIcon(icon, 1);
       myOverlayedIcon = null;
     }
@@ -492,16 +514,15 @@ public class TabLabel extends JPanel {
   protected void paintChildren(final Graphics g) {
     super.paintChildren(g);
 
-    if (myOverlayedIcon == null || myLabel.getParent() == null) return;
+    if (myOverlayedIcon == null || getLabelComponent().getParent() == null) return;
 
-    final Rectangle textBounds = SwingUtilities.convertRectangle(myLabel.getParent(), myLabel.getBounds(), this);
+    final Rectangle textBounds = SwingUtilities.convertRectangle(getLabelComponent().getParent(), getLabelComponent().getBounds(), this);
     if (getLayeredIcon().isLayerEnabled(1)) {
 
       final int top = (getSize().height - myOverlayedIcon.getIconHeight()) / 2;
 
       myOverlayedIcon.paintIcon(this, g, textBounds.x - myOverlayedIcon.getIconWidth() / 2, top);
     }
-
   }
 
   public void setTabActionsAutoHide(final boolean autoHide) {
@@ -530,7 +551,7 @@ public class TabLabel extends JPanel {
   }
 
   public void setTabEnabled(boolean enabled) {
-    myLabel.setEnabled(enabled);
+    getLabelComponent().setEnabled(enabled);
   }
 
 
@@ -539,7 +560,8 @@ public class TabLabel extends JPanel {
     BufferedImage img = null;
     if (myLastPaintedInactiveImageBounds != null && myLastPaintedInactiveImageBounds.getSize().equals(effectiveBounds.getSize())) {
       img = myInactiveStateImage;
-    } else {
+    }
+    else {
       setInactiveStateImage(null);
     }
     myLastPaintedInactiveImageBounds = effectiveBounds;
@@ -551,5 +573,9 @@ public class TabLabel extends JPanel {
       myInactiveStateImage.flush();
     }
     myInactiveStateImage = img;
+  }
+
+  public JComponent getLabelComponent() {
+    return myLabel;
   }
 }

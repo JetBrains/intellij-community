@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -80,6 +80,7 @@ class Reindexer {
       private int originalX = myOriginalLengths[0] - 1;
       private int originalY = myOriginalLengths[1] - 1;
 
+      @Override
       public void addChange(int first, int second) {
         x -= first;
         y -= second;
@@ -87,6 +88,7 @@ class Reindexer {
         originalY = markChanged(changes2, originalY, myOldIndecies[1], y);
       }
 
+      @Override
       public void addEqual(int length) {
         for (int i = length; i > 0; i--) {
           originalX = markChanged(changes1, originalX, myOldIndecies[0], x);

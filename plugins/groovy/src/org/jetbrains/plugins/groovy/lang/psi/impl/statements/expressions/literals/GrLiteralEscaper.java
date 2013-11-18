@@ -16,7 +16,6 @@
 
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.literals;
 
-import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.LiteralTextEscaper;
 import com.intellij.psi.tree.IElementType;
@@ -34,7 +33,7 @@ public class GrLiteralEscaper extends LiteralTextEscaper<GrLiteralContainer> {
 
   @Override
   public boolean decode(@NotNull TextRange rangeInsideHost, @NotNull StringBuilder outChars) {
-    ProperTextRange.assertProperRange(rangeInsideHost);
+    TextRange.assertProperRange(rangeInsideHost);
     String subText = rangeInsideHost.substring(myHost.getText());
     outSourceOffsets = new int[subText.length() + 1];
 

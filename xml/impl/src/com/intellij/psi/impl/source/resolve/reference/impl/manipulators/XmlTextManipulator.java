@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,7 +43,7 @@ public class XmlTextManipulator extends AbstractElementManipulator<XmlText> {
       newValue = replacement.toString();
     }
     if (Comparing.equal(value, newValue)) return text;
-    if (newValue.length() > 0) {
+    if (!newValue.isEmpty()) {
       text.setValue(newValue);
     }
     else {
@@ -60,6 +60,6 @@ public class XmlTextManipulator extends AbstractElementManipulator<XmlText> {
     final String value = xmlText.getValue();
     final int i = value.indexOf(value);
     final int start = xmlText.displayToPhysical(i);
-    return value.length() == 0 ? new TextRange(start, start) : new TextRange(start, xmlText.displayToPhysical(i + value.length() - 1) + 1);
+    return value.isEmpty() ? new TextRange(start, start) : new TextRange(start, xmlText.displayToPhysical(i + value.length() - 1) + 1);
   }
 }

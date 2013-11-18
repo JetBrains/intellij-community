@@ -87,7 +87,7 @@ public class ConvertSchemaPrefixToDefaultIntention extends PsiElementBaseIntenti
         final int index = ns.length() + 1;
         for (XmlTag tag : tags) {
           final String s = tag.getName().substring(index);
-          if (s.length() > 0) {
+          if (!s.isEmpty()) {
             tag.setName(s);
           }
         }

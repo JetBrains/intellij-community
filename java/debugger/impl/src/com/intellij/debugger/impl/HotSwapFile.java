@@ -15,6 +15,8 @@
  */
 package com.intellij.debugger.impl;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.io.File;
 
 /**
@@ -23,9 +25,10 @@ import java.io.File;
  * Time: 2:23:38 PM
  */
 public class HotSwapFile {
+  @NotNull
   final File file;
 
-  public HotSwapFile(File file) {
+  public HotSwapFile(@NotNull File file) {
     this.file = file;
   }
 }

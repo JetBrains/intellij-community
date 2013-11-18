@@ -86,6 +86,10 @@ public class PyRegexpTest extends PyTestCase {
     doTestHighlighting();
   }
 
+  public void testReSubNotRegexp() {  // PY-11069
+    doTestHighlighting();
+  }
+
   public void testSingleStringRegexpAutoInjection() {
     doTestInjectedText("import re\n" +
                         "\n" +

@@ -17,9 +17,7 @@ package com.intellij.psi;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.stubs.StubElement;
-import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * @author max
@@ -27,8 +25,5 @@ import org.jetbrains.annotations.Nullable;
 public interface StubBuilder {
   StubElement buildStubTree(@NotNull PsiFile file);
 
-  /**
-   * @deprecated use/implement {@linkplain com.intellij.psi.stubs.DefaultStubBuilder#skipChildProcessingWhenBuildingStubs(ASTNode, ASTNode)}
-   * (to remove in IDEA 13) */
-  boolean skipChildProcessingWhenBuildingStubs(@Nullable ASTNode parent, IElementType childType);
+  boolean skipChildProcessingWhenBuildingStubs(@NotNull ASTNode parent, @NotNull ASTNode node);
 }

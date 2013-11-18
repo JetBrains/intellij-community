@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -123,7 +123,7 @@ public class IntObjectCache<T> extends ObjectCacheBase implements Iterable<T> {
 
   // Some AbstractMap functions finished
 
-  final public void cacheObject(int key, T x) {
+  public final void cacheObject(int key, T x) {
     int deletedKey = 0;
     Object deletedValue = null;
 
@@ -160,7 +160,7 @@ public class IntObjectCache<T> extends ObjectCacheBase implements Iterable<T> {
     }
   }
 
-  final public T tryKey(int key) {
+  public final T tryKey(int key) {
     ++myAttempts;
     final int index = searchForCacheEntry(key);
     if (index == 0) {
@@ -187,7 +187,7 @@ public class IntObjectCache<T> extends ObjectCacheBase implements Iterable<T> {
     return cacheEntry.value;
   }
 
-  final public boolean isCached(int key) {
+  public final boolean isCached(int key) {
     return searchForCacheEntry(key) != 0;
   }
 
@@ -286,6 +286,7 @@ public class IntObjectCache<T> extends ObjectCacheBase implements Iterable<T> {
 
   // start of Iterable implementation
 
+  @Override
   public Iterator<T> iterator() {
     return new IntObjectCacheIterator(this);
   }
@@ -298,14 +299,17 @@ public class IntObjectCache<T> extends ObjectCacheBase implements Iterable<T> {
       cache.myCache[0].next = cache.myTop;
     }
 
+    @Override
     public boolean hasNext() {
       return (myCurrentEntry = myCache[myCurrentEntry].next) != 0;
     }
 
+    @Override
     public T next() {
       return myCache[myCurrentEntry].value;
     }
 
+    @Override
     public void remove() {
       removeEntry(myCache[myCurrentEntry].key);
     }

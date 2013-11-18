@@ -9,6 +9,7 @@ import com.intellij.openapi.externalSystem.model.project.LibraryPathType;
 import com.intellij.openapi.externalSystem.service.project.ExternalLibraryPathTypeMapper;
 import com.intellij.openapi.externalSystem.service.project.PlatformFacade;
 import com.intellij.openapi.externalSystem.service.project.ProjectStructureHelper;
+import com.intellij.openapi.externalSystem.util.DisposeAwareProjectChange;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemConstants;
 import com.intellij.openapi.externalSystem.util.Order;
@@ -78,7 +79,7 @@ public class LibraryDataService implements ProjectDataService<LibraryData, Libra
 
     Library library = myProjectStructureHelper.findIdeLibrary(toImport, project);
     if (library != null) {
-      syncPaths(toImport, library, synchronous);
+      syncPaths(toImport, library, project, synchronous);
       return;
     }
     importLibrary(toImport.getName(), libraryFiles, project, synchronous);
@@ -102,9 +103,9 @@ public class LibraryDataService implements ProjectDataService<LibraryData, Libra
                             @NotNull final Project project,
                             boolean synchronous)
   {
-    ExternalSystemApiUtil.executeProjectChangeAction(synchronous, new Runnable() {
+    ExternalSystemApiUtil.executeProjectChangeAction(synchronous, new DisposeAwareProjectChange(project) {
       @Override
-      public void run() {
+      public void execute() {
         // Is assumed to be called from the EDT.
         final LibraryTable libraryTable = myPlatformFacade.getProjectLibraryTable(project);
         final LibraryTable.ModifiableModel projectLibraryModel = libraryTable.getModifiableModel();
@@ -165,9 +166,9 @@ public class LibraryDataService implements ProjectDataService<LibraryData, Libra
     if (libraries.isEmpty()) {
       return;
     }
-    ExternalSystemApiUtil.executeProjectChangeAction(synchronous, new Runnable() {
+    ExternalSystemApiUtil.executeProjectChangeAction(synchronous, new DisposeAwareProjectChange(project) {
       @Override
-      public void run() {
+      public void execute() {
         final LibraryTable libraryTable = myPlatformFacade.getProjectLibraryTable(project);
         final LibraryTable.ModifiableModel model = libraryTable.getModifiableModel();
         try {
@@ -188,7 +189,7 @@ public class LibraryDataService implements ProjectDataService<LibraryData, Libra
     });
   }
 
-  public void syncPaths(@NotNull final LibraryData externalLibrary, @NotNull final Library ideLibrary, boolean synchronous) {
+  public void syncPaths(@NotNull final LibraryData externalLibrary, @NotNull final Library ideLibrary, @NotNull final Project project, boolean synchronous) {
     if (externalLibrary.isUnresolved()) {
       return;
     }
@@ -212,9 +213,9 @@ public class LibraryDataService implements ProjectDataService<LibraryData, Libra
     if (toRemove.isEmpty() && toAdd.isEmpty()) {
       return;
     }
-    ExternalSystemApiUtil.executeProjectChangeAction(synchronous, new Runnable() {
+    ExternalSystemApiUtil.executeProjectChangeAction(synchronous, new DisposeAwareProjectChange(project) {
       @Override
-      public void run() {
+      public void execute() {
         Library.ModifiableModel model = ideLibrary.getModifiableModel();
         try {
           for (Map.Entry<OrderRootType, Set<String>> entry : toRemove.entrySet()) {

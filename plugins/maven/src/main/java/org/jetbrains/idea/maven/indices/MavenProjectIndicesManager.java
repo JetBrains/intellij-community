@@ -19,10 +19,13 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.Consumer;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
 import gnu.trove.THashSet;
 import org.apache.lucene.search.Query;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.model.MavenArtifactInfo;
 import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.model.MavenRemoteRepository;
@@ -91,11 +94,17 @@ public class MavenProjectIndicesManager extends MavenSimpleProjectComponent {
   }
 
   private void scheduleUpdateIndicesList() {
+    scheduleUpdateIndicesList(null);
+  }
+
+  public void scheduleUpdateIndicesList(@Nullable final Consumer<List<MavenIndex>> consumer) {
     myUpdateQueue.queue(new Update(MavenProjectIndicesManager.this) {
       public void run() {
-        List<MavenIndex> newIndices = MavenIndicesManager.getInstance().ensureIndicesExist(
+        myProjectIndices = MavenIndicesManager.getInstance().ensureIndicesExist(
           myProject, getLocalRepository(), collectRemoteRepositoriesIdsAndUrls());
-        myProjectIndices = newIndices;
+        if(consumer != null) {
+          consumer.consume(myProjectIndices);
+        }
       }
     });
   }
@@ -106,7 +115,11 @@ public class MavenProjectIndicesManager extends MavenSimpleProjectComponent {
 
   private Set<Pair<String, String>> collectRemoteRepositoriesIdsAndUrls() {
     Set<Pair<String, String>> result = new THashSet<Pair<String, String>>();
-    for (MavenRemoteRepository each : getMavenProjectManager().getRemoteRepositories()) {
+    Set<MavenRemoteRepository> remoteRepositories = ContainerUtil.newHashSet(getMavenProjectManager().getRemoteRepositories());
+    for (MavenRepositoryProvider repositoryProvider : MavenRepositoryProvider.EP_NAME.getExtensions()) {
+      ContainerUtil.addAll(remoteRepositories, repositoryProvider.getRemoteRepositories(myProject));
+    }
+    for (MavenRemoteRepository each : remoteRepositories) {
       String id = each.getId();
       String url = each.getUrl();
 

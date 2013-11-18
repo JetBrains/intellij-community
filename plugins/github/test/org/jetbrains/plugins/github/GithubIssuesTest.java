@@ -68,7 +68,7 @@ public class GithubIssuesTest extends GithubTest {
       }
     });
 
-    List<Long> expected = Arrays.asList(1L, 2L, 5L, 6L, 7L, 8L, 9L, 10L, 11L, 13L);
+    List<Long> expected = Arrays.asList(1L, 2L, 5L, 6L, 7L, 8L, 9L, 10L, 11L, 13L, 14L);
 
     assertTrue(Comparing.haveEqualElements(issues, expected));
   }

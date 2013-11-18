@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.openapi.projectRoots.impl;
 
 import com.intellij.openapi.projectRoots.Sdk;
@@ -40,24 +39,6 @@ public class SdkListCellRenderer extends ColoredListCellRendererWrapper<Sdk> {
   public SdkListCellRenderer(@NotNull String nullText, boolean showHomePath) {
     myNullText = nullText;
     myShowHomePath = showHomePath;
-  }
-
-  /** @deprecated use {@linkplain #SdkListCellRenderer(String)} (to remove in IDEA 13) */
-  @SuppressWarnings("UnusedDeclaration")
-  public SdkListCellRenderer(final ListCellRenderer listCellRenderer) {
-    this("");
-  }
-
-  /** @deprecated use {@linkplain #SdkListCellRenderer(String)} (to remove in IDEA 13) */
-  @SuppressWarnings("UnusedDeclaration")
-  public SdkListCellRenderer(final String nullText, final ListCellRenderer listCellRenderer) {
-    this(nullText);
-  }
-
-  /** @deprecated use {@linkplain #SdkListCellRenderer(String, boolean)} (to remove in IDEA 13) */
-  @SuppressWarnings("UnusedDeclaration")
-  public SdkListCellRenderer(final String nullText, final boolean showHomePath, final ListCellRenderer listCellRenderer) {
-    this(nullText, showHomePath);
   }
 
   @Override

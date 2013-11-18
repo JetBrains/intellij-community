@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.formatter.FormatterUtil;
 import com.intellij.psi.impl.source.tree.ElementType;
+import com.intellij.psi.impl.source.tree.JavaElementType;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -78,9 +79,9 @@ public class ExtendsListBlock extends AbstractJavaBlock{
   }
 
   private boolean alignList() {
-    if (myNode.getElementType() == ElementType.EXTENDS_LIST || myNode.getElementType() == ElementType.IMPLEMENTS_LIST) {
+    if (myNode.getElementType() == JavaElementType.EXTENDS_LIST || myNode.getElementType() == JavaElementType.IMPLEMENTS_LIST) {
       return mySettings.ALIGN_MULTILINE_EXTENDS_LIST;
-    } else if (myNode.getElementType() == ElementType.THROWS_LIST) {
+    } else if (myNode.getElementType() == JavaElementType.THROWS_LIST) {
       return mySettings.ALIGN_MULTILINE_THROWS_LIST;
     }
     return false;

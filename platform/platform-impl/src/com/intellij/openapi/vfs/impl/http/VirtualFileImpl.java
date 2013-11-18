@@ -18,13 +18,14 @@ package com.intellij.openapi.vfs.impl.http;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.VirtualFileSystem;
-import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.UriUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -64,11 +65,7 @@ class VirtualFileImpl extends HttpVirtualFile {
         }
       });
 
-      int end = path.indexOf("?");
-      if (end != -1) {
-        path = path.substring(0, end);
-      }
-      path = StringUtil.trimEnd(path, "/");
+      path = StringUtil.trimEnd(UriUtil.trimParameters(path), "/");
       int lastSlash = path.lastIndexOf('/');
       if (lastSlash == -1) {
         myParentPath = null;

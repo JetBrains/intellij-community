@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -301,7 +301,7 @@ public class GitCheckinHandlerFactory extends VcsCheckinHandlerFactory {
       final int choice = Messages.showOkCancelDialog(myPanel.getComponent(), XmlStringUtil.wrapInHtml(message), title,
                                                                                                       "Cancel", "Commit",
                                                                                                       Messages.getWarningIcon());
-      if (choice == 1) {
+      if (choice != Messages.OK) {
         return ReturnResult.COMMIT;
       } else {
         return ReturnResult.CLOSE_WINDOW;

@@ -252,11 +252,6 @@ public class ClsParameterImpl extends ClsRepositoryPsiElement<PsiParameterStub> 
   }
 
   @Override
-  public PsiType getTypeNoResolve() {
-    return getType();
-  }
-
-  @Override
   public String toString() {
     return "PsiParameter";
   }

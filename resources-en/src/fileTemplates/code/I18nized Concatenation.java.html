@@ -1,41 +1,44 @@
 <html>
 <body>
-<table border="0" cellpadding="2" cellspacing="0" style="border-collapse: collapse" bordercolor="#111111">
+<table border="0" cellpadding="2" cellspacing="0" style="border-collapse: collapse">
   <tr>
-    <td colspan="3"><font face="verdana" size="-1">
-    This is a built-in template used for replace string concatenation (e.g. <b><i>String s = "Hello " + name;</i></b>)
-    with internationalized Java code expression,
-    e.g. <b><i>String s = MessageFormat.format(myResourceBundle.getString("hello.0"), name);</i></b>.<br>
-    The template is editable. Along with Java expressions and comments, you can also use the predefined variables that
+    <td colspan="2"><font face="verdana" size="-1">
+    This is a built-in template used for replacing a string concatenation (e.g. </font><code>String s = "Hello " + name;</code>)
+    <font face="verdana" size="-1">with an internationalized Java code expression (e.g.</font>
+    <code>String s = MessageFormat.format(&#8203;myResourceBundle.getString(&#8203;"hello.0"), name);</code><font face="verdana" size="-1">).<br>
+    The template is editable. Along with Java expressions and comments, you can also use predefined variables that
     will be then expanded into the corresponding values.</font>
     </td>
   </tr>
 </table>
-<table border="0" cellpadding="5" cellspacing="0" style="border-collapse: collapse" bordercolor="#111111">
+<table border="0" cellpadding="5" cellspacing="0" style="border-collapse: collapse">
   <tr>
     <td colspan="3"><font face="verdana" size="-1">Predefined variables will take the following values:</font></td>
   </tr>
   <tr>
-    <td valign="top"><nobr><font face="verdana" size="-2" color="#7F0000"><b><i>${RESOURCE_BUNDLE}</i></b></font></nobr></td>
+    <td valign="top"><nobr><font face="verdana" size="-2"><b>${RESOURCE_BUNDLE}</b></font></nobr></td>
     <td width="10">&nbsp;</td>
-    <td valign="top"><font face="verdana" size="-1">Expression of type <b><i>java.util.ResourceBundle</i></b>, instance of which is available in this context</font></td>
+    <td valign="top"><font face="verdana" size="-1">Expression of type <b>java.util.ResourceBundle</b>, instance of which is available in this context.</font></td>
   </tr>
   <tr>
-    <td valign="top"><nobr><font face="verdana" size="-2" color="#7F0000"><b><i>${PROPERTY_KEY}</i></b></font></nobr></td>
-    <td valign="top"><nobr><font face="verdana" size="-2" color="#7F0000"><b><i>${PARAMETERS}</i></b></font></nobr></td>
+    <td valign="top"><nobr><font face="verdana" size="-2"><b>${PARAMETERS}</b></font></nobr></td>
     <td width="10">&nbsp;</td>
-    <td valign="top"><font face="verdana" size="-1">Property key name which is specified in the corresponding properties file.
-      Typically it is the value that is used for <b><i>ResourceBundle.getString()</i></b> method parameter.
+    <td valign="top"><font face="verdana" size="-1">Variables used in the string concatenation, usually passed as arguments to the internationalized expression.</font></td>
+  </tr>
+  <tr>
+    <td valign="top"><nobr><font face="verdana" size="-2"><b>${PROPERTY_KEY}</b></font></nobr></td>
+    <td width="10">&nbsp;</td>
+    <td valign="top"><font face="verdana" size="-1">Property key name which is defined in the corresponding properties file.
+      Typically it is the value that is used for <code>ResourceBundle.getString()</code> method parameter.
     </font></td>
   </tr>
   <tr>
-    <td valign="top"><nobr><font face="verdana" size="-2" color="#7F0000"><b><i>${PROPERTY_VALUE}</i></b></font></nobr></td>
+    <td valign="top"><nobr><font face="verdana" size="-2"><b>${PROPERTY_VALUE}</b></font></nobr></td>
     <td width="10">&nbsp;</td>
-    <td valign="top"><font face="verdana" size="-1">Property value which is specified in the corresponding properties file.
-      This is an original Java string literal value.
+    <td valign="top"><font face="verdana" size="-1">Property value which is defined in the corresponding properties file.
+      This is the original Java string literal value.
     </font></td>
   </tr>
-
 </table>
 </body>
 </html>

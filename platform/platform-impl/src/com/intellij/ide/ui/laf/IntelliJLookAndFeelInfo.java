@@ -22,13 +22,13 @@ import javax.swing.*;
 /**
  * @author Konstantin Bulenkov
  */
-public class IntelliJLookAndFeelInfo extends UIManager.LookAndFeelInfo {
+public final class IntelliJLookAndFeelInfo extends UIManager.LookAndFeelInfo {
   public IntelliJLookAndFeelInfo(){
     super(IdeBundle.message("idea.intellij.look.and.feel"), IntelliJLaf.class.getName());
   }
 
   public boolean equals(Object obj){
-    return (obj instanceof IdeaLookAndFeelInfo);
+    return (obj instanceof IntelliJLookAndFeelInfo);
   }
 
   public int hashCode(){

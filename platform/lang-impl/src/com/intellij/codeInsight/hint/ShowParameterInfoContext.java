@@ -16,6 +16,7 @@
 package com.intellij.codeInsight.hint;
 
 import com.intellij.codeInsight.lookup.LookupManager;
+import com.intellij.injected.editor.EditorWindow;
 import com.intellij.lang.parameterInfo.CreateParameterInfoContext;
 import com.intellij.lang.parameterInfo.ParameterInfoHandler;
 import com.intellij.openapi.application.ApplicationManager;
@@ -141,7 +142,8 @@ public class ShowParameterInfoContext implements CreateParameterInfoContext {
         HintHint hintHint = HintManagerImpl.createHintHint(editor, pos.getFirst(), hint, pos.getSecond());
         hintHint.setExplicitClose(true);
 
-        hintManager.showEditorHint(hint, editor, pos.getFirst(), HintManager.HIDE_BY_ESCAPE | HintManager.UPDATE_BY_SCROLLING, 0, false, hintHint);
+        Editor editorToShow = editor instanceof EditorWindow ? ((EditorWindow)editor).getDelegate() : editor;
+        hintManager.showEditorHint(hint, editorToShow, pos.getFirst(), HintManager.HIDE_BY_ESCAPE | HintManager.UPDATE_BY_SCROLLING, 0, false, hintHint);
         new ParameterInfoController(project, editor, elementStart, hint, handler, provider);
       }
     });

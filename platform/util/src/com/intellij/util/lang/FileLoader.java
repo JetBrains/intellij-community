@@ -74,6 +74,7 @@ class FileLoader extends Loader {
     return relativePath;
   }
 
+  @Override
   @Nullable
   Resource getResource(final String name, boolean check) {
     URL url = null;
@@ -115,6 +116,7 @@ class FileLoader extends Loader {
     return null;
   }
 
+  @Override
   void buildCache(final ClasspathCache cache) throws IOException {
     File index = new File(myRootDir, "classpath.index");
     if (index.exists()) {
@@ -151,22 +153,27 @@ class FileLoader extends Loader {
       if (willLoadBytes) getByteBuffer(); // check for existence by creating cached file input stream
     }
 
+    @Override
     public String getName() {
       return myName;
     }
 
+    @Override
     public URL getURL() {
       return myUrl;
     }
 
+    @Override
     public URL getCodeSourceURL() {
       return getBaseURL();
     }
 
+    @Override
     public InputStream getInputStream() throws IOException {
       return new BufferedInputStream(new FileInputStream(myFile));
     }
 
+    @Override
     public int getContentLength() throws IOException {
       return -1;
     }

@@ -84,7 +84,7 @@ public interface ContentEntry extends Synthetic {
   VirtualFile[] getSourceFolderFiles();
 
   /**
-   * Returns the list of excluded roots under this content root.
+   * Returns the list of excluded roots configured under this content root. The result doesn't include synthetic excludes like the module output.
    *
    * @return list of this <code>ContentEntry</code> {@link com.intellij.openapi.roots.ExcludeFolder}s
    */
@@ -92,9 +92,15 @@ public interface ContentEntry extends Synthetic {
   ExcludeFolder[] getExcludeFolders();
 
   /**
+   * @return list of URLs for all excluded roots under this content root including synthetic excludes like the module output
+   */
+  @NotNull
+  List<String> getExcludeFolderUrls();
+
+  /**
    * Returns the list of directories for valid excluded roots under this content root.
    *
-   * @return list of all valid exclude roots.
+   * @return list of all valid exclude roots including synthetic excludes like the module output
    */
   @NotNull
   VirtualFile[] getExcludeFolderFiles();
@@ -178,6 +184,13 @@ public interface ContentEntry extends Synthetic {
    * @param excludeFolder the exclude root to remove (must belong to this content root).
    */
   void removeExcludeFolder(@NotNull ExcludeFolder excludeFolder);
+
+  /**
+   * Removes an exclude root from this content root.
+   * @param url url of the exclude root
+   * @return {@code true} if the exclude root was removed
+   */
+  boolean removeExcludeFolder(@NotNull String url);
 
   void clearExcludeFolders();
 }

@@ -31,6 +31,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Stack;
+import com.siyeh.ig.numeric.UnnecessaryExplicitNumericCastInspection;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -42,7 +43,7 @@ import static com.intellij.codeInsight.ConditionChecker.Type.*;
 import static com.intellij.codeInspection.dataFlow.MethodContract.ValueConstraint;
 import static com.intellij.psi.CommonClassNames.*;
 
-class ControlFlowAnalyzer extends JavaElementVisitor {
+public class ControlFlowAnalyzer extends JavaElementVisitor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.dataFlow.ControlFlowAnalyzer");
   public static final String ORG_JETBRAINS_ANNOTATIONS_CONTRACT = Contract.class.getName();
   private boolean myIgnoreAssertions;
@@ -79,7 +80,7 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
     myAssertionError = createClassType(manager, scope, JAVA_LANG_ASSERTION_ERROR);
     myString = myFactory.createTypeValue(createClassType(manager, scope, JAVA_LANG_STRING), Nullness.NOT_NULL);
     
-    PsiParameter mockVar = JavaPsiFacade.getElementFactory(manager.getProject()).createParameter("$exception$", createClassType(manager, scope, JAVA_LANG_OBJECT));
+    PsiParameter mockVar = JavaPsiFacade.getElementFactory(manager.getProject()).createParameterFromText("java.lang.Object $exception$", null);
     myExceptionHolder = myFactory.getVarFactory().createVariableValue(mockVar, false);
     
     myFields = new HashSet<DfaVariableValue>();
@@ -309,6 +310,14 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
           if (declaration instanceof PsiVariable) {
             myCurrentFlow.removeVariable((PsiVariable)declaration);
           }
+        }
+      }
+    }
+    else if (parent instanceof PsiTryStatement) {
+      PsiResourceList list = ((PsiTryStatement)parent).getResourceList();
+      if (list != null) {
+        for (PsiResourceVariable variable : list.getResourceVariables()) {
+          myCurrentFlow.removeVariable(variable);
         }
       }
     }
@@ -1866,7 +1875,13 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
 
     final PsiTypeElement typeElement = castExpression.getCastType();
     if (typeElement != null && operand != null) {
-      addInstruction(new TypeCastInstruction(castExpression, operand, typeElement.getType()));
+      if (typeElement.getType() instanceof PsiPrimitiveType &&
+          UnnecessaryExplicitNumericCastInspection.isPrimitiveNumericCastNecessary(castExpression)) {
+        addInstruction(new PopInstruction());
+        pushUnknown();
+      } else {
+        addInstruction(new TypeCastInstruction(castExpression, operand, typeElement.getType()));
+      }
     }
     finishElement(castExpression);
   }

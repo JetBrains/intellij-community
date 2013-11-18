@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,10 +22,7 @@ import com.intellij.debugger.settings.*;
 import com.intellij.debugger.ui.breakpoints.*;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
-import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
@@ -338,7 +335,7 @@ public class JavaDebuggerSupport extends DebuggerSupport {
 
   public static Project getCurrentProject() {
     //todo[nik] improve
-    Project project = PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext());
+    Project project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext());
     if (project != null) {
       return project;
     }

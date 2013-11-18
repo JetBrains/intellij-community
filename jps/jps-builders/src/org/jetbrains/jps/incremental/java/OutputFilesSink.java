@@ -29,7 +29,7 @@ import org.jetbrains.jps.incremental.messages.ProgressMessage;
 import org.jetbrains.jps.javac.OutputFileConsumer;
 import org.jetbrains.jps.javac.OutputFileObject;
 
-import javax.tools.*;
+import javax.tools.JavaFileObject;
 import java.io.File;
 import java.io.IOException;
 import java.util.Collections;
@@ -102,39 +102,15 @@ class OutputFilesSink implements OutputFileConsumer {
     }
 
     if (outKind == JavaFileObject.Kind.CLASS) {
-      // generated sources and resources are handled separately
-      try {
-        writeToDisk(fileObject, isTemp);
-      }
-      catch (IOException e) {
-        myContext.processMessage(new CompilerMessage(JavaBuilder.BUILDER_NAME, BuildMessage.Kind.ERROR, e.getMessage()));
+      myContext.processMessage(new ProgressMessage("Writing classes... " + myChunkName));
+      if (!isTemp && srcFile != null) {
+        mySuccessfullyCompiled.add(srcFile);
       }
     }
   }
 
   public Set<File> getSuccessfullyCompiled() {
     return Collections.unmodifiableSet(mySuccessfullyCompiled);
-  }
-
-  private void writeToDisk(@NotNull OutputFileObject fileObject, boolean isTemp) throws IOException {
-    myContext.processMessage(new ProgressMessage("Writing classes... " + myChunkName));
-
-    final File file = fileObject.getFile();
-    final BinaryContent content = fileObject.getContent();
-    if (content == null) {
-      throw new IOException("Missing content for file " + file);
-    }
-
-    content.saveToFile(file);
-
-    final File source = fileObject.getSourceFile();
-    if (!isTemp && source != null) {
-      mySuccessfullyCompiled.add(source);
-      //final String className = fileObject.getClassName();
-      //if (className != null) {
-      //  myContext.processMessage(new ProgressMessage("Compiled " + className));
-      //}
-    }
   }
 
   public void markError(@NotNull final File sourceFile) {

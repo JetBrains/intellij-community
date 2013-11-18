@@ -26,4 +26,9 @@ public class PyStringLiteralLexerTest extends PyLexerTestCase {
     PyLexerTestCase.doLexerTest("u\"\\N{LATIN SMALL LETTER B}\"", new PyStringLiteralLexer(PyTokenTypes.SINGLE_QUOTED_UNICODE),
                                 "Py:SINGLE_QUOTED_UNICODE", "VALID_STRING_ESCAPE_TOKEN", "Py:SINGLE_QUOTED_UNICODE");
   }
+
+  public void testRawBackslashN() {
+    PyLexerTestCase.doLexerTest("r'[\\w\\']'", new PyStringLiteralLexer(PyTokenTypes.SINGLE_QUOTED_STRING), true,
+                                "r'[\\w\\']'");
+  }
 }

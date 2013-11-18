@@ -5,6 +5,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.tmatesoft.svn.core.ISVNCanceller;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 
@@ -29,21 +30,33 @@ public class Command {
   @Nullable private SVNURL myRepositoryUrl;
   @NotNull private SvnTarget myTarget;
 
+  @Nullable private ISVNCanceller myCanceller;
+
   public Command(@NotNull SvnCommandName name) {
     myName = name;
   }
 
-  public void addParameters(@NonNls @NotNull String... parameters) {
-    addParameters(Arrays.asList(parameters));
+  public void put(@NonNls @NotNull String... parameters) {
+    put(Arrays.asList(parameters));
   }
 
-  public void addParameters(@NotNull List<String> parameters) {
+  public void put(@NotNull List<String> parameters) {
     myParameters.addAll(parameters);
   }
 
-  public void setParameters(@NotNull List<String> parameters) {
-    myParameters.clear();
-    addParameters(parameters);
+  public void putIfNotPresent(@NotNull String parameter) {
+    if (!myParameters.contains(parameter)) {
+      myParameters.add(parameter);
+    }
+  }
+
+  @Nullable
+  public ISVNCanceller getCanceller() {
+    return myCanceller;
+  }
+
+  public void setCanceller(@Nullable ISVNCanceller canceller) {
+    myCanceller = canceller;
   }
 
   @Nullable

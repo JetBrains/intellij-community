@@ -101,7 +101,7 @@ class CreateXmlElementIntentionAction implements IntentionAction {
 
   protected void addTextTo(Template template, XmlTag rootTag) {
     String schemaPrefix = rootTag.getPrefixByNamespace(XmlUtil.XML_SCHEMA_URI);
-    if (schemaPrefix.length() > 0) schemaPrefix += ":";
+    if (!schemaPrefix.isEmpty()) schemaPrefix += ":";
 
     template.addTextSegment(
       "<" + schemaPrefix + myDeclarationTagName + " name=\"" + XmlUtil.findLocalNameByQualifiedName(myRef.getCanonicalText()) + "\">"

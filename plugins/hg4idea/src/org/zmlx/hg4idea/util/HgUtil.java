@@ -38,15 +38,15 @@ import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.impl.status.StatusBarUtil;
 import com.intellij.ui.GuiUtils;
+import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.*;
-import org.zmlx.hg4idea.command.HgLogCommand;
 import org.zmlx.hg4idea.command.HgRemoveCommand;
 import org.zmlx.hg4idea.command.HgStatusCommand;
 import org.zmlx.hg4idea.command.HgWorkingCopyRevisionsCommand;
-import org.zmlx.hg4idea.execution.HgCommandException;
 import org.zmlx.hg4idea.execution.HgCommandResult;
 import org.zmlx.hg4idea.execution.ShellCommand;
 import org.zmlx.hg4idea.execution.ShellCommandException;
@@ -306,7 +306,6 @@ public abstract class HgUtil {
     return null;
   }
 
-
   /**
     * Shows a message dialog to enter the name of new branch.
     * @return name of new branch or {@code null} if user has cancelled the dialog.
@@ -351,32 +350,16 @@ public abstract class HgUtil {
   }
 
   @NotNull
-  public static HgFile getFileNameInTargetRevision(@NotNull Project project,
-                                                   @NotNull HgRevisionNumber vcsRevisionNumber,
-                                                   @NotNull HgFile localHgFile) {
-    //change status command execution to log command because the last one is faster,
-    // but need to find file renames manually.
-    //if virtualFile is null - our parent revision does not contain this file,
-    // so this selected localHgFile comes from selected revision from history and his name is result filename
-    if (localHgFile.toFilePath().getVirtualFile() == null) {
-      return localHgFile;
+  public static HgFile getFileNameInTargetRevision(Project project, HgRevisionNumber vcsRevisionNumber, HgFile localHgFile) {
+    HgStatusCommand statCommand = new HgStatusCommand.Builder(true).unknown(false).baseRevision(vcsRevisionNumber).build(project);
+
+    Set<HgChange> changes = statCommand.execute(localHgFile.getRepo());
+
+    for (HgChange change : changes) {
+      if (change.afterFile().equals(localHgFile)) {
+        return change.beforeFile();
+      }
     }
-    HgLogCommand logCommand = new HgLogCommand(project);
-    //--follow could be changed to --branch filter, but the last one is slower
-    logCommand.setFollowCopies(true);
-    try {
-      //usually when 'compare' 2 revision or 'compare with local' performed the localHgFile - is really local copy,
-      //so we need to get all previous revision from current.
-      // But when 'compare with' called from "get Affected path -> compare with..." then localHgFile is hgFile from selected revision,
-      //so if this name was changed then file is not in parent revision and log command could not follow history.
-      return logCommand.getNameThroughCopies(localHgFile, vcsRevisionNumber);
-    }
-    catch (HgCommandException e) {
-      LOG.warn("Could not find filename in target revision: " + localHgFile.toString(), e);
-    }
-    //todo: fix: when filename comes from another revision and working copy contains another file with the same name,
-    //then 'show diff with local' produce inconvenient behaviour.
-    // todo: fix: If performed 'show diff with local' but there are no selected filename in currant working copy - nothing shows.
     return localHgFile;
   }
 
@@ -634,5 +617,50 @@ public abstract class HgUtil {
     cmdArgs.add("-q");
     ShellCommand shellCommand = new ShellCommand(cmdArgs, null, CharsetToolkit.getDefaultSystemCharset());
     return shellCommand.execute();
+  }
+
+  public static List<String> getNamesWithoutHashes(Collection<HgNameWithHashInfo> namesWithHashes) {
+    //return names without duplication (actually for several heads in one branch)
+    List<String> names = new ArrayList<String>();
+    for (HgNameWithHashInfo hash : namesWithHashes) {
+      if (!names.contains(hash.getName())) {
+        names.add(hash.getName());
+      }
+    }
+    return names;
+  }
+
+  @NotNull
+  public static List<String> parseUserNameAndEmail(String authorString) {
+    //maybe return value should be a pair of String not an array
+    List<String> userInfoList = new ArrayList<String>(2);
+    if (authorString == null) {
+      return Arrays.asList("", "");
+    }
+
+    // Vasya Pupkin <vasya.pupkin@jetbrains.com> -> Vasya Pupkin , vasya.pupkin@jetbrains.com
+    final int[] ind = {authorString.indexOf('<'), authorString.indexOf('@'), authorString.indexOf('>')};
+    if (0 < ind[0] && ind[0] < ind[1] && ind[1] < ind[2]) {
+      String email = authorString.substring(ind[1] + 1, ind[2]).trim();
+      userInfoList.add(convertUserName(authorString.substring(0, ind[0])));
+      userInfoList.add(email);
+    }
+
+    // vasya.pupkin@email.com --> vasya pupkin, vasya.pupkin@email.com
+    else if (!authorString.contains(" ") && authorString.contains("@")) { //simple e-mail check. john@localhost
+      final String firstPart = convertUserName(authorString.substring(0, authorString.indexOf('@')));
+      userInfoList.add(firstPart); //user name
+      userInfoList.add(authorString);// email
+    }
+
+    else {
+      userInfoList.add(convertUserName(authorString));
+      userInfoList.add("");
+    }
+    return userInfoList;
+  }
+
+  private static String convertUserName(@NotNull String userNameInfo) {
+    return userNameInfo.trim().replace('.', ' ').replace('_', ' ').replace('-', ' ');
   }
 }

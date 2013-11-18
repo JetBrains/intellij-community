@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,6 +33,7 @@ public interface DiffPolicy {
       myComparisonPolicy = comparisonPolicy;
     }
 
+    @Override
     public DiffFragment[] buildFragments(String text1, String text2) throws FilesTooBigForDiffException {
       String[] strings1 = new LineTokenizer(text1).execute();
       String[] strings2 = new LineTokenizer(text2).execute();
@@ -48,6 +49,7 @@ public interface DiffPolicy {
       myComparisonPolicy = comparisonPolicy;
     }
 
+    @Override
     public DiffFragment[] buildFragments(String text1, String text2) throws FilesTooBigForDiffException {
       return myComparisonPolicy.buildFragments(splitByChar(text1), splitByChar(text2));
     }

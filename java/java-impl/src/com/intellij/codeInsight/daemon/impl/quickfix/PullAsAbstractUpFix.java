@@ -91,7 +91,7 @@ public class PullAsAbstractUpFix extends LocalQuickFixAndIntentionActionOnPsiEle
       collectClassesToPullUp(manager, classesToPullUp, containingClass.getExtendsListTypes());
       collectClassesToPullUp(manager, classesToPullUp, containingClass.getImplementsListTypes());
 
-      if (classesToPullUp.size() == 0) {
+      if (classesToPullUp.isEmpty()) {
         //check visibility
         new ExtractInterfaceHandler().invoke(project, new PsiElement[]{containingClass}, null);
       }
@@ -154,7 +154,7 @@ public class PullAsAbstractUpFix extends LocalQuickFixAndIntentionActionOnPsiEle
       final LinkedHashSet<PsiClass> classesToPullUp = new LinkedHashSet<PsiClass>();
       collectClassesToPullUp(manager, classesToPullUp, containingClass.getExtendsListTypes());
       collectClassesToPullUp(manager, classesToPullUp, containingClass.getImplementsListTypes());
-      if (classesToPullUp.size() == 0) {
+      if (classesToPullUp.isEmpty()) {
         name = "Extract method \'" + methodWithOverrides.getName() + "\' to new interface";
         canBePulledUp = false;
       } else if (classesToPullUp.size() == 1) {

@@ -8,6 +8,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public interface LoggingHandler {
   void print(@NotNull String s);
+  void printHyperlink(@NotNull String url);
 
   void attachToProcess(@NotNull ProcessHandler handler);
 }

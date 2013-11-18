@@ -37,4 +37,9 @@ public interface PsiMethodReferenceExpression extends PsiReferenceExpression {
   PsiType getFunctionalInterfaceType();
 
   boolean isExact();
+
+  /**
+   * @return true if reference is of form ClassType::new
+   */
+  boolean isConstructor();
 }

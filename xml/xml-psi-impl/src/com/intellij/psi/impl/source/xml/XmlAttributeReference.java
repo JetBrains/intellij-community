@@ -55,7 +55,7 @@ public class XmlAttributeReference implements PsiReference {
   public TextRange getRangeInElement() {
     final int parentOffset = myAttribute.getNameElement().getStartOffsetInParent();
     int nsLen = myAttribute.getNamespacePrefix().length();
-    nsLen += nsLen > 0 && myAttribute.getRealLocalName().length() > 0 ? 1 : -nsLen;
+    nsLen += nsLen > 0 && !myAttribute.getRealLocalName().isEmpty() ? 1 : -nsLen;
     return new TextRange(parentOffset + nsLen, parentOffset + myAttribute.getNameElement().getTextLength());
   }
 

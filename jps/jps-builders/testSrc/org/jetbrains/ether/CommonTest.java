@@ -50,7 +50,7 @@ public class CommonTest extends IncrementalTestCase {
 
   public void testDeleteClassAfterCompileErrors() throws Exception {
     setupInitialProject();
-  
+
     doTestBuild(2);
   }
 
@@ -91,18 +91,26 @@ public class CommonTest extends IncrementalTestCase {
   }
 
   public void testDeleteClass3() throws Exception {
-      doTest();
+    doTest();
   }
 
   public void testDeleteClass4() throws Exception {
-      doTest();
+    doTest();
+  }
+
+  public void testDeleteInnerClass() throws Exception {
+    doTest();
+  }
+
+  public void testDeleteInnerClass1() throws Exception {
+    doTest();
   }
 
   public void testAddClass() throws Exception {
-      doTest();
+    doTest();
   }
 
   public void testAddDuplicateClass() throws Exception {
-      doTest();
+    doTest();
   }
 }

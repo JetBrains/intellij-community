@@ -19,7 +19,9 @@ import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.compiler.CompilerConfigurationImpl;
 import com.intellij.compiler.CompilerWorkspaceConfiguration;
 import com.intellij.compiler.MalformedPatternException;
+import com.intellij.compiler.impl.javaCompiler.javac.JavacConfiguration;
 import com.intellij.compiler.server.BuildManager;
+import com.intellij.ide.PowerSaveMode;
 import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.Configurable;
@@ -158,13 +160,18 @@ public class CompilerUIConfigurable implements SearchableConfigurable, Configura
     myCbEnableAutomake.setSelected(workspaceConfiguration.MAKE_PROJECT_ON_SAVE);
     myCbParallelCompilation.setSelected(workspaceConfiguration.PARALLEL_COMPILATION);
     myCbRebuildOnDependencyChange.setSelected(workspaceConfiguration.REBUILD_ON_DEPENDENCY_CHANGE);
-    myHeapSizeField.setText(String.valueOf(workspaceConfiguration.COMPILER_PROCESS_HEAP_SIZE));
+    final int javacPreferred = JavacConfiguration.getOptions(myProject, JavacConfiguration.class).MAXIMUM_HEAP_SIZE; // for compatibility with older projects
+    myHeapSizeField.setText(String.valueOf(workspaceConfiguration.getProcessHeapSize(javacPreferred)));
     final String options = workspaceConfiguration.COMPILER_PROCESS_ADDITIONAL_VM_OPTIONS;
     myVMOptionsField.setText(options == null ? "" : options.trim());
 
     configuration.convertPatterns();
 
     myResourcePatternsField.setText(patternsToString(configuration.getResourceFilePatterns()));
+    
+    myEnableAutomakeLegendLabel.setText("(only works while not running / debugging" + 
+                                        (PowerSaveMode.isEnabled() ? ", disabled in Power Save mode" : "") + 
+                                        ")");
   }
 
   private static String patternsToString(final String[] patterns) {

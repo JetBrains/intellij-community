@@ -26,7 +26,6 @@ import com.intellij.ExtensionPoints;
 import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.execution.*;
 import com.intellij.execution.configurations.*;
-import com.intellij.execution.junit.RuntimeConfigurationProducer;
 import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
@@ -220,12 +219,7 @@ public class TestNGRunnableState extends JavaCommandLineState {
     getJavaParameters().getClassPath().add(PathUtil.getJarPathForClass(ServiceMessageTypes.class));
 
     OSProcessHandler handler = startProcess();
-    TestConsoleProperties testConsoleProperties = new SMTRunnerConsoleProperties(
-      new RuntimeConfigurationProducer.DelegatingRuntimeConfiguration<TestNGConfiguration>(
-        (TestNGConfiguration)getEnvironment().getRunProfile()),
-      TESTNG_TEST_FRAMEWORK_NAME,
-      executor
-    );
+    TestConsoleProperties testConsoleProperties = new SMTRunnerConsoleProperties(config, TESTNG_TEST_FRAMEWORK_NAME, executor);
 
     testConsoleProperties.setIfUndefined(TestConsoleProperties.HIDE_PASSED_TESTS, false);
 

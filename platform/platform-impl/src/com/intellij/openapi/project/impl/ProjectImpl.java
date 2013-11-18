@@ -41,6 +41,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
@@ -207,9 +208,9 @@ public class ProjectImpl extends ComponentManagerImpl implements ProjectEx {
     if (!service) {
       ProgressIndicator indicator = getProgressIndicator();
       if (indicator != null) {
-        indicator.setText2(getComponentName(component));
-  //      indicator.setIndeterminate(false);
-  //      indicator.setFraction(myComponentsRegistry.getPercentageOfComponentsLoaded());
+  //      indicator.setText2(getComponentName(component));
+        indicator.setIndeterminate(false);
+        indicator.setFraction(getPercentageOfComponentsLoaded());
       }
     }
 
@@ -279,15 +280,6 @@ public class ProjectImpl extends ComponentManagerImpl implements ProjectEx {
     return prefix + Integer.toHexString(str.hashCode());
   }
 
-  @SuppressWarnings("deprecation")
-  @Nullable
-  @NonNls
-  @Override
-  public String getLocation() {
-    if (myName == null) return null; // was called before initialized
-    return isDisposed() ? null : getStateStore().getLocation();
-  }
-
   @Override
   @Nullable
   public VirtualFile getWorkspaceFile() {
@@ -308,7 +300,14 @@ public class ProjectImpl extends ComponentManagerImpl implements ProjectEx {
   public void init() {
     long start = System.currentTimeMillis();
 //    ProfilingUtil.startCPUProfiling();
+    final ProgressIndicator progressIndicator = isDefault() ? null : ProgressIndicatorProvider.getGlobalProgressIndicator();
+    if (progressIndicator != null) {
+      progressIndicator.pushState();
+    }
     super.init();
+    if (progressIndicator != null) {
+      progressIndicator.popState();
+    }
 //    ProfilingUtil.captureCPUSnapshot();
     long time = System.currentTimeMillis() - start;
     LOG.info(getComponentConfigurations().length + " project components initialized in " + time + " ms");
@@ -522,7 +521,7 @@ public class ProjectImpl extends ComponentManagerImpl implements ProjectEx {
           }
           else {
             if (Messages.showYesNoDialog(this, "Component could not be reloaded. Reload project?", "Configuration Changed",
-                                         Messages.getQuestionIcon()) == 0) {
+                                         Messages.getQuestionIcon()) == Messages.YES) {
               ProjectManagerEx.getInstanceEx().reloadProject(this);
             }
           }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -59,9 +59,7 @@ public class SmartPointerManagerImpl extends SmartPointerManager {
       if (pointers == null) return;
       PsiDocumentManager psiDocumentManager = PsiDocumentManager.getInstance(file.getProject());
 
-      //noinspection ForLoopReplaceableByForEach
-      for (int i = 0; i < pointers.size(); i++) {
-        SmartPointerEx pointer = pointers.get(i);
+      for (SmartPointerEx pointer : pointers) {
         if (pointer != null) {
           pointer.fastenBelt(offset, cachedRangeMarkers);
         }
@@ -90,9 +88,7 @@ public class SmartPointerManagerImpl extends SmartPointerManager {
       List<SmartPointerEx> pointers = getPointers(file);
       if (pointers == null) return;
 
-      //noinspection ForLoopReplaceableByForEach
-      for (int i = 0; i < pointers.size(); i++) {
-        SmartPointerEx pointer = pointers.get(i);
+      for (SmartPointerEx pointer : pointers) {
         if (pointer != null) {
           pointer.unfastenBelt(offset);
         }

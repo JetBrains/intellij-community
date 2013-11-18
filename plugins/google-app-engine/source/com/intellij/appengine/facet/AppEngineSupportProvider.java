@@ -106,21 +106,23 @@ public class AppEngineSupportProvider extends FacetBasedFrameworkSupportProvider
     final AppEngineSdk sdk = appEngineFacet.getSdk();
     final Artifact artifact = findOrCreateArtifact(appEngineFacet);
 
-    final VirtualFile descriptorDir = AppEngineWebIntegration.getInstance().suggestParentDirectoryForAppEngineWebXml(module, rootModel);
+    AppEngineWebIntegration webIntegration = AppEngineWebIntegration.getInstance();
+    final VirtualFile descriptorDir = webIntegration.suggestParentDirectoryForAppEngineWebXml(module, rootModel);
     if (descriptorDir != null) {
       VirtualFile descriptor = createFileFromTemplate(AppEngineTemplateGroupDescriptorFactory.APP_ENGINE_WEB_XML_TEMPLATE, descriptorDir,
                                                       AppEngineUtil.APP_ENGINE_WEB_XML_NAME);
       if (descriptor != null) {
-        AppEngineWebIntegration.getInstance().addDescriptor(artifact, module.getProject(), descriptor);
+        webIntegration.addDescriptor(artifact, module.getProject(), descriptor);
       }
     }
 
     final Project project = module.getProject();
-    AppEngineWebIntegration.getInstance().setupRunConfiguration(rootModel, sdk, artifact, project);
+    webIntegration.setupRunConfiguration(sdk, artifact, project);
+    webIntegration.addDevServerToModuleDependencies(rootModel, sdk);
 
     final Library apiJar = addProjectLibrary(module, "AppEngine API", sdk.getLibUserDirectoryPath(), VirtualFile.EMPTY_ARRAY);
     rootModel.addLibraryEntry(apiJar);
-    AppEngineWebIntegration.getInstance().addLibraryToArtifact(apiJar, artifact, project);
+    webIntegration.addLibraryToArtifact(apiJar, artifact, project);
 
     if (persistenceApi != null) {
       facetConfiguration.setRunEnhancerOnMake(true);
@@ -142,7 +144,7 @@ public class AppEngineSupportProvider extends FacetBasedFrameworkSupportProvider
         else {
           final VirtualFile file = createFileFromTemplate(AppEngineTemplateGroupDescriptorFactory.APP_ENGINE_JPA_CONFIG_TEMPLATE, metaInf, AppEngineUtil.JPA_CONFIG_XML_NAME);
           if (file != null) {
-            AppEngineWebIntegration.getInstance().setupJpaSupport(module, file);
+            webIntegration.setupJpaSupport(module, file);
           }
         }
       }
@@ -151,7 +153,7 @@ public class AppEngineSupportProvider extends FacetBasedFrameworkSupportProvider
       }
       final Library library = addProjectLibrary(module, "AppEngine ORM", sdk.getOrmLibDirectoryPath(), sdk.getOrmLibSources());
       rootModel.addLibraryEntry(library);
-      AppEngineWebIntegration.getInstance().addLibraryToArtifact(library, artifact, project);
+      webIntegration.addLibraryToArtifact(library, artifact, project);
     }
   }
 

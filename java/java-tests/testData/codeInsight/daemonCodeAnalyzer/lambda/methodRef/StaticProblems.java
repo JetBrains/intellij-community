@@ -115,10 +115,10 @@ class MyTest2 {
     static void call3(I1 s) {}
     static void call3(I2 s) {}
     static {
-          call3(<error descr="Non-static method cannot be referenced from a static context">MyTest2::m1</error>);
-          call3(MyTest2::m2);
-          call3(MyTest2::m3);
-          call3(<error descr="Non-static method cannot be referenced from a static context">MyTest2::m4</error>);
+          call3<error descr="Cannot resolve method 'call3(<method reference>)'">(MyTest2::m1)</error>;
+          call3<error descr="Cannot resolve method 'call3(<method reference>)'">(MyTest2::m2)</error>;
+          call3<error descr="Cannot resolve method 'call3(<method reference>)'">(MyTest2::m3)</error>;
+          call3<error descr="Cannot resolve method 'call3(<method reference>)'">(MyTest2::m4)</error>;
     }
 }
 

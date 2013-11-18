@@ -15,7 +15,6 @@
  */
 package com.intellij.lang.ant.config.explorer;
 
-import com.intellij.icons.AllIcons;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.lang.ant.config.AntBuildFile;
 import com.intellij.lang.ant.config.AntBuildFileBase;
@@ -26,6 +25,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.ui.HtmlListCellRenderer;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
+import icons.AntIcons;
 import org.jetbrains.annotations.NotNull;
 
 final class AntBuildFileNodeDescriptor extends AntNodeDescriptor {
@@ -54,7 +54,7 @@ final class AntBuildFileNodeDescriptor extends AntNodeDescriptor {
     if (buildModel != null) {
       AntTargetNodeDescriptor.addShortcutText(buildModel.getDefaultTargetActionId(), myAppearance);
     }
-    setIcon(AllIcons.Ant.Build);
+    myAppearance.setIcon(AntIcons.Build);
     myName = myBuildFile.getPresentableName();
     return !Comparing.equal(myAppearance, oldAppearance);
   }

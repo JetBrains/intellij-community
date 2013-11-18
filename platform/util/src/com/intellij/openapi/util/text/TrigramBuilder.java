@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,13 +20,6 @@
 package com.intellij.openapi.util.text;
 
 import gnu.trove.TIntHashSet;
-import gnu.trove.TIntObjectHashMap;
-
-import java.io.File;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
 
 public class TrigramBuilder {
   private TrigramBuilder() {

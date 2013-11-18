@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -125,14 +125,14 @@ public abstract class EditorAction extends AnAction implements DumbAware {
   }
 
   private static DataContext getProjectAwareDataContext(final Editor editor, @NotNull final DataContext original) {
-    if (PlatformDataKeys.PROJECT.getData(original) == editor.getProject()) {
+    if (CommonDataKeys.PROJECT.getData(original) == editor.getProject()) {
       return original;
     }
 
     return new DataContext() {
       @Override
       public Object getData(String dataId) {
-        if (PlatformDataKeys.PROJECT.is(dataId)) {
+        if (CommonDataKeys.PROJECT.is(dataId)) {
           return editor.getProject();
         }
         return original.getData(dataId);

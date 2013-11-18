@@ -85,20 +85,19 @@ public class SelectionQuotingTypedHandler extends TypedHandlerDelegate {
     return super.checkAutoPopup(c, project, editor, psiFile);
   }
 
-  private boolean shouldSkipReplacementOfQuotesOrBraces(PsiFile psiFile, Editor editor, String selectedText, char c) {
+  private static boolean shouldSkipReplacementOfQuotesOrBraces(PsiFile psiFile, Editor editor, String selectedText, char c) {
     for(DequotingFilter filter: Extensions.getExtensions(EP_NAME)) {
       if (filter.skipReplacementQuotesOrBraces(psiFile, editor, selectedText, c)) return true;
     }
     return false;
   }
 
-  private static char getMatchingDelimiter(final char c) {
-    char c2 = c;
-    if (c == '(') c2 = ')';
-    if (c == '[') c2 = ']';
-    if (c == '{') c2 = '}';
-    if (c == '<') c2 = '>';
-    return c2;
+  private static char getMatchingDelimiter(char c) {
+    if (c == '(') return ')';
+    if (c == '[') return ']';
+    if (c == '{') return '}';
+    if (c == '<') return '>';
+    return c;
   }
 
   private static boolean isDelimiter(final char c) {
@@ -110,7 +109,7 @@ public class SelectionQuotingTypedHandler extends TypedHandlerDelegate {
   }
 
   private static boolean isQuote(final char c) {
-    return c == '"' || c == '\'';
+    return c == '"' || c == '\'' || c == '`';
   }
 
   private static boolean isSimilarDelimiters(final char c1, final char c2) {

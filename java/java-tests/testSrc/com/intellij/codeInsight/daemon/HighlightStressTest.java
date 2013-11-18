@@ -226,6 +226,7 @@ public class HighlightStressTest extends LightDaemonAnalyzerTestCase {
     }
     final String text = imports + "\n class X {{\n" + usages + "}}";
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
       public void run() {
         getEditor().getDocument().setText(text);
       }

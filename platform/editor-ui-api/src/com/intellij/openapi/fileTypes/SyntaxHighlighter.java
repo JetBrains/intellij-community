@@ -17,6 +17,8 @@ package com.intellij.openapi.fileTypes;
 
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
+import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.extensions.KeyedFactoryEPBean;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 
@@ -27,13 +29,15 @@ import org.jetbrains.annotations.NotNull;
  * @see SyntaxHighlighterFactory#getSyntaxHighlighter(com.intellij.lang.Language, com.intellij.openapi.project.Project, com.intellij.openapi.vfs.VirtualFile)
  */
 public interface SyntaxHighlighter {
+  ExtensionPointName<KeyedFactoryEPBean> EP_NAME = ExtensionPointName.create("com.intellij.syntaxHighlighter");
+
   /**
    * @deprecated
    * @see SyntaxHighlighterFactory#getSyntaxHighlighter(com.intellij.openapi.project.Project, com.intellij.openapi.vfs.VirtualFile)
    * @see SyntaxHighlighterFactory#getSyntaxHighlighter(com.intellij.lang.Language, com.intellij.openapi.project.Project, com.intellij.openapi.vfs.VirtualFile)
    */
   SyntaxHighlighterProvider PROVIDER =
-    new FileTypeExtensionFactory<SyntaxHighlighterProvider>(SyntaxHighlighterProvider.class, "com.intellij.syntaxHighlighter").get();
+    new FileTypeExtensionFactory<SyntaxHighlighterProvider>(SyntaxHighlighterProvider.class, EP_NAME).get();
 
   /**
    * Returns the lexer used for highlighting the file. The lexer is invoked incrementally when the file is changed, so it must be

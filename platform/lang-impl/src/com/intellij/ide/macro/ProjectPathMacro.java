@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,8 +17,8 @@
 package com.intellij.ide.macro;
 
 import com.intellij.ide.IdeBundle;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.OrderEnumerator;
 
@@ -35,7 +35,7 @@ public final class ProjectPathMacro extends Macro {
 
   @Override
   public String expand(DataContext dataContext) {
-    Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+    Project project = CommonDataKeys.PROJECT.getData(dataContext);
     if (project == null) return null;
     return OrderEnumerator.orderEntries(project).withoutSdk().withoutLibraries().getSourcePathsList().getPathsString();
   }

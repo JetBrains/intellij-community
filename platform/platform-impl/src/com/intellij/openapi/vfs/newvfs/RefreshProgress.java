@@ -46,6 +46,7 @@ public class RefreshProgress extends ProgressIndicatorBase {
   private final String myMessage;
 
   private RefreshProgress(@NotNull String message) {
+    super(true);
     myMessage = message;
   }
 
@@ -74,11 +75,6 @@ public class RefreshProgress extends ProgressIndicatorBase {
         }
       }
     });
-  }
-
-  @Override
-  protected boolean isReuseable() {
-    return true;
   }
 
   @Override

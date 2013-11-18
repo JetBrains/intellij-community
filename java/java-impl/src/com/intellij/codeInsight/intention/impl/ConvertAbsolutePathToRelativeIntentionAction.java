@@ -20,14 +20,10 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
-import com.intellij.psi.impl.source.resolve.reference.impl.PsiMultiReference;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReference;
-import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceOwner;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceSet;
-import com.intellij.psi.impl.source.resolve.reference.impl.providers.PsiFileReference;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * @author spleaner
@@ -41,7 +37,7 @@ public class ConvertAbsolutePathToRelativeIntentionAction extends BaseIntentionA
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     final PsiReference reference = file.findReferenceAt(editor.getCaretModel().getOffset());
-    final FileReference fileReference = reference == null ? null : findFileReference(reference);
+    final FileReference fileReference = reference == null ? null : FileReference.findFileReference(reference);
 
     if (fileReference != null) {
       final FileReferenceSet set = fileReference.getFileReferenceSet();
@@ -52,26 +48,6 @@ public class ConvertAbsolutePathToRelativeIntentionAction extends BaseIntentionA
     }
 
     return false;
-  }
-
-  @Nullable
-  private static FileReference findFileReference(@NotNull final PsiReference original) {
-    if (original instanceof PsiMultiReference) {
-      final PsiMultiReference multiReference = (PsiMultiReference)original;
-      for (PsiReference reference : multiReference.getReferences()) {
-        if (reference instanceof FileReference) {
-          return (FileReference)reference;
-        }
-      }
-    }
-    else if (original instanceof FileReferenceOwner) {
-      final PsiFileReference fileReference = ((FileReferenceOwner)original).getLastFileReference();
-      if (fileReference instanceof FileReference) {
-        return (FileReference)fileReference;
-      }
-    }
-
-    return null;
   }
 
   @Override
@@ -85,7 +61,7 @@ public class ConvertAbsolutePathToRelativeIntentionAction extends BaseIntentionA
     if (!FileModificationService.getInstance().prepareFileForWrite(file)) return;
 
     final PsiReference reference = file.findReferenceAt(editor.getCaretModel().getOffset());
-    final FileReference fileReference = reference == null ? null : findFileReference(reference);
+    final FileReference fileReference = reference == null ? null : FileReference.findFileReference(reference);
     if (fileReference != null) {
       final FileReference lastReference = fileReference.getFileReferenceSet().getLastReference();
       if (lastReference != null) lastReference.bindToElement(lastReference.resolve(), !isConvertToRelative());

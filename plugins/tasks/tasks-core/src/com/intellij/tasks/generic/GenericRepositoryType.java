@@ -3,8 +3,8 @@ package com.intellij.tasks.generic;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.JDOMUtil;
-import com.intellij.tasks.TaskRepositorySubtype;
 import com.intellij.tasks.TaskRepository;
+import com.intellij.tasks.TaskRepositorySubtype;
 import com.intellij.tasks.config.TaskRepositoryEditor;
 import com.intellij.tasks.impl.BaseRepositoryType;
 import com.intellij.util.Consumer;
@@ -61,7 +61,8 @@ public class GenericRepositoryType extends BaseRepositoryType<GenericRepository>
       this,
       new AsanaRepository(),
       new AssemblaRepository(),
-      new SprintlyRepository()
+      new SprintlyRepository(),
+      new GitlabRepository()
     );
   }
 
@@ -124,6 +125,12 @@ public class GenericRepositoryType extends BaseRepositoryType<GenericRepository>
   public final class SprintlyRepository extends GenericSubtype {
     public SprintlyRepository() {
       super("Sprintly", TasksIcons.Sprintly);
+    }
+  }
+
+  public final class GitlabRepository extends GenericSubtype {
+    public GitlabRepository() {
+      super("Gitlab", TasksIcons.Gitlab);
     }
   }
 }

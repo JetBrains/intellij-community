@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,8 @@
  * @author max
  */
 package com.intellij.util.io;
+
+import org.jetbrains.annotations.NotNull;
 
 class PoolPageKey implements Comparable<PoolPageKey> {
   private RandomAccessDataFile owner;
@@ -51,7 +53,8 @@ class PoolPageKey implements Comparable<PoolPageKey> {
     this.offset = offset;
   }
 
-  public int compareTo(final PoolPageKey o) {
+  @Override
+  public int compareTo(@NotNull final PoolPageKey o) {
     if (owner != o.owner) {
       return owner.hashCode() - o.owner.hashCode();
     }

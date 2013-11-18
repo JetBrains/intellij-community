@@ -52,6 +52,7 @@ import java.util.List;
  * User: spLeaner
  */
 public class IdeStatusBarImpl extends JComponent implements StatusBarEx {
+  private static final int MIN_ICON_HEIGHT = 18;
   private final InfoAndProgressPanel myInfoAndProgressPanel;
   private IdeFrame myFrame;
 
@@ -174,6 +175,16 @@ public class IdeStatusBarImpl extends JComponent implements StatusBarEx {
 
   public IdeStatusBarImpl() {
     this(null);
+  }
+
+  @Override
+  public Dimension getPreferredSize() {
+    Dimension size = super.getPreferredSize();
+    if (size == null) return null;
+    
+    Insets insets = getInsets();
+    int minHeight = insets.top + insets.bottom + MIN_ICON_HEIGHT;
+    return new Dimension(size.width, Math.max(size.height, minHeight));
   }
 
   @Override
@@ -839,7 +850,7 @@ public class IdeStatusBarImpl extends JComponent implements StatusBarEx {
 
     @Override
     public Dimension getMinimumSize() {
-      return new Dimension(24, 18);
+      return new Dimension(24, MIN_ICON_HEIGHT);
     }
 
     @Override

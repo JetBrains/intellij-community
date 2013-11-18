@@ -31,7 +31,8 @@ import com.intellij.util.indexing.FileContent;
  */
 public class ClassFileStubBuilder implements BinaryFileStubBuilder {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.compiled.ClassFileStubBuilder");
-  public static final int STUB_VERSION = JavaFileElementType.STUB_VERSION + 6;
+
+  public static final int STUB_VERSION = JavaFileElementType.STUB_VERSION + 7;
 
   @Override
   public boolean acceptsFile(final VirtualFile file) {

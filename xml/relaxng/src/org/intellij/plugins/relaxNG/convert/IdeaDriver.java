@@ -139,7 +139,7 @@ public class IdeaDriver {
             if (file.exists()) {
               final String msg = "The file '" + file.getAbsolutePath() + "' already exists. Overwrite it?";
               final int choice = Messages.showYesNoDialog(myProject, msg, "Output File Exists", Messages.getWarningIcon());
-              if (choice == 0) {
+              if (choice == Messages.YES) {
                 return super.open(sourceUri, encoding);
               } else if (choice == 1) {
                 throw new CanceledException();

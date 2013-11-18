@@ -38,8 +38,8 @@ public class PsiImportStatementStubImpl extends StubBase<PsiImportStatementBase>
   private final StringRef myText;
   private SoftReference<PsiJavaCodeReferenceElement> myReference = null;
 
-  private final static int ON_DEMAND = 0x01;
-  private final static int STATIC = 0x02;
+  private static final int ON_DEMAND = 0x01;
+  private static final int STATIC = 0x02;
 
   public PsiImportStatementStubImpl(final StubElement parent, final String text, final byte flags) {
     this(parent, StringRef.fromString(text), flags);

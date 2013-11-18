@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -77,8 +77,8 @@ public class FileReferenceSet {
   private Collection<PsiFileSystemItem> myDefaultContexts;
   private final boolean myEndingSlashNotAllowed;
   private boolean myEmptyPathAllowed;
-  private @Nullable Map<CustomizableReferenceProvider.CustomizationKey, Object> myOptions;
-  private @Nullable FileType[] mySuitableFileTypes;
+  @Nullable private Map<CustomizableReferenceProvider.CustomizationKey, Object> myOptions;
+  @Nullable private FileType[] mySuitableFileTypes;
 
   public FileReferenceSet(String str,
                           PsiElement element,
@@ -174,7 +174,7 @@ public class FileReferenceSet {
     this(str, element, startInElement, provider, isCaseSensitive, endingSlashNotAllowed, null);
   }
 
-  public FileReferenceSet(final @NotNull PsiElement element) {
+  public FileReferenceSet(@NotNull final PsiElement element) {
 
     myElement = element;
     TextRange range = ElementManipulators.getValueTextRange(element);
@@ -350,13 +350,13 @@ public class FileReferenceSet {
       final Project project = file.getProject();
       for (FileReferenceHelper helper : helpers) {
         if (helper.isMine(project, virtualFile)) {
-          if (list.size() > 0 && helper.isFallback()) {
+          if (!list.isEmpty() && helper.isFallback()) {
             continue;
           }
           list.addAll(helper.getContexts(project, virtualFile));
         }
       }
-      if (list.size() > 0) {
+      if (!list.isEmpty()) {
         return list;
       }
       final VirtualFile parent = virtualFile.getParent();
@@ -394,7 +394,7 @@ public class FileReferenceSet {
   }
 
   @NotNull
-  public static Collection<PsiFileSystemItem> getAbsoluteTopLevelDirLocations(final @NotNull PsiFile file) {
+  public static Collection<PsiFileSystemItem> getAbsoluteTopLevelDirLocations(@NotNull final PsiFile file) {
 
     final VirtualFile virtualFile = file.getVirtualFile();
     if (virtualFile == null) {
@@ -410,7 +410,7 @@ public class FileReferenceSet {
     final ArrayList<PsiFileSystemItem> list = new ArrayList<PsiFileSystemItem>();
     for (FileReferenceHelper helper : helpers) {
       if (helper.isMine(project, virtualFile)) {
-        if (helper.isFallback() && list.size() > 0) {
+        if (helper.isFallback() && !list.isEmpty()) {
           continue;
         }
         final Collection<PsiFileSystemItem> roots = helper.getRoots(module);

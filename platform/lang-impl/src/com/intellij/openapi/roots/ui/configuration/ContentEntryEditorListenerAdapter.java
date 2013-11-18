@@ -47,7 +47,7 @@ public class ContentEntryEditorListenerAdapter implements ContentEntryEditor.Con
   }
 
   @Override
-  public void folderIncluded(@NotNull ContentEntryEditor editor, VirtualFile file) {
+  public void folderIncluded(@NotNull ContentEntryEditor editor, String fileUrl) {
   }
 
   @Override

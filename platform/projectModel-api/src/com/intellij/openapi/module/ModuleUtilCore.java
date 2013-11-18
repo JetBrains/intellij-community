@@ -79,13 +79,11 @@ public class ModuleUtilCore {
 
   @Nullable
   public static Module findModuleForPsiElement(@NotNull PsiElement element) {
+    if (!element.isValid()) {
+      return null;
+    }
     PsiFile containingFile = element.getContainingFile();
-    if (containingFile == null) {
-      if (!element.isValid()) return null;
-    }
-    else {
-      if (!containingFile.isValid()) return null;
-    }
+    if (containingFile != null && !containingFile.isValid()) return null;
 
     Project project = (containingFile == null ? element : containingFile).getProject();
     if (project.isDefault()) return null;

@@ -15,9 +15,13 @@
  */
 package com.jetbrains.python.testing;
 
-import com.intellij.execution.configurations.*;
+import com.intellij.execution.configurations.ConfigurationFactory;
+import com.intellij.execution.configurations.ConfigurationType;
+import com.intellij.execution.configurations.ConfigurationTypeUtil;
+import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.openapi.project.Project;
 import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.run.PythonConfigurationFactoryBase;
 import com.jetbrains.python.testing.attest.PythonAtTestRunConfiguration;
 import com.jetbrains.python.testing.doctest.PythonDocTestRunConfiguration;
 import com.jetbrains.python.testing.nosetest.PythonNoseTestRunConfiguration;
@@ -44,7 +48,7 @@ public class PythonTestConfigurationType implements ConfigurationType {
     return ConfigurationTypeUtil.findConfigurationType(PythonTestConfigurationType.class);
   }
 
-  private static class PythonUnitTestConfigurationFactory extends ConfigurationFactory {
+  private static class PythonUnitTestConfigurationFactory extends PythonConfigurationFactoryBase {
     protected PythonUnitTestConfigurationFactory(ConfigurationType configurationType) {
       super(configurationType);
     }
@@ -60,7 +64,7 @@ public class PythonTestConfigurationType implements ConfigurationType {
     }
   }
 
-  private static class PythonDocTestConfigurationFactory extends ConfigurationFactory {
+  private static class PythonDocTestConfigurationFactory extends PythonConfigurationFactoryBase {
     protected PythonDocTestConfigurationFactory(ConfigurationType configurationType) {
       super(configurationType);
     }
@@ -76,7 +80,7 @@ public class PythonTestConfigurationType implements ConfigurationType {
     }
   }
 
-  private static class PythonPyTestConfigurationFactory extends ConfigurationFactory {
+  private static class PythonPyTestConfigurationFactory extends PythonConfigurationFactoryBase {
     protected PythonPyTestConfigurationFactory(ConfigurationType configurationType) {
       super(configurationType);
     }
@@ -92,7 +96,7 @@ public class PythonTestConfigurationType implements ConfigurationType {
     }
   }
 
-  private static class PythonNoseTestConfigurationFactory extends ConfigurationFactory {
+  private static class PythonNoseTestConfigurationFactory extends PythonConfigurationFactoryBase {
     protected PythonNoseTestConfigurationFactory(ConfigurationType configurationType) {
       super(configurationType);
     }
@@ -108,7 +112,7 @@ public class PythonTestConfigurationType implements ConfigurationType {
     }
   }
 
-  private static class PythonAtTestConfigurationFactory extends ConfigurationFactory {
+  private static class PythonAtTestConfigurationFactory extends PythonConfigurationFactoryBase {
     protected PythonAtTestConfigurationFactory(ConfigurationType configurationType) {
       super(configurationType);
     }

@@ -17,6 +17,7 @@
 package org.intellij.plugins.xsltDebugger.ui;
 
 import com.intellij.ide.DataManager;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
@@ -307,7 +308,7 @@ public class GeneratedStructureModel extends DefaultTreeModel {
 
     public void navigate(boolean requestFocus) {
       final OutputEventQueue.NodeEvent event = getUserObject();
-      final Project project = (Project)DataManager.getInstance().getDataContext().getData(PlatformDataKeys.PROJECT.getName());
+      final Project project = (Project)DataManager.getInstance().getDataContext().getData(CommonDataKeys.PROJECT.getName());
       XsltDebuggerSession.openLocation(project, event.getURI(), event.getLineNumber() - 1);
     }
 

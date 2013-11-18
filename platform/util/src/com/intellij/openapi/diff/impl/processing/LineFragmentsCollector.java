@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -55,7 +55,7 @@ class LineFragmentsCollector {
   }
 
   private static int countLines(String text) {
-    if (text == null || text.length() == 0) return 0;
+    if (text == null || text.isEmpty()) return 0;
     int count = StringUtil.countNewLines(text);
     if (text.charAt(text.length()-1) != '\n') count++;
     return count;

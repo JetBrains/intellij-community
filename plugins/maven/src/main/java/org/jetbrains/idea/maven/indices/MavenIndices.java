@@ -112,8 +112,9 @@ public class MavenIndices {
         File f = new File(parent, name);
         if (!f.exists()) {
           boolean createSuccessFull = f.mkdirs();
-          assert createSuccessFull || f.exists();
-          return f;
+          if (createSuccessFull) {
+            return f;
+          }
         }
       }
       throw new RuntimeException("No available dir found");

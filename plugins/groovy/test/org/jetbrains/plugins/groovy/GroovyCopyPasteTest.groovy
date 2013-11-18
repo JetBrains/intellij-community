@@ -23,7 +23,7 @@ import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
  * @author peter
  */
 class GroovyCopyPasteTest extends LightCodeInsightFixtureTestCase {
-  int myAddImportsOld
+  private int myAddImportsOld
 
   @Override
   protected void setUp() throws Exception {
@@ -151,5 +151,22 @@ print "\\$<caret>${foo}"
 ''')
   }
 
+  void testPasteEnumConstant() {
+    myFixture.addClass('''\
+package pack;
+enum E {
+  CONST
+}
+''')
+    doTest('''\
+import static pack.E.CONST
+print <selection>CONST</selection>
+''', '''\
+print <caret>
+''', '''\
+import static pack.E.CONST
 
+print CONST<caret>
+''')
+  }
 }

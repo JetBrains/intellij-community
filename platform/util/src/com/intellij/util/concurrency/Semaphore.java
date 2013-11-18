@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,10 +22,12 @@ import java.util.concurrent.locks.AbstractQueuedSynchronizer;
 
 public class Semaphore {
   private static final class Sync extends AbstractQueuedSynchronizer {
+    @Override
     public int tryAcquireShared(int acquires) {
       return getState() == 0 ? 1 : -1;
     }
 
+    @Override
     public boolean tryReleaseShared(int releases) {
       // Decrement count; signal when transition to zero
       while (true) {

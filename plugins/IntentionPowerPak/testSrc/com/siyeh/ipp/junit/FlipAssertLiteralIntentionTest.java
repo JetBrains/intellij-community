@@ -1,7 +1,3 @@
-/**
- * (c) 2013 Desert Island BV
- * created: 08 09 2013
- */
 package com.siyeh.ipp.junit;
 
 import com.siyeh.IntentionPowerPackBundle;

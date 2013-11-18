@@ -20,6 +20,7 @@ import com.intellij.dvcs.repo.Repository;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.zmlx.hg4idea.HgNameWithHashInfo;
 
 import java.util.Collection;
 
@@ -38,10 +39,16 @@ public interface HgRepository extends Repository {
   String getCurrentBranch();
 
   @NotNull
-  Collection<String> getBranches();
+  Collection<HgNameWithHashInfo> getBranches();
 
   @NotNull
-  Collection<String> getBookmarks();
+  Collection<HgNameWithHashInfo> getBookmarks();
+
+  @NotNull
+  Collection<HgNameWithHashInfo> getTags();
+
+  @NotNull
+  Collection<HgNameWithHashInfo> getLocalTags();
 
   @Nullable
   String getCurrentBookmark();

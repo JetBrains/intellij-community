@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -178,7 +178,7 @@ public class NamePathComponent extends JPanel{
       int answer = Messages.showYesNoDialog(
         IdeBundle.message("prompt.overwrite.project.file", projectFile.getAbsolutePath(), context.getPresentationName()),
         IdeBundle.message("title.file.already.exists"), Messages.getQuestionIcon());
-      shouldContinue = (answer == 0);
+      shouldContinue = (answer == Messages.YES);
     }
 
     return shouldContinue;

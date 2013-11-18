@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInsight.completion;
 
+import com.intellij.application.options.editor.WebEditorOptions;
 import com.intellij.ide.highlighter.XmlFileType;
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
 
@@ -25,14 +26,27 @@ import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCa
 public class XmlTypedHandlersTest extends LightPlatformCodeInsightFixtureTestCase {
 
   public void testClosingTag() throws Exception {
-    myFixture.configureByText(XmlFileType.INSTANCE, "<foo><<caret>");
-    myFixture.type('/');
-    myFixture.checkResult("<foo></foo>");
+    doTest("<foo><<caret>", '/', "<foo></foo>");
   }
 
   public void testGreedyClosing() {
-    myFixture.configureByText(XmlFileType.INSTANCE, "<foo><<caret>foo>");
-    myFixture.type('/');
-    myFixture.checkResult("<foo></foo>");
+    doTest("<foo><<caret>foo>", '/', "<foo></foo>");
+  }
+
+  public void testValueQuotas() throws Exception {
+    doTest("<foo bar<caret>", '=', "<foo bar=\"<caret>\"");
+    WebEditorOptions.getInstance().setInsertQuotesForAttributeValue(false);
+    try {
+      doTest("<foo bar<caret>", '=', "<foo bar=<caret>");
+    }
+    finally {
+      WebEditorOptions.getInstance().setInsertQuotesForAttributeValue(true);
+    }
+  }
+
+  private void doTest(String text, char c, String result) {
+    myFixture.configureByText(XmlFileType.INSTANCE, text);
+    myFixture.type(c);
+    myFixture.checkResult(result);
   }
 }

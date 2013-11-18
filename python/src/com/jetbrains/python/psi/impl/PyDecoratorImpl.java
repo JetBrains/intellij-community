@@ -172,10 +172,10 @@ public class PyDecoratorImpl extends StubBasedPsiElementBase<PyDecoratorStub> im
 
   public PsiElement setName(@NonNls @NotNull String name) throws IncorrectOperationException {
     final ASTNode node = getNode();
-    final ASTNode name_node = node.findChildByType(PyTokenTypes.IDENTIFIER);
-    if (name_node != null) {
-      final ASTNode nameElement = PyElementGenerator.getInstance(getProject()).createNameIdentifier(name);
-      node.replaceChild(name_node, nameElement);
+    final ASTNode nameNode = node.findChildByType(PyTokenTypes.IDENTIFIER);
+    if (nameNode != null) {
+      final ASTNode nameElement = PyUtil.createNewName(this, name);
+      node.replaceChild(nameNode, nameElement);
       return this;
     }
     else {

@@ -22,7 +22,6 @@ import com.intellij.history.LocalHistoryAction;
 import com.intellij.ide.DataManager;
 import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
@@ -367,9 +366,18 @@ public abstract class BaseRefactoringProcessor implements Runnable {
     nonCodeFiles.remove(null);
     dynamicUsagesCodeFiles.remove(null);
 
-    presentation.setCodeUsagesString(descriptor.getCodeReferencesText(codeUsageCount, codeFiles.size()));
+    String codeReferencesText = descriptor.getCodeReferencesText(codeUsageCount, codeFiles.size());
+    presentation.setCodeUsagesString(codeReferencesText);
     presentation.setNonCodeUsagesString(descriptor.getCommentReferencesText(nonCodeUsageCount, nonCodeFiles.size()));
     presentation.setDynamicUsagesString("Dynamic " + StringUtil.decapitalize(descriptor.getCodeReferencesText(dynamicUsagesCount, dynamicUsagesCodeFiles.size())));
+    String generatedCodeString;
+    if (codeReferencesText.contains("in code")) {
+      generatedCodeString = StringUtil.replace(codeReferencesText, "in code", "in generated code");
+    }
+    else {
+      generatedCodeString = codeReferencesText + " in generated code";
+    }
+    presentation.setUsagesInGeneratedCodeString(generatedCodeString);
     return presentation;
   }
 

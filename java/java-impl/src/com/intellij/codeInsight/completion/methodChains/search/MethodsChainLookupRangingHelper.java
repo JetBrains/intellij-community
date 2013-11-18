@@ -192,7 +192,6 @@ public class MethodsChainLookupRangingHelper {
         if (e != null) {
           final LookupElement firstChainElement;
           if (e instanceof PsiVariable) {
-            hasCallingVariableInContext = true;
             firstChainElement = new VariableLookupItem((PsiVariable)e);
           }
           else if (e instanceof PsiMethod) {
@@ -204,6 +203,7 @@ public class MethodsChainLookupRangingHelper {
           else {
             throw new AssertionError();
           }
+          hasCallingVariableInContext = true;
           lookupElement = new JavaChainLookupElement(firstChainElement, createLookupElement(method, parametersMap));
         }
         else {

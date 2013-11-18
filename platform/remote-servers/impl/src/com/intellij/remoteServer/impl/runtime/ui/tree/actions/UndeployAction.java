@@ -1,11 +1,15 @@
 package com.intellij.remoteServer.impl.runtime.ui.tree.actions;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.remoteServer.impl.runtime.ui.ServersToolWindowContent;
 import com.intellij.remoteServer.impl.runtime.ui.tree.DeploymentNode;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.List;
 
 /**
- * Created by IntelliJ IDEA.
- * User: michael.golubev
+ * @author michael.golubev
  */
 public class UndeployAction extends DeploymentActionBase {
   public UndeployAction() {
@@ -13,12 +17,14 @@ public class UndeployAction extends DeploymentActionBase {
   }
 
   @Override
-  protected boolean isApplicable(DeploymentNode node) {
+  protected boolean isApplicable(@NotNull DeploymentNode node) {
     return node.isUndeployActionEnabled();
   }
 
   @Override
-  protected void perform(DeploymentNode node) {
-    node.undeploy();
+  protected void perform(@NotNull List<DeploymentNode> nodes, ServersToolWindowContent content, AnActionEvent e) {
+    for (DeploymentNode node : nodes) {
+      node.undeploy();
+    }
   }
 }

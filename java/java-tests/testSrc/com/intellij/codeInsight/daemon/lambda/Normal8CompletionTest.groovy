@@ -13,13 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.codeInsight.daemon.lambda;
+package com.intellij.codeInsight.daemon.lambda
 
-import com.intellij.JavaTestUtil;
-import com.intellij.codeInsight.completion.LightFixtureCompletionTestCase;
-import com.intellij.testFramework.LightProjectDescriptor;
-import org.jetbrains.annotations.NotNull;
-
+import com.intellij.JavaTestUtil
+import com.intellij.codeInsight.completion.LightFixtureCompletionTestCase
+import com.intellij.testFramework.LightProjectDescriptor
+import org.jetbrains.annotations.NotNull
 /**
  * User: anna
  */

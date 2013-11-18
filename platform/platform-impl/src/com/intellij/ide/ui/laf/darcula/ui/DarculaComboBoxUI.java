@@ -30,6 +30,10 @@ import javax.swing.plaf.basic.BasicArrowButton;
 import javax.swing.plaf.basic.BasicComboBoxRenderer;
 import javax.swing.plaf.basic.BasicComboBoxUI;
 import java.awt.*;
+import java.awt.event.FocusAdapter;
+import java.awt.event.FocusEvent;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
 import java.awt.geom.Path2D;
 
 /**
@@ -228,6 +232,45 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border {
   @Override
   protected void installKeyboardActions() {
     super.installKeyboardActions();
+  }
+
+  @Override
+  protected ComboBoxEditor createEditor() {
+    final ComboBoxEditor comboBoxEditor = super.createEditor();
+    if (comboBoxEditor != null && comboBoxEditor.getEditorComponent() != null) {
+      comboBoxEditor.getEditorComponent().addKeyListener(new KeyAdapter() {
+        @Override
+        public void keyPressed(KeyEvent e) {
+          process(e);
+        }
+
+        private void process(KeyEvent e) {
+          final int code = e.getKeyCode();
+          if ((code == KeyEvent.VK_UP || code == KeyEvent.VK_DOWN) && e.getModifiers() == 0) {
+            comboBox.dispatchEvent(e);
+          }
+        }
+
+        @Override
+        public void keyReleased(KeyEvent e) {
+          process(e);
+        }
+      });
+      comboBoxEditor.getEditorComponent().addFocusListener(new FocusAdapter() {
+        @Override
+        public void focusGained(FocusEvent e) {
+          comboBox.revalidate();
+          comboBox.repaint();
+        }
+
+        @Override
+        public void focusLost(FocusEvent e) {
+          comboBox.revalidate();
+          comboBox.repaint();
+        }
+      });
+    }
+    return comboBoxEditor;
   }
 
   @Override

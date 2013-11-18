@@ -155,9 +155,9 @@ public class HgStatusCommand {
     if (myIncludeCopySource) {
       options.add("--copies");
     }
-    if (myBaseRevision != null && !myBaseRevision.getRevision().isEmpty()) {
+    if (myBaseRevision != null && (!myBaseRevision.getRevision().isEmpty() || !myBaseRevision.getChangeset().isEmpty())) {
       options.add("--rev");
-      options.add(myBaseRevision.getChangeset().isEmpty() ? myBaseRevision.getRevision() : myBaseRevision.getChangeset());
+      options.add(StringUtil.isEmptyOrSpaces(myBaseRevision.getChangeset()) ? myBaseRevision.getRevision() : myBaseRevision.getChangeset());
       if (myTargetRevision != null) {
         options.add("--rev");
         options.add(myTargetRevision.getChangeset());

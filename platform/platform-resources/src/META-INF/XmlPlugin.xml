@@ -299,6 +299,7 @@
     <psi.referenceContributor implementation="com.intellij.xml.util.XmlReferenceContributor"/>
     <!--<pom.declarationSearcher implementation="com.intellij.psi.impl.source.resolve.reference.impl.providers.IdDeclarationSearcher"/>-->
     <anchorReferenceProvider implementation="com.intellij.xml.util.AnchorPathReferenceProvider"/>
+    <psi.fileReferenceHelper implementation="com.intellij.codeInsight.daemon.impl.analysis.HtmlFileReferenceHelper"/>
 
     <extendWordSelectionHandler implementation="com.intellij.codeInsight.editorActions.HtmlSelectioner"/>
     <extendWordSelectionHandler implementation="com.intellij.codeInsight.editorActions.XmlTagSelectioner"/>

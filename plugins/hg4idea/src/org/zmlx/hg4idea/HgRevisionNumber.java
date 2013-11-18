@@ -14,6 +14,7 @@ package org.zmlx.hg4idea;
 
 import com.google.common.base.Objects;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
+import org.zmlx.hg4idea.util.HgUtil;
 
 import java.util.Collections;
 import java.util.List;
@@ -24,7 +25,9 @@ public class HgRevisionNumber implements VcsRevisionNumber {
   private final String changeset;
   private final String commitMessage;
   private final String author;
+  private final String email;
   private final List<HgRevisionNumber> parents;
+  private final String mySubject;
 
   private final boolean isWorkingVersion;
 
@@ -48,7 +51,7 @@ public class HgRevisionNumber implements VcsRevisionNumber {
   public static HgRevisionNumber getInstance(String revision, String changeset) {
     return new HgRevisionNumber(revision, changeset, "", "", Collections.<HgRevisionNumber>emptyList());
   }
-  
+
   public static HgRevisionNumber getInstance(String revision, String changeset, List<HgRevisionNumber> parents) {
     return new HgRevisionNumber(revision, changeset, "", "", parents);
   }
@@ -57,13 +60,21 @@ public class HgRevisionNumber implements VcsRevisionNumber {
     return new HgRevisionNumber(revision, "", "", "", Collections.<HgRevisionNumber>emptyList());
   }
 
-  private HgRevisionNumber(String revision, String changeset, String author, String commitMessage, List<HgRevisionNumber> parents) {
+  public HgRevisionNumber(String revision,
+                          String changeset,
+                          String authorInfo,
+                          String commitMessage,
+                          List<HgRevisionNumber> parents) {
     this.commitMessage = commitMessage;
-    this.author = author;
+    List<String> authorArgs = HgUtil.parseUserNameAndEmail(authorInfo);
+    this.author = authorArgs.get(0);
+    this.email = authorArgs.get(1);
     this.parents = parents;
     this.revision = revision.trim();
     this.changeset = changeset.trim();
     isWorkingVersion = changeset.endsWith("+");
+    int subjectIndex = commitMessage.indexOf('\n');
+    mySubject = subjectIndex == -1 ? commitMessage : commitMessage.substring(0, subjectIndex);
   }
 
   public String getChangeset() {
@@ -91,6 +102,9 @@ public class HgRevisionNumber implements VcsRevisionNumber {
   }
 
   public String asString() {
+    if (revision.isEmpty()) {
+      return changeset;
+    }
     return revision + ":" + changeset;
   }
 
@@ -133,7 +147,7 @@ public class HgRevisionNumber implements VcsRevisionNumber {
   }
 
   /**
-   * Returns the numeric part of the revision, i. e. the revision without trailing '+' if one exists. 
+   * Returns the numeric part of the revision, i. e. the revision without trailing '+' if one exists.
    */
   public String getRevisionNumber() {
     if (isWorkingVersion) {
@@ -162,5 +176,13 @@ public class HgRevisionNumber implements VcsRevisionNumber {
   @Override
   public String toString() {
     return asString();
+  }
+
+  public String getSubject() {
+    return mySubject;
+  }
+
+  public String getEmail() {
+    return email;
   }
 }

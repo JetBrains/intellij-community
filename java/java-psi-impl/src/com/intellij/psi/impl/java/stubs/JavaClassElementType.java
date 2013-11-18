@@ -120,7 +120,7 @@ public abstract class JavaClassElementType extends JavaStubElementType<PsiClassS
     if (name != null) {
       if (parentStub instanceof PsiJavaFileStub) {
         final String pkg = ((PsiJavaFileStub)parentStub).getPackageName();
-        if (pkg.length() > 0) qualifiedName = pkg + '.' + name; else qualifiedName = name;
+        if (!pkg.isEmpty()) qualifiedName = pkg + '.' + name; else qualifiedName = name;
       }
       else if (parentStub instanceof PsiClassStub) {
         final String parentFqn = ((PsiClassStub)parentStub).getQualifiedName();

@@ -25,6 +25,7 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
@@ -40,45 +41,19 @@ import org.jetbrains.annotations.NotNull;
 import java.util.HashSet;
 import java.util.Set;
 
-public class QualifyThisArgumentFix implements IntentionAction {
-  private final PsiThisExpression myExpression;
-  private final PsiClass myPsiClass;
-  private String myText;
-
-
-  public QualifyThisArgumentFix(@NotNull PsiThisExpression expression, @NotNull PsiClass psiClass) {
-    myExpression = expression;
-    myPsiClass = psiClass;
+public class QualifyThisArgumentFix extends QualifyThisOrSuperArgumentFix{
+  public QualifyThisArgumentFix(@NotNull PsiExpression expression, @NotNull PsiClass psiClass) {
+    super(expression, psiClass);
   }
 
   @Override
-  public boolean startInWriteAction() {
-    return true;
-  }
-
-  @NotNull
-  @Override
-  public String getText() {
-    return myText;
+  protected String getQualifierText() {
+    return "this";
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    if (!myExpression.isValid()) return false;
-    if (!myPsiClass.isValid()) return false;
-    myText = "Qualify this expression with \'" + myPsiClass.getQualifiedName() + "\'";
-    return true;
-  }
-
-  @NotNull
-  @Override
-  public String getFamilyName() {
-    return "Qualify this";
-  }
-
-  @Override
-  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    myExpression.replace(RefactoringChangeUtil.createThisExpression(PsiManager.getInstance(project), myPsiClass));
+  protected PsiExpression getQualifier(PsiManager manager) {
+    return RefactoringChangeUtil.createThisExpression(manager, myPsiClass);
   }
 
   public static void registerQuickFixAction(CandidateInfo[] candidates, PsiCall call, HighlightInfo highlightInfo, final TextRange fixRange) {

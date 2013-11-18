@@ -78,7 +78,7 @@ public class InferenceVariablesOrder {
 
   public static class InferenceGraphNode<T> {
     private final List<T> myValue = new ArrayList<T>();
-    private Set<InferenceGraphNode<T>> myDependencies = new HashSet<InferenceGraphNode<T>>();
+    private final Set<InferenceGraphNode<T>> myDependencies = new HashSet<InferenceGraphNode<T>>();
 
     private int index = -1;
     private int lowlink;

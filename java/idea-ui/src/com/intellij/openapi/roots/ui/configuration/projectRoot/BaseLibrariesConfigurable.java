@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,7 +33,6 @@ import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.LibraryPro
 import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStructureDaemonAnalyzer;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStructureElement;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStructureElementUsage;
-import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.NamedConfigurable;
 import com.intellij.openapi.ui.NonEmptyInputValidator;
@@ -303,7 +302,7 @@ public abstract class BaseLibrariesConfigurable extends BaseStructureConfigurabl
 
         sb.append(".\n\nAre you sure you want to delete this library?");
 
-        if (DialogWrapper.OK_EXIT_CODE == Messages.showOkCancelDialog(myProject, sb.toString(),
+        if (Messages.OK == Messages.showOkCancelDialog(myProject, sb.toString(),
                                     "Delete Library", Messages.getQuestionIcon())) {
 
           for (final ProjectStructureElementUsage usage : usages) {

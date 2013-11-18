@@ -177,7 +177,7 @@ public class MvcRunTargetDialog extends DialogWrapper {
     myTargetField.setEditable(true);
     myTargetField.setEditor(editor);
 
-    EditorTextField editorTextField = (EditorTextField)editor.getEditorComponent();
+    EditorTextField editorTextField = editor.getEditorComponent();
 
     myFakePanel = new JPanel(new BorderLayout());
     myFakePanel.add(myTargetField, BorderLayout.CENTER);

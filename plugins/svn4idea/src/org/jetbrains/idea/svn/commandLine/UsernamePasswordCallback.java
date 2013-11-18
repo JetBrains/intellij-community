@@ -21,7 +21,6 @@ import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.auth.SVNAuthentication;
 import org.tmatesoft.svn.core.auth.SVNPasswordAuthentication;
 
-import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -69,16 +68,16 @@ public class UsernamePasswordCallback extends AuthCallbackCase {
   }
 
   @Override
-  public void updateParameters(List<String> parameters) {
+  public void updateParameters(@NotNull Command command) {
     if (myAuthentication instanceof SVNPasswordAuthentication) {
       SVNPasswordAuthentication auth = (SVNPasswordAuthentication)myAuthentication;
 
-      parameters.add("--username");
-      parameters.add(auth.getUserName());
-      parameters.add("--password");
-      parameters.add(auth.getPassword());
+      command.put("--username");
+      command.put(auth.getUserName());
+      command.put("--password");
+      command.put(auth.getPassword());
       if (!auth.isStorageAllowed()) {
-        parameters.add("--no-auth-cache");
+        command.put("--no-auth-cache");
       }
     }
   }

@@ -25,6 +25,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -78,14 +79,12 @@ public class ExcludeCompilerOutputPolicy implements DirectoryIndexExcludePolicy 
       return VirtualFilePointer.EMPTY_ARRAY;
     }
     if (extension.isCompilerOutputPathInherited()) {
-      result.add(CompilerProjectExtension.getInstance(myProject).getCompilerOutputPointer());
+      ContainerUtil.addIfNotNull(result, CompilerProjectExtension.getInstance(myProject).getCompilerOutputPointer());
     }
     else {
       if (!extension.isExcludeOutput()) return VirtualFilePointer.EMPTY_ARRAY;
-      final VirtualFilePointer outputPath = extension.getCompilerOutputPointer();
-      if (outputPath != null) result.add(outputPath);
-      final VirtualFilePointer outputPathForTests = extension.getCompilerOutputForTestsPointer();
-      if (outputPathForTests != null) result.add(outputPathForTests);
+      ContainerUtil.addIfNotNull(result, extension.getCompilerOutputPointer());
+      ContainerUtil.addIfNotNull(result, extension.getCompilerOutputForTestsPointer());
     }
     return result.isEmpty() ? VirtualFilePointer.EMPTY_ARRAY : result.toArray(new VirtualFilePointer[result.size()]);
   }

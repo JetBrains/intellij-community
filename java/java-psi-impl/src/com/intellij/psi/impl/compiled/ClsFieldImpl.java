@@ -226,11 +226,6 @@ public class ClsFieldImpl extends ClsMemberImpl<PsiFieldStub> implements PsiFiel
   }
 
   @Override
-  public PsiType getTypeNoResolve() {
-    return getType(); //todo?
-  }
-
-  @Override
   protected boolean isVisibilitySupported() {
     return true;
   }

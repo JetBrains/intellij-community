@@ -133,7 +133,7 @@ abstract class CodeStyleManagerRunnable<T> {
   protected abstract T doPerform(int offset, TextRange range);
 
   private static boolean isInsidePlainComment(int offset, @Nullable PsiElement element) {
-    if (!(element instanceof PsiComment) || element instanceof PsiComment.BlockFormatting || !element.getTextRange().contains(offset)) {
+    if (!(element instanceof PsiComment) || element instanceof PsiDocCommentBase || !element.getTextRange().contains(offset)) {
       return false;
     }
 

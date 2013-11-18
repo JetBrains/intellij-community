@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -179,7 +179,7 @@ class AddModuleDependencyFix extends OrderEntryFix {
         int ret = Messages.showOkCancelDialog(project, message,
                                               QuickFixBundle.message("orderEntry.fix.title.circular.dependency.warning"),
                                               Messages.getWarningIcon());
-        if (ret == 0) {
+        if (ret == Messages.OK) {
           ApplicationManager.getApplication().runWriteAction(doit);
         }
       }

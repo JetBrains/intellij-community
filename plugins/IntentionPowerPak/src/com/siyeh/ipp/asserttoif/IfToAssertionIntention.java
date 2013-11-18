@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 Bas Leijdekkers
+ * Copyright 2010-2013 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,10 +16,10 @@
 package com.siyeh.ipp.asserttoif;
 
 import com.intellij.psi.*;
-import com.intellij.util.IncorrectOperationException;
+import com.siyeh.ig.psiutils.BoolUtils;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
-import com.siyeh.ipp.psiutils.BoolUtils;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 public class IfToAssertionIntention extends Intention {
@@ -31,24 +31,19 @@ public class IfToAssertionIntention extends Intention {
   }
 
   @Override
-  protected void processIntention(@NotNull PsiElement element)
-    throws IncorrectOperationException {
+  protected void processIntention(@NotNull PsiElement element) {
     final PsiElement parent = element.getParent();
     if (!(parent instanceof PsiIfStatement)) {
       return;
     }
     final PsiIfStatement ifStatement = (PsiIfStatement)parent;
-
     final PsiExpression condition = ifStatement.getCondition();
-    final String negatedExpressionText =
-      BoolUtils.getNegatedExpressionText(condition);
-    final StringBuilder newStatementText = new StringBuilder("assert ");
-    newStatementText.append(negatedExpressionText);
+    @NonNls final StringBuilder newStatementText = new StringBuilder("assert ");
+    newStatementText.append(BoolUtils.getNegatedExpressionText(condition));
     final PsiStatement thenBranch = ifStatement.getThenBranch();
     final String message = getMessage(thenBranch);
     if (message != null) {
-      newStatementText.append(':');
-      newStatementText.append(message);
+      newStatementText.append(':').append(message);
     }
     newStatementText.append(';');
     replaceStatement(newStatementText.toString(), ifStatement);
@@ -67,7 +62,6 @@ public class IfToAssertionIntention extends Intention {
     }
     else if (element instanceof PsiThrowStatement) {
       final PsiThrowStatement throwStatement = (PsiThrowStatement)element;
-
       final PsiExpression exception = throwStatement.getException();
       if (!(exception instanceof PsiNewExpression)) {
         return null;

@@ -106,10 +106,11 @@ public class PyNames {
   public static final String SEQUENCE = "Sequence";
   public static final String MAPPING = "Mapping";
 
-  public static final String COMPLEX = "Complex";
-  public static final String REAL = "Real";
-  public static final String RATIONAL = "Rational";
-  public static final String INTEGRAL = "Integral";
+  public static final String ABC_NUMBER = "Number";
+  public static final String ABC_COMPLEX = "Complex";
+  public static final String ABC_REAL = "Real";
+  public static final String ABC_RATIONAL = "Rational";
+  public static final String ABC_INTEGRAL = "Integral";
 
   public static final String CONTAINS = "__contains__";
   public static final String HASH = "__hash__";
@@ -168,10 +169,12 @@ public class PyNames {
       "__all__",
     "__author__",
     "__bases__",
+    "__defaults__",
     "__dict__",
     "__doc__",
     "__docformat__",
     "__file__",
+    "__kwdefaults__",
     "__members__",
     "__metaclass__",
     "__mod__",
@@ -303,6 +306,7 @@ public class PyNames {
     .put("__rdivmod__", _self_other_descr)
     .put("__reduce__", _only_self_descr)
     .put("__repr__", _only_self_descr)
+    .put("__reversed__", _only_self_descr)
     .put("__rfloordiv__", _self_other_descr)
     .put("__rlshift__", _self_other_descr)
     .put("__rmod__", _self_other_descr)
@@ -337,6 +341,9 @@ public class PyNames {
   public static ImmutableMap<String, BuiltinDescription> PY3_BUILTIN_METHODS = ImmutableMap.<String, BuiltinDescription>builder()
     .putAll(BuiltinMethods)
     .put("__bool__", _only_self_descr)
+    .put("__bytes__", _only_self_descr)
+    .put("__format__", new BuiltinDescription("(self, format_spec)"))
+    .put("__round__", new BuiltinDescription("(self, n=None)"))
     .build();
 
   public static ImmutableMap<String, BuiltinDescription> getBuiltinMethods(LanguageLevel level) {
@@ -386,7 +393,8 @@ public class PyNames {
   );
 
   public static Set<String> BuiltinInterfaces = ImmutableSet.of(
-      CALLABLE, HASHABLE, ITERABLE, ITERATOR, SIZED, CONTAINER, SEQUENCE, MAPPING, COMPLEX, REAL, RATIONAL, INTEGRAL
+      CALLABLE, HASHABLE, ITERABLE, ITERATOR, SIZED, CONTAINER, SEQUENCE, MAPPING, ABC_COMPLEX, ABC_REAL, ABC_RATIONAL, ABC_INTEGRAL,
+      ABC_NUMBER
   );
 
   /**

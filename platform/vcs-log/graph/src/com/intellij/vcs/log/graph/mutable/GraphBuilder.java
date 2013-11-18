@@ -4,8 +4,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.impl.NullVirtualFile;
 import com.intellij.util.containers.MultiMap;
-import com.intellij.vcs.log.Hash;
-import com.intellij.vcs.log.VcsCommit;
+import com.intellij.vcs.log.GraphCommit;
 import com.intellij.vcs.log.VcsRef;
 import com.intellij.vcs.log.graph.elements.Branch;
 import com.intellij.vcs.log.graph.mutable.elements.MutableNode;
@@ -25,16 +24,16 @@ public class GraphBuilder {
   private static final Logger LOG = Logger.getInstance(GraphBuilder.class);
 
   @NotNull
-  public static MutableGraph build(@NotNull List<? extends VcsCommit> commitParentses, Collection<VcsRef> allRefs) {
+  public static MutableGraph build(@NotNull List<? extends GraphCommit> commitParentses, Collection<VcsRef> allRefs) {
     GraphBuilder builder = new GraphBuilder(commitParentses.size() - 1, calcCommitLogIndices(commitParentses), allRefs);
     return builder.runBuild(commitParentses);
   }
 
   @NotNull
-  public static Map<Hash, Integer> calcCommitLogIndices(@NotNull List<? extends VcsCommit> commitParentses) {
-    Map<Hash, Integer> commitLogIndexes = new HashMap<Hash, Integer>(commitParentses.size());
+  public static Map<Integer, Integer> calcCommitLogIndices(@NotNull List<? extends GraphCommit> commitParentses) {
+    Map<Integer, Integer> commitLogIndexes = new HashMap<Integer, Integer>(commitParentses.size());
     for (int i = 0; i < commitParentses.size(); i++) {
-      commitLogIndexes.put(commitParentses.get(i).getHash(), i);
+      commitLogIndexes.put(commitParentses.get(i).getIndex(), i);
     }
     return commitLogIndexes;
   }
@@ -48,16 +47,16 @@ public class GraphBuilder {
 
   private final int lastLogIndex;
   private final MutableGraph graph;
-  private final Map<Hash, MutableNode> underdoneNodes;
-  private Map<Hash, Integer> commitHashLogIndexes;
-  private MultiMap<Hash, VcsRef> myRefsOfHashes;
+  private final Map<Integer, MutableNode> underdoneNodes;
+  private Map<Integer, Integer> commitHashLogIndexes;
+  private MultiMap<Integer, VcsRef> myRefsOfHashes;
 
   private MutableNodeRow nextRow;
 
   public GraphBuilder(int lastLogIndex,
-                      Map<Hash, Integer> commitHashLogIndexes,
+                      Map<Integer, Integer> commitHashLogIndexes,
                       MutableGraph graph,
-                      Map<Hash, MutableNode> underdoneNodes,
+                      Map<Integer, MutableNode> underdoneNodes,
                       MutableNodeRow nextRow, Collection<VcsRef> refs) {
     this.lastLogIndex = lastLogIndex;
     this.commitHashLogIndexes = commitHashLogIndexes;
@@ -69,24 +68,24 @@ public class GraphBuilder {
   }
 
   @NotNull
-  private static MultiMap<Hash, VcsRef> prepareRefsMap(@NotNull Collection<VcsRef> refs) {
-    MultiMap<Hash, VcsRef> map = MultiMap.create();
+  private static MultiMap<Integer, VcsRef> prepareRefsMap(@NotNull Collection<VcsRef> refs) {
+    MultiMap<Integer, VcsRef> map = MultiMap.create();
     for (VcsRef ref : refs) {
-      map.putValue(ref.getCommitHash(), ref);
+      map.putValue(ref.getCommitIndex(), ref);
     }
     return map;
   }
 
-  public GraphBuilder(int lastLogIndex, Map<Hash, Integer> commitHashLogIndexes, MutableGraph graph, Collection<VcsRef> refs) {
-    this(lastLogIndex, commitHashLogIndexes, graph, new HashMap<Hash, MutableNode>(), new MutableNodeRow(graph, 0), refs);
+  public GraphBuilder(int lastLogIndex, Map<Integer, Integer> commitHashLogIndexes, MutableGraph graph, Collection<VcsRef> refs) {
+    this(lastLogIndex, commitHashLogIndexes, graph, new HashMap<Integer, MutableNode>(), new MutableNodeRow(graph, 0), refs);
   }
 
-  public GraphBuilder(int lastLogIndex, Map<Hash, Integer> commitHashLogIndexes, Collection<VcsRef> refs) {
+  public GraphBuilder(int lastLogIndex, Map<Integer, Integer> commitHashLogIndexes, Collection<VcsRef> refs) {
     this(lastLogIndex, commitHashLogIndexes, new MutableGraph(), refs);
   }
 
 
-  private int getLogIndexOfCommit(@NotNull Hash commitHash) {
+  private int getLogIndexOfCommit(@NotNull Integer commitHash) {
     Integer index = commitHashLogIndexes.get(commitHash);
     if (index == null) {
       return lastLogIndex + 1;
@@ -97,11 +96,11 @@ public class GraphBuilder {
   }
 
   @NotNull
-  private Collection<VcsRef> findRefForHash(@NotNull final Hash hash) {
+  private Collection<VcsRef> findRefForHash(int hash) {
     return myRefsOfHashes.get(hash);
   }
 
-  private MutableNode addCurrentCommitAndFinishRow(@NotNull Hash commitHash) {
+  private MutableNode addCurrentCommitAndFinishRow(int commitHash) {
     MutableNode node = underdoneNodes.remove(commitHash);
     if (node == null) {
       Collection<VcsRef> refs = findRefForHash(commitHash);
@@ -117,7 +116,7 @@ public class GraphBuilder {
   }
 
   @NotNull
-  protected Branch createBranch(@NotNull Hash commitHash, @NotNull Collection<VcsRef> refs) {
+  protected Branch createBranch(int commitHash, @NotNull Collection<VcsRef> refs) {
     VirtualFile repositoryRoot;
     if (refs.isEmpty()) {
       // should never happen, but fallback gently.
@@ -130,7 +129,7 @@ public class GraphBuilder {
     return new Branch(commitHash, refs, repositoryRoot);
   }
 
-  private void addParent(MutableNode node, Hash parentHash, Branch branch) {
+  private void addParent(MutableNode node, int parentHash, Branch branch) {
     MutableNode parentNode = underdoneNodes.remove(parentHash);
     if (parentNode == null) {
       parentNode = createNode(parentHash, branch);
@@ -158,30 +157,30 @@ public class GraphBuilder {
     }
   }
 
-  private MutableNode createNode(Hash hash, Branch branch) {
+  private MutableNode createNode(int hash, Branch branch) {
     return new MutableNode(branch, hash);
   }
 
-  private void append(@NotNull VcsCommit vcsCommit) {
-    MutableNode node = addCurrentCommitAndFinishRow(vcsCommit.getHash());
+  private void append(@NotNull GraphCommit commit) {
+    MutableNode node = addCurrentCommitAndFinishRow(commit.getIndex());
 
-    List<Hash> parents = vcsCommit.getParents();
+    int[] parents = commit.getParentIndices();
     Branch branch = node.getBranch();
-    if (parents.size() == 1) {
-      addParent(node, parents.get(0), branch);
+    if (parents.length == 1) {
+      addParent(node, parents[0], branch);
     }
     else {
-      for (Hash parentHash : parents) {
-        Collection<VcsRef> refs = findRefForHash(node.getCommitHash());
-        addParent(node, parentHash, new Branch(node.getCommitHash(), parentHash, refs, branch.getRepositoryRoot()));
+      for (int parentHash : parents) {
+        Collection<VcsRef> refs = findRefForHash(node.getCommitIndex());
+        addParent(node, parentHash, new Branch(node.getCommitIndex(), parentHash, refs, branch.getRepositoryRoot()));
       }
     }
   }
 
 
   private void lastActions() {
-    Set<Hash> notReadiedCommitHashes = underdoneNodes.keySet();
-    for (Hash hash : notReadiedCommitHashes) {
+    Set<Integer> notReadiedCommitHashes = underdoneNodes.keySet();
+    for (Integer hash : notReadiedCommitHashes) {
       MutableNode underdoneNode = underdoneNodes.get(hash);
       underdoneNode.setNodeRow(nextRow);
       underdoneNode.setType(END_COMMIT_NODE);
@@ -194,11 +193,11 @@ public class GraphBuilder {
 
   // local package
   @NotNull
-  public MutableGraph runBuild(@NotNull List<? extends VcsCommit> commitParentses) {
+  public MutableGraph runBuild(@NotNull List<? extends GraphCommit> commitParentses) {
     if (commitParentses.size() == 0) {
       throw new IllegalArgumentException("Empty list commitParentses");
     }
-    for (VcsCommit vcsCommit : commitParentses) {
+    for (GraphCommit vcsCommit : commitParentses) {
       append(vcsCommit);
     }
     lastActions();

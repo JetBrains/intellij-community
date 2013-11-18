@@ -1,4 +1,5 @@
 <idea-plugin version="2" xmlns:xi="http://www.w3.org/2001/XInclude">
+  <!-- former Flex IDE foundation, todo: integrate into IdeaPlugin.xml -->
 
   <module value="com.intellij.modules.platform"/>
   <module value="com.intellij.modules.lang"/>
@@ -355,7 +356,6 @@
     <stepsBeforeRunProvider implementation="com.intellij.compiler.options.CompileStepBeforeRun" id="compileBeforeRun"/>
     <stepsBeforeRunProvider implementation="com.intellij.compiler.options.CompileStepBeforeRunNoErrorCheck" id="compileBeforeRunNoErrorCheck" order="after compileBeforeRun"/>
     <stepsBeforeRunProvider implementation="com.intellij.packaging.impl.run.BuildArtifactsBeforeRunTaskProvider" order="after compileBeforeRunNoErrorCheck"/>
-    <stepsBeforeRunProvider implementation="com.intellij.execution.impl.RunConfigurationBeforeRunProvider"/>
     <programRunner id="defaultRunRunner" implementation="com.intellij.execution.impl.DefaultJavaProgramRunner"/>
 
     <hectorComponentProvider implementation="com.intellij.codeInsight.daemon.impl.ImportPopupHectorComponentProvider"/>

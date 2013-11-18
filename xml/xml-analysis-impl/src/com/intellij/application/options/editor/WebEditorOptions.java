@@ -45,6 +45,7 @@ public class WebEditorOptions implements PersistentStateComponent<WebEditorOptio
   private boolean myAutomaticallyInsertRequiredAttributes = true;
   private boolean myAutomaticallyInsertRequiredSubTags = true;
   private boolean myAutomaticallyStartAttribute = true;
+  private boolean myInsertQuotesForAttributeValue = true;
 
   private boolean myTagTreeHighlightingEnabled = true;
   private int myTagTreeHighlightingLevelCount = 6;
@@ -98,9 +99,7 @@ public class WebEditorOptions implements PersistentStateComponent<WebEditorOptio
     myAutomaticallyInsertClosingTag = automaticallyInsertClosingTag;
   }
 
-  public boolean isAutomaticallyInsertRequiredAttributes() {
-    return myAutomaticallyInsertRequiredAttributes;
-  }
+  public boolean isAutomaticallyInsertRequiredAttributes() { return myAutomaticallyInsertRequiredAttributes; }
 
   public void setAutomaticallyInsertRequiredAttributes(final boolean automaticallyInsertRequiredAttributes) {
     myAutomaticallyInsertRequiredAttributes = automaticallyInsertRequiredAttributes;
@@ -185,5 +184,13 @@ public class WebEditorOptions implements PersistentStateComponent<WebEditorOptio
 
   public void setSelectWholeCssSelectorSuffixOnDoubleClick(boolean selectWholeCssSelectorSuffixOnDoubleClick) {
     mySelectWholeCssSelectorSuffixOnDoubleClick = selectWholeCssSelectorSuffixOnDoubleClick;
+  }
+
+  public boolean isInsertQuotesForAttributeValue() {
+    return myInsertQuotesForAttributeValue;
+  }
+
+  public void setInsertQuotesForAttributeValue(boolean insertQuotesForAttributeValue) {
+    myInsertQuotesForAttributeValue = insertQuotesForAttributeValue;
   }
 }

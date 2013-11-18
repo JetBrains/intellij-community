@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,10 +16,7 @@
 package com.intellij.ide.actions;
 
 import com.intellij.ide.IdeBundle;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
-import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileEditor.impl.EditorWindow;
 import com.intellij.openapi.project.DumbAware;
@@ -38,7 +35,7 @@ public abstract class SplitAction extends AnAction implements DumbAware {
   }
 
   public void actionPerformed(final AnActionEvent event) {
-    final Project project = PlatformDataKeys.PROJECT.getData(event.getDataContext());
+    final Project project = CommonDataKeys.PROJECT.getData(event.getDataContext());
     final FileEditorManagerEx fileEditorManager = FileEditorManagerEx.getInstanceEx(project);
     final EditorWindow window = EditorWindow.DATA_KEY.getData(event.getDataContext());
 
@@ -46,7 +43,7 @@ public abstract class SplitAction extends AnAction implements DumbAware {
   }
 
   public void update(final AnActionEvent event) {
-    final Project project = PlatformDataKeys.PROJECT.getData(event.getDataContext());
+    final Project project = CommonDataKeys.PROJECT.getData(event.getDataContext());
     final Presentation presentation = event.getPresentation();
     presentation.setText (myOrientation == SwingConstants.VERTICAL
                           ? IdeBundle.message("action.split.vertically")

@@ -15,6 +15,7 @@
  */
 package com.intellij.xml.util.documentation;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.HashSet;
@@ -30,6 +31,8 @@ import java.util.*;
  * @author maxim
  */
 public class HtmlDescriptorsTable {
+  public static final Logger LOG = Logger.getInstance(HtmlDescriptorsTable.class);
+
   private static final HashMap<String,HtmlTagDescriptor> ourTagTable = new HashMap<String, HtmlTagDescriptor>();
   private static final HashMap<String,HtmlAttributeDescriptor> ourAttributeTable = new HashMap<String, HtmlAttributeDescriptor>();
   private static String[] ourHtmlTagNames;
@@ -95,7 +98,7 @@ public class HtmlDescriptorsTable {
       ourHtmlTagNames = ArrayUtil.toStringArray(htmlTagNames);
 
     } catch (Exception ex) {
-      ex.printStackTrace();
+      LOG.error(ex);
       ourHtmlTagNames = ArrayUtil.EMPTY_STRING_ARRAY;
     }
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -61,7 +61,7 @@ public class PServerSettingsPanel {
     if (!passwordFile.exists()) {
       final int result = Messages.showYesNoDialog(myPanel, CvsBundle.message("message.password.file.does.not.exist", pathToPasswordFile),
                                              CvsBundle.message("title.password.file.does.not.exist"), Messages.getQuestionIcon());
-      if (result == 1) {
+      if (result == Messages.NO) {
         throw new InputException(myPathToPasswordFile);
       }
       try {

@@ -522,7 +522,7 @@ public class FindManagerImpl extends FindManager implements PersistentStateCompo
 
       try {
         if (editorHighlighter instanceof LayeredLexerEditorHighlighter) {
-          lexer = LexerEditorHighlighterLexer.getLexerBasedOnLexerHighlighter(text, file, myProject);
+          lexer = new LexerEditorHighlighterLexer(editorHighlighter, false);
         } else {
           lexer = highlighter.getHighlightingLexer();
         }

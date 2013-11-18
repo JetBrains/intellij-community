@@ -11,6 +11,8 @@
     <extensionPoint name="archetypesProvider" interface="org.jetbrains.idea.maven.indices.MavenArchetypesProvider"/>
 
     <extensionPoint name="pluginDescriptor" beanClass="org.jetbrains.idea.maven.plugins.api.MavenPluginDescriptor" />
+
+    <extensionPoint name="repositoryProvider" interface="org.jetbrains.idea.maven.indices.MavenRepositoryProvider"/>
   </extensionPoints>
 
   <depends>com.intellij.properties</depends>

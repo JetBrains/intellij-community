@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,9 +25,9 @@ import com.intellij.psi.codeStyle.CustomCodeStyleSettings;
  */
 public class XmlCodeStyleSettings extends CustomCodeStyleSettings {
 
-  public final static int WS_AROUND_CDATA_PRESERVE = 0;
-  public final static int WS_AROUND_CDATA_NONE = 1;
-  public final static int WS_AROUND_CDATA_NEW_LINES = 2;
+  public static final int WS_AROUND_CDATA_PRESERVE = 0;
+  public static final int WS_AROUND_CDATA_NONE = 1;
+  public static final int WS_AROUND_CDATA_NEW_LINES = 2;
 
   public boolean XML_KEEP_WHITESPACES = false;
   public int XML_ATTRIBUTE_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED;

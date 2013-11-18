@@ -10,7 +10,7 @@ class Test {
 
     public void test(Set<MyConsumer> set) {
         @SuppressWarnings("unchecked")
-        Map<Parent, MyConsumer<Parent>> map = create<error descr="'create(java.util.Set<Test.MyConsumer<Test.Parent>>)' in 'Test' cannot be applied to '(java.util.Set<Test.MyConsumer>)'">(set)</error>;
+        Map<Parent, MyConsumer<Parent>> map = create<error descr="'create(java.util.Set<T>)' in 'Test' cannot be applied to '(java.util.Set<Test.MyConsumer>)'">(set)</error>;
 
     }
 

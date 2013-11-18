@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -57,7 +57,7 @@ public class StaticImportResolveProcessor extends BaseScopeProcessor implements 
   }
 
   private static boolean checkDomination(final PsiMember candidate, final List<JavaResolveResult> results) {
-    if (results.size() > 0) {
+    if (!results.isEmpty()) {
       for (ListIterator<JavaResolveResult> i = results.listIterator(results.size()); i.hasPrevious();) {
         final Domination domination = dominates(candidate, (PsiMember)i.previous().getElement());
         if (domination == Domination.DOMINATED_BY) {

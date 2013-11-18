@@ -376,7 +376,7 @@ public class XmlUtil {
     return XSLT_URI.equals(ns) || XINCLUDE_URI.equals(ns);
   }
 
-  public static char getCharFromEntityRef(@NonNls String text) {
+  public static char getCharFromEntityRef(@NonNls @NotNull String text) {
     try {
       if (text.charAt(1) != '#') {
         text = text.substring(1, text.length() - 1);

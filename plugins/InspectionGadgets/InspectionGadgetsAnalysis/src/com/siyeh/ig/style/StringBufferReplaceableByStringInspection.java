@@ -312,10 +312,6 @@ public class StringBufferReplaceableByStringInspection extends BaseInspection {
     @Override
     public void visitLocalVariable(@NotNull PsiLocalVariable variable) {
       super.visitLocalVariable(variable);
-      final PsiCodeBlock codeBlock = PsiTreeUtil.getParentOfType(variable, PsiCodeBlock.class);
-      if (codeBlock == null) {
-        return;
-      }
       final PsiType type = variable.getType();
       if (!TypeUtils.typeEquals(CommonClassNames.JAVA_LANG_STRING_BUFFER, type) &&
           !TypeUtils.typeEquals(CommonClassNames.JAVA_LANG_STRING_BUILDER, type)) {
@@ -323,6 +319,10 @@ public class StringBufferReplaceableByStringInspection extends BaseInspection {
       }
       final PsiExpression initializer = variable.getInitializer();
       if (!isNewStringBufferOrStringBuilder(initializer)) {
+        return;
+      }
+      final PsiCodeBlock codeBlock = PsiTreeUtil.getParentOfType(variable, PsiCodeBlock.class);
+      if (codeBlock == null) {
         return;
       }
       final ReplaceableByStringVisitor visitor = new ReplaceableByStringVisitor(variable);
@@ -504,14 +504,32 @@ public class StringBufferReplaceableByStringInspection extends BaseInspection {
         return false;
       }
       final PsiElement grandParent = parent.getParent();
-      if (!(grandParent instanceof PsiMethodCallExpression)) {
-        return false;
+      if (grandParent instanceof PsiMethodCallExpression) {
+        final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)grandParent;
+        if (!isCallToStringBuilderMethod(methodCallExpression)) {
+          return isArgumentOfStringBuilderMethod(methodCallExpression);
+        }
+        return true;
       }
-      final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)grandParent;
-      if (!isCallToStringBuilderMethod(methodCallExpression)) {
-        return isArgumentOfStringBuilderMethod(methodCallExpression);
+      else if (grandParent instanceof PsiNewExpression) {
+        final PsiLocalVariable variable = PsiTreeUtil.getParentOfType(grandParent, PsiLocalVariable.class, true, PsiExpressionList.class);
+        if (!myVariable.equals(variable)) {
+          return false;
+        }
+        final PsiNewExpression newExpression = (PsiNewExpression)grandParent;
+        final PsiMethod constructor = newExpression.resolveMethod();
+        if (constructor == null) {
+          return false;
+        }
+        final PsiClass aClass = constructor.getContainingClass();
+        if (aClass == null) {
+          return false;
+        }
+        final String name = aClass.getQualifiedName();
+        return CommonClassNames.JAVA_LANG_STRING_BUFFER.equals(name) ||
+               CommonClassNames.JAVA_LANG_STRING_BUILDER.equals(name);
       }
-      return true;
+      return false;
     }
 
     private boolean isCallToStringBuilderMethod(PsiMethodCallExpression methodCallExpression) {

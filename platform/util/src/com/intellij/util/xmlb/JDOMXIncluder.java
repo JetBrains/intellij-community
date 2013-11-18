@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,7 +43,7 @@ public class JDOMXIncluder {
   @NonNls private static final String ENCODING = "encoding";
   @NonNls private static final String XPOINTER = "xpointer";
 
-  public final static Namespace XINCLUDE_NAMESPACE = Namespace.getNamespace(XI, HTTP_WWW_W3_ORG_2001_XINCLUDE);
+  public static final Namespace XINCLUDE_NAMESPACE = Namespace.getNamespace(XI, HTTP_WWW_W3_ORG_2001_XINCLUDE);
 
   private JDOMXIncluder() {
   }
@@ -149,7 +149,7 @@ public class JDOMXIncluder {
 
   }
   protected static List<Content> resolve(Element original, Stack<String> bases) throws XIncludeException {
-    if (bases.size() != 0) bases.peek();
+    if (!bases.isEmpty()) bases.peek();
 
     if (isIncludeElement(original)) {
       return resolveXIncludeElement(original, bases);
@@ -165,7 +165,7 @@ public class JDOMXIncluder {
 
   private static List<Content> resolveXIncludeElement(Element element, Stack<String> bases) throws XIncludeException {
     String base = "";
-    if (bases.size() != 0) base = bases.peek();
+    if (!bases.isEmpty()) base = bases.peek();
 
     // These lines are probably unnecessary
     assert isIncludeElement(element);
@@ -213,7 +213,7 @@ public class JDOMXIncluder {
 
       final Element fallbackElement = element.getChild("fallback", element.getNamespace());
       List<Content> remoteParsed = parseRemote(bases, remote, fallbackElement);
-      if (remoteParsed.size() > 0) {
+      if (!remoteParsed.isEmpty()) {
         remoteParsed = extractNeededChildren(element, remoteParsed);
       }
 
@@ -324,7 +324,7 @@ public class JDOMXIncluder {
   }
 
   private static Element resolveNonXIncludeElement(Element original, Stack<String> bases) throws XIncludeException {
-    if (bases.size() != 0) bases.peek();
+    if (!bases.isEmpty()) bases.peek();
 
     Element result = new Element(original.getName(), original.getNamespace());
     Iterator<Attribute> attributes = original.getAttributes().iterator();

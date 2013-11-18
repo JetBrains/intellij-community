@@ -72,7 +72,7 @@ import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
 import gnu.trove.*;
-import jsr166e.SequenceLock;
+import jsr166e.extra.SequenceLock;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -2165,7 +2165,6 @@ public class FileBasedIndexImpl extends FileBasedIndex {
           break;
         }
         indicator.setFraction((double)count++ / size);
-        indicator.setText2(task.getSubj().getPresentableUrl());
         task.run();
       }
     }
@@ -2414,7 +2413,6 @@ public class FileBasedIndexImpl extends FileBasedIndex {
         if (myProgressIndicator != null && file.isDirectory()) { // once for dir is cheap enough
           myProgressIndicator.checkCanceled();
           myProgressIndicator.setText("Scanning files to index");
-          myProgressIndicator.setText2(file.getPresentableUrl());
         }
       }
       return true;
@@ -2603,10 +2601,6 @@ public class FileBasedIndexImpl extends FileBasedIndex {
         if (indicator != null) indicator.checkCanceled();
 
         processor.processFile(file);
-        if (indicator != null && file.isDirectory()) {
-          // once for directory should be cheap enough
-          indicator.setText2(file.getPresentableUrl());
-        }
         return true;
       }
     });

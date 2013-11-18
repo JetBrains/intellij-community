@@ -1,24 +1,15 @@
 package org.jetbrains.idea.maven.importing;
 
-import com.intellij.facet.Facet;
-import com.intellij.facet.FacetManager;
-import com.intellij.facet.FacetType;
+import com.intellij.facet.*;
 import com.intellij.openapi.vfs.VfsUtilCore;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.MavenImportingTestCase;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public abstract class FacetImporterTestCase<FACET_TYPE extends Facet, FACET_TYPE_TYPE extends FacetType<FACET_TYPE, ?>> extends MavenImportingTestCase {
-  private FacetImporter<FACET_TYPE,?,FACET_TYPE_TYPE> myImporter;
-
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-    myImporter = createImporter();
-  }
-
-  protected abstract FacetImporter<FACET_TYPE, ?, FACET_TYPE_TYPE> createImporter();
+public abstract class FacetImporterTestCase<FACET_TYPE extends Facet> extends MavenImportingTestCase {
+  protected abstract FacetTypeId<FACET_TYPE> getFacetTypeId();
 
   protected void doAssertSourceRoots(List<String> actualRoots, String... roots) {
     List<String> expectedRootUrls = new ArrayList<String>();
@@ -48,6 +39,7 @@ public abstract class FacetImporterTestCase<FACET_TYPE extends Facet, FACET_TYPE
     return manager.findFacet(type.getId(), facetName);
   }
 
+  @NotNull
   protected <T extends Facet> T getFacet(String module, FacetType<T, ?> type) {
     T result = findFacet(module, type);
     assertNotNull("facet '" + type + "' not found", result);
@@ -61,10 +53,10 @@ public abstract class FacetImporterTestCase<FACET_TYPE extends Facet, FACET_TYPE
   }
 
   private FacetType<FACET_TYPE, ?> getFacetType() {
-    return myImporter.getFacetType();
+    return FacetTypeRegistry.getInstance().findFacetType(getFacetTypeId());
   }
 
-  private String getDefaultFacetName() {
-    return myImporter.getDefaultFacetName();
+  protected String getDefaultFacetName() {
+    return getFacetType().getDefaultFacetName();
   }
 }

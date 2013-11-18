@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -53,7 +53,7 @@ public class FilePathReferenceProvider extends PsiReferenceProvider {
                                                String text,
                                                int offset,
                                                final boolean soft,
-                                               final @NotNull Module... forModules) {
+                                               @NotNull final Module... forModules) {
     return new FileReferenceSet(text, element, offset, this, true, myEndingSlashNotAllowed) {
 
 
@@ -75,7 +75,7 @@ public class FilePathReferenceProvider extends PsiReferenceProvider {
       @Override
       public boolean absoluteUrlNeedsStartSlash() {
         final String s = getPathString();
-        return s != null && s.length() > 0 && s.charAt(0) == '/';
+        return s != null && !s.isEmpty() && s.charAt(0) == '/';
       }
 
       @Override

@@ -17,6 +17,7 @@ package com.intellij.psi.impl.source.javadoc;
 
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.ElementType;
@@ -36,7 +37,7 @@ import java.util.List;
 class SeeDocTagInfo implements JavadocTagInfo {
   private final String myName;
   private final boolean myInline;
-  private static final @NonNls String LINKPLAIN_TAG = "linkplain";
+  @NonNls private static final String LINKPLAIN_TAG = "linkplain";
 
   public SeeDocTagInfo(@NonNls String name, boolean isInline) {
     myName = name;
@@ -106,7 +107,7 @@ class SeeDocTagInfo implements JavadocTagInfo {
       PsiDocMethodOrFieldRef methodRef = (PsiDocMethodOrFieldRef) place.getParent();
 
       final IElementType firstChildType = methodRef.getFirstChildNode().getElementType();
-      if (firstChildType == ElementType.JAVA_CODE_REFERENCE || firstChildType == ElementType.REFERENCE_EXPRESSION) {
+      if (firstChildType == JavaElementType.JAVA_CODE_REFERENCE || firstChildType == JavaElementType.REFERENCE_EXPRESSION) {
         PsiJavaCodeReferenceElement referenceElement = (PsiJavaCodeReferenceElement) SourceTreeToPsiMap.treeElementToPsi(methodRef.getFirstChildNode());
         final PsiElement element = referenceElement.resolve();
         if (element instanceof PsiClass) {

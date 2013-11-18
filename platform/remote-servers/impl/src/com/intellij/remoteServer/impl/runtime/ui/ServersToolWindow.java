@@ -14,8 +14,7 @@ import icons.RemoteServersIcons;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Created by IntelliJ IDEA.
- * User: michael.golubev
+ * @author michael.golubev
  */
 public class ServersToolWindow {
   public static final String ID = "Application Servers";

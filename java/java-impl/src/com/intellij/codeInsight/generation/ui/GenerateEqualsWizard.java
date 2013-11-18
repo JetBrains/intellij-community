@@ -243,7 +243,7 @@ public class GenerateEqualsWizard extends AbstractGenerateEqualsWizard<PsiClass,
   @Override
   protected void addSteps() {
     if (myEqualsPanel != null) {
-      addStep(new InstanceofOptionStep());
+      addStep(new InstanceofOptionStep(myClass.hasModifierProperty(PsiModifier.FINAL)));
     }
     super.addSteps();
   }
@@ -322,9 +322,10 @@ public class GenerateEqualsWizard extends AbstractGenerateEqualsWizard<PsiClass,
   private static class InstanceofOptionStep extends StepAdapter {
     private final JComponent myPanel;
 
-    private InstanceofOptionStep() {
+    private InstanceofOptionStep(boolean isFinal) {
       final JCheckBox checkbox = new NonFocusableCheckBox(CodeInsightBundle.message("generate.equals.hashcode.accept.sublcasses"));
-      checkbox.setSelected(CodeInsightSettings.getInstance().USE_INSTANCEOF_ON_EQUALS_PARAMETER);
+      checkbox.setSelected(!isFinal && CodeInsightSettings.getInstance().USE_INSTANCEOF_ON_EQUALS_PARAMETER);
+      checkbox.setEnabled(!isFinal);
       checkbox.addActionListener(new ActionListener() {
         public void actionPerformed(@NotNull final ActionEvent M) {
           CodeInsightSettings.getInstance().USE_INSTANCEOF_ON_EQUALS_PARAMETER = checkbox.isSelected();

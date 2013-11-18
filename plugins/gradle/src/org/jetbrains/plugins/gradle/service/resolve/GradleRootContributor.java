@@ -68,6 +68,8 @@ public class GradleRootContributor implements GradleMethodContextContributor {
     }
 
     GroovyPsiManager psiManager = GroovyPsiManager.getInstance(place.getProject());
-    GradleResolverUtil.processDeclarations(psiManager, processor, state, place, GradleCommonClassNames.GRADLE_API_PROJECT);
+    GradleResolverUtil.processDeclarations(methodCallInfo.size() > 0 ? methodCallInfo.get(0) : null,
+                                           psiManager, processor, state, place,
+                                           GradleCommonClassNames.GRADLE_API_PROJECT);
   }
 }

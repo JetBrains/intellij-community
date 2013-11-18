@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,12 +34,8 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
 import com.intellij.psi.presentation.java.ClassPresentationUtil;
-import com.intellij.psi.util.PsiFormatUtil;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtilBase;
-import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.psi.util.*;
 import com.intellij.ui.LayeredIcon;
-import com.intellij.psi.util.FileTypeUtils;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -68,7 +64,7 @@ public final class CallHierarchyNodeDescriptor extends HierarchyNodeDescriptor i
     return myElement == null ? null : getEnclosingElement(myElement);
   }
 
-  static PsiMember getEnclosingElement(final PsiElement element){
+  public static PsiMember getEnclosingElement(final PsiElement element){
     return PsiTreeUtil.getNonStrictParentOfType(element, PsiMethod.class, PsiClass.class);
   }
 
@@ -138,8 +134,8 @@ public final class CallHierarchyNodeDescriptor extends HierarchyNodeDescriptor i
         }
         final String methodText = PsiFormatUtil.formatMethod(
           method,
-          PsiSubstitutor.EMPTY, PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_PARAMETERS,
-          PsiFormatUtil.SHOW_TYPE
+          PsiSubstitutor.EMPTY, PsiFormatUtilBase.SHOW_NAME | PsiFormatUtilBase.SHOW_PARAMETERS,
+          PsiFormatUtilBase.SHOW_TYPE
         );
         buffer.append(methodText);
 

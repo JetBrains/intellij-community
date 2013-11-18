@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -155,10 +155,10 @@ public final class StringEditorDialog extends DialogWrapper{
                                                UIDesignerBundle.message("edit.text.make.unique"),
                                                CommonBundle.getCancelButtonText(),
                                              Messages.getWarningIcon());
-          if (rc == 2) {
+          if (rc == Messages.CANCEL) {
             return null;
           }
-          if (rc == 1) {
+          if (rc == Messages.NO) {
             newKeyName = promptNewKeyName(module.getProject(), propFile, descriptor.getKey());
             if (newKeyName == null) return null;
           }

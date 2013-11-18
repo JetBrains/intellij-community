@@ -32,6 +32,10 @@ import java.nio.charset.Charset;
 public class ColoredProcessHandler extends OSProcessHandler implements AnsiEscapeDecoder.ColoredTextAcceptor {
   private final AnsiEscapeDecoder myAnsiEscapeDecoder = new AnsiEscapeDecoder();
 
+  /**
+   * todo ruby plugin compatibility. Remove on the next update.
+   */
+  @Deprecated
   public static TextAttributes getByKey(final TextAttributesKey key) {
     return EditorColorsManager.getInstance().getGlobalScheme().getAttributes(key);
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,9 +38,9 @@ public class BlockContainingJavaBlock extends AbstractJavaBlock{
     JavaElementType.IF_STATEMENT, JavaElementType.WHILE_STATEMENT, JavaElementType.FOR_STATEMENT
   );
   
-  private final static int BEFORE_FIRST = 0;
-  private final static int BEFORE_BLOCK = 1;
-  private final static int AFTER_ELSE = 2;
+  private static final int BEFORE_FIRST = 0;
+  private static final int BEFORE_BLOCK = 1;
+  private static final int AFTER_ELSE = 2;
 
   private final List<Indent> myIndentsBefore = new ArrayList<Indent>();
 

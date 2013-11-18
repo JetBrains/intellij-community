@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,7 +45,7 @@ public class PagePool {
   private PoolPageKey lastFinalizedKey = null;
 
   public PagePool(final int protectedPagesLimit, final int probationalPagesLimit) {
-    myProbationalQueue = new LinkedHashMap<PoolPageKey,Page>(probationalPagesLimit * 2, 0.6f) {
+    myProbationalQueue = new LinkedHashMap<PoolPageKey,Page>(probationalPagesLimit * 2, 0.6f, true) {
       @Override
       protected boolean removeEldestEntry(final Map.Entry<PoolPageKey, Page> eldest) {
         if (size() > probationalPagesLimit) {
@@ -56,7 +56,7 @@ public class PagePool {
       }
     };
 
-    myProtectedQueue = new LinkedHashMap<PoolPageKey, Page>(protectedPagesLimit, 0.6f) {
+    myProtectedQueue = new LinkedHashMap<PoolPageKey, Page>(protectedPagesLimit, 0.6f, true) {
       @Override
       protected boolean removeEldestEntry(final Map.Entry<PoolPageKey, Page> eldest) {
         if (size() > protectedPagesLimit) {
@@ -75,7 +75,7 @@ public class PagePool {
   @SuppressWarnings({"FieldAccessedSynchronizedAndUnsynchronized"}) private static int probational_queue_hits = 0;
   @SuppressWarnings({"FieldAccessedSynchronizedAndUnsynchronized"}) private static int finalization_queue_hits = 0;
 
-  public final static PagePool SHARED = new PagePool(500, 500);
+  public static final PagePool SHARED = new PagePool(500, 500);
 
   private RandomAccessDataFile lastOwner = null;
   private long lastOffset = 0;

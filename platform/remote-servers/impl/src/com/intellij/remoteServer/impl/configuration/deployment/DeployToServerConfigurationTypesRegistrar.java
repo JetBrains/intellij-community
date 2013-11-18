@@ -35,6 +35,19 @@ public class DeployToServerConfigurationTypesRegistrar implements ApplicationCom
     }
   }
 
+  @NotNull
+  public static DeployToServerConfigurationType getDeployConfigurationType(@NotNull ServerType<?> serverType) {
+    for (ConfigurationType type : ConfigurationType.CONFIGURATION_TYPE_EP.getExtensions()) {
+      if (type instanceof DeployToServerConfigurationType) {
+        DeployToServerConfigurationType configurationType = (DeployToServerConfigurationType)type;
+        if (configurationType.getServerType().equals(serverType)) {
+          return configurationType;
+        }
+      }
+    }
+    throw new IllegalArgumentException("Cannot find run configuration type for " + serverType.getClass());
+  }
+
   @Override
   public void disposeComponent() {
   }

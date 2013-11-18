@@ -561,13 +561,13 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
 
       final PsiElement point;
       final TextRange range;
-      if (reference instanceof PyOperatorReference) {
+      final PsiElement lastChild = node.getLastChild();
+      if (reference instanceof PyOperatorReference || lastChild == null) {
         point = node;
         range = rangeInElement;
       }
       else {
-        final PsiElement lastChild = node.getLastChild();
-        point = lastChild != null ? lastChild : node; // usually the identifier at the end of qual ref
+        point = lastChild; // usually the identifier at the end of qual ref
         range = rangeInElement.shiftRight(-point.getStartOffsetInParent());
       }
       if (reference instanceof PyImportReference && refname != null) {
@@ -835,7 +835,7 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
     }
 
     private void addCreateClassFix(String refText, PsiElement element, List<LocalQuickFix> actions) {
-      if (refText.length() > 2 && Character.isUpperCase(refText.charAt(0)) && !Character.isUpperCase(refText.charAt(1)) &&
+      if (refText.length() > 2 && Character.isUpperCase(refText.charAt(0)) && !refText.toUpperCase().equals(refText) &&
           PsiTreeUtil.getParentOfType(element, PyImportStatementBase.class) == null) {
         PsiElement anchor = element;
         if (element instanceof PyQualifiedExpression) {

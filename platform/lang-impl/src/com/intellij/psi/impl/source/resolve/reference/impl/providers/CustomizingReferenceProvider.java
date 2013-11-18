@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,7 +31,7 @@ import java.util.Map;
  */
 public class CustomizingReferenceProvider extends PsiReferenceProvider implements CustomizableReferenceProvider {
   private final CustomizableReferenceProvider myProvider;
-  private @Nullable Map<CustomizationKey, Object> myOptions;
+  @Nullable private Map<CustomizationKey, Object> myOptions;
 
   public CustomizingReferenceProvider(@NotNull CustomizableReferenceProvider provider) {
     myProvider = provider;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.intellij.util.containers.SLRUMap;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.KeyDescriptor;
 import com.intellij.util.io.PersistentHashMap;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
@@ -60,7 +61,7 @@ public class CachedPersistentHashMap<Key, Value> extends PersistentHashMap<Key, 
   }
 
   @Override
-  protected void doAppendData(Key key, ValueDataAppender appender) throws IOException {
+  protected void doAppendData(Key key, @NotNull ValueDataAppender appender) throws IOException {
     myCache.remove(key);
     super.doAppendData(key, appender);
   }

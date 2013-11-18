@@ -18,7 +18,10 @@ package com.intellij.usageView;
 
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.GeneratedSourcesFilter;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.ElementDescriptionUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -61,6 +64,22 @@ public class UsageViewUtil {
     for (UsageInfo usage : usages) {
       if (usage.isNonCodeUsage) return true;
     }
+    return false;
+  }
+
+  public static boolean hasUsagesInGeneratedCode(UsageInfo[] usages, Project project) {
+    GeneratedSourcesFilter[] filters = GeneratedSourcesFilter.EP_NAME.getExtensions();
+    for (UsageInfo usage : usages) {
+      VirtualFile file = usage.getVirtualFile();
+      if (file != null) {
+        for (GeneratedSourcesFilter filter : filters) {
+          if (filter.isGeneratedSource(file, project)) {
+            return true;
+          }
+        }
+      }
+    }
+
     return false;
   }
 

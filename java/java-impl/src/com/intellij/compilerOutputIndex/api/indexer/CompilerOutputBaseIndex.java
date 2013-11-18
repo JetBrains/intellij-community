@@ -5,10 +5,11 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.indexing.*;
 import com.intellij.util.io.DataExternalizer;
+import com.intellij.util.io.IOUtil;
 import com.intellij.util.io.KeyDescriptor;
 import com.intellij.util.io.PersistentHashMap;
 import org.jetbrains.asm4.tree.ClassNode;
@@ -51,24 +52,32 @@ public abstract class CompilerOutputBaseIndex<K, V> {
         if (!IndexInfrastructure.getIndexRootDir(indexId).exists()) {
           rewriteIndex.set(true);
         }
-        final File storageFile = IndexInfrastructure.getStorageFile(indexId);
+        final File storageFile = getStorageFile(indexId);
         final MapIndexStorage<K, V> indexStorage = new MapIndexStorage<K, V>(storageFile, myKeyDescriptor, myValueExternalizer, 1024);
         index = new MapReduceIndex<K, V, ClassNode>(indexId, getIndexer(), indexStorage);
         index.setInputIdToDataKeysIndex(new Factory<PersistentHashMap<Integer, Collection<K>>>() {
           @Override
           public PersistentHashMap<Integer, Collection<K>> create() {
-            Exception failCause = null;
-            for (int attempts = 0; attempts < 2; attempts++) {
-              try {
-                return FileBasedIndexImpl.createIdToDataKeysIndex(indexId, myKeyDescriptor, new MemoryIndexStorage<K, V>(indexStorage));
-              }
-              catch (IOException e) {
-                failCause = e;
-                FileUtil.delete(IndexInfrastructure.getInputIndexStorageFile(getIndexId()));
-                rewriteIndex.set(true);
-              }
+            try {
+              return IOUtil.openCleanOrResetBroken(
+                new ThrowableComputable<PersistentHashMap<Integer, Collection<K>>, IOException>() {
+                  @Override
+                  public PersistentHashMap<Integer, Collection<K>> compute() throws IOException {
+                    return FileBasedIndexImpl.createIdToDataKeysIndex(indexId, myKeyDescriptor, new MemoryIndexStorage<K, V>(indexStorage));
+                  }
+                },
+                new Runnable() {
+                  @Override
+                  public void run() {
+                    FileUtil.delete(getInputIndexStorageFile(getIndexId()));
+                    rewriteIndex.set(true);
+                  }
+                }
+              );
             }
-            throw new RuntimeException("couldn't create index", failCause);
+            catch (IOException e) {
+              throw new RuntimeException("couldn't create index", e);
+            }
           }
         });
         final File versionFile = getVersionFile(indexId);
@@ -143,10 +152,5 @@ public abstract class CompilerOutputBaseIndex<K, V> {
 
   protected final ID<K, V> generateIndexId(final String indexName) {
     return CompilerOutputIndexUtil.generateIndexId(indexName, myProject);
-  }
-
-  protected final ID<K, V> generateIndexId(final Class aClass) {
-    final String className = StringUtil.getShortName(aClass);
-    return generateIndexId(StringUtil.trimEnd(className, "Index"));
   }
 }

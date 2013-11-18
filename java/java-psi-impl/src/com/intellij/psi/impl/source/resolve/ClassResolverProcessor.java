@@ -32,7 +32,7 @@ import java.util.List;
 
 public class ClassResolverProcessor extends BaseScopeProcessor implements NameHint, ElementClassHint {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.resolve.ClassResolverProcessor");
-  private static final String[] DEFAULT_PACKAGES = new String[]{CommonClassNames.DEFAULT_PACKAGE};
+  private static final String[] DEFAULT_PACKAGES = {CommonClassNames.DEFAULT_PACKAGE};
 
   private final String myClassName;
   private final PsiElement myPlace;

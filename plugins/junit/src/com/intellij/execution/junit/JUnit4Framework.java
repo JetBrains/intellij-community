@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,6 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.fileTemplates.FileTemplateDescriptor;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.projectRoots.ex.JavaSdkUtil;
-import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -31,7 +30,6 @@ import com.intellij.testIntegration.JavaTestFramework;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.junit.Ignore;
 
 import javax.swing.*;
 
@@ -97,11 +95,11 @@ public class JUnit4Framework extends JavaTestFramework {
     PsiMethod existingMethod = clazz.findMethodBySignature(method, false);
     if (existingMethod != null) {
       int exit = ApplicationManager.getApplication().isUnitTestMode() ?
-                       DialogWrapper.OK_EXIT_CODE :
+                 Messages.OK :
                        Messages.showOkCancelDialog("Method setUp already exist but is not annotated as @Before. Annotate?",
                                                    CommonBundle.getWarningTitle(),
                                                    Messages.getWarningIcon());
-      if (exit == DialogWrapper.OK_EXIT_CODE) {
+      if (exit == Messages.OK) {
         new AddAnnotationFix(JUnitUtil.BEFORE_ANNOTATION_NAME, existingMethod).invoke(existingMethod.getProject(), null, existingMethod.getContainingFile());
         return existingMethod;
       }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,7 +38,7 @@ abstract class TabNavigationActionBase extends AnAction implements DumbAware {
 
   public void actionPerformed(AnActionEvent e) {
     DataContext dataContext = e.getDataContext();
-    Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+    Project project = CommonDataKeys.PROJECT.getData(dataContext);
     if (project == null) {
       return;
     }
@@ -58,7 +58,7 @@ abstract class TabNavigationActionBase extends AnAction implements DumbAware {
   public void update(AnActionEvent event){
     Presentation presentation = event.getPresentation();
     DataContext dataContext = event.getDataContext();
-    Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+    Project project = CommonDataKeys.PROJECT.getData(dataContext);
     presentation.setEnabled(false);
     if (project == null) {
       return;

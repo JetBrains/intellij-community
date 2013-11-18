@@ -152,7 +152,7 @@ public class ModuleManagerComponent extends ModuleManagerImpl {
 
     ProgressIndicator progressIndicator = myProgressManager.getProgressIndicator();
     if (progressIndicator == null) {
-      myProgressManager.runProcessWithProgressSynchronously(runnableWithProgress, "Loading modules", false, myProject);
+      myProgressManager.runProcessWithProgressSynchronously(runnableWithProgress, "Initializing modules...", false, myProject);
     }
     else {
       runnableWithProgress.run();

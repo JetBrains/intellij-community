@@ -21,6 +21,10 @@ import org.junit.Test;
 import java.util.Iterator;
 import java.util.Map;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
+
 public class LinkedHashMapTest {
 
   @Test
@@ -29,16 +33,16 @@ public class LinkedHashMapTest {
     for (int i = 0; i < 1000; ++i) {
       tested.put(i, Integer.toString(i));
     }
-    Assert.assertEquals(1000, tested.size());
+    assertEquals(1000, tested.size());
     for (int i = 0; i < 1000; ++i) {
-      Assert.assertEquals(Integer.toString(i), tested.get(i));
+      assertEquals(Integer.toString(i), tested.get(i));
     }
     for (int i = 0; i < 1000; ++i) {
-      Assert.assertEquals(Integer.toString(i), tested.put(i, Integer.toString(i + 1)));
+      assertEquals(Integer.toString(i), tested.put(i, Integer.toString(i + 1)));
     }
-    Assert.assertEquals(1000, tested.size());
+    assertEquals(1000, tested.size());
     for (int i = 0; i < 1000; ++i) {
-      Assert.assertEquals(Integer.toString(i + 1), tested.get(i));
+      assertEquals(Integer.toString(i + 1), tested.get(i));
     }
   }
 
@@ -48,16 +52,16 @@ public class LinkedHashMapTest {
     for (int i = 0; i < 1000; ++i) {
       tested.put(i - 500, Integer.toString(i));
     }
-    Assert.assertEquals(1000, tested.size());
+    assertEquals(1000, tested.size());
     for (int i = 0; i < 1000; ++i) {
-      Assert.assertEquals(Integer.toString(i), tested.get(i - 500));
+      assertEquals(Integer.toString(i), tested.get(i - 500));
     }
     for (int i = 0; i < 1000; ++i) {
-      Assert.assertEquals(Integer.toString(i), tested.put(i - 500, Integer.toString(i + 1)));
+      assertEquals(Integer.toString(i), tested.put(i - 500, Integer.toString(i + 1)));
     }
-    Assert.assertEquals(1000, tested.size());
+    assertEquals(1000, tested.size());
     for (int i = 0; i < 1000; ++i) {
-      Assert.assertEquals(Integer.toString(i + 1), tested.get(i - 500));
+      assertEquals(Integer.toString(i + 1), tested.get(i - 500));
     }
   }
 
@@ -67,13 +71,13 @@ public class LinkedHashMapTest {
      for (int i = 0; i < 1000; ++i) {
        tested.put(i, Integer.toString(i));
      }
-     Assert.assertEquals(1000, tested.size());
+     assertEquals(1000, tested.size());
      for (int i = 0; i < 1000; i += 2) {
-       Assert.assertEquals(Integer.toString(i), tested.remove(i));
+       assertEquals(Integer.toString(i), tested.remove(i));
      }
-     Assert.assertEquals(500, tested.size());
+     assertEquals(500, tested.size());
      for (int i = 0; i < 1000; ++i) {
-       Assert.assertEquals((i % 2 == 0) ? null : Integer.toString(i), tested.get(i));
+       assertEquals((i % 2 == 0) ? null : Integer.toString(i), tested.get(i));
      }
   }
 
@@ -85,7 +89,7 @@ public class LinkedHashMapTest {
     }
     int i = 10000;
     for (Integer key : tested.keySet()) {
-      Assert.assertEquals(--i, key.intValue());
+      assertEquals(--i, key.intValue());
     }
   }
 
@@ -103,11 +107,11 @@ public class LinkedHashMapTest {
       }
     }
 
-    Assert.assertEquals(5000, tested.size());
+    assertEquals(5000, tested.size());
     it = tested.keySet().iterator();
     for (int i = 9999; i > 0; i -= 2) {
       Assert.assertTrue(it.hasNext());
-      Assert.assertEquals(i, it.next().intValue());
+      assertEquals(i, it.next().intValue());
     }
   }
 
@@ -122,20 +126,20 @@ public class LinkedHashMapTest {
     for (int i = 0; i < 1000; ++i) {
       tested.put(i, Integer.toString(i));
     }
-    Assert.assertEquals(500, tested.size());
+    assertEquals(500, tested.size());
     for (int i = 0; i < 500; ++i) {
       Assert.assertNull(tested.remove(i));
     }
-    Assert.assertEquals(500, tested.size());
+    assertEquals(500, tested.size());
     for (int i = 500; i < 1000; ++i) {
-      Assert.assertEquals(Integer.toString(i), tested.remove(i));
+      assertEquals(Integer.toString(i), tested.remove(i));
     }
-    Assert.assertEquals(0, tested.size());
+    assertEquals(0, tested.size());
   }
 
   @Test
   public void lru2() {
-    final LinkedHashMap<Integer, String> tested = new LinkedHashMap<Integer, String>() {
+    final LinkedHashMap<Integer, String> tested = new LinkedHashMap<Integer, String>(0, true) {
       @Override
       protected boolean removeEldestEntry(Map.Entry<Integer, String> eldest) {
         return size() > 1000;
@@ -144,18 +148,18 @@ public class LinkedHashMapTest {
     for (int i = 0; i < 1000; ++i) {
       tested.put(i, Integer.toString(i));
     }
-    Assert.assertEquals(Integer.toString(0), tested.get(0));
+    assertEquals(Integer.toString(0), tested.get(0));
     for (int i = 1000; i < 1999; ++i) {
       tested.put(i, Integer.toString(i));
     }
-    Assert.assertEquals(Integer.toString(0), tested.get(0));
+    assertEquals(Integer.toString(0), tested.get(0));
     tested.put(2000, Integer.toString(2000));
     Assert.assertNull(tested.get(1000));
   }
 
   @Test
   public void lru3() {
-    final LinkedHashMap<Integer, String> tested = new LinkedHashMap<Integer, String>() {
+    final LinkedHashMap<Integer, String> tested = new LinkedHashMap<Integer, String>(0, true) {
       @Override
       protected boolean removeEldestEntry(Map.Entry<Integer, String> eldest) {
         return size() > 1000;
@@ -164,15 +168,50 @@ public class LinkedHashMapTest {
     for (int i = 0; i < 1000; ++i) {
       tested.put(i, Integer.toString(i));
     }
-    Assert.assertEquals(Integer.toString(999), tested.remove(999));
-    Assert.assertEquals(999, tested.size());
-    Assert.assertEquals(Integer.toString(0), tested.get(0));
+    assertEquals(Integer.toString(999), tested.remove(999));
+    assertEquals(999, tested.size());
+    assertEquals(Integer.toString(0), tested.get(0));
     for (int i = 1000; i < 1999; ++i) {
       tested.put(i, Integer.toString(i));
     }
-    Assert.assertEquals(Integer.toString(0), tested.get(0));
+    assertEquals(Integer.toString(0), tested.get(0));
     tested.put(2000, Integer.toString(2000));
-    Assert.assertNull(tested.get(1000));
+    assertNull(tested.get(1000));
+  }
+
+  @Test
+  public void iteration() {
+    ///todo[nik] it iterates in reversed order, may be it is a bug?
+    Map<Integer, String> map = new LinkedHashMap<Integer, String>();
+    map.put(1, "a");
+    map.put(2, "b");
+    map.put(3, "c");
+    Iterator<String> iterator = map.values().iterator();
+    assertEquals("c", iterator.next());
+    assertEquals("b", iterator.next());
+    assertEquals("a", iterator.next());
+    assertFalse(iterator.hasNext());
+  }
+
+  @Test
+  public void lastAddedKey() {
+    LinkedHashMap<Integer, String> map = new LinkedHashMap<Integer, String>();
+    map.put(1, "a");
+    map.put(2, "b");
+    map.put(3, "c");
+    map.get(1);
+    map.get(2);
+    assertEquals(3, map.getLastKey().intValue());
+    assertEquals("c", map.getLastValue());
+    map.remove(2);
+    assertEquals(3, map.getLastKey().intValue());
+    assertEquals("c", map.getLastValue());
+    map.remove(3);
+    assertEquals(1, map.getLastKey().intValue());
+    assertEquals("a", map.getLastValue());
+    map.remove(1);
+    assertNull(map.getLastKey());
+    assertNull(map.getLastValue());
   }
 
   //@Test

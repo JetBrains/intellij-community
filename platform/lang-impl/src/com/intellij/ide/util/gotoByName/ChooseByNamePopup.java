@@ -45,7 +45,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNamePopupComponent {
-  private static final Key<ChooseByNamePopup> CHOOSE_BY_NAME_POPUP_IN_PROJECT_KEY = new Key<ChooseByNamePopup>("ChooseByNamePopup");
+  public static final Key<ChooseByNamePopup> CHOOSE_BY_NAME_POPUP_IN_PROJECT_KEY = new Key<ChooseByNamePopup>("ChooseByNamePopup");
   private Component myOldFocusOwner = null;
   private boolean myShowListForEmptyPattern = false;
   private final boolean myMayRequestCurrentWindow;
@@ -332,7 +332,7 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
     return newPopup;
   }
 
-  private static final Pattern patternToDetectLinesAndColumns = Pattern.compile("(.+)(?::|@|,)(\\d+)?(?:(?:\\D)(\\d+)?)?");
+  private static final Pattern patternToDetectLinesAndColumns = Pattern.compile("([^:]+)(?::|@|,|)\\[?(\\d+)?(?:(?:\\D)(\\d+)?)?\\]?");
   private static final Pattern patternToDetectAnonymousClasses = Pattern.compile("([\\.\\w]+)((\\$[\\d]+)*(\\$)?)");
   private static final Pattern patternToDetectMembers = Pattern.compile("(.+)(#)(.*)");
 

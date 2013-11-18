@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -52,18 +52,18 @@ public class XmlFilterLexer extends BaseFilterLexer {
   public void advance() {
     final IElementType tokenType = myDelegate.getTokenType();
 
-    if (tokenType == XmlElementType.XML_COMMENT_CHARACTERS) {
+    if (tokenType == XmlTokenType.XML_COMMENT_CHARACTERS) {
       scanWordsInToken(UsageSearchContext.IN_COMMENTS, false, false);
       advanceTodoItemCountsInToken();
     }
 
-    if (tokenType == XmlElementType.XML_ATTRIBUTE_VALUE_TOKEN) {
+    if (tokenType == XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN) {
       scanWordsInToken(UsageSearchContext.IN_PLAIN_TEXT | UsageSearchContext.IN_FOREIGN_LANGUAGES, true, false);
     }
-    else if (tokenType == XmlElementType.XML_NAME || tokenType == XmlElementType.XML_DATA_CHARACTERS) {
+    else if (tokenType == XmlTokenType.XML_NAME || tokenType == XmlTokenType.XML_DATA_CHARACTERS) {
       scanWordsInToken(UsageSearchContext.IN_PLAIN_TEXT | UsageSearchContext.IN_FOREIGN_LANGUAGES, false, false);
     }
-    else if (tokenType == XmlElementType.XML_ENTITY_REF_TOKEN || tokenType == XmlElementType.XML_CHAR_ENTITY_REF) {
+    else if (tokenType == XmlTokenType.XML_ENTITY_REF_TOKEN || tokenType == XmlTokenType.XML_CHAR_ENTITY_REF) {
       scanWordsInToken(UsageSearchContext.IN_CODE, false, false);
     }
     else if (tokenType == XmlElementType.XML_TEXT) {

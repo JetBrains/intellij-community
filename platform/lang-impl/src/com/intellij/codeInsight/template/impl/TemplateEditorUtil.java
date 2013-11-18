@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,7 @@ import com.intellij.ide.DataManager;
 import com.intellij.lexer.CompositeLexer;
 import com.intellij.lexer.Lexer;
 import com.intellij.lexer.MergingLexerAdapter;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
@@ -55,7 +55,7 @@ public class TemplateEditorUtil {
   }
 
   public static Editor createEditor(boolean isReadOnly, CharSequence text, @Nullable Map<TemplateContextType, Boolean> context) {
-    final Project project = PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext());
+    final Project project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext());
     return createEditor(isReadOnly, createDocument(text, context, project), project);
   }
 

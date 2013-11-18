@@ -26,6 +26,7 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.AsyncResult;
 import com.intellij.psi.PsiFile;
+import com.intellij.util.Consumer;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.importing.MavenRootModelAdapter;
@@ -73,8 +74,8 @@ public class MavenAttachSourcesProvider implements AttachSourcesProvider {
 
         final ActionCallback resultWrapper = new ActionCallback();
 
-        result.doWhenDone(new AsyncResult.Handler<MavenArtifactDownloader.DownloadResult>() {
-          public void run(MavenArtifactDownloader.DownloadResult downloadResult) {
+        result.doWhenDone(new Consumer<MavenArtifactDownloader.DownloadResult>() {
+          public void consume(MavenArtifactDownloader.DownloadResult downloadResult) {
             if (!downloadResult.unresolvedSources.isEmpty()) {
               final StringBuilder message = new StringBuilder();
 

@@ -27,7 +27,7 @@ import org.zmlx.hg4idea.HgVcs;
 
 import java.io.IOException;
 
-import static com.intellij.dvcs.test.Executor.*;
+import static com.intellij.openapi.vcs.Executor.*;
 import static hg4idea.test.HgExecutor.hg;
 import static hg4idea.test.HgExecutor.updateProject;
 

@@ -28,7 +28,6 @@ public class Patches {
 
   /**
    * Debugger hangs on any attempt to attach/listen Connector when attach hanged once.
-   * @deprecated to remove in IDEA 13 (IDEA support JRE only >= 1.6)
    */
   public static final boolean SUN_JDI_CONNECTOR_HANGUP_BUG = !SystemInfo.isJavaVersionAtLeast("1.5");
 

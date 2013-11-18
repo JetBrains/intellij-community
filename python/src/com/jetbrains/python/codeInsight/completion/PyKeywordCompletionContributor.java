@@ -293,9 +293,7 @@ public class PyKeywordCompletionContributor extends CompletionContributor {
 
   private static final PsiElementPattern.Capture<PsiElement> IN_IMPORT_STMT =
     psiElement().inside(
-      StandardPatterns.or(
-        psiElement(PyImportStatement.class), psiElement(PyFromImportStatement.class)
-      )
+      or(psiElement(PyImportStatement.class), psiElement(PyFromImportStatement.class))
     );
 
   private static final PsiElementPattern.Capture<PsiElement> IN_PARAM_LIST = psiElement().inside(PyParameterList.class);
@@ -310,7 +308,8 @@ public class PyKeywordCompletionContributor extends CompletionContributor {
   private static final PsiElementPattern.Capture<PsiElement> IN_EXCEPT_BODY =
     psiElement().inside(psiElement(PyStatementList.class).inside(psiElement(PyExceptPart.class)));
 
-  private static final PsiElementPattern.Capture<PsiElement> AFTER_IF = afterStatement(psiElement(PyIfStatement.class));
+  private static final PsiElementPattern.Capture<PsiElement> AFTER_IF = afterStatement(psiElement(PyIfStatement.class).withLastChild(
+    psiElement(PyIfPart.class)));
   private static final PsiElementPattern.Capture<PsiElement> AFTER_TRY = afterStatement(psiElement(PyTryExceptStatement.class));
 
   private static final PsiElementPattern.Capture<PsiElement> AFTER_LOOP_NO_ELSE =
@@ -325,8 +324,8 @@ public class PyKeywordCompletionContributor extends CompletionContributor {
                                     .afterSiblingSkipping(psiElement().whitespaceCommentEmptyOrError(), statementPattern));
   }
 
-  private static final PsiElementPattern.Capture<PsiElement> AFTER_TRY_NO_ELSE = afterStatement(
-    psiElement().withChild(psiElement(PyTryPart.class)).withLastChild(StandardPatterns.not(psiElement(PyElsePart.class)))
+  private static final PsiElementPattern.Capture<PsiElement> AFTER_EXCEPT = afterStatement(
+    psiElement().withLastChild(psiElement(PyExceptPart.class))
   );
 
   private static final PsiElementPattern.Capture<PsiElement> IN_FINALLY_NO_LOOP =
@@ -355,14 +354,11 @@ public class PyKeywordCompletionContributor extends CompletionContributor {
     }
   }
 
-  private static void putKeyword(
-    @NotNull @NonNls String keyword,
-    InsertHandler<PythonLookupElement> handler,
-    TailType tail,
-    CompletionResultSet result) {
-    final PythonLookupElement lookup_elt = new PythonLookupElement(keyword, true, null);
-    lookup_elt.setHandler(handler);
-    result.addElement(TailTypeDecorator.withTail(lookup_elt, tail));
+  private static void putKeyword(@NotNull @NonNls String keyword, InsertHandler<PythonLookupElement> handler, TailType tail,
+                                 CompletionResultSet result) {
+    final PythonLookupElement lookupElement = new PythonLookupElement(keyword, true, null);
+    lookupElement.setHandler(handler);
+    result.addElement(TailTypeDecorator.withTail(lookupElement, tail));
   }
 
   private void addPreColonStatements() {
@@ -472,8 +468,7 @@ public class PyKeywordCompletionContributor extends CompletionContributor {
       CompletionType.BASIC, psiElement()
       .withLanguage(PythonLanguage.getInstance())
       .and(FIRST_ON_LINE)
-      .andOr(IN_IF_BODY, AFTER_IF)  // NOTE: does allow 'elif' after 'else', may be useful for easier reordering of branches
-        //.andNot(RIGHT_AFTER_COLON)
+      .andOr(IN_IF_BODY, AFTER_IF)
       .andNot(AFTER_QUALIFIER).andNot(IN_STRING_LITERAL)
       ,
       new PyKeywordCompletionProvider(TailType.NONE, UnindentingInsertHandler.INSTANCE, "elif"));
@@ -504,8 +499,7 @@ public class PyKeywordCompletionContributor extends CompletionContributor {
       CompletionType.BASIC, psiElement()
       .withLanguage(PythonLanguage.getInstance())
       .and(FIRST_ON_LINE)
-      .andOr(IN_COND_STMT, IN_TRY_BODY, IN_EXCEPT_BODY, AFTER_COND_STMT_NO_ELSE, AFTER_LOOP_NO_ELSE, AFTER_TRY_NO_ELSE)
-        //.andNot(RIGHT_AFTER_COLON)
+      .andOr(IN_COND_STMT, IN_EXCEPT_BODY, AFTER_COND_STMT_NO_ELSE, AFTER_LOOP_NO_ELSE, AFTER_EXCEPT)
       .andNot(AFTER_QUALIFIER).andNot(IN_STRING_LITERAL)
       ,
       new PyKeywordCompletionProvider(TailType.CASE_COLON, UnindentingInsertHandler.INSTANCE, "else"));
@@ -650,6 +644,26 @@ public class PyKeywordCompletionContributor extends CompletionContributor {
     addExprElse();
     addRaiseFrom();
     addYieldFrom();
+    addForToComprehensions();
+    addInToFor();
+  }
+
+  private void addForToComprehensions() {
+    extend(CompletionType.BASIC,
+           psiElement()
+             .withLanguage(PythonLanguage.getInstance())
+             .inside(psiElement(PySequenceExpression.class))
+             .andNot(psiElement().afterLeaf(or(psiElement(PyTokenTypes.LBRACE), psiElement(PyTokenTypes.LBRACKET), psiElement(PyTokenTypes.LPAR)))),
+           new PyKeywordCompletionProvider("for"));
+  }
+
+  private void addInToFor() {
+    extend(CompletionType.BASIC,
+           psiElement()
+             .withLanguage(PythonLanguage.getInstance())
+             .and(psiElement()).afterLeaf(psiElement().afterLeaf("for")),
+           new PyKeywordCompletionProvider("in"));
+
   }
 
   private static class PyKeywordCompletionProvider extends CompletionProvider<CompletionParameters> {

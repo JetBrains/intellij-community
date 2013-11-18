@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,6 @@ import org.jetbrains.annotations.NotNull;
 public class JavadocWhiteSpaceFormattingStrategy extends WhiteSpaceFormattingStrategyAdapter {
   @Override
   public boolean containsWhitespacesOnly(@NotNull final ASTNode node) {
-    return node.getElementType() == JavaDocTokenType.DOC_COMMENT_DATA && node.textContains('\n') && node.getText().trim().length() == 0;
+    return node.getElementType() == JavaDocTokenType.DOC_COMMENT_DATA && node.textContains('\n') && node.getText().trim().isEmpty();
   }
 }

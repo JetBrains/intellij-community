@@ -18,7 +18,8 @@ package com.intellij.psi.formatter;
 
 import com.intellij.formatting.Block;
 import com.intellij.formatting.FormattingDocumentModel;
-import com.intellij.formatting.FormattingModel;
+import com.intellij.formatting.FormattingModelEx;
+import com.intellij.lang.ASTNode;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
@@ -36,7 +37,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author lesya
  */
-public class DocumentBasedFormattingModel implements FormattingModel {
+public class DocumentBasedFormattingModel implements FormattingModelEx {
   private final Block                   myRootBlock;
   private final FormattingDocumentModel myDocumentModel;
   @NotNull private final Document       myDocument;
@@ -86,8 +87,14 @@ public class DocumentBasedFormattingModel implements FormattingModel {
     return myDocumentModel;
   }
 
+
   @Override
   public TextRange replaceWhiteSpace(TextRange textRange, String whiteSpace) {
+    return replaceWhiteSpace(textRange, null, whiteSpace);
+  }
+
+  @Override
+  public TextRange replaceWhiteSpace(TextRange textRange, ASTNode nodeAfter, String whiteSpace) {
     boolean removesStartMarker;
     String marker;
 
@@ -121,7 +128,7 @@ public class DocumentBasedFormattingModel implements FormattingModel {
     }
 
     CharSequence whiteSpaceToUse = getDocumentModel().adjustWhiteSpaceIfNecessary(
-      whiteSpace, textRange.getStartOffset(), textRange.getEndOffset(), false
+      whiteSpace, textRange.getStartOffset(), textRange.getEndOffset(), nodeAfter, false
     );
 
     myDocument.replaceString(textRange.getStartOffset(),
@@ -154,8 +161,8 @@ public class DocumentBasedFormattingModel implements FormattingModel {
   }
 
   private int shiftIndentInside(final TextRange elementRange, final int shift) {
-    final StringBuffer buffer = new StringBuffer();
-    StringBuffer afterWhiteSpace = new StringBuffer();
+    final StringBuilder buffer = new StringBuilder();
+    StringBuilder afterWhiteSpace = new StringBuilder();
     int whiteSpaceLength = 0;
     boolean insideWhiteSpace = true;
     int line = 0;
@@ -169,7 +176,7 @@ public class DocumentBasedFormattingModel implements FormattingModel {
           buffer.append(afterWhiteSpace.toString());
           insideWhiteSpace = true;
           whiteSpaceLength = 0;
-          afterWhiteSpace = new StringBuffer();
+          afterWhiteSpace = new StringBuilder();
           buffer.append(c);
           line++;
           break;
@@ -203,7 +210,7 @@ public class DocumentBasedFormattingModel implements FormattingModel {
     return buffer.length();
   }
 
-  private void createWhiteSpace(final int whiteSpaceLength, StringBuffer buffer) {
+  private void createWhiteSpace(final int whiteSpaceLength, StringBuilder buffer) {
     if (whiteSpaceLength < 0) return;
     final CommonCodeStyleSettings.IndentOptions indentOptions = getIndentOptions();
     if (indentOptions.USE_TAB_CHARACTER) {

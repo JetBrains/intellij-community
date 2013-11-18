@@ -119,7 +119,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
 
     // initial guess to show correct progress in the traffic light icon
     setProgressLimit(document.getTextLength()/2); // approx number of PSI elements = file length/2
-    myGlobalScheme = EditorColorsManager.getInstance().getGlobalScheme();
+    myGlobalScheme = myEditor != null ? myEditor.getColorsScheme() : EditorColorsManager.getInstance().getGlobalScheme();
   }
 
   private static final Key<AtomicInteger> HIGHLIGHT_VISITOR_INSTANCE_COUNT = new Key<AtomicInteger>("HIGHLIGHT_VISITOR_INSTANCE_COUNT");

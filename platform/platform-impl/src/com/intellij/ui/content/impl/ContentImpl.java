@@ -27,7 +27,9 @@ import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.content.AlertIcon;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
+import com.intellij.util.IconUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -36,6 +38,8 @@ import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 
 public class ContentImpl extends UserDataHolderBase implements Content {
+  private static Icon ourEmptyPinIcon = null;
+
   private String myDisplayName;
   private String myDescription;
   private JComponent myComponent;
@@ -113,11 +117,21 @@ public class ContentImpl extends UserDataHolderBase implements Content {
   @Override
   public Icon getIcon() {
     if (myIsLocked) {
-      return myIcon == null ? AllIcons.Nodes.PinToolWindow : myLayeredIcon;
+      return myIcon == null ? getEmptyPinIcon() : myLayeredIcon;
     }
     else {
       return myIcon;
     }
+  }
+
+  @NotNull
+  private static Icon getEmptyPinIcon() {
+    if (ourEmptyPinIcon == null) {
+      Icon icon = AllIcons.Nodes.PinToolWindow;
+      int width = icon.getIconWidth();
+      ourEmptyPinIcon = IconUtil.cropIcon(icon, new Rectangle(width / 2, 0, width - width / 2, icon.getIconHeight()));
+    }
+    return ourEmptyPinIcon;
   }
 
   @Override

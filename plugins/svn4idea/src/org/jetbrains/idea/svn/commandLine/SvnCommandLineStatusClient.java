@@ -171,6 +171,11 @@ public class SvnCommandLineStatusClient implements SvnStatusClientI {
       throw new SVNException(SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e), e);
     }
     catch (SAXException e) {
+      // status parsing errors are logged separately as sometimes there are parsing errors connected to terminal output handling.
+      // these errors primarily occur when status output is rather large.
+      // and status output could be large, for instance, when working copy is locked (seems that each file is listed in status output).
+      command.logCommand();
+
       throw new SVNException(SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e), e);
     }
   }

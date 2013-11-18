@@ -128,6 +128,11 @@ public class CompletionServiceImpl extends CompletionService{
 
     @Override
     public void addElement(@NotNull final LookupElement element) {
+      if (!element.isValid()) {
+        LOG.error("Invalid lookup element: " + element);
+        return;
+      }
+
       CompletionResult matched = CompletionResult.wrap(element, getPrefixMatcher(), mySorter);
       if (matched != null) {
         passResult(matched);

@@ -181,7 +181,7 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
     // So, if 'virtual space in editor' is enabled, we save target visual column. Caret indent is ensured otherwise
     int visualColumnToRestore = -1;
     String caretIndentToRestore = null;
-    RangeMarker caretRangeMarker = null;
+    RangeMarker beforeCaretRangeMarker = null;
 
     if (editor != null) {
       Document document = editor.getDocument();
@@ -202,7 +202,7 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
       if (fixCaretPosition) {
         visualColumnToRestore = editor.getCaretModel().getVisualPosition().column;
         caretIndentToRestore = document.getText(TextRange.create(lineStartOffset, caretOffset));
-        caretRangeMarker = document.createRangeMarker(lineStartOffset, caretOffset);
+        beforeCaretRangeMarker = document.createRangeMarker(0, lineStartOffset);
       }
     }
 
@@ -261,11 +261,11 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
       }
     }
     else {
-      if (caretRangeMarker == null || !caretRangeMarker.isValid() || caretIndentToRestore == null) {
+      if (beforeCaretRangeMarker == null || !beforeCaretRangeMarker.isValid() || caretIndentToRestore == null) {
         return;
       }
-      int offset = caretRangeMarker.getStartOffset();
-      caretRangeMarker.dispose();
+      int offset = beforeCaretRangeMarker.getEndOffset();
+      beforeCaretRangeMarker.dispose();
       if (editor.getCaretModel().getVisualPosition().column == visualColumnToRestore) {
         return;
       }
@@ -484,10 +484,10 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
    * </ol>
    * </pre>
    * <p/>
-   * This method inserts that dummy comment (fallback to identifier <code>xxx</code>, see {@link CodeStyleManagerImpl#createDummy(PsiFile)}) 
+   * This method inserts that dummy comment (fallback to identifier <code>xxx</code>, see {@link CodeStyleManagerImpl#createDummy(PsiFile)})
    * if necessary (if target line contains white space symbols only).
    * <p/>
-   
+
    * <b>Note:</b> it's expected that the whole white space region that contains given offset is processed in a way that all
    * {@link RangeMarker range markers} registered for the given offset are expanded to the whole white space region.
    * E.g. there is a possible case that particular range marker serves for defining formatting range, hence, its start/end offsets
@@ -537,7 +537,7 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
     try {
       comment = PsiParserFacade.SERVICE.getInstance(file.getProject()).createLineOrBlockCommentFromText(language, "");
     }
-    catch (Exception ignored) {
+    catch (Throwable ignored) {
     }
     String text = comment != null ? comment.getText() : null;
     return text != null ? text : DUMMY_IDENTIFIER;

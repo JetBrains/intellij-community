@@ -167,12 +167,15 @@ public class GradleUtil {
       //
       // So, just ignore it and assume that the user didn't define any custom build file name.
     }
-    File rootProjectParent = new File(rootProjectPath).getParentFile();
+    File rootProjectParent = new File(rootProjectPath);
     StringBuilder buffer = new StringBuilder(FileUtil.toCanonicalPath(rootProjectParent.getAbsolutePath()));
     Stack<String> stack = ContainerUtilRt.newStack();
     for (GradleProject p = subProject; p != null; p = p.getParent()) {
       stack.push(p.getName());
     }
+
+    // pop root project
+    stack.pop();
     while (!stack.isEmpty()) {
       buffer.append(ExternalSystemConstants.PATH_SEPARATOR).append(stack.pop());
     }

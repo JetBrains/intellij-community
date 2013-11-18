@@ -1,0 +1,13 @@
+PyFile:LoneStar.py
+  PyAssignmentStatement
+    PyTargetExpression: x
+      PsiElement(Py:IDENTIFIER)('x')
+    PsiWhiteSpace(' ')
+    PsiElement(Py:EQ)('=')
+    PsiWhiteSpace(' ')
+    PyParenthesizedExpression
+      PsiElement(Py:LPAR)('(')
+      PsiElement(Py:MULT)('*')
+      PsiErrorElement:expression expected
+        <empty list>
+      PsiElement(Py:RPAR)(')')

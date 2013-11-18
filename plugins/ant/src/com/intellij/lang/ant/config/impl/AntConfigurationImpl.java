@@ -29,7 +29,6 @@ import com.intellij.lang.ant.dom.AntDomFileDescription;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -687,14 +686,13 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
   }
 
   private void loadBuildFileProjectProperties(final Element parentNode) {
-    final List<Pair<Element, VirtualFile>> files = new ArrayList<Pair<Element, VirtualFile>>();
+    final List<Pair<Element, String>> files = new ArrayList<Pair<Element, String>>();
     final VirtualFileManager vfManager = VirtualFileManager.getInstance();
     for (final Object o : parentNode.getChildren(BUILD_FILE)) {
       final Element element = (Element)o;
       final String url = element.getAttributeValue(URL);
-      final VirtualFile file = vfManager.findFileByUrl(url);
-      if (file != null) {
-        files.add(new Pair<Element, VirtualFile>(element, file));
+      if (url != null) {
+        files.add(new Pair<Element, String>(element, url));
       }
     }
     
@@ -732,9 +730,12 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
                 }
                 // then fill the configuration with the files configured in xml
                 List<Pair<Element, AntBuildFileBase>> buildFiles = new ArrayList<Pair<Element, AntBuildFileBase>>(files.size());
-                for (Pair<Element, VirtualFile> pair : files) {
+                for (Pair<Element, String> pair : files) {
                   final Element element = pair.getFirst();
-                  final VirtualFile file = pair.getSecond();
+                  final VirtualFile file = vfManager.findFileByUrl(pair.getSecond());
+                  if (file == null) {
+                    continue;
+                  }
                   try {
                     final AntBuildFileBase buildFile = addBuildFileImpl(file);
                     buildFile.readProperties(element);

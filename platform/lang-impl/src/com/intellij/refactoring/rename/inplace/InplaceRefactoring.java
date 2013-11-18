@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,6 +30,7 @@ import com.intellij.lang.refactoring.NamesValidator;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.Shortcut;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.command.impl.FinishMarkAction;
@@ -53,7 +54,6 @@ import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.BalloonBuilder;
@@ -327,7 +327,7 @@ public abstract class InplaceRefactoring {
 
     new WriteCommandAction(myProject, getCommandName()) {
       @Override
-      protected void run(com.intellij.openapi.application.Result result) throws Throwable {
+      protected void run(Result result) throws Throwable {
         startTemplate(builder);
       }
     }.execute();
@@ -434,11 +434,11 @@ public abstract class InplaceRefactoring {
     return myCaretRangeMarker.isValid() ? myCaretRangeMarker.getEndOffset() : offset;
   }
 
-  protected void navigateToAlreadyStarted(Document oldDocument, int exitCode) {
+  protected void navigateToAlreadyStarted(Document oldDocument, @Messages.YesNoResult int exitCode) {
     navigateToStarted(oldDocument, myProject, exitCode);
   }
 
-  private static void navigateToStarted(final Document oldDocument, final Project project, final int exitCode) {
+  private static void navigateToStarted(final Document oldDocument, final Project project, @Messages.YesNoResult final int exitCode) {
     final PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(oldDocument);
     if (file != null) {
       final VirtualFile virtualFile = file.getVirtualFile();
@@ -449,7 +449,7 @@ public abstract class InplaceRefactoring {
             final Editor textEditor = ((TextEditor)editor).getEditor();
             final TemplateState templateState = TemplateManagerImpl.getTemplateState(textEditor);
             if (templateState != null) {
-              if (exitCode == DialogWrapper.OK_EXIT_CODE) {
+              if (exitCode == Messages.YES) {
                 final TextRange range = templateState.getVariableRange(PRIMARY_VARIABLE_NAME);
                 if (range != null) {
                   new OpenFileDescriptor(project, virtualFile, range.getStartOffset()).navigate(true);

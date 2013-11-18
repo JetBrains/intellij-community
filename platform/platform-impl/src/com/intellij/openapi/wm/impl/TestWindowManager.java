@@ -166,6 +166,11 @@ public final class TestWindowManager extends WindowManagerEx implements Applicat
     public void updateWidget(@NotNull String id) { }
 
     @Override
+    public StatusBarWidget getWidget(String id) {
+      return null;
+    }
+
+    @Override
     public void removeWidget(@NotNull String id) { }
 
     @Override

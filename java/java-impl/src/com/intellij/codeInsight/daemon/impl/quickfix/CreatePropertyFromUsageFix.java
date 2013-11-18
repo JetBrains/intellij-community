@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -82,7 +82,7 @@ public class CreatePropertyFromUsageFix extends CreateFromUsageBaseFix implement
     String methodName = myMethodCall.getMethodExpression().getReferenceName();
     LOG.assertTrue(methodName != null);
     String propertyName = PropertyUtil.getPropertyName(methodName);
-    if (propertyName == null || propertyName.length() == 0) return false;
+    if (propertyName == null || propertyName.isEmpty()) return false;
 
     String getterOrSetter = null;
     if (methodName.startsWith(GET_PREFIX) || methodName.startsWith(IS_PREFIX)) {
@@ -326,7 +326,7 @@ public class CreatePropertyFromUsageFix extends CreateFromUsageBaseFix implement
     JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(methodCall.getProject());
     String methodName = methodCall.getMethodExpression().getReferenceName();
     String propertyName = PropertyUtil.getPropertyName(methodName);
-    if (propertyName != null && propertyName.length() > 0) {
+    if (propertyName != null && !propertyName.isEmpty()) {
       VariableKind kind = isStatic ? VariableKind.STATIC_FIELD : VariableKind.FIELD;
       return codeStyleManager.propertyNameToVariableName(propertyName, kind);
     }

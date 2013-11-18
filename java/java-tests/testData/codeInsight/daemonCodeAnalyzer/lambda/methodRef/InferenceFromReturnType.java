@@ -17,11 +17,11 @@ class MyTestDefaultConstructor {
    }
    
    private static void <warning descr="Private method 'foo(MyTestDefaultConstructor.I1)' is never used">foo</warning>(I1 i) {System.out.println(i);}
-   private static void foo(I2 i) {System.out.println(i);}
+   private static void <warning descr="Private method 'foo(MyTestDefaultConstructor.I2)' is never used">foo</warning>(I2 i) {System.out.println(i);}
    private static void <warning descr="Private method 'foo(MyTestDefaultConstructor.I3)' is never used">foo</warning>(I3 i) {System.out.println(i);}
 
    static {
-       foo(Foo::new);
+       foo<error descr="Cannot resolve method 'foo(<method reference>)'">(Foo::new)</error>;
    }
 }
 

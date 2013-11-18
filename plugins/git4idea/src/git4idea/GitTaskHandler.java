@@ -22,9 +22,11 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsTaskHandler;
+import com.intellij.util.Function;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
+import git4idea.branch.GitBranchUtil;
 import git4idea.branch.GitBrancher;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
@@ -88,7 +90,7 @@ public class GitTaskHandler extends VcsTaskHandler {
   }
 
   @Override
-  public void switchToTask(TaskInfo taskInfo) {
+  public void switchToTask(TaskInfo taskInfo, Runnable invokeAfter) {
     for (final String branchName : taskInfo.branches.keySet()) {
       List<GitRepository> repositories = getRepositories(taskInfo.branches.get(branchName));
       List<GitRepository> notFound = ContainerUtil.filter(repositories, new Condition<GitRepository>() {
@@ -102,7 +104,7 @@ public class GitTaskHandler extends VcsTaskHandler {
       }
       repositories.removeAll(notFound);
       if (!repositories.isEmpty()) {
-        myBrancher.checkout(branchName, repositories, null);
+        myBrancher.checkout(branchName, repositories, invokeAfter);
       }
     }
   }
@@ -142,6 +144,26 @@ public class GitTaskHandler extends VcsTaskHandler {
       }
     }
     return new TaskInfo(branches);
+  }
+
+  @Override
+  public TaskInfo[] getCurrentTasks() {
+    List<GitRepository> repositories = myRepositoryManager.getRepositories();
+    final List<String> names = ContainerUtil.map(repositories, new Function<GitRepository, String>() {
+      @Override
+      public String fun(GitRepository repository) {
+        return repository.getPresentableUrl();
+      }
+    });
+    Collection<String> branches = GitBranchUtil.getCommonBranches(repositories, true);
+    return ContainerUtil.map2Array(branches, TaskInfo.class, new Function<String, TaskInfo>() {
+      @Override
+      public TaskInfo fun(String branchName) {
+        MultiMap<String, String> map = new MultiMap<String, String>();
+        map.put(branchName, names);
+        return new TaskInfo(map);
+      }
+    });
   }
 
   private List<GitRepository> getRepositories(Collection<String> urls) {

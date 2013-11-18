@@ -189,7 +189,7 @@ public class CommandUtil {
     command.setTarget(target);
     command.setWorkingDirectory(workingDirectory);
     command.setResultBuilder(listener);
-    command.addParameters(parameters);
+    command.put(parameters);
 
     CommandRuntime runtime = new CommandRuntime(vcs, new IdeaSvnkitBasedAuthenticationCallback(vcs));
     return runtime.runWithAuthenticationAttempt(command);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,7 +46,7 @@ class InjectedSelfElementInfo extends SelfElementInfo {
                           @NotNull PsiElement hostContext) {
     super(project, hostContext);
     assert containingFile.getViewProvider() instanceof FreeThreadedFileViewProvider : "element parameter must be an injected element: "+injectedElement+"; "+containingFile;
-    ProperTextRange.assertProperRange(injectedRange);
+    TextRange.assertProperRange(injectedRange);
     assert containingFile.getTextRange().contains(injectedRange) : "Injected range outside the file: "+injectedRange +"; file: "+containingFile.getTextRange();
 
     TextRange hostRange = InjectedLanguageManager.getInstance(project).injectedToHost(injectedElement, injectedRange);
@@ -54,8 +54,8 @@ class InjectedSelfElementInfo extends SelfElementInfo {
     assert !(hostFile.getViewProvider() instanceof FreeThreadedFileViewProvider) : "hostContext parameter must not be and injected element: "+hostContext;
     SmartPointerManager smartPointerManager = SmartPointerManager.getInstance(project);
     myInjectedFileRangeInHostFile = smartPointerManager.createSmartPsiFileRangePointer(hostFile, hostRange);
-    anchorClass = containingFile.findElementAt(injectedRange.getStartOffset()).getClass();
     anchorLanguage = containingFile.getLanguage();
+    anchorClass = injectedElement.getClass(); //containingFile.findElementAt(injectedRange.getStartOffset()).getClass();
   }
 
   @Override
@@ -73,32 +73,40 @@ class InjectedSelfElementInfo extends SelfElementInfo {
   @Override
   public PsiElement restoreElement() {
     if (!mySyncMarkerIsValid) return null;
-    PsiFile file = restoreFileFromVirtual(myVirtualFile, myProject, myLanguage);
-    if (file == null || !file.isValid()) return null;
+    PsiFile hostFile = restoreFileFromVirtual(myVirtualFile, myProject, myLanguage);
+    if (hostFile == null || !hostFile.isValid()) return null;
 
-    PsiElement hostContext = restoreFromFile(file);
+    PsiElement hostContext = restoreFromFile(hostFile);
     if (hostContext == null) return null;
 
     Segment segment = myInjectedFileRangeInHostFile.getRange();
     if (segment == null) return null;
     final TextRange rangeInHostFile = TextRange.create(segment);
-    final Ref<PsiElement> result = new Ref<PsiElement>();
 
+    PsiElement result = null;
+    PsiFile injectedPsi = getInjectedFileIn(hostContext, hostFile, rangeInHostFile);
+    if (injectedPsi != null) {
+    Document document = PsiDocumentManager.getInstance(getProject()).getDocument(injectedPsi);
+      int start = ((DocumentWindow)document).hostToInjected(rangeInHostFile.getStartOffset());
+      int end = ((DocumentWindow)document).hostToInjected(rangeInHostFile.getEndOffset());
+      result = findElementInside(injectedPsi, start, end, anchorClass, anchorLanguage);
+    }
+
+    return result;
+  }
+
+  private PsiFile getInjectedFileIn(@NotNull final PsiElement hostContext,
+                                    @NotNull final PsiFile hostFile, final TextRange rangeInHostFile
+                                    ) {
     final InjectedLanguageManager manager = InjectedLanguageManager.getInstance(getProject());
-    PsiFile hostFile = hostContext.getContainingFile();
-    if (hostFile == null) return null;
-
-    PsiLanguageInjectionHost.InjectedPsiVisitor visitor = new PsiLanguageInjectionHost.InjectedPsiVisitor() {
+    final PsiFile[] result = {null};
+    final PsiLanguageInjectionHost.InjectedPsiVisitor visitor = new PsiLanguageInjectionHost.InjectedPsiVisitor() {
       @Override
       public void visit(@NotNull PsiFile injectedPsi, @NotNull List<PsiLanguageInjectionHost.Shred> places) {
-        if (result.get() != null) return;
         TextRange hostRange = manager.injectedToHost(injectedPsi, new TextRange(0, injectedPsi.getTextLength()));
         Document document = PsiDocumentManager.getInstance(getProject()).getDocument(injectedPsi);
         if (hostRange.contains(rangeInHostFile) && document instanceof DocumentWindow) {
-          int start = ((DocumentWindow)document).hostToInjected(rangeInHostFile.getStartOffset());
-          int end = ((DocumentWindow)document).hostToInjected(rangeInHostFile.getEndOffset());
-          PsiElement element = findElementInside(injectedPsi, start, end, anchorClass, anchorLanguage);
-          result.set(element);
+         result[0] = injectedPsi;
         }
       }
     };
@@ -123,7 +131,7 @@ class InjectedSelfElementInfo extends SelfElementInfo {
       }
     }
 
-    return result.get();
+    return result[0];
   }
 
   @Override
@@ -137,17 +145,29 @@ class InjectedSelfElementInfo extends SelfElementInfo {
 
   @Override
   public PsiFile restoreFile() {
-    PsiElement element = restoreElement();
-    return element == null ? null : element.getContainingFile();
+    PsiFile hostFile = restoreFileFromVirtual(myVirtualFile, myProject, myLanguage);
+    if (hostFile == null || !hostFile.isValid()) return null;
+
+    PsiElement hostContext = restoreFromFile(hostFile);
+    if (hostContext == null) return null;
+
+    Segment segment = myInjectedFileRangeInHostFile.getRange();
+    if (segment == null) return null;
+    final TextRange rangeInHostFile = TextRange.create(segment);
+    return getInjectedFileIn(hostContext, hostFile, rangeInHostFile);
   }
 
   public ProperTextRange getInjectedRange() {
+    PsiFile hostFile = restoreFileFromVirtual(myVirtualFile, myProject, myLanguage);
+    if (hostFile == null || !hostFile.isValid()) return null;
+
+    PsiElement hostContext = restoreFromFile(hostFile);
+    if (hostContext == null) return null;
+
     Segment hostElementRange = myInjectedFileRangeInHostFile.getRange();
     if (hostElementRange == null) return null;
 
-    PsiElement injectedElement = restoreElement();
-    if (injectedElement == null) return null;
-    PsiFile injectedFile = injectedElement.getContainingFile();
+    PsiFile injectedFile = restoreFile();
     if (injectedFile == null) return null;
     VirtualFile virtualFile = injectedFile.getVirtualFile();
     DocumentWindow documentWindow = virtualFile instanceof VirtualFileWindow ?  ((VirtualFileWindow)virtualFile).getDocumentWindow() : null;

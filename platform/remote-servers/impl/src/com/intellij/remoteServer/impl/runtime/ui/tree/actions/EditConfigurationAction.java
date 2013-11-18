@@ -10,8 +10,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Set;
 
 /**
- * Created by IntelliJ IDEA.
- * User: michael.golubev
+ * @author michael.golubev
  */
 public class EditConfigurationAction extends ServersTreeActionBase {
   public EditConfigurationAction() {
@@ -19,7 +18,7 @@ public class EditConfigurationAction extends ServersTreeActionBase {
   }
 
   @Override
-  protected void doActionPerformed(@NotNull ServersToolWindowContent content) {
+  protected void doActionPerformed(@NotNull ServersToolWindowContent content, AnActionEvent e) {
     Set<DeploymentNode> deploymentNodes = content.getSelectedDeploymentNodes();
     Set<ServerNode> serverNodes = content.getSelectedServerNodes();
     if (deploymentNodes.size() == 1) {

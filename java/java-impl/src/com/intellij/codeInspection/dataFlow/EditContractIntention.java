@@ -54,6 +54,10 @@ public class EditContractIntention extends BaseIntentionAction {
     if (!element.getManager().isInProject(element) || CodeStyleSettingsManager.getSettings(project).USE_EXTERNAL_ANNOTATIONS) {
       final PsiModifierListOwner owner = AddAnnotationPsiFix.getContainer(element);
       if (owner instanceof PsiMethod) {
+        PsiElement original = owner.getOriginalElement();
+        if (original instanceof PsiMethod) {
+          return (PsiMethod)original;
+        }
         return (PsiMethod)owner;
       }
     }

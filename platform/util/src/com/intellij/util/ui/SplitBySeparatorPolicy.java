@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import java.util.List;
  * author: lesya
  */
 public class SplitBySeparatorPolicy extends FilePathSplittingPolicy {
+  @Override
   public String getPresentableName(File file, int length) {
     String absolutePath = file.getPath();
     if (absolutePath.length() <= length) return absolutePath;
@@ -88,7 +89,7 @@ public class SplitBySeparatorPolicy extends FilePathSplittingPolicy {
 
   private String getFileName(File current) {
     String result = current.getName();
-    if (result.length() > 0) return result;
+    if (!result.isEmpty()) return result;
     String path = current.getPath();
     return path.substring(0, path.length() - 1);
   }

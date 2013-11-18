@@ -164,8 +164,8 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
       @Override
       public void run() {
         DesignerEditorPanel designer = DesignerEditorPanel.this;
-        DesignerToolWindowManager.getInstance(myProject).bind(designer);
-        PaletteToolWindowManager.getInstance(myProject).bind(designer);
+        getDesignerWindowManager().bind(designer);
+        getPaletteWindowManager().bind(designer);
       }
     });
   }
@@ -376,7 +376,7 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
     myErrorPanel.revalidate();
     myLayout.show(myPanel, ERROR_CARD);
 
-    DesignerToolWindowManager.getInstance(this).refresh(true);
+    getDesignerToolWindow().refresh(true);
     repaint();
   }
 
@@ -603,7 +603,7 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
   }
 
   protected void restoreState() {
-    DesignerToolWindow toolManager = DesignerToolWindowManager.getInstance(this);
+    DesignerToolWindowContent toolManager = getDesignerToolWindow();
 
     if (myExpandedState != null) {
       List<RadComponent> expanded = new ArrayList<RadComponent>();
@@ -733,9 +733,25 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
 
   public void dispose() {
     Disposer.dispose(myProgressIcon);
-    DesignerToolWindowManager.getInstance(myProject).dispose(this);
-    PaletteToolWindowManager.getInstance(myProject).dispose(this);
+    getDesignerWindowManager().dispose(this);
+    getPaletteWindowManager().dispose(this);
     Disposer.dispose(myContentSplitter);
+  }
+
+  protected AbstractToolWindowManager getDesignerWindowManager() {
+    return DesignerToolWindowManager.getInstance(myProject);
+  }
+
+  protected AbstractToolWindowManager getPaletteWindowManager() {
+    return PaletteToolWindowManager.getInstance(myProject);
+  }
+
+  public DesignerToolWindowContent getDesignerToolWindow() {
+    return DesignerToolWindowManager.getInstance(this);
+  }
+
+  protected PaletteToolWindowContent getPaletteToolWindow() {
+    return PaletteToolWindowManager.getInstance(this);
   }
 
   @Nullable
@@ -1012,7 +1028,7 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
     @Override
     public void setActiveTool(InputTool tool) {
       if (getActiveTool() instanceof CreationTool && !(tool instanceof CreationTool)) {
-        PaletteToolWindowManager.getInstance(DesignerEditorPanel.this).clearActiveItem();
+        getPaletteToolWindow().clearActiveItem();
       }
       if (!(tool instanceof SelectionTool)) {
         hideInspections();

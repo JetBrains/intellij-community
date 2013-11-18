@@ -35,6 +35,7 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.util.Consumer;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -221,9 +222,9 @@ public abstract class BaseProjectTreeBuilder extends AbstractTreeBuilder {
 
     if (alreadySelected == null) {
       expandPathTo(file, (AbstractTreeNode)getTreeStructure().getRootElement(), element, condition, indicator, virtualSelectTarget)
-        .doWhenDone(new AsyncResult.Handler<AbstractTreeNode>() {
+        .doWhenDone(new Consumer<AbstractTreeNode>() {
           @Override
-          public void run(AbstractTreeNode node) {
+          public void consume(AbstractTreeNode node) {
             if (virtualSelectTarget == null) {
               select(node, onDone);
             }
@@ -371,9 +372,9 @@ public abstract class BaseProjectTreeBuilder extends AbstractTreeBuilder {
 
       if (nonStopCondition.value(eachKid)) {
         final AsyncResult<AbstractTreeNode> result = expandPathTo(file, eachKid, element, nonStopCondition, indicator, virtualSelectTarget);
-        result.doWhenDone(new AsyncResult.Handler<AbstractTreeNode>() {
+        result.doWhenDone(new Consumer<AbstractTreeNode>() {
           @Override
-          public void run(AbstractTreeNode abstractTreeNode) {
+          public void consume(AbstractTreeNode abstractTreeNode) {
             indicator.checkCanceled();
             async.setDone(abstractTreeNode);
           }

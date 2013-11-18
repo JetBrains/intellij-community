@@ -379,11 +379,15 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
     List<BranchInfo> branches = task.getBranches(false);
     VcsTaskHandler.TaskInfo info = fromBranches(branches);
 
+    switchBranch(info);
+    return task;
+  }
+
+  public void switchBranch(VcsTaskHandler.TaskInfo info) {
     VcsTaskHandler[] handlers = VcsTaskHandler.getAllHandlers(myProject);
     for (VcsTaskHandler handler : handlers) {
-      handler.switchToTask(info);
+      handler.switchToTask(info, null);
     }
-    return task;
   }
 
   private static VcsTaskHandler.TaskInfo fromBranches(List<BranchInfo> branches) {

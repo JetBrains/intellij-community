@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Set;
@@ -102,18 +101,6 @@ public abstract class LocalFileSystem extends NewVirtualFileSystem {
 
   public abstract void refreshFiles(@NotNull Iterable<VirtualFile> files, boolean async, boolean recursive, @Nullable Runnable onFinish);
 
-  /** @deprecated use {@linkplain com.intellij.openapi.vfs.VirtualFile#contentsToByteArray()} (to remove in IDEA 13) */
-  @SuppressWarnings({"MethodMayBeStatic", "UnusedDeclaration"})
-  public byte[] physicalContentsToByteArray(@NotNull VirtualFile virtualFile) throws IOException{
-    return virtualFile.contentsToByteArray();
-  }
-
-  /** @deprecated use {@linkplain VirtualFile#getLength()} (to remove in IDEA 13) */
-  @SuppressWarnings({"MethodMayBeStatic", "UnusedDeclaration"})
-  public long physicalLength(@NotNull VirtualFile virtualFile) throws IOException{
-    return virtualFile.getLength();
-  }
-
   @NotNull
   public final VirtualFile getRoot() {
     final String rootPath = SystemInfo.isWindows ? "" : "/";
@@ -127,14 +114,6 @@ public abstract class LocalFileSystem extends NewVirtualFileSystem {
     String getRootPath();
 
     boolean isToWatchRecursively();
-
-    /** @deprecated implementation details (to remove in IDEA 13) */
-    @SuppressWarnings({"UnusedDeclaration"})
-    String getFileSystemRootPath();
-
-    /** @deprecated implementation details (to remove in IDEA 13) */
-    @SuppressWarnings({"UnusedDeclaration"})
-    boolean dominates(@NotNull WatchRequest other);
   }
 
   @Nullable

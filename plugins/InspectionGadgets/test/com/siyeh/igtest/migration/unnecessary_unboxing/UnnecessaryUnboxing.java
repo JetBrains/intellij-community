@@ -34,4 +34,9 @@ public class UnnecessaryUnboxing {
     void user(Long l) {
         new UnnecessaryUnboxing(l.longValue());
     }
+
+    void casting(Byte b) {
+        System.out.println((byte)b.byteValue());
+    }
+
 }

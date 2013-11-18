@@ -400,7 +400,7 @@ public class TreeUtil {
       @Override
       protected void visitNode(TreeElement node) {
         CompositeElement parent = node.getTreeParent();
-        if (parent != null && skipNode(builder, parent, node)) {
+        if (parent != null && builder.skipChildProcessingWhenBuildingStubs(parent, node)) {
           return;
         }
 
@@ -418,18 +418,5 @@ public class TreeUtil {
         super.visitNode(node);
       }
     });
-  }
-
-  @SuppressWarnings("deprecation")
-  public static boolean skipNode(@NotNull StubBuilder builder, @NotNull ASTNode parent, @NotNull ASTNode node) {
-    if (builder instanceof DefaultStubBuilder) {
-      return ((DefaultStubBuilder)builder).skipChildProcessingWhenBuildingStubs(parent, node);
-    }
-    else if (builder instanceof LightStubBuilder) {
-      return ((LightStubBuilder)builder).skipChildProcessingWhenBuildingStubs(parent, node);
-    }
-    else {
-      return builder.skipChildProcessingWhenBuildingStubs(parent, node.getElementType());
-    }
   }
 }

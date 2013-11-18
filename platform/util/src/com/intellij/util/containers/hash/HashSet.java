@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,8 @@
 package com.intellij.util.containers.hash;
 
 
+
+import org.jetbrains.annotations.NotNull;
 
 import java.util.AbstractSet;
 
@@ -65,6 +67,7 @@ public class HashSet<E> extends AbstractSet<E> implements Set<E> {
 
 
 
+  @Override
   public boolean contains(Object key) {
 
     final Entry<E>[] table = this.table;
@@ -95,6 +98,7 @@ public class HashSet<E> extends AbstractSet<E> implements Set<E> {
 
 
 
+  @Override
   public boolean add(E key) {
 
     final Entry<E>[] table = this.table;
@@ -141,6 +145,7 @@ public class HashSet<E> extends AbstractSet<E> implements Set<E> {
 
 
 
+  @Override
   public boolean remove(Object key) {
 
     final Entry<E>[] table = this.table;
@@ -193,10 +198,13 @@ public class HashSet<E> extends AbstractSet<E> implements Set<E> {
 
 
 
+  @NotNull
+  @Override
   public Iterator<E> iterator() {
 
     return new HashSetIterator<E>() {
 
+      @Override
       public E next() {
 
         return nextEntry().key;
@@ -209,6 +217,7 @@ public class HashSet<E> extends AbstractSet<E> implements Set<E> {
 
 
 
+  @Override
   public int size() {
 
     return size;
@@ -217,6 +226,7 @@ public class HashSet<E> extends AbstractSet<E> implements Set<E> {
 
 
 
+  @Override
   public boolean isEmpty() {
 
     return size() == 0;
@@ -255,6 +265,7 @@ public class HashSet<E> extends AbstractSet<E> implements Set<E> {
 
     final Iterator<Entry<E>> entries = new HashSetIterator<Entry<E>>() {
 
+      @Override
       public Entry<E> next() {
 
         return nextEntry();
@@ -331,6 +342,7 @@ public class HashSet<E> extends AbstractSet<E> implements Set<E> {
 
 
 
+    @Override
     public boolean hasNext() {
 
       return e != null;
@@ -339,6 +351,7 @@ public class HashSet<E> extends AbstractSet<E> implements Set<E> {
 
 
 
+    @Override
     public void remove() {
 
       if (last == null) {

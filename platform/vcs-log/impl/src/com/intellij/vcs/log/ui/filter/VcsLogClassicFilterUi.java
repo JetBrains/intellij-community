@@ -15,13 +15,15 @@
  */
 package com.intellij.vcs.log.ui.filter;
 
+import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.ui.SearchTextField;
 import com.intellij.ui.SearchTextFieldWithStoredHistory;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.VcsLogFilter;
-import com.intellij.vcs.log.data.VcsLogFilterer;
 import com.intellij.vcs.log.ui.VcsLogUI;
 import org.jetbrains.annotations.NotNull;
 
@@ -36,16 +38,13 @@ import java.util.List;
  */
 public class VcsLogClassicFilterUi implements VcsLogFilterUi {
 
-  @NotNull private final VcsLogFilterer myFilterer;
-  @NotNull private final JComponent myRootPanel;
   @NotNull private final List<FilterPopupComponent> myFilterPopupComponents;
   @NotNull private final SearchTextField myTextFilter;
+  @NotNull private final VcsLogUI myUi;
+  @NotNull private final DefaultActionGroup myActionGroup;
 
   public VcsLogClassicFilterUi(@NotNull VcsLogUI ui) {
-    myFilterer = ui.getFilterer();
-
-    JLabel filterCaption = new JLabel("Filter:");
-    filterCaption.setForeground(UIUtil.isUnderDarcula() ? UIUtil.getLabelForeground() : UIUtil.getInactiveTextColor());
+    myUi = ui;
 
     myTextFilter = new SearchTextFieldWithStoredHistory("Vcs.Log.Text.Filter.History");
     myTextFilter.getTextEditor().addActionListener(new ActionListener() {
@@ -55,24 +54,29 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUi {
         myTextFilter.addCurrentTextToHistory();
       }
     });
+
     FilterPopupComponent branchFilter = new BranchFilterPopupComponent(this, ui);
     FilterPopupComponent userFilter = new UserFilterPopupComponent(this, ui.getLogDataHolder(), ui.getUiProperties());
+    FilterPopupComponent dateFilter = new DateFilterPopupComponent(this);
+    FilterPopupComponent structureFilter = new StructureFilterPopupComponent(this, ui.getLogDataHolder().getRoots());
 
     myFilterPopupComponents = ContainerUtil.newArrayList();
     myFilterPopupComponents.add(branchFilter);
     myFilterPopupComponents.add(userFilter);
+    myFilterPopupComponents.add(dateFilter);
+    myFilterPopupComponents.add(structureFilter);
 
-    myRootPanel = new JPanel();
-    myRootPanel.add(filterCaption);
-    myRootPanel.add(myTextFilter);
-    myRootPanel.add(branchFilter);
-    myRootPanel.add(userFilter);
+    myActionGroup = new DefaultActionGroup();
+    myActionGroup.add(new TextFilterComponent(myTextFilter));
+    myActionGroup.add(new FilterActionComponent(branchFilter));
+    myActionGroup.add(new FilterActionComponent(userFilter));
+    myActionGroup.add(new FilterActionComponent(dateFilter));
+    myActionGroup.add(new FilterActionComponent(structureFilter));
   }
 
-  @NotNull
   @Override
-  public JComponent getRootComponent() {
-    return myRootPanel;
+  public ActionGroup getFilterActionComponents() {
+    return myActionGroup;
   }
 
   @NotNull
@@ -97,7 +101,48 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUi {
   }
 
   void applyFilters() {
-    myFilterer.applyFiltersAndUpdateUi(getFilters());
+    myUi.applyFiltersAndUpdateUi();
+  }
+
+
+  private static class TextFilterComponent extends DumbAwareAction implements CustomComponentAction {
+
+    private final SearchTextField mySearchField;
+
+    TextFilterComponent(SearchTextField searchField) {
+      mySearchField = searchField;
+    }
+
+    @Override
+    public JComponent createCustomComponent(Presentation presentation) {
+      JPanel panel = new JPanel();
+      JLabel filterCaption = new JLabel("Filter:");
+      filterCaption.setForeground(UIUtil.isUnderDarcula() ? UIUtil.getLabelForeground() : UIUtil.getInactiveTextColor());
+      panel.add(filterCaption);
+      panel.add(mySearchField);
+      return panel;
+    }
+
+    @Override
+    public void actionPerformed(AnActionEvent e) {
+    }
+  }
+
+  private static class FilterActionComponent extends DumbAwareAction implements CustomComponentAction {
+    private final FilterPopupComponent myComponent;
+
+    public FilterActionComponent(FilterPopupComponent component) {
+      myComponent = component;
+    }
+
+    @Override
+    public JComponent createCustomComponent(Presentation presentation) {
+      return myComponent;
+    }
+
+    @Override
+    public void actionPerformed(AnActionEvent e) {
+    }
   }
 
 }

@@ -89,6 +89,7 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui, SwingConstants {
   private final boolean myHideOnLinkClick;
 
   private final Color myBorderColor;
+  private final Insets myBorderInsets;
   private final Color myFillColor;
 
   private final Insets myContainerInsets;
@@ -238,6 +239,7 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui, SwingConstants {
 
   public BalloonImpl(JComponent content,
                      Color borderColor,
+                     Insets borderInsets,
                      Color fillColor,
                      boolean hideOnMouse,
                      boolean hideOnKey,
@@ -261,6 +263,7 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui, SwingConstants {
                      boolean blockClicks,
                      Layer layer) {
     myBorderColor = borderColor;
+    myBorderInsets = borderInsets != null ? borderInsets : new Insets(3, 3, 3, 3);
     myFillColor = fillColor;
     myContent = content;
     myHideOnMouse = hideOnMouse;
@@ -378,6 +381,9 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui, SwingConstants {
     show(tracker, pos);
   }
 
+  private Insets getInsetsCopy() {
+    return new Insets(myBorderInsets.top, myBorderInsets.left, myBorderInsets.bottom, myBorderInsets.right);
+  }
 
   private void show(RelativePoint target, AbstractPosition position) {
     show(new PositionTracker.Static<Balloon>(target), position);
@@ -628,8 +634,8 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui, SwingConstants {
   }
 
 
-  private static EmptyBorder getPointlessBorder() {
-    return new EmptyBorder(getNormalInset(), getNormalInset(), getNormalInset(), getNormalInset());
+  private EmptyBorder getPointlessBorder() {
+    return new EmptyBorder(myBorderInsets);
   }
 
   public void revalidate() {
@@ -1023,8 +1029,9 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui, SwingConstants {
     }
 
     EmptyBorder createBorder(final BalloonImpl balloon) {
-      final int inset = getNormalInset();
-      return new EmptyBorder(balloon.getPointerLength(this) + inset, inset, inset, inset);
+      Insets insets = balloon.getInsetsCopy();
+      insets.top += balloon.getPointerLength(this);
+      return new EmptyBorder(insets);
     }
 
     @Override
@@ -1076,8 +1083,9 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui, SwingConstants {
     }
 
     EmptyBorder createBorder(final BalloonImpl balloon) {
-      final int inset = getNormalInset();
-      return new EmptyBorder(inset, inset, balloon.getPointerLength(this), inset);
+      Insets insets = balloon.getInsetsCopy();
+      insets.bottom = balloon.getPointerLength(this);
+      return new EmptyBorder(insets);
     }
 
     @Override
@@ -1131,8 +1139,9 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui, SwingConstants {
     }
 
     EmptyBorder createBorder(final BalloonImpl balloon) {
-      final int inset = getNormalInset();
-      return new EmptyBorder(inset, balloon.getPointerLength(this) + inset, inset, inset);
+      Insets insets = balloon.getInsetsCopy();
+      insets.left += balloon.getPointerLength(this);
+      return new EmptyBorder(insets);
     }
 
     @Override
@@ -1185,8 +1194,9 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui, SwingConstants {
     }
 
     EmptyBorder createBorder(final BalloonImpl balloon) {
-      final int inset = getNormalInset();
-      return new EmptyBorder(inset, inset, inset, balloon.getPointerLength(this) + inset);
+      Insets insets = balloon.getInsetsCopy();
+      insets.right += balloon.getPointerLength(this);
+      return new EmptyBorder(insets);
     }
 
     @Override

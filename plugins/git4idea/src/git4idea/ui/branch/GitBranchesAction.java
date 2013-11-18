@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,7 +37,7 @@ public class GitBranchesAction extends DumbAwareAction {
 
   @Override
   public void actionPerformed(AnActionEvent e) {
-    final Project project = e.getData(PlatformDataKeys.PROJECT);
+    final Project project = e.getData(CommonDataKeys.PROJECT);
     assert project != null;
     GitRepositoryManager repositoryManager = GitUtil.getRepositoryManager(project);
     VirtualFile file = e.getData(CommonDataKeys.VIRTUAL_FILE);

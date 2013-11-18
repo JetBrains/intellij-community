@@ -23,7 +23,6 @@ import org.jetbrains.annotations.TestOnly;
 
 import java.lang.ref.ReferenceQueue;
 import java.util.*;
-import java.util.HashSet;
 import java.util.concurrent.ConcurrentMap;
 
 abstract class ConcurrentRefValueHashMap<K, V> implements ConcurrentMap<K, V> {

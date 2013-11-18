@@ -56,9 +56,7 @@ public class CommonShortcuts {
   private static boolean isCtrlEnter(Shortcut shortcut) {
     if (shortcut instanceof KeyboardShortcut) {
       KeyStroke keyStroke = ((KeyboardShortcut)shortcut).getFirstKeyStroke();
-      return keyStroke != null
-        && keyStroke.getKeyCode() == KeyEvent.VK_ENTER
-        && (keyStroke.getModifiers() & InputEvent.CTRL_MASK) != 0;
+      return keyStroke.getKeyCode() == KeyEvent.VK_ENTER && (keyStroke.getModifiers() & InputEvent.CTRL_MASK) != 0;
     }
     return false;
   }

@@ -22,6 +22,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.FixedSizeButton;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.Consumer;
 import com.intellij.xml.XmlBundle;
 
 import javax.swing.*;
@@ -63,54 +64,53 @@ public class EditLocationDialog extends DialogWrapper {
     init();
   }
 
+  @Override
   protected JComponent createCenterPanel() {
     JPanel panel = new JPanel(new GridBagLayout());
 
     panel.add(
-        new JLabel(myName),
-        new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 5, 3, 5), 0, 0)
+      new JLabel(myName),
+      new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 5, 3, 5), 0, 0)
     );
     panel.add(
-        myTfUrl,
-        new GridBagConstraints(0, 1, 2, 1, 1, 0, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, new Insets(0, 5, 5, 5), 0, 0)
+      myTfUrl,
+      new GridBagConstraints(0, 1, 2, 1, 1, 0, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, new Insets(0, 5, 5, 5), 0, 0)
     );
 
     myTfUrl.setPreferredSize(new Dimension(350, myTfUrl.getPreferredSize().height));
 
-  if (myShowPath) {
+    if (myShowPath) {
       panel.add(
-          new JLabel(myLocation),
-          new GridBagConstraints(0, 2, 1, 1, 0, 0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 5, 3, 5), 0, 0)
+        new JLabel(myLocation),
+        new GridBagConstraints(0, 2, 1, 1, 0, 0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 5, 3, 5), 0, 0)
       );
       panel.add(
-          myTfPath,
-          new GridBagConstraints(0, 3, 1, 1, 1, 0, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, new Insets(0, 5, 10, 0), 0, 0)
+        myTfPath,
+        new GridBagConstraints(0, 3, 1, 1, 1, 0, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, new Insets(0, 5, 10, 0), 0, 0)
       );
       panel.add(
-          myBtnBrowseLocalPath,
-          new GridBagConstraints(1, 3, 1, 1, 0, 0, GridBagConstraints.CENTER, GridBagConstraints.NONE, new Insets(0, 0, 10, 5), 0, 0)
+        myBtnBrowseLocalPath,
+        new GridBagConstraints(1, 3, 1, 1, 0, 0, GridBagConstraints.CENTER, GridBagConstraints.NONE, new Insets(0, 0, 10, 5), 0, 0)
       );
 
-      //
-    TextFieldWithBrowseButton.MyDoClickAction.addTo(myBtnBrowseLocalPath, myTfPath);
-    myBtnBrowseLocalPath.addActionListener(
-          new ActionListener() {
-            public void actionPerformed(ActionEvent ignored) {
-              FileChooserDescriptor descriptor = getChooserDescriptor();
-              VirtualFile file = FileChooser.chooseFile(descriptor, myProject, null);
-              if (file != null) {
-                myTfPath.setText(file.getPath().replace('/', File.separatorChar));
-              }
+      TextFieldWithBrowseButton.MyDoClickAction.addTo(myBtnBrowseLocalPath, myTfPath);
+      myBtnBrowseLocalPath.addActionListener(new ActionListener() {
+        @Override
+        public void actionPerformed(ActionEvent ignored) {
+          FileChooserDescriptor descriptor = getChooserDescriptor();
+          FileChooser.chooseFile(descriptor, myProject, null, new Consumer<VirtualFile>() {
+            @Override
+            public void consume(VirtualFile file) {
+              myTfPath.setText(file.getPath().replace('/', File.separatorChar));
             }
-          }
-      );
+          });
+        }
+      });
     }
-
-    //
-
     return panel;
   }
 
+  @Override
   public JComponent getPreferredFocusedComponent() {
     return myTfUrl;
   }
@@ -125,6 +125,7 @@ public class EditLocationDialog extends DialogWrapper {
     return new FileChooserDescriptor(true, false, false, false, true, false);
   }
 
+  @Override
   protected void init() {
     setTitle(myTitle);
     myTfUrl = new JTextField();

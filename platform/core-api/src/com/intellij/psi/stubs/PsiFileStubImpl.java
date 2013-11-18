@@ -22,10 +22,13 @@ package com.intellij.psi.stubs;
 import com.intellij.lang.Language;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.tree.IStubFileElementType;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class PsiFileStubImpl<T extends PsiFile> extends StubBase<T> implements PsiFileStub<T> {
   public static final IStubFileElementType TYPE = new IStubFileElementType(Language.ANY);
   private volatile T myFile;
+  private volatile String myInvalidationReason;
 
   public PsiFileStubImpl(final T file) {
     super(null, null);
@@ -38,8 +41,18 @@ public class PsiFileStubImpl<T extends PsiFile> extends StubBase<T> implements P
   }
 
   @Override
-  public void setPsi(final T psi) {
+  public void setPsi(@NotNull final T psi) {
     myFile = psi;
+  }
+  
+  public void clearPsi(@NotNull String reason) {
+    myInvalidationReason = reason;
+    myFile = null;
+  }
+
+  @Nullable
+  public String getInvalidationReason() {
+    return myInvalidationReason;
   }
 
   @Override

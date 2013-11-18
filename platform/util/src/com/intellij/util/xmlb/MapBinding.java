@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,6 +39,7 @@ class MapBinding implements Binding {
   private final Binding myValueBinding;
   private final MapAnnotation myMapAnnotation;
   private static final Comparator<Object> KEY_COMPARATOR = new Comparator<Object>() {
+    @Override
     public int compare(final Object o1, final Object o2) {
       if (o1 instanceof Comparable && o2 instanceof Comparable) {
         Comparable c1 = (Comparable)o1;
@@ -61,6 +62,7 @@ class MapBinding implements Binding {
     myMapAnnotation = XmlSerializerImpl.findAnnotation(accessor.getAnnotations(), MapAnnotation.class);
   }
 
+  @Override
   public Object serialize(Object o, Object context, SerializationFilter filter) {
     Map map = (Map)o;
 
@@ -135,6 +137,7 @@ class MapBinding implements Binding {
     return myMapAnnotation == null ? KEY : myMapAnnotation.keyAttributeName();
   }
 
+  @Override
   public Object deserialize(Object o, @NotNull Object... nodes) {
     Map map = (Map)o;
     map.clear();
@@ -212,6 +215,7 @@ class MapBinding implements Binding {
     return map;
   }
 
+  @Override
   public boolean isBoundTo(Object node) {
     if (!(node instanceof Element)) return false;
 
@@ -222,10 +226,12 @@ class MapBinding implements Binding {
     return ((Element)node).getName().equals(Constants.MAP);
   }
 
+  @Override
   public Class getBoundNodeType() {
     return Element.class;
   }
 
+  @Override
   public void init() {
   }
 }

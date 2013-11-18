@@ -1,0 +1,11 @@
+<component name="libraryTable">
+  <library name="purejavacomm">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/lib/purejavacomm.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$PROJECT_DIR$/lib/src/purejavacomm-src.jar!/" />
+    </SOURCES>
+  </library>
+</component>

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -123,21 +123,21 @@ public class RemoveSuppressWarningAction implements LocalQuickFix {
       }
       else {
         PsiComment newComment = JavaPsiFacade.getInstance(comment.getProject()).getElementFactory()
-          .createCommentFromText("// " + SuppressionUtil.SUPPRESS_INSPECTIONS_TAG_NAME+" "+newText, comment);
+          .createCommentFromText("// " + SuppressionUtilCore.SUPPRESS_INSPECTIONS_TAG_NAME +" "+newText, comment);
         comment.replace(newComment);
       }
     }
   }
 
   private void removeFromJavaDoc(PsiDocComment docComment) throws IncorrectOperationException {
-    PsiDocTag tag = docComment.findTagByName(SuppressionUtil.SUPPRESS_INSPECTIONS_TAG_NAME);
+    PsiDocTag tag = docComment.findTagByName(SuppressionUtilCore.SUPPRESS_INSPECTIONS_TAG_NAME);
     if (tag == null) return;
     String newText = removeFromElementText(tag.getDataElements());
     if (newText != null && newText.isEmpty()) {
       tag.delete();
     }
     else if (newText != null) {
-      newText = "@" + SuppressionUtil.SUPPRESS_INSPECTIONS_TAG_NAME + " " + newText;
+      newText = "@" + SuppressionUtilCore.SUPPRESS_INSPECTIONS_TAG_NAME + " " + newText;
       PsiDocTag newTag = JavaPsiFacade.getInstance(tag.getProject()).getElementFactory().createDocTagFromText(newText);
       tag.replace(newTag);
     }
@@ -150,7 +150,7 @@ public class RemoveSuppressWarningAction implements LocalQuickFix {
       text += StringUtil.trimStart(element.getText(), "//").trim();
     }
     text = StringUtil.trimStart(text, "@").trim();
-    text = StringUtil.trimStart(text, SuppressionUtil.SUPPRESS_INSPECTIONS_TAG_NAME).trim();
+    text = StringUtil.trimStart(text, SuppressionUtilCore.SUPPRESS_INSPECTIONS_TAG_NAME).trim();
     List<String> ids = StringUtil.split(text, ",");
     int i = ArrayUtil.find(ids.toArray(), myID);
     if (i==-1) return null;

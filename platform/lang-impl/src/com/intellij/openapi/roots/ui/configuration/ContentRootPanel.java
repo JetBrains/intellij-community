@@ -22,7 +22,6 @@ import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ContentFolder;
 import com.intellij.openapi.roots.ExcludeFolder;
 import com.intellij.openapi.roots.SourceFolder;
-import com.intellij.openapi.roots.impl.SourceFolderImpl;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -49,8 +48,10 @@ import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
 import java.awt.*;
 import java.io.File;
-import java.util.*;
+import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author Eugene Zhuravlev
@@ -100,7 +101,6 @@ public abstract class ContentRootPanel extends JPanel {
   }
 
   protected void addFolderGroupComponents() {
-    final List<ContentFolder> excluded = new ArrayList<ContentFolder>();
     final SourceFolder[] sourceFolders = getContentEntry().getSourceFolders();
     MultiMap<JpsModuleSourceRootType<?>, SourceFolder> folderByType = new MultiMap<JpsModuleSourceRootType<?>, SourceFolder>();
     for (SourceFolder folder : sourceFolders) {
@@ -108,17 +108,10 @@ public abstract class ContentRootPanel extends JPanel {
         continue;
       }
       final VirtualFile folderFile = folder.getFile();
-      if (folderFile != null && (isExcluded(folderFile) || isUnderExcludedDirectory(folderFile))) {
+      if (folderFile != null && isExcludedOrUnderExcludedDirectory(folderFile)) {
         continue;
       }
       folderByType.putValue(folder.getRootType(), folder);
-    }
-
-    final ExcludeFolder[] excludeFolders = getContentEntry().getExcludeFolders();
-    for (final ExcludeFolder excludeFolder : excludeFolders) {
-      if (!excludeFolder.isSynthetic()) {
-        excluded.add(excludeFolder);
-      }
     }
 
     Insets insets = new Insets(0, 0, 10, 0);
@@ -128,13 +121,15 @@ public abstract class ContentRootPanel extends JPanel {
       if (folders.isEmpty()) continue;
 
       ContentFolder[] foldersArray = folders.toArray(new ContentFolder[folders.size()]);
-      final JComponent sourcesComponent = createFolderGroupComponent(editor.getRootsGroupTitle(), foldersArray, editor.getRootsGroupColor(), editor);
+      final JComponent sourcesComponent = createFolderGroupComponent(editor.getRootsGroupTitle(), foldersArray, editor.getRootsGroupColor(),
+                                                                     editor);
       add(sourcesComponent, constraints);
     }
 
-    if (!excluded.isEmpty()) {
-      final JComponent excludedComponent = createFolderGroupComponent(ProjectBundle.message("module.paths.excluded.group"), excluded.toArray(new ContentFolder[excluded.size()]), EXCLUDED_COLOR,
-                                                                      null);
+    ExcludeFolder[] excluded = getContentEntry().getExcludeFolders();
+    if (excluded.length > 0) {
+      final JComponent excludedComponent = createFolderGroupComponent(ProjectBundle.message("module.paths.excluded.group"), excluded,
+                                                                      EXCLUDED_COLOR, null);
       this.add(excludedComponent, constraints);
     }
   }
@@ -214,8 +209,7 @@ public abstract class ContentRootPanel extends JPanel {
   private <P extends JpsElement> JComponent createFolderComponent(final ContentFolder folder, Color foreground, ModuleSourceRootEditHandler<P> editor) {
     final VirtualFile folderFile = folder.getFile();
     final VirtualFile contentEntryFile = getContentEntry().getFile();
-    final String properties = folder instanceof SourceFolderImpl? StringUtil.notNullize(
-      editor.getPropertiesString((P)((SourceFolderImpl)folder).getJpsElement().getProperties())) : "";
+    final String properties = folder instanceof SourceFolder? StringUtil.notNullize(editor.getPropertiesString((P)((SourceFolder)folder).getJpsElement().getProperties())) : "";
     if (folderFile != null && contentEntryFile != null) {
       String path = folderFile.equals(contentEntryFile)? "." : VfsUtilCore.getRelativePath(folderFile, contentEntryFile, File.separatorChar);
       HoverHyperlinkLabel hyperlinkLabel = new HoverHyperlinkLabel(path + properties, foreground);
@@ -263,45 +257,17 @@ public abstract class ContentRootPanel extends JPanel {
     });
   }
 
-  public boolean isExcluded(VirtualFile file) {
-    return getExcludeFolder(file) != null;
-  }
-
-  public boolean isUnderExcludedDirectory(final VirtualFile file) {
+  public boolean isExcludedOrUnderExcludedDirectory(final VirtualFile file) {
     final ContentEntry contentEntry = getContentEntry();
     if (contentEntry == null) {
       return false;
     }
-    final ExcludeFolder[] excludeFolders = contentEntry.getExcludeFolders();
-    for (ExcludeFolder excludeFolder : excludeFolders) {
-      final VirtualFile excludedDir = excludeFolder.getFile();
-      if (excludedDir == null) {
-        continue;
-      }
-      if (VfsUtilCore.isAncestor(excludedDir, file, true)) {
+    for (VirtualFile excludedDir : contentEntry.getExcludeFolderFiles()) {
+      if (VfsUtilCore.isAncestor(excludedDir, file, false)) {
         return true;
       }
     }
     return false;
-  }
-
-  @Nullable
-  public ExcludeFolder getExcludeFolder(VirtualFile file) {
-    final ContentEntry contentEntry = getContentEntry();
-    if (contentEntry == null) {
-      return null;
-    }
-    final ExcludeFolder[] excludeFolders = contentEntry.getExcludeFolders();
-    for (final ExcludeFolder excludeFolder : excludeFolders) {
-      final VirtualFile f = excludeFolder.getFile();
-      if (f == null) {
-        continue;
-      }
-      if (f.equals(file)) {
-        return excludeFolder;
-      }
-    }
-    return null;
   }
 
   protected static String toRelativeDisplayPath(String url, String ancestorUrl) {

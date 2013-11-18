@@ -7,6 +7,7 @@ import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.VcsCommit;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -26,7 +27,7 @@ public class VcsCommitImpl implements VcsCommit {
 
   public VcsCommitImpl(@NotNull Hash hash, @NotNull List<Hash> parents) {
     myHash = hash;
-    myParents = parents;
+    myParents = new ArrayList<Hash>(parents);
   }
 
   @Override

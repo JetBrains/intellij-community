@@ -62,12 +62,12 @@ class MyTest1 {
         System.out.println(i);
     }
 
-    private static void m(I3 i) {
+    private static void <warning descr="Private method 'm(MyTest1.I3)' is never used">m</warning>(I3 i) {
         System.out.println(i);
     }
 
     public static void main(String[] args) {
-        m(Foo::new);
+        m<error descr="Ambiguous method call: both 'MyTest1.m(I2)' and 'MyTest1.m(I3)' match">(Foo::new)</error>;
     }
 }
 class MyTest2 {

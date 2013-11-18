@@ -61,7 +61,7 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
   private final ToolWindowManagerListener myWindowManagerListener = new MyToolWindowManagerListener();
   private final PropertyChangeSupport myChangeSupport = new PropertyChangeSupport(this);
   private String myRecentEnteredPrefix;
-  private SpeedSearchComparator myComparator = new SpeedSearchComparator();
+  private SpeedSearchComparator myComparator = new SpeedSearchComparator(false);
   private boolean myClearSearchOnNavigateNoMatch = false;
 
   @NonNls protected static final String ENTERED_PREFIX_PROPERTY_NAME = "enteredPrefix";

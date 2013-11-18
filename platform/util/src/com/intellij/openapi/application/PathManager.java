@@ -416,9 +416,7 @@ public class PathManager {
   // helpers
 
   private static String getAbsolutePath(String path) {
-    if (path.startsWith("~/") || path.startsWith("~\\")) {
-      path = getUserHome() + path.substring(1);
-    }
+    path = FileUtil.expandUserHome(path);
     return new File(path).getAbsolutePath();
   }
 

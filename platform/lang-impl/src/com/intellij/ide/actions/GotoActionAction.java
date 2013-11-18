@@ -32,6 +32,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Pair;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.util.Collections;
@@ -86,7 +87,7 @@ public class GotoActionAction extends GotoActionBase implements DumbAware {
                                                final String enteredText,
                                                final Project project,
                                                final Component component,
-                                               @NotNull final AnActionEvent e) {
+                                               @Nullable final AnActionEvent e) {
     if (element instanceof OptionDescription) {
       final String configurableId = ((OptionDescription)element).getConfigurableId();
       ApplicationManager.getApplication().invokeLater(new Runnable() {
@@ -108,10 +109,12 @@ public class GotoActionAction extends GotoActionBase implements DumbAware {
             }
             final Presentation presentation = action.getTemplatePresentation().clone();
             final DataContext context = DataManager.getInstance().getDataContext(component);
-            final AnActionEvent event = new AnActionEvent(e.getInputEvent(), context,
-                                                          e.getPlace(), presentation,
+            final AnActionEvent event = new AnActionEvent(e == null ? null : e.getInputEvent(),
+                                                          context,
+                                                          e == null ? ActionPlaces.UNKNOWN : e.getPlace(),
+                                                          presentation,
                                                           ActionManager.getInstance(),
-                                                          e.getModifiers());
+                                                          e == null ? 0 : e.getModifiers());
 
             if (ActionUtil.lastUpdateAndCheckDumb(action, event, true)) {
               if (action instanceof ActionGroup) {

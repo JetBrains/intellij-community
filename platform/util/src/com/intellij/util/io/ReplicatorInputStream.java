@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@
 package com.intellij.util.io;
 
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -61,12 +62,12 @@ public class ReplicatorInputStream extends InputStream {
   }
 
   @Override
-  public int read(final byte[] b) throws IOException {
+  public int read(@NotNull final byte[] b) throws IOException {
     return read(b, 0, b.length);
   }
 
   @Override
-  public int read(final byte[] b, final int off, final int len) throws IOException {
+  public int read(@NotNull final byte[] b, final int off, final int len) throws IOException {
     final int count = mySource.read(b, off, len);
     if (count < 0) return count;
     myTarget.write(b, off, count);

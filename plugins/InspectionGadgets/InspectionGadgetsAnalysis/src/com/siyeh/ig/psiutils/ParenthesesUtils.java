@@ -518,6 +518,11 @@ public class ParenthesesUtils {
         }
       }
     }
+    else if (parentExpression instanceof PsiConditionalExpression && expression instanceof PsiConditionalExpression) {
+      final PsiConditionalExpression conditionalExpression = (PsiConditionalExpression)parentExpression;
+      final PsiExpression condition = conditionalExpression.getCondition();
+      return PsiTreeUtil.isAncestor(condition, expression, true);
+    }
     return parentPrecedence < childPrecedence;
   }
 }

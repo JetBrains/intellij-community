@@ -17,6 +17,9 @@ package com.intellij.openapi.roots;
 
 /**
  *  @author dsl
+ *
+ *  @deprecated {@link ContentEntry#getExcludeFolders()} don't return synthetic entries for excluded outputs any more.
+ *  Use {@link ContentEntry#getExcludeFolderFiles()} to get all excluded roots
  */
 public interface ExcludedOutputFolder extends ExcludeFolder {
 }

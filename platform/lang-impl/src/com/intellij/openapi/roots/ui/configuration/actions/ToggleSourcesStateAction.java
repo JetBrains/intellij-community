@@ -20,7 +20,6 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.SourceFolder;
-import com.intellij.openapi.roots.impl.SourceFolderImpl;
 import com.intellij.openapi.roots.ui.configuration.ContentEntryEditor;
 import com.intellij.openapi.roots.ui.configuration.ContentEntryTreeEditor;
 import com.intellij.openapi.roots.ui.configuration.ModuleSourceRootEditHandler;
@@ -72,7 +71,7 @@ public class ToggleSourcesStateAction<P extends JpsElement> extends ContentEntry
         else if (!myEditHandler.getRootType().equals(sourceFolder.getRootType())) {
           P properties;
           if (myEditHandler.getRootType().getClass().equals(sourceFolder.getRootType().getClass())) {
-            properties = (P)((SourceFolderImpl)sourceFolder).getJpsElement().getProperties().getBulkModificationSupport().createCopy();
+            properties = (P)sourceFolder.getJpsElement().getProperties().getBulkModificationSupport().createCopy();
           }
           else {
             properties = myEditHandler.getRootType().createDefaultProperties();

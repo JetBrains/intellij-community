@@ -32,7 +32,6 @@ import org.jetbrains.jps.cmdline.ProjectDescriptor;
 import org.jetbrains.jps.indices.IgnoredFileIndex;
 import org.jetbrains.jps.indices.ModuleExcludeIndex;
 import org.jetbrains.jps.model.JpsModel;
-import org.jetbrains.jps.model.JpsSimpleElement;
 import org.jetbrains.jps.model.java.JavaResourceRootType;
 import org.jetbrains.jps.model.java.JavaSourceRootProperties;
 import org.jetbrains.jps.model.java.JavaSourceRootType;
@@ -93,9 +92,9 @@ public final class ResourcesTarget extends JVMModuleBuildTarget<ResourceRootDesc
     JavaSourceRootType type = isTests() ? JavaSourceRootType.TEST_SOURCE : JavaSourceRootType.SOURCE;
     Iterable<ExcludedJavaSourceRootProvider> excludedRootProviders = JpsServiceManager.getInstance().getExtensions(ExcludedJavaSourceRootProvider.class);
 
-    for (JpsTypedModuleSourceRoot<? extends JpsSimpleElement<JavaSourceRootProperties>> sourceRoot : myModule.getSourceRoots(type)) {
+    for (JpsTypedModuleSourceRoot<JavaSourceRootProperties> sourceRoot : myModule.getSourceRoots(type)) {
       if (!isExcludedFromCompilation(excludedRootProviders, sourceRoot)) {
-        final String packagePrefix = sourceRoot.getProperties().getData().getPackagePrefix();
+        final String packagePrefix = sourceRoot.getProperties().getPackagePrefix();
         final File rootFile = sourceRoot.getFile();
         roots.add(new FilteredResourceRootDescriptor(rootFile, this, packagePrefix, computeRootExcludes(rootFile, index)));
       }

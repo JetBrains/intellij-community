@@ -188,11 +188,6 @@ public class PsiMethodImpl extends JavaStubPsiElement<PsiMethodStub> implements 
   }
 
   @Override
-  public PsiType getReturnTypeNoResolve() {
-    return getReturnType();
-  }
-
-  @Override
   public PsiType getReturnType() {
     if (isConstructor()) return null;
 

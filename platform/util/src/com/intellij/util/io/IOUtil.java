@@ -15,6 +15,7 @@
  */
 package com.intellij.util.io;
 
+import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.SystemProperties;
@@ -183,5 +184,27 @@ public class IOUtil {
     catch (IllegalAccessException e) {
       throw new RuntimeException(e);
     }
+  }
+
+  public static <T> T openCleanOrResetBroken(@NotNull ThrowableComputable<T, IOException> factoryComputable, final File file) throws IOException {
+    return openCleanOrResetBroken(factoryComputable, new Runnable() {
+      @Override
+      public void run() {
+        deleteAllFilesStartingWith(file);
+      }
+    });
+  }
+
+  public static <T> T openCleanOrResetBroken(@NotNull ThrowableComputable<T, IOException> factoryComputable, Runnable cleanupCallback) throws IOException {
+    for(int i = 0; i < 2; ++i) {
+      try {
+        return factoryComputable.compute();
+      } catch (IOException ex) {
+        if (i == 1) throw ex;
+        cleanupCallback.run();
+      }
+    }
+
+    return null;
   }
 }

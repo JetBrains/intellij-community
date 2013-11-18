@@ -779,7 +779,7 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
 
     String prefix = getPrefixByVariableKind(variableKind);
     String name = propertyName;
-    if (name.length() > 0 && prefix.length() > 0 && !StringUtil.endsWithChar(prefix, '_')) {
+    if (!name.isEmpty() && !prefix.isEmpty() && !StringUtil.endsWithChar(prefix, '_')) {
       name = Character.toUpperCase(name.charAt(0)) + name.substring(1);
     }
     name = prefix + name + getSuffixByVariableKind(variableKind);

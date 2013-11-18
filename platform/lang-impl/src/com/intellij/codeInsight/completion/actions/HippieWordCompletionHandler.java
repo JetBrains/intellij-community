@@ -44,7 +44,6 @@ import java.util.*;
  */
 public class HippieWordCompletionHandler implements CodeInsightActionHandler {
   private static final Key<CompletionState> KEY_STATE = new Key<CompletionState>("HIPPIE_COMPLETION_STATE");
-  private static final String WHITESPACE_CHARS = " \t\n";
   private final boolean myForward;
 
   public HippieWordCompletionHandler(boolean forward) {
@@ -188,7 +187,7 @@ public class HippieWordCompletionHandler implements CodeInsightActionHandler {
     }
   }
   
-  private static boolean isWordLike(CharSequence seq, int start, int end) {
+  private static boolean containsLetters(CharSequence seq, int start, int end) {
     for (int i = start; i < end; i++) {
       if (Character.isLetter(seq.charAt(i))) {
         return true;
@@ -256,7 +255,7 @@ public class HippieWordCompletionHandler implements CodeInsightActionHandler {
       @Override
       public boolean processToken(int start, int end) {
         if ((start > caretOffset || end < caretOffset) &&  //skip prefix itself
-            end - start > matcher.getPrefix().length() && isWordLike(chars, start, end)) {
+            end - start > matcher.getPrefix().length()) {
           final String word = chars.subSequence(start, end).toString();
           if (matcher.isStartMatch(word)) {
             CompletionVariant v = new CompletionVariant(editor, word, start);
@@ -280,31 +279,25 @@ public class HippieWordCompletionHandler implements CodeInsightActionHandler {
     while (!iterator.atEnd()) {
       int start = iterator.getStart();
       int end = iterator.getEnd();
-      if (StringUtil.indexOfAny(chars, WHITESPACE_CHARS, start, end) < 0) {
-        //a single token without whitespace, consider it one word, even if it's an identifier with '-' inside
-        if (isWordLike(chars, start, end) && !processor.processToken(start, end)) {
-          return;
-        }
-        iterator.advance();
-        continue;
-      }
 
-      // a token with whitespace inside (a string literal or comment)
-      // use the default java-identifier notion of word
       while (start < end) {
         int wordStart = start;
-        while (wordStart < end && !Character.isJavaIdentifierPart(chars.charAt(wordStart))) wordStart++;
+        while (wordStart < end && !isWordPart(chars.charAt(wordStart))) wordStart++;
 
         int wordEnd = wordStart;
-        while (wordEnd < end && Character.isJavaIdentifierPart(chars.charAt(wordEnd))) wordEnd++;
+        while (wordEnd < end && isWordPart(chars.charAt(wordEnd))) wordEnd++;
 
-        if (!processor.processToken(wordStart, wordEnd)) {
+        if (wordEnd > wordStart && containsLetters(chars, wordStart, wordEnd) && !processor.processToken(wordStart, wordEnd)) {
           return;
         }
         start = wordEnd + 1;
       }
       iterator.advance();
     }
+  }
+
+  private static boolean isWordPart(final char c) {
+    return Character.isJavaIdentifierPart(c) || c == '-' || c == '*' ;
   }
 
   private static CompletionData computeData(final Editor editor, final CharSequence charsSequence) {

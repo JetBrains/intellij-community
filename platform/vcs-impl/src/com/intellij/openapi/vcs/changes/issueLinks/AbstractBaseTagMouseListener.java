@@ -42,7 +42,8 @@ public abstract class AbstractBaseTagMouseListener extends ClickListener impleme
   }
 
   @Nullable
-  protected abstract Object getTagAt(final MouseEvent e);
+  public abstract Object getTagAt(final MouseEvent e);
+
   public void mouseDragged(MouseEvent e) {
   }
 

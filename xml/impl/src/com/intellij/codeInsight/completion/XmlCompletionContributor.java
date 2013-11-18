@@ -30,12 +30,10 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.patterns.XmlPatterns;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.xml.XmlAttributeValue;
-import com.intellij.psi.xml.XmlFile;
-import com.intellij.psi.xml.XmlTag;
-import com.intellij.psi.xml.XmlTokenType;
+import com.intellij.psi.xml.*;
 import com.intellij.util.Consumer;
 import com.intellij.util.ProcessingContext;
 import com.intellij.xml.XmlBundle;
@@ -199,9 +197,15 @@ public class XmlCompletionContributor extends CompletionContributor {
 
   public void beforeCompletion(@NotNull final CompletionInitializationContext context) {
     final int offset = context.getStartOffset();
-    final XmlAttributeValue attributeValue = PsiTreeUtil.findElementOfClassAtOffset(context.getFile(), offset, XmlAttributeValue.class, true);
+    final PsiFile file = context.getFile();
+    final XmlAttributeValue attributeValue = PsiTreeUtil.findElementOfClassAtOffset(file, offset, XmlAttributeValue.class, true);
     if (attributeValue != null && offset == attributeValue.getTextRange().getStartOffset()) {
       context.setDummyIdentifier("");
+    }
+
+    final PsiElement at = file.findElementAt(offset);
+    if (at != null && at.getNode().getElementType() == XmlTokenType.XML_NAME && at.getParent() instanceof XmlAttribute) {
+      context.getOffsetMap().addOffset(CompletionInitializationContext.IDENTIFIER_END_OFFSET, at.getTextRange().getEndOffset());
     }
   }
 }

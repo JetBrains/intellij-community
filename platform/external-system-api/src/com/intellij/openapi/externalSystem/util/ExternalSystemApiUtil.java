@@ -323,11 +323,11 @@ public class ExternalSystemApiUtil {
     return result == null ? Collections.<DataNode<T>>emptyList() : result;
   }
 
-  public static void executeProjectChangeAction(@NotNull final Runnable task) {
+  public static void executeProjectChangeAction(@NotNull final DisposeAwareProjectChange task) {
     executeProjectChangeAction(false, task);
   }
 
-  public static void executeProjectChangeAction(boolean synchronous, @NotNull final Runnable task) {
+  public static void executeProjectChangeAction(boolean synchronous, @NotNull final DisposeAwareProjectChange task) {
     executeOnEdt(synchronous, new Runnable() {
       public void run() {
         ApplicationManager.getApplication().runWriteAction(new Runnable() {

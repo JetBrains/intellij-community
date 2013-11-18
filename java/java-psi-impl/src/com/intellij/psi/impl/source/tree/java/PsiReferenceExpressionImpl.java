@@ -477,7 +477,7 @@ public class PsiReferenceExpressionImpl extends PsiReferenceExpressionBase imple
       @Override
       public boolean isAcceptable(Object element, @Nullable PsiElement context) {
         return LambdaUtil.isValidQualifier4InterfaceStaticMethodCall((PsiMethod)element, PsiReferenceExpressionImpl.this,
-                                                                     PsiUtil.getLanguageLevel(PsiReferenceExpressionImpl.this));
+                                                                     null, PsiUtil.getLanguageLevel(PsiReferenceExpressionImpl.this));
       }
 
       @Override
@@ -509,16 +509,13 @@ public class PsiReferenceExpressionImpl extends PsiReferenceExpressionBase imple
     PsiScopesUtil.resolveAndWalk(filterProcessor, this, null, true);
   }
 
-  private static boolean seemsScrambled(PsiClass element) {
-    if (!(element instanceof PsiCompiledElement)) {
+  public static boolean seemsScrambled(PsiClass aClass) {
+    if (!(aClass instanceof PsiCompiledElement)) {
       return false;
     }
 
-    final String qualifiedName = element.getQualifiedName();
-    return qualifiedName != null &&
-           qualifiedName.length() <= 2 &&
-           !qualifiedName.isEmpty() &&
-           Character.isLowerCase(qualifiedName.charAt(0));
+    final String name = aClass.getName();
+    return name != null && !name.isEmpty() && name.length() <= 2;
   }
 
   @Override

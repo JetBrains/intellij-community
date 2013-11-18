@@ -73,7 +73,7 @@ public class FileReferenceCompletionImpl extends FileReferenceCompletion {
       @Override
       public boolean execute(@NotNull PsiFileSystemItem fileSystemItem) {
         return new FilteringProcessor<PsiFileSystemItem>(reference.getFileReferenceSet().getReferenceCompletionFilter(), collector).process(
-          reference.getOriginalFile(fileSystemItem));
+          FileReference.getOriginalFile(fileSystemItem));
       }
     };
     for (PsiFileSystemItem context : reference.getContexts()) {

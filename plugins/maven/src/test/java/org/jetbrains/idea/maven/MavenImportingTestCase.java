@@ -34,7 +34,6 @@ import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl;
 import com.intellij.openapi.roots.*;
-import com.intellij.openapi.roots.impl.SourceFolderImpl;
 import com.intellij.openapi.roots.impl.libraries.ProjectLibraryTable;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.ui.Messages;
@@ -45,6 +44,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.IdeaTestUtil;
+import com.intellij.util.Consumer;
 import com.intellij.util.PathUtil;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.ui.UIUtil;
@@ -129,7 +129,9 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
     ContentEntry contentRoot = getContentRoot(moduleName);
     List<ContentFolder> folders = new ArrayList<ContentFolder>();
     for (SourceFolder folder : contentRoot.getSourceFolders(JavaSourceRootType.SOURCE)) {
-      if (((JavaSourceRootProperties)((SourceFolderImpl)folder).getJpsElement().getProperties()).isForGeneratedSources()) {
+      JavaSourceRootProperties properties = folder.getJpsElement().getProperties(JavaSourceRootType.SOURCE);
+      assertNotNull(properties);
+      if (properties.isForGeneratedSources()) {
         folders.add(folder);
       }
     }
@@ -497,9 +499,9 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
     final MavenArtifactDownloader.DownloadResult[] unresolved = new MavenArtifactDownloader.DownloadResult[1];
 
     AsyncResult<MavenArtifactDownloader.DownloadResult> result = new AsyncResult<MavenArtifactDownloader.DownloadResult>();
-    result.doWhenDone(new AsyncResult.Handler<MavenArtifactDownloader.DownloadResult>() {
+    result.doWhenDone(new Consumer<MavenArtifactDownloader.DownloadResult>() {
       @Override
-      public void run(MavenArtifactDownloader.DownloadResult unresolvedArtifacts) {
+      public void consume(MavenArtifactDownloader.DownloadResult unresolvedArtifacts) {
         unresolved[0] = unresolvedArtifacts;
       }
     });

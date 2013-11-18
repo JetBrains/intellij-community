@@ -51,6 +51,7 @@ import com.intellij.ui.switcher.SwitchTarget;
 import com.intellij.ui.tabs.*;
 import com.intellij.ui.tabs.impl.JBEditorTabs;
 import com.intellij.ui.tabs.impl.JBTabsImpl;
+import com.intellij.util.Consumer;
 import com.intellij.util.ui.AwtVisitor;
 import com.intellij.util.ui.TimedDeadzone;
 import com.intellij.util.ui.UIUtil;
@@ -181,7 +182,7 @@ public final class EditorTabbedContainer implements Disposable, CloseAction.Clos
 
 
   public static DockableEditor createDockableEditor(Project project, Image image, VirtualFile file, Presentation presentation, EditorWindow window) {
-    return new DockableEditor(project, image, file, presentation, window);
+    return new DockableEditor(project, image, file, presentation, window.getSize(), window.isFilePinned(file));
   }
 
   private void updateTabBorder() {
@@ -209,7 +210,7 @@ public final class EditorTabbedContainer implements Disposable, CloseAction.Clos
 
     for (String each : ids) {
       ToolWindow eachWnd = mgr.getToolWindow(each);
-      if (!eachWnd.isAvailable()) continue;
+      if (eachWnd == null || !eachWnd.isAvailable()) continue;
 
       if (eachWnd.isVisible() && eachWnd.getType() == ToolWindowType.DOCKED) {
         ToolWindowAnchor eachAnchor = eachWnd.getAnchor();
@@ -483,9 +484,9 @@ public final class EditorTabbedContainer implements Disposable, CloseAction.Clos
     final FileEditorManagerEx mgr = FileEditorManagerEx.getInstanceEx(myProject);
 
     AsyncResult<EditorWindow> window = mgr.getActiveWindow();
-    window.doWhenDone(new AsyncResult.Handler<EditorWindow>() {
+    window.doWhenDone(new Consumer<EditorWindow>() {
       @Override
-      public void run(EditorWindow wnd) {
+      public void consume(EditorWindow wnd) {
         if (wnd != null) {
           if (wnd.findFileComposite(file) != null) {
             mgr.closeFile(file, wnd);
@@ -662,19 +663,17 @@ public final class EditorTabbedContainer implements Disposable, CloseAction.Clos
     final Image myImg;
     private DockableEditorTabbedContainer myContainer;
     private Presentation myPresentation;
-    private EditorWindow myEditorWindow;
     private Dimension myPreferredSize;
     private boolean myPinned;
     private VirtualFile myFile;
 
-    public DockableEditor(Project project, Image img, VirtualFile file, Presentation presentation, EditorWindow window) {
+    public DockableEditor(Project project, Image img, VirtualFile file, Presentation presentation, Dimension preferredSize, boolean isFilePinned) {
       myImg = img;
       myFile = file;
       myPresentation = presentation;
       myContainer = new DockableEditorTabbedContainer(project);
-      myEditorWindow = window;
-      myPreferredSize = myEditorWindow.getSize();
-      myPinned = window.isFilePinned(file);
+      myPreferredSize = preferredSize;
+      myPinned = isFilePinned;
     }
 
     @NotNull

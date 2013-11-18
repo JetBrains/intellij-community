@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,19 +44,23 @@ public class FragmentListImpl implements FragmentList {
     return fragmentList;
   }
 
+  @Override
   public FragmentList shift(TextRange rangeShift1, TextRange rangeShift2,
                             int startLine1, int startLine2) {
     return new FragmentListImpl(shift(myFragments, rangeShift1, rangeShift2, startLine1, startLine2));
   }
 
+  @Override
   public boolean isEmpty() {
     return myFragments.isEmpty();
   }
 
+  @Override
   public Iterator<Fragment> iterator() {
     return myFragments.iterator();
   }
 
+  @Override
   public Fragment getFragmentAt(int offset, FragmentSide side, Condition<Fragment> condition) {
     for (Iterator<Fragment> iterator = iterator(); iterator.hasNext();) {
       Fragment fragment = iterator.next();
@@ -79,6 +83,7 @@ public class FragmentListImpl implements FragmentList {
   }
 
   private static final Comparator<Fragment> FRAGMENT_COMPARATOR = new Comparator<Fragment>() {
+    @Override
     public int compare(Fragment fragment1, Fragment fragment2) {
       int result = compareBySide(fragment1, fragment2, FragmentSide.SIDE1);
       int check = compareBySide(fragment1, fragment2, FragmentSide.SIDE2);

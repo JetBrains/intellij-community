@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -176,7 +176,7 @@ public class PsiDocMethodOrFieldRef extends CompositePsiElement implements PsiDo
         final String[] typeStrings = child.getText().split("[, ]");  //avoid param types list parsing hmm method(paramType1, paramType2, ...) -> typeElement1, identifier2, ...
         if (typeStrings != null) {
           for (String type : typeStrings) {
-            if (type.length() > 0) {
+            if (!type.isEmpty()) {
               types.add(type);
             }
           }
@@ -189,7 +189,7 @@ public class PsiDocMethodOrFieldRef extends CompositePsiElement implements PsiDo
 
   @Nullable
   private PsiClass getScope(){
-    if (getFirstChildNode().getElementType() == ElementType.DOC_REFERENCE_HOLDER) {
+    if (getFirstChildNode().getElementType() == JavaDocElementType.DOC_REFERENCE_HOLDER) {
       final PsiElement firstChildPsi = SourceTreeToPsiMap.treeElementToPsi(getFirstChildNode().getFirstChildNode());
       if (firstChildPsi instanceof PsiJavaCodeReferenceElement) {
         PsiJavaCodeReferenceElement referenceElement = (PsiJavaCodeReferenceElement)firstChildPsi;
@@ -312,7 +312,7 @@ public class PsiDocMethodOrFieldRef extends CompositePsiElement implements PsiDo
       }
 
       final PsiElement child = getFirstChild();
-      if (containingClass != null && child != null && child.getNode().getElementType() == ElementType.DOC_REFERENCE_HOLDER) {
+      if (containingClass != null && child != null && child.getNode().getElementType() == JavaDocElementType.DOC_REFERENCE_HOLDER) {
         final PsiJavaCodeReferenceElement referenceElement = (PsiJavaCodeReferenceElement) child.getFirstChild();
         assert referenceElement != null;
         referenceElement.bindToElement(containingClass);

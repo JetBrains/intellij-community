@@ -24,7 +24,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ui.FileAppearanceService;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
-import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.impl.http.HttpVirtualFile;
 import com.intellij.openapi.vfs.impl.http.RemoteFileState;
@@ -39,31 +38,26 @@ import javax.swing.*;
 import java.util.Collection;
 import java.util.Collections;
 
-/**
- * @author nik
- */
 public class JumpFromRemoteFileToLocalAction extends AnAction {
   private final HttpVirtualFile myFile;
   private final Project myProject;
 
   public JumpFromRemoteFileToLocalAction(HttpVirtualFile file, Project project) {
     super("Find Local File", "", AllIcons.General.AutoscrollToSource);
+
     myFile = file;
     myProject = project;
   }
 
   @Override
   public void update(AnActionEvent e) {
-    final RemoteFileState state = myFile.getFileInfo().getState();
-    e.getPresentation().setEnabled(state == RemoteFileState.DOWNLOADED);
+    e.getPresentation().setEnabled(myFile.getFileInfo().getState() == RemoteFileState.DOWNLOADED);
   }
 
   @Override
   public void actionPerformed(AnActionEvent e) {
     final String url = myFile.getUrl();
-    final String fileName = myFile.getName();
-    Collection<VirtualFile> files = findLocalFiles(myProject, url, fileName);
-
+    Collection<VirtualFile> files = findLocalFiles(myProject, url, myFile.getName());
     if (files.isEmpty()) {
       Messages.showErrorDialog(myProject, "Cannot find local file for '" + url + "'", CommonBundle.getErrorTitle());
       return;
@@ -73,7 +67,7 @@ public class JumpFromRemoteFileToLocalAction extends AnAction {
       navigateToFile(myProject, ContainerUtil.getFirstItem(files, null));
     }
     else {
-      final JList list = new JBList(VfsUtilCore.toVirtualFileArray(files));
+      final JList list = new JBList(files);
       //noinspection unchecked
       list.setCellRenderer(new ColoredListCellRenderer() {
         @Override
@@ -87,6 +81,7 @@ public class JumpFromRemoteFileToLocalAction extends AnAction {
        .setItemChoosenCallback(new Runnable() {
          @Override
          public void run() {
+           //noinspection deprecation
            for (Object value : list.getSelectedValues()) {
              navigateToFile(myProject, (VirtualFile)value);
            }
@@ -95,7 +90,7 @@ public class JumpFromRemoteFileToLocalAction extends AnAction {
     }
   }
 
-  public static Collection<VirtualFile> findLocalFiles(Project project, String url, String fileName) {
+  private static Collection<VirtualFile> findLocalFiles(Project project, String url, String fileName) {
     for (LocalFileFinder finder : LocalFileFinder.EP_NAME.getExtensions()) {
       final VirtualFile file = finder.findLocalFile(url, project);
       if (file != null) {

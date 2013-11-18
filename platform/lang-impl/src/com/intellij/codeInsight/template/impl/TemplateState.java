@@ -378,7 +378,10 @@ public class TemplateState implements Disposable {
       public void run() {
         IntArrayList indices = initEmptyVariables();
         mySegments.setSegmentsGreedy(false);
-        LOG.assertTrue(myTemplateRange.isValid());
+        LOG.assertTrue(myTemplateRange.isValid(), 
+                       "template key: " + myTemplate.getKey() + "; " +
+                       "template text" + myTemplate.getTemplateText() + "; " +
+                       "variable number: " + getCurrentVariableNumber());
         reformat(finalRangeMarker);
         mySegments.setSegmentsGreedy(true);
         restoreEmptyVariables(indices);

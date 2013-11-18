@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -109,12 +109,14 @@ public class StripedLockConcurrentHashMap<K, V> extends _CHMSegment<K, V> implem
 
   // inherit Map javadoc
 
+  @Override
   public boolean isEmpty() {
     return count == 0;
   }
 
   // inherit Map javadoc
 
+  @Override
   public int size() {
     return count;
   }
@@ -130,6 +132,7 @@ public class StripedLockConcurrentHashMap<K, V> extends _CHMSegment<K, V> implem
    * @throws NullPointerException if the key is
    *                              <tt>null</tt>.
    */
+  @Override
   public V get(@NotNull Object key) {
     K kKey = (K)key;
     int hash = getHashingStrategy().computeHashCode(kKey); // throws NullPointerException if key null
@@ -146,6 +149,7 @@ public class StripedLockConcurrentHashMap<K, V> extends _CHMSegment<K, V> implem
    * @throws NullPointerException if the key is
    *                              <tt>null</tt>.
    */
+  @Override
   public boolean containsKey(@NotNull Object key) {
     K kKey = (K)key;
     int hash = getHashingStrategy().computeHashCode(kKey); // throws NullPointerException if key null
@@ -186,6 +190,7 @@ public class StripedLockConcurrentHashMap<K, V> extends _CHMSegment<K, V> implem
    * @throws NullPointerException if the key or value is
    *                              <tt>null</tt>.
    */
+  @Override
   public V put(@NotNull K key, @NotNull V value) {
     int hash = getHashingStrategy().computeHashCode(key);
     return put(key, hash, value, false);
@@ -210,6 +215,7 @@ public class StripedLockConcurrentHashMap<K, V> extends _CHMSegment<K, V> implem
    * @throws NullPointerException if the specified key or value is
    *                              <tt>null</tt>.
    */
+  @Override
   public V putIfAbsent(@NotNull K key, @NotNull V value) {
     int hash = getHashingStrategy().computeHashCode(key);
     return put(key, hash, value, true);
@@ -224,6 +230,7 @@ public class StripedLockConcurrentHashMap<K, V> extends _CHMSegment<K, V> implem
    *
    * @param t Mappings to be stored in this map.
    */
+  @Override
   public void putAll(@NotNull Map<? extends K, ? extends V> t) {
     for (Entry<? extends K, ? extends V> e : t.entrySet()) {
       V value = e.getValue();
@@ -243,6 +250,7 @@ public class StripedLockConcurrentHashMap<K, V> extends _CHMSegment<K, V> implem
    * @throws NullPointerException if the key is
    *                              <tt>null</tt>.
    */
+  @Override
   public V remove(@NotNull Object key) {
     K kKey = (K)key;
     int hash = getHashingStrategy().computeHashCode(kKey);
@@ -266,6 +274,7 @@ public class StripedLockConcurrentHashMap<K, V> extends _CHMSegment<K, V> implem
    * @throws NullPointerException if the specified key is
    *                              <tt>null</tt>.
    */
+  @Override
   public boolean remove(@NotNull Object key, @NotNull Object value) {
     K kKey = (K)key;
     int hash = getHashingStrategy().computeHashCode(kKey);
@@ -291,6 +300,7 @@ public class StripedLockConcurrentHashMap<K, V> extends _CHMSegment<K, V> implem
    * @throws NullPointerException if the specified key or values are
    *                              <tt>null</tt>.
    */
+  @Override
   public boolean replace(@NotNull K key, @NotNull V oldValue, @NotNull V newValue) {
     int hash = getHashingStrategy().computeHashCode(key);
     return replace(key, hash, oldValue, newValue);
@@ -313,6 +323,7 @@ public class StripedLockConcurrentHashMap<K, V> extends _CHMSegment<K, V> implem
    * @throws NullPointerException if the specified key or value is
    *                              <tt>null</tt>.
    */
+  @Override
   public V replace(@NotNull K key, @NotNull V value) {
     int hash = getHashingStrategy().computeHashCode(key);
     return replace(key, hash, value);
@@ -335,6 +346,8 @@ public class StripedLockConcurrentHashMap<K, V> extends _CHMSegment<K, V> implem
    *
    * @return a set view of the keys contained in this map.
    */
+  @NotNull
+  @Override
   public Set<K> keySet() {
     return new KeySet(); //conserve memory by not caching keyset
   }
@@ -356,6 +369,8 @@ public class StripedLockConcurrentHashMap<K, V> extends _CHMSegment<K, V> implem
    *
    * @return a collection view of the values contained in this map.
    */
+  @NotNull
+  @Override
   public Collection<V> values() {
     return new Values(); //conserve memory by not caching
   }
@@ -378,6 +393,8 @@ public class StripedLockConcurrentHashMap<K, V> extends _CHMSegment<K, V> implem
    *
    * @return a collection view of the mappings contained in this map.
    */
+  @NotNull
+  @Override
   public Set<Entry<K, V>> entrySet() {
     return new EntrySet(); //conserve memory by not caching
   }
@@ -471,11 +488,13 @@ public class StripedLockConcurrentHashMap<K, V> extends _CHMSegment<K, V> implem
   }
 
   final class KeyIterator extends HashIterator implements Iterator<K>, Enumeration<K> {
+    @Override
     @NotNull
     public K next() {
       return nextEntry().key;
     }
 
+    @Override
     @NotNull
     public K nextElement() {
       return nextEntry().key;
@@ -483,11 +502,13 @@ public class StripedLockConcurrentHashMap<K, V> extends _CHMSegment<K, V> implem
   }
 
   final class ValueIterator extends HashIterator implements Iterator<V>, Enumeration<V> {
+    @Override
     @NotNull
     public V next() {
       return nextEntry().value;
     }
 
+    @Override
     @NotNull
     public V nextElement() {
       return nextEntry().value;
@@ -502,12 +523,14 @@ public class StripedLockConcurrentHashMap<K, V> extends _CHMSegment<K, V> implem
    * itself acts as a forwarding pseudo-entry.
    */
   final class EntryIterator extends HashIterator implements Entry<K, V>, Iterator<Entry<K, V>> {
+    @Override
     @NotNull
     public Entry<K, V> next() {
       nextEntry();
       return this;
     }
 
+    @Override
     @NotNull
     public K getKey() {
       if (lastReturned == null) {
@@ -516,6 +539,7 @@ public class StripedLockConcurrentHashMap<K, V> extends _CHMSegment<K, V> implem
       return lastReturned.key;
     }
 
+    @Override
     @Nullable("null means the entry has just been removed")
     public V getValue() {
       if (lastReturned == null) {
@@ -524,6 +548,7 @@ public class StripedLockConcurrentHashMap<K, V> extends _CHMSegment<K, V> implem
       return get(lastReturned.key);
     }
 
+    @Override
     public V setValue(@NotNull V value) {
       if (lastReturned == null) {
         throw new IllegalStateException("Entry was removed");
@@ -566,26 +591,34 @@ public class StripedLockConcurrentHashMap<K, V> extends _CHMSegment<K, V> implem
   }
 
   final class KeySet extends AbstractSet<K> {
+    @NotNull
+    @Override
     public Iterator<K> iterator() {
       return new KeyIterator();
     }
 
+    @Override
     public int size() {
       return StripedLockConcurrentHashMap.this.size();
     }
 
+    @Override
     public boolean contains(Object o) {
       return containsKey(o);
     }
 
+    @Override
     public boolean remove(Object o) {
       return StripedLockConcurrentHashMap.this.remove(o) != null;
     }
 
+    @Override
     public void clear() {
       StripedLockConcurrentHashMap.this.clear();
     }
 
+    @NotNull
+    @Override
     public Object[] toArray() {
       Collection<K> c = new ArrayList<K>();
       for (K k : this) {
@@ -594,7 +627,9 @@ public class StripedLockConcurrentHashMap<K, V> extends _CHMSegment<K, V> implem
       return c.toArray();
     }
 
-    public <T> T[] toArray(T[] a) {
+    @NotNull
+    @Override
+    public <T> T[] toArray(@NotNull T[] a) {
       Collection<K> c = new ArrayList<K>();
       for (K k : this) {
         c.add(k);
@@ -604,22 +639,29 @@ public class StripedLockConcurrentHashMap<K, V> extends _CHMSegment<K, V> implem
   }
 
   final class Values extends AbstractCollection<V> {
+    @NotNull
+    @Override
     public Iterator<V> iterator() {
       return new ValueIterator();
     }
 
+    @Override
     public int size() {
       return StripedLockConcurrentHashMap.this.size();
     }
 
+    @Override
     public boolean contains(Object o) {
       return containsValue(o);
     }
 
+    @Override
     public void clear() {
       StripedLockConcurrentHashMap.this.clear();
     }
 
+    @NotNull
+    @Override
     public Object[] toArray() {
       Collection<V> c = new ArrayList<V>();
       for (V k : this) {
@@ -628,7 +670,9 @@ public class StripedLockConcurrentHashMap<K, V> extends _CHMSegment<K, V> implem
       return c.toArray();
     }
 
-    public <T> T[] toArray(T[] a) {
+    @NotNull
+    @Override
+    public <T> T[] toArray(@NotNull T[] a) {
       Collection<V> c = new ArrayList<V>();
       for (V k : this) {
         c.add(k);
@@ -638,10 +682,13 @@ public class StripedLockConcurrentHashMap<K, V> extends _CHMSegment<K, V> implem
   }
 
   final class EntrySet extends AbstractSet<Entry<K, V>> {
+    @NotNull
+    @Override
     public Iterator<Entry<K, V>> iterator() {
       return new EntryIterator();
     }
 
+    @Override
     public boolean contains(Object o) {
       if (!(o instanceof Entry)) {
         return false;
@@ -651,6 +698,7 @@ public class StripedLockConcurrentHashMap<K, V> extends _CHMSegment<K, V> implem
       return v != null && v.equals(e.getValue());
     }
 
+    @Override
     public boolean remove(Object o) {
       if (!(o instanceof Entry)) {
         return false;
@@ -659,14 +707,18 @@ public class StripedLockConcurrentHashMap<K, V> extends _CHMSegment<K, V> implem
       return StripedLockConcurrentHashMap.this.remove(e.getKey(), e.getValue());
     }
 
+    @Override
     public int size() {
       return StripedLockConcurrentHashMap.this.size();
     }
 
+    @Override
     public void clear() {
       StripedLockConcurrentHashMap.this.clear();
     }
 
+    @NotNull
+    @Override
     public Object[] toArray() {
       // Since we don't ordinarily have distinct Entry objects, we
       // must pack elements using exportable SimpleEntry
@@ -677,7 +729,9 @@ public class StripedLockConcurrentHashMap<K, V> extends _CHMSegment<K, V> implem
       return c.toArray();
     }
 
-    public <T> T[] toArray(T[] a) {
+    @NotNull
+    @Override
+    public <T> T[] toArray(@NotNull T[] a) {
       Collection<Entry<K, V>> c = new ArrayList<Entry<K, V>>(size());
       for (Entry<K, V> i : this) {
         c.add(new SimpleEntry(i));
@@ -699,16 +753,19 @@ public class StripedLockConcurrentHashMap<K, V> extends _CHMSegment<K, V> implem
       value = e.getValue();
     }
 
+    @Override
     @NotNull
     public K getKey() {
       return key;
     }
 
+    @Override
     @NotNull
     public V getValue() {
       return value;
     }
 
+    @Override
     public V setValue(@NotNull V value) {
       V oldValue = this.value;
       this.value = value;
@@ -741,6 +798,7 @@ public class StripedLockConcurrentHashMap<K, V> extends _CHMSegment<K, V> implem
       return INSTANCE;
     }
 
+    @Override
     public int computeHashCode(final K object) {
       int h = object.hashCode();
       // performance matters here
@@ -751,6 +809,7 @@ public class StripedLockConcurrentHashMap<K, V> extends _CHMSegment<K, V> implem
       return h;
     }
 
+    @Override
     public boolean equals(@NotNull K o1, @NotNull K o2) {
       return o1.equals(o2);
     }

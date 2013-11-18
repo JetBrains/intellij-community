@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,7 +44,7 @@ public abstract class CreateClassFromUsageBaseFix extends BaseIntentionAction {
 
   protected abstract String getText(String varName);
 
-  private boolean isAvailableInContext(final @NotNull PsiJavaCodeReferenceElement element) {
+  private boolean isAvailableInContext(@NotNull final PsiJavaCodeReferenceElement element) {
     PsiElement parent = element.getParent();
 
     if (myKind == CreateClassKind.ANNOTATION) {

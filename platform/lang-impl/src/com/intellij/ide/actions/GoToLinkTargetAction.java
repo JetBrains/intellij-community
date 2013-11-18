@@ -22,7 +22,7 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VFileProperty;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.PsiManager;
 
 public class GoToLinkTargetAction extends DumbAwareAction {
@@ -40,7 +40,8 @@ public class GoToLinkTargetAction extends DumbAwareAction {
     if (project != null && file != null && file.is(VFileProperty.SYMLINK)) {
       VirtualFile target = file.getCanonicalFile();
       if (target != null) {
-        PsiFile psiFile = PsiManager.getInstance(project).findFile(target);
+        PsiManager psiManager = PsiManager.getInstance(project);
+        PsiFileSystemItem psiFile = target.isDirectory() ? psiManager.findDirectory(target) : psiManager.findFile(target);
         if (psiFile != null) {
           ProjectView.getInstance(project).select(psiFile, target, false);
         }

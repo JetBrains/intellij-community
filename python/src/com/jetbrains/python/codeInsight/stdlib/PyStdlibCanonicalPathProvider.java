@@ -69,6 +69,10 @@ public class PyStdlibCanonicalPathProvider implements PyCanonicalPathProvider {
         result.addAll(components);
         return QualifiedName.fromComponents(result);
       }
+      else if (head.equals("_sqlite3")) {
+        components.set(0, "sqlite3");
+        return QualifiedName.fromComponents(components);
+      }
     }
     return null;
   }

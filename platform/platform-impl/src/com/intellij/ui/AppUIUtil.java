@@ -33,7 +33,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.awt.*;
 import java.io.IOException;
 import java.io.InputStream;
@@ -49,18 +48,6 @@ public class AppUIUtil {
 
   public static void updateWindowIcon(@NotNull Window window) {
     window.setIconImages(getAppIconImages());
-  }
-
-  /** @deprecated use {@linkplain #updateWindowIcon(Window)} (to remove in IDEA 13) */
-  @SuppressWarnings("UnusedDeclaration")
-  public static void updateFrameIcon(final Frame frame) {
-    updateWindowIcon(frame);
-  }
-
-  /** @deprecated use {@linkplain #updateWindowIcon(Window)} (to remove in IDEA 13) */
-  @SuppressWarnings("UnusedDeclaration")
-  public static void updateDialogIcon(final JDialog dialog) {
-    updateWindowIcon(dialog);
   }
 
   @SuppressWarnings({"UnnecessaryFullyQualifiedName", "deprecation"})

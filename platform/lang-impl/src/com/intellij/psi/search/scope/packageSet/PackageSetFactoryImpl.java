@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.intellij.analysis.AnalysisScopeBundle;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.psi.TokenType;
 import com.intellij.psi.search.scope.packageSet.lexer.ScopeTokenTypes;
 import com.intellij.psi.search.scope.packageSet.lexer.ScopesLexer;
 import org.jetbrains.annotations.Nullable;
@@ -121,7 +122,7 @@ public class PackageSetFactoryImpl extends PackageSetFactory {
         } else if (myLexer.getTokenType() == ScopeTokenTypes.ASTERISK) {
           pattern.append("*");
         } else if (myLexer.getTokenType() == ScopeTokenTypes.IDENTIFIER ||
-                   myLexer.getTokenType() == ScopeTokenTypes.WHITE_SPACE ||
+                   myLexer.getTokenType() == TokenType.WHITE_SPACE ||
                    myLexer.getTokenType() == ScopeTokenTypes.INTEGER_LITERAL ) {
           pattern.append(getTokenText());
         } else if (myLexer.getTokenType() == ScopeTokenTypes.DOT) {

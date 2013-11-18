@@ -26,21 +26,25 @@ public class CommandLineUtil {
   private static final char SPECIAL_QUOTE = '\uEFEF';
   private static final String WIN_SHELL_SPECIALS = "&<>()@^|";
 
-  public static @NotNull String specialQuote(@NotNull String parameter) {
+  @NotNull
+  public static String specialQuote(@NotNull String parameter) {
     return quote(parameter, SPECIAL_QUOTE);
   }
 
-  public static @NotNull List<String> toCommandLine(@NotNull List<String> command) {
-    assert command.size() > 0;
+  @NotNull
+  public static List<String> toCommandLine(@NotNull List<String> command) {
+    assert !command.isEmpty();
     return toCommandLine(command.get(0), command.subList(1, command.size()));
   }
 
-  public static @NotNull List<String> toCommandLine(@NotNull String command, @NotNull List<String> parameters) {
+  @NotNull
+  public static List<String> toCommandLine(@NotNull String command, @NotNull List<String> parameters) {
     return toCommandLine(command, parameters, Platform.current());
   }
 
   // please keep an implementation in sync with [junit-rt] ProcessBuilder.createProcess()
-  public static @NotNull List<String> toCommandLine(@NotNull String command, @NotNull List<String> parameters, @NotNull Platform platform) {
+  @NotNull
+  public static List<String> toCommandLine(@NotNull String command, @NotNull List<String> parameters, @NotNull Platform platform) {
     List<String> commandLine = ContainerUtil.newArrayListWithExpectedSize(parameters.size() + 1);
 
     commandLine.add(FileUtilRt.toSystemDependentName(command, platform.fileSeparator));
@@ -55,7 +59,7 @@ public class CommandLineUtil {
         if (parameter.contains("\"")) {
           parameter = StringUtil.replace(parameter, "\"", "\\\"");
         }
-        else if (parameter.length() == 0) {
+        else if (parameter.isEmpty()) {
           parameter = "\"\"";
         }
       }

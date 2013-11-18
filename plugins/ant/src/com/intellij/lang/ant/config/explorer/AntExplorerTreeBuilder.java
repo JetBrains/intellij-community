@@ -87,7 +87,7 @@ final class AntExplorerTreeBuilder extends AbstractTreeBuilder {
 
   @NotNull
   protected ProgressIndicator createProgressIndicator() {
-    return ProgressIndicatorUtils.forceWriteActionPriority(new ProgressIndicatorBase(), this);
+    return ProgressIndicatorUtils.forceWriteActionPriority(new ProgressIndicatorBase(true), this);
   }
 
   private final class ConfigurationListener implements AntConfigurationListener {

@@ -25,6 +25,7 @@
     <orderEntry type="module" module-name="dom-openapi" />
     <orderEntry type="module" module-name="java-impl" />
     <orderEntry type="module" module-name="remote-servers-java-api" />
+    <orderEntry type="module" module-name="maven" />
   </component>
 </module>
 

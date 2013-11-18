@@ -71,7 +71,7 @@ public final class WeakKeyWeakValueHashMap<K,V> implements Map<K,V>{
   }
 
   @Override
-  public void putAll(Map<? extends K, ? extends V> t) {
+  public void putAll(@NotNull Map<? extends K, ? extends V> t) {
     throw new RuntimeException("method not implemented");
   }
 

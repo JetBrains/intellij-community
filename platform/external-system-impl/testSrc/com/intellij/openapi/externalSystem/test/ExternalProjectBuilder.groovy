@@ -81,6 +81,9 @@ class ExternalProjectBuilder extends BuilderSupport {
                                                                getLevel(attributes))
         data.scope = getScope(attributes)
         return parentNode.createChild(ProjectKeys.LIBRARY_DEPENDENCY, data)
+      case 'extraModel':
+        DataNode<ModuleData> parentNode = current as DataNode
+        return parentNode.createChild(attributes.key, attributes.model)
       case 'task':
         DataNode<ExternalConfigPathAware> parentNode = current as DataNode
         ProjectSystemId projectSystemId = attributes.projectSystemId ?: TEST_EXTERNAL_SYSTEM_ID

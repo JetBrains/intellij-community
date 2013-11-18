@@ -23,6 +23,7 @@ import com.intellij.openapi.options.UnnamedConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.remoteServer.ServerType;
+import com.intellij.remoteServer.configuration.RemoteServer;
 import com.intellij.remoteServer.configuration.deployment.*;
 import com.intellij.remoteServer.runtime.ServerConnector;
 import com.intellij.remoteServer.runtime.ServerTaskExecutor;
@@ -120,7 +121,7 @@ public class AppEngineCloudType extends ServerType<AppEngineServerConfiguration>
     }
   }
 
-  private static class AppEngineDeploymentConfigurator extends DeploymentConfigurator<DummyDeploymentConfiguration> {
+  private static class AppEngineDeploymentConfigurator extends DeploymentConfigurator<DummyDeploymentConfiguration, AppEngineServerConfiguration> {
     private final Project myProject;
 
     public AppEngineDeploymentConfigurator(Project project) {
@@ -141,7 +142,7 @@ public class AppEngineCloudType extends ServerType<AppEngineServerConfiguration>
     }
 
     @Override
-    public SettingsEditor<DummyDeploymentConfiguration> createEditor(@NotNull DeploymentSource source) {
+    public SettingsEditor<DummyDeploymentConfiguration> createEditor(@NotNull DeploymentSource source, @NotNull RemoteServer<AppEngineServerConfiguration> server) {
       return null;
     }
   }

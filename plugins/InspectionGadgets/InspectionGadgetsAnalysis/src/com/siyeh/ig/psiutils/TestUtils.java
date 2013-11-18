@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2013 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,18 +33,17 @@ public class TestUtils {
   private TestUtils() {
   }
 
-  public static boolean isTest(@Nullable PsiClass aClass) {
-    if (aClass == null) {
+  public static boolean isInTestSourceContent(@Nullable PsiElement element) {
+    if (element == null) {
       return false;
     }
-    final PsiFile file = aClass.getContainingFile();
+    final PsiFile file = element.getContainingFile();
     final VirtualFile virtualFile = file.getVirtualFile();
     if (virtualFile == null) {
       return true;
     }
-    final Project project = aClass.getProject();
-    final ProjectRootManager rootManager =
-      ProjectRootManager.getInstance(project);
+    final Project project = element.getProject();
+    final ProjectRootManager rootManager = ProjectRootManager.getInstance(project);
     final ProjectFileIndex fileIndex = rootManager.getFileIndex();
     return fileIndex.isInTestSourceContent(virtualFile);
   }
@@ -110,6 +109,9 @@ public class TestUtils {
       return true;
     }
     final PsiClass containingClass = PsiTreeUtil.getParentOfType(element, PsiClass.class);
-    return containingClass != null && TestFrameworks.getInstance().isTestClass(containingClass);
+    if (containingClass != null && TestFrameworks.getInstance().isTestOrConfig(containingClass)) {
+      return true;
+    }
+    return isInTestSourceContent(element);
   }
 }

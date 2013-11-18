@@ -6,6 +6,7 @@
       <sourceFolder url="file://$MODULE_DIR$/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/test" isTestSource="true" />
       <sourceFolder url="file://$MODULE_DIR$/icons" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/resources" isTestSource="false" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
@@ -17,6 +18,8 @@
     <orderEntry type="module" module-name="vcs-impl" />
     <orderEntry type="library" name="Guava" level="project" />
     <orderEntry type="library" name="JUnit4" level="project" />
+    <orderEntry type="module" module-name="lang-impl" />
+    <orderEntry type="module" module-name="spellchecker" />
   </component>
 </module>
 

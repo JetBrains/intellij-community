@@ -42,6 +42,7 @@ public class BalloonPopupBuilderImpl implements BalloonBuilder {
   private JComponent myContent;
 
   private Color   myBorder             = new JBColor(JBColor.GRAY, Gray._200);
+  @Nullable private Insets myBorderInsets = null;
   private Color   myFill               = MessageType.INFO.getPopupBackground();
   private boolean myHideOnMouseOutside = true;
   private boolean myHideOnKeyOutside   = true;
@@ -102,6 +103,12 @@ public class BalloonPopupBuilderImpl implements BalloonBuilder {
   @Override
   public BalloonBuilder setBorderColor(@NotNull final Color color) {
     myBorder = color;
+    return this;
+  }
+
+  @Override
+  public BalloonBuilder setBorderInsets(@Nullable Insets insets) {
+    myBorderInsets = insets;
     return this;
   }
 
@@ -250,7 +257,7 @@ public class BalloonPopupBuilderImpl implements BalloonBuilder {
   @Override
   public Balloon createBalloon() {
     final BalloonImpl result = new BalloonImpl(
-      myContent, myBorder, myFill, myHideOnMouseOutside, myHideOnKeyOutside, myHideOnAction, myShowCallout, myCloseButtonEnabled,
+      myContent, myBorder, myBorderInsets, myFill, myHideOnMouseOutside, myHideOnKeyOutside, myHideOnAction, myShowCallout, myCloseButtonEnabled,
       myFadeoutTime, myHideOnFrameResize, myHideOnLinkClick, myClickHandler, myCloseOnClick, myAnimationCycle, myCalloutShift,
       myPositionChangeXShift, myPositionChangeYShift, myDialogMode, myTitle, myContentInsets, myShadow, mySmallVariant, myBlockClicks,
       myLayer);

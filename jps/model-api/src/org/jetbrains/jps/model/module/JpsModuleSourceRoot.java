@@ -20,6 +20,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.JpsElement;
 
 import java.io.File;
+import java.util.Set;
 
 /**
  * @author nik
@@ -28,8 +29,17 @@ public interface JpsModuleSourceRoot extends JpsElement {
   @NotNull
   JpsModuleSourceRootType<?> getRootType();
 
+  /**
+   * @return the root properties element or {@code null} if the root type doesn't equal to {@code type}
+   */
   @Nullable
   <P extends JpsElement> P getProperties(@NotNull JpsModuleSourceRootType<P> type);
+
+  /**
+   * @return the root properties element or {@code null} if the root type isn't contained in {@code types}
+   */
+  @Nullable
+  <P extends JpsElement> P getProperties(@NotNull Set<? extends JpsModuleSourceRootType<P>> types);
 
   @Nullable
   <P extends JpsElement> JpsTypedModuleSourceRoot<P> asTyped(@NotNull JpsModuleSourceRootType<P> type);

@@ -24,7 +24,6 @@ import com.intellij.psi.StubBuilder;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.containers.Stack;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * @author max
@@ -123,14 +122,9 @@ public class DefaultStubBuilder implements StubBuilder {
 
   /**
    * Note to implementers: always keep in sync with {@linkplain #skipChildProcessingWhenBuildingStubs(PsiElement, PsiElement)}.
-   * todo[r.sh] move to interface (IDEA 13)
    */
-  public boolean skipChildProcessingWhenBuildingStubs(@NotNull ASTNode parent, @NotNull ASTNode node) {
-    return skipChildProcessingWhenBuildingStubs(parent, node.getElementType());
-  }
-
   @Override
-  public boolean skipChildProcessingWhenBuildingStubs(@Nullable ASTNode parent, IElementType childType) {
+  public boolean skipChildProcessingWhenBuildingStubs(@NotNull ASTNode parent, @NotNull ASTNode node) {
     return false;
   }
 }

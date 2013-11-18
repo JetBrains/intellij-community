@@ -32,6 +32,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.StringTokenizer;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -47,8 +48,8 @@ class DocumentFoldingInfo implements JDOMExternalizable, CodeFoldingState {
   @NotNull private final Project myProject;
   private final VirtualFile myFile;
 
-  @NotNull private final List<SmartPsiElementPointer<PsiElement>> myPsiElements = new ArrayList<SmartPsiElementPointer<PsiElement>>();
-  @NotNull private final List<RangeMarker> myRangeMarkers = new ArrayList<RangeMarker>();
+  @NotNull private final List<SmartPsiElementPointer<PsiElement>> myPsiElements = ContainerUtil.createLockFreeCopyOnWriteList();
+  @NotNull private final List<RangeMarker> myRangeMarkers = ContainerUtil.createLockFreeCopyOnWriteList();
   private static final String DEFAULT_PLACEHOLDER = "...";
   @NonNls private static final String ELEMENT_TAG = "element";
   @NonNls private static final String SIGNATURE_ATT = "signature";

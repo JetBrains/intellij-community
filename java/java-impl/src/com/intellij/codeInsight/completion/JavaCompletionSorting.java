@@ -227,7 +227,7 @@ public class JavaCompletionSorting {
 
   private static int calcMatch(final List<String> words, int max, ExpectedTypeInfo[] myExpectedInfos) {
     for (ExpectedTypeInfo myExpectedInfo : myExpectedInfos) {
-      String expectedName = ((ExpectedTypeInfoImpl)myExpectedInfo).getExpectedName().compute();
+      String expectedName = ((ExpectedTypeInfoImpl)myExpectedInfo).getExpectedName();
       if (expectedName == null) continue;
       max = calcMatch(expectedName, words, max);
       max = calcMatch(truncDigits(expectedName), words, max);
@@ -331,7 +331,11 @@ public class JavaCompletionSorting {
       if (type instanceof PsiClassType) {
         final PsiClass psiClass = ((PsiClassType)type).resolve();
         if (psiClass != null && CommonClassNames.JAVA_LANG_CLASS.equals(psiClass.getQualifiedName())) {
-          return GenericsUtil.eliminateWildcards(type);
+          PsiClassType erased = (PsiClassType)GenericsUtil.eliminateWildcards(type);
+          PsiType[] parameters = erased.getParameters();
+          if (parameters.length == 1 && !parameters[0].equalsToText(CommonClassNames.JAVA_LANG_OBJECT)) {
+            return erased;
+          }
         }
       }
       return type;
@@ -500,7 +504,7 @@ public class JavaCompletionSorting {
         int max = 0;
         final List<String> wordsNoDigits = NameUtil.nameToWordsLowerCase(truncDigits(name));
         for (ExpectedTypeInfo myExpectedInfo : myExpectedTypes) {
-          String expectedName = ((ExpectedTypeInfoImpl)myExpectedInfo).getExpectedName().compute();
+          String expectedName = ((ExpectedTypeInfoImpl)myExpectedInfo).getExpectedName();
           if (expectedName != null) {
             final THashSet<String> set = new THashSet<String>(NameUtil.nameToWordsLowerCase(truncDigits(expectedName)));
             set.retainAll(wordsNoDigits);

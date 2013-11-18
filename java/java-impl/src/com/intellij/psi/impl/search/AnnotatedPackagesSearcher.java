@@ -86,7 +86,7 @@ public class AnnotatedPackagesSearcher implements QueryExecutor<PsiPackage, Anno
     GlobalSearchScope infoFiles =
       useScope instanceof GlobalSearchScope ? ((GlobalSearchScope)useScope).intersectWith(infoFilesFilter) : infoFilesFilter;
 
-    final boolean[] wantmore = new boolean[]{true};
+    final boolean[] wantmore = {true};
     helper.processAllFilesWithWord(annotationShortName, infoFiles, new Processor<PsiFile>() {
       @Override
       public boolean process(final PsiFile psiFile) {

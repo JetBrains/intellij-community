@@ -86,7 +86,7 @@ public class AddSchemaPrefixIntention extends PsiElementBaseIntentionAction {
           tag.accept(new XmlRecursiveElementVisitor() {
             @Override
             public void visitXmlTag(XmlTag tag) {
-              if (tag.getNamespace().equals(namespace) && tag.getNamespacePrefix().length() == 0) {
+              if (tag.getNamespace().equals(namespace) && tag.getNamespacePrefix().isEmpty()) {
                 tags.add(tag);
               }
               super.visitXmlTag(tag);
@@ -141,7 +141,7 @@ public class AddSchemaPrefixIntention extends PsiElementBaseIntentionAction {
     final PsiElement parent = element.getParent();
     if (parent instanceof XmlTag) {
       XmlTag tag = (XmlTag)parent;
-      if (tag.getNamespacePrefix().length() == 0) {
+      if (tag.getNamespacePrefix().isEmpty()) {
         while (tag != null) {
           final XmlAttribute attr = tag.getAttribute("xmlns");
           if (attr != null) return attr;

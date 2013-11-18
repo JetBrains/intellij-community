@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,7 +46,7 @@ public class MethodElement extends CompositeElement implements Constants {
 
   @Override
   public TreeElement addInternal(TreeElement first, ASTNode last, ASTNode anchor, Boolean before) {
-    if (first == last && first.getElementType() == ElementType.CODE_BLOCK){
+    if (first == last && first.getElementType() == JavaElementType.CODE_BLOCK){
       ASTNode semicolon = findChildByRole(ChildRole.CLOSING_SEMICOLON);
       if (semicolon != null){
         deleteChildInternal(semicolon);

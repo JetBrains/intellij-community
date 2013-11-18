@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -70,10 +70,12 @@ public class BlockBorder implements Border {
     myShade2 = aShade2;
   }
 
+  @Override
   public boolean isBorderOpaque() {
     return true;
   }
 
+  @Override
   public void paintBorder(Component component, Graphics g, int x, int y, int width, int height) {
     Graphics2D g2 = (Graphics2D)g;
 
@@ -104,6 +106,7 @@ public class BlockBorder implements Border {
     myBoundsColor = aColor;
   }
 
+  @Override
   public Insets getBorderInsets(Component component) {
     return myInsets;
   }

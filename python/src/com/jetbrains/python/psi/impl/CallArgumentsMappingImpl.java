@@ -65,29 +65,9 @@ public class CallArgumentsMappingImpl implements CallArgumentsMapping {
   public void mapArguments(PyCallExpression.PyMarkedCallee resolved_callee, @NotNull TypeEvalContext context) {
     PyExpression[] arguments = myArgumentList.getArguments();
     myMarkedCallee = resolved_callee;
-    List<PyExpression> unmatched_args = new LinkedList<PyExpression>();
-    Collections.addAll(unmatched_args, arguments);
     final List<PyExpression> unmatched_subargs = new LinkedList<PyExpression>(); // unmatched nested arguments will go here
-    // detect starred args
-    for (PyExpression arg : arguments) {
-      if (arg instanceof PyStarArgument) {
-        PyStarArgument star_arg = (PyStarArgument)arg;
-        if (star_arg.isKeyword()) {
-          if (myKwdArg == null) myKwdArg = star_arg;
-          else {
-            markArgument(arg, ArgFlag.IS_DUP_KWD);
-            unmatched_args.remove(arg);
-          }
-        }
-        else {
-          if (myTupleArg == null) myTupleArg = star_arg;
-          else {
-            markArgument(arg, ArgFlag.IS_DUP_TUPLE);
-            unmatched_args.remove(arg);
-          }
-        }
-      }
-    }
+    List<PyExpression> unmatched_args = verifyArguments();
+
     final List<PyParameter> parameters = PyUtil.getParameters(myMarkedCallee.getCallable(), context);
     // prepare parameter slots
     Map<PyNamedParameter, PyExpression> slots = new LinkedHashMap<PyNamedParameter, PyExpression>();
@@ -180,15 +160,8 @@ public class CallArgumentsMappingImpl implements CallArgumentsMapping {
     for (PyExpression arg : unmatched_subargs) {
       markArgument(arg, ArgFlag.IS_UNMAPPED);
     }
-    // mark past-bound positional args
-    i = positional_bound;
-    while (i<arguments.length) {
-      PyExpression arg = arguments[i];
-      if (!(arg instanceof PyStarArgument) && !(arg instanceof PyKeywordArgument)) {
-        markArgument(arg, ArgFlag.IS_POS_PAST_KWD);
-      }
-      i += 1;
-    }
+
+
     boolean seen_named_args = false;
     // map named args to named params if possible
     Map<String, PyNamedParameter> parameter_by_name = new LinkedHashMap<String, PyNamedParameter>();
@@ -347,6 +320,57 @@ public class CallArgumentsMappingImpl implements CallArgumentsMapping {
         final EnumSet<ArgFlag> flags = myArgFlags.get(arg);
         if (flags == null || flags.isEmpty()) {
           markArgument(arg, ArgFlag.IS_UNMAPPED);
+        }
+      }
+    }
+  }
+
+  public List<PyExpression> verifyArguments() {
+    List<PyExpression> unmatched_args = new LinkedList<PyExpression>();
+    Collections.addAll(unmatched_args, myArgumentList.getArguments());
+    // detect starred args
+    for (PyExpression arg : myArgumentList.getArguments()) {
+      if (arg instanceof PyStarArgument) {
+        PyStarArgument star_arg = (PyStarArgument)arg;
+        if (star_arg.isKeyword()) {
+          if (myKwdArg == null) myKwdArg = star_arg;
+          else {
+            markArgument(arg, ArgFlag.IS_DUP_KWD);
+            unmatched_args.remove(arg);
+          }
+        }
+        else {
+          if (myTupleArg == null) myTupleArg = star_arg;
+          else {
+            markArgument(arg, ArgFlag.IS_DUP_TUPLE);
+            unmatched_args.remove(arg);
+          }
+        }
+      }
+    }
+
+    markPastBoundPositionalArguments(myArgumentList.getArguments());
+    return unmatched_args;
+  }
+
+  private void markPastBoundPositionalArguments(PyExpression[] arguments) {
+    boolean seenKwArg = false;
+    boolean seenKeyword = false;
+    boolean seenStar = false;
+    for (PyExpression arg : arguments) {
+      if (arg == myKwdArg) {
+        seenKwArg = true;
+      }
+      else if (arg instanceof PyKeywordArgument) {
+        seenKeyword = true;
+      }
+      else if (arg instanceof PyStarArgument) {
+        seenStar = true;
+      }
+
+      if (seenKeyword || seenKwArg || seenStar) {
+        if (!(arg instanceof PyStarArgument) && (seenKwArg || !(arg instanceof PyKeywordArgument))) {
+          markArgument(arg, ArgFlag.IS_POS_PAST_KWD);
         }
       }
     }

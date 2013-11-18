@@ -1,4 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<!--
+  How to make changes in Darcula.xml
+  Open Settings -> Editor -> Colors & Fonts and make a copy of Darcula scheme. Say 'Darcula_copy'
+  In 'Colors & Fonts' settings panel make changes in 'Darcula_copy' scheme and save it
+  Open <IDEA_SETTINGS>/config/colors/Darcula_copy.icls and copy it's content into clipboard
+  Open Darcula.xml in editor and call 'Compare with Clipboard'
+  Apply necessary changes and commit
+-->
 <scheme name="Darcula" version="1" parent_scheme="Default">
   <option name="LINE_SPACING" value="1.0" />
   <option name="EDITOR_FONT_SIZE" value="12" linux="14"/>
@@ -1113,6 +1121,11 @@
         <option name="EFFECT_TYPE" value="-1" />
       </value>
     </option>
+    <option name="PY.BUILTIN_NAME">
+      <value>
+        <option name="FOREGROUND" value="8888c6" />
+      </value>
+    </option>
     <option name="REGEXP.BRACES">
       <value>
         <option name="FOREGROUND" value="e8bf6a" />
@@ -1164,8 +1177,6 @@
       <value>
         <option name="FOREGROUND" value="9396c0" />
         <option name="FONT_TYPE" value="1" />
-        <option name="EFFECT_COLOR" value="aeae80" />
-        <option name="EFFECT_TYPE" value="2" />
       </value>
     </option>
     <option name="REQUIRE_GEM_CALL">

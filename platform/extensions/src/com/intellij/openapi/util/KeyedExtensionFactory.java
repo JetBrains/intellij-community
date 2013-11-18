@@ -34,9 +34,10 @@ public abstract class KeyedExtensionFactory<T, KeyT> {
   private final ExtensionPointName<KeyedFactoryEPBean> myEpName;
   private final PicoContainer myPicoContainer;
 
-  public KeyedExtensionFactory(@NotNull final Class<T> interfaceClass, @NonNls @NotNull final String epName, @NotNull PicoContainer picoContainer) {
+  public KeyedExtensionFactory(@NotNull final Class<T> interfaceClass, @NonNls @NotNull final ExtensionPointName<KeyedFactoryEPBean> epName,
+                               @NotNull PicoContainer picoContainer) {
     myInterfaceClass = interfaceClass;
-    myEpName = new ExtensionPointName<KeyedFactoryEPBean>(epName);
+    myEpName = epName;
     myPicoContainer = picoContainer;
   }
 

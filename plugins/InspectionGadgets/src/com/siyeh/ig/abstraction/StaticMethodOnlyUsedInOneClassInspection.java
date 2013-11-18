@@ -24,6 +24,7 @@ import com.intellij.openapi.util.AsyncResult;
 import com.intellij.psi.*;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringActionHandlerFactory;
+import com.intellij.util.Consumer;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.InspectionGadgetsFix;
@@ -66,9 +67,9 @@ public class StaticMethodOnlyUsedInOneClassInspection extends StaticMethodOnlyUs
       final PsiMethod method = (PsiMethod)location.getParent();
       final RefactoringActionHandler moveHandler = RefactoringActionHandlerFactory.getInstance().createMoveHandler();
       final AsyncResult<DataContext> result = DataManager.getInstance().getDataContextFromFocus();
-      result.doWhenDone(new AsyncResult.Handler<DataContext>() {
+      result.doWhenDone(new Consumer<DataContext>() {
         @Override
-        public void run(final DataContext originalContext) {
+        public void consume(final DataContext originalContext) {
           final DataContext dataContext = new DataContext() {
             @Override
             public Object getData(@NonNls String name) {

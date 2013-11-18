@@ -59,7 +59,7 @@ public class BalloonTest {
           //pane.setBorder(new LineBorder(Color.blue));
 
           balloon.set(new BalloonImpl(
-            new JLabel("Content"), Color.black, MessageType.ERROR.getPopupBackground(), true, true, true, true, true, 0, true, false, null,
+            new JLabel("Content"), Color.black, null , MessageType.ERROR.getPopupBackground(), true, true, true, true, true, 0, true, false, null,
             false, 500, 25, 0, 0, false, "This is the title", new Insets(2, 2, 2, 2), true, false, false, Balloon.Layer.normal));
           balloon.get().setShowPointer(true);
 

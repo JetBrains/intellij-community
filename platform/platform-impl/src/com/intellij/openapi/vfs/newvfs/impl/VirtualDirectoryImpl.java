@@ -19,10 +19,12 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.impl.ApplicationImpl;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.roots.OrderEnumerator;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileAttributes;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -56,6 +58,7 @@ import java.util.*;
  * @author max
  */
 public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.newvfs.impl.VirtualDirectoryImpl");
   public static boolean CHECK = ApplicationManager.getApplication().isUnitTestMode();
 
   static final VirtualDirectoryImpl NULL_VIRTUAL_FILE = new VirtualDirectoryImpl("*?;%NULL", null, LocalFileSystem.getInstance(), -42, 0) {
@@ -180,11 +183,6 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
     }
 
     synchronized (this) {
-      // do not extract getId outside the synchronized block since it will cause a concurrency problem.
-      int id = ourPersistence.getId(this, name, delegate);
-      if (id <= 0) {
-        return null;
-      }
       // maybe another doFindChild() sneaked in the middle
       VirtualFileSystemEntry[] array = myChildren;
       long r = findIndexInBoth(array, comparator);
@@ -196,6 +194,11 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
         return array[indexInReal];
       }
 
+      // do not extract getId outside the synchronized block since it will cause a concurrency problem.
+      int id = ourPersistence.getId(this, name, delegate);
+      if (id <= 0) {
+        return null;
+      }
       String shorty = new String(name);
       VirtualFileSystemEntry child = createChild(shorty, id, delegate); // So we don't hold whole char[] buffer of a lengthy path
 
@@ -489,7 +492,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
       return children;
     }
 
-    FSRecords.NameId[] childrenIds = ourPersistence.listAll(this);
+    final FSRecords.NameId[] childrenIds = ourPersistence.listAll(this);
     VirtualFileSystemEntry[] result;
     if (childrenIds.length == 0) {
       result = EMPTY_ARRAY;
@@ -500,7 +503,16 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
         public int compare(FSRecords.NameId o1, FSRecords.NameId o2) {
           String name1 = o1.name;
           String name2 = o2.name;
-          return compareNames(name1, name2, ignoreCase);
+          int cmp = compareNames(name1, name2, ignoreCase);
+          if (cmp == 0 && name1 != name2) {
+            LOG.error(ourPersistence + " returned duplicate file names("+name1+","+name2+")" +
+                      " ignoreCase: "+ignoreCase+
+                      " SystemInfo.isFileSystemCaseSensitive: "+ SystemInfo.isFileSystemCaseSensitive+
+                      " SystemInfo.OS: "+ SystemInfo.OS_NAME+" "+SystemInfo.OS_VERSION+
+                      " in the dir: "+VirtualDirectoryImpl.this+";" +
+                      " children: "+Arrays.toString(childrenIds));
+          }
+          return cmp;
         }
       });
       result = new VirtualFileSystemEntry[childrenIds.length];

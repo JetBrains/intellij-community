@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -61,12 +61,14 @@ public class CollapsiblePanel extends JPanel {
     myToggleCollapseButton.setFocusable(true);
 
     myToggleCollapseButton.getActionMap().put(COLLAPSE, new AbstractAction() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         collapse();
       }
     });
 
     myToggleCollapseButton.getActionMap().put(EXPAND, new AbstractAction() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         expand();
       }
@@ -97,6 +99,7 @@ public class CollapsiblePanel extends JPanel {
     }
 
     myToggleCollapseButton.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         setCollapsed(!myIsCollapsed);
       }
@@ -219,6 +222,7 @@ public class CollapsiblePanel extends JPanel {
     return myToggleCollapseButton.getInputMap();
   }
 
+  @Override
   protected void paintComponent(Graphics g) {
     updatePanel();
     super.paintComponent(g);
@@ -232,6 +236,7 @@ public class CollapsiblePanel extends JPanel {
     }
   }
 
+  @Override
   protected void paintChildren(Graphics g) {
     if (myTitleLabel != null) {
       updateTitle();

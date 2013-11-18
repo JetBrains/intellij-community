@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,7 +48,7 @@ public class PsiJavaDirectoryFactory extends PsiDirectoryFactory {
     final PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage(directory);
     if (aPackage != null) {
       final String qualifiedName = aPackage.getQualifiedName();
-      if (qualifiedName.length() > 0) return qualifiedName;
+      if (!qualifiedName.isEmpty()) return qualifiedName;
       if (presentable) {
         return PsiBundle.message("default.package.presentation") + " (" + directory.getVirtualFile().getPresentableUrl() + ")";
       }

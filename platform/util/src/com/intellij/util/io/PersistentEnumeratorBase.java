@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,7 +39,7 @@ import java.util.List;
  * @author jeka
  */
 @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
-abstract public class PersistentEnumeratorBase<Data> implements Forceable, Closeable {
+public abstract class PersistentEnumeratorBase<Data> implements Forceable, Closeable {
   protected static final Logger LOG = Logger.getInstance("#com.intellij.util.io.PersistentEnumerator");
   protected static final int NULL_ID = 0;
 
@@ -140,6 +140,17 @@ abstract public class PersistentEnumeratorBase<Data> implements Forceable, Close
   public static class CorruptedException extends IOException {
     @SuppressWarnings({"HardCodedStringLiteral"})
     public CorruptedException(File file) {
+      this("PersistentEnumerator storage corrupted " + file.getPath());
+    }
+
+    protected CorruptedException(String message) {
+      super(message);
+    }
+  }
+
+  public static class VersionUpdatedException extends CorruptedException {
+    @SuppressWarnings({"HardCodedStringLiteral"})
+    public VersionUpdatedException(File file) {
       super("PersistentEnumerator storage corrupted " + file.getPath());
     }
   }
@@ -206,6 +217,7 @@ abstract public class PersistentEnumeratorBase<Data> implements Forceable, Close
         }
         if (sign != myVersion.correctlyClosedMagic) {
           myStorage.close();
+          if (sign != myVersion.dirtyMagic) throw new VersionUpdatedException(file);
           throw new CorruptedException(file);
         }
       }

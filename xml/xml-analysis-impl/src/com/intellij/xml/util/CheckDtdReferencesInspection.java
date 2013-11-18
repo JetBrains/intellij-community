@@ -23,16 +23,13 @@ import com.intellij.codeInspection.XmlInspectionGroupNames;
 import com.intellij.codeInspection.XmlSuppressableInspectionTool;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.psi.PsiElementVisitor;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.XmlElementVisitor;
-import com.intellij.psi.xml.*;
-import com.intellij.util.containers.HashMap;
+import com.intellij.psi.xml.XmlElement;
+import com.intellij.psi.xml.XmlElementContentSpec;
+import com.intellij.psi.xml.XmlEntityRef;
 import com.intellij.xml.XmlBundle;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.Map;
 
 /**
  * @author Maxim Mossienko
@@ -47,48 +44,13 @@ public class CheckDtdReferencesInspection extends XmlSuppressableInspectionTool 
   @NotNull
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
     return new XmlElementVisitor() {
-
-      private final Map<PsiFile, Boolean> myDoctypeMap = new HashMap<PsiFile, Boolean>();
-
       @Override
       public void visitXmlElement(final XmlElement element) {
-        if (isHtml5Doctype(element)) {
-          return;
-        }
-
         if (element instanceof XmlElementContentSpec ||
             element instanceof XmlEntityRef
           ) {
           doCheckRefs(element, holder);
         }
-      }
-
-      private boolean isHtml5Doctype(XmlElement element) {
-        if (HtmlUtil.isHtml5Context(element)) {
-          return true;
-        }
-
-        PsiFile file = element.getContainingFile();
-        if (file instanceof XmlFile) {
-          if (!myDoctypeMap.containsKey(file)) {
-            myDoctypeMap.put(file, computeHtml5Doctype((XmlFile)file));
-          }
-          return myDoctypeMap.get(file);
-        }
-        return false;
-      }
-
-      private boolean computeHtml5Doctype(XmlFile file) {
-        XmlDoctype doctype = null;
-        //Search for doctypes from providers
-        for (HtmlDoctypeProvider provider : HtmlDoctypeProvider.EP_NAME.getExtensions()) {
-          doctype = provider.getDoctype(file);
-          if (doctype != null) {
-            break;
-          }
-        }
-
-        return doctype != null && HtmlUtil.isHtml5Doctype(doctype);
       }
     };
   }
@@ -122,12 +84,5 @@ public class CheckDtdReferencesInspection extends XmlSuppressableInspectionTool 
   @NotNull
   public String getDisplayName() {
     return XmlBundle.message("xml.inspections.check.dtd.references");
-  }
-
-  @Override
-  @NotNull
-  @NonNls
-  public String getShortName() {
-    return "CheckDtdRefs";
   }
 }

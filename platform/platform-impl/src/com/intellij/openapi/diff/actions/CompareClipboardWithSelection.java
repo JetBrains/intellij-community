@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,7 +32,7 @@ import org.jetbrains.annotations.Nullable;
 public class CompareClipboardWithSelection extends BaseDiffAction {
   @Nullable
   protected DiffRequest getDiffData(DataContext dataContext) {
-    Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+    Project project = CommonDataKeys.PROJECT.getData(dataContext);
     if (project == null) return null;
     Editor editorData = CommonDataKeys.EDITOR.getData(dataContext);
     Editor editor = editorData != null ? editorData : FileEditorManager.getInstance(project).getSelectedTextEditor();
