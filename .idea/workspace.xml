@@ -2,18 +2,9 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="5b978c1f-e03c-4c14-b72c-970392c23907" name="Default" comment="Experimental">
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/testData/completion/testNoVariants01-out.java" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/testData/completion/testNoVariants01.java" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/testData/completion/testNoVariants02-out.java" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/testData/completion/testNoVariants02.java" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/org/jetbrains/postfixCompletion/TemplateProviders/ArgumentExpressionTemplateProvider.java" afterPath="$PROJECT_DIR$/src/org/jetbrains/postfixCompletion/TemplateProviders/ArgumentExpressionTemplateProvider.java" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/testSrc/PostfixCompletionTest.java" afterPath="$PROJECT_DIR$/testSrc/PostfixCompletionTest.java" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/README.md" afterPath="$PROJECT_DIR$/README.md" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/testData/completion/testVar03-out.java" afterPath="$PROJECT_DIR$/testData/completion/testVar03-out.java" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/testData/completion/testVar05-out.java" afterPath="$PROJECT_DIR$/testData/completion/testVar05-out.java" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/testData/completion/testVar07-out.java" afterPath="$PROJECT_DIR$/testData/completion/testVar07-out.java" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/testData/completion/testVar11-out.java" afterPath="$PROJECT_DIR$/testData/completion/testVar11-out.java" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/.idea/.gitignore" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.gitignore" afterPath="$PROJECT_DIR$/.gitignore" />
     </list>
     <ignored path="intellij-postfix.iws" />
     <ignored path=".idea/workspace.xml" />
@@ -80,71 +71,7 @@
     <favorites_list name="intellij-postfix" />
   </component>
   <component name="FileEditorManager">
-    <leaf>
-      <file leaf-file-name="testNoVariants01.java" pinned="false" current="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/testData/completion/testNoVariants01.java">
-          <provider selected="true" editor-type-id="text-editor">
-            <state line="0" column="18" selection-start="18" selection-end="18" vertical-scroll-proportion="0.0" vertical-offset="0" max-vertical-offset="200">
-              <folding />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="testNoVariants02.java" pinned="false" current="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/testData/completion/testNoVariants02.java">
-          <provider selected="true" editor-type-id="text-editor">
-            <state line="3" column="12" selection-start="94" selection-end="94" vertical-scroll-proportion="0.0" vertical-offset="0" max-vertical-offset="220">
-              <folding />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="PostfixCompletionTest.java" pinned="false" current="true" current-in-tab="true">
-        <entry file="file://$PROJECT_DIR$/testSrc/PostfixCompletionTest.java">
-          <provider selected="true" editor-type-id="text-editor">
-            <state line="59" column="47" selection-start="2095" selection-end="2095" vertical-scroll-proportion="0.6198347" vertical-offset="680" max-vertical-offset="2220">
-              <folding />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="PostfixTestUtils.java" pinned="false" current="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/testSrc/PostfixTestUtils.java">
-          <provider selected="true" editor-type-id="text-editor">
-            <state line="5" column="13" selection-start="112" selection-end="112" vertical-scroll-proportion="0.0" vertical-offset="0" max-vertical-offset="400">
-              <folding />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="testNoVariants01-out.java" pinned="false" current="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/testData/completion/testNoVariants01-out.java">
-          <provider selected="true" editor-type-id="text-editor">
-            <state line="4" column="0" selection-start="82" selection-end="82" vertical-scroll-proportion="0.0" vertical-offset="20" max-vertical-offset="220">
-              <folding />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="testNoVariants02-out.java" pinned="false" current="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/testData/completion/testNoVariants02-out.java">
-          <provider selected="true" editor-type-id="text-editor">
-            <state line="4" column="42" selection-start="145" selection-end="145" vertical-scroll-proportion="0.0" vertical-offset="20" max-vertical-offset="260">
-              <folding />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="ArgumentExpressionTemplateProvider.java" pinned="false" current="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/src/org/jetbrains/postfixCompletion/TemplateProviders/ArgumentExpressionTemplateProvider.java">
-          <provider selected="true" editor-type-id="text-editor">
-            <state line="17" column="47" selection-start="646" selection-end="646" vertical-scroll-proportion="0.0" vertical-offset="56" max-vertical-offset="1660">
-              <folding />
-            </state>
-          </provider>
-        </entry>
-      </file>
-    </leaf>
+    <leaf />
   </component>
   <component name="FindManager">
     <FindUsagesManager>
@@ -173,8 +100,6 @@
   <component name="IdeDocumentHistory">
     <option name="changedFiles">
       <list>
-        <option value="$PROJECT_DIR$/testData/completion/testNot02-out.java" />
-        <option value="$PROJECT_DIR$/testData/completion/testNotNull01-out.java" />
         <option value="$PROJECT_DIR$/testData/completion/testNotNull02-out.java" />
         <option value="$PROJECT_DIR$/testData/completion/testNull01-out.java" />
         <option value="$PROJECT_DIR$/testData/completion/testVar07-out.java" />
@@ -216,14 +141,16 @@
         <option value="$PROJECT_DIR$/src/org/jetbrains/postfixCompletion/Infrastructure/PostfixTemplatesManager.java" />
         <option value="$PROJECT_DIR$/src/org/jetbrains/postfixCompletion/Infrastructure/PostfixTemplateContext.java" />
         <option value="$PROJECT_DIR$/src/org/jetbrains/postfixCompletion/PostfixCompletionContributor.java" />
-        <option value="$PROJECT_DIR$/src/org/jetbrains/postfixCompletion/Infrastructure/PostfixNoVariantsCompletionUtil.java" />
         <option value="$PROJECT_DIR$/README.md" />
         <option value="$PROJECT_DIR$/testData/completion/testNoVariants01.java" />
-        <option value="$PROJECT_DIR$/testData/completion/testNoVariants02.java" />
         <option value="$PROJECT_DIR$/testData/completion/testNoVariants01-out.java" />
         <option value="$PROJECT_DIR$/testData/completion/testNoVariants02-out.java" />
         <option value="$PROJECT_DIR$/src/org/jetbrains/postfixCompletion/TemplateProviders/ArgumentExpressionTemplateProvider.java" />
+        <option value="$PROJECT_DIR$/testData/completion/testNoVariants02.java" />
+        <option value="$PROJECT_DIR$/src/org/jetbrains/postfixCompletion/Infrastructure/PostfixNoVariantsCompletionUtil.java" />
         <option value="$PROJECT_DIR$/testSrc/PostfixCompletionTest.java" />
+        <option value="$PROJECT_DIR$/intellij-postfix.iml" />
+        <option value="$PROJECT_DIR$/.gitignore" />
       </list>
     </option>
   </component>
@@ -337,10 +264,6 @@
               <option name="myItemId" value="testData" />
               <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
             </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="completion" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
           </PATH>
           <PATH>
             <PATH_ELEMENT>
@@ -357,50 +280,6 @@
             </PATH_ELEMENT>
             <PATH_ELEMENT>
               <option name="myItemId" value="postfixCompletion" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-          </PATH>
-          <PATH>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="intellij-postfix" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="intellij-postfix" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="src" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="postfixCompletion" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="TemplateProviders" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-          </PATH>
-          <PATH>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="intellij-postfix" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="intellij-postfix" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="src" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="postfixCompletion" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="Infrastructure" />
               <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
             </PATH_ELEMENT>
           </PATH>
@@ -415,6 +294,20 @@
             </PATH_ELEMENT>
             <PATH_ELEMENT>
               <option name="myItemId" value="META-INF" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+          </PATH>
+          <PATH>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="intellij-postfix" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="intellij-postfix" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value=".idea" />
               <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
             </PATH_ELEMENT>
           </PATH>
@@ -477,6 +370,9 @@
       <recent name="org.jetbrains.postfixCompletion.TemplateProviders" />
       <recent name="org.jetbrains.postfixCompletion.LookupItems" />
     </key>
+    <key name="MoveMembersDialog.RECENTS_KEY">
+      <recent name="PostfixTestUtils" />
+    </key>
     <key name="CreateClassDialog.RecentsKey">
       <recent name="org.jetbrains.postfixCompletion.TemplateProviders" />
       <recent name="org.jetbrains.postfixCompletion.Infrastructure" />
@@ -518,32 +414,6 @@
       <RunnerSettings RunnerId="Run" />
       <ConfigurationWrapper RunnerId="Debug" />
       <ConfigurationWrapper RunnerId="Run" />
-      <method />
-    </configuration>
-    <configuration default="false" name="PostfixCompletionTest.testVar17" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
-      <module name="intellij-postfix" />
-      <option name="ALTERNATIVE_JRE_PATH_ENABLED" value="false" />
-      <option name="ALTERNATIVE_JRE_PATH" value="" />
-      <option name="PACKAGE_NAME" value="" />
-      <option name="MAIN_CLASS_NAME" value="PostfixCompletionTest" />
-      <option name="METHOD_NAME" value="testVar17" />
-      <option name="TEST_OBJECT" value="method" />
-      <option name="VM_PARAMETERS" value="-ea" />
-      <option name="PARAMETERS" value="" />
-      <option name="WORKING_DIRECTORY" value="file://$PROJECT_DIR$" />
-      <option name="ENV_VARIABLES" />
-      <option name="PASS_PARENT_ENVS" value="true" />
-      <option name="TEST_SEARCH_SCOPE">
-        <value defaultName="moduleWithDependencies" />
-      </option>
-      <envs />
-      <patterns />
-      <RunnerSettings RunnerId="Debug">
-        <option name="DEBUG_PORT" value="" />
-        <option name="TRANSPORT" value="0" />
-        <option name="LOCAL" value="true" />
-      </RunnerSettings>
-      <ConfigurationWrapper RunnerId="Debug" />
       <method />
     </configuration>
     <configuration default="false" name="All in intellij-postfix" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
@@ -620,12 +490,30 @@
       <ConfigurationWrapper RunnerId="Debug" />
       <method />
     </configuration>
-    <configuration default="true" type="#org.jetbrains.idea.devkit.run.PluginConfigurationType" factoryName="Plugin" singleton="true">
+    <configuration default="false" name="PostfixCompletionTest.testNoVariants02" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
       <module name="intellij-postfix" />
-      <option name="VM_PARAMETERS" value="-Xmx512m -Xms256m -XX:MaxPermSize=250m" />
-      <option name="PROGRAM_PARAMETERS" value="" />
-      <alternative-path path="$USER_HOME$" alternative-path-enabled="false" />
-      <log_file path="$USER_HOME$/Library/Caches/IdeaIC12/plugins-sandbox/system/log/idea.log" checked="true" skipped="true" show_all="false" alias="IDEA LOG" />
+      <option name="ALTERNATIVE_JRE_PATH_ENABLED" value="false" />
+      <option name="ALTERNATIVE_JRE_PATH" value="" />
+      <option name="PACKAGE_NAME" value="" />
+      <option name="MAIN_CLASS_NAME" value="PostfixCompletionTest" />
+      <option name="METHOD_NAME" value="testNoVariants02" />
+      <option name="TEST_OBJECT" value="method" />
+      <option name="VM_PARAMETERS" value="-ea" />
+      <option name="PARAMETERS" value="" />
+      <option name="WORKING_DIRECTORY" value="file://$PROJECT_DIR$" />
+      <option name="ENV_VARIABLES" />
+      <option name="PASS_PARENT_ENVS" value="true" />
+      <option name="TEST_SEARCH_SCOPE">
+        <value defaultName="moduleWithDependencies" />
+      </option>
+      <envs />
+      <patterns />
+      <RunnerSettings RunnerId="Debug">
+        <option name="DEBUG_PORT" value="" />
+        <option name="TRANSPORT" value="0" />
+        <option name="LOCAL" value="true" />
+      </RunnerSettings>
+      <ConfigurationWrapper RunnerId="Debug" />
       <method />
     </configuration>
     <configuration default="true" type="GroovyScriptRunConfiguration" factoryName="Groovy">
@@ -635,6 +523,34 @@
       <setting name="params" value="" />
       <setting name="workDir" value="file://$PROJECT_DIR$" />
       <setting name="debug" value="false" />
+      <method />
+    </configuration>
+    <configuration default="true" type="#org.jetbrains.idea.devkit.run.PluginConfigurationType" factoryName="Plugin" singleton="true">
+      <module name="intellij-postfix" />
+      <option name="VM_PARAMETERS" value="-Xmx512m -Xms256m -XX:MaxPermSize=250m" />
+      <option name="PROGRAM_PARAMETERS" value="" />
+      <alternative-path path="$USER_HOME$" alternative-path-enabled="false" />
+      <log_file path="$USER_HOME$/Library/Caches/IdeaIC12/plugins-sandbox/system/log/idea.log" checked="true" skipped="true" show_all="false" alias="IDEA LOG" />
+      <method />
+    </configuration>
+    <configuration default="true" type="AndroidTestRunConfigurationType" factoryName="Android Tests">
+      <module name="" />
+      <option name="TESTING_TYPE" value="0" />
+      <option name="INSTRUMENTATION_RUNNER_CLASS" value="" />
+      <option name="METHOD_NAME" value="" />
+      <option name="CLASS_NAME" value="" />
+      <option name="PACKAGE_NAME" value="" />
+      <option name="TARGET_SELECTION_MODE" value="EMULATOR" />
+      <option name="USE_LAST_SELECTED_DEVICE" value="false" />
+      <option name="PREFERRED_AVD" value="" />
+      <option name="USE_COMMAND_LINE" value="true" />
+      <option name="COMMAND_LINE" value="" />
+      <option name="WIPE_USER_DATA" value="false" />
+      <option name="DISABLE_BOOT_ANIMATION" value="false" />
+      <option name="NETWORK_SPEED" value="full" />
+      <option name="NETWORK_LATENCY" value="none" />
+      <option name="CLEAR_LOGCAT" value="false" />
+      <option name="SHOW_LOGCAT_AUTOMATICALLY" value="true" />
       <method />
     </configuration>
     <configuration default="true" type="MavenRunConfiguration" factoryName="Maven">
@@ -659,26 +575,6 @@
       </MavenSettings>
       <method />
     </configuration>
-    <configuration default="true" type="AndroidTestRunConfigurationType" factoryName="Android Tests">
-      <module name="" />
-      <option name="TESTING_TYPE" value="0" />
-      <option name="INSTRUMENTATION_RUNNER_CLASS" value="" />
-      <option name="METHOD_NAME" value="" />
-      <option name="CLASS_NAME" value="" />
-      <option name="PACKAGE_NAME" value="" />
-      <option name="TARGET_SELECTION_MODE" value="EMULATOR" />
-      <option name="USE_LAST_SELECTED_DEVICE" value="false" />
-      <option name="PREFERRED_AVD" value="" />
-      <option name="USE_COMMAND_LINE" value="true" />
-      <option name="COMMAND_LINE" value="" />
-      <option name="WIPE_USER_DATA" value="false" />
-      <option name="DISABLE_BOOT_ANIMATION" value="false" />
-      <option name="NETWORK_SPEED" value="full" />
-      <option name="NETWORK_LATENCY" value="none" />
-      <option name="CLEAR_LOGCAT" value="false" />
-      <option name="SHOW_LOGCAT_AUTOMATICALLY" value="true" />
-      <method />
-    </configuration>
     <configuration default="true" type="GriffonRunConfigurationType" factoryName="Griffon">
       <module name="" />
       <setting name="vmparams" value="" />
@@ -695,20 +591,17 @@
       <option name="PORT" value="5005" />
       <method />
     </configuration>
-    <configuration default="true" type="XSLT" factoryName="XSLT">
-      <option name="myOutputFile" />
-      <option name="myOpenOutputFile" value="false" />
-      <option name="myOpenInBrowser" value="false" />
-      <option name="mySmartErrorHandling" value="true" />
-      <option name="myRunnerPort" value="34873" />
-      <option name="myVmArguments" />
-      <option name="myWorkingDirectory" />
-      <option name="myModule" />
-      <option name="myJdk" />
-      <parameters />
-      <OutputType value="CONSOLE" save-to-file="false" />
-      <FileType name="XML" />
-      <JdkChoice value="FROM_MODULE" />
+    <configuration default="true" type="Applet" factoryName="Applet">
+      <module name="" />
+      <option name="MAIN_CLASS_NAME" />
+      <option name="HTML_FILE_NAME" />
+      <option name="HTML_USED" value="false" />
+      <option name="WIDTH" value="400" />
+      <option name="HEIGHT" value="300" />
+      <option name="POLICY_FILE" value="$APPLICATION_HOME_DIR$/bin/appletviewer.policy" />
+      <option name="VM_PARAMETERS" />
+      <option name="ALTERNATIVE_JRE_PATH_ENABLED" value="false" />
+      <option name="ALTERNATIVE_JRE_PATH" />
       <method />
     </configuration>
     <configuration default="true" type="TestNG" factoryName="TestNG">
@@ -738,17 +631,20 @@
       <listeners />
       <method />
     </configuration>
-    <configuration default="true" type="Applet" factoryName="Applet">
-      <module name="" />
-      <option name="MAIN_CLASS_NAME" />
-      <option name="HTML_FILE_NAME" />
-      <option name="HTML_USED" value="false" />
-      <option name="WIDTH" value="400" />
-      <option name="HEIGHT" value="300" />
-      <option name="POLICY_FILE" value="$APPLICATION_HOME_DIR$/bin/appletviewer.policy" />
-      <option name="VM_PARAMETERS" />
-      <option name="ALTERNATIVE_JRE_PATH_ENABLED" value="false" />
-      <option name="ALTERNATIVE_JRE_PATH" />
+    <configuration default="true" type="XSLT" factoryName="XSLT">
+      <option name="myOutputFile" />
+      <option name="myOpenOutputFile" value="false" />
+      <option name="myOpenInBrowser" value="false" />
+      <option name="mySmartErrorHandling" value="true" />
+      <option name="myRunnerPort" value="34873" />
+      <option name="myVmArguments" />
+      <option name="myWorkingDirectory" />
+      <option name="myModule" />
+      <option name="myJdk" />
+      <parameters />
+      <OutputType value="CONSOLE" save-to-file="false" />
+      <FileType name="XML" />
+      <JdkChoice value="FROM_MODULE" />
       <method />
     </configuration>
     <configuration default="true" type="Application" factoryName="Application">
@@ -823,18 +719,18 @@
     <list size="6">
       <item index="0" class="java.lang.String" itemvalue="Plugin.Plugin" />
       <item index="1" class="java.lang.String" itemvalue="JUnit.PostfixCompletionTest" />
-      <item index="2" class="java.lang.String" itemvalue="JUnit.PostfixCompletionTest.testVar17" />
-      <item index="3" class="java.lang.String" itemvalue="JUnit.All in intellij-postfix" />
-      <item index="4" class="java.lang.String" itemvalue="JUnit.PostfixCompletionTest.testVar12" />
-      <item index="5" class="java.lang.String" itemvalue="JUnit.PostfixCompletionTest.testVar05" />
+      <item index="2" class="java.lang.String" itemvalue="JUnit.All in intellij-postfix" />
+      <item index="3" class="java.lang.String" itemvalue="JUnit.PostfixCompletionTest.testVar12" />
+      <item index="4" class="java.lang.String" itemvalue="JUnit.PostfixCompletionTest.testVar05" />
+      <item index="5" class="java.lang.String" itemvalue="JUnit.PostfixCompletionTest.testNoVariants02" />
     </list>
     <recent_temporary>
       <list size="5">
         <item index="0" class="java.lang.String" itemvalue="JUnit.PostfixCompletionTest" />
-        <item index="1" class="java.lang.String" itemvalue="JUnit.PostfixCompletionTest.testVar05" />
-        <item index="2" class="java.lang.String" itemvalue="JUnit.PostfixCompletionTest.testVar12" />
-        <item index="3" class="java.lang.String" itemvalue="JUnit.All in intellij-postfix" />
-        <item index="4" class="java.lang.String" itemvalue="JUnit.PostfixCompletionTest.testVar17" />
+        <item index="1" class="java.lang.String" itemvalue="JUnit.PostfixCompletionTest.testNoVariants02" />
+        <item index="2" class="java.lang.String" itemvalue="JUnit.PostfixCompletionTest.testVar05" />
+        <item index="3" class="java.lang.String" itemvalue="JUnit.PostfixCompletionTest.testVar12" />
+        <item index="4" class="java.lang.String" itemvalue="JUnit.All in intellij-postfix" />
       </list>
     </recent_temporary>
     <configuration name="&lt;template&gt;" type="WebApp" default="true" selected="false">
@@ -1211,7 +1107,15 @@
       <created>1384798108611</created>
       <updated>1384798108612</updated>
     </task>
-    <option name="localTasksCounter" value="87" />
+    <task id="LOCAL-00087" summary="Dump all lookup elements in tests, not only pure postfix">
+      <created>1384798621185</created>
+      <updated>1384798621185</updated>
+    </task>
+    <task id="LOCAL-00088" summary="Basic no-variants mode tests">
+      <created>1384799741958</created>
+      <updated>1384799741958</updated>
+    </task>
+    <option name="localTasksCounter" value="89" />
     <servers />
   </component>
   <component name="TodoView" selected-index="0">
@@ -1236,32 +1140,32 @@
   </component>
   <component name="ToolWindowManager">
     <frame x="0" y="0" width="1440" height="900" extended-state="0" />
-    <editor active="true" />
+    <editor active="false" />
     <layout>
       <window_info id="Palette&#9;" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
       <window_info id="Changes" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.3272727" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="Designer" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
       <window_info id="Palette" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
       <window_info id="Terminal" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
-      <window_info id="Find" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.2364706" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
       <window_info id="Ant Build" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.25" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
       <window_info id="Debug" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.37882352" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
       <window_info id="Event Log" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33498758" sideWeight="0.5" order="7" side_tool="true" content_ui="tabs" />
       <window_info id="Favorites" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.24605452" sideWeight="0.41873804" order="2" side_tool="true" content_ui="tabs" />
       <window_info id="Version Control" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.34491315" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
-      <window_info id="Messages" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.32352942" sideWeight="0.5" order="8" side_tool="false" content_ui="tabs" />
       <window_info id="TODO" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.32848486" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" />
       <window_info id="Structure" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.25" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
       <window_info id="Maven Projects" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
       <window_info id="Commander" active="false" anchor="right" auto_hide="false" internal_type="SLIDING" type="SLIDING" visible="false" weight="0.4" sideWeight="0.5" order="0" side_tool="false" content_ui="tabs" />
       <window_info id="Application Servers" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
-      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" weight="0.2611111" sideWeight="0.58126193" order="0" side_tool="false" content_ui="combo" />
-      <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" weight="0.37058824" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
+      <window_info id="Project" active="true" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" weight="0.2611111" sideWeight="0.58126193" order="0" side_tool="false" content_ui="combo" />
+      <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.37058824" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
       <window_info id="Hierarchy" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.25" sideWeight="0.5" order="2" side_tool="false" content_ui="combo" />
       <window_info id="Cvs" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.25" sideWeight="0.5" order="4" side_tool="false" content_ui="tabs" />
       <window_info id="JetGradle" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
       <window_info id="Message" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="0" side_tool="false" content_ui="tabs" />
+      <window_info id="Find" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.2364706" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
       <window_info id="Kotlin" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
+      <window_info id="Messages" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.32352942" sideWeight="0.5" order="8" side_tool="false" content_ui="tabs" />
       <window_info id="Inspection" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.4" sideWeight="0.5" order="5" side_tool="false" content_ui="tabs" />
     </layout>
   </component>
@@ -1280,8 +1184,6 @@
     <option name="myTodoPanelSettings">
       <TodoPanelSettings />
     </option>
-    <MESSAGE value="Set since-version to first IDEA 13 preview build version. Update readme.md" />
-    <MESSAGE value="Fix '2 + 2.var * 2' case" />
     <MESSAGE value="Fix .var over expressions (caret placement, prevent from loosing comments/whitespace/semicolons)" />
     <MESSAGE value="Prettify code" />
     <MESSAGE value="New .arg template" />
@@ -1305,7 +1207,9 @@
     <MESSAGE value="Destruct some code" />
     <MESSAGE value="Fix prefix matching for chained items ('in.nn' now matches 'integers.notnull')" />
     <MESSAGE value="Cosmetics" />
-    <option name="LAST_COMMIT_MESSAGE" value="Cosmetics" />
+    <MESSAGE value="Dump all lookup elements in tests, not only pure postfix" />
+    <MESSAGE value="Basic no-variants mode tests" />
+    <option name="LAST_COMMIT_MESSAGE" value="Basic no-variants mode tests" />
     <option name="OPTIMIZE_IMPORTS_BEFORE_PROJECT_COMMIT" value="true" />
   </component>
   <component name="XDebuggerManager">
@@ -1316,21 +1220,6 @@
     <option name="FILTER_TARGETS" value="false" />
   </component>
   <component name="editorHistoryManager">
-    <entry file="jar://$APPLICATION_HOME_DIR$/lib/openapi.jar!/com/intellij/codeInsight/completion/PrefixMatcher.class">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="10" column="12" selection-start="346" selection-end="346" vertical-scroll-proportion="0.32315978" vertical-offset="0" max-vertical-offset="640" />
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/org/jetbrains/postfixCompletion/TemplateProviders/ElseStatementTemplateProvider.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="26" column="0" selection-start="846" selection-end="846" vertical-scroll-proportion="0.0" vertical-offset="21" max-vertical-offset="820" />
-      </provider>
-    </entry>
-    <entry file="jar://$APPLICATION_HOME_DIR$/lib/openapi.jar!/com/intellij/codeInsight/template/Expression.class">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="4" column="10" selection-start="129" selection-end="129" vertical-scroll-proportion="0.11764706" vertical-offset="0" max-vertical-offset="510" />
-      </provider>
-    </entry>
     <entry file="jar://$APPLICATION_HOME_DIR$/lib/idea.jar!/com/intellij/codeInsight/template/impl/MacroCallNode.class">
       <provider selected="true" editor-type-id="text-editor">
         <state line="6" column="72" selection-start="240" selection-end="240" vertical-scroll-proportion="0.09803922" vertical-offset="50" max-vertical-offset="560" />
@@ -1387,9 +1276,7 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/src/org/jetbrains/postfixCompletion/TemplateProviders/ForIterationTemplateProvider.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="32" column="15" selection-start="1280" selection-end="1280" vertical-scroll-proportion="0.0" vertical-offset="100" max-vertical-offset="2520">
-          <folding />
-        </state>
+        <state line="32" column="15" selection-start="1280" selection-end="1280" vertical-scroll-proportion="0.0" vertical-offset="100" max-vertical-offset="2520" />
       </provider>
     </entry>
     <entry file="jar://$APPLICATION_HOME_DIR$/lib/guava-14.0.1.jar!/com/google/common/collect/ImmutableSet.class">
@@ -1454,9 +1341,7 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/src/org/jetbrains/postfixCompletion/TemplateProviders/IfStatementTemplateProvider.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="14" column="30" selection-start="453" selection-end="453" vertical-scroll-proportion="0.04" vertical-offset="140" max-vertical-offset="840">
-          <folding />
-        </state>
+        <state line="14" column="30" selection-start="453" selection-end="453" vertical-scroll-proportion="0.04" vertical-offset="140" max-vertical-offset="840" />
       </provider>
     </entry>
     <entry file="jar://$APPLICATION_HOME_DIR$/lib/openapi.jar!/com/intellij/psi/PsiAnnotationMemberValue.class">
@@ -1471,9 +1356,7 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/src/org/jetbrains/postfixCompletion/TemplateProviders/IntroduceVariableTemplateProvider.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="104" column="63" selection-start="4030" selection-end="4030" vertical-scroll-proportion="0.0" vertical-offset="1306" max-vertical-offset="4000">
-          <folding />
-        </state>
+        <state line="104" column="63" selection-start="4030" selection-end="4030" vertical-scroll-proportion="0.0" vertical-offset="1306" max-vertical-offset="4000" />
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/src/org/jetbrains/postfixCompletion/LookupItems/PostfixLookupElement.java">
@@ -1488,16 +1371,12 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/src/org/jetbrains/postfixCompletion/TemplateProviders/NotNullCheckTemplateProvider.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="34" column="5" selection-start="1311" selection-end="1311" vertical-scroll-proportion="0.0" vertical-offset="418" max-vertical-offset="1740">
-          <folding />
-        </state>
+        <state line="34" column="5" selection-start="1311" selection-end="1311" vertical-scroll-proportion="0.0" vertical-offset="418" max-vertical-offset="1740" />
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/src/org/jetbrains/postfixCompletion/TemplateProviders/BooleanTemplateProviderBase.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="36" column="17" selection-start="1302" selection-end="1302" vertical-scroll-proportion="0.0" vertical-offset="326" max-vertical-offset="1960">
-          <folding />
-        </state>
+        <state line="36" column="17" selection-start="1302" selection-end="1302" vertical-scroll-proportion="0.0" vertical-offset="326" max-vertical-offset="1960" />
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/src/org/jetbrains/postfixCompletion/CommonUtils.java">
@@ -1556,56 +1435,22 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/src/org/jetbrains/postfixCompletion/Infrastructure/PostfixItemsCompletionProvider.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="23" column="1" selection-start="982" selection-end="982" vertical-scroll-proportion="0.7210626" vertical-offset="0" max-vertical-offset="527">
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/org/jetbrains/postfixCompletion/PostfixCompletionContributor.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="49" column="6" selection-start="2191" selection-end="2191" vertical-scroll-proportion="0.0" vertical-offset="418" max-vertical-offset="1240">
-          <folding>
-            <element signature="imports" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/org/jetbrains/postfixCompletion/Infrastructure/PostfixNoVariantsCompletionUtil.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="89" column="47" selection-start="4196" selection-end="4196" vertical-scroll-proportion="0.0" vertical-offset="2114" max-vertical-offset="3640">
-          <folding>
-            <element signature="imports" expanded="true" />
-            <element signature="e#4208#4216#0" expanded="true" />
-          </folding>
-        </state>
+        <state line="23" column="1" selection-start="982" selection-end="982" vertical-scroll-proportion="0.7210626" vertical-offset="0" max-vertical-offset="527" />
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/README.md">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="60" column="62" selection-start="2740" selection-end="2740" vertical-scroll-proportion="0.75359344" vertical-offset="833" max-vertical-offset="1340">
-          <folding />
-        </state>
+        <state line="60" column="62" selection-start="2740" selection-end="2740" vertical-scroll-proportion="0.75359344" vertical-offset="833" max-vertical-offset="1340" />
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/testData/completion/testNoVariants01.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="0" column="18" selection-start="18" selection-end="18" vertical-scroll-proportion="0.0" vertical-offset="0" max-vertical-offset="500">
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/testData/completion/testNoVariants02.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="3" column="12" selection-start="94" selection-end="94" vertical-scroll-proportion="0.0" vertical-offset="0" max-vertical-offset="220">
-          <folding />
-        </state>
+        <state line="0" column="18" selection-start="18" selection-end="18" vertical-scroll-proportion="0.0" vertical-offset="0" max-vertical-offset="500" />
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/testData/completion/testNoVariants01-out.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="4" column="0" selection-start="82" selection-end="82" vertical-scroll-proportion="0.0" vertical-offset="20" max-vertical-offset="220">
-          <folding />
-        </state>
+        <state line="4" column="0" selection-start="82" selection-end="82" vertical-scroll-proportion="0.0" vertical-offset="20" max-vertical-offset="220" />
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/testData/completion/testNoVariants02-out.java">
@@ -1622,16 +1467,59 @@
         </state>
       </provider>
     </entry>
+    <entry file="jar://$APPLICATION_HOME_DIR$/lib/openapi.jar!/com/intellij/codeInsight/completion/CompletionService.class">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="26" column="14" selection-start="1022" selection-end="1022" vertical-scroll-proportion="0.0" vertical-offset="353" max-vertical-offset="880" />
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/org/jetbrains/postfixCompletion/PostfixCompletionContributor.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="27" column="0" selection-start="1165" selection-end="1165" vertical-scroll-proportion="0.0" vertical-offset="389" max-vertical-offset="1240">
+          <folding>
+            <element signature="imports" expanded="false" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/org/jetbrains/postfixCompletion/Infrastructure/PostfixNoVariantsCompletionUtil.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="131" column="14" selection-start="5839" selection-end="5839" vertical-scroll-proportion="2.28" vertical-offset="1480" max-vertical-offset="3640">
+          <folding>
+            <element signature="imports" expanded="true" />
+            <element signature="e#4208#4216#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/testData/completion/testNoVariants02.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="3" column="11" selection-start="93" selection-end="93" vertical-scroll-proportion="0.12" vertical-offset="0" max-vertical-offset="500" />
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/testSrc/PostfixTestUtils.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="5" column="13" selection-start="112" selection-end="112" vertical-scroll-proportion="0.0" vertical-offset="0" max-vertical-offset="400">
+        <state line="17" column="3" selection-start="507" selection-end="507" vertical-scroll-proportion="0.20118344" vertical-offset="138" max-vertical-offset="960">
           <folding />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/testSrc/PostfixCompletionTest.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="59" column="47" selection-start="2095" selection-end="2095" vertical-scroll-proportion="0.6198347" vertical-offset="680" max-vertical-offset="2220">
+        <state line="43" column="67" selection-start="1570" selection-end="1570" vertical-scroll-proportion="0.40828404" vertical-offset="513" max-vertical-offset="1920">
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/intellij-postfix.iml">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="9" column="76" selection-start="626" selection-end="626" vertical-scroll-proportion="0.2189781" vertical-offset="0" max-vertical-offset="822">
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/.gitignore">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="9" column="13" selection-start="95" selection-end="95" vertical-scroll-proportion="0.2189781" vertical-offset="0" max-vertical-offset="822">
           <folding />
         </state>
       </provider>
