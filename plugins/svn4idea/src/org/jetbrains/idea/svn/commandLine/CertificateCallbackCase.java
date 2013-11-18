@@ -27,6 +27,7 @@ public class CertificateCallbackCase extends AuthCallbackCase {
 
   private static final String CERTIFICATE_ERROR = "Error validating server certificate for";
   private static final String UNTRUSTED_SERVER_CERTIFICATE = "Server SSL certificate untrusted";
+  private static final String CERTIFICATE_VERIFICATION_FAILED = "certificate verification failed";
 
   private boolean accepted;
 
@@ -38,7 +39,9 @@ public class CertificateCallbackCase extends AuthCallbackCase {
   public boolean canHandle(String error) {
     return error.startsWith(CERTIFICATE_ERROR) ||
            // https one-way protocol untrusted server certificate
-           error.contains(UNTRUSTED_SERVER_CERTIFICATE);
+           error.contains(UNTRUSTED_SERVER_CERTIFICATE) ||
+           // for instance, certificate issued for a different hostname, issuer is not trusted - for both 1.7 and 1.8
+           error.contains(CERTIFICATE_VERIFICATION_FAILED);
   }
 
   @Override
