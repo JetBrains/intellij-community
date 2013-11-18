@@ -123,7 +123,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
                                          @NotNull String text,
                                          short searchContext,
                                          boolean caseSensitive) {
-    return processElementsWithWord(processor, searchScope, text, searchContext, caseSensitive, true);
+    return processElementsWithWord(processor, searchScope, text, searchContext, caseSensitive, shouldProcessInjectedPsi(searchScope));
   }
 
   @Override
@@ -145,7 +145,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
                                                            @NotNull final String text,
                                                            final short searchContext,
                                                            final boolean caseSensitively) {
-    return processElementsWithWordAsync(processor, searchScope, text, searchContext, caseSensitively, true, null);
+    return processElementsWithWordAsync(processor, searchScope, text, searchContext, caseSensitively, shouldProcessInjectedPsi(searchScope), null);
   }
 
   @NotNull
@@ -170,13 +170,13 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     }
     LocalSearchScope scope = (LocalSearchScope)searchScope;
     PsiElement[] scopeElements = scope.getScope();
-    if (scope.isIgnoreInjectedPsi()) {
-      processInjectedPsi = false;
-    }
-
     final StringSearcher searcher = new StringSearcher(text, caseSensitively, true, searchContext == UsageSearchContext.IN_STRINGS);
     Processor<PsiElement> localProcessor = localProcessor(processor, progress, processInjectedPsi, searcher);
     return JobLauncher.getInstance().invokeConcurrentlyUnderProgressAsync(Arrays.asList(scopeElements), progress, false, localProcessor);
+  }
+
+  private boolean shouldProcessInjectedPsi(SearchScope scope) {
+    return scope instanceof LocalSearchScope ? !((LocalSearchScope)scope).isIgnoreInjectedPsi() : true;
   }
 
   @NotNull
@@ -1001,7 +1001,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
   @NotNull
   private AsyncFuture<Boolean> processSingleRequestAsync(@NotNull PsiSearchRequest single, @NotNull Processor<PsiReference> consumer) {
     return processElementsWithWordAsync(adaptProcessor(single, consumer), single.searchScope, single.word, single.searchContext,
-                                        single.caseSensitive, true, single.containerName);
+                                        single.caseSensitive, shouldProcessInjectedPsi(single.searchScope), single.containerName);
   }
 
   @NotNull
