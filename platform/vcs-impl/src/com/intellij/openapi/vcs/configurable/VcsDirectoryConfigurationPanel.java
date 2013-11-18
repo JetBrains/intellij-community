@@ -34,6 +34,7 @@ import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.ui.components.labels.LinkListener;
 import com.intellij.ui.table.TableView;
+import com.intellij.util.UriUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.*;
 import com.intellij.xml.util.XmlStringUtil;
@@ -106,7 +107,7 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
         String directory = mapping.getDirectory();
         VirtualFile baseDir = myProject.getBaseDir();
         if (baseDir != null) {
-          final File directoryFile = new File(StringUtil.trimEnd(StringUtil.trimEnd(directory, "/"), "\\") + "/");
+          final File directoryFile = new File(StringUtil.trimEnd(UriUtil.trimLastSlash(directory), "\\") + "/");
           File ioBase = new File(baseDir.getPath());
           if (directoryFile.isAbsolute() && !FileUtil.isAncestor(ioBase, directoryFile, false)) {
             append(new File(directory).getPath());
