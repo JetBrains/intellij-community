@@ -24,6 +24,8 @@ import org.gradle.tooling.UnsupportedVersionException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.net.ConnectException;
 import java.net.UnknownHostException;
 
@@ -129,6 +131,15 @@ public class BaseProjectImportErrorHandler extends AbstractProjectImportErrorHan
       }
     }
 
-    return createUserFriendlyError(rootCause.getMessage(), location);
+    final String errMessage;
+    if (rootCause.getMessage() == null) {
+      StringWriter writer = new StringWriter();
+      rootCause.printStackTrace(new PrintWriter(writer));
+      errMessage = writer.toString();
+    }
+    else {
+      errMessage = rootCause.getMessage();
+    }
+    return createUserFriendlyError(errMessage, location);
   }
 }

@@ -24,6 +24,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.LightVirtualFile;
+import com.intellij.util.Url;
 import com.intellij.xml.XmlBundle;
 import com.intellij.xml.util.HtmlUtil;
 

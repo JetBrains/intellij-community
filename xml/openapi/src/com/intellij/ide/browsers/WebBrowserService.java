@@ -17,6 +17,7 @@ package com.intellij.ide.browsers;
 
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.psi.PsiElement;
+import com.intellij.util.Url;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Set;

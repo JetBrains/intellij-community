@@ -1,4 +1,4 @@
-package com.intellij.ide.browsers;
+package com.intellij.util;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
