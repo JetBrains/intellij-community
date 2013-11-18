@@ -71,7 +71,7 @@ public class DomStubBuilder implements BinaryFileStubBuilder {
       FileStub fileStub = new FileStub(header);
       XmlTag rootTag = xmlFile.getRootTag();
       if (rootTag != null) {
-        new DomStubBuilderVisitor(DomManagerImpl.getDomManager(project)).visitXmlElement(rootTag, fileStub);
+        new DomStubBuilderVisitor(DomManagerImpl.getDomManager(project)).visitXmlElement(rootTag, fileStub, 0);
       }
       return fileStub;
     }
@@ -83,7 +83,7 @@ public class DomStubBuilder implements BinaryFileStubBuilder {
 
   @Override
   public int getStubVersion() {
-    int version = 9;
+    int version = 10;
     DomFileDescription[] descriptions = Extensions.getExtensions(DomFileDescription.EP_NAME);
     for (DomFileDescription description : descriptions) {
       version += description.getStubVersion();

@@ -52,7 +52,8 @@ class OptimizedFileManager17 extends com.sun.tools.javac.file.JavacFileManager {
   private static final boolean isOS2 = _OS_NAME.startsWith("os/2") || _OS_NAME.startsWith("os2");
   private static final boolean isMac = _OS_NAME.startsWith("mac");
   private static final boolean isFileSystemCaseSensitive = !isWindows && !isOS2 && !isMac;
-  
+  private static final boolean ourUseContentCache = Boolean.valueOf(System.getProperty("javac.use.content.cache", "false"));
+
   public OptimizedFileManager17() throws Throwable {
     super(new Context(), true, null);
     final Field archivesField = com.sun.tools.javac.file.JavacFileManager.class.getDeclaredField("archives");
@@ -386,22 +387,24 @@ class OptimizedFileManager17 extends com.sun.tools.javac.file.JavacFileManager {
     }
 
     public CharBuffer getCharContent(boolean ignoreEncodingErrors) throws IOException {
-      CharBuffer cb = fileManager.getCachedContent(this);
+      CharBuffer cb = ourUseContentCache? fileManager.getCachedContent(this) : null;
       if (cb == null) {
         InputStream in = new FileInputStream(file);
         try {
-          ByteBuffer bb = fileManager.makeByteBuffer(in);
-          JavaFileObject prev = fileManager.log.useSource(this);
+          final ByteBuffer bb = fileManager.makeByteBuffer(in);
+          final JavaFileObject prev = fileManager.log.useSource(this);
           try {
             cb = fileManager.decode(bb, ignoreEncodingErrors);
-          } finally {
+          }
+          finally {
             fileManager.log.useSource(prev);
           }
           fileManager.recycleByteBuffer(bb);
-          if (!ignoreEncodingErrors) {
+          if (ourUseContentCache && !ignoreEncodingErrors) {
             fileManager.cache(this, cb);
           }
-        } finally {
+        }
+        finally {
           in.close();
         }
       }
@@ -409,5 +412,14 @@ class OptimizedFileManager17 extends com.sun.tools.javac.file.JavacFileManager {
     }
   }
 
-
+  public void close() {
+    try {
+      super.close();
+    }
+    finally {
+      // archives are cleared in super.close()
+      myDirectoryCache.clear();
+      myIsFile.clear();
+    }
+  }
 }

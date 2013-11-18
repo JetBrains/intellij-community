@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 package com.intellij.lang.xml;
 
-import com.intellij.find.impl.HelpID;
 import com.intellij.lang.LangBundle;
 import com.intellij.lang.cacheBuilder.WordsScanner;
 import com.intellij.lang.findUsages.DescriptiveNameUtil;
@@ -73,7 +72,7 @@ public class XmlFindUsagesProvider implements FindUsagesProvider {
   }
 
   public String getHelpId(@NotNull PsiElement element) {
-    return HelpID.FIND_OTHER_USAGES;
+    return com.intellij.lang.HelpID.FIND_OTHER_USAGES;
   }
 
   @NotNull

@@ -198,13 +198,17 @@ public class OpenTaskDialog extends DialogWrapper {
     }
     if (myCreateBranch.isSelected()) {
       VcsTaskHandler.TaskInfo item = (VcsTaskHandler.TaskInfo)myBranchFrom.getSelectedItem();
+      Runnable createBranch = new Runnable() {
+        @Override
+        public void run() {
+          taskManager.createBranch(localTask, activeTask, myBranchName.getText());
+        }
+      };
       if (item != null && !item.equals(myVcsTaskHandler.getActiveTask())) {
-        myVcsTaskHandler.switchToTask(item, new Runnable() {
-          @Override
-          public void run() {
-            taskManager.createBranch(localTask, activeTask, myBranchName.getText());
-          }
-        });
+        myVcsTaskHandler.switchToTask(item, createBranch);
+      }
+      else {
+        createBranch.run();
       }
     }
     if (myTask.getType() == TaskType.EXCEPTION && AnalyzeTaskStacktraceAction.hasTexts(myTask)) {

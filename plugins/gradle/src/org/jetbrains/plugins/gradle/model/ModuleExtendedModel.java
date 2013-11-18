@@ -15,6 +15,8 @@
  */
 package org.jetbrains.plugins.gradle.model;
 
+import org.gradle.tooling.model.DomainObjectSet;
+
 import java.io.File;
 import java.io.Serializable;
 import java.util.List;
@@ -51,4 +53,11 @@ public interface ModuleExtendedModel extends Serializable {
    * @return
    */
   List<File> getArtifacts();
+
+  /**
+   * All IDEA content roots.
+   *
+   * @return content roots
+   */
+  DomainObjectSet<? extends ExtIdeaContentRoot> getContentRoots();
 }

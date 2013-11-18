@@ -302,7 +302,7 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
           //there could be no requests after hotswap
         }
         else {
-          LOG.error(e);
+          LOG.info(e);
         }
       }
     }

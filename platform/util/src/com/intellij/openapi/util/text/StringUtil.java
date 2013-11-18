@@ -1781,6 +1781,12 @@ public class StringUtil extends StringUtilRt {
   }
 
   @NotNull
+  public static String htmlEmphasize(String text) {
+    return "<b><code>" + escapeXml(text) + "</code></b>";
+  }
+
+
+  @NotNull
   public static String escapeToRegexp(@NotNull String text) {
     final StringBuilder result = new StringBuilder(text.length());
     return escapeToRegexp(text, result).toString();

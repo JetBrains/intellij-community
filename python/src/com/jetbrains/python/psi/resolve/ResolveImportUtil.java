@@ -15,6 +15,7 @@
  */
 package com.jetbrains.python.psi.resolve;
 
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -365,6 +366,9 @@ public class ResolveImportUtil {
           VirtualFile vFile = ((PyFile)target).getVirtualFile();
           if (vFile != null && vFile.getLength() > 0) {
             rate += 100;
+          }
+          for (PyResolveResultRater rater : Extensions.getExtensions(PyResolveResultRater.EP_NAME)) {
+            rate += rater.getRate(target);
           }
         }
         ret.poke(target, rate);

@@ -355,6 +355,8 @@
 
     <group id="NavBarToolBar">
       <reference ref="ToolbarRunGroup"/>
+      <separator/>
+      <reference ref="MainToolBarSettings"/>
     </group>
 
     <group id="Bookmarks">

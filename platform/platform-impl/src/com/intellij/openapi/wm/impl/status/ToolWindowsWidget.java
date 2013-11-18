@@ -200,7 +200,7 @@ class ToolWindowsWidget extends JLabel implements CustomStatusBarWidget, StatusB
             PropertiesComponent.getInstance().setValue(key, String.valueOf(true));
           Disposer.dispose(alarm);
         }
-      }, 120000);
+      }, 30000);
     }
   }
 

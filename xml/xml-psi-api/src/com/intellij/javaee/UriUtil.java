@@ -19,6 +19,7 @@
  */
 package com.intellij.javaee;
 
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFileSystemItem;
@@ -39,5 +40,11 @@ public class UriUtil {
   public static VirtualFile findRelative(String uri, @NotNull PsiFileSystemItem base) {
     String location = ExternalResourceManager.getInstance().getResourceLocation(uri, base.getProject());
     return VfsUtilCore.findRelativeFile(location, base.getVirtualFile());
+  }
+
+  // cannot use UriUtil.SLASH_MATCHER.trimFrom - we don't depend on guava
+  @NotNull
+  public static String trimSlashFrom(@NotNull String path) {
+    return StringUtil.trimStart(StringUtil.trimEnd(path, "/"), "/");
   }
 }

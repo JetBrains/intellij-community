@@ -152,7 +152,7 @@ public class CertificatesManager {
         X509Certificate certificate = certificates[0];
         // looks like self-signed certificate
         if (certificates.length == 1 && certificateIsSelfSigned(certificate)) {
-          // check-the-act sequence
+          // check-then-act sequence
           synchronized (myCustomManager) {
             try {
               myCustomManager.checkServerTrusted(certificates, s);

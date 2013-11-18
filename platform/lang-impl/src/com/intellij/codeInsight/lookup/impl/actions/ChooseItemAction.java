@@ -23,6 +23,7 @@ import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.codeInsight.template.CustomLiveTemplate;
+import com.intellij.codeInsight.template.CustomLiveTemplateBase;
 import com.intellij.codeInsight.template.CustomTemplateCallback;
 import com.intellij.codeInsight.template.impl.*;
 import com.intellij.featureStatistics.FeatureUsageTracker;
@@ -120,9 +121,12 @@ public abstract class ChooseItemAction extends EditorAction {
       
       final CustomTemplateCallback callback = new CustomTemplateCallback(editor, file, false);
       for (CustomLiveTemplate customLiveTemplate : CustomLiveTemplate.EP_NAME.getExtensions()) {
-        final int offset = editor.getCaretModel().getOffset();
-        if (customLiveTemplate.getShortcut() == shortcutChar && customLiveTemplate.hasCompletionItem(file, offset)) {
-          return customLiveTemplate.computeTemplateKey(callback) != null;
+        if (customLiveTemplate instanceof CustomLiveTemplateBase) {
+          final int offset = editor.getCaretModel().getOffset();
+          if (customLiveTemplate.getShortcut() == shortcutChar 
+              && ((CustomLiveTemplateBase)customLiveTemplate).hasCompletionItem(file, offset)) {
+            return customLiveTemplate.computeTemplateKey(callback) != null;
+          }
         }
       }
 
