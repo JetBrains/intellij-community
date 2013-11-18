@@ -16,12 +16,13 @@
 
 package com.intellij.util.download.impl;
 
+import com.google.common.base.Throwables;
 import com.google.common.util.concurrent.AtomicDouble;
-import com.intellij.concurrency.JobLauncher;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
@@ -37,7 +38,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
-import com.intellij.util.Processor;
+import com.intellij.util.concurrency.BoundedTaskExecutor;
 import com.intellij.util.containers.hash.LinkedHashMap;
 import com.intellij.util.download.DownloadableFileDescription;
 import com.intellij.util.download.FileDownloader;
@@ -47,6 +48,7 @@ import com.intellij.util.net.NetUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.ide.PooledThreadExecutor;
 
 import javax.swing.*;
 import java.io.*;
@@ -54,12 +56,16 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * @author nik
  */
 public class FileDownloaderImpl implements FileDownloader {
+  private static final Logger LOG = Logger.getInstance(FileDownloaderImpl.class);
   private static final int CONNECTION_TIMEOUT = 60*1000;
   private static final int READ_TIMEOUT = 60*1000;
   @NonNls private static final String LIB_SCHEMA = "lib://";
@@ -156,58 +162,79 @@ public class FileDownloaderImpl implements FileDownloader {
   public List<Pair<File, DownloadableFileDescription>> download(@NotNull final File targetDir) throws IOException {
     final List<Pair<File, DownloadableFileDescription>> downloadedFiles = new ArrayList<Pair<File, DownloadableFileDescription>>();
     final List<Pair<File, DownloadableFileDescription>> existingFiles = new ArrayList<Pair<File, DownloadableFileDescription>>();
-    final ProgressIndicator parentIndicator = getProgressIndicator();
+    ProgressIndicator parentIndicator = ProgressManager.getInstance().getProgressIndicator();
+    if (parentIndicator == null) {
+      parentIndicator = new EmptyProgressIndicator();
+    }
+
     try {
-      final AtomicReference<IOException> ioException = new AtomicReference<IOException>();
       final ConcurrentTasksProgressManager progressManager = new ConcurrentTasksProgressManager(parentIndicator, myFileDescriptions.size());
       parentIndicator.setText(IdeBundle.message("progress.downloading.0.files.text", myFileDescriptions.size()));
-      boolean finished = JobLauncher.getInstance().invokeConcurrentlyUnderProgress(myFileDescriptions, parentIndicator, false, false, new Processor<DownloadableFileDescription>() {
-        @Override
-        public boolean process(DownloadableFileDescription description) {
-          SubTaskProgressIndicator indicator = progressManager.createSubTaskIndicator();
-          indicator.checkCanceled();
+      int maxParallelDownloads = Runtime.getRuntime().availableProcessors();
+      LOG.debug("Downloading " + myFileDescriptions.size() + " files using " + maxParallelDownloads + " threads");
+      long start = System.currentTimeMillis();
+      BoundedTaskExecutor executor = new BoundedTaskExecutor(PooledThreadExecutor.INSTANCE, maxParallelDownloads);
+      List<Future<Void>> results = new ArrayList<Future<Void>>();
+      final AtomicLong totalSize = new AtomicLong();
+      for (final DownloadableFileDescription description : myFileDescriptions) {
+        results.add(executor.submit(new Callable<Void>() {
+          @Override
+          public Void call() throws Exception {
+            SubTaskProgressIndicator indicator = progressManager.createSubTaskIndicator();
+            indicator.checkCanceled();
 
-          final File existing = new File(targetDir, description.getDefaultFileName());
-          final String url = description.getDownloadUrl();
-          if (url.startsWith(LIB_SCHEMA)) {
-            final String path = FileUtil.toSystemDependentName(StringUtil.trimStart(url, LIB_SCHEMA));
-            final File file = PathManager.findFileInLibDirectory(path);
-            existingFiles.add(Pair.create(file, description));
-          }
-          else if (url.startsWith(LocalFileSystem.PROTOCOL_PREFIX)) {
-            String path = FileUtil.toSystemDependentName(StringUtil.trimStart(url, LocalFileSystem.PROTOCOL_PREFIX));
-            File file = new File(path);
-            if (file.exists()) {
+            final File existing = new File(targetDir, description.getDefaultFileName());
+            final String url = description.getDownloadUrl();
+            if (url.startsWith(LIB_SCHEMA)) {
+              final String path = FileUtil.toSystemDependentName(StringUtil.trimStart(url, LIB_SCHEMA));
+              final File file = PathManager.findFileInLibDirectory(path);
               existingFiles.add(Pair.create(file, description));
             }
-          }
-          else {
-            File downloaded;
-            try {
-              downloaded = downloadFile(description, existing, indicator);
-            }
-            catch (IOException e) {
-              ioException.compareAndSet(null, new IOException(IdeBundle.message("error.file.download.failed", description.getDownloadUrl(),
-                                                                                e.getMessage()), e));
-              return false;
-            }
-            if (FileUtil.filesEqual(downloaded, existing)) {
-              existingFiles.add(Pair.create(existing, description));
+            else if (url.startsWith(LocalFileSystem.PROTOCOL_PREFIX)) {
+              String path = FileUtil.toSystemDependentName(StringUtil.trimStart(url, LocalFileSystem.PROTOCOL_PREFIX));
+              File file = new File(path);
+              if (file.exists()) {
+                existingFiles.add(Pair.create(file, description));
+              }
             }
             else {
-              downloadedFiles.add(Pair.create(downloaded, description));
+              File downloaded;
+              try {
+                downloaded = downloadFile(description, existing, indicator);
+              }
+              catch (IOException e) {
+                throw new IOException(IdeBundle.message("error.file.download.failed", description.getDownloadUrl(), e.getMessage()), e);
+              }
+              if (FileUtil.filesEqual(downloaded, existing)) {
+                existingFiles.add(Pair.create(existing, description));
+              }
+              else {
+                totalSize.addAndGet(downloaded.length());
+                downloadedFiles.add(Pair.create(downloaded, description));
+              }
             }
+            indicator.finished();
+            return null;
           }
-          indicator.finished();
-          return true;
-        }
-      });
-      if (!finished) {
-        if (ioException.get() != null) {
-          throw ioException.get();
-        }
-        throw new ProcessCanceledException();
+        }));
       }
+
+      for (Future<Void> result : results) {
+        try {
+          result.get();
+        }
+        catch (InterruptedException e) {
+          throw new ProcessCanceledException();
+        }
+        catch (ExecutionException e) {
+          Throwables.propagateIfInstanceOf(e.getCause(), IOException.class);
+          Throwables.propagateIfInstanceOf(e.getCause(), ProcessCanceledException.class);
+          LOG.error(e);
+        }
+      }
+      long duration = System.currentTimeMillis() - start;
+      LOG.debug("Downloaded " + StringUtil.formatFileSize(totalSize.get()) + " in " + StringUtil.formatDuration(duration) + "(" + duration + "ms)");
+
       List<Pair<File, DownloadableFileDescription>> localFiles = new ArrayList<Pair<File, DownloadableFileDescription>>();
       localFiles.addAll(moveToDir(downloadedFiles, targetDir));
       localFiles.addAll(existingFiles);
@@ -221,12 +248,6 @@ public class FileDownloaderImpl implements FileDownloader {
       deleteFiles(downloadedFiles);
       throw e;
     }
-  }
-
-  @NotNull
-  private static ProgressIndicator getProgressIndicator() {
-    ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
-    return indicator == null ? new EmptyProgressIndicator() : indicator;
   }
 
   @Nullable
