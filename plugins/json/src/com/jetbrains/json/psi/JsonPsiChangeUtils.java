@@ -8,8 +8,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.TokenType;
+import com.jetbrains.json.JsonElementTypes;
 import com.jetbrains.json.JsonFile;
-import com.jetbrains.json.JsonParserTypes;
 import org.jetbrains.annotations.NotNull;
 
 public class JsonPsiChangeUtils {
@@ -23,7 +23,7 @@ public class JsonPsiChangeUtils {
       toCandidate = toCandidate.getTreeNext();
     }
 
-    if (toCandidate != null && toCandidate.getElementType() == JsonParserTypes.COMMA) {
+    if (toCandidate != null && toCandidate.getElementType() == JsonElementTypes.COMMA) {
       toCandidate = toCandidate.getTreeNext();
       to = toCandidate;
       seenComma = true;
@@ -40,7 +40,7 @@ public class JsonPsiChangeUtils {
         from = treePrev;
         treePrev = treePrev.getTreePrev();
       }
-      if (treePrev != null && treePrev.getElementType() == JsonParserTypes.COMMA) {
+      if (treePrev != null && treePrev.getElementType() == JsonElementTypes.COMMA) {
         from = treePrev;
       }
     }

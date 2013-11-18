@@ -3,7 +3,7 @@ package com.jetbrains.json.psi;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.jetbrains.json.JsonParserTypes;
+import com.jetbrains.json.JsonElementTypes;
 import com.jetbrains.json.psi.impl.JsonPropertyImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -12,7 +12,7 @@ import java.util.Collection;
 
 public class JsonPsiImplUtils {
   public static boolean isQuotedString(@NotNull JsonLiteral literal) {
-    return literal.getNode().findChildByType(JsonParserTypes.STRING) != null;
+    return literal.getNode().findChildByType(JsonElementTypes.STRING) != null;
   }
 
   @NotNull

@@ -1,12 +1,12 @@
 // This is a generated file. Not intended for manual editing.
 package com.jetbrains.json;
 
-import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.PsiElement;
 import com.intellij.lang.ASTNode;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.tree.IElementType;
 import com.jetbrains.json.psi.impl.*;
 
-public interface JsonParserTypes {
+public interface JsonElementTypes {
 
   IElementType ARRAY = new JsonElementType("ARRAY");
   IElementType BOOLEAN_LITERAL = new JsonElementType("BOOLEAN_LITERAL");

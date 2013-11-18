@@ -16,9 +16,9 @@ import org.jetbrains.annotations.NotNull;
 
 public class JsonParserDefinition implements ParserDefinition {
   public static final TokenSet WHITE_SPACES = TokenSet.create(TokenType.WHITE_SPACE);
-  public static final TokenSet STRING_LITERALS = TokenSet.create(JsonParserTypes.STRING);
+  public static final TokenSet STRING_LITERALS = TokenSet.create(JsonElementTypes.STRING);
   public static final IFileElementType FILE = new IFileElementType(JsonLanguage.INSTANCE);
-  public static final TokenSet CONTAINERS = TokenSet.create(JsonParserTypes.ARRAY, JsonParserTypes.OBJECT);
+  public static final TokenSet CONTAINERS = TokenSet.create(JsonElementTypes.ARRAY, JsonElementTypes.OBJECT);
 
 
   @NotNull
@@ -58,7 +58,7 @@ public class JsonParserDefinition implements ParserDefinition {
   @NotNull
   @Override
   public PsiElement createElement(ASTNode astNode) {
-    return JsonParserTypes.Factory.createElement(astNode);
+    return JsonElementTypes.Factory.createElement(astNode);
   }
 
   @Override

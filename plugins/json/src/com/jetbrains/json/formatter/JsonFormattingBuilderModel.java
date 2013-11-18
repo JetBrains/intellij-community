@@ -9,12 +9,12 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.impl.DebugUtil;
+import com.jetbrains.json.JsonElementTypes;
 import com.jetbrains.json.JsonLanguage;
-import com.jetbrains.json.JsonParserTypes;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import static com.jetbrains.json.JsonParserTypes.*;
+import static com.jetbrains.json.JsonElementTypes.*;
 
 /**
  * @author Mikhail Golubev
@@ -49,8 +49,8 @@ public class JsonFormattingBuilderModel implements FormattingModelBuilder {
     JsonCodeStyleSettings jsonSettings = settings.getCustomSettings(JsonCodeStyleSettings.class);
     CommonCodeStyleSettings commonSettings = settings.getCommonSettings(JsonLanguage.INSTANCE);
     return new SpacingBuilder(settings, JsonLanguage.INSTANCE)
-      .afterInside(COLON, JsonParserTypes.PROPERTY).spaceIf(jsonSettings.SPACE_AFTER_COLON)
-      .beforeInside(COLON, JsonParserTypes.PROPERTY).spaceIf(jsonSettings.SPACE_BEFORE_COLON)
+      .afterInside(COLON, JsonElementTypes.PROPERTY).spaceIf(jsonSettings.SPACE_AFTER_COLON)
+      .beforeInside(COLON, JsonElementTypes.PROPERTY).spaceIf(jsonSettings.SPACE_BEFORE_COLON)
       .withinPair(L_BRAKET, R_BRAKET).spaceIf(commonSettings.SPACE_WITHIN_BRACKETS)
       .withinPair(L_CURLY, R_CURLY).spaceIf(jsonSettings.SPACE_WITHIN_BRACES)
       .after(COMMA).spaceIf(commonSettings.SPACE_AFTER_COMMA)

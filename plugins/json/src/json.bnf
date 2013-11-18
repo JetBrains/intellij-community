@@ -4,7 +4,7 @@
   psiPackage='com.jetbrains.json.psi'
   psiImplPackage='com.jetbrains.json.psi.impl'
 
-  elementTypeHolderClass='com.jetbrains.json.JsonParserTypes'
+  elementTypeHolderClass='com.jetbrains.json.JsonElementTypes'
   elementTypeClass='com.jetbrains.json.JsonElementType'
   psiClassPrefix="Json"
 
@@ -36,7 +36,6 @@ json ::= object | array
 
 object ::= L_CURLY (property (COMMA property)*)? R_CURLY {
   pin=1
-//  recoverUntil=closing_brace
 //  recoverUntil=comma
   methods=[
     findProperty
@@ -56,7 +55,7 @@ property ::= property_name COLON property_value {
 
 array ::= L_BRAKET (property_value (COMMA property_value)*)? R_BRAKET {
   pin=1
-//  recoverUntil=comma
+//  recoverUntil=closing_bracket
 }
 //private closing_bracket ::= !(']')
 

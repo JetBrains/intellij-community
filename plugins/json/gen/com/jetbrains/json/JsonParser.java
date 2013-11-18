@@ -9,7 +9,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 
-import static com.jetbrains.json.JsonParserTypes.*;
+import static com.jetbrains.json.JsonElementTypes.*;
 import static com.jetbrains.json.JsonParserUtil.*;
 
 @SuppressWarnings({"SimplifiableIfStatement", "UnusedAssignment"})

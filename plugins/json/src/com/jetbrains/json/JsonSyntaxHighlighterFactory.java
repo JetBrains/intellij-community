@@ -16,7 +16,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.HashMap;
 import java.util.Map;
 
-import static com.jetbrains.json.JsonParserTypes.*;
+import static com.jetbrains.json.JsonElementTypes.*;
 
 public class JsonSyntaxHighlighterFactory extends SyntaxHighlighterFactory {
   @NotNull
