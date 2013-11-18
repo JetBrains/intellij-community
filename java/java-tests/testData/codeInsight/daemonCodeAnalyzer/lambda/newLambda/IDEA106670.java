@@ -12,7 +12,7 @@ class Test {
     zip(range1, range2, (f, s) -> asList(f, s));
     zip(range1, range2, Test::asList);
     
-    BiFunction<? super String, ? super String, ?> asList = Arrays::asList;
+    BiFunction<? super String, ? super String, ?> asList = Test::asList;
     zip(range1, range2, asList);
   }
 
@@ -27,3 +27,16 @@ class Test {
     return null;
   }
 }
+
+class Test1111 {
+  interface I<R> {
+    R apply();
+  }
+
+  public void test(I<?> i) {
+      bar<error descr="'bar(Test1111.I<? super java.lang.Object>)' in 'Test1111' cannot be applied to '(Test1111.I<capture<?>>)'">(i)</error>;
+  }
+
+  public static <A> void bar(I<? super A> i) {}
+}
+
