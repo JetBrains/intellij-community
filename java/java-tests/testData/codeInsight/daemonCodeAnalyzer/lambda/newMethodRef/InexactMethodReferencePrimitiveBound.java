@@ -4,7 +4,7 @@ class Test22 {
     }
 
     static void test() {
-        Iterable<Integer> map = <error>map(Test22 ::length)</error>;
+        Iterable<Integer> map = map(Test22 ::length);
     }
 
     public static <T> int length(String s) {
