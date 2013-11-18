@@ -98,9 +98,21 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
   public List<ReferenceType> nestedTypes(ReferenceType refType) {
     List<ReferenceType> nestedTypes = myNestedClassesCache.get(refType);
     if (nestedTypes == null) {
-      final List<ReferenceType> list = refType.nestedTypes();
-      final int size = list.size();
-      if (size > 0) {
+      List<ReferenceType> list = Collections.emptyList();
+      try {
+        list = refType.nestedTypes();
+      }
+      catch (Throwable e) {
+        // sometimes some strange errors are thrown from JDI. Do not crash debugger because of this.
+        // Example:
+        //java.lang.StringIndexOutOfBoundsException: String index out of range: 487700285
+        //	at java.lang.String.checkBounds(String.java:375)
+        //	at java.lang.String.<init>(String.java:415)
+        //	at com.sun.tools.jdi.PacketStream.readString(PacketStream.java:392)
+        //	at com.sun.tools.jdi.JDWP$VirtualMachine$AllClassesWithGeneric$ClassInfo.<init>(JDWP.java:1644)
+        LOG.info(e);
+      }
+      if (!list.isEmpty()) {
         final Set<ReferenceType> candidates = new HashSet<ReferenceType>();
         final ClassLoaderReference outerLoader = refType.classLoader();
         for (ReferenceType nested : list) {
