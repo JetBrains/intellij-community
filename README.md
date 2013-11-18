@@ -58,5 +58,5 @@ Future work:
 
 #### Feedback
 
-Feel free to post any issues or feature requests here on github or
-* contact me directly: *alexander.shvedov[at]jetbrains.com*
+Feel free to post any issues or feature requests here on github or contact me directly:
+* *alexander.shvedov[at]jetbrains.com*

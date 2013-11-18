@@ -15,6 +15,8 @@ import org.jetbrains.postfixCompletion.LookupItems.*;
 
 import java.util.*;
 
+// todo: disable over types in no-variants mode
+
 @TemplateProvider(
   templateName = "arg",
   description = "Surrounds expression with invocation",

@@ -5,7 +5,6 @@ import com.intellij.openapi.editor.*;
 import com.intellij.testFramework.fixtures.*;
 import com.intellij.util.*;
 import org.jetbrains.annotations.*;
-import org.jetbrains.postfixCompletion.LookupItems.*;
 import org.jetbrains.postfixCompletion.*;
 
 public class PostfixCompletionTest extends LightCodeInsightFixtureTestCase {
@@ -56,10 +55,8 @@ public class PostfixCompletionTest extends LightCodeInsightFixtureTestCase {
     if (elements != null && elements.length > 0) {
       boolean first = true;
       for (LookupElement item : elements) {
-        if (item instanceof PostfixLookupElement) {
-          if (first) first = false; else builder.append(", ");
-          builder.append(item.getLookupString());
-        }
+        if (first) first = false; else builder.append(", ");
+        builder.append(item.getLookupString());
       }
     } else builder.append("<no items>");
 
@@ -110,5 +107,8 @@ public class PostfixCompletionTest extends LightCodeInsightFixtureTestCase {
   public void testWhile01() { test("while\n"); }
 
   public void testCast01() { testForce("cast\n"); }
+
+  public void testNoVariants01() { test(""); }
+  public void testNoVariants02() { test("nn\n"); }
 }
 
