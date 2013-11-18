@@ -71,6 +71,9 @@
     <component>
       <implementation-class>org.jetbrains.postfixCompletion.TemplateProviders.CastExpressionTemplateProvider</implementation-class>
     </component>
+    <component>
+      <implementation-class>org.jetbrains.postfixCompletion.TemplateProviders.NewExpressionTemplateProvider</implementation-class>
+    </component>
   </application-components>
 
   <module-components>

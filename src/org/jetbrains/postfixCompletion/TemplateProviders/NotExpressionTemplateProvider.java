@@ -11,6 +11,8 @@ import org.jetbrains.postfixCompletion.LookupItems.*;
 
 import java.util.*;
 
+// todo: fix if (parametersCount == 0.not) {
+
 @TemplateProvider(
   templateName = "not",
   description = "Negates boolean expression",

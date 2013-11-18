@@ -12,10 +12,13 @@ import com.intellij.refactoring.introduce.inplace.*;
 import com.intellij.refactoring.introduceVariable.*;
 import com.intellij.refactoring.ui.*;
 import org.jetbrains.annotations.*;
+import org.jetbrains.postfixCompletion.*;
 import org.jetbrains.postfixCompletion.Infrastructure.*;
 import org.jetbrains.postfixCompletion.LookupItems.*;
 
 import java.util.*;
+
+import static org.jetbrains.postfixCompletion.CommonUtils.*;
 
 // todo: support for int[].var
 
@@ -44,8 +47,10 @@ public class IntroduceVariableTemplateProvider extends TemplateProviderBase {
       if (referenced != null) {
         if (referenced instanceof PsiClass) {
           invokedOnType = (PsiClass) referenced;
-          // enumerations can't be instantiated
-          if (invokedOnType.isEnum()) break;
+
+          // if enum/class without constructors accessible in current context
+          CtorAccessibility accessibility = CommonUtils.isTypeCanBeInstantiatedWithNew(invokedOnType, expression);
+          if (accessibility == CtorAccessibility.NotAccessible) break;
         } else {
           // filter out packages
           if (referenced instanceof PsiPackage) continue;
@@ -99,8 +104,7 @@ public class IntroduceVariableTemplateProvider extends TemplateProviderBase {
       @NotNull PrefixExpressionContext context, @Nullable PsiClass invokedOnType) {
       super("var", context);
       myInvokedOnType = (invokedOnType != null);
-      myIsAbstractType = myInvokedOnType &&
-        (invokedOnType.isInterface() || invokedOnType.hasModifierProperty(PsiModifier.ABSTRACT));
+      myIsAbstractType = myInvokedOnType && CommonUtils.isTypeRequiresRefinement(invokedOnType);
     }
 
     @NotNull @Override protected PsiExpressionStatement createNewStatement(
