@@ -36,6 +36,7 @@ import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.ui.components.labels.LinkListener;
 import com.intellij.util.Consumer;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.io.EqualityPolicy;
 import com.intellij.util.messages.MessageBusConnection;
@@ -45,6 +46,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.*;
 import org.jetbrains.idea.svn.actions.CleanupWorker;
 import org.jetbrains.idea.svn.actions.SelectBranchPopup;
+import org.jetbrains.idea.svn.api.ClientFactory;
 import org.jetbrains.idea.svn.branchConfig.SvnBranchConfigurationNew;
 import org.jetbrains.idea.svn.checkout.SvnCheckoutProvider;
 import org.jetbrains.idea.svn.integrate.QuickMergeInteractionImpl;
@@ -323,10 +325,13 @@ public class CopiesPanel {
 
   @NotNull
   private List<WorkingCopyFormat> getSupportedFormats() {
-    List<WorkingCopyFormat> result = Collections.emptyList();
+    List<WorkingCopyFormat> result = ContainerUtil.newArrayList();
+    ClientFactory factory = myVcs.getFactory();
+    ClientFactory otherFactory = myVcs.getOtherFactory(factory);
 
     try {
-      result = myVcs.getFactory().createUpgradeClient().getSupportedFormats();
+      result.addAll(factory.createUpgradeClient().getSupportedFormats());
+      result.addAll(otherFactory.createUpgradeClient().getSupportedFormats());
     }
     catch (VcsException e) {
       LOG.info(e);
