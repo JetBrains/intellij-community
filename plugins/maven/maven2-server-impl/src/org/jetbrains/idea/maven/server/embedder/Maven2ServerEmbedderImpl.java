@@ -198,7 +198,7 @@ public class Maven2ServerEmbedderImpl extends MavenRemoteObject implements Maven
     return result;
   }
 
-  @NotNull
+  @Nullable
   public String evaluateEffectivePom(@NotNull File file, @NotNull List<String> activeProfiles) {
     throw new UnsupportedOperationException();
   }
