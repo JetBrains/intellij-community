@@ -15,42 +15,48 @@
  */
 package org.jetbrains.plugins.gradle.model.impl;
 
+import org.gradle.tooling.model.DomainObjectSet;
+import org.gradle.tooling.model.internal.ImmutableDomainObjectSet;
+import org.jetbrains.plugins.gradle.model.ExtIdeaContentRoot;
 import org.jetbrains.plugins.gradle.model.ModuleExtendedModel;
 
 import java.io.File;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 /**
  * @author Vladislav.Soroka
  * @since 11/8/13
  */
 public class ModuleExtendedModelImpl implements ModuleExtendedModel {
-  private final String name;
-  private final String group;
-  private final String version;
+  private final String myName;
+  private final String myGroup;
+  private final String myVersion;
   private List<File> myArtifacts;
+  private Set<ExtIdeaContentRoot> myContentRoots;
 
   public ModuleExtendedModelImpl(String name, String group, String version) {
-    this.name = name;
-    this.group = group;
-    this.version = version;
-    this.myArtifacts = Collections.emptyList();
+    myName = name;
+    myGroup = group;
+    myVersion = version;
+    myArtifacts = Collections.emptyList();
+    myContentRoots = Collections.emptySet();
   }
 
   @Override
   public String getName() {
-    return name;
+    return myName;
   }
 
   @Override
   public String getGroup() {
-    return group;
+    return myGroup;
   }
 
   @Override
   public String getVersion() {
-    return version;
+    return myVersion;
   }
 
   @Override
@@ -60,5 +66,14 @@ public class ModuleExtendedModelImpl implements ModuleExtendedModel {
 
   public void setArtifacts(List<File> artifacts) {
     this.myArtifacts = artifacts == null ? Collections.<File>emptyList() : artifacts;
+  }
+
+  @Override
+  public DomainObjectSet<? extends ExtIdeaContentRoot> getContentRoots() {
+    return ImmutableDomainObjectSet.of(myContentRoots);
+  }
+
+  public void setContentRoots(Set<ExtIdeaContentRoot> contentRoots) {
+    myContentRoots = contentRoots == null ? Collections.<ExtIdeaContentRoot>emptySet() : contentRoots;
   }
 }

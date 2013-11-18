@@ -16,48 +16,16 @@
 package org.jetbrains.plugins.gradle.model;
 
 import org.gradle.tooling.model.DomainObjectSet;
+import org.gradle.tooling.model.idea.IdeaContentRoot;
+import org.gradle.tooling.model.idea.IdeaSourceDirectory;
 
-import java.io.File;
 import java.io.Serializable;
-import java.util.List;
 
 /**
  * @author Vladislav.Soroka
- * @since 11/5/13
+ * @since 11/15/13
  */
-public interface ModuleExtendedModel extends Serializable {
-  /**
-   * The group of the module.
-   *
-   * @return module group
-   */
-  String getGroup();
+public interface ExtIdeaContentRoot extends IdeaContentRoot, Serializable {
 
-  /**
-   * The name of the module.
-   *
-   * @return module name
-   */
-  String getName();
-
-  /**
-   * The version of the module
-   *
-   * @return module version
-   */
-  String getVersion();
-
-  /**
-   * The paths where the artifacts is constructed
-   *
-   * @return
-   */
-  List<File> getArtifacts();
-
-  /**
-   * All IDEA content roots.
-   *
-   * @return content roots
-   */
-  DomainObjectSet<? extends ExtIdeaContentRoot> getContentRoots();
+  DomainObjectSet<? extends IdeaSourceDirectory> getResourceDirectories();
 }
