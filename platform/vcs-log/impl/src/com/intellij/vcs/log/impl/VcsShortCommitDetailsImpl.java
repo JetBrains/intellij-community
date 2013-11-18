@@ -46,8 +46,8 @@ public class VcsShortCommitDetailsImpl implements VcsShortCommitDetails {
   }
 
   @Override
-  public long getAuthorTime() {
-    return myTimeCommitParents.getAuthorTime();
+  public long getTime() {
+    return myTimeCommitParents.getTime();
   }
 
   @Override

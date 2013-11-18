@@ -31,6 +31,7 @@ import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.icons.AllIcons;
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -446,7 +447,7 @@ public class LineBreakpoint extends BreakpointWithHighlighter {
         @Override
         public OwnerMethod compute() {
           final PsiMethod method = DebuggerUtilsEx.findPsiMethod(file, offset);
-          return method != null? new OwnerMethod(method, file instanceof PsiJavaFile) : null;
+          return method != null? new OwnerMethod(method, file instanceof PsiJavaFile && JavaLanguage.INSTANCE.equals(file.getLanguage())) : null;
         }
       });
     }

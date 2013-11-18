@@ -22,7 +22,7 @@ import com.siyeh.ig.controlflow.TrivialIfInspection;
 
 import java.util.List;
 
-public class TrivialIfInspectionTest extends IGQuickFixesTestCase {
+public class TrivialIfFixTest extends IGQuickFixesTestCase {
 
   @Override
   protected void setUp() throws Exception {

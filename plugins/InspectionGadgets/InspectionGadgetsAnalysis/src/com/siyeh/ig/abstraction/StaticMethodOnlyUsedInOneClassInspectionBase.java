@@ -139,7 +139,7 @@ public class StaticMethodOnlyUsedInOneClassInspectionBase extends BaseInspection
       if (usageClass.equals(method.getContainingClass())) {
         return;
       }
-      if (ignoreTestClasses && TestUtils.isTest(usageClass)) {
+      if (ignoreTestClasses && TestUtils.isInTestCode(usageClass)) {
         return;
       }
       if (usageClass instanceof PsiAnonymousClass) {

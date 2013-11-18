@@ -20,7 +20,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.StandardFileSystems;
-import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.io.URLUtil;
 import org.jetbrains.annotations.NotNull;
@@ -52,13 +52,19 @@ public final class Urls {
     return new UrlImpl("http", authority, path);
   }
 
+  // java.net.URI.create cannot parse "file:///Test Stuff" - but you don't need to worry about it - this method is aware
+  @Nullable
+  public static Url newFromIdea(@NotNull String url) {
+    return URLUtil.containsScheme(url) ? parseUrl(url) : new LocalFileUrl(url);
+  }
+
   @Nullable
   public static Url parse(@NotNull String url, boolean asLocalIfNoScheme) {
     if (asLocalIfNoScheme && !URLUtil.containsScheme(url)) {
       // nodejs debug — files only in local filesystem
       return new LocalFileUrl(url);
     }
-    return parseUrl(VfsUtil.toIdeaUrl(url));
+    return parseUrl(VfsUtilCore.toIdeaUrl(url));
   }
 
   @Nullable
@@ -110,12 +116,6 @@ public final class Urls {
       authority = null;
     }
     return new UrlImpl(scheme, authority, path, parameters);
-  }
-
-  // java.net.URI.create cannot parse "file:///Test Stuff" - but you don't need to worry about it - this method is aware
-  @Nullable
-  public static Url newFromIdea(@NotNull String url) {
-    return URLUtil.containsScheme(url) ? parseUrl(VfsUtil.toIdeaUrl(url)) : new LocalFileUrl(url);
   }
 
   // must not be used in NodeJS

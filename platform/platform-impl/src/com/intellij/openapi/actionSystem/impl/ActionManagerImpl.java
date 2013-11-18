@@ -1178,6 +1178,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Applicat
     preloadActionGroup(IdeActions.GROUP_EDITOR_TAB_POPUP);
     preloadActionGroup(IdeActions.GROUP_PROJECT_VIEW_POPUP);
     preloadActionGroup(IdeActions.GROUP_MAIN_MENU);
+    preloadActionGroup(IdeActions.GROUP_NEW);
     // TODO anything else?
     LOG.debug("Actions preloading completed");
   }

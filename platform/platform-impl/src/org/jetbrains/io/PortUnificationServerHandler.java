@@ -78,7 +78,7 @@ class PortUnificationServerHandler extends Decoder {
   }
 
   @Override
-  protected void channelRead0(ChannelHandlerContext context, ByteBuf message) throws Exception {
+  protected void messageReceived(ChannelHandlerContext context, ByteBuf message) throws Exception {
     ByteBuf buffer = getBufferIfSufficient(message, 5, context);
     if (buffer == null) {
       message.release();
@@ -162,7 +162,7 @@ class PortUnificationServerHandler extends Decoder {
     private static final int UUID_LENGTH = 16;
 
     @Override
-    protected void channelRead0(ChannelHandlerContext context, ByteBuf message) throws Exception {
+    protected void messageReceived(ChannelHandlerContext context, ByteBuf message) throws Exception {
       ByteBuf buffer = getBufferIfSufficient(message, UUID_LENGTH, context);
       if (buffer == null) {
         message.release();

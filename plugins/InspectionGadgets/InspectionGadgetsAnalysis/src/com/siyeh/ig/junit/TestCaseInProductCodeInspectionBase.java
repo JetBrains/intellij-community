@@ -16,7 +16,6 @@
 package com.siyeh.ig.junit;
 
 import com.intellij.psi.PsiClass;
-import com.intellij.psi.util.InheritanceUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -54,16 +53,11 @@ public class TestCaseInProductCodeInspectionBase extends BaseInspection {
     return new TestCaseInProductCodeVisitor();
   }
 
-  private static class TestCaseInProductCodeVisitor
-    extends BaseInspectionVisitor {
+  private static class TestCaseInProductCodeVisitor extends BaseInspectionVisitor {
 
     @Override
     public void visitClass(@NotNull PsiClass aClass) {
-      if (TestUtils.isTest(aClass)) {
-        return;
-      }
-      if (!InheritanceUtil.isInheritor(aClass,
-                                       "junit.framework.TestCase")) {
+      if (TestUtils.isInTestSourceContent(aClass) || !TestUtils.isJUnitTestClass(aClass)) {
         return;
       }
       registerClassError(aClass);

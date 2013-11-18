@@ -20,7 +20,6 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.compiled.ClsFileImpl;
 import org.jetbrains.annotations.NotNull;
 
@@ -38,20 +37,22 @@ public class ClassFileViewProvider extends SingleRootFileViewProvider {
 
   @Override
   protected PsiFile createFile(@NotNull final Project project, @NotNull final VirtualFile vFile, @NotNull final FileType fileType) {
-    final FileIndexFacade fileIndex = ServiceManager.getService(project, FileIndexFacade.class);
-    if (fileIndex.isInLibraryClasses(vFile) || !fileIndex.isInSource(vFile)) {
-      String name = vFile.getName();
+    FileIndexFacade fileIndex = ServiceManager.getService(project, FileIndexFacade.class);
+    if (!fileIndex.isInLibraryClasses(vFile) && fileIndex.isInSource(vFile)) {
+      return null;
+    }
 
-      // skip inners & anonymous (todo: read actual class name from file)
-      int dotIndex = name.lastIndexOf('.');
-      if (dotIndex < 0) dotIndex = name.length();
-      int index = name.lastIndexOf('$', dotIndex);
-      if (index <= 0 || index == dotIndex - 1) {
-        return new ClsFileImpl((PsiManagerImpl)PsiManager.getInstance(project), this);
+    // skip inners & anonymous
+    String name = vFile.getNameWithoutExtension();
+    int index = name.lastIndexOf('$', name.length());
+    if (index > 0 && index < name.length() - 1) {
+      String supposedParentName = name.substring(0, index) + ".class";
+      if (vFile.getParent().findChild(supposedParentName) != null) {
+        return null;
       }
     }
 
-    return null;
+    return new ClsFileImpl(PsiManager.getInstance(project), this);
   }
 
   @NotNull
