@@ -89,9 +89,6 @@ class Command:
         else:
             self.more = self.interpreter.runsource(self.code_fragment.text, '<input>', 'exec')
 
-def Sync(runnable):
-    runnable.run()
-
 try:
     try:
         execfile #Not in Py3k
@@ -123,7 +120,7 @@ class InterpreterInterface(BaseInterpreterInterface):
 
     def doAddExec(self, codeFragment):
         command = Command(self.interpreter, codeFragment)
-        Sync(command)
+        command.run()
         return command.more
 
 
