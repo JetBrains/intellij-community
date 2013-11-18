@@ -55,31 +55,36 @@ public class StackFrameProxyImpl extends JdiProxy implements StackFrameProxy {
   public boolean isObsolete() throws EvaluateException {
     DebuggerManagerThreadImpl.assertIsManagerThread();
     checkValid();
-    if (myIsObsolete == null) {
+    if (myIsObsolete != null) {
+      return myIsObsolete.booleanValue();
+    }
+    InvalidStackFrameException error = null;
+    for (int attempt = 0; attempt < 2; attempt++) {
       try {
         boolean isObsolete = (getVirtualMachine().canRedefineClasses() && location().method().isObsolete());
-        //boolean isObsolete = (getVirtualMachine().versionHigher("1.4") && location().method().isObsolete());
         myIsObsolete = isObsolete? Boolean.TRUE : Boolean.FALSE;
+        return isObsolete;
       }
       catch (InvalidStackFrameException e) {
+        error = e;
         clearCaches();
-        return isObsolete();
       }
       catch (InternalException e) {
         if (e.errorCode() == 23 /*INVALID_METHODID accoeding to JDI sources*/) {
           myIsObsolete = Boolean.TRUE;
+          return true;
         }
-        else {
-          throw e;
-        }
+        throw e;
       }
     }
-    return myIsObsolete.booleanValue();
+    if (error != null) {
+      throw new EvaluateException(error.getMessage(), error);
+    }
+    return false;
   }
 
   protected void clearCaches() {
     DebuggerManagerThreadImpl.assertIsManagerThread();
-    //DebuggerManagerThreadImpl.assertIsManagerThread();
     if (LOG.isDebugEnabled()) {
       LOG.debug("caches cleared " + super.toString());
     }
@@ -151,13 +156,20 @@ public class StackFrameProxyImpl extends JdiProxy implements StackFrameProxy {
   }
 
   public Location location() throws EvaluateException {
-    try {
-      return getStackFrame().location();
+    InvalidStackFrameException error = null;
+    for (int attempt = 0; attempt < 2; attempt++) {
+      try {
+        return getStackFrame().location();
+      }
+      catch (InvalidStackFrameException e) {
+        error = e;
+        clearCaches();
+      }
     }
-    catch (InvalidStackFrameException e) {
-      clearCaches();
-      return location();
+    if (error != null) {
+      throw new EvaluateException(error.getMessage(), error);
     }
+    return null;
   }
 
   public ThreadReferenceProxyImpl threadProxy() {
@@ -201,24 +213,29 @@ public class StackFrameProxyImpl extends JdiProxy implements StackFrameProxy {
 
   public List<LocalVariableProxyImpl> visibleVariables() throws EvaluateException {
     DebuggerManagerThreadImpl.assertIsManagerThread();
-    try {
-      List<LocalVariable> list = getStackFrame().visibleVariables();
-
-      List<LocalVariableProxyImpl> locals = new ArrayList<LocalVariableProxyImpl>();
-      for (Iterator<LocalVariable> iterator = list.iterator(); iterator.hasNext();) {
-        LocalVariable localVariable = iterator.next();
-        LOG.assertTrue(localVariable != null);
-        locals.add(new LocalVariableProxyImpl(this, localVariable));
+    InvalidStackFrameException error = null;
+    for (int attempt = 0; attempt < 2; attempt++) {
+      try {
+        final List<LocalVariable> list = getStackFrame().visibleVariables();
+        final List<LocalVariableProxyImpl> locals = new ArrayList<LocalVariableProxyImpl>(list.size());
+        for (LocalVariable localVariable : list) {
+          LOG.assertTrue(localVariable != null);
+          locals.add(new LocalVariableProxyImpl(this, localVariable));
+        }
+        return locals;
       }
-      return locals;
+      catch (InvalidStackFrameException e) {
+        error = e;
+        clearCaches();
+      }
+      catch (AbsentInformationException e) {
+        throw EvaluateExceptionUtil.createEvaluateException(e);
+      }
     }
-    catch (InvalidStackFrameException e) {
-      clearCaches();
-      return visibleVariables();
+    if (error != null) {
+      throw new EvaluateException(error.getMessage(), error);
     }
-    catch (AbsentInformationException e) {
-      throw EvaluateExceptionUtil.createEvaluateException(e);
-    }
+    return Collections.emptyList();
   }
 
   public LocalVariableProxyImpl visibleVariableByName(String name) throws EvaluateException  {
@@ -229,59 +246,77 @@ public class StackFrameProxyImpl extends JdiProxy implements StackFrameProxy {
 
   protected LocalVariable visibleVariableByNameInt(String name) throws EvaluateException  {
     DebuggerManagerThreadImpl.assertIsManagerThread();
-    try {
+    InvalidStackFrameException error = null;
+    for (int attempt = 0; attempt < 2; attempt++) {
       try {
-        return getStackFrame().visibleVariableByName(name);
+        try {
+          return getStackFrame().visibleVariableByName(name);
+        }
+        catch (InvalidStackFrameException e) {
+          error = e;
+          clearCaches();
+        }
       }
       catch (InvalidStackFrameException e) {
-        clearCaches();
-        return getStackFrame().visibleVariableByName(name);
+        throw EvaluateExceptionUtil.createEvaluateException(e);
+      }
+      catch (AbsentInformationException e) {
+        throw EvaluateExceptionUtil.createEvaluateException(e);
       }
     }
-    catch (InvalidStackFrameException e) {
-      throw EvaluateExceptionUtil.createEvaluateException(e);
+    if (error != null) {
+      throw new EvaluateException(error.getMessage(), error);
     }
-    catch (AbsentInformationException e) {
-      throw EvaluateExceptionUtil.createEvaluateException(e);
-    }
+    return null;
   }
 
   public Value getValue(LocalVariableProxyImpl localVariable) throws EvaluateException {
     DebuggerManagerThreadImpl.assertIsManagerThread();
-    try {
-      final Map<LocalVariable, Value> allValues = getAllValues();
-      return allValues.get(localVariable.getVariable());
+    InvalidStackFrameException error = null;
+    for (int attempt = 0; attempt < 2; attempt++) {
+      try {
+        final Map<LocalVariable, Value> allValues = getAllValues();
+        return allValues.get(localVariable.getVariable());
+      }
+      catch (InvalidStackFrameException e) {
+        error = e;
+        clearCaches();
+      }
     }
-    catch (InvalidStackFrameException e) {
-      clearCaches();
-      return getValue(localVariable);
+    if (error != null) {
+      throw new EvaluateException(error.getMessage(), error);
     }
+    return null;
   }
 
   public List<Value> getArgumentValues() throws EvaluateException {
     DebuggerManagerThreadImpl.assertIsManagerThread();
-    try {
-      final StackFrame stackFrame = getStackFrame();
-      if (stackFrame != null) {
-        return stackFrame.getArgumentValues();
+    InvalidStackFrameException error = null;
+    for (int attempt = 0; attempt < 2; attempt++) {
+      try {
+        final StackFrame stackFrame = getStackFrame();
+        return stackFrame != null? stackFrame.getArgumentValues() : Collections.<Value>emptyList();
       }
-      return Collections.emptyList();
-    }
-    catch (InternalException e) {
-      // From Oracle's forums:
-      // This could be a JPDA bug. Unexpected JDWP Error: 32 means that an 'opaque' frame was detected at the lower JPDA levels,
-      // typically a native frame.
-      if (e.errorCode() == 32 /*opaque frame JDI bug*/ ) {
-        return Collections.emptyList();
+      catch (InternalException e) {
+        // From Oracle's forums:
+        // This could be a JPDA bug. Unexpected JDWP Error: 32 means that an 'opaque' frame was detected at the lower JPDA levels,
+        // typically a native frame.
+        if (e.errorCode() == 32 /*opaque frame JDI bug*/ ) {
+          return Collections.emptyList();
+        }
+        else {
+          throw e;
+        }
       }
-      else {
-        throw e;
+      catch (InvalidStackFrameException e) {
+        error = e;
+        clearCaches();
       }
     }
-    catch (InvalidStackFrameException e) {
-      clearCaches();
-      return getArgumentValues();
+    if (error != null) {
+      throw new EvaluateException(error.getMessage(), error);
     }
+    return Collections.emptyList();
   }
 
   private Map<LocalVariable, Value> getAllValues() throws EvaluateException{
@@ -308,23 +343,28 @@ public class StackFrameProxyImpl extends JdiProxy implements StackFrameProxy {
     return myAllValues;
   }
 
-  public void setValue(LocalVariableProxyImpl localVariable, Value value) throws EvaluateException,
-                                                                                 ClassNotLoadedException,
-                                                                                 InvalidTypeException {
+  public void setValue(LocalVariableProxyImpl localVariable, Value value) throws EvaluateException, ClassNotLoadedException, InvalidTypeException {
     DebuggerManagerThreadImpl.assertIsManagerThread();
-    try {
-      final LocalVariable variable = localVariable.getVariable();
-      final StackFrame stackFrame = getStackFrame();
-      stackFrame.setValue(variable, (value instanceof ObjectReference)? ((ObjectReference)value) : value);
-      if (myAllValues != null) {
-        // update cached data if any
-        // re-read the value just set from the stackframe to be 100% sure
-        myAllValues.put(variable, stackFrame.getValue(variable));
+    InvalidStackFrameException error = null;
+    for (int attempt = 0; attempt < 2; attempt++) {
+      try {
+        final LocalVariable variable = localVariable.getVariable();
+        final StackFrame stackFrame = getStackFrame();
+        stackFrame.setValue(variable, (value instanceof ObjectReference)? ((ObjectReference)value) : value);
+        if (myAllValues != null) {
+          // update cached data if any
+          // re-read the value just set from the stackframe to be 100% sure
+          myAllValues.put(variable, stackFrame.getValue(variable));
+        }
+        return;
+      }
+      catch (InvalidStackFrameException e) {
+        error = e;
+        clearCaches();
       }
     }
-    catch (InvalidStackFrameException e) {
-      clearCaches();
-      setValue(localVariable, value);
+    if (error != null) {
+      throw new EvaluateException(error.getMessage(), error);
     }
   }
 
