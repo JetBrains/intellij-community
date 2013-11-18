@@ -1501,6 +1501,10 @@
     <localInspection language="JAVA" suppressId="CallToThreadDumpStack" shortName="ThreadDumpStack" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="dumpstack.call.display.name" groupBundle="messages.InspectionsBundle" groupKey="group.names.code.maturity.issues"
                      enabledByDefault="false" level="WARNING" implementationClass="com.siyeh.ig.maturity.ThreadDumpStackInspection"/>
+   <localInspection language="JAVA"  shortName="ThrowablePrintedToSystemOut" bundle="com.siyeh.InspectionGadgetsBundle"
+                     key="throwable.printed.to.system.out.display.name" groupBundle="messages.InspectionsBundle"
+                     groupKey="group.names.code.maturity.issues" enabledByDefault="false" level="WARNING"
+                     implementationClass="com.siyeh.ig.maturity.ThrowablePrintedToSystemOutInspection"/>
     <localInspection language="JAVA" suppressId="UseOfObsoleteCollectionType" shortName="ObsoleteCollection" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="use.obsolete.collection.type.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.code.maturity.issues" enabledByDefault="false" level="WARNING"

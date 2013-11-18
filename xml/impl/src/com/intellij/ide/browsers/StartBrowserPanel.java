@@ -18,6 +18,7 @@ import com.intellij.psi.PsiBinaryFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.ui.AncestorListenerAdapter;
+import com.intellij.util.Url;
 import com.intellij.util.io.URLUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xml.XmlBundle;
