@@ -31,11 +31,14 @@ import java.util.List;
 public class ElementStub extends DomStub {
 
   private final List<DomStub> myChildren = new SmartList<DomStub>();
+  private final int myIndex;
   private final boolean myCustom;
 
-  public ElementStub(@Nullable ElementStub parent, @NotNull StringRef name, @Nullable StringRef namespace, boolean custom) {
+  public ElementStub(@Nullable ElementStub parent, @NotNull StringRef name, @Nullable StringRef namespace, int index, boolean custom) {
     super(parent, name, namespace);
+    myIndex = index;
     myCustom = custom;
+
   }
 
   void addChild(DomStub child) {
@@ -58,13 +61,12 @@ public class ElementStub extends DomStub {
     return StringUtil.isEmpty(key) ? getName() : key + ":" + getName();
   }
 
-  @Override
-  public boolean equals(Object obj) {
-    if (obj == this) return true;
-    return obj instanceof ElementStub && id == ((ElementStub)obj).id && myLocalName.equals(((ElementStub)obj).myLocalName);
-  }
-
   public boolean isCustom() {
     return myCustom;
+  }
+
+  @Override
+  public int getIndex() {
+    return myIndex;
   }
 }
