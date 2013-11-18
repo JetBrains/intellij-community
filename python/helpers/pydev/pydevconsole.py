@@ -50,6 +50,7 @@ except NameError: # version < 2.3 -- didn't have the True/False builtins
     setattr(__builtin__, 'False', 0)
 
 from pydev_console_utils import BaseInterpreterInterface
+from pydev_console_utils import CodeFragment
 
 IS_PYTHON_3K = False
 
@@ -73,23 +74,33 @@ except ImportError:
 
 
 class Command:
-    def __init__(self, interpreter, command):
+    def __init__(self, interpreter, code_fragment, buffer):
         """
-        :type command: object
+        :type code_fragment: CodeFragment
         :type interpreter: InteractiveConsole
         """
         self.interpreter = interpreter
-        self.command = command
+        self.code_fragment = code_fragment
         self.more = None
+        self.buffer = buffer
+
+    @staticmethod
+    def symbol_for_fragment(code_fragment):
+        if code_fragment.is_single_line:
+            symbol = 'single'
+        else:
+            symbol = 'exec'
+        return symbol
 
     def run(self):
-        if self.command.is_single_line:
-            self.more = self.interpreter.push(self.command.code)
+        if self.buffer is None:
+            text = self.code_fragment.text
+            symbol = self.symbol_for_fragment(self.code_fragment)
         else:
-            self.more = self.interpreter.runsource(self.command.code, '<input>', 'exec')
-
-def Sync(runnable):
-    runnable.run()
+            text = self.buffer.text
+            symbol = self.symbol_for_fragment(self.buffer)
+            
+        self.more = self.interpreter.runsource(text, '<input>', symbol)
 
 try:
     try:
@@ -120,9 +131,9 @@ class InterpreterInterface(BaseInterpreterInterface):
         self._input_error_printed = False
 
 
-    def doAddExec(self, command):
-        command = Command(self.interpreter, command)
-        Sync(command)
+    def doAddExec(self, codeFragment):
+        command = Command(self.interpreter, codeFragment, self.buffer)
+        command.run()
         return command.more
 
 
@@ -153,14 +164,16 @@ def process_exec_queue(interpreter):
     while 1:
         try:
             try:
-                command = interpreter.exec_queue.get(block=True, timeout=0.05)
+                codeFragment = interpreter.exec_queue.get(block=True, timeout=0.05)
             except _queue.Empty:
                 continue
 
-            if not interpreter.addExec(command):     #TODO: think about locks here
-                interpreter.buffer = []
+            more = interpreter.addExec(codeFragment)
+            
+            if not more:     
+                interpreter.buffer = None
         except KeyboardInterrupt:
-            interpreter.buffer = []
+            interpreter.buffer = None
             continue
         except SystemExit:
             raise
@@ -308,17 +321,17 @@ def get_completions(text, token, globals, locals):
 def get_frame():
     return interpreterInterface.getFrame()
 
-def exec_expression(expression, globals, locals):
+def exec_code(code, globals, locals):
     interpreterInterface = get_interpreter()
 
     interpreterInterface.interpreter.update(globals, locals)
 
-    res = interpreterInterface.needMore(None, expression)
+    res = interpreterInterface.needMore(code)
 
     if res:
         return True
 
-    interpreterInterface.addExec(expression)
+    interpreterInterface.addExec(code)
 
     return False
 
@@ -368,7 +381,7 @@ def consoleExec(thread_id, frame_id, expression):
     updated_globals.update(frame.f_locals) #locals later because it has precedence over the actual globals
 
     if IPYTHON:
-        return exec_expression(expression, updated_globals, frame.f_locals)
+        return exec_code(CodeFragment(expression), updated_globals, frame.f_locals)
 
     interpreter = ConsoleWriter()
 
