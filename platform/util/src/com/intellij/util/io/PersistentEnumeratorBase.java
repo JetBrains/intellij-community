@@ -140,7 +140,18 @@ public abstract class PersistentEnumeratorBase<Data> implements Forceable, Close
   public static class CorruptedException extends IOException {
     @SuppressWarnings({"HardCodedStringLiteral"})
     public CorruptedException(File file) {
-      super("PersistentEnumerator storage corrupted " + file.getPath());
+      this("PersistentEnumerator storage corrupted " + file.getPath());
+    }
+
+    protected CorruptedException(String message) {
+      super(message);
+    }
+  }
+
+  public static class VersionUpdatedException extends CorruptedException {
+    @SuppressWarnings({"HardCodedStringLiteral"})
+    public VersionUpdatedException(File file) {
+      super("PersistentEnumerator storage version updated " + file.getPath());
     }
   }
 
@@ -206,6 +217,7 @@ public abstract class PersistentEnumeratorBase<Data> implements Forceable, Close
         }
         if (sign != myVersion.correctlyClosedMagic) {
           myStorage.close();
+          if (sign != myVersion.dirtyMagic) throw new VersionUpdatedException(file);
           throw new CorruptedException(file);
         }
       }
