@@ -32,6 +32,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.impl.source.codeStyle.IndentHelperImpl;
 import com.intellij.util.Function;
+import com.intellij.util.ui.UIUtil;
 import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.console.pydev.ConsoleCommunication;
@@ -213,7 +214,12 @@ public class PydevConsoleExecuteActionHandler extends ConsoleExecuteActionHandle
               setCurrentIndentSize(
                 (line != null ? IndentHelperImpl.getIndent(getProject(), PythonFileType.INSTANCE, line, false) : 0) + getPythonIndent());
               // In this case we can insert indent automatically
-              indentEditor(currentEditor, myCurrentIndentSize);
+              UIUtil.invokeLaterIfNeeded(new Runnable() {
+                @Override
+                public void run() {
+                  indentEditor(currentEditor, myCurrentIndentSize);
+                }
+              });
             }
           }
           else {
