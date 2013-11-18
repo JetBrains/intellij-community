@@ -248,14 +248,16 @@ public class StackFrameProxyImpl extends JdiProxy implements StackFrameProxy {
 
   public Value getValue(LocalVariableProxyImpl localVariable) throws EvaluateException {
     DebuggerManagerThreadImpl.assertIsManagerThread();
-    try {
-      final Map<LocalVariable, Value> allValues = getAllValues();
-      return allValues.get(localVariable.getVariable());
+    for (int attempt = 0; attempt < 2; attempt++) {
+      try {
+        final Map<LocalVariable, Value> allValues = getAllValues();
+        return allValues.get(localVariable.getVariable());
+      }
+      catch (InvalidStackFrameException e) {
+        clearCaches();
+      }
     }
-    catch (InvalidStackFrameException e) {
-      clearCaches();
-      return getValue(localVariable);
-    }
+    return null;
   }
 
   public List<Value> getArgumentValues() throws EvaluateException {
