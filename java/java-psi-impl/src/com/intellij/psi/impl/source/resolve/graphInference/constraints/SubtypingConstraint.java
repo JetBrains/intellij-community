@@ -121,7 +121,10 @@ public class SubtypingConstraint implements ConstraintFormula {
 
           if (myS instanceof PsiWildcardType) {
             final PsiType sBound = ((PsiWildcardType)myS).getBound();
-            if (sBound != null && ((PsiWildcardType)myS).isExtends()) {
+            if (sBound == null) {
+              return true;
+            }
+            if (((PsiWildcardType)myS).isExtends()) {
               constraints.add(new SubtypingConstraint(tBound, sBound, true));
               return true;
             }
