@@ -4,7 +4,10 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.remoteServer.agent.RemoteAgentManager;
-import com.intellij.remoteServer.agent.util.*;
+import com.intellij.remoteServer.agent.util.CloudAgentConfigBase;
+import com.intellij.remoteServer.agent.util.CloudAgentLogger;
+import com.intellij.remoteServer.agent.util.CloudGitAgent;
+import com.intellij.remoteServer.agent.util.DeploymentData;
 import com.intellij.remoteServer.configuration.deployment.DeploymentSource;
 import com.intellij.remoteServer.impl.configuration.deployment.DeployToServerRunConfiguration;
 import com.intellij.remoteServer.runtime.ServerConnector;
@@ -14,6 +17,7 @@ import com.intellij.remoteServer.runtime.deployment.DeploymentTask;
 import com.intellij.remoteServer.runtime.deployment.ServerRuntimeInstance;
 import com.intellij.util.ThrowableRunnable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.List;
@@ -111,7 +115,7 @@ public abstract class CloudGitServerRuntimeInstanceBase<
 
       @Override
       public void run() throws Exception {
-        createDeploymentRuntime(myConfiguration, myTasksExecutor, task, createLoggingHandler(logManager)).deploy(callback);
+        createDeploymentRuntime(myConfiguration, myTasksExecutor, task, logManager).deploy(callback);
       }
     }, callback);
   }
@@ -201,27 +205,14 @@ public abstract class CloudGitServerRuntimeInstanceBase<
                                        return false;
                                      }
                                    },
-                                   new CloudGitLoggingHandler() {
-
-                                     @Override
-                                     public void println(String message) {
-                                       LOG.info(message);
-                                     }
-
-                                     @Override
-                                     public void lineLogged(String line, String deploymentName, String kind) {
-
-                                     }
-                                   }
+                                   null
     );
   }
 
   protected abstract DR createDeploymentRuntime(SC configuration,
                                                 ServerTaskExecutor serverTaskExecutor,
                                                 DeploymentTask<DC> deploymentTask,
-                                                CloudGitLoggingHandler loggingHandler) throws ServerRuntimeException;
-
-  protected abstract CloudGitLoggingHandler createLoggingHandler(DeploymentLogManager logManager);
+                                                @Nullable DeploymentLogManager logManager) throws ServerRuntimeException;
 
   protected abstract void doConnect(SC configuration, CloudAgentLogger logger);
 }

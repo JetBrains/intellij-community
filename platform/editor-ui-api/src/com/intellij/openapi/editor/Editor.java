@@ -38,7 +38,6 @@ import java.awt.event.MouseEvent;
  * @see EditorFactory#createViewer(Document)
  */
 public interface Editor extends UserDataHolder {
-  @NonNls Object IGNORE_MOUSE_TRACKING = "ignore_mouse_tracking";
   Editor[] EMPTY_ARRAY = new Editor[0];
 
   /**

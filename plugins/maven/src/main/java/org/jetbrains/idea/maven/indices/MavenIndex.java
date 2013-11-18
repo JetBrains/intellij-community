@@ -154,7 +154,9 @@ public class MavenIndex {
         doOpen();
       }
       catch (Exception e1) {
-        MavenLog.LOG.warn(e1);
+        final boolean versionUpdated = e1.getCause() instanceof PersistentEnumeratorBase.VersionUpdatedException;
+        if (!versionUpdated) MavenLog.LOG.warn(e1);
+
         try {
           doOpen();
         }
@@ -619,12 +621,7 @@ public class MavenIndex {
     }
 
     private PersistentHashMap<String, Set<String>> createPersistentMap(final File f) throws IOException {
-      return IOUtil.openCleanOrResetBroken(new ThrowableComputable<PersistentHashMap<String, Set<String>>, IOException>() {
-        @Override
-        public PersistentHashMap<String, Set<String>> compute() throws IOException {
-          return new PersistentHashMap<String, Set<String>>(f, new EnumeratorStringDescriptor(), new SetDescriptor());
-        }
-      }, f);
+      return new PersistentHashMap<String, Set<String>>(f, new EnumeratorStringDescriptor(), new SetDescriptor());
     }
 
     public void close(boolean releaseIndexContext) throws MavenIndexException {

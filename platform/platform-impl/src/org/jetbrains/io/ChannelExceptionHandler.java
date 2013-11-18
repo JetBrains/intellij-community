@@ -40,7 +40,7 @@ public final class ChannelExceptionHandler extends ChannelInboundHandlerAdapter 
   public void exceptionCaught(ChannelHandlerContext context, Throwable cause) throws Exception {
     // don't report about errors while connecting
     // WEB-7727
-    if (cause instanceof ConnectException || (cause.getMessage() != null && cause.getMessage().startsWith("Connection reset"))) {
+    if (cause instanceof ConnectException) {
       LOG.debug(cause);
     }
     else {

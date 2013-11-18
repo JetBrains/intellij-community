@@ -14,6 +14,7 @@ package org.zmlx.hg4idea;
 
 import com.google.common.base.Objects;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
+import org.zmlx.hg4idea.util.HgUtil;
 
 import java.util.Collections;
 import java.util.List;
@@ -24,6 +25,7 @@ public class HgRevisionNumber implements VcsRevisionNumber {
   private final String changeset;
   private final String commitMessage;
   private final String author;
+  private final String email;
   private final List<HgRevisionNumber> parents;
   private final String mySubject;
 
@@ -58,9 +60,15 @@ public class HgRevisionNumber implements VcsRevisionNumber {
     return new HgRevisionNumber(revision, "", "", "", Collections.<HgRevisionNumber>emptyList());
   }
 
-  public HgRevisionNumber(String revision, String changeset, String author, String commitMessage, List<HgRevisionNumber> parents) {
+  public HgRevisionNumber(String revision,
+                          String changeset,
+                          String authorInfo,
+                          String commitMessage,
+                          List<HgRevisionNumber> parents) {
     this.commitMessage = commitMessage;
-    this.author = author;
+    List<String> authorArgs = HgUtil.parseUserNameAndEmail(authorInfo);
+    this.author = authorArgs.get(0);
+    this.email = authorArgs.get(1);
     this.parents = parents;
     this.revision = revision.trim();
     this.changeset = changeset.trim();
@@ -172,5 +180,9 @@ public class HgRevisionNumber implements VcsRevisionNumber {
 
   public String getSubject() {
     return mySubject;
+  }
+
+  public String getEmail() {
+    return email;
   }
 }

@@ -19,7 +19,7 @@ public class TimedVcsCommitImpl extends VcsCommitImpl implements TimedVcsCommit 
   }
 
   @Override
-  public final long getAuthorTime() {
+  public final long getTime() {
     return myTime;
   }
 

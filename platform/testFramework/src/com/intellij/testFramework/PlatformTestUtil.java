@@ -69,6 +69,8 @@ import java.io.File;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.lang.ref.SoftReference;
+import java.lang.reflect.Field;
+import java.nio.charset.Charset;
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
 import java.util.*;
@@ -780,5 +782,37 @@ public class PlatformTestUtil {
     for (int i = 0; i < 100; i++) {
       list.add(new SoftReference<byte[]>(new byte[(int)Runtime.getRuntime().freeMemory() / 2]));
     }
+  }
+
+  public static void withEncoding(@NotNull String encoding, @NotNull final Runnable r) {
+    withEncoding(encoding, new ThrowableRunnable() {
+      @Override
+      public void run() throws Throwable {
+        r.run();
+      }
+    });
+  }
+
+  public static void withEncoding(@NotNull String encoding, @NotNull ThrowableRunnable r) {
+    Charset oldCharset = Charset.defaultCharset();
+    try {
+      try {
+        patchSystemFileEncoding(encoding);
+        r.run();
+      }
+      finally {
+        patchSystemFileEncoding(oldCharset.name());
+      }
+    }
+    catch (Throwable t) {
+      throw new RuntimeException(t);
+    }
+  }
+
+  private static void patchSystemFileEncoding(String encoding) throws NoSuchFieldException, IllegalAccessException {
+    Field charset = Charset.class.getDeclaredField("defaultCharset");
+    charset.setAccessible(true);
+    charset.set(Charset.class, null);
+    System.setProperty("file.encoding", encoding);
   }
 }

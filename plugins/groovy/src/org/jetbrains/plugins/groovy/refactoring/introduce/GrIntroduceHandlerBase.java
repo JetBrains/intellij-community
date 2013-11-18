@@ -43,7 +43,9 @@ import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.IntroduceTargetChooser;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.refactoring.introduce.inplace.AbstractInplaceIntroducer;
 import com.intellij.refactoring.introduce.inplace.OccurrencesChooser;
+import com.intellij.refactoring.rename.inplace.InplaceRefactoring;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
@@ -574,6 +576,8 @@ public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSetting
   public static boolean isInplace(@NotNull Editor editor, @NotNull PsiElement place) {
     final RefactoringSupportProvider supportProvider = LanguageRefactoringSupport.INSTANCE.forLanguage(place.getLanguage());
     return supportProvider != null &&
+           (editor.getUserData(InplaceRefactoring.INTRODUCE_RESTART) == null || !editor.getUserData(InplaceRefactoring.INTRODUCE_RESTART)) &&
+           editor.getUserData(AbstractInplaceIntroducer.ACTIVE_INTRODUCE) == null &&
            editor.getSettings().isVariableInplaceRenameEnabled() &&
            supportProvider.isInplaceIntroduceAvailable(place, place) &&
            !ApplicationManager.getApplication().isUnitTestMode();

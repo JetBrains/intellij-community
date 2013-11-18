@@ -85,12 +85,6 @@ class CacheUpdateRunner {
             processed.add(virtualFile);
             indicator.setFraction(processed.size() / total);
           }
-          if (virtualFile.isValid()) {
-            indicator.setText2(virtualFile.getPresentableUrl());
-          }
-          else {
-            indicator.setText2("");
-          }
         }
       };
 

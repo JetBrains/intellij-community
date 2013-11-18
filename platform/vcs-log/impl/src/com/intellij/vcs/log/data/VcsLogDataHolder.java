@@ -89,19 +89,6 @@ public class VcsLogDataHolder implements Disposable {
 
   private static final Logger LOG = Logger.getInstance(VcsLogDataHolder.class);
 
-  /**
-   * Don't load more than ourDetailsLoadingRateLimit times of standard recent commits details per repository.
-   * If this amount of commits is not enough, ask the VCS directly.
-   */
-  private static final int MORE_DETAILS_LOADING_RATE_LIMIT = 10;
-
-  /**
-   * If more details of recent commits are requested, multiply the number of commits to load by this value on each step,
-   * until this value reaches {@link #MORE_DETAILS_LOADING_RATE_LIMIT} times of
-   * {@link VcsLogSettings#getRecentCommitsCount() the standard recent commits count}.
-   */
-  public static final int MORE_DETAILS_LOADING_STEP_MULTIPLIER = 10;
-
   @NotNull private final Project myProject;
   @NotNull private final VcsLogObjectsFactory myFactory;
   @NotNull private final Map<VirtualFile, VcsLogProvider> myLogProviders;
@@ -558,6 +545,11 @@ public class VcsLogDataHolder implements Disposable {
     return myLogProviders.values();
   }
 
+  @NotNull
+  public VcsLogSettings getSettings() {
+    return mySettings;
+  }
+
   private static class RecentCommitsInfo {
     List<TimedVcsCommit> firstBlockCommits;
     Collection<VcsRef> newRefs;
@@ -597,89 +589,9 @@ public class VcsLogDataHolder implements Disposable {
     return ContainerUtil.map(firstBlockDetails, new Function<VcsFullCommitDetails, TimedVcsCommit>() {
       @Override
       public TimedVcsCommit fun(VcsFullCommitDetails details) {
-        return new CompactCommit(details.getHash(), details.getParents(), details.getAuthorTime());
+        return new CompactCommit(details.getHash(), details.getParents(), details.getTime());
       }
     });
-  }
-
-  /**
-   * The state of "load more" procedure.
-   */
-  public enum LoadingState {
-    /**
-     * currently in the process of loading more details;
-     */
-    LOADING,
-    /**
-     * details of all commit of the entire history have been loaded, nothing to load more
-     */
-    ALL_COMMITS_LOADED,
-    /**
-     * reached the limit to load more commit details; need to query the VCS directly if needed.
-     */
-    LIMIT_REACHED
-  }
-
-  @NotNull
-  public LoadingState loadMoreDetails(@NotNull final Runnable onSuccess) {
-    if (myLoadMoreInProgress.get()) { // quick check
-      return LoadingState.LOADING;
-    }
-
-    final int topCommitsCount = myLogData.getTopCommitsCount();
-    int rootsCount = getRootCount();
-    if (topCommitsCount >= MORE_DETAILS_LOADING_RATE_LIMIT * mySettings.getRecentCommitsCount() * rootsCount) {
-      return LoadingState.LIMIT_REACHED;
-    }
-
-    if (entireLogDetailsLoaded()) { // the entire history was small enough
-      return LoadingState.ALL_COMMITS_LOADED;
-    }
-
-    if (myLogData.isFullLogReady()) {
-      int totalSize = 0;
-      for (List<? extends TimedVcsCommit> commits : myLogData.getLogs().values()) {
-        totalSize += commits.size();
-      }
-      if (topCommitsCount >= totalSize) {
-        // nothing more to load
-        return LoadingState.ALL_COMMITS_LOADED;
-      }
-    }
-
-    if (myLoadMoreInProgress.compareAndSet(false, true)) {
-      runInBackground(new ThrowableConsumer<ProgressIndicator, VcsException>() {
-        @Override
-        public void consume(ProgressIndicator indicator) throws VcsException {
-          loadFromVcs(topCommitsCount * MORE_DETAILS_LOADING_STEP_MULTIPLIER, indicator, new Consumer<DataPack>() {
-            @Override
-            public void consume(DataPack dataPack) {
-              myLoadMoreInProgress.set(false);
-              onSuccess.run();
-            }
-          });
-        }
-      }, "Loading more details to filter...");
-    }
-    return LoadingState.LOADING;
-  }
-
-  private int getRootCount() {
-    return myLogProviders.keySet().size();
-  }
-
-  private boolean entireLogDetailsLoaded() {
-    LogData logData = myLogData;
-    if (logData.isFullLogReady()) {
-      int totalSize = 0;
-      for (List<? extends TimedVcsCommit> commits : logData.getLogs().values()) {
-        totalSize += commits.size();
-      }
-      if (logData.getTopCommitsCount() >= totalSize) {
-        return true;
-      }
-    }
-    return false;
   }
 
   private void runInBackground(final ThrowableConsumer<ProgressIndicator, VcsException> task, final String title) {
@@ -790,48 +702,6 @@ public class VcsLogDataHolder implements Disposable {
   }
 
   /**
-   * Returns the ordered part of the recent commits, details of which are always stored in the cache.
-   */
-  @NotNull
-  public Collection<TimedVcsCommit> getTopCommits() {
-    return myLogData.getTopCommits();
-  }
-
-  /**
-   * Returns details of recent commits ordered in the "right way" (as in the log).
-   */
-  @NotNull
-  public Collection<VcsFullCommitDetails> getTopCommitDetails() {
-    final Collection<TimedVcsCommit> topCommits = getTopCommits();
-    final AtomicBoolean errorDetailsAttached = new AtomicBoolean();
-    return ContainerUtil.mapNotNull(topCommits, new Function<TimedVcsCommit, VcsFullCommitDetails>() {
-      @Nullable
-      @Override
-      public VcsFullCommitDetails fun(TimedVcsCommit commit) {
-        Hash hash = commit.getHash();
-        VcsFullCommitDetails details = myTopCommitsDetailsCache.get(hash);
-        if (details != null) {
-          return details;
-        }
-
-        // shouldn't happen
-        String errorMessage = "No details were stored for commit " + hash;
-        // log the error only once for the getTopCommitDetails request
-        if (!errorDetailsAttached.get()) {
-          errorDetailsAttached.set(true);
-          // temporary disable the error message until the bug is properly fixed.
-          // the bug is: we store 1000 commit details per root, but iterate through the roots_num * 1000 latest commits
-          // therefore this error shouldn't happen only in the case when commits of all repositories are evently distributed in time.
-//          LOG.error(errorMessage,
-//                    new Attachment("details_cache.txt", myTopCommitsDetailsCache.toString()),
-//                    new Attachment("top_commits.txt", topCommits.toString()));
-        }
-        return null;
-      }
-    });
-  }
-
-  /**
    * Simply checks for isDisposed.
    */
   private void invokeAndWait(final Runnable task) {
@@ -920,15 +790,15 @@ public class VcsLogDataHolder implements Disposable {
     private final int myHashIndex;
     private final int myParent; // there is almost always one parent
     private final int[] myOtherParents;
-    private final long myAuthorTime;
+    private final long myTime;
 
     public CompactCommit(TimedVcsCommit commit) {
-      this(commit.getHash(), commit.getParents(), commit.getAuthorTime());
+      this(commit.getHash(), commit.getParents(), commit.getTime());
     }
 
     public CompactCommit(Hash hash, List<Hash> parents, long time) {
       myHashIndex = putHash(hash);
-      myAuthorTime = time;
+      myTime = time;
 
       if (!parents.isEmpty()) {
         myParent = putHash(parents.get(0));
@@ -949,8 +819,8 @@ public class VcsLogDataHolder implements Disposable {
     }
 
     @Override
-    public long getAuthorTime() {
-      return myAuthorTime;
+    public long getTime() {
+      return myTime;
     }
 
     @NotNull

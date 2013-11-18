@@ -51,7 +51,7 @@ public class GlobalPathReferenceProvider implements PathReferenceProvider {
     }
     final TextRange range = manipulator.getRangeInElement(psiElement);
     final String s = range.substring(psiElement.getText());
-    if (s.startsWith("http://") || s.startsWith("https://")) {
+    if (isWebReferenceUrl(s)) {
       references.add(new WebReference(psiElement, range));
     }
     else if (s.contains("://") || s.startsWith("//") || startsWithAllowedPrefix(s)) {
@@ -60,6 +60,10 @@ public class GlobalPathReferenceProvider implements PathReferenceProvider {
       return true;
     }
     return false;
+  }
+
+  public static boolean isWebReferenceUrl(String url) {
+    return url.startsWith("http://") || url.startsWith("https://") || url.startsWith("about:");
   }
 
   @Override

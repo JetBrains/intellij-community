@@ -27,6 +27,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.impl.dir.actions.popup.WarnOnDeletion;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.MessageDialogBuilder;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.Balloon;
@@ -802,39 +803,34 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
     return true;
   }
 
-  private static boolean confirmDeletion(int count) {
-    DialogWrapper.DoNotAskOption option = new DialogWrapper.DoNotAskOption() {
-      @Override
-      public boolean isToBeShown() {
-        return WarnOnDeletion.isWarnWhenDeleteItems();
-      }
+  private boolean confirmDeletion(int count) {
+    return MessageDialogBuilder.yesNo("Confirm Delete", "Delete " + count + " items?").project(myProject).yesText("Delete").noText(CommonBundle.message("button.cancel")).doNotAsk(
+      new DialogWrapper.DoNotAskOption() {
+        @Override
+        public boolean isToBeShown() {
+          return WarnOnDeletion.isWarnWhenDeleteItems();
+        }
 
-      @Override
-      public void setToBeShown(boolean value, int exitCode) {
-        WarnOnDeletion.setWarnWhenDeleteItems(value);
-      }
+        @Override
+        public void setToBeShown(boolean value, int exitCode) {
+          WarnOnDeletion.setWarnWhenDeleteItems(value);
+        }
 
-      @Override
-      public boolean canBeHidden() {
-        return true;
-      }
+        @Override
+        public boolean canBeHidden() {
+          return true;
+        }
 
-      @Override
-      public boolean shouldSaveOptionsOnCancel() {
-        return true;
-      }
+        @Override
+        public boolean shouldSaveOptionsOnCancel() {
+          return true;
+        }
 
-      @Override
-      public String getDoNotShowMessage() {
-        return "Do not ask me again";
-      }
-    };
-
-    return DialogWrapper.OK_EXIT_CODE == Messages.showYesNoDialog("Delete " + count + " items?", "Confirm Delete",
-                                                                  "Delete",
-                                                                  CommonBundle.message("button.cancel"),
-                                                                  Messages.getQuestionIcon(),
-                                                                  option);
+        @Override
+        public String getDoNotShowMessage() {
+          return "Do not ask me again";
+        }
+      }).show() == Messages.YES;
   }
 
   private void syncElement(DirDiffElementImpl element) {

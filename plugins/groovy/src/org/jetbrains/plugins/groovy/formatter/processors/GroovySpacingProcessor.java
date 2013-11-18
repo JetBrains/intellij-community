@@ -212,7 +212,7 @@ public class GroovySpacingProcessor extends GroovyElementVisitor {
   @Override
   public void visitLabeledStatement(GrLabeledStatement labeledStatement) {
     if (myType1 == mCOLON) {
-      if (myGroovySettings.INDENT_LABEL_BLOCKS) {
+      if (myGroovySettings.INDENT_LABEL_BLOCKS && !(myType2 == LITERAL)) {
         createLF(true);
       }
       else {
@@ -776,6 +776,7 @@ public class GroovySpacingProcessor extends GroovyElementVisitor {
                           isLeftOrRight(ADDITIVE_OPERATORS)       ? mySettings.SPACE_AROUND_ADDITIVE_OPERATORS :
                           isLeftOrRight(MULTIPLICATIVE_OPERATORS) ? mySettings.SPACE_AROUND_MULTIPLICATIVE_OPERATORS :
                           isLeftOrRight(SHIFT_OPERATORS)          ? mySettings.SPACE_AROUND_SHIFT_OPERATORS :
+                          isLeftOrRight(REGEX_OPERATORS)          ? myGroovySettings.SPACE_AROUND_REGEX_OPERATORS :
                           isLeftOrRight(kIN);
     if (TokenSets.BINARY_OP_SET.contains(myType2)) {
       createDependentLFSpacing(mySettings.BINARY_OPERATION_SIGN_ON_NEXT_LINE, spaceAround, expression.getTextRange());

@@ -71,13 +71,13 @@ public class PyFindUsagesHandlerFactory extends FindUsagesHandlerFactory {
                                                                           " overrides method of class " +
                                                                           ((PyFunction)next).getContainingClass().getName() +
                                                                           ".\nDo you want to find usages of the base method?",  "Find Usages", Messages.getQuestionIcon());
-            if (rc == 0) {
+            if (rc == Messages.YES) {
               List<PsiElement> allMethods = new ArrayList<PsiElement>();
               allMethods.add(element);
               allMethods.addAll(superMethods);
               return new PyFunctionFindUsagesHandler(element, allMethods);
             }
-            if (rc == 1) {
+            if (rc == Messages.NO) {
               return new PyFunctionFindUsagesHandler(element);
             }
             return FindUsagesHandler.NULL_HANDLER;

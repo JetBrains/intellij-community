@@ -297,6 +297,18 @@ class Goo { void goo(Foo foo, Bar bar) {} }
     assert myFixture.editor.document.text.contains('@link #goo(Foo, Bar)')
   }
 
+  public void testNoMethodsAfterClassDot() {
+    def text = '''
+/**
+* @see java.util.List.<caret>
+*/
+class Goo { void goo(Foo foo, Bar bar) {} }
+'''
+    myFixture.configureByText "a.java", text
+    assert !myFixture.completeBasic()
+    myFixture.checkResult(text)
+  }
+
   public void testCustomReferenceProvider() throws Exception {
     PsiReferenceRegistrarImpl registrar =
       (PsiReferenceRegistrarImpl) ReferenceProvidersRegistry.getInstance().getRegistrar(StdLanguages.JAVA);

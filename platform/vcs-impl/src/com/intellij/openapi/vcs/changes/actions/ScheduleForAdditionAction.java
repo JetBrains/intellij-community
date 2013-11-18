@@ -26,9 +26,9 @@ import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.FileStatusManager;
@@ -60,10 +60,15 @@ public class ScheduleForAdditionAction extends AnAction implements DumbAware {
       return;
     }
     final ChangeListManagerImpl changeListManager = ChangeListManagerImpl.getInstanceImpl(e.getData(CommonDataKeys.PROJECT));
-    changeListManager.addUnversionedFiles(changeListManager.getDefaultChangeList(), unversionedFiles);
+    changeListManager.addUnversionedFiles(changeListManager.getDefaultChangeList(), unversionedFiles, new Condition<FileStatus>() {
+      @Override
+      public boolean value(FileStatus status) {
+        return isStatusForAddition(status);
+      }
+    });
   }
 
-  private static boolean thereAreUnversionedFiles(AnActionEvent e) {
+  private boolean thereAreUnversionedFiles(AnActionEvent e) {
     List<VirtualFile> unversionedFiles = getFromChangesView(e);
     if (unversionedFiles != null && !unversionedFiles.isEmpty()) {
       return true;
@@ -84,7 +89,7 @@ public class ScheduleForAdditionAction extends AnAction implements DumbAware {
   }
 
   @NotNull
-  private static List<VirtualFile> getUnversionedFiles(final AnActionEvent e) {
+  private List<VirtualFile> getUnversionedFiles(final AnActionEvent e) {
     List<VirtualFile> unversionedFiles = getFromChangesView(e);
     if (unversionedFiles != null && !unversionedFiles.isEmpty()) {
       return unversionedFiles;
@@ -106,11 +111,15 @@ public class ScheduleForAdditionAction extends AnAction implements DumbAware {
     return unversionedFiles;
   }
 
-  private static boolean isFileUnversioned(@NotNull VirtualFile file,
-                                           @NotNull ProjectLevelVcsManager vcsManager, @NotNull FileStatusManager fileStatusManager) {
+  private boolean isFileUnversioned(@NotNull VirtualFile file,
+                                    @NotNull ProjectLevelVcsManager vcsManager, @NotNull FileStatusManager fileStatusManager) {
     AbstractVcs vcs = vcsManager.getVcsFor(file);
     return vcs != null && !vcs.areDirectoriesVersionedItems() && file.isDirectory() ||
-           fileStatusManager.getStatus(file) == FileStatus.UNKNOWN;
+           isStatusForAddition(fileStatusManager.getStatus(file));
+  }
+
+  protected boolean isStatusForAddition(FileStatus status) {
+    return status == FileStatus.UNKNOWN;
   }
 
   @Nullable

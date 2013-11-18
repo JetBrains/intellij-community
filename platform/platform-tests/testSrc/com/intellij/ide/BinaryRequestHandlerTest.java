@@ -31,7 +31,7 @@ public class BinaryRequestHandlerTest extends LightPlatformTestCase {
       protected void initChannel(Channel channel) throws Exception {
         channel.pipeline().addLast(new Decoder() {
           @Override
-          protected void channelRead0(ChannelHandlerContext context, ByteBuf message) throws Exception {
+          protected void messageReceived(ChannelHandlerContext context, ByteBuf message) throws Exception {
             int requiredLength = 4 + text.length();
             ByteBuf buffer = getBufferIfSufficient(message, requiredLength, context);
             if (buffer == null) {
@@ -100,7 +100,7 @@ public class BinaryRequestHandlerTest extends LightPlatformTestCase {
       }
 
       @Override
-      protected void channelRead0(ChannelHandlerContext context, ByteBuf message) throws Exception {
+      protected void messageReceived(ChannelHandlerContext context, ByteBuf message) throws Exception {
         while (true) {
           switch (state) {
             case HEADER: {

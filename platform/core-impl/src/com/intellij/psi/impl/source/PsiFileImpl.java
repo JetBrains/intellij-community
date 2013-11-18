@@ -311,7 +311,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
 
   protected void reportStubAstMismatch(String message, StubTree stubTree, Document cachedDocument) {
     rebuildStub();
-    clearStub();
+    clearStub("stub-psi mismatch");
     scheduleDropCachesWithInvalidStubPsi();
 
     String msg = message;
@@ -388,15 +388,15 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     myViewProvider.beforeContentsSynchronized();
     synchronized (PsiLock.LOCK) {
       myTreeElementPointer = null;
-      clearStub();
+      clearStub("unloadContent");
     }
   }
 
-  private void clearStub() {
+  private void clearStub(@NotNull String reason) {
     SoftReference<StubTree> stubRef = myStub;
     StubTree stubHolder = stubRef == null ? null : stubRef.get();
     if (stubHolder != null) {
-      ((StubBase<?>)stubHolder.getRoot()).setPsi(null);
+      ((PsiFileStubImpl<?>)stubHolder.getRoot()).clearPsi(reason);
     }
     myStub = null;
   }
@@ -440,18 +440,18 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
 
   @Override
   public void subtreeChanged() {
-    doClearCaches();
+    doClearCaches("subtreeChanged");
     getViewProvider().rootChanged(this);
   }
 
-  private void doClearCaches() {
+  private void doClearCaches(String reason) {
     final FileElement tree = getTreeElement();
     if (tree != null) {
       tree.clearCaches();
     }
 
     synchronized (PsiLock.LOCK) {
-      clearStub();
+      clearStub(reason);
     }
     if (tree != null) {
       tree.putUserData(STUB_TREE_IN_PARSED_TREE, null);
@@ -497,7 +497,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
   @Override
   public PsiElement setName(@NotNull String name) throws IncorrectOperationException {
     checkSetName(name);
-    doClearCaches();
+    doClearCaches("setName");
     return PsiFileImplUtil.setName(this, name);
   }
 

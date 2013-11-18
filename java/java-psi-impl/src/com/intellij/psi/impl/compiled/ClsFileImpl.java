@@ -34,7 +34,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.JavaPsiImplementationHelper;
 import com.intellij.psi.impl.PsiFileEx;
 import com.intellij.psi.impl.PsiManagerEx;
-import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.java.stubs.PsiClassStub;
 import com.intellij.psi.impl.java.stubs.impl.PsiJavaFileStubImpl;
 import com.intellij.psi.impl.source.PsiFileImpl;
@@ -67,7 +66,7 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub>
   private final Object myMirrorLock = new Object();
   private final Object myStubLock = new Object();
 
-  private final PsiManagerImpl myManager;
+  private final PsiManager myManager;
   private final boolean myIsForDecompiling;
   private final FileViewProvider myViewProvider;
   private volatile SoftReference<StubTree> myStub;
@@ -75,7 +74,7 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub>
   private volatile ClsPackageStatementImpl myPackageStatement = null;
   private boolean myIsPhysical = true;
 
-  private ClsFileImpl(@NotNull PsiManagerImpl manager, @NotNull FileViewProvider viewProvider, boolean forDecompiling) {
+  private ClsFileImpl(@NotNull PsiManager manager, @NotNull FileViewProvider viewProvider, boolean forDecompiling) {
     //noinspection ConstantConditions
     super(null);
     myManager = manager;
@@ -84,7 +83,7 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub>
     JavaElementType.CLASS.getIndex();  // initialize Java stubs
   }
 
-  public ClsFileImpl(PsiManagerImpl manager, FileViewProvider viewProvider) {
+  public ClsFileImpl(PsiManager manager, FileViewProvider viewProvider) {
     this(manager, viewProvider, false);
   }
 
@@ -388,7 +387,7 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub>
     }
 
     if (psiFile == null) {
-      psiFile = new ClsFileImpl((PsiManagerImpl)manager, new ClassFileViewProvider(manager, file), true);
+      psiFile = new ClsFileImpl(manager, new ClassFileViewProvider(manager, file), true);
     }
 
     final StringBuilder buffer = new StringBuilder();
@@ -456,7 +455,7 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub>
       myStub = null;
       if (stubTree != null) {
         //noinspection unchecked
-        ((PsiFileStubImpl)stubTree.getRoot()).setPsi(null);
+        ((PsiFileStubImpl)stubTree.getRoot()).clearPsi("cls onContentReload");
       }
     }
 

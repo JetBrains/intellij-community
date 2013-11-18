@@ -365,6 +365,11 @@ public class VfsUtilCore {
   }
 
   @NotNull
+  public static String toIdeaUrl(@NotNull String url) {
+    return toIdeaUrl(url, true);
+  }
+
+  @NotNull
   public static String toIdeaUrl(@NotNull String url, boolean removeLocalhostPrefix) {
     int index = url.indexOf(":/");
     if (index < 0 || (index + 2) >= url.length()) {

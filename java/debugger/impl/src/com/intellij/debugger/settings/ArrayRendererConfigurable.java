@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,6 @@ import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.ui.tree.render.ArrayRenderer;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.options.UnnamedConfigurable;
-import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 
 import javax.swing.*;
@@ -77,7 +76,7 @@ public class ArrayRendererConfigurable implements UnnamedConfigurable{
           DebuggerBundle.message("warning.range.too.big", ApplicationNamesInfo.getInstance().getProductName()),
           DebuggerBundle.message("title.range.too.big"),
           Messages.getWarningIcon());
-        if(answer != DialogWrapper.OK_EXIT_CODE) {
+        if(answer != Messages.OK) {
           return;
         }
       }

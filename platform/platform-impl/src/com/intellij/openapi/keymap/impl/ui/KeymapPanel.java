@@ -437,7 +437,7 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
 
     group.add(new DumbAwareAction(KeyMapBundle.message("filter.shortcut.action.text"),
                            KeyMapBundle.message("filter.shortcut.action.text"),
-                           AllIcons.Ant.ShortcutFilter) {
+                           AllIcons.Actions.ShortcutFilter) {
       public void actionPerformed(AnActionEvent e) {
         myFilterComponent.reset();
         if (myPopup == null || myPopup.getContent() == null){
@@ -577,14 +577,14 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
           KeyMapBundle.message("conflict.shortcut.dialog.cancel.button"),
         Messages.getWarningIcon());
 
-      if(result == 0) {
+      if(result == Messages.YES) {
         for (String id : conflicts.keySet()) {
           for (KeyboardShortcut s : conflicts.get(id)) {
             mySelectedKeymap.removeShortcut(id, s);
           }
         }
       }
-      else if (result != 1) {
+      else if (result != Messages.NO) {
         return;
       }
     }
@@ -649,12 +649,12 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
           KeyMapBundle.message("conflict.shortcut.dialog.cancel.button"),
         Messages.getWarningIcon());
 
-      if(result == 0) {
+      if(result == Messages.YES) {
         for (String id : actionIds) {
           mySelectedKeymap.removeShortcut(id, mouseShortcut);
         }
       }
-      else if (result != 1) {
+      else if (result != Messages.NO) {
         return;
       }
     }
@@ -778,7 +778,7 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
     }
     int result = Messages.showYesNoDialog(this, KeyMapBundle.message("delete.keymap.dialog.message"),
                                           KeyMapBundle.message("delete.keymap.dialog.title"), Messages.getWarningIcon());
-    if (result != 0) {
+    if (result != Messages.YES) {
       return;
     }
     myKeymapListModel.removeElement(myKeymapList.getSelectedItem());

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -109,7 +109,7 @@ public class AddSupportForSingleFrameworkDialog extends DialogWrapper {
         int answer = Messages.showYesNoDialog(getRootPane(),
                                               ProjectBundle.message("warning.message.some.required.libraries.wasn.t.downloaded"),
                                               CommonBundle.getWarningTitle(), Messages.getWarningIcon());
-        if (answer != 0) {
+        if (answer != Messages.YES) {
           return;
         }
       }
@@ -166,12 +166,12 @@ public class AddSupportForSingleFrameworkDialog extends DialogWrapper {
       }
       final int result = Messages.showYesNoCancelDialog(rootModel.getProject(), message, "Library Already Exists",
                                                         "&Replace", "&Add", "&Cancel", null);
-      if (result == 0) {
+      if (result == Messages.YES) {
         for (OrderEntry entry : existingEntries) {
           rootModel.removeOrderEntry(entry);
         }
       }
-      else if (result != 1) {
+      else if (result != Messages.NO) {
         return false;
       }
     }

@@ -55,6 +55,7 @@ import java.awt.image.PixelGrabber;
 import java.beans.PropertyChangeListener;
 import java.lang.ref.WeakReference;
 import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.URL;
 import java.util.*;
@@ -1248,7 +1249,7 @@ public class UIUtil {
     g.setPaint(getGradientPaint(startX, 2, c1, startX, height - 5, c2));
 
     if (isRetina()) {
-      g.fillRoundRect(startX - 1, 3, endX - startX + 2, height - 5, 5, 5);
+      g.fillRoundRect(startX - 1, 2, endX - startX + 1, height - 4, 5, 5);
       g.setComposite(oldComposite);
       return;
     }
@@ -2670,5 +2671,18 @@ public class UIUtil {
       if (each.isVisible() && each.isActive()) return each;
     }
     return JOptionPane.getRootFrame();
+  }
+
+  public static void setAutoRequestFocus (final Window onWindow, final boolean set){
+    if (SystemInfo.isMac) return;
+    if (SystemInfo.isJavaVersionAtLeast("1.7")) {
+      try {
+        Method setAutoRequestFocusMethod  = onWindow.getClass().getMethod("setAutoRequestFocus",new Class [] {boolean.class});
+        setAutoRequestFocusMethod.invoke(onWindow, set);
+      }
+      catch (NoSuchMethodException e) { LOG.debug(e); }
+      catch (InvocationTargetException e) { LOG.debug(e); }
+      catch (IllegalAccessException e) { LOG.debug(e); }
+    }
   }
 }

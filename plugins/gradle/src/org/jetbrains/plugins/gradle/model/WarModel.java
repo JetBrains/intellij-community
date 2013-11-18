@@ -32,4 +32,8 @@ public interface WarModel extends Serializable {
   File getWebXml();
 
   Map<String, Set<String>> getWebRoots();
+
+  Set<File> getClasspath();
+
+  String getManifestContent();
 }

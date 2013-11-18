@@ -23,6 +23,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnApplicationSettings;
+import org.jetbrains.idea.svn.SvnProgressCanceller;
 import org.jetbrains.idea.svn.SvnUtil;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.tmatesoft.svn.core.SVNURL;
@@ -71,6 +72,10 @@ public class CommandRuntime {
   }
 
   private void onStart(@NotNull Command command) throws SvnBindException {
+    // TODO: Actually command handler should be used as canceller, but currently all handlers use same cancel logic -
+    // TODO: - just check progress indicator
+    command.setCanceller(new SvnProgressCanceller());
+
     for (CommandRuntimeModule module : myModules) {
       module.onStart(command);
     }
@@ -79,56 +84,73 @@ public class CommandRuntime {
   private boolean onAfterCommand(@NotNull CommandExecutor executor, @NotNull Command command) throws SvnBindException {
     boolean repeat = false;
 
-    // could be situations when exit code = 0, but there is info "warning" in error stream for instance, for "svn status"
-    // on non-working copy folder
     // TODO: synchronization does not work well in all cases - sometimes exit code is not yet set and null returned - fix synchronization
     // here we treat null exit code as some non-zero exit code
     final Integer exitCode = executor.getExitCodeReference();
     if (exitCode == null || exitCode != 0) {
       logNullExitCode(executor, exitCode);
-
-      if (executor.isManuallyDestroyed()) {
-        cleanup(executor, command.getWorkingDirectory());
-
-        String destroyReason = executor.getDestroyReason();
-        if (!StringUtil.isEmpty(destroyReason)) {
-          throw new SvnBindException(destroyReason);
-        }
-      }
-
-      if (executor.getErrorOutput().length() > 0) {
-        // handle authentication
-        final String errText = executor.getErrorOutput().trim();
-        final AuthCallbackCase callback = executor instanceof TerminalExecutor ? null : createCallback(errText, command.getRepositoryUrl());
-        if (callback != null) {
-          if (callback.getCredentials(errText)) {
-            if (myAuthCallback.getSpecialConfigDir() != null) {
-              command.setConfigDir(myAuthCallback.getSpecialConfigDir());
-            }
-            callback.updateParameters(command);
-            repeat = true;
-          } else {
-            throw new SvnBindException(errText);
-          }
-        } else {
-          throw new SvnBindException(errText);
-        }
-      } else {
-        // no errors found in error stream => we treat null exitCode as successful, otherwise exception is thrown
-        if (exitCode != null) {
-          // here exitCode != null && exitCode != 0
-          LOG.info("Command - " + executor.getCommandText());
-          LOG.info("Command output - " + executor.getOutput());
-
-          throw new SvnBindException("Svn process exited with error code: " + exitCode);
-        }
-      }
-    } else if (executor.getErrorOutput().length() > 0) {
-      // here exitCode == 0, but some warnings are in error stream
-      LOG.info("Detected warning - " + executor.getErrorOutput());
+      cleanupManualDestroy(executor, command);
+      repeat = !StringUtil.isEmpty(executor.getErrorOutput()) ? handleErrorText(executor, command) : handleErrorCode(executor);
+    }
+    else {
+      handleSuccess(executor);
     }
 
     return repeat;
+  }
+
+  private static void handleSuccess(CommandExecutor executor) {
+    // could be situations when exit code = 0, but there is info "warning" in error stream for instance, for "svn status"
+    // on non-working copy folder
+    if (executor.getErrorOutput().length() > 0) {
+      // here exitCode == 0, but some warnings are in error stream
+      LOG.info("Detected warning - " + executor.getErrorOutput());
+    }
+  }
+
+  private static boolean handleErrorCode(CommandExecutor executor) throws SvnBindException {
+    // no errors found in error stream => we treat null exitCode as successful, otherwise exception is thrown
+    Integer exitCode = executor.getExitCodeReference();
+    if (exitCode != null) {
+      // here exitCode != null && exitCode != 0
+      LOG.info("Command - " + executor.getCommandText());
+      LOG.info("Command output - " + executor.getOutput());
+
+      throw new SvnBindException("Svn process exited with error code: " + exitCode);
+    }
+
+    return false;
+  }
+
+  private boolean handleErrorText(CommandExecutor executor, Command command) throws SvnBindException {
+    final String errText = executor.getErrorOutput().trim();
+    final AuthCallbackCase callback = executor instanceof TerminalExecutor ? null : createCallback(errText, command.getRepositoryUrl());
+    // do not handle possible authentication errors if command was manually cancelled
+    // force checking if command is cancelled and not just use corresponding value from executor - as there could be cases when command
+    // finishes quickly but with some auth error - this way checkCancelled() is not called by executor itself and so command is repeated
+    // "infinite" times despite it was cancelled.
+    if (!executor.checkCancelled() && callback != null) {
+      if (callback.getCredentials(errText)) {
+        if (myAuthCallback.getSpecialConfigDir() != null) {
+          command.setConfigDir(myAuthCallback.getSpecialConfigDir());
+        }
+        callback.updateParameters(command);
+        return true;
+      }
+    }
+
+    throw new SvnBindException(errText);
+  }
+
+  private void cleanupManualDestroy(CommandExecutor executor, Command command) throws SvnBindException {
+    if (executor.isManuallyDestroyed()) {
+      cleanup(executor, command.getWorkingDirectory());
+
+      String destroyReason = executor.getDestroyReason();
+      if (!StringUtil.isEmpty(destroyReason)) {
+        throw new SvnBindException(destroyReason);
+      }
+    }
   }
 
   private void onFinish() {

@@ -100,7 +100,8 @@ import org.jetbrains.jps.cmdline.ClasspathBootstrap;
 import org.jetbrains.jps.incremental.Utils;
 import org.jetbrains.jps.model.serialization.JpsGlobalLoader;
 
-import javax.tools.*;
+import javax.tools.JavaCompiler;
+import javax.tools.ToolProvider;
 import java.awt.*;
 import java.io.File;
 import java.io.IOException;
@@ -838,13 +839,7 @@ public class BuildManager implements ApplicationComponent{
     cmdLine.setExePath(vmExecutablePath);
     //cmdLine.addParameter("-XX:MaxPermSize=150m");
     //cmdLine.addParameter("-XX:ReservedCodeCacheSize=64m");
-    int heapSize = config.COMPILER_PROCESS_HEAP_SIZE;
-
-    // todo: remove when old make implementation is removed
-    if (heapSize == CompilerWorkspaceConfiguration.DEFAULT_COMPILE_PROCESS_HEAP_SIZE) {
-      // check if javac is set to use larger heap, and if so, use it.
-      heapSize = Math.max(heapSize, JavacConfiguration.getOptions(project, JavacConfiguration.class).MAXIMUM_HEAP_SIZE);
-    }
+    final int heapSize = config.getProcessHeapSize(JavacConfiguration.getOptions(project, JavacConfiguration.class).MAXIMUM_HEAP_SIZE);
 
     cmdLine.addParameter("-Xmx" + heapSize + "m");
 

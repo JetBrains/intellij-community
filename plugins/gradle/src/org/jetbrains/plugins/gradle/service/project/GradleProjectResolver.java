@@ -154,7 +154,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
       parametersList.getParameters(), resolverCtx.getConnection());
 
     // TODO [vlad] remove the check
-    if (GradleEnvironment.USE_ENHANCED_TOOLING_API) {
+    if (!GradleEnvironment.DISABLE_ENHANCED_TOOLING_API) {
       GradleExecutionHelper.setInitScript(buildActionExecutor);
     }
 

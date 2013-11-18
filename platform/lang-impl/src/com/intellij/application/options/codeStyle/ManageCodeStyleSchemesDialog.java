@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -256,7 +256,7 @@ public class ManageCodeStyleSchemesDialog extends DialogWrapper {
                                                       ApplicationBundle.message("message.code.style.scheme.already.exists", targetName),
                                                       ApplicationBundle.message("title.code.style.settings.import"),
                                                       Messages.getQuestionIcon());
-                if (result != Messages.OK) {
+                if (result != Messages.YES) {
                   return null;
                 }
               }
@@ -423,7 +423,7 @@ public class ManageCodeStyleSchemesDialog extends DialogWrapper {
         .showYesNoDialog("Scheme '" + scheme.getName() + "' was copied to be used as the project scheme.\n" +
                          "Switch to this created scheme?",
                          "Copy Scheme to Project", Messages.getQuestionIcon());
-      if (switchToProject == 0) {
+      if (switchToProject == Messages.YES) {
         mySchemesModel.setUsePerProjectSettings(true, true);
       }
     }
@@ -437,7 +437,7 @@ public class ManageCodeStyleSchemesDialog extends DialogWrapper {
           .showYesNoDialog("Project scheme was copied to global scheme list as '" + newScheme.getName() + "'.\n" +
                            "Switch to this created scheme?",
                            "Copy Project Scheme to Global List", Messages.getQuestionIcon());
-        if (switchToGlobal == 0) {
+        if (switchToGlobal == Messages.YES) {
           mySchemesModel.setUsePerProjectSettings(false);
           mySchemesModel.selectScheme(newScheme, null);
         }

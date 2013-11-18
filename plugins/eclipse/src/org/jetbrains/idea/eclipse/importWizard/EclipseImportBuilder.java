@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,7 +43,6 @@ import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.startup.StartupManager;
-import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.JDOMUtil;
@@ -275,8 +274,8 @@ public class EclipseImportBuilder extends ProjectImportBuilder<String> implement
                                                               }, "\n") +
                                                               ".\n Would you like to reuse them?", "Module files found",
                                                               Messages.getQuestionIcon());
-        if (resultCode != DialogWrapper.OK_EXIT_CODE) {
-          if (resultCode == DialogWrapper.CANCEL_EXIT_CODE) {
+        if (resultCode != Messages.YES) {
+          if (resultCode == Messages.NO) {
             final LocalFileSystem localFileSystem = LocalFileSystem.getInstance();
             for (File file : files) {
               final VirtualFile virtualFile = localFileSystem.findFileByIoFile(file);

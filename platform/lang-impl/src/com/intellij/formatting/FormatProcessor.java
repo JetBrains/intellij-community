@@ -338,7 +338,7 @@ class FormatProcessor {
       WhiteSpace whiteSpace = block.getWhiteSpace();
       CharSequence newWs = documentModel.adjustWhiteSpaceIfNecessary(
         whiteSpace.generateWhiteSpace(getIndentOptionsToUse(block, indentOption)), whiteSpace.getStartOffset(),
-        whiteSpace.getEndOffset(), false
+        whiteSpace.getEndOffset(), block.getNode(), false
       );
       if (changes.size() > 10000) {
         CharSequence mergeResult = BulkChangesMerger.INSTANCE.mergeToCharSequence(document.getChars(), document.getTextLength(), changes);
@@ -386,7 +386,9 @@ class FormatProcessor {
     final TextRange textRange = whiteSpace.getTextRange();
     final TextRange wsRange = shiftRange(textRange, shift);
     final String newWhiteSpace = _newWhiteSpace.toString();
-    TextRange newWhiteSpaceRange = model.replaceWhiteSpace(wsRange, newWhiteSpace);
+    TextRange newWhiteSpaceRange = model instanceof FormattingModelEx
+                                   ? ((FormattingModelEx) model).replaceWhiteSpace(wsRange, block.getNode(), newWhiteSpace)
+                                   : model.replaceWhiteSpace(wsRange, newWhiteSpace);
 
     shift += newWhiteSpaceRange.getLength() - textRange.getLength();
 

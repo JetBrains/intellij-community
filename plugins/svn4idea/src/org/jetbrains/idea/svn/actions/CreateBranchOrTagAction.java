@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -89,7 +89,7 @@ public class CreateBranchOrTagAction extends BasicAction {
         if (!dirExists(activeVcs, project, parentUrl)) {
           int rc = Messages.showYesNoDialog(project, "The repository path '" + parentUrl + "' does not exist. Would you like to create it?",
                                             "Branch or Tag", Messages.getQuestionIcon());
-          if (rc == 1) {
+          if (rc == Messages.NO) {
             return;
           }
         }

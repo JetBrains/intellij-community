@@ -30,7 +30,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vcs.CheckinProjectPanel;
 import com.intellij.openapi.vcs.VcsBundle;
@@ -154,7 +153,7 @@ public class TodoCheckinHandler extends CheckinHandler {
                               " can't be performed while " + ApplicationNamesInfo.getInstance().getFullProductName() + " updates the indices in background.\n" +
                               "You can commit the changes without running checks, or you can wait until indices are built.",
                               todoName + " is not possible right now",
-                              "&Wait", "&Commit", null) == DialogWrapper.OK_EXIT_CODE) {
+                              "&Wait", "&Commit", null) == Messages.OK) {
         return ReturnResult.CANCEL;
       }
       return ReturnResult.COMMIT;

@@ -72,6 +72,7 @@ public class StatementsParsingTest extends GroovyParsingTestCase {
   public void testFor$for10() throws Throwable { doTest(); }
   public void testFor$for11() throws Throwable { doTest(); }
   public void testFor$for12() throws Throwable { doTest(); }
+  public void testFor$for13() throws Throwable { doTest(); }
   public void testFor$for2() throws Throwable { doTest(); }
   public void testFor$for3() throws Throwable { doTest(); }
   public void testFor$for4() throws Throwable { doTest(); }
@@ -105,7 +106,6 @@ public class StatementsParsingTest extends GroovyParsingTestCase {
   public void testLoop$while2() throws Throwable { doTest(); }
   public void testLoop$while3() throws Throwable { doTest(); }
   public void testLoop$while4() throws Throwable { doTest(); }
-  public void testLoop$while5() throws Throwable { doTest(); }
   public void testLoop$while6() throws Throwable { doTest(); }
   public void testMethods$method1() throws Throwable { doTest(); }
   public void testMethods$method2() throws Throwable { doTest(); }

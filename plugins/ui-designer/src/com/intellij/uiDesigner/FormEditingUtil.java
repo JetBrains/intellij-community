@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,6 @@ import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.Ref;
@@ -551,7 +550,7 @@ public final class FormEditingUtil {
             final int rc = Messages.showYesNoDialog(editor, message,
                                                     isRow ? UIDesignerBundle.message("delete.row.title")
                                                           : UIDesignerBundle.message("delete.column.title"), Messages.getQuestionIcon());
-            if (rc != DialogWrapper.OK_EXIT_CODE) {
+            if (rc != Messages.YES) {
               return;
             }
 

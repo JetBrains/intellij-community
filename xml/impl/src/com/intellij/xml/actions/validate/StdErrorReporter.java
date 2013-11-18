@@ -211,7 +211,7 @@ public class StdErrorReporter extends ErrorReporter {
             XmlBundle.message("xml.validate.validation.is.running.terminate.confirmation.title"),
             Messages.getQuestionIcon()
           );
-          if (result != 0) {
+          if (result != Messages.YES) {
             event.consume();
           }
         }

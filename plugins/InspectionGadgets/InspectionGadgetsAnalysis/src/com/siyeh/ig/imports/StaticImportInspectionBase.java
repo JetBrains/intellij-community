@@ -255,7 +255,7 @@ public class StaticImportInspectionBase extends BaseInspection {
       if (importList == null) {
         return;
       }
-      if (ignoreInTestCode && TestUtils.isTest(aClass)) {
+      if (ignoreInTestCode && TestUtils.isInTestSourceContent(aClass)) {
         return;
       }
       final PsiImportStaticStatement[] importStatements = importList.getImportStaticStatements();

@@ -897,11 +897,11 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
 
     public void update() {
       AbstractMessage logMessage = getSelectedMessage();
-      if (logMessage != null && !logMessage.isSubmitted()) {
+      if (logMessage != null) {
         ErrorReportSubmitter submitter = getSubmitter(logMessage.getThrowable());
         if (submitter != null) {
           putValue(NAME, submitter.getReportActionText());
-          setEnabled(true);
+          setEnabled(!logMessage.isSubmitted());
           return;
         }
       }

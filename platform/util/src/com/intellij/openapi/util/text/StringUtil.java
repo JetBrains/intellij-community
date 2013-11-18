@@ -853,6 +853,13 @@ public class StringUtil extends StringUtilRt {
   }
 
   @NotNull
+  public static String trimLeading(@NotNull String string, char symbol) {
+    int index = 0;
+    while (index < string.length() && string.charAt(index) == symbol) index++;
+    return string.substring(index);
+  }
+
+  @NotNull
   public static String trimTrailing(@NotNull String string) {
     int index = string.length() - 1;
     while (index >= 0 && Character.isWhitespace(string.charAt(index))) index--;
@@ -1772,6 +1779,12 @@ public class StringUtil extends StringUtilRt {
     if (text == null) return null;
     return replace(text, REPLACES_DISP, REPLACES_REFS);
   }
+
+  @NotNull
+  public static String htmlEmphasize(String text) {
+    return "<b><code>" + escapeXml(text) + "</code></b>";
+  }
+
 
   @NotNull
   public static String escapeToRegexp(@NotNull String text) {

@@ -141,6 +141,7 @@ public class GithubNotifications {
     Messages.showInfoMessage(component, getErrorTextFromException(e), title);
   }
 
+  @Messages.YesNoResult
   public static int showYesNoDialog(final @Nullable Project project, final @NotNull String title, final @NotNull String message) {
     return Messages.showYesNoDialog(project, message, title, Messages.getQuestionIcon());
   }

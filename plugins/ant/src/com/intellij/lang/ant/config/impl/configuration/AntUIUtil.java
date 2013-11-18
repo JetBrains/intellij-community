@@ -36,6 +36,7 @@ import com.intellij.util.PlatformIcons;
 import com.intellij.util.config.AbstractProperty;
 import com.intellij.util.ui.AbstractTableCellEditor;
 import com.intellij.util.ui.CellEditorComponentWithBrowseButton;
+import icons.AntIcons;
 
 import javax.swing.*;
 import javax.swing.text.BadLocationException;
@@ -96,7 +97,7 @@ public class AntUIUtil {
   }
 
   public static void customizeAnt(AbstractProperty.AbstractPropertyContainer antProperties, SimpleColoredComponent component) {
-    component.setIcon(AllIcons.Ant.AntInstallation);
+    component.setIcon(AntIcons.AntInstallation);
     String name = AntInstallation.NAME.get(antProperties);
     component.append(name, SimpleTextAttributes.REGULAR_ATTRIBUTES);
     String versionString = AntInstallation.VERSION.get(antProperties);

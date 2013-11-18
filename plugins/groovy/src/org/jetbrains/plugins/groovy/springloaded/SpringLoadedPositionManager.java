@@ -102,6 +102,10 @@ public class SpringLoadedPositionManager implements PositionManager {
       }
     }
 
+    if (element != null) {
+      return getClassNameForJvm((PsiClass)element);
+    }
+
     return null;
   }
 

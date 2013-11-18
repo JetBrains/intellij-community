@@ -16,7 +16,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.remoteServer.agent.util.CloudGitAgent;
 import com.intellij.remoteServer.agent.util.CloudGitAgentDeployment;
 import com.intellij.remoteServer.agent.util.CloudGitApplication;
-import com.intellij.remoteServer.agent.util.CloudGitLoggingHandler;
+import com.intellij.remoteServer.agent.util.CloudLoggingHandler;
 import com.intellij.remoteServer.configuration.deployment.DeploymentSource;
 import com.intellij.remoteServer.configuration.deployment.ModuleDeploymentSource;
 import com.intellij.remoteServer.runtime.ServerTaskExecutor;
@@ -56,7 +56,7 @@ public abstract class CloudGitDeploymentRuntime<DC extends CloudDeploymentNameCo
   private final File myContentRootFile;
   private final AgentTaskExecutor myAgentTaskExecutor;
   private final String myPresentableName;
-  private final CloudGitLoggingHandler myLoggingHandler;
+  private final CloudLoggingHandler myLoggingHandler;
   private final ServerTaskExecutor myTasksExecutor;
   private final AD myDeployment;
 
@@ -70,7 +70,7 @@ public abstract class CloudGitDeploymentRuntime<DC extends CloudDeploymentNameCo
                                    ServerTaskExecutor taskExecutor,
                                    DeploymentTask<DC> task,
                                    AgentTaskExecutor agentTaskExecutor,
-                                   CloudGitLoggingHandler loggingHandler,
+                                   CloudLoggingHandler loggingHandler,
                                    CloudDeploymentNameProvider deploymentNameProvider,
                                    String remoteName,
                                    String cloudName) throws ServerRuntimeException {

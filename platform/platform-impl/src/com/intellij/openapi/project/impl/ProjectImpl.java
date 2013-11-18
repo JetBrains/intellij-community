@@ -521,7 +521,7 @@ public class ProjectImpl extends ComponentManagerImpl implements ProjectEx {
           }
           else {
             if (Messages.showYesNoDialog(this, "Component could not be reloaded. Reload project?", "Configuration Changed",
-                                         Messages.getQuestionIcon()) == 0) {
+                                         Messages.getQuestionIcon()) == Messages.YES) {
               ProjectManagerEx.getInstanceEx().reloadProject(this);
             }
           }

@@ -620,11 +620,47 @@ public abstract class HgUtil {
   }
 
   public static List<String> getNamesWithoutHashes(Collection<HgNameWithHashInfo> namesWithHashes) {
-    return ContainerUtil.map(namesWithHashes, new Function<HgNameWithHashInfo, String>() {
-      @Override
-      public String fun(HgNameWithHashInfo info) {
-        return info.getName();
+    //return names without duplication (actually for several heads in one branch)
+    List<String> names = new ArrayList<String>();
+    for (HgNameWithHashInfo hash : namesWithHashes) {
+      if (!names.contains(hash.getName())) {
+        names.add(hash.getName());
       }
-    });
+    }
+    return names;
+  }
+
+  @NotNull
+  public static List<String> parseUserNameAndEmail(String authorString) {
+    //maybe return value should be a pair of String not an array
+    List<String> userInfoList = new ArrayList<String>(2);
+    if (authorString == null) {
+      return Arrays.asList("", "");
+    }
+
+    // Vasya Pupkin <vasya.pupkin@jetbrains.com> -> Vasya Pupkin , vasya.pupkin@jetbrains.com
+    final int[] ind = {authorString.indexOf('<'), authorString.indexOf('@'), authorString.indexOf('>')};
+    if (0 < ind[0] && ind[0] < ind[1] && ind[1] < ind[2]) {
+      String email = authorString.substring(ind[1] + 1, ind[2]).trim();
+      userInfoList.add(convertUserName(authorString.substring(0, ind[0])));
+      userInfoList.add(email);
+    }
+
+    // vasya.pupkin@email.com --> vasya pupkin, vasya.pupkin@email.com
+    else if (!authorString.contains(" ") && authorString.contains("@")) { //simple e-mail check. john@localhost
+      final String firstPart = convertUserName(authorString.substring(0, authorString.indexOf('@')));
+      userInfoList.add(firstPart); //user name
+      userInfoList.add(authorString);// email
+    }
+
+    else {
+      userInfoList.add(convertUserName(authorString));
+      userInfoList.add("");
+    }
+    return userInfoList;
+  }
+
+  private static String convertUserName(@NotNull String userNameInfo) {
+    return userNameInfo.trim().replace('.', ' ').replace('_', ' ').replace('-', ' ');
   }
 }

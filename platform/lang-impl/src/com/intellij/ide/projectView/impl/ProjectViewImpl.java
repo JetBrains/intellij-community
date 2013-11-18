@@ -1160,7 +1160,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
       String message = IdeBundle.message("detach.library.from.module", orderEntry.getPresentableName(), module.getName());
       String title = IdeBundle.message("detach.library");
       int ret = Messages.showOkCancelDialog(project, message, title, Messages.getQuestionIcon());
-      if (ret != 0) return;
+      if (ret != Messages.OK) return;
       CommandProcessor.getInstance().executeCommand(module.getProject(), new Runnable() {
         @Override
         public void run() {

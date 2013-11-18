@@ -15,8 +15,6 @@
  */
 package org.jetbrains.plugins.gradle.service.project;
 
-import com.google.common.collect.Maps;
-import com.intellij.util.containers.ContainerUtil;
 import org.gradle.tooling.BuildAction;
 import org.gradle.tooling.BuildController;
 import org.gradle.tooling.model.build.BuildEnvironment;
@@ -27,6 +25,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.Serializable;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
@@ -36,7 +36,7 @@ import java.util.Set;
  */
 public class ProjectImportAction implements BuildAction<ProjectImportAction.AllModels>, Serializable {
 
-  private final Set<Class> myExtraProjectModelClasses = ContainerUtil.newHashSet();
+  private final Set<Class> myExtraProjectModelClasses = new HashSet<Class>();
   private final boolean myIsPreviewMode;
 
   public ProjectImportAction(boolean isPreviewMode) {
@@ -71,7 +71,7 @@ public class ProjectImportAction implements BuildAction<ProjectImportAction.AllM
   }
 
   public static class AllModels implements Serializable {
-    @NotNull private final Map<String, Object> projectsByPath = Maps.newHashMap();
+    @NotNull private final Map<String, Object> projectsByPath = new HashMap<String, Object>();
     @NotNull private final IdeaProject myIdeaProject;
     @Nullable private BuildEnvironment myBuildEnvironment;
 

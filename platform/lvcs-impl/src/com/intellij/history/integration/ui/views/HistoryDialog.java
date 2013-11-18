@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -408,7 +408,7 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends FrameW
     if (questions.isEmpty()) return true;
 
     return Messages.showYesNoDialog(myProject, message("message.do.you.want.to.proceed", formatQuestions(questions)),
-                                    CommonBundle.getWarningTitle(), Messages.getWarningIcon()) == 0;
+                                    CommonBundle.getWarningTitle(), Messages.getWarningIcon()) == Messages.YES;
   }
 
   private String formatQuestions(List<String> questions) {

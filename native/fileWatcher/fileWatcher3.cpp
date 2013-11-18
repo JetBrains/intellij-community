@@ -41,13 +41,13 @@ CRITICAL_SECTION csOutput;
 void NormalizeSlashes(char *path, char slash)
 {
 	for(char *p=path; *p; p++)
-		if (*p == '\\' || *p == '/') 
+		if (*p == '\\' || *p == '/')
 			*p = slash;
 }
 
 // -- Watchable root checks ---------------------------------------------------
 
-bool IsNetworkDrive(const char *name) 
+bool IsNetworkDrive(const char *name)
 {
     const int BUF_SIZE = 1024;
     char buffer[BUF_SIZE];
@@ -96,7 +96,7 @@ bool IsWatchable(const char *path)
 
 // -- Substed drive checks ----------------------------------------------------
 
-void PrintRemapForSubstDrive(char driveLetter) 
+void PrintRemapForSubstDrive(char driveLetter)
 {
     const int BUF_SIZE = 1024;
     char targetPath[BUF_SIZE];
@@ -108,7 +108,7 @@ void PrintRemapForSubstDrive(char driveLetter)
     if (result == 0) {
         return;
     }
-    else 
+    else
 	{
         if (targetPath[0] == '\\' && targetPath[1] == '?' && targetPath[2] == '?' && targetPath[3] == '\\')
 		{
@@ -142,7 +142,7 @@ void PrintDirectoryReparsePoint(const char *path)
 	NormalizeSlashes(directory, '\\');
 	if (directory [strlen(directory)-1] != '\\')
 		strcat_s(directory, size, "\\");
-		
+
 	char volumeName[_MAX_PATH];
 	int rc = GetVolumeNameForVolumeMountPointA(directory, volumeName, sizeof(volumeName));
 	if (rc)
@@ -176,17 +176,17 @@ bool PrintMountPointsForVolume(HANDLE hVol, const char* volumePath, char *Buf)
     DWORD dwSysFlags;            // flags that describe the file system
     char FileSysNameBuf[BUFSIZE];
 
-    // Is this volume NTFS? 
+    // Is this volume NTFS?
     GetVolumeInformationA(Buf, NULL, 0, NULL, NULL, &dwSysFlags, FileSysNameBuf, BUFSIZE);
 
-    // Detect support for reparse points, and therefore for volume 
-    // mount points, which are implemented using reparse points. 
+    // Detect support for reparse points, and therefore for volume
+    // mount points, which are implemented using reparse points.
 
     if (! (dwSysFlags & FILE_SUPPORTS_REPARSE_POINTS)) {
        return true;
-    } 
+    }
 
-    // Start processing mount points on this volume. 
+    // Start processing mount points on this volume.
     hPt = FindFirstVolumeMountPointA(
         Buf, // root path of volume to be scanned
         Path, // pointer to output string
@@ -196,7 +196,7 @@ bool PrintMountPointsForVolume(HANDLE hVol, const char* volumePath, char *Buf)
     // Shall we error out?
     if (hPt == INVALID_HANDLE_VALUE) {
 		return GetLastError() != ERROR_ACCESS_DENIED;
-    } 
+    }
 
     // Process the volume mount point.
 	char *buf = new char[MAX_PATH];
@@ -217,7 +217,7 @@ bool PrintMountPoints(const char *path)
 	if (!res) {
         return false;
     }
-   
+
     char buf[BUFSIZE];            // buffer for unique volume identifiers
     HANDLE hVol;                  // handle for the volume scan
 
@@ -265,7 +265,7 @@ void PrintDirectoryReparsePoints(const char *path)
 }
 
 // This is called if we got an ERROR_ACCESS_DENIED when trying to enumerate all mount points for volume.
-// In this case, we walk the directory tree up from each watch root, and look at each parent directory 
+// In this case, we walk the directory tree up from each watch root, and look at each parent directory
 // to check whether it's a reparse point.
 void PrintWatchRootReparsePoints()
 {
@@ -295,7 +295,7 @@ void PrintChangeInfo(char *rootPath, FILE_NOTIFY_INFORMATION *info)
 	}
 	else if (info->Action == FILE_ACTION_MODIFIED)
 	{
-		command = "CHANGE";	
+		command = "CHANGE";
 	}
 	else
 	{
@@ -340,14 +340,14 @@ DWORD WINAPI WatcherThread(void *param)
 	handles [1] = overlapped.hEvent;
 	while(true)
 	{
-		int rcDir = ReadDirectoryChangesW(hRootDir, buffer, buffer_size, TRUE, 
+		int rcDir = ReadDirectoryChangesW(hRootDir, buffer, buffer_size, TRUE,
 			FILE_NOTIFY_CHANGE_FILE_NAME |
-			FILE_NOTIFY_CHANGE_DIR_NAME | 
-			FILE_NOTIFY_CHANGE_ATTRIBUTES | 
+			FILE_NOTIFY_CHANGE_DIR_NAME |
+			FILE_NOTIFY_CHANGE_ATTRIBUTES |
 			FILE_NOTIFY_CHANGE_SIZE |
 			FILE_NOTIFY_CHANGE_LAST_WRITE,
 			NULL,
-			&overlapped, 
+			&overlapped,
 			NULL);
 		if (rcDir == 0)
 		{
@@ -379,7 +379,7 @@ DWORD WINAPI WatcherThread(void *param)
 				PrintEverythingChangedUnderRoot(rootPath);
 			} else {
 				FILE_NOTIFY_INFORMATION *info = (FILE_NOTIFY_INFORMATION *) buffer;
-				while(true) 
+				while(true)
 				{
 					PrintChangeInfo(rootPath, info);
 					if (!info->NextEntryOffset)
@@ -553,6 +553,6 @@ int _tmain(int argc, _TCHAR* argv[])
 
 	MarkAllRootsUnused();
 	UpdateRoots();
-	
+
 	DeleteCriticalSection(&csOutput);
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -329,7 +329,7 @@ public class CustomizableActionsPanel {
       final int exitCode = Messages.showOkCancelDialog(IdeBundle.message("error.adding.action.without.icon.to.toolbar"),
                                                        IdeBundle.message("title.unable.to.add.action.without.icon.to.toolbar"),
                                                        Messages.getInformationIcon());
-      if (exitCode == DialogWrapper.OK_EXIT_CODE) {
+      if (exitCode == Messages.OK) {
         mySelectedSchema.addIconCustomization(actionId, null);
         anAction.getTemplatePresentation().setIcon(AllIcons.Toolbar.Unknown);
         anAction.setDefaultIcon(false);

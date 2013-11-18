@@ -795,7 +795,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
         try {
           final FileEditorProvider provider = providers[i];
           LOG.assertTrue(provider != null);
-          LOG.assertTrue(provider.accept(myProject, file));
+          LOG.assertTrue(provider.accept(myProject, file), "Provider " + provider + " doesn't accept file " + file);
           final FileEditor editor = provider.createEditor(myProject, file);
           LOG.assertTrue(editor != null);
           LOG.assertTrue(editor.isValid());

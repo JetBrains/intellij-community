@@ -21,7 +21,6 @@ import com.intellij.internal.statistic.beans.ConvertUsagesUtil;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
@@ -79,7 +78,7 @@ public class NewDirectoryProjectAction extends AnAction implements DumbAware {
                                         "The directory '" + location +
                                         "' is not empty. Would you like to create a project from existing sources instead?",
                                         "Create New Project", Messages.getQuestionIcon());
-      if (rc == 0) {
+      if (rc == Messages.YES) {
         return PlatformProjectOpenProcessor.getInstance().doOpenProject(baseDir, null, false);
       }
     }

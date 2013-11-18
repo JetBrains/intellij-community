@@ -151,9 +151,9 @@ private layoutWin(Map args, String home, Paths paths) {
   winVMOptions(target, null, "idea.exe", "idea64.exe")
   List resourcePaths = ["$home/community-resources/src", "$home/platform/icons/src"]
   buildWinLauncher(home, "$home/bin/WinLauncher/WinLauncher.exe", "$target/bin/idea.exe", appInfoFile(),
-                   "$home/build/conf/ideaCE-launcher.properties", null, resourcePaths)
+                   "$home/build/conf/ideaCE-launcher.properties", args.ce_exe_selector, resourcePaths)
   buildWinLauncher(home, "$home/bin/WinLauncher/WinLauncher64.exe", "$target/bin/idea64.exe", appInfoFile(),
-                   "$home/build/conf/ideaCE64-launcher.properties", null, resourcePaths)
+                   "$home/build/conf/ideaCE64-launcher.properties", args.ce_exe_selector, resourcePaths)
 }
 
 private layoutMac(Map _args, String home, Paths paths) {

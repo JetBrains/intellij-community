@@ -31,7 +31,6 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
@@ -94,8 +93,8 @@ public class ExtractMethodHelper {
       final int exitCode = !isUnittest ? Messages.showYesNoDialog(project, message,
                                                                   RefactoringBundle.message("refactoring.extract.method.dialog.title"),
                                                                   Messages.getInformationIcon()) :
-                           DialogWrapper.OK_EXIT_CODE;
-      if (exitCode == DialogWrapper.OK_EXIT_CODE) {
+                           Messages.YES;
+      if (exitCode == Messages.YES) {
         boolean replaceAll = false;
         final Map<SimpleMatch, RangeHighlighter> highlighterMap = new HashMap<SimpleMatch, RangeHighlighter>();
         for (SimpleMatch match : duplicates) {

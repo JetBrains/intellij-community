@@ -132,7 +132,7 @@ public class GrIntroduceConstantProcessor {
       String message = RefactoringBundle.message("field.exists", fieldName, oldField.getContainingClass().getQualifiedName());
       int answer = Messages
         .showYesNoDialog(context.getProject(), message, GrIntroduceConstantHandler.REFACTORING_NAME, Messages.getWarningIcon());
-      if (answer != 0) {
+      if (answer != Messages.YES) {
         return true;
       }
     }

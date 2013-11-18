@@ -163,6 +163,6 @@ public class CheckedExceptionCompatibilityConstraint extends InputOutputConstrai
                                             PsiExpression psiExpression,
                                             PsiType returnType, 
                                             Set<InferenceVariable> result) {
-    session.collectDependencies(returnType, result, true);
+    session.collectDependencies(returnType, result);
   }
 }

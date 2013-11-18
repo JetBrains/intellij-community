@@ -154,7 +154,7 @@ public class ConvertMapToClassIntention extends Intention {
                                                                                                GroovyIntentionsBundle
                                                                                                  .message(
                                                                                                    "convert.map.to.class.intention.name"),
-                                                                                               Messages.getQuestionIcon()) != 0);
+                                                                                               Messages.getQuestionIcon()) != Messages.YES);
   }
 
   public static boolean checkForVariableDeclaration(GrExpression replacedNewExpression) {
@@ -171,7 +171,7 @@ public class ConvertMapToClassIntention extends Intention {
                                                                                             GroovyIntentionsBundle.message(
                                                                                               "convert.map.to.class.intention.name"),
                                                                                             Messages.getQuestionIcon()) ==
-                                                                   0) {
+                                                                  Messages.YES) {
         return true;
       }
     }
@@ -215,7 +215,7 @@ public class ConvertMapToClassIntention extends Intention {
     if (ApplicationManager.getApplication().isUnitTestMode() ||
            Messages.showYesNoDialog(map.getProject(), GroovyIntentionsBundle
              .message("do.you.want.to.change.type.of.parameter.in.method", parameter.getName(), method.getName()),
-                                    GroovyIntentionsBundle.message("convert.map.to.class.intention.name"), Messages.getQuestionIcon()) == 0) {
+                                    GroovyIntentionsBundle.message("convert.map.to.class.intention.name"), Messages.getQuestionIcon()) == Messages.YES) {
       return parameter;
     }
     return null;

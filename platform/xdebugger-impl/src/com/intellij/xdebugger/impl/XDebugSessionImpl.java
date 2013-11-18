@@ -39,13 +39,13 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.ui.AppUIUtil;
 import com.intellij.util.EventDispatcher;
@@ -143,6 +143,7 @@ public class XDebugSessionImpl implements XDebugSession {
   @NotNull
   public RunContentDescriptor getRunContentDescriptor() {
     assertSessionTabInitialized();
+    //noinspection ConstantConditions
     return mySessionTab.getRunContentDescriptor();
   }
 
@@ -746,28 +747,19 @@ public class XDebugSessionImpl implements XDebugSession {
     myDispatcher.getMulticaster().sessionPaused();
   }
 
+  @Nullable
   private Editor getEditor(@NotNull XSourcePosition position) {
-    final VirtualFile psiFile = position.getFile();
-    if (!psiFile.isValid()) {
-      return null;
-    }
-
-    final int offset = position.getOffset();
-    if (offset < 0 || offset > psiFile.getLength()) {
-      LOG.error("Incorrect offset " + offset + " in file " + psiFile.getName());
-      return null;
-    }
-
-    return FileEditorManager.getInstance(myProject).openTextEditor(new OpenFileDescriptor(myProject, psiFile, offset), false);
+    OpenFileDescriptor descriptor = XSourcePositionImpl.createOpenFileDescriptor(myProject, position);
+    return descriptor.canNavigate() ? FileEditorManager.getInstance(myProject).openTextEditor(descriptor, false) : null;
   }
 
   private void adjustMouseTrackingCounter(@NotNull XSourcePosition position, int increment) {
     final Editor editor = getEditor(position);
     if (editor != null) {
       JComponent component = editor.getComponent();
-      Object o = component.getClientProperty(Editor.IGNORE_MOUSE_TRACKING);
+      Object o = component.getClientProperty(EditorImpl.IGNORE_MOUSE_TRACKING);
       Integer value = ((o instanceof Integer) ? (Integer)o : 0) + increment;
-      component.putClientProperty(Editor.IGNORE_MOUSE_TRACKING, value > 0 ? value : null);
+      component.putClientProperty(EditorImpl.IGNORE_MOUSE_TRACKING, value > 0 ? value : null);
     }
   }
 

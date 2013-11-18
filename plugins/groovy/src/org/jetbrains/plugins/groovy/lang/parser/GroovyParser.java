@@ -34,7 +34,6 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.declaration.D
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.AssignmentExpression;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.ConditionalExpression;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.ExpressionStatement;
-import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.StrictContextExpression;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.imports.ImportStatement;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions.TypeDefinition;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.toplevel.CompilationUnit;
@@ -192,7 +191,7 @@ public class GroovyParser implements PsiParser {
       return true;
     }
 
-    if (!StrictContextExpression.parse(builder, this)) {
+    if (!ExpressionStatement.argParse(builder, this)) {
       builder.error(GroovyBundle.message("expression.expected"));
     }
 

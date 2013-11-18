@@ -82,6 +82,7 @@ public abstract class DomAnchorImpl<T extends DomElement> implements DomAnchor<T
 
     final int index = values.indexOf(t);
     if (index < 0) {
+      t.equals(values.get(10));
       diagnoseNegativeIndex2(t, parent, description, values);
     }
     return new IndexedAnchor<T>(parentAnchor, description, index);

@@ -19,7 +19,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.MultilineTreeCellRenderer;
 import com.intellij.ui.SideBorder;
-import com.intellij.util.PlatformIcons;
+import icons.AntIcons;
 
 import javax.swing.*;
 
@@ -53,20 +53,20 @@ final class MessageTreeRenderer extends MultilineTreeCellRenderer {
       MessageNode node = (MessageNode)value;
       AntBuildMessageView.MessageType type = node.getType();
       if (type == AntBuildMessageView.MessageType.BUILD) {
-        icon = AllIcons.Ant.Build;
+        icon = AntIcons.Build;
       }
       else if (type == AntBuildMessageView.MessageType.TARGET) {
-        icon = AllIcons.Ant.Target;
+        icon = AntIcons.Target;
       }
       else if (type == AntBuildMessageView.MessageType.TASK) {
-        icon = PlatformIcons.TASK_ICON;
+        icon = AntIcons.Task;
       }
       else if (type == AntBuildMessageView.MessageType.MESSAGE) {
         if (node.getPriority() == AntBuildMessageView.PRIORITY_WARN) {
           icon = AllIcons.General.Warning;
         }
         else {
-          icon = AllIcons.Ant.Message;
+          icon = AntIcons.Message;
         }
       }
       else if (type == AntBuildMessageView.MessageType.ERROR) {

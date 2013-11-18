@@ -79,10 +79,10 @@ public class RenamePyFunctionProcessor extends RenamePyElementProcessor {
       String message = "Method " + function.getName() + " of class " + containingClass.getQualifiedName() + "\noverrides method of class "
                        + deepestSuperMethod.getContainingClass().getQualifiedName() + ".\nDo you want to rename the base method?";
       int rc = Messages.showYesNoCancelDialog(element.getProject(), message, "Rename", Messages.getQuestionIcon());
-      if (rc == 0) {
+      if (rc == Messages.YES) {
         return deepestSuperMethod;
       }
-      if (rc == 1) {
+      if (rc == Messages.NO) {
         return function;
       }
       return null;
@@ -98,8 +98,8 @@ public class RenamePyFunctionProcessor extends RenamePyElementProcessor {
                                              property.getName(), function.getName());
         final int rc = Messages.showYesNoCancelDialog(element.getProject(), message, "Rename", Messages.getQuestionIcon());
         switch (rc) {
-          case 0: return site;
-          case 1: return function;
+          case Messages.YES: return site;
+          case Messages.NO: return function;
           default: return null;
         }
       }

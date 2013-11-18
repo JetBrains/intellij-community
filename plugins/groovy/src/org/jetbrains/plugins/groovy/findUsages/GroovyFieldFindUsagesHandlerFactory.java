@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,6 @@ import com.intellij.find.findUsages.JavaFindUsagesHandlerFactory;
 import com.intellij.ide.util.SuperMethodWarningUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
@@ -70,7 +69,7 @@ public class GroovyFieldFindUsagesHandlerFactory extends JavaFindUsagesHandlerFa
               if (ApplicationManager.getApplication().isUnitTestMode()) return PsiElement.EMPTY_ARRAY;
               doSearch = Messages.showYesNoDialog(FindBundle.message("find.field.accessors.prompt", field.getName()),
                                              FindBundle.message("find.field.accessors.title"),
-                                             Messages.getQuestionIcon()) == DialogWrapper.OK_EXIT_CODE;
+                                             Messages.getQuestionIcon()) == Messages.YES;
             }
             else {
               doSearch = true;

@@ -23,7 +23,7 @@ import io.netty.handler.codec.http.QueryStringDecoder;
 
 abstract class DelegatingHttpRequestHandlerBase extends SimpleChannelInboundHandler<FullHttpRequest> {
   @Override
-  protected void channelRead0(ChannelHandlerContext context, FullHttpRequest message) throws Exception {
+  protected void messageReceived(ChannelHandlerContext context, FullHttpRequest message) throws Exception {
     if (BuiltInServer.LOG.isDebugEnabled()) {
 //      BuiltInServer.LOG.debug("IN HTTP:\n" + message);
       BuiltInServer.LOG.debug("IN HTTP: " + message.getUri());

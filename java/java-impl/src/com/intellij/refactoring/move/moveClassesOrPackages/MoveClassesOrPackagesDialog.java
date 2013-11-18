@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -499,7 +499,7 @@ public class MoveClassesOrPackagesDialog extends RefactoringDialog {
     if (!targetPackage.exists()) {
       final int ret = Messages.showYesNoDialog(myProject, RefactoringBundle.message("package.does.not.exist", packageName),
                                                RefactoringBundle.message("move.title"), Messages.getQuestionIcon());
-      if (ret != 0) return null;
+      if (ret != Messages.YES) return null;
     }
 
     return ((DestinationFolderComboBox)myDestinationFolderCB).selectDirectory(targetPackage, mySuggestToMoveToAnotherRoot);

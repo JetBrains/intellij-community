@@ -32,7 +32,7 @@ public class SimpleTimedVcsCommit implements TimedVcsCommit {
   }
 
   @Override
-  public long getAuthorTime() {
+  public long getTime() {
     return myTime;
   }
 

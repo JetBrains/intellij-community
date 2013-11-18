@@ -607,6 +607,7 @@ public class SvnConfiguration implements PersistentStateComponent<Element> {
     myIsUseDefaultProxy = isUseDefaultProxy;
   }
 
+  // TODO: Rewrite AutoStorage to use MemoryPasswordSafe at least
   public static class AuthStorage implements ISVNAuthenticationStorage {
 
     private final Map<String, Object> myStorage = Collections.synchronizedMap(new HashMap<String, Object>());

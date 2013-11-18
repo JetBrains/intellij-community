@@ -3,10 +3,13 @@ package com.intellij.openapi.externalSystem.model.project;
 import com.intellij.ide.highlighter.ModuleFileType;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ContainerUtilRt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -22,17 +25,21 @@ public class ModuleData extends AbstractNamedData implements Named, ExternalConf
   @NotNull private final String myModuleTypeId;
   @NotNull private final String myExternalConfigPath;
   @NotNull private String myModuleFilePath;
+  @Nullable private String group;
+  @Nullable private String version;
+  @NotNull private List<File> myArtifacts;
+
   private boolean myInheritProjectCompileOutputPath = true;
 
   public ModuleData(@NotNull ProjectSystemId owner,
                     @NotNull String typeId,
                     @NotNull String name,
                     @NotNull String moduleFileDirectoryPath,
-                    @NotNull String externalConfigPath)
-  {
+                    @NotNull String externalConfigPath) {
     super(owner, name);
     myModuleTypeId = typeId;
     myExternalConfigPath = externalConfigPath;
+    myArtifacts = ContainerUtil.emptyList();
     setModuleFileDirectoryPath(moduleFileDirectoryPath);
   }
 
@@ -85,21 +92,61 @@ public class ModuleData extends AbstractNamedData implements Named, ExternalConf
     myCompileOutputPaths.put(type, ExternalSystemApiUtil.toCanonicalPath(path));
   }
 
-  @Override
-  public int hashCode() {
-    return 31 * super.hashCode() + myModuleTypeId.hashCode();
+  @Nullable
+  public String getGroup() {
+    return group;
+  }
+
+  public void setGroup(@Nullable String group) {
+    this.group = group;
+  }
+
+  @Nullable
+  public String getVersion() {
+    return version;
+  }
+
+  public void setVersion(@Nullable String version) {
+    this.version = version;
+  }
+
+  @NotNull
+  public List<File> getArtifacts() {
+    return myArtifacts;
+  }
+
+  public void setArtifacts(@NotNull List<File> artifacts) {
+    myArtifacts = artifacts;
   }
 
   @Override
   public boolean equals(Object o) {
-    if (!super.equals(o)) {
-      return false;
-    }
-    return myModuleTypeId.equals(((ModuleData)o).myModuleTypeId);
+    if (!(o instanceof ModuleData)) return false;
+    if (!super.equals(o)) return false;
+
+    ModuleData that = (ModuleData)o;
+
+    if (group != null ? !group.equals(that.group) : that.group != null) return false;
+    if (!myModuleTypeId.equals(that.myModuleTypeId)) return false;
+    if (version != null ? !version.equals(that.version) : that.version != null) return false;
+
+    return true;
+  }
+
+  @Override
+  public int hashCode() {
+    int result = super.hashCode();
+    result = 31 * result + myModuleTypeId.hashCode();
+    result = 31 * result + (group != null ? group.hashCode() : 0);
+    result = 31 * result + (version != null ? version.hashCode() : 0);
+    return result;
   }
 
   @Override
   public String toString() {
-    return String.format("module '%s'", getName());
+    return String.format("module '%s:%s:%s'",
+                         group == null ? "" : group,
+                         getName(),
+                         version == null ? "" : version);
   }
 }

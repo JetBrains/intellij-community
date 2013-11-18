@@ -396,6 +396,8 @@ binding.setVariable("layoutMacApp", { String path, String ch, Map args ->
   if (args.inspect_script != null && args.inspect_script != "inspect") {
     ant.move(file: "$path/bin/inspect.sh", tofile: "$path/bin/${args.inspect_script}.sh")
   }
+
+  ant.fixcrlf(srcdir: "$path/bin", includes: "*.sh", eol: "unix")
 })
 
 binding.setVariable("winScripts", { String target, String home, String name, Map args ->
@@ -747,14 +749,9 @@ binding.setVariable("buildWinLauncher", { String ch, String inputPath, String ou
                                           String launcherProperties, String pathsSelector, List resourcePaths ->
   projectBuilder.stage("winLauncher")
 
-  File launcherPropertiesTempFile = null;
   if (pathsSelector != null) {
-    String propertiesContent = new File(launcherProperties).text
-    if (propertiesContent.contains("__PRODUCT_PATHS_SELECTOR__")) {
-      propertiesContent = propertiesContent.replace("__PRODUCT_PATHS_SELECTOR__", pathsSelector)
-      launcherPropertiesTempFile = File.createTempFile("launcher", ".properties")
-      launcherPropertiesTempFile.write(propertiesContent)
-      launcherProperties = launcherPropertiesTempFile.getAbsolutePath()
+    ant.replace(file: launcherProperties) {
+      replacefilter(token: "__PRODUCT_PATHS_SELECTOR__", value: pathsSelector)
     }
   }
 
@@ -775,10 +772,6 @@ binding.setVariable("buildWinLauncher", { String ch, String inputPath, String ou
         pathelement(location: it)
       }
     }
-  }
-
-  if (launcherPropertiesTempFile != null) {
-    launcherPropertiesTempFile.delete()
   }
 })
 

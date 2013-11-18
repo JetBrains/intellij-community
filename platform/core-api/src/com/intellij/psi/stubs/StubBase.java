@@ -27,6 +27,7 @@ import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.ArrayFactory;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.SmartList;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
@@ -78,7 +79,7 @@ public abstract class StubBase<T extends PsiElement> extends ObjectStubBase<Stub
     return null;
   }
 
-  public void setPsi(final T psi) {
+  public void setPsi(@NotNull final T psi) {
     myPsi = psi;
   }
 

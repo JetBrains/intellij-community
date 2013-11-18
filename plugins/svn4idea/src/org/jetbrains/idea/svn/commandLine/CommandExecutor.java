@@ -25,6 +25,7 @@ import com.intellij.util.EventDispatcher;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.tmatesoft.svn.core.SVNCancelException;
 
 import java.io.IOException;
 import java.io.OutputStreamWriter;
@@ -44,6 +45,7 @@ public class CommandExecutor {
   private boolean myIsDestroyed;
   private boolean myNeedsDestroy;
   private volatile String myDestroyReason;
+  private volatile boolean myWasCancelled;
   protected final GeneralCommandLine myCommandLine;
   protected Process myProcess;
   protected OSProcessHandler myHandler;
@@ -180,7 +182,7 @@ public class CommandExecutor {
     boolean finished;
     do {
       finished = waitFor(500);
-      if (!finished && (wasError() || needsDestroy())) {
+      if (!finished && (wasError() || needsDestroy() || checkCancelled())) {
         waitFor(1000);
         doDestroyProcess();
         break;
@@ -201,6 +203,20 @@ public class CommandExecutor {
     synchronized (myLock) {
       return myListeners.getMulticaster();
     }
+  }
+
+  public boolean checkCancelled() {
+    if (!myWasCancelled && myCommand.getCanceller() != null) {
+      try {
+        myCommand.getCanceller().checkCancelled();
+      }
+      catch (SVNCancelException e) {
+        // indicates command should be cancelled
+        myWasCancelled = true;
+      }
+    }
+
+    return myWasCancelled;
   }
 
   public void destroyProcess() {

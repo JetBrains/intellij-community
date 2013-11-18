@@ -20,7 +20,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.StandardFileSystems;
-import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.io.URLUtil;
 import org.jetbrains.annotations.NotNull;
@@ -52,18 +52,24 @@ public final class Urls {
     return new UrlImpl("http", authority, path);
   }
 
+  // java.net.URI.create cannot parse "file:///Test Stuff" - but you don't need to worry about it - this method is aware
+  @Nullable
+  public static Url newFromIdea(@NotNull String url) {
+    return URLUtil.containsScheme(url) ? parseUrl(url) : new LocalFileUrl(url);
+  }
+
   @Nullable
   public static Url parse(@NotNull String url, boolean asLocalIfNoScheme) {
     if (asLocalIfNoScheme && !URLUtil.containsScheme(url)) {
       // nodejs debug — files only in local filesystem
       return new LocalFileUrl(url);
     }
-    return parseUrl(VfsUtil.toIdeaUrl(url), true);
+    return parseUrl(VfsUtilCore.toIdeaUrl(url));
   }
 
   @Nullable
   public static URI parseAsJavaUriWithoutParameters(@NotNull String url) {
-    Url asUrl = parseUrl(url, false);
+    Url asUrl = parseUrl(url);
     if (asUrl == null) {
       return null;
     }
@@ -78,7 +84,7 @@ public final class Urls {
   }
 
   @Nullable
-  private static Url parseUrl(@NotNull String url, boolean urlAsRaw) {
+  private static Url parseUrl(@NotNull String url) {
     String urlToParse;
     if (url.startsWith("jar:file://")) {
       urlToParse = url.substring("jar:".length());
@@ -109,13 +115,7 @@ public final class Urls {
       path = path == null ? authority : (authority + path);
       authority = null;
     }
-    return new UrlImpl(urlAsRaw ? url : null, scheme, authority, path, parameters);
-  }
-
-  // java.net.URI.create cannot parse "file:///Test Stuff" - but you don't need to worry about it - this method is aware
-  @Nullable
-  public static Url newFromIdea(@NotNull String url) {
-    return URLUtil.containsScheme(url) ? parseUrl(VfsUtil.toIdeaUrl(url), false) : new LocalFileUrl(url);
+    return new UrlImpl(scheme, authority, path, parameters);
   }
 
   // must not be used in NodeJS
@@ -124,7 +124,7 @@ public final class Urls {
       return new UrlImpl(file.getFileSystem().getProtocol(), null, file.getPath());
     }
     else {
-      return parseUrl(file.getUrl(), false);
+      return parseUrl(file.getUrl());
     }
   }
 
@@ -136,7 +136,7 @@ public final class Urls {
       return false;
     }
 
-    Url fileUrl = parseUrl(file.getUrl(), false);
+    Url fileUrl = parseUrl(file.getUrl());
     return fileUrl != null && fileUrl.equalsIgnoreParameters(url);
   }
 }

@@ -41,10 +41,12 @@ public class HgLogCommand {
   private static final String[] SHORT_TEMPLATE_ITEMS =
     {"{rev}", "{node}", "{parents}", "{date|isodatesec}", "{author}", "{branch}", "{desc}"};
   private static final String[] LONG_TEMPLATE_ITEMS =
-    {"{rev}", "{node}", "{parents}", "{date|isodatesec}", "{author}", "{branch}", "{desc}", "{file_adds}", "{file_mods}",
+    {"{rev}", "{node}", "{parents}", "{date|isodatesec}", "{author}", "{branch}", "{desc}", "{file_adds}",
+      "{file_mods}",
       "{file_dels}", "{join(file_copies,'" + HgChangesetUtil.FILE_SEPARATOR + "')}"};
   private static final String[] LONG_TEMPLATE_FOR_OLD_VERSIONS =
-    {"{rev}", "{node}", "{parents}", "{date|isodatesec}", "{author}", "{branch}", "{desc}", "{file_adds}", "{file_mods}",
+    {"{rev}", "{node}", "{parents}", "{date|isodatesec}", "{author}", "{branch}", "{desc}", "{file_adds}",
+      "{file_mods}",
       "{file_dels}", "{file_copies}"};
   private static final int REVISION_INDEX = 0;
   private static final int CHANGESET_INDEX = 1;
@@ -222,7 +224,8 @@ public class HgLogCommand {
         }
 
         revisions.add(
-          new HgFileRevision(myProject, hgFile, vcsRevisionNumber, branchName, revisionDate, author, commitMessage, filesModified,
+          new HgFileRevision(myProject, hgFile, vcsRevisionNumber, branchName, revisionDate, author, commitMessage,
+                             filesModified,
                              filesAdded,
                              filesDeleted, copies));
       }

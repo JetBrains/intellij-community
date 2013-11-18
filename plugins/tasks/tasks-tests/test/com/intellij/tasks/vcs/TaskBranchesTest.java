@@ -69,7 +69,7 @@ public class TaskBranchesTest extends PlatformTestCase {
     assertEquals(2, repository.getBranches().getLocalBranches().size());
     assertEquals(first, repository.getCurrentBranch().getName());
 
-    handler.switchToTask(defaultInfo);
+    handler.switchToTask(defaultInfo, null);
     assertEquals("master", repository.getCurrentBranch().getName());
 
     final String second = "second";

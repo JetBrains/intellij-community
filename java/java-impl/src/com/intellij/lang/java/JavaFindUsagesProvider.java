@@ -1,8 +1,5 @@
 /*
-
-import com.intellij.lang.findUsages.FindUsagesProvider;
-
-* Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -70,7 +67,7 @@ public class JavaFindUsagesProvider implements FindUsagesProvider {
     if (ThrowSearchUtil.isSearchable(element)) {
       return HelpID.FIND_THROW_USAGES;
     }
-    return HelpID.FIND_OTHER_USAGES;
+    return com.intellij.lang.HelpID.FIND_OTHER_USAGES;
   }
 
   @Override

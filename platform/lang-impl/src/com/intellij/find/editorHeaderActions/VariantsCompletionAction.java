@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@ import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.psi.impl.cache.impl.id.IdTableBuilding;
+import com.intellij.ui.JBColor;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.text.Matcher;
@@ -79,7 +80,7 @@ public class VariantsCompletionAction extends AnAction {
           super.paintComponent(g);
         }
       };
-      list.setBackground(EditorSearchComponent.COMPLETION_BACKGROUND_COLOR);
+      list.setBackground(new JBColor(EditorSearchComponent.COMPLETION_BACKGROUND_COLOR, new Color(0x4C4F51)));
       list.setFont(editor.getColorsScheme().getFont(EditorFontType.PLAIN));
 
       Utils.showCompletionPopup(

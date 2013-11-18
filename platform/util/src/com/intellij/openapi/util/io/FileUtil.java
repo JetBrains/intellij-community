@@ -1350,25 +1350,42 @@ public class FileUtil extends FileUtilRt {
   }
 
   @NotNull
-  public static List<String> loadLines(@NotNull InputStream stream) throws IOException {
-    //noinspection IOResourceOpenedButNotSafelyClosed
-    return loadLines(new InputStreamReader(stream));
+  public static List<String> loadLines(@NotNull String path) throws IOException {
+    BufferedReader reader = new BufferedReader(new FileReader(path));
+    try {
+      return loadLines(reader);
+    }
+    finally {
+      reader.close();
+    }
   }
 
   @NotNull
-  public static List<String> loadLines(@NotNull Reader reader) throws IOException {
+  public static List<String> loadLines(@NotNull BufferedReader reader) throws IOException {
     List<String> lines = new ArrayList<String>();
+    String line;
+    while ((line = reader.readLine()) != null) {
+      lines.add(line);
+    }
+    return lines;
+  }
+
+  /** @deprecated unclear closing policy, do not use (to remove in IDEA 14) */
+  @SuppressWarnings({"UnusedDeclaration", "deprecation"})
+  public static List<String> loadLines(@NotNull InputStream stream) throws IOException {
+    return loadLines(new InputStreamReader(stream));
+  }
+
+  /** @deprecated unclear closing policy, do not use (to remove in IDEA 14) */
+  @SuppressWarnings("UnusedDeclaration")
+  public static List<String> loadLines(@NotNull Reader reader) throws IOException {
     BufferedReader bufferedReader = new BufferedReader(reader);
     try {
-      String line;
-      while ((line = bufferedReader.readLine()) != null) {
-        lines.add(line);
-      }
+      return loadLines(bufferedReader);
     }
     finally {
       bufferedReader.close();
     }
-    return lines;
   }
 
   @NotNull

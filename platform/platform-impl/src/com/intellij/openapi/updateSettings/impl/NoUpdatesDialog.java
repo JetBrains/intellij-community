@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import com.intellij.CommonBundle;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.PluginManagerConfigurable;
 import com.intellij.openapi.application.ApplicationInfo;
+import com.intellij.openapi.ui.Messages;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -55,7 +56,7 @@ class NoUpdatesDialog extends AbstractUpdateDialog {
   @Override
   protected boolean doDownloadAndPrepare() {
     boolean hasSmthToUpdate = super.doDownloadAndPrepare();
-    if (hasSmthToUpdate && isShowConfirmation() && PluginManagerConfigurable.showRestartIDEADialog() != 0) {
+    if (hasSmthToUpdate && isShowConfirmation() && PluginManagerConfigurable.showRestartIDEADialog() != Messages.YES) {
       hasSmthToUpdate = false;
     }
     return hasSmthToUpdate;

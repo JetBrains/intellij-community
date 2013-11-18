@@ -186,7 +186,7 @@ public class EditorsSplitters extends IdePanePanel {
       painter.appendLine("Open a file by name with " + getActionShortcutText("GotoFile")).smaller().withBullet()
         .appendLine("Open Recent files with " + getActionShortcutText(IdeActions.ACTION_RECENT_FILES)).smaller().withBullet()
         .appendLine("Open Navigation Bar with " + getActionShortcutText("ShowNavBar")).smaller().withBullet()
-        .appendLine("Drag'n'Drop file(s) here from " + ShowFilePathAction.getFileManagerName()).smaller().withBullet()
+        .appendLine("Drag and Drop file(s) here from " + ShowFilePathAction.getFileManagerName()).smaller().withBullet()
         .draw(g, new PairFunction<Integer, Integer, Pair<Integer, Integer>>() {
           @Override
           public Pair<Integer, Integer> fun(Integer width, Integer height) {

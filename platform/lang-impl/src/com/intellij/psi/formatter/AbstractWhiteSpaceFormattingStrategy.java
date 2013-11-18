@@ -43,7 +43,7 @@ public abstract class AbstractWhiteSpaceFormattingStrategy implements WhiteSpace
   public CharSequence adjustWhiteSpaceIfNecessary(@NotNull CharSequence whiteSpaceText,
                                                   @NotNull CharSequence text,
                                                   int startOffset,
-                                                  int endOffset, CodeStyleSettings codeStyleSettings)
+                                                  int endOffset, CodeStyleSettings codeStyleSettings, ASTNode nodeAfter)
   {
     // Does nothing
     return whiteSpaceText;
@@ -85,7 +85,7 @@ public abstract class AbstractWhiteSpaceFormattingStrategy implements WhiteSpace
       } 
     }
     
-    return adjustWhiteSpaceIfNecessary(whiteSpaceText, buffer, 0, endOffset - startOffset, codeStyleSettings);
+    return adjustWhiteSpaceIfNecessary(whiteSpaceText, buffer, 0, endOffset - startOffset, codeStyleSettings, null);
   }
 
   @Nullable

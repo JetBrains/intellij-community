@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -168,15 +168,15 @@ public class JavaMoveClassesOrPackagesHandler extends MoveHandlerDelegate {
                       RefactoringBundle.message("move.current.directory"),
                       RefactoringBundle.message("move.directories"),
                       CommonBundle.getCancelButtonText(), Messages.getWarningIcon());
-      if (ret == 0) {
+      if (ret == Messages.YES) {
         moveAsDirectory(project, targetContainer, callback, directories);
       }
-      else if (ret == 1) {
+      else if (ret == Messages.NO) {
         moveAsDirectory(project, targetContainer, callback, projectDirectories);
       }
     }
     else if (Messages.showOkCancelDialog(project, prompt + "?", RefactoringBundle.message("warning.title"),
-                                 Messages.getWarningIcon()) == DialogWrapper.OK_EXIT_CODE) {
+                                 Messages.getWarningIcon()) == Messages.OK) {
       moveAsDirectory(project, targetContainer, callback, directories);
     }
   }

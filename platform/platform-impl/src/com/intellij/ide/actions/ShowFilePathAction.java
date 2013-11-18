@@ -383,7 +383,7 @@ public class ShowFilePathAction extends AnAction {
 
   public static void showDialog(Project project, String message, String title, File file, DialogWrapper.DoNotAskOption option) {
     if (Messages.showOkCancelDialog(project, message, title, RevealFileAction.getActionName(),
-                                    IdeBundle.message("action.close"), Messages.getInformationIcon(), option) == 0) {
+                                    IdeBundle.message("action.close"), Messages.getInformationIcon(), option) == Messages.OK) {
       openFile(file);
     }
   }

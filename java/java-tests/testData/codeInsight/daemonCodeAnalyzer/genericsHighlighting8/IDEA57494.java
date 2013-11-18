@@ -11,6 +11,6 @@ abstract class A1{
     abstract <T> T baz(List<? super T> a);
 
     void bar(List<?> x){
-        String o = baz<error descr="'baz(java.util.List<? super java.lang.String>)' in 'A1' cannot be applied to '(java.util.List<capture<?>>)'">(x)</error>;
+        String o = baz<error descr="'baz(java.util.List<? super java.lang.Object>)' in 'A1' cannot be applied to '(java.util.List<capture<?>>)'">(x)</error>;
     }
 }
