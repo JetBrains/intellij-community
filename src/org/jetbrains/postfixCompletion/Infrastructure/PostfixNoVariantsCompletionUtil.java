@@ -13,6 +13,7 @@ import com.intellij.psi.search.*;
 import com.intellij.util.*;
 import com.intellij.util.containers.*;
 import org.jetbrains.annotations.*;
+import org.jetbrains.postfixCompletion.LookupItems.*;
 
 import java.util.*;
 import java.util.LinkedHashSet;
@@ -82,20 +83,7 @@ public abstract class PostfixNoVariantsCompletionUtil {
       };
 
       for (LookupElement postfixElement : templatesManager.collectTemplates(mockTemplateContext)) {
-        JavaChainLookupElement chainedPostfix = new JavaChainLookupElement(qualifierElement, postfixElement) {
-          @Override public PsiType getType() { return null; }
-
-          @Override public Set<String> getAllLookupStrings() {
-            String qualifierString = getQualifier().getLookupString() + ".";
-            Set<String> prefixedStrings = new LinkedHashSet<String>();
-
-            for (String s : getDelegate().getAllLookupStrings()) {
-              prefixedStrings.add(qualifierString + s);
-            }
-
-            return prefixedStrings;
-          }
-        };
+        PostfixChainLookupElement chainedPostfix = new PostfixChainLookupElement(qualifierElement, postfixElement);
 
         PrefixMatcher prefixMatcher = new CamelHumpMatcher(fullPrefix);
         boolean b = prefixMatcher.prefixMatches(chainedPostfix);
@@ -173,4 +161,5 @@ public abstract class PostfixNoVariantsCompletionUtil {
           || ReflectionCache.isAssignable(CandidateInfo.class, hintClass);
     }
   }
+
 }
