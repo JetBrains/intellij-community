@@ -45,9 +45,9 @@ public final class PostfixCompletionContributor extends CompletionContributor {
       result.addElement(element);
     }
 
-    if (results.isEmpty()) {
+    //if (results.isEmpty()) {
       PostfixNoVariantsCompletionUtil.suggestChainedCalls(parameters, result, executionContext);
-    }
+    //}
   }
 
 

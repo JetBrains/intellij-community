@@ -1,6 +1,7 @@
-// Items: arg, for
+// Items: <no items>
 public class Foo {
     void m() {
-         unresolved.var<caret>
+         unresolved.var
+                 <caret>
     }
 }

@@ -18,7 +18,6 @@ import java.util.*;
 import java.util.LinkedHashSet;
 
 // todo: fix 'scn.nn' prefix matching
-// NOTE: copy & paste from IDEA CE chained code completion :((
 public abstract class PostfixNoVariantsCompletionUtil {
   public static void suggestChainedCalls(
     @NotNull CompletionParameters parameters, @NotNull CompletionResultSet resultSet,
@@ -57,19 +56,19 @@ public abstract class PostfixNoVariantsCompletionUtil {
       if (mockReferenceQualifier == null) continue;
 
       PostfixTemplateContext mockTemplateContext = new PostfixTemplateContext(
-        (PsiJavaCodeReferenceElement) parent, qualifierReference, executionContext) {
-
+          (PsiJavaCodeReferenceElement) parent, qualifierReference, executionContext) {
         @NotNull @Override
         protected List<PrefixExpressionContext> buildExpressionContexts(
             @NotNull PsiElement reference, @NotNull PsiElement expression) {
           return Collections.<PrefixExpressionContext>singletonList(
             new PrefixExpressionContext(this, expression) {
-              // mock expression's type and referenced element
-              @Nullable @Override protected PsiType calculateExpressionType(@NotNull PsiElement expression) {
+              @Nullable @Override // mock expression's type and referenced element
+              protected PsiType calculateExpressionType(@NotNull PsiElement expression) {
                 return super.calculateExpressionType(mockReferenceQualifier);
               }
 
-              @Nullable @Override protected PsiElement calculateReferencedElement(@NotNull PsiElement expression) {
+              @Nullable @Override
+              protected PsiElement calculateReferencedElement(@NotNull PsiElement expression) {
                 return super.calculateReferencedElement(mockReferenceQualifier);
               }
             }
@@ -85,13 +84,28 @@ public abstract class PostfixNoVariantsCompletionUtil {
       for (LookupElement postfixElement : templatesManager.collectTemplates(mockTemplateContext)) {
         JavaChainLookupElement chainedPostfix = new JavaChainLookupElement(qualifierElement, postfixElement) {
           @Override public PsiType getType() { return null; }
+
+          @Override public Set<String> getAllLookupStrings() {
+            String qualifierString = getQualifier().getLookupString() + ".";
+            Set<String> prefixedStrings = new LinkedHashSet<String>();
+
+            for (String s : getDelegate().getAllLookupStrings()) {
+              prefixedStrings.add(qualifierString + s);
+            }
+
+            return prefixedStrings;
+          }
         };
+
+        PrefixMatcher prefixMatcher = new CamelHumpMatcher(fullPrefix);
+        boolean b = prefixMatcher.prefixMatches(chainedPostfix);
 
         filteredResultSet.addElement(chainedPostfix);
       }
     }
   }
 
+  // NOTE: this is copy & paste from IDEA CE chained code completion :((
   @NotNull private static Set<LookupElement> suggestQualifierItems(
     @NotNull CompletionParameters parameters, @NotNull PsiJavaCodeReferenceElement qualifier) {
 
