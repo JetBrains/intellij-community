@@ -63,6 +63,7 @@ public class PostfixCompletionTest extends LightCodeInsightFixtureTestCase {
   public void testElse03() { test("else\n"); }
   public void testElse04() { test("else\n"); }
   public void testElse05() { test("else\n"); }
+  public void testElse06() { test("se\n"); }
 
   public void testVar01() { test("var\n"); }
   public void testVar02() { test(""); }
@@ -87,6 +88,7 @@ public class PostfixCompletionTest extends LightCodeInsightFixtureTestCase {
 
   public void testNot01() { test("not\n"); }
   public void testNot02() { test("not\n"); }
+  public void testNot03() { test("not\n"); }
 
   public void testNew01() { test("new\n"); }
   public void testNew02() { test("new\n"); }

@@ -119,10 +119,12 @@ public final class PostfixTemplatesManager implements ApplicationComponent {
       final PsiElement qualifier = ((PsiJavaCodeReferenceElement) parent).getQualifier();
       if (!(qualifier instanceof PsiJavaCodeReferenceElement)) return null;
 
-      // todo: drop this in favor of more general PsiJavaCodeReferenceElement handling?
+
       PsiElement referenceParent = parent.getParent();
       if (referenceParent instanceof PsiTypeElement) {
         final PsiElement psiElement = referenceParent.getParent();
+
+        // todo: drop this in favor of more general PsiJavaCodeReferenceElement handling?
         // handle 'foo instanceof Bar.postfix' expressions
         if (psiElement instanceof PsiInstanceOfExpression) {
           PsiJavaCodeReferenceElement reference = (PsiJavaCodeReferenceElement) parent;
@@ -182,7 +184,10 @@ public final class PostfixTemplatesManager implements ApplicationComponent {
     // fix broken double literal by cutting of "." suffix
     Project project = expressionToFix.getProject();
     String literalText = brokenLiteral.getText();
-    String fixedText = literalText.substring(0, literalText.length() - 1);
+    int dotIndex = literalText.lastIndexOf('.');
+    assert dotIndex >= 0 : "dotIndex >= 0";
+
+    String fixedText = literalText.substring(0, dotIndex);
     PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
     PsiLiteralExpression newLiteral = (PsiLiteralExpression)
       factory.createExpressionFromText(fixedText, null);
@@ -240,6 +245,7 @@ public final class PostfixTemplatesManager implements ApplicationComponent {
     statementToRemove.delete();
   }
 
+  // todo: maybe fix prefix matcher?
   @Nullable private PsiLiteralExpression findBrokenLiteral(@Nullable PsiExpression expr) {
     if (expr == null) return null;
 
@@ -250,7 +256,7 @@ public final class PostfixTemplatesManager implements ApplicationComponent {
         PsiJavaToken token = PsiTreeUtil.getChildOfType(expression, PsiJavaToken.class);
         if (token != null
             && token.getTokenType() == JavaTokenType.DOUBLE_LITERAL
-            && token.getText().endsWith("."))
+            && token.getText().matches("^.*?\\.\\D*$")) // omfg
           return (PsiLiteralExpression) expression;
       }
 
@@ -267,14 +273,13 @@ public final class PostfixTemplatesManager implements ApplicationComponent {
     if (statement == null) return null;
 
     PsiElement lastChild = statement.getLastChild();
-    if (statement instanceof PsiExpressionStatement) {
-      if (lastChild instanceof PsiErrorElement && lastChild.getPrevSibling() instanceof PsiExpression) {
-        return ((PsiExpressionStatement) statement).getExpression();
+    while (lastChild != null) {
+      if (lastChild instanceof PsiErrorElement &&
+          lastChild.getPrevSibling() instanceof PsiExpression) {
+        return (PsiExpression) lastChild.getPrevSibling();
       }
-    } else if (statement instanceof PsiDeclarationStatement) {
-      if (lastChild instanceof PsiLocalVariable && lastChild.getLastChild() instanceof PsiErrorElement) {
-        return ((PsiLocalVariable) lastChild).getInitializer();
-      }
+
+      lastChild = lastChild.getLastChild();
     }
 
     return null;
