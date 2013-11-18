@@ -39,9 +39,9 @@ import java.net.ServerSocket;
 import java.util.Map;
 
 public class BuiltInServer implements Disposable {
-  private final ChannelRegistrar channelRegistrar = new ChannelRegistrar();
-
   static final Logger LOG = Logger.getInstance(BuiltInServer.class);
+
+  private final ChannelRegistrar channelRegistrar = new ChannelRegistrar();
 
   public boolean isRunning() {
     return !channelRegistrar.isEmpty();
