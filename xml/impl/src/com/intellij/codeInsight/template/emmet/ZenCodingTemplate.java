@@ -65,7 +65,7 @@ import java.util.List;
 /**
  * @author Eugene.Kudelevsky
  */
-public class ZenCodingTemplate implements CustomLiveTemplate {
+public class ZenCodingTemplate extends CustomLiveTemplateBase {
   public static final char MARKER = '\0';
   private static final String EMMET_RECENT_WRAP_ABBREVIATIONS_KEY = "emmet.recent.wrap.abbreviations";
   private static final String EMMET_LAST_WRAP_ABBREVIATIONS_KEY = "emmet.last.wrap.abbreviations";
