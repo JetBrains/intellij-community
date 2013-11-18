@@ -4,6 +4,8 @@
   <version>0.3-beta</version>
   <vendor email="alexander.shvedov@jetbrains.com"
           url="https://github.com/controlflow">Alexander Shvedov</vendor>
+  <depends>com.intellij.modules.lang</depends>
+  <depends>com.intellij.modules.java</depends>
 
   <description><![CDATA[
       The basic idea is to prevent caret jumps backward while typing code,
