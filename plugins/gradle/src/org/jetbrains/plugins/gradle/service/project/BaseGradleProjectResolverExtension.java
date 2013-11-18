@@ -62,6 +62,7 @@ import java.io.File;
 import java.io.FilenameFilter;
 import java.net.URL;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
@@ -293,7 +294,10 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
   @NotNull
   @Override
   public List<KeyValue<String, String>> getExtraJvmArgs() {
-    return HttpConfigurable.getJvmPropertiesList(false, null);
+    if (ExternalSystemApiUtil.isInProcessMode(GradleConstants.SYSTEM_ID)) {
+      return HttpConfigurable.getJvmPropertiesList(false, null);
+    }
+    return Collections.emptyList();
   }
 
   @NotNull
