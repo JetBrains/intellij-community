@@ -167,10 +167,10 @@ public abstract class PostfixNoVariantsCompletionUtil {
     }
 
     @Override public boolean isClassAcceptable(Class hintClass) {
-      return ReflectionCache.isAssignable(PsiClass.class, hintClass) ||
-             ReflectionCache.isAssignable(PsiVariable.class, hintClass) ||
-             ReflectionCache.isAssignable(PsiMethod.class, hintClass) ||
-             ReflectionCache.isAssignable(CandidateInfo.class, hintClass);
+      return ReflectionCache.isAssignable(PsiClass.class, hintClass)
+          || ReflectionCache.isAssignable(PsiVariable.class, hintClass)
+          || ReflectionCache.isAssignable(PsiMethod.class, hintClass)
+          || ReflectionCache.isAssignable(CandidateInfo.class, hintClass);
     }
   }
 }

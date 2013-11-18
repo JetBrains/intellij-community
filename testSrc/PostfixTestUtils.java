@@ -1,4 +1,6 @@
+import com.intellij.codeInsight.lookup.*;
 import com.intellij.openapi.application.*;
+import com.intellij.util.*;
 import org.jetbrains.annotations.*;
 
 import java.io.*;
@@ -13,5 +15,33 @@ public class PostfixTestUtils {
     }
 
     return PathManager.getHomePath() + "/testData";
+  }
+
+  @NotNull static String dumpItems(@Nullable LookupElement[] elements) {
+    StringBuilder builder = new StringBuilder("// Items: ");
+
+    if (elements != null && elements.length > 0) {
+      int totalLength = 0;
+      for (LookupElement element : elements) {
+        totalLength += element.getLookupString().length();
+      }
+
+      if (totalLength > 60) {
+        for (LookupElement item : elements) {
+          builder
+            .append(SystemProperties.getLineSeparator())
+            .append("//  ").append(item.getLookupString());
+        }
+      } else {
+        boolean first = true;
+        for (LookupElement item : elements) {
+          if (first) first = false; else builder.append(", ");
+          builder.append(item.getLookupString());
+        }
+      }
+    } else builder.append("<no items>");
+
+    builder.append(SystemProperties.getLineSeparator());
+    return builder.toString();
   }
 }

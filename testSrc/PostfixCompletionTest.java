@@ -3,7 +3,6 @@ import com.intellij.codeInsight.lookup.*;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.editor.*;
 import com.intellij.testFramework.fixtures.*;
-import com.intellij.util.*;
 import org.jetbrains.annotations.*;
 import org.jetbrains.postfixCompletion.*;
 
@@ -42,26 +41,11 @@ public class PostfixCompletionTest extends LightCodeInsightFixtureTestCase {
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       @Override public void run() {
         Editor editor = myFixture.getEditor();
-        editor.getDocument().insertString(0, dumpItems(autoItems));
+        editor.getDocument().insertString(0, PostfixTestUtils.dumpItems(autoItems));
       }
     });
 
     myFixture.checkResultByFile(name + "-out.java");
-  }
-
-  @NotNull private String dumpItems(@Nullable LookupElement[] elements) {
-    StringBuilder builder = new StringBuilder("// Items: ");
-
-    if (elements != null && elements.length > 0) {
-      boolean first = true;
-      for (LookupElement item : elements) {
-        if (first) first = false; else builder.append(", ");
-        builder.append(item.getLookupString());
-      }
-    } else builder.append("<no items>");
-
-    builder.append(SystemProperties.getLineSeparator());
-    return builder.toString();
   }
 
   public void testArg01() { test("arg\n"); }
