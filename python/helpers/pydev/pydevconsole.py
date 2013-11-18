@@ -50,6 +50,7 @@ except NameError: # version < 2.3 -- didn't have the True/False builtins
     setattr(__builtin__, 'False', 0)
 
 from pydev_console_utils import BaseInterpreterInterface
+from pydev_console_utils import CodeFragment
 
 IS_PYTHON_3K = False
 
@@ -120,8 +121,8 @@ class InterpreterInterface(BaseInterpreterInterface):
         self._input_error_printed = False
 
 
-    def doAddExec(self, command):
-        command = Command(self.interpreter, command)
+    def doAddExec(self, codeFragment):
+        command = Command(self.interpreter, codeFragment)
         Sync(command)
         return command.more
 
@@ -153,11 +154,11 @@ def process_exec_queue(interpreter):
     while 1:
         try:
             try:
-                command = interpreter.exec_queue.get(block=True, timeout=0.05)
+                codeFragment = interpreter.exec_queue.get(block=True, timeout=0.05)
             except _queue.Empty:
                 continue
 
-            if not interpreter.addExec(command):     #TODO: think about locks here
+            if not interpreter.addExec(codeFragment):     #TODO: think about locks here
                 interpreter.buffer = []
         except KeyboardInterrupt:
             interpreter.buffer = []
@@ -308,17 +309,17 @@ def get_completions(text, token, globals, locals):
 def get_frame():
     return interpreterInterface.getFrame()
 
-def exec_expression(expression, globals, locals):
+def exec_code(code, globals, locals):
     interpreterInterface = get_interpreter()
 
     interpreterInterface.interpreter.update(globals, locals)
 
-    res = interpreterInterface.needMore(None, expression)
+    res = interpreterInterface.needMore(None, code.text)
 
     if res:
         return True
 
-    interpreterInterface.addExec(expression)
+    interpreterInterface.addExec(code)
 
     return False
 
@@ -368,7 +369,7 @@ def consoleExec(thread_id, frame_id, expression):
     updated_globals.update(frame.f_locals) #locals later because it has precedence over the actual globals
 
     if IPYTHON:
-        return exec_expression(expression, updated_globals, frame.f_locals)
+        return exec_code(CodeFragment(expression), updated_globals, frame.f_locals)
 
     interpreter = ConsoleWriter()
 

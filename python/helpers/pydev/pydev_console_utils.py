@@ -132,9 +132,9 @@ class StdIn(BaseStdIn):
             return '\n'
 
 
-class ExecCode:
-    def __init__(self, code, is_single_line=True):
-        self.code = code
+class CodeFragment:
+    def __init__(self, text, is_single_line=True):
+        self.text = text
         self.is_single_line = is_single_line
 
 #=======================================================================================================================
@@ -171,7 +171,7 @@ class BaseInterpreterInterface:
         return self.needMoreForCode(source)
 
 
-    def addExec(self, command):
+    def addExec(self, codeFragment):
         original_in = sys.stdin
         try:
             help = None
@@ -210,7 +210,7 @@ class BaseInterpreterInterface:
 
                 try:
                     self.startExec()
-                    more = self.doAddExec(command)
+                    more = self.doAddExec(codeFragment)
                     self.finishExec()
                 finally:
                     if help is not None:
@@ -236,7 +236,7 @@ class BaseInterpreterInterface:
         return more, need_input
 
 
-    def doAddExec(self, command):
+    def doAddExec(self, codeFragment):
         '''
         Subclasses should override.
         
@@ -316,7 +316,7 @@ class BaseInterpreterInterface:
 
     def execLine(self, line):
         try:
-            self.exec_queue.put(ExecCode(line, True))
+            self.exec_queue.put(CodeFragment(line, True))
             return self.needMore(self.buffer, line)
         except:
             traceback.print_exc()
@@ -325,7 +325,7 @@ class BaseInterpreterInterface:
 
     def execMultipleLines(self, lines):
         try:
-            self.exec_queue.put(ExecCode(lines, False))
+            self.exec_queue.put(CodeFragment(lines, False))
             return self.needMoreForCode(lines)
         except:
             traceback.print_exc()
