@@ -71,7 +71,7 @@ public class GenericsHighlighting8Test extends LightDaemonAnalyzerTestCase {
   public void testInferenceWithBounds() {
     doTest();
   }
-  public void _testInferenceWithSuperBounds() {
+  public void testInferenceWithSuperBounds() {
     doTest();
   }
   public void testInferenceWithUpperBoundPromotion() {
@@ -86,7 +86,7 @@ public class GenericsHighlighting8Test extends LightDaemonAnalyzerTestCase {
   public void testRawOverridingMethods() {
     doTest();
   }    
-  public void _testAutoboxing() { //todo
+  public void testAutoboxing() {
     doTest();
   }                
   public void testAutoboxingMethods() {
@@ -98,7 +98,7 @@ public class GenericsHighlighting8Test extends LightDaemonAnalyzerTestCase {
   public void testEnumWithAbstractMethods() {
     doTest();
   }                                   
-  public void _testEnum() { doTest(); } //todo     
+  public void testEnum() { doTest(); }
   public void testEnum56239() {
     doTest();
   }
@@ -264,7 +264,7 @@ public class GenericsHighlighting8Test extends LightDaemonAnalyzerTestCase {
   public void testIDEA57339() {
     doTest();
   } 
-  public void _testIDEA57340() {
+  public void testIDEA57340() {
     doTest();
   }
   public void testIDEA89771() {
@@ -297,7 +297,7 @@ public class GenericsHighlighting8Test extends LightDaemonAnalyzerTestCase {
   public void testIDEA57563() {
     doTest();
   }
-  public void _testIDEA57275() {
+  public void testIDEA57275() {
     doTest();
   }
   public void testIDEA57533() {
@@ -315,7 +315,7 @@ public class GenericsHighlighting8Test extends LightDaemonAnalyzerTestCase {
   public void testIDEA57484() {
     doTest();
   }
-  public void _testIDEA57485() {//todo
+  public void testIDEA57485() {
     doTest();
   }
   public void testIDEA57486() {
@@ -400,7 +400,7 @@ public class GenericsHighlighting8Test extends LightDaemonAnalyzerTestCase {
     doTest();
   }
 
-  public void _testIDEA94011() {
+  public void testIDEA94011() {
     doTest();
   }
   public void testDifferentTypeParamsInOverloadedMethods() {
@@ -619,7 +619,7 @@ public class GenericsHighlighting8Test extends LightDaemonAnalyzerTestCase {
   public void testIDEA67571(){
     doTest();
   }
-  public void _testTypeArgumentsOnRawType(){//todo
+  public void testTypeArgumentsOnRawType(){
     doTest();
   }
 
@@ -758,7 +758,7 @@ public class GenericsHighlighting8Test extends LightDaemonAnalyzerTestCase {
     doTest();
   }
 
-  public void _testJavaUtilCollections_NoVerify() throws Exception {   //todo
+  public void testJavaUtilCollections_NoVerify() throws Exception {
     PsiClass collectionsClass = getJavaFacade().findClass("java.util.Collections", GlobalSearchScope.moduleWithLibrariesScope(getModule()));
     assertNotNull(collectionsClass);
     collectionsClass = (PsiClass)collectionsClass.getNavigationElement();

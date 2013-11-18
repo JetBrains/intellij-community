@@ -478,7 +478,7 @@ public class InferenceSession {
           if (eqBounds.size() > 1) {
             for (Iterator<PsiType> iterator = eqBounds.iterator(); iterator.hasNext(); ) {
               PsiType eqBound = acceptBoundsWithRecursiveDependencies(inferenceVariable, iterator.next(), substitutor);
-              if (PsiUtil.resolveClassInType(eqBound) == typeParameter || Comparing.equal(bound, eqBound)) {
+              if (PsiUtil.resolveClassInType(eqBound) == typeParameter || !(bound instanceof PsiCapturedWildcardType) && Comparing.equal(bound, eqBound)) {
                 iterator.remove();
               } else if (bound == null) {
                 bound = eqBound; 
