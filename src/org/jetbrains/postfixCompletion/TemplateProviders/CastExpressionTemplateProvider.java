@@ -16,10 +16,13 @@ import org.jetbrains.postfixCompletion.LookupItems.*;
 
 import java.util.*;
 
+// todo: when invoked inside code fragment - insert ((T) expr)
+
 @TemplateProvider(
   templateName = "cast",
   description = "Surrounds expression with cast",
-  example = "(SomeType) expr")
+  example = "(SomeType) expr",
+  worksInsideFragments = true)
 public class CastExpressionTemplateProvider extends TemplateProviderBase {
   @Override public void createItems(
       @NotNull PostfixTemplateContext context, @NotNull List<LookupElement> consumer) {

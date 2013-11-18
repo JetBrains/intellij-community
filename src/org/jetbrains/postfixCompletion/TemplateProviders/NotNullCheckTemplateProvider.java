@@ -11,8 +11,7 @@ import java.util.*;
 @TemplateProvider(
   templateName = "notnull",
   description = "Checks expression to be not-null",
-  example = "if (expr != null)",
-  worksInsideFragments = false)
+  example = "if (expr != null)")
 public class NotNullCheckTemplateProvider extends TemplateProviderBase {
   @Override public void createItems(
       @NotNull PostfixTemplateContext context, @NotNull List<LookupElement> consumer) {

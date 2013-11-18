@@ -11,5 +11,5 @@ public @interface TemplateProvider {
   @NotNull String description();
   @NotNull String example();
   boolean worksOnTypes() default false;
-  boolean worksInsideFragments() default true;
+  boolean worksInsideFragments() default false;
 }

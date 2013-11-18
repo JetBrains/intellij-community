@@ -20,7 +20,8 @@ import java.util.*;
 @TemplateProvider(
   templateName = "arg",
   description = "Surrounds expression with invocation",
-  example = "someMethod(expr)")
+  example = "someMethod(expr)",
+  worksInsideFragments = true)
 public class ArgumentExpressionTemplateProvider extends TemplateProviderBase {
   @Override public void createItems(
       @NotNull PostfixTemplateContext context, @NotNull List<LookupElement> consumer) {

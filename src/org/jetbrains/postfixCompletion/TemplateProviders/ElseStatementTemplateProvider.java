@@ -12,8 +12,7 @@ import java.util.*;
 @TemplateProvider(
   templateName = "else",
   description = "Checks boolean expression to be 'false'",
-  example = "if (!expr)",
-  worksInsideFragments = false)
+  example = "if (!expr)")
 public final class ElseStatementTemplateProvider extends BooleanTemplateProviderBase {
   @Override public boolean createBooleanItems(
     @NotNull PrefixExpressionContext context, @NotNull List<LookupElement> consumer) {

@@ -12,8 +12,7 @@ import java.util.*;
 @TemplateProvider(
   templateName = "while",
   description = "Iterating while boolean statement is 'true'",
-  example = "while (expr)",
-  worksInsideFragments = false)
+  example = "while (expr)")
 public final class WhileStatementTemplateProvider extends BooleanTemplateProviderBase {
   @Override public boolean createBooleanItems(
     @NotNull PrefixExpressionContext context, @NotNull List<LookupElement> consumer) {

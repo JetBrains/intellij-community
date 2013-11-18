@@ -14,7 +14,8 @@ import java.util.*;
 @TemplateProvider(
   templateName = "not",
   description = "Negates boolean expression",
-  example = "!expr")
+  example = "!expr",
+  worksInsideFragments = true)
 public final class NotExpressionTemplateProvider extends BooleanTemplateProviderBase {
   @Override public boolean createBooleanItems(
       @NotNull PrefixExpressionContext context, @NotNull List<LookupElement> consumer) {
