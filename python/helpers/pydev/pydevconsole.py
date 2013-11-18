@@ -10,7 +10,6 @@ import os
 import sys
 
 from pydevd_constants import USE_LIB_COPY
-from pydevd_utils import *
 
 if USE_LIB_COPY:
     import _pydev_threading as threading
@@ -72,56 +71,25 @@ try:
 except ImportError:
     import _pydev_xmlrpclib as xmlrpclib
 
-try:
-    class ExecState:
-        FIRST_CALL = True
-        PYDEV_CONSOLE_RUN_IN_UI = False #Defines if we should run commands in the UI thread.
 
-    from org.python.pydev.core.uiutils import RunInUiThread #@UnresolvedImport
-    from java.lang import Runnable #@UnresolvedImport
+class Command:
+    def __init__(self, interpreter, command):
+        """
+        :type command: object
+        :type interpreter: InteractiveConsole
+        """
+        self.interpreter = interpreter
+        self.command = command
+        self.more = None
 
-    class Command(Runnable):
-        def __init__(self, interpreter, line):
-            self.interpreter = interpreter
-            self.line = line
-
-        def run(self):
-            if ExecState.FIRST_CALL:
-                ExecState.FIRST_CALL = False
-                sys.stdout.write('\nYou are now in a console within Eclipse.\nUse it with care as it can halt the VM.\n')
-                sys.stdout.write(
-                    'Typing a line with "PYDEV_CONSOLE_TOGGLE_RUN_IN_UI"\nwill start executing all the commands in the UI thread.\n\n')
-
-            if self.line == 'PYDEV_CONSOLE_TOGGLE_RUN_IN_UI':
-                ExecState.PYDEV_CONSOLE_RUN_IN_UI = not ExecState.PYDEV_CONSOLE_RUN_IN_UI
-                if ExecState.PYDEV_CONSOLE_RUN_IN_UI:
-                    sys.stdout.write(
-                        'Running commands in UI mode. WARNING: using sys.stdin (i.e.: calling raw_input()) WILL HALT ECLIPSE.\n')
-                else:
-                    sys.stdout.write('No longer running commands in UI mode.\n')
-                self.more = False
-            else:
-                self.more = self.interpreter.push(self.line)
-
-
-    def Sync(runnable):
-        if ExecState.PYDEV_CONSOLE_RUN_IN_UI:
-            return RunInUiThread.sync(runnable)
+    def run(self):
+        if self.command.is_single_line:
+            self.more = self.interpreter.push(self.command.code)
         else:
-            return runnable.run()
+            self.more = self.interpreter.runsource(self.command.code, '<input>', 'exec')
 
-except:
-    #If things are not there, define a way in which there's no 'real' sync, only the default execution.
-    class Command:
-        def __init__(self, interpreter, line):
-            self.interpreter = interpreter
-            self.line = line
-
-        def run(self):
-            self.more = self.interpreter.push(self.line)
-
-    def Sync(runnable):
-        runnable.run()
+def Sync(runnable):
+    runnable.run()
 
 try:
     try:
@@ -152,8 +120,8 @@ class InterpreterInterface(BaseInterpreterInterface):
         self._input_error_printed = False
 
 
-    def doAddExec(self, line):
-        command = Command(self.interpreter, line)
+    def doAddExec(self, command):
+        command = Command(self.interpreter, command)
         Sync(command)
         return command.more
 
@@ -185,11 +153,11 @@ def process_exec_queue(interpreter):
     while 1:
         try:
             try:
-                line = interpreter.exec_queue.get(block=True, timeout=0.05)
+                command = interpreter.exec_queue.get(block=True, timeout=0.05)
             except _queue.Empty:
                 continue
 
-            if not interpreter.addExec(line):     #TODO: think about locks here
+            if not interpreter.addExec(command):     #TODO: think about locks here
                 interpreter.buffer = []
         except KeyboardInterrupt:
             interpreter.buffer = []
@@ -274,6 +242,7 @@ def start_server(host, port, interpreter):
         raise
 
     server.register_function(interpreter.execLine)
+    server.register_function(interpreter.execMultipleLines)
     server.register_function(interpreter.getCompletions)
     server.register_function(interpreter.getFrame)
     server.register_function(interpreter.getVariable)

@@ -132,6 +132,11 @@ class StdIn(BaseStdIn):
             return '\n'
 
 
+class ExecCode:
+    def __init__(self, code, is_single_line=True):
+        self.code = code
+        self.is_single_line = is_single_line
+
 #=======================================================================================================================
 # BaseInterpreterInterface
 #=======================================================================================================================
@@ -142,20 +147,14 @@ class BaseInterpreterInterface:
         self.exec_queue = _queue.Queue(0)
         self.buffer = []
 
-    def needMore(self, buffer, line):
-        if not buffer:
-            buffer = []
-        buffer.append(line)
-        source = "\n".join(buffer)
+    def needMoreForCode(self, source):
         if hasattr(self.interpreter, 'is_complete'):
             return not self.interpreter.is_complete(source)
-
         try:
-            code = self.interpreter.compile(source, "<input>", "single")
+            code = self.interpreter.compile(source, "<input>", "exec")
         except (OverflowError, SyntaxError, ValueError):
             # Case 1
             return False
-
         if code is None:
             # Case 2
             return True
@@ -163,8 +162,16 @@ class BaseInterpreterInterface:
         # Case 3
         return False
 
+    def needMore(self, buffer, line):
+        if not buffer:
+            buffer = []
+        buffer.append(line)
+        source = "\n".join(buffer)
+        
+        return self.needMoreForCode(source)
 
-    def addExec(self, line):
+
+    def addExec(self, command):
         original_in = sys.stdin
         try:
             help = None
@@ -203,7 +210,7 @@ class BaseInterpreterInterface:
 
                 try:
                     self.startExec()
-                    more = self.doAddExec(line)
+                    more = self.doAddExec(command)
                     self.finishExec()
                 finally:
                     if help is not None:
@@ -229,7 +236,7 @@ class BaseInterpreterInterface:
         return more, need_input
 
 
-    def doAddExec(self, line):
+    def doAddExec(self, command):
         '''
         Subclasses should override.
         
@@ -309,9 +316,17 @@ class BaseInterpreterInterface:
 
     def execLine(self, line):
         try:
-            #buffer = self.interpreter.buffer[:]
-            self.exec_queue.put(line)
+            self.exec_queue.put(ExecCode(line, True))
             return self.needMore(self.buffer, line)
+        except:
+            traceback.print_exc()
+            return False
+
+
+    def execMultipleLines(self, lines):
+        try:
+            self.exec_queue.put(ExecCode(lines, False))
+            return self.needMoreForCode(lines)
         except:
             traceback.print_exc()
             return False
