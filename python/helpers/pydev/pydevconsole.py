@@ -74,7 +74,7 @@ except ImportError:
 
 
 class Command:
-    def __init__(self, interpreter, code_fragment):
+    def __init__(self, interpreter, code_fragment, buffer):
         """
         :type code_fragment: CodeFragment
         :type interpreter: InteractiveConsole
@@ -82,12 +82,25 @@ class Command:
         self.interpreter = interpreter
         self.code_fragment = code_fragment
         self.more = None
+        self.buffer = buffer
+
+    @staticmethod
+    def symbol_for_fragment(code_fragment):
+        if code_fragment.is_single_line:
+            symbol = 'single'
+        else:
+            symbol = 'exec'
+        return symbol
 
     def run(self):
-        if self.code_fragment.is_single_line:
-            self.more = self.interpreter.push(self.code_fragment.text)
+        if self.buffer is None:
+            text = self.code_fragment.text
+            symbol = self.symbol_for_fragment(self.code_fragment)
         else:
-            self.more = self.interpreter.runsource(self.code_fragment.text, '<input>', 'exec')
+            text = self.buffer.text
+            symbol = self.symbol_for_fragment(self.buffer)
+            
+        self.more = self.interpreter.runsource(text, '<input>', symbol)
 
 try:
     try:
@@ -119,7 +132,7 @@ class InterpreterInterface(BaseInterpreterInterface):
 
 
     def doAddExec(self, codeFragment):
-        command = Command(self.interpreter, codeFragment)
+        command = Command(self.interpreter, codeFragment, self.buffer)
         command.run()
         return command.more
 
@@ -155,10 +168,12 @@ def process_exec_queue(interpreter):
             except _queue.Empty:
                 continue
 
-            if not interpreter.addExec(codeFragment):     #TODO: think about locks here
-                interpreter.buffer = []
+            more = interpreter.addExec(codeFragment)
+            
+            if not more:     
+                interpreter.buffer = None
         except KeyboardInterrupt:
-            interpreter.buffer = []
+            interpreter.buffer = None
             continue
         except SystemExit:
             raise
@@ -311,7 +326,7 @@ def exec_code(code, globals, locals):
 
     interpreterInterface.interpreter.update(globals, locals)
 
-    res = interpreterInterface.needMore(None, code.text)
+    res = interpreterInterface.needMore(code)
 
     if res:
         return True
