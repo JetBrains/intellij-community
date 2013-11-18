@@ -16,10 +16,8 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.synthetic;
 
 import com.intellij.codeInsight.completion.originInfo.OriginInfoAwareElement;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 
 /**
  * @author Sergey Evdokimov
@@ -41,15 +39,7 @@ public class GrMethodWrapper extends GrLightMethodBuilder {
 
     getModifierList().copyModifiers(method);
 
-    for (PsiParameter parameter : method.getParameterList().getParameters()) {
-      GrLightParameter p = new GrLightParameter(StringUtil.notNullize(parameter.getName()), parameter.getType(), this);
-
-      if (parameter instanceof GrParameter) {
-        p.setOptional(((GrParameter)parameter).isOptional());
-      }
-
-      addParameter(p);
-    }
+    getParameterList().copyParameters(method);
 
     if (method instanceof OriginInfoAwareElement) {
       setOriginInfo(((OriginInfoAwareElement)method).getOriginInfo());
