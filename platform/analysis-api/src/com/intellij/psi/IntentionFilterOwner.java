@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
 package com.intellij.psi;
 
 import com.intellij.codeInsight.intention.IntentionAction;
+import org.jetbrains.annotations.NotNull;
 
 public interface IntentionFilterOwner {
   /**
@@ -24,7 +25,7 @@ public interface IntentionFilterOwner {
    *
    * @param filter the intention actions filter instance.
    */
-  void setIntentionActionsFilter(IntentionActionsFilter filter);
+  void setIntentionActionsFilter(@NotNull  IntentionActionsFilter filter);
 
   /**
    * Sets the intention actions filter which is used to determine which intention actions should be available in an editor.
@@ -43,14 +44,14 @@ public interface IntentionFilterOwner {
      * @param intentionAction the intention action to analyze
      * @return Returns true if the intention action should be available, false otherwise
      */
-    boolean isAvailable(final IntentionAction intentionAction);
+    boolean isAvailable(@NotNull IntentionAction intentionAction);
 
     /**
      * This filter reports all intentions are available.
      */
     IntentionActionsFilter EVERYTHING_AVAILABLE = new IntentionActionsFilter() {
       @Override
-      public boolean isAvailable(final IntentionAction intentionAction) {
+      public boolean isAvailable(@NotNull final IntentionAction intentionAction) {
         return true;
       }
     };
