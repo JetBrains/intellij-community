@@ -50,6 +50,7 @@ import org.gradle.tooling.model.idea.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.gradle.model.ExtIdeaContentRoot;
 import org.jetbrains.plugins.gradle.model.ModuleExtendedModel;
 import org.jetbrains.plugins.gradle.model.ProjectDependenciesModel;
 import org.jetbrains.plugins.gradle.model.impl.GradleDependency;
@@ -150,7 +151,15 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
   @Override
   public void populateModuleContentRoots(@NotNull IdeaModule gradleModule,
                                          @NotNull DataNode<ModuleData> ideModule) {
-    DomainObjectSet<? extends IdeaContentRoot> contentRoots = gradleModule.getContentRoots();
+    DomainObjectSet<? extends IdeaContentRoot> contentRoots;
+    ModuleExtendedModel moduleExtendedModel = resolverCtx.getExtraProject(gradleModule, ModuleExtendedModel.class);
+    if (moduleExtendedModel != null) {
+      contentRoots = moduleExtendedModel.getContentRoots();
+    }
+    else {
+      contentRoots = gradleModule.getContentRoots();
+    }
+
     if (contentRoots == null) {
       return;
     }
@@ -164,6 +173,12 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
       ideModule.getData().setModuleFileDirectoryPath(ideContentRoot.getRootPath());
       populateContentRoot(ideContentRoot, ExternalSystemSourceType.SOURCE, gradleContentRoot.getSourceDirectories());
       populateContentRoot(ideContentRoot, ExternalSystemSourceType.TEST, gradleContentRoot.getTestDirectories());
+
+      if (gradleContentRoot instanceof ExtIdeaContentRoot) {
+        populateContentRoot(ideContentRoot, ExternalSystemSourceType.RESOURCE,
+                            ExtIdeaContentRoot.class.cast(gradleContentRoot).getResourceDirectories());
+      }
+
       Set<File> excluded = gradleContentRoot.getExcludeDirectories();
       if (excluded != null) {
         for (File file : excluded) {

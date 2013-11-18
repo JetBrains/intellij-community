@@ -17,20 +17,31 @@ package org.jetbrains.plugins.gradle.model.impl;
 
 import org.gradle.api.Project;
 import org.gradle.api.Task;
+import org.gradle.api.tasks.SourceSet;
+import org.gradle.api.tasks.SourceSetContainer;
 import org.gradle.api.tasks.bundling.Jar;
+import org.gradle.api.tasks.testing.Test;
+import org.gradle.plugins.ide.idea.IdeaPlugin;
+import org.gradle.plugins.ide.idea.model.IdeaModel;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.gradle.model.ExtIdeaContentRoot;
 import org.jetbrains.plugins.gradle.model.ModelBuilderService;
 import org.jetbrains.plugins.gradle.model.ModuleExtendedModel;
+import org.jetbrains.plugins.gradle.model.internal.IdeaContentRootImpl;
+import org.jetbrains.plugins.gradle.model.internal.IdeaSourceDirectoryImpl;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.List;
+import java.io.IOException;
+import java.util.*;
 
 /**
  * @author Vladislav.Soroka
  * @since 11/5/13
  */
 public class ModuleExtendedModelBuilderImpl implements ModelBuilderService {
+
+  private static final String SOURCE_SETS_PROPERTY = "sourceSets";
+  private static final String TEST_SRC_DIRS_PROPERTY = "testSrcDirs";
 
   @Override
   public boolean canBuild(String modelName) {
@@ -56,6 +67,93 @@ public class ModuleExtendedModelBuilderImpl implements ModelBuilderService {
     }
 
     moduleVersionModel.setArtifacts(artifacts);
+
+    Set<String> testDirectories = new HashSet<String>();
+    for (Task task : project.getTasks()) {
+      if (task instanceof Test) {
+        Test test = (Test)task;
+        if (test.hasProperty(TEST_SRC_DIRS_PROPERTY)) {
+          Object testSrcDirs = test.property(TEST_SRC_DIRS_PROPERTY);
+          if (testSrcDirs instanceof Iterable) {
+            for (Object dir : Iterable.class.cast(testSrcDirs)) {
+              addFilePath(testDirectories, dir);
+            }
+          }
+        }
+      }
+    }
+
+    Set<String> javaDirectories = new HashSet<String>();
+    Set<String> resourceDirectories = new HashSet<String>();
+
+    if (project.hasProperty(SOURCE_SETS_PROPERTY)) {
+      Object sourceSets = project.property(SOURCE_SETS_PROPERTY);
+      if (sourceSets instanceof SourceSetContainer) {
+        SourceSetContainer sourceSetContainer = (SourceSetContainer)sourceSets;
+        for (SourceSet sourceSet : sourceSetContainer) {
+          for (File javaSrcDir : sourceSet.getAllJava().getSrcDirs()) {
+            addFilePath(javaDirectories, javaSrcDir);
+          }
+          for (File resourcesSrcDir : sourceSet.getResources().getSrcDirs()) {
+            addFilePath(resourceDirectories, resourcesSrcDir);
+          }
+        }
+      }
+    }
+
+
+    File projectDir = project.getProjectDir();
+    IdeaContentRootImpl contentRoot = new IdeaContentRootImpl(projectDir);
+
+    enrichDataFromIdeaPlugin(project, contentRoot, javaDirectories, testDirectories);
+
+    javaDirectories.removeAll(testDirectories);
+    javaDirectories.removeAll(resourceDirectories);
+    testDirectories.removeAll(resourceDirectories);
+
+    for (String javaDir : javaDirectories) {
+      contentRoot.addSourceDirectory(new IdeaSourceDirectoryImpl(new File(javaDir)));
+    }
+    for (String testDir : testDirectories) {
+      contentRoot.addTestDirectory(new IdeaSourceDirectoryImpl(new File(testDir)));
+    }
+    for (String resourceDir : resourceDirectories) {
+      contentRoot.addResourceDirectory(new IdeaSourceDirectoryImpl(new File(resourceDir)));
+    }
+
+    moduleVersionModel.setContentRoots(Collections.<ExtIdeaContentRoot>singleton(contentRoot));
     return moduleVersionModel;
+  }
+
+  private static void addFilePath(Set<String> filePathSet, Object file) {
+    if (file instanceof File) {
+      try {
+        filePathSet.add(((File)file).getCanonicalPath());
+      }
+      catch (IOException ignore) {
+      }
+    }
+  }
+
+  private static void enrichDataFromIdeaPlugin(Project project,
+                                               IdeaContentRootImpl contentRoot,
+                                               Set<String> javaDirectories,
+                                               Set<String> testDirectories) {
+
+    IdeaPlugin ideaPlugin = project.getPlugins().getPlugin(IdeaPlugin.class);
+    if (ideaPlugin == null) return;
+
+    IdeaModel ideaModel = ideaPlugin.getModel();
+    if (ideaModel == null || ideaModel.getModule() == null) return;
+
+    for (File excludeDir : ideaModel.getModule().getExcludeDirs()) {
+      contentRoot.addExcludeDirectory(excludeDir);
+    }
+    for (File file : ideaModel.getModule().getSourceDirs()) {
+      javaDirectories.add(file.getPath());
+    }
+    for (File file : ideaModel.getModule().getTestSourceDirs()) {
+      testDirectories.add(file.getPath());
+    }
   }
 }
