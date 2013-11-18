@@ -15,25 +15,35 @@
  */
 package com.intellij.execution.impl;
 
+import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.ide.ui.UISettings;
+import com.intellij.lexer.Lexer;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.EditorSettings;
-import com.intellij.openapi.editor.colors.EditorColors;
-import com.intellij.openapi.editor.colors.EditorColorsScheme;
-import com.intellij.openapi.editor.colors.EditorFontType;
-import com.intellij.openapi.editor.colors.FontPreferences;
+import com.intellij.openapi.editor.HighlighterColors;
+import com.intellij.openapi.editor.colors.*;
 import com.intellij.openapi.editor.colors.impl.DelegateColorScheme;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.impl.EditorFactoryImpl;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapAppliancePlaces;
+import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.SyntaxHighlighter;
+import com.intellij.openapi.fileTypes.SyntaxHighlighterFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
+import com.intellij.psi.tree.IElementType;
+import com.intellij.util.containers.FactoryMap;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
+import java.util.*;
+import java.util.List;
+
+import static com.intellij.execution.ui.ConsoleViewContentType.registerNewConsoleViewType;
 
 /**
  * @author peter
@@ -121,5 +131,49 @@ public class ConsoleViewUtil {
 
   public static boolean isConsoleViewEditor(Editor editor) {
     return editor.getUserData(EDITOR_IS_CONSOLE_VIEW) == Boolean.TRUE;
+  }
+
+  // @noinspection MismatchedQueryAndUpdateOfCollection
+  private static final Map<List<TextAttributesKey>, Key> ourContentTypes = Collections.synchronizedMap(new FactoryMap<List<TextAttributesKey>, Key>() {
+    protected Key create(List<TextAttributesKey> keys) {
+      EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
+      TextAttributes result = scheme.getAttributes(HighlighterColors.TEXT);
+      StringBuilder keyName = new StringBuilder("Generated_");
+      for (TextAttributesKey key : keys) {
+        TextAttributes attributes = scheme.getAttributes(key);
+        if (attributes != null) {
+          keyName.append("_").append(key.getExternalName());
+          result = TextAttributes.merge(result, attributes);
+        }
+      }
+      Key newKey = new Key(keyName.toString());
+      ConsoleViewContentType contentType = new ConsoleViewContentType(keyName.toString(), result);
+      registerNewConsoleViewType(newKey, contentType);
+      return newKey;
+    }
+  });
+
+  public static void printWithHighlighting(@NotNull ConsoleView console, @NotNull String text, @NotNull SyntaxHighlighter highlighter) {
+    Lexer lexer = highlighter.getHighlightingLexer();
+    lexer.start(text, 0, text.length(), 0);
+
+    IElementType tokenType;
+    while ((tokenType = lexer.getTokenType()) != null) {
+      TextAttributesKey[] keys = highlighter.getTokenHighlights(tokenType);
+      ConsoleViewContentType type = keys.length == 0 ? ConsoleViewContentType.NORMAL_OUTPUT :
+                                    ConsoleViewContentType.getConsoleViewType(ourContentTypes.get(Arrays.asList(keys)));
+      console.print(lexer.getTokenText(), type);
+      lexer.advance();
+    }
+  }
+
+  public static void printAsFileType(@NotNull ConsoleView console, @NotNull String text, @NotNull FileType fileType) {
+    SyntaxHighlighter highlighter = SyntaxHighlighterFactory.getSyntaxHighlighter(fileType, null, null);
+    if (highlighter != null) {
+      printWithHighlighting(console, text, highlighter);
+    }
+    else {
+      console.print(text, ConsoleViewContentType.NORMAL_OUTPUT);
+    }
   }
 }
