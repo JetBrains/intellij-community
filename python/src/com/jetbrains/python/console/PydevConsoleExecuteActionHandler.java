@@ -360,7 +360,7 @@ public class PydevConsoleExecuteActionHandler extends ConsoleExecuteActionHandle
   }
 
   @Override
-  public void runExecuteAction(LanguageConsoleImpl languageConsole) {
+  public void runExecuteAction(@NotNull LanguageConsoleImpl languageConsole) {
     if (isEnabled()) {
       if (!canExecuteNow()) {
         HintManager.getInstance().showErrorHint(languageConsole.getConsoleEditor(), getPrevCommandRunningMessage());
