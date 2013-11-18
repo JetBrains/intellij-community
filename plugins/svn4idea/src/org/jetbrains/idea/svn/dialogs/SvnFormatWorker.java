@@ -32,6 +32,7 @@ import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnUtil;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.WorkingCopyFormat;
+import org.jetbrains.idea.svn.api.ClientFactory;
 import org.tmatesoft.svn.core.SVNCancelException;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.wc.ISVNEventHandler;
@@ -135,7 +136,7 @@ public class SvnFormatWorker extends Task.Backgroundable {
                                                     SvnUtil.formatRepresentation(myNewFormat));
           ISVNEventHandler handler = createUpgradeHandler(indicator, cleanupMessage, upgradeMessage);
 
-          myVcs.getFactory(path).createUpgradeClient().upgrade(path, myNewFormat, handler);
+          getFactory(path, myNewFormat).createUpgradeClient().upgrade(path, myNewFormat, handler);
         } catch (Throwable e) {
           myExceptions.add(e);
         }
@@ -151,6 +152,16 @@ public class SvnFormatWorker extends Task.Backgroundable {
 
       ApplicationManager.getApplication().getMessageBus().syncPublisher(SvnVcs.WC_CONVERTED).run();
     }
+  }
+
+  @NotNull
+  private ClientFactory getFactory(@NotNull File path, @NotNull WorkingCopyFormat format) throws VcsException {
+    ClientFactory factory = myVcs.getFactory(path);
+    ClientFactory otherFactory = myVcs.getOtherFactory(factory);
+    List<WorkingCopyFormat> factoryFormats = factory.createUpgradeClient().getSupportedFormats();
+    List<WorkingCopyFormat> otherFactoryFormats = otherFactory.createUpgradeClient().getSupportedFormats();
+
+    return factoryFormats.contains(format) || !otherFactoryFormats.contains(format) ? factory : otherFactory;
   }
 
   private static ISVNEventHandler createUpgradeHandler(@NotNull final ProgressIndicator indicator,
