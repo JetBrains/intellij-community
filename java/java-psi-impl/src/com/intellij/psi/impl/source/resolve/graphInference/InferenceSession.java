@@ -186,14 +186,17 @@ public class InferenceSession {
                               @Nullable PsiExpression[] args,
                               @Nullable PsiElement parent,
                               ParameterTypeInferencePolicy policy) {
-    repeatInferencePhases();
+    boolean doesNotContainFalseBound = repeatInferencePhases();
 
     resolveBounds(myInferenceVariables.values(), mySiteSubstitutor, false);
 
     final Pair<PsiMethod, PsiCallExpression> pair = getPair(parent);
     if (pair != null) {
       initReturnTypeConstraint(pair.first, (PsiCallExpression)parent);
-      repeatInferencePhases();
+      for (InferenceVariable inferenceVariable : myInferenceVariables.values()) {
+        inferenceVariable.ignoreInstantiation();
+      }
+      doesNotContainFalseBound = repeatInferencePhases();
       resolveBounds(myInferenceVariables.values(), mySiteSubstitutor, false);
     }
 
@@ -215,7 +218,7 @@ public class InferenceSession {
         for (InferenceVariable inferenceVariable : myInferenceVariables.values()) {
           inferenceVariable.ignoreInstantiation();
         }
-        proceedWithAdditionalConstraints(additionalConstraints);
+        doesNotContainFalseBound = proceedWithAdditionalConstraints(additionalConstraints);
       }
     }
 
