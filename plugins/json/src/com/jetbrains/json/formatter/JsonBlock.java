@@ -32,7 +32,6 @@ public class JsonBlock implements ASTBlock {
 
   private ASTNode myNode;
   private PsiElement myPsiElement;
-  private IElementType myNodeType;
   private Alignment myAlignment;
   private Indent myIndent;
   private Wrap myWrap;
@@ -52,7 +51,6 @@ public class JsonBlock implements ASTBlock {
     myParent = parent;
     myNode = node;
     myPsiElement = node.getPsi();
-    myNodeType = node.getElementType();
     myAlignment = alignment;
     myIndent = indent;
     myWrap = wrap;
@@ -97,7 +95,7 @@ public class JsonBlock implements ASTBlock {
     Alignment alignment = null;
     Wrap wrap = null;
 
-    if (isContainer(myNode) && childNodeType != COMMA && !BRACES.contains(childNodeType)) {
+    if (isContainer() && childNodeType != COMMA && !BRACES.contains(childNodeType)) {
       wrap = Wrap.createWrap(WrapType.NORMAL, true);
       alignment = myChildAlignment;
       indent = Indent.getNormalIndent();
@@ -136,17 +134,16 @@ public class JsonBlock implements ASTBlock {
   @NotNull
   @Override
   public ChildAttributes getChildAttributes(int newChildIndex) {
-    JsonBlock prevBlock = newChildIndex > 0 ? (JsonBlock)mySubBlocks.get(newChildIndex - 1) : null;
-    ASTNode prevChild = prevBlock != null? prevBlock.myNode : null;
-    if (isContainer(myNode) && prevChild != null) {
+    JsonBlock prevChildBlock = newChildIndex > 0 ? (JsonBlock)mySubBlocks.get(newChildIndex - 1) : null;
+    ASTNode prevChildNode = prevChildBlock != null? prevChildBlock.myNode : null;
+    if (isContainer() && prevChildNode != null) {
       // correctly indent first element after opening brace
-      if (OPEN_BRACES.contains(prevChild.getElementType())) {
+      if (OPEN_BRACES.contains(prevChildNode.getElementType())) {
         return new ChildAttributes(Indent.getNormalIndent(), myChildAlignment);
       }
       return ChildAttributes.DELEGATE_TO_PREV_CHILD;
     }
-    // TODO find out why inside object then cursor is after '"a": []<cursor>', myNode is instance
-    // of JsonArray
+    // TODO find out why inside object then cursor is after '"a": []<cursor>', myNode is instance of JsonArray
     return new ChildAttributes(Indent.getNormalIndent(), null);
   }
 
@@ -154,15 +151,14 @@ public class JsonBlock implements ASTBlock {
   public boolean isIncomplete() {
     IElementType nodeType = myNode.getElementType();
     ASTNode lastChildNode = myNode.getLastChildNode();
-    PsiElement psiElement = myNode.getPsi();
     if (nodeType == OBJECT) {
       return lastChildNode != null && lastChildNode.getElementType() == R_CURLY;
     }
     else if (nodeType == ARRAY) {
       return lastChildNode != null && lastChildNode.getElementType() == R_BRAKET;
     }
-    else if (psiElement instanceof JsonProperty) {
-      return ((JsonProperty)psiElement).getValue() != null;
+    else if (myPsiElement instanceof JsonProperty) {
+      return ((JsonProperty)myPsiElement).getValue() != null;
     }
     return false;
   }
@@ -176,8 +172,8 @@ public class JsonBlock implements ASTBlock {
     return node.getElementType() == TokenType.WHITE_SPACE || node.getTextLength() == 0;
   }
 
-  private static boolean isContainer(ASTNode node) {
-    return CONTAINERS.contains(node.getElementType());
+  private boolean isContainer() {
+    return CONTAINERS.contains(myNode.getElementType());
   }
 
 }
