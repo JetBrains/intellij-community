@@ -1,7 +1,9 @@
 package org.jetbrains.postfixCompletion;
 
+import com.intellij.codeInsight.completion.*;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.*;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.*;
 import com.intellij.openapi.project.*;
@@ -31,7 +33,8 @@ public final class ExpandPostfixEditorActionHandler extends EditorActionHandler 
     return myUnderlying.isEnabled(editor, dataContext);
   }
 
-  protected Object findFoo(Editor editor) {
+  @Nullable
+  protected LookupElement findFoo(Editor editor) {
     Project project = editor.getProject();
     if (project == null) return null;
 
@@ -78,6 +81,35 @@ public final class ExpandPostfixEditorActionHandler extends EditorActionHandler 
   }
 
   @Override public void execute(Editor editor, DataContext dataContext) {
+    final LookupElement lookupElement = findFoo(editor);
+    if (lookupElement != null) {
+      PsiFile psiFile = PsiUtilBase.getPsiFileInEditor(editor, editor.getProject());
+
+      OffsetMap offsetMap = new OffsetMap(editor.getDocument());
+      int offset = editor.getCaretModel().getOffset() - lookupElement.getLookupString().length();
+      offsetMap.addOffset(CompletionInitializationContext.START_OFFSET, offset);
+
+      final InsertionContext context = new InsertionContext(
+        offsetMap, '\t',
+        new LookupElement[]{lookupElement}, psiFile,
+        editor, false);
+
+
+      ApplicationManager.getApplication().runWriteAction(new Runnable() {
+        @Override public void run() {
+          lookupElement.handleInsert(context);
+        }
+      });
+
+      /*public InsertionContext(
+      com.intellij.codeInsight.completion.OffsetMap offsetMap,
+       char completionChar, com.intellij.codeInsight.lookup.LookupElement[] elements,
+        @org.jetbrains.annotations.NotNull com.intellij.psi.PsiFile file, @org.jetbrains.annotations.NotNull
+       com.intellij.openapi.editor.Editor editor, boolean addCompletionChar)*/
+
+      return;
+    }
+
     myUnderlying.execute(editor, dataContext);
   }
 }
