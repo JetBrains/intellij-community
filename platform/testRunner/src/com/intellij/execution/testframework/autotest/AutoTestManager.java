@@ -13,9 +13,9 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.content.Content;
 import com.intellij.util.Consumer;
-import com.intellij.util.containers.WeakList;
+import com.intellij.util.containers.WeakHashMap;
 
-import java.util.Collection;
+import java.util.Collections;
 import java.util.Set;
 
 /**
@@ -29,7 +29,9 @@ public class AutoTestManager {
 
   private int myDelay;
   private DelayedDocumentWatcher myDocumentWatcher;
-  private final Collection<Content> myEnabledDescriptors = new WeakList<Content>();
+
+  // accessed only from EDT
+  private final Set<Content> myEnabledDescriptors = Collections.newSetFromMap(new WeakHashMap<Content, Boolean>());
 
   public static AutoTestManager getInstance(Project project) {
     return ServiceManager.getService(project, AutoTestManager.class);
