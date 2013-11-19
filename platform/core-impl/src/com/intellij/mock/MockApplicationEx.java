@@ -118,6 +118,7 @@ public class MockApplicationEx extends MockApplication implements ApplicationEx 
 
   @Override
   public boolean tryRunReadAction(@NotNull Runnable runnable) {
-    return false;
+    runReadAction(runnable);
+    return true;
   }
 }
