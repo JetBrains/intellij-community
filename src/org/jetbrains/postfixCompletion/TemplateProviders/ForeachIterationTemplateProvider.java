@@ -3,17 +3,18 @@ package org.jetbrains.postfixCompletion.TemplateProviders;
 import com.intellij.codeInsight.completion.*;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.codeInsight.template.*;
-import com.intellij.codeInsight.template.Result;
 import com.intellij.codeInsight.template.impl.*;
 import com.intellij.codeInsight.template.macro.*;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.command.*;
 import com.intellij.openapi.editor.*;
+import com.intellij.openapi.project.*;
 import com.intellij.psi.*;
 import com.intellij.psi.util.*;
 import org.jetbrains.annotations.*;
 import org.jetbrains.postfixCompletion.Infrastructure.*;
 import org.jetbrains.postfixCompletion.LookupItems.*;
+import org.jetbrains.postfixCompletion.*;
 
 import java.util.*;
 
@@ -58,8 +59,9 @@ public class ForeachIterationTemplateProvider extends TemplateProviderBase {
     }
 
     @Override protected void postProcess(
-      @NotNull final InsertionContext context, @NotNull final PsiForeachStatement forStatement) {
-      final SmartPointerManager pointerManager = SmartPointerManager.getInstance(context.getProject());
+      @NotNull final InsertionContext context, @NotNull PsiForeachStatement forStatement) {
+      final Project project = context.getProject();
+      final SmartPointerManager pointerManager = SmartPointerManager.getInstance(project);
       final SmartPsiElementPointer<PsiForeachStatement> statementPointer =
         pointerManager.createSmartPsiElementPointer(forStatement);
 
@@ -68,13 +70,13 @@ public class ForeachIterationTemplateProvider extends TemplateProviderBase {
           PsiForeachStatement statement = statementPointer.getElement();
           if (statement == null) return;
 
-          // create template for iteration expression
+          // create template for iteration statement
           TemplateBuilderImpl builder = new TemplateBuilderImpl(statement);
           PsiParameter iterationParameter = statement.getIterationParameter();
 
           // store pointer to iterated value
           PsiExpression iteratedValue = statement.getIteratedValue();
-          assert iteratedValue != null : "iteratedValue != null";
+          assert (iteratedValue != null) : "iteratedValue != null";
           final SmartPsiElementPointer<PsiExpression> valuePointer =
             pointerManager.createSmartPsiElementPointer(iteratedValue);
 
@@ -98,7 +100,7 @@ public class ForeachIterationTemplateProvider extends TemplateProviderBase {
           CaretModel caretModel = editor.getCaretModel();
           caretModel.moveToOffset(statement.getTextRange().getStartOffset());
 
-          TemplateManager manager = TemplateManager.getInstance(context.getProject());
+          TemplateManager manager = TemplateManager.getInstance(project);
           manager.startTemplate(editor, template);
         }
       };
@@ -112,26 +114,6 @@ public class ForeachIterationTemplateProvider extends TemplateProviderBase {
           });
         }
       });
-    }
-
-    private static final class PsiPointerExpression extends Expression {
-      @NotNull private final SmartPsiElementPointer<PsiExpression> valuePointer;
-
-      public PsiPointerExpression(@NotNull SmartPsiElementPointer<PsiExpression> valuePointer) {
-        this.valuePointer = valuePointer;
-      }
-
-      @Nullable @Override public Result calculateResult(ExpressionContext expressionContext) {
-        return new PsiElementResult(valuePointer.getElement());
-      }
-
-      @Nullable @Override public Result calculateQuickResult(ExpressionContext expressionContext) {
-        return calculateResult(expressionContext);
-      }
-
-      @Nullable @Override public LookupElement[] calculateLookupItems(ExpressionContext expressionContext) {
-        return LookupElement.EMPTY_ARRAY;
-      }
     }
   }
 }

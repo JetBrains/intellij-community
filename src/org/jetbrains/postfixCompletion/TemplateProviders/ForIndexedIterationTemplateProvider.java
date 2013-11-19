@@ -3,9 +3,12 @@ package org.jetbrains.postfixCompletion.TemplateProviders;
 import com.intellij.codeInsight.completion.*;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.codeInsight.template.*;
-import com.intellij.codeInsight.template.Result;
+import com.intellij.codeInsight.template.impl.*;
+import com.intellij.codeInsight.template.macro.*;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.command.*;
+import com.intellij.openapi.editor.*;
+import com.intellij.openapi.util.*;
 import com.intellij.psi.*;
 import com.intellij.psi.util.*;
 import org.jetbrains.annotations.*;
@@ -24,95 +27,120 @@ import java.util.*;
 public class ForIndexedIterationTemplateProvider extends TemplateProviderBase {
   @Override public void createItems(
     @NotNull PostfixTemplateContext context, @NotNull List<LookupElement> consumer) {
-
-
     PrefixExpressionContext expression = context.innerExpression;
     if (!expression.canBeStatement) return;
 
     PsiType expressionType = expression.expressionType;
 
-    String methodAccess = findSizeLikeMethod(expressionType, expression.expression);
-    if (methodAccess == null && !context.executionContext.isForceMode) return;
+    Pair<String, String> info = findSizeLikeMethod(expressionType, expression.expression);
+    if (info == null) {
+      if (!context.executionContext.isForceMode) return;
+      else info = Pair.create("", "int");
+    }
 
-    consumer.add(new ForIndexedLookupElement(expression, methodAccess));
+    consumer.add(new ForIndexedLookupElement(expression, info.second, info.first));
   }
 
-  @Nullable public static String findSizeLikeMethod(@Nullable PsiType psiType, @NotNull PsiElement accessContext) {
+  @Nullable public static Pair<String, String> findSizeLikeMethod(
+      @Nullable PsiType psiType, @NotNull PsiElement accessContext) {
     // plain array types
     if (psiType instanceof PsiArrayType) {
-      return ".length";
+      return Pair.create(".length", "int");
     }
 
     // custom collection types with size()/length()/count() methods
     if (psiType instanceof PsiClassType) {
       PsiClass psiClass = ((PsiClassType) psiType).resolve();
-      if (psiClass != null) {
-        JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(accessContext.getProject());
-        PsiClass containingType = PsiTreeUtil.getParentOfType(accessContext, PsiClass.class);
-        PsiResolveHelper resolveHelper = psiFacade.getResolveHelper();
+      if (psiClass == null) return null;
 
-        for (PsiMethod psiMethod : psiClass.getAllMethods()) {
-          String methodName = psiMethod.getName();
-          if (methodName.equals("size") || methodName.equals("length") || methodName.equals("count")) {
-            if (psiMethod.hasModifierProperty(PsiModifier.STATIC)) continue;
-            if (psiMethod.getParameterList().getParametersCount() != 0) continue;
+      JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(accessContext.getProject());
+      PsiClass containingType = PsiTreeUtil.getParentOfType(accessContext, PsiClass.class);
+      PsiResolveHelper resolveHelper = psiFacade.getResolveHelper();
 
-            PsiType returnType = psiMethod.getReturnType();
-            if (!TypeConversionUtil.isNumericType(returnType)) continue;
+      for (PsiMethod psiMethod : psiClass.getAllMethods()) {
+        String methodName = psiMethod.getName();
+        if (methodName.equals("size") || methodName.equals("length") || methodName.equals("count")) {
+          if (psiMethod.hasModifierProperty(PsiModifier.STATIC)) continue;
+          if (psiMethod.getParameterList().getParametersCount() != 0) continue;
 
-            if (resolveHelper.isAccessible(psiMethod, accessContext, containingType)) {
-              return "." + methodName + "()";
-            }
+          PsiType returnType = psiMethod.getReturnType();
+          if (returnType == null) continue;
+
+          String integralType = isIntegralType(returnType);
+          if (integralType == null) continue;
+
+          if (resolveHelper.isAccessible(psiMethod, accessContext, containingType)) {
+            return Pair.create("." + methodName + "()", integralType);
           }
         }
       }
     }
 
     // any other numeric types
-    if (TypeConversionUtil.isNumericType(psiType)) {
-      return ""; // for (int i = 0; i < expr; i++)
+    if (psiType != null) {
+      String integralType = isIntegralType(psiType);
+      if (integralType != null) { // for (int i = 0; i < expr; i++)
+        return Pair.create("", integralType);
+      }
     }
 
     return null;
   }
 
-  private static final class ForIndexedLookupElement extends StatementPostfixLookupElement<PsiForStatement> {
-    @NotNull private final String myMethodAccess;
+  @Nullable private static String isIntegralType(@NotNull PsiType psiType) {
+    if (PsiType.BYTE.isAssignableFrom(psiType))  return "byte";
+    if (PsiType.SHORT.isAssignableFrom(psiType)) return "short";
+    if (PsiType.INT.isAssignableFrom(psiType))   return "int";
+    if (PsiType.LONG.isAssignableFrom(psiType))  return "long";
 
-    public ForIndexedLookupElement(@NotNull PrefixExpressionContext context, @NotNull String methodAccess) {
+    return null;
+  }
+
+  private static final class ForIndexedLookupElement extends StatementPostfixLookupElement<PsiForStatement> {
+    @NotNull private final String myIndexVariableType, mySizeAccessSuffix;
+
+    public ForIndexedLookupElement(
+      @NotNull PrefixExpressionContext context, @NotNull String indexVariableType, @NotNull String sizeAccessSuffix) {
       super("fori", context);
-      myMethodAccess = methodAccess;
+      myIndexVariableType = indexVariableType;
+      mySizeAccessSuffix = sizeAccessSuffix;
     }
 
     @NotNull @Override protected PsiForStatement createNewStatement(
       @NotNull PsiElementFactory factory, @NotNull PsiElement expression, @NotNull PsiElement context) {
-      String template = "for(int i = 0; i < expr" + myMethodAccess + "; i++)";
+      String template = "for(" + myIndexVariableType + " i = 0; i < expr" + mySizeAccessSuffix + "; i++)";
       PsiForStatement forStatement = (PsiForStatement) factory.createStatementFromText(template, context);
 
-      PsiBinaryExpression condition = (PsiBinaryExpression) forStatement.getCondition();
-      assert (condition != null) : "condition != null";
-
-      PsiExpression upperBound = condition.getROperand();
-
-      if (upperBound instanceof PsiMethodCallExpression) { // expr.size()
-        upperBound = ((PsiMethodCallExpression) upperBound).getMethodExpression();
-      }
-
-      if (upperBound instanceof PsiReferenceExpression) { // expr.length
-        PsiReferenceExpression reference = (PsiReferenceExpression) upperBound;
-        if (!"expr".equals(reference.getReferenceName())) {
-          upperBound = (PsiExpression) reference.getQualifier();
-        }
-      }
-
-      assert (upperBound != null) : "upperBound != null";
+      PsiExpression upperBound = findBoundExpression(forStatement);
       upperBound.replace(expression);
 
       return forStatement;
     }
 
+    @NotNull private PsiExpression findBoundExpression(@NotNull PsiForStatement forStatement) {
+      PsiBinaryExpression condition = (PsiBinaryExpression) forStatement.getCondition();
+      assert (condition != null) : "condition != null";
+
+      PsiExpression boundExpression = condition.getROperand();
+      assert (boundExpression != null) : "boundExpression != null";
+
+      if (boundExpression instanceof PsiMethodCallExpression) { // expr.size()
+        boundExpression = ((PsiMethodCallExpression) boundExpression).getMethodExpression();
+      }
+
+      if (boundExpression instanceof PsiReferenceExpression) { // expr.length
+        PsiReferenceExpression reference = (PsiReferenceExpression) boundExpression;
+        if (!"expr".equals(reference.getReferenceName())) {
+          boundExpression = (PsiExpression) reference.getQualifier();
+        }
+      }
+
+      assert (boundExpression != null) : "boundExpression != null";
+      return boundExpression;
+    }
+
     @Override protected void postProcess(
-      @NotNull final InsertionContext context, @NotNull final PsiForStatement forStatement) {
+      @NotNull final InsertionContext context, @NotNull PsiForStatement forStatement) {
       final SmartPointerManager pointerManager = SmartPointerManager.getInstance(context.getProject());
       final SmartPsiElementPointer<PsiForStatement> statementPointer =
         pointerManager.createSmartPsiElementPointer(forStatement);
@@ -122,26 +150,21 @@ public class ForIndexedIterationTemplateProvider extends TemplateProviderBase {
           PsiForStatement statement = statementPointer.getElement();
           if (statement == null) return;
 
-          /*
-          // create template for iteration expression
+          // create template for for statement
           TemplateBuilderImpl builder = new TemplateBuilderImpl(statement);
-          PsiParameter iterationParameter = statement.getIterationParameter();
+          PsiDeclarationStatement initialization = (PsiDeclarationStatement) statement.getInitialization();
+          assert (initialization != null) : "initialization != null";
 
-          // store pointer to iterated value
-          PsiExpression iteratedValue = statement.getIteratedValue();
-          assert iteratedValue != null : "iteratedValue != null";
-          final SmartPsiElementPointer<PsiExpression> valuePointer =
-            pointerManager.createSmartPsiElementPointer(iteratedValue);
+          PsiLocalVariable indexVariable = (PsiLocalVariable) initialization.getDeclaredElements()[0];
+
+          PsiBinaryExpression condition = (PsiBinaryExpression) statement.getCondition();
+          assert (condition != null) : "condition != null";
 
           // use standard macro, pass parameter expression with expression to iterate
-          MacroCallNode iterableTypeExpression = new MacroCallNode(new IterableComponentTypeMacro());
-          iterableTypeExpression.addParameter(new PsiPointerExpression(valuePointer));
-
-          MacroCallNode nameExpression = new MacroCallNode(new SuggestVariableNameMacro());
+          MacroCallNode nameExpression = new MacroCallNode(new SuggestIndexNameMacro());
 
           // setup placeholders and final position
-          builder.replaceElement(iterationParameter.getTypeElement(), iterableTypeExpression, false);
-          builder.replaceElement(iterationParameter.getNameIdentifier(), nameExpression, true);
+          builder.replaceElement(indexVariable.getNameIdentifier(), nameExpression, true);
           builder.setEndVariableAfter(statement.getRParenth());
 
           // todo: braces insertion?
@@ -155,7 +178,6 @@ public class ForIndexedIterationTemplateProvider extends TemplateProviderBase {
 
           TemplateManager manager = TemplateManager.getInstance(context.getProject());
           manager.startTemplate(editor, template);
-          */
         }
       };
 
@@ -168,26 +190,6 @@ public class ForIndexedIterationTemplateProvider extends TemplateProviderBase {
           });
         }
       });
-    }
-
-    private static final class PsiPointerExpression extends Expression {
-      @NotNull private final SmartPsiElementPointer<PsiExpression> valuePointer;
-
-      public PsiPointerExpression(@NotNull SmartPsiElementPointer<PsiExpression> valuePointer) {
-        this.valuePointer = valuePointer;
-      }
-
-      @Nullable @Override public Result calculateResult(ExpressionContext expressionContext) {
-        return new PsiElementResult(valuePointer.getElement());
-      }
-
-      @Nullable @Override public Result calculateQuickResult(ExpressionContext expressionContext) {
-        return calculateResult(expressionContext);
-      }
-
-      @Nullable @Override public LookupElement[] calculateLookupItems(ExpressionContext expressionContext) {
-        return LookupElement.EMPTY_ARRAY;
-      }
     }
   }
 }
