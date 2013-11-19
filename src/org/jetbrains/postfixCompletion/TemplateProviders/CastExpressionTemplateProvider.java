@@ -16,7 +16,8 @@ import org.jetbrains.postfixCompletion.LookupItems.*;
 
 import java.util.*;
 
-// todo: when invoked inside code fragment - insert ((T) expr)
+// todo: when invoked inside code fragment - insert ((T) expr)?
+// todo: also when can be expression-statements?
 
 @TemplateProvider(
   templateName = "cast",

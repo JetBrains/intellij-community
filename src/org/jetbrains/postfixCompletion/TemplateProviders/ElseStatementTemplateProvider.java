@@ -9,8 +9,6 @@ import org.jetbrains.postfixCompletion.LookupItems.*;
 
 import java.util.*;
 
-// todo: fix 'parametersCount == 0.else' case
-
 @TemplateProvider(
   templateName = "else",
   description = "Checks boolean expression to be 'false'",

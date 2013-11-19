@@ -48,7 +48,8 @@ public final class ExpandPostfixEditorActionHandler extends EditorActionHandler 
     assert (psiFile != null) : "psiFile != null";
 
     OffsetMap offsetMap = new OffsetMap(document);
-    int startOffset = editor.getCaretModel().getOffset() - postfixElement.getLookupString().length();
+    int caretOffset = editor.getCaretModel().getOffset();
+    int startOffset = caretOffset - postfixElement.getLookupString().length();
     offsetMap.addOffset(CompletionInitializationContext.START_OFFSET, startOffset);
 
     final InsertionContext insertionContext = new InsertionContext(
@@ -86,7 +87,9 @@ public final class ExpandPostfixEditorActionHandler extends EditorActionHandler 
       application.runWriteAction(new Runnable() {
         @Override public void run() {
           commandProcessor.runUndoTransparentAction(new Runnable() {
-            @Override public void run() { document.insertString(offset, dummyIdentifier); }
+            @Override public void run() {
+              document.insertString(offset, dummyIdentifier);
+            }
           });
         }
       });

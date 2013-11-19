@@ -28,16 +28,11 @@ public class ForIterationTemplateProvider extends TemplateProviderBase {
 
     if (!context.executionContext.isForceMode) {
       PsiType expressionType = expression.expressionType;
-      if (expressionType == null) {
-        return;
-        // filter out expression of primitive types
-        //Boolean isNullable = NotNullCheckTemplateProvider.isNullableExpression(expression);
-        //if (isNullable != null && !isNullable) return;
-      } else {
-        // for-statements can take expressions of array or Iterable<T>-derived types
-        if (!(expressionType instanceof PsiArrayType) &&
-          !InheritanceUtil.isInheritor(expressionType, CommonClassNames.JAVA_LANG_ITERABLE)) return;
-      }
+      if (expressionType == null) return;
+
+      // for-statements can take expressions of array or Iterable<T>-derived types
+      if (!(expressionType instanceof PsiArrayType) &&
+        !InheritanceUtil.isInheritor(expressionType, CommonClassNames.JAVA_LANG_ITERABLE)) return;
     }
 
     consumer.add(new ForeachLookupElement(expression));
@@ -55,7 +50,8 @@ public class ForIterationTemplateProvider extends TemplateProviderBase {
         factory.createStatementFromText("for(T item:expr)", context);
 
       PsiExpression iteratedValue = forStatement.getIteratedValue();
-      assert iteratedValue != null : "iteratedValue != null";
+      assert (iteratedValue != null) : "iteratedValue != null";
+
       iteratedValue.replace(expression);
 
       return forStatement;
