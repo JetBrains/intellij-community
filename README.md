@@ -35,6 +35,9 @@ Available templates:
 * `.cast` – surrounds expression with cast `(SomeType) expr`
 * `.new` – produces instantiation expression for type `new T()`
 
+* `.fori` – surrounds with loop `for (int i = 0; i < expr.length; i++)`
+* `.forr` – reverse loop `for (int i = expr.length; i >= 0; i--)`
+
 Other features:
 
 * Template expansion by `Tab` key in editor (like live templates)
@@ -42,8 +45,6 @@ Other features:
 * Works inside code fragments, like *evaluate expression* debugger window
 
 Future work:
-* `.fori` – surrounds with loop `for (int i = 0; i < expr.length; i++)`
-* `.forr` – reverse loop `for (int i = expr.length; i >= 0; i--)`
 * `.field` – introduces field for expression `_field = expr;`
 * `.par` – surrounds outer expression with parentheses `(expr)`
 * `.return` – returns value from method/property `return expr;`

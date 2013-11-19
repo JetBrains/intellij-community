@@ -69,7 +69,7 @@
       <implementation-class>org.jetbrains.postfixCompletion.TemplateProviders.NotExpressionTemplateProvider</implementation-class>
     </component>
     <component>
-      <implementation-class>org.jetbrains.postfixCompletion.TemplateProviders.ForIterationTemplateProvider</implementation-class>
+      <implementation-class>org.jetbrains.postfixCompletion.TemplateProviders.ForeachIterationTemplateProvider</implementation-class>
     </component>
     <component>
       <implementation-class>org.jetbrains.postfixCompletion.TemplateProviders.WhileStatementTemplateProvider</implementation-class>
@@ -82,6 +82,9 @@
     </component>
     <component>
       <implementation-class>org.jetbrains.postfixCompletion.TemplateProviders.NewExpressionTemplateProvider</implementation-class>
+    </component>
+    <component>
+      <implementation-class>org.jetbrains.postfixCompletion.TemplateProviders.ForIndexedIterationTemplateProvider</implementation-class>
     </component>
   </application-components>
 
