@@ -26,6 +26,10 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 import java.util.concurrent.Future;
 
+/**
+ * Invitation-only service for running short-lived computing-intensive IO-free tasks on all available CPU cores.
+ * DO NOT USE for your tasks, IO-bound or long tasks, there is Application#executeOnPooledThread() for that.
+ */
 public abstract class JobLauncher {
   public static JobLauncher getInstance() {
     return ServiceManager.getService(JobLauncher.class);
