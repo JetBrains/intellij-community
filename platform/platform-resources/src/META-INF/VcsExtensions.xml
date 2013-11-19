@@ -38,6 +38,7 @@
     <applicationService serviceInterface="com.intellij.openapi.vcs.impl.CheckinHandlersManager"
                         serviceImplementation="com.intellij.openapi.vcs.impl.CheckinHandlersManagerImpl"/>
     <pathMacroFilter implementation="com.intellij.openapi.vcs.VcsPathMacroFilter"/>
+    <search.topHitProvider implementation="com.intellij.openapi.vcs.actions.VcsTopHitProvider"/>
   </extensions>
 </idea-plugin>
 
