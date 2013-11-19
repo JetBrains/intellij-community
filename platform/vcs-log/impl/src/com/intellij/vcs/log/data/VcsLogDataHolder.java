@@ -589,7 +589,7 @@ public class VcsLogDataHolder implements Disposable {
     return ContainerUtil.map(firstBlockDetails, new Function<VcsFullCommitDetails, TimedVcsCommit>() {
       @Override
       public TimedVcsCommit fun(VcsFullCommitDetails details) {
-        return new CompactCommit(details.getHash(), details.getParents(), details.getAuthorTime());
+        return new CompactCommit(details.getHash(), details.getParents(), details.getTime());
       }
     });
   }
@@ -790,15 +790,15 @@ public class VcsLogDataHolder implements Disposable {
     private final int myHashIndex;
     private final int myParent; // there is almost always one parent
     private final int[] myOtherParents;
-    private final long myAuthorTime;
+    private final long myTime;
 
     public CompactCommit(TimedVcsCommit commit) {
-      this(commit.getHash(), commit.getParents(), commit.getAuthorTime());
+      this(commit.getHash(), commit.getParents(), commit.getTime());
     }
 
     public CompactCommit(Hash hash, List<Hash> parents, long time) {
       myHashIndex = putHash(hash);
-      myAuthorTime = time;
+      myTime = time;
 
       if (!parents.isEmpty()) {
         myParent = putHash(parents.get(0));
@@ -819,8 +819,8 @@ public class VcsLogDataHolder implements Disposable {
     }
 
     @Override
-    public long getAuthorTime() {
-      return myAuthorTime;
+    public long getTime() {
+      return myTime;
     }
 
     @NotNull

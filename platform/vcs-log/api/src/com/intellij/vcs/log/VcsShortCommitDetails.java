@@ -28,7 +28,10 @@ public interface VcsShortCommitDetails {
   @NotNull
   List<Hash> getParents();
 
-  long getAuthorTime();
+  /**
+   * @see {@link TimedVcsCommit#getTime()}.
+   */
+  long getTime();
 
   @NotNull
   String getSubject();

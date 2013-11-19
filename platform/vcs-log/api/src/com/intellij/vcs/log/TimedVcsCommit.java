@@ -23,8 +23,11 @@ package com.intellij.vcs.log;
 public interface TimedVcsCommit extends VcsCommit {
 
   /**
-   * Returns the timestamp indicating the date & time when this commit was made.
+   * <p>Returns the timestamp indicating the date & time when this commit was made.</p>
+   * <p>This time is displayed in the table by default;
+   *    is used for joining commits from different repositories;
+   *    is used for ordering commits in a single repository (keeping the preference of the topological ordering of course).</p>
    */
-  long getAuthorTime();
+  long getTime();
 
 }

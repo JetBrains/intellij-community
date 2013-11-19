@@ -220,7 +220,7 @@ public class VcsLogJoiner {
       Collections.sort(newSortedCommits, new Comparator<TimedVcsCommit>() {
         @Override
         public int compare(@NotNull TimedVcsCommit o1, @NotNull TimedVcsCommit o2) {
-          return new Long(o1.getAuthorTime()).compareTo(o2.getAuthorTime());
+          return new Long(o1.getTime()).compareTo(o2.getTime());
         }
       });
     }
