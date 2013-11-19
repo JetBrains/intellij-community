@@ -19,6 +19,7 @@ package org.zmlx.hg4idea.log;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsKey;
@@ -235,8 +236,8 @@ public class HgLogProvider implements VcsLogProvider {
     if (userName == null) {
       userName = System.getenv("HGUSER");
     }
-    List<String> userArgs = HgUtil.parseUserNameAndEmail(userName);
-    return userName == null ? null : myVcsObjectsFactory.createUser(userArgs.get(0), userArgs.get(1));
+    Pair<String, String> userArgs = HgUtil.parseUserNameAndEmail(userName);
+    return userName == null ? null : myVcsObjectsFactory.createUser(userArgs.getFirst(), userArgs.getSecond());
   }
 
   private static String prepareParameter(String paramName, String value) {
