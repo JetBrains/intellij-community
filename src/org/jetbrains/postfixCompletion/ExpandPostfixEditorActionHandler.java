@@ -4,6 +4,7 @@ import com.intellij.codeInsight.completion.*;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.*;
+import com.intellij.openapi.command.*;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.*;
 import com.intellij.openapi.project.*;
@@ -75,13 +76,19 @@ public final class ExpandPostfixEditorActionHandler extends EditorActionHandler 
     final Document document = editor.getDocument();
     final int offset = editor.getCaretModel().getOffset();
     final String dummyIdentifier = CompletionUtilCore.DUMMY_IDENTIFIER_TRIMMED;
+    final CommandProcessor commandProcessor = CommandProcessor.getInstance();
 
     boolean reparseBack = true;
     Application application = ApplicationManager.getApplication();
+
     try {
       // ugly physical reparse with dummy identifier
       application.runWriteAction(new Runnable() {
-        @Override public void run() { document.insertString(offset, dummyIdentifier); }
+        @Override public void run() {
+          commandProcessor.runUndoTransparentAction(new Runnable() {
+            @Override public void run() { document.insertString(offset, dummyIdentifier); }
+          });
+        }
       });
 
       PsiDocumentManager.getInstance(project).commitDocument(document);
@@ -113,7 +120,11 @@ public final class ExpandPostfixEditorActionHandler extends EditorActionHandler 
       if (reparseBack) {
         application.runWriteAction(new Runnable() {
           @Override public void run() {
-            document.deleteString(offset, offset + dummyIdentifier.length());
+            commandProcessor.runUndoTransparentAction(new Runnable() {
+              @Override public void run() {
+                document.deleteString(offset, offset + dummyIdentifier.length());
+              }
+            });
           }
         });
       }

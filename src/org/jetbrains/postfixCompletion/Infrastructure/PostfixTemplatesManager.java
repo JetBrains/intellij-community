@@ -30,17 +30,15 @@ public final class PostfixTemplatesManager implements ApplicationComponent {
       }
     }
 
-    ActionManager instance = ActionManager.getInstance();
-    AnAction expandLiveTemplate = instance.getAction("ExpandLiveTemplateByTab");
+    // wrap 'ExpandLiveTemplateByTab' action handler
+    ActionManager actionManager = ActionManager.getInstance();
+    AnAction expandLiveTemplate = actionManager.getAction("ExpandLiveTemplateByTab");
     if (expandLiveTemplate instanceof ExpandLiveTemplateByTabAction) {
       EditorAction expandAction = (EditorAction) expandLiveTemplate;
 
-      EditorActionHandler existingHandler = expandAction.getHandler();
+      EditorActionHandler existingHandler = expandAction.getHandler(); // hack :(
       expandAction.setupHandler(new ExpandPostfixEditorActionHandler(existingHandler, this));
     }
-
-
-    //act.copyShortcutFrom(editorTab2);
   }
 
   private static class TemplateProviderInfo {
@@ -111,8 +109,8 @@ public final class PostfixTemplatesManager implements ApplicationComponent {
               }
 
               @Nullable @Override
-              public PsiStatement getContainingStatement(@NotNull PrefixExpressionContext expressionContext) {
-                PsiStatement statement = super.getContainingStatement(expressionContext);
+              public PsiStatement getContainingStatement(@NotNull PrefixExpressionContext context) {
+                PsiStatement statement = super.getContainingStatement(context);
                 if (statement != null && lhsStatement.isValid()) {
                   // ignore expression-statements produced by broken expr like '2.var + 2'
                   // note: only when lhsStatement is not 'fixed' yet
@@ -164,12 +162,11 @@ public final class PostfixTemplatesManager implements ApplicationComponent {
               return new PrefixExpressionContext(this, fixedReference);
             }
 
-            @Nullable @Override public PsiStatement getContainingStatement(
-                @NotNull PrefixExpressionContext expressionContext) {
-
+            @Nullable @Override
+            public PsiStatement getContainingStatement(@NotNull PrefixExpressionContext context) {
               // note: not always correct?
-              if (expressionContext.expression instanceof PsiJavaCodeReferenceElement) {
-                PsiElement parent = expressionContext.expression.getParent();
+              if (context.expression instanceof PsiJavaCodeReferenceElement) {
+                PsiElement parent = context.expression.getParent();
                 if (parent instanceof PsiJavaCodeReferenceElement && parent == reference) {
                   parent = parent.getParent();
                 }
@@ -182,7 +179,7 @@ public final class PostfixTemplatesManager implements ApplicationComponent {
                 }
               }
 
-              return super.getContainingStatement(expressionContext);
+              return super.getContainingStatement(context);
             }
           };
         }

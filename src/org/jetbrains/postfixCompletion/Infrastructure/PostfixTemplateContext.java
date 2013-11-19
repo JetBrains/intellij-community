@@ -54,9 +54,9 @@ public abstract class PostfixTemplateContext {
 
   @NotNull public abstract PrefixExpressionContext fixExpression(@NotNull PrefixExpressionContext context);
 
-  @Nullable public PsiStatement getContainingStatement(@NotNull PrefixExpressionContext expressionContext) {
+  @Nullable public PsiStatement getContainingStatement(@NotNull PrefixExpressionContext context) {
     // look for expression-statement parent
-    PsiElement element = expressionContext.expression.getParent();
+    PsiElement element = context.expression.getParent();
 
     // escape from '.postfix' reference-expression
     if (element == postfixReference) {
