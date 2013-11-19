@@ -1,7 +1,7 @@
 <idea-plugin version="2">
   <id>org.jetbrains.postfixCompletion</id>
   <name>Postfix Completion</name>
-  <version>0.3-beta</version>
+  <version>0.4-beta</version>
   <vendor email="alexander.shvedov@jetbrains.com"
           url="https://github.com/controlflow">Alexander Shvedov</vendor>
   <depends>com.intellij.modules.lang</depends>
@@ -25,14 +25,22 @@
         <li> <b>.while</b> – uses expression as loop condition – <b>while (expr)</b></li>
         <li> <b>.arg</b> – helps surround argument with invocation – <b>method(expr)</b></li>
         <li> <b>.cast</b> – surrounds expression with cast – <b>(SomeType) expr</b></li>
+        <li> <b>.new</b> – produces instantiation expression for type – <b>new T()</b></li>
+      </ul>
+
+      <b>Other features:</b><br/>
+
+      <ul>
+        <li>Template expansion by <b>[Tab]</b> key in editor (like live templates)</li>
+        <li>Support for IDEA chained code completion (<b>st.new</b> => <b>new SomeType()</b>)</li>
+        <li>Works inside code fragments, like evaluate expression debugger window</li>
       </ul>
 ]]></description>
 
   <change-notes><![CDATA[
-      <b>Version 0.3-beta</b><br/>
-      Lot of various fixes. Initial (and nearly final, I hope) support for IDEA's code completion
-      with unresolved reference-expression qualifier feature. It allows you to write <b>scn.nn</b>
-      and expand into <b>if (superCoolName != null)</b>, for example.
+      <b>Version 0.4-beta</b><br/>
+      Various fixes. New <b>.new</b> template over types.<br/>
+      Postfix template expansion by <b>Tab</b> key in editor (like live templates)
 ]]></change-notes>
 
   <idea-version since-build="130.754"/>
@@ -84,6 +92,6 @@
 
   <extensions defaultExtensionNs="com.intellij">
     <completion.contributor language="JAVA" order="FIRST"
-                            implementationClass="org.jetbrains.postfixCompletion.PostfixCompletionContributor" />
+      implementationClass="org.jetbrains.postfixCompletion.PostfixCompletionContributor" />
   </extensions>
 </idea-plugin>
