@@ -17,6 +17,7 @@ package com.intellij.codeInsight.daemon.lambda;
 
 import com.intellij.codeInsight.daemon.LightDaemonAnalyzerTestCase;
 import com.intellij.codeInspection.LocalInspectionTool;
+import com.intellij.codeInspection.uncheckedWarnings.UncheckedWarningLocalInspection;
 import com.intellij.codeInspection.unusedSymbol.UnusedSymbolLocalInspection;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.testFramework.IdeaTestUtil;
@@ -31,6 +32,7 @@ public class NewMethodRefHighlightingTest extends LightDaemonAnalyzerTestCase {
   protected LocalInspectionTool[] configureLocalInspectionTools() {
     return new LocalInspectionTool[]{
       new UnusedSymbolLocalInspection(),
+      new UncheckedWarningLocalInspection()
     };
   }
 
@@ -80,6 +82,10 @@ public class NewMethodRefHighlightingTest extends LightDaemonAnalyzerTestCase {
 
   public void testAssertNumberOfParameters() throws Exception {
     doTest(false);
+  }
+
+  public void testGenericArrayCreation() throws Exception {
+    doTest(true);
   }
 
   private void doTest() {
