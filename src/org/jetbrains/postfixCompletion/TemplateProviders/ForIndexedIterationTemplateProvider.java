@@ -160,11 +160,22 @@ public class ForIndexedIterationTemplateProvider extends TemplateProviderBase {
           PsiBinaryExpression condition = (PsiBinaryExpression) statement.getCondition();
           assert (condition != null) : "condition != null";
 
+          PsiReferenceExpression indexRef1 = (PsiReferenceExpression) condition.getLOperand();
+
+          PsiExpressionStatement updateStatement = (PsiExpressionStatement) statement.getUpdate();
+          assert (updateStatement != null) : "updateStatement != null";
+
+          PsiPostfixExpression increment = (PsiPostfixExpression) updateStatement.getExpression();
+          PsiReferenceExpression indexRef2 = (PsiReferenceExpression) increment.getOperand();
+
           // use standard macro, pass parameter expression with expression to iterate
           MacroCallNode nameExpression = new MacroCallNode(new SuggestIndexNameMacro());
 
           // setup placeholders and final position
-          builder.replaceElement(indexVariable.getNameIdentifier(), nameExpression, true);
+          builder.replaceElement(indexVariable.getNameIdentifier(), "INDEX", nameExpression, true);
+          builder.replaceElement(indexRef1.getReferenceNameElement(), "FOO1", "INDEX", false);
+          builder.replaceElement(indexRef2.getReferenceNameElement(), "FOO1", "INDEX", false);
+
           builder.setEndVariableAfter(statement.getRParenth());
 
           // todo: braces insertion?
