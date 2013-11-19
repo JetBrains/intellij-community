@@ -63,6 +63,6 @@ public class WeightBasedComparator implements Comparator<NodeDescriptor> {
   }
 
   protected static int compareToString(final NodeDescriptor first, final NodeDescriptor second) {
-    return StringUtil.compare(first.toString(), second.toString(), true);
+    return StringUtil.naturalCompare(first.toString(), second.toString());
   }
 }

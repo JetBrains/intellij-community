@@ -2240,11 +2240,22 @@ public class StringUtil extends StringUtilRt {
    * Implementation of "Sorting for Humans: Natural Sort Order":
    * http://www.codinghorror.com/blog/2007/12/sorting-for-humans-natural-sort-order.html
    */
-  public static int naturalCompare(@NotNull String string1, @NotNull String string2) {
+  public static int naturalCompare(@Nullable String string1, @Nullable String string2) {
     return naturalCompare(string1, string2, false);
   }
 
-  private static int naturalCompare(@NotNull String string1, @NotNull String string2, boolean caseSensitive) {
+  private static int naturalCompare(@Nullable String string1, @Nullable String string2, boolean caseSensitive) {
+    //noinspection StringEquality
+    if (string1 == string2) {
+      return 0;
+    }
+    if (string1 == null) {
+      return -1;
+    }
+    if (string2 == null) {
+      return 1;
+    }
+
     final int string1Length = string1.length();
     final int string2Length = string2.length();
     int i = 0, j = 0;
