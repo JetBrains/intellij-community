@@ -641,7 +641,7 @@ public abstract class HgUtil {
     // Vasya Pupkin <vasya.pupkin@jetbrains.com> -> Vasya Pupkin , vasya.pupkin@jetbrains.com
     final int[] ind = {authorString.indexOf('<'), authorString.indexOf('@'), authorString.indexOf('>')};
     if (0 < ind[0] && ind[0] < ind[1] && ind[1] < ind[2]) {
-      String email = authorString.substring(ind[1] + 1, ind[2]).trim();
+      String email = authorString.substring(ind[0] + 1, ind[2]).trim();
       userInfoList.add(convertUserName(authorString.substring(0, ind[0])));
       userInfoList.add(email);
     }
