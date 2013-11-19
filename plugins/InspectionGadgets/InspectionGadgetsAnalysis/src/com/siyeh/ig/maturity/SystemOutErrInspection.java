@@ -15,7 +15,6 @@
  */
 package com.siyeh.ig.maturity;
 
-import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
@@ -24,16 +23,12 @@ import com.siyeh.HardcodedMethodConstants;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.psiutils.TestUtils;
+import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.fixes.SuppressForTestsScopeFix;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-
 public class SystemOutErrInspection extends BaseInspection {
-
-  @SuppressWarnings("PublicField")
-  public boolean ignoreInTestCode = false;
 
   @Override
   @NotNull
@@ -57,8 +52,8 @@ public class SystemOutErrInspection extends BaseInspection {
 
   @Nullable
   @Override
-  public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message("ignore.in.test.code"), this, "ignoreInTestCode");
+  protected InspectionGadgetsFix buildFix(Object... infos) {
+    return new SuppressForTestsScopeFix(this);
   }
 
   @Override
@@ -66,7 +61,7 @@ public class SystemOutErrInspection extends BaseInspection {
     return new SystemOutErrVisitor();
   }
 
-  private class SystemOutErrVisitor extends BaseInspectionVisitor {
+  private static class SystemOutErrVisitor extends BaseInspectionVisitor {
 
     @Override
     public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
@@ -87,9 +82,6 @@ public class SystemOutErrInspection extends BaseInspection {
       }
       final String className = containingClass.getQualifiedName();
       if (!"java.lang.System".equals(className)) {
-        return;
-      }
-      if (ignoreInTestCode && TestUtils.isInTestCode(expression)) {
         return;
       }
       registerError(expression);

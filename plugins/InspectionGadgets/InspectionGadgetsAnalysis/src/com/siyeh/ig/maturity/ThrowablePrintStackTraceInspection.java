@@ -15,23 +15,18 @@
  */
 package com.siyeh.ig.maturity;
 
-import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.psi.*;
 import com.siyeh.HardcodedMethodConstants;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.fixes.SuppressForTestsScopeFix;
 import com.siyeh.ig.psiutils.MethodCallUtils;
-import com.siyeh.ig.psiutils.TestUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-
 public class ThrowablePrintStackTraceInspection extends BaseInspection {
-
-  @SuppressWarnings("PublicField")
-  public boolean ignoreInTestCode = false;
 
   @Override
   @NotNull
@@ -53,8 +48,8 @@ public class ThrowablePrintStackTraceInspection extends BaseInspection {
 
   @Nullable
   @Override
-  public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message("ignore.in.test.code"), this, "ignoreInTestCode");
+  protected InspectionGadgetsFix buildFix(Object... infos) {
+    return new SuppressForTestsScopeFix(this);
   }
 
   @Override
@@ -62,7 +57,7 @@ public class ThrowablePrintStackTraceInspection extends BaseInspection {
     return new ThrowablePrintStackTraceVisitor();
   }
 
-  private class ThrowablePrintStackTraceVisitor extends BaseInspectionVisitor {
+  private static class ThrowablePrintStackTraceVisitor extends BaseInspectionVisitor {
 
     @Override
     public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
@@ -85,9 +80,6 @@ public class ThrowablePrintStackTraceInspection extends BaseInspection {
       }
       final String name = containingClass.getQualifiedName();
       if (!CommonClassNames.JAVA_LANG_THROWABLE.equals(name)) {
-        return;
-      }
-      if (ignoreInTestCode && TestUtils.isInTestCode(expression)) {
         return;
       }
       registerMethodCallError(expression);
