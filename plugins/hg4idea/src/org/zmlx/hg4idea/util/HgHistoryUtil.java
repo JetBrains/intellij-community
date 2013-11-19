@@ -203,7 +203,6 @@ public class HgHistoryUtil {
     for (String hash : hashes) {
       builder.append("--rev ").append(hash).append(' ');
     }
-    //todo change ugly style
     return builder.toString();
   }
 }
