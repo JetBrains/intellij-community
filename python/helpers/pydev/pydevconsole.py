@@ -10,6 +10,7 @@ import os
 import sys
 
 from pydevd_constants import USE_LIB_COPY
+from pydevd_constants import IS_JYTHON
 
 if USE_LIB_COPY:
     import _pydev_threading as threading
@@ -86,10 +87,10 @@ class Command:
 
     @staticmethod
     def symbol_for_fragment(code_fragment):
-        if code_fragment.is_single_line:
+        if IS_JYTHON or code_fragment.is_single_line: 
             symbol = 'single'
         else:
-            symbol = 'exec'
+            symbol = 'exec' # Jython doesn't support this
         return symbol
 
     def run(self):
