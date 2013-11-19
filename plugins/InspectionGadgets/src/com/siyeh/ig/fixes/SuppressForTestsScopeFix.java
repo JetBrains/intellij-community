@@ -20,14 +20,21 @@ import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
+import com.intellij.openapi.command.undo.BasicUndoableAction;
+import com.intellij.openapi.command.undo.UndoManager;
+import com.intellij.openapi.command.undo.UnexpectedUndoException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.psiutils.TestUtils;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
 * @author Bas Leijdekkers
@@ -36,8 +43,16 @@ public class SuppressForTestsScopeFix extends InspectionGadgetsFix {
 
   private final BaseInspection myInspection;
 
-  public SuppressForTestsScopeFix(BaseInspection inspection) {
+  private SuppressForTestsScopeFix(BaseInspection inspection) {
     myInspection = inspection;
+  }
+
+  @Nullable
+  public static SuppressForTestsScopeFix build(BaseInspection inspection, PsiElement context) {
+    if (!TestUtils.isInTestSourceContent(context)) {
+      return null;
+    }
+    return new SuppressForTestsScopeFix(inspection);
   }
 
   @NotNull
@@ -58,7 +73,23 @@ public class SuppressForTestsScopeFix extends InspectionGadgetsFix {
   }
 
   @Override
-  protected void doFix(Project project, ProblemDescriptor descriptor) {
+  protected void doFix(final Project project, ProblemDescriptor descriptor) {
+    addRemoveTestsScope(project, true);
+    final VirtualFile vFile = descriptor.getPsiElement().getContainingFile().getVirtualFile();
+    UndoManager.getInstance(project).undoableActionPerformed(new BasicUndoableAction(vFile) {
+      @Override
+      public void undo() throws UnexpectedUndoException {
+        addRemoveTestsScope(project, false);
+      }
+
+      @Override
+      public void redo() throws UnexpectedUndoException {
+        addRemoveTestsScope(project, true);
+      }
+    });
+  }
+
+  private void addRemoveTestsScope(Project project, boolean add) {
     final InspectionProjectProfileManager profileManager = InspectionProjectProfileManager.getInstance(project);
     final InspectionProfileImpl profile = (InspectionProfileImpl)profileManager.getInspectionProfile();
     final String shortName = myInspection.getShortName();
@@ -69,6 +100,12 @@ public class SuppressForTestsScopeFix extends InspectionGadgetsFix {
     final NamedScope namedScope = NamedScopesHolder.getScope(project, "Tests");
     final HighlightDisplayKey key = HighlightDisplayKey.find(shortName);
     final HighlightDisplayLevel level = profile.getErrorLevel(key, namedScope, project);
-    profile.addScope(tool, namedScope, level, false, project);
+    if (add) {
+      profile.addScope(tool, namedScope, level, false, project);
+    }
+    else {
+      profile.removeScope(shortName, 0, project);
+    }
+    profile.scopesChanged();
   }
 }
