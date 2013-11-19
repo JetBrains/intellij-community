@@ -48,13 +48,13 @@ public class CastExpressionTemplateProvider extends TemplateProviderBase {
     }
 
     @NotNull @Override protected PsiTypeCastExpression createNewExpression(
-      @NotNull PsiElementFactory factory, @NotNull PsiExpression expression, @NotNull PsiElement context) {
+      @NotNull PsiElementFactory factory, @NotNull PsiElement expression, @NotNull PsiElement context) {
 
-      PsiTypeCastExpression typeCastExpression = (PsiTypeCastExpression)
-        factory.createExpressionFromText("(T) expr", context);
+      PsiTypeCastExpression typeCastExpression =
+        (PsiTypeCastExpression) factory.createExpressionFromText("(T) expr", context);
 
       PsiExpression operand = typeCastExpression.getOperand();
-      assert operand != null : "operand != null";
+      assert (operand != null) : "operand != null";
       operand.replace(expression);
 
       return typeCastExpression;
@@ -75,7 +75,7 @@ public class CastExpressionTemplateProvider extends TemplateProviderBase {
           TemplateBuilderImpl builder = new TemplateBuilderImpl(castExpression);
 
           PsiTypeElement castType = castExpression.getCastType();
-          assert castType != null : "castType != null";
+          assert (castType != null) : "castType != null";
 
           builder.replaceElement(castType, new MacroCallNode(new ExpectedTypeMacro()), true);
           builder.setEndVariableAfter(castExpression);

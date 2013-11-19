@@ -119,8 +119,7 @@ public final class PostfixTemplatesManager implements ApplicationComponent {
       if (referenceParent instanceof PsiTypeElement) {
         final PsiElement psiElement = referenceParent.getParent();
 
-        // todo: drop this in favor of more general PsiJavaCodeReferenceElement handling?
-        // handle 'foo instanceof Bar.postfix' expressions
+        // handle 'foo instanceof Bar.postfix' expressions (not 'Bar' type itself)
         if (psiElement instanceof PsiInstanceOfExpression) {
           PsiJavaCodeReferenceElement reference = (PsiJavaCodeReferenceElement) parent;
           PsiExpression instanceOfExpression = (PsiInstanceOfExpression) psiElement;
@@ -139,31 +138,37 @@ public final class PostfixTemplatesManager implements ApplicationComponent {
         if (psiElement instanceof PsiDeclarationStatement &&
             psiElement.getLastChild() instanceof PsiErrorElement && // only simple
             psiElement.getFirstChild() == referenceParent) {
-          // copy and fix type usage from '.postfix' suffix
-          PsiTypeElement refParentCopy = (PsiTypeElement) referenceParent.copy();
-          PsiJavaCodeReferenceElement referenceElement = refParentCopy.getInnermostComponentReferenceElement();
-          assert referenceElement != null : "referenceElement != null";
-
-          PsiElement referenceQualifier = referenceElement.getQualifier();
-          assert referenceQualifier != null : "referenceQualifier != null";
-          referenceElement.replace(referenceQualifier); // remove '.postfix'
-
-          // reinterpret type usages as 'new T();' expression-statement
-          // todo: do not do this?
-          PsiElementFactory factory = JavaPsiFacade.getElementFactory(psiElement.getProject());
-          final PsiExpressionStatement statement = (PsiExpressionStatement)
-            factory.createStatementFromText("new " + refParentCopy.getText() + "()", psiElement);
-
-          PsiJavaCodeReferenceElement reference = (PsiJavaCodeReferenceElement) parent;
-          return new PostfixTemplateContext(reference, statement.getExpression(), executionContext) {
+          final PsiJavaCodeReferenceElement reference = (PsiJavaCodeReferenceElement) parent;
+          return new PostfixTemplateContext(reference, qualifier, executionContext) {
             @NotNull @Override
             public PrefixExpressionContext fixExpression(@NotNull PrefixExpressionContext context) {
-              PsiExpressionStatement newStatement = (PsiExpressionStatement) psiElement.replace(statement);
-              return new PrefixExpressionContext(this, newStatement.getExpression());
+              // note: sometimes it can be required to use document-level fix
+              // todo: test .new with various statements as next statements in block
+
+              PsiElement fixedReference = reference.replace(context.expression);
+              return new PrefixExpressionContext(this, fixedReference);
             }
 
-            // todo: override referencedElement
-            @Override public boolean isFakeContextFromType() { return true; }
+            @Nullable @Override public PsiStatement getContainingStatement(
+                @NotNull PrefixExpressionContext expressionContext) {
+
+              // note: not always correct?
+              if (expressionContext.expression instanceof PsiJavaCodeReferenceElement) {
+                PsiElement parent = expressionContext.expression.getParent();
+                if (parent instanceof PsiJavaCodeReferenceElement && parent == reference) {
+                  parent = parent.getParent();
+                }
+
+                if (parent instanceof PsiTypeElement) {
+                  PsiElement typeElementOwner = parent.getParent();
+                  if (typeElementOwner instanceof PsiDeclarationStatement) {
+                    return (PsiStatement) typeElementOwner;
+                  }
+                }
+              }
+
+              return super.getContainingStatement(expressionContext);
+            }
           };
         }
       }

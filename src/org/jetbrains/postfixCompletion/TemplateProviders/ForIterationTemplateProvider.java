@@ -49,7 +49,7 @@ public class ForIterationTemplateProvider extends TemplateProviderBase {
     }
 
     @NotNull @Override protected PsiForeachStatement createNewStatement(
-      @NotNull PsiElementFactory factory, @NotNull PsiExpression expression, @NotNull PsiElement context) {
+      @NotNull PsiElementFactory factory, @NotNull PsiElement expression, @NotNull PsiElement context) {
 
       PsiForeachStatement forStatement = (PsiForeachStatement)
         factory.createStatementFromText("for(T item:expr)", context);

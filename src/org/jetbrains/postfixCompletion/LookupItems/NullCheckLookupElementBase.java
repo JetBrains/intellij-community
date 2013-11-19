@@ -11,7 +11,7 @@ public abstract class NullCheckLookupElementBase extends StatementPostfixLookupE
   }
 
   @NotNull @Override protected PsiIfStatement createNewStatement(
-    @NotNull PsiElementFactory factory, @NotNull PsiExpression expression, @NotNull PsiElement context) {
+    @NotNull PsiElementFactory factory, @NotNull PsiElement expression, @NotNull PsiElement context) {
     PsiIfStatement ifStatement = (PsiIfStatement) factory.createStatementFromText(getTemplate(), context);
 
     PsiBinaryExpression condition = (PsiBinaryExpression) ifStatement.getCondition();

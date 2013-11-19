@@ -37,29 +37,22 @@ public abstract class PostfixTemplateContext {
       if (node instanceof PsiStatement) break;
 
       // handle only expressions, except 'reference'
-      if (node instanceof PsiExpression && node != reference) {
-        PsiExpression expr = (PsiExpression) node;
-
-        int endOffset = expr.getTextRange().getEndOffset();
+      if ((node instanceof PsiExpression ||
+           node instanceof PsiJavaCodeReferenceElement) && node != reference) {
+        int endOffset = node.getTextRange().getEndOffset();
         if (endOffset > referenceEndRange) break; // stop when 'a.var + b'
 
-        PrefixExpressionContext context = new PrefixExpressionContext(this, expr);
+        PrefixExpressionContext context = new PrefixExpressionContext(this, node);
         contexts.add(context);
 
         if (context.canBeStatement) break;
       }
-
-      // todo: node instanceof PsiTypeElement?
     }
 
     return contexts;
   }
 
   @NotNull public abstract PrefixExpressionContext fixExpression(@NotNull PrefixExpressionContext context);
-
-  // todo: use me (when? in .new/.throw template?)
-  // todo: drop me :O
-  public boolean isFakeContextFromType() { return false; }
 
   @Nullable public PsiStatement getContainingStatement(@NotNull PrefixExpressionContext expressionContext) {
     // look for expression-statement parent
@@ -94,4 +87,6 @@ public abstract class PostfixTemplateContext {
 
     return null;
   }
+
+  // todo: getContainingExpression?
 }

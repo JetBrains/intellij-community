@@ -32,11 +32,11 @@ public final class ElseStatementTemplateProvider extends BooleanTemplateProvider
     }
 
     @Override protected void processStatement(
-        @NotNull PsiElementFactory factory, @NotNull PsiIfStatement ifStatement, @NotNull PsiExpression expression) {
+        @NotNull PsiElementFactory factory, @NotNull PsiIfStatement ifStatement, @NotNull PsiElement expression) {
       PsiExpression condition = ifStatement.getCondition();
-      assert condition != null : "condition != null";
+      assert (condition != null) : "condition != null";
 
-      PsiExpression inverted = CodeInsightServicesUtil.invertCondition(expression);
+      PsiExpression inverted = CodeInsightServicesUtil.invertCondition((PsiExpression) expression);
       condition.replace(inverted);
     }
   }

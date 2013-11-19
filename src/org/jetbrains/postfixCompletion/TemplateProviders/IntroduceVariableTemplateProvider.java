@@ -25,7 +25,7 @@ import static org.jetbrains.postfixCompletion.CommonUtils.*;
 @TemplateProvider(
   templateName = "var",
   description = "Introduces variable for expression",
-  example = "var x = expr;",
+  example = "T name = expr;",
   worksOnTypes = true)
 public class IntroduceVariableTemplateProvider extends TemplateProviderBase {
   @Override public void createItems(
@@ -108,7 +108,7 @@ public class IntroduceVariableTemplateProvider extends TemplateProviderBase {
     }
 
     @NotNull @Override protected PsiExpressionStatement createNewStatement(
-      @NotNull PsiElementFactory factory, @NotNull PsiExpression expression, @NotNull PsiElement context) {
+      @NotNull PsiElementFactory factory, @NotNull PsiElement expression, @NotNull PsiElement context) {
       if (myInvokedOnType) {
         String template = "new " + expression.getText() + "()";
         if (myIsAbstractType) template += "{}";
@@ -153,8 +153,7 @@ public class IntroduceVariableTemplateProvider extends TemplateProviderBase {
     }
   }
 
-  private static class IntroduceVarExpressionLookupElement
-    extends ExpressionPostfixLookupElement<PsiExpression> {
+  private static class IntroduceVarExpressionLookupElement extends ExpressionPostfixLookupElement<PsiExpression> {
     private final boolean myInvokedOnType, myIsAbstractType;
 
     public IntroduceVarExpressionLookupElement(
@@ -166,14 +165,14 @@ public class IntroduceVariableTemplateProvider extends TemplateProviderBase {
     }
 
     @NotNull @Override protected PsiExpression createNewExpression(
-      @NotNull PsiElementFactory factory, @NotNull PsiExpression expression, @NotNull PsiElement context) {
+      @NotNull PsiElementFactory factory, @NotNull PsiElement expression, @NotNull PsiElement context) {
       if (myInvokedOnType) {
         String template = "new " + expression.getText() + "()";
         if (myIsAbstractType) template += "{}";
         expression = factory.createExpressionFromText(template, context);
       }
 
-      return expression;
+      return (PsiExpression) expression;
     }
 
     @Override public void handleInsert(@NotNull final InsertionContext context) {

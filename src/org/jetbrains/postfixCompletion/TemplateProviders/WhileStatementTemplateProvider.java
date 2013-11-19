@@ -31,7 +31,7 @@ public final class WhileStatementTemplateProvider extends BooleanTemplateProvide
     }
 
     @NotNull @Override protected PsiWhileStatement createNewStatement(
-      @NotNull PsiElementFactory factory, @NotNull PsiExpression expression, @NotNull PsiElement context) {
+      @NotNull PsiElementFactory factory, @NotNull PsiElement expression, @NotNull PsiElement context) {
 
       PsiWhileStatement whileStatement = (PsiWhileStatement) factory.createStatementFromText("while(expr)", context);
 

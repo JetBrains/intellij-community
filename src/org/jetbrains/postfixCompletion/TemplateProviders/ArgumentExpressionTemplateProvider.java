@@ -42,7 +42,7 @@ public class ArgumentExpressionTemplateProvider extends TemplateProviderBase {
     }
 
     @NotNull @Override protected PsiMethodCallExpression createNewExpression(
-      @NotNull PsiElementFactory factory, @NotNull PsiExpression expression, @NotNull PsiElement context) {
+      @NotNull PsiElementFactory factory, @NotNull PsiElement expression, @NotNull PsiElement context) {
 
       PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)
         factory.createExpressionFromText("method(expr)", context);

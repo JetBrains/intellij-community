@@ -11,10 +11,10 @@ public abstract class IfStatementPostfixLookupItem extends StatementPostfixLooku
   }
 
   protected abstract void processStatement(
-    @NotNull PsiElementFactory factory, @NotNull PsiIfStatement ifStatement, @NotNull PsiExpression expression);
+    @NotNull PsiElementFactory factory, @NotNull PsiIfStatement ifStatement, @NotNull PsiElement expression);
 
   @NotNull @Override protected PsiIfStatement createNewStatement(
-    @NotNull PsiElementFactory factory, @NotNull PsiExpression expression, @NotNull PsiElement context) {
+    @NotNull PsiElementFactory factory, @NotNull PsiElement expression, @NotNull PsiElement context) {
 
     PsiIfStatement ifStatement = (PsiIfStatement) factory.createStatementFromText("if(expr)", context);
     processStatement(factory, ifStatement, expression);

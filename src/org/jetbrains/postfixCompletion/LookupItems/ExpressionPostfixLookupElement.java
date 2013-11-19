@@ -23,16 +23,17 @@ public abstract class ExpressionPostfixLookupElement<TExpression extends PsiExpr
 
     // fix up expression before template expansion
     PrefixExpressionContext fixedContext = expressionContext.fixExpression();
-    PsiExpression exprCopy = (PsiExpression) fixedContext.expression.copy();
+    PsiElement expressionCopy = fixedContext.expression.copy();
 
-    TExpression newExpression = createNewExpression(elementFactory, exprCopy, fixedContext.expression);
+    TExpression newExpression = createNewExpression(
+      elementFactory, expressionCopy, fixedContext.expression);
 
     //noinspection unchecked
     return (TExpression) fixedContext.expression.replace(newExpression);
   }
 
   @NotNull protected abstract TExpression createNewExpression(
-    @NotNull PsiElementFactory factory, @NotNull PsiExpression expression, @NotNull PsiElement context);
+    @NotNull PsiElementFactory factory, @NotNull PsiElement expression, @NotNull PsiElement context);
 
   @Override protected void postProcess(
       @NotNull InsertionContext context, @NotNull TExpression expression) {

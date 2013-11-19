@@ -30,9 +30,9 @@ public final class IfStatementTemplateProvider extends BooleanTemplateProviderBa
     }
 
     @Override protected void processStatement(
-        @NotNull PsiElementFactory factory, @NotNull PsiIfStatement ifStatement, @NotNull PsiExpression expression) {
+        @NotNull PsiElementFactory factory, @NotNull PsiIfStatement ifStatement, @NotNull PsiElement expression) {
       PsiExpression condition = ifStatement.getCondition();
-      assert condition != null : "condition != null";
+      assert (condition != null) : "condition != null";
 
       condition.replace(expression);
     }

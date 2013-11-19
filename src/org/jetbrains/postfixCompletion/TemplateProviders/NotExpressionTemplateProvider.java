@@ -31,8 +31,8 @@ public final class NotExpressionTemplateProvider extends BooleanTemplateProvider
     }
 
     @NotNull @Override protected PsiExpression createNewExpression(
-      @NotNull PsiElementFactory factory, @NotNull PsiExpression expression, @NotNull PsiElement context) {
-      return CodeInsightServicesUtil.invertCondition(expression);
+      @NotNull PsiElementFactory factory, @NotNull PsiElement expression, @NotNull PsiElement context) {
+      return CodeInsightServicesUtil.invertCondition((PsiExpression) expression);
     }
 
     @Override protected void postProcess(

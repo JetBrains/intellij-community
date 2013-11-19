@@ -38,22 +38,19 @@ public class NewExpressionTemplateProvider extends TemplateProviderBase {
   }
 
   private static class NewObjectLookupElement extends ExpressionPostfixLookupElement<PsiNewExpression> {
-    @NotNull private final PsiClass myReferencedElement;
     @NotNull private final CtorAccessibility myAccessibility;
     private final boolean myTypeRequiresRefinement;
 
     public NewObjectLookupElement(
-        @NotNull PrefixExpressionContext context,
-        @NotNull PsiClass referencedElement,
+        @NotNull PrefixExpressionContext context, @NotNull PsiClass referencedElement,
         @NotNull CtorAccessibility accessibility) {
       super("new", context);
-      myReferencedElement = referencedElement;
       myAccessibility = accessibility;
       myTypeRequiresRefinement = CommonUtils.isTypeRequiresRefinement(referencedElement);
     }
 
     @NotNull @Override protected PsiNewExpression createNewExpression(
-      @NotNull PsiElementFactory factory, @NotNull PsiExpression expression, @NotNull PsiElement context) {
+      @NotNull PsiElementFactory factory, @NotNull PsiElement expression, @NotNull PsiElement context) {
 
       String template = "new T()";
       if (myTypeRequiresRefinement) {
@@ -61,14 +58,10 @@ public class NewExpressionTemplateProvider extends TemplateProviderBase {
       }
 
       PsiNewExpression newExpression = (PsiNewExpression) factory.createExpressionFromText(template, context);
-      PsiJavaCodeReferenceElement referenceElement = factory.createClassReferenceElement(myReferencedElement);
+      PsiJavaCodeReferenceElement typeReference = newExpression.getClassOrAnonymousClassReference();
+      assert (typeReference != null) : "typeReference != null";
 
-      PsiJavaCodeReferenceElement ref = newExpression.getClassOrAnonymousClassReference();
-      assert ref != null;
-
-      ref.replace(referenceElement);
-
-      // todo: fix type?
+      typeReference.replace(expression);
 
       return newExpression;
     }
@@ -84,8 +77,13 @@ public class NewExpressionTemplateProvider extends TemplateProviderBase {
       if (myAccessibility == CtorAccessibility.WithParametricCtor) { // new T(<caret>)
         caretModel.moveToOffset(argumentList.getFirstChild().getTextRange().getEndOffset());
       } else if (myTypeRequiresRefinement) {
-        caretModel.moveToOffset(
-          expression.getAnonymousClass().getRBrace().getTextRange().getEndOffset());
+        PsiAnonymousClass anonymousClass = expression.getAnonymousClass();
+        assert (anonymousClass != null) : "anonymousClass != null";
+
+        PsiElement lBrace = anonymousClass.getLBrace();
+        assert (lBrace != null) : "lBrace != null";
+
+        caretModel.moveToOffset(lBrace.getTextRange().getEndOffset());
       } else { // new T()<caret>
         caretModel.moveToOffset(argumentList.getTextRange().getEndOffset());
       }

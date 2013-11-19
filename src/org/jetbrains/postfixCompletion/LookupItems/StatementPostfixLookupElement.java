@@ -28,15 +28,15 @@ public abstract class StatementPostfixLookupElement<TStatement extends PsiStatem
     PsiStatement targetStatement = fixedContext.getContainingStatement();
     assert targetStatement != null : "targetStatement != null";
 
-    PsiExpression exprCopy = (PsiExpression) fixedContext.expression.copy();
-    TStatement newStatement = createNewStatement(elementFactory, exprCopy, fixedContext.expression);
+    PsiElement expressionCopy = fixedContext.expression.copy();
+    TStatement newStatement = createNewStatement(elementFactory, expressionCopy, fixedContext.expression);
 
     //noinspection unchecked
     return (TStatement) targetStatement.replace(newStatement);
   }
 
   @NotNull protected abstract TStatement createNewStatement(
-    @NotNull PsiElementFactory factory, @NotNull PsiExpression expression, @NotNull PsiElement context);
+    @NotNull PsiElementFactory factory, @NotNull PsiElement expression, @NotNull PsiElement context);
 
   @Override protected void postProcess(
     @NotNull InsertionContext context, @NotNull TStatement statement) {
