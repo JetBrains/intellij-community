@@ -362,9 +362,8 @@ public abstract class FinderRecursivePanel<T> extends JBSplitter implements Data
   @Override
   public Object getData(@NonNls String dataId) {
     Object selectedValue = getSelectedValue();
-    if (PlatformDataKeys.COPY_PROVIDER.is(dataId) && selectedValue != null) {
-      return myCopyProvider;
-    }
+    if (selectedValue == null) return null;
+
     if (CommonDataKeys.PSI_ELEMENT.is(dataId) && selectedValue instanceof PsiElement) {
       return selectedValue;
     }
@@ -373,6 +372,9 @@ public abstract class FinderRecursivePanel<T> extends JBSplitter implements Data
     }
     if (selectedValue instanceof DataProvider) {
       return ((DataProvider)selectedValue).getData(dataId);
+    }
+    if (PlatformDataKeys.COPY_PROVIDER.is(dataId)) {
+      return myCopyProvider;
     }
     return null;
   }
@@ -383,6 +385,7 @@ public abstract class FinderRecursivePanel<T> extends JBSplitter implements Data
   }
 
   @SuppressWarnings("unchecked")
+  @Nullable
   public T getSelectedValue() {
     return (T)myList.getSelectedValue();
   }
@@ -398,7 +401,7 @@ public abstract class FinderRecursivePanel<T> extends JBSplitter implements Data
   }
 
   @Nullable
-  public String getGroupId() {
+  protected String getGroupId() {
     return myGroupId;
   }
 
