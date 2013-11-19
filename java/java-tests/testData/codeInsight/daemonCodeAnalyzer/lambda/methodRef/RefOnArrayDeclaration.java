@@ -42,7 +42,7 @@ class OnArrayTest {
         <error descr="Incompatible types. Found: '<method reference>', required: 'OnArrayTest.ArrayReturnType<java.lang.String[]>'">ArrayReturnType<String[]> a3 = int[]::new;</error>
         
         ObjectArrayReturnType a4 = Foo<?>[]::new;
-        ObjectArrayReturnType a5 = Foo<? extends String>[]::new;
+        ObjectArrayReturnType a5 = <error descr="Generic array creation">Foo<? extends String>[]</error>::new;
     }
 }
 

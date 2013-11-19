@@ -444,4 +444,19 @@ public class PsiMethodReferenceUtil {
     return method.getParameterList().getParametersCount() + 1 == parameterTypes.length &&
            hasReceiver(parameterTypes, qualifierResolveResult, methodRef);
   }
+
+  public static String checkTypeArguments(PsiTypeElement qualifier, PsiType psiType) {
+    if (psiType instanceof PsiClassType) {
+      final PsiJavaCodeReferenceElement referenceElement = qualifier.getInnermostComponentReferenceElement();
+      if (referenceElement != null) {
+        PsiType[] typeParameters = referenceElement.getTypeParameters();
+        for (PsiType typeParameter : typeParameters) {
+          if (typeParameter instanceof PsiWildcardType) {
+            return "Unexpected wildcard";
+          }
+        }
+      }
+    }
+    return null;
+  }
 }
