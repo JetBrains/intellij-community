@@ -20,6 +20,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.util.AbstractProgressIndicatorBase;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.util.Processor;
@@ -177,7 +178,7 @@ public class JobUtilTest extends PlatformTestCase {
           ProgressIndicator actualIndicator = ProgressManager.getInstance().getProgressIndicator();
           if (progress == null) {
             assertNotNull(actualIndicator);
-            assertTrue(actualIndicator instanceof ProgressIndicatorBase);
+            assertTrue(actualIndicator instanceof AbstractProgressIndicatorBase);
           }
           else {
             assertTrue(actualIndicator instanceof SensitiveProgressWrapper);
