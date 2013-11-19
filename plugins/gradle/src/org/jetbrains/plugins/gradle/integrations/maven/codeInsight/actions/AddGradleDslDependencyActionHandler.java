@@ -37,6 +37,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall;
 
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -54,7 +55,7 @@ class AddGradleDslDependencyActionHandler implements CodeInsightActionHandler {
       ids = AddGradleDslDependencyAction.TEST_THREAD_LOCAL.get();
     }
     else {
-      ids = MavenArtifactSearchDialog.searchForArtifact(project, ContainerUtil.<MavenDomDependency>emptyList());
+      ids = MavenArtifactSearchDialog.searchForArtifact(project, Collections.<MavenDomDependency>emptyList());
     }
 
     if (ids.isEmpty()) return;
