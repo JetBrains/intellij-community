@@ -398,7 +398,9 @@ public class GeneratedParserUtilBase {
       PsiBuilder.Marker extensionMarker = null;
       IElementType extensionTokenType = null;
       // whitespace prefix makes the very first frame offset bigger than marker start offset which is always 0
-      if (latestDoneMarker instanceof PsiBuilder.Marker && frame.offset >= latestDoneMarker.getStartOffset()) {
+      if (latestDoneMarker instanceof PsiBuilder.Marker &&
+          frame.offset >= latestDoneMarker.getStartOffset() &&
+          frame.offset <= latestDoneMarker.getEndOffset()) {
         extensionMarker = ((PsiBuilder.Marker)latestDoneMarker).precede();
         extensionTokenType = latestDoneMarker.getTokenType();
         ((PsiBuilder.Marker)latestDoneMarker).drop();
