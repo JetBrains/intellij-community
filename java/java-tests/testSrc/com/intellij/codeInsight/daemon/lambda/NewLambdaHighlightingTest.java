@@ -66,6 +66,10 @@ public class NewLambdaHighlightingTest extends LightDaemonAnalyzerTestCase {
     doTest();
   }
 
+  public void testOverloadResolutionSAM() throws Exception {
+    doTest();
+  }
+
   private void doTest() {
     doTest(false);
   }
