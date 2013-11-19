@@ -54,13 +54,12 @@ public class LambdaHighlightingUtil {
         if (!LambdaUtil.getReturnExpressions(lambdaExpression).isEmpty()) return "Unexpected return value";
       } else if (body instanceof PsiExpression) {
         final PsiType type = ((PsiExpression)body).getType();
-        if (type != PsiType.VOID) {
-          try {
-            if (!PsiUtil.isStatement(JavaPsiFacade.getElementFactory(body.getProject()).createStatementFromText(body.getText(), body))) {
-              return "Incompatible return type " + (type == PsiType.NULL || type == null ? "<null>" : type.getPresentableText()) + " in lambda expression";
-            }
+        try {
+          if (!PsiUtil.isStatement(JavaPsiFacade.getElementFactory(body.getProject()).createStatementFromText(body.getText(), body))) {
+            return "Incompatible return type " + (type == PsiType.NULL || type == null ? "<null>" : type.getPresentableText()) + " in lambda expression";
           }
-          catch (IncorrectOperationException ignore) {}
+        }
+        catch (IncorrectOperationException ignore) {
         }
       }
     } else if (functionalInterfaceReturnType != null) {
