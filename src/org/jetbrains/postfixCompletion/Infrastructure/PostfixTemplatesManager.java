@@ -3,6 +3,7 @@ package org.jetbrains.postfixCompletion.Infrastructure;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.*;
+import com.intellij.openapi.editor.*;
 import com.intellij.openapi.project.*;
 import com.intellij.openapi.util.*;
 import com.intellij.psi.*;
@@ -92,19 +93,96 @@ public final class PostfixTemplatesManager implements ApplicationComponent {
             return new PostfixTemplateContext(reference, brokenLiteral, executionContext) {
               @Override @NotNull
               public PrefixExpressionContext fixExpression(@NotNull PrefixExpressionContext context) {
-                PsiExpression newExpression = fixCompletelyBrokenCase(
-                  (PsiExpression) context.expression, brokenLiteral, reference, lhsExpression);
-                removeStatementPreventingExtraTokens(exprStatement, lhsStatement);
 
-                return new PrefixExpressionContext(this, newExpression);
+                // todo: redo this? transform at document-level:
+                // todo: if (1 + 2.|var + 3) into if ((1 + 2) + 3) { }
+                // todo: use range marker to find (1 + 2)
+
+                String literalText = brokenLiteral.getText();
+
+                int dotIndex = literalText.lastIndexOf('.');
+                assert dotIndex > 0 : "dotIndex > 0";
+
+                String fixedText = literalText.substring(0, dotIndex);
+
+                Project project = context.expression.getProject();
+                PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
+                PsiLiteralExpression newLiteral = (PsiLiteralExpression)
+                  factory.createExpressionFromText(fixedText, null);
+
+                SmartPointerManager pointerManager = SmartPointerManager.getInstance(project);
+                SmartPsiElementPointer<PsiExpression> pointer =
+                  pointerManager.createSmartPsiElementPointer(lhsExpression);
+
+                newLiteral = (PsiLiteralExpression) brokenLiteral.replace(newLiteral);
+
+
+
+
+
+
+                PsiDocumentManager instance = PsiDocumentManager.getInstance(project);
+
+
+                Document document = instance.getDocument(newLiteral.getContainingFile());
+                assert document != null : "document != null";
+
+                instance.doPostponedOperationsAndUnblockDocument(document);
+
+
+
+                // to replace with ")"
+                int literalStart = newLiteral.getTextRange().getEndOffset();
+                int referenceEnd = reference.getTextRange().getEndOffset();
+
+                // to replace with "("
+                int exprStart = pointer.getElement().getTextRange().getStartOffset();
+
+                String before = document.getText();
+
+                //document.replaceString(literalStart, referenceEnd, "");
+                document.replaceString(literalStart, referenceEnd, ")");
+                document.replaceString(exprStart, exprStart, "(");
+
+                TextRange targetRange = new TextRange(exprStart, literalStart + 2);
+
+                instance.commitDocument(document);
+
+                String after = document.getText();
+
+                PsiExpression element = pointer.getElement();
+                assert element != null;
+
+                PsiElement elementAt = element.getContainingFile().findElementAt(exprStart);
+                if (elementAt != null
+                  && elementAt instanceof PsiJavaToken
+                  && elementAt.getParent() instanceof PsiParenthesizedExpression) {
+
+                  // todo: check expre != null
+
+                  element = ((PsiParenthesizedExpression) elementAt.getParent()).getExpression();
+                  element = (PsiExpression) elementAt.getParent().replace(element);
+                }
+
+                // unwrap
+                //if (element.getParent() instanceof PsiParenthesizedExpression) {
+                //  element = (PsiExpression) element.getParent().replace(element);
+                //}
+
+                return new PrefixExpressionContext(this, element);
+                //PsiExpression newExpression = fixCompletelyBrokenCase(
+                //  (PsiExpression) context.expression, brokenLiteral, reference, lhsExpression);
+                //removeStatementPreventingExtraTokens(exprStatement, lhsStatement);
+
+                //return new PrefixExpressionContext(this, newExpression);
               }
 
               @Nullable @Override
               public PsiStatement getContainingStatement(@NotNull PrefixExpressionContext expressionContext) {
                 PsiStatement statement = super.getContainingStatement(expressionContext);
-                if (statement != null) {
+                if (statement != null && lhsStatement.isValid() /* when is not fixed yet */) {
                   // ignore expression-statements produced by broken expr like '2.var + 2'
-                  assert lhsStatement.isValid() : "lhsStatement.isValid()";
+                  //assert lhsStatement.isValid() : "lhsStatement.isValid()";
                   if (isComplexRhs && (statement == lhsStatement)) return null;
                 }
 
@@ -181,6 +259,8 @@ public final class PostfixTemplatesManager implements ApplicationComponent {
     @NotNull PsiExpression expressionToFix, @NotNull PsiLiteralExpression brokenLiteral,
     @NotNull PsiReferenceExpression reference, @NotNull PsiExpression lhsExpression) {
 
+
+
     // fix broken double literal by cutting of "." suffix
     Project project = expressionToFix.getProject();
     String literalText = brokenLiteral.getText();
@@ -245,7 +325,7 @@ public final class PostfixTemplatesManager implements ApplicationComponent {
     statementToRemove.delete();
   }
 
-  // todo: maybe fix prefix matcher?
+  // todo: maybe fix prefix matcher? looks like impossible or not required a lot...
   @Nullable private PsiLiteralExpression findBrokenLiteral(@Nullable PsiExpression expr) {
     if (expr == null) return null;
 
