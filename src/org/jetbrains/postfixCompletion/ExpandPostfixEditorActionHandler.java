@@ -28,60 +28,86 @@ public final class ExpandPostfixEditorActionHandler extends EditorActionHandler 
   @Override public boolean isEnabled(Editor editor, DataContext dataContext) {
 
 
-    if (findFoo(editor) != null) return true;
+    if (findFoo(editor, false) != null) return true;
 
     return myUnderlying.isEnabled(editor, dataContext);
   }
 
   @Nullable
-  protected LookupElement findFoo(Editor editor) {
+  protected LookupElement findFoo(Editor editor, boolean reparseIfAvailable) {
     Project project = editor.getProject();
     if (project == null) return null;
 
-    PsiFile file = PsiUtilBase.getPsiFileInEditor(editor, project);
-    if (file == null) return null;
+    final Document document = editor.getDocument();
+    final int offset = editor.getCaretModel().getOffset();
 
-    int offset = editor.getCaretModel().getOffset();
-    PsiElement elementAt = file.findElementAt(offset);
-    if (elementAt == null) return null;
+    boolean reparseBack = true;
+    try {
+      ApplicationManager.getApplication().runWriteAction(new Runnable() {
+        @Override public void run() {
+          document.insertString(offset, CompletionUtilCore.DUMMY_IDENTIFIER_TRIMMED);
+        }
+      });
 
-    if (elementAt instanceof PsiWhiteSpace && offset > 0) {
-      // todo: handle other situations?
-      elementAt = file.findElementAt(offset - 1);
-    }
+      PsiDocumentManager.getInstance(project).commitAllDocuments();
 
-    if (elementAt == null) return null;
 
-    PostfixExecutionContext executionContext = new PostfixExecutionContext(true, "postfix", false /* ? */);
-    PostfixTemplateContext templateContext = myTemplatesManager.isAvailable(elementAt, executionContext);
-    if (templateContext == null) return null;
+      PsiFile file = PsiUtilBase.getPsiFileInEditor(editor, project);
+      if (file == null) return null;
 
-    List<LookupElement> elements = myTemplatesManager.collectTemplates(templateContext);
-    Document document = editor.getDocument();
 
-    for (LookupElement element : elements) {
+      PsiElement elementAt = file.findElementAt(offset);
+      if (elementAt == null) return null;
 
-      String lookupString = element.getLookupString();
-      if (offset > lookupString.length()) {
-        String prefix = document.getText(new TextRange(offset - lookupString.length(), offset));
-        if (prefix.equals(lookupString)) {
-          return element;
+      if (elementAt instanceof PsiWhiteSpace && offset > 0) {
+        // todo: handle other situations?
+        elementAt = file.findElementAt(offset - 1);
+      }
+
+      if (elementAt == null) return null;
+
+      PostfixExecutionContext executionContext = new PostfixExecutionContext(true, "postfix", false /* ? */);
+      PostfixTemplateContext templateContext = myTemplatesManager.isAvailable(elementAt, executionContext);
+      if (templateContext == null) return null;
+
+      List<LookupElement> elements = myTemplatesManager.collectTemplates(templateContext);
+
+
+      for (LookupElement element : elements) {
+
+        String lookupString = element.getLookupString();
+        if (offset > lookupString.length()) {
+          String prefix = document.getText(new TextRange(offset - lookupString.length(), offset));
+          if (prefix.equals(lookupString)) {
+            if (reparseIfAvailable) {
+              reparseBack = false;
+            }
+
+            return element;
+          }
         }
       }
 
+      return null;
 
-      /*element.handleInsert(new InsertionContext(
-        new OffsetMap(document),
-        '\t', elements.toArray(), ,
+    } finally {
+      if (reparseBack)
+      {
+        ApplicationManager.getApplication().runWriteAction(new Runnable() {
+          @Override public void run() {
+            document.deleteString(offset, offset + CompletionUtilCore.DUMMY_IDENTIFIER_TRIMMED.length());
+          }
+        });
 
-      ));*/
+
+      }
     }
 
-    return null;
+
   }
 
   @Override public void execute(Editor editor, DataContext dataContext) {
-    final LookupElement lookupElement = findFoo(editor);
+    final LookupElement lookupElement = findFoo(editor, true);
     if (lookupElement != null) {
       PsiFile psiFile = PsiUtilBase.getPsiFileInEditor(editor, editor.getProject());
 
