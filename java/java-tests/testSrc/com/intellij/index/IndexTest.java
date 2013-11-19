@@ -211,4 +211,34 @@ public class IndexTest extends IdeaTestCase {
     });
   }
   
+  public void _testSavedUncommittedDocument() throws IOException {
+    VirtualFile dir = getVirtualFile(createTempDirectory());
+    PsiTestUtil.addSourceContentToRoots(myModule, dir);
+    
+    final VirtualFile vFile = createChildData(dir, "Foo.java");
+    VfsUtil.saveText(vFile, "");
+
+    final GlobalSearchScope scope = GlobalSearchScope.allScope(getProject());
+    final JavaPsiFacade facade = JavaPsiFacade.getInstance(getProject());
+    assertNull(facade.findClass("Foo", scope));
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
+      public void run() {
+        PsiFile psiFile = PsiManager.getInstance(getProject()).findFile(vFile);
+        assertNotNull(psiFile);
+
+        long count = PsiManager.getInstance(myProject).getModificationTracker().getModificationCount();
+
+        Document document = FileDocumentManager.getInstance().getDocument(vFile);
+        document.insertString(0, "class Foo {}");
+        FileDocumentManager.getInstance().saveDocument(document);
+        // if Foo exists now, mod count should be different
+        //assertTrue(count != PsiManager.getInstance(myProject).getModificationTracker().getModificationCount());
+        
+        assertNotNull(facade.findClass("Foo", scope));
+        assertNotNull(facade.findClass("Foo", scope).getText());
+      }
+    });
+  }
+  
 }
