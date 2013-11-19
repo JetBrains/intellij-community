@@ -21,7 +21,6 @@ import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.Function;
 import com.intellij.util.SmartList;
@@ -74,7 +73,6 @@ public class HgHistoryUtil {
                                                                     String... parameters) {
     HgFile hgFile = new HgFile(root, VcsUtil.getFilePath(root.getPath()));
     List<String> args = ContainerUtil.newArrayList(parameters);
-    args.add("--debug");
     List<HgCommittedChangeList> result = new LinkedList<HgCommittedChangeList>();
     final List<HgFileRevision> localRevisions;
     HgLogCommand hgLogCommand = new HgLogCommand(project);
@@ -83,6 +81,9 @@ public class HgHistoryUtil {
     HgVcs hgvcs = HgVcs.getInstance(project);
     assert hgvcs != null;
     try {
+      if (!hgvcs.getVersion().isParentRevisionTemplateSupported()) {
+        args.add("--debug");
+      }
       localRevisions = hgLogCommand.execute(hgFile, limit, withFiles, args);
     }
     catch (HgCommandException e) {
@@ -194,16 +195,15 @@ public class HgHistoryUtil {
   }
 
   @Nullable
-  public static String[] prepareHashes(@NotNull List<String> hashes) {
+  public static String prepareHashes(@NotNull List<String> hashes) {
     if (hashes.isEmpty()) {
-      return ArrayUtil.EMPTY_STRING_ARRAY;
+      return "";
     }
     StringBuilder builder = new StringBuilder();
     for (String hash : hashes) {
-      builder.append(hash).append('+');
+      builder.append("--rev ").append(hash).append(' ');
     }
-    builder.deleteCharAt(builder.length() - 1);
     //todo change ugly style
-    return new String[]{"--rev", builder.toString()};
+    return builder.toString();
   }
 }
