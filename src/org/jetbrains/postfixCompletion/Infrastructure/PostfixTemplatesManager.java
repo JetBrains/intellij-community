@@ -93,96 +93,15 @@ public final class PostfixTemplatesManager implements ApplicationComponent {
             return new PostfixTemplateContext(reference, brokenLiteral, executionContext) {
               @Override @NotNull
               public PrefixExpressionContext fixExpression(@NotNull PrefixExpressionContext context) {
-
-                // todo: redo this? transform at document-level:
-                // todo: if (1 + 2.|var + 3) into if ((1 + 2) + 3) { }
-                // todo: use range marker to find (1 + 2)
-
-                String literalText = brokenLiteral.getText();
-
-                int dotIndex = literalText.lastIndexOf('.');
-                assert dotIndex > 0 : "dotIndex > 0";
-
-                String fixedText = literalText.substring(0, dotIndex);
-
-                Project project = context.expression.getProject();
-                PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
-                PsiLiteralExpression newLiteral = (PsiLiteralExpression)
-                  factory.createExpressionFromText(fixedText, null);
-
-                SmartPointerManager pointerManager = SmartPointerManager.getInstance(project);
-                SmartPsiElementPointer<PsiExpression> pointer =
-                  pointerManager.createSmartPsiElementPointer(lhsExpression);
-
-                newLiteral = (PsiLiteralExpression) brokenLiteral.replace(newLiteral);
-
-
-
-
-
-
-                PsiDocumentManager instance = PsiDocumentManager.getInstance(project);
-
-
-                Document document = instance.getDocument(newLiteral.getContainingFile());
-                assert document != null : "document != null";
-
-                instance.doPostponedOperationsAndUnblockDocument(document);
-
-
-
-                // to replace with ")"
-                int literalStart = newLiteral.getTextRange().getEndOffset();
-                int referenceEnd = reference.getTextRange().getEndOffset();
-
-                // to replace with "("
-                int exprStart = pointer.getElement().getTextRange().getStartOffset();
-
-                String before = document.getText();
-
-                //document.replaceString(literalStart, referenceEnd, "");
-                document.replaceString(literalStart, referenceEnd, ")");
-                document.replaceString(exprStart, exprStart, "(");
-
-                TextRange targetRange = new TextRange(exprStart, literalStart + 2);
-
-                instance.commitDocument(document);
-
-                String after = document.getText();
-
-                PsiExpression element = pointer.getElement();
-                assert element != null;
-
-                PsiElement elementAt = element.getContainingFile().findElementAt(exprStart);
-                if (elementAt != null
-                  && elementAt instanceof PsiJavaToken
-                  && elementAt.getParent() instanceof PsiParenthesizedExpression) {
-
-                  // todo: check expre != null
-
-                  element = ((PsiParenthesizedExpression) elementAt.getParent()).getExpression();
-                  element = (PsiExpression) elementAt.getParent().replace(element);
-                }
-
-                // unwrap
-                //if (element.getParent() instanceof PsiParenthesizedExpression) {
-                //  element = (PsiExpression) element.getParent().replace(element);
-                //}
-
-                return new PrefixExpressionContext(this, element);
-                //PsiExpression newExpression = fixCompletelyBrokenCase(
-                //  (PsiExpression) context.expression, brokenLiteral, reference, lhsExpression);
-                //removeStatementPreventingExtraTokens(exprStatement, lhsStatement);
-
-                //return new PrefixExpressionContext(this, newExpression);
+                return fixStatementsBrokenByLiteral(context, lhsExpression, brokenLiteral);
               }
 
               @Nullable @Override
               public PsiStatement getContainingStatement(@NotNull PrefixExpressionContext expressionContext) {
                 PsiStatement statement = super.getContainingStatement(expressionContext);
-                if (statement != null && lhsStatement.isValid() /* when is not fixed yet */) {
+                if (statement != null && lhsStatement.isValid()) {
                   // ignore expression-statements produced by broken expr like '2.var + 2'
-                  //assert lhsStatement.isValid() : "lhsStatement.isValid()";
+                  // note: only when lhsStatement is not 'fixed' yet
                   if (isComplexRhs && (statement == lhsStatement)) return null;
                 }
 
@@ -196,7 +115,6 @@ public final class PostfixTemplatesManager implements ApplicationComponent {
       // check for qualifier of '.postfix' parsed as code-reference-element
       final PsiElement qualifier = ((PsiJavaCodeReferenceElement) parent).getQualifier();
       if (!(qualifier instanceof PsiJavaCodeReferenceElement)) return null;
-
 
       PsiElement referenceParent = parent.getParent();
       if (referenceParent instanceof PsiTypeElement) {
@@ -255,74 +173,61 @@ public final class PostfixTemplatesManager implements ApplicationComponent {
     return null;
   }
 
-  @NotNull private static PsiExpression fixCompletelyBrokenCase(
-    @NotNull PsiExpression expressionToFix, @NotNull PsiLiteralExpression brokenLiteral,
-    @NotNull PsiReferenceExpression reference, @NotNull PsiExpression lhsExpression) {
+  @NotNull protected PrefixExpressionContext fixStatementsBrokenByLiteral(
+      @NotNull PrefixExpressionContext context, PsiExpression lhsExpression,
+      @NotNull PsiExpression brokenLiteral) {
+    Project project = context.expression.getProject();
 
+    // store pointer to rhs expression all the time
+    SmartPointerManager pointerManager = SmartPointerManager.getInstance(project);
+    SmartPsiElementPointer<PsiExpression> lhsExpressionPointer =
+      pointerManager.createSmartPsiElementPointer(lhsExpression);
 
+    // fix literal at PSI-level first
+    String brokenLiteralText = brokenLiteral.getText();
+    int dotIndex = brokenLiteralText.lastIndexOf('.');
+    assert (dotIndex > 0) : "dotIndex > 0";
 
-    // fix broken double literal by cutting of "." suffix
-    Project project = expressionToFix.getProject();
-    String literalText = brokenLiteral.getText();
-    int dotIndex = literalText.lastIndexOf('.');
-    assert dotIndex >= 0 : "dotIndex >= 0";
-
-    String fixedText = literalText.substring(0, dotIndex);
+    String fixedLiteralText = brokenLiteralText.substring(0, dotIndex);
     PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
-    PsiLiteralExpression newLiteral = (PsiLiteralExpression)
-      factory.createExpressionFromText(fixedText, null);
+    PsiExpression fixedLiteral = factory.createExpressionFromText(fixedLiteralText, null);
+    fixedLiteral = (PsiExpression) brokenLiteral.replace(fixedLiteral);
 
-    // 'int a = 2.|var + 3;' => 'int a = 2.|2 + 3;'
-    PsiExpression newExpression, oldExpression;
-    if (lhsExpression == brokenLiteral) {
-      oldExpression = brokenLiteral;
-      newExpression = (PsiExpression) reference.replace(newLiteral);
-    } else { // 'int a = 1 + 2.|var + 3;' => 'int a = 1 + 2.|1 + 2 + 3;'
-      brokenLiteral.replace(newLiteral);
-      oldExpression = lhsExpression;
-      newExpression = (PsiExpression) reference.replace(lhsExpression.copy());
+    // now let's fix broken statements at document-level
+    PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
+    Document document = documentManager.getDocument(fixedLiteral.getContainingFile());
+    assert (document != null) : "document != null";
+
+    documentManager.doPostponedOperationsAndUnblockDocument(document);
+
+    lhsExpression = lhsExpressionPointer.getElement();
+    assert (lhsExpression != null) : "element != null";
+
+    // calculate ranges to modify
+    int literalStart = fixedLiteral.getTextRange().getEndOffset();
+    int referenceEnd = context.parentContext.postfixReference.getTextRange().getEndOffset();
+    int exprStart = lhsExpression.getTextRange().getStartOffset();
+
+    document.replaceString(literalStart, referenceEnd, ")");
+    document.replaceString(exprStart, exprStart, "(");
+
+    documentManager.commitDocument(document);
+
+    // let's find restored expressions in fresh PSI
+    lhsExpression = lhsExpressionPointer.getElement();
+    assert (lhsExpression != null) : "element != null";
+
+    // pointer may resolve in more outer expression, try to correct
+    PsiElement leftPar = lhsExpression.getContainingFile().findElementAt(exprStart /* "(" now */);
+    if (leftPar != null && leftPar instanceof PsiJavaToken &&
+      leftPar.getParent() instanceof PsiParenthesizedExpression) {
+      PsiParenthesizedExpression parenthesized = (PsiParenthesizedExpression) leftPar.getParent();
+      PsiExpression expression = parenthesized.getExpression();
+      if (expression != null)
+        lhsExpression = (PsiExpression) parenthesized.replace(expression);
     }
 
-    assert newExpression.isPhysical() : "newExpression.isPhysical()";
-    assert oldExpression.isPhysical() : "oldExpression.isPhysical()";
-
-    // 'int a = 1 + 2.|1 + 2 + 3;' => 'int a = 1 + 2 + 3;'
-    PsiStatement statement = PsiTreeUtil.getParentOfType(newExpression, PsiStatement.class);
-    if (statement instanceof PsiExpressionStatement) {
-      newExpression.putCopyableUserData(marker, marker);
-
-      PsiExpression outerExpression = ((PsiExpressionStatement) statement).getExpression();
-      newExpression = (PsiExpression) oldExpression.replace(outerExpression);
-
-      PsiExpression marked = findMarkedExpression(newExpression);
-      if (marked != null) newExpression = marked;
-    } else { // 'int a = 1 + 2.|1 + 2;' => 'int a = 1 + 2;'
-      newExpression = (PsiExpression) oldExpression.replace(newExpression);
-    }
-
-    return newExpression;
-  }
-
-  private void removeStatementPreventingExtraTokens(
-      @NotNull PsiExpressionStatement statementToRemove, @NotNull PsiStatement targetStatement) {
-
-    PsiElement target = targetStatement;
-    if (targetStatement instanceof PsiDeclarationStatement) {
-      for (PsiElement element : ((PsiDeclarationStatement) targetStatement).getDeclaredElements())
-        if (element instanceof PsiLocalVariable) target = element;
-    }
-
-    PsiElement node = statementToRemove.getExpression();
-    while ((node = node.getNextSibling()) != null) {
-      target.addBefore(node.copy(), null);
-
-      if (node instanceof PsiJavaToken && target instanceof PsiLocalVariable) {
-        if (((PsiJavaToken) node).getTokenType() == JavaTokenType.SEMICOLON)
-          target = target.getParent();
-      }
-    }
-
-    statementToRemove.delete();
+    return new PrefixExpressionContext(context.parentContext, lhsExpression);
   }
 
   // todo: maybe fix prefix matcher? looks like impossible or not required a lot...
