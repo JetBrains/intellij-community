@@ -238,8 +238,7 @@ public abstract class AbstractExternalProjectImportBuilder<C extends AbstractImp
             }
 
             // Register libraries.
-            projectWithResolvedLibraries.prepareData(this.getClass().getClassLoader());
-            myProjectDataManager.importData(ContainerUtil.<DataNode<?>>set(projectWithResolvedLibraries), project, false);
+            myProjectDataManager.importData(Collections.<DataNode<?>>singletonList(projectWithResolvedLibraries), project, false);
           }
         });
       }
