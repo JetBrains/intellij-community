@@ -339,21 +339,19 @@ public class HgLogCommand {
   private static List<HgRevisionNumber> parseParentRevisions(@NotNull String parentsString, @NotNull String currentRevisionString) {
     List<HgRevisionNumber> parents = new ArrayList<HgRevisionNumber>(2);
     if (StringUtil.isEmptyOrSpaces(parentsString)) {
-      // parents shouldn't be empty
+      // parents shouldn't be empty  only if not supported
       Long revision = Long.valueOf(currentRevisionString);
       HgRevisionNumber parentRevision = HgRevisionNumber.getLocalInstance(String.valueOf(revision - 1));
       parents.add(parentRevision);
       return parents;
     }
-    else {
-      //hg returns parents in the format 'rev:node rev:node ' (note the trailing space)
-      String[] parentStrings = parentsString.trim().split(" ");
-      for (String parentString : parentStrings) {
-        String[] parentParts = parentString.split(":");
-        //if revision has only 1 parent and "--debug" argument were added or if appropriate parent template were used,  its second parent has revision number  -1
-        if (Integer.valueOf(parentParts[0]) >= 0) {
-          parents.add(HgRevisionNumber.getInstance(parentParts[0], parentParts[1]));
-        }
+    //hg returns parents in the format 'rev:node rev:node ' (note the trailing space)
+    String[] parentStrings = parentsString.trim().split(" ");
+    for (String parentString : parentStrings) {
+      String[] parentParts = parentString.split(":");
+      //if revision has only 1 parent and "--debug" argument were added or if appropriate parent template were used,  its second parent has revision number  -1
+      if (Integer.valueOf(parentParts[0]) >= 0) {
+        parents.add(HgRevisionNumber.getInstance(parentParts[0], parentParts[1]));
       }
     }
     return parents;
