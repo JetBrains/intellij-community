@@ -20,13 +20,10 @@ import com.siyeh.HardcodedMethodConstants;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.InspectionGadgetsFix;
-import com.siyeh.ig.fixes.SuppressForTestsScopeFix;
 import com.siyeh.ig.psiutils.MethodCallUtils;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-public class ThrowablePrintStackTraceInspection extends BaseInspection {
+public class ThrowablePrintStackTraceInspectionBase extends BaseInspection {
 
   @Override
   @NotNull
@@ -44,12 +41,6 @@ public class ThrowablePrintStackTraceInspection extends BaseInspection {
   @NotNull
   public String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("printstacktrace.call.problem.descriptor");
-  }
-
-  @Nullable
-  @Override
-  protected InspectionGadgetsFix buildFix(Object... infos) {
-    return new SuppressForTestsScopeFix(this);
   }
 
   @Override
@@ -82,7 +73,7 @@ public class ThrowablePrintStackTraceInspection extends BaseInspection {
       if (!CommonClassNames.JAVA_LANG_THROWABLE.equals(name)) {
         return;
       }
-      registerMethodCallError(expression);
+      registerMethodCallError(expression, expression);
     }
   }
 }

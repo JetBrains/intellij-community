@@ -23,12 +23,9 @@ import com.siyeh.HardcodedMethodConstants;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.InspectionGadgetsFix;
-import com.siyeh.ig.fixes.SuppressForTestsScopeFix;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-public class SystemOutErrInspection extends BaseInspection {
+public class SystemOutErrInspectionBase extends BaseInspection {
 
   @Override
   @NotNull
@@ -48,12 +45,6 @@ public class SystemOutErrInspection extends BaseInspection {
   public String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "use.system.out.err.problem.descriptor");
-  }
-
-  @Nullable
-  @Override
-  protected InspectionGadgetsFix buildFix(Object... infos) {
-    return new SuppressForTestsScopeFix(this);
   }
 
   @Override
@@ -84,7 +75,7 @@ public class SystemOutErrInspection extends BaseInspection {
       if (!"java.lang.System".equals(className)) {
         return;
       }
-      registerError(expression);
+      registerError(expression, expression);
     }
   }
 }
