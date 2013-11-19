@@ -21,7 +21,7 @@ import com.intellij.ide.ActionsTopHitProvider;
  * @author Konstantin Bulenkov
  */
 public class VcsTopHitProvider extends ActionsTopHitProvider {
-  String[][] ACTION_MATRIX = {
+  private static final String[][] ACTION_MATRIX = {
      {"his", "history ", "Vcs.ShowTabbedFileHistory"},
      {"upd", "update ", "Vcs.UpdateProject"},
      {"pull", "pull ", "Vcs.UpdateProject"},
