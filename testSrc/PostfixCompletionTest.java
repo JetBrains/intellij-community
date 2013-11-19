@@ -6,6 +6,8 @@ import com.intellij.testFramework.fixtures.*;
 import org.jetbrains.annotations.*;
 import org.jetbrains.postfixCompletion.*;
 
+import java.util.regex.*;
+
 public class PostfixCompletionTest extends LightCodeInsightFixtureTestCase {
   @Override protected String getTestDataPath() {
     return PostfixTestUtils.BASE_TEST_DATA_PATH + "/completion";
@@ -23,11 +25,18 @@ public class PostfixCompletionTest extends LightCodeInsightFixtureTestCase {
     StackTraceElement[] trace = Thread.currentThread().getStackTrace();
     String name = trace[3].getMethodName();
 
+    Pattern pattern = Pattern.compile("^test(\\w+?)\\d+$");
+    Matcher matcher = pattern.matcher(name);
+    if (matcher.find()) {
+      name = matcher.group(1).toLowerCase() + "/" + name;
+    }
+
     myFixture.configureByFile(name + ".java");
 
     PostfixCompletionContributor.behaveAsAutoPopupForTests = !useBasic;
 
     myFixture.complete(CompletionType.BASIC);
+
     final LookupElement[] autoItems = myFixture.getLookupElements();
 
     PostfixCompletionContributor.behaveAsAutoPopupForTests = false;

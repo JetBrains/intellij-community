@@ -11,7 +11,6 @@ import org.jetbrains.annotations.*;
 
 import java.util.*;
 
-// todo: check usages of PsiBinaryExpression with PsiPolyadicExpression (2 + 2 + 2)
 // todo: support '2 + 2 .var' (with spacing)
 
 public final class PostfixTemplatesManager implements ApplicationComponent {
