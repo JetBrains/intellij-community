@@ -349,6 +349,7 @@ public class ZenCodingTemplate extends CustomLiveTemplateBase {
       @Override
       public void run() {
         focusManager.requestFocus(field, true);
+        field.selectText();
       }
     });
   }
