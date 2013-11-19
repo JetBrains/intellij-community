@@ -22,7 +22,6 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.RecursionGuard;
 import com.intellij.openapi.util.RecursionManager;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.DefaultParameterTypeInferencePolicy;
@@ -100,9 +99,27 @@ public class MethodCandidateInfo extends CandidateInfo{
 
   @ApplicabilityLevelConstant
   public int getPertinentApplicabilityLevel() {
+    if (myTypeArguments != null) {
+      return getApplicabilityLevel();
+    }
+
     final PsiMethod method = getElement();
     if (method != null && method.hasTypeParameters() || myArgumentList == null || !PsiUtil.isLanguageLevel8OrHigher(myArgumentList)) {
-      return getApplicabilityLevel();
+      @ApplicabilityLevelConstant int level;
+      if (myArgumentTypes == null) {
+        return ApplicabilityLevel.NOT_APPLICABLE;
+      }
+      else {
+        final PsiSubstitutor substitutor = getSubstitutor();
+        level = ourOverloadGuard.doPreventingRecursion(myArgumentList, false, new Computable<Integer>() {
+          @Override
+          public Integer compute() {
+            return PsiUtil.getApplicabilityLevel(getElement(), substitutor, myArgumentTypes, myLanguageLevel);
+          }
+        });
+      }
+      if (level > ApplicabilityLevel.NOT_APPLICABLE && !isTypeArgumentsApplicable()) level = ApplicabilityLevel.NOT_APPLICABLE;
+      return level;
     }
     return ourOverloadGuard.doPreventingRecursion(myArgumentList, false, new Computable<Integer>() {
       @Override
