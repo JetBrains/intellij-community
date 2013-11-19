@@ -182,7 +182,7 @@ public class IndexTest extends IdeaTestCase {
     assertTrue(new HashSet<T>(Arrays.asList(expected)).equals(new HashSet<T>(actual)));
   }
 
-  public void _testCollectedPsiWithChangedDocument() throws IOException {
+  public void testCollectedPsiWithChangedDocument() throws IOException {
     VirtualFile dir = getVirtualFile(createTempDirectory());
     PsiTestUtil.addSourceContentToRoots(myModule, dir);
     
@@ -206,9 +206,7 @@ public class IndexTest extends IdeaTestCase {
         PlatformTestUtil.tryGcSoftlyReachableObjects();
         assertNull(((PsiManagerEx)PsiManager.getInstance(getProject())).getFileManager().getCachedPsiFile(vFile));
 
-        // should be assertNull(facade.findClass("Foo", scope));
-        // or the file should not be allowed to be gc'ed
-        facade.findClass("Foo", scope).getText();
+        assertNull(facade.findClass("Foo", scope));
       }
     });
   }
