@@ -5,7 +5,6 @@ import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.*;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.project.*;
-import com.intellij.openapi.util.*;
 import com.intellij.psi.*;
 import com.intellij.psi.util.*;
 import org.jetbrains.annotations.*;
@@ -283,21 +282,6 @@ public final class PostfixTemplatesManager implements ApplicationComponent {
 
     return null;
   }
-
-  @Nullable private static PsiExpression findMarkedExpression(@NotNull PsiExpression expression) {
-    if (expression.getCopyableUserData(marker) != null) return expression;
-
-    for (PsiElement node = expression.getFirstChild(); node != null; node = node.getNextSibling()) {
-      if (node instanceof PsiExpression) {
-        PsiExpression markedExpression = findMarkedExpression((PsiExpression) node);
-        if (markedExpression != null) return markedExpression;
-      }
-    }
-
-    return null;
-  }
-
-  static final com.intellij.openapi.util.Key marker = new Key(PostfixTemplatesManager.class.getName());
 
   @NotNull public List<LookupElement> collectTemplates(@NotNull PostfixTemplateContext context) {
     // disable all providers over package names
