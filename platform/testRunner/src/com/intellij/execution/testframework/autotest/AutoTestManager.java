@@ -61,10 +61,7 @@ public class AutoTestManager {
   public void setAutoTestEnabled(RunContentDescriptor descriptor, boolean enabled) {
     Content content = descriptor.getAttachedContent();
     if (enabled) {
-      // TODO Why not just 'myEnabledDescriptors.add(content)'?
-      if (!myEnabledDescriptors.contains(content)) {
-        myEnabledDescriptors.add(content);
-      }
+      myEnabledDescriptors.add(content);
       myDocumentWatcher.activate();
     }
     else {
