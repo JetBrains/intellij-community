@@ -44,11 +44,6 @@ public class AttributeStub extends DomStub {
   }
 
   @Override
-  public int getIndex() {
-    return 0;
-  }
-
-  @Override
   public ObjectStubSerializer getStubType() {
     return AttributeStubSerializer.INSTANCE;
   }

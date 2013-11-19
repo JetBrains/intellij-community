@@ -53,6 +53,11 @@ public abstract class DomStub extends ObjectStubBase<DomStub> {
 
   public abstract List<DomStub> getChildrenStubs();
 
+  public int getChildIndex(DomStub child) {
+    List<DomStub> stubs = getChildrenByName(XmlUtil.getLocalName(child.getName()), child.getNamespaceKey());
+    return stubs.indexOf(child);
+  }
+
   public String getName() {
     return myLocalName.getString();
   }
@@ -131,12 +136,4 @@ public abstract class DomStub extends ObjectStubBase<DomStub> {
   public boolean isCustom() {
     return false;
   }
-
-  @Override
-  public boolean equals(Object obj) {
-    if (obj == this) return true;
-    return super.equals(obj);
-  }
-
-  public abstract int getIndex();
 }

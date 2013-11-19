@@ -37,14 +37,13 @@ public class ElementStubSerializer implements ObjectStubSerializer<ElementStub, 
   public void serialize(@NotNull ElementStub stub, @NotNull StubOutputStream dataStream) throws IOException {
     dataStream.writeName(stub.getName());
     dataStream.writeName(stub.getNamespaceKey());
-    dataStream.writeInt(stub.getIndex());
     dataStream.writeBoolean(stub.isCustom());
   }
 
   @NotNull
   @Override
   public ElementStub deserialize(@NotNull StubInputStream dataStream, ElementStub parentStub) throws IOException {
-    return new ElementStub(parentStub, dataStream.readName(), dataStream.readName(), dataStream.readInt(), dataStream.readBoolean());
+    return new ElementStub(parentStub, dataStream.readName(), dataStream.readName(), dataStream.readBoolean());
   }
 
   @Override

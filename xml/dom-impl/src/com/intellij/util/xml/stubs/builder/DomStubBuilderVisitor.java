@@ -28,9 +28,6 @@ import com.intellij.util.xml.reflect.DomChildrenDescription;
 import com.intellij.util.xml.stubs.AttributeStub;
 import com.intellij.util.xml.stubs.ElementStub;
 
-import java.util.HashMap;
-import java.util.Map;
-
 /**
  * @author Dmitry Avdeev
  *         Date: 8/7/12
@@ -42,7 +39,7 @@ class DomStubBuilderVisitor {
     myManager = manager;
   }
   
-  void visitXmlElement(XmlElement element, ElementStub parent, int index) {
+  void visitXmlElement(XmlElement element, ElementStub parent) {
     DomInvocationHandler handler = myManager.getDomHandler(element);
     if (handler == null || handler.getAnnotation(Stubbed.class) == null && !handler.getChildDescription().isStubbed()) return;
 
@@ -53,18 +50,12 @@ class DomStubBuilderVisitor {
       ElementStub stub = new ElementStub(parent,
                                          StringRef.fromString(tag.getName()),
                                          StringRef.fromNullableString(nsKey),
-                                         index,
                                          description instanceof CustomDomChildrenDescription);
       for (XmlAttribute attribute : tag.getAttributes()) {
-        visitXmlElement(attribute, stub, 0);
+        visitXmlElement(attribute, stub);
       }
-      Map<String, Integer> indices = new HashMap<String, Integer>();
       for (final XmlTag subTag : tag.getSubTags()) {
-        String name = subTag.getName();
-        Integer i = indices.get(name);
-        i = i == null ? 0 : i + 1;
-        visitXmlElement(subTag, stub, i);
-        indices.put(name, i);
+        visitXmlElement(subTag, stub);
       }
     } else if (element instanceof XmlAttribute) {
       new AttributeStub(parent, StringRef.fromString(((XmlAttribute)element).getLocalName()), 
