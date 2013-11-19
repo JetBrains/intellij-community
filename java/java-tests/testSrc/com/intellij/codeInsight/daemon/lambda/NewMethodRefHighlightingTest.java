@@ -104,6 +104,10 @@ public class NewMethodRefHighlightingTest extends LightDaemonAnalyzerTestCase {
     doTest();
   }
 
+  public void testLiftMethodReferenceTypeParams() throws Exception {
+    doTest();
+  }
+
   private void doTest() {
     doTest(false);
   }

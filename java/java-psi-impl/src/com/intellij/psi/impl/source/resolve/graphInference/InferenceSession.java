@@ -239,7 +239,7 @@ public class InferenceSession {
     return mySiteSubstitutor;
   }
 
-  private void initBounds(PsiTypeParameter... typeParameters) {
+  public void initBounds(PsiTypeParameter... typeParameters) {
     for (PsiTypeParameter parameter : typeParameters) {
       if (myInferenceVariables.containsKey(parameter)) continue;
       InferenceVariable variable = new InferenceVariable(parameter);
