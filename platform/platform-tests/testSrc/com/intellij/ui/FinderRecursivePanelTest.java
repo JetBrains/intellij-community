@@ -69,18 +69,21 @@ public class FinderRecursivePanelTest extends PlatformTestCase {
     assertMerge(new String[]{"a", "b"}, 0, -1, "c", "d");
   }
 
-  private static void assertMerge(String[] items, int startSelection, int expectedSelection, String... newItems) {
+  private static void assertMerge(String[] initialItems,
+                                  int initialSelectionIdx,
+                                  int selectionIndexAfterMerge,
+                                  String... itemsToMerge) {
     CollectionListModel<String> model = new CollectionListModel<String>();
-    model.add(Arrays.asList(items));
+    model.add(Arrays.asList(initialItems));
     JBList list = new JBList(model);
-    list.setSelectedIndex(startSelection);
+    list.setSelectedIndex(initialSelectionIdx);
 
-    FinderRecursivePanel.mergeListItems(model, Arrays.asList(newItems));
-    assertEquals(newItems.length, model.getSize());
-    for (int i = 0; i < newItems.length; i++) {
-      assertEquals(newItems[i], model.getElementAt(i));
+    FinderRecursivePanel.mergeListItems(model, Arrays.asList(itemsToMerge));
+    assertEquals(itemsToMerge.length, model.getSize());
+    for (int i = 0; i < itemsToMerge.length; i++) {
+      assertEquals("idx:" + i + " " + toString(model.getItems(), ","), itemsToMerge[i], model.getElementAt(i));
     }
-    assertEquals(expectedSelection, list.getSelectedIndex());
+    assertEquals(toString(model.getItems(), ","), selectionIndexAfterMerge, list.getSelectedIndex());
   }
 
   private static void assertMerge(String[] items, String... newItems) {
