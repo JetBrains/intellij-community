@@ -99,6 +99,8 @@ public class DelayedDocumentWatcher {
       WolfTheProblemSolver problemSolver = WolfTheProblemSolver.getInstance(myProject);
       for (VirtualFile file : myChangedFiles) {
         if (problemSolver.hasSyntaxErrors(file)) {
+          // Do nothing, if some changed file has syntax errors.
+          // This method will be invoked subsequently, when syntax errors are fixed.
           return;
         }
       }
