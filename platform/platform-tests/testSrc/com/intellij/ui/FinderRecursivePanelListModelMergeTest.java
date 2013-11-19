@@ -22,19 +22,19 @@ import java.util.Arrays;
 
 public class FinderRecursivePanelListModelMergeTest extends UsefulTestCase {
 
-  public void testListModelMerge1() {
+  public void testSelectionKeptSingleItem() {
     assertMerge(new String[]{"a", "b", "c", "d"}, 0, 0, "a");
   }
 
-  public void testListModelMerge2() {
+  public void testNoSelectionAfterReplacingAllItems() {
     assertMerge(new String[0], "a", "b", "c", "d");
   }
 
-  public void testListModelMerge3() {
+  public void testNoSelectionNoItems() {
     assertMerge(new String[]{"a", "b", "c", "d"}, 0, -1 /* nothing */);
   }
 
-  public void testListModelMerge4() {
+  public void testSelectionKeptIdenticalItems() {
     assertMerge(new String[]{"a", "b", "c", "d"}, 2, 2, "a", "b", "c", "d");
   }
 
@@ -42,11 +42,11 @@ public class FinderRecursivePanelListModelMergeTest extends UsefulTestCase {
     assertMerge(new String[]{"a", "b", "c", "d"}, "d", "c", "b", "a");
   }
 
-  public void testListModelMerge6() {
+  public void testSelectionItemKeptItemsLessAndMovedUp() {
     assertMerge(new String[]{"a", "b", "c", "d"}, 2, 1, "b", "c");
   }
 
-  public void testListModelMerge7() {
+  public void testSelectionItemKeptItemsMovedUp() {
     assertMerge(new String[]{"a", "b", "c", "d"}, 1, 0, "b", "c", "d", "e");
   }
 
@@ -54,12 +54,16 @@ public class FinderRecursivePanelListModelMergeTest extends UsefulTestCase {
     assertMerge(new String[]{"a", "a", "b", "b"}, "b", "a", "b", "a");
   }
 
-  public void testListModelMerge9() {
+  public void testSelectionItemKeptItemsMovedDown() {
     assertMerge(new String[]{"a", "b"}, 1, 3, "e", "d", "a", "b");
   }
 
-  public void testListModelMerge10() {
+  public void testNoSelectionDisjointItems() {
     assertMerge(new String[]{"a", "b"}, 0, -1, "c", "d");
+  }
+
+  private static void assertMerge(String[] initialItems, String... itemsToMerge) {
+    assertMerge(initialItems, -1, -1, itemsToMerge);
   }
 
   private static void assertMerge(String[] initialItems,
@@ -77,9 +81,5 @@ public class FinderRecursivePanelListModelMergeTest extends UsefulTestCase {
       assertEquals("idx:" + i + " " + toString(model.getItems(), ","), itemsToMerge[i], model.getElementAt(i));
     }
     assertEquals(toString(model.getItems(), ","), selectionIndexAfterMerge, list.getSelectedIndex());
-  }
-
-  private static void assertMerge(String[] items, String... newItems) {
-    assertMerge(items, -1, -1, newItems);
   }
 }
