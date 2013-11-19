@@ -1,3 +1,18 @@
+/*
+ * Copyright 2000-2013 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.jetbrains.python.intentions;
 
 import com.intellij.codeInsight.CodeInsightSettings;
@@ -126,51 +141,6 @@ public class PyIntentionTest extends PyTestCase {
 
   public void testNegateComparison2() {
     doTest(PyBundle.message("INTN.negate.$0.to.$1", ">", "<="));
-  }
-
-  public void testStringConcatToFormat() {
-    doTest(PyBundle.message("INTN.replace.plus.with.format.operator"), LanguageLevel.PYTHON25);
-  }
-
-  public void testStringConcatToFormat1() {   //PY-5226
-    doTest(PyBundle.message("INTN.replace.plus.with.format.operator"), LanguageLevel.PYTHON25);
-  }
-
-  public void testStringConcatToFormat2() {   //PY-6505
-    runWithLanguageLevel(LanguageLevel.PYTHON25, new Runnable() {
-      @Override
-      public void run() {
-        doNegativeTest(PyBundle.message("INTN.replace.plus.with.format.operator"));
-      }
-    });
-  }
-
-  public void testStringConcatToFormat3() {   //PY-6505
-    doTest(PyBundle.message("INTN.replace.plus.with.format.operator"), LanguageLevel.PYTHON25);
-  }
-
-  public void testStringConcatToFormat4() {   //PY-7969
-    doNegativeTest(PyBundle.message("INTN.replace.plus.with.format.operator"));
-  }
-
-  public void testStringConcatToFormat5() {   //PY-7968
-    doNegativeTest(PyBundle.message("INTN.replace.plus.with.format.operator"));
-  }
-
-  public void testStringConcatToFormatPy3() {   //PY-4706
-    doTest(PyBundle.message("INTN.replace.plus.with.str.format"), LanguageLevel.PYTHON33);
-  }
-
-  public void testConvertFormatOperatorToMethod() {
-    doTest(PyBundle.message("INTN.replace.with.method"), LanguageLevel.PYTHON26);
-  }
-
-  public void testConvertFormatOperatorToMethodMulti() {
-    doTest(PyBundle.message("INTN.replace.with.method"), LanguageLevel.PYTHON26);
-  }
-
-  public void testConvertFormatOperatorToMethodEscaped() {
-    doTest(PyBundle.message("INTN.replace.with.method"), LanguageLevel.PYTHON26);
   }
 
   public void testFlipComparison() {
@@ -400,20 +370,6 @@ public class PyIntentionTest extends PyTestCase {
   // PY-7383
   public void testYieldFrom() {
     doTest(PyBundle.message("INTN.yield.from"), LanguageLevel.PYTHON33);
-  }
-
-  public void testUnicodeStringConcatToFormat() { //PY-7463
-    doTest(PyBundle.message("INTN.replace.plus.with.format.operator"), LanguageLevel.PYTHON25);
-  }
-
-  // PY-8366
-  public void testStringConcatToFormatEscapingPy3() {
-    doTest(PyBundle.message("INTN.replace.plus.with.str.format"), LanguageLevel.PYTHON33);
-  }
-
-  // PY-8588
-  public void testStringConcatToFormatEscaping() {
-    doTest(PyBundle.message("INTN.replace.plus.with.format.operator"), LanguageLevel.PYTHON25);
   }
 
   public void testConvertStaticMethodToFunction() {

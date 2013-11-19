@@ -45,17 +45,17 @@ class HtmlStructureViewTreeModel extends XmlStructureViewTreeModel implements Pl
           String s1 = SorterUtil.getStringPresentation(o1);
           String s2 = SorterUtil.getStringPresentation(o2);
 
-          if (isTagPresenation(s1, "head") && isTagPresenation(s2, "body")) return -1;
-          if (isTagPresenation(s1, "body") && isTagPresenation(s2, "head")) return 1;
+          if (isTagPresentation(s1, "head") && isTagPresentation(s2, "body")) return -1;
+          if (isTagPresentation(s1, "body") && isTagPresentation(s2, "head")) return 1;
 
           return s1.compareToIgnoreCase(s2);
         }
 
-        private boolean isTagPresenation(final String presentation, final String tagName) {
+        private boolean isTagPresentation(final String presentation, final String tagName) {
           // "head", "head#id", "head.cls"
-          final String lowercased = presentation.toLowerCase();
-          return lowercased.startsWith(tagName) &&
-                 (lowercased.length() == tagName.length() || !Character.isLetter(lowercased.charAt(tagName.length())));
+          final String lowerCased = presentation.toLowerCase();
+          return lowerCased.startsWith(tagName) &&
+                 (lowerCased.length() == tagName.length() || !Character.isLetter(lowerCased.charAt(tagName.length())));
         }
       };
     }

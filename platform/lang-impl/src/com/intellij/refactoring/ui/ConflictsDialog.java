@@ -84,7 +84,7 @@ public class ConflictsDialog extends DialogWrapper{
     myElementConflictDescription = conflictDescriptions;
     setTitle(RefactoringBundle.message("problems.detected.title"));
     setOKButtonText(RefactoringBundle.message("continue.button"));
-    setOKActionEnabled(alwaysShowOkButton || myDoRefactoringRunnable != null);
+    setOKActionEnabled(alwaysShowOkButton || getDoRefactoringRunnable(null) != null);
     init();
   }
 
@@ -167,6 +167,10 @@ public class ConflictsDialog extends DialogWrapper{
     }
   }
 
+  protected Runnable getDoRefactoringRunnable(@Nullable UsageView usageView) {
+    return myDoRefactoringRunnable;
+  }
+
   private class MyShowConflictsInUsageViewAction extends AbstractAction {
 
 
@@ -218,9 +222,10 @@ public class ConflictsDialog extends DialogWrapper{
         };
       }
       final UsageView usageView = UsageViewManager.getInstance(myProject).showUsages(UsageTarget.EMPTY_ARRAY, usages, presentation);
-      if (myDoRefactoringRunnable != null) {
+      Runnable doRefactoringRunnable = getDoRefactoringRunnable(usageView);
+      if (doRefactoringRunnable != null) {
         usageView.addPerformOperationAction(
-          myDoRefactoringRunnable,
+          doRefactoringRunnable,
           myCommandName != null ? myCommandName : RefactoringBundle.message("retry.command"), "Unable to perform refactoring. There were changes in code after the usages have been found.", RefactoringBundle.message("usageView.doAction"));
       }
       close(SHOW_CONFLICTS_EXIT_CODE);

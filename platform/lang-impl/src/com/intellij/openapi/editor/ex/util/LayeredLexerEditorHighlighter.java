@@ -180,7 +180,7 @@ public class LayeredLexerEditorHighlighter extends LexerEditorHighlighter {
       if (b) {
         setText(myText);
       }
-      return new LayeredHighlighterIterator(startOffset);
+      return new LayeredHighlighterIteratorImpl(startOffset);
     }
   }
 
@@ -479,13 +479,13 @@ public class LayeredLexerEditorHighlighter extends LexerEditorHighlighter {
     }
   }
 
-  private class LayeredHighlighterIterator implements HighlighterIterator {
+  private class LayeredHighlighterIteratorImpl implements LayeredHighlighterIterator {
     private final HighlighterIterator myBaseIterator;
     private HighlighterIterator myLayerIterator;
     private int myLayerStartOffset = 0;
     private Mapper myCurrentMapper;
 
-    private LayeredHighlighterIterator(int offset) {
+    private LayeredHighlighterIteratorImpl(int offset) {
       myBaseIterator = LayeredLexerEditorHighlighter.super.createIterator(offset);
       if (!myBaseIterator.atEnd()) {
         int shift = offset - myBaseIterator.getStart();
@@ -519,6 +519,14 @@ public class LayeredLexerEditorHighlighter extends LexerEditorHighlighter {
       }
 
       return myBaseIterator.getTextAttributes();
+    }
+
+    public SyntaxHighlighter getActiveSyntaxHighlighter() {
+      if (myCurrentMapper != null) {
+        return myCurrentMapper.mySyntaxHighlighter;
+      }
+
+      return LayeredLexerEditorHighlighter.this.getSyntaxHighlighter();
     }
 
     @Override

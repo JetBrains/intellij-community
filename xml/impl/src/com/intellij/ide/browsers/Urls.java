@@ -31,6 +31,11 @@ public final class Urls {
     return result;
   }
 
+  @NotNull
+  public static Url newHttpUrl(@Nullable String authority, @Nullable String path) {
+    return new UrlImpl("http", authority, path);
+  }
+
   @Nullable
   public static Url parse(@NotNull String url, boolean asLocalIfNoScheme) {
     if (asLocalIfNoScheme && !URLUtil.containsScheme(url)) {
@@ -77,21 +82,14 @@ public final class Urls {
 
   // java.net.URI.create cannot parse "file:///Test Stuff" - but you don't need to worry about it - this method is aware
   public static Url newFromIdea(@NotNull String url) {
-    int index = url.indexOf(URLUtil.SCHEME_SEPARATOR);
-    if (index < 0) {
-      // nodejs debug — files only in local filesystem
-      return new LocalFileUrl(url);
-    }
-    else {
-      return parseUrl(VfsUtil.toIdeaUrl(url), false);
-    }
+    return URLUtil.containsScheme(url) ? parseUrl(VfsUtil.toIdeaUrl(url), false) : new LocalFileUrl(url);
   }
 
   // must not be used in NodeJS
   public static Url newFromVirtualFile(@NotNull VirtualFile file) {
     String path = file.getPath();
     if (file.isInLocalFileSystem()) {
-      return new UrlImpl(null, file.getFileSystem().getProtocol(), null, path, null);
+      return new UrlImpl(file.getFileSystem().getProtocol(), null, path);
     }
     else {
       return parseUrl(file.getUrl(), false);

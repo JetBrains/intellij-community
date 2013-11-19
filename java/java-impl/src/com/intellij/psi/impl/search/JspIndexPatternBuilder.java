@@ -18,15 +18,8 @@ package com.intellij.psi.impl.search;
 import com.intellij.lang.LanguageParserDefinitions;
 import com.intellij.lang.ParserDefinition;
 import com.intellij.lexer.Lexer;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.highlighter.EditorHighlighter;
-import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory;
-import com.intellij.openapi.editor.impl.EditorHighlighterCache;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.JspPsiUtil;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.impl.cache.impl.id.PlatformIdTableBuilding;
 import com.intellij.psi.impl.source.tree.StdTokenSets;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.jsp.JspTokenType;
@@ -40,27 +33,7 @@ public class JspIndexPatternBuilder implements IndexPatternBuilder {
   @Override
   public Lexer getIndexingLexer(final PsiFile file) {
     if (JspPsiUtil.isInJspFile(file)) {
-      EditorHighlighter highlighter = null;
-
-      final Document document = PsiDocumentManager.getInstance(file.getProject()).getDocument(file);
-      final EditorHighlighter cachedEditorHighlighter;
-      boolean alreadyInitializedHighlighter = false;
-
-      if ((cachedEditorHighlighter = EditorHighlighterCache.getEditorHighlighterForCachesBuilding(document)) != null &&
-          PlatformIdTableBuilding.checkCanUseCachedEditorHighlighter(file.getText(), cachedEditorHighlighter)) {
-        highlighter = cachedEditorHighlighter;
-        alreadyInitializedHighlighter = true;
-      }
-      else {
-        final VirtualFile virtualFile = file.getVirtualFile();
-        if (virtualFile != null) {
-          highlighter = EditorHighlighterFactory.getInstance().createEditorHighlighter(file.getProject(), virtualFile);
-        }
-      }
-
-      if (highlighter != null) {
-        return new LexerEditorHighlighterLexer(highlighter, alreadyInitializedHighlighter);
-      }
+      return LexerEditorHighlighterLexer.getLexerBasedOnLexerHighlighter(file.getText(), file.getVirtualFile(), file.getProject());
     }
 
     return null;

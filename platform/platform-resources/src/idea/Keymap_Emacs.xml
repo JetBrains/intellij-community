@@ -287,9 +287,6 @@
     <action id="CommentByLineComment">
       <keyboard-shortcut first-keystroke="alt SEMICOLON"/>
     </action>
-    <action id="ActivateTerminalToolWindow">
-      <keyboard-shortcut first-keystroke="control alt MINUS"/>
-    </action>
     
     <!--Disabled shortcuts-->
     <action id="CollapseAllRegions"/>

@@ -166,6 +166,10 @@ public abstract class AutomaticRenamer {
     return name;
   }
 
+  public boolean allowChangeSuggestedName() {
+    return true;
+  }
+
   public boolean isSelectedByDefault() {
     return false;
   }

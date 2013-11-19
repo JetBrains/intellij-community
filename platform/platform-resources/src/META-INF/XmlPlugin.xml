@@ -297,7 +297,7 @@
     <extendWordSelectionHandler implementation="com.intellij.codeInsight.editorActions.XmlCDATAContentSelectioner"/>
     <extendWordSelectionHandler implementation="com.intellij.codeInsight.editorActions.DtdSelectioner"/>
     <extendWordSelectionHandler implementation="com.intellij.codeInsight.editorActions.XmlElementSelectioner"/>
-    <extendWordSelectionHandler implementation="com.intellij.codeInsight.editorActions.XmlTokenSelectioner"/>
+    <extendWordSelectionHandler id="xmlTokenSelectioner" implementation="com.intellij.codeInsight.editorActions.XmlTokenSelectioner"/>
     <extendWordSelectionHandler implementation="com.intellij.codeInsight.editorActions.XmlLineSelectioner"/>
 
 

@@ -132,7 +132,7 @@ public abstract class AbstractTerminalRunner<T extends Process> {
     processHandler.startNotify();
   }
 
-  public static void openSession(TerminalWidget terminal, TtyConnector ttyConnector) {
+  public static void openSession(@NotNull TerminalWidget terminal, @NotNull TtyConnector ttyConnector) {
     TerminalSession session = terminal.createTerminalSession(ttyConnector);
     session.start();
   }
@@ -163,7 +163,7 @@ public abstract class AbstractTerminalRunner<T extends Process> {
     return myProject;
   }
 
-  public void openSession(TerminalWidget terminalWidget) {
+  public void openSession(@NotNull TerminalWidget terminalWidget) {
     // Create Server process
     try {
       final T process = createProcess();

@@ -100,7 +100,7 @@ public class ManagePackagesDialog extends DialogWrapper {
                 @Override
                 public void run() {
                   //noinspection DialogTitleCapitalization
-                  Messages.showErrorDialog("Error updating package list: " + e.getMessage(), "Reload List of Packages");
+                  Messages.showErrorDialog(myMainPanel, "Error updating package list: " + e.getMessage(), "Reload List of Packages");
                   myPackages.setPaintBusy(false);
                 }
               }, ModalityState.any());
@@ -309,7 +309,7 @@ public class ManagePackagesDialog extends DialogWrapper {
           application.invokeLater(new Runnable() {
             @Override
             public void run() {
-              Messages.showErrorDialog("Error loading package list:" + e.getMessage(), "Packages");
+              Messages.showErrorDialog(myMainPanel, "Error loading package list:" + e.getMessage(), "Packages");
               setDownloadStatus(false);
             }
           }, ModalityState.any());
@@ -545,7 +545,7 @@ public class ManagePackagesDialog extends DialogWrapper {
         final Color fg = orig.getForeground();
         myNameLabel.setForeground(myInstalledPackages.contains(name) ? PlatformColors.BLUE : fg);
       }
-      myRepositoryLabel.setForeground(Color.GRAY);
+      myRepositoryLabel.setForeground(JBColor.GRAY);
 
       final Color bg;
       if (isSelected) {

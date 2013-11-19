@@ -22,8 +22,16 @@ public class PortField extends JSpinner {
     this(0);
   }
 
-  public PortField(int number) {
-    setModel(new SpinnerNumberModel(number, 0, 65535, 1));
+  public PortField(int value) {
+    this(value, 0);
+  }
+
+  public void setMin(int value) {
+    ((SpinnerNumberModel)getModel()).setMinimum(value);
+  }
+
+  public PortField(int value, int min) {
+    setModel(new SpinnerNumberModel(value, min, 65535, 1));
     setEditor(new NumberEditor(this, "#"));
   }
 
@@ -31,8 +39,8 @@ public class PortField extends JSpinner {
     ((NumberEditor)getEditor()).getTextField().setEditable(value);
   }
 
-  public void setNumber(int number) {
-    setValue(number);
+  public void setNumber(int value) {
+    setValue(value);
   }
 
   public int getNumber() {

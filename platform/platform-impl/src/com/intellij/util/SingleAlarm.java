@@ -50,8 +50,10 @@ public class SingleAlarm extends Alarm {
   }
 
   public void cancelAndRequest() {
-    cancel();
-    addRequest(delay);
+    if (!isDisposed()) {
+      cancel();
+      addRequest(delay);
+    }
   }
 
   private void addRequest(int delay) {

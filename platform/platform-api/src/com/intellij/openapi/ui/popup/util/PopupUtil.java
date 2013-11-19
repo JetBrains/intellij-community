@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,12 +29,15 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.util.ReflectionUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.plaf.basic.ComboPopup;
 import java.awt.*;
+import java.awt.event.ComponentEvent;
 import java.lang.reflect.Method;
 
 public class PopupUtil {
@@ -194,5 +197,12 @@ public class PopupUtil {
       position = Balloon.Position.below;
     }
     balloon.show(new RelativePoint(component, new Point(x, y)), position);
+  }
+
+  public static boolean isComboPopupKeyEvent(@NotNull ComponentEvent event, @NotNull JComboBox comboBox) {
+    final Component component = event.getComponent();
+    if(!comboBox.isPopupVisible()) return false;
+    ComboPopup popup = ReflectionUtil.getField(comboBox.getUI().getClass(), comboBox.getUI(), ComboPopup.class, "popup");
+    return popup != null && SwingUtilities.isDescendingFrom(popup.getList(), component);
   }
 }

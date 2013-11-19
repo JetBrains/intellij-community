@@ -24,6 +24,7 @@
  */
 package com.intellij.codeInsight.editorActions;
 
+import com.intellij.application.options.editor.WebEditorOptions;
 import com.intellij.codeInsight.editorActions.wordSelection.AbstractWordSelectioner;
 import com.intellij.codeInsight.highlighting.BraceMatchingUtil;
 import com.intellij.ide.highlighter.HighlighterFactory;
@@ -54,6 +55,7 @@ public class HtmlSelectioner extends AbstractWordSelectioner {
       return Character.isJavaIdentifierPart(ch) || ch == '-';
     }
   };
+  private static final String CLASS_ATTRIBUTE_NAME = "class";
 
   public boolean canSelect(PsiElement e) {
     return canSelectElement(e);
@@ -151,7 +153,7 @@ public class HtmlSelectioner extends AbstractWordSelectioner {
       final XmlAttributeValue value = attribute.getValueElement();
 
       if (value != null) {
-        if ("class".equalsIgnoreCase(attribute.getName())) {
+        if (CLASS_ATTRIBUTE_NAME.equalsIgnoreCase(attribute.getName())) {
           addClassAttributeRanges(result, editor, editorText, value);
         }
         final TextRange range = value.getTextRange();
@@ -162,6 +164,38 @@ public class HtmlSelectioner extends AbstractWordSelectioner {
         }
       }
     }
+  }
+
+  @Override
+  public int getMinimalTextRangeLength(@NotNull PsiElement element, @NotNull CharSequence text, int cursorOffset) {
+    if (WebEditorOptions.getInstance().isSelectWholeCssSelectorSuffixOnDoubleClick()) {
+      final XmlAttribute attribute = PsiTreeUtil.getParentOfType(element, XmlAttribute.class);
+      final XmlAttributeValue attributeValue = PsiTreeUtil.getParentOfType(element, XmlAttributeValue.class);
+      if (attribute != null && attributeValue != null) {
+        if (CLASS_ATTRIBUTE_NAME.equalsIgnoreCase(attribute.getName())) {
+          final TextRange valueTextRange = attributeValue.getValueTextRange();
+          if (!valueTextRange.isEmpty()) {
+            int start = cursorOffset;
+            int end = cursorOffset;
+            while (start > valueTextRange.getStartOffset()) {
+              if (!JAVA_IDENTIFIER_AND_HYPHEN_CONDITION.value(text.charAt(start - 1))) {
+                break;
+              }
+              start--;
+            }
+
+            while (end < valueTextRange.getEndOffset()) {
+              if (!JAVA_IDENTIFIER_AND_HYPHEN_CONDITION.value(text.charAt(end + 1))) {
+                break;
+              }
+              end++;
+            }
+            return end - start;
+          }
+        }
+      }
+    }
+    return super.getMinimalTextRangeLength(element, text, cursorOffset);
   }
 
   private static void addClassAttributeRanges(@NotNull List<TextRange> result, @NotNull Editor editor, 

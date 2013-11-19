@@ -27,6 +27,7 @@ import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.EnvironmentUtil;
+import com.intellij.util.PlatformUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.CaseInsensitiveStringHashingStrategy;
 import gnu.trove.THashMap;
@@ -37,7 +38,10 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
 
 /**
  * OS-independent way of executing external processes with complex parameters.
@@ -260,7 +264,8 @@ public class GeneralCommandLine implements UserDataHolder {
     environment.clear();
 
     if (myPassParentEnvironment) {
-      environment.putAll(EnvironmentUtil.getEnvironmentMap());
+      environment.putAll(PlatformUtils.isAppCode() ? System.getenv() // Temporarily fix for OC-8606 
+                                                   : EnvironmentUtil.getEnvironmentMap());
     }
 
     if (!myEnvParams.isEmpty()) {

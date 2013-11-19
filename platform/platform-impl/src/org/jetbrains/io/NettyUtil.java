@@ -33,6 +33,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.ide.PooledThreadExecutor;
 
 import java.io.IOException;
+import java.net.BindException;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 
@@ -93,7 +94,8 @@ public final class NettyUtil {
     }
 
     return (throwable instanceof IOException && message.equals("An existing connection was forcibly closed by the remote host")) ||
-           (throwable instanceof ChannelException && message.startsWith("Failed to bind to: "));
+           (throwable instanceof ChannelException && message.startsWith("Failed to bind to: ")) ||
+           throwable instanceof BindException;
   }
 
   // applicable only in case of ClientBootstrap&OioClientSocketChannelFactory

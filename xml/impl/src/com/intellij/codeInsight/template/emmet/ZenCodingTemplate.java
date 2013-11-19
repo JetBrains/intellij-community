@@ -28,21 +28,34 @@ import com.intellij.codeInsight.template.emmet.tokens.TextToken;
 import com.intellij.codeInsight.template.emmet.tokens.ZenCodingToken;
 import com.intellij.codeInsight.template.impl.TemplateImpl;
 import com.intellij.codeInsight.template.impl.TemplateState;
+import com.intellij.ide.IdeEventQueue;
+import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorModificationUtil;
 import com.intellij.openapi.editor.ScrollType;
-import com.intellij.openapi.ui.InputValidatorEx;
-import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.ui.popup.Balloon;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.ui.popup.JBPopupListener;
+import com.intellij.openapi.ui.popup.LightweightWindowEvent;
+import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.ui.*;
 import com.intellij.xml.XmlBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.event.DocumentEvent;
+import java.awt.*;
+import java.awt.event.ComponentEvent;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
+import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -54,6 +67,8 @@ import java.util.List;
  */
 public class ZenCodingTemplate implements CustomLiveTemplate {
   public static final char MARKER = '\0';
+  private static final String EMMET_RECENT_WRAP_ABBREVIATIONS_KEY = "emmet.recent.wrap.abbreviations";
+  private static final String EMMET_LAST_WRAP_ABBREVIATIONS_KEY = "emmet.last.wrap.abbreviations";
 
   @Nullable
   public static ZenCodingGenerator findApplicableDefaultGenerator(@NotNull PsiElement context, boolean wrapping) {
@@ -156,7 +171,7 @@ public class ZenCodingTemplate implements CustomLiveTemplate {
   }
 
 
-  public static void expand(@NotNull String key, @NotNull CustomTemplateCallback callback, @Nullable String surroundedText, 
+  public static void expand(@NotNull String key, @NotNull CustomTemplateCallback callback, @Nullable String surroundedText,
                             @NotNull ZenCodingGenerator defaultGenerator,
                             @NotNull Collection<? extends ZenCodingFilter> extraFilters,
                             boolean expandPrimitiveAbbreviations) {
@@ -266,32 +281,91 @@ public class ZenCodingTemplate implements CustomLiveTemplate {
     return false;
   }
 
-  public void wrap(final String selection, @NotNull final CustomTemplateCallback callback) {
-    InputValidatorEx validator = new InputValidatorEx() {
-      public String getErrorText(String inputString) {
-        if (!checkTemplateKey(inputString, callback)) {
-          return XmlBundle.message("zen.coding.incorrect.abbreviation.error");
+  public void wrap(@NotNull final String selection, @NotNull final CustomTemplateCallback callback) {
+    final TextFieldWithStoredHistory field = new TextFieldWithStoredHistory(EMMET_RECENT_WRAP_ABBREVIATIONS_KEY);
+    final Dimension fieldPreferredSize = field.getPreferredSize();
+    field.setPreferredSize(new Dimension(Math.max(160, fieldPreferredSize.width), fieldPreferredSize.height));
+    field.setHistorySize(10);
+    final JBPopupFactory popupFactory = JBPopupFactory.getInstance();
+    final BalloonImpl balloon = (BalloonImpl)popupFactory.createDialogBalloonBuilder(field, XmlBundle.message("emmet.title"))
+      .setCloseButtonEnabled(false)
+      .setBlockClicksThroughBalloon(true)
+      .setAnimationCycle(0)
+      .setHideOnKeyOutside(true)
+      .createBalloon();
+    
+    field.addDocumentListener(new DocumentAdapter() {
+      @Override
+      protected void textChanged(DocumentEvent e) {
+        validateTemplateKey(field, balloon, field.getText(), callback);
+      }
+    });
+    field.addKeyboardListener(new KeyAdapter() {
+      @Override
+      public void keyPressed(KeyEvent e) {
+        if (!field.isPopupVisible()) {
+          switch (e.getKeyCode()) {
+            case KeyEvent.VK_ENTER:
+              final String abbreviation = field.getText();
+              if (validateTemplateKey(field, balloon, abbreviation, callback)) {
+                doWrap(selection, abbreviation, callback);
+                PropertiesComponent.getInstance().setValue(EMMET_LAST_WRAP_ABBREVIATIONS_KEY, abbreviation);
+                field.addCurrentTextToHistory();
+                balloon.hide(true);
+              }
+              break;
+            case KeyEvent.VK_ESCAPE:
+              balloon.hide(false);
+              break;
+          }
         }
-        return null;
       }
+    });
 
-      public boolean checkInput(String inputString) {
-        return getErrorText(inputString) == null;
+    IdeEventQueue.getInstance().addDispatcher(new IdeEventQueue.EventDispatcher() {
+      @Override
+      public boolean dispatch(AWTEvent e) {
+        if (e instanceof MouseEvent) {
+          if (e.getID() == MouseEvent.MOUSE_PRESSED) {
+            if (!balloon.isInsideBalloon((MouseEvent)e) && !PopupUtil.isComboPopupKeyEvent((ComponentEvent)e, field)) {
+              balloon.hide();
+            }
+          }
+        }
+        return false;
       }
+    }, balloon);
 
-      public boolean canClose(String inputString) {
-        return checkInput(inputString);
+    balloon.addListener(new JBPopupListener.Adapter() {
+      @Override
+      public void beforeShown(LightweightWindowEvent event) {
+        field.setText(PropertiesComponent.getInstance().getValue(EMMET_LAST_WRAP_ABBREVIATIONS_KEY, ""));
       }
-    };
-    final String abbreviation = Messages.showInputDialog(callback.getProject(),
-                                                         XmlBundle.message("zen.coding.enter.abbreviation.dialog.label"),
-                                                         XmlBundle.message("zen.coding.title"), Messages.getQuestionIcon(), "", validator);
-    if (abbreviation != null) {
-      doWrap(selection, abbreviation, callback);
-    }
+    });
+    balloon.show(popupFactory.guessBestPopupLocation(callback.getEditor()), Balloon.Position.below);
+
+    final IdeFocusManager focusManager = IdeFocusManager.getInstance(callback.getProject());
+    focusManager.doWhenFocusSettlesDown(new Runnable() {
+      @Override
+      public void run() {
+        focusManager.requestFocus(field, true);
+      }
+    });
   }
 
-  public static boolean checkTemplateKey(String inputString, CustomTemplateCallback callback) {
+  private static boolean validateTemplateKey(@NotNull TextFieldWithHistory field,
+                                             @Nullable Balloon balloon,
+                                             @NotNull String abbreviation,
+                                             @NotNull CustomTemplateCallback callback) {
+    final boolean correct = checkTemplateKey(abbreviation, callback);
+    field.getTextEditor().setBackground(correct ? LightColors.SLIGHTLY_GREEN : LightColors.RED);
+    if (balloon != null && !balloon.isDisposed()) {
+      balloon.revalidate();
+    }
+    return correct;
+  }
+
+  static boolean checkTemplateKey(String inputString, CustomTemplateCallback callback) {
     ZenCodingGenerator generator = findApplicableDefaultGenerator(callback.getContext(), true);
     assert generator != null;
     return checkTemplateKey(inputString, callback, generator);
@@ -305,6 +379,13 @@ public class ZenCodingTemplate implements CustomLiveTemplate {
     PsiElement element = CustomTemplateCallback.getContext(file, offset);
     final ZenCodingGenerator applicableGenerator = findApplicableDefaultGenerator(element, wrapping);
     return applicableGenerator != null && applicableGenerator.isEnabled();
+  }
+
+  @Override
+  public boolean hasCompletionItem(@NotNull PsiFile file, int offset) {
+    PsiElement element = CustomTemplateCallback.getContext(file, offset);
+    final ZenCodingGenerator applicableGenerator = findApplicableDefaultGenerator(element, false);
+    return applicableGenerator != null && applicableGenerator.isEnabled() && applicableGenerator.hasCompletionItem();
   }
 
   public static void doWrap(final String selection, final String abbreviation, final CustomTemplateCallback callback) {
@@ -333,7 +414,7 @@ public class ZenCodingTemplate implements CustomLiveTemplate {
 
   @NotNull
   public String getTitle() {
-    return XmlBundle.message("zen.coding.title");
+    return XmlBundle.message("emmet.title");
   }
 
   public char getShortcut() {

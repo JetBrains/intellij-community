@@ -24,7 +24,6 @@ import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
-import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -80,16 +79,16 @@ public class HippieWordCompletionHandler implements CodeInsightActionHandler {
     editor.getDocument().replaceString(data.startOffset, replacementEnd, nextVariant.variant);
     editor.getCaretModel().moveToOffset(data.startOffset + nextVariant.variant.length());
     completionState.lastProposedVariant = nextVariant;
-    highlightWord(editor, nextVariant, project, data);
+    highlightWord(nextVariant, project, data);
   }
 
-  private static void highlightWord(final Editor editor, final CompletionVariant variant, final Project project, CompletionData data) {
+  private static void highlightWord(final CompletionVariant variant, final Project project, CompletionData data) {
     int delta = data.startOffset < variant.offset ? variant.variant.length() - data.myWordUnderCursor.length() : 0;
 
     HighlightManager highlightManager = HighlightManager.getInstance(project);
     EditorColorsManager colorManager = EditorColorsManager.getInstance();
     TextAttributes attributes = colorManager.getGlobalScheme().getAttributes(EditorColors.TEXT_SEARCH_RESULT_ATTRIBUTES);
-    highlightManager.addOccurrenceHighlight(editor, variant.offset + delta, variant.offset + variant.variant.length() + delta, attributes,
+    highlightManager.addOccurrenceHighlight(variant.editor, variant.offset + delta, variant.offset + variant.variant.length() + delta, attributes,
                                             HighlightManager.HIDE_BY_ANY_KEY, null, null);
   }
 
@@ -175,10 +174,12 @@ public class HippieWordCompletionHandler implements CodeInsightActionHandler {
   }
 
   public static class CompletionVariant {
+    public final Editor editor;
     public final String variant;
     public final int offset;
 
-    public CompletionVariant(final String variant, final int offset) {
+    public CompletionVariant(final Editor editor, final String variant, final int offset) {
+      this.editor = editor;
       this.variant = variant;
       this.offset = offset;
     }
@@ -240,7 +241,7 @@ public class HippieWordCompletionHandler implements CodeInsightActionHandler {
 
         final String word = chars.subSequence(start, end).toString();
         if (!prefixMatches(prefix, word)) return;
-        final CompletionVariant v = new CompletionVariant(word, start);
+        final CompletionVariant v = new CompletionVariant(editor, word, start);
 
         if (end > caretOffset) {
           afterWords.add(v);

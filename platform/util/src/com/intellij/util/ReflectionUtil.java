@@ -233,11 +233,11 @@ public class ReflectionUtil {
     return findMethod(aClass.getDeclaredMethods(), name, parameters);
   }
 
-  public static Object getField(Class objectClass, Object object, Class type, @NonNls String name) {
+  public static <T> T getField(@NotNull Class objectClass, Object object, @NotNull Class<T> type, @NotNull @NonNls String name) {
     try {
       final Field field = findAssignableField(objectClass, type, name);
       field.setAccessible(true);
-      return field.get(object);
+      return (T)field.get(object);
     }
     catch (NoSuchFieldException e) {
       LOG.debug(e);

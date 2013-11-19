@@ -16,7 +16,6 @@
 package com.intellij.ide.browsers;
 
 import com.intellij.execution.filters.HyperlinkWithPopupMenuInfo;
-import com.intellij.ide.BrowserUtil;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -27,66 +26,60 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.datatransfer.StringSelection;
 import java.awt.event.MouseEvent;
 
-/**
- * @author nik
- */
-public class OpenUrlHyperlinkInfo implements HyperlinkWithPopupMenuInfo {
-  private final String myUrl;
-  private final Condition<BrowsersConfiguration.BrowserFamily> mySuitableBrowsers;
+public final class OpenUrlHyperlinkInfo implements HyperlinkWithPopupMenuInfo {
+  private final String url;
+  private final WebBrowser browser;
+  private final Condition<WebBrowser> browserCondition;
 
   public OpenUrlHyperlinkInfo(@NotNull String url) {
-    this(url, Conditions.<BrowsersConfiguration.BrowserFamily>alwaysTrue());
+    this(url, Conditions.<WebBrowser>alwaysTrue(), null);
   }
 
-  public OpenUrlHyperlinkInfo(@NotNull String url, @NotNull Condition<BrowsersConfiguration.BrowserFamily> suitableBrowsers) {
-    myUrl = url;
-    mySuitableBrowsers = suitableBrowsers;
+  public OpenUrlHyperlinkInfo(@NotNull String url, @NotNull WebBrowser browser) {
+    this(url, null, browser);
+  }
+
+  public OpenUrlHyperlinkInfo(@NotNull String url, @NotNull Condition<WebBrowser> browserCondition) {
+    this(url, browserCondition, null);
+  }
+
+  private OpenUrlHyperlinkInfo(@NotNull String url, @Nullable Condition<WebBrowser> browserCondition, @Nullable WebBrowser browser) {
+    this.url = url;
+    this.browserCondition = browserCondition;
+    this.browser = browser;
   }
 
   @Override
   public ActionGroup getPopupMenuGroup(@NotNull MouseEvent event) {
-    final DefaultActionGroup group = new DefaultActionGroup();
-    for (BrowsersConfiguration.BrowserFamily family : BrowsersConfiguration.getInstance().getActiveBrowsers()) {
-      if (mySuitableBrowsers.value(family)) {
-        group.add(new OpenUrlInBrowserAction(family));
+    DefaultActionGroup group = new DefaultActionGroup();
+    for (BrowsersConfiguration.BrowserFamily browserFamily : BrowsersConfiguration.getInstance().getActiveBrowsers()) {
+      final WebBrowser browser = WebBrowser.getStandardBrowser(browserFamily);
+      if (browserCondition == null ? browser.equals(this.browser) : browserCondition.value(browser)) {
+        group.add(new AnAction("Open in " + browser.getName(), "Open URL in " + browser.getName(), browser.getIcon()) {
+          @Override
+          public void actionPerformed(AnActionEvent e) {
+            UrlOpener.launchBrowser(url, browser);
+          }
+        });
       }
     }
-    group.addAll(new CopyUrlToClipboardAction());
 
+    group.add(new AnAction("Copy URL", "Copy URL to clipboard", PlatformIcons.COPY_ICON) {
+      @Override
+      public void actionPerformed(AnActionEvent e) {
+        CopyPasteManager.getInstance().setContents(new StringSelection(url));
+      }
+    });
     return group;
   }
 
   @Override
   public void navigate(Project project) {
-    BrowserUtil.launchBrowser(myUrl);
-  }
-
-  private class CopyUrlToClipboardAction extends AnAction {
-    private CopyUrlToClipboardAction() {
-      super("Copy URL", "Copy URL to clipboard", PlatformIcons.COPY_ICON);
-    }
-
-    @Override
-    public void actionPerformed(AnActionEvent e) {
-      CopyPasteManager.getInstance().setContents(new StringSelection(myUrl));
-    }
-  }
-
-  private class OpenUrlInBrowserAction extends AnAction {
-    private final BrowsersConfiguration.BrowserFamily myFamily;
-
-    public OpenUrlInBrowserAction(@NotNull BrowsersConfiguration.BrowserFamily family) {
-      super("Open in " + family.getName(), "Open URL in " + family.getName(), family.getIcon());
-      myFamily = family;
-    }
-
-    @Override
-    public void actionPerformed(AnActionEvent e) {
-      UrlOpener.launchBrowser(myFamily, myUrl);
-    }
+    UrlOpener.launchBrowser(url, browser);
   }
 }

@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInsight.editorActions;
 
+import com.intellij.application.options.editor.WebEditorOptions;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.TestDataPath;
 import com.intellij.testFramework.fixtures.CodeInsightTestUtil;
@@ -29,7 +30,27 @@ import java.io.File;
 @TestDataPath("$CONTENT_ROOT/testData/selectWord")
 public class HtmlSelectWordTest extends LightCodeInsightFixtureTestCase {
 
+  private boolean oldSelectWholeCssSelectorOptionValue;
+
+  @Override
+  public void setUp() throws Exception {
+    super.setUp();
+    oldSelectWholeCssSelectorOptionValue = WebEditorOptions.getInstance().isSelectWholeCssSelectorSuffixOnDoubleClick();
+  }
+
+  @Override
+  public void tearDown() throws Exception {
+    WebEditorOptions.getInstance().setSelectWholeCssSelectorSuffixOnDoubleClick(oldSelectWholeCssSelectorOptionValue);
+    super.tearDown();
+  }
+  
   public void testSelectClassNames() {
+    WebEditorOptions.getInstance().setSelectWholeCssSelectorSuffixOnDoubleClick(true);
+    doTest();
+  }
+
+  public void testSelectClassNamesWithDisabledSelectSelectorOption() {
+    WebEditorOptions.getInstance().setSelectWholeCssSelectorSuffixOnDoubleClick(false);
     doTest();
   }
 

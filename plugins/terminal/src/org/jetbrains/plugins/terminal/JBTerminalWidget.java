@@ -14,7 +14,7 @@ import javax.swing.*;
 
 public class JBTerminalWidget extends JediTermWidget {
 
-  public JBTerminalWidget(SettingsProvider settingsProvider) {
+  public JBTerminalWidget(JBTerminalSystemSettingsProvider settingsProvider) {
     super(settingsProvider);
 
     JBTabbedTerminalWidget.convertActions(this, getActions());
@@ -24,7 +24,7 @@ public class JBTerminalWidget extends JediTermWidget {
   protected JBTerminalPanel createTerminalPanel(@NotNull SettingsProvider settingsProvider,
                                                 @NotNull StyleState styleState,
                                                 @NotNull BackBuffer backBuffer) {
-    return new JBTerminalPanel(settingsProvider, backBuffer, styleState);
+    return new JBTerminalPanel((JBTerminalSystemSettingsProvider)settingsProvider, backBuffer, styleState);
   }
 
   @Override
@@ -36,6 +36,4 @@ public class JBTerminalWidget extends JediTermWidget {
   protected JScrollBar createScrollBar() {
     return new JBScrollBar();
   }
-
-
 }

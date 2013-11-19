@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,6 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
-import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
@@ -30,19 +29,4 @@ public interface ExtendWordSelectionHandler {
   boolean canSelect(PsiElement e);
 
   List<TextRange> select(PsiElement e, CharSequence editorText, int cursorOffset, Editor editor);
-
-  /**
-   * Returns minimal selection length for given element.
-   * 
-   * Sometimes the length of word selection should be bounded below. 
-   * E.g. it is useful in languages that requires prefixes for variable (php, less, etc.).
-   * By default this kind of variables will be selected without prefix: @<selection>variable</selection>,
-   * but it make sense to exclude this range from selection list. 
-   * So if this method returns 9 as a minimal length of selection
-   * then first selection range for @variable will be: <selection>@variable</selection>.
-   * 
-   * @param element element at caret
-   * @return minimal selection length for given element
-   */
-  int getMinimalTextRangeLength(@NotNull PsiElement element);
 }
