@@ -25,15 +25,13 @@ public class NewExpressionTemplateProvider extends TemplateProviderBase {
 
     PsiElement referencedElement = context.innerExpression.referencedElement;
     if (referencedElement instanceof PsiClass) {
-
-      CtorAccessibility accessibility = CommonUtils
-        .isTypeCanBeInstantiatedWithNew((PsiClass) referencedElement, expression.expression);
+      PsiClass psiClass = (PsiClass) referencedElement;
+      CtorAccessibility accessibility =
+        CommonUtils.isTypeCanBeInstantiatedWithNew(psiClass, expression.expression);
       if (accessibility == CtorAccessibility.NotAccessible)
         return;
 
-      // todo: is instantiable type check
-
-      consumer.add(new NewObjectLookupElement(expression, (PsiClass) referencedElement, accessibility));
+      consumer.add(new NewObjectLookupElement(expression, psiClass, accessibility));
     }
   }
 
@@ -51,11 +49,8 @@ public class NewExpressionTemplateProvider extends TemplateProviderBase {
 
     @NotNull @Override protected PsiNewExpression createNewExpression(
       @NotNull PsiElementFactory factory, @NotNull PsiElement expression, @NotNull PsiElement context) {
-
       String template = "new T()";
-      if (myTypeRequiresRefinement) {
-        template += "{}";
-      }
+      if (myTypeRequiresRefinement) template += "{}";
 
       PsiNewExpression newExpression = (PsiNewExpression) factory.createExpressionFromText(template, context);
       PsiJavaCodeReferenceElement typeReference = newExpression.getClassOrAnonymousClassReference();
@@ -66,7 +61,6 @@ public class NewExpressionTemplateProvider extends TemplateProviderBase {
       return newExpression;
     }
 
-    // TODO: test and cleanup
     @Override protected void postProcess(
       @NotNull final InsertionContext context, @NotNull PsiNewExpression expression) {
 
