@@ -1430,9 +1430,11 @@ public class FileBasedIndexImpl extends FileBasedIndex {
 
         semaphore.down();
         boolean allDocsProcessed = true;
+        boolean hasUncommittedDocuments = project == null;
         try {
           for (Document document : documents) {
             allDocsProcessed &= indexUnsavedDocument(document, indexId, project, filter, restrictedFile);
+            if (!hasUncommittedDocuments) hasUncommittedDocuments = PsiDocumentManager.getInstance(project).isUncommited(document);
             ProgressManager.checkCanceled();
           }
         }
@@ -1448,7 +1450,11 @@ public class FileBasedIndexImpl extends FileBasedIndex {
           if (allDocsProcessed && !hasActiveTransactions()) {
             ProgressManager.checkCanceled();
             // assume all tasks were finished or cancelled in the same time
-            myUpToDateIndices.add(indexId); // safe to set the flag here, because it will be cleared under the WriteAction
+            // safe to set the flag here, because it will be cleared under the WriteAction
+
+            // if we have uncommitted documents in unsaved documents, we may index old psi with new uncommitted doc,
+            // to properly reindex with new psi / new doc we don't mark index up to date in this case (IDEA-111448)
+            if (!hasUncommittedDocuments) myUpToDateIndices.add(indexId);
           }
         }
       }
