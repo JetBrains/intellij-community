@@ -45,7 +45,6 @@ import org.jetbrains.annotations.Nullable;
  * @author traff
  */
 public class PydevConsoleExecuteActionHandler extends ConsoleExecuteActionHandler implements ConsoleCommunicationListener {
-
   private final LanguageConsoleView myConsoleView;
 
   private String myInMultilineStringState = null;
@@ -97,7 +96,7 @@ public class PydevConsoleExecuteActionHandler extends ConsoleExecuteActionHandle
     final LanguageConsoleImpl console = myConsoleView.getConsole();
     final Editor currentEditor = console.getConsoleEditor();
 
-    sendLineToConsole(new ConsoleCommunication.ConsoleCodeFragment(myInputBuffer.toString(), false), null, console, currentEditor);
+    sendLineToConsole(new ConsoleCommunication.ConsoleCodeFragment(myInputBuffer.toString(), false), console, currentEditor);
   }
 
   private void processOneLine(String line) {
@@ -187,11 +186,10 @@ public class PydevConsoleExecuteActionHandler extends ConsoleExecuteActionHandle
     }
 
 
-    sendLineToConsole(new ConsoleCommunication.ConsoleCodeFragment(myInputBuffer.toString(), true), line, console, currentEditor);
+    sendLineToConsole(new ConsoleCommunication.ConsoleCodeFragment(myInputBuffer.toString(), true), console, currentEditor);
   }
 
   private void sendLineToConsole(@NotNull final ConsoleCommunication.ConsoleCodeFragment code,
-                                 @Nullable final String line,
                                  @NotNull final LanguageConsoleImpl console,
                                  @NotNull final Editor currentEditor) {
     if (myConsoleCommunication != null) {
@@ -212,7 +210,7 @@ public class PydevConsoleExecuteActionHandler extends ConsoleExecuteActionHandle
             if (myCurrentIndentSize == 0) {
               // compute current indentation
               setCurrentIndentSize(
-                (line != null ? IndentHelperImpl.getIndent(getProject(), PythonFileType.INSTANCE, line, false) : 0) + getPythonIndent());
+                IndentHelperImpl.getIndent(getProject(), PythonFileType.INSTANCE, lastLine(code.getText()), false) + getPythonIndent());
               // In this case we can insert indent automatically
               UIUtil.invokeLaterIfNeeded(new Runnable() {
                 @Override
@@ -238,6 +236,11 @@ public class PydevConsoleExecuteActionHandler extends ConsoleExecuteActionHandle
         PyConsoleUtil.scrollDown(currentEditor);
       }
     }
+  }
+
+  private static String lastLine(@NotNull String text) {
+    String[] lines = StringUtil.splitByLinesDontTrim(text);
+    return lines[lines.length - 1];
   }
 
   private void ordinaryPrompt(LanguageConsoleImpl console, Editor currentEditor) {
