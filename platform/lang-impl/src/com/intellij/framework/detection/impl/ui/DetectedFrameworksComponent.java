@@ -18,10 +18,9 @@ package com.intellij.framework.detection.impl.ui;
 import com.intellij.framework.detection.DetectedFrameworkDescription;
 import com.intellij.framework.detection.DetectionExcludesConfiguration;
 import com.intellij.framework.detection.FrameworkDetectionContext;
-import com.intellij.ui.ListCellRendererWrapper;
-import com.intellij.openapi.ui.Splitter;
 import com.intellij.ui.CheckedTreeNode;
 import com.intellij.ui.EnumComboBoxModel;
+import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.util.Consumer;
 import com.intellij.util.ui.UIUtil;
@@ -42,10 +41,9 @@ public class DetectedFrameworksComponent {
   private JPanel myMainPanel;
   private final DetectedFrameworksTree myTree;
   private JPanel myTreePanel;
-  private JPanel myOptionsPanel;
-  private Splitter mySplitter;
   private JComboBox myGroupByComboBox;
   private JLabel myDescriptionLabel;
+  private JPanel myOptionsPanel;
 
   public DetectedFrameworksComponent(final FrameworkDetectionContext context) {
     myTree = new DetectedFrameworksTree(context, GroupByOption.TYPE) {
@@ -83,11 +81,12 @@ public class DetectedFrameworksComponent {
       final DetectedFrameworkTreeNodeBase node = nodes[0];
       String description = node.isChecked() ? node.getCheckedDescription() : node.getUncheckedDescription();
       if (description != null) {
+        ((CardLayout)myOptionsPanel.getLayout()).show(myOptionsPanel, "description");
         myDescriptionLabel.setText(UIUtil.toHtml(description));
         return;
       }
     }
-    myDescriptionLabel.setText("");
+    ((CardLayout)myOptionsPanel.getLayout()).show(myOptionsPanel, "empty");
   }
 
   public List<DetectedFrameworkDescription> getSelectedFrameworks() {
@@ -107,9 +106,9 @@ public class DetectedFrameworksComponent {
     });
   }
 
-  public static enum GroupByOption { TYPE, DIRECTORY }
+  public enum GroupByOption { TYPE, DIRECTORY }
 
-  private class GroupByListCellRenderer extends ListCellRendererWrapper<GroupByOption> {
+  private static class GroupByListCellRenderer extends ListCellRendererWrapper<GroupByOption> {
     public GroupByListCellRenderer() {
       super();
     }
