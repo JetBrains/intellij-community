@@ -5,6 +5,7 @@ import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiCompiledElement;
 import com.intellij.psi.impl.source.PsiFileWithStubSupport;
 import com.intellij.util.indexing.FileBasedIndex;
 
@@ -43,9 +44,10 @@ public class StubProcessingHelper extends StubProcessingHelperBase {
     details += "\npsiFile" + psiFile;
     details += "\npsiFile.class" + psiFile.getClass();
     details += "\npsiFile.lang" + psiFile.getLanguage();
+    String fileText = psiFile instanceof PsiCompiledElement ? "compiled" : psiFile.getText();
     return LogMessageEx.createEvent("PSI and index do not match",
                                     details,
-                                    new Attachment(virtualFile != null ? virtualFile.getPath() + "_file.txt" : "vFile.txt", psiFile.getText()),
+                                    new Attachment(virtualFile != null ? virtualFile.getPath() + "_file.txt" : "vFile.txt", fileText),
                                     new Attachment("stubTree.txt", ((PsiFileStubImpl)stubTree.getRoot()).printTree()),
                                     new Attachment("stubTreeFromIndex.txt", stubTreeFromIndex == null
                                                                             ? "null"
