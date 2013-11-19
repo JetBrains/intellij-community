@@ -1,13 +1,17 @@
 package org.jetbrains.postfixCompletion.Infrastructure;
 
 import com.intellij.codeInsight.lookup.*;
+import com.intellij.codeInsight.template.impl.editorActions.*;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.*;
 import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.actionSystem.*;
 import com.intellij.openapi.project.*;
 import com.intellij.psi.*;
 import com.intellij.psi.util.*;
 import org.jetbrains.annotations.*;
+import org.jetbrains.postfixCompletion.*;
 
 import java.util.*;
 
@@ -25,6 +29,18 @@ public final class PostfixTemplatesManager implements ApplicationComponent {
         myProviders.add(new TemplateProviderInfo(provider, annotation));
       }
     }
+
+    ActionManager instance = ActionManager.getInstance();
+    AnAction expandLiveTemplate = instance.getAction("ExpandLiveTemplateByTab");
+    if (expandLiveTemplate instanceof ExpandLiveTemplateByTabAction) {
+      EditorAction expandAction = (EditorAction) expandLiveTemplate;
+
+      EditorActionHandler existingHandler = expandAction.getHandler();
+      expandAction.setupHandler(new ExpandPostfixEditorActionHandler(existingHandler, this));
+    }
+
+
+    //act.copyShortcutFrom(editorTab2);
   }
 
   private static class TemplateProviderInfo {

@@ -27,8 +27,6 @@ public class PrefixExpressionContext {
 
   @Nullable public final PsiStatement getContainingStatement() {
     return parentContext.getContainingStatement(this);
-
-
   }
 
   @Nullable protected PsiType calculateExpressionType(@NotNull PsiElement expression) {
