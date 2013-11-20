@@ -71,7 +71,7 @@ public final class LocalFileUrl implements Url {
 
   @Nullable
   @Override
-  public String getParametersPart() {
+  public String getParameters() {
     return null;
   }
 

@@ -29,8 +29,6 @@ import java.net.URI;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-// We don't use Java URI due to problem — http://cns-etuat-2.localnet.englishtown.com/school/e12/#school/45383/201/221/382?c=countrycode=cc|culturecode=en-us|partnercode=mkge
-// it is illegal URI (fragment before query), but we must support such URI
 public final class Urls {
   private static final Logger LOG = Logger.getInstance(Urls.class);
 
