@@ -89,7 +89,7 @@ public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtensi
           return true;
         }
         final ID indexId = IndexInfrastructure.getStubId(INDEX_ID, fileType);
-        if (IndexingStamp.getIndexingState(file, indexId) == IndexingStamp.State.INDEXED) {
+        if (IndexingStamp.isFileIndexed(file, indexId, IndexInfrastructure.getIndexCreationStamp(indexId))) {
           return true;
         }
       }
@@ -298,10 +298,7 @@ public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtensi
     }
 
     @Override
-    protected void updateWithMap(final int inputId,
-                                 @NotNull final Map<Integer, SerializedStubTree> newData,
-                                 @NotNull Callable<Collection<Integer>> oldKeysGetter,
-                                 boolean merge)
+    protected void updateWithMap(final int inputId, @NotNull final Map<Integer, SerializedStubTree> newData, @NotNull Callable<Collection<Integer>> oldKeysGetter)
       throws StorageException {
 
       checkNameStorage();
@@ -324,8 +321,7 @@ public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtensi
         try {
           getWriteLock().lock();
 
-          final Map<Integer, SerializedStubTree> oldData =
-            merge ? readOldData(inputId) : Collections.<Integer, SerializedStubTree>emptyMap();
+          final Map<Integer, SerializedStubTree> oldData = readOldData(inputId);
           final Map<StubIndexKey, Map<Object, StubIdList>> oldStubTree;
           try {
             oldStubTree = getStubTree(oldData);
@@ -334,7 +330,7 @@ public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtensi
             throw new StorageException(e);
           }
 
-          super.updateWithMap(inputId, newData, oldKeysGetter, merge);
+          super.updateWithMap(inputId, newData, oldKeysGetter);
 
           updateStubIndices(getAffectedIndices(oldStubTree, newStubTree), inputId, oldStubTree, newStubTree);
         }

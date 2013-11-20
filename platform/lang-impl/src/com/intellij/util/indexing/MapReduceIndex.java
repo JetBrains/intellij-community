@@ -202,7 +202,7 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
   }
 
   @Override
-  public final Computable<Boolean> update(final int inputId, @Nullable final Input content, final boolean merge) {
+  public final Computable<Boolean> update(final int inputId, @Nullable Input content) {
     assert myInputsIndex != null;
 
     final Map<Key, Value> data = content != null ? myIndexer.map(content) : Collections.<Key, Value>emptyMap();
@@ -224,7 +224,7 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
                   final Collection<Key> oldKeys = myInputsIndex.get(inputId);
                   return oldKeys == null? Collections.<Key>emptyList() : oldKeys;
                 }
-              }, merge);
+              });
             } catch (StorageException ex) {
               exRef.set(ex);
             }
@@ -242,10 +242,7 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
     };
   }
 
-  protected void updateWithMap(final int inputId,
-                               @NotNull Map<Key, Value> newData,
-                               @NotNull Callable<Collection<Key>> oldKeysGetter,
-                               boolean merge) throws StorageException {
+  protected void updateWithMap(final int inputId, @NotNull Map<Key, Value> newData, @NotNull Callable<Collection<Key>> oldKeysGetter) throws StorageException {
     getWriteLock().lock();
     try {
       try {

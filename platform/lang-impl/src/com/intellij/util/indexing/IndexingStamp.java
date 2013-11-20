@@ -18,6 +18,7 @@ package com.intellij.util.indexing;
 
 import com.intellij.openapi.vfs.InvalidVirtualFileAccessException;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.openapi.vfs.newvfs.FileAttribute;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.util.containers.ConcurrentHashMap;
@@ -57,7 +58,7 @@ public class IndexingStamp {
             if (id != null) {
               long stamp = IndexInfrastructure.getIndexCreationStamp(id);
               if (myIndexStamps == null) myIndexStamps = new TObjectLongHashMap<ID<?, ?>>(5, 0.98f);
-              myIndexStamps.put(id, stamp <= dominatingIndexStamp ? stamp : INDEX_VERSION_CHANGED_STAMP);
+              if (stamp <= dominatingIndexStamp) myIndexStamps.put(id, stamp);
             }
           }
         }
@@ -125,20 +126,10 @@ public class IndexingStamp {
   private static final ConcurrentHashMap<VirtualFile, Timestamps> myTimestampsCache = new ConcurrentHashMap<VirtualFile, Timestamps>();
   private static final int CAPACITY = 100;
   private static final ArrayBlockingQueue<VirtualFile> myFinishedFiles = new ArrayBlockingQueue<VirtualFile>(CAPACITY);
-  private static final long INDEX_VERSION_CHANGED_STAMP = 1l;
 
-  public enum State {
-    INDEXED, INDEX_VERSION_CHANGED, FILE_CONTENT_CHANGED
-  }
-
-  public static State getIndexingState(VirtualFile file, ID<?, ?> indexName) {
+  public static boolean isFileIndexed(VirtualFile file, ID<?, ?> indexName, final long indexCreationStamp) {
     try {
-      long stamp = getIndexStamp(file, indexName);
-      if (stamp == INDEX_VERSION_CHANGED_STAMP) {
-        return State.INDEX_VERSION_CHANGED;
-      }
-      long indexCreationStamp = IndexInfrastructure.getIndexCreationStamp(indexName);
-      return stamp == indexCreationStamp ? State.INDEXED : State.FILE_CONTENT_CHANGED;
+      return getIndexStamp(file, indexName) == indexCreationStamp;
     }
     catch (RuntimeException e) {
       final Throwable cause = e.getCause();
@@ -147,7 +138,7 @@ public class IndexingStamp {
       }
     }
 
-    return State.FILE_CONTENT_CHANGED;
+    return false;
   }
 
   public static long getIndexStamp(VirtualFile file, ID<?, ?> indexName) {
