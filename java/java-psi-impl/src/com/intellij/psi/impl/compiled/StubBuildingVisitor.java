@@ -315,6 +315,9 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
         throw new OutOfOrderInnerClassException();
       }
     }
+    if (!namesEqual(outerName, myResult.getQualifiedName())) {
+      return;
+    }
 
     final T innerSource = myInnersStrategy.findInnerClass(innerName, mySource);
     if (innerSource == null) return;
@@ -328,6 +331,24 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
 
   private static boolean isCorrectName(String name) {
     return name != null;
+  }
+
+  private static boolean namesEqual(String signature, String fqn) {
+    if (fqn == null) return true;  // impossible case, just ignore
+    if (fqn.length() != signature.length()) return false;
+
+    int p = 0, dot;
+    while ((dot = fqn.indexOf('.', p)) >= 0) {
+      if (!signature.regionMatches(p, fqn, p, dot - p)) {
+        return false;
+      }
+      char ch = signature.charAt(dot);
+      if (ch != '/' && ch != '$') {
+        return false;
+      }
+      p = dot + 1;
+    }
+    return fqn.regionMatches(p, signature, p, fqn.length() - p);
   }
 
   @Override
