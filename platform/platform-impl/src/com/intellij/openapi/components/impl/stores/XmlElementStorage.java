@@ -51,7 +51,8 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
   protected final StreamProvider myStreamProvider;
   protected final String myFileSpec;
   private final ComponentRoamingManager myComponentRoamingManager;
-  protected boolean myBlockSavingTheContent = false;
+  protected boolean myBlockSavingTheContentCausedByRead = false;
+  protected boolean myBlockSavingTheContentCausedByWrite = false;
   protected int myUpToDateHash = -1;
   protected int myProviderUpToDateHash = -1;
   private boolean mySavingDisabled = false;
@@ -270,13 +271,15 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
 
       try {
         setState(componentName, DefaultStateSerializer.serializeState(state, storageSpec));
+        myBlockSavingTheContentCausedByWrite = false;
       }
       catch (WriteExternalException e) {
+        myBlockSavingTheContentCausedByWrite = true;
         LOG.debug(e);
       }
     }
 
-    private synchronized void setState(final String componentName, final Element element)  {
+    private synchronized void setState(@NotNull String componentName, @NotNull Element element)  {
       if (element.getAttributes().isEmpty() && element.getChildren().isEmpty()) {
         return;
       }
@@ -325,7 +328,7 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
     }
 
     private boolean _needsSave(int hash) {
-      if (myBlockSavingTheContent) {
+      if (myBlockSavingTheContentCausedByRead || myBlockSavingTheContentCausedByWrite) {
         return false;
       }
 
@@ -374,7 +377,7 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
     public final void save() throws StateStorageException {
       assert mySession == this;
 
-      if (myBlockSavingTheContent) {
+      if (myBlockSavingTheContentCausedByRead || myBlockSavingTheContentCausedByWrite) {
         return;
       }
 

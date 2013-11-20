@@ -27,13 +27,12 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
-import com.intellij.openapi.components.ApplicationComponent;
+import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.NamedJDOMExternalizable;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.StatusBar;
@@ -67,7 +66,11 @@ import java.util.Set;
  * @author Anton Katilin
  * @author Vladimir Kondratyev
  */
-public final class WindowManagerImpl extends WindowManagerEx implements ApplicationComponent, NamedJDOMExternalizable {
+@State(
+  name = "WindowManager",
+  roamingType = RoamingType.GLOBAL,
+  storages = {@Storage(file = StoragePathMacros.APP_CONFIG + "/window.manager.xml")})
+public final class WindowManagerImpl extends WindowManagerEx implements ApplicationComponent, PersistentStateComponent<Element> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.wm.impl.WindowManagerImpl");
 
   @NonNls public static final String FULL_SCREEN = "ide.frame.full.screen";
@@ -682,12 +685,9 @@ public final class WindowManagerImpl extends WindowManagerEx implements Applicat
     return myCommandProcessor;
   }
 
-  public final String getExternalFileName() {
-    return "window.manager";
-  }
-
-  public final void readExternal(final Element element) {
-    final Element frameElement = element.getChild(FRAME_ELEMENT);
+  @Override
+  public void loadState(Element state) {
+    final Element frameElement = state.getChild(FRAME_ELEMENT);
     if (frameElement != null) {
       myFrameBounds = loadFrameBounds(frameElement);
       try {
@@ -701,7 +701,7 @@ public final class WindowManagerImpl extends WindowManagerEx implements Applicat
       }
     }
 
-    final Element desktopElement = element.getChild(DesktopLayout.TAG);
+    final Element desktopElement = state.getChild(DesktopLayout.TAG);
     if (desktopElement != null) {
       myLayout.readExternal(desktopElement);
     }
@@ -736,43 +736,61 @@ public final class WindowManagerImpl extends WindowManagerEx implements Applicat
     return bounds;
   }
 
-  public final void writeExternal(final Element element) {
-    // Save frame bounds
-    final Element frameElement = new Element(FRAME_ELEMENT);
-    element.addContent(frameElement);
-    final Project[] projects = ProjectManager.getInstance().getOpenProjects();
-    final Project project = projects.length > 0 ? projects[0] : null;
-
-    final IdeFrameImpl frame = getFrame(project);
-    if (frame != null) {
-      int extendedState = frame.getExtendedState();
-      if (SystemInfo.isMacOSLion) {
-        @SuppressWarnings("deprecation") ComponentPeer peer = frame.getPeer();
-        if (peer instanceof FramePeer) {
-          // frame.state is not updated by jdk so get it directly from peer
-          extendedState = ((FramePeer)peer).getState();
-        }
-      }
-      boolean isMaximized = extendedState == Frame.MAXIMIZED_BOTH ||
-                            isFullScreenSupportedInCurrentOS() && frame.isInFullScreen();
-      boolean usePreviousBounds = isMaximized &&
-                                  myFrameBounds != null &&
-                                  frame.getBounds().contains(new Point((int)myFrameBounds.getCenterX(), (int)myFrameBounds.getCenterY()));
-      Rectangle rectangle = usePreviousBounds ? myFrameBounds : frame.getBounds();
-      frameElement.setAttribute(X_ATTR, Integer.toString(rectangle.x));
-      frameElement.setAttribute(Y_ATTR, Integer.toString(rectangle.y));
-      frameElement.setAttribute(WIDTH_ATTR, Integer.toString(rectangle.width));
-      frameElement.setAttribute(HEIGHT_ATTR, Integer.toString(rectangle.height));
-
-      if (!(frame.isInFullScreen() && SystemInfo.isAppleJvm)) {
-        frameElement.setAttribute(EXTENDED_STATE_ATTR, Integer.toString(extendedState));
-      }
-
-      // Save default layout
-      final Element layoutElement = new Element(DesktopLayout.TAG);
-      element.addContent(layoutElement);
-      myLayout.writeExternal(layoutElement);
+  @Nullable
+  @Override
+  public Element getState() {
+    Element frameState = getFrameState();
+    if (frameState == null) {
+      return null;
     }
+
+    Element state = new Element("state");
+    state.addContent(frameState);
+
+    // Save default layout
+    Element layoutElement = new Element(DesktopLayout.TAG);
+    state.addContent(layoutElement);
+    myLayout.writeExternal(layoutElement);
+    return state;
+  }
+
+  private Element getFrameState() {
+    // Save frame bounds
+    final Project[] projects = ProjectManager.getInstance().getOpenProjects();
+    if (projects.length == 0) {
+      return null;
+    }
+
+    Project project = projects[0];
+    final IdeFrameImpl frame = getFrame(project);
+    if (frame == null) {
+      return null;
+    }
+
+    final Element frameElement = new Element(FRAME_ELEMENT);
+    int extendedState = frame.getExtendedState();
+    if (SystemInfo.isMacOSLion) {
+      @SuppressWarnings("deprecation") ComponentPeer peer = frame.getPeer();
+      if (peer instanceof FramePeer) {
+        // frame.state is not updated by jdk so get it directly from peer
+        extendedState = ((FramePeer)peer).getState();
+      }
+    }
+    boolean isMaximized = extendedState == Frame.MAXIMIZED_BOTH ||
+                          isFullScreenSupportedInCurrentOS() && frame.isInFullScreen();
+    boolean usePreviousBounds = isMaximized &&
+                                myFrameBounds != null &&
+                                frame.getBounds().contains(new Point((int)myFrameBounds.getCenterX(), (int)myFrameBounds.getCenterY()));
+    Rectangle rectangle = usePreviousBounds ? myFrameBounds : frame.getBounds();
+    frameElement.setAttribute(X_ATTR, Integer.toString(rectangle.x));
+    frameElement.setAttribute(Y_ATTR, Integer.toString(rectangle.y));
+    frameElement.setAttribute(WIDTH_ATTR, Integer.toString(rectangle.width));
+    frameElement.setAttribute(HEIGHT_ATTR, Integer.toString(rectangle.height));
+
+    if (!(frame.isInFullScreen() && SystemInfo.isAppleJvm)) {
+      frameElement.setAttribute(EXTENDED_STATE_ATTR, Integer.toString(extendedState));
+    }
+    return frameElement;
   }
 
   public final DesktopLayout getLayout() {

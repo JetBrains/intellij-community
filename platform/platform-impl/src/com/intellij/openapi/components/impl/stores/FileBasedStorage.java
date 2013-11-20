@@ -163,7 +163,7 @@ public class FileBasedStorage extends XmlElementStorage {
 
     @Override
     protected void doSave() throws StateStorageException {
-      if (myBlockSavingTheContent) {
+      if (myBlockSavingTheContentCausedByRead || myBlockSavingTheContentCausedByWrite) {
         return;
       }
       if (ApplicationManager.getApplication().isUnitTestMode() && myFile != null && StringUtil.startsWithChar(myFile.getPath(), '$')) {
@@ -248,7 +248,8 @@ public class FileBasedStorage extends XmlElementStorage {
   @Override
   @Nullable
   protected Document loadDocument() throws StateStorageException {
-    myBlockSavingTheContent = false;
+    myBlockSavingTheContentCausedByRead = false;
+    myBlockSavingTheContentCausedByWrite = false;
     try {
       VirtualFile file = getVirtualFile();
       if (file == null || file.isDirectory() || !file.isValid()) {
@@ -271,7 +272,7 @@ public class FileBasedStorage extends XmlElementStorage {
   @Nullable
   private Document processReadException(@Nullable final Exception e) {
     boolean contentTruncated = e == null;
-    myBlockSavingTheContent = isProjectOrModuleFile() && !contentTruncated;
+    myBlockSavingTheContentCausedByRead = isProjectOrModuleFile() && !contentTruncated;
     if (!ApplicationManager.getApplication().isUnitTestMode() && !ApplicationManager.getApplication().isHeadlessEnvironment()) {
       if (e != null) {
         LOG.info(e);
