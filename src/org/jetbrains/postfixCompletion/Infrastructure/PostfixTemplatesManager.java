@@ -9,6 +9,7 @@ import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.*;
 import com.intellij.openapi.project.*;
 import com.intellij.psi.*;
+import com.intellij.psi.tree.*;
 import com.intellij.psi.util.*;
 import org.jetbrains.annotations.*;
 import org.jetbrains.postfixCompletion.*;
@@ -16,6 +17,8 @@ import org.jetbrains.postfixCompletion.*;
 import java.util.*;
 
 // todo: support '2 + 2 .var' (with spacing)
+/* todo: foo.bar
+ *       123.fori    */
 
 public final class PostfixTemplatesManager implements ApplicationComponent {
   @NotNull private final List<TemplateProviderInfo> myProviders;
@@ -102,10 +105,26 @@ public final class PostfixTemplatesManager implements ApplicationComponent {
           final PsiLiteralExpression brokenLiteral = findBrokenLiteral(lhsExpression);
           if (lhsExpression != null && brokenLiteral != null) {
             final boolean isComplexRhs = !(reference.getParent() instanceof PsiExpressionStatement);
+
+            // TODO: EXTRACT DIZ FATTY BOOM BOOM
             return new PostfixTemplateContext(reference, brokenLiteral, executionContext) {
               @Override @NotNull
               public PrefixExpressionContext fixExpression(@NotNull PrefixExpressionContext context) {
                 return fixStatementsBrokenByLiteral(context, lhsExpression, brokenLiteral);
+              }
+
+              @NotNull @Override
+              protected PrefixExpressionContext buildExpressionContext(@NotNull PsiElement expression) {
+                if (expression == brokenLiteral) {
+                  return new PrefixExpressionContext(this, expression) {
+                    @Nullable @Override
+                    protected PsiType calculateExpressionType(@NotNull PsiElement expression) {
+                      return PsiType.INT;
+                    }
+                  };
+                }
+
+                return super.buildExpressionContext(expression);
               }
 
               @Nullable @Override
@@ -118,6 +137,16 @@ public final class PostfixTemplatesManager implements ApplicationComponent {
                 }
 
                 return statement;
+              }
+
+              @Nullable @Override public String shouldFixPrefixMatcher() {
+                String brokenLiteralText = brokenLiteral.getText();
+                int dotIndex = brokenLiteralText.lastIndexOf('.');
+                if (dotIndex < brokenLiteralText.length()) {
+                  return brokenLiteralText.substring(dotIndex + 1);
+                }
+
+                return super.shouldFixPrefixMatcher();
               }
             };
           }
@@ -246,7 +275,6 @@ public final class PostfixTemplatesManager implements ApplicationComponent {
     return new PrefixExpressionContext(context.parentContext, lhsExpression);
   }
 
-  // todo: maybe fix prefix matcher? looks like impossible or not required a lot...
   @Nullable private PsiLiteralExpression findBrokenLiteral(@Nullable PsiExpression expr) {
     if (expr == null) return null;
 
@@ -255,10 +283,14 @@ public final class PostfixTemplatesManager implements ApplicationComponent {
       // look for double literal broken by dot at end
       if (expression instanceof PsiLiteralExpression) {
         PsiJavaToken token = PsiTreeUtil.getChildOfType(expression, PsiJavaToken.class);
-        if (token != null
-            && token.getTokenType() == JavaTokenType.DOUBLE_LITERAL
-            && token.getText().matches("^.*?\\.\\D*$")) // omfg
-          return (PsiLiteralExpression) expression;
+        if (token != null) {
+          IElementType tokenType = token.getTokenType();
+          if (tokenType == JavaTokenType.DOUBLE_LITERAL || tokenType == JavaTokenType.FLOAT_LITERAL) {
+            if (token.getText().matches("^.*?\\.\\D*$")) { // omfg
+              return (PsiLiteralExpression) expression;
+            }
+          }
+        }
       }
 
       // skip current expression and look its last inner expression

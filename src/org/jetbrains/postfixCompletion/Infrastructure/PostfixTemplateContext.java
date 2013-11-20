@@ -42,7 +42,7 @@ public abstract class PostfixTemplateContext {
         int endOffset = node.getTextRange().getEndOffset();
         if (endOffset > referenceEndRange) break; // stop when 'a.var + b'
 
-        PrefixExpressionContext context = new PrefixExpressionContext(this, node);
+        PrefixExpressionContext context = buildExpressionContext(node);
         contexts.add(context);
 
         if (context.canBeStatement) break;
@@ -50,6 +50,10 @@ public abstract class PostfixTemplateContext {
     }
 
     return contexts;
+  }
+
+  @NotNull protected PrefixExpressionContext buildExpressionContext(@NotNull PsiElement expression) {
+    return new PrefixExpressionContext(this, expression);
   }
 
   @NotNull public abstract PrefixExpressionContext fixExpression(@NotNull PrefixExpressionContext context);
@@ -85,6 +89,10 @@ public abstract class PostfixTemplateContext {
       return (PsiStatement) element;
     }
 
+    return null;
+  }
+
+  @Nullable public String shouldFixPrefixMatcher() {
     return null;
   }
 

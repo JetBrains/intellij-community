@@ -26,7 +26,7 @@ public abstract class StatementPostfixLookupElement<TStatement extends PsiStatem
 
     // get target statement to replace
     PsiStatement targetStatement = fixedContext.getContainingStatement();
-    assert targetStatement != null : "targetStatement != null";
+    assert (targetStatement != null) : "targetStatement != null";
 
     PsiElement expressionCopy = fixedContext.expression.copy();
     TStatement newStatement = createNewStatement(elementFactory, expressionCopy, fixedContext.expression);

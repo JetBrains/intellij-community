@@ -19,6 +19,8 @@ import java.util.*;
 
 // todo: make it work on integers/Integers
 // todo: check over String
+// todo: extract base class
+// todo: fix 123.f| case?
 
 @TemplateProvider(
   templateName = "fori",
@@ -88,6 +90,7 @@ public class ForIndexedIterationTemplateProvider extends TemplateProviderBase {
   }
 
   @Nullable private static String isIntegralType(@NotNull PsiType psiType) {
+    // note: order is important
     if (PsiType.BYTE.isAssignableFrom(psiType))  return "byte";
     if (PsiType.SHORT.isAssignableFrom(psiType)) return "short";
     if (PsiType.INT.isAssignableFrom(psiType))   return "int";

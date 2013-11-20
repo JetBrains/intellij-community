@@ -10,7 +10,9 @@ import java.util.*;
 
 public abstract class PostfixItemsCompletionProvider {
   @NotNull public static List<LookupElement> getItems(
-      @NotNull CompletionParameters parameters, @NotNull PostfixExecutionContext executionContext) {
+      @NotNull CompletionParameters parameters, @NotNull CompletionResultSet result,
+      @NotNull PostfixExecutionContext executionContext) {
+
     Application application = ApplicationManager.getApplication();
     PostfixTemplatesManager templatesManager = application.getComponent(PostfixTemplatesManager.class);
 
@@ -19,6 +21,19 @@ public abstract class PostfixItemsCompletionProvider {
     PostfixTemplateContext context = templatesManager.isAvailable(position, executionContext);
     if (context == null) return Collections.emptyList();
 
-    return templatesManager.collectTemplates(context);
+    // fix prefix mather for cases like 'xs.length == 0.f|not'
+    String extraPrefix = context.shouldFixPrefixMatcher();
+    if (extraPrefix != null) {
+      PrefixMatcher prefixMatcher = result.getPrefixMatcher();
+      PrefixMatcher extraMatcher = prefixMatcher.cloneWithPrefix(extraPrefix + prefixMatcher.getPrefix());
+      result = result.withPrefixMatcher(extraMatcher);
+    }
+
+    List<LookupElement> lookupElements = templatesManager.collectTemplates(context);
+    for (LookupElement postfixElement : lookupElements) {
+      result.addElement(postfixElement);
+    }
+
+    return lookupElements;
   }
 }

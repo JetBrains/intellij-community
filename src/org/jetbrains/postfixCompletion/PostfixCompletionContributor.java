@@ -1,7 +1,6 @@
 package org.jetbrains.postfixCompletion;
 
 import com.intellij.codeInsight.completion.*;
-import com.intellij.codeInsight.lookup.*;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.*;
 import org.jetbrains.postfixCompletion.Infrastructure.*;
@@ -40,10 +39,8 @@ public final class PostfixCompletionContributor extends CompletionContributor {
       new PostfixExecutionContext(isForceMode, dummyIdentifier, insideCodeFragment);
 
     // add normal postfix items
-    List<LookupElement> elements = PostfixItemsCompletionProvider.getItems(parameters, executionContext);
-    for (LookupElement element : elements) {
-      result.addElement(element);
-    }
+    PostfixItemsCompletionProvider.getItems(parameters, result, executionContext);
+
 
     //if (results.isEmpty()) {
       PostfixNoVariantsCompletionUtil.suggestChainedCalls(parameters, result, executionContext);
