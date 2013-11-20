@@ -83,7 +83,7 @@ public final class UrlImpl implements Url {
 
   @Nullable
   @Override
-  public String getParametersPart() {
+  public String getParameters() {
     return parameters;
   }
 
