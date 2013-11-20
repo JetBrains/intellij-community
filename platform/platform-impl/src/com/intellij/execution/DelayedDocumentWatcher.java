@@ -16,17 +16,22 @@
 package com.intellij.execution;
 
 import com.google.common.collect.ImmutableSet;
+import com.intellij.AppTopics;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.fileEditor.FileDocumentManagerAdapter;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.problems.WolfTheProblemSolver;
 import com.intellij.util.Alarm;
 import com.intellij.util.Consumer;
+import com.intellij.util.messages.MessageBusConnection;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -43,7 +48,8 @@ public class DelayedDocumentWatcher {
   private final Runnable myAlarmRunnable;
 
   private final Set<VirtualFile> myChangedFiles = new THashSet<VirtualFile>();
-
+  private boolean myDocumentSavingInProgress = false;
+  private MessageBusConnection myConnection;
 
   public DelayedDocumentWatcher(@NotNull Project project,
                                 int delayMillis,
@@ -65,15 +71,41 @@ public class DelayedDocumentWatcher {
 
   public void activate() {
     EditorFactory.getInstance().getEventMulticaster().addDocumentListener(myListener, myProject);
+    if (myConnection == null) {
+      myConnection = ApplicationManager.getApplication().getMessageBus().connect(myProject);
+      myConnection.subscribe(AppTopics.FILE_DOCUMENT_SYNC, new FileDocumentManagerAdapter() {
+        @Override
+        public void beforeAllDocumentsSaving() {
+          myDocumentSavingInProgress = true;
+          ApplicationManager.getApplication().invokeLater(new Runnable() {
+            @Override
+            public void run() {
+              myDocumentSavingInProgress = false;
+            }
+          }, ModalityState.any());
+        }
+      });
+    }
   }
 
   public void deactivate() {
     EditorFactory.getInstance().getEventMulticaster().removeDocumentListener(myListener);
+    if (myConnection != null) {
+      myConnection.disconnect();
+      myConnection = null;
+    }
   }
 
   private class MyDocumentAdapter extends DocumentAdapter {
     @Override
     public void documentChanged(DocumentEvent event) {
+      if (myDocumentSavingInProgress) {
+        /** When {@link FileDocumentManager#saveAllDocuments} is called,
+         *  {@link com.intellij.openapi.fileEditor.impl.TrailingSpacesStripper} can change a document.
+         *  These needless 'documentChanged' events should be filtered out.
+         */
+        return;
+      }
       final Document document = event.getDocument();
       final VirtualFile file = FileDocumentManager.getInstance().getFile(document);
       if (file == null) {
