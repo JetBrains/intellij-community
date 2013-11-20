@@ -26,6 +26,7 @@ import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileDocumentManagerAdapter;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.problems.WolfTheProblemSolver;
@@ -149,9 +150,14 @@ public class DelayedDocumentWatcher {
     // don't use 'WolfTheProblemSolver.hasSyntaxErrors(file)' if possible
     Document document = FileDocumentManager.getInstance().getDocument(file);
     if (document != null) {
-      PsiFile psiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(document);
+      final PsiFile psiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(document);
       if (psiFile != null) {
-        return PsiTreeUtil.hasErrorElements(psiFile);
+        return ApplicationManager.getApplication().runWriteAction(new Computable<Boolean>() {
+          @Override
+          public Boolean compute() {
+            return PsiTreeUtil.hasErrorElements(psiFile);
+          }
+        });
       }
     }
     return WolfTheProblemSolver.getInstance(myProject).hasSyntaxErrors(file);
