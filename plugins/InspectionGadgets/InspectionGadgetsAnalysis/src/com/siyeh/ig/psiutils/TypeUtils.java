@@ -38,6 +38,10 @@ public class TypeUtils {
     return factory.createTypeByFQClassName(fqName, scope);
   }
 
+  public static PsiClassType getType(@NotNull PsiClass aClass) {
+    return JavaPsiFacade.getInstance(aClass.getProject()).getElementFactory().createType(aClass);
+  }
+
   public static PsiClassType getObjectType(@NotNull PsiElement context) {
     return getType(CommonClassNames.JAVA_LANG_OBJECT, context);
   }
