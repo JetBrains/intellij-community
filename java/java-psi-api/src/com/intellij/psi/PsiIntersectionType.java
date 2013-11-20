@@ -137,7 +137,7 @@ public class PsiIntersectionType extends PsiType {
 
   @Override
   public <A> A accept(@NotNull PsiTypeVisitor<A> visitor) {
-    return myConjuncts[0].accept(visitor);
+    return visitor.visitIntersectionType(this);
   }
 
   @Override

@@ -238,6 +238,18 @@ public class PsiSubstitutorImpl implements PsiSubstitutor {
     @Override
     public abstract PsiType visitClassType(PsiClassType classType);
 
+    @Nullable
+    @Override
+    public PsiType visitIntersectionType(PsiIntersectionType intersectionType) {
+      final List<PsiType> substituted = ContainerUtil.map(intersectionType.getConjuncts(), new Function<PsiType, PsiType>() {
+        @Override
+        public PsiType fun(PsiType psiType) {
+          return psiType.accept(SubstitutionVisitorBase.this);
+        }
+      });
+      return PsiIntersectionType.createIntersection(substituted);
+    }
+
     @Override
     public PsiType visitDisjunctionType(PsiDisjunctionType disjunctionType) {
       final List<PsiType> substituted = ContainerUtil.map(disjunctionType.getDisjunctions(), new Function<PsiType, PsiType>() {
