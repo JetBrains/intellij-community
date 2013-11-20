@@ -37,6 +37,10 @@ Available templates:
 * `.fori` – surrounds with loop `for (int i = 0; i < expr.length; i++)`
 * `.forr` – reverse loop `for (int i = expr.length - 1; i >= 0; i--)`
 
+* `.field` – introduces field for expression `_field = expr;`
+* `.par` – surrounds outer expression with parentheses `(expr)`
+* `.return` – returns value from method/property `return expr;`
+
 Other features:
 
 * Template expansion by `Tab` key in editor (like live templates)
@@ -45,9 +49,6 @@ Other features:
 
 Future work:
 
-* `.field` – introduces field for expression `_field = expr;`
-* `.par` – surrounds outer expression with parentheses `(expr)`
-* `.return` – returns value from method/property `return expr;`
 * `.switch` – produces switch over integral/string type `switch (expr)`
 * `.throw` – throws value of Exception type `throw expr;`
 * `.assert` - creates assertion statement from expression `assert expr`
@@ -56,7 +57,7 @@ Future work:
 * Settings page to disable/enable templates
 * Control braces insertion for statements (use code style settings?)
 * Completion char handling `expr.var.usage()` => `T x = expr; x.usage()`?
-* Support non-Java languages, of course :)
+* Support non-Java languages
 
 #### Feedback
 

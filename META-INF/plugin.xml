@@ -46,7 +46,7 @@
 
       <b>Version 0.4-beta</b><br/>
       Various fixes. New <b>.new</b> template over types.<br/>
-      Postfix template expansion by <b>Tab</b> key in editor (like live templates)<br/><br/>
+      Postfix template expansion by <b>Tab</b> key in editor (like live templates).<br/><br/>
 
       <b>Version 0.3-beta</b><br/>
       Lot of various fixes.<br/>
@@ -115,6 +115,9 @@
     </component>
     <component>
       <implementation-class>org.jetbrains.postfixCompletion.TemplateProviders.ForReverseIterationTemplateProvider</implementation-class>
+    </component>
+    <component>
+      <implementation-class>org.jetbrains.postfixCompletion.TemplateProviders.IntroduceFieldTemplateProvider</implementation-class>
     </component>
   </application-components>
 

@@ -129,6 +129,9 @@ public class PostfixCompletionTest extends LightCodeInsightFixtureTestCase {
 
   public void testCast01() { testForce("cast\n"); }
 
+  public void testField01() { test("field\n"); }
+  public void testField02() { testForce("field\n"); }
+
   public void testNoVariants01() { test(""); }
   public void testNoVariants02() { test("nn\n"); }
   public void testNoVariants03() { test("v\n"); }

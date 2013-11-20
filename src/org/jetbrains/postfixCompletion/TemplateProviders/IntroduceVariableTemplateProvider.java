@@ -20,7 +20,7 @@ import java.util.*;
 
 import static org.jetbrains.postfixCompletion.CommonUtils.*;
 
-// todo: support for int[].var
+// todo: support for int[].var (parses as .class access!)
 
 @TemplateProvider(
   templateName = "var",
@@ -52,8 +52,6 @@ public class IntroduceVariableTemplateProvider extends TemplateProviderBase {
           CtorAccessibility accessibility = CommonUtils.isTypeCanBeInstantiatedWithNew(invokedOnType, expression);
           if (accessibility == CtorAccessibility.NotAccessible) break;
         } else {
-          // filter out packages
-          if (referenced instanceof PsiPackage) continue;
           // and 'too simple' expressions (except force mode)
           if (referenced instanceof PsiLocalVariable ||
               referenced instanceof PsiParameter ||
