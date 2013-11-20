@@ -16,6 +16,7 @@
 package com.intellij.openapi.vcs.roots;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.VcsRoot;
 import com.intellij.openapi.vcs.VcsTestUtil;
@@ -42,14 +43,14 @@ public class VcsRootDetectorTest extends VcsRootPlatformTest {
     Map<String, Collection<String>> map = new HashMap<String, Collection<String>>();
     map.put("mock", Collections.<String>emptyList());
     map.put("content_roots", Collections.<String>emptyList());
-    doTest(map, null, Collections.<String>emptyList(), false, false);
+    doTest(map, null, Collections.<String>emptyList());
   }
 
   public void testProjectUnderSingleMockRoot() throws IOException {
     Map<String, Collection<String>> map = new HashMap<String, Collection<String>>();
     map.put("mock", Arrays.asList("."));
     map.put("content_roots", Collections.<String>emptyList());
-    doTest(map, myProjectRoot, Arrays.asList("."), true, false);
+    doTest(map, myProjectRoot, Arrays.asList("."));
   }
 
   public void testProjectWithMockRootUnderIt() throws IOException {
@@ -59,7 +60,7 @@ public class VcsRootDetectorTest extends VcsRootPlatformTest {
     cd(myProjectRoot);
     mkdir("src");
     mkdir(".idea");
-    doTest(map, myProjectRoot, Arrays.asList("community"), false, false);
+    doTest(map, myProjectRoot, Arrays.asList("community"));
   }
 
   public void testProjectWithAllSubdirsUnderMockRootShouldStillBeNotFullyControlled() throws IOException {
@@ -67,7 +68,7 @@ public class VcsRootDetectorTest extends VcsRootPlatformTest {
     Map<String, Collection<String>> map = new HashMap<String, Collection<String>>();
     map.put("mock", Arrays.asList(dirNames));
     map.put("content_roots", Collections.<String>emptyList());
-    doTest(map, myProjectRoot, Arrays.asList(dirNames), false, false);
+    doTest(map, myProjectRoot, Arrays.asList(dirNames));
   }
 
   public void testProjectUnderVcsAboveIt() throws IOException {
@@ -78,8 +79,8 @@ public class VcsRootDetectorTest extends VcsRootPlatformTest {
     map.put("mock", Arrays.asList(myRepository.getName()));
     map.put("content_roots", Collections.<String>emptyList());
     VirtualFile vfile = myRepository.findChild(subdir);
-    doTest(map, vfile, Arrays.asList(myRepository.getName()),
-           true, true);
+    doTest(map, vfile, Arrays.asList(myRepository.getName())
+    );
   }
 
   public void testIDEAProject() throws IOException {
@@ -87,7 +88,7 @@ public class VcsRootDetectorTest extends VcsRootPlatformTest {
     Map<String, Collection<String>> map = new HashMap<String, Collection<String>>();
     map.put("mock", Arrays.asList(names));
     map.put("content_roots", Collections.<String>emptyList());
-    doTest(map, myProjectRoot, Arrays.asList(names), true, false);
+    doTest(map, myProjectRoot, Arrays.asList(names));
   }
 
   public void testOneAboveAndOneUnder() throws IOException {
@@ -95,7 +96,7 @@ public class VcsRootDetectorTest extends VcsRootPlatformTest {
     Map<String, Collection<String>> map = new HashMap<String, Collection<String>>();
     map.put("mock", Arrays.asList(names));
     map.put("content_roots", Collections.<String>emptyList());
-    doTest(map, myRepository, Arrays.asList(names), true, true);
+    doTest(map, myRepository, Arrays.asList(names));
   }
 
   public void testOneAboveAndOneForProjectShouldShowOnlyProjectRoot() throws IOException {
@@ -103,7 +104,7 @@ public class VcsRootDetectorTest extends VcsRootPlatformTest {
     Map<String, Collection<String>> map = new HashMap<String, Collection<String>>();
     map.put("mock", Arrays.asList(names));
     map.put("content_roots", Collections.<String>emptyList());
-    doTest(map, myRepository, Arrays.asList(myRepository.getName()), true, false);
+    doTest(map, myRepository, Arrays.asList(myRepository.getName()));
   }
 
   public void testOneAboveAndSeveralUnderProject() throws IOException {
@@ -111,7 +112,7 @@ public class VcsRootDetectorTest extends VcsRootPlatformTest {
     Map<String, Collection<String>> map = new HashMap<String, Collection<String>>();
     map.put("mock", Arrays.asList(names));
     map.put("content_roots", Collections.<String>emptyList());
-    doTest(map, myRepository, Arrays.asList(names), true, true);
+    doTest(map, myRepository, Arrays.asList(names));
   }
 
   public void testMultipleAboveShouldBeDetectedAsOneAbove() throws IOException {
@@ -122,14 +123,14 @@ public class VcsRootDetectorTest extends VcsRootPlatformTest {
     cd(myRepository);
     mkdir(subdir);
     VirtualFile vfile = myRepository.findChild(subdir);
-    doTest(map, vfile, Arrays.asList(myRepository.getName()), true, true);
+    doTest(map, vfile, Arrays.asList(myRepository.getName()));
   }
 
   public void testUnrelatedRootShouldNotBeDetected() throws IOException {
     Map<String, Collection<String>> map = new HashMap<String, Collection<String>>();
     map.put("mock", Arrays.asList("another"));
     map.put("content_roots", Collections.<String>emptyList());
-    doTest(map, myRepository, Collections.<String>emptyList(), false, false);
+    doTest(map, myRepository, Collections.<String>emptyList());
   }
 
 
@@ -137,21 +138,21 @@ public class VcsRootDetectorTest extends VcsRootPlatformTest {
     Map<String, Collection<String>> map = new HashMap<String, Collection<String>>();
     map.put("mock", Arrays.asList("linked_root"));
     map.put("content_roots", Arrays.asList("linked_root"));
-    doTest(map, myRepository, Arrays.asList("linked_root"), false, false);
+    doTest(map, myRepository, Arrays.asList("linked_root"));
   }
 
   public void testLinkedSourceRootAndProjectRootShouldBeDetected() throws IOException {
     Map<String, Collection<String>> map = new HashMap<String, Collection<String>>();
     map.put("mock", Arrays.asList(".", "linked_root"));
     map.put("content_roots", Arrays.asList("linked_root"));
-    doTest(map, myProjectRoot, Arrays.asList(".", "linked_root"), true, false);
+    doTest(map, myProjectRoot, Arrays.asList(".", "linked_root"));
   }
 
   public void testLinkedSourceBelowMockRoot() throws IOException {
     Map<String, Collection<String>> map = new HashMap<String, Collection<String>>();
     map.put("mock", Arrays.asList(".", "linked_root"));
     map.put("content_roots", Arrays.asList("linked_root/src"));
-    doTest(map, myProjectRoot, Arrays.asList(".", "linked_root"), true, false);
+    doTest(map, myProjectRoot, Arrays.asList(".", "linked_root"));
   }
 
   // This is a test of performance optimization via limitation: don't scan deep though the whole VFS, i.e. don't detect deep roots
@@ -159,7 +160,7 @@ public class VcsRootDetectorTest extends VcsRootPlatformTest {
     Map<String, Collection<String>> map = new HashMap<String, Collection<String>>();
     map.put("mock", Arrays.asList("community", "content_root/lev1/lev2", "content_root2/lev1/lev2/lev3"));
     map.put("content_roots", Arrays.asList("content_root"));
-    doTest(map, myProjectRoot, Arrays.asList("community", "content_root/lev1/lev2"), false, false);
+    doTest(map, myProjectRoot, Arrays.asList("community", "content_root/lev1/lev2"));
   }
 
   void assertRoots(Collection<String> expectedRelativePaths, Collection<String> actual) {
@@ -202,15 +203,18 @@ public class VcsRootDetectorTest extends VcsRootPlatformTest {
 
   public void doTest(@NotNull Map<String, Collection<String>> map,
                      @Nullable VirtualFile startDir,
-                     @NotNull Collection<String> expectedPaths,
-                     boolean expectedFull,
-                     boolean expectedBelow)
+                     @NotNull Collection<String> expectedPaths)
     throws IOException {
     initProject(map.get("mock"), Collections.<String>emptyList(), map.get("content_roots"));
 
     VcsRootDetectInfo info = detect(startDir);
-    assertRoots(expectedPaths, getPaths(info.getRoots()));
-    assertEquals(expectedFull, info.totallyUnderVcs());
-    assertEquals(expectedBelow, info.projectIsBelowVcs());
+    assertRoots(expectedPaths, getPaths(
+      ContainerUtil.filter(info.getRoots(), new Condition<VcsRoot>() {
+        @Override
+        public boolean value(VcsRoot root) {
+          assert root.getVcs() != null;
+          return root.getVcs().getKeyInstanceMethod().equals(myVcs.getKeyInstanceMethod());
+        }
+      })));
   }
 }
