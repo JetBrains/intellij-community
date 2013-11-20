@@ -50,7 +50,7 @@ public class SubtypingConstraint implements ConstraintFormula {
         inferenceVariable.addBound(myT, InferenceBound.UPPER);
         return true;
       }
-      if (PsiType.NULL.equals(myS)) return true;
+      if (PsiType.NULL.equals(myS) || myS == null) return true;
       inferenceVariable = session.getInferenceVariable(myT);
       if (inferenceVariable != null) {
         inferenceVariable.addBound(myS, InferenceBound.LOWER);
