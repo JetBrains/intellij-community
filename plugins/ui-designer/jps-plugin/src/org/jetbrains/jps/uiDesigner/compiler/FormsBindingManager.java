@@ -167,7 +167,7 @@ public class FormsBindingManager extends FormsBuilder {
 
     FORMS_TO_COMPILE.set(context, srcToForms.isEmpty()? null : srcToForms);
 
-    if (config.isCopyFormsRuntimeToOutput() && !formsToCompile.isEmpty()) {
+    if (config.isCopyFormsRuntimeToOutput() && containsValidForm(formsToCompile.keySet())) {
       for (ModuleBuildTarget target : chunk.getTargets()) {
         if (!target.isTests()) {
           final File outputDir = target.getOutputDir();
@@ -187,6 +187,19 @@ public class FormsBindingManager extends FormsBuilder {
     }
 
     return exitCode;
+  }
+
+  private static boolean containsValidForm(Set<File> files) {
+    for (File file : files) {
+      try {
+        if (FormsParsing.readBoundClassName(file) != null) {
+          return true;
+        }
+      }
+      catch (IOException ignore) {
+      }
+    }
+    return false;
   }
 
   @NotNull
