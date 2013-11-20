@@ -1,4 +1,4 @@
-// Items: clone, length, arg, for, fori, notnull, null
+// Items: clone, length, arg, for, fori, forr, notnull, null
 public class Foo {
     void m() {
         Long[] xs = {1, 2, 3};

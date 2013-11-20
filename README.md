@@ -35,7 +35,7 @@ Available templates:
 * `.cast` – surrounds expression with cast `(SomeType) expr`
 * `.new` – produces instantiation expression for type `new T()`
 * `.fori` – surrounds with loop `for (int i = 0; i < expr.length; i++)`
-* `.forr` – reverse loop `for (int i = expr.length; i >= 0; i--)`
+* `.forr` – reverse loop `for (int i = expr.length - 1; i >= 0; i--)`
 
 Other features:
 

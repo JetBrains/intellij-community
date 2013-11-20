@@ -3,6 +3,8 @@ package org.jetbrains.postfixCompletion.TemplateProviders;
 import com.intellij.codeInsight.completion.*;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.codeInsight.template.*;
+import com.intellij.codeInsight.template.impl.*;
+import com.intellij.codeInsight.template.macro.*;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.command.*;
 import com.intellij.openapi.editor.*;
@@ -116,8 +118,34 @@ public abstract class ForIterationTemplateProviderBase extends TemplateProviderB
       });
     }
 
-    protected abstract void buildTemplate(
-      @NotNull TemplateBuilderImpl builder, @NotNull PsiForStatement forStatement);
+    protected void buildTemplate(
+        @NotNull TemplateBuilderImpl builder, @NotNull PsiForStatement forStatement) {
+      PsiDeclarationStatement initialization = (PsiDeclarationStatement) forStatement.getInitialization();
+      assert (initialization != null) : "initialization != null";
+
+      PsiLocalVariable indexVariable = (PsiLocalVariable) initialization.getDeclaredElements()[0];
+
+      PsiBinaryExpression condition = (PsiBinaryExpression) forStatement.getCondition();
+      assert (condition != null) : "condition != null";
+
+      PsiReferenceExpression indexRef1 = (PsiReferenceExpression) condition.getLOperand();
+
+      PsiExpressionStatement updateStatement = (PsiExpressionStatement) forStatement.getUpdate();
+      assert (updateStatement != null) : "updateStatement != null";
+
+      PsiPostfixExpression increment = (PsiPostfixExpression) updateStatement.getExpression();
+      PsiReferenceExpression indexRef2 = (PsiReferenceExpression) increment.getOperand();
+
+      // use standard macro, pass parameter expression with expression to iterate
+      MacroCallNode nameExpression = new MacroCallNode(new SuggestIndexNameMacro());
+
+      // setup placeholders and final position
+      builder.replaceElement(indexVariable.getNameIdentifier(), "INDEX", nameExpression, true);
+      builder.replaceElement(indexRef1.getReferenceNameElement(), "FOO1", "INDEX", false);
+      builder.replaceElement(indexRef2.getReferenceNameElement(), "FOO1", "INDEX", false);
+
+      builder.setEndVariableAfter(forStatement.getRParenth());
+    }
   }
 
   @Nullable public static Pair<String, String> findSizeLikeMethod(

@@ -3,6 +3,6 @@ public class Foo {
     int length() { }
     void m() {
         Foo foo = new Foo();
-        for (int i = 0; i < foo.length(); i++)<caret>
+        for (int i = foo.length() - 1; i >= 0; i--)<caret>
     }
 }
