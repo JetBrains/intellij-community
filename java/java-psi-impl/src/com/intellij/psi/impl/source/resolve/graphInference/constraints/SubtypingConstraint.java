@@ -41,7 +41,8 @@ public class SubtypingConstraint implements ConstraintFormula {
   public boolean reduce(InferenceSession session, List<ConstraintFormula> constraints) {
     if (myIsRefTypes) {
       if (session.isProperType(myS) && session.isProperType(myT)) {
-        if (myT == null || myS == null) return myS == myT;
+        if (myT == null) return myS == null || myS.equalsToText(CommonClassNames.JAVA_LANG_OBJECT); 
+        if (myS == null) return myT.equalsToText(CommonClassNames.JAVA_LANG_OBJECT); 
         return TypeConversionUtil.isAssignable(myT, myS);
       }
       InferenceVariable inferenceVariable = session.getInferenceVariable(myS);
