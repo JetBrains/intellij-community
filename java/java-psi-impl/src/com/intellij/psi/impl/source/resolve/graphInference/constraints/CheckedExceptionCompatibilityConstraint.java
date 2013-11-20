@@ -21,6 +21,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceSession;
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceVariable;
 import com.intellij.psi.impl.source.resolve.graphInference.PsiPolyExpressionUtil;
+import com.intellij.psi.impl.source.tree.java.PsiMethodReferenceExpressionImpl;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.Function;
@@ -96,7 +97,8 @@ public class CheckedExceptionCompatibilityConstraint extends InputOutputConstrai
       
       final List<PsiType> thrownTypes = new ArrayList<PsiType>();
       if (myExpression instanceof PsiLambdaExpression) {
-        //todo
+        PsiElement body = ((PsiLambdaExpression)myExpression).getBody();
+        thrownTypes.addAll(ExceptionUtil.getUnhandledExceptions(body));
       } else {
         final PsiElement resolve = ((PsiMethodReferenceExpression)myExpression).resolve();
         if (resolve instanceof PsiMethod) {
