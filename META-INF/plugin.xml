@@ -40,9 +40,35 @@
 ]]></description>
 
   <change-notes><![CDATA[
+      <b>Version 0.5-beta</b><br/>
+      Various fixes for completion with over literals.<br/>
+      New <b>.fori</b> and <b>.forr</b> templates iteration with index.<br/><br/>
+
       <b>Version 0.4-beta</b><br/>
       Various fixes. New <b>.new</b> template over types.<br/>
-      Postfix template expansion by <b>Tab</b> key in editor (like live templates)
+      Postfix template expansion by <b>Tab</b> key in editor (like live templates)<br/><br/>
+
+      <b>Version 0.3-beta</b><br/>
+      Lot of various fixes.<br/>
+      Initial (and nearly final, I hope) support for IDEA's code completion with unresolved
+      reference-expression qualifier feature. It allows you to write <b>scn.nn</b> and expand
+      into <b>if (superCoolName != null)</b>, for example.<br/><br/>
+
+      <b>Version 0.2.5-alpha</b><br/>
+      Small fixes in <b>.var</b> over expressions.<br/>
+      New templates: <b>.while</b>, <b>.arg</b> and <b>.cast</b>.<br/><br/>
+
+      <b>Version 0.2.2-alpha</b><br/>
+      Small fixes. Template <b>.for</b> now should works when standard IDEA's surround
+      template "I" (Iterate) do not exists (removed by user).<br/><br/>
+
+      <b>Version 0.1-alpha</b><br/>
+      Tests and a lot of various fixes.<br/>
+      New <b>.for</b> template for iteration over collections.<br/><br/>
+
+      <b>Version 0.1-alpha</b><br/>
+      Initial version.<br/>
+      Basic templates like <b>.if</b>, <b>.else</b>, <b>.var</b>, <b>.notnull</b> and some other.
 ]]></change-notes>
 
   <idea-version since-build="130.754"/>
