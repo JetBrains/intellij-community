@@ -141,8 +141,9 @@ public abstract class CompletionContributor {
    *
    * If you want to implement this functionality directly by overriding this method, the following is for you.
    * Always check that parameters match your situation, and that completion type ({@link CompletionParameters#getCompletionType()}
-   * is of your favourite kind. This method is run outside of read action, so you have to manage this manually
-   * ({@link com.intellij.openapi.application.Application#runReadAction(Runnable)}). Don't take read actions for too long.<p>
+   * is of your favourite kind. This method is run inside a read action. If you do any long activity non-related to PSI in it, please
+   * ensure you call {@link com.intellij.openapi.progress.ProgressManager#checkCanceled()} often enough so that the completion process 
+   * can be cancelled smoothly when the user begins to type in the editor. 
    *
    * @param parameters
    * @param result
