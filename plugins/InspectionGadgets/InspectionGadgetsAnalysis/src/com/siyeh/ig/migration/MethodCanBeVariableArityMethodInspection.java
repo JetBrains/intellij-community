@@ -39,9 +39,6 @@ public class MethodCanBeVariableArityMethodInspection extends BaseInspection {
   @SuppressWarnings("PublicField")
   public boolean ignoreOverridingMethods = false;
 
-  @SuppressWarnings("PublicField")
-  public boolean ignoreNullableParameters = true;
-
   @Nls
   @NotNull
   @Override
@@ -61,7 +58,6 @@ public class MethodCanBeVariableArityMethodInspection extends BaseInspection {
     panel.addCheckbox(InspectionGadgetsBundle.message("method.can.be.variable.arity.method.ignore.byte.short.option"),
                       "ignoreByteAndShortArrayParameters");
     panel.addCheckbox(InspectionGadgetsBundle.message("ignore.methods.overriding.super.method"), "ignoreOverridingMethods");
-    panel.addCheckbox(InspectionGadgetsBundle.message("ignore.nullable.parameters.option"), "ignoreNullableParameters");
     return panel;
   }
 
@@ -89,7 +85,7 @@ public class MethodCanBeVariableArityMethodInspection extends BaseInspection {
       }
       final PsiParameter[] parameters = parameterList.getParameters();
       final PsiParameter lastParameter = parameters[parameters.length - 1];
-      if (ignoreNullableParameters && NullableNotNullManager.isNullable(lastParameter)) {
+      if (NullableNotNullManager.isNullable(lastParameter)) {
         return;
       }
       final PsiType type = lastParameter.getType();
