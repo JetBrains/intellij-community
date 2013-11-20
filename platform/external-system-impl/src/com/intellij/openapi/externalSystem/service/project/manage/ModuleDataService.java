@@ -219,6 +219,8 @@ public class ModuleDataService implements ProjectDataService<ModuleData, Module>
       @Override
       public void execute() {
         for (Module module : modules) {
+          if(module.isDisposed()) continue;
+
           ModuleManager moduleManager = ModuleManager.getInstance(module.getProject());
           String path = module.getModuleFilePath();
           moduleManager.disposeModule(module);

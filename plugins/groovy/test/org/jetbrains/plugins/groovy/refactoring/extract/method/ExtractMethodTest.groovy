@@ -239,4 +239,15 @@ class Foo {
 ''')
   }
 
+  void testExtractMethodFromStringPart() {
+    doTest('-', '''\
+print 'a<begin>b<end>c'
+''', '''\
+print 'a' + '-'() + 'c'
+
+private String '-'() {
+    return 'b'
+}
+''')
+  }
 }

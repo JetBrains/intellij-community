@@ -152,7 +152,9 @@ public class PythonConsoleView extends JPanel implements LanguageConsoleView, Ob
 
 
   private void doExecute(String code) {
-    executeInConsole(PyConsoleIndentUtil.normalize(code, myExecuteActionHandler.getCurrentIndentSize()));
+    String codeFragment = PyConsoleIndentUtil.normalize(code, myExecuteActionHandler.getCurrentIndentSize());
+    codeFragment += "\n";
+    executeInConsole(codeFragment);
   }
 
   public void executeInConsole(final String code) {

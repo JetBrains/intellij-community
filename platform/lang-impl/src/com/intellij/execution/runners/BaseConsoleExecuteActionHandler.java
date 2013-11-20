@@ -42,7 +42,7 @@ public abstract class BaseConsoleExecuteActionHandler {
     myAddCurrentToHistory = addCurrentToHistory;
   }
 
-  public void runExecuteAction(LanguageConsoleImpl languageConsole) {
+  public void runExecuteAction(@NotNull LanguageConsoleImpl languageConsole) {
     // process input and add to history
     Document document = languageConsole.getCurrentEditor().getDocument();
     String text = document.getText();
@@ -56,7 +56,7 @@ public abstract class BaseConsoleExecuteActionHandler {
 
     languageConsole.setInputText("");
 
-    UndoManager manager = languageConsole.getProject() == null ? UndoManager.getGlobalInstance() : UndoManager.getInstance(languageConsole.getProject());
+    UndoManager manager = UndoManager.getInstance(languageConsole.getProject());
     ((UndoManagerImpl)manager).invalidateActionsFor(DocumentReferenceManager.getInstance().create(document));
 
     myConsoleHistoryModel.addToHistory(text);

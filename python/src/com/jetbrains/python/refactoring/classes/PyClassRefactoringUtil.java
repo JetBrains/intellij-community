@@ -25,16 +25,15 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.psi.util.QualifiedName;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
 import com.jetbrains.python.codeInsight.imports.AddImportHelper;
-import com.jetbrains.python.documentation.DocStringTypeReference;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyImportedModule;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
-import com.intellij.psi.util.QualifiedName;
 import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -190,7 +189,7 @@ public class PyClassRefactoringUtil {
       public void visitPyStringLiteralExpression(PyStringLiteralExpression node) {
         super.visitPyStringLiteralExpression(node);
         for (PsiReference ref : node.getReferences()) {
-          if (ref instanceof DocStringTypeReference && ref.isReferenceTo(oldElement)) {
+          if (ref.isReferenceTo(oldElement)) {
             ref.bindToElement(newElement);
           }
         }

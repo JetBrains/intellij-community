@@ -18,7 +18,7 @@ public interface ConsoleCommunication {
 
   boolean isExecuting();
 
-  void execInterpreter(String s, Function<InterpreterResponse, Object> callback);
+  void execInterpreter(ConsoleCodeFragment code, Function<InterpreterResponse, Object> callback);
 
   void interrupt();
 
@@ -27,4 +27,21 @@ public interface ConsoleCommunication {
   void notifyCommandExecuted();
   void notifyInputRequested();
 
+  class ConsoleCodeFragment {
+    private final String myText;
+    private final boolean myIsSingleLine;
+
+    public ConsoleCodeFragment(String text, boolean isSingleLine) {
+      myText = text;
+      myIsSingleLine = isSingleLine;
+    }
+
+    public String getText() {
+      return myText;
+    }
+
+    public boolean isSingleLine() {
+      return myIsSingleLine;
+    }
+  }
 }

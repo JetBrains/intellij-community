@@ -53,10 +53,11 @@ import java.util.Vector;
  *
  * @author Fabio
  */
-public class PydevConsoleCommunication extends AbstractConsoleCommunication implements IScriptConsoleCommunication, XmlRpcHandler,
+public class PydevConsoleCommunication extends AbstractConsoleCommunication implements XmlRpcHandler,
                                                                                        PyFrameAccessor {
 
   private static final String EXEC_LINE = "execLine";
+  private static final String EXEC_MULTILINE = "execMultipleLines";
   private static final String GET_COMPLETIONS = "getCompletions";
   private static final String GET_DESCRIPTION = "getDescription";
   private static final String GET_FRAME = "getFrame";
@@ -64,6 +65,7 @@ public class PydevConsoleCommunication extends AbstractConsoleCommunication impl
   private static final String CHANGE_VARIABLE = "changeVariable";
   private static final String HANDSHAKE = "handshake";
   private static final String CLOSE = "close";
+
   /**
    * XML-RPC client for sending messages to the server.
    */
@@ -261,12 +263,13 @@ public class PydevConsoleCommunication extends AbstractConsoleCommunication impl
   /**
    * Executes the needed command
    *
+   * @param command
    * @return a Pair with (null, more) or (error, false)
    * @throws XmlRpcException
    */
-  protected Pair<String, Boolean> exec(final String command) throws XmlRpcException {
+  protected Pair<String, Boolean> exec(final ConsoleCodeFragment command) throws XmlRpcException {
     setExecuting(true);
-    Object execute = myClient.execute(EXEC_LINE, new Object[]{command});
+    Object execute = myClient.execute(command.isSingleLine() ? EXEC_LINE : EXEC_MULTILINE, new Object[]{command.getText()});
 
     Object object;
     if (execute instanceof Vector) {
@@ -314,10 +317,10 @@ public class PydevConsoleCommunication extends AbstractConsoleCommunication impl
    *
    * @param command the command to be executed in the client
    */
-  public void execInterpreter(final String command, final Function<InterpreterResponse, Object> onResponseReceived) {
+  public void execInterpreter(final ConsoleCodeFragment command, final Function<InterpreterResponse, Object> onResponseReceived) {
     nextResponse = null;
     if (waitingForInput) {
-      inputReceived = command;
+      inputReceived = command.getText();
       waitingForInput = false;
       //the thread that we started in the last exec is still alive if we were waiting for an input.
     }

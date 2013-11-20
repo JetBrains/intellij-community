@@ -1,3 +1,18 @@
+/*
+ * Copyright 2000-2013 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.find.impl;
 
 import com.intellij.find.FindManager;
@@ -16,14 +31,14 @@ import com.intellij.usageView.UsageInfo;
 import org.jetbrains.annotations.NotNull;
 
 public class FindResultUsageInfo extends UsageInfo {
-  private FindManager myFindManager;
-  private FindModel myFindModel;
+  private final FindManager myFindManager;
+  private final FindModel myFindModel;
   private SmartPsiFileRange myAnchor;
 
   private Boolean myCachedResult;
   private long myTimestamp = 0;
 
-  private static Key<Long> ourDocumentTimestampKey = Key.create("com.intellij.find.impl.FindResultUsageInfo.documentTimestamp");
+  private static final Key<Long> ourDocumentTimestampKey = Key.create("com.intellij.find.impl.FindResultUsageInfo.documentTimestamp");
 
   @Override
   public boolean isValid() {
@@ -35,40 +50,52 @@ public class FindResultUsageInfo extends UsageInfo {
       return false;
     }
 
-    if (document.getModificationStamp() == myTimestamp && myCachedResult != null) {
-      return myCachedResult;
-    } else {
-      myTimestamp = document.getModificationStamp();
+    Boolean cachedResult = myCachedResult;
+    if (document.getModificationStamp() == myTimestamp && cachedResult != null) {
+      return cachedResult;
     }
+    myTimestamp = document.getModificationStamp();
 
-    Segment segment = super.getSegment();
-    if (segment == null) return myCachedResult = false;
+    Segment segment = getSegment();
+    if (segment == null) {
+      myCachedResult = false;
+      return false;
+    }
 
     VirtualFile file = getPsiFile().getVirtualFile();
 
     Segment searchOffset;
     if (myAnchor != null) {
       searchOffset = myAnchor.getRange();
-      if (searchOffset == null) return myCachedResult = false;
-    } else {
+      if (searchOffset == null) {
+        myCachedResult = false;
+        return false;
+      }
+    }
+    else {
       searchOffset = segment;
     }
 
     int offset = searchOffset.getStartOffset();
-    FindResult result;
     Long data = myFindModel.getUserData(ourDocumentTimestampKey);
     if (data == null || data != myTimestamp) {
       data = myTimestamp;
       myFindModel.putUserData(FindManagerImpl.ourCommentsLiteralsSearchDataKey, null);
     }
     myFindModel.putUserData(ourDocumentTimestampKey, data);
+    FindResult result;
     do {
       result = myFindManager.findString(document.getCharsSequence(), offset, myFindModel, file);
       offset = result.getEndOffset() == offset ? offset + 1 : result.getEndOffset();
-      if (!result.isStringFound()) return myCachedResult = false;
+      if (!result.isStringFound()) {
+        myCachedResult = false;
+        return false;
+      }
     } while (result.getStartOffset() < segment.getStartOffset());
 
-    return myCachedResult = (segment.getStartOffset() == result.getStartOffset() && segment.getEndOffset() == result.getEndOffset());
+    boolean ret = segment.getStartOffset() == result.getStartOffset() && segment.getEndOffset() == result.getEndOffset();
+    myCachedResult = ret;
+    return ret;
   }
 
   private PsiFile getPsiFile() {

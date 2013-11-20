@@ -287,7 +287,7 @@ public class Maven3ServerEmbedderImpl extends MavenRemoteObject implements Maven
     return createExecutionResult(file, result, listener.getRootNode());
   }
 
-  @NotNull
+  @Nullable
   @Override
   public String evaluateEffectivePom(@NotNull File file, @NotNull List<String> activeProfiles)
     throws RemoteException, MavenServerProcessCanceledException {

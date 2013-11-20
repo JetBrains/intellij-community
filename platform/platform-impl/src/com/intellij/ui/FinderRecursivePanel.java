@@ -185,7 +185,7 @@ public abstract class FinderRecursivePanel<T> extends JBSplitter implements Data
     });
     ListScrollingUtil.installActions(list);
 
-//    installSpeedSearch(list); // TODO
+    //    installSpeedSearch(list); // TODO
 
     installEditOnDoubleClick(list);
     return list;
@@ -362,9 +362,8 @@ public abstract class FinderRecursivePanel<T> extends JBSplitter implements Data
   @Override
   public Object getData(@NonNls String dataId) {
     Object selectedValue = getSelectedValue();
-    if (PlatformDataKeys.COPY_PROVIDER.is(dataId) && selectedValue != null) {
-      return myCopyProvider;
-    }
+    if (selectedValue == null) return null;
+
     if (CommonDataKeys.PSI_ELEMENT.is(dataId) && selectedValue instanceof PsiElement) {
       return selectedValue;
     }
@@ -373,6 +372,9 @@ public abstract class FinderRecursivePanel<T> extends JBSplitter implements Data
     }
     if (selectedValue instanceof DataProvider) {
       return ((DataProvider)selectedValue).getData(dataId);
+    }
+    if (PlatformDataKeys.COPY_PROVIDER.is(dataId)) {
+      return myCopyProvider;
     }
     return null;
   }
@@ -383,6 +385,7 @@ public abstract class FinderRecursivePanel<T> extends JBSplitter implements Data
   }
 
   @SuppressWarnings("unchecked")
+  @Nullable
   public T getSelectedValue() {
     return (T)myList.getSelectedValue();
   }
@@ -398,7 +401,7 @@ public abstract class FinderRecursivePanel<T> extends JBSplitter implements Data
   }
 
   @Nullable
-  public String getGroupId() {
+  protected String getGroupId() {
     return myGroupId;
   }
 
@@ -451,11 +454,14 @@ public abstract class FinderRecursivePanel<T> extends JBSplitter implements Data
       }
     }
     // add items
-    List<T> items = listModel.getItems();
     for (int i = 0; i < newItems.size(); i++) {
       T newItem = newItems.get(i);
-      if (!items.contains(newItem)) {
-        listModel.add(i, newItem);
+      if (i < listModel.getSize()) {
+        if (!listModel.getElementAt(i).equals(newItem)) {
+          listModel.add(i, newItem);
+        }
+      }  else {
+        listModel.add(newItem);
       }
     }
   }

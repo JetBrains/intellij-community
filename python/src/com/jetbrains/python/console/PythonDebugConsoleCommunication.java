@@ -63,8 +63,8 @@ public class PythonDebugConsoleCommunication extends AbstractConsoleCommunicatio
     return false;
   }
 
-  protected void exec(final String command, final ProcessDebugger.DebugCallback<Pair<String, Boolean>> callback) {
-    myDebugProcess.consoleExec(command, new ProcessDebugger.DebugCallback<String>() {
+  protected void exec(final ConsoleCodeFragment command, final ProcessDebugger.DebugCallback<Pair<String, Boolean>> callback) {
+    myDebugProcess.consoleExec(command.getText(), new ProcessDebugger.DebugCallback<String>() {
       @Override
       public void ok(String value) {
         callback.ok(parseExecResponseString(value));
@@ -77,9 +77,9 @@ public class PythonDebugConsoleCommunication extends AbstractConsoleCommunicatio
     });
   }
 
-  public void execInterpreter(String s, final Function<InterpreterResponse, Object> callback) {
-    myExpression.append(s);
-    exec(myExpression.toString(), new ProcessDebugger.DebugCallback<Pair<String, Boolean>>() {
+  public void execInterpreter(ConsoleCodeFragment code, final Function<InterpreterResponse, Object> callback) {
+    myExpression.append(code.getText());
+    exec(new ConsoleCodeFragment(myExpression.toString(), false), new ProcessDebugger.DebugCallback<Pair<String, Boolean>>() {
       @Override
       public void ok(Pair<String, Boolean> executed) {
         boolean more = executed.second;

@@ -83,6 +83,8 @@ public abstract class VcsRootPlatformTest extends UsefulTestCase {
 
     myProject = myProjectFixture.getProject();
     myProjectRoot = myProject.getBaseDir();
+    //temporary fix
+    delete(new File(myProjectRoot.getParent().getPath(), ".mock"));
     cd(myProjectRoot);
     Module module = doCreateRealModuleIn("foo", myProject, EmptyModuleType
       .getInstance());

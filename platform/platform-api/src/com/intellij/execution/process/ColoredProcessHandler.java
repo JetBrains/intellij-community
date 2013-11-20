@@ -18,9 +18,6 @@ package com.intellij.execution.process;
 
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
-import com.intellij.openapi.editor.colors.EditorColorsManager;
-import com.intellij.openapi.editor.colors.TextAttributesKey;
-import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.Key;
 import org.jetbrains.annotations.NotNull;
 
@@ -31,14 +28,6 @@ import java.nio.charset.Charset;
  */
 public class ColoredProcessHandler extends OSProcessHandler implements AnsiEscapeDecoder.ColoredTextAcceptor {
   private final AnsiEscapeDecoder myAnsiEscapeDecoder = new AnsiEscapeDecoder();
-
-  /**
-   * todo ruby plugin compatibility. Remove on the next update.
-   */
-  @Deprecated
-  public static TextAttributes getByKey(final TextAttributesKey key) {
-    return EditorColorsManager.getInstance().getGlobalScheme().getAttributes(key);
-  }
 
   public ColoredProcessHandler(final GeneralCommandLine commandLine) throws ExecutionException {
     super(commandLine.createProcess(), commandLine.getCommandLineString(), commandLine.getCharset());
