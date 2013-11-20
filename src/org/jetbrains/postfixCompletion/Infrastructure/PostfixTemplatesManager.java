@@ -5,11 +5,8 @@ import com.intellij.codeInsight.template.impl.editorActions.*;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.*;
-import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.*;
-import com.intellij.openapi.project.*;
 import com.intellij.psi.*;
-import com.intellij.psi.tree.*;
 import com.intellij.psi.util.*;
 import org.jetbrains.annotations.*;
 import org.jetbrains.postfixCompletion.*;
@@ -100,55 +97,13 @@ public final class PostfixTemplatesManager implements ApplicationComponent {
         // find enclosing expression-statement through expressions
         final PsiExpressionStatement exprStatement = findContainingExprStatement(reference.getParent());
         if (exprStatement != null) {
-          final PsiStatement lhsStatement = PsiTreeUtil.getPrevSiblingOfType(exprStatement, PsiStatement.class);
-          final PsiExpression lhsExpression = findUnfinishedExpression(lhsStatement);
-          final PsiLiteralExpression brokenLiteral = findBrokenLiteral(lhsExpression);
+          PsiStatement lhsStatement = PsiTreeUtil.getPrevSiblingOfType(exprStatement, PsiStatement.class);
+          PsiExpression lhsExpression = BrokenLiteralPostfixTemplateContext.findUnfinishedExpression(lhsStatement);
+          PsiLiteralExpression brokenLiteral = BrokenLiteralPostfixTemplateContext.findBrokenLiteral(lhsExpression);
           if (lhsExpression != null && brokenLiteral != null) {
-            final boolean isComplexRhs = !(reference.getParent() instanceof PsiExpressionStatement);
-
-            // TODO: EXTRACT DIZ FATTY BOOM BOOM
-            return new PostfixTemplateContext(reference, brokenLiteral, executionContext) {
-              @Override @NotNull
-              public PrefixExpressionContext fixExpression(@NotNull PrefixExpressionContext context) {
-                return fixStatementsBrokenByLiteral(context, lhsExpression, brokenLiteral);
-              }
-
-              @NotNull @Override
-              protected PrefixExpressionContext buildExpressionContext(@NotNull PsiElement expression) {
-                if (expression == brokenLiteral) {
-                  return new PrefixExpressionContext(this, expression) {
-                    @Nullable @Override
-                    protected PsiType calculateExpressionType(@NotNull PsiElement expression) {
-                      return PsiType.INT;
-                    }
-                  };
-                }
-
-                return super.buildExpressionContext(expression);
-              }
-
-              @Nullable @Override
-              public PsiStatement getContainingStatement(@NotNull PrefixExpressionContext context) {
-                PsiStatement statement = super.getContainingStatement(context);
-                if (statement != null && lhsStatement.isValid()) {
-                  // ignore expression-statements produced by broken expr like '2.var + 2'
-                  // note: only when lhsStatement is not 'fixed' yet
-                  if (isComplexRhs && (statement == lhsStatement)) return null;
-                }
-
-                return statement;
-              }
-
-              @Nullable @Override public String shouldFixPrefixMatcher() {
-                String brokenLiteralText = brokenLiteral.getText();
-                int dotIndex = brokenLiteralText.lastIndexOf('.');
-                if (dotIndex < brokenLiteralText.length()) {
-                  return brokenLiteralText.substring(dotIndex + 1);
-                }
-
-                return super.shouldFixPrefixMatcher();
-              }
-            };
+            return new BrokenLiteralPostfixTemplateContext(
+              reference, brokenLiteral, lhsExpression,
+              lhsStatement, executionContext);
           }
         }
       }
@@ -218,106 +173,6 @@ public final class PostfixTemplatesManager implements ApplicationComponent {
     return null;
   }
 
-  @NotNull protected PrefixExpressionContext fixStatementsBrokenByLiteral(
-      @NotNull PrefixExpressionContext context, PsiExpression lhsExpression,
-      @NotNull PsiExpression brokenLiteral) {
-    Project project = context.expression.getProject();
-
-    // store pointer to rhs expression all the time
-    SmartPointerManager pointerManager = SmartPointerManager.getInstance(project);
-    SmartPsiElementPointer<PsiExpression> lhsExpressionPointer =
-      pointerManager.createSmartPsiElementPointer(lhsExpression);
-
-    // fix literal at PSI-level first
-    String brokenLiteralText = brokenLiteral.getText();
-    int dotIndex = brokenLiteralText.lastIndexOf('.');
-    assert (dotIndex > 0) : "dotIndex > 0";
-
-    String fixedLiteralText = brokenLiteralText.substring(0, dotIndex);
-    PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
-    PsiExpression fixedLiteral = factory.createExpressionFromText(fixedLiteralText, null);
-    fixedLiteral = (PsiExpression) brokenLiteral.replace(fixedLiteral);
-
-    // now let's fix broken statements at document-level
-    PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
-    Document document = documentManager.getDocument(fixedLiteral.getContainingFile());
-    assert (document != null) : "document != null";
-
-    documentManager.doPostponedOperationsAndUnblockDocument(document);
-
-    lhsExpression = lhsExpressionPointer.getElement();
-    assert (lhsExpression != null) : "element != null";
-
-    // calculate ranges to modify
-    int literalStart = fixedLiteral.getTextRange().getEndOffset();
-    int referenceEnd = context.parentContext.postfixReference.getTextRange().getEndOffset();
-    int exprStart = lhsExpression.getTextRange().getStartOffset();
-
-    document.replaceString(literalStart, referenceEnd, ")");
-    document.replaceString(exprStart, exprStart, "(");
-
-    documentManager.commitDocument(document);
-
-    // let's find restored expressions in fresh PSI
-    lhsExpression = lhsExpressionPointer.getElement();
-    assert (lhsExpression != null) : "element != null";
-
-    // pointer may resolve in more outer expression, try to correct
-    PsiElement leftPar = lhsExpression.getContainingFile().findElementAt(exprStart /* "(" now */);
-    if (leftPar != null && leftPar instanceof PsiJavaToken &&
-      leftPar.getParent() instanceof PsiParenthesizedExpression) {
-      PsiParenthesizedExpression parenthesized = (PsiParenthesizedExpression) leftPar.getParent();
-      PsiExpression expression = parenthesized.getExpression();
-      if (expression != null)
-        lhsExpression = (PsiExpression) parenthesized.replace(expression);
-    }
-
-    return new PrefixExpressionContext(context.parentContext, lhsExpression);
-  }
-
-  @Nullable private PsiLiteralExpression findBrokenLiteral(@Nullable PsiExpression expr) {
-    if (expr == null) return null;
-
-    PsiExpression expression = expr;
-    do {
-      // look for double literal broken by dot at end
-      if (expression instanceof PsiLiteralExpression) {
-        PsiJavaToken token = PsiTreeUtil.getChildOfType(expression, PsiJavaToken.class);
-        if (token != null) {
-          IElementType tokenType = token.getTokenType();
-          if (tokenType == JavaTokenType.DOUBLE_LITERAL || tokenType == JavaTokenType.FLOAT_LITERAL) {
-            if (token.getText().matches("^.*?\\.\\D*$")) { // omfg
-              return (PsiLiteralExpression) expression;
-            }
-          }
-        }
-      }
-
-      // skip current expression and look its last inner expression
-      PsiElement last = expression.getLastChild();
-      if (last instanceof PsiExpression) expression = (PsiExpression) last;
-      else expression = PsiTreeUtil.getPrevSiblingOfType(last, PsiExpression.class);
-    } while (expression != null);
-
-    return null;
-  }
-
-  @Nullable private static PsiExpression findUnfinishedExpression(@Nullable PsiStatement statement) {
-    if (statement == null) return null;
-
-    PsiElement lastChild = statement.getLastChild();
-    while (lastChild != null) {
-      if (lastChild instanceof PsiErrorElement &&
-          lastChild.getPrevSibling() instanceof PsiExpression) {
-        return (PsiExpression) lastChild.getPrevSibling();
-      }
-
-      lastChild = lastChild.getLastChild();
-    }
-
-    return null;
-  }
-
   @Nullable private static PsiExpressionStatement findContainingExprStatement(@NotNull PsiElement element) {
     while (element instanceof PsiBinaryExpression ||
            element instanceof PsiPolyadicExpression) {
@@ -334,12 +189,12 @@ public final class PostfixTemplatesManager implements ApplicationComponent {
 
   @NotNull public List<LookupElement> collectTemplates(@NotNull PostfixTemplateContext context) {
     // disable all providers over package names
-    PsiElement referencedElement = context.innerExpression.referencedElement;
+    PsiElement referencedElement = context.innerExpression().referencedElement;
     if (referencedElement instanceof PsiPackage) return Collections.emptyList();
 
     // check we invoked on type
     boolean invokedOnType = (referencedElement instanceof PsiClass);
-    boolean insideCodeFragment = context.insideCodeFragment;
+    boolean insideCodeFragment = context.executionContext.insideCodeFragment;
     List<LookupElement> elements = new ArrayList<LookupElement>();
 
     for (TemplateProviderInfo providerInfo : myProviders)

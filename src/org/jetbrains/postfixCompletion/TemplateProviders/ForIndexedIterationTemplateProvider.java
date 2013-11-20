@@ -29,7 +29,7 @@ import java.util.*;
 public class ForIndexedIterationTemplateProvider extends TemplateProviderBase {
   @Override public void createItems(
     @NotNull PostfixTemplateContext context, @NotNull List<LookupElement> consumer) {
-    PrefixExpressionContext expression = context.innerExpression;
+    PrefixExpressionContext expression = context.innerExpression();
     if (!expression.canBeStatement) return;
 
     PsiType expressionType = expression.expressionType;

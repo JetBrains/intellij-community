@@ -23,7 +23,7 @@ public abstract class PostfixLookupElement<TPsiElement extends PsiElement> exten
     myExpressionType = context.expression.getClass();
     myLookupString = lookupString;
     myExpressionRange = context.expressionRange;
-    myContextIndex = context.parentContext.expressions.indexOf(context);
+    myContextIndex = context.parentContext.expressions().indexOf(context);
   }
 
   @NotNull @Override public final String getLookupString() {
@@ -81,14 +81,14 @@ public abstract class PostfixLookupElement<TPsiElement extends PsiElement> exten
   }
 
   @Nullable private PrefixExpressionContext findOriginalContext(@NotNull PostfixTemplateContext context) {
-    for (PrefixExpressionContext expressionContext : context.expressions) {
+    for (PrefixExpressionContext expressionContext : context.expressions()) {
       if (myExpressionType.isInstance(expressionContext.expression) &&
           expressionContext.expressionRange.equals(myExpressionRange))
         return expressionContext;
     }
 
     int index = 0;
-    for (PrefixExpressionContext expressionContext : context.expressions) {
+    for (PrefixExpressionContext expressionContext : context.expressions()) {
       if (myContextIndex == index++)
         return expressionContext;
     }

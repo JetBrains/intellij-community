@@ -8,23 +8,35 @@ import java.util.*;
 
 public abstract class PostfixTemplateContext {
   @NotNull public final PsiJavaCodeReferenceElement postfixReference;
-  @NotNull public final List<PrefixExpressionContext> expressions;
-  @NotNull public final PrefixExpressionContext outerExpression, innerExpression;
   @NotNull public final PostfixExecutionContext executionContext;
-  public final boolean insideCodeFragment;
+
+  @NotNull private final PsiElement myExpression;
+  @Nullable private List<PrefixExpressionContext> myExpressionContexts;
 
   public PostfixTemplateContext(
     @NotNull PsiJavaCodeReferenceElement reference, @NotNull PsiElement expression,
     @NotNull PostfixExecutionContext executionContext) {
     postfixReference = reference;
+    myExpression = expression;
     this.executionContext = executionContext;
-    insideCodeFragment = (reference.getContainingFile() instanceof PsiCodeFragment);
+  }
 
-    List<PrefixExpressionContext> contexts = buildExpressionContexts(reference, expression);
+  @NotNull public final PrefixExpressionContext innerExpression() {
+    return expressions().get(0);
+  }
 
-    expressions = Collections.unmodifiableList(contexts);
-    innerExpression = contexts.get(0);
-    outerExpression = contexts.get(contexts.size() - 1);
+  @NotNull public final PrefixExpressionContext outerExpression() {
+    List<PrefixExpressionContext> expressions = expressions();
+    return expressions.get(expressions.size() - 1);
+  }
+
+  @NotNull public final List<PrefixExpressionContext> expressions() {
+    if (myExpressionContexts == null) {
+      List<PrefixExpressionContext> contexts = buildExpressionContexts(postfixReference, myExpression);
+      myExpressionContexts = Collections.unmodifiableList(contexts);
+    }
+
+    return myExpressionContexts;
   }
 
   @NotNull protected List<PrefixExpressionContext> buildExpressionContexts(
@@ -95,6 +107,4 @@ public abstract class PostfixTemplateContext {
   @Nullable public String shouldFixPrefixMatcher() {
     return null;
   }
-
-  // todo: getContainingExpression?
 }

@@ -34,7 +34,7 @@ public class IntroduceVariableTemplateProvider extends TemplateProviderBase {
     PrefixExpressionContext forcedTarget = null;
     PsiClass invokedOnType = null;
 
-    for (PrefixExpressionContext expressionContext : context.expressions) {
+    for (PrefixExpressionContext expressionContext : context.expressions()) {
       PsiElement expression = expressionContext.expression;
       // filter out from 'this' and 'super'
       if (expression instanceof PsiThisExpression ||
@@ -68,7 +68,7 @@ public class IntroduceVariableTemplateProvider extends TemplateProviderBase {
       PsiType expressionType = expressionContext.expressionType;
       if (expressionType == null && invokedOnType == null) {
         // for simple expressions like `expr.postfix`
-        if (context.expressions.size() == 1) break;
+        if (context.expressions().size() == 1) break;
       }
 
       // disable on expressions (invocations) of void type

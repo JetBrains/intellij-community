@@ -25,7 +25,7 @@ import java.util.*;
 public class ForeachIterationTemplateProvider extends TemplateProviderBase {
   @Override public void createItems(
     @NotNull PostfixTemplateContext context, @NotNull List<LookupElement> consumer) {
-    PrefixExpressionContext expression = context.outerExpression;
+    PrefixExpressionContext expression = context.outerExpression();
 
     if (!context.executionContext.isForceMode) {
       PsiType expressionType = expression.expressionType;

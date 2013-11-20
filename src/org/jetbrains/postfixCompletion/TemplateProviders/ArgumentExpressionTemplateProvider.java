@@ -23,7 +23,7 @@ import java.util.*;
 public class ArgumentExpressionTemplateProvider extends TemplateProviderBase {
   @Override public void createItems(
       @NotNull PostfixTemplateContext context, @NotNull List<LookupElement> consumer) {
-    PrefixExpressionContext expression = context.outerExpression;
+    PrefixExpressionContext expression = context.outerExpression();
     if (context.executionContext.isForceMode) {
       consumer.add(new ArgumentLookupElement(expression));
     } else if (expression.canBeStatement) {

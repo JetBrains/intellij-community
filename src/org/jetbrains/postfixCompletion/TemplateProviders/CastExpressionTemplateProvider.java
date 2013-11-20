@@ -29,8 +29,8 @@ public class CastExpressionTemplateProvider extends TemplateProviderBase {
       @NotNull PostfixTemplateContext context, @NotNull List<LookupElement> consumer) {
     if (!context.executionContext.isForceMode) return;
 
-    PrefixExpressionContext bestContext = context.outerExpression;
-    List<PrefixExpressionContext> expressions = context.expressions;
+    PrefixExpressionContext bestContext = context.outerExpression();
+    List<PrefixExpressionContext> expressions = context.expressions();
 
     for (int index = expressions.size() - 1; index >= 0; index--) {
       PrefixExpressionContext expressionContext = expressions.get(index);

@@ -21,9 +21,9 @@ import static org.jetbrains.postfixCompletion.CommonUtils.*;
 public class NewExpressionTemplateProvider extends TemplateProviderBase {
   @Override public void createItems(
       @NotNull PostfixTemplateContext context, @NotNull List<LookupElement> consumer) {
-    PrefixExpressionContext expression = context.outerExpression;
+    PrefixExpressionContext expression = context.outerExpression();
 
-    PsiElement referencedElement = context.innerExpression.referencedElement;
+    PsiElement referencedElement = context.innerExpression().referencedElement;
     if (referencedElement instanceof PsiClass) {
       PsiClass psiClass = (PsiClass) referencedElement;
       CtorAccessibility accessibility =
