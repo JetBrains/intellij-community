@@ -5,13 +5,13 @@ import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.json.psi.JsonArray;
-import com.jetbrains.json.psi.JsonPropertyValue;
+import com.jetbrains.json.psi.JsonValue;
 import com.jetbrains.json.psi.JsonVisitor;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-public class JsonArrayImpl extends JsonPropertyValueImpl implements JsonArray {
+public class JsonArrayImpl extends JsonValueImpl implements JsonArray {
 
   public JsonArrayImpl(ASTNode node) {
     super(node);
@@ -24,8 +24,8 @@ public class JsonArrayImpl extends JsonPropertyValueImpl implements JsonArray {
 
   @Override
   @NotNull
-  public List<JsonPropertyValue> getPropertyValueList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, JsonPropertyValue.class);
+  public List<JsonValue> getValueList() {
+    return PsiTreeUtil.getChildrenOfTypeAsList(this, JsonValue.class);
   }
 
 }

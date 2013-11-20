@@ -10,8 +10,9 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
+import com.jetbrains.json.JsonParserDefinition;
 import com.jetbrains.json.psi.JsonProperty;
-import com.jetbrains.json.psi.JsonPropertyValue;
+import com.jetbrains.json.psi.JsonValue;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -24,8 +25,8 @@ import static com.jetbrains.json.JsonParserDefinition.CONTAINERS;
  * @author Mikhail Golubev
  */
 public class JsonBlock implements ASTBlock {
-  private static final TokenSet OPEN_BRACES = TokenSet.create(L_BRAKET, L_CURLY);
-  private static final TokenSet CLOSE_BRACES = TokenSet.create(R_BRAKET, R_CURLY);
+  private static final TokenSet OPEN_BRACES = TokenSet.create(L_BRACKET, L_CURLY);
+  private static final TokenSet CLOSE_BRACES = TokenSet.create(R_BRACKET, R_CURLY);
   private static final TokenSet BRACES = TokenSet.orSet(OPEN_BRACES, CLOSE_BRACES);
 
   private JsonBlock myParent;
@@ -100,7 +101,7 @@ public class JsonBlock implements ASTBlock {
       alignment = myChildAlignment;
       indent = Indent.getNormalIndent();
     }
-    if (myNode.getElementType() == PROPERTY && childPsiElement instanceof JsonPropertyValue) {
+    if (myNode.getElementType() == PROPERTY && childPsiElement instanceof JsonValue) {
       wrap = Wrap.createWrap(WrapType.NORMAL, true);
       indent = Indent.getNormalIndent();
     }
@@ -136,14 +137,19 @@ public class JsonBlock implements ASTBlock {
   public ChildAttributes getChildAttributes(int newChildIndex) {
     JsonBlock prevChildBlock = newChildIndex > 0 ? (JsonBlock)mySubBlocks.get(newChildIndex - 1) : null;
     ASTNode prevChildNode = prevChildBlock != null? prevChildBlock.myNode : null;
+    if (myNode.getElementType() == JsonParserDefinition.FILE) {
+      return new ChildAttributes(Indent.getNoneIndent(), null);
+    }
     if (isContainer() && prevChildNode != null) {
       // correctly indent first element after opening brace
-      if (OPEN_BRACES.contains(prevChildNode.getElementType())) {
+      if (OPEN_BRACES.contains(prevChildNode.getElementType()) || prevChildNode.getElementType() == COMMA) {
         return new ChildAttributes(Indent.getNormalIndent(), myChildAlignment);
       }
-      return ChildAttributes.DELEGATE_TO_PREV_CHILD;
     }
-    // TODO find out why inside object then cursor is after '"a": []<cursor>', myNode is instance of JsonArray
+//    // TODO find out why inside object then cursor is after '"a": []<cursor>', myNode is instance of JsonArray
+//    if (isContainer() && prevChildBlock != null) {
+//      return ChildAttributes.DELEGATE_TO_PREV_CHILD;
+//    }
     return new ChildAttributes(Indent.getNormalIndent(), null);
   }
 
@@ -155,7 +161,7 @@ public class JsonBlock implements ASTBlock {
       return lastChildNode != null && lastChildNode.getElementType() == R_CURLY;
     }
     else if (nodeType == ARRAY) {
-      return lastChildNode != null && lastChildNode.getElementType() == R_BRAKET;
+      return lastChildNode != null && lastChildNode.getElementType() == R_BRACKET;
     }
     else if (myPsiElement instanceof JsonProperty) {
       return ((JsonProperty)myPsiElement).getValue() != null;

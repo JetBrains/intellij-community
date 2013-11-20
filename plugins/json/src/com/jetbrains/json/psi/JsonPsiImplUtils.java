@@ -21,8 +21,8 @@ public class JsonPsiImplUtils {
   }
 
   @Nullable
-  public static JsonPropertyValue getValue(JsonPropertyImpl property) {
-    return PsiTreeUtil.getChildOfType(property, JsonPropertyValue.class);
+  public static JsonValue getValue(JsonPropertyImpl property) {
+    return PsiTreeUtil.getChildOfType(property, JsonValue.class);
   }
 
   public static void delete(@NotNull JsonProperty property) {

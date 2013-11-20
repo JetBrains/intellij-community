@@ -16,17 +16,17 @@ public interface JsonElementTypes {
   IElementType OBJECT = new JsonElementType("OBJECT");
   IElementType PROPERTY = new JsonElementType("PROPERTY");
   IElementType PROPERTY_NAME = new JsonElementType("PROPERTY_NAME");
-  IElementType PROPERTY_VALUE = new JsonElementType("PROPERTY_VALUE");
   IElementType STRING_LITERAL = new JsonElementType("STRING_LITERAL");
+  IElementType VALUE = new JsonElementType("VALUE");
 
   IElementType COLON = new JsonTokenType(":");
   IElementType COMMA = new JsonTokenType(",");
   IElementType FALSE = new JsonTokenType("false");
-  IElementType L_BRAKET = new JsonTokenType("[");
+  IElementType L_BRACKET = new JsonTokenType("[");
   IElementType L_CURLY = new JsonTokenType("{");
   IElementType NULL = new JsonTokenType("null");
   IElementType NUMBER = new JsonTokenType("NUMBER");
-  IElementType R_BRAKET = new JsonTokenType("]");
+  IElementType R_BRACKET = new JsonTokenType("]");
   IElementType R_CURLY = new JsonTokenType("}");
   IElementType STRING = new JsonTokenType("STRING");
   IElementType TRUE = new JsonTokenType("true");
@@ -58,11 +58,11 @@ public interface JsonElementTypes {
       else if (type == PROPERTY_NAME) {
         return new JsonPropertyNameImpl(node);
       }
-      else if (type == PROPERTY_VALUE) {
-        return new JsonPropertyValueImpl(node);
-      }
       else if (type == STRING_LITERAL) {
         return new JsonStringLiteralImpl(node);
+      }
+      else if (type == VALUE) {
+        return new JsonValueImpl(node);
       }
       throw new AssertionError("Unknown element type: " + type);
     }

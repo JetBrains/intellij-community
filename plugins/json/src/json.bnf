@@ -34,34 +34,27 @@
 
 json ::= object | array
 
-object ::= L_CURLY properties? R_CURLY {
+object ::= L_CURLY [properties] R_CURLY {
   pin=1
   methods=[
     findProperty
   ]
 }
-
-private properties ::= property (COMMA property)* {
-  pin = 1
-  recoverUntil = closing_brace
-}
-
+private properties ::= property (COMMA property)* { pin(".*")=1 }
 property ::= property_name COLON value {
+  pin = 1
   methods=[
     getName
     delete
   ]
+  recoverUntil = brace_or_comma
 }
 
-array ::= L_BRACKET elements? R_BRACKET {
-  pin=1
+array ::= L_BRACKET [array_elements] R_BRACKET { pin=1 }
+private array_elements ::= array_element (COMMA array_element)* { pin(".*")=1 }
+private array_element ::= value {
+  recoverUntil = bracket_or_comma
 }
-
-private elements ::= value (COMMA value)* {
-  pin = 1
-  recoverUntil = closing_bracket
-}
-
 
 property_name ::= string_literal
 value ::= object | array | literal
@@ -76,5 +69,5 @@ literal ::= string_literal | number_literal | boolean_literal | null_literal {
   mixin="com.jetbrains.json.psi.impl.JsonLiteralMixin"
 }
 
-private closing_bracket ::= !R_BRACKET
-private closing_brace ::= !R_CURLY
+private bracket_or_comma ::= !(R_BRACKET|COMMA)
+private brace_or_comma ::= !(R_CURLY|COMMA)

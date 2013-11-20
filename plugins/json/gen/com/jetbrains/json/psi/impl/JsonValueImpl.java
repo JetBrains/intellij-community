@@ -4,18 +4,18 @@ package com.jetbrains.json.psi.impl;
 import com.intellij.extapi.psi.ASTWrapperPsiElement;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElementVisitor;
-import com.jetbrains.json.psi.JsonPropertyValue;
+import com.jetbrains.json.psi.JsonValue;
 import com.jetbrains.json.psi.JsonVisitor;
 import org.jetbrains.annotations.NotNull;
 
-public class JsonPropertyValueImpl extends ASTWrapperPsiElement implements JsonPropertyValue {
+public class JsonValueImpl extends ASTWrapperPsiElement implements JsonValue {
 
-  public JsonPropertyValueImpl(ASTNode node) {
+  public JsonValueImpl(ASTNode node) {
     super(node);
   }
 
   public void accept(@NotNull PsiElementVisitor visitor) {
-    if (visitor instanceof JsonVisitor) ((JsonVisitor)visitor).visitPropertyValue(this);
+    if (visitor instanceof JsonVisitor) ((JsonVisitor)visitor).visitValue(this);
     else super.accept(visitor);
   }
 

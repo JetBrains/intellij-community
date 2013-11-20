@@ -13,7 +13,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public class JsonObjectImpl extends JsonPropertyValueImpl implements JsonObject {
+public class JsonObjectImpl extends JsonValueImpl implements JsonObject {
 
   public JsonObjectImpl(ASTNode node) {
     super(node);

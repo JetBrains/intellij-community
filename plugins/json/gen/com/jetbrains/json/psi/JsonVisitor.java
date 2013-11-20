@@ -1,14 +1,14 @@
 // This is a generated file. Not intended for manual editing.
 package com.jetbrains.json.psi;
 
-import org.jetbrains.annotations.*;
-import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementVisitor;
+import org.jetbrains.annotations.NotNull;
 
 public class JsonVisitor extends PsiElementVisitor {
 
   public void visitArray(@NotNull JsonArray o) {
-    visitPropertyValue(o);
+    visitValue(o);
   }
 
   public void visitBooleanLiteral(@NotNull JsonBooleanLiteral o) {
@@ -16,7 +16,7 @@ public class JsonVisitor extends PsiElementVisitor {
   }
 
   public void visitLiteral(@NotNull JsonLiteral o) {
-    visitPropertyValue(o);
+    visitValue(o);
   }
 
   public void visitNullLiteral(@NotNull JsonNullLiteral o) {
@@ -28,7 +28,7 @@ public class JsonVisitor extends PsiElementVisitor {
   }
 
   public void visitObject(@NotNull JsonObject o) {
-    visitPropertyValue(o);
+    visitValue(o);
   }
 
   public void visitProperty(@NotNull JsonProperty o) {
@@ -39,12 +39,12 @@ public class JsonVisitor extends PsiElementVisitor {
     visitPsiElement(o);
   }
 
-  public void visitPropertyValue(@NotNull JsonPropertyValue o) {
-    visitPsiElement(o);
-  }
-
   public void visitStringLiteral(@NotNull JsonStringLiteral o) {
     visitLiteral(o);
+  }
+
+  public void visitValue(@NotNull JsonValue o) {
+    visitPsiElement(o);
   }
 
   public void visitPsiElement(@NotNull PsiElement o) {

@@ -3,7 +3,6 @@ package com.jetbrains.json;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.ParserDefinition;
 import com.intellij.lang.PsiParser;
-import com.intellij.lexer.FlexAdapter;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.FileViewProvider;
@@ -24,7 +23,7 @@ public class JsonParserDefinition implements ParserDefinition {
   @NotNull
   @Override
   public Lexer createLexer(Project project) {
-    return new FlexAdapter(new _JsonLexer());
+    return new JsonLexer();
   }
 
   @Override

@@ -12,7 +12,7 @@ import org.jetbrains.annotations.Nullable;
  */
 public class JsonBraceMatcher implements PairedBraceMatcher {
   private static BracePair[] PAIRS = {
-    new BracePair(JsonElementTypes.L_BRAKET, JsonElementTypes.R_BRAKET, true),
+    new BracePair(JsonElementTypes.L_BRACKET, JsonElementTypes.R_BRACKET, true),
     new BracePair(JsonElementTypes.L_CURLY, JsonElementTypes.R_CURLY, true)
   };
 

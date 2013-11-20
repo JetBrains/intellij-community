@@ -16,7 +16,7 @@ public class JsonLiteralManipulator extends AbstractElementManipulator<JsonLiter
     JsonProperty property = PsiTreeUtil.findChildOfType(dummy, JsonProperty.class);
     assert property != null;
 
-    JsonPropertyValue value = property.getPropertyValue();
+    JsonValue value = property.getValue();
     assert value instanceof JsonLiteral;
 
     return (JsonLiteral)element.replace(value);

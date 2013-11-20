@@ -1,10 +1,9 @@
 // This is a generated file. Not intended for manual editing.
 package com.jetbrains.json.psi;
 
-import java.util.List;
-import org.jetbrains.annotations.*;
 import com.intellij.psi.PsiElement;
-import com.jetbrains.json.psi.impl.JsonPropertyImpl;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public interface JsonProperty extends PsiElement {
 
@@ -12,13 +11,10 @@ public interface JsonProperty extends PsiElement {
   JsonPropertyName getPropertyName();
 
   @Nullable
-  JsonPropertyValue getPropertyValue();
+  JsonValue getValue();
 
   @NotNull
   String getName();
-
-  @Nullable
-  JsonPropertyValue getValue();
 
   void delete();
 

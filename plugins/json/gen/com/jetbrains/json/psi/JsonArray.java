@@ -1,13 +1,13 @@
 // This is a generated file. Not intended for manual editing.
 package com.jetbrains.json.psi;
 
-import java.util.List;
-import org.jetbrains.annotations.*;
-import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.NotNull;
 
-public interface JsonArray extends JsonPropertyValue {
+import java.util.List;
+
+public interface JsonArray extends JsonValue {
 
   @NotNull
-  List<JsonPropertyValue> getPropertyValueList();
+  List<JsonValue> getValueList();
 
 }
