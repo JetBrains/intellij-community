@@ -61,7 +61,7 @@ public class PsiContinueStatementImpl extends CompositePsiElement implements Psi
             return ((PsiLabeledStatement)SourceTreeToPsiMap.treeElementToPsi(parent)).getStatement();
           }
         }
-        if (parent.getElementType() == METHOD || parent.getElementType() == CLASS_INITIALIZER) return null; // do not pass through anonymous/local class
+        if (parent.getElementType() == METHOD || parent.getElementType() == CLASS_INITIALIZER || parent.getElementType() == LAMBDA_EXPRESSION) return null; // do not pass through anonymous/local class
       }
     }
     return null;
