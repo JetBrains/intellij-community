@@ -32,6 +32,8 @@ import com.intellij.openapi.vfs.newvfs.impl.VirtualDirectoryImpl;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.OpenTHashSet;
 import com.intellij.util.containers.Queue;
+import com.intellij.util.text.FilePathHashingStrategy;
+import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -92,6 +94,8 @@ public class RefreshWorker {
   }
 
   private void processQueue(NewVirtualFileSystem fs, PersistentFS persistence) throws RefreshCancelledException {
+    TObjectHashingStrategy<String> strategy = FilePathHashingStrategy.create(fs.isCaseSensitive());
+
     while (!myRefreshQueue.isEmpty()) {
       checkCancelled();
 
@@ -120,13 +124,13 @@ public class RefreshWorker {
         if (fullSync) {
           String[] currentNames = persistence.list(file);
           String[] upToDateNames = VfsUtil.filterNames(fs.list(file));
-          Set<String> newNames = newTroveSet(FileUtil.PATH_HASHING_STRATEGY, upToDateNames);
+          Set<String> newNames = newTroveSet(strategy, upToDateNames);
           ContainerUtil.removeAll(newNames, currentNames);
-          Set<String> deletedNames = newTroveSet(FileUtil.PATH_HASHING_STRATEGY, currentNames);
+          Set<String> deletedNames = newTroveSet(strategy, currentNames);
           ContainerUtil.removeAll(deletedNames, upToDateNames);
           OpenTHashSet<String> actualNames = null;
-          if (!SystemInfo.isFileSystemCaseSensitive) {
-            actualNames = new OpenTHashSet<String>(FileUtil.PATH_HASHING_STRATEGY, upToDateNames);
+          if (!fs.isCaseSensitive()) {
+            actualNames = new OpenTHashSet<String>(strategy, upToDateNames);
           }
           debug(LOG, "current=%s +%s -%s", currentNames, newNames, deletedNames);
 
@@ -163,8 +167,8 @@ public class RefreshWorker {
         else {
           Collection<VirtualFile> cachedChildren = file.getCachedChildren();
           OpenTHashSet<String> actualNames = null;
-          if (!SystemInfo.isFileSystemCaseSensitive) {
-            actualNames = new OpenTHashSet<String>(FileUtil.PATH_HASHING_STRATEGY, VfsUtil.filterNames(fs.list(file)));
+          if (!fs.isCaseSensitive()) {
+            actualNames = new OpenTHashSet<String>(strategy, VfsUtil.filterNames(fs.list(file)));
           }
           debug(LOG, "cached=%s actual=%s", cachedChildren, actualNames);
 
