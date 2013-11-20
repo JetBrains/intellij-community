@@ -492,6 +492,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
       return children;
     }
 
+    final boolean wasChildrenLoaded = ourPersistence.areChildrenLoaded(this);
     final FSRecords.NameId[] childrenIds = ourPersistence.listAll(this);
     VirtualFileSystemEntry[] result;
     if (childrenIds.length == 0) {
@@ -509,6 +510,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
                       " ignoreCase: "+ignoreCase+
                       " SystemInfo.isFileSystemCaseSensitive: "+ SystemInfo.isFileSystemCaseSensitive+
                       " SystemInfo.OS: "+ SystemInfo.OS_NAME+" "+SystemInfo.OS_VERSION+
+                      " wasChildrenLoaded: "+wasChildrenLoaded+
                       " in the dir: "+VirtualDirectoryImpl.this+";" +
                       " children: "+Arrays.toString(childrenIds));
           }
