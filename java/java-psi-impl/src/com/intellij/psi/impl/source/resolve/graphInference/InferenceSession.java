@@ -462,7 +462,7 @@ public class InferenceSession {
     return true;
   }
 
-  private PsiSubstitutor resolveBounds(final Collection<InferenceVariable> inferenceVariables, PsiSubstitutor substitutor, boolean acceptObject) {
+  private PsiSubstitutor resolveBounds(final Collection<InferenceVariable> inferenceVariables, PsiSubstitutor substitutor, boolean acceptInitialUpperBound) {
     final List<List<InferenceVariable>> independentVars = InferenceVariablesOrder.resolveOrder(inferenceVariables, this);
     for (List<InferenceVariable> variables : independentVars) {
       for (InferenceVariable inferenceVariable : variables) {
@@ -509,23 +509,33 @@ public class InferenceSession {
               inferenceVariable.setInstantiation(lub instanceof PsiCapturedWildcardType ? ((PsiCapturedWildcardType)lub).getWildcard() : lub);
             }
             else {
+              boolean inferred = false;
               PsiType glb = null;
               if (isThrowable(upperBounds)) {
                 glb = PsiType.getJavaLangRuntimeException(myManager, GlobalSearchScope.allScope(myManager.getProject()));
+                inferred = true;
               } else {
+                int boundCandidatesNumber = 0;
                 for (PsiType upperBound : upperBounds) {
-                  upperBound = acceptBoundsWithRecursiveDependencies(inferenceVariable, upperBound, substitutor);
-                  if (isProperType(upperBound)) {
+                  PsiType substitutedBound = acceptBoundsWithRecursiveDependencies(inferenceVariable, upperBound, substitutor);
+                  if (isProperType(substitutedBound)) {
+                    boundCandidatesNumber++;
+                    if (!upperBound.equals(substitutedBound)) {
+                      inferred = true;
+                    }
                     if (glb == null) {
-                      glb = upperBound;
+                      glb = substitutedBound;
                     }
                     else {
-                      glb = GenericsUtil.getGreatestLowerBound(glb, upperBound);
+                      glb = GenericsUtil.getGreatestLowerBound(glb, substitutedBound);
                     }
                   }
                 }
+                if (!inferred) {
+                  inferred = boundCandidatesNumber > typeParameter.getExtendsListTypes().length && (typeParameter.getExtendsListTypes().length > 0 || boundCandidatesNumber > 1);
+                }
               }
-              if (glb != null && (acceptObject || !glb.equalsToText(CommonClassNames.JAVA_LANG_OBJECT))) {
+              if (glb != null && (acceptInitialUpperBound || inferred)) {
                 inferenceVariable.setInstantiation(glb);
               }
             }
