@@ -205,6 +205,14 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border {
     paintCurrentValue(g, r, hasFocus);
   }
 
+  @Override
+  protected Rectangle rectangleForCurrentValue() {
+    final Rectangle r = super.rectangleForCurrentValue();
+    r.x-=2;
+    r.y-=1;
+    return r;
+  }
+
   public void paintCurrentValue(Graphics g, Rectangle bounds, boolean hasFocus) {
     ListCellRenderer renderer = comboBox.getRenderer();
     Component c;
@@ -247,8 +255,10 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border {
       r.height -= myPadding.top + myPadding.bottom;
     }
 
-    currentValuePane.paintComponent(g, c, comboBox, r.x-2, r.y, r.width, r.height, shouldValidate);
+    currentValuePane.paintComponent(g, c, comboBox, r.x, r.y, r.width, r.height, shouldValidate);
   }
+
+
 
   @Override
   protected void installKeyboardActions() {
