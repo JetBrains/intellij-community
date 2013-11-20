@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,23 +33,22 @@ public class EditorWithProviderComposite extends EditorComposite {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.fileEditor.impl.EditorWithProviderComposite");
   private final FileEditorProvider[] myProviders;
 
-  EditorWithProviderComposite (
-    final VirtualFile file,
-    final FileEditor[] editors,
-    final FileEditorProvider[] providers,
-    final FileEditorManagerEx fileEditorManager
-    ) {
+  EditorWithProviderComposite(@NotNull VirtualFile file,
+                              @NotNull FileEditor[] editors,
+                              @NotNull FileEditorProvider[] providers,
+                              @NotNull FileEditorManagerEx fileEditorManager) {
     super(file, editors, fileEditorManager);
     myProviders = providers;
   }
 
+  @NotNull
   public FileEditorProvider[] getProviders() {
     return myProviders;
   }
 
   @Override
   public boolean isModified() {
-    final FileEditor [] editors = getEditors ();
+    final FileEditor[] editors = getEditors();
     for (FileEditor editor : editors) {
       if (editor.isModified()) {
         return true;
@@ -62,22 +61,23 @@ public class EditorWithProviderComposite extends EditorComposite {
   @NotNull
   public Pair<FileEditor, FileEditorProvider> getSelectedEditorWithProvider() {
     LOG.assertTrue(myEditors.length > 0, myEditors.length);
-    if(myEditors.length==1){
-      LOG.assertTrue(myTabbedPaneWrapper==null);
-      return Pair.create (myEditors[0], myProviders [0]);
+    if (myEditors.length == 1) {
+      LOG.assertTrue(myTabbedPaneWrapper == null);
+      return Pair.create(myEditors[0], myProviders[0]);
     }
-    else{ // we have to get myEditor from tabbed pane
-      LOG.assertTrue(myTabbedPaneWrapper!=null);
+    else { // we have to get myEditor from tabbed pane
+      LOG.assertTrue(myTabbedPaneWrapper != null);
       int index = myTabbedPaneWrapper.getSelectedIndex();
       if (index == -1) {
         index = 0;
       }
-      LOG.assertTrue(index>=0, index);
-      LOG.assertTrue(index<myEditors.length, index);
-      return Pair.create (myEditors[index], myProviders [index]);
+      LOG.assertTrue(index >= 0, index);
+      LOG.assertTrue(index < myEditors.length, index);
+      return Pair.create(myEditors[index], myProviders[index]);
     }
   }
 
+  @NotNull
   public HistoryEntry currentStateAsHistoryEntry() {
     final FileEditor[] editors = getEditors();
     final FileEditorState[] states = new FileEditorState[editors.length];
