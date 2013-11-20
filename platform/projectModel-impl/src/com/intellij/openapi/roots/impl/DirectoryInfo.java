@@ -105,6 +105,7 @@ public final class DirectoryInfo {
            ", libraryClassRoot=" + getLibraryClassRoot() +
            ", contentRoot=" + getContentRoot() +
            ", sourceRoot=" + getSourceRoot() +
+           ", orderEntries=" + Arrays.toString(orderEntries) +
            "}";
   }
 
