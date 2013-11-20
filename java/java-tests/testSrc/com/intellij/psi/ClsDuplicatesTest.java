@@ -33,7 +33,7 @@ public class ClsDuplicatesTest extends PsiTestCase {
     return JavaTestUtil.getTestJdk();
   }
 
-  public void testDuplicates() throws Exception {
+  public void _testDuplicates() throws Exception {
     final PsiPackage rootPackage = JavaPsiFacade.getInstance(getProject()).findPackage("");
     assert rootPackage != null;
     final GlobalSearchScope scope = GlobalSearchScope.allScope(getProject());
@@ -93,7 +93,10 @@ public class ClsDuplicatesTest extends PsiTestCase {
 
   private void visit(PsiNamedElement element) {
     if (!uniques.add(element)) {
-      fail("Duplicate Element: "+ElementDescriptionUtil.getElementDescription(element, UsageViewLongNameLocation.INSTANCE)+": "+element.getText() );
+      fail("Duplicate Element: " +
+           ElementDescriptionUtil.getElementDescription(element, UsageViewLongNameLocation.INSTANCE) +
+           ": " +
+           element.getText());
     }
   }
 }
