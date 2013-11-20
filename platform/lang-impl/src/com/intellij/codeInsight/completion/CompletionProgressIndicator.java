@@ -208,7 +208,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
       try {
         final int selectionEndOffset = initContext.getSelectionEndOffset();
         final PsiReference reference = initContext.getFile().findReferenceAt(selectionEndOffset);
-        if (reference != null && reference == initContext.getFile().findReferenceAt(initContext.getStartOffset())) {
+        if (reference != null && reference.equals(initContext.getFile().findReferenceAt(initContext.getStartOffset()))) {
           initContext.setReplacementOffset(findReplacementOffset(selectionEndOffset, reference));
         }
       }
