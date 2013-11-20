@@ -42,6 +42,7 @@ public class WeightBasedComparator implements Comparator<NodeDescriptor> {
     myCompareToString = compareToString;
   }
 
+  @Override
   public int compare(NodeDescriptor o1, NodeDescriptor o2) {
     final int w1 = getWeight(o1);
     final int w2 = getWeight(o2);
