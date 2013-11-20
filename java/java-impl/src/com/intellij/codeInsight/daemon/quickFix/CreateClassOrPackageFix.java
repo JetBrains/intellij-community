@@ -246,7 +246,9 @@ public class CreateClassOrPackageFix extends LocalQuickFixAndIntentionActionOnPs
         if (LOG.isDebugEnabled()) {
           LOG.debug("Package directory: " + directory);
         }
-        if (directory.isWritable() && scope.contains(directory.getVirtualFile())) {
+        VirtualFile virtualFile = directory.getVirtualFile();
+        if (directory.isWritable() && scope.contains(virtualFile)
+            && !JavaProjectRootsUtil.isInGeneratedCode(virtualFile, psiManager.getProject())) {
           writableDirectoryList.add(directory);
         }
       }
