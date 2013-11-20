@@ -495,7 +495,7 @@ public class LibraryImpl extends TraceableDisposable implements LibraryEx.Modifi
       if (myExcludedRoots != null) {
         for (String excludedRoot : myExcludedRoots.getUrls()) {
           if (!isUnderRoots(excludedRoot)) {
-            VirtualFilePointer pointer = myExcludedRoots.findByUrl(url);
+            VirtualFilePointer pointer = myExcludedRoots.findByUrl(excludedRoot);
             if (pointer != null) {
               myExcludedRoots.remove(pointer);
             }
