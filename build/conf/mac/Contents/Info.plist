@@ -59,6 +59,10 @@
       <string>x86_64</string>
       <string>i386</string>
     </array>
+
+    <key>jreRedistributed</key>
+    <string>NoJavaDistribution</string>
+
     <key>LSRequiresNativeExecution</key>
     <string>YES</string>
     @@url_schemes@@
