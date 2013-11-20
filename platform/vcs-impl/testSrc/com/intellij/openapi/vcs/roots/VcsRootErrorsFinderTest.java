@@ -15,9 +15,11 @@
  */
 package com.intellij.openapi.vcs.roots;
 
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vcs.VcsDirectoryMapping;
 import com.intellij.openapi.vcs.VcsRootError;
 import com.intellij.openapi.vcs.VcsTestUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -218,7 +220,12 @@ public class VcsRootErrorsFinderTest extends VcsRootPlatformTest {
     if (extraPaths != null) {
       expected.addAll(extraAll(extraPaths));
     }
-    Collection<VcsRootError> actual = new VcsRootErrorsFinder(myProject).find();
+    Collection<VcsRootError> actual = ContainerUtil.filter(new VcsRootErrorsFinder(myProject).find(), new Condition<VcsRootError>() {
+      @Override
+      public boolean value(VcsRootError error) {
+        return error.getVcsKey().equals(myVcs.getKeyInstanceMethod());
+      }
+    });
     VcsTestUtil.assertEqualCollections(actual, expected);
   }
 

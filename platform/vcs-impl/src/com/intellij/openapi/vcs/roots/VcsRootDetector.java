@@ -37,22 +37,22 @@ public class VcsRootDetector {
   @NotNull
   public VcsRootDetectInfo detect(@Nullable VirtualFile startDir) {
     if (startDir == null) {
-      return new VcsRootDetectInfo(Collections.<VcsRoot>emptyList(), false, false);
+      return new VcsRootDetectInfo(Collections.<VcsRoot>emptyList(), false);
     }
 
     final Set<VcsRoot> roots = scanForRootsInsideDir(startDir);
     roots.addAll(scanForRootsInContentRoots());
     for (VcsRoot root : roots) {
       if (startDir.equals(root.getPath())) {
-        return new VcsRootDetectInfo(roots, true, false);
+        return new VcsRootDetectInfo(roots, false);
       }
     }
     List<VcsRoot> rootsAbove = scanForSingleRootAboveDir(startDir);
     if (!rootsAbove.isEmpty()) {
       roots.addAll(rootsAbove);
-      return new VcsRootDetectInfo(roots, true, true);
+      return new VcsRootDetectInfo(roots, true);
     }
-    return new VcsRootDetectInfo(roots, false, false);
+    return new VcsRootDetectInfo(roots, false);
   }
 
   @NotNull
