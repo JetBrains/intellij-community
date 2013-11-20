@@ -34,7 +34,6 @@ Available templates:
 * `.arg` – helps surround argument with invocation `method(expr)`
 * `.cast` – surrounds expression with cast `(SomeType) expr`
 * `.new` – produces instantiation expression for type `new T()`
-
 * `.fori` – surrounds with loop `for (int i = 0; i < expr.length; i++)`
 * `.forr` – reverse loop `for (int i = expr.length; i >= 0; i--)`
 
@@ -45,6 +44,7 @@ Other features:
 * Works inside code fragments, like *evaluate expression* debugger window
 
 Future work:
+
 * `.field` – introduces field for expression `_field = expr;`
 * `.par` – surrounds outer expression with parentheses `(expr)`
 * `.return` – returns value from method/property `return expr;`
@@ -55,6 +55,7 @@ Future work:
 * `.try` – surrounds resource expression with `try (T resource = expr)`
 * Settings page to disable/enable templates
 * Control braces insertion for statements (use code style settings?)
+* Completion char handling `expr.var.usage()` => `T x = expr; x.usage()`?
 * Support non-Java languages, of course :)
 
 #### Feedback
