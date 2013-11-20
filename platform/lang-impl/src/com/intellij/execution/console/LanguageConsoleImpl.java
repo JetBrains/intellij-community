@@ -404,8 +404,7 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
 
     Document history = myHistoryViewer.getDocument();
     MarkupModel markupModel = DocumentMarkupModel.forDocument(history, myProject, true);
-    int offset = history.getTextLength();
-    appendToHistoryDocument(history, text);
+    int offset = appendToHistoryDocument(history, text);
     if (attributes == null) return;
     markupModel.addRangeHighlighter(offset, offset + text.length(), HighlighterLayer.SYNTAX, attributes, HighlighterTargetArea.EXACT_RANGE);
   }
@@ -482,8 +481,7 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
       highlighter = consoleEditor.getHighlighter();
     }
     //offset can be changed after text trimming after insert due to buffer constraints
-    appendToHistoryDocument(history, text);
-    int offset = history.getTextLength() - text.length();
+    int offset = appendToHistoryDocument(history, text);
 
     final HighlighterIterator iterator = highlighter.createIterator(localStartOffset);
     final int localEndOffset = textRange.getEndOffset();
@@ -514,9 +512,11 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
     addTextToHistory(myPrompt, ConsoleViewContentType.USER_INPUT.getAttributes());
   }
 
-  protected void appendToHistoryDocument(@NotNull Document history, @NotNull CharSequence text) {
+  // returns the real (cyclic-buffer-aware) start offset of the inserted text
+  protected int appendToHistoryDocument(@NotNull Document history, @NotNull CharSequence text) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     history.insertString(history.getTextLength(), text);
+    return history.getTextLength() - text.length();
   }
 
   private static void duplicateHighlighters(@NotNull MarkupModel to, @NotNull MarkupModel from, int offset, @NotNull TextRange textRange) {
