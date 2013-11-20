@@ -28,6 +28,9 @@ public interface VcsShortCommitDetails {
   @NotNull
   List<Hash> getParents();
 
+  /**
+   * @see {@link TimedVcsCommit#getTime()}.
+   */
   long getTime();
 
   @NotNull

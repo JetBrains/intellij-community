@@ -39,14 +39,14 @@ class InterpreterInterface(BaseInterpreterInterface):
     def get_greeting_msg(self):
         return self.interpreter.get_greeting_msg()
 
-    def doAddExec(self, line):
+    def doAddExec(self, codeFragment):
         self.notify_about_magic()
-        if (line.rstrip().endswith('??')):
+        if (codeFragment.text.rstrip().endswith('??')):
             print('IPython-->')
         try:
-            res = bool(self.interpreter.addExec(line))
+            res = bool(self.interpreter.addExec(codeFragment.text))
         finally:
-            if (line.rstrip().endswith('??')):
+            if (codeFragment.text.rstrip().endswith('??')):
                 print('<--IPython')
 
         return res

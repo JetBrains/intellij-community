@@ -17,6 +17,7 @@ package org.jetbrains.jps.uiDesigner.build;
 
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.uiDesigner.core.AbstractLayout;
 import org.jetbrains.asm4.ClassReader;
 import org.jetbrains.asm4.ClassVisitor;
 import org.jetbrains.asm4.MethodVisitor;
@@ -27,6 +28,7 @@ import org.jetbrains.jps.model.java.JpsJavaExtensionService;
 import org.jetbrains.jps.model.module.JpsModule;
 import org.jetbrains.jps.uiDesigner.compiler.FormsInstrumenter;
 import org.jetbrains.jps.uiDesigner.model.JpsUiDesignerExtensionService;
+import org.jetbrains.jps.util.JpsPathUtil;
 
 import java.io.File;
 import java.io.IOException;
@@ -40,6 +42,7 @@ public class FormsBuilderTest extends JpsBuildTestCase {
   public void testSimple() {
     JpsModule m = addModule("m", copyToProject(SIMPLE_FORM_PATH, "src"));
     makeAll().assertSuccessful();
+    assertTrue(isRuntimeClassesCopied(m));
     assertInstrumented(m, "xxx/MyForm.class");
     makeAll().assertUpToDate();
   }
@@ -95,6 +98,17 @@ public class FormsBuilderTest extends JpsBuildTestCase {
     assertCompiled(FormsInstrumenter.BUILDER_NAME, "src/xxx/MyForm.form");
     assertInstrumented(m, "xxx/MyForm.class");
     makeAll().assertUpToDate();
+  }
+
+  public void testDoNotCopyRuntimeClassesIfOnlyAlienFormFilesExist() {
+    JpsModule module = addModule("m", copyToProject("plugins/ui-designer/jps-plugin/testData/build/alienFormFile", "src"));
+    makeAll().assertSuccessful();
+    assertFalse(isRuntimeClassesCopied(module));
+  }
+
+  private static boolean isRuntimeClassesCopied(JpsModule module) {
+    File outputDir = JpsPathUtil.urlToFile(JpsJavaExtensionService.getInstance().getOutputUrl(module, false));
+    return new File(outputDir, AbstractLayout.class.getName().replace('.', '/') + ".class").exists();
   }
 
   private static void assertNotInstrumented(JpsModule m, final String classPath) {

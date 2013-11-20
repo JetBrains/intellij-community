@@ -35,6 +35,6 @@ public class TestsConsoleBuilderImpl extends TextConsoleBuilderImpl {
 
   @Override
   protected ConsoleView createConsole() {
-    return new TestsConsoleViewImpl(getProject(), getScope(), isViewer(), null, isUsePredefinedMessageFilter());
+    return new TestsConsoleViewImpl(getProject(), getScope(), isViewer(), isUsePredefinedMessageFilter());
   }
 }

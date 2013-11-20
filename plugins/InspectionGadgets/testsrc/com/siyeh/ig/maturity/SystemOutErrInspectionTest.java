@@ -27,16 +27,6 @@ public class SystemOutErrInspectionTest extends LightInspectionTestCase {
     doStatementTest("/*Uses of 'System.out' should probably be replaced with more robust logging*/System.out/**/.println(\"debugging\");");
   }
 
-  public void testInTest() {
-    addEnvironmentClass("package org.junit;" +
-                        "@Retention(RetentionPolicy.RUNTIME) " +
-                        "@Target({ElementType.METHOD}) " +
-                        "public @interface Test {}");
-    doMemberTest("@org.junit.Test public void testSomething() {" +
-                 "  System.out.println(\"debugger\");" +
-                 "}");
-  }
-
   public void testMultiple() {
     doMemberTest("public void foo() {" +
                  "  /*Uses of 'System.out' should probably be replaced with more robust logging*/System.out/**/.println(0);" +
@@ -48,8 +38,6 @@ public class SystemOutErrInspectionTest extends LightInspectionTestCase {
 
   @Override
   protected InspectionProfileEntry getInspection() {
-    final SystemOutErrInspection inspection = new SystemOutErrInspection();
-    inspection.ignoreInTestCode = true;
-    return inspection;
+    return new SystemOutErrInspection();
   }
 }

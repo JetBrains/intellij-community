@@ -68,7 +68,7 @@ public class ModuleExtendedModelBuilderImpl implements ModelBuilderService {
 
     moduleVersionModel.setArtifacts(artifacts);
 
-    Set<String> testDirectories = new HashSet<String>();
+    final Set<String> testDirectories = new HashSet<String>();
     for (Task task : project.getTasks()) {
       if (task instanceof Test) {
         Test test = (Test)task;
@@ -83,8 +83,8 @@ public class ModuleExtendedModelBuilderImpl implements ModelBuilderService {
       }
     }
 
-    Set<String> javaDirectories = new HashSet<String>();
-    Set<String> resourceDirectories = new HashSet<String>();
+    final Set<String> javaDirectories = new HashSet<String>();
+    final Set<String> resourceDirectories = new HashSet<String>();
 
     if (project.hasProperty(SOURCE_SETS_PROPERTY)) {
       Object sourceSets = project.property(SOURCE_SETS_PROPERTY);
@@ -109,7 +109,12 @@ public class ModuleExtendedModelBuilderImpl implements ModelBuilderService {
 
     javaDirectories.removeAll(testDirectories);
     javaDirectories.removeAll(resourceDirectories);
+
+    final Set<String> testResourceDirectories = new HashSet<String>(resourceDirectories);
+    testResourceDirectories.retainAll(testDirectories);
+
     testDirectories.removeAll(resourceDirectories);
+    resourceDirectories.removeAll(testResourceDirectories);
 
     for (String javaDir : javaDirectories) {
       contentRoot.addSourceDirectory(new IdeaSourceDirectoryImpl(new File(javaDir)));
@@ -119,6 +124,9 @@ public class ModuleExtendedModelBuilderImpl implements ModelBuilderService {
     }
     for (String resourceDir : resourceDirectories) {
       contentRoot.addResourceDirectory(new IdeaSourceDirectoryImpl(new File(resourceDir)));
+    }
+    for (String testResourceDir : testResourceDirectories) {
+      contentRoot.addTestResourceDirectory(new IdeaSourceDirectoryImpl(new File(testResourceDir)));
     }
 
     moduleVersionModel.setContentRoots(Collections.<ExtIdeaContentRoot>singleton(contentRoot));

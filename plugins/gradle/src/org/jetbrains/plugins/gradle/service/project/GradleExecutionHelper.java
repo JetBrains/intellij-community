@@ -47,6 +47,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.lang.reflect.Field;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -79,7 +80,7 @@ public class GradleExecutionHelper {
                                         @NotNull ExternalSystemTaskNotificationListener listener,
                                         @Nullable final String vmOptions) {
     BuildLauncher result = connection.newBuild();
-    List<String> extraJvmArgs = vmOptions == null ? ContainerUtil.<String>emptyList() : ContainerUtil.newArrayList(vmOptions.trim());
+    List<String> extraJvmArgs = vmOptions == null ? Collections.<String>emptyList() : ContainerUtil.newArrayList(vmOptions.trim());
     prepare(result, id, settings, listener, extraJvmArgs, connection);
     return result;
   }

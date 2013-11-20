@@ -53,7 +53,21 @@ public abstract class CompilerOutputBaseIndex<K, V> {
           rewriteIndex.set(true);
         }
         final File storageFile = getStorageFile(indexId);
-        final MapIndexStorage<K, V> indexStorage = new MapIndexStorage<K, V>(storageFile, myKeyDescriptor, myValueExternalizer, 1024);
+        final MapIndexStorage<K, V> indexStorage = IOUtil.openCleanOrResetBroken(
+          new ThrowableComputable<MapIndexStorage<K, V>, IOException>() {
+            @Override
+            public MapIndexStorage<K, V> compute() throws IOException {
+              return new MapIndexStorage<K, V>(storageFile, myKeyDescriptor, myValueExternalizer, 1024);
+            }
+          },
+          new Runnable() {
+            @Override
+            public void run() {
+              IOUtil.deleteAllFilesStartingWith(storageFile);
+              rewriteIndex.set(true);
+            }
+          }
+        );
         index = new MapReduceIndex<K, V, ClassNode>(indexId, getIndexer(), indexStorage);
         index.setInputIdToDataKeysIndex(new Factory<PersistentHashMap<Integer, Collection<K>>>() {
           @Override

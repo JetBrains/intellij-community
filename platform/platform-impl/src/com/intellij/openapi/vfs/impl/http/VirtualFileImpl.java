@@ -18,7 +18,6 @@ package com.intellij.openapi.vfs.impl.http;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.VirtualFileSystem;
@@ -65,7 +64,7 @@ class VirtualFileImpl extends HttpVirtualFile {
         }
       });
 
-      path = StringUtil.trimEnd(UriUtil.trimParameters(path), "/");
+      path = UriUtil.trimLastSlash(UriUtil.trimParameters(path));
       int lastSlash = path.lastIndexOf('/');
       if (lastSlash == -1) {
         myParentPath = null;

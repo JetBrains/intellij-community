@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -160,7 +160,7 @@ public class SaveProjectAsTemplateAction extends AnAction {
             try {
               String relativePath = VfsUtilCore.getRelativePath(virtualFile, dir, '/');
               if (relativePath == null) {
-                throw new RuntimeException("Can't find relative path for " + virtualFile);
+                throw new RuntimeException("Can't find relative path for " + virtualFile + " in " + dir);
               }
               final boolean system = Project.DIRECTORY_STORE_FOLDER.equals(virtualFile.getParent().getName());
               if (system) {

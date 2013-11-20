@@ -26,6 +26,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.border.EmptyBorder;
+import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.util.Collection;
 
@@ -35,10 +37,7 @@ public class PopupWithTextFieldWithAutoCompletion extends TextFieldWithAutoCompl
 
   public PopupWithTextFieldWithAutoCompletion(@NotNull Project project, @NotNull Collection<String> variants) {
     super(project, new StringsCompletionProvider(variants, null), false, null);
-
-    // this hack is needed, because the preferred size is requested before createEditor(),
-    // and EditorTextField#getPreferredSize() hardcodes unacceptable (100, 20)
-    setPreferredSize(new JBTextField(20).getPreferredSize());
+    setBorder(new EmptyBorder(3, 3, 3, 3));
   }
 
   public JBPopup createPopup() {
@@ -48,6 +47,14 @@ public class PopupWithTextFieldWithAutoCompletion extends TextFieldWithAutoCompl
       .setCancelKeyEnabled(true)
       .setRequestFocus(true)
       .createPopup();
+
+    final JBTextField field = new JBTextField(20);
+    final Dimension size = field.getPreferredSize();
+    final Insets insets = getBorder().getBorderInsets(this);
+    size.height+=6 + insets.top + insets.bottom;
+    size.width +=4 + insets.left + insets.right;
+    myPopup.setSize(size);
+
     return myPopup;
   }
 

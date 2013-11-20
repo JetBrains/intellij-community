@@ -15,8 +15,8 @@
  */
 package org.jetbrains.idea.svn;
 
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.UriUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.tmatesoft.svn.core.SVNURL;
@@ -43,7 +43,7 @@ public class RootUrlInfo implements RootUrlPair {
     myNode = node;
     myFormat = format;
     myRoot = root;
-    myRepositoryUrl = StringUtil.trimEnd(node.getRepositoryRootUrl().toString(), "/");
+    myRepositoryUrl = UriUtil.trimLastSlash(node.getRepositoryRootUrl().toString());
     myType = type;
   }
 

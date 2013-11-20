@@ -9,6 +9,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -39,7 +40,7 @@ public class ModuleData extends AbstractNamedData implements Named, ExternalConf
     super(owner, name);
     myModuleTypeId = typeId;
     myExternalConfigPath = externalConfigPath;
-    myArtifacts = ContainerUtil.emptyList();
+    myArtifacts = Collections.emptyList();
     setModuleFileDirectoryPath(moduleFileDirectoryPath);
   }
 

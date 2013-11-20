@@ -147,6 +147,8 @@ public class MavenModuleBuilderHelper {
 
     new WriteCommandAction.Simple(project, myCommandName) {
       protected void run() throws Throwable {
+        PsiDocumentManager.getInstance(project).commitAllDocuments();
+
         MavenDomProjectModel model = MavenDomUtil.getMavenDomProjectModel(project, pom);
         if (model == null) return;
 

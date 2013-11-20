@@ -89,7 +89,7 @@ public class ExtractUtil {
     else {
       GrExpression oldExpr;
       if (helper.getStringPartInfo() != null) {
-        oldExpr = GrIntroduceHandlerBase.processLiteral(helper.getName(), helper.getStringPartInfo(), helper.getProject());
+        oldExpr = GrIntroduceHandlerBase.processLiteral("xyz", helper.getStringPartInfo(), helper.getProject());
       }
       else {
         oldExpr = (GrExpression)helper.getStatements()[0];

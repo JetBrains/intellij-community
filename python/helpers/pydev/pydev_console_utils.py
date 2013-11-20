@@ -132,6 +132,16 @@ class StdIn(BaseStdIn):
             return '\n'
 
 
+class CodeFragment:
+    def __init__(self, text, is_single_line=True):
+        self.text = text
+        self.is_single_line = is_single_line
+        
+    def append(self, code_fragment):
+        self.text = self.text + "\n" + code_fragment.text
+        if not code_fragment.is_single_line:
+            self.is_single_line = False
+
 #=======================================================================================================================
 # BaseInterpreterInterface
 #=======================================================================================================================
@@ -140,22 +150,16 @@ class BaseInterpreterInterface:
         self.mainThread = mainThread
         self.interruptable = False
         self.exec_queue = _queue.Queue(0)
-        self.buffer = []
+        self.buffer = None
 
-    def needMore(self, buffer, line):
-        if not buffer:
-            buffer = []
-        buffer.append(line)
-        source = "\n".join(buffer)
+    def needMoreForCode(self, source):
         if hasattr(self.interpreter, 'is_complete'):
             return not self.interpreter.is_complete(source)
-
         try:
-            code = self.interpreter.compile(source, "<input>", "single")
+            code = self.interpreter.compile(source, "<input>", "exec")
         except (OverflowError, SyntaxError, ValueError):
             # Case 1
             return False
-
         if code is None:
             # Case 2
             return True
@@ -163,10 +167,15 @@ class BaseInterpreterInterface:
         # Case 3
         return False
 
+    def needMore(self, code_fragment):
+        if self.buffer is None:
+            self.buffer = code_fragment
+        else:
+            self.buffer.append(code_fragment)
+        
+        return self.needMoreForCode(code_fragment.text)
 
-    def addExec(self, line):
-        #f_opened = open('c:/temp/a.txt', 'a')
-        #f_opened.write(line+'\n')
+    def addExec(self, code_fragment):
         original_in = sys.stdin
         try:
             help = None
@@ -205,7 +214,7 @@ class BaseInterpreterInterface:
 
                 try:
                     self.startExec()
-                    more = self.doAddExec(line)
+                    more = self.doAddExec(code_fragment)
                     self.finishExec()
                 finally:
                     if help is not None:
@@ -226,12 +235,10 @@ class BaseInterpreterInterface:
 
             traceback.print_exc()
 
-        #it's always false at this point
-        need_input = False
-        return more, need_input
+        return more
 
 
-    def doAddExec(self, line):
+    def doAddExec(self, codeFragment):
         '''
         Subclasses should override.
         
@@ -309,14 +316,22 @@ class BaseInterpreterInterface:
             return ''
 
 
-    def execLine(self, line):
+    def doExecCode(self, code, is_single_line):
         try:
-            #buffer = self.interpreter.buffer[:]
-            self.exec_queue.put(line)
-            return self.needMore(self.buffer, line)
+            code_fragment = CodeFragment(code, is_single_line)
+            more = self.needMore(code_fragment)
+            self.exec_queue.put(code_fragment)
+            return more
         except:
             traceback.print_exc()
             return False
+
+    def execLine(self, line):
+        return self.doExecCode(line, True)
+
+
+    def execMultipleLines(self, lines):
+        return self.doExecCode(lines, False)
 
 
     def interrupt(self):

@@ -1,5 +1,6 @@
 package com.intellij.remoteServer.util;
 
+import com.intellij.ProjectTopics;
 import com.intellij.execution.RunManagerEx;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.ConfigurationType;
@@ -11,7 +12,9 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModulePointer;
 import com.intellij.openapi.module.ModulePointerManager;
 import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.project.ModuleAdapter;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.Condition;
 import com.intellij.remoteServer.ServerType;
@@ -26,6 +29,7 @@ import com.intellij.remoteServer.runtime.ServerConnection;
 import com.intellij.remoteServer.runtime.ServerConnector;
 import com.intellij.remoteServer.runtime.deployment.ServerRuntimeInstance;
 import com.intellij.util.concurrency.Semaphore;
+import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.text.UniqueNameGenerator;
 import org.jetbrains.annotations.NotNull;
 
@@ -46,8 +50,7 @@ public abstract class CloudSupportConfigurableBase<
   extends FrameworkSupportConfigurable {
 
   private final String myNotificationDisplayId;
-
-  private final FrameworkSupportModel myFrameworkSupportModel;
+  private final Project myModelProject;
   private RemoteServer<SC> myNewServer;
   private ST myCloudType;
   private RemoteServerConfigurable myServerConfigurable;
@@ -56,7 +59,7 @@ public abstract class CloudSupportConfigurableBase<
   private boolean myInitialized = false;
 
   public CloudSupportConfigurableBase(FrameworkSupportModel frameworkSupportModel, ST cloudType, String notificationDisplayId) {
-    myFrameworkSupportModel = frameworkSupportModel;
+    myModelProject = frameworkSupportModel.getProject();
     myCloudType = cloudType;
     myNotificationDisplayId = notificationDisplayId;
   }
@@ -178,10 +181,6 @@ public abstract class CloudSupportConfigurableBase<
     });
   }
 
-  protected Project getProject() {
-    return myFrameworkSupportModel.getProject();
-  }
-
   private DeployToServerConfigurationType getRunConfigurationType() {
     String id = DeployToServerConfigurationType.getId(myCloudType);
     for (ConfigurationType configurationType : ConfigurationType.CONFIGURATION_TYPE_EP.getExtensions()) {
@@ -211,7 +210,7 @@ public abstract class CloudSupportConfigurableBase<
   }
 
   protected DeployToServerRunConfiguration<SC, DC> createRunConfiguration(String name, Module module, DC deploymentConfiguration) {
-    Project project = getProject();
+    Project project = module.getProject();
 
     RemoteServer<SC> server = getServer();
 
@@ -238,6 +237,23 @@ public abstract class CloudSupportConfigurableBase<
     result.setDeploymentConfiguration(deploymentConfiguration);
 
     return result;
+  }
+
+  protected void runOnModuleAdded(final Module module, final Runnable runnable) {
+    if (myModelProject == null) {
+      StartupManager.getInstance(module.getProject()).runWhenProjectIsInitialized(runnable);
+    }
+    else {
+      MessageBusConnection connection = myModelProject.getMessageBus().connect(myModelProject);
+      connection.subscribe(ProjectTopics.MODULES, new ModuleAdapter() {
+
+        public void moduleAdded(Project project, Module addedModule) {
+          if (addedModule == module) {
+            runnable.run();
+          }
+        }
+      });
+    }
   }
 
   protected abstract JComboBox getExistingComboBox();
@@ -271,17 +287,16 @@ public abstract class CloudSupportConfigurableBase<
   protected abstract class ConnectionTask<T> extends CloudConnectionTask<T, SC, DC, SR> {
 
     public ConnectionTask(String title, boolean modal, boolean cancellable) {
-      super(title, modal, cancellable);
+      super(myModelProject, title, modal, cancellable);
+    }
+
+    public ConnectionTask(Module module, String title, boolean modal, boolean cancellable) {
+      super(module.getProject(), title, modal, cancellable);
     }
 
     @Override
     protected RemoteServer<SC> getServer() {
       return CloudSupportConfigurableBase.this.getServer();
-    }
-
-    @Override
-    protected Project getProject() {
-      return CloudSupportConfigurableBase.this.getProject();
     }
   }
 }

@@ -33,14 +33,12 @@ public class ThrowablePrintStackTraceInspectionTest extends LightInspectionTestC
                         "@Target({ElementType.METHOD}) " +
                         "public @interface Test {}");
     doMemberTest("@org.junit.Test public void testSomething() {" +
-                 "  new RuntimeException().printStackTrace();" +
+                 "  new RuntimeException()./*Call to 'printStackTrace()' should probably be replaced with more robust logging*/printStackTrace/**/();" +
                  "}");
   }
 
   @Override
   protected InspectionProfileEntry getInspection() {
-    final ThrowablePrintStackTraceInspection inspection = new ThrowablePrintStackTraceInspection();
-    inspection.ignoreInTestCode = true;
-    return inspection;
+    return new ThrowablePrintStackTraceInspection();
   }
 }

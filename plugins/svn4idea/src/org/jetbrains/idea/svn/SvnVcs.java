@@ -1415,6 +1415,16 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
   }
 
   @NotNull
+  public ClientFactory getOtherFactory() {
+    return myConfiguration.isCommandLine() ? svnKitClientFactory : cmdClientFactory;
+  }
+
+  @NotNull
+  public ClientFactory getOtherFactory(@NotNull ClientFactory factory) {
+    return factory.equals(cmdClientFactory) ? svnKitClientFactory : cmdClientFactory;
+  }
+
+  @NotNull
   public ClientFactory getCommandLineFactory() {
     return cmdClientFactory;
   }

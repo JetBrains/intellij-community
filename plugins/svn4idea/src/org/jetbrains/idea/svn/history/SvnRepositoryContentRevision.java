@@ -165,8 +165,9 @@ public class SvnRepositoryContentRevision implements ContentRevision, MarkerVcsC
       }
 
       try {
-        byte[] contents = SvnUtil.getFileContents(myVcs, SvnTarget.fromURL(SvnUtil.parseUrl(getFullPath())), SVNRevision.create(myRevision),
-                                                  SVNRevision.UNDEFINED);
+        // TODO: Local path could also be used here
+        SVNRevision revision = SVNRevision.create(myRevision);
+        byte[] contents = SvnUtil.getFileContents(myVcs, SvnTarget.fromURL(SvnUtil.parseUrl(getFullPath())), revision, revision);
         myDst.write(contents);
       }
       catch (VcsException e) {

@@ -17,6 +17,7 @@ package com.siyeh.ig.dataflow;
 
 import com.intellij.psi.PsiType;
 import com.intellij.psi.PsiVariable;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -30,7 +31,7 @@ import org.jetbrains.annotations.NotNull;
 public class NegativelyNamedBooleanVariableInspectionBase extends BaseInspection {
 
   @NonNls
-  private static final String[] NEGATIVE_NAMES = {"not", "isNot", "shouldNot", "shallNot", "willNot", "cannot", "cant", "hasNot",
+  private static final String[] NEGATIVE_NAMES = {"not", "isNot", "isNon", "shouldNot", "shallNot", "willNot", "cannot", "cant", "hasNot",
     "couldNot", "hidden", "isHidden", "disabled", "isDisabled"};
 
   @Nls
@@ -60,13 +61,22 @@ public class NegativelyNamedBooleanVariableInspectionBase extends BaseInspection
         return;
       }
       final String name = variable.getName();
+      final JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(variable.getProject());
+      final String prefix = codeStyleManager.getPrefixByVariableKind(codeStyleManager.getVariableKind(variable));
       for (final String negativeName : NEGATIVE_NAMES) {
-        if (name.startsWith(negativeName) &&
-            (name.length() == negativeName.length() || Character.isUpperCase(name.charAt(negativeName.length())))) {
+        if (isNegativelyNamed(name, negativeName) || !prefix.isEmpty() && isNegativelyNamed(name, prefix + negativeName)) {
           registerVariableError(variable, variable);
           break;
         }
       }
+    }
+
+    private static boolean isNegativelyNamed(String name, String negativeName) {
+      if (!name.startsWith(negativeName) ||
+          (name.length() != negativeName.length() && !Character.isUpperCase(name.charAt(negativeName.length())))) {
+        return false;
+      }
+      return true;
     }
   }
 }
