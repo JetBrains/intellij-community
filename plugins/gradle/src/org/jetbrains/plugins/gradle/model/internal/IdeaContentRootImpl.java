@@ -36,6 +36,7 @@ public class IdeaContentRootImpl implements ExtIdeaContentRoot {
   private final List<IdeaSourceDirectory> mySourceDirectories;
   private final List<IdeaSourceDirectory> myTestDirectories;
   private final List<IdeaSourceDirectory> myResourceDirectories;
+  private final List<IdeaSourceDirectory> myTestResourceDirectories;
   private final Set<File> myExcludeDirectories;
 
   public IdeaContentRootImpl(File rootDirectory) {
@@ -43,6 +44,7 @@ public class IdeaContentRootImpl implements ExtIdeaContentRoot {
     mySourceDirectories = new ArrayList<IdeaSourceDirectory>();
     myTestDirectories = new ArrayList<IdeaSourceDirectory>();
     myResourceDirectories = new ArrayList<IdeaSourceDirectory>();
+    myTestResourceDirectories = new ArrayList<IdeaSourceDirectory>();
     myExcludeDirectories = new HashSet<File>();
   }
 
@@ -68,6 +70,10 @@ public class IdeaContentRootImpl implements ExtIdeaContentRoot {
     myResourceDirectories.add(resourceDirectory);
   }
 
+  public void addTestResourceDirectory(IdeaSourceDirectory resourceDirectory) {
+    myTestResourceDirectories.add(resourceDirectory);
+  }
+
   public void addExcludeDirectory(File excludeDirectory) {
     myExcludeDirectories.add(excludeDirectory);
   }
@@ -80,6 +86,11 @@ public class IdeaContentRootImpl implements ExtIdeaContentRoot {
   @Override
   public DomainObjectSet<? extends IdeaSourceDirectory> getResourceDirectories() {
     return ImmutableDomainObjectSet.of(myResourceDirectories);
+  }
+
+  @Override
+  public DomainObjectSet<? extends IdeaSourceDirectory> getTestResourceDirectories() {
+    return ImmutableDomainObjectSet.of(myTestResourceDirectories);
   }
 
   @Override
