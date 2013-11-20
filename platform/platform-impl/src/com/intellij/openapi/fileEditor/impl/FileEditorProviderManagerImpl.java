@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,6 +31,7 @@ import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Function;
@@ -46,15 +47,15 @@ import java.util.*;
  * @author Anton Katilin
  * @author Vladimir Kondratyev
  */
-@State(name = "FileEditorProviderManager", storages = {@Storage( file = StoragePathMacros.APP_CONFIG + "/other.xml")})
-public final class FileEditorProviderManagerImpl extends FileEditorProviderManager implements PersistentStateComponent<FileEditorProviderManagerImpl> {
-  private static final FileEditorProvider[] EMPTY_ARRAY=new FileEditorProvider[]{};
+@State(name = "FileEditorProviderManager", storages = {@Storage(file = StoragePathMacros.APP_CONFIG + "/other.xml")})
+public final class FileEditorProviderManagerImpl extends FileEditorProviderManager
+  implements PersistentStateComponent<FileEditorProviderManagerImpl> {
+  private static final FileEditorProvider[] EMPTY_ARRAY = new FileEditorProvider[0];
   private static final String SEPARATOR = ",";
 
-  private final ArrayList<FileEditorProvider> myProviders = new ArrayList<FileEditorProvider>();
-  private final ArrayList<FileEditorProvider> mySharedProviderList = new ArrayList<FileEditorProvider>();
+  private final List<FileEditorProvider> myProviders = new ArrayList<FileEditorProvider>();
 
-  public FileEditorProviderManagerImpl(FileEditorProvider[] providers) {
+  public FileEditorProviderManagerImpl(@NotNull FileEditorProvider[] providers) {
     Extensions.getRootArea().getExtensionPoint(FileEditorProvider.EP_FILE_EDITOR_PROVIDER).addExtensionPointListener(
       new ExtensionPointListener<FileEditorProvider>() {
         @Override
@@ -78,70 +79,63 @@ public final class FileEditorProviderManagerImpl extends FileEditorProviderManag
 
   @Override
   @NotNull
-  public synchronized FileEditorProvider[] getProviders(@NotNull final Project project, @NotNull final VirtualFile file){
+  public synchronized FileEditorProvider[] getProviders(@NotNull final Project project, @NotNull final VirtualFile file) {
     // Collect all possible editors
-    mySharedProviderList.clear();
+    List<FileEditorProvider> mySharedProviderList = new ArrayList<FileEditorProvider>();
     boolean doNotShowTextEditor = false;
     final boolean dumb = DumbService.getInstance(project).isDumb();
-    for(int i = myProviders.size() -1 ; i >= 0; i--){
-      final FileEditorProvider provider=myProviders.get(i);
-      if((!dumb || DumbService.isDumbAware(provider)) && ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
-              @Override
-              public Boolean compute() {
-                return provider.accept(project, file);
-              }
-            })){
+    for (final FileEditorProvider provider : myProviders) {
+      boolean canUseProvider = !dumb || DumbService.isDumbAware(provider);
+      if (canUseProvider && ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
+        @Override
+        public Boolean compute() {
+          return provider.accept(project, file);
+        }
+      })) {
         mySharedProviderList.add(provider);
         doNotShowTextEditor |= provider.getPolicy() == FileEditorPolicy.HIDE_DEFAULT_EDITOR;
       }
     }
 
     // Throw out default editors provider if necessary
-    if(doNotShowTextEditor){
-      for(int i = mySharedProviderList.size() - 1; i >= 0; i--){
-        if(mySharedProviderList.get(i) instanceof TextEditorProvider){
-          mySharedProviderList.remove(i);
+    if (doNotShowTextEditor) {
+      ContainerUtil.retainAll(mySharedProviderList, new Condition<FileEditorProvider>() {
+        @Override
+        public boolean value(FileEditorProvider provider) {
+          return !(provider instanceof TextEditorProvider);
         }
-      }
+      });
     }
 
     // Sort editors according policies
     Collections.sort(mySharedProviderList, MyComparator.ourInstance);
 
-    if(!mySharedProviderList.isEmpty()){
-      return mySharedProviderList.toArray(new FileEditorProvider[mySharedProviderList.size()]);
-    }
-    else{
+    if (mySharedProviderList.isEmpty()) {
       return EMPTY_ARRAY;
     }
+    return mySharedProviderList.toArray(new FileEditorProvider[mySharedProviderList.size()]);
   }
 
   @Override
   @Nullable
-  public synchronized FileEditorProvider getProvider(@NotNull String editorTypeId){
-    for(int i=myProviders.size()-1;i>=0;i--){
-      FileEditorProvider provider=myProviders.get(i);
-      if(provider.getEditorTypeId().equals(editorTypeId)){
+  public synchronized FileEditorProvider getProvider(@NotNull String editorTypeId) {
+    for (FileEditorProvider provider : myProviders) {
+      if (provider.getEditorTypeId().equals(editorTypeId)) {
         return provider;
       }
     }
     return null;
   }
 
-  private void registerProvider(FileEditorProvider provider) {
+  private void registerProvider(@NotNull FileEditorProvider provider) {
     String editorTypeId = provider.getEditorTypeId();
-    for(int i=myProviders.size()-1;i>=0;i--){
-      FileEditorProvider _provider=myProviders.get(i);
-      if(editorTypeId.equals(_provider.getEditorTypeId())){
-        throw new IllegalArgumentException(
-          "attempt to register provider with non unique editorTypeId: "+_provider.getEditorTypeId()
-        );
-      }
+    if (getProvider(editorTypeId) != null) {
+      throw new IllegalArgumentException("attempt to register provider with non unique editorTypeId: " + editorTypeId);
     }
     myProviders.add(provider);
   }
 
-  private void unregisterProvider(FileEditorProvider provider) {
+  private void unregisterProvider(@NotNull FileEditorProvider provider) {
     final boolean b = myProviders.remove(provider);
     assert b;
   }
@@ -158,7 +152,7 @@ public final class FileEditorProviderManagerImpl extends FileEditorProviderManag
     mySelectedProviders.putAll(state.mySelectedProviders);
   }
 
-  private static final Function<FileEditorProvider,String> EDITOR_PROVIDER_STRING_FUNCTION = new Function<FileEditorProvider, String>() {
+  private static final Function<FileEditorProvider, String> EDITOR_PROVIDER_STRING_FUNCTION = new Function<FileEditorProvider, String>() {
     @Override
     public String fun(FileEditorProvider provider) {
       return provider.getEditorTypeId();
@@ -206,12 +200,12 @@ public final class FileEditorProviderManagerImpl extends FileEditorProviderManag
     mySelectedProviders.clear();
   }
 
-  private static final class MyComparator implements Comparator<FileEditorProvider>{
+  private static final class MyComparator implements Comparator<FileEditorProvider> {
     public static final MyComparator ourInstance = new MyComparator();
 
     private static double getWeight(FileEditorProvider provider) {
       return provider instanceof WeighedFileEditorProvider
-             ? ((WeighedFileEditorProvider) provider).getWeight()
+             ? ((WeighedFileEditorProvider)provider).getWeight()
              : Double.MAX_VALUE;
     }
 
