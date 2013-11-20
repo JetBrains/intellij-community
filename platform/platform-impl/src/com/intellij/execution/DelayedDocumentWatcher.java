@@ -29,6 +29,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.problems.WolfTheProblemSolver;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.Alarm;
 import com.intellij.util.Consumer;
 import com.intellij.util.messages.MessageBusConnection;
@@ -128,9 +131,9 @@ public class DelayedDocumentWatcher {
   private class MyRunnable implements Runnable {
     @Override
     public void run() {
-      WolfTheProblemSolver problemSolver = WolfTheProblemSolver.getInstance(myProject);
       for (VirtualFile file : myChangedFiles) {
-        if (problemSolver.hasSyntaxErrors(file)) {
+        boolean hasErrors = hasErrors(file);
+        if (hasErrors) {
           // Do nothing, if some changed file has syntax errors.
           // This method will be invoked subsequently, when syntax errors are fixed.
           return;
@@ -140,6 +143,18 @@ public class DelayedDocumentWatcher {
       myChangedFiles.clear();
       myConsumer.consume(copy);
     }
+  }
+
+  private boolean hasErrors(@NotNull VirtualFile file) {
+    // don't use 'WolfTheProblemSolver.hasSyntaxErrors(file)' if possible
+    Document document = FileDocumentManager.getInstance().getDocument(file);
+    if (document != null) {
+      PsiFile psiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(document);
+      if (psiFile != null) {
+        return PsiTreeUtil.hasErrorElements(psiFile);
+      }
+    }
+    return WolfTheProblemSolver.getInstance(myProject).hasSyntaxErrors(file);
   }
 
 }
