@@ -208,7 +208,7 @@ public class SmartPointerManagerImpl extends SmartPointerManager {
   public int getPointersNumber(@NotNull PsiFile containingFile) {
     synchronized (lock) {
       List<SmartPointerEx> pointers = getPointers(containingFile);
-      return pointers == null ? 0 : pointers.size();
+      return pointers == null ? 0 : ((UnsafeWeakList)pointers).toStrongList().size();
     }
   }
 
