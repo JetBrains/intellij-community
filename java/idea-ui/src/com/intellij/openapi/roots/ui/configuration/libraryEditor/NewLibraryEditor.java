@@ -30,10 +30,7 @@ import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author nik
@@ -41,7 +38,7 @@ import java.util.List;
 public class NewLibraryEditor extends LibraryEditorBase {
   private String myLibraryName;
   private final MultiMap<OrderRootType, LightFilePointer> myRoots;
-  private final List<LightFilePointer> myExcludedRoots;
+  private final Set<LightFilePointer> myExcludedRoots;
   private final JarDirectories myJarDirectories = new JarDirectories();
   private LibraryType myType;
   private LibraryProperties myProperties;
@@ -54,7 +51,7 @@ public class NewLibraryEditor extends LibraryEditorBase {
     myType = type;
     myProperties = properties;
     myRoots = new MultiMap<OrderRootType, LightFilePointer>();
-    myExcludedRoots = new ArrayList<LightFilePointer>();
+    myExcludedRoots = new LinkedHashSet<LightFilePointer>();
   }
 
   @Override
@@ -94,7 +91,7 @@ public class NewLibraryEditor extends LibraryEditorBase {
   }
 
   private static String[] pointersToUrls(Collection<LightFilePointer> pointers) {
-    List<String> urls = new ArrayList<String>();
+    List<String> urls = new ArrayList<String>(pointers.size());
     for (LightFilePointer pointer : pointers) {
       urls.add(pointer.getUrl());
     }

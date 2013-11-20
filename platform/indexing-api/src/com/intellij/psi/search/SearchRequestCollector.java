@@ -16,6 +16,8 @@
 package com.intellij.psi.search;
 
 import com.intellij.codeInsight.ContainerProvider;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFileSystemItem;
@@ -82,9 +84,14 @@ public class SearchRequestCollector {
     searchWord(word, searchScope, searchContext, caseSensitive, getContainerName(searchTarget), processor);
   }
 
-  private static String getContainerName(@NotNull PsiElement target) {
-    PsiElement container = getContainer(target);
-    return container instanceof PsiNamedElement ? ((PsiNamedElement)container).getName() : null;
+  private static String getContainerName(@NotNull final PsiElement target) {
+    return ApplicationManager.getApplication().runReadAction(new Computable<String>() {
+      @Override
+      public String compute() {
+        PsiElement container = getContainer(target);
+        return container instanceof PsiNamedElement ? ((PsiNamedElement)container).getName() : null;
+      }
+    });
   }
 
   private static PsiElement getContainer(@NotNull PsiElement refElement) {

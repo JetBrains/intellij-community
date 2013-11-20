@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.util.text;
 
 import com.intellij.openapi.util.SystemInfo;
@@ -25,11 +24,15 @@ import org.jetbrains.annotations.NotNull;
  * @author max
  */
 public class FilePathHashingStrategy {
-  private FilePathHashingStrategy() {
-  }
+  private FilePathHashingStrategy() { }
 
   @NotNull
   public static TObjectHashingStrategy<String> create() {
-    return SystemInfo.isFileSystemCaseSensitive ? ContainerUtil.<String>canonicalStrategy() : new CaseInsensitiveStringHashingStrategy();
+    return create(SystemInfo.isFileSystemCaseSensitive);
+  }
+
+  @NotNull
+  public static TObjectHashingStrategy<String> create(boolean caseSensitive) {
+    return caseSensitive ? ContainerUtil.<String>canonicalStrategy() : new CaseInsensitiveStringHashingStrategy();
   }
 }

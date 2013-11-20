@@ -20,6 +20,7 @@ import com.intellij.concurrency.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.Result;
+import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -27,10 +28,7 @@ import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.progress.util.TooManyUsagesStatus;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.FileIndexFacade;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -60,7 +58,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public class PsiSearchHelperImpl implements PsiSearchHelper {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.search.PsiSearchHelperImpl");
-
   private final PsiManagerEx myManager;
 
   @Override
@@ -76,8 +73,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     return scope;
   }
 
-
-  public PsiSearchHelperImpl(PsiManagerEx manager) {
+  public PsiSearchHelperImpl(@NotNull PsiManagerEx manager) {
     myManager = manager;
   }
 
@@ -172,10 +168,22 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     PsiElement[] scopeElements = scope.getScope();
     final StringSearcher searcher = new StringSearcher(text, caseSensitively, true, searchContext == UsageSearchContext.IN_STRINGS);
     Processor<PsiElement> localProcessor = localProcessor(processor, progress, processInjectedPsi, searcher);
-    return JobLauncher.getInstance().invokeConcurrentlyUnderProgressAsync(Arrays.asList(scopeElements), progress, false, localProcessor);
+    return wrapInFuture(Arrays.asList(scopeElements), progress, localProcessor);
   }
 
-  private boolean shouldProcessInjectedPsi(SearchScope scope) {
+  private static <T> AsyncFuture<Boolean> wrapInFuture(@NotNull List<T> files, final ProgressIndicator progress, @NotNull Processor<T> processor) {
+    AsyncFutureResult<Boolean> asyncFutureResult = AsyncFutureFactory.getInstance().createAsyncFutureResult();
+    try {
+      boolean result = JobLauncher.getInstance().invokeConcurrentlyUnderProgress(files, progress, true, true, processor);
+      asyncFutureResult.set(result);
+    }
+    catch (Throwable t) {
+      asyncFutureResult.setException(t);
+    }
+    return asyncFutureResult;
+  }
+
+  private static boolean shouldProcessInjectedPsi(SearchScope scope) {
     return scope instanceof LocalSearchScope ? !((LocalSearchScope)scope).isIgnoreInjectedPsi() : true;
   }
 
@@ -265,7 +273,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     }
 
     AsyncFuture<Boolean> result = fileSet.isEmpty()
-                                  ? AsyncFutureFactory.wrap(true)
+                                  ? AsyncFutureFactory.wrap(Boolean.TRUE)
                                   : processPsiFileRootsAsync(new ArrayList<VirtualFile>(fileSet), fileSet.size(), 0, progress, localProcessor);
     return popStateAfter(result, progress);
   }
@@ -299,31 +307,24 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     return totalResult;
   }
 
-  // splits mainList into 2 lists: outIntersection containing elements from both mainList and list2 and outRest with all the rest elements from mainList
-  private static <T> void splitSortedLists(@NotNull List<T> mainList,
-                                           @NotNull List<T> list2,
-                                           @NotNull Comparator<? super T> comparator,
-                                           @NotNull List<T> outIntersection,
-                                           @NotNull List<T> outRest) {
-    int index1 = 0;
-    int index2 = 0;
-    while (index1 != mainList.size()) {
-      T element1 = mainList.get(index1);
-      T element2 = index2 == list2.size() ? null : list2.get(index2);
-      int c = element2 == null ? -1 : comparator.compare(element1, element2);
-      if (c == 0) {
-        outIntersection.add(element1);
-        index1++;
-        index2++;
-      }
-      else if (c < 0) {
-        index1++;
-        outRest.add(element1);
-      }
-      else {
-        index2++;
-      }
+  private static class CannotRunReadActionException extends RuntimeException{
+    @Override
+    public Throwable fillInStackTrace() {
+      return this;
     }
+  }
+  // throws exception if can't grab read action right now
+  private static <T> T tryRead(final Computable<T> computable) throws CannotRunReadActionException {
+    final Ref<T> result = new Ref<T>();
+    if (((ApplicationEx)ApplicationManager.getApplication()).tryRunReadAction(new Runnable() {
+      @Override
+      public void run() {
+        result.set(computable.compute());
+      }
+    })) {
+      return result.get();
+    }
+    throw new CannotRunReadActionException();
   }
 
   /**
@@ -337,64 +338,95 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
                                                         final int totalSize,
                                                         int alreadyProcessedFiles,
                                                         final ProgressIndicator progress,
-                                                        @NotNull final Processor<? super PsiFile> psiRootProcessor) {
+                                                        @NotNull final Processor<? super PsiFile> localProcessor) {
     myManager.startBatchFilesProcessingMode();
     final AtomicInteger counter = new AtomicInteger(alreadyProcessedFiles);
     final AtomicBoolean canceled = new AtomicBoolean(false);
 
-    AsyncFuture<Boolean>
-      completed = JobLauncher.getInstance().invokeConcurrentlyUnderProgressAsync(files, progress, false, new Processor<VirtualFile>() {
-      @Override
-      public boolean process(final VirtualFile vfile) {
-        final PsiFile file = ApplicationManager.getApplication().runReadAction(new Computable<PsiFile>() {
+    AsyncFutureResult<Boolean> asyncFutureResult = AsyncFutureFactory.getInstance().createAsyncFutureResult();
+    final List<VirtualFile> failedFiles = new ArrayList<VirtualFile>();
+    try {
+      boolean completed =
+        JobLauncher.getInstance().invokeConcurrentlyUnderProgress(files, progress, false, false, new Processor<VirtualFile>() {
           @Override
-          public PsiFile compute() {
-            return vfile.isValid() ? myManager.findFile(vfile) : null;
+          public boolean process(final VirtualFile vfile) {
+            try {
+              processVirtualFile(vfile, progress, localProcessor, canceled, counter, totalSize);
+            }
+            catch (CannotRunReadActionException action) {
+              failedFiles.add(vfile);
+            }
+            return !canceled.get();
           }
         });
-        if (file != null && !(file instanceof PsiBinaryFile)) {
-          file.getViewProvider().getContents(); // load contents outside read action
-          if (myManager.getProject().isDisposed()) throw new ProcessCanceledException();
-          List<PsiFile> psiRoots = ApplicationManager.getApplication().runReadAction(new Computable<List<PsiFile>>() {
+      if (!failedFiles.isEmpty()) {
+        for (final VirtualFile vfile : failedFiles) {
+          // we failed to run read action in job launcher thread
+          // run read action in our thread instead
+          ApplicationManager.getApplication().runReadAction(new Runnable() {
             @Override
-            public List<PsiFile> compute() {
-              return file.getViewProvider().getAllFiles();
+            public void run() {
+              processVirtualFile(vfile, progress, localProcessor, canceled, counter, totalSize);
             }
           });
-          Set<PsiElement> processed = new THashSet<PsiElement>(psiRoots.size() * 2, (float)0.5);
+        }
+      }
+      asyncFutureResult.set(completed);
+      myManager.finishBatchFilesProcessingMode();
+    }
+    catch (Throwable t) {
+      asyncFutureResult.setException(t);
+    }
+
+    return asyncFutureResult;
+  }
+
+  private void processVirtualFile(final VirtualFile vfile,
+                                  final ProgressIndicator progress,
+                                  final Processor<? super PsiFile> localProcessor,
+                                  final AtomicBoolean canceled, AtomicInteger counter, int totalSize) {
+    final PsiFile file = tryRead(new Computable<PsiFile>() {
+      @Override
+      public PsiFile compute() {
+        return vfile.isValid() ? myManager.findFile(vfile) : null;
+      }
+    });
+    if (file != null && !(file instanceof PsiBinaryFile)) {
+      file.getViewProvider().getContents(); // load contents outside read action
+      if (myManager.getProject().isDisposed()) throw new ProcessCanceledException();
+      final List<PsiFile> psiRoots = tryRead(new Computable<List<PsiFile>>() {
+        @Override
+        public List<PsiFile> compute() {
+          return file.getViewProvider().getAllFiles();
+        }
+      });
+      final Set<PsiElement> processed = new THashSet<PsiElement>(psiRoots.size() * 2, (float)0.5);
+      TooManyUsagesStatus.getFrom(progress).pauseProcessingIfTooManyUsages();
+      tryRead(new Computable<Void>() {
+        @Override
+        public Void compute() {
           for (final PsiFile psiRoot : psiRoots) {
             checkCanceled(progress);
             assert psiRoot != null : "One of the roots of file " + file + " is null. All roots: " + psiRoots +
                                      "; ViewProvider: " + file.getViewProvider() + "; Virtual file: " + file.getViewProvider().getVirtualFile();
             if (!processed.add(psiRoot)) continue;
-            if (!ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
-              @Override
-              public Boolean compute() {
-                return psiRoot.isValid();
-              }
-            })) {
+            if (!psiRoot.isValid()) {
               continue;
             }
-            if (!psiRootProcessor.process(psiRoot)) {
+
+            if (!localProcessor.process(psiRoot)) {
               canceled.set(true);
               break;
             }
           }
+          return null;
         }
-        if (progress != null && progress.isRunning()) {
-          double fraction = (double)counter.incrementAndGet() / totalSize;
-          progress.setFraction(fraction);
-        }
-        return !canceled.get();
-      }
-    });
-
-    return new FinallyFuture<Boolean>(completed, new Runnable() {
-      @Override
-      public void run() {
-        myManager.finishBatchFilesProcessingMode();
-      }
-    });
+      });
+    }
+    if (progress != null && progress.isRunning()) {
+      double fraction = (double)counter.incrementAndGet() / totalSize;
+      progress.setFraction(fraction);
+    }
   }
 
   private static void checkCanceled(ProgressIndicator progress) {
@@ -769,6 +801,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     return popStateAfter(result, progress);
   }
 
+  @NotNull
   private AsyncFuture<Boolean> processCandidatesAsync(final ProgressIndicator progress,
                                                       @NotNull final Map<RequestWithProcessor, Processor<PsiElement>> localProcessors,
                                                       @NotNull final MultiMap<VirtualFile, RequestWithProcessor> candidateFiles,
@@ -779,20 +812,19 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     return processPsiFileRootsAsync(files, totalSize, alreadyProcessedFiles, progress, new Processor<PsiFile>() {
       @Override
       public boolean process(final PsiFile psiRoot) {
-        final VirtualFile vfile = ApplicationManager.getApplication().runReadAction(new Computable<VirtualFile>() {
+        return tryRead(new Computable<Boolean>() {
           @Override
-          public VirtualFile compute() {
-            return psiRoot.getVirtualFile();
+          public Boolean compute() {
+            final VirtualFile vfile = psiRoot.getVirtualFile();
+            for (final RequestWithProcessor singleRequest : candidateFiles.get(vfile)) {
+              Processor<PsiElement> localProcessor = localProcessors.get(singleRequest);
+              if (!localProcessor.process(psiRoot)) {
+                return false;
+              }
+            }
+            return true;
           }
         });
-        for (final RequestWithProcessor singleRequest : candidateFiles.get(vfile)) {
-          Processor<PsiElement> localProcessor = localProcessors.get(singleRequest);
-          TooManyUsagesStatus.getFrom(progress).pauseProcessingIfTooManyUsages();
-          if (!localProcessor.process(psiRoot)) {
-            return false;
-          }
-        }
-        return true;
       }
     });
   }
