@@ -20,8 +20,8 @@ class Test {
 
 
 
-        foo1(()->{ <error descr="Unhandled exception: java.lang.ClassNotFoundException">throw new ClassNotFoundException();</error> });
-        foo1(()->{ <error descr="Unhandled exception: java.lang.Exception">throw new Exception();</error> });
+        <error descr="Unhandled exception: java.lang.ClassNotFoundException">foo1(()->{ throw new ClassNotFoundException(); });</error>
+        <error descr="Unhandled exception: java.lang.Exception">foo1(()->{ throw new Exception(); });</error>
 
         <error descr="Unhandled exception: java.lang.ClassNotFoundException">foo1(this::m2);</error>
         <error descr="Unhandled exception: java.lang.Exception">foo1(this::m3);</error>
