@@ -127,7 +127,7 @@ public class StartBrowserPanel {
       @NotNull
       @Override
       protected String chosenFileToResultingText(@NotNull VirtualFile chosenFile) {
-        return virtualFileToUrl(chosenFile, project).toDecodedForm(false);
+        return virtualFileToUrl(chosenFile, project).toDecodedForm();
       }
     });
   }
