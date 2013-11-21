@@ -182,6 +182,12 @@ public class ChangeSignatureTest extends LightRefactoringTestCase {
     }, false);
   }
 
+  public void testJavadocNoNewLineInserted() throws Exception {
+    doTest(null, new ParameterInfoImpl[]{
+      new ParameterInfoImpl(0, "newArgs", PsiType.DOUBLE),
+    }, false);
+  }
+
   public void testSuperCallFromOtherMethod() throws Exception {
     doTest(null, new ParameterInfoImpl[] {
       new ParameterInfoImpl(-1, "nnn", PsiType.INT, "-222"),
