@@ -18,6 +18,7 @@ package com.intellij.execution.impl;
 import com.intellij.execution.filters.Filter;
 import com.intellij.execution.filters.FilterMixin;
 import com.intellij.execution.filters.HyperlinkInfo;
+import com.intellij.execution.filters.HyperlinkInfoBase;
 import com.intellij.ide.OccurenceNavigator;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -36,6 +37,7 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.pom.NavigatableAdapter;
+import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.BeforeAfter;
 import com.intellij.util.Consumer;
 import com.intellij.util.SmartList;
@@ -87,7 +89,12 @@ public class EditorHyperlinkSupport {
           if (range != null) {
             final HyperlinkInfo info = myHighlighterToMessageInfoMap.get(range);
             if (info != null) {
-              info.navigate(project);
+              if (info instanceof HyperlinkInfoBase) {
+                ((HyperlinkInfoBase)info).navigate(project, new RelativePoint(mouseEvent));
+              }
+              else {
+                info.navigate(project);
+              }
               linkFollowed(editor, getHyperlinks().keySet(), range);
             }
           }
