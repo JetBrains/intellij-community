@@ -44,7 +44,6 @@ import java.util.List;
 public class Merger implements IMerger {
   protected final List<CommittedChangeList> myChangeLists;
   protected final File myTarget;
-  protected final SVNDiffClient myDiffClient;
   @Nullable private final ISVNEventHandler myHandler;
   protected int myCount;
   private final ProgressIndicator myProgressIndicator;
@@ -67,7 +66,6 @@ public class Merger implements IMerger {
     myProject = vcs.getProject();
     mySvnConfig = SvnConfiguration.getInstance(vcs.getProject());
     myCurrentBranchUrl = currentBranchUrl;
-    myDiffClient = vcs.createDiffClient();
     myChangeLists = changeLists;
 
     Collections.sort(myChangeLists, ByNumberChangeListComparator.getInstance());
@@ -75,9 +73,7 @@ public class Merger implements IMerger {
     myTarget = target;
     myCount = 0;
     myProgressIndicator = ProgressManager.getInstance().getProgressIndicator();
-    myDiffClient.setEventHandler(handler);
     myHandler = handler;
-    myDiffClient.setMergeOptions(mySvnConfig.getMergeOptions());
     myCommitMessage = new StringBuilder();
   }
 
