@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.wm.impl;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.Gray;
@@ -111,7 +110,7 @@ public final class StripeButtonUI extends MetalToggleButtonUI{
     final Color background = button.getBackground();
     final boolean vertical = anchor == ToolWindowAnchor.LEFT || anchor == ToolWindowAnchor.RIGHT;
 
-    if (ApplicationManager.getApplication().isInternal()) {
+//    if (ApplicationManager.getApplication().isInternal()) {
       ourIconRect.x-=2;
       ourTextRect.x-=2;
       if (anchor == ToolWindowAnchor.LEFT) g2.translate(-1, 0);
@@ -119,11 +118,11 @@ public final class StripeButtonUI extends MetalToggleButtonUI{
       paintNewDecoration(g2, button, model, vertical);
       if (anchor == ToolWindowAnchor.LEFT) g2.translate(1, 0);
       if (anchor.isHorizontal()) g2.translate(0, 1);
-    } else {
-      if (anchor == ToolWindowAnchor.RIGHT) g2.translate(1, 0);
-      paintLegacyDecoration(g2, button, model, vertical);
-      if (anchor == ToolWindowAnchor.RIGHT) g2.translate(-1, 0);
-    }
+//    } else {
+//      if (anchor == ToolWindowAnchor.RIGHT) g2.translate(1, 0);
+//      paintLegacyDecoration(g2, button, model, vertical);
+//      if (anchor == ToolWindowAnchor.RIGHT) g2.translate(-1, 0);
+//    }
 
 
     AffineTransform tr=null;
