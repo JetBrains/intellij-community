@@ -1,7 +1,6 @@
 package com.jetbrains.env.python;
 
 import com.google.common.collect.ImmutableSet;
-import com.intellij.xdebugger.frame.XValueChildrenList;
 import com.jetbrains.env.python.console.PyConsoleTask;
 import com.jetbrains.env.python.debug.PyEnvTestCase;
 import org.junit.Assert;
@@ -72,6 +71,7 @@ public class PythonConsoleTest extends PyEnvTestCase {
         exec("if True:");
         exec("");
         exec("  print(x)");
+        exec("");
         exec("");
         waitForOutput("97");
       }
