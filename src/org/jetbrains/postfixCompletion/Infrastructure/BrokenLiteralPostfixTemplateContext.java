@@ -7,6 +7,8 @@ import com.intellij.psi.tree.*;
 import com.intellij.psi.util.*;
 import org.jetbrains.annotations.*;
 
+import java.util.*;
+
 final class BrokenLiteralPostfixTemplateContext extends PostfixTemplateContext {
   @NotNull private final PsiLiteralExpression myBrokenLiteral;
   @NotNull private final PsiExpression myLhsExpression;
@@ -84,9 +86,33 @@ final class BrokenLiteralPostfixTemplateContext extends PostfixTemplateContext {
       return new PrefixExpressionContext(this, expression) {
         @Nullable @Override
         protected PsiType calculateExpressionType(@NotNull PsiElement expression) {
-          return PsiType.INT;
+          return PsiType.INT; // note: yeah, can't be long
         }
       };
+    }
+
+    // broken literal can change type of containing expression(s)
+    if (expression instanceof PsiExpression) {
+      PsiElement[] children = expression.getChildren();
+      int literalIndex = Arrays.asList(children).indexOf(myBrokenLiteral);
+      if (literalIndex >= 0) { // check one level up
+        PsiExpression expressionCopy = (PsiExpression) expression.copy();
+        PsiLiteralExpression brokenCopy = (PsiLiteralExpression) expressionCopy.getChildren()[literalIndex];
+        PsiElementFactory factory = JavaPsiFacade.getElementFactory(postfixReference.getProject());
+        PsiLiteralExpression normalLiteral =
+          (PsiLiteralExpression) factory.createExpressionFromText("1", postfixReference);
+
+        brokenCopy.replace(normalLiteral);
+        final PsiType fixedType = expressionCopy.getType();
+        if (fixedType != null) {
+          return new PrefixExpressionContext(this, expression) {
+            @Nullable @Override
+            protected PsiType calculateExpressionType(@NotNull PsiElement expression) {
+              return fixedType;
+            }
+          };
+        }
+      }
     }
 
     return super.buildExpressionContext(expression);

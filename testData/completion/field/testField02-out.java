@@ -1,4 +1,4 @@
-// Items: bar, arg, cast, else, field, for, fori, forr, if, not, notnull, null, par, var, while
+// Items: bar, arg, cast, else, field, for, fori, forr, if, not, notnull, null, par, return, var, while
 public class Foo {
     private Foo foo;
 

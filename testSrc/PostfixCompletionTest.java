@@ -8,6 +8,8 @@ import org.jetbrains.postfixCompletion.*;
 
 import java.util.regex.*;
 
+// todo: check everything in field initializer!
+
 public class PostfixCompletionTest extends LightCodeInsightFixtureTestCase {
   @Override protected String getTestDataPath() {
     return PostfixTestUtils.BASE_TEST_DATA_PATH + "/completion";
@@ -130,6 +132,11 @@ public class PostfixCompletionTest extends LightCodeInsightFixtureTestCase {
   public void testCast01() { testForce("cast\n"); }
 
   public void testPar01() { testForce("par\n"); }
+
+  public void testReturn01() { test("return\n"); }
+  public void testReturn02() { test("return\n"); }
+  public void testReturn03() { test("return\n"); }
+  public void testReturn04() { test("return\n"); }
 
   public void testField01() { test("field\n"); }
   public void testField02() { testForce("field\n"); }
