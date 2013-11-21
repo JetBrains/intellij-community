@@ -54,7 +54,6 @@ public class PsiMethodReferenceCompatibilityConstraint implements ConstraintForm
     final PsiSubstitutor substitutor = LambdaUtil.getSubstitutor(interfaceMethod, classResolveResult);
     final PsiParameter[] targetParameters = interfaceMethod.getParameterList().getParameters();
     final PsiType returnType = substitutor.substitute(interfaceMethod.getReturnType());
-    LOG.assertTrue(returnType != null, interfaceMethod);
     final PsiType[] typeParameters = myExpression.getTypeParameters();
     if (!myExpression.isExact()) {
       for (PsiParameter parameter : targetParameters) {
@@ -105,7 +104,7 @@ public class PsiMethodReferenceCompatibilityConstraint implements ConstraintForm
       } else {
         return false;
       }
-      if (returnType != PsiType.VOID) {
+      if (returnType != PsiType.VOID && returnType != null) {
         if (applicableMethodReturnType == PsiType.VOID) {
           return false;
         }
@@ -126,7 +125,7 @@ public class PsiMethodReferenceCompatibilityConstraint implements ConstraintForm
       return false;
     }
 
-    if (PsiType.VOID.equals(returnType)) {
+    if (PsiType.VOID.equals(returnType) || returnType == null) {
       return true;
     }
 
