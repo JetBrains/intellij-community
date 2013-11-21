@@ -36,7 +36,6 @@ Available templates:
 * `.new` – produces instantiation expression for type `new T()`
 * `.fori` – surrounds with loop `for (int i = 0; i < expr.length; i++)`
 * `.forr` – reverse loop `for (int i = expr.length - 1; i >= 0; i--)`
-
 * `.field` – introduces field for expression `_field = expr;`
 * `.par` – surrounds outer expression with parentheses `(expr)`
 * `.return` – returns value from method/property `return expr;`
