@@ -1,7 +1,7 @@
 <idea-plugin version="2">
   <id>org.jetbrains.postfixCompletion</id>
   <name>Postfix Completion</name>
-  <version>0.5-beta</version>
+  <version>0.6-beta</version>
   <vendor email="alexander.shvedov@jetbrains.com"
           url="https://github.com/controlflow">Alexander Shvedov</vendor>
   <depends>com.intellij.modules.lang</depends>
@@ -28,6 +28,9 @@
         <li> <b>.new</b> – produces instantiation expression for type – <b>new T()</b></li>
         <li> <b>.fori</b> – surrounds with loop – <b>for (int i = 0; i < expr.length; i++)</b></li>
         <li> <b>.forr</b> – reverse loop – <b>for (int i = expr.length - 1; i >= 0; i--)</b></li>
+        <li> <b>.field</b> – introduces field for expression – <b>_field = expr;</b></li>
+        <li> <b>.par</b> – surrounds outer expression with parentheses – <b>(expr)</b></li>
+        <li> <b>.return</b> – returns value from method/property – <b>return expr;</b></li>
       </ul>
 
       <br/><b>Other features:</b><br/><br/>
@@ -40,6 +43,9 @@
 ]]></description>
 
   <change-notes><![CDATA[
+      <b>Version 0.6-beta</b><br/>
+      Fixes, new templates: <b>.field</b>, <b>.par</b> and <b>.return</b>.
+
       <b>Version 0.5-beta</b><br/>
       Various fixes for completion with over literals.<br/>
       New <b>.fori</b> and <b>.forr</b> templates iteration with index.<br/><br/>
