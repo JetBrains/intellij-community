@@ -2,7 +2,6 @@ package com.jetbrains.env.python.console;
 
 import com.google.common.collect.Lists;
 import com.intellij.execution.console.LanguageConsoleView;
-import com.intellij.execution.console.LanguageConsoleViewImpl;
 import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.openapi.application.Result;
@@ -14,10 +13,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.util.ui.UIUtil;
-import com.intellij.xdebugger.frame.XValue;
 import com.intellij.xdebugger.frame.XValueChildrenList;
-import com.intellij.xdebugger.frame.XValueGroup;
-import com.intellij.xdebugger.impl.ui.tree.nodes.XStackFrameNode;
 import com.jetbrains.env.python.debug.PyExecutionFixtureTestTask;
 import com.jetbrains.python.console.*;
 import com.jetbrains.python.console.pydev.ConsoleCommunicationListener;
@@ -27,9 +23,6 @@ import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
 
-import javax.swing.tree.TreeNode;
-import java.util.ArrayList;
-import java.util.Enumeration;
 import java.util.List;
 import java.util.concurrent.Semaphore;
 
@@ -168,7 +161,7 @@ public class PyConsoleTask extends PyExecutionFixtureTestTask {
 
     myCommunication.addCommunicationListener(new ConsoleCommunicationListener() {
       @Override
-      public void commandExecuted() {
+      public void commandExecuted(boolean more) {
         mySemaphore.release();
       }
 
