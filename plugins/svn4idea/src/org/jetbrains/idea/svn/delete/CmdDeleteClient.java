@@ -17,14 +17,18 @@ import java.util.List;
 public class CmdDeleteClient extends BaseSvnClient implements DeleteClient {
 
   @Override
-  public void delete(@NotNull File path, boolean force) throws VcsException {
-    List<String> parameters = new ArrayList<String>();
+  public void delete(@NotNull File path, boolean force, boolean dryRun) throws VcsException {
+    // TODO: no actual support for dryRun in 'svn delete', SvnKit performs certain validation on file status and svn:externals property
+    // TODO: probably add some widespread checks for dryRun delete - but most likely this should be placed upper - in merge logic
+    if (!dryRun) {
+      List<String> parameters = new ArrayList<String>();
 
-    CommandUtil.put(parameters, path);
-    CommandUtil.put(parameters, force, "--force");
+      CommandUtil.put(parameters, path);
+      CommandUtil.put(parameters, force, "--force");
 
-    // for now parsing of the output is not required as command is executed only for one file
-    // and will be either successful or exception will be thrown
-    CommandUtil.execute(myVcs, SvnTarget.fromFile(path), CommandUtil.getHomeDirectory(), SvnCommandName.delete, parameters, null);
+      // for now parsing of the output is not required as command is executed only for one file
+      // and will be either successful or exception will be thrown
+      CommandUtil.execute(myVcs, SvnTarget.fromFile(path), CommandUtil.getHomeDirectory(), SvnCommandName.delete, parameters, null);
+    }
   }
 }
