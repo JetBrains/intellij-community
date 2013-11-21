@@ -181,6 +181,10 @@ public class ExternalSystemApiUtil {
     return getLibraryName(library).equals(getLibraryName(libraryData));
   }
 
+  public static boolean isExternalSystemLibrary(@NotNull Library library, @NotNull ProjectSystemId externalSystemId) {
+    return library.getName() != null && StringUtil.startsWith(library.getName(), externalSystemId.getReadableName() + ": ");
+  }
+
   @Nullable
   public static ArtifactInfo parseArtifactInfo(@NotNull String fileName) {
     Matcher matcher = ARTIFACT_PATTERN.matcher(fileName);

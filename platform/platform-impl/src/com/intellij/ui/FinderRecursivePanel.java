@@ -146,6 +146,10 @@ public abstract class FinderRecursivePanel<T> extends JBSplitter implements Data
     return null;
   }
 
+  protected boolean isEditable() {
+    return getSelectedValue() != null;
+  }
+
   @Nullable
   protected JComponent createRightComponent(T t) {
     return new JPanel();
@@ -245,7 +249,7 @@ public abstract class FinderRecursivePanel<T> extends JBSplitter implements Data
 
       @Override
       public void update(AnActionEvent e) {
-        e.getPresentation().setEnabled(getSelectedValue() != null);
+        e.getPresentation().setEnabled(isEditable());
       }
 
       @Override

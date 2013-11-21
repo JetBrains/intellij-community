@@ -272,7 +272,7 @@ public class ExternalSystemUtil {
 
         LibraryTable projectLibraryTable = platformFacade.getProjectLibraryTable(project);
         for (Library library : projectLibraryTable.getLibraries()) {
-          if (library.getName() == null || !StringUtil.startsWith(library.getName(), externalSystemId.getReadableName() + ": ")) continue;
+          if (!ExternalSystemApiUtil.isExternalSystemLibrary(library, externalSystemId)) continue;
           if (ProjectStructureHelper.isOrphanProjectLibrary(library, platformFacade.getModules(project))) {
             orphanIdeLibraries.add(library);
           }
