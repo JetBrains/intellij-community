@@ -22,18 +22,16 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public final class UrlImpl implements Url {
-  private String externalForm;
-  private UrlImpl withoutParameters;
-
-  @Nullable
   private final String scheme;
-
   private final String authority;
 
   private final String path;
   private String decodedPath;
 
   private final String parameters;
+
+  private String externalForm;
+  private UrlImpl withoutParameters;
 
   public UrlImpl(@Nullable String path) {
     this(null, null, path, null);
