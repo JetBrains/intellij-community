@@ -34,6 +34,10 @@ import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.util.List;
 
+/**
+ * @param <T> List item type.
+ * @since 13.0
+ */
 public abstract class FinderRecursivePanel<T> extends JBSplitter implements DataProvider, Disposable {
 
   @NotNull
@@ -460,7 +464,8 @@ public abstract class FinderRecursivePanel<T> extends JBSplitter implements Data
         if (!listModel.getElementAt(i).equals(newItem)) {
           listModel.add(i, newItem);
         }
-      }  else {
+      }
+      else {
         listModel.add(newItem);
       }
     }
