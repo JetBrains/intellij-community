@@ -44,7 +44,7 @@
 
   <change-notes><![CDATA[
       <b>Version 0.6-beta</b><br/>
-      Fixes, new templates: <b>.field</b>, <b>.par</b> and <b>.return</b>.
+      Fixes, new templates: <b>.field</b>, <b>.par</b> and <b>.return</b>.<br/><br/>
 
       <b>Version 0.5-beta</b><br/>
       Various fixes for completion with over literals.<br/>
