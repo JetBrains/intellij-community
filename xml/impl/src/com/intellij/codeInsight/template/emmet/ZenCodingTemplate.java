@@ -40,12 +40,15 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.JBPopupListener;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.openapi.ui.popup.util.PopupUtil;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.*;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.XmlBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -274,8 +277,12 @@ public class ZenCodingTemplate extends CustomLiveTemplateBase {
   private static boolean isPrimitiveNode(@NotNull ZenCodingNode node) {
     if (node instanceof TemplateNode) {
       final TemplateToken token = ((TemplateNode)node).getTemplateToken();
-      if (token != null && token.getAttribute2Value().isEmpty()) {
-        return true;
+      if (token != null) {
+        final List<Pair<String,String>> attributes = token.getAttribute2Value();
+        final Pair<String, String> singleAttribute = ContainerUtil.getFirstItem(attributes);
+        if (singleAttribute == null || "class".equalsIgnoreCase(singleAttribute.first) && StringUtil.isEmpty(singleAttribute.second)) {
+          return true;
+        }
       }
     }
     return false;
@@ -349,6 +356,7 @@ public class ZenCodingTemplate extends CustomLiveTemplateBase {
       @Override
       public void run() {
         focusManager.requestFocus(field, true);
+        field.selectText();
       }
     });
   }

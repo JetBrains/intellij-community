@@ -83,7 +83,7 @@ public class DomStubBuilder implements BinaryFileStubBuilder {
 
   @Override
   public int getStubVersion() {
-    int version = 10;
+    int version = 11;
     DomFileDescription[] descriptions = Extensions.getExtensions(DomFileDescription.EP_NAME);
     for (DomFileDescription description : descriptions) {
       version += description.getStubVersion();

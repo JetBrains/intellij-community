@@ -63,7 +63,7 @@ public class GitIntegrationEnablerTest extends GitLightTest {
   public void oneRootForTheWholeProjectThenJustAddVcsrRoot() {
     Map<String, List<String>> map = new HashMap<String, List<String>>();
     map.put("git_init", Collections.<String>emptyList());
-    doTest(given(Arrays.asList("."), true, false),
+    doTest(given(Arrays.asList("."), false),
            map, null);
   }
 
@@ -74,7 +74,7 @@ public class GitIntegrationEnablerTest extends GitLightTest {
     map.put("vcs_roots", VcsTestUtil.toAbsolute(Arrays.asList("."), myProject));
 
 
-    doTest(given(Collections.<String>emptyList(), false, false),
+    doTest(given(Collections.<String>emptyList(), false),
            map, notification("Created Git repository in " + myProjectRoot));
   }
 
@@ -83,7 +83,7 @@ public class GitIntegrationEnablerTest extends GitLightTest {
     Map<String, List<String>> map = new HashMap<String, List<String>>();
     map.put("git_init", Collections.<String>emptyList());
 
-    doTest(given(Arrays.asList(".."), true, true),
+    doTest(given(Arrays.asList(".."), true),
            map, notification("Added Git root: " + myTestRoot));
   }
 
@@ -92,7 +92,7 @@ public class GitIntegrationEnablerTest extends GitLightTest {
     Map<String, List<String>> map = new HashMap<String, List<String>>();
     map.put("git_init", Collections.<String>emptyList());
 
-    doTest(given(Arrays.asList(".", "community"), true, false),
+    doTest(given(Arrays.asList(".", "community"), false),
            map, notification("Added Git roots: " + myProjectRoot + ", " + getPresentationForRoot("community")));
   }
 
@@ -101,7 +101,7 @@ public class GitIntegrationEnablerTest extends GitLightTest {
     Map<String, List<String>> map = new HashMap<String, List<String>>();
     map.put("git_init", Collections.<String>emptyList());
 
-    doTest(given(Arrays.asList("..", "community"), true, true),
+    doTest(given(Arrays.asList("..", "community"), true),
            map, notification("Added Git roots: " + myTestRoot + ", " + getPresentationForRoot("community")));
   }
 
@@ -110,7 +110,7 @@ public class GitIntegrationEnablerTest extends GitLightTest {
     Map<String, List<String>> map = new HashMap<String, List<String>>();
     map.put("git_init", Collections.<String>emptyList());
 
-    doTest(given(Arrays.asList("community", "contrib"), false, false),
+    doTest(given(Arrays.asList("community", "contrib"), false),
            map, notification(
       "Added Git roots: " + getPresentationForRoot("community") + ", " + getPresentationForRoot("contrib")));
   }
@@ -148,14 +148,14 @@ public class GitIntegrationEnablerTest extends GitLightTest {
     VcsTestUtil.assertEqualCollections(expectedVcsRoots, getPaths(actualRoots));
   }
 
-  VcsRootDetectInfo given(@NotNull Collection<String> roots, boolean full, boolean below) {
+  VcsRootDetectInfo given(@NotNull Collection<String> roots, boolean below) {
     return new VcsRootDetectInfo(ContainerUtil.map(roots, new Function<String, VcsRoot>() {
 
       @Override
       public VcsRoot fun(String s) {
         return new VcsRoot(myVcs, new MockVirtualFile(VcsTestUtil.toAbsolute(s, myProject)));
       }
-    }), full, below);
+    }), below);
   }
 
   Notification notification(String content) {

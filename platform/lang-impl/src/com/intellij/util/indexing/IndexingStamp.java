@@ -84,7 +84,9 @@ public class IndexingStamp {
           @Override
           public boolean execute(final ID<?, ?> id, final long timestamp) {
             try {
-              DataInputOutputUtil.writeINT(stream, id.getUniqueId());
+              if (timestamp != INDEX_VERSION_CHANGED_STAMP) {
+                DataInputOutputUtil.writeINT(stream, id.getUniqueId());
+              }
               return true;
             }
             catch (IOException e) {

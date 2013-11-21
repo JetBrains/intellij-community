@@ -25,6 +25,16 @@ import org.jetbrains.annotations.Nullable;
  */
 public class RemoteCredentialsHolder implements RemoteCredentials {
 
+  public static final String HOST = "HOST";
+  public static final String PORT = "PORT";
+  public static final String ANONYMOUS = "ANONYMOUS";
+  public static final String USERNAME = "USERNAME";
+  public static final String PASSWORD = "PASSWORD";
+  public static final String USE_KEY_PAIR = "USE_KEY_PAIR";
+  public static final String PRIVATE_KEY_FILE = "PRIVATE_KEY_FILE";
+  public static final String KNOWN_HOSTS_FILE = "MY_KNOWN_HOSTS_FILE";
+  public static final String PASSPHRASE = "PASSPHRASE";
+
   private String myHost;
   private int myPort;
   private boolean myAnonymous;

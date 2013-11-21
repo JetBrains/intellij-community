@@ -2000,7 +2000,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
               final ID<?, ?> indexId = candidates.get(i);
               if (needsFileContentLoading(indexId) && getInputFilter(indexId).acceptInput(file)) {
                 ID id = IndexInfrastructure.getStubId(indexId, fileType);
-                if (IndexingStamp.getIndexingState(file, id) != IndexingStamp.State.INDEXED) {
+                if (IndexingStamp.getIndexingState(file, id) == IndexingStamp.State.INDEXED) {
                   IndexingStamp.update(file, id, IndexInfrastructure.INVALID_STAMP2);
                   resetStamp = true;
                 }

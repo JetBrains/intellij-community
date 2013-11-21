@@ -106,9 +106,10 @@ public abstract class PythonTestCommandLineStateBase extends PythonCommandLineSt
     return cmd;
   }
 
-  private void setWorkingDirectory(@NotNull final GeneralCommandLine cmd) {
-    if (!StringUtil.isEmptyOrSpaces(myConfiguration.getWorkingDirectory())) {
-      cmd.setWorkDirectory(myConfiguration.getWorkingDirectory());
+  protected void setWorkingDirectory(@NotNull final GeneralCommandLine cmd) {
+    final String workingDirectory = myConfiguration.getWorkingDirectory();
+    if (!StringUtil.isEmptyOrSpaces(workingDirectory)) {
+      cmd.setWorkDirectory(workingDirectory);
     }
     else if (myConfiguration instanceof AbstractPythonTestRunConfiguration) {
       final String folderName = ((AbstractPythonTestRunConfiguration)myConfiguration).getFolderName();

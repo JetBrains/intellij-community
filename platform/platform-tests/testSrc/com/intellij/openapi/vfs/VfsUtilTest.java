@@ -351,6 +351,15 @@ public class VfsUtilTest extends PlatformLangTestCase {
     assertEquals("f=23r2ewd", uri.getQuery());
   }
 
+  public void testIsAncestor() {
+    assertTrue(VfsUtilCore.isEqualOrAncestor("file:///my/dir", "file:///my/dir"));
+    assertTrue(VfsUtilCore.isEqualOrAncestor("file:///my/dir", "file:///my/dir/file.txt"));
+    assertTrue(VfsUtilCore.isEqualOrAncestor("file:///my/dir/", "file:///my/dir/file.txt"));
+    assertFalse(VfsUtilCore.isEqualOrAncestor("file:///my/dir2", "file:///my/dir/file.txt"));
+    assertFalse(VfsUtilCore.isEqualOrAncestor("file:///my/dir", "file:///my/dir2"));
+    assertFalse(VfsUtilCore.isEqualOrAncestor("file:///my/dir/", "file:///my/dir2"));
+  }
+
   public void testFindChildByNamePerformance() throws IOException {
     File tempDir = new WriteAction<File>() {
       @Override
