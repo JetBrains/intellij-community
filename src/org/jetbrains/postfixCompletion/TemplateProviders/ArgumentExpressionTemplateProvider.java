@@ -20,7 +20,7 @@ import java.util.*;
   description = "Surrounds expression with invocation",
   example = "someMethod(expr)",
   worksInsideFragments = true)
-public class ArgumentExpressionTemplateProvider extends TemplateProviderBase {
+public final class ArgumentExpressionTemplateProvider extends TemplateProviderBase {
   @Override public void createItems(
       @NotNull PostfixTemplateContext context, @NotNull List<LookupElement> consumer) {
     PrefixExpressionContext expression = context.outerExpression();

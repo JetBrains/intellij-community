@@ -18,7 +18,7 @@ import static org.jetbrains.postfixCompletion.CommonUtils.*;
   description = "Produces instantiation expression for type",
   example = "new SomeType()",
   worksOnTypes = true)
-public class NewExpressionTemplateProvider extends TemplateProviderBase {
+public final class NewExpressionTemplateProvider extends TemplateProviderBase {
   @Override public void createItems(
       @NotNull PostfixTemplateContext context, @NotNull List<LookupElement> consumer) {
     PrefixExpressionContext expression = context.outerExpression();

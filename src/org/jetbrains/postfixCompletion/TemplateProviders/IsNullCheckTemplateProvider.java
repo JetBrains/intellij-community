@@ -11,7 +11,7 @@ import java.util.*;
   templateName = "null",
   description = "Checks expression to be null",
   example = "if (expr == null)")
-public class IsNullCheckTemplateProvider extends TemplateProviderBase {
+public final class IsNullCheckTemplateProvider extends TemplateProviderBase {
   @Override public void createItems(
       @NotNull PostfixTemplateContext context, @NotNull List<LookupElement> consumer) {
 

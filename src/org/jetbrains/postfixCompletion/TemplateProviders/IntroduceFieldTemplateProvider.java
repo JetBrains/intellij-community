@@ -19,7 +19,7 @@ import java.util.*;
   templateName = "field",
   description = "Introduces field for expression",
   example = "_field = expr;")
-public class IntroduceFieldTemplateProvider extends TemplateProviderBase {
+public final class IntroduceFieldTemplateProvider extends TemplateProviderBase {
   @Override public void createItems(
       @NotNull PostfixTemplateContext context, @NotNull List<LookupElement> consumer) {
 

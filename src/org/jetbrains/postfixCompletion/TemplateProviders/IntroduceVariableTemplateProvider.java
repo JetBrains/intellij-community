@@ -27,7 +27,7 @@ import static org.jetbrains.postfixCompletion.CommonUtils.*;
   description = "Introduces variable for expression",
   example = "T name = expr;",
   worksOnTypes = true)
-public class IntroduceVariableTemplateProvider extends TemplateProviderBase {
+public final class IntroduceVariableTemplateProvider extends TemplateProviderBase {
   @Override public void createItems(
       @NotNull PostfixTemplateContext context, @NotNull List<LookupElement> consumer) {
 

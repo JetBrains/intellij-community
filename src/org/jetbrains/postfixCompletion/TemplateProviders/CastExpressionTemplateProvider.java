@@ -24,7 +24,7 @@ import java.util.*;
   description = "Surrounds expression with cast",
   example = "(SomeType) expr",
   worksInsideFragments = true)
-public class CastExpressionTemplateProvider extends TemplateProviderBase {
+public final class CastExpressionTemplateProvider extends TemplateProviderBase {
   @Override public void createItems(
       @NotNull PostfixTemplateContext context, @NotNull List<LookupElement> consumer) {
     if (!context.executionContext.isForceMode) return;

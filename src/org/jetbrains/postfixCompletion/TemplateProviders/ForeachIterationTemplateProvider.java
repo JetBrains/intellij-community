@@ -22,7 +22,7 @@ import java.util.*;
   templateName = "for",
   description = "Iterates over enumerable collection",
   example = "for (T item : collection)")
-public class ForeachIterationTemplateProvider extends TemplateProviderBase {
+public final class ForeachIterationTemplateProvider extends TemplateProviderBase {
   @Override public void createItems(
     @NotNull PostfixTemplateContext context, @NotNull List<LookupElement> consumer) {
     PrefixExpressionContext expression = context.outerExpression();

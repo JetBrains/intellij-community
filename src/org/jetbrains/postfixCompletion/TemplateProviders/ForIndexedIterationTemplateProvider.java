@@ -8,7 +8,7 @@ import org.jetbrains.postfixCompletion.Infrastructure.*;
   templateName = "fori",
   description = "Iterates with index over collection",
   example = "for (int i = 0; i < expr.length; i++)")
-public class ForIndexedIterationTemplateProvider extends ForIterationTemplateProviderBase {
+public final class ForIndexedIterationTemplateProvider extends ForIterationTemplateProviderBase {
   @Override @NotNull protected ForIndexedLookupElement createIterationLookupElement(
     @NotNull PrefixExpressionContext expression, @NotNull String indexVarType, @NotNull String sizeAccessSuffix) {
 

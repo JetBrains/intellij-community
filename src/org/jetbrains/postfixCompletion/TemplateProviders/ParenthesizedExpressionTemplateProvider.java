@@ -14,7 +14,7 @@ import java.util.*;
   description = "Parenthesizes current expression",
   example = "(expr)",
   worksInsideFragments = true)
-public class ParenthesizedExpressionTemplateProvider extends TemplateProviderBase {
+public final class ParenthesizedExpressionTemplateProvider extends TemplateProviderBase {
   @Override public void createItems(
       @NotNull PostfixTemplateContext context, @NotNull List<LookupElement> consumer) {
     if (!context.executionContext.isForceMode) return;
