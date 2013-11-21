@@ -17,7 +17,6 @@ package com.intellij.psi;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.testFramework.PsiTestCase;
@@ -33,7 +32,7 @@ public class ClsDuplicatesTest extends PsiTestCase {
     return JavaTestUtil.getTestJdk();
   }
 
-  public void _testDuplicates() throws Exception {
+  public void testDuplicates() throws Exception {
     final PsiPackage rootPackage = JavaPsiFacade.getInstance(getProject()).findPackage("");
     assert rootPackage != null;
     final GlobalSearchScope scope = GlobalSearchScope.allScope(getProject());
@@ -47,7 +46,7 @@ public class ClsDuplicatesTest extends PsiTestCase {
           visitPackage(subPackage);
         }
         for (PsiClass aClass : aPackage.getClasses(scope)) {
-          visitElement(aClass);
+          visitClass(aClass);
         }
       }
 
@@ -65,6 +64,10 @@ public class ClsDuplicatesTest extends PsiTestCase {
           int i =0;
         }
         super.visitClass(aClass);
+        PsiElement parent = aClass.getParent();
+        if (!(parent instanceof PsiClass)){
+          uniques.clear();
+        }
       }
     };
     rootPackage.accept(visitor);
@@ -80,7 +83,7 @@ public class ClsDuplicatesTest extends PsiTestCase {
     @Override
     public boolean equals(PsiNamedElement o1, PsiNamedElement o2) {
       boolean eq = o1.getParent() == o2.getParent() && StringUtil.equals(o1.getName(), o2.getName()) && o1.getClass() == o2.getClass()
-                  && Comparing.equal(o1.getText(), o2.getText());
+                  && StringUtil.equals(o1.getText(), o2.getText());
 
       if (eq) {
         return true;
