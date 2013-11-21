@@ -12,27 +12,15 @@ import java.util.Collection;
 public class VcsRootDetectInfo {
 
   private final @NotNull Collection<VcsRoot> myRoots;
-  private final boolean myFull;
   private final boolean myBelow;
 
   /**
    * @param roots Vcs roots important for the project.
-   * @param full  Pass true to indicate that the project is fully under Vcs.
    * @param below Pass true to indicate that the project dir is below Vcs dir,
-   *              i.e. .git is above the project dir, and there is no DOT dir directly under the project dir.
    */
-  public VcsRootDetectInfo(@NotNull Collection<VcsRoot> roots, boolean full, boolean below) {
+  public VcsRootDetectInfo(@NotNull Collection<VcsRoot> roots, boolean below) {
     myRoots = new ArrayList<VcsRoot>(roots);
-    myFull = full;
     myBelow = below;
-  }
-
-  /**
-   * @return True if the project is fully under Vcs.
-   * It is true if f.e. .git is directly inside or above the project dir.
-   */
-  public boolean totallyUnderVcs() {
-    return myFull;
   }
 
   public boolean empty() {

@@ -89,7 +89,7 @@ public class ContentEntryTreeCellRenderer extends NodeRenderer {
     final SourceFolder[] sourceFolders = entry.getSourceFolders();
     for (SourceFolder sourceFolder : sourceFolders) {
       if (file.equals(sourceFolder.getFile())) {
-        return IconSet.getSourceRootIcon(sourceFolder.getRootType(), myEditHandlers);
+        return SourceRootPresentation.getSourceRootIcon(sourceFolder);
       }
     }
 

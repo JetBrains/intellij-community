@@ -308,7 +308,13 @@ public abstract class PropertyTable extends JBTable {
   }
 
   public void update(@NotNull List<? extends PropertiesContainer> containers, @Nullable Property initialSelection) {
-    finishEditing();
+    update(containers, initialSelection, true);
+  }
+
+  private void update(@NotNull List<? extends PropertiesContainer> containers, @Nullable Property initialSelection, boolean finishEditing) {
+    if (finishEditing) {
+      finishEditing();
+    }
 
     if (mySkipUpdate) {
       return;
@@ -316,7 +322,7 @@ public abstract class PropertyTable extends JBTable {
     mySkipUpdate = true;
 
     try {
-      if (isEditing()) {
+      if (finishEditing && isEditing()) {
         cellEditor.stopCellEditing();
       }
 
@@ -841,7 +847,7 @@ public abstract class PropertyTable extends JBTable {
 
     if (isSetValue) {
       if (property.needRefreshPropertyList() || needRefresh[0]) {
-        update();
+        update(myContainers, null, false);
       }
       else {
         myModel.fireTableRowsUpdated(row, row);
@@ -1107,7 +1113,9 @@ public abstract class PropertyTable extends JBTable {
 
         if (setValueAtRow(editingRow, value)) {
           if (!continueEditing) {
-            tableCellEditor.stopCellEditing();
+            PropertyEditor editor = myProperties.get(editingRow).getEditor();
+            editor.removePropertyEditorListener(myPropertyEditorListener);
+            removeEditor();
           }
         }
         else if (closeEditorOnError) {

@@ -20,7 +20,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.sun.jdi.VMDisconnectedException;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.List;
 import java.util.concurrent.*;
 
 /**
@@ -60,14 +59,14 @@ public abstract class InvokeThread<E extends PrioritizedTask> {
       }
     }
 
-    public void interrupt() {
+    public void requestStop() {
       final Future<?> future = myRequestFuture;
       assert future != null;
       myStopRequested = true;
       future.cancel(true);
     }
 
-    public boolean isInterrupted() {
+    public boolean isStopRequested() {
       final Future<?> future = myRequestFuture;
       assert future != null;
       return myStopRequested || future.isCancelled() || future.isDone();
@@ -127,51 +126,58 @@ public abstract class InvokeThread<E extends PrioritizedTask> {
     workerRequest.setRequestFuture( ApplicationManager.getApplication().executeOnPooledThread(workerRequest) );
   }
 
-  private void run(@NotNull WorkerThreadRequest threadRequest) {
-    while(true) {
-      try {
-        if(threadRequest.isInterrupted()) {
+  private void run(final @NotNull WorkerThreadRequest threadRequest) {
+    try {
+      while(true) {
+        try {
+          if(threadRequest.isStopRequested()) {
+            break;
+          }
+
+          final WorkerThreadRequest currentRequest = getCurrentRequest();
+          if(currentRequest != threadRequest) {
+            LOG.error("Expected " + threadRequest + " instead of " + currentRequest);
+            if (currentRequest != null && !currentRequest.isDone()) {
+              continue; // ensure events are processed by one thread at a time
+            }
+          }
+
+          processEvent(myEvents.get());
+        }
+        catch (VMDisconnectedException e) {
           break;
         }
-
-        final WorkerThreadRequest currentRequest = getCurrentRequest();
-        if(currentRequest != threadRequest) {
-          LOG.error("Expected " + threadRequest + " instead of " + currentRequest);
-          if (currentRequest != null && !currentRequest.isDone()) {
-            continue; // ensure events are processed by one thread at a time
-          }
+        catch (EventQueueClosedException e) {
+          break;
         }
-
-        processEvent(myEvents.get());
+        catch (RuntimeException e) {
+          if(e.getCause() instanceof InterruptedException) {
+            break;
+          }
+          LOG.error(e);
+        }
+        catch (Throwable e) {
+          LOG.error(e);
+        }
       }
-      catch (VMDisconnectedException e) {
-        break;
-      }
-      catch (EventQueueClosedException e) {
-        final List<E> unprocessed = myEvents.clearQueue();
-        for (E event : unprocessed) {
+    }
+    finally {
+      // ensure that all scheduled events are processed
+      if (threadRequest == getCurrentRequest()) {
+        for (E event : myEvents.clearQueue()) {
           try {
             processEvent(event);
           }
           catch (Throwable ignored) {
           }
         }
-        break;
       }
-      catch (RuntimeException e) {
-        if(e.getCause() instanceof InterruptedException) {
-          break;
-        }
-        LOG.error(e);
-      }
-      catch (Throwable e) {
-        LOG.error(e);
+
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("Request " + this.toString() + " exited");
       }
     }
 
-    if (LOG.isDebugEnabled()) {
-      LOG.debug("Request " + this.toString() + " exited");
-    }
   }
 
   protected static InvokeThread currentThread() {
@@ -201,7 +207,7 @@ public abstract class InvokeThread<E extends PrioritizedTask> {
       LOG.debug("Closing " + currentThreadRequest + " new request = " + newRequest);
     }
 
-    currentThreadRequest.interrupt();
+    currentThreadRequest.requestStop();
   }
 
   public WorkerThreadRequest getCurrentRequest() {

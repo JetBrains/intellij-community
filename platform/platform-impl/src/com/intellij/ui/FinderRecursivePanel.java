@@ -34,6 +34,10 @@ import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.util.List;
 
+/**
+ * @param <T> List item type.
+ * @since 13.0
+ */
 public abstract class FinderRecursivePanel<T> extends JBSplitter implements DataProvider, Disposable {
 
   @NotNull
@@ -142,6 +146,10 @@ public abstract class FinderRecursivePanel<T> extends JBSplitter implements Data
     return null;
   }
 
+  protected boolean isEditable() {
+    return getSelectedValue() != null;
+  }
+
   @Nullable
   protected JComponent createRightComponent(T t) {
     return new JPanel();
@@ -241,7 +249,7 @@ public abstract class FinderRecursivePanel<T> extends JBSplitter implements Data
 
       @Override
       public void update(AnActionEvent e) {
-        e.getPresentation().setEnabled(getSelectedValue() != null);
+        e.getPresentation().setEnabled(isEditable());
       }
 
       @Override
@@ -460,7 +468,8 @@ public abstract class FinderRecursivePanel<T> extends JBSplitter implements Data
         if (!listModel.getElementAt(i).equals(newItem)) {
           listModel.add(i, newItem);
         }
-      }  else {
+      }
+      else {
         listModel.add(newItem);
       }
     }

@@ -215,7 +215,7 @@ class BaseInterpreterInterface:
                 try:
                     self.startExec()
                     more = self.doAddExec(code_fragment)
-                    self.finishExec()
+                    self.finishExec(more)
                 finally:
                     if help is not None:
                         try:
@@ -358,13 +358,13 @@ class BaseInterpreterInterface:
         else:
             return None
 
-    def finishExec(self):
+    def finishExec(self, more):
         self.interruptable = False
 
         server = self.get_server()
 
         if server is not None:
-            return server.NotifyFinished()
+            return server.NotifyFinished(more)
         else:
             return True
 

@@ -24,7 +24,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsKey;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
@@ -46,10 +45,7 @@ import org.zmlx.hg4idea.util.HgHistoryUtil;
 import org.zmlx.hg4idea.util.HgUtil;
 
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author Nadya Zabrodina
@@ -74,8 +70,7 @@ public class HgLogProvider implements VcsLogProvider {
   @Override
   public List<? extends VcsFullCommitDetails> readFirstBlock(@NotNull VirtualFile root,
                                                              boolean ordered, int commitCount) throws VcsException {
-    String[] params = ordered ? ArrayUtil.EMPTY_STRING_ARRAY : new String[]{"-r", "0:tip"};
-    return HgHistoryUtil.history(myProject, root, commitCount, params);
+    return HgHistoryUtil.history(myProject, root, commitCount, ordered ? Collections.<String>emptyList() : Arrays.asList("-r", "0:tip"));
   }
 
   @NotNull
@@ -226,7 +221,7 @@ public class HgLogProvider implements VcsLogProvider {
       }
     }
 
-    return HgHistoryUtil.history(myProject, root, -1, ArrayUtil.toStringArray(filterParameters));
+    return HgHistoryUtil.history(myProject, root, -1, filterParameters);
   }
 
   @Nullable

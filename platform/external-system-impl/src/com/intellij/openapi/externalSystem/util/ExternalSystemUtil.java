@@ -42,6 +42,7 @@ import com.intellij.openapi.externalSystem.service.internal.ExternalSystemResolv
 import com.intellij.openapi.externalSystem.service.notification.ExternalSystemIdeNotificationManager;
 import com.intellij.openapi.externalSystem.service.project.ExternalProjectRefreshCallback;
 import com.intellij.openapi.externalSystem.service.project.PlatformFacade;
+import com.intellij.openapi.externalSystem.service.project.ProjectStructureHelper;
 import com.intellij.openapi.externalSystem.service.project.manage.ModuleDataService;
 import com.intellij.openapi.externalSystem.service.project.manage.ProjectDataManager;
 import com.intellij.openapi.externalSystem.service.settings.ExternalSystemConfigLocator;
@@ -55,6 +56,8 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
+import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -216,6 +219,8 @@ public class ExternalSystemUtil {
                 projectDataManager.importData(externalProject.getKey(), Collections.singleton(externalProject), project, true);
               }
             });
+
+            processOrphanProjectLibraries();
           }
         });
         if (--counter[0] <= 0) {
@@ -258,6 +263,22 @@ public class ExternalSystemUtil {
 
         if (!orphanIdeModules.isEmpty()) {
           ruleOrphanModules(orphanIdeModules, project, externalSystemId);
+        }
+      }
+
+      private void processOrphanProjectLibraries() {
+        PlatformFacade platformFacade = ServiceManager.getService(PlatformFacade.class);
+        List<Library> orphanIdeLibraries = ContainerUtilRt.newArrayList();
+
+        LibraryTable projectLibraryTable = platformFacade.getProjectLibraryTable(project);
+        for (Library library : projectLibraryTable.getLibraries()) {
+          if (!ExternalSystemApiUtil.isExternalSystemLibrary(library, externalSystemId)) continue;
+          if (ProjectStructureHelper.isOrphanProjectLibrary(library, platformFacade.getModules(project))) {
+            orphanIdeLibraries.add(library);
+          }
+        }
+        for (Library orphanIdeLibrary : orphanIdeLibraries) {
+          projectLibraryTable.removeLibrary(orphanIdeLibrary);
         }
       }
     };

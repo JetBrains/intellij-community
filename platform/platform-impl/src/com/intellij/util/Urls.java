@@ -16,6 +16,7 @@
 package com.intellij.util;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.StandardFileSystems;
@@ -26,11 +27,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-// We don't use Java URI due to problem — http://cns-etuat-2.localnet.englishtown.com/school/e12/#school/45383/201/221/382?c=countrycode=cc|culturecode=en-us|partnercode=mkge
-// it is illegal URI (fragment before query), but we must support such URI
 public final class Urls {
   private static final Logger LOG = Logger.getInstance(Urls.class);
 
@@ -79,7 +79,7 @@ public final class Urls {
     }
 
     try {
-      return asUrl.toJavaUriWithoutParameters();
+      return toUriWithoutParameters(asUrl);
     }
     catch (Exception e) {
       LOG.info("Can't parse " + url, e);
@@ -142,5 +142,20 @@ public final class Urls {
 
     Url fileUrl = parseUrl(file.getUrl());
     return fileUrl != null && fileUrl.equalsIgnoreParameters(url);
+  }
+
+  @NotNull
+  public static URI toUriWithoutParameters(@NotNull Url url) {
+    try {
+      String externalPath = url.getPath();
+      boolean inLocalFileSystem = url.isInLocalFileSystem();
+      if (inLocalFileSystem && SystemInfo.isWindows && externalPath.charAt(0) != '/') {
+        externalPath = '/' + externalPath;
+      }
+      return new URI(inLocalFileSystem ? "file" : url.getScheme(), inLocalFileSystem ? "" : url.getAuthority(), externalPath, null, null);
+    }
+    catch (URISyntaxException e) {
+      throw new RuntimeException(e);
+    }
   }
 }

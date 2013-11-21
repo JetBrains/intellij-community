@@ -298,6 +298,7 @@ public abstract class EditorComposite implements Disposable {
    * @return editors which are opened in the composite. <b>Do not modify
    * this array</b>.
    */
+  @NotNull
   public FileEditor[] getEditors() {
     return myEditors;
   }
