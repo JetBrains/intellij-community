@@ -132,9 +132,9 @@ public class PsiMethodReferenceCompatibilityConstraint implements ConstraintForm
     if (resolve instanceof PsiMethod) {
       final PsiMethod method = (PsiMethod)resolve;
       final PsiType referencedMethodReturnType;
+      final PsiClass containingClass = method.getContainingClass();
+      LOG.assertTrue(containingClass != null, method);
       if (method.isConstructor()) {
-        final PsiClass containingClass = method.getContainingClass();
-        LOG.assertTrue(containingClass != null, method);
         referencedMethodReturnType = JavaPsiFacade.getElementFactory(method.getProject()).createType(containingClass, PsiSubstitutor.EMPTY);
       }
       else {
@@ -154,6 +154,9 @@ public class PsiMethodReferenceCompatibilityConstraint implements ConstraintForm
       }
  
       session.initBounds(method.getTypeParameters());
+      if (myExpression.isConstructor()) {
+        session.initBounds(containingClass.getTypeParameters());
+      }
       constraints.add(new TypeCompatibilityConstraint(returnType, referencedMethodReturnType));
     }
     
