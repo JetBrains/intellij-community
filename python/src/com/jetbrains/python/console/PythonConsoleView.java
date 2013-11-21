@@ -385,7 +385,7 @@ public class PythonConsoleView extends JPanel implements LanguageConsoleView, Ob
     final XStandaloneVariablesView view = new XStandaloneVariablesView(myProject, new PyDebuggerEditorsProvider(), stackFrame);
     consoleCommunication.addCommunicationListener(new ConsoleCommunicationListener() {
       @Override
-      public void commandExecuted() {
+      public void commandExecuted(boolean more) {
         view.rebuildView();
       }
 
