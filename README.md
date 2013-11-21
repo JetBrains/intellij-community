@@ -40,6 +40,10 @@ Available templates:
 * `.par` – surrounds outer expression with parentheses `(expr)`
 * `.return` – returns value from method/property `return expr;`
 
+* `.switch` – switch over integral/enum/string values `switch (expr)`
+* `.throw` – throws value of Exception type `throw expr;`
+* `.assert` - creates assertion statement from expression `assert expr`
+
 Other features:
 
 * Template expansion by `Tab` key in editor (like live templates)

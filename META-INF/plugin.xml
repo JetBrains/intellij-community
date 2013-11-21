@@ -80,7 +80,7 @@
   <idea-version since-build="130.754"/>
 
   <application-components>
-     <component>
+    <component>
       <implementation-class>org.jetbrains.postfixCompletion.Infrastructure.PostfixTemplatesManager</implementation-class>
     </component>
     <component>
@@ -130,6 +130,9 @@
     </component>
     <component>
       <implementation-class>org.jetbrains.postfixCompletion.TemplateProviders.ReturnStatementTemplateProvider</implementation-class>
+    </component>
+    <component>
+      <implementation-class>org.jetbrains.postfixCompletion.TemplateProviders.SwitchStatementTemplateProvider</implementation-class>
     </component>
   </application-components>
 
