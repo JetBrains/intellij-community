@@ -38,7 +38,7 @@ public class InvalidVirtualFileAccessException extends RuntimeException {
     return message;
   }
 
-  private static int hashCode(Object o) {
-    return o != null ? o.hashCode() : 0;
+  private static String hashCode(Object o) {
+    return o != null ? String.valueOf(o.hashCode()) : "-";
   }
 }
