@@ -392,8 +392,9 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
                                                                 final boolean staticProblem,
                                                                 final boolean accessible) {
                 final PsiExpressionList argumentList = getArgumentList();
+                final PsiType[] typeParameters = PsiMethodReferenceExpressionImpl.this.getTypeParameters();
                 return new MethodCandidateInfo(method, substitutor, !accessible, staticProblem, argumentList, myCurrentFileContext,
-                                               argumentList != null ? argumentList.getExpressionTypes() : null, getTypeArguments(),
+                                               argumentList != null ? argumentList.getExpressionTypes() : null, typeParameters.length > 0 ? typeParameters : null,
                                                getLanguageLevel()) {
                   @Override
                   public PsiSubstitutor inferTypeArguments(@NotNull ParameterTypeInferencePolicy policy, boolean includeReturnConstraint) {

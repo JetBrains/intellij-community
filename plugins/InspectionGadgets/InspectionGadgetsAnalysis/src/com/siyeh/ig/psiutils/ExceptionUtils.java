@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2013 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -51,6 +51,25 @@ public class ExceptionUtils {
     final PsiClassType classType = (PsiClassType)exceptionType;
     final String className = classType.getCanonicalText();
     return s_genericExceptionTypes.contains(className);
+  }
+
+  public static boolean isThrowableRethrown(PsiParameter throwable, PsiCodeBlock catchBlock) {
+    final PsiStatement[] statements = catchBlock.getStatements();
+    if (statements.length <= 0) {
+      return false;
+    }
+    final PsiStatement lastStatement = statements[statements.length - 1];
+    if (!(lastStatement instanceof PsiThrowStatement)) {
+      return false;
+    }
+    final PsiThrowStatement throwStatement = (PsiThrowStatement)lastStatement;
+    final PsiExpression expression = throwStatement.getException();
+    if (!(expression instanceof PsiReferenceExpression)) {
+      return false;
+    }
+    final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)expression;
+    final PsiElement element = referenceExpression.resolve();
+    return throwable.equals(element);
   }
 
   public static boolean statementThrowsException(PsiStatement statement) {

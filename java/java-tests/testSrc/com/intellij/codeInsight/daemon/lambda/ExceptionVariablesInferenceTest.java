@@ -41,6 +41,14 @@ public class ExceptionVariablesInferenceTest extends LightDaemonAnalyzerTestCase
     doTest();
   }
 
+  public void testLambdaBodyUncaughtExceptionsForOuterCallInference() throws Exception {
+    doTest();
+  }
+
+  public void testMethodRefUncaughtExceptionsForOuterCallInference() throws Exception {
+    doTest();
+  }
+
   private void doTest() throws Exception {
     doTest(false);
   }

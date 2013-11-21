@@ -176,8 +176,9 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
       populateContentRoot(ideContentRoot, ExternalSystemSourceType.TEST, gradleContentRoot.getTestDirectories());
 
       if (gradleContentRoot instanceof ExtIdeaContentRoot) {
-        populateContentRoot(ideContentRoot, ExternalSystemSourceType.RESOURCE,
-                            ExtIdeaContentRoot.class.cast(gradleContentRoot).getResourceDirectories());
+        ExtIdeaContentRoot extIdeaContentRoot = (ExtIdeaContentRoot)gradleContentRoot;
+        populateContentRoot(ideContentRoot, ExternalSystemSourceType.RESOURCE, extIdeaContentRoot.getResourceDirectories());
+        populateContentRoot(ideContentRoot, ExternalSystemSourceType.TEST_RESOURCE, extIdeaContentRoot.getTestResourceDirectories());
       }
 
       Set<File> excluded = gradleContentRoot.getExcludeDirectories();

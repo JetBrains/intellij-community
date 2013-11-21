@@ -17,7 +17,6 @@ package com.intellij.ide.ui.laf.darcula.ui;
 
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
 import com.intellij.openapi.ui.GraphicsConfig;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.Gray;
 import com.intellij.util.ui.EmptyIcon;
@@ -88,14 +87,21 @@ public class DarculaRadioButtonUI extends MetalRadioButtonUI {
 
     //setup AA for lines
     final GraphicsConfig config = GraphicsUtil.setupAAPainting(g);
-    g.setPaint(
-      UIUtil.getGradientPaint(0, 0, ColorUtil.shift(c.getBackground(), 1.5), 0, c.getHeight(), ColorUtil.shift(c.getBackground(), 1.2)));
-    g.fillOval(0, 1, w - 1, h - 1);
+    final boolean focus = b.hasFocus();
+    g.setPaint(UIUtil.getGradientPaint(0, 0, ColorUtil.shift(c.getBackground(), 1.5),
+                                       0, c.getHeight(), ColorUtil.shift(c.getBackground(), 1.2)));
+    if (focus) {
+      g.fillOval(0, 1, w, h);
+    } else {
+      g.fillOval(0, 1, w - 1, h - 1);
+    }
 
-    if (b.hasFocus()) {
-      int sysOffX = SystemInfo.isMac ? 0 : 1;
-      int sysOffY = SystemInfo.isMac ? 0 : -1;
-      DarculaUIUtil.paintFocusOval(g, w/2 - rad - sysOffX, y- (rad + 1)/2 + sysOffY, w-2, h-2);
+    if (focus) {
+      if (UIUtil.isRetina()) {
+        DarculaUIUtil.paintFocusOval(g, 1, 2, w-2, h-2);
+      } else {
+        DarculaUIUtil.paintFocusOval(g, 0, 1, w, h);
+      }
     } else {
       if (UIUtil.isUnderDarcula()) {
         g.setPaint(UIUtil.getGradientPaint(w / 2, 1, Gray._160.withAlpha(90), w / 2, h, Gray._100.withAlpha(90)));

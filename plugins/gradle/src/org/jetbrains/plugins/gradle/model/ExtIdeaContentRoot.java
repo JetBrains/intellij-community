@@ -28,4 +28,5 @@ import java.io.Serializable;
 public interface ExtIdeaContentRoot extends IdeaContentRoot, Serializable {
 
   DomainObjectSet<? extends IdeaSourceDirectory> getResourceDirectories();
+  DomainObjectSet<? extends IdeaSourceDirectory> getTestResourceDirectories();
 }

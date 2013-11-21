@@ -379,7 +379,10 @@ public class LibraryImpl extends TraceableDisposable implements LibraryEx.Modifi
 
   @Override
   public void addExcludedRoot(@NotNull String url) {
-    getOrCreateExcludedRoots().add(url);
+    VirtualFilePointerContainer roots = getOrCreateExcludedRoots();
+    if (roots.findByUrl(url) == null) {
+      roots.add(url);
+    }
   }
 
   @Override
@@ -492,7 +495,7 @@ public class LibraryImpl extends TraceableDisposable implements LibraryEx.Modifi
       if (myExcludedRoots != null) {
         for (String excludedRoot : myExcludedRoots.getUrls()) {
           if (!isUnderRoots(excludedRoot)) {
-            VirtualFilePointer pointer = myExcludedRoots.findByUrl(url);
+            VirtualFilePointer pointer = myExcludedRoots.findByUrl(excludedRoot);
             if (pointer != null) {
               myExcludedRoots.remove(pointer);
             }
