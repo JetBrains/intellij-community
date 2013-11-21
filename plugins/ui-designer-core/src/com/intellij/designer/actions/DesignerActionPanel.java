@@ -129,7 +129,7 @@ public class DesignerActionPanel implements DataProvider {
     return group;
   }
 
-  protected SelectAllAction createSelectAllAction(EditableArea area) {
+  public AnAction createSelectAllAction(EditableArea area) {
     return new SelectAllAction(area);
   }
 
