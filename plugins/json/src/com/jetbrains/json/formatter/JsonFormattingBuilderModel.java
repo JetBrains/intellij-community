@@ -4,6 +4,7 @@ import com.intellij.formatting.*;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
@@ -35,6 +36,7 @@ public class JsonFormattingBuilderModel implements FormattingModelBuilder {
   public FormattingModel createModel(PsiElement element, CodeStyleSettings settings) {
     if (LOG.isDebugEnabled()) {
       LOG.debug("PSI Tree:\n" + DebugUtil.psiToString(element, false));
+      LOG.debug("AST Tree:\n" + dumpAST(element.getNode()));
     }
 
     JsonBlock block = new JsonBlock(null, element.getNode(), settings, null, Indent.getNoneIndent(), null);
@@ -70,5 +72,17 @@ public class JsonFormattingBuilderModel implements FormattingModelBuilder {
       .after(COMMA).spaceIf(commonSettings.SPACE_AFTER_COMMA);
 
     return builder;
+  }
+
+  private static String dumpAST(ASTNode root) {
+    return dumpAST(root, 0);
+  }
+
+  private static String dumpAST(ASTNode node, int indent) {
+    StringBuilder builder = new StringBuilder(StringUtil.repeat(" ", indent) + node);
+    for (ASTNode child : node.getChildren(null)) {
+      builder.append('\n').append(dumpAST(child, indent + 2));
+    }
+    return builder.toString();
   }
 }
