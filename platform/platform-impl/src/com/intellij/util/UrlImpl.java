@@ -86,7 +86,7 @@ public final class UrlImpl implements Url {
   public String toDecodedForm() {
     StringBuilder builder = new StringBuilder();
     if (scheme != null) {
-      builder.append(scheme).append("://");
+      builder.append(scheme).append(URLUtil.SCHEME_SEPARATOR);
     }
     if (authority != null) {
       builder.append(authority);
