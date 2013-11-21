@@ -13,9 +13,9 @@ import java.io.File;
 public class SvnKitDeleteClient extends BaseSvnClient implements DeleteClient {
 
   @Override
-  public void delete(@NotNull File path, boolean force) throws VcsException {
+  public void delete(@NotNull File path, boolean force, boolean dryRun) throws VcsException {
     try {
-      myVcs.createWCClient().doDelete(path, force, false);
+      myVcs.createWCClient().doDelete(path, force, dryRun);
     }
     catch (SVNException e) {
       throw new VcsException(e);

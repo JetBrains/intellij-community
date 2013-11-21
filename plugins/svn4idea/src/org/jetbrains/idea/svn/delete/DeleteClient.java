@@ -11,5 +11,5 @@ import java.io.File;
  */
 public interface DeleteClient extends SvnClient {
 
-  void delete(@NotNull File path, boolean force) throws VcsException;
+  void delete(@NotNull File path, boolean force, boolean dryRun) throws VcsException;
 }
