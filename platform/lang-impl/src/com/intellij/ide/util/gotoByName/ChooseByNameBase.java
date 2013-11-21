@@ -82,6 +82,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.border.Border;
 import javax.swing.border.CompoundBorder;
 import javax.swing.border.EmptyBorder;
 import javax.swing.event.DocumentEvent;
@@ -1245,6 +1246,18 @@ public abstract class ChooseByNameBase {
           }
         }
       });
+    }
+
+    @Override
+    public Dimension getPreferredSize() {
+      Dimension size = super.getPreferredSize();
+      Border border = super.getBorder();
+      if (border != null && UIUtil.isUnderAquaLookAndFeel()) {
+        Insets insets = border.getBorderInsets(this);
+        size.height += insets.top + insets.bottom;
+        size.width += insets.left + insets.right;
+      }
+      return size;
     }
 
     @Nullable
