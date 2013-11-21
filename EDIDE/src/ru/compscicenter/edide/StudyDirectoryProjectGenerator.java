@@ -3,6 +3,7 @@ package ru.compscicenter.edide;
 import com.intellij.facet.ui.ValidationResult;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Log;
+import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
@@ -23,7 +24,6 @@ import java.io.*;
  * User: lia
  */
 public class StudyDirectoryProjectGenerator implements DirectoryProjectGenerator {
-
     @Nls
     @NotNull
     @Override
@@ -58,18 +58,18 @@ public class StudyDirectoryProjectGenerator implements DirectoryProjectGenerator
             @Override
             public void run() {
                 try {
-                    VirtualFile vf = baseDir.createChildDirectory(this, "tasks").createChildData(this, "helloworld.py");
-                    vf.setWritable(true);
+                    VirtualFile my_task = baseDir.createChildDirectory(this, "tasks").createChildData(this, "helloworld.py");
+                    my_task.setWritable(true);
                     InputStream ip = StudyDirectoryProjectGenerator.class.getResourceAsStream("helloworld.py");
                     BufferedReader bf = new BufferedReader(new InputStreamReader(ip));
-                    OutputStream os = vf.getOutputStream(this);
+                    OutputStream os = my_task.getOutputStream(this);
                     while (bf.ready()) {
                         os.write(bf.readLine().getBytes());
                     }
                     ip.close();
                     os.close();
 
-                    vf = baseDir.createChildDirectory(this, "resources").createChildData(this, "utrunner.py");
+                    VirtualFile vf = baseDir.createChildDirectory(this, "resources").createChildData(this, "utrunner.py");
                     vf.setWritable(true);
                     ip = StudyDirectoryProjectGenerator.class.getResourceAsStream("utrunner.py");
                     bf = new BufferedReader(new InputStreamReader(ip));
@@ -88,6 +88,7 @@ public class StudyDirectoryProjectGenerator implements DirectoryProjectGenerator
 
             }
         });
+        EditorFactory.getInstance().addEditorFactoryListener(new StudyEditorFactoryListener(), project);
     }
 
     @NotNull
