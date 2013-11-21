@@ -78,7 +78,6 @@ public class CheckedExceptionCompatibilityConstraint extends InputOutputConstrai
         if (!session.isProperType(substitutor.substitute(parameter.getType()))) return false;
       }
       final PsiType returnType = interfaceMethod.getReturnType();
-      LOG.assertTrue(returnType != null, interfaceMethod);
       if (!session.isProperType(substitutor.substitute(returnType))) return false;
 
       final List<PsiType>
