@@ -387,6 +387,7 @@ public abstract class FinderRecursivePanel<T> extends JBSplitter implements Data
 
   @Override
   public void dispose() {
+    super.dispose();
     myMergingUpdateQueue.cancelAllUpdates();
   }
 
