@@ -128,6 +128,19 @@ class Xoo {
 
   }
 
+  public void "test file start"() {
+    myFixture.configureByText "a.java", '''<caret>
+class Xoo {
+}
+'''
+    complete()
+    myFixture.checkResult '''class<caret>
+class Xoo {
+}
+'''
+
+  }
+
   private void complete() {
     myFixture.performEditorAction(IdeActions.ACTION_HIPPIE_COMPLETION)
   }
