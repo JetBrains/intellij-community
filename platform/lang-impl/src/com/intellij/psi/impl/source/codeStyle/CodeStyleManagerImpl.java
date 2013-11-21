@@ -173,37 +173,9 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
       editor = PsiUtilBase.findEditor(file);
     }
 
-    // There is a possible case that cursor is located at the end of the line that contains only white spaces. For example:
-    //     public void foo() {
-    //         <caret>
-    //     }
-    // Formatter removes such white spaces, i.e. keeps only line feed symbol. But we want to preserve caret position then.
-    // So, if 'virtual space in editor' is enabled, we save target visual column. Caret indent is ensured otherwise
-    int visualColumnToRestore = -1;
-    String caretIndentToRestore = null;
-    RangeMarker beforeCaretRangeMarker = null;
-
+    CaretPositionKeeper caretKeeper = null;
     if (editor != null) {
-      Document document = editor.getDocument();
-      int caretOffset = editor.getCaretModel().getOffset();
-      caretOffset = Math.max(Math.min(caretOffset, document.getTextLength() - 1), 0);
-      CharSequence text = document.getCharsSequence();
-      int caretLine = document.getLineNumber(caretOffset);
-      int lineStartOffset = document.getLineStartOffset(caretLine);
-      int lineEndOffset = document.getLineEndOffset(caretLine);
-      boolean fixCaretPosition = true;
-      for (int i = lineStartOffset; i < lineEndOffset; i++) {
-        char c = text.charAt(i);
-        if (c != ' ' && c != '\t' && c != '\n') {
-          fixCaretPosition = false;
-          break;
-        }
-      }
-      if (fixCaretPosition) {
-        visualColumnToRestore = editor.getCaretModel().getVisualPosition().column;
-        caretIndentToRestore = document.getText(TextRange.create(lineStartOffset, caretOffset));
-        beforeCaretRangeMarker = document.createRangeMarker(0, lineStartOffset);
-      }
+      caretKeeper = new CaretPositionKeeper(editor);
     }
 
     final SmartPointerManager smartPointerManager = SmartPointerManager.getInstance(getProject());
@@ -243,34 +215,8 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
       if (info.endPointer != null) smartPointerManager.removePointer(info.endPointer);
     }
 
-    if (editor == null) {
-      return;
-    }
-
-    boolean virtualSpaceEnabled = editor.getSettings().isVirtualSpace();
-
-    if (virtualSpaceEnabled) {
-      if (visualColumnToRestore < 0) {
-        editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
-        return;
-      }
-      CaretModel caretModel = editor.getCaretModel();
-      VisualPosition position = caretModel.getVisualPosition();
-      if (visualColumnToRestore != position.column) {
-        caretModel.moveToVisualPosition(new VisualPosition(position.line, visualColumnToRestore));
-      }
-    }
-    else {
-      if (beforeCaretRangeMarker == null || !beforeCaretRangeMarker.isValid() || caretIndentToRestore == null) {
-        return;
-      }
-      int offset = beforeCaretRangeMarker.getEndOffset();
-      beforeCaretRangeMarker.dispose();
-      if (editor.getCaretModel().getVisualPosition().column == visualColumnToRestore) {
-        return;
-      }
-      Document document = editor.getDocument();
-      document.replaceString(document.getLineStartOffset(document.getLineNumber(offset)), offset, caretIndentToRestore);
+    if (caretKeeper != null) {
+      caretKeeper.restoreCaretPosition();
     }
   }
 
@@ -733,6 +679,129 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
       this.endPointer = endPointer;
       this.fromStart = fromStart;
       this.toEnd = toEnd;
+    }
+  }
+
+  // There is a possible case that cursor is located at the end of the line that contains only white spaces. For example:
+  //     public void foo() {
+  //         <caret>
+  //     }
+  // Formatter removes such white spaces, i.e. keeps only line feed symbol. But we want to preserve caret position then.
+  // So, if 'virtual space in editor' is enabled, we save target visual column. Caret indent is ensured otherwise
+  private static class CaretPositionKeeper {
+    Editor myEditor;
+    Document myDocument;
+    CaretModel myCaretModel;
+    RangeMarker myBeforeCaretRangeMarker;
+    String myCaretIndentToRestore;
+    int myVisualColumnToRestore = -1;
+
+    CaretPositionKeeper(@NotNull Editor editor) {
+      myEditor = editor;
+      myCaretModel = editor.getCaretModel();
+      myDocument = editor.getDocument();
+
+      int caretOffset = getCaretOffset();
+      int lineStartOffset = getLineStartOffsetByTotalOffset(caretOffset);
+      int lineEndOffset = getLineEndOffsetByTotalOffset(caretOffset);
+      boolean shouldFixCaretPosition = rangeHasWhiteSpaceSymbolsOnly(myDocument.getCharsSequence(), lineStartOffset, lineEndOffset);
+
+      if (shouldFixCaretPosition) {
+        initRestoreInfo(caretOffset);
+      }
+    }
+
+    private void initRestoreInfo(int caretOffset) {
+      int lineStartOffset = getLineStartOffsetByTotalOffset(caretOffset);
+
+      myVisualColumnToRestore = myCaretModel.getVisualPosition().column;
+      myCaretIndentToRestore = myDocument.getText(TextRange.create(lineStartOffset, caretOffset));
+      myBeforeCaretRangeMarker = myDocument.createRangeMarker(0, lineStartOffset);
+    }
+
+    public void restoreCaretPosition() {
+      if (isVirtualSpaceEnabled()) {
+        restoreVisualPosition();
+      }
+      else {
+        restorePositionByIndentInsertion();
+      }
+    }
+
+    private void restorePositionByIndentInsertion() {
+      if (myBeforeCaretRangeMarker == null || !myBeforeCaretRangeMarker.isValid() || myCaretIndentToRestore == null) {
+        return;
+      }
+      int newCaretLineStartOffset = myBeforeCaretRangeMarker.getEndOffset();
+      myBeforeCaretRangeMarker.dispose();
+      if (myCaretModel.getVisualPosition().column == myVisualColumnToRestore) {
+        return;
+      }
+      insertWhiteSpaceIndentIfNeeded(newCaretLineStartOffset);
+    }
+
+    private void restoreVisualPosition() {
+      if (myVisualColumnToRestore < 0) {
+        myEditor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
+        return;
+      }
+      VisualPosition position = myCaretModel.getVisualPosition();
+      if (myVisualColumnToRestore != position.column) {
+        myCaretModel.moveToVisualPosition(new VisualPosition(position.line, myVisualColumnToRestore));
+      }
+    }
+
+    private void insertWhiteSpaceIndentIfNeeded(int caretLineOffset) {
+      int lineToInsertIndent = myDocument.getLineNumber(caretLineOffset);
+      if (!lineContainsWhiteSpaceSymbolsOnly(lineToInsertIndent))
+        return;
+
+      int lineToInsertStartOffset = myDocument.getLineStartOffset(lineToInsertIndent);
+
+      if (lineToInsertIndent != getCurrentCaretLine()) {
+        myCaretModel.moveToOffset(lineToInsertStartOffset);
+      }
+      myDocument.replaceString(lineToInsertStartOffset, caretLineOffset, myCaretIndentToRestore);
+    }
+
+    private boolean rangeHasWhiteSpaceSymbolsOnly(CharSequence text, int lineStartOffset, int lineEndOffset) {
+      for (int i = lineStartOffset; i < lineEndOffset; i++) {
+        char c = text.charAt(i);
+        if (c != ' ' && c != '\t' && c != '\n') {
+          return false;
+        }
+      }
+      return true;
+    }
+
+    private boolean isVirtualSpaceEnabled() {
+      return myEditor.getSettings().isVirtualSpace();
+    }
+
+    private int getLineStartOffsetByTotalOffset(int offset) {
+      int line = myDocument.getLineNumber(offset);
+      return myDocument.getLineStartOffset(line);
+    }
+
+    private int getLineEndOffsetByTotalOffset(int offset) {
+      int line = myDocument.getLineNumber(offset);
+      return myDocument.getLineEndOffset(line);
+    }
+
+    private int getCaretOffset() {
+      int caretOffset = myCaretModel.getOffset();
+      caretOffset = Math.max(Math.min(caretOffset, myDocument.getTextLength() - 1), 0);
+      return caretOffset;
+    }
+
+    private boolean lineContainsWhiteSpaceSymbolsOnly(int lineNumber) {
+      int startOffset = myDocument.getLineStartOffset(lineNumber);
+      int endOffset = myDocument.getLineEndOffset(lineNumber);
+      return rangeHasWhiteSpaceSymbolsOnly(myDocument.getCharsSequence(), startOffset, endOffset);
+    }
+
+    private int getCurrentCaretLine() {
+      return myDocument.getLineNumber(myCaretModel.getOffset());
     }
   }
 }
