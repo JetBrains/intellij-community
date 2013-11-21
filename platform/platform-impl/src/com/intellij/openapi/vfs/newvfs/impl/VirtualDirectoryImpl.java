@@ -99,25 +99,25 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
 
   @Nullable
   private VirtualFileSystemEntry findChild(@NotNull String name,
-                                           final boolean doRefresh,
+                                           boolean doRefresh,
                                            boolean ensureCanonicalName,
                                            @NotNull NewVirtualFileSystem delegate) {
     boolean ignoreCase = !delegate.isCaseSensitive();
     Comparator comparator = getComparator(name, ignoreCase);
     VirtualFileSystemEntry result = doFindChild(name, ensureCanonicalName, delegate, comparator);
+
     if (result == NULL_VIRTUAL_FILE) {
       result = doRefresh ? createAndFindChildWithEventFire(name, delegate) : null;
     }
-    else if (result != null) {
-      if (doRefresh && delegate.isDirectory(result) != result.isDirectory()) {
-        RefreshQueue.getInstance().refresh(false, false, null, result);
-        result = findChild(name, false, ensureCanonicalName, delegate);
-      }
+    else if (result != null && doRefresh && delegate.isDirectory(result) != result.isDirectory()) {
+      RefreshQueue.getInstance().refresh(false, false, null, result);
+      result = findChild(name, false, ensureCanonicalName, delegate);
     }
 
     if (result == null) {
       addToAdoptedChildren(name, !delegate.isCaseSensitive(), comparator);
     }
+
     return result;
   }
 
