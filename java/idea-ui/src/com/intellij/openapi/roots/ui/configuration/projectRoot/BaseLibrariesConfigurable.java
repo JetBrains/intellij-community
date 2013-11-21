@@ -234,25 +234,25 @@ public abstract class BaseLibrariesConfigurable extends BaseStructureConfigurabl
   @Override
   protected void updateSelection(@Nullable NamedConfigurable configurable) {
     boolean selectionChanged = !Comparing.equal(myCurrentConfigurable, configurable);
-    if (myCurrentConfigurable != null && selectionChanged) {
+    if (myCurrentConfigurable instanceof LibraryConfigurable && selectionChanged) {
       ((LibraryConfigurable)myCurrentConfigurable).onUnselected();
     }
     super.updateSelection(configurable);
-    if (myCurrentConfigurable != null && selectionChanged) {
+    if (myCurrentConfigurable instanceof LibraryConfigurable && selectionChanged) {
       ((LibraryConfigurable)myCurrentConfigurable).onSelected();
     }
   }
 
   @Override
   public void onStructureUnselected() {
-    if (myCurrentConfigurable != null) {
+    if (myCurrentConfigurable instanceof LibraryConfigurable) {
       ((LibraryConfigurable)myCurrentConfigurable).onUnselected();
     }
   }
 
   @Override
   public void onStructureSelected() {
-    if (myCurrentConfigurable != null) {
+    if (myCurrentConfigurable instanceof LibraryConfigurable) {
       ((LibraryConfigurable)myCurrentConfigurable).onSelected();
     }
   }
