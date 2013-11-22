@@ -18,10 +18,7 @@ package org.jetbrains.plugins.groovy.codeInspection.confusing;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiMember;
-import com.intellij.psi.PsiModifier;
+import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -143,6 +140,8 @@ public class UnnecessaryQualifiedReferenceInspection extends BaseInspection {
   }
 
   private static boolean canBeSimplified(PsiElement element) {
+    if (PsiTreeUtil.getParentOfType(element, PsiComment.class) != null) return false;
+
     if (element instanceof GrCodeReferenceElement) {
       if (PsiTreeUtil.getParentOfType(element, GrImportStatement.class, GrPackageDefinition.class) != null) return false;
     }
