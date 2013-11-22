@@ -250,8 +250,8 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       @Override
       protected void paintComponent(Graphics g) {
         if (myBalloon != null && !myBalloon.isDisposed() && myActionEvent != null && myActionEvent.getInputEvent() instanceof MouseEvent) {
-          ((Graphics2D)g).setPaint(new GradientPaint(0,0, new JBColor(new Color(101, 136, 242), new Color(48, 87, 186)), 0, getHeight(),
-                                                     new JBColor(new Color(44, 96, 238), new Color(48, 87, 186))));
+          ((Graphics2D)g).setPaint(new GradientPaint(0,0, new JBColor(new Color(147, 162, 174), new Color(64, 80, 94)), 0, getHeight(),
+                                                     new JBColor(new Color(116, 128, 143), new Color(53, 65, 87))));
           g.fillRect(0,0,getWidth(), getHeight());
         } else {
           super.paintComponent(g);
@@ -605,8 +605,8 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
     final JPanel panel = new JPanel(new BorderLayout()) {
       @Override
       protected void paintComponent(Graphics g) {
-        ((Graphics2D)g).setPaint(new GradientPaint(0,0, new JBColor(new Color(211, 232, 253), new Color(64, 80, 94)), 0, getHeight(),
-                                                   new JBColor(new Color(200, 215, 239), new Color(53, 65, 87))));
+        ((Graphics2D)g).setPaint(new GradientPaint(0,0, new JBColor(new Color(147, 162, 174), new Color(64, 80, 94)), 0, getHeight(),
+                                                   new JBColor(new Color(116, 128, 143), new Color(53, 65, 87))));
         g.fillRect(0, 0, getWidth(), getHeight());
       }
    };
@@ -643,7 +643,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       showPoint = new RelativePoint(button, new Point(button.getWidth() - panel.getPreferredSize().width, button.getHeight()));
     } else {
       if (parent != null) {
-        int height = UISettings.getInstance().SHOW_MAIN_TOOLBAR ? 95 : 75;
+        int height = UISettings.getInstance().SHOW_MAIN_TOOLBAR ? 135 : 115;
         if (parent instanceof IdeFrameImpl && ((IdeFrameImpl)parent).isInFullScreen()) {
           height -= 20;
         }
