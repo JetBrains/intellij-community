@@ -23,6 +23,7 @@ import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Arrays;
 import java.util.List;
 
 import static com.jetbrains.python.inspections.PyStringFormatParser.*;
@@ -31,15 +32,22 @@ import static com.jetbrains.python.inspections.PyStringFormatParser.*;
  * @author vlan
  */
 public class PyInjectionUtil {
+  public static final List<Class<? extends PyExpression>> ELEMENTS_TO_INJECT_IN =
+    Arrays.asList(PyStringLiteralExpression.class, PyParenthesizedExpression.class, PyBinaryExpression.class, PyCallExpression.class);
+
   private PyInjectionUtil() {}
 
   /**
-   * Returns true if the element is the largest expression that represents a string literal, possibly with concatenation, parentheses,
-   * or formatting.
+   * Returns the largest expression in the specified context that represents a string literal suitable for language injection, possibly
+   * with concatenation, parentheses, or formatting.
    */
-  public static boolean isLargestStringLiteral(@NotNull PsiElement element) {
-    final PsiElement parent = element.getParent();
-    return isStringLiteralPart(element) && (parent == null || !isStringLiteralPart(parent));
+  @Nullable
+  public static PsiElement getLargestStringLiteral(@NotNull PsiElement context) {
+    PsiElement element = null;
+    for (PsiElement current = context; current != null && isStringLiteralPart(current); current = current.getParent()) {
+      element = current;
+    }
+    return element;
   }
 
   /**
