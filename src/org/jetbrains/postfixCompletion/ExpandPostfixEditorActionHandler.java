@@ -57,7 +57,9 @@ public final class ExpandPostfixEditorActionHandler extends EditorActionHandler 
 
     Application application = ApplicationManager.getApplication();
     application.runWriteAction(new Runnable() {
-      @Override public void run() { postfixElement.handleInsert(insertionContext); }
+      @Override public void run() {
+        postfixElement.handleInsert(insertionContext);
+      }
     });
 
     Runnable laterRunnable = insertionContext.getLaterRunnable();

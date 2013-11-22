@@ -13,6 +13,8 @@ import java.util.*;
 
 import static org.jetbrains.postfixCompletion.CommonUtils.*;
 
+// todo: force mode!
+
 @TemplateProvider(
   templateName = "new",
   description = "Produces instantiation expression for type",
@@ -28,14 +30,14 @@ public final class NewExpressionTemplateProvider extends TemplateProviderBase {
       PsiClass psiClass = (PsiClass) referencedElement;
       CtorAccessibility accessibility =
         CommonUtils.isTypeCanBeInstantiatedWithNew(psiClass, expression.expression);
-      if (accessibility == CtorAccessibility.NotAccessible)
-        return;
+      if (accessibility == CtorAccessibility.NotAccessible &&
+          !context.executionContext.isForceMode) return;
 
       consumer.add(new NewObjectLookupElement(expression, psiClass, accessibility));
     }
   }
 
-  private static class NewObjectLookupElement extends ExpressionPostfixLookupElement<PsiNewExpression> {
+  static class NewObjectLookupElement extends ExpressionPostfixLookupElement<PsiNewExpression> {
     @NotNull private final CtorAccessibility myAccessibility;
     private final boolean myTypeRequiresRefinement;
 
@@ -66,9 +68,10 @@ public final class NewExpressionTemplateProvider extends TemplateProviderBase {
 
       CaretModel caretModel = context.getEditor().getCaretModel();
       PsiExpressionList argumentList = expression.getArgumentList();
-      assert argumentList != null : "argumentList != null";
+      assert (argumentList != null) : "argumentList != null";
 
-      if (myAccessibility == CtorAccessibility.WithParametricCtor) { // new T(<caret>)
+      if (myAccessibility == CtorAccessibility.WithParametricCtor ||
+          myAccessibility == CtorAccessibility.NotAccessible) { // new T(<caret>)
         caretModel.moveToOffset(argumentList.getFirstChild().getTextRange().getEndOffset());
       } else if (myTypeRequiresRefinement) {
         PsiAnonymousClass anonymousClass = expression.getAnonymousClass();

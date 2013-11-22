@@ -39,8 +39,9 @@ Available templates:
 * `.field` – introduces field for expression `_field = expr;`
 * `.par` – surrounds outer expression with parentheses `(expr)`
 * `.return` – returns value from method/property `return expr;`
-
 * `.switch` – switch over integral/enum/string values `switch (expr)`
+
+
 * `.throw` – throws value of Exception type `throw expr;`
 * `.assert` - creates assertion statement from expression `assert expr`
 

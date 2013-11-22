@@ -134,6 +134,9 @@
     <component>
       <implementation-class>org.jetbrains.postfixCompletion.TemplateProviders.SwitchStatementTemplateProvider</implementation-class>
     </component>
+    <component>
+      <implementation-class>org.jetbrains.postfixCompletion.TemplateProviders.ThrowExceptionTemplateProvider</implementation-class>
+    </component>
   </application-components>
 
   <module-components>
