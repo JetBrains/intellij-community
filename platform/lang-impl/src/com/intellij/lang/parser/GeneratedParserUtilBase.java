@@ -87,11 +87,15 @@ public class GeneratedParserUtilBase {
 
   @Deprecated
   public static void empty_element_parsed_guard_(PsiBuilder builder_, int offset_, String funcName_) {
-    empty_element_parsed_guard_(builder_, funcName_);
+    builder_.error("Empty element parsed in '" + funcName_ + "' at offset " + offset_);
   }
 
-  public static void empty_element_parsed_guard_(PsiBuilder builder_, String funcName_) {
-    builder_.error("Empty element parsed in '" + funcName_ +"' at offset " + builder_.getCurrentOffset());
+  public static boolean empty_element_parsed_guard_(PsiBuilder builder_, String funcName_, int prev_position_) {
+    if (prev_position_ == current_position_(builder_)) {
+      builder_.error("Empty element parsed in '" + funcName_ + "' at offset " + builder_.getCurrentOffset());
+      return false;
+    }
+    return true;
   }
 
   public static boolean invalid_left_marker_guard_(PsiBuilder builder_, PsiBuilder.Marker marker_, String funcName_) {
