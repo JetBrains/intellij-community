@@ -175,8 +175,10 @@ public class GrInplaceConstantIntroducer extends GrAbstractInplaceIntroducer<GrI
       ApplicationManager.getApplication().invokeLater(new Runnable() {
         @Override
         public void run() {
-          myEditor.putUserData(ACTIVE_INTRODUCE, GrInplaceConstantIntroducer.this);
           try {
+            if (myEditor.isDisposed() || myProject.isDisposed()) return;
+
+            myEditor.putUserData(ACTIVE_INTRODUCE, GrInplaceConstantIntroducer.this);
             final GrIntroduceConstantHandler constantHandler = new GrIntroduceConstantHandler();
             final PsiLocalVariable localVariable = (PsiLocalVariable)getLocalVariable();
             constantHandler.getContextAndInvoke(myProject, myEditor, ((GrExpression)myExpr), (GrVariable)localVariable, null);
