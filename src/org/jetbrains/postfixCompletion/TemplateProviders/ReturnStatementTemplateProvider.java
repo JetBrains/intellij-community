@@ -10,7 +10,7 @@ import java.util.*;
 
 @TemplateProvider(
   templateName = "return",
-  description = "Returns expression/yields value from iterator",
+  description = "Returns value from containing method",
   example = "return expr;")
 public final class ReturnStatementTemplateProvider extends TemplateProviderBase {
   @Override public void createItems(@NotNull PostfixTemplateContext context, @NotNull List<LookupElement> consumer) {

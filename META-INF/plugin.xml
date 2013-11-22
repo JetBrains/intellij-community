@@ -30,7 +30,7 @@
         <li> <b>.forr</b> – reverse loop – <b>for (int i = expr.length - 1; i >= 0; i--)</b></li>
         <li> <b>.field</b> – introduces field for expression – <b>_field = expr;</b></li>
         <li> <b>.par</b> – surrounds outer expression with parentheses – <b>(expr)</b></li>
-        <li> <b>.return</b> – returns value from method/property – <b>return expr;</b></li>
+        <li> <b>.return</b> – returns value from containing method – <b>return expr;</b></li>
       </ul>
 
       <br/><b>Other features:</b><br/><br/>
@@ -136,6 +136,9 @@
     </component>
     <component>
       <implementation-class>org.jetbrains.postfixCompletion.TemplateProviders.ThrowExceptionTemplateProvider</implementation-class>
+    </component>
+    <component>
+      <implementation-class>org.jetbrains.postfixCompletion.TemplateProviders.AssertStatementTemplateProvider</implementation-class>
     </component>
   </application-components>
 

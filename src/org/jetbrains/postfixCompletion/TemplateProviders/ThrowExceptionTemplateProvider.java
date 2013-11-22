@@ -28,7 +28,6 @@ public final class ThrowExceptionTemplateProvider extends TemplateProviderBase {
 
     CtorAccessibility accessibility = CtorAccessibility.NotAccessible;
     PsiType expressionType = expression.expressionType;
-    boolean requiresRefinement = false;
     PsiClass throwableClass = null;
 
     if (expressionType instanceof PsiClassType) {
@@ -54,12 +53,10 @@ public final class ThrowExceptionTemplateProvider extends TemplateProviderBase {
       }
 
       if (!InheritanceUtil.isInheritor(expressionType, CommonClassNames.JAVA_LANG_THROWABLE)) return;
-      requiresRefinement = CommonUtils.isTypeRequiresRefinement(throwableClass);
     }
 
     PsiClass psiClass = (expression.referencedElement == throwableClass) ? throwableClass : null;
-    consumer.add(new ThrowStatementLookupElement(
-      expression, psiClass, accessibility, requiresRefinement));
+    consumer.add(new ThrowStatementLookupElement(expression, psiClass, accessibility));
   }
 
   static class ThrowStatementLookupElement extends StatementPostfixLookupElement<PsiThrowStatement> {
@@ -69,11 +66,12 @@ public final class ThrowExceptionTemplateProvider extends TemplateProviderBase {
 
     public ThrowStatementLookupElement(
         @NotNull PrefixExpressionContext context, @Nullable PsiClass throwableClass,
-        @NotNull CtorAccessibility accessibility, boolean typeRequiresRefinement) {
+        @NotNull CtorAccessibility accessibility) {
       super("throw", context);
       myThrowableClass = throwableClass;
       myAccessibility = accessibility;
-      myTypeRequiresRefinement = typeRequiresRefinement;
+      myTypeRequiresRefinement = (throwableClass != null)
+        && CommonUtils.isTypeRequiresRefinement(throwableClass);
     }
 
     @NotNull @Override protected PsiThrowStatement createNewStatement(

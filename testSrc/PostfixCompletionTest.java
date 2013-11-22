@@ -61,6 +61,8 @@ public class PostfixCompletionTest extends LightCodeInsightFixtureTestCase {
 
   public void testArg01() { test("arg\n"); }
 
+  public void testAssert01() { test("assert\n"); }
+
   public void testIf01() { test("if\n"); }
   public void testIf02() { test(""); }
   public void testIf03() { test("if\n"); }
@@ -131,6 +133,7 @@ public class PostfixCompletionTest extends LightCodeInsightFixtureTestCase {
   public void testThrow01() { testForce("throw\n"); }
   public void testThrow02() { testForce("throw\n"); }
   public void testThrow03() { testForce("throw\n"); }
+  public void testThrow04() { testForce("throw\n"); }
 
   public void testWhile01() { test("while\n"); }
 

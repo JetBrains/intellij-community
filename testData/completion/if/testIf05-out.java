@@ -1,4 +1,4 @@
-// Items: arg, else, if, not, while
+// Items: arg, assert, else, if, not, while
 public class Foo {
     void m(boolean b, int value) {
         if (b)<caret>

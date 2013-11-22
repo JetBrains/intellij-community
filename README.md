@@ -38,12 +38,11 @@ Available templates:
 * `.forr` – reverse loop `for (int i = expr.length - 1; i >= 0; i--)`
 * `.field` – introduces field for expression `_field = expr;`
 * `.par` – surrounds outer expression with parentheses `(expr)`
-* `.return` – returns value from method/property `return expr;`
+* `.return` – returns value from containing method `return expr;`
 * `.switch` – switch over integral/enum/string values `switch (expr)`
-
-
-* `.throw` – throws value of Exception type `throw expr;`
-* `.assert` - creates assertion statement from expression `assert expr`
+* `.throw` – throws value of Throwable type `throw expr;`
+* `.assert` - creates assertion from boolean expression `assert expr;`
+* `.synchronized` – produces synchronized block `synchronized (expr)`
 
 Other features:
 
@@ -53,10 +52,6 @@ Other features:
 
 Future work:
 
-* `.switch` – produces switch over integral/string type `switch (expr)`
-* `.throw` – throws value of Exception type `throw expr;`
-* `.assert` - creates assertion statement from expression `assert expr`
-* `.sync` – surrounds expression with statement `synchronized (expr)`
 * `.try` – surrounds resource expression with `try (T resource = expr)`
 * Settings page to disable/enable templates
 * Control braces insertion for statements (use code style settings?)
