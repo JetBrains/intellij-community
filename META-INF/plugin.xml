@@ -1,7 +1,7 @@
 <idea-plugin version="2">
   <id>org.jetbrains.postfixCompletion</id>
   <name>Postfix Completion</name>
-  <version>0.6-beta</version>
+  <version>0.7-beta</version>
   <vendor email="alexander.shvedov@jetbrains.com"
           url="https://github.com/controlflow">Alexander Shvedov</vendor>
   <depends>com.intellij.modules.lang</depends>
@@ -31,6 +31,10 @@
         <li> <b>.field</b> – introduces field for expression – <b>_field = expr;</b></li>
         <li> <b>.par</b> – surrounds outer expression with parentheses – <b>(expr)</b></li>
         <li> <b>.return</b> – returns value from containing method – <b>return expr;</b></li>
+        <li> <b>.switch</b> – switch over integral/enum/string values – <b>switch (expr)</b></li>
+        <li> <b>.throw</b> – throws exception of 'Throwable' type – <b>throw new Exception();</b></li>
+        <li> <b>.assert</b> – creates assertion from boolean expression – <b>assert expr;</b></li>
+        <li> <b>.synchronized</b> – produces synchronized block – <b>synchronized (expr)</b></li>
       </ul>
 
       <br/><b>Other features:</b><br/><br/>
@@ -43,6 +47,9 @@
 ]]></description>
 
   <change-notes><![CDATA[
+      <b>Version 0.7-beta</b><br/>
+      New templates: <b>.switch</b>, <b>.throw</b>, <b>.assert</b> and <b>.synchronized</b>.<br/><br/>
+
       <b>Version 0.6-beta</b><br/>
       Fixes, new templates: <b>.field</b>, <b>.par</b> and <b>.return</b>.<br/><br/>
 
@@ -59,22 +66,6 @@
       Initial (and nearly final, I hope) support for IDEA's code completion with unresolved
       reference-expression qualifier feature. It allows you to write <b>scn.nn</b> and expand
       into <b>if (superCoolName != null)</b>, for example.<br/><br/>
-
-      <b>Version 0.2.5-alpha</b><br/>
-      Small fixes in <b>.var</b> over expressions.<br/>
-      New templates: <b>.while</b>, <b>.arg</b> and <b>.cast</b>.<br/><br/>
-
-      <b>Version 0.2.2-alpha</b><br/>
-      Small fixes. Template <b>.for</b> now should works when standard IDEA's surround
-      template "I" (Iterate) do not exists (removed by user).<br/><br/>
-
-      <b>Version 0.1-alpha</b><br/>
-      Tests and a lot of various fixes.<br/>
-      New <b>.for</b> template for iteration over collections.<br/><br/>
-
-      <b>Version 0.1-alpha</b><br/>
-      Initial version.<br/>
-      Basic templates like <b>.if</b>, <b>.else</b>, <b>.var</b>, <b>.notnull</b> and some other.
 ]]></change-notes>
 
   <idea-version since-build="130.754"/>
