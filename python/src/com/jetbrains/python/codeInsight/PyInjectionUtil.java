@@ -55,7 +55,7 @@ public class PyInjectionUtil {
    * string concatenations or formatting.
    */
   public static void registerStringLiteralInjection(@NotNull PsiElement element, @NotNull MultiHostRegistrar registrar) {
-    processStringLiteral(element, registrar, "", "", Formatting.NONE);
+    processStringLiteral(element, registrar, "", "", Formatting.PERCENT);
   }
 
   private static boolean isStringLiteralPart(@NotNull PsiElement element) {
@@ -108,9 +108,25 @@ public class PyInjectionUtil {
             final FormatStringChunk chunk = chunks.get(i);
             if (chunk instanceof ConstantChunk) {
               final int nextIndex = i + 1;
-              final String chunkPrefix = i == 1 && chunks.get(0) instanceof SubstitutionChunk ? missingValue : "";
-              final String chunkSuffix = nextIndex < chunks.size() &&
-                                         chunks.get(nextIndex) instanceof SubstitutionChunk ? missingValue : "";
+              final String chunkPrefix;
+              if (i == 1 && chunks.get(0) instanceof SubstitutionChunk) {
+                chunkPrefix = missingValue;
+              }
+              else if (i == 0) {
+                chunkPrefix = prefix;
+              } else {
+                chunkPrefix = "";
+              }
+              final String chunkSuffix;
+              if (nextIndex < chunks.size() && chunks.get(nextIndex) instanceof SubstitutionChunk) {
+                chunkSuffix = missingValue;
+              }
+              else if (nextIndex == chunks.size()) {
+                chunkSuffix = suffix;
+              }
+              else {
+                chunkSuffix = "";
+              }
               final TextRange chunkRange = chunk.getTextRange().shiftRight(range.getStartOffset());
               registrar.addPlace(chunkPrefix, chunkSuffix, expr, chunkRange);
             }
