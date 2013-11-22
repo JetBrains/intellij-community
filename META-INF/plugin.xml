@@ -71,69 +71,27 @@
   <idea-version since-build="130.754"/>
 
   <application-components>
-    <component>
-      <implementation-class>org.jetbrains.postfixCompletion.Infrastructure.PostfixTemplatesManager</implementation-class>
-    </component>
-    <component>
-      <implementation-class>org.jetbrains.postfixCompletion.TemplateProviders.IfStatementTemplateProvider</implementation-class>
-    </component>
-    <component>
-      <implementation-class>org.jetbrains.postfixCompletion.TemplateProviders.ElseStatementTemplateProvider</implementation-class>
-    </component>
-    <component>
-      <implementation-class>org.jetbrains.postfixCompletion.TemplateProviders.IntroduceVariableTemplateProvider</implementation-class>
-    </component>
-    <component>
-      <implementation-class>org.jetbrains.postfixCompletion.TemplateProviders.NotNullCheckTemplateProvider</implementation-class>
-    </component>
-    <component>
-      <implementation-class>org.jetbrains.postfixCompletion.TemplateProviders.IsNullCheckTemplateProvider</implementation-class>
-    </component>
-    <component>
-      <implementation-class>org.jetbrains.postfixCompletion.TemplateProviders.NotExpressionTemplateProvider</implementation-class>
-    </component>
-    <component>
-      <implementation-class>org.jetbrains.postfixCompletion.TemplateProviders.ForeachIterationTemplateProvider</implementation-class>
-    </component>
-    <component>
-      <implementation-class>org.jetbrains.postfixCompletion.TemplateProviders.WhileStatementTemplateProvider</implementation-class>
-    </component>
-    <component>
-      <implementation-class>org.jetbrains.postfixCompletion.TemplateProviders.ArgumentExpressionTemplateProvider</implementation-class>
-    </component>
-    <component>
-      <implementation-class>org.jetbrains.postfixCompletion.TemplateProviders.CastExpressionTemplateProvider</implementation-class>
-    </component>
-    <component>
-      <implementation-class>org.jetbrains.postfixCompletion.TemplateProviders.NewExpressionTemplateProvider</implementation-class>
-    </component>
-    <component>
-      <implementation-class>org.jetbrains.postfixCompletion.TemplateProviders.ForIndexedIterationTemplateProvider</implementation-class>
-    </component>
-    <component>
-      <implementation-class>org.jetbrains.postfixCompletion.TemplateProviders.ForReverseIterationTemplateProvider</implementation-class>
-    </component>
-    <component>
-      <implementation-class>org.jetbrains.postfixCompletion.TemplateProviders.IntroduceFieldTemplateProvider</implementation-class>
-    </component>
-    <component>
-      <implementation-class>org.jetbrains.postfixCompletion.TemplateProviders.ParenthesizedExpressionTemplateProvider</implementation-class>
-    </component>
-    <component>
-      <implementation-class>org.jetbrains.postfixCompletion.TemplateProviders.ReturnStatementTemplateProvider</implementation-class>
-    </component>
-    <component>
-      <implementation-class>org.jetbrains.postfixCompletion.TemplateProviders.SwitchStatementTemplateProvider</implementation-class>
-    </component>
-    <component>
-      <implementation-class>org.jetbrains.postfixCompletion.TemplateProviders.ThrowExceptionTemplateProvider</implementation-class>
-    </component>
-    <component>
-      <implementation-class>org.jetbrains.postfixCompletion.TemplateProviders.AssertStatementTemplateProvider</implementation-class>
-    </component>
-    <component>
-      <implementation-class>org.jetbrains.postfixCompletion.TemplateProviders.SynchronizedStatementTemplateProvider</implementation-class>
-    </component>
+    <component><implementation-class>org.jetbrains.postfixCompletion.Infrastructure.PostfixTemplatesManager</implementation-class></component>
+    <component><implementation-class>org.jetbrains.postfixCompletion.TemplateProviders.IfStatementTemplateProvider</implementation-class></component>
+    <component><implementation-class>org.jetbrains.postfixCompletion.TemplateProviders.ElseStatementTemplateProvider</implementation-class></component>
+    <component><implementation-class>org.jetbrains.postfixCompletion.TemplateProviders.IntroduceVariableTemplateProvider</implementation-class></component>
+    <component><implementation-class>org.jetbrains.postfixCompletion.TemplateProviders.NotNullCheckTemplateProvider</implementation-class></component>
+    <component><implementation-class>org.jetbrains.postfixCompletion.TemplateProviders.IsNullCheckTemplateProvider</implementation-class></component>
+    <component><implementation-class>org.jetbrains.postfixCompletion.TemplateProviders.NotExpressionTemplateProvider</implementation-class></component>
+    <component><implementation-class>org.jetbrains.postfixCompletion.TemplateProviders.ForeachIterationTemplateProvider</implementation-class></component>
+    <component><implementation-class>org.jetbrains.postfixCompletion.TemplateProviders.WhileStatementTemplateProvider</implementation-class></component>
+    <component><implementation-class>org.jetbrains.postfixCompletion.TemplateProviders.ArgumentExpressionTemplateProvider</implementation-class></component>
+    <component><implementation-class>org.jetbrains.postfixCompletion.TemplateProviders.CastExpressionTemplateProvider</implementation-class></component>
+    <component><implementation-class>org.jetbrains.postfixCompletion.TemplateProviders.NewExpressionTemplateProvider</implementation-class></component>
+    <component><implementation-class>org.jetbrains.postfixCompletion.TemplateProviders.ForIndexedIterationTemplateProvider</implementation-class></component>
+    <component><implementation-class>org.jetbrains.postfixCompletion.TemplateProviders.ForReverseIterationTemplateProvider</implementation-class></component>
+    <component><implementation-class>org.jetbrains.postfixCompletion.TemplateProviders.IntroduceFieldTemplateProvider</implementation-class></component>
+    <component><implementation-class>org.jetbrains.postfixCompletion.TemplateProviders.ParenthesizedExpressionTemplateProvider</implementation-class></component>
+    <component><implementation-class>org.jetbrains.postfixCompletion.TemplateProviders.ReturnStatementTemplateProvider</implementation-class></component>
+    <component><implementation-class>org.jetbrains.postfixCompletion.TemplateProviders.SwitchStatementTemplateProvider</implementation-class></component>
+    <component><implementation-class>org.jetbrains.postfixCompletion.TemplateProviders.ThrowExceptionTemplateProvider</implementation-class></component>
+    <component><implementation-class>org.jetbrains.postfixCompletion.TemplateProviders.AssertStatementTemplateProvider</implementation-class></component>
+    <component><implementation-class>org.jetbrains.postfixCompletion.TemplateProviders.SynchronizedStatementTemplateProvider</implementation-class></component>
   </application-components>
 
   <module-components>
@@ -145,5 +103,13 @@
   <extensions defaultExtensionNs="com.intellij">
     <completion.contributor language="JAVA" order="FIRST"
       implementationClass="org.jetbrains.postfixCompletion.PostfixCompletionContributor" />
+
+    <applicationConfigurable id="editing.postfixCompletion"
+      instance="org.jetbrains.postfixCompletion.SettingsPage.PostfixCompletionConfigurable" />
+
+
+    <!-- key="templates.settings.page.title"
+         bundle="messages.CodeInsightBundle"
+     -->
   </extensions>
 </idea-plugin>

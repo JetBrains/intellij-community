@@ -21,16 +21,18 @@ public final class PostfixTemplatesManager implements ApplicationComponent {
   @NotNull private final List<TemplateProviderInfo> myProviders;
 
   public PostfixTemplatesManager(@NotNull PostfixTemplateProvider[] providers) {
-    myProviders = new ArrayList<TemplateProviderInfo>();
-
+    List<TemplateProviderInfo> providerInfos = new ArrayList<TemplateProviderInfo>();
     for (PostfixTemplateProvider provider : providers) {
       TemplateProvider annotation = provider.getClass().getAnnotation(TemplateProvider.class);
       if (annotation != null) {
-        myProviders.add(new TemplateProviderInfo(provider, annotation));
+        providerInfos.add(new TemplateProviderInfo(provider, annotation));
       }
     }
 
+    myProviders = Collections.unmodifiableList(providerInfos);
+
     // wrap 'ExpandLiveTemplateByTab' action handler
+    // todo: configurable?
     ActionManager actionManager = ActionManager.getInstance();
     AnAction expandLiveTemplate = actionManager.getAction("ExpandLiveTemplateByTab");
     if (expandLiveTemplate instanceof ExpandLiveTemplateByTabAction) {
@@ -41,15 +43,8 @@ public final class PostfixTemplatesManager implements ApplicationComponent {
     }
   }
 
-  private static class TemplateProviderInfo {
-    @NotNull public final PostfixTemplateProvider provider;
-    @NotNull public final TemplateProvider annotation;
-
-    public TemplateProviderInfo(
-        @NotNull PostfixTemplateProvider provider, @NotNull TemplateProvider annotation) {
-      this.provider = provider;
-      this.annotation = annotation;
-    }
+  @NotNull public final List<TemplateProviderInfo> getAllTemplates() {
+    return myProviders;
   }
 
   @Nullable public final PostfixTemplateContext isAvailable(
