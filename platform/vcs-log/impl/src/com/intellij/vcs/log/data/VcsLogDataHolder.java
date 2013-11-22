@@ -23,6 +23,7 @@ import com.intellij.openapi.progress.BackgroundTaskQueue;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.VcsException;
@@ -145,6 +146,7 @@ public class VcsLogDataHolder implements Disposable {
   private final VcsLogHashMap myHashMap;
   private final NotNullFunction<Integer, Hash> myHashGetter;
   private final NotNullFunction<Hash, Integer> myIndexGetter;
+  private final ContainingBranchesGetter myContainingBranchesGetter;
 
   public VcsLogDataHolder(@NotNull Project project,
                           @NotNull Map<VirtualFile, VcsLogProvider> logProviders, @NotNull VcsLogSettings settings) {
@@ -179,6 +181,7 @@ public class VcsLogDataHolder implements Disposable {
         return putHash(hash);
       }
     };
+    myContainingBranchesGetter = new ContainingBranchesGetter(this);
   }
 
   @NotNull
@@ -373,8 +376,12 @@ public class VcsLogDataHolder implements Disposable {
       VirtualFile root = entry.getKey();
       RecentCommitsInfo info = entry.getValue();
 
-      Pair<List<TimedVcsCommit>, Integer> joinResult = myLogJoiner.addCommits(myLogData.getLog(root), myLogData.getRefs(root),
+      Collection<VcsRef> oldRefs = myLogData.getRefs(root);
+      Pair<List<TimedVcsCommit>, Integer> joinResult = myLogJoiner.addCommits(myLogData.getLog(root), oldRefs,
                                                                               info.firstBlockCommits, info.newRefs);
+      if (!Comparing.haveEqualElements(oldRefs, info.newRefs)) {
+        myContainingBranchesGetter.clearCache();
+      }
       List<TimedVcsCommit> refreshedLog = joinResult.getFirst();
       int newCommitsCount = joinResult.getSecond();
       // the value can significantly increase if user keeps IDEA open for a long time, and frequently receives many new commits,
@@ -437,6 +444,7 @@ public class VcsLogDataHolder implements Disposable {
       myLogData = new LogData(logsToBuild, refsByRoot, compoundLog, dataPack, false);
     }
 
+    myContainingBranchesGetter.clearCache();
     handleOnSuccessInEdt(onSuccess, dataPack);
   }
 
@@ -548,6 +556,10 @@ public class VcsLogDataHolder implements Disposable {
   @NotNull
   public VcsLogSettings getSettings() {
     return mySettings;
+  }
+
+  public ContainingBranchesGetter getContainingBranchesGetter() {
+    return myContainingBranchesGetter;
   }
 
   private static class RecentCommitsInfo {
