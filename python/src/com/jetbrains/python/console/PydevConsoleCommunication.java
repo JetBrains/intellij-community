@@ -169,7 +169,7 @@ public class PydevConsoleCommunication extends AbstractConsoleCommunication impl
    */
   public Object execute(String method, Vector params) throws Exception {
     if ("NotifyFinished".equals(method)) {
-      return execNotifyFinished();
+      return execNotifyFinished((Boolean)params.get(0));
     }
     else if ("RequestInput".equals(method)) {
       return execRequestInput();
@@ -225,9 +225,9 @@ public class PydevConsoleCommunication extends AbstractConsoleCommunication impl
     return Boolean.FALSE;
   }
 
-  private Object execNotifyFinished() {
+  private Object execNotifyFinished(boolean more) {
     setExecuting(false);
-    notifyCommandExecuted();
+    notifyCommandExecuted(more);
     return true;
   }
 

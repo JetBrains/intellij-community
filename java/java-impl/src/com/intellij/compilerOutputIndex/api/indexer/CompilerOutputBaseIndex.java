@@ -149,7 +149,7 @@ public abstract class CompilerOutputBaseIndex<K, V> {
   }
 
   public final void update(final int id, final ClassNode inputData) {
-    final Boolean result = myIndex.update(id, inputData).compute();
+    final Boolean result = myIndex.update(id, inputData, true).compute();
     if (result == Boolean.FALSE) throw new RuntimeException();
   }
 

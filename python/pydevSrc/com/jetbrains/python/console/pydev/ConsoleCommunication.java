@@ -24,7 +24,7 @@ public interface ConsoleCommunication {
 
   void addCommunicationListener(ConsoleCommunicationListener listener);
 
-  void notifyCommandExecuted();
+  void notifyCommandExecuted(boolean more);
   void notifyInputRequested();
 
   class ConsoleCodeFragment {

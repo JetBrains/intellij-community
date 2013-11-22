@@ -733,7 +733,9 @@ public final class UpdateChecker {
 
     String fromBuildNumber = patch.getFromBuild().asStringWithoutProductCode();
     String toBuildNumber = newVersion.getNumber().asStringWithoutProductCode();
-    String fileName = productCode + "-" + fromBuildNumber + "-" + toBuildNumber + "-patch" + osSuffix + ".jar";
+    String bundledJdk = "jdk-bundled".equals(System.getProperty("idea.java.redist")) ? "-jdk-bundled":"";
+
+    String fileName = productCode + "-" + fromBuildNumber + "-" + toBuildNumber + "-patch" + bundledJdk + osSuffix + ".jar";
 
     String platform = PlatformUtils.getPlatformPrefix();
 

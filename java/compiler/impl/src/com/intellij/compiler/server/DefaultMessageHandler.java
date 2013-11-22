@@ -290,7 +290,7 @@ public abstract class DefaultMessageHandler implements BuilderMessageHandler {
         return !(element instanceof PsiIdentifier) || processor.execute((PsiIdentifier)element);
       }
     };
-    return helper.processElementsWithWord(processor1, searchScope, identifier, searchContext, true);
+    return helper.processElementsWithWord(processor1, searchScope, identifier, searchContext, true, false);
   }
 
   private void addUsages(PsiField psiField, Collection<PsiElement> usages, final boolean ignoreAccessScope) throws ProcessCanceledException {

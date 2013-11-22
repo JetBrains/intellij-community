@@ -15,21 +15,20 @@
  */
 package com.intellij.ui;
 
-import com.intellij.idea.Bombed;
 import com.intellij.openapi.project.Project;
 import com.intellij.testFramework.PlatformTestCase;
+import com.intellij.testFramework.SkipInHeadlessEnvironment;
 import com.intellij.ui.components.JBList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.Arrays;
-import java.util.Calendar;
 import java.util.List;
 
+@SkipInHeadlessEnvironment
 public class FinderRecursivePanelSelectionUpdateTest extends PlatformTestCase {
 
-  @Bombed(year = 2013, month = Calendar.DECEMBER, day = 1, user = "Yann Cebron")
   public void testUpdate() throws InterruptedException {
     StringFinderRecursivePanel panel_0 = new StringFinderRecursivePanel(getProject()) {
       @NotNull
@@ -53,7 +52,6 @@ public class FinderRecursivePanelSelectionUpdateTest extends PlatformTestCase {
     disposeOnTearDown(panel_0);
 
     panel_0.setTestSelectedIndex(0);
-    //panel_0.updateRightComponent(true);
 
     StringFinderRecursivePanel panel_1 = (StringFinderRecursivePanel)panel_0.getSecondComponent();
     panel_1.setTestSelectedIndex(1);
@@ -97,6 +95,11 @@ public class FinderRecursivePanelSelectionUpdateTest extends PlatformTestCase {
     @Override
     protected String getItemText(String s) {
       return s;
+    }
+
+    @Override
+    protected boolean hasChildren(String s) {
+      return true;
     }
 
     @Nullable

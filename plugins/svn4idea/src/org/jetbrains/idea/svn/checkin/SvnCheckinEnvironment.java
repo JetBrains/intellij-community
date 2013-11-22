@@ -431,7 +431,7 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
 
     for (File file : files) {
       try {
-        mySvnVcs.getFactory(file).createDeleteClient().delete(file, true);
+        mySvnVcs.getFactory(file).createDeleteClient().delete(file, true, false, null);
       }
       catch (VcsException e) {
         exceptions.add(e);

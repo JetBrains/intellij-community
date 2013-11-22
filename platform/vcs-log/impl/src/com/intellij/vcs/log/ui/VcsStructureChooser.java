@@ -17,6 +17,7 @@ package com.intellij.vcs.log.ui;
 
 import com.intellij.ide.util.treeView.AbstractTreeUi;
 import com.intellij.ide.util.treeView.NodeDescriptor;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diff.impl.patch.formove.FilePathComparator;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
@@ -31,6 +32,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.changes.ui.VirtualFileListCellRenderer;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -238,6 +240,11 @@ public class VcsStructureChooser extends DialogWrapper {
     });
 
     final Splitter splitter = new Splitter(true, 0.7f);
+    Disposer.register(this.getDisposable(), new Disposable() {
+      public void dispose() {
+        splitter.dispose();
+      }
+    });
     splitter.setFirstComponent(new JBScrollPane(fileSystemTree.getTree()));
     final JPanel wrapper = new JPanel(new BorderLayout());
     mySelectedLabel = new JLabel(DEFAULT_TEXT);

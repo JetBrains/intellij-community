@@ -99,25 +99,25 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
 
   @Nullable
   private VirtualFileSystemEntry findChild(@NotNull String name,
-                                           final boolean doRefresh,
+                                           boolean doRefresh,
                                            boolean ensureCanonicalName,
                                            @NotNull NewVirtualFileSystem delegate) {
     boolean ignoreCase = !delegate.isCaseSensitive();
     Comparator comparator = getComparator(name, ignoreCase);
     VirtualFileSystemEntry result = doFindChild(name, ensureCanonicalName, delegate, comparator);
+
     if (result == NULL_VIRTUAL_FILE) {
       result = doRefresh ? createAndFindChildWithEventFire(name, delegate) : null;
     }
-    else if (result != null) {
-      if (doRefresh && delegate.isDirectory(result) != result.isDirectory()) {
-        RefreshQueue.getInstance().refresh(false, false, null, result);
-        result = findChild(name, false, ensureCanonicalName, delegate);
-      }
+    else if (result != null && doRefresh && delegate.isDirectory(result) != result.isDirectory()) {
+      RefreshQueue.getInstance().refresh(false, false, null, result);
+      result = findChild(name, false, ensureCanonicalName, delegate);
     }
 
     if (result == null) {
       addToAdoptedChildren(name, !delegate.isCaseSensitive(), comparator);
     }
+
     return result;
   }
 
@@ -492,6 +492,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
       return children;
     }
 
+    final boolean wasChildrenLoaded = ourPersistence.areChildrenLoaded(this);
     final FSRecords.NameId[] childrenIds = ourPersistence.listAll(this);
     VirtualFileSystemEntry[] result;
     if (childrenIds.length == 0) {
@@ -509,6 +510,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
                       " ignoreCase: "+ignoreCase+
                       " SystemInfo.isFileSystemCaseSensitive: "+ SystemInfo.isFileSystemCaseSensitive+
                       " SystemInfo.OS: "+ SystemInfo.OS_NAME+" "+SystemInfo.OS_VERSION+
+                      " wasChildrenLoaded: "+wasChildrenLoaded+
                       " in the dir: "+VirtualDirectoryImpl.this+";" +
                       " children: "+Arrays.toString(childrenIds));
           }
@@ -563,36 +565,43 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
         String prevName = prev.getName();
         int cmp = file.compareNameTo(prevName, ignoreCase);
         if (cmp == 0) {
-          Function<VirtualFileSystemEntry, String> verboseToString = new Function<VirtualFileSystemEntry, String>() {
-            @Override
-            public String fun(VirtualFileSystemEntry entry) {
-              return entry + " (name: '" + entry.getName()
-                     + "', " + entry.getClass()
-                     + ", parent:"+entry.getParent()
-                     + "; id:"+entry.getId()
-                     + "; FS:" +entry.getFileSystem()
-                     + "; delegate.attrs:" +entry.getFileSystem().getAttributes(entry)
-                     + "; caseSensitive:" +entry.getFileSystem().isCaseSensitive()
-                     + "; canonical:" +entry.getFileSystem().getCanonicallyCasedName(entry)
-                     + ") ";
-            }
-          };
-          String children = StringUtil.join(array, verboseToString, ",");
-          throw new AssertionError(
-            verboseToString.fun(prev) + " equals to " + verboseToString.fun(file) + "; children: " + children + "\nDetails: " + ContainerUtil.map(
-              details, new Function<Object, Object>() {
-              @Override
-              public Object fun(Object o) {
-                return o instanceof Object[] ? Arrays.toString((Object[])o) : o;
-              }
-            }));
+          error(verboseToString.fun(prev) + " equals to " + verboseToString.fun(file), array, details);
         }
 
         if (isAdopted == isAdoptedChild(prev)) {
-          assert cmp > 0 : "Not sorted. "+Arrays.toString(details);
+          if (cmp <= 0) {
+            error("Not sorted: "+verboseToString.fun(prev) + " is not less than " + verboseToString.fun(file), array, details);
+          }
         }
       }
     }
+  }
+
+  private static final Function<VirtualFileSystemEntry, String> verboseToString = new Function<VirtualFileSystemEntry, String>() {
+    @Override
+    public String fun(VirtualFileSystemEntry file) {
+      //noinspection HardCodedStringLiteral
+      return file + " (name: '" + file.getName()
+             + "', " + file.getClass()
+             + ", parent: "+file.getParent()
+             + "; id: "+file.getId()
+             + "; FS: " +file.getFileSystem()
+             + "; delegate.attrs: " +file.getFileSystem().getAttributes(file)
+             + "; caseSensitive: " +file.getFileSystem().isCaseSensitive()
+             + "; canonical: " +file.getFileSystem().getCanonicallyCasedName(file)
+             + ") ";
+    }
+  };
+  private static void error(@NonNls String message, VirtualFileSystemEntry[] array, Object... details) {
+    String children = StringUtil.join(array, verboseToString, ",");
+    throw new AssertionError(
+      message + "; children: " + children + "\nDetails: " + ContainerUtil.map(
+        details, new Function<Object, Object>() {
+        @Override
+        public Object fun(Object o) {
+          return o instanceof Object[] ? Arrays.toString((Object[])o) : o;
+        }
+      }));
   }
 
   @Override

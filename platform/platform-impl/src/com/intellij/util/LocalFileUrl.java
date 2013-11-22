@@ -1,11 +1,7 @@
 package com.intellij.util;
 
-import com.intellij.openapi.util.SystemInfo;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.net.URI;
-import java.net.URISyntaxException;
 
 public final class LocalFileUrl implements Url {
   private final String path;
@@ -26,7 +22,7 @@ public final class LocalFileUrl implements Url {
   }
 
   @Override
-  public String toDecodedForm(boolean skipQueryAndFragment) {
+  public String toDecodedForm() {
     return path;
   }
 
@@ -34,27 +30,6 @@ public final class LocalFileUrl implements Url {
   @Override
   public String toExternalForm() {
     return path;
-  }
-
-  @NotNull
-  @Override
-  public URI toJavaUriWithoutParameters() {
-    try {
-      String externalPath = path;
-      if (SystemInfo.isWindows && externalPath.charAt(0) != '/') {
-        externalPath = '/' + externalPath;
-      }
-      return new URI("file", "", externalPath, null, null);
-    }
-    catch (URISyntaxException e) {
-      throw new RuntimeException(e);
-    }
-  }
-
-  @NotNull
-  @Override
-  public String toExternalForm(boolean skipQueryAndFragment) {
-    return toExternalForm();
   }
 
   @Nullable
@@ -71,8 +46,19 @@ public final class LocalFileUrl implements Url {
 
   @Nullable
   @Override
-  public String getParametersPart() {
+  public String getParameters() {
     return null;
+  }
+
+  @NotNull
+  @Override
+  public Url trimParameters() {
+    return this;
+  }
+
+  @Override
+  public String toString() {
+    return toExternalForm();
   }
 
   @Override
@@ -80,10 +66,7 @@ public final class LocalFileUrl implements Url {
     if (this == o) {
       return true;
     }
-    if (!(o instanceof LocalFileUrl)) {
-      return false;
-    }
-    return path.equals(((LocalFileUrl)o).path);
+    return o instanceof LocalFileUrl && path.equals(((LocalFileUrl)o).path);
   }
 
   @Override
@@ -94,10 +77,5 @@ public final class LocalFileUrl implements Url {
   @Override
   public int hashCode() {
     return path.hashCode();
-  }
-
-  @Override
-  public String toString() {
-    return toExternalForm();
   }
 }

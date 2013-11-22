@@ -58,7 +58,6 @@ public class CommandExecutor {
   private final EventDispatcher<LineCommandListener> myListeners = EventDispatcher.create(LineCommandListener.class);
 
   private final AtomicBoolean myWasError = new AtomicBoolean(false);
-  @NotNull private final AtomicReference<Throwable> myExceptionRef;
   @Nullable private final LineCommandListener myResultBuilder;
   @NotNull private final Command myCommand;
 
@@ -81,7 +80,6 @@ public class CommandExecutor {
     myCommandLine.addParameter(command.getName().getName());
     myCommandLine.addParameters(command.getParameters());
     myExitCodeReference = new AtomicReference<Integer>();
-    myExceptionRef = new AtomicReference<Throwable>();
   }
 
   /**
@@ -97,7 +95,7 @@ public class CommandExecutor {
     return myDestroyReason;
   }
 
-  public void start() {
+  public void start() throws SvnBindException {
     synchronized (myLock) {
       checkNotStarted();
 
@@ -109,9 +107,10 @@ public class CommandExecutor {
         myHandler = createProcessHandler();
         myProcessWriter = new OutputStreamWriter(myHandler.getProcessInput());
         startHandlingStreams();
-      } catch (Throwable t) {
-        listeners().startFailed(t);
-        myExceptionRef.set(t);
+      } catch (ExecutionException e) {
+        // TODO: currently startFailed() is not used for some real logic in svn4idea plugin
+        listeners().startFailed(e);
+        throw new SvnBindException(e);
       }
     }
   }
@@ -189,8 +188,6 @@ public class CommandExecutor {
       }
     }
     while (!finished);
-
-    throwIfError();
   }
 
   public void addListener(final LineCommandListener listener) {
@@ -304,14 +301,6 @@ public class CommandExecutor {
 
   public Boolean wasError() {
     return myWasError.get();
-  }
-
-  public void throwIfError() throws SvnBindException {
-    Throwable error = myExceptionRef.get();
-
-    if (error != null) {
-      throw new SvnBindException(error);
-    }
   }
 
   public void write(String value) throws SvnBindException {

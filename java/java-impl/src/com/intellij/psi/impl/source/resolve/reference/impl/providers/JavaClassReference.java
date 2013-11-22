@@ -452,11 +452,8 @@ public class JavaClassReference extends GenericReference implements PsiJavaRefer
     Project project = getElement().getProject();
     GlobalSearchScope scope = myJavaClassReferenceSet.getProvider().getScope(project);
     if (scope == null) {
-      final Module module = ModuleUtilCore.findModuleForPsiElement(getElement());
-      if (module != null) {
-        return module.getModuleWithDependenciesAndLibrariesScope(true);
-      }
-      return GlobalSearchScope.allScope(project);
+      Module module = ModuleUtilCore.findModuleForPsiElement(getElement());
+      return module != null ? module.getModuleWithDependenciesAndLibrariesScope(true) : GlobalSearchScope.allScope(project);
     }
     return scope;
   }

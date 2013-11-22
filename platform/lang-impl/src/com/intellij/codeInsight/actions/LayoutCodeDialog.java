@@ -39,7 +39,7 @@ import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 
-public class LayoutCodeDialog extends DialogWrapper {
+public class LayoutCodeDialog extends DialogWrapper implements LayoutCodeOptions {
   @NotNull  private final Project myProject;
   @Nullable private final PsiFile myFile;
   @Nullable private final PsiDirectory myDirectory;
@@ -232,30 +232,37 @@ public class LayoutCodeDialog extends DialogWrapper {
     HelpManager.getInstance().invokeHelp(myHelpId);
   }
 
+
   public boolean isProcessSelectedText() {
     return myRbSelectedText.isSelected();
   }
 
+  @Override
   public boolean isProcessWholeFile() {
     return myRbFile.isSelected();
   }
 
+  @Override
   public boolean isProcessDirectory() {
     return myRbDirectory.isSelected();
   }
 
+  @Override
   public boolean isIncludeSubdirectories() {
     return myCbIncludeSubdirs.isSelected();
   }
 
+  @Override
   public boolean isOptimizeImports() {
     return myCbOptimizeImports.isSelected();
   }
 
+  @Override
   public boolean isRearrangeEntries() {
     return myCbArrangeEntries.isSelected();
   }
-  
+
+  @Override
   public boolean isProcessOnlyChangedText() {
     return myCbOnlyVcsChangedRegions.isEnabled() && myCbOnlyVcsChangedRegions.isSelected();
   }

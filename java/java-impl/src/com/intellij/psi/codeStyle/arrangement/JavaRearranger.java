@@ -121,12 +121,12 @@ public class JavaRearranger implements Rearranger<JavaElementArrangementEntry>, 
 
   private static void setupUtilityMethods(@NotNull JavaArrangementParseInfo info, @NotNull ArrangementSettingsToken orderType) {
     if (DEPTH_FIRST.equals(orderType)) {
-      for (JavaArrangementMethodDependencyInfo rootInfo : info.getMethodDependencyRoots()) {
+      for (ArrangementEntryDependencyInfo rootInfo : info.getMethodDependencyRoots()) {
         setupDepthFirstDependency(rootInfo);
       }
     }
     else if (BREADTH_FIRST.equals(orderType)) {
-      for (JavaArrangementMethodDependencyInfo rootInfo : info.getMethodDependencyRoots()) {
+      for (ArrangementEntryDependencyInfo rootInfo : info.getMethodDependencyRoots()) {
         setupBreadthFirstDependency(rootInfo);
       }
     }
@@ -135,25 +135,25 @@ public class JavaRearranger implements Rearranger<JavaElementArrangementEntry>, 
     }
   }
 
-  private static void setupDepthFirstDependency(@NotNull JavaArrangementMethodDependencyInfo info) {
-    for (JavaArrangementMethodDependencyInfo dependencyInfo : info.getDependentMethodInfos()) {
+  private static void setupDepthFirstDependency(@NotNull ArrangementEntryDependencyInfo info) {
+    for (ArrangementEntryDependencyInfo dependencyInfo : info.getDependentEntriesInfos()) {
       setupDepthFirstDependency(dependencyInfo);
-      JavaElementArrangementEntry dependentEntry = dependencyInfo.getAnchorMethod();
+      JavaElementArrangementEntry dependentEntry = dependencyInfo.getAnchorEntry();
       if (dependentEntry.getDependencies() == null) {
-        dependentEntry.addDependency(info.getAnchorMethod());
+        dependentEntry.addDependency(info.getAnchorEntry());
       }
     }
   }
 
-  private static void setupBreadthFirstDependency(@NotNull JavaArrangementMethodDependencyInfo info) {
-    Deque<JavaArrangementMethodDependencyInfo> toProcess = new ArrayDeque<JavaArrangementMethodDependencyInfo>();
+  private static void setupBreadthFirstDependency(@NotNull ArrangementEntryDependencyInfo info) {
+    Deque<ArrangementEntryDependencyInfo> toProcess = new ArrayDeque<ArrangementEntryDependencyInfo>();
     toProcess.add(info);
     while (!toProcess.isEmpty()) {
-      JavaArrangementMethodDependencyInfo current = toProcess.removeFirst();
-      for (JavaArrangementMethodDependencyInfo dependencyInfo : current.getDependentMethodInfos()) {
-        JavaElementArrangementEntry dependencyMethod = dependencyInfo.getAnchorMethod();
+      ArrangementEntryDependencyInfo current = toProcess.removeFirst();
+      for (ArrangementEntryDependencyInfo dependencyInfo : current.getDependentEntriesInfos()) {
+        JavaElementArrangementEntry dependencyMethod = dependencyInfo.getAnchorEntry();
         if (dependencyMethod.getDependencies() == null) {
-          dependencyMethod.addDependency(current.getAnchorMethod());
+          dependencyMethod.addDependency(current.getAnchorEntry());
         }
         toProcess.addLast(dependencyInfo);
       }
@@ -216,8 +216,20 @@ public class JavaRearranger implements Rearranger<JavaElementArrangementEntry>, 
         }
       }
     }
+    setupFieldInitializationDependencies(parseInfo.getFieldDependencyRoots());
     return parseInfo.getEntries();
   }
+
+
+  public void setupFieldInitializationDependencies(@NotNull List<ArrangementEntryDependencyInfo> list) {
+    for (ArrangementEntryDependencyInfo info : list) {
+      JavaElementArrangementEntry anchorField = info.getAnchorEntry();
+      for (ArrangementEntryDependencyInfo fieldUsedInInitialization : info.getDependentEntriesInfos()) {
+        anchorField.addDependency(fieldUsedInInitialization.getAnchorEntry());
+      }
+    }
+  }
+
 
   @Override
   public int getBlankLines(@NotNull CodeStyleSettings settings,

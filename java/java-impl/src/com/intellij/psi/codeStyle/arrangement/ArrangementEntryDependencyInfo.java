@@ -24,33 +24,32 @@ import java.util.List;
  * @author Denis Zhdanov
  * @since 9/19/12 6:41 PM
  */
-public class JavaArrangementMethodDependencyInfo {
+public class ArrangementEntryDependencyInfo {
 
-  @NotNull private final List<JavaArrangementMethodDependencyInfo> myDependentMethods
-    = new ArrayList<JavaArrangementMethodDependencyInfo>();
+  @NotNull private final List<ArrangementEntryDependencyInfo> myDependentEntries = new ArrayList<ArrangementEntryDependencyInfo>();
   
-  @NotNull private final JavaElementArrangementEntry myAnchorMethod;
+  @NotNull private final JavaElementArrangementEntry myAnchorEntry;
 
-  public JavaArrangementMethodDependencyInfo(@NotNull JavaElementArrangementEntry method) {
-    myAnchorMethod = method;
+  public ArrangementEntryDependencyInfo(@NotNull JavaElementArrangementEntry entry) {
+    myAnchorEntry= entry;
   }
 
-  public void addDependentMethodInfo(@NotNull JavaArrangementMethodDependencyInfo info) {
-    myDependentMethods.add(info);
+  public void addDependentEntryInfo(@NotNull ArrangementEntryDependencyInfo info) {
+    myDependentEntries.add(info);
   }
   
   @NotNull
-  public List<JavaArrangementMethodDependencyInfo> getDependentMethodInfos() {
-    return myDependentMethods;
+  public List<ArrangementEntryDependencyInfo> getDependentEntriesInfos() {
+    return myDependentEntries;
   }
 
   @NotNull
-  public JavaElementArrangementEntry getAnchorMethod() {
-    return myAnchorMethod;
+  public JavaElementArrangementEntry getAnchorEntry() {
+    return myAnchorEntry;
   }
 
   @Override
   public String toString() {
-    return myAnchorMethod.toString();
+    return myAnchorEntry.toString();
   }
 }

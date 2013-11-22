@@ -398,7 +398,7 @@ public class HtmlUtil {
     return isHtml5Document(doc);
   }
 
-  public static boolean isHtmlTag(XmlTag tag) {
+  public static boolean isHtmlTag(@NotNull XmlTag tag) {
     final XmlElementDescriptor descriptor = tag.getDescriptor();
     return descriptor != null && descriptor.getNSDescriptor() instanceof RelaxedHtmlNSDescriptor &&
            tag.getLanguage() != XHTMLLanguage.INSTANCE;

@@ -34,6 +34,10 @@ import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.util.List;
 
+/**
+ * @param <T> List item type.
+ * @since 13.0
+ */
 public abstract class FinderRecursivePanel<T> extends JBSplitter implements DataProvider, Disposable {
 
   @NotNull
@@ -127,9 +131,7 @@ public abstract class FinderRecursivePanel<T> extends JBSplitter implements Data
     return null;
   }
 
-  protected boolean hasChildren(T t) {
-    return false;
-  }
+  protected abstract boolean hasChildren(T t);
 
   /**
    * To determine item list background color (if enabled).
@@ -140,6 +142,10 @@ public abstract class FinderRecursivePanel<T> extends JBSplitter implements Data
   @Nullable
   protected VirtualFile getContainingFile(T t) {
     return null;
+  }
+
+  protected boolean isEditable() {
+    return getSelectedValue() != null;
   }
 
   @Nullable
@@ -241,7 +247,7 @@ public abstract class FinderRecursivePanel<T> extends JBSplitter implements Data
 
       @Override
       public void update(AnActionEvent e) {
-        e.getPresentation().setEnabled(getSelectedValue() != null);
+        e.getPresentation().setEnabled(isEditable());
       }
 
       @Override
@@ -381,6 +387,7 @@ public abstract class FinderRecursivePanel<T> extends JBSplitter implements Data
 
   @Override
   public void dispose() {
+    super.dispose();
     myMergingUpdateQueue.cancelAllUpdates();
   }
 
@@ -460,7 +467,8 @@ public abstract class FinderRecursivePanel<T> extends JBSplitter implements Data
         if (!listModel.getElementAt(i).equals(newItem)) {
           listModel.add(i, newItem);
         }
-      }  else {
+      }
+      else {
         listModel.add(newItem);
       }
     }

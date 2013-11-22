@@ -35,7 +35,7 @@ import org.jetbrains.jps.model.java.JpsJavaExtensionService;
 public class MarkGeneratedSourceRootAction extends MarkRootActionBase {
   public MarkGeneratedSourceRootAction() {
     Presentation presentation = getTemplatePresentation();
-    presentation.setIcon(AllIcons.Modules.SourceRoot);
+    presentation.setIcon(AllIcons.Modules.GeneratedSourceRoot);
     presentation.setText("Generated Sources Root");
     presentation.setDescription("Mark directory as a source root for generated files");
   }

@@ -18,7 +18,6 @@ package com.intellij.util.indexing;
 
 import com.intellij.openapi.vfs.InvalidVirtualFileAccessException;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.openapi.vfs.newvfs.FileAttribute;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.util.containers.ConcurrentHashMap;
@@ -58,7 +57,7 @@ public class IndexingStamp {
             if (id != null) {
               long stamp = IndexInfrastructure.getIndexCreationStamp(id);
               if (myIndexStamps == null) myIndexStamps = new TObjectLongHashMap<ID<?, ?>>(5, 0.98f);
-              if (stamp <= dominatingIndexStamp) myIndexStamps.put(id, stamp);
+              myIndexStamps.put(id, stamp <= dominatingIndexStamp ? stamp : INDEX_VERSION_CHANGED_STAMP);
             }
           }
         }
@@ -85,7 +84,9 @@ public class IndexingStamp {
           @Override
           public boolean execute(final ID<?, ?> id, final long timestamp) {
             try {
-              DataInputOutputUtil.writeINT(stream, id.getUniqueId());
+              if (timestamp != INDEX_VERSION_CHANGED_STAMP) {
+                DataInputOutputUtil.writeINT(stream, id.getUniqueId());
+              }
               return true;
             }
             catch (IOException e) {
@@ -126,10 +127,20 @@ public class IndexingStamp {
   private static final ConcurrentHashMap<VirtualFile, Timestamps> myTimestampsCache = new ConcurrentHashMap<VirtualFile, Timestamps>();
   private static final int CAPACITY = 100;
   private static final ArrayBlockingQueue<VirtualFile> myFinishedFiles = new ArrayBlockingQueue<VirtualFile>(CAPACITY);
+  private static final long INDEX_VERSION_CHANGED_STAMP = 1l;
 
-  public static boolean isFileIndexed(VirtualFile file, ID<?, ?> indexName, final long indexCreationStamp) {
+  public enum State {
+    INDEXED, INDEX_VERSION_CHANGED, FILE_CONTENT_CHANGED
+  }
+
+  public static State getIndexingState(VirtualFile file, ID<?, ?> indexName) {
     try {
-      return getIndexStamp(file, indexName) == indexCreationStamp;
+      long stamp = getIndexStamp(file, indexName);
+      if (stamp == INDEX_VERSION_CHANGED_STAMP) {
+        return State.INDEX_VERSION_CHANGED;
+      }
+      long indexCreationStamp = IndexInfrastructure.getIndexCreationStamp(indexName);
+      return stamp == indexCreationStamp ? State.INDEXED : State.FILE_CONTENT_CHANGED;
     }
     catch (RuntimeException e) {
       final Throwable cause = e.getCause();
@@ -138,7 +149,7 @@ public class IndexingStamp {
       }
     }
 
-    return false;
+    return State.FILE_CONTENT_CHANGED;
   }
 
   public static long getIndexStamp(VirtualFile file, ID<?, ?> indexName) {
