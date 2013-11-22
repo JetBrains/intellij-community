@@ -102,6 +102,7 @@ public class ViewTextAction extends BaseValueAction {
       editor.setVerticalScrollbarVisible(true);
       editor.setEmbeddedIntoDialogWrapper(true);
       editor.getComponent().setPreferredSize(null);
+      editor.getSettings().setUseSoftWraps(true);
       return editor;
     }
   }
