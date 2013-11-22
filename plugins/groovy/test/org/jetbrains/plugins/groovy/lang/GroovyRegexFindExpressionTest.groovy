@@ -53,4 +53,10 @@ class A {
 
     myFixture.checkHighlighting(true, false, true)
   }
+
+  public void testRegex() {
+    myFixture.configureByText('a.groovy', '\'foo\' =~ /\\s/')
+    myFixture.checkHighlighting(true, false, true)
+  }
+
 }
