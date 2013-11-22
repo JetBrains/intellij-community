@@ -167,12 +167,8 @@ public class EditorWindow extends UserDataHolderBase implements EditorEx {
     else {
       int offset = lineStartOffset + column;
       int hostOffset = getDocument().injectedToHost(offset);
-      int hostLineNumber = getDocument().getDelegate().getLineNumber(hostOffset);
-      int hostLineStart = getDocument().getDelegate().getLineStartOffset(hostLineNumber);
-
-      return new LogicalPosition(hostLineNumber, hostOffset - hostLineStart);
+      return myDelegate.offsetToLogicalPosition(hostOffset);
     }
-
   }
 
   private void dispose() {
