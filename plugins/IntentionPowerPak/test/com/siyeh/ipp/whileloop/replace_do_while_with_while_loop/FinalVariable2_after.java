@@ -6,10 +6,14 @@ class FinalVariable2 {
       if (b) {
           int i = 10;
           System.out.println(i);
-          while (true) {
+          while (c()) {
               i = 10;
               System.out.println(i);
           }
       }
+  }
+
+  boolean c() {
+    return true;
   }
 }
