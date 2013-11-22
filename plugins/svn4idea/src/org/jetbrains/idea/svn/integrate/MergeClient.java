@@ -37,6 +37,7 @@ public interface MergeClient extends SvnClient {
              @NotNull SvnTarget source2,
              @NotNull File destination,
              @Nullable SVNDepth depth,
+             boolean useAncestry,
              boolean dryRun,
              boolean recordOnly,
              boolean force,
