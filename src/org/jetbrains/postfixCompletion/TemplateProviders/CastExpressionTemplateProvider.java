@@ -43,7 +43,7 @@ public final class CastExpressionTemplateProvider extends TemplateProviderBase {
     consumer.add(new CastLookupElement(bestContext));
   }
 
-  private static class CastLookupElement extends ExpressionPostfixLookupElement<PsiTypeCastExpression> {
+  static final class CastLookupElement extends ExpressionPostfixLookupElement<PsiTypeCastExpression> {
     public CastLookupElement(@NotNull PrefixExpressionContext context) {
       super("cast", context);
     }

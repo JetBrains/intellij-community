@@ -40,13 +40,13 @@ Available templates:
 * `.par` – surrounds outer expression with parentheses `(expr)`
 * `.return` – returns value from containing method `return expr;`
 * `.switch` – switch over integral/enum/string values `switch (expr)`
-* `.throw` – throws value of Throwable type `throw expr;`
+* `.throw` – throws exception of 'Throwable' type `throw new Exception();`
 * `.assert` - creates assertion from boolean expression `assert expr;`
 * `.synchronized` – produces synchronized block `synchronized (expr)`
 
 Other features:
 
-* Template expansion by `Tab` key in editor (like live templates)
+* Template expansion by `Tab` key in editor (just like live templates)
 * Support for IDEA chained code completion (`st.new` => `new SomeType()`)
 * Works inside code fragments, like *evaluate expression* debugger window
 

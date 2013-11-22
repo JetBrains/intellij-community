@@ -154,6 +154,8 @@ public class PostfixCompletionTest extends LightCodeInsightFixtureTestCase {
   public void testSwitch06() { test("switch\n"); }
   public void testSwitch07() { test("switch\n"); }
 
+  public void testSynchronized01() { testForce("synchronized\n"); }
+
   public void testField01() { test("field\n"); }
   public void testField02() { testForce("field\n"); }
 

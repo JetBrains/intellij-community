@@ -140,6 +140,9 @@
     <component>
       <implementation-class>org.jetbrains.postfixCompletion.TemplateProviders.AssertStatementTemplateProvider</implementation-class>
     </component>
+    <component>
+      <implementation-class>org.jetbrains.postfixCompletion.TemplateProviders.SynchronizedStatementTemplateProvider</implementation-class>
+    </component>
   </application-components>
 
   <module-components>
