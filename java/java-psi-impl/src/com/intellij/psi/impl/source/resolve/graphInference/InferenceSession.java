@@ -31,6 +31,7 @@ import com.intellij.psi.scope.util.PsiScopesUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ArrayUtilRt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -49,6 +50,8 @@ public class InferenceSession {
   private PsiSubstitutor mySiteSubstitutor;
   private PsiManager myManager;
   private int myConstraintIdx = 0;
+  
+  private boolean myErased = false;
 
   private final InferenceIncorporationPhase myIncorporationPhase = new InferenceIncorporationPhase(this);
 
@@ -186,7 +189,7 @@ public class InferenceSession {
                               @Nullable PsiExpression[] args,
                               @Nullable PsiElement parent,
                               ParameterTypeInferencePolicy policy) {
-    boolean doesNotContainFalseBound = repeatInferencePhases();
+    boolean doesNotContainFalseBound = repeatInferencePhases(parameters == null);
 
     resolveBounds(myInferenceVariables.values(), mySiteSubstitutor, false);
 
@@ -196,7 +199,7 @@ public class InferenceSession {
       for (InferenceVariable inferenceVariable : myInferenceVariables.values()) {
         inferenceVariable.ignoreInstantiation();
       }
-      doesNotContainFalseBound = repeatInferencePhases();
+      doesNotContainFalseBound = repeatInferencePhases(true);
       resolveBounds(myInferenceVariables.values(), mySiteSubstitutor, false);
     }
 
@@ -280,7 +283,7 @@ public class InferenceSession {
           });
         }
         if (targetType != null) {
-          myConstraints.add(new TypeCompatibilityConstraint(GenericsUtil.eliminateWildcards(targetType, false), PsiImplUtil.normalizeWildcardTypeByPosition(returnType, context)));
+          myConstraints.add(new TypeCompatibilityConstraint(myErased ? TypeConversionUtil.erasure(targetType) : GenericsUtil.eliminateWildcards(targetType, false), PsiImplUtil.normalizeWildcardTypeByPosition(returnType, context)));
         }
       }
     }
@@ -434,15 +437,16 @@ public class InferenceSession {
     return dependencies != null ? !dependencies.isEmpty() : isProper;
   }
 
-  private boolean repeatInferencePhases() {
+  private boolean repeatInferencePhases(boolean incorporate) {
     do {
       if (!reduceConstraints()) {
         //inference error occurred
         return false;
       }
-      myIncorporationPhase.incorporate();
-
-    } while (!myIncorporationPhase.isFullyIncorporated() || myConstraintIdx < myConstraints.size());
+      if (incorporate) {
+        myIncorporationPhase.incorporate();
+      }
+    } while (incorporate && !myIncorporationPhase.isFullyIncorporated() || myConstraintIdx < myConstraints.size());
 
     return true;
   }
@@ -473,7 +477,7 @@ public class InferenceSession {
           final List<PsiType> eqBounds = inferenceVariable.getBounds(InferenceBound.EQ);
           final List<PsiType> lowerBounds = inferenceVariable.getBounds(InferenceBound.LOWER);
           final List<PsiType> upperBounds = inferenceVariable.getBounds(InferenceBound.UPPER);
-          if (/*eqBounds.contains(null) || lowerBounds.contains(null) || */upperBounds.contains(null)) {
+          if (myErased && eqBounds.contains(null) || /*lowerBounds.contains(null) || */upperBounds.contains(null)) {
             inferenceVariable.setInstantiation(null);
             continue;
           }
@@ -664,7 +668,7 @@ public class InferenceSession {
       additionalConstraints.removeAll(subset);
 
       myConstraints.addAll(subset);
-      if (!repeatInferencePhases()) {
+      if (!repeatInferencePhases(true)) {
         return false;
       }
 
@@ -675,5 +679,9 @@ public class InferenceSession {
       }
     }
     return true;
+  }
+
+  public void setErased() {
+    myErased = true;
   }
 }
