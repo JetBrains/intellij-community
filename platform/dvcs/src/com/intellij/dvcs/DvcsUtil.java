@@ -16,19 +16,31 @@
 package com.intellij.dvcs;
 
 import com.intellij.dvcs.repo.Repository;
+import com.intellij.dvcs.repo.RepositoryManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vcs.AbstractVcs;
+import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import com.intellij.openapi.vcs.VcsKey;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.StatusBarWidget;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.vcs.log.VcsLog;
+import com.intellij.vcs.log.VcsLogProvider;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.List;
 
 /**
  * @author Kirill Likhodedov
@@ -96,5 +108,34 @@ public class DvcsUtil {
       }
     }
     return false;
+  }
+
+  /**
+   * Report a warning that the given root has no associated Repositories.
+   */
+  public static void noVcsRepositoryForRoot(@NotNull Logger log,
+                                            @NotNull VirtualFile root,
+                                            @NotNull Project project,
+                                            @NotNull RepositoryManager repositoryManager,
+                                            @Nullable AbstractVcs vcs) {
+    if (vcs == null) {
+      return;
+    }
+    ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(project);
+    List<VirtualFile> roots = Arrays.asList(vcsManager.getRootsUnderVcs(vcs));
+    log.warn(String.format("Repository not found for root: %s. All roots: %s, all repositories: %s", root, roots,
+                           repositoryManager.getRepositories()));
+  }
+
+  /**
+   * Checks if there are hg roots in the VCS log.
+   */
+  public static boolean logHasRootForVcs(@NotNull VcsLog log, @Nullable final VcsKey vcsKey) {
+    return ContainerUtil.find(log.getLogProviders(), new Condition<VcsLogProvider>() {
+      @Override
+      public boolean value(VcsLogProvider logProvider) {
+        return logProvider.getSupportedVcs().equals(vcsKey);
+      }
+    }) != null;
   }
 }
