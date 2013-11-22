@@ -61,6 +61,7 @@ public class CmdMergeClient extends BaseSvnClient implements MergeClient {
                     @NotNull SvnTarget source2,
                     @NotNull File destination,
                     @Nullable SVNDepth depth,
+                    boolean useAncestry,
                     boolean dryRun,
                     boolean recordOnly,
                     boolean force,
@@ -74,6 +75,7 @@ public class CmdMergeClient extends BaseSvnClient implements MergeClient {
     CommandUtil.put(parameters, source1);
     CommandUtil.put(parameters, source2);
     fillParameters(parameters, destination, depth, dryRun, recordOnly, force, false, diffOptions);
+    CommandUtil.put(parameters, !useAncestry, "--ignore-ancestry");
 
     run(destination, handler, parameters);
   }

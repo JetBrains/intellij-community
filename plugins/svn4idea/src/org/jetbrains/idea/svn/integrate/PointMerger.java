@@ -88,7 +88,8 @@ public class PointMerger extends Merger {
     SvnTarget source1 = SvnTarget.fromURL(SVNURL.parseURIEncoded(beforeUrl), ((SvnRevisionNumber)before.getRevisionNumber()).getRevision());
     SvnTarget source2 = SvnTarget.fromURL(SVNURL.parseURIEncoded(afterUrl), ((SvnRevisionNumber) after.getRevisionNumber()).getRevision());
 
-    client.merge(source1, source2, afterPath, SVNDepth.FILES, mySvnConfig.MERGE_DRY_RUN, false, false, mySvnConfig.getMergeOptions(), myHandler);
+    client.merge(source1, source2, afterPath, SVNDepth.FILES, true, mySvnConfig.MERGE_DRY_RUN, false, false, mySvnConfig.getMergeOptions(),
+                 myHandler);
   }
 
   private void delete(final Change change) throws SVNException, VcsException {
