@@ -61,7 +61,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.newvfs.impl.VirtualDirectoryImpl");
   public static boolean CHECK = ApplicationManager.getApplication().isUnitTestMode();
 
-  static final VirtualDirectoryImpl NULL_VIRTUAL_FILE = new VirtualDirectoryImpl("*?;%NULL", null, LocalFileSystem.getInstance(), -42, 0) {
+  static final VirtualDirectoryImpl NULL_VIRTUAL_FILE = new VirtualDirectoryImpl(FileNameCache.storeName("*?;%NULL"), null, LocalFileSystem.getInstance(), -42, 0) {
     public String toString() {
       return "NULL";
     }
@@ -82,12 +82,12 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
    */
   private VirtualFileSystemEntry[] myChildren = EMPTY_ARRAY;
 
-  public VirtualDirectoryImpl(@NonNls @NotNull final String name,
+  public VirtualDirectoryImpl(@NonNls final int nameId,
                               @Nullable final VirtualDirectoryImpl parent,
                               @NotNull final NewVirtualFileSystem fs,
                               final int id,
                               @PersistentFS.Attributes final int attributes) {
-    super(name, parent, id, attributes);
+    super(nameId, parent, id, attributes);
     myFS = fs;
   }
 
@@ -141,8 +141,38 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
   }
 
   private static class AdoptedChild extends VirtualFileImpl {
+    private final String myName;
+    
     private AdoptedChild(String name) {
-      super(name, NULL_VIRTUAL_FILE, -42, -1);
+      super(-1, NULL_VIRTUAL_FILE, -42, -1);
+      myName = name;
+    }
+
+    @NotNull
+    @Override
+    public String getName() {
+      return myName;
+    }
+
+    @Override
+    public void setNewName(@NotNull String newName) {
+      throw new IncorrectOperationException();
+    }
+
+    @Override
+    public int compareNameTo(@NotNull String name, boolean ignoreCase) {
+      return compareNames(myName, name, ignoreCase);
+    }
+
+    @Override
+    protected char[] appendPathOnFileSystem(int accumulatedPathLength, int[] positionRef) {
+      char[] chars = getParent().appendPathOnFileSystem(accumulatedPathLength + 1 + myName.length(), positionRef);
+      if (positionRef[0] > 0 && chars[positionRef[0] - 1] != '/') {
+        chars[positionRef[0]++] = '/';
+      }
+      positionRef[0] = VirtualFileSystemEntry.copyString(chars, positionRef[0], myName);
+      return chars;
+
     }
   }
 
@@ -199,8 +229,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
       if (id <= 0) {
         return null;
       }
-      String shorty = new String(name);
-      VirtualFileSystemEntry child = createChild(shorty, id, delegate); // So we don't hold whole char[] buffer of a lengthy path
+      VirtualFileSystemEntry child = createChild(FileNameCache.storeName(name), id, delegate); 
 
       VirtualFileSystemEntry[] after = myChildren;
       if (after != array)  {
@@ -238,15 +267,20 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
   }
 
   @NotNull
-  public VirtualFileSystemEntry createChild(@NotNull String name, int id, @NotNull NewVirtualFileSystem delegate) {
+  public VirtualFileSystemEntry createChild(String name, int id, @NotNull NewVirtualFileSystem delegate) {
+    return createChild(FileNameCache.storeName(name), id, delegate);
+  }
+  
+  @NotNull
+  private VirtualFileSystemEntry createChild(int nameId, int id, @NotNull NewVirtualFileSystem delegate) {
     VirtualFileSystemEntry child;
 
     final int attributes = ourPersistence.getFileAttributes(id);
     if (PersistentFS.isDirectory(attributes)) {
-      child = new VirtualDirectoryImpl(name, this, delegate, id, attributes);
+      child = new VirtualDirectoryImpl(nameId, this, delegate, id, attributes);
     }
     else {
-      child = new VirtualFileImpl(name, this, id, attributes);
+      child = new VirtualFileImpl(nameId, this, id, attributes);
       //noinspection TestOnlyProblems
       assertAccessInTests(child, delegate);
     }
@@ -543,7 +577,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
           resultFile = children[i++];
         }
         else {
-          resultFile = createChild(nameId.name, nameId.id, delegate);
+          resultFile = createChild(nameId.nameId, nameId.id, delegate);
         }
         result[delegateI++] = resultFile;
       }

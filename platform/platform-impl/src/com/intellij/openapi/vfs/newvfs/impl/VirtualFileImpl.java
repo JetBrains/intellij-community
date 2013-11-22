@@ -39,8 +39,8 @@ import java.util.Collections;
 public class VirtualFileImpl extends VirtualFileSystemEntry {
   private Charset myCharset;
 
-  VirtualFileImpl(String name, VirtualDirectoryImpl parent, int id, @PersistentFS.Attributes final int attributes) {
-    super(name, parent, id, attributes);
+  VirtualFileImpl(int nameId, VirtualDirectoryImpl parent, int id, @PersistentFS.Attributes final int attributes) {
+    super(nameId, parent, id, attributes);
   }
 
   @Override
