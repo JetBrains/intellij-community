@@ -90,7 +90,7 @@ public class AddMavenDependencyQuickFix implements IntentionAction, LowPriorityA
 
         VirtualFile virtualFile = file.getOriginalFile().getVirtualFile();
         if (virtualFile != null) {
-          isTestSource = ProjectRootManager.getInstance(project).getFileIndex().isInSourceContent(virtualFile);
+          isTestSource = ProjectRootManager.getInstance(project).getFileIndex().isInTestSourceContent(virtualFile);
         }
 
         for (MavenId each : ids) {
