@@ -91,8 +91,8 @@ public class BranchMerger implements IMerger {
       client.merge(SvnTarget.fromURL(mySourceUrl), destination, false, createDiffOptions(), myHandler);
     } else {
       client.merge(SvnTarget.fromURL(mySourceUrl, SVNRevision.create(mySourceCopyRevision)),
-                   SvnTarget.fromURL(mySourceUrl, SVNRevision.create(mySourceLatestRevision)), destination, SVNDepth.INFINITY, false, false,
-                   true, createDiffOptions(), myHandler);
+                   SvnTarget.fromURL(mySourceUrl, SVNRevision.create(mySourceLatestRevision)), destination, SVNDepth.INFINITY, true, false,
+                   false, true, createDiffOptions(), myHandler);
     }
   }
 
