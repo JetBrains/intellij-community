@@ -28,10 +28,14 @@ import com.intellij.openapi.fileEditor.FileDocumentManagerAdapter;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.problems.WolfTheProblemSolver;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.util.CachedValue;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.Alarm;
 import com.intellij.util.Consumer;
@@ -40,9 +44,14 @@ import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collection;
 import java.util.Set;
 
 public class DelayedDocumentWatcher {
+
+  private static final Key<CachedValue<Boolean>> CONTAINS_ERROR_ELEMENT = Key.create("CONTAINS_ERROR_ELEMENT");
+
+  // All instance fields are be accessed from EDT
   private final Project myProject;
   private final Alarm myAlarm;
   private final int myDelayMillis;
@@ -54,6 +63,7 @@ public class DelayedDocumentWatcher {
   private final Set<VirtualFile> myChangedFiles = new THashSet<VirtualFile>();
   private boolean myDocumentSavingInProgress = false;
   private MessageBusConnection myConnection;
+  private int myEventCount = 0;
 
   public DelayedDocumentWatcher(@NotNull Project project,
                                 int delayMillis,
@@ -126,38 +136,81 @@ public class DelayedDocumentWatcher {
 
       myAlarm.cancelRequest(myAlarmRunnable);
       myAlarm.addRequest(myAlarmRunnable, myDelayMillis);
+      myEventCount++;
     }
   }
 
   private class MyRunnable implements Runnable {
     @Override
     public void run() {
-      for (VirtualFile file : myChangedFiles) {
-        boolean hasErrors = hasErrors(file);
-        if (hasErrors) {
-          // Do nothing, if some changed file has syntax errors.
-          // This method will be invoked subsequently, when syntax errors are fixed.
-          return;
+      final int oldEventCount = myEventCount;
+      final Set<VirtualFile> copy = ImmutableSet.copyOf(myChangedFiles);
+      asyncCheckErrors(copy, new Consumer<Boolean>() {
+        @Override
+        public void consume(Boolean errorsFound) {
+          if (myEventCount != oldEventCount) {
+            // 'documentChanged' event was raised during async checking files for errors
+            // Do nothing in that case, this method will be invoked subsequently.
+            return;
+          }
+          if (errorsFound) {
+            // Do nothing, if some changed file has syntax errors.
+            // This method will be invoked subsequently, when syntax errors are fixed.
+            return;
+          }
+          myChangedFiles.clear();
+          myConsumer.consume(copy);
         }
-      }
-      Set<VirtualFile> copy = ImmutableSet.copyOf(myChangedFiles);
-      myChangedFiles.clear();
-      myConsumer.consume(copy);
+      });
     }
   }
 
+  private void asyncCheckErrors(@NotNull final Collection<VirtualFile> files,
+                                @NotNull final Consumer<Boolean> errorsFoundConsumer) {
+    ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+      @Override
+      public void run() {
+        final boolean errorsFound = ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
+          @Override
+          public Boolean compute() {
+            for (VirtualFile file : files) {
+              if (hasErrors(file)) {
+                return true;
+              }
+            }
+            return false;
+          }
+        });
+        ApplicationManager.getApplication().invokeLater(new Runnable() {
+          @Override
+          public void run() {
+            errorsFoundConsumer.consume(errorsFound);
+          }
+        }, ModalityState.any());
+      }
+    });
+  }
+
+  // This method is called in a background thread with a read lock acquired
   private boolean hasErrors(@NotNull VirtualFile file) {
     // don't use 'WolfTheProblemSolver.hasSyntaxErrors(file)' if possible
     Document document = FileDocumentManager.getInstance().getDocument(file);
     if (document != null) {
       final PsiFile psiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(document);
       if (psiFile != null) {
-        return ApplicationManager.getApplication().runWriteAction(new Computable<Boolean>() {
-          @Override
-          public Boolean compute() {
-            return PsiTreeUtil.hasErrorElements(psiFile);
-          }
-        });
+        CachedValuesManager cachedValuesManager = CachedValuesManager.getManager(myProject);
+        return cachedValuesManager.getCachedValue(
+          psiFile,
+          CONTAINS_ERROR_ELEMENT,
+          new CachedValueProvider<Boolean>() {
+            @Override
+            public Result<Boolean> compute() {
+              boolean error = PsiTreeUtil.hasErrorElements(psiFile);
+              return Result.create(error, psiFile);
+            }
+          },
+          false
+        );
       }
     }
     return WolfTheProblemSolver.getInstance(myProject).hasSyntaxErrors(file);

@@ -181,6 +181,7 @@ public class PydevConsoleExecuteActionHandler extends ConsoleExecuteActionHandle
         indentEditor(currentEditor, indent);
         more(console, currentEditor);
 
+        myConsoleCommunication.notifyCommandExecuted(true);
         return;
       }
     }
@@ -271,10 +272,13 @@ public class PydevConsoleExecuteActionHandler extends ConsoleExecuteActionHandle
   }
 
   @Override
-  public void commandExecuted() {
-    final LanguageConsoleImpl console = myConsoleView.getConsole();
-    final Editor currentEditor = console.getConsoleEditor();
-    ordinaryPrompt(console, currentEditor);
+  public void commandExecuted(boolean more) {
+    if (!more) {
+      final LanguageConsoleImpl console = myConsoleView.getConsole();
+      final Editor currentEditor = console.getConsoleEditor();
+
+      ordinaryPrompt(console, currentEditor);
+    }
   }
 
   @Override

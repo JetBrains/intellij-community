@@ -64,9 +64,7 @@ public class DebuggerManagerThreadImpl extends InvokeAndWaitThread<DebuggerComma
   }
 
   public void invokeAndWait(DebuggerCommandImpl managerCommand) {
-    LOG.assertTrue(!ApplicationManager.getApplication().isDispatchThread());
-    LOG.assertTrue(!(currentThread() instanceof DebuggerManagerThreadImpl),
-                   "Should be invoked outside manager thread, use DebuggerManagerThreadImpl.getInstance(..).invoke...");
+    LOG.assertTrue(!isManagerThread(), "Should be invoked outside manager thread, use DebuggerManagerThreadImpl.getInstance(..).invoke...");
     super.invokeAndWait(managerCommand);
   }
 
@@ -112,7 +110,7 @@ public class DebuggerManagerThreadImpl extends InvokeAndWaitThread<DebuggerComma
           try {
             if (currentCommand == myEvents.getCurrentEvent()) {
               // if current command is still in progress, cancel it
-              getCurrentRequest().interrupt();
+              getCurrentRequest().requestStop();
               try {
                 getCurrentRequest().join();
               }
@@ -181,6 +179,7 @@ public class DebuggerManagerThreadImpl extends InvokeAndWaitThread<DebuggerComma
 
 
   public void startLongProcessAndFork(Runnable process) {
+    assertIsManagerThread();
     startNewWorkerThread();
 
     try {
@@ -202,7 +201,7 @@ public class DebuggerManagerThreadImpl extends InvokeAndWaitThread<DebuggerComma
           if (LOG.isDebugEnabled()) {
             LOG.debug("Event queue was closed, killing request");
           }
-          request.interrupt();
+          request.requestStop();
         }
       });
     }

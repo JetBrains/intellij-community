@@ -16,26 +16,27 @@
 
 package com.intellij.openapi.roots.ui.configuration;
 
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
+import com.intellij.openapi.roots.SourceFolder;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.jps.model.JpsElement;
+import org.jetbrains.jps.model.module.JpsTypedModuleSourceRoot;
 
 import javax.swing.*;
-import java.util.List;
 
 /**
  * @author Eugene Zhuravlev
  *         Date: Oct 20
  * @author 2003
  */
-public class IconSet {
+public class SourceRootPresentation {
+  @NotNull
+  public static Icon getSourceRootIcon(@NotNull SourceFolder sourceFolder) {
+    return getSourceRootIcon(sourceFolder.getJpsElement().asTyped());
+  }
 
-  @Nullable
-  public static Icon getSourceRootIcon(JpsModuleSourceRootType<?> type, List<ModuleSourceRootEditHandler<?>> handlers) {
-    for (ModuleSourceRootEditHandler<?> handler : handlers) {
-      if (handler.getRootType().equals(type)) {
-        return handler.getRootIcon();
-      }
-    }
-    return null;
+  @NotNull
+  private static <P extends JpsElement> Icon getSourceRootIcon(@NotNull JpsTypedModuleSourceRoot<P> root) {
+    ModuleSourceRootEditHandler<P> handler = ModuleSourceRootEditHandler.getEditHandler(root.getRootType());
+    return handler.getRootIcon(root.getProperties());
   }
 }

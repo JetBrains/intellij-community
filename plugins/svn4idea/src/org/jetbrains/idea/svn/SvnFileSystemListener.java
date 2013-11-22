@@ -544,7 +544,7 @@ public class SvnFileSystemListener extends CommandAdapter implements LocalFileOp
       @Override
       protected void executeImpl() throws SVNException {
         try {
-          vcs.getFactory(file).createDeleteClient().delete(file, force);
+          vcs.getFactory(file).createDeleteClient().delete(file, force, false, null);
         }
         catch (VcsException e) {
           wrapAndThrow(e);

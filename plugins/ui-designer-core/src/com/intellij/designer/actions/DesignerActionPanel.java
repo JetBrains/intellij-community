@@ -116,7 +116,7 @@ public class DesignerActionPanel implements DataProvider {
     AnAction selectSameType = new SelectSameTypeAction(area);
     AnAction deselectAllAction = new DeselectAllAction(area);
 
-    SelectAllAction selectAllAction = new SelectAllAction(area);
+    AnAction selectAllAction = createSelectAllAction(area);
     registerAction(selectAllAction, "$SelectAll");
 
     group.add(selectParent);
@@ -127,6 +127,10 @@ public class DesignerActionPanel implements DataProvider {
     group.add(deselectAllAction);
 
     return group;
+  }
+
+  public AnAction createSelectAllAction(EditableArea area) {
+    return new SelectAllAction(area);
   }
 
   public static StartInplaceEditing createInplaceEditingAction(JComponent shortcuts) {

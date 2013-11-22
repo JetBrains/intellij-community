@@ -57,6 +57,11 @@ public abstract class ModuleSourceRootEditHandler<P extends JpsElement> {
   @NotNull
   public abstract Icon getRootIcon();
 
+  @NotNull
+  public Icon getRootIcon(@NotNull P properties) {
+    return getRootIcon();
+  }
+
   @Nullable
   public abstract Icon getFolderUnderRootIcon();
 

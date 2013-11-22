@@ -25,7 +25,7 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-public class ReformatFilesDialog extends DialogWrapper {
+public class ReformatFilesDialog extends DialogWrapper implements ReformatFilesOptions {
   private JPanel myPanel;
   private JCheckBox myOptimizeImports;
   private JCheckBox myOnlyChangedText;
@@ -56,10 +56,12 @@ public class ReformatFilesDialog extends DialogWrapper {
     return myPanel;
   }
 
-  public boolean optimizeImports(){
+  @Override
+  public boolean isOptimizeImports(){
     return myOptimizeImports.isSelected();
   }
 
+  @Override
   public boolean isProcessOnlyChangedText() {
     return myOnlyChangedText.isEnabled() && myOnlyChangedText.isSelected();
   }

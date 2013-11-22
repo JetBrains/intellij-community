@@ -16,6 +16,7 @@
 package com.intellij.util;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.StandardFileSystems;
@@ -26,6 +27,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -77,7 +79,7 @@ public final class Urls {
     }
 
     try {
-      return asUrl.toJavaUriWithoutParameters();
+      return toUriWithoutParameters(asUrl);
     }
     catch (Exception e) {
       LOG.info("Can't parse " + url, e);
@@ -140,5 +142,20 @@ public final class Urls {
 
     Url fileUrl = parseUrl(file.getUrl());
     return fileUrl != null && fileUrl.equalsIgnoreParameters(url);
+  }
+
+  @NotNull
+  public static URI toUriWithoutParameters(@NotNull Url url) {
+    try {
+      String externalPath = url.getPath();
+      boolean inLocalFileSystem = url.isInLocalFileSystem();
+      if (inLocalFileSystem && SystemInfo.isWindows && externalPath.charAt(0) != '/') {
+        externalPath = '/' + externalPath;
+      }
+      return new URI(inLocalFileSystem ? "file" : url.getScheme(), inLocalFileSystem ? "" : url.getAuthority(), externalPath, null, null);
+    }
+    catch (URISyntaxException e) {
+      throw new RuntimeException(e);
+    }
   }
 }

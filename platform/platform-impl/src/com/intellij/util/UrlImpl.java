@@ -15,18 +15,15 @@
  */
 package com.intellij.util;
 
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.util.io.URLUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.net.URI;
-import java.net.URISyntaxException;
-
 public final class UrlImpl implements Url {
   private String externalForm;
+  private UrlImpl withoutParameters;
 
   @Nullable
   private final String scheme;
@@ -37,8 +34,6 @@ public final class UrlImpl implements Url {
   private String decodedPath;
 
   private final String parameters;
-
-  private String externalFormWithoutParameters;
 
   public UrlImpl(@Nullable String path) {
     this(null, null, path, null);
@@ -88,16 +83,16 @@ public final class UrlImpl implements Url {
   }
 
   @Override
-  public String toDecodedForm(boolean skipQueryAndFragment) {
+  public String toDecodedForm() {
     StringBuilder builder = new StringBuilder();
     if (scheme != null) {
-      builder.append(scheme).append("://");
+      builder.append(scheme).append(URLUtil.SCHEME_SEPARATOR);
     }
     if (authority != null) {
       builder.append(authority);
     }
     builder.append(getPath());
-    if (!skipQueryAndFragment && parameters != null) {
+    if (parameters != null) {
       builder.append(parameters);
     }
     return builder.toString();
@@ -105,57 +100,34 @@ public final class UrlImpl implements Url {
 
   @Override
   @NotNull
-  public URI toJavaUriWithoutParameters() {
-    try {
-      String externalPath = path;
-      boolean inLocalFileSystem = isInLocalFileSystem();
-      if (inLocalFileSystem && SystemInfo.isWindows && externalPath.charAt(0) != '/') {
-        externalPath = '/' + externalPath;
-      }
-      return new URI(scheme, inLocalFileSystem ? "" : authority, externalPath, null, null);
-    }
-    catch (URISyntaxException e) {
-      throw new RuntimeException(e);
-    }
-  }
-
-  @Override
-  @NotNull
-  public String toExternalForm(boolean skipQueryAndFragment) {
-    if (parameters == null || !skipQueryAndFragment) {
-      if (externalForm != null) {
-        return externalForm;
-      }
-    }
-    else if (externalFormWithoutParameters != null) {
-      return externalFormWithoutParameters;
+  public String toExternalForm() {
+    if (externalForm != null) {
+      return externalForm;
     }
 
-    String result = toJavaUriWithoutParameters().toASCIIString();
-    if (skipQueryAndFragment) {
-      externalFormWithoutParameters = result;
-      if (parameters == null) {
-        externalForm = externalFormWithoutParameters;
-      }
+    String result = Urls.toUriWithoutParameters(this).toASCIIString();
+    if (parameters != null) {
+      result += parameters;
     }
-    else {
-      if (parameters != null) {
-        result += parameters;
-      }
-      externalForm = result;
-    }
+    externalForm = result;
     return result;
   }
 
-  @NotNull
   @Override
-  public String toExternalForm() {
-    return toExternalForm(false);
+  @NotNull
+  public Url trimParameters() {
+    if (parameters == null) {
+      return this;
+    }
+    else if (withoutParameters == null) {
+      withoutParameters = new UrlImpl(scheme, authority, path, null);
+    }
+    return withoutParameters;
   }
 
   @Override
   public String toString() {
-    return toExternalForm(false);
+    return toExternalForm();
   }
 
   @Override
@@ -164,21 +136,11 @@ public final class UrlImpl implements Url {
       return true;
     }
     if (!(o instanceof UrlImpl)) {
-      return false;
-    }
-
-    UrlImpl url = (UrlImpl)o;
-    return equalsIgnoreParameters(url) && (parameters == null ? url.parameters == null : parameters.equals(url.parameters));
-  }
-
-  @Override
-  public boolean equalsIgnoreParameters(@Nullable Url o) {
-    if (this == o) {
-      return true;
-    }
-    if (!(o instanceof UrlImpl)) {
-      if (o instanceof LocalFileUrl && isInLocalFileSystem()) {
-        return o.getPath().equals(path);
+      if (o instanceof Url && isInLocalFileSystem()) {
+        Url url = (Url)o;
+        if (url.isInLocalFileSystem()) {
+          return url.getPath().equals(path);
+        }
       }
       return false;
     }
@@ -190,11 +152,15 @@ public final class UrlImpl implements Url {
     if (authority == null ? url.authority != null : !authority.equals(url.authority)) {
       return false;
     }
-    String decodedPath = getPath();
-    if (!decodedPath.equals(url.getPath())) {
+    if (!getPath().equals(url.getPath())) {
       return false;
     }
-    return true;
+    return parameters == null ? url.parameters == null : parameters.equals(url.parameters);
+  }
+
+  @Override
+  public boolean equalsIgnoreParameters(@Nullable Url url) {
+    return url != null && equals(url.trimParameters());
   }
 
   @Override
