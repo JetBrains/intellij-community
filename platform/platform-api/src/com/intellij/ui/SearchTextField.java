@@ -233,8 +233,9 @@ public class SearchTextField extends JPanel {
     }
   }
 
-  public void setHistorySize(int aHistorySize) {
-    myHistorySize = aHistorySize;
+  public void setHistorySize(int historySize) {
+    if (historySize <= 0) throw new IllegalArgumentException("history size must be a positive number");
+    myHistorySize = historySize;
   }
 
   public void setHistory(List<String> aHistory) {
