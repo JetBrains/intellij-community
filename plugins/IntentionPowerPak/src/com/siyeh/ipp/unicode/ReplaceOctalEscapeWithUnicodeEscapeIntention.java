@@ -150,8 +150,14 @@ public class ReplaceOctalEscapeWithUnicodeEscapeIntention extends Intention {
       }
       final SelectionModel selectionModel = editor.getSelectionModel();
       if (selectionModel.hasSelection()) {
-        final String selectedText = selectionModel.getSelectedText();
-        return selectedText != null && indexOfOctalEscape(selectedText, 1) >= 0;
+        final int start = selectionModel.getSelectionStart();
+        final int end = selectionModel.getSelectionEnd();
+        if (start < 0 || end < 0 || start > end) {
+          // shouldn't happen but http://ea.jetbrains.com/browser/ea_problems/51155
+          return false;
+        }
+        final String text = editor.getDocument().getCharsSequence().subSequence(start, end).toString();
+        return indexOfOctalEscape(text, 1) >= 0;
       }
       else if (element instanceof PsiLiteralExpression) {
         final PsiLiteralExpression literalExpression = (PsiLiteralExpression)element;
