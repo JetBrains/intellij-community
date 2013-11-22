@@ -73,16 +73,25 @@ public class GeneratedParserUtilBase {
     return builder_.eof();
   }
 
+  public static int current_position_(PsiBuilder builder_) {
+    return builder_.rawTokenIndex();
+  }
+
   public static boolean recursion_guard_(PsiBuilder builder_, int level_, String funcName_) {
     if (level_ > MAX_RECURSION_LEVEL) {
-      builder_.error("Maximum recursion level (" + MAX_RECURSION_LEVEL + ") reached in " + funcName_);
+      builder_.error("Maximum recursion level (" + MAX_RECURSION_LEVEL + ") reached in '" + funcName_ + "'");
       return false;
     }
     return true;
   }
 
+  @Deprecated
   public static void empty_element_parsed_guard_(PsiBuilder builder_, int offset_, String funcName_) {
-    builder_.error("Empty element parsed in " + funcName_ +" at offset " + offset_);
+    empty_element_parsed_guard_(builder_, funcName_);
+  }
+
+  public static void empty_element_parsed_guard_(PsiBuilder builder_, String funcName_) {
+    builder_.error("Empty element parsed in '" + funcName_ +"' at offset " + builder_.getCurrentOffset());
   }
 
   public static boolean invalid_left_marker_guard_(PsiBuilder builder_, PsiBuilder.Marker marker_, String funcName_) {
