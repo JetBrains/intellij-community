@@ -372,17 +372,17 @@ public class VfsUtilTest extends PlatformLangTestCase {
     assertNotNull(vDir);
     assertTrue(vDir.isDirectory());
 
-    for (int i=0; i<10000; i++) {
-      final String name = i + ".txt";
-      new WriteCommandAction.Simple(getProject()) {
-        @Override
-        protected void run() throws Throwable {
+    new WriteCommandAction.Simple(getProject()) {
+      @Override
+      protected void run() throws Throwable {
+        for (int i=0; i<10000; i++) {
+          final String name = i + ".txt";
           vDir.createChildData(vDir, name);
         }
-      }.execute().throwException();
-    }
+      }
+    }.execute();
     final VirtualFile theChild = vDir.findChild("5111.txt");
-
+    System.out.println("Start searching...");
     PlatformTestUtil.startPerformanceTest("find child is slow", 450, new ThrowableRunnable() {
       @Override
       public void run() throws Throwable {
@@ -455,5 +455,27 @@ public class VfsUtilTest extends PlatformLangTestCase {
         });
       }
     }).assertTiming();
+  }
+
+  public void testNotCanonicallyNamedChild() {
+    File tempDir = new WriteAction<File>() {
+      @Override
+      protected void run(Result<File> result) throws Throwable {
+        File res = createTempDirectory();
+        new File(res, "libFiles").createNewFile();
+        new File(res, "CssInvalidElement").createNewFile();
+        new File(res, "extFiles").createNewFile();
+        result.setResult(res);
+      }
+    }.execute().getResultObject();
+    final VirtualFile vDir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(tempDir);
+    assertNotNull(vDir);
+    assertTrue(vDir.isDirectory());
+
+    assertNotNull(vDir.findChild("libFiles"));
+    assertNotNull(vDir.findChild("CssInvalidElement"));
+
+    VirtualFile ext = vDir.findChild("/extFiles/");
+    assertNotNull(ext);
   }
 }
