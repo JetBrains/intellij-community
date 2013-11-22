@@ -59,11 +59,11 @@ public class GenericsHighlightUtil {
   private GenericsHighlightUtil() { }
 
   @Nullable
-  public static HighlightInfo checkInferredTypeArguments(PsiMethod genericMethod,
-                                                         PsiMethodCallExpression call,
+  public static HighlightInfo checkInferredTypeArguments(PsiTypeParameterListOwner listOwner,
+                                                         PsiElement call,
                                                          PsiSubstitutor substitutor) {
     final Pair<PsiTypeParameter, PsiType> inferredTypeArgument =
-      GenericsUtil.findTypeParameterWithBoundError(genericMethod.getTypeParameters(), substitutor, call, false);
+      GenericsUtil.findTypeParameterWithBoundError(listOwner.getTypeParameters(), substitutor, call, false);
     if (inferredTypeArgument != null) {
       final PsiType extendsType = inferredTypeArgument.second;
       final PsiTypeParameter typeParameter = inferredTypeArgument.first;

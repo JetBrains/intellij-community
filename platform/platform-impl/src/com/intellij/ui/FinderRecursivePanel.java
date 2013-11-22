@@ -131,9 +131,7 @@ public abstract class FinderRecursivePanel<T> extends JBSplitter implements Data
     return null;
   }
 
-  protected boolean hasChildren(T t) {
-    return false;
-  }
+  protected abstract boolean hasChildren(T t);
 
   /**
    * To determine item list background color (if enabled).
@@ -389,6 +387,7 @@ public abstract class FinderRecursivePanel<T> extends JBSplitter implements Data
 
   @Override
   public void dispose() {
+    super.dispose();
     myMergingUpdateQueue.cancelAllUpdates();
   }
 

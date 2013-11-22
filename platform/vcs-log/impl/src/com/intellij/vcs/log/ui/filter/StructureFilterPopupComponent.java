@@ -65,7 +65,7 @@ class StructureFilterPopupComponent extends FilterPopupComponent {
       setValue(StringUtil.shortenPathWithEllipsis(file.getPresentableUrl(), FILTER_LABEL_LENGTH));
     }
     else {
-      setValue(files.size() + " files");
+      setValue(files.size() + " items");
     }
   }
 
@@ -84,7 +84,7 @@ class StructureFilterPopupComponent extends FilterPopupComponent {
     public void actionPerformed(AnActionEvent e) {
       Project project = e.getProject();
       assert project != null;
-      VcsStructureChooser chooser = new VcsStructureChooser(project, "Select Folders to Filter", myFiles,
+      VcsStructureChooser chooser = new VcsStructureChooser(project, "Select Files or Folders to Filter", myFiles,
                                                             new ArrayList<VirtualFile>(myRoots));
       if (chooser.showAndGet()) {
         myFiles.clear();

@@ -99,6 +99,11 @@ public class FinderRecursivePanelSelectionUpdateTest extends PlatformTestCase {
       return s;
     }
 
+    @Override
+    protected boolean hasChildren(String s) {
+      return true;
+    }
+
     @Nullable
     @Override
     protected JComponent createRightComponent(String s) {

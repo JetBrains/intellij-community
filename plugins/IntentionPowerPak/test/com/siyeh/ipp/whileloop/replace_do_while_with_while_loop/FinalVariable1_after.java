@@ -4,9 +4,13 @@ class FinalVariable1 {
   void m() {
       int j = 10;
       System.out.println(j);
-      while (true) {
+      while (c()) {
           j = 10;
           System.out.println(j);
       }
+  }
+
+  boolean c() {
+    return true;
   }
 }

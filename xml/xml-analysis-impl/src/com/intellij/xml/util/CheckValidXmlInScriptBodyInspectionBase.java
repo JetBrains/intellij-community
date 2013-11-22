@@ -55,6 +55,8 @@ public class CheckValidXmlInScriptBodyInspectionBase extends XmlSuppressableInsp
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
     return new XmlElementVisitor() {
       @Override public void visitXmlTag(final XmlTag tag) {
+        if (HtmlUtil.isHtmlTag(tag)) return;
+        
         if (SCRIPT_TAG_NAME.equals(tag.getName()) ||
             tag instanceof HtmlTag && SCRIPT_TAG_NAME.equalsIgnoreCase(tag.getName())) {
           final PsiFile psiFile = tag.getContainingFile();

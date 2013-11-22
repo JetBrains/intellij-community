@@ -74,6 +74,10 @@ public class NewLambdaHighlightingTest extends LightDaemonAnalyzerTestCase {
     doTest();
   }
 
+  public void testIncludeConstraintsWhenParentMethodIsDuringCalculation() throws Exception {
+    doTest();
+  }
+
   private void doTest() {
     doTest(false);
   }
