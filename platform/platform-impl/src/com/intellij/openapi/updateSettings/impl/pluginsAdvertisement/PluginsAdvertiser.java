@@ -127,6 +127,9 @@ public class PluginsAdvertiser implements StartupActivity {
           boolean isBundled = Boolean.parseBoolean(bundledExt.toString());
           if (!availableIds.contains(pluginId) && !isBundled) continue;
 
+          final IdeaPluginDescriptor plugin = PluginManager.getPlugin(PluginId.getId(pluginId));
+          if (plugin != null && plugin.isEnabled()) continue;
+
           final JsonElement ext = jsonObject.get("implementationName");
           final String extension = StringUtil.unquoteString(ext.toString());
           Set<Plugin> pluginIds = result.get(extension);
