@@ -39,7 +39,7 @@ import java.util.List;
  * @author ven
  */
 public class GrClosureType extends GrLiteralClassType {
-  private final @NotNull GrSignature mySignature;
+  private final GrSignature mySignature;
   private PsiType[] myTypeArgs = null;
 
   private GrClosureType(@NotNull LanguageLevel languageLevel,
@@ -52,19 +52,20 @@ public class GrClosureType extends GrLiteralClassType {
     if (!shouldInferTypeParameters) myTypeArgs = PsiType.EMPTY_ARRAY;
   }
 
+  private GrClosureType(@NotNull LanguageLevel level,
+                        @NotNull GlobalSearchScope scope,
+                        @NotNull JavaPsiFacade facade,
+                        @NotNull GrSignature signature,
+                        @NotNull PsiType[] typeArgs) {
+    super(level, scope, facade);
+
+    mySignature = signature;
+    myTypeArgs = typeArgs;
+  }
+
   @NotNull
   public String getClassName() {
     return "Closure";
-  }
-
-  @Override
-  public int getParameterCount() {
-    if (myTypeArgs != null) {
-      return myTypeArgs.length;
-    }
-
-    final PsiClass psiClass = resolve();
-    return psiClass != null && psiClass.getTypeParameters().length == 1 ? 1 : 0;
   }
 
   @NotNull
@@ -79,8 +80,8 @@ public class GrClosureType extends GrLiteralClassType {
     final PsiClass psiClass = resolve();
     if (psiClass != null && psiClass.getTypeParameters().length == 1) {
       final PsiType type = GrClosureSignatureUtil.getReturnType(mySignature);
-      if (type == PsiType.NULL) {
-        return EMPTY_ARRAY;
+      if (type == PsiType.NULL || type == null) {
+        return new PsiType[]{null};
       }
       else {
         return new PsiType[]{TypesUtil.boxPrimitiveType(type, getPsiManager(), getResolveScope(), true)};
@@ -129,9 +130,7 @@ public class GrClosureType extends GrLiteralClassType {
 
   @NotNull
   public PsiClassType setLanguageLevel(@NotNull final LanguageLevel languageLevel) {
-    final GrClosureType result = create(mySignature, myScope, myFacade, languageLevel, true);
-    result.myTypeArgs = this.myTypeArgs;
-    return result;
+    return new GrClosureType(languageLevel, myScope, myFacade, mySignature, myTypeArgs);
   }
 
   public static GrClosureType create(GroovyResolveResult[] results, GroovyPsiElement context) {
@@ -187,9 +186,7 @@ public class GrClosureType extends GrLiteralClassType {
   public PsiType curry(@NotNull PsiType[] args, int position, @NotNull GroovyPsiElement context) {
     final GrSignature newSignature = mySignature.curry(args, position, context);
     if (newSignature == null) return null;
-    final GrClosureType result = create(newSignature, myScope, myFacade, myLanguageLevel, true);
-    result.myTypeArgs = this.myTypeArgs;
-    return result;
+    return new GrClosureType(myLanguageLevel, myScope, myFacade, newSignature, myTypeArgs);
   }
 
   @NotNull
