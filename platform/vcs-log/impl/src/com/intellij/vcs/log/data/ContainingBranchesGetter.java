@@ -17,6 +17,7 @@ package com.intellij.vcs.log.data;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Condition;
 import com.intellij.util.ThrowableConsumer;
 import com.intellij.util.containers.ContainerUtil;
@@ -28,28 +29,33 @@ import com.intellij.vcs.log.util.SequentialLimitedLifoExecutor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.awt.*;
 import java.util.*;
+import java.util.List;
 
 /**
  * Provides capabilities to asynchronously calculate "contained in branches" information.
  */
 public class ContainingBranchesGetter {
 
+  private static final Logger LOG = Logger.getInstance(ContainingBranchesGetter.class);
+
   @NotNull private final SequentialLimitedLifoExecutor<Task> myTaskExecutor;
-  @NotNull private final Collection<Runnable> myLoadingFinishedListeners = new ArrayList<Runnable>();
-  @NotNull private final SLRUMap<Node, List<VcsRef>> myCache = new SLRUMap<Node, List<VcsRef>>(1000, 1000);
+  @NotNull private volatile SLRUMap<Node, List<VcsRef>> myCache = createCache();
+  @Nullable private Runnable myLoadingFinishedListener; // access only from EDT
 
   ContainingBranchesGetter(@NotNull Disposable parentDisposable) {
     myTaskExecutor = new SequentialLimitedLifoExecutor<Task>(parentDisposable, 10, new ThrowableConsumer<Task, Throwable>() {
       @Override
-      public void consume(Task task) throws Throwable {
-        myCache.put(task.node, getContainingBranches(task.pack, task.node));
+      public void consume(final Task task) throws Throwable {
+        final List<VcsRef> branches = getContainingBranches(task.pack, task.node);
         ApplicationManager.getApplication().invokeLater(new Runnable() {
           @Override
           public void run() {
-            for (Runnable listener : myLoadingFinishedListeners) {
-              listener.run();
-            }
+            // if cache is cleared (because of log refresh) during this task execution,
+            // this will put obsolete value into the old instance we don't care anymore
+            task.cache.put(task.node, branches);
+            notifyListener();
           }
         });
       }
@@ -57,14 +63,30 @@ public class ContainingBranchesGetter {
   }
 
   void clearCache() {
-    myCache.clear();
+    myCache = createCache();
+    myTaskExecutor.clear();
+    // re-request containing branches information for the commit user (possibly) currently stays on
+    ApplicationManager.getApplication().invokeLater(new Runnable() {
+      @Override
+      public void run() {
+        notifyListener();
+      }
+    });
   }
 
   /**
    * This task will be executed each time the calculating process completes.
    */
-  public void addTaskCompletedListener(@NotNull Runnable runnable) {
-    myLoadingFinishedListeners.add(runnable);
+  public void setTaskCompletedListener(@NotNull Runnable runnable) {
+    LOG.assertTrue(EventQueue.isDispatchThread());
+    myLoadingFinishedListener = runnable;
+  }
+
+  private void notifyListener() {
+    LOG.assertTrue(EventQueue.isDispatchThread());
+    if (myLoadingFinishedListener != null) {
+      myLoadingFinishedListener.run();
+    }
   }
 
   /**
@@ -75,9 +97,14 @@ public class ContainingBranchesGetter {
   public List<VcsRef> requestContainingBranches(@NotNull DataPack dataPack, @NotNull Node node) {
     List<VcsRef> refs = myCache.get(node);
     if (refs == null) {
-      myTaskExecutor.queue(new Task(dataPack, node));
+      myTaskExecutor.queue(new Task(dataPack, node, myCache));
     }
     return refs;
+  }
+
+  @NotNull
+  private static SLRUMap<Node, List<VcsRef>> createCache() {
+    return new SLRUMap<Node, List<VcsRef>>(1000, 1000);
   }
 
   @NotNull
@@ -139,9 +166,12 @@ public class ContainingBranchesGetter {
   private static class Task {
     private final DataPack pack;
     private final Node node;
-    public Task(DataPack pack, Node node) {
+    private final SLRUMap<Node, List<VcsRef>> cache;
+
+    public Task(DataPack pack, Node node, SLRUMap<Node, List<VcsRef>> cache) {
       this.pack = pack;
       this.node = node;
+      this.cache = cache;
     }
   }
 
