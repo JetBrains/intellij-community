@@ -24,10 +24,12 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.impl.ModalityHelper;
+import com.intellij.ui.mac.foundation.Foundation;
 import com.intellij.ui.mac.foundation.ID;
 import com.intellij.ui.mac.foundation.MacUtil;
 import com.intellij.util.ui.UIUtil;
 import com.sun.jna.Callback;
+import com.sun.jna.Pointer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -200,6 +202,19 @@ public class MacMessagesImpl extends MacMessages {
 
   private MacMessagesImpl() {}
 
+  private static final Callback windowDidBecomeMainCallback = new Callback() {
+    public void callback(ID self,
+                         ID nsNotification)
+    {
+      synchronized (lock) {
+        if (!windowFromId.keySet().contains(self.longValue())) {
+          return;
+        }
+      }
+      invoke(self, "oldWindowDidBecomeMain:", nsNotification);
+    }
+  };
+
   static {
     if (SystemInfo.isMac) {
       final ID delegateClass = allocateObjcClassPair(getObjcClass("NSObject"), "NSAlertDelegate_");
@@ -213,6 +228,19 @@ public class MacMessagesImpl extends MacMessages {
         throw new RuntimeException("Unable to add method to objective-c delegate class!");
       }
       registerObjcClassPair(delegateClass);
+
+      if (SystemInfo.isJavaVersionAtLeast("1.7")) {
+
+        ID awtWindow = Foundation.getObjcClass("AWTWindow");
+
+        Pointer windowWillEnterFullScreenMethod = Foundation.createSelector("windowDidBecomeMain:");
+        ID originalWindowWillEnterFullScreen = Foundation.class_replaceMethod(awtWindow, windowWillEnterFullScreenMethod,
+                                                                              windowDidBecomeMainCallback, "v@::@");
+
+        Foundation.addMethodByID(awtWindow, Foundation.createSelector("oldWindowDidBecomeMain:"),
+                                 originalWindowWillEnterFullScreen, "v@::@");
+
+      }
     }
   }
 
@@ -327,8 +355,9 @@ public class MacMessagesImpl extends MacMessages {
   }
 
   private static void startModal(final Window w, ID windowId) {
+    long windowPtr = windowId.longValue();
     synchronized (lock) {
-      windowFromId.put(windowId.longValue(), w);
+      windowFromId.put(windowPtr, w);
       if (blockedDocumentRoots.keySet().contains(w)) {
         blockedDocumentRoots.put(w, blockedDocumentRoots.get(w) + 1);
       } else {
@@ -337,6 +366,9 @@ public class MacMessagesImpl extends MacMessages {
     }
 
     pumpEventsDocumentExclusively(w);
+    synchronized (lock) {
+      windowFromId.remove(windowPtr);
+    }
   }
 
   private enum COMMON_DIALOG_PARAM_TYPE {
@@ -717,9 +749,9 @@ public class MacMessagesImpl extends MacMessages {
       _window = _window.getOwner();
       //At least our frame should have a title
     }
-    
+
     while (Registry.is("skip.untitled.windows.for.mac.messages") && _window != null && _window instanceof JDialog && !((JDialog)_window).isModal()) {
-        _window = _window.getOwner();
+      _window = _window.getOwner();
     }
 
     return _window;
