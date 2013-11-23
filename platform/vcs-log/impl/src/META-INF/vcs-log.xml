@@ -24,7 +24,6 @@
             icon="AllIcons.General.Gear" text="Quick Settings" description="Quick Settings" />
     
     <group id="Vcs.Log.Toolbar">
-      <reference id="Vcs.Log.CopyHash"/>
       <reference id="Vcs.Log.GoToRef" />
       <reference id="Vcs.Log.QuickSettings" />
     </group>
