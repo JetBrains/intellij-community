@@ -43,9 +43,13 @@ public class SequentialLimitedLifoExecutor<Task> implements Disposable {
     myLoader.addFirst(task);
   }
 
+  public void clear() {
+    myLoader.clear();
+  }
+
   @Override
   public void dispose() {
-    myLoader.clear();
+    clear();
   }
 
   private class DetailsLoadingTask implements Consumer<Task> {

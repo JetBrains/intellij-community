@@ -123,7 +123,7 @@ public class MainFrame extends JPanel implements TypeSafeDataProvider {
         myDetailsPanel.valueChanged(null);
       }
     });
-    myLogDataHolder.getContainingBranchesGetter().addTaskCompletedListener(new Runnable() {
+    myLogDataHolder.getContainingBranchesGetter().setTaskCompletedListener(new Runnable() {
       @Override
       public void run() {
         myDetailsPanel.valueChanged(null);
