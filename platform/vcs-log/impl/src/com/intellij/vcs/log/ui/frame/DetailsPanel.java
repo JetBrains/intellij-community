@@ -1,6 +1,7 @@
 package com.intellij.vcs.log.ui.frame;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.util.ProgressWindow;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.changes.issueLinks.IssueLinkHtmlRenderer;
@@ -64,7 +65,7 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
     content.add(myDataPanel);
     content.setBorder(BorderFactory.createEmptyBorder(0, 5, 0, 5));
 
-    myLoadingPanel = new JBLoadingPanel(new BorderLayout(), logDataHolder);
+    myLoadingPanel = new JBLoadingPanel(new BorderLayout(), logDataHolder, ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS);
     myLoadingPanel.add(ScrollPaneFactory.createScrollPane(content));
 
     add(myLoadingPanel, STANDARD_LAYER);
