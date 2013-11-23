@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -109,7 +109,7 @@ public class DefaultCallExpressionTypeCalculator extends GrCallExpressionTypeCal
     if (type instanceof GrClosureType) {
       returnType = GrClosureSignatureUtil.getReturnType(((GrClosureType)type).getSignature(), callExpression);
     }
-    else if (isPsiClassTypeToClosure(type)) {
+    else if (TypesUtil.isPsiClassTypeToClosure(type)) {
       assert type instanceof PsiClassType;
       final PsiType[] parameters = ((PsiClassType)type).getParameters();
       if (parameters.length == 1) {
@@ -130,15 +130,6 @@ public class DefaultCallExpressionTypeCalculator extends GrCallExpressionTypeCal
     return returnType;
   }
 
-
-  private static boolean isPsiClassTypeToClosure(PsiType type) {
-    if (!(type instanceof PsiClassType)) return false;
-
-    final PsiClass psiClass = ((PsiClassType)type).resolve();
-    if (psiClass == null) return false;
-
-    return GroovyCommonClassNames.GROOVY_LANG_CLOSURE.equals(psiClass.getQualifiedName());
-  }
 
   private static final Set<String> CLOSURE_METHODS = new HashSet<String>();
   static {

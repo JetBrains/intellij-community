@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,8 +31,8 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUt
  * @author ven
  */
 public class GrTupleType extends GrLiteralClassType {
-  private static final PsiType[] RAW_PARAMETERS = new PsiType[]{null};
   private final PsiType[] myComponentTypes;
+  private final PsiType[] myParameters;
 
   public GrTupleType(PsiType[] componentTypes, JavaPsiFacade facade, GlobalSearchScope scope) {
     this(componentTypes, facade, scope,LanguageLevel.JDK_1_5);
@@ -40,6 +40,8 @@ public class GrTupleType extends GrLiteralClassType {
   public GrTupleType(PsiType[] componentTypes, JavaPsiFacade facade, GlobalSearchScope scope,LanguageLevel languageLevel) {
     super(languageLevel, scope, facade);
     myComponentTypes = componentTypes;
+
+    myParameters = inferParameters();
   }
 
   @NotNull
@@ -49,21 +51,19 @@ public class GrTupleType extends GrLiteralClassType {
   }
 
   @NotNull
-  @Override
-  public PsiClassType rawType() {
-    return new GrTupleType(RAW_PARAMETERS, myFacade, getResolveScope(), getLanguageLevel());
-  }
-
-  @NotNull
   public String getClassName() {
     return StringUtil.getShortName(getJavaClassName());
   }
 
   @NotNull
   public PsiType[] getParameters() {
-    if (myComponentTypes.length == 0) return RAW_PARAMETERS;
+    return myParameters;
+  }
+
+  private PsiType[] inferParameters() {
+    if (myComponentTypes.length == 0) return PsiType.EMPTY_ARRAY;
     final PsiType leastUpperBound = getLeastUpperBound(myComponentTypes);
-    if (leastUpperBound == PsiType.NULL) return RAW_PARAMETERS;
+    if (leastUpperBound == PsiType.NULL) return EMPTY_ARRAY;
     return new PsiType[]{leastUpperBound};
   }
 
