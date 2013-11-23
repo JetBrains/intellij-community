@@ -137,11 +137,10 @@ public class CharArrayUtil {
     if (seq instanceof CharBuffer) {
       final CharBuffer buffer = (CharBuffer)seq;
       if (buffer.hasArray() && !buffer.isReadOnly() && buffer.arrayOffset() == 0) {
-        return buffer.array();
-        // final char[] bufArray = buffer.array();
-        // return larger array. Clients may use seq.length() to calculate correct processing range.
-        // if (bufArray.length == seq.length())
-        // return bufArray;
+        char[] array = buffer.array();
+        if (buffer.length() == array.length) {
+          return array;
+        }
       }
 
       char[] chars = new char[seq.length()];
