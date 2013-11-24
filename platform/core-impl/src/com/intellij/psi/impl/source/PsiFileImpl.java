@@ -617,7 +617,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
   @Override
   @NotNull
   public char[] textToCharArray() {
-    return CharArrayUtil.fromSequenceStrict(getViewProvider().getContents());
+    return CharArrayUtil.fromSequence(getViewProvider().getContents());
   }
 
   @NotNull

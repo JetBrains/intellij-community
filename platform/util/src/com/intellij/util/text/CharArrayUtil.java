@@ -99,13 +99,12 @@ public class CharArrayUtil {
     }
   }
 
+  /**
+   * @deprecated use {@link #fromSequence(CharSequence)}
+   */
   @NotNull
   public static char[] fromSequenceStrict(@NotNull CharSequence seq) {
-    char[] chars = fromSequence(seq);
-    if (seq.length() == chars.length) return chars;
-    char[] strictChars = new char[seq.length()];
-    System.arraycopy(chars, 0, strictChars, 0, seq.length());
-    return strictChars;
+    return fromSequence(seq);
   }
 
   @Nullable
@@ -126,7 +125,6 @@ public class CharArrayUtil {
 
   /**
    * @return the underlying char[] array if any, or the new chara array if not
-   * NOTE RETURNED ARRAY LENGTH MAY HAVE BE DIFFERENT FROM THE seq.length()
    */
   @NotNull
   public static char[] fromSequence(@NotNull CharSequence seq) {
@@ -153,6 +151,11 @@ public class CharArrayUtil {
     if (seq instanceof StringBuffer) {
       char[] chars = new char[seq.length()];
       ((StringBuffer)seq).getChars(0, seq.length(), chars, 0);
+      return chars;
+    }
+    if (seq instanceof StringBuilder) {
+      char[] chars = new char[seq.length()];
+      ((StringBuilder)seq).getChars(0, seq.length(), chars, 0);
       return chars;
     }
 
