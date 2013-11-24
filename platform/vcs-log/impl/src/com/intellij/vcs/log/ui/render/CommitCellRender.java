@@ -14,11 +14,8 @@ import java.awt.font.FontRenderContext;
  */
 public class CommitCellRender extends AbstractPaddingCellRender {
 
-  @NotNull private final RefPainter refPainter;
-
   public CommitCellRender(@NotNull VcsLogColorManager colorManager, Project project) {
-    super(project);
-    refPainter = new RefPainter(colorManager, false);
+    super(project, colorManager);
   }
 
   @Override
@@ -26,7 +23,7 @@ public class CommitCellRender extends AbstractPaddingCellRender {
     CommitCell cell = getAssertCommitCell(value);
 
     FontRenderContext fontContext = ((Graphics2D)table.getGraphics()).getFontRenderContext();
-    return refPainter.padding(cell.getRefsToThisCommit(), fontContext);
+    return calcRefsPadding(cell.getRefsToThisCommit(), fontContext);
   }
 
   private static CommitCell getAssertCommitCell(Object value) {
@@ -48,6 +45,7 @@ public class CommitCellRender extends AbstractPaddingCellRender {
   protected void additionPaint(Graphics g, Object value) {
     CommitCell cell = getAssertCommitCell(value);
     Graphics2D g2 = (Graphics2D)g;
-    refPainter.draw(g2, cell.getRefsToThisCommit(), 0, -1);
+    drawRefs(g2, cell.getRefsToThisCommit(), 0);
   }
+
 }

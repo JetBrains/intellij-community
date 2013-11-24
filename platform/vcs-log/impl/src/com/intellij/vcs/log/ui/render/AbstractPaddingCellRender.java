@@ -3,22 +3,28 @@ package com.intellij.vcs.log.ui.render;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.changes.issueLinks.IssueLinkRenderer;
 import com.intellij.ui.ColoredTableCellRenderer;
+import com.intellij.vcs.log.VcsRef;
 import com.intellij.vcs.log.graph.render.GraphCommitCell;
 import com.intellij.vcs.log.printmodel.SpecialPrintElement;
+import com.intellij.vcs.log.ui.VcsLogColorManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.font.FontRenderContext;
+import java.util.Collection;
 
 public abstract class AbstractPaddingCellRender extends ColoredTableCellRenderer {
 
   public static final Color MARKED_BACKGROUND = new Color(200, 255, 250);
 
+  @NotNull protected final RefPainter myRefPainter;
   @NotNull private final IssueLinkRenderer myIssueLinkRenderer;
   @Nullable private Object myValue;
 
-  protected AbstractPaddingCellRender(@NotNull Project project) {
+  protected AbstractPaddingCellRender(@NotNull Project project, VcsLogColorManager colorManager) {
+    myRefPainter = new RefPainter(colorManager, false);
     myIssueLinkRenderer = new IssueLinkRenderer(project, this);
   }
 
@@ -58,4 +64,13 @@ public abstract class AbstractPaddingCellRender extends ColoredTableCellRenderer
     super.paint(g);
     additionPaint(g, myValue);
   }
+
+  protected void drawRefs(Graphics2D g2, Collection<VcsRef> refs, int padding) {
+    myRefPainter.draw(g2, refs, padding, -1);
+  }
+
+  protected int calcRefsPadding(@NotNull Collection<VcsRef> refs, @NotNull FontRenderContext fontContext) {
+    return myRefPainter.padding(refs, fontContext);
+  }
+
 }
