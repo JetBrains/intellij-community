@@ -347,6 +347,8 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
               }
             }
           }
+        } else if (LambdaUtil.getFunctionalInterfaceType(expression, true) != null) {
+          myHolder.add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip("Cannot infer functional interface type").create());
         }
       }
       else {
