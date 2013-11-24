@@ -200,7 +200,12 @@ public class InferenceSession {
         inferenceVariable.ignoreInstantiation();
       }
       doesNotContainFalseBound = repeatInferencePhases(true);
-      resolveBounds(myInferenceVariables.values(), mySiteSubstitutor, false);
+
+      PsiSubstitutor substitutor = resolveBounds(myInferenceVariables.values(), mySiteSubstitutor, false);
+      LOG.assertTrue(parent != null);
+      PsiExpressionList argumentList = ((PsiCallExpression)parent).getArgumentList();
+      LOG.assertTrue(argumentList != null);
+      MethodCandidateInfo.updateSubstitutor(argumentList, substitutor);
     }
 
     if (parameters != null && args != null) {
