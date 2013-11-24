@@ -7,7 +7,6 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.font.FontRenderContext;
 
 /**
  * @author erokhins
@@ -21,9 +20,7 @@ public class CommitCellRender extends AbstractPaddingCellRender {
   @Override
   protected int getLeftPadding(JTable table, Object value) {
     CommitCell cell = getAssertCommitCell(value);
-
-    FontRenderContext fontContext = ((Graphics2D)table.getGraphics()).getFontRenderContext();
-    return calcRefsPadding(cell.getRefsToThisCommit(), fontContext);
+    return calcRefsPadding(cell.getRefsToThisCommit(), (Graphics2D)table.getGraphics());
   }
 
   private static CommitCell getAssertCommitCell(Object value) {

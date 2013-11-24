@@ -27,7 +27,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.font.FontRenderContext;
 import java.awt.image.BufferedImage;
 import java.util.Collection;
 
@@ -57,8 +56,7 @@ public class GraphCommitCellRender extends AbstractPaddingCellRender {
       return 0;
     }
 
-    FontRenderContext fontContext = ((Graphics2D)table.getGraphics()).getFontRenderContext();
-    int refPadding = calcRefsPadding(cell.getRefsToThisCommit(), fontContext);
+    int refPadding = calcRefsPadding(cell.getRefsToThisCommit(), (Graphics2D)table.getGraphics());
 
     int countCells = cell.getPrintCell().countCell();
     int graphPadding = countCells * WIDTH_NODE;
