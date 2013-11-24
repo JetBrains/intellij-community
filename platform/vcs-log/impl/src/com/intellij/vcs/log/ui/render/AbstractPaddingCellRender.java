@@ -93,7 +93,7 @@ public abstract class AbstractPaddingCellRender extends ColoredTableCellRenderer
       VcsRef firstTag = tags.iterator().next();
       Color color = firstTag.getType().getBackgroundColor();
       if (tags.size() > 1) {
-        labels.put(firstTag.getName() + " + " + tags.size() + " more", color);
+        labels.put(firstTag.getName() + " +", color);
       }
       else {
         labels.put(firstTag.getName(), color);
