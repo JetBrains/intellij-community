@@ -263,6 +263,16 @@ public class MethodCandidateInfo extends CandidateInfo{
     return currentMethodCandidates != null ? currentMethodCandidates.get(context) : null;
   }
 
+  public static void updateSubstitutor(PsiElement context, PsiSubstitutor newSubstitutor) {
+    final Map<PsiElement,Pair<PsiMethod,PsiSubstitutor>> currentMethodCandidates = CURRENT_CANDIDATE.get();
+    if (currentMethodCandidates != null) {
+      final Pair<PsiMethod, PsiSubstitutor> pair = currentMethodCandidates.get(context);
+      if (pair != null) {
+        currentMethodCandidates.put(context, Pair.create(pair.first, newSubstitutor));
+      }
+    }
+  }
+
   public static class ApplicabilityLevel {
     public static final int NOT_APPLICABLE = 1;
     public static final int VARARGS = 2;
