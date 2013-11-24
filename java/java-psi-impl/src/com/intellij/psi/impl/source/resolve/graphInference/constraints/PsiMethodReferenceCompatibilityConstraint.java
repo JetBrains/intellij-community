@@ -154,9 +154,7 @@ public class PsiMethodReferenceCompatibilityConstraint implements ConstraintForm
       }
  
       session.initBounds(method.getTypeParameters());
-      if (myExpression.isConstructor()) {
-        session.initBounds(containingClass.getTypeParameters());
-      }
+      session.initBounds(containingClass.getTypeParameters());
       constraints.add(new TypeCompatibilityConstraint(returnType, referencedMethodReturnType));
     }
     
