@@ -15,9 +15,12 @@
  */
 package com.jetbrains.python;
 
+import com.google.common.collect.Lists;
 import com.intellij.codeInsight.completion.impl.CamelHumpMatcher;
+import com.intellij.codeInsight.lookup.AutoCompletionPolicy;
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.jetbrains.python.documentation.DocStringFormat;
 import com.jetbrains.python.documentation.PyDocumentationSettings;
 import com.jetbrains.python.fixtures.PyTestCase;
@@ -387,8 +390,10 @@ public class PythonCompletionTest extends PyTestCase {
     final PyDocumentationSettings settings = PyDocumentationSettings.getInstance(myFixture.getModule());
     settings.setFormat(DocStringFormat.PLAIN);
     myFixture.configureByFile("completion/identifiersInPlainDocstring.py");
-    myFixture.completeBasic();
-    myFixture.checkResultByFile("completion/identifiersInPlainDocstring.after.py");
+    final LookupElement[] elements = myFixture.completeBasic();
+    assertNotNull(elements);
+    assertContainsElements(Lists.newArrayList(elements),
+                           LookupElementBuilder.create("bar").withAutoCompletionPolicy(AutoCompletionPolicy.NEVER_AUTOCOMPLETE));
   }
 
   public void testPep328Completion() {  // PY-3409

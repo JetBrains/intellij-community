@@ -16,10 +16,10 @@
 package org.jetbrains.idea.maven.artifactResolver;
 
 import org.codehaus.plexus.component.annotations.Component;
+import org.eclipse.aether.artifact.Artifact;
+import org.eclipse.aether.repository.WorkspaceReader;
+import org.eclipse.aether.repository.WorkspaceRepository;
 import org.jetbrains.idea.maven.artifactResolver.common.MavenModuleMap;
-import org.sonatype.aether.artifact.Artifact;
-import org.sonatype.aether.repository.WorkspaceReader;
-import org.sonatype.aether.repository.WorkspaceRepository;
 
 import java.io.File;
 import java.util.Collections;
@@ -29,22 +29,22 @@ import java.util.List;
  * @author Sergey Evdokimov
  */
 @Component(role = WorkspaceReader.class, hint = "ide")
-public class MyWorkspaceReader implements WorkspaceReader {
+public class IntelliJWorkspaceReaderM31 implements WorkspaceReader {
 
   private final WorkspaceRepository myWorkspaceRepository;
 
-  public MyWorkspaceReader() {
+  public IntelliJWorkspaceReaderM31() {
     myWorkspaceRepository = new WorkspaceRepository("ide", getClass());
   }
 
   @Override
   public int hashCode() {
-    return 0;
+    return 311;
   }
 
   @Override
   public boolean equals(Object o) {
-    return o instanceof MyWorkspaceReader;
+    return o instanceof IntelliJWorkspaceReaderM31;
   }
 
   public WorkspaceRepository getRepository() {

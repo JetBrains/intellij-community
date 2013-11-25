@@ -236,7 +236,7 @@ public class ExpressionParsing extends Parsing {
           break;
         }
       }
-      myBuilder.advanceLexer();
+      checkMatches(PyTokenTypes.RBRACE, message("PARSE.expected.rbrace"));
       startMarker.done(PyElementTypes.DICT_LITERAL_EXPRESSION);
     }
   }
@@ -264,7 +264,7 @@ public class ExpressionParsing extends Parsing {
         break;
       }
     }
-    myBuilder.advanceLexer();
+    checkMatches(PyTokenTypes.RBRACE, message("PARSE.expected.rbrace"));
     startMarker.done(PyElementTypes.SET_LITERAL_EXPRESSION);
   }
 
