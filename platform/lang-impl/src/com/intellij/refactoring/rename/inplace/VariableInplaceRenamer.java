@@ -62,7 +62,7 @@ public class VariableInplaceRenamer extends InplaceRefactoring {
   );
   private ResolveSnapshotProvider.ResolveSnapshot mySnapshot;
   private TextRange mySelectedRange;
-  private Language myLanguage;
+  protected Language myLanguage;
 
   public VariableInplaceRenamer(@NotNull PsiNamedElement elementToRename, Editor editor) {
     this(elementToRename, editor, elementToRename.getProject());
