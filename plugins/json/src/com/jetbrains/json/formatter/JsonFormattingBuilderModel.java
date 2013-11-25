@@ -10,7 +10,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.impl.DebugUtil;
-import com.intellij.psi.tree.TokenSet;
 import com.jetbrains.json.JsonLanguage;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -22,14 +21,6 @@ import static com.jetbrains.json.JsonElementTypes.*;
  */
 public class JsonFormattingBuilderModel implements FormattingModelBuilder {
   private static final Logger LOG = Logger.getInstance(JsonFormattingBuilderModel.class);
-
-  private static final TokenSet VALUES = TokenSet.create(
-    OBJECT, ARRAY, STRING_LITERAL, NUMBER_LITERAL, BOOLEAN_LITERAL, NULL
-  );
-
-  private static final TokenSet SIGNS = TokenSet.create(
-    L_BRACKET, R_BRACKET, L_CURLY, R_CURLY, COMMA, COLON
-  );
 
   @NotNull
   @Override
@@ -62,16 +53,16 @@ public class JsonFormattingBuilderModel implements FormattingModelBuilder {
 
     int spacesBeforeComma = commonSettings.SPACE_BEFORE_COMMA ? 1 : 0;
     int spacesBeforeColon = jsonSettings.SPACE_BEFORE_COLON ? 1 : 0;
+    int spacesAfterColon = jsonSettings.SPACE_AFTER_COLON ? 1 : 0;
     // not allow to keep line breaks before colon/comma, because it looks horrible
-    SpacingBuilder builder = new SpacingBuilder(settings, JsonLanguage.INSTANCE)
+
+    return new SpacingBuilder(settings, JsonLanguage.INSTANCE)
       .before(COLON).spacing(spacesBeforeColon, spacesBeforeColon, 0, false, 0)
-      .after(COLON).spaceIf(jsonSettings.SPACE_AFTER_COLON)
+      .after(COLON).spacing(spacesAfterColon, spacesAfterColon, 0, false, 0)
       .withinPair(L_BRACKET, R_BRACKET).spaceIf(commonSettings.SPACE_WITHIN_BRACKETS)
       .withinPair(L_CURLY, R_CURLY).spaceIf(jsonSettings.SPACE_WITHIN_BRACES)
       .before(COMMA).spacing(spacesBeforeComma, spacesBeforeComma, 0, false, 0)
       .after(COMMA).spaceIf(commonSettings.SPACE_AFTER_COMMA);
-
-    return builder;
   }
 
   private static String dumpAST(ASTNode root) {
