@@ -321,15 +321,17 @@ public class ClassRepr extends Proto {
   }
 
   public String getPackageName() {
-    return getPackageName(name);
+    final String strValue = myContext.getValue(name);
+    return strValue != null? getPackageName(strValue) : null;
   }
 
-  public String getPackageName(final int s) {
-    return getPackageName(myContext.getValue(s));
+  public String getShortName() {
+    final String strValue = myContext.getValue(name);
+    return strValue != null? getShortName(strValue) : null;
   }
 
   @NotNull
-  public static String getPackageName(final String raw) {
+  public static String getPackageName(@NotNull final String raw) {
     final int index = raw.lastIndexOf('/');
 
     if (index == -1) {
@@ -337,6 +339,17 @@ public class ClassRepr extends Proto {
     }
 
     return raw.substring(0, index);
+  }
+
+  @NotNull
+  public static String getShortName(@NotNull final String fqName) {
+    final int index = fqName.lastIndexOf('/');
+
+    if (index == -1) {
+      return fqName;
+    }
+
+    return fqName.substring(index + 1);
   }
 
   @Nullable
