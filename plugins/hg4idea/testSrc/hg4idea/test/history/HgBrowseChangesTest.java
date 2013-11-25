@@ -53,8 +53,7 @@ public class HgBrowseChangesTest extends HgPlatformTest {
     hg("commit -m add");
     java.util.Calendar now = java.util.Calendar.getInstance();
     int year = java.util.Calendar.YEAR;
-    now.set(year,
-            +1);
+    now.set(year, now.get(year) + 1);
     dateBefore = ChangeBrowserSettings.DATE_FORMAT.format(now.getTime());
     now.set(year, 1970);
     dateAfter = ChangeBrowserSettings.DATE_FORMAT.format(now.getTime());

@@ -64,6 +64,12 @@ public class PsiTypeVisitor<A> {
   }
 
   @Nullable
+  public A visitIntersectionType(PsiIntersectionType intersectionType) {
+    PsiType type = intersectionType.getConjuncts()[0];
+    return type.accept(this);
+  }
+
+  @Nullable
   public A visitDiamondType(PsiDiamondType diamondType) {
     return visitType(diamondType);
   }

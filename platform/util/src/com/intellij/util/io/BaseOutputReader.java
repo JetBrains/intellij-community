@@ -15,121 +15,29 @@
  */
 package com.intellij.util.io;
 
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.util.TimeoutUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.io.Reader;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
 
 /**
  * @author traff
  */
-public abstract class BaseOutputReader {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.util.io.BaseOutputReader");
+public abstract class BaseOutputReader extends BaseDataReader {
 
   protected final Reader myReader;
-  protected volatile boolean isStopped = false;
 
   private final char[] myBuffer = new char[8192];
   private final StringBuilder myTextBuffer = new StringBuilder();
   private boolean skipLF = false;
-
-  private Future<?> myFinishedFuture = null;
-  @NotNull protected final SleepingPolicy mySleepingPolicy;
 
   public BaseOutputReader(@NotNull Reader reader) {
     this(reader, null);
   }
 
   public BaseOutputReader(@NotNull Reader reader, SleepingPolicy sleepingPolicy) {
+    super(sleepingPolicy);
     myReader = reader;
-    mySleepingPolicy = sleepingPolicy != null ? sleepingPolicy: SleepingPolicy.SIMPLE;
-  }
-
-  protected void start() {
-    if (myFinishedFuture == null) {
-      myFinishedFuture = executeOnPooledThread(new Runnable() {
-        @Override
-        public void run() {
-          doRun();
-        }
-      });
-    }
-  }
-
-  protected abstract Future<?> executeOnPooledThread(Runnable runnable);
-
-  public interface SleepingPolicy {
-    int sleepTimeWhenWasActive = 1;
-    int sleepTimeWhenIdle = 5;
-
-    SleepingPolicy SIMPLE = new SleepingPolicy() {
-      @Override
-      public int getTimeToSleep(boolean wasActive) {
-        return wasActive ? sleepTimeWhenWasActive : sleepTimeWhenIdle;
-      }
-    };
-
-    int getTimeToSleep(boolean wasActive);
-  }
-
-  public static class AdaptiveSleepingPolicy implements SleepingPolicy {
-    private static final int maxSleepTimeWhenIdle = 200;
-    private static final int maxIterationsWithCurrentSleepTime = 50;
-
-    private volatile int myIterationsWithCurrentTime;
-    private volatile int myCurrentSleepTime = sleepTimeWhenIdle;
-
-    @Override
-    public int getTimeToSleep(boolean wasActive) {
-      int currentSleepTime = myCurrentSleepTime; // volatile read
-      if (wasActive) currentSleepTime = sleepTimeWhenWasActive;
-      else if (currentSleepTime == sleepTimeWhenWasActive) {
-        currentSleepTime = sleepTimeWhenIdle;
-        myIterationsWithCurrentTime = 0;
-      }
-      else {
-        int iterationsWithCurrentTime = ++myIterationsWithCurrentTime;
-        if (iterationsWithCurrentTime >= maxIterationsWithCurrentSleepTime) {
-          myIterationsWithCurrentTime = 0;
-          currentSleepTime = Math.min(2* currentSleepTime, maxSleepTimeWhenIdle);
-        }
-      }
-
-      myCurrentSleepTime = currentSleepTime; // volatile write
-      return currentSleepTime;
-    }
-  }
-
-  protected void doRun() {
-    try {
-      while (true) {
-        boolean read = readAvailable();
-
-        if (isStopped) {
-          break;
-        }
-
-        TimeoutUtil.sleep(mySleepingPolicy.getTimeToSleep(read));
-      }
-    }
-    catch (IOException e) {
-      LOG.info(e);
-    }
-    catch (Exception e) {
-      LOG.error(e);
-    }
-    finally {
-      try {
-        myReader.close();
-      }
-      catch (IOException e) {
-        LOG.error("Can't close stream", e);
-      }
-    }
   }
 
   /**
@@ -176,18 +84,10 @@ public abstract class BaseOutputReader {
     return read;
   }
 
+  @Override
+  protected void close() throws IOException {
+    myReader.close();
+  }
+
   protected abstract void onTextAvailable(@NotNull String text);
-
-  public void stop() {
-    isStopped = true;
-  }
-
-  public void waitFor() throws InterruptedException {
-    try {
-      myFinishedFuture.get();
-    }
-    catch (ExecutionException e) {
-      LOG.error(e);
-    }
-  }
 }

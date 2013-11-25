@@ -179,13 +179,13 @@ public class GitLogProvider implements VcsLogProvider {
 
     List<VcsLogBranchFilter> branchFilters = ContainerUtil.findAll(filters, VcsLogBranchFilter.class);
     if (!branchFilters.isEmpty()) {
-      String branchFilter = joinFilters(branchFilters, new Function<VcsLogBranchFilter, String>() {
-        @Override
-        public String fun(VcsLogBranchFilter filter) {
-          return filter.getBranchName();
-        }
-      });
-      filterParameters.add(prepareParameter("branches", branchFilter));
+      // git doesn't support filtering by several branches very well (--branches parameter give a weak pattern capabilities)
+      // => by now assuming there is only one branch filter.
+      if (branchFilters.size() > 1) {
+        LOG.warn("More than one branch filter was passed. Using only the first one.");
+      }
+      VcsLogBranchFilter branchFilter = branchFilters.get(0);
+      filterParameters.add(branchFilter.getBranchName());
     }
     else {
       filterParameters.add("--all");

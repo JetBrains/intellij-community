@@ -27,6 +27,7 @@ import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.newvfs.*;
 import com.intellij.openapi.vfs.newvfs.events.*;
 import com.intellij.openapi.vfs.newvfs.impl.FakeVirtualFile;
+import com.intellij.openapi.vfs.newvfs.impl.FileNameCache;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualDirectoryImpl;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry;
 import com.intellij.util.*;
@@ -173,43 +174,26 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
       return current;
     }
 
-    THashMap<String, FSRecords.NameId> result = new THashMap<String, FSRecords.NameId>();
-    if (current.length == 0) {
-      for (String name : delegateNames) {
-        result.put(name, new FSRecords.NameId(-1, name));
-      }
-    }
-    else {
-      for (FSRecords.NameId nameId : current) {
-        result.put(nameId.name, nameId);
-      }
-      for (String name : delegateNames) {
-        if (!result.containsKey(name)) {
-          result.put(name, new FSRecords.NameId(-1, name));
-        }
-      }
+    Set<String> toAdd = ContainerUtil.newHashSet(delegateNames);
+    for (FSRecords.NameId nameId : current) {
+      toAdd.remove(nameId.name);
     }
 
-    final TIntArrayList childrenIds = new TIntArrayList(result.size());
-    final List<FSRecords.NameId> nameIds = ContainerUtil.newArrayListWithExpectedSize(result.size());
-    result.forEachValue(new TObjectProcedure<FSRecords.NameId>() {
-      @Override
-      public boolean execute(FSRecords.NameId nameId) {
-        if (nameId.id < 0) {
-          FakeVirtualFile child = new FakeVirtualFile(file, nameId.name);
-          FileAttributes attributes = fs.getAttributes(child);
-          if (attributes != null) {
-            int childId = createAndFillRecord(fs, child, id, attributes);
-            nameId = new FSRecords.NameId(childId, nameId.name);
-          }
-        }
-        if (nameId.id > 0) {
-          childrenIds.add(nameId.id);
-          nameIds.add(nameId);
-        }
-        return true;
+    final TIntArrayList childrenIds = new TIntArrayList(current.length + toAdd.size());
+    final List<FSRecords.NameId> nameIds = ContainerUtil.newArrayListWithExpectedSize(current.length + toAdd.size());
+    for (FSRecords.NameId nameId : current) {
+      childrenIds.add(nameId.id);
+      nameIds.add(nameId);
+    }
+    for (String newName : toAdd) {
+      FakeVirtualFile child = new FakeVirtualFile(file, newName);
+      FileAttributes attributes = fs.getAttributes(child);
+      if (attributes != null) {
+        int childId = createAndFillRecord(fs, child, id, attributes);
+        childrenIds.add(childId);
+        nameIds.add(new FSRecords.NameId(childId, FileNameCache.storeName(newName), newName));
       }
-    });
+    }
 
     FSRecords.updateList(id, childrenIds.toNativeArray());
     setChildrenCached(id);
@@ -1291,7 +1275,7 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
 
   private abstract static class AbstractRoot extends VirtualDirectoryImpl {
     protected AbstractRoot(@NotNull NewVirtualFileSystem fs, int id) {
-      super(FS_ROOT_FAKE_NAME, null, fs, id, 0);
+      super(-1, null, fs, id, 0);
     }
 
     @NotNull
@@ -1299,7 +1283,17 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
     public abstract String getName();
 
     @Override
+    public int compareNameTo(@NotNull String name, boolean ignoreCase) {
+      return VirtualFileSystemEntry.compareNames(getName(), name, ignoreCase);
+    }
+
+    @Override
     protected abstract char[] appendPathOnFileSystem(int accumulatedPathLength, int[] positionRef);
+
+    @Override
+    public void setNewName(@NotNull String newName) {
+      throw new IncorrectOperationException();
+    }
 
     @Override
     public final void setParent(@NotNull VirtualFile newParent) {
@@ -1315,7 +1309,7 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
     @NotNull
     @Override
     public String getName() {
-      return FS_ROOT_FAKE_NAME;
+      return "";
     }
 
     @SuppressWarnings("NonSynchronizedMethodOverridesSynchronizedMethod")

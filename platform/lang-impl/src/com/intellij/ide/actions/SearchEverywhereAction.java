@@ -1213,6 +1213,11 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
     }
 
     private void buildClasses(String pattern, boolean includeLibraries) {
+      if (pattern.indexOf('.') != -1) {
+        //todo[kb] it's not a mistake. If we search for "*.png" or "index.xml" in SearchEverywhere
+        //todo[kb] we don't want to see Java classes started with Png or Xml. This approach should be reworked someday.
+        return;
+      }
       boolean includeLibs = includeLibraries || showAll.get();
       int clsCounter = 0;
       final int maxCount = includeLibraries ? 5 : MAX_CLASSES;

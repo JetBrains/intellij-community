@@ -15,6 +15,7 @@
  */
 package org.jetbrains.idea.maven.indices;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Pair;
@@ -35,6 +36,8 @@ import java.util.List;
 public class MavenArtifactSearchDialog extends DialogWrapper {
   private List<MavenId> myResult = Collections.emptyList();
 
+  public static List<MavenId> ourResultForTest;
+
   private TabbedPaneWrapper myTabbedPane;
   private MavenArtifactSearchPanel myArtifactsPanel;
   private MavenArtifactSearchPanel myClassesPanel;
@@ -45,6 +48,14 @@ public class MavenArtifactSearchDialog extends DialogWrapper {
 
   @NotNull
   public static List<MavenId> searchForClass(Project project, String className) {
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      assert ourResultForTest != null;
+
+      List<MavenId> res = ourResultForTest;
+      ourResultForTest = null;
+      return res;
+    }
+
     MavenArtifactSearchDialog d = new MavenArtifactSearchDialog(project, className, true);
     d.show();
     if (!d.isOK()) return Collections.emptyList();
@@ -54,6 +65,14 @@ public class MavenArtifactSearchDialog extends DialogWrapper {
 
   @NotNull
   public static List<MavenId> searchForArtifact(Project project, Collection<MavenDomDependency> managedDependencies) {
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      assert ourResultForTest != null;
+
+      List<MavenId> res = ourResultForTest;
+      ourResultForTest = null;
+      return res;
+    }
+
     MavenArtifactSearchDialog d = new MavenArtifactSearchDialog(project, "", false);
     d.setManagedDependencies(managedDependencies);
 

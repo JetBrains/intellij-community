@@ -20,6 +20,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.Consumer;
+import com.intellij.util.io.BaseDataReader;
 import com.intellij.util.io.BaseOutputReader;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -28,7 +29,7 @@ import java.io.*;
 import java.nio.charset.Charset;
 import java.util.concurrent.*;
 
-import static com.intellij.util.io.BaseOutputReader.AdaptiveSleepingPolicy;
+import static com.intellij.util.io.BaseDataReader.AdaptiveSleepingPolicy;
 
 public class BaseOSProcessHandler extends ProcessHandler implements TaskExecutor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.execution.process.OSProcessHandlerBase");
@@ -82,13 +83,10 @@ public class BaseOSProcessHandler extends ProcessHandler implements TaskExecutor
       @Override
       public void startNotified(final ProcessEvent event) {
         try {
-          BaseOutputReader.SleepingPolicy sleepingPolicy =
-            useAdaptiveSleepingPolicyWhenReadingOutput() ? new AdaptiveSleepingPolicy() : BaseOutputReader.SleepingPolicy.SIMPLE;
-          final BaseOutputReader stdoutReader = new SimpleOutputReader(createProcessOutReader(), ProcessOutputTypes.STDOUT, sleepingPolicy);
-          final BaseOutputReader stderrReader = processHasSeparateErrorStream()
-                                                ? new SimpleOutputReader(createProcessErrReader(), ProcessOutputTypes.STDERR,
-                                                                         sleepingPolicy)
-                                                : null;
+          BaseDataReader.SleepingPolicy sleepingPolicy =
+            useAdaptiveSleepingPolicyWhenReadingOutput() ? new AdaptiveSleepingPolicy() : BaseDataReader.SleepingPolicy.SIMPLE;
+          final BaseDataReader stdoutReader = createOutputDataReader(sleepingPolicy);
+          final BaseDataReader stderrReader = processHasSeparateErrorStream() ? createErrorDataReader(sleepingPolicy) : null;
 
           myWaitFor.setTerminationCallback(new Consumer<Integer>() {
             @Override
@@ -118,6 +116,17 @@ public class BaseOSProcessHandler extends ProcessHandler implements TaskExecutor
     });
 
     super.startNotify();
+  }
+
+  @NotNull
+  protected BaseDataReader createErrorDataReader(BaseDataReader.SleepingPolicy sleepingPolicy) {
+    return new SimpleOutputReader(createProcessErrReader(), ProcessOutputTypes.STDERR,
+                             sleepingPolicy);
+  }
+
+  @NotNull
+  protected BaseDataReader createOutputDataReader(BaseDataReader.SleepingPolicy sleepingPolicy) {
+    return new SimpleOutputReader(createProcessOutReader(), ProcessOutputTypes.STDOUT, sleepingPolicy);
   }
 
   protected void onOSProcessTerminated(final int exitCode) {

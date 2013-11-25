@@ -91,9 +91,9 @@ public class TipUIUtil {
   private static void updateImages(StringBuffer text, Class providerClass) {
     final boolean dark = UIUtil.isUnderDarcula();
     final boolean retina = UIUtil.isRetina();
-    if (!dark && !retina) {
-      return;
-    }
+//    if (!dark && !retina) {
+//      return;
+//    }
 
     String suffix = "";
     if (retina) suffix += "@2x";

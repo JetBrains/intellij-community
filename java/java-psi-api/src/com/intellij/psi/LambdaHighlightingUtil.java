@@ -18,6 +18,7 @@ package com.intellij.psi;
 import com.intellij.openapi.util.Computable;
 import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -51,10 +52,14 @@ public class LambdaHighlightingUtil {
       final PsiElement body = lambdaExpression.getBody();
       if (body instanceof PsiCodeBlock) {
         if (!LambdaUtil.getReturnExpressions(lambdaExpression).isEmpty()) return "Unexpected return value";
-      } else if (body instanceof PsiReferenceExpression || body instanceof PsiLiteralExpression) {
+      } else if (body instanceof PsiExpression) {
         final PsiType type = ((PsiExpression)body).getType();
-        if (type != PsiType.VOID) {
-          return "Incompatible return type " + (type == PsiType.NULL || type == null ? "<null>" : type.getPresentableText()) +" in lambda expression";
+        try {
+          if (!PsiUtil.isStatement(JavaPsiFacade.getElementFactory(body.getProject()).createStatementFromText(body.getText(), body))) {
+            return "Incompatible return type " + (type == PsiType.NULL || type == null ? "<null>" : type.getPresentableText()) + " in lambda expression";
+          }
+        }
+        catch (IncorrectOperationException ignore) {
         }
       }
     } else if (functionalInterfaceReturnType != null) {

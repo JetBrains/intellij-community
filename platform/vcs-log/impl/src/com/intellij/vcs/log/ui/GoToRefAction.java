@@ -61,7 +61,7 @@ public class GoToRefAction extends DumbAwareAction {
   @Override
   public void update(AnActionEvent e) {
     VcsLog log = e.getData(VcsLogDataKeys.VSC_LOG);
-    getTemplatePresentation().setEnabledAndVisible(e.getProject() != null && log != null);
+    e.getPresentation().setEnabledAndVisible(e.getProject() != null && log != null);
   }
 
 }

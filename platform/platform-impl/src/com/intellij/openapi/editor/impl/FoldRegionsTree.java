@@ -81,35 +81,28 @@ abstract class FoldRegionsTree {
     ArrayList<FoldRegion> topLevels = new ArrayList<FoldRegion>(myRegions.size() / 2);
     ArrayList<FoldRegion> visible = new ArrayList<FoldRegion>(myRegions.size());
     FoldRegion[] regions = toFoldArray(myRegions);
-    FoldRegion currentToplevel = null;
+    FoldRegion currentCollapsed = null;
     for (FoldRegion region : regions) {
-      if (region.isValid()) {
+      if (!region.isValid()) {
+        continue;
+      }
+      
+      if (currentCollapsed == null || !contains(currentCollapsed, region)) {
         visible.add(region);
-        if (!region.isExpanded()) {
-          if (currentToplevel == null || currentToplevel.getEndOffset() < region.getStartOffset()) {
-            currentToplevel = region;
-            topLevels.add(region);
-          }
+      }
+      
+      if (!region.isExpanded()) {
+        if (currentCollapsed == null || currentCollapsed.getEndOffset() < region.getStartOffset()) {
+          currentCollapsed = region;
+          topLevels.add(region);
         }
       }
     }
 
     myCachedTopLevelRegions = toFoldArray(topLevels);
-
-    Arrays.sort(myCachedTopLevelRegions, BY_END_OFFSET);
-
-    FoldRegion[] visibleArrayed = toFoldArray(visible);
-    for (FoldRegion visibleRegion : visibleArrayed) {
-      for (FoldRegion topLevelRegion : myCachedTopLevelRegions) {
-        if (contains(topLevelRegion, visibleRegion)) {
-          visible.remove(visibleRegion);
-          break;
-        }
-      }
-    }
-
     myCachedVisible = toFoldArray(visible);
 
+    Arrays.sort(myCachedTopLevelRegions, BY_END_OFFSET);
     Arrays.sort(myCachedVisible, BY_END_OFFSET_REVERSE);
 
     updateCachedOffsets();

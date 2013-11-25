@@ -48,7 +48,6 @@ import java.nio.charset.Charset;
 public abstract class VirtualFileSystemEntry extends NewVirtualFile {
   public static final VirtualFileSystemEntry[] EMPTY_ARRAY = new VirtualFileSystemEntry[0];
 
-  @NonNls protected static final String FS_ROOT_FAKE_NAME = "";
   protected static final PersistentFS ourPersistence = PersistentFS.getInstance();
 
   private static final Key<String> SYMLINK_TARGET = Key.create("local.vfs.symlink.target");
@@ -70,13 +69,10 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
   private volatile int myFlags;
   private volatile int myId;
 
-  public VirtualFileSystemEntry(@NotNull String name, VirtualDirectoryImpl parent, int id, @PersistentFS.Attributes int attributes) {
+  public VirtualFileSystemEntry(int nameId, VirtualDirectoryImpl parent, int id, @PersistentFS.Attributes int attributes) {
     myParent = parent;
     myId = id;
-
-    if (name != FS_ROOT_FAKE_NAME) {
-      storeName(name);
-    }
+    myNameId = nameId;
 
     if (parent != null && parent != VirtualDirectoryImpl.NULL_VIRTUAL_FILE) {
       setFlagInt(IS_SYMLINK_FLAG, PersistentFS.isSymLink(attributes));
@@ -88,10 +84,6 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
     setFlagInt(IS_HIDDEN_FLAG, PersistentFS.isHidden(attributes));
 
     setModificationStamp(LocalTimeCounter.currentTime());
-  }
-
-  private void storeName(@NotNull String name) {
-    myNameId = FileNameCache.storeName(name.replace('\\', '/'));   // note: on Unix-style FS names may contain backslashes
   }
 
   private void updateLinkStatus() {
@@ -113,7 +105,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
     return FileNameCache.compareNameTo(myNameId, name, ignoreCase);
   }
 
-  static int compareNames(@NotNull String name1, @NotNull String name2, boolean ignoreCase) {
+  protected static int compareNames(@NotNull String name1, @NotNull String name2, boolean ignoreCase) {
     return compareNames(name1, name2, ignoreCase, 0);
   }
 
@@ -350,7 +342,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
     }
 
     myParent.removeChild(this);
-    storeName(newName);
+    myNameId = FileNameCache.storeName(newName);
     myParent.addChild(this);
   }
 

@@ -10,6 +10,7 @@ import org.jetbrains.idea.svn.commandLine.*;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 
+import java.io.ByteArrayOutputStream;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -22,17 +23,17 @@ public class CmdContentClient extends BaseSvnClient implements ContentClient {
   public byte[] getContent(@NotNull SvnTarget target, @Nullable SVNRevision revision, @Nullable SVNRevision pegRevision)
     throws VcsException, FileTooBigRuntimeException {
     // TODO: rewrite this to provide output as Stream
-    // TODO: rewrite without conversion from String to byte[]
     // TODO: Also implement max size constraint like in SvnKitContentClient
-    // TODO: Could not use export to get content of scheduled for deletion file - use cat command, but write special binary handler
+    // NOTE: Export could not be used to get content of scheduled for deletion file
 
     List<String> parameters = new ArrayList<String>();
     CommandUtil.put(parameters, target.getPathOrUrlString(), pegRevision);
     CommandUtil.put(parameters, revision);
 
     CommandExecutor command = CommandUtil.execute(myVcs, target, SvnCommandName.cat, parameters, null);
-
-    byte[] bytes = CharsetToolkit.getUtf8Bytes(command.getOutput());
+    // TODO: currently binary output will be null for terminal mode - use text output in this case
+    ByteArrayOutputStream output = command.getBinaryOutput();
+    byte[] bytes = output != null ? output.toByteArray() : CharsetToolkit.getUtf8Bytes(command.getOutput());
 
     ContentRevisionCache.checkContentsSize(target.getPathOrUrlString(), bytes.length);
 

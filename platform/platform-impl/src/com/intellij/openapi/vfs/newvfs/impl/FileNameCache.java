@@ -79,7 +79,7 @@ public class FileNameCache {
     if (length == 0) return "";
 
     if (!IOUtil.isAscii(name)) {
-      return name;
+      return new String(name); // So we don't hold whole char[] buffer of a lengthy path on JDK 6
     }
 
     byte[] bytes = new byte[length];

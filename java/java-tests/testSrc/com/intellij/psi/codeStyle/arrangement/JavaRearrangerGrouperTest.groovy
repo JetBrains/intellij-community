@@ -127,7 +127,7 @@ class Sub extends Base {
 }''')
   }
 
-  void "test overriden and utility methods"() {
+  void "do not test overriden and utility methods"() {
     doTest(
       initial: '''\
 class Base {

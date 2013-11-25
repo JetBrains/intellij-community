@@ -670,9 +670,10 @@ public class ExceptionUtil {
 
   private static boolean isDeclaredBySAMMethod(@NotNull PsiClassType exceptionType, @Nullable PsiType interfaceType) {
     if (interfaceType != null) {
-      final PsiMethod interfaceMethod = LambdaUtil.getFunctionalInterfaceMethod(interfaceType);
+      final PsiClassType.ClassResolveResult resolveResult = PsiUtil.resolveGenericsClassInType(interfaceType);
+      final PsiMethod interfaceMethod = LambdaUtil.getFunctionalInterfaceMethod(resolveResult);
       if (interfaceMethod != null) {
-        return isHandledByMethodThrowsClause(interfaceMethod, exceptionType);
+        return isHandledByMethodThrowsClause(interfaceMethod, exceptionType, LambdaUtil.getSubstitutor(interfaceMethod, resolveResult));
       }
     }
     return true;
@@ -718,13 +719,26 @@ public class ExceptionUtil {
   }
 
   private static boolean isHandledByMethodThrowsClause(@NotNull PsiMethod method, @NotNull PsiClassType exceptionType) {
+    return isHandledByMethodThrowsClause(method, exceptionType, PsiSubstitutor.EMPTY);
+  }
+
+  private static boolean isHandledByMethodThrowsClause(@NotNull PsiMethod method,
+                                                       @NotNull PsiClassType exceptionType,
+                                                       PsiSubstitutor substitutor) {
     final PsiClassType[] referencedTypes = method.getThrowsList().getReferencedTypes();
-    return isHandledBy(exceptionType, referencedTypes);
+    return isHandledBy(exceptionType, referencedTypes, substitutor);
   }
 
   public static boolean isHandledBy(@NotNull PsiClassType exceptionType, @NotNull PsiClassType[] referencedTypes) {
+    return isHandledBy(exceptionType, referencedTypes, PsiSubstitutor.EMPTY);
+  }
+
+  public static boolean isHandledBy(@NotNull PsiClassType exceptionType,
+                                    @NotNull PsiClassType[] referencedTypes,
+                                    PsiSubstitutor substitutor) {
     for (PsiClassType classType : referencedTypes) {
-      if (classType.isAssignableFrom(exceptionType)) return true;
+      PsiType psiType = substitutor.substitute(classType);
+      if (psiType != null && psiType.isAssignableFrom(exceptionType)) return true;
     }
     return false;
   }
