@@ -118,7 +118,7 @@ public class FindInProjectUtil {
       if (directoryName == null) {
         VirtualFile virtualFile = CommonDataKeys.VIRTUAL_FILE.getData(dataContext);
         if (virtualFile != null && !virtualFile.isDirectory()) virtualFile = virtualFile.getParent();
-        if (virtualFile != null) model.setDirectoryName(virtualFile.getParent().getPresentableUrl());
+        if (virtualFile != null) model.setDirectoryName(virtualFile.getPresentableUrl());
       }
     }
   }
