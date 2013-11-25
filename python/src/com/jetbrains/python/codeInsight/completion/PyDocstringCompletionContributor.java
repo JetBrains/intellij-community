@@ -16,6 +16,7 @@
 package com.jetbrains.python.codeInsight.completion;
 
 import com.intellij.codeInsight.completion.*;
+import com.intellij.codeInsight.lookup.AutoCompletionPolicy;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
@@ -64,12 +65,12 @@ public class PyDocstringCompletionContributor extends CompletionContributor {
         result = result.withPrefixMatcher(getPrefix(parameters.getOffset(), file));
         final Collection<String> identifiers = PyRefactoringUtil.collectUsedNames(docStringOwner);
         for (String identifier : identifiers)
-          result.addElement(LookupElementBuilder.create(identifier));
+          result.addElement(LookupElementBuilder.create(identifier).withAutoCompletionPolicy(AutoCompletionPolicy.NEVER_AUTOCOMPLETE));
 
 
         final Collection<String> fileIdentifiers = PyRefactoringUtil.collectUsedNames(parameters.getOriginalFile());
         for (String identifier : fileIdentifiers)
-          result.addElement(LookupElementBuilder.create(identifier));
+          result.addElement(LookupElementBuilder.create(identifier).withAutoCompletionPolicy(AutoCompletionPolicy.NEVER_AUTOCOMPLETE));
       }
     }
   }
