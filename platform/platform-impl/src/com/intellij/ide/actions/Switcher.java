@@ -1027,6 +1027,10 @@ public class Switcher extends AnAction implements DumbAware {
       public void propertyChange(PropertyChangeEvent evt) {
         final MyList list = getSelectedList();
         final Object value = list.getSelectedValue();
+        if (project.isDisposed()) {
+          myPopup.cancel();
+          return;
+        }
         ((NameFilteringListModel)files.getModel()).refilter();
         ((NameFilteringListModel)toolWindows.getModel()).refilter();
         if (files.getModel().getSize() + toolWindows.getModel().getSize() == 0) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2013 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,28 +24,12 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.MethodUtils;
+import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.util.HashMap;
-import java.util.Map;
 
 public class CastThatLosesPrecisionInspection extends BaseInspection {
-
-  /**
-   * @noinspection StaticCollection
-   */
-  private static final Map<PsiType, Integer> typePrecisions = new HashMap<PsiType, Integer>(7);
-
-  static {
-    typePrecisions.put(PsiType.BYTE, 1);
-    typePrecisions.put(PsiType.CHAR, 2);
-    typePrecisions.put(PsiType.SHORT, 2);
-    typePrecisions.put(PsiType.INT, 3);
-    typePrecisions.put(PsiType.LONG, 4);
-    typePrecisions.put(PsiType.FLOAT, 5);
-    typePrecisions.put(PsiType.DOUBLE, 6);
-  }
 
   @SuppressWarnings({"PublicField"})
   public boolean ignoreIntegerCharCasts = false;
@@ -81,8 +65,7 @@ public class CastThatLosesPrecisionInspection extends BaseInspection {
     return new CastThatLosesPrecisionVisitor();
   }
 
-  private class CastThatLosesPrecisionVisitor
-    extends BaseInspectionVisitor {
+  private class CastThatLosesPrecisionVisitor extends BaseInspectionVisitor {
 
     @Override
     public void visitTypeCastExpression(@NotNull PsiTypeCastExpression expression) {
@@ -95,10 +78,7 @@ public class CastThatLosesPrecisionInspection extends BaseInspection {
         return;
       }
       final PsiType operandType = operand.getType();
-      if (!ClassUtils.isPrimitiveNumericType(operandType)) {
-        return;
-      }
-      if (hasLowerPrecision(operandType, castType)) {
+      if (!ClassUtils.isPrimitiveNumericType(operandType) || !TypeUtils.isNarrowingConversion(operandType, castType)) {
         return;
       }
       if (ignoreIntegerCharCasts) {
@@ -127,12 +107,6 @@ public class CastThatLosesPrecisionInspection extends BaseInspection {
         return;
       }
       registerError(castTypeElement, operandType);
-    }
-
-    private boolean hasLowerPrecision(PsiType operandType, PsiType castType) {
-      final Integer operandPrecision = typePrecisions.get(operandType);
-      final Integer castPrecision = typePrecisions.get(castType);
-      return operandPrecision.intValue() <= castPrecision.intValue();
     }
 
     private boolean valueIsContainableInType(Number value, PsiType type) {

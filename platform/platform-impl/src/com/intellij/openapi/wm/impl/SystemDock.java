@@ -26,20 +26,28 @@ import com.intellij.ui.win.WinDockDelegate;
  * @author Denis Fokin
  */
 public class SystemDock {
-
-  private static Delegate delegate;
+  private static final Delegate ourDelegate;
 
   static {
-    if (SystemInfo.isMac) {
-      delegate = MacDockDelegate.getInstance();
-    } else if (SystemInfo.isWin7OrNewer && Registry.is("windows.jumplist") && !ApplicationManager.getApplication().isUnitTestMode()) {
-      delegate = WinDockDelegate.getInstance();
+    Delegate delegate = null;
+
+    Application app = ApplicationManager.getApplication();
+    if (app != null && !app.isUnitTestMode()) {
+      if (SystemInfo.isMac) {
+        delegate = MacDockDelegate.getInstance();
+      }
+      else if (SystemInfo.isWin7OrNewer && Registry.is("windows.jumplist")) {
+        delegate = WinDockDelegate.getInstance();
+      }
     }
+
+    ourDelegate = delegate;
   }
 
-  public static void updateMenu () {
-    if (delegate == null) return;
-    delegate.updateRecentProjectsMenu();
+  public static void updateMenu() {
+    if (ourDelegate != null) {
+      ourDelegate.updateRecentProjectsMenu();
+    }
   }
 
   public interface Delegate {

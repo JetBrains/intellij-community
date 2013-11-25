@@ -36,6 +36,11 @@ public class TypeParameterHidesVisibleTypeInspectionBase extends BaseInspection 
   }
 
   @Override
+  public boolean isEnabledByDefault() {
+    return true;
+  }
+
+  @Override
   @NotNull
   public String buildErrorString(Object... infos) {
     final PsiClass aClass = (PsiClass)infos[0];

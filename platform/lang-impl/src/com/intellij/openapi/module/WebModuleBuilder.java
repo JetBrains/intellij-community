@@ -24,14 +24,12 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.WebProjectGenerator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.List;
 
 /**
 * @author Dmitry Avdeev
@@ -72,13 +70,14 @@ public class WebModuleBuilder extends ModuleBuilder {
     return myTemplate != null ? myTemplate.getIcon() : ICON;
   }
 
+  @Nullable
   @Override
-  public List<Module> commit(Project project, ModifiableModuleModel model, ModulesProvider modulesProvider) {
-    List<Module> modules = super.commit(project, model, modulesProvider);
-    if (modules != null && !modules.isEmpty() && myTemplate != null) {
-      doGenerate(myTemplate, modules.get(0));
+  public Module commitModule(@NotNull Project project, @Nullable ModifiableModuleModel model) {
+    Module module = super.commitModule(project, model);
+    if (module != null && myTemplate != null) {
+      doGenerate(myTemplate, module);
     }
-    return modules;
+    return module;
   }
 
   private static <T> void doGenerate(@NotNull WebProjectTemplate<T> template, @NotNull Module module) {

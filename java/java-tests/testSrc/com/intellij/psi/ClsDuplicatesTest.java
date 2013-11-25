@@ -39,7 +39,7 @@ public class ClsDuplicatesTest extends PsiTestCase {
     JavaRecursiveElementVisitor visitor = new JavaRecursiveElementVisitor() {
       @Override
       public void visitPackage(PsiPackage aPackage) {
-        System.out.println(aPackage.getQualifiedName());
+//        System.out.println(aPackage.getQualifiedName());
 
         visit(aPackage);
         for (PsiPackage subPackage : aPackage.getSubPackages(scope)) {
@@ -65,7 +65,7 @@ public class ClsDuplicatesTest extends PsiTestCase {
         }
         super.visitClass(aClass);
         PsiElement parent = aClass.getParent();
-        if (!(parent instanceof PsiClass)){
+        if (parent instanceof PsiFile){
           uniques.clear();
         }
       }

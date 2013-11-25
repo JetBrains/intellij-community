@@ -357,7 +357,7 @@ public class EditorSearchComponent extends EditorHeaderComponent implements Data
   }
 
   private void setupHistoryToSearchField(SearchTextField field, String[] strings) {
-    field.setHistorySize(strings.length);
+    field.setHistorySize(20);
     field.setHistory(ContainerUtil.reverse(Arrays.asList(strings)));
   }
 

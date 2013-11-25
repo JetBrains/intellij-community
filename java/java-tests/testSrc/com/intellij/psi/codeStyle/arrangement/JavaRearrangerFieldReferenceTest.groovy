@@ -84,8 +84,8 @@ public class CodeFormatTest {
         public static String TEST = "OK!";
         public static String BOOK = "ATLAS";
         private static String PREFIX = "prefix.";
-        private static String PRIVATE_NAME = PREFIX + "private name";
         public static String NAME = PREFIX + "name";
+        private static String PRIVATE_NAME = PREFIX + "private name";
 }
 ''',
             rules: defaultFieldsArrangement

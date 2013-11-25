@@ -913,4 +913,13 @@ public class TypesUtil {
     if (!changed) return null;
     return JavaPsiFacade.getElementFactory(project).createType(element, parameters);
   }
+
+  public static boolean isPsiClassTypeToClosure(PsiType type) {
+    if (!(type instanceof PsiClassType)) return false;
+
+    final PsiClass psiClass = ((PsiClassType)type).resolve();
+    if (psiClass == null) return false;
+
+    return GROOVY_LANG_CLOSURE.equals(psiClass.getQualifiedName());
+  }
 }

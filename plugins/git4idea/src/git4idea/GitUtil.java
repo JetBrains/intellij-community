@@ -23,7 +23,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -38,10 +37,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.Function;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
-import com.intellij.vcs.log.VcsLog;
-import com.intellij.vcs.log.VcsLogProvider;
 import com.intellij.vcsUtil.VcsFileUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import git4idea.branch.GitBranchUtil;
@@ -942,29 +938,6 @@ public class GitUtil {
     diff.setSilent(true);
     final String output = diff.run();
     return !output.trim().isEmpty();
-  }
-
-  /**
-   * Report a warning that the given root has no associated GitRepositories.
-   */
-  public static void noRepositoryForRoot(@NotNull Logger log, @NotNull VirtualFile root, @NotNull Project project) {
-    GitRepositoryManager repositoryManager = getRepositoryManager(project);
-    ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(project);
-    List<VirtualFile> roots = Arrays.asList(vcsManager.getRootsUnderVcs(GitVcs.getInstance(project)));
-    log.warn(String.format("Repository not found for root: %s. All roots: %s, all repositories: %s", root, roots,
-                           repositoryManager.getRepositories()));
-  }
-
-  /**
-   * Checks if there are Git roots in the VCS log.
-   */
-  public static boolean logHasGitRoot(@NotNull VcsLog log) {
-    return ContainerUtil.find(log.getLogProviders(), new Condition<VcsLogProvider>() {
-      @Override
-      public boolean value(VcsLogProvider logProvider) {
-        return logProvider.getSupportedVcs().equals(GitVcs.getKey());
-      }
-    }) != null;
   }
 
 }

@@ -481,8 +481,10 @@ public class SetValueAction extends DebuggerAction {
 
     stateManager.addListener(new DebuggerContextListener() {
       public void changeEvent(DebuggerContextImpl newContext, int event) {
-        stateManager.removeListener(this);
-        editor.cancelEditing();
+        if (event != DebuggerSession.EVENT_THREADS_REFRESH) {
+          stateManager.removeListener(this);
+          editor.cancelEditing();
+        }
       }
     });
 

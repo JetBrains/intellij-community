@@ -1,7 +1,7 @@
 package com.intellij.vcs.log.data;
 
 import com.intellij.openapi.util.Condition;
-import com.intellij.util.Function;
+import com.intellij.util.NotNullFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.vcs.log.Hash;
@@ -19,10 +19,11 @@ public class RefsModel {
 
   @NotNull private final Collection<VcsRef> myBranches;
   @NotNull private final MultiMap<Hash, VcsRef> myRefsToHashes;
-  private final Function<Integer, Hash> myHashGetter;
+  @NotNull private final MultiMap<Integer, VcsRef> myRefsToIndices;
+  @NotNull private final NotNullFunction<Hash, Integer> myIndexGetter;
 
-  public RefsModel(@NotNull Collection<VcsRef> allRefs, Function<Integer, Hash> hashGetter) {
-    myHashGetter = hashGetter;
+  public RefsModel(@NotNull Collection<VcsRef> allRefs, @NotNull NotNullFunction<Hash, Integer> indexGetter) {
+    myIndexGetter = indexGetter;
     myBranches = ContainerUtil.filter(allRefs, new Condition<VcsRef>() {
       @Override
       public boolean value(VcsRef ref) {
@@ -31,6 +32,16 @@ public class RefsModel {
     });
 
     myRefsToHashes = prepareRefsMap(allRefs);
+    myRefsToIndices = prepareRefsToIndicesMap(allRefs);
+  }
+
+  @NotNull
+  private MultiMap<Integer, VcsRef> prepareRefsToIndicesMap(@NotNull Collection<VcsRef> refs) {
+    MultiMap<Integer, VcsRef> map = MultiMap.create();
+    for (VcsRef ref : refs) {
+      map.putValue(myIndexGetter.fun(ref.getCommitHash()), ref);
+    }
+    return map;
   }
 
   @NotNull
@@ -42,8 +53,8 @@ public class RefsModel {
     return map;
   }
 
-  public boolean isBranchRef(@NotNull Hash commitHash) {
-    for (VcsRef ref : refsToCommit(commitHash)) {
+  public boolean isBranchRef(int hash) {
+    for (VcsRef ref : refsToCommit(hash)) {
       if (ref.getType().isBranch()) {
         return true;
       }
@@ -60,6 +71,11 @@ public class RefsModel {
   }
 
   @NotNull
+  public Collection<VcsRef> refsToCommit(int index) {
+    return myRefsToIndices.containsKey(index) ? myRefsToIndices.get(index) : Collections.<VcsRef>emptyList();
+  }
+
+  @NotNull
   public Collection<VcsRef> getBranches() {
     return myBranches;
   }
@@ -67,10 +83,6 @@ public class RefsModel {
   @NotNull
   public Collection<VcsRef> getAllRefs() {
     return new ArrayList<VcsRef>(myRefsToHashes.values());
-  }
-
-  public boolean isBranchRef(int hash) {
-    return isBranchRef(myHashGetter.fun(hash));
   }
 
 }

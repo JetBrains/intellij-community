@@ -93,7 +93,7 @@ public class TestClientRunner {
     }
 
     final CapturingProcessHandler handler = new CapturingProcessHandler(clientProcess, CharsetToolkit.getDefaultSystemCharset());
-    final ProcessOutput result = handler.runProcess(100*1000);
+    final ProcessOutput result = handler.runProcess(100*1000, false);
     if (myTraceClient || result.isTimeout()) {
       LOG.debug("*** result: " + result.getExitCode());
       final String out = result.getStdout().trim();
@@ -107,7 +107,9 @@ public class TestClientRunner {
     }
 
     if (result.isTimeout()) {
-      throw new RuntimeException("Timeout waiting for VCS client to finish execution:\n" + EnvironmentUtil.getProcessList());
+      String processList = EnvironmentUtil.getProcessList();
+      handler.destroyProcess();
+      throw new RuntimeException("Timeout waiting for VCS client to finish execution:\n" + processList);
     }
     return result;
   }

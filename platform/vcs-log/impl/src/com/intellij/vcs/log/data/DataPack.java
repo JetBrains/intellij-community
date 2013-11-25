@@ -52,7 +52,7 @@ public class DataPack {
       }
     });
 
-    final RefsModel refsModel = new RefsModel(allRefs, hashGetter);
+    final RefsModel refsModel = new RefsModel(allRefs, indexGetter);
     graphModel.getFragmentManager().setUnconcealedNodeFunction(new Function<Node, Boolean>() {
       @NotNull
       @Override

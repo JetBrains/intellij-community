@@ -29,6 +29,7 @@ import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.openapi.util.io.ByteSequence;
 import com.intellij.openapi.util.io.FileAttributes;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.newvfs.impl.FileNameCache;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ConcurrentHashMap;
@@ -879,9 +880,11 @@ public class FSRecords implements Forceable {
     public static final NameId[] EMPTY_ARRAY = new NameId[0];
     public final int id;
     public final String name;
+    public final int nameId;
 
-    public NameId(int id, @NotNull String name) {
+    public NameId(int id, int nameId, @NotNull String name) {
       this.id = id;
+      this.nameId = nameId;
       this.name = name;
     }
 
@@ -904,7 +907,8 @@ public class FSRecords implements Forceable {
         for (int i = 0; i < count; i++) {
           int id = DataInputOutputUtil.readINT(input);
           id = id >= 0 ? id + parentId : -id;
-          result[i] = new NameId(id, getName(id));
+          int nameId = getNameId(id);
+          result[i] = new NameId(id, nameId, FileNameCache.getVFileName(nameId));
         }
         input.close();
         return result;

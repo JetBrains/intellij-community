@@ -1,2 +1,2 @@
-java.util.Map<java.lang.Object, java.lang.Object> map = new java.util.Map<java.lang.Object, java.lang.Object>();
+java.util.Map map = new java.util.Map();
 print(map.get(1));

@@ -4,8 +4,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.Consumer;
-import com.intellij.util.concurrency.QueueProcessor;
+import com.intellij.util.ThrowableConsumer;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.Hash;
@@ -14,6 +13,7 @@ import com.intellij.vcs.log.VcsShortCommitDetails;
 import com.intellij.vcs.log.graph.Graph;
 import com.intellij.vcs.log.graph.elements.Node;
 import com.intellij.vcs.log.graph.elements.NodeRow;
+import com.intellij.vcs.log.util.SequentialLimitedLifoExecutor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -43,13 +43,13 @@ public abstract class DataGetter<T extends VcsShortCommitDetails> implements Dis
   @NotNull protected final VcsLogDataHolder myDataHolder;
   @NotNull private final Map<VirtualFile, VcsLogProvider> myLogProviders;
   @NotNull private final VcsCommitCache<T> myCache;
+  @NotNull private final SequentialLimitedLifoExecutor<TaskDescriptor> myLoader;
 
   /**
    * The sequence number of the current "loading" task.
    */
   private long myCurrentTaskIndex = 0;
 
-  @NotNull private final QueueProcessor<TaskDescriptor> myLoader = new QueueProcessor<TaskDescriptor>(new DetailsLoadingTask());
   @NotNull private final Collection<Runnable> myLoadingFinishedListeners = new ArrayList<Runnable>();
 
   DataGetter(@NotNull VcsLogDataHolder dataHolder, @NotNull Map<VirtualFile, VcsLogProvider> logProviders,
@@ -58,12 +58,26 @@ public abstract class DataGetter<T extends VcsShortCommitDetails> implements Dis
     myLogProviders = logProviders;
     myCache = cache;
     Disposer.register(dataHolder, this);
+    myLoader = new SequentialLimitedLifoExecutor<TaskDescriptor>(this, MAX_LOADING_TASKS,
+                                                                 new ThrowableConsumer<TaskDescriptor, VcsException>() {
+      @Override
+      public void consume(TaskDescriptor task) throws VcsException {
+        preLoadCommitData(task.nodes);
+        UIUtil.invokeAndWaitIfNeeded(new Runnable() {
+          @Override
+          public void run() {
+            for (Runnable loadingFinishedListener : myLoadingFinishedListeners) {
+              loadingFinishedListener.run();
+            }
+          }
+        });
+      }
+    });
   }
 
   @Override
   public void dispose() {
     myLoadingFinishedListeners.clear();
-    myLoader.clear();
   }
 
   @NotNull
@@ -150,7 +164,7 @@ public abstract class DataGetter<T extends VcsShortCommitDetails> implements Dis
       }
     }
     TaskDescriptor task = new TaskDescriptor(nodes, taskNumber);
-    myLoader.addFirst(task);
+    myLoader.queue(task);
     return task;
   }
 
@@ -204,25 +218,4 @@ public abstract class DataGetter<T extends VcsShortCommitDetails> implements Dis
     }
   }
 
-  private class DetailsLoadingTask implements Consumer<TaskDescriptor> {
-
-    @Override
-    public void consume(final TaskDescriptor task) {
-      try {
-        myLoader.dismissLastTasks(MAX_LOADING_TASKS);
-        preLoadCommitData(task.nodes);
-        UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-          @Override
-          public void run() {
-            for (Runnable loadingFinishedListener : myLoadingFinishedListeners) {
-              loadingFinishedListener.run();
-            }
-          }
-        });
-      }
-      catch (VcsException e) {
-        throw new RuntimeException(e); // todo
-      }
-    }
-  }
 }

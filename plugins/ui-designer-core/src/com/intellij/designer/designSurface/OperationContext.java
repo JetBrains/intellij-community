@@ -34,6 +34,7 @@ public final class OperationContext {
 
   private Object myType;
   private EditableArea myArea;
+  private RadComponent myContainer;
   private List<RadComponent> myComponents;
   private InputEvent myInputEvent;
   private int myModifiers;
@@ -100,6 +101,14 @@ public final class OperationContext {
 
   public void setArea(EditableArea area) {
     myArea = area;
+  }
+
+  public RadComponent getContainer() {
+    return myContainer;
+  }
+
+  public void setContainer(RadComponent container) {
+    myContainer = container;
   }
 
   public List<RadComponent> getComponents() {

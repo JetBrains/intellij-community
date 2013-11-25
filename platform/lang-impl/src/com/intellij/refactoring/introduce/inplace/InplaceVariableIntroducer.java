@@ -109,6 +109,7 @@ public abstract class InplaceVariableIntroducer<E extends PsiElement> extends In
     myExprMarker = exprMarker;
   }
 
+  @Nullable
   public E getExpr() {
     return myExpr != null && myExpr.isValid() && myExpr.isPhysical() ? myExpr : null;
   }
