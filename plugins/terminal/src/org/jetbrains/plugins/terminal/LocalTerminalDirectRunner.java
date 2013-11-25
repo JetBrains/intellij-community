@@ -71,7 +71,7 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
 
   private static File findRCFile() {
     try {
-      final String folder = PtyUtil.getJarFolder();
+      final String folder = PtyUtil.getPtyLibFolderPath();
       if (folder != null) {
         File rcFile = new File(folder, "jediterm.in");
         if (rcFile.exists()) {
