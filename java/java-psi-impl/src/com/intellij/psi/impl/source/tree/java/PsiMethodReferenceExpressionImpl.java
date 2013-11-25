@@ -439,9 +439,12 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
         }
       } else {
         if (rightTypes.length != types.length || rightTypes[rightTypes.length - 1].getArrayDimensions() != types[types.length-1].getArrayDimensions()) {
-          types[types.length - 1] = ((PsiArrayType)types[types.length - 1]).getComponentType();
+          boolean expandTypeArray = types.length < rightTypes.length;
           int min = Math.min(types.length, rightTypes.length);
           types = Arrays.copyOf(types, min);
+          if (expandTypeArray) {
+            types[types.length - 1] = ((PsiArrayType)types[types.length - 1]).getComponentType();
+          }
           rightTypes = Arrays.copyOf(rightTypes, min);
         }
       }
