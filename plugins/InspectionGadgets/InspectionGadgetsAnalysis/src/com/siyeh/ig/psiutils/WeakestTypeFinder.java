@@ -65,7 +65,7 @@ public class WeakestTypeFinder {
     }
     final PsiClassType variableOrMethodClassType = (PsiClassType)variableOrMethodType;
     final PsiClass variableOrMethodClass = variableOrMethodClassType.resolve();
-    if (variableOrMethodClass == null) {
+    if (variableOrMethodClass == null || variableOrMethodClass instanceof PsiTypeParameter) {
       return Collections.emptyList();
     }
     Set<PsiClass> weakestTypeClasses = new HashSet<PsiClass>();
