@@ -22,8 +22,9 @@ EOL="\r"|"\n"|"\r\n"
 LINE_WS=[\ \t\f]
 WHITE_SPACE=({LINE_WS}|{EOL})+
 
-STRING=\"([^\\\"]|\\([\\\"/bfnrt]|u[a-fA-F0-9]{4}))*\"
+STRING=\"([^\\\"\r\n]|\\([\\\"/bfnrt]|u[a-fA-F0-9]{4}))*\"?
 NUMBER=-?[0-9]+(\.[0-9]+([eE][+-]?[0-9]+)?)?
+TEXT=[a-zA-Z_0-9]+
 
 %%
 <YYINITIAL> {
@@ -41,6 +42,7 @@ NUMBER=-?[0-9]+(\.[0-9]+([eE][+-]?[0-9]+)?)?
 
   {STRING}           { return STRING; }
   {NUMBER}           { return NUMBER; }
+  {TEXT}             { return TEXT; }
 
   [^] { return com.intellij.psi.TokenType.BAD_CHARACTER; }
 }

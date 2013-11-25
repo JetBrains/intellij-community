@@ -19,13 +19,17 @@
         
         COMMA=','
         COLON=':'
-//        COMMENT='regexp:"//.*|/\*.*?\*/"'
+        // COMMENT='regexp:"//.*|/\*.*?\*/"'
         // else /\*(?:[^*]|\*[^/])*\*/
-        STRING='regexp:"([^\\"]|\\([\\"/bfnrt]|u[a-fA-F0-9]{4}))*"'
+        // unclosed string literal matches till the line's end
+        STRING='regexp:"([^\\"\r\n]|\\([\\"/bfnrt]|u[a-fA-F0-9]{4}))*"?'
         NUMBER='regexp:-?\d+(\.\d+([eE][+-]?\d+)?)?'
         TRUE='true'
         FALSE='false'
         NULL='null'
+        // Workaround for highlighting issue
+        // plays role of IDENTIFIER or NAME token in other languages
+        TEXT='regexp:\w+'
     ]
 
     extends("object|array|literal")=value

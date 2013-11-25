@@ -29,6 +29,7 @@ public interface JsonElementTypes {
   IElementType R_BRACKET = new JsonTokenType("]");
   IElementType R_CURLY = new JsonTokenType("}");
   IElementType STRING = new JsonTokenType("STRING");
+  IElementType TEXT = new JsonTokenType("TEXT");
   IElementType TRUE = new JsonTokenType("true");
 
   class Factory {

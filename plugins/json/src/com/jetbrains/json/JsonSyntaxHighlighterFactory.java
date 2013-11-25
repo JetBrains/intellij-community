@@ -38,6 +38,7 @@ public class JsonSyntaxHighlighterFactory extends SyntaxHighlighterFactory {
       fillMap(ourAttributes, DefaultLanguageHighlighterColors.STRING, STRING);
       fillMap(ourAttributes, DefaultLanguageHighlighterColors.NUMBER, NUMBER);
       fillMap(ourAttributes, DefaultLanguageHighlighterColors.KEYWORD, TRUE, FALSE, NULL);
+      fillMap(ourAttributes, HighlighterColors.TEXT, TEXT);
       fillMap(ourAttributes, HighlighterColors.BAD_CHARACTER, TokenType.BAD_CHARACTER);
 
       // StringLexer's tokens
