@@ -430,6 +430,14 @@ public class PythonParsingTest extends ParsingTestCase {
     doTest();
   }
 
+  public void testNotClosedBraceDict() {
+    doTest();
+  }
+
+  public void testNotClosedBraceSet() {
+    doTest(LanguageLevel.PYTHON33);
+  }
+
   public void doTest(LanguageLevel languageLevel) {
     LanguageLevel prev = myLanguageLevel;
     myLanguageLevel = languageLevel;
