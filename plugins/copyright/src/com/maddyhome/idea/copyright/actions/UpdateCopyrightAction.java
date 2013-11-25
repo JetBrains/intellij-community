@@ -16,21 +16,24 @@
 
 package com.maddyhome.idea.copyright.actions;
 
+import com.intellij.analysis.AnalysisScope;
+import com.intellij.analysis.BaseAnalysisAction;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiUtilCore;
 import com.maddyhome.idea.copyright.CopyrightManager;
 import com.maddyhome.idea.copyright.pattern.FileUtil;
 import com.maddyhome.idea.copyright.util.FileTypeUtil;
+import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.List;
+public class UpdateCopyrightAction extends BaseAnalysisAction {
+  protected UpdateCopyrightAction() {
+    super(UpdateCopyrightProcessor.TITLE, UpdateCopyrightProcessor.TITLE);
+  }
 
-public class UpdateCopyrightAction extends AnAction {
   public void update(AnActionEvent event) {
     final boolean enabled = isEnabled(event);
     event.getPresentation().setEnabled(enabled);
@@ -94,79 +97,14 @@ public class UpdateCopyrightAction extends AnAction {
     return true;
   }
 
-  public void actionPerformed(AnActionEvent event) {
-    final DataContext context = event.getDataContext();
-    final Project project = CommonDataKeys.PROJECT.getData(context);
-    assert project != null;
-
-    final Module module = LangDataKeys.MODULE.getData(context);
-    PsiDocumentManager.getInstance(project).commitAllDocuments();
-
-    final VirtualFile[] files = CommonDataKeys.VIRTUAL_FILE_ARRAY.getData(context);
-    final Editor editor = CommonDataKeys.EDITOR.getData(context);
-
-    PsiFile file = null;
-    PsiDirectory dir;
-    if (editor != null) {
-      file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
-      if (file == null) {
-        return;
+  @Override
+  protected void analyze(@NotNull final Project project, @NotNull AnalysisScope scope) {
+    if (scope.checkScopeWritable(project)) return;
+    scope.accept(new PsiElementVisitor() {
+      @Override
+      public void visitFile(PsiFile file) {
+        new UpdateCopyrightProcessor(project, ModuleUtilCore.findModuleForPsiElement(file), file).run();
       }
-      dir = file.getContainingDirectory();
-    }
-    else {
-      if (FileUtil.areFiles(files)) {
-        new UpdateCopyrightProcessor(project, null, FileUtil.convertToPsiFiles(files, project)).run();
-        return;
-      }
-      final Module modCtx = LangDataKeys.MODULE_CONTEXT.getData(context);
-      if (modCtx != null) {
-        new UpdateCopyrightProcessor(project, module).run();
-        return;
-      }
-
-      final Module[] modules = LangDataKeys.MODULE_CONTEXT_ARRAY.getData(context);
-      if (modules != null && modules.length > 0) {
-        List<PsiFile> psiFiles = new ArrayList<PsiFile>();
-        for (Module mod : modules) {
-          AbstractFileProcessor.findFiles(mod, psiFiles);
-        }
-        new UpdateCopyrightProcessor(project, null, PsiUtilCore.toPsiFileArray(psiFiles)).run();
-        return;
-      }
-
-      final PsiElement psielement = CommonDataKeys.PSI_ELEMENT.getData(context);
-      if (psielement == null) {
-        return;
-      }
-
-      if (psielement instanceof PsiDirectoryContainer) {
-        dir = ((PsiDirectoryContainer)psielement).getDirectories()[0];
-      }
-      else if (psielement instanceof PsiDirectory) {
-        dir = (PsiDirectory)psielement;
-      }
-      else {
-        file = psielement.getContainingFile();
-        if (file == null) {
-          return;
-        }
-        dir = file.getContainingDirectory();
-      }
-    }
-
-    final RecursionDlg recDlg = new RecursionDlg(project, file != null ? file.getVirtualFile() : dir.getVirtualFile());
-    recDlg.show();
-    if (!recDlg.isOK()) {
-      return;
-    }
-
-    if (recDlg.isAll()) {
-      new UpdateCopyrightProcessor(project, module, dir, recDlg.includeSubdirs()).run();
-    }
-    else {
-      new UpdateCopyrightProcessor(project, module, file).run();
-    }
+    });
   }
-
 }
