@@ -262,6 +262,12 @@ public class MavenExternalParameters {
 
           res.setProperty(mavenProject.getMavenId().getGroupId()
                           + ':' + mavenProject.getMavenId().getArtifactId()
+                          + ":test-jar"
+                          + ':' + mavenProject.getMavenId().getVersion(),
+                          mavenProject.getTestOutputDirectory());
+
+          res.setProperty(mavenProject.getMavenId().getGroupId()
+                          + ':' + mavenProject.getMavenId().getArtifactId()
                           + ':' + mavenProject.getPackaging()
                           + ':' + mavenProject.getMavenId().getVersion(),
                            mavenProject.getOutputDirectory());
