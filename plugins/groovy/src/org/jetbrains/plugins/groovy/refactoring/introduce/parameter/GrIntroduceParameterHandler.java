@@ -215,10 +215,16 @@ public class GrIntroduceParameterHandler implements RefactoringActionHandler, Me
 
     CommandProcessor.getInstance().executeCommand(info.getProject(), new Runnable() {
       public void run() {
-        List<RangeMarker> occurrences = ContainerUtil.newArrayList();
         Document document = context.getEditor().getDocument();
-        for (PsiElement element : context.getOccurrences()) {
-          occurrences.add(createRange(document, element));
+
+        List<RangeMarker> occurrences = ContainerUtil.newArrayList();
+        if (settings.replaceAllOccurrences()) {
+          for (PsiElement element : context.getOccurrences()) {
+            occurrences.add(createRange(document, element));
+          }
+        }
+        else if (context.getExpression() != null) {
+          occurrences.add(createRange(document, context.getExpression()));
         }
 
         GrExpressionWrapper expr = new GrExpressionWrapper(GroovyIntroduceParameterUtil.findExpr(settings));
@@ -237,8 +243,13 @@ public class GrIntroduceParameterHandler implements RefactoringActionHandler, Me
                 false, project);
               GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(project);
 
-              for (PsiElement element : context.getOccurrences()) {
-                element.replace(factory.createReferenceExpressionFromText(name));
+              if (settings.replaceAllOccurrences()) {
+                for (PsiElement element : context.getOccurrences()) {
+                  element.replace(factory.createReferenceExpressionFromText(name));
+                }
+              }
+              else {
+                context.getExpression().replace(factory.createReferenceExpressionFromText(name));
               }
               return SmartPointerManager.getInstance(project).createSmartPsiElementPointer(parameter);
             }
