@@ -1,6 +1,8 @@
 package com.jetbrains.json;
 
+import com.intellij.lexer.LayeredLexer;
 import com.intellij.lexer.Lexer;
+import com.intellij.lexer.StringLiteralLexer;
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors;
 import com.intellij.openapi.editor.HighlighterColors;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
@@ -50,10 +52,10 @@ public class JsonSyntaxHighlighterFactory extends SyntaxHighlighterFactory {
     @NotNull
     @Override
     public Lexer getHighlightingLexer() {
-//      LayeredLexer layeredLexer = new LayeredLexer(new JsonLexer());
-//      StringLiteralLexer stringLexer = new StringLiteralLexer('\"', STRING, false, "/", false, false);
-//      layeredLexer.registerSelfStoppingLayer(stringLexer, new IElementType[]{STRING}, IElementType.EMPTY_ARRAY);
-      return new JsonLexer();
+      LayeredLexer layeredLexer = new LayeredLexer(new JsonLexer());
+      StringLiteralLexer stringLexer = new StringLiteralLexer('\"', STRING, false, "/", false, false);
+      layeredLexer.registerSelfStoppingLayer(stringLexer, new IElementType[]{STRING}, IElementType.EMPTY_ARRAY);
+      return layeredLexer;
     }
 
     @NotNull
