@@ -117,7 +117,7 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
       @NonNls Element problemClassElement = new Element(InspectionsBundle.message("inspection.export.results.problem.element.tag"));
 
       final RefElement refElement = (RefElement)refEntity;
-      final HighlightSeverity severity = getSeverity(refElement, getContext(), getToolWrapper());
+      final HighlightSeverity severity = getSeverity(refElement);
       final String attributeKey =
         getTextAttributeKey(refElement.getRefManager().getProject(), severity, ProblemHighlightType.LIKE_UNUSED_SYMBOL);
       problemClassElement.setAttribute("severity", severity.myName);
