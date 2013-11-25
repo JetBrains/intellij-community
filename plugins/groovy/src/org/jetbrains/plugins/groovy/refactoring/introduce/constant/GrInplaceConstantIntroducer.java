@@ -16,6 +16,7 @@
 package org.jetbrains.plugins.groovy.refactoring.introduce.constant;
 
 import com.intellij.psi.*;
+import com.intellij.refactoring.JavaRefactoringSettings;
 import com.intellij.refactoring.introduce.inplace.OccurrencesChooser;
 import com.intellij.refactoring.introduceField.IntroduceConstantHandler;
 import com.intellij.ui.components.JBCheckBox;
@@ -162,6 +163,34 @@ public class GrInplaceConstantIntroducer extends GrAbstractInplaceIntroducer<GrI
   @Override
   protected PsiElement checkLocalScope() {
     return ((PsiField)getVariable()).getContainingClass();
+  }
+
+
+  @Override
+  protected boolean performRefactoring() {
+    JavaRefactoringSettings.getInstance().INTRODUCE_CONSTANT_MOVE_TO_ANOTHER_CLASS = myPanel.isMoveToAnotherClass();
+    if (myPanel.isMoveToAnotherClass()) {
+      try {
+        myEditor.putUserData(INTRODUCE_RESTART, true);
+        myEditor.putUserData(ACTIVE_INTRODUCE, this);
+        final GrIntroduceConstantHandler constantHandler = new GrIntroduceConstantHandler();
+        final PsiLocalVariable localVariable = (PsiLocalVariable)getLocalVariable();
+        constantHandler.getContextAndInvoke(myProject, myEditor, ((GrExpression)myExpr), (GrVariable)localVariable, null);
+      }
+      finally {
+        myEditor.putUserData(INTRODUCE_RESTART, false);
+        myEditor.putUserData(ACTIVE_INTRODUCE, null);
+        releaseResources();
+        if (myLocalMarker != null) {
+          myLocalMarker.dispose();
+        }
+        if (myExprMarker != null) {
+          myExprMarker.dispose();
+        }
+      }
+      return false;
+    }
+    return super.performRefactoring();
   }
 
   /**
