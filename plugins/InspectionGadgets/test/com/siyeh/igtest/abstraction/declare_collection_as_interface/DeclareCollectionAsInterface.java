@@ -2,13 +2,13 @@ package com.siyeh.igtest.abstraction.declare_collection_as_interface;
 
 import java.util.*;
 
-public class DeclareCollectionsAsInterfaceInspection
+public class DeclareCollectionAsInterface
 {
     private HashMap<String, String> m_mapThree = new HashMap<String, String>(2);
     private HashMap m_setOne = new HashMap(2);
     private Map m_setTwo = new HashMap(2);
 
-    public DeclareCollectionsAsInterfaceInspection()
+    public DeclareCollectionAsInterface()
     {
         m_setOne.put("foo", "foo");
         m_setTwo.put("bar", "bar");
@@ -46,5 +46,13 @@ public class DeclareCollectionsAsInterfaceInspection
 
     HashMap theRoad() {
         return null;
+    }
+
+    void makeItRight() {
+      ArrayList list22 = new ArrayList();
+      System.out.println(list22.get(0));
+
+      ArrayList<String> list33 = new ArrayList();
+      System.out.println(list33.get(0));
     }
 }
