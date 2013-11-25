@@ -19,6 +19,8 @@ import org.jetbrains.annotations.NotNull;
 import org.zmlx.hg4idea.execution.HgCommandException;
 import org.zmlx.hg4idea.execution.HgCommandExecutor;
 import org.zmlx.hg4idea.execution.HgCommandResultHandler;
+import org.zmlx.hg4idea.repo.HgRepositoryManager;
+import org.zmlx.hg4idea.util.HgUtil;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -48,5 +50,9 @@ public class HgTagCreateCommand {
       arguments.add(revisionNumberOrHash);
     }
     new HgCommandExecutor(project).execute(repo, "tag", arguments, resultHandler);
+    if (!project.isDisposed()) {
+      HgRepositoryManager manager = HgUtil.getRepositoryManager(project);
+      manager.updateRepository(repo);
+    }
   }
 }

@@ -15,15 +15,7 @@ import java.util.List;
 public abstract class PyInjectorBase implements MultiHostInjector {
   @Override
   public void getLanguagesToInject(@NotNull MultiHostRegistrar registrar, @NotNull PsiElement context) {
-    final Language language = getInjectedLanguage(context);
-    if (language != null) {
-      final PsiElement element = PyInjectionUtil.getLargestStringLiteral(context);
-      if (element != null) {
-        registrar.startInjecting(language);
-        PyInjectionUtil.registerStringLiteralInjection(element, registrar);
-        registrar.doneInjecting();
-      }
-    }
+    registerInjection(registrar, context);
   }
 
   @NotNull
@@ -34,4 +26,18 @@ public abstract class PyInjectorBase implements MultiHostInjector {
 
   @Nullable
   public abstract Language getInjectedLanguage(@NotNull PsiElement context);
+
+  protected boolean registerInjection(@NotNull MultiHostRegistrar registrar, @NotNull PsiElement context) {
+    final Language language = getInjectedLanguage(context);
+    if (language != null) {
+      final PsiElement element = PyInjectionUtil.getLargestStringLiteral(context);
+      if (element != null) {
+        registrar.startInjecting(language);
+        PyInjectionUtil.registerStringLiteralInjection(element, registrar);
+        registrar.doneInjecting();
+        return true;
+      }
+    }
+    return false;
+  }
 }

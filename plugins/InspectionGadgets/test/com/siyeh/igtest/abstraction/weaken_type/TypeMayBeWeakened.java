@@ -120,4 +120,9 @@ public class TypeMayBeWeakened {
     Integer simpleConditional(Boolean condition, Integer value1, Integer value2) {
         return condition ? value1 : value2;
     }
+
+    private static <T, V extends T> java.util.concurrent.atomic.AtomicReference<T> nullSafeReference(java.util.concurrent.atomic.AtomicReference<T> ref, V value) {
+        if (ref != null) ref.set(value);
+        return ref;
+    }
 }
