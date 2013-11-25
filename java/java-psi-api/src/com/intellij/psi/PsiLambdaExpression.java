@@ -47,6 +47,7 @@ public interface PsiLambdaExpression extends PsiExpression {
   PsiType getFunctionalInterfaceType();
 
   boolean isVoidCompatible();
+  boolean isValueCompatible();
 
   /**
    * @return true when lambda declares parameter types explicitly

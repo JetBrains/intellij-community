@@ -66,7 +66,7 @@ public class InferenceVariable {
   }
 
   public Set<InferenceVariable> getDependencies(InferenceSession session) {
-    final HashSet<InferenceVariable> dependencies = new HashSet<InferenceVariable>();
+    final Set<InferenceVariable> dependencies = new LinkedHashSet<InferenceVariable>();
     for (InferenceBound inferenceBound : InferenceBound.values()) {
       for (PsiType bound : getBounds(inferenceBound)) {
         session.collectDependencies(bound, dependencies);

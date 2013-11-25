@@ -207,7 +207,7 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       return myTestHelper != null ? myTestHelper : new PsiOldInferenceHelper(myManager);
     }
-    if (languageLevel.isAtLeast(LanguageLevel.JDK_1_8) && Registry.is("enable.graph.inference", false)) {
+    if (languageLevel.isAtLeast(LanguageLevel.JDK_1_8) && Registry.is("enable.graph.inference", true)) {
       return new PsiGraphInferenceHelper(myManager);
     }
     return new PsiOldInferenceHelper(myManager);

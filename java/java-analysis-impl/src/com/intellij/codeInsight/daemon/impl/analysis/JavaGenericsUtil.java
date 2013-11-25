@@ -88,6 +88,9 @@ public class JavaGenericsUtil {
             psiMethod.getParameterList().getParameters()[parametersCount - 1];
           final PsiType componentType = ((PsiEllipsisType)varargParameter.getType()).getComponentType();
           if (!isReifiableType(resolveResult.getSubstitutor().substitute(componentType))) {
+
+            if (expression instanceof PsiMethodReferenceExpression) return true;
+
             final PsiElement parent = expression.getParent();
             if (parent instanceof PsiCall) {
               final PsiExpressionList argumentList = ((PsiCall)parent).getArgumentList();
