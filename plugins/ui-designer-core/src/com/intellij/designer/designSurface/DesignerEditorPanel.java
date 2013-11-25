@@ -33,6 +33,7 @@ import com.intellij.diagnostic.LogMessageEx;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
@@ -344,8 +345,12 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
     if (info.myShowLog) {
       LOG.error(LogMessageEx.createEvent(info.myDisplayMessage,
                                          info.myMessage + "\n" + ExceptionUtil.getThrowableText(info.myThrowable),
-                                         AttachmentFactory.createAttachment(myFile)));
+                                         getErrorAttachments(info)));
     }
+  }
+
+  protected Attachment[] getErrorAttachments(ErrorInfo info) {
+    return new Attachment[]{AttachmentFactory.createAttachment(myFile)};
   }
 
   protected abstract void configureError(final @NotNull ErrorInfo info);
