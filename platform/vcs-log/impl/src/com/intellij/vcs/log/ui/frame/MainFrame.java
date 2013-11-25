@@ -4,6 +4,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.actions.RefreshAction;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Splitter;
@@ -176,34 +177,8 @@ public class MainFrame extends JPanel implements TypeSafeDataProvider {
       }
     };
 
-    AnAction showFullPatchAction = new ToggleAction("Show long edges",
-                                                    "Show long branch edges even if commits are invisible in the current view.",
-                                                    VcsLogIcons.ShowHideLongEdges) {
-      @Override
-      public boolean isSelected(AnActionEvent e) {
-        return !myUI.areLongEdgesHidden();
-      }
-
-      @Override
-      public void setSelected(AnActionEvent e, boolean state) {
-        myUI.setLongEdgeVisibility(state);
-      }
-    };
-
-    ToggleAction showDetailsAction = new ToggleAction("Show Details", "Display details panel", AllIcons.Actions.Preview) {
-      @Override
-      public boolean isSelected(AnActionEvent e) {
-        return !myProject.isDisposed() && myUiProperties.isShowDetails();
-      }
-
-      @Override
-      public void setSelected(AnActionEvent e, boolean state) {
-        setupDetailsSplitter(state);
-        if (!myProject.isDisposed()) {
-          myUiProperties.setShowDetails(state);
-        }
-      }
-    };
+    AnAction showFullPatchAction = new ShowLongEdgesAction();
+    AnAction showDetailsAction = new ShowDetailsAction();
 
     refreshAction.registerShortcutOn(this);
 
@@ -282,6 +257,42 @@ public class MainFrame extends JPanel implements TypeSafeDataProvider {
           myChangesLoadingPane.startLoading();
         }
       }
+    }
+  }
+
+  private class ShowDetailsAction extends ToggleAction implements DumbAware {
+
+    public ShowDetailsAction() {
+      super("Show Details", "Display details panel", AllIcons.Actions.Preview);
+    }
+
+    @Override
+    public boolean isSelected(AnActionEvent e) {
+      return !myProject.isDisposed() && myUiProperties.isShowDetails();
+    }
+
+    @Override
+    public void setSelected(AnActionEvent e, boolean state) {
+      setupDetailsSplitter(state);
+      if (!myProject.isDisposed()) {
+        myUiProperties.setShowDetails(state);
+      }
+    }
+  }
+
+  private class ShowLongEdgesAction extends ToggleAction implements DumbAware {
+    public ShowLongEdgesAction() {
+      super("Show long edges", "Show long branch edges even if commits are invisible in the current view.", VcsLogIcons.ShowHideLongEdges);
+    }
+
+    @Override
+    public boolean isSelected(AnActionEvent e) {
+      return !myUI.areLongEdgesHidden();
+    }
+
+    @Override
+    public void setSelected(AnActionEvent e, boolean state) {
+      myUI.setLongEdgeVisibility(state);
     }
   }
 }
