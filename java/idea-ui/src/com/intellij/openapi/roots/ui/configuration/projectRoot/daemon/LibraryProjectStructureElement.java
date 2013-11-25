@@ -41,6 +41,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Proxy;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -148,7 +149,7 @@ public class LibraryProjectStructureElement extends ProjectStructureElement {
 
   @Override
   public ProjectStructureProblemDescription createUnusedElementWarning() {
-    final List<ConfigurationErrorQuickFix> fixes = Arrays.asList(new AddLibraryToDependenciesFix(), new RemoveLibraryFix());
+    final List<ConfigurationErrorQuickFix> fixes = Arrays.asList(new AddLibraryToDependenciesFix(), new RemoveLibraryFix(), new RemoveAllUnusedLibrariesFix());
     return new ProjectStructureProblemDescription("Library '" + StringUtil.escapeXml(myLibrary.getName()) + "'" + " is not used", null, createPlace(),
                                                   ProjectStructureProblemType.unused("unused-library"), ProjectStructureProblemDescription.ProblemLevel.PROJECT,
                                                   fixes, false);
@@ -223,6 +224,26 @@ public class LibraryProjectStructureElement extends ProjectStructureElement {
     @Override
     public void performFix() {
       BaseLibrariesConfigurable.getInstance(myContext.getProject(), myLibrary.getTable().getTableLevel()).removeLibrary(LibraryProjectStructureElement.this);
+    }
+  }
+
+  private class RemoveAllUnusedLibrariesFix extends ConfigurationErrorQuickFix {
+    private RemoveAllUnusedLibrariesFix() {
+      super("Remove All Unused Libraries");
+    }
+
+    @Override
+    public void performFix() {
+      BaseLibrariesConfigurable configurable = BaseLibrariesConfigurable.getInstance(myContext.getProject(), LibraryTablesRegistrar.PROJECT_LEVEL);
+      Library[] libraries = configurable.getModelProvider().getModifiableModel().getLibraries();
+      List<LibraryProjectStructureElement> toRemove = new ArrayList<LibraryProjectStructureElement>();
+      for (Library library : libraries) {
+        LibraryProjectStructureElement libraryElement = new LibraryProjectStructureElement(myContext, library);
+        if (myContext.getDaemonAnalyzer().getUsages(libraryElement).isEmpty()) {
+          toRemove.add(libraryElement);
+        }
+      }
+      configurable.removeLibraries(toRemove);
     }
   }
 }

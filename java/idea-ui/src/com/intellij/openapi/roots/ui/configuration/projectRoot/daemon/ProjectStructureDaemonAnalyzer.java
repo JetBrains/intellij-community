@@ -141,20 +141,27 @@ public class ProjectStructureDaemonAnalyzer implements Disposable {
   }
 
   public void removeElement(ProjectStructureElement element) {
-    myElementWithNotCalculatedUsages.remove(element);
-    myElementsToShowWarningIfUnused.remove(element);
-    myWarningsAboutUnused.remove(element);
-    myProblemHolders.remove(element);
-    final Collection<ProjectStructureElementUsage> usages = mySourceElement2Usages.removeAll(element);
-    if (usages != null) {
-      for (ProjectStructureElementUsage usage : usages) {
-        myProblemHolders.remove(usage.getContainingElement());
+    removeElements(Collections.singletonList(element));
+  }
+
+  public void removeElements(@NotNull List<? extends ProjectStructureElement> elements) {
+    myElementWithNotCalculatedUsages.removeAll(elements);
+    myElementsToShowWarningIfUnused.removeAll(elements);
+    for (ProjectStructureElement element : elements) {
+      myWarningsAboutUnused.remove(element);
+      myProblemHolders.remove(element);
+      final Collection<ProjectStructureElementUsage> usages = mySourceElement2Usages.removeAll(element);
+      if (usages != null) {
+        for (ProjectStructureElementUsage usage : usages) {
+          myProblemHolders.remove(usage.getContainingElement());
+        }
       }
+      removeUsagesInElement(element);
+      myDispatcher.getMulticaster().problemsChanged(element);
     }
-    removeUsagesInElement(element);
-    myDispatcher.getMulticaster().problemsChanged(element);
     reportUnusedElements();
   }
+
 
   private void reportUnusedElements() {
     if (!myElementWithNotCalculatedUsages.isEmpty()) return;
