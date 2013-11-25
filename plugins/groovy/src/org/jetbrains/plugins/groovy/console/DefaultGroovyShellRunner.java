@@ -49,7 +49,7 @@ public class DefaultGroovyShellRunner extends GroovyShellRunner {
   @Override
   public JavaParameters createJavaParameters(@NotNull Module module) throws ExecutionException {
     JavaParameters res = GroovyScriptRunConfiguration.createJavaParametersWithSdk(module);
-    boolean useBundled = !hasGroovyAll(module);
+    boolean useBundled = !hasGroovyWithNeededJars(module);
     DefaultGroovyScriptRunner.configureGenericGroovyRunner(res, module, "org.codehaus.groovy.tools.shell.Main", false, true);
     if (useBundled) {
       String libRoot = GroovyUtils.getBundledGroovyJar().getParent();
@@ -76,21 +76,25 @@ public class DefaultGroovyShellRunner extends GroovyShellRunner {
   @Override
   public String getTitle(@NotNull Module module) {
     String homePath = LibrariesUtil.getGroovyHomePath(module);
-    boolean bundled = false;
-    if (homePath == null || !hasGroovyAll(module)) {
+    boolean bundled = !hasGroovyWithNeededJars(module);
+    if (bundled) {
       homePath = GroovyUtils.getBundledGroovyJar().getParentFile().getParent();
-      bundled = true;
     }
+    else {
+      assert homePath != null;
+    }
+
     String version = GroovyConfigUtils.getInstance().getSDKVersion(homePath);
     return version == AbstractConfigUtils.UNDEFINED_VERSION ? "" : " (" + (bundled ? "Bundled " : "") + "Groovy " + version + ")";
   }
 
-  private static boolean hasGroovyAll(Module module) {
+  private static boolean hasGroovyWithNeededJars(Module module) {
     GlobalSearchScope scope = GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module);
     JavaPsiFacade facade = JavaPsiFacade.getInstance(module.getProject());
     return (facade.findClass("org.apache.commons.cli.CommandLineParser", scope) != null ||
             facade.findClass("groovyjarjarcommonscli.CommandLineParser", scope) != null) &&
-           facade.findClass("groovy.ui.GroovyMain", scope) != null;
+           facade.findClass("groovy.ui.GroovyMain", scope) != null  &&
+           facade.findClass("org.fusesource.jansi.AnsiConsole", scope) != null;
   }
 
   @NotNull
