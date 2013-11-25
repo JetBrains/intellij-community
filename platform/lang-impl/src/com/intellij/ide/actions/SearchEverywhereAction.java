@@ -80,6 +80,7 @@ import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.OnOffButton;
+import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.ui.popup.PopupPositionManager;
 import com.intellij.util.*;
@@ -136,6 +137,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
   private Alarm myAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, ApplicationManager.getApplication());
   private Alarm myUpdateAlarm = new Alarm(ApplicationManager.getApplication());
   private JBList myList = new JBList(myListModel);
+  private JCheckBox myNonProjectCheckBox = new JCheckBox();
   private AnActionEvent myActionEvent;
   private Component myContextComponent;
   private CalcThread myCalcThread;
@@ -248,8 +250,8 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       @Override
       protected void paintComponent(Graphics g) {
         if (myBalloon != null && !myBalloon.isDisposed() && myActionEvent != null && myActionEvent.getInputEvent() instanceof MouseEvent) {
-          ((Graphics2D)g).setPaint(new GradientPaint(0,0, new JBColor(new Color(101, 136, 242), new Color(48, 87, 186)), 0, getHeight(),
-                                                     new JBColor(new Color(44, 96, 238), new Color(48, 87, 186))));
+          ((Graphics2D)g).setPaint(new GradientPaint(0,0, new JBColor(new Color(147, 162, 174), new Color(64, 80, 94)), 0, getHeight(),
+                                                     new JBColor(new Color(116, 128, 143), new Color(53, 65, 87))));
           g.fillRect(0,0,getWidth(), getHeight());
         } else {
           super.paintComponent(g);
@@ -311,6 +313,30 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
         }
       }
     });
+
+    myNonProjectCheckBox.setOpaque(false);
+    myNonProjectCheckBox.setAlignmentX(1.0f);
+    myNonProjectCheckBox.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        if (showAll.get() != myNonProjectCheckBox.isSelected()) {
+          showAll.set(!showAll.get());
+          final JTextField editor = UIUtil.findComponentOfType(myBalloon.getContent(), JTextField.class);
+          if (editor != null) {
+            final String pattern = editor.getText();
+            myAlarm.cancelAllRequests();
+            myAlarm.addRequest(new Runnable() {
+              @Override
+              public void run() {
+                if (editor.hasFocus()) {
+                  rebuildList(pattern);
+                }
+              }
+            }, 30);
+          }
+        }
+      }
+    });
     //noinspection SSBasedInspection
     SwingUtilities.invokeLater(new Runnable() {
       public void run() {
@@ -321,18 +347,24 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
   }
 
   private void initTooltip(JLabel label) {
-    final Shortcut[] shortcuts = KeymapManager.getInstance().getActiveKeymap().getShortcuts(IdeActions.ACTION_SEARCH_EVERYWHERE);
     final String shortcutText;
-    if (shortcuts.length == 0) {
-      shortcutText = "Double " + (SystemInfo.isMac ? MacKeymapUtil.SHIFT : "Shift");
-    } else {
-      shortcutText = KeymapUtil.getShortcutsText(shortcuts);
-    }
+    shortcutText = getShortcut();
 
     label.setToolTipText("<html><body>Search Everywhere<br/>Press <b>"
                                  + shortcutText
                                  + "</b> to access<br/> - Classes<br/> - Files<br/> - Tool Windows<br/> - Actions<br/> - Settings</body></html>");
 
+  }
+
+  private static String getShortcut() {
+    String shortcutText;
+    final Shortcut[] shortcuts = KeymapManager.getInstance().getActiveKeymap().getShortcuts(IdeActions.ACTION_SEARCH_EVERYWHERE);
+    if (shortcuts.length == 0) {
+      shortcutText = "Double " + (SystemInfo.isMac ? MacKeymapUtil.SHIFT : "Shift");
+    } else {
+      shortcutText = KeymapUtil.getShortcutsText(shortcuts);
+    }
+    return shortcutText;
   }
 
   private void initSearchField(final MySearchTextField search) {
@@ -355,8 +387,14 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       }
     });
     editor.addFocusListener(new FocusAdapter() {
+      boolean skip = false;
+
       @Override
       public void focusGained(FocusEvent e) {
+        if (skip) {
+          skip = false;
+          return;
+        }
         search.setText("");
         search.getTextEditor().setForeground(UIUtil.getLabelForeground());
         myTitleIndexes = new TitleIndexes();
@@ -382,6 +420,11 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       public void focusLost(FocusEvent e) {
         if ( myPopup instanceof AbstractPopup && myPopup.isVisible()
              && ((myList == e.getOppositeComponent()) || ((AbstractPopup)myPopup).getPopupWindow() == e.getOppositeComponent())) {
+          return;
+        }
+        if (myNonProjectCheckBox == e.getOppositeComponent()) {
+          skip = true;
+          editor.requestFocus();
           return;
         }
         onFocusLost();
@@ -535,7 +578,8 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
   public void actionPerformed(AnActionEvent e, MouseEvent me) {
     if (myBalloon != null && myBalloon.isVisible()) {
       showAll.set(!showAll.get());
-      myPopupField.getTextEditor().setBackground(showAll.get() ? new JBColor(new Color(0xffffe4), new Color(0x494539)) : UIUtil.getTextFieldBackground());
+      myNonProjectCheckBox.setSelected(showAll.get());
+//      myPopupField.getTextEditor().setBackground(showAll.get() ? new JBColor(new Color(0xffffe4), new Color(0x494539)) : UIUtil.getTextFieldBackground());
       rebuildList(myPopupField.getText());
       return;
     }
@@ -561,20 +605,24 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
     final JPanel panel = new JPanel(new BorderLayout()) {
       @Override
       protected void paintComponent(Graphics g) {
-        ((Graphics2D)g).setPaint(new GradientPaint(0,0, new JBColor(new Color(211, 232, 253), new Color(64, 80, 94)), 0, getHeight(),
-                                                   new JBColor(new Color(200, 215, 239), new Color(53, 65, 87))));
+        ((Graphics2D)g).setPaint(new GradientPaint(0,0, new JBColor(new Color(147, 162, 174), new Color(64, 80, 94)), 0, getHeight(),
+                                                   new JBColor(new Color(116, 128, 143), new Color(53, 65, 87))));
         g.fillRect(0, 0, getWidth(), getHeight());
       }
    };
-    final JLabel title = new JLabel(" Search Everywhere:");
+    final JLabel title = new JLabel(" Search Everywhere:       ");
+    final JPanel topPanel = new NonOpaquePanel(new BorderLayout());
     title.setForeground(new JBColor(Gray._50, Gray._180));
     if (SystemInfo.isMac) {
       title.setFont(title.getFont().deriveFont(Font.BOLD, title.getFont().getSize() - 1f));
     } else {
       title.setFont(title.getFont().deriveFont(Font.BOLD));
     }
-    panel.add(title, BorderLayout.WEST);
+    topPanel.add(title, BorderLayout.WEST);
+    myNonProjectCheckBox.setText("Include non-project items (" + getShortcut() + ")");
+    topPanel.add(myNonProjectCheckBox, BorderLayout.EAST);
     panel.add(myPopupField, BorderLayout.CENTER);
+    panel.add(topPanel, BorderLayout.NORTH);
     panel.setBorder(IdeBorderFactory.createEmptyBorder(3, 5, 4, 5));
     final ComponentPopupBuilder builder = JBPopupFactory.getInstance().createComponentPopupBuilder(panel, myPopupField.getTextEditor());
     myBalloon = builder
@@ -595,7 +643,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       showPoint = new RelativePoint(button, new Point(button.getWidth() - panel.getPreferredSize().width, button.getHeight()));
     } else {
       if (parent != null) {
-        int height = UISettings.getInstance().SHOW_MAIN_TOOLBAR ? 95 : 75;
+        int height = UISettings.getInstance().SHOW_MAIN_TOOLBAR ? 135 : 115;
         if (parent instanceof IdeFrameImpl && ((IdeFrameImpl)parent).isInFullScreen()) {
           height -= 20;
         }
@@ -1165,6 +1213,11 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
     }
 
     private void buildClasses(String pattern, boolean includeLibraries) {
+      if (pattern.indexOf('.') != -1) {
+        //todo[kb] it's not a mistake. If we search for "*.png" or "index.xml" in SearchEverywhere
+        //todo[kb] we don't want to see Java classes started with Png or Xml. This approach should be reworked someday.
+        return;
+      }
       boolean includeLibs = includeLibraries || showAll.get();
       int clsCounter = 0;
       final int maxCount = includeLibraries ? 5 : MAX_CLASSES;
@@ -1435,6 +1488,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
                 myCalcThread = null;
                 myPopup = null;
                 showAll.set(false);
+                myNonProjectCheckBox.setSelected(false);
                 ActionToolbarImpl.updateAllToolbarsImmediately();
                 if (myActionEvent != null && myActionEvent.getInputEvent() instanceof MouseEvent) {
                   final Component component = myActionEvent.getInputEvent().getComponent();

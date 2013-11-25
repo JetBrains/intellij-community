@@ -67,8 +67,8 @@ public abstract class GitLogSingleCommitAction extends DumbAwareAction {
   public void update(AnActionEvent e) {
     Data data = Data.collect(e);
     boolean enabled = data.isValid() && data.log.getSelectedCommits().size() == 1;
-    getTemplatePresentation().setVisible(data.isValid());
-    getTemplatePresentation().setEnabled(enabled);
+    e.getPresentation().setVisible(data.isValid());
+    e.getPresentation().setEnabled(enabled);
   }
 
   private static class Data {

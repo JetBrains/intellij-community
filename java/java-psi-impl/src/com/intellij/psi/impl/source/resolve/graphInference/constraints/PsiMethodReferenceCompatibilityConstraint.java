@@ -21,10 +21,12 @@ import com.intellij.psi.impl.source.resolve.graphInference.InferenceSession;
 import com.intellij.psi.impl.source.resolve.graphInference.PsiPolyExpressionUtil;
 import com.intellij.psi.impl.source.tree.java.PsiMethodReferenceExpressionImpl;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.containers.HashMap;
 
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 
 /**
  * User: anna
@@ -120,7 +122,21 @@ public class PsiMethodReferenceCompatibilityConstraint implements ConstraintForm
       return true;
     }
 
-    final PsiElement resolve = myExpression.resolve();
+    Map<PsiMethodReferenceExpression, PsiType> map = PsiMethodReferenceUtil.ourRefs.get();
+    if (map == null) {
+      map = new HashMap<PsiMethodReferenceExpression, PsiType>();
+      PsiMethodReferenceUtil.ourRefs.set(map);
+    }
+    final PsiType added = map.put(myExpression, myT);
+    final PsiElement resolve;
+    try {
+      resolve = myExpression.resolve();
+    }
+    finally {
+      if (added == null) {
+        map.remove(myExpression);
+      }
+    }
     if (resolve == null) {
       return false;
     }
@@ -154,9 +170,7 @@ public class PsiMethodReferenceCompatibilityConstraint implements ConstraintForm
       }
  
       session.initBounds(method.getTypeParameters());
-      if (myExpression.isConstructor()) {
-        session.initBounds(containingClass.getTypeParameters());
-      }
+      session.initBounds(containingClass.getTypeParameters());
       constraints.add(new TypeCompatibilityConstraint(returnType, referencedMethodReturnType));
     }
     

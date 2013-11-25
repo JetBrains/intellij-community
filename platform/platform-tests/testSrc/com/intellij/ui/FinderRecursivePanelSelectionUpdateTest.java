@@ -29,7 +29,7 @@ import java.util.List;
 
 public class FinderRecursivePanelSelectionUpdateTest extends PlatformTestCase {
 
-  @Bombed(year = 2013, month = Calendar.DECEMBER, day = 01, user = "Yann Cebron")
+  @Bombed(year = 2014, month = Calendar.JANUARY, day = 31, user = "Yann Cebron")
   public void testUpdate() throws InterruptedException {
     StringFinderRecursivePanel panel_0 = new StringFinderRecursivePanel(getProject()) {
       @NotNull

@@ -16,6 +16,7 @@
 package com.siyeh.ipp.whileloop;
 
 import com.intellij.psi.*;
+import com.siyeh.ig.psiutils.BoolUtils;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NonNls;
@@ -35,8 +36,18 @@ public class ReplaceDoWhileLoopWithWhileLoopIntention extends Intention {
     }
     final PsiStatement body = doWhileStatement.getBody();
     final PsiElement parent = doWhileStatement.getParent();
-    boolean noBraces = !(parent instanceof PsiCodeBlock);
+    final PsiExpression condition = doWhileStatement.getCondition();
     @NonNls final StringBuilder replacementText = new StringBuilder();
+    if (BoolUtils.isTrue(condition)) {
+      // no trickery needed
+      replacementText.append("while(").append(condition.getText()).append(')');
+      if (body != null) {
+        replacementText.append(body.getText());
+      }
+      replaceStatement(replacementText.toString(), doWhileStatement);
+      return;
+    }
+    final boolean noBraces = !(parent instanceof PsiCodeBlock);
     if (noBraces) {
       final PsiElement[] parentChildren = parent.getChildren();
       for (PsiElement child : parentChildren) {
@@ -60,7 +71,10 @@ public class ReplaceDoWhileLoopWithWhileLoopIntention extends Intention {
             for (PsiElement declaredElement : declaredElements) {
               if (declaredElement instanceof PsiVariable) {
                 final PsiVariable variable = (PsiVariable)declaredElement;
-                variable.getModifierList().setModifierProperty(PsiModifier.FINAL, false);
+                final PsiModifierList modifierList = variable.getModifierList();
+                if (modifierList != null) {
+                  modifierList.setModifierProperty(PsiModifier.FINAL, false);
+                }
               }
             }
           }
@@ -82,7 +96,6 @@ public class ReplaceDoWhileLoopWithWhileLoopIntention extends Intention {
       }
     }
     replacementText.append("while(");
-    final PsiExpression condition = doWhileStatement.getCondition();
     if (condition != null) {
       replacementText.append(condition.getText());
     }

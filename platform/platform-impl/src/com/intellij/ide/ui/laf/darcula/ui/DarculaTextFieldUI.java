@@ -115,7 +115,7 @@ public class DarculaTextFieldUI extends BasicTextFieldUI {
   }
 
   protected Rectangle getDrawingRect() {
-    final JTextComponent c = getComponent();
+    final JTextComponent c = myTextField;
     final JBInsets i = JBInsets.create(c.getInsets());
     final int x = i.right - 4 - 16;
     final int y = i.top - 3;
