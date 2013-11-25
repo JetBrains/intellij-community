@@ -82,6 +82,10 @@ public class NewLambdaHighlightingTest extends LightDaemonAnalyzerTestCase {
     doTest();
   }
 
+  public void testArgumentOfAnonymousClass() throws Exception {
+    doTest();
+  }
+
   private void doTest() {
     doTest(false);
   }
