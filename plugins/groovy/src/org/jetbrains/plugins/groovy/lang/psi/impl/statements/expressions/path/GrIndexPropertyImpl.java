@@ -420,7 +420,7 @@ public class GrIndexPropertyImpl extends GrExpressionImpl implements GrIndexProp
     @NotNull
     @Override
     public ResolveResult[] multiResolve(boolean incompleteCode) {
-      return resolveImpl(incompleteCode, null, null);
+      return GrIndexPropertyImpl.this.multiResolve(incompleteCode);
     }
   }
 }
