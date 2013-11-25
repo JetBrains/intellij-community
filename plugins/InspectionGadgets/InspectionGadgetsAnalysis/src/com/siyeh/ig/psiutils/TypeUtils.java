@@ -23,7 +23,22 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.HashMap;
+import java.util.Map;
+
 public class TypeUtils {
+
+  private static final Map<PsiType, Integer> typePrecisions = new HashMap<PsiType, Integer>(7);
+
+  static {
+    typePrecisions.put(PsiType.BYTE, 1);
+    typePrecisions.put(PsiType.CHAR, 2);
+    typePrecisions.put(PsiType.SHORT, 2);
+    typePrecisions.put(PsiType.INT, 3);
+    typePrecisions.put(PsiType.LONG, 4);
+    typePrecisions.put(PsiType.FLOAT, 5);
+    typePrecisions.put(PsiType.DOUBLE, 6);
+  }
 
   private TypeUtils() {}
 
@@ -48,6 +63,12 @@ public class TypeUtils {
 
   public static PsiClassType getStringType(@NotNull PsiElement context) {
     return getType(CommonClassNames.JAVA_LANG_STRING, context);
+  }
+
+  public static boolean isNarrowingConversion(PsiType operandType, PsiType castType) {
+    final Integer operandPrecision = typePrecisions.get(operandType);
+    final Integer castPrecision = typePrecisions.get(castType);
+    return operandPrecision.intValue() > castPrecision.intValue();
   }
 
   public static boolean isJavaLangObject(@Nullable PsiType targetType) {
