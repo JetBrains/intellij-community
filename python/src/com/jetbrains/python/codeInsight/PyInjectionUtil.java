@@ -44,7 +44,7 @@ public class PyInjectionUtil {
   @Nullable
   public static PsiElement getLargestStringLiteral(@NotNull PsiElement context) {
     PsiElement element = null;
-    for (PsiElement current = context; current != null && isStringLiteralPart(current); current = current.getParent()) {
+    for (PsiElement current = context; current != null && isStringLiteralPart(current, element); current = current.getParent()) {
       element = current;
     }
     return element;
@@ -58,24 +58,32 @@ public class PyInjectionUtil {
     processStringLiteral(element, registrar, "", "", Formatting.PERCENT);
   }
 
-  private static boolean isStringLiteralPart(@NotNull PsiElement element) {
-    if (element instanceof PyStringLiteralExpression) {
+  private static boolean isStringLiteralPart(@NotNull PsiElement element, @Nullable PsiElement context) {
+    if (element == context) {
+      return true;
+    }
+    else if (element instanceof PyStringLiteralExpression) {
       return true;
     }
     else if (element instanceof PyParenthesizedExpression) {
       final PyExpression contained = ((PyParenthesizedExpression)element).getContainedExpression();
-      return contained != null && isStringLiteralPart(contained);
+      return contained != null && isStringLiteralPart(contained, context);
     }
     else if (element instanceof PyBinaryExpression) {
       final PyBinaryExpression expr = (PyBinaryExpression)element;
       final PyExpression left = expr.getLeftExpression();
       final PyExpression right = expr.getRightExpression();
-      return (expr.isOperator("+") && (isStringLiteralPart(left) || right != null && isStringLiteralPart(right))) ||
-              expr.isOperator("%") && isStringLiteralPart(left);
+      if (expr.isOperator("+")) {
+        return isStringLiteralPart(left, context) || right != null && isStringLiteralPart(right, context);
+      }
+      else if (expr.isOperator("%")) {
+        return right != context && isStringLiteralPart(left, context);
+      }
+      return false;
     }
     else if (element instanceof PyCallExpression) {
       final PyExpression qualifier = getFormatCallQualifier((PyCallExpression)element);
-      return qualifier != null && isStringLiteralPart(qualifier);
+      return qualifier != null && isStringLiteralPart(qualifier, context);
     }
     return false;
   }
@@ -147,9 +155,9 @@ public class PyInjectionUtil {
       final PyBinaryExpression expr = (PyBinaryExpression)element;
       final PyExpression left = expr.getLeftExpression();
       final PyExpression right = expr.getRightExpression();
-      final boolean isLeftString = isStringLiteralPart(left);
+      final boolean isLeftString = isStringLiteralPart(left, null);
       if (expr.isOperator("+")) {
-        final boolean isRightString = right != null && isStringLiteralPart(right);
+        final boolean isRightString = right != null && isStringLiteralPart(right, null);
         if (isLeftString) {
           processStringLiteral(left, registrar, prefix, isRightString ? "" : missingValue, formatting);
         }
