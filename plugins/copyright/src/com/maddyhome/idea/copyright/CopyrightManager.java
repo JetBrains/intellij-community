@@ -164,13 +164,13 @@ public class CopyrightManager extends AbstractProjectComponent implements Persis
         state.addContent(map);
       }
 
-      if (myDefaultCopyright != null) {
-        state.setAttribute(DEFAULT, myDefaultCopyright.getName());
-      }
+      boolean hasAttributes = myDefaultCopyright != null;
+      // CR-IC-3403#CFR-62470, idea <= 12 compatibility
+      state.setAttribute(DEFAULT, hasAttributes ? myDefaultCopyright.getName() : "");
 
       myOptions.writeExternal(state);
 
-      return state.getChildren().isEmpty() && state.getAttributes().isEmpty() ? null : state;
+      return !hasAttributes && state.getChildren().isEmpty() ? null : state;
     }
     catch (WriteExternalException e) {
       LOG.error(e);
