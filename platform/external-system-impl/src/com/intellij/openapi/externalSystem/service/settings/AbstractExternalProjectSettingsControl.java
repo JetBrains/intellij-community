@@ -37,6 +37,7 @@ public abstract class AbstractExternalProjectSettingsControl<S extends ExternalP
   @NotNull private S myInitialSettings;
 
   private JBCheckBox myUseAutoImportBox;
+  private JBCheckBox myCreateEmptyContentRootDirectoriesBox;
   private boolean myHideUseAutoImportBox;
 
   protected AbstractExternalProjectSettingsControl(@NotNull S initialSettings) {
@@ -57,13 +58,18 @@ public abstract class AbstractExternalProjectSettingsControl<S extends ExternalP
     myUseAutoImportBox = new JBCheckBox(ExternalSystemBundle.message("settings.label.use.auto.import"));
     myUseAutoImportBox.setVisible(!myHideUseAutoImportBox);
     canvas.add(myUseAutoImportBox, ExternalSystemUiUtil.getFillLineConstraints(indentLevel));
+    myCreateEmptyContentRootDirectoriesBox =
+      new JBCheckBox(ExternalSystemBundle.message("settings.label.create.empty.content.root.directories"));
+    canvas.add(myCreateEmptyContentRootDirectoriesBox, ExternalSystemUiUtil.getFillLineConstraints(indentLevel));
     fillExtraControls(canvas, indentLevel); 
   }
   
   protected abstract void fillExtraControls(@NotNull PaintAwarePanel content, int indentLevel);
 
   public boolean isModified() {
-    return myUseAutoImportBox.isSelected() != getInitialSettings().isUseAutoImport() || isExtraSettingModified();
+    return myUseAutoImportBox.isSelected() != getInitialSettings().isUseAutoImport()
+           || myCreateEmptyContentRootDirectoriesBox.isSelected() != getInitialSettings().isCreateEmptyContentRootDirectories()
+           || isExtraSettingModified();
   }
 
   protected abstract boolean isExtraSettingModified();
@@ -74,6 +80,7 @@ public abstract class AbstractExternalProjectSettingsControl<S extends ExternalP
 
   public void reset(boolean isDefaultModuleCreation) {
     myUseAutoImportBox.setSelected(getInitialSettings().isUseAutoImport());
+    myCreateEmptyContentRootDirectoriesBox.setSelected(getInitialSettings().isCreateEmptyContentRootDirectories());
     resetExtraSettings(isDefaultModuleCreation);
   }
 
@@ -83,6 +90,8 @@ public abstract class AbstractExternalProjectSettingsControl<S extends ExternalP
   public void apply(@NotNull S settings) {
     settings.setUseAutoImport(myUseAutoImportBox.isSelected());
     myInitialSettings.setUseAutoImport(myUseAutoImportBox.isSelected());
+    settings.setCreateEmptyContentRootDirectories(myCreateEmptyContentRootDirectoriesBox.isSelected());
+    myInitialSettings.setCreateEmptyContentRootDirectories(myCreateEmptyContentRootDirectoriesBox.isSelected());
     if (myInitialSettings.getExternalProjectPath() != null) {
       settings.setExternalProjectPath(myInitialSettings.getExternalProjectPath());
     }
