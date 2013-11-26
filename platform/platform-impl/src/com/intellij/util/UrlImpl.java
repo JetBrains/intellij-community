@@ -103,6 +103,11 @@ public final class UrlImpl implements Url {
       return externalForm;
     }
 
+    // relative path - special url, encoding is not required
+    if (path.charAt(0) != '/' && !isInLocalFileSystem()) {
+      return toDecodedForm();
+    }
+
     String result = Urls.toUriWithoutParameters(this).toASCIIString();
     if (parameters != null) {
       result += parameters;
