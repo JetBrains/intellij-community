@@ -1555,12 +1555,14 @@
             icon="JetgroovyIcons.Groovy.GroovyDoc">
       <add-to-group group-id="ToolsMenu" anchor="last"/>
     </action>
+<!--
     <action id="Groovy.Shell"
             class="org.jetbrains.plugins.groovy.console.GroovyShellAction"
             text="Groovy Shell..." description="Launch Groovy Shell"
             icon="JetgroovyIcons.Groovy.Groovy_16x16">
       <add-to-group group-id="ToolsMenu" anchor="last"/>
     </action>
+-->
 
     <action id="Groovy.Console"
             class="org.jetbrains.plugins.groovy.console.GroovyConsoleAction"
