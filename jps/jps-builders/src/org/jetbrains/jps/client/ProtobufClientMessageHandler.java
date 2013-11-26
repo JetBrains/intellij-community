@@ -34,7 +34,7 @@ import java.util.concurrent.Executor;
 */
 @ChannelHandler.Sharable
 final class ProtobufClientMessageHandler<T extends ProtobufResponseHandler> extends SimpleChannelInboundHandler<MessageLite> {
-  private final ConcurrentHashMap<UUID, RequestFuture<T>> myHandlers = new ConcurrentHashMap<UUID, RequestFuture<T>>();
+  private final ConcurrentHashMap<UUID, RequestFuture<T>> myHandlers = new ConcurrentHashMap<UUID, RequestFuture<T>>(16, 0.75f, 1);
   @NotNull
   private final UUIDGetter myUuidGetter;
   private final SimpleProtobufClient myClient;

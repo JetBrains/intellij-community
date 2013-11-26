@@ -15,10 +15,10 @@
  */
 package org.jetbrains.jps.service.impl;
 
+import com.intellij.util.containers.ConcurrentHashMap;
 import org.jetbrains.jps.service.JpsServiceManager;
 
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * @author nik
