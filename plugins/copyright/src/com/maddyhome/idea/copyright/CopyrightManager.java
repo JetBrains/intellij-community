@@ -33,6 +33,7 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packageDependencies.DependencyValidationManager;
 import com.intellij.psi.PsiFile;
@@ -58,11 +59,11 @@ import java.util.*;
        storages = {@Storage(file = StoragePathMacros.PROJECT_FILE),
                    @Storage(file = StoragePathMacros.PROJECT_CONFIG_DIR + "/copyright/", scheme = StorageScheme.DIRECTORY_BASED,
                             stateSplitter = CopyrightManager.CopyrightStateSplitter.class)})
-public class CopyrightManager extends AbstractProjectComponent implements JDOMExternalizable, PersistentStateComponent<Element> {
+public class CopyrightManager extends AbstractProjectComponent implements PersistentStateComponent<Element> {
   private static final Logger LOG = Logger.getInstance("#" + CopyrightManager.class.getName());
   @Nullable
   private CopyrightProfile myDefaultCopyright = null;
-  private final LinkedHashMap<String, String> myModule2Copyrights = new LinkedHashMap<String, String>();
+  private final LinkedHashMap<String, String> myModuleToCopyrights = new LinkedHashMap<String, String>();
   private final Map<String, CopyrightProfile> myCopyrights = new HashMap<String, CopyrightProfile>();
   private final Options myOptions = new Options();
 
@@ -141,63 +142,61 @@ public class CopyrightManager extends AbstractProjectComponent implements JDOMEx
   }
 
   @Override
-  public void readExternal(Element element) throws InvalidDataException {
-    clearCopyrights();
-    final Element module2copyright = element.getChild(MODULE2COPYRIGHT);
-    if (module2copyright != null) {
-      for (Object o : module2copyright.getChildren(ELEMENT)) {
-        final Element el = (Element)o;
-        final String moduleName = el.getAttributeValue(MODULE);
-        final String copyrightName = el.getAttributeValue(COPYRIGHT);
-        myModule2Copyrights.put(moduleName, copyrightName);
-      }
-    }
-    for (Object o : element.getChildren(COPYRIGHT)) {
-      final CopyrightProfile copyrightProfile = new CopyrightProfile();
-      copyrightProfile.readExternal((Element)o);
-      myCopyrights.put(copyrightProfile.getName(), copyrightProfile);
-    }
-    myDefaultCopyright = myCopyrights.get(element.getAttributeValue(DEFAULT));
-    myOptions.readExternal(element);
-  }
-
-  @Override
-  public void writeExternal(Element element) throws WriteExternalException {
-    for (CopyrightProfile copyright : myCopyrights.values()) {
-      final Element copyrightElement = new Element(COPYRIGHT);
-      copyright.writeExternal(copyrightElement);
-      element.addContent(copyrightElement);
-    }
-    final Element map = new Element(MODULE2COPYRIGHT);
-    for (String moduleName : myModule2Copyrights.keySet()) {
-      final Element setting = new Element(ELEMENT);
-      setting.setAttribute(MODULE, moduleName);
-      setting.setAttribute(COPYRIGHT, myModule2Copyrights.get(moduleName));
-      map.addContent(setting);
-    }
-    element.addContent(map);
-    element.setAttribute(DEFAULT, myDefaultCopyright != null ? myDefaultCopyright.getName() : "");
-    myOptions.writeExternal(element);
-  }
-
-
-  @Override
   public Element getState() {
     try {
-      final Element e = new Element("settings");
-      writeExternal(e);
-      return e;
+      Element state = new Element("settings");
+      if (!myCopyrights.isEmpty()) {
+        for (CopyrightProfile copyright : myCopyrights.values()) {
+          final Element copyrightElement = new Element(COPYRIGHT);
+          copyright.writeExternal(copyrightElement);
+          state.addContent(copyrightElement);
+        }
+      }
+
+      if (!myModuleToCopyrights.isEmpty()) {
+        final Element map = new Element(MODULE2COPYRIGHT);
+        for (String moduleName : myModuleToCopyrights.keySet()) {
+          final Element setting = new Element(ELEMENT);
+          setting.setAttribute(MODULE, moduleName);
+          setting.setAttribute(COPYRIGHT, myModuleToCopyrights.get(moduleName));
+          map.addContent(setting);
+        }
+        state.addContent(map);
+      }
+
+      if (myDefaultCopyright != null) {
+        state.setAttribute(DEFAULT, myDefaultCopyright.getName());
+      }
+
+      myOptions.writeExternal(state);
+
+      return state.getChildren().isEmpty() && state.getAttributes().isEmpty() ? null : state;
     }
-    catch (WriteExternalException e1) {
-      LOG.error(e1);
+    catch (WriteExternalException e) {
+      LOG.error(e);
       return null;
     }
   }
 
   @Override
   public void loadState(Element state) {
+    clearCopyrights();
+
+    final Element moduleToCopyright = state.getChild(MODULE2COPYRIGHT);
+    if (moduleToCopyright != null) {
+      for (Element element : moduleToCopyright.getChildren(ELEMENT)) {
+        myModuleToCopyrights.put(element.getAttributeValue(MODULE), element.getAttributeValue(COPYRIGHT));
+      }
+    }
+
     try {
-      readExternal(state);
+      for (Element element : state.getChildren(COPYRIGHT)) {
+        final CopyrightProfile copyrightProfile = new CopyrightProfile();
+        copyrightProfile.readExternal(element);
+        myCopyrights.put(copyrightProfile.getName(), copyrightProfile);
+      }
+      myDefaultCopyright = myCopyrights.get(StringUtil.notNullize(state.getAttributeValue(DEFAULT)));
+      myOptions.readExternal(state);
     }
     catch (InvalidDataException e) {
       LOG.error(e);
@@ -205,7 +204,7 @@ public class CopyrightManager extends AbstractProjectComponent implements JDOMEx
   }
 
   public Map<String, String> getCopyrightsMapping() {
-    return myModule2Copyrights;
+    return myModuleToCopyrights;
   }
 
   public void setDefaultCopyright(@Nullable CopyrightProfile copyright) {
@@ -223,8 +222,8 @@ public class CopyrightManager extends AbstractProjectComponent implements JDOMEx
 
   public void removeCopyright(CopyrightProfile copyrightProfile) {
     myCopyrights.values().remove(copyrightProfile);
-    for (Iterator<String> it = myModule2Copyrights.keySet().iterator(); it.hasNext();) {
-      final String profileName = myModule2Copyrights.get(it.next());
+    for (Iterator<String> it = myModuleToCopyrights.keySet().iterator(); it.hasNext();) {
+      final String profileName = myModuleToCopyrights.get(it.next());
       if (profileName.equals(copyrightProfile.getName())) {
         it.remove();
       }
@@ -234,15 +233,15 @@ public class CopyrightManager extends AbstractProjectComponent implements JDOMEx
   public void clearCopyrights() {
     myDefaultCopyright = null;
     myCopyrights.clear();
-    myModule2Copyrights.clear();
+    myModuleToCopyrights.clear();
   }
 
   public void mapCopyright(String scopeName, String copyrightProfileName) {
-    myModule2Copyrights.put(scopeName, copyrightProfileName);
+    myModuleToCopyrights.put(scopeName, copyrightProfileName);
   }
 
   public void unmapCopyright(String scopeName) {
-    myModule2Copyrights.remove(scopeName);
+    myModuleToCopyrights.remove(scopeName);
   }
 
   public Collection<CopyrightProfile> getCopyrights() {
@@ -250,7 +249,7 @@ public class CopyrightManager extends AbstractProjectComponent implements JDOMEx
   }
 
   public boolean hasAnyCopyrights() {
-    return myDefaultCopyright != null || !myModule2Copyrights.isEmpty();
+    return myDefaultCopyright != null || !myModuleToCopyrights.isEmpty();
   }
 
   @Nullable
@@ -258,13 +257,13 @@ public class CopyrightManager extends AbstractProjectComponent implements JDOMEx
     final VirtualFile virtualFile = file.getVirtualFile();
     if (virtualFile == null || myOptions.getOptions(virtualFile.getFileType().getName()).getFileTypeOverride() == LanguageOptions.NO_COPYRIGHT) return null;
     final DependencyValidationManager validationManager = DependencyValidationManager.getInstance(myProject);
-    for (String scopeName : myModule2Copyrights.keySet()) {
+    for (String scopeName : myModuleToCopyrights.keySet()) {
       final NamedScope namedScope = validationManager.getScope(scopeName);
       if (namedScope != null) {
         final PackageSet packageSet = namedScope.getValue();
         if (packageSet != null) {
           if (packageSet.contains(file, validationManager)) {
-            final CopyrightProfile profile = myCopyrights.get(myModule2Copyrights.get(scopeName));
+            final CopyrightProfile profile = myCopyrights.get(myModuleToCopyrights.get(scopeName));
             if (profile != null) {
               return profile;
             }
@@ -330,7 +329,7 @@ public class CopyrightManager extends AbstractProjectComponent implements JDOMEx
             target.addContent(state);
           }
           for (Object attr : element.getAttributes()) {
-            target.setAttribute((Attribute)((Attribute)attr).clone());
+            target.setAttribute(((Attribute)attr).clone());
           }
         }
       }
