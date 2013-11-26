@@ -25,6 +25,7 @@ package com.intellij.psi.scope.util;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
@@ -318,7 +319,13 @@ public class PsiScopesUtil {
               if (initializer instanceof PsiNewExpression) {
                 final PsiAnonymousClass anonymousClass = ((PsiNewExpression)initializer).getAnonymousClass();
                 if (anonymousClass != null && type.equals(anonymousClass.getBaseClassType())) {
-                  type = initializer.getType();
+                  final PsiMethod[] refMethods = anonymousClass.findMethodsByName(methodCall.getMethodExpression().getReferenceName(), false);
+                  if (refMethods.length > 0) {
+                    final PsiClass baseClass = PsiUtil.resolveClassInType(type);
+                    if (baseClass != null && !hasCovariantOverriding(baseClass, refMethods)) {
+                      type = initializer.getType();
+                    }
+                  }
                 }
               }
             }
@@ -379,6 +386,18 @@ public class PsiScopesUtil {
         processDummyConstructor(processor, aClass);
       }
     }
+  }
+
+  private static boolean hasCovariantOverriding(PsiClass baseClass, PsiMethod[] refMethods) {
+    for (PsiMethod method : refMethods) {
+      final PsiType methodReturnType = method.getReturnType();
+      for (PsiMethod superMethod : method.findSuperMethods(baseClass)) {
+        if (!Comparing.equal(methodReturnType, superMethod.getReturnType())) {
+          return true;
+        }
+      }
+    }
+    return false;
   }
 
   private static boolean processQualifierType(@NotNull final PsiType type,
