@@ -77,6 +77,10 @@ public class IdeaTestUtil extends PlatformTestUtil {
     return JavaSdk.getInstance().createJdk(name, getMockJdk17Path().getPath(), false);
   }
 
+  public static Sdk getMockJdk18() {
+    return JavaSdk.getInstance().createJdk("java 1.8", getMockJdk18Path().getPath(), false);
+  }
+
   public static Sdk getMockJdk14() {
     return JavaSdk.getInstance().createJdk("java 1.4", getMockJdk14Path().getPath(), false);
   }
@@ -87,6 +91,10 @@ public class IdeaTestUtil extends PlatformTestUtil {
 
   public static File getMockJdk17Path() {
     return getPathForJdkNamed("mockJDK-1.7");
+  }
+
+  public static File getMockJdk18Path() {
+    return getPathForJdkNamed("mockJDK-1.8");
   }
 
   private static File getPathForJdkNamed(String name) {
@@ -130,4 +138,6 @@ public class IdeaTestUtil extends PlatformTestUtil {
       }
     });
   }
+
+  
 }
