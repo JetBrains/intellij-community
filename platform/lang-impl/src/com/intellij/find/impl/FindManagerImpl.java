@@ -454,7 +454,7 @@ public class FindManagerImpl extends FindManager implements PersistentStateCompo
       SyntaxHighlighter highlighter = getHighlighter(file, lang);
 
       if (highlighter == null) {
-        LOG.error("Syntax highlighter is null:"+file);
+        // no syntax highlighter -> no search
         return NOT_FOUND_RESULT;
       }
 
