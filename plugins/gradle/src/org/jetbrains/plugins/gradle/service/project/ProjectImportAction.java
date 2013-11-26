@@ -26,10 +26,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.Serializable;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author Vladislav.Soroka
@@ -114,14 +111,34 @@ public class ProjectImportAction implements BuildAction<ProjectImportAction.AllM
       return null;
     }
 
+    /**
+     * Return collection path of modules provides the model
+     * @param modelClazz extra project model
+     * @return modules path collection
+     */
+    @NotNull
+    public Collection<String> findModulesWithModel(@NotNull Class modelClazz) {
+      List<String> modules = new ArrayList<String>();
+      for (Map.Entry<String, Object> set : projectsByPath.entrySet()) {
+        if (modelClazz.isInstance(set.getValue())) {
+          modules.add(extractModulePath(modelClazz, set.getKey()));
+        }
+      }
+      return modules;
+    }
+
     public void addExtraProject(@NotNull Object project, @NotNull Class modelClazz, @NotNull IdeaModule module) {
       projectsByPath.put(extractMapKey(modelClazz, module), project);
     }
 
-
     @NotNull
     private static String extractMapKey(Class modelClazz, @NotNull IdeaModule module) {
-      return modelClazz.getName() + "@" + module.getGradleProject().getPath();
+      return modelClazz.getName() + '@' + module.getGradleProject().getPath();
+    }
+
+    @NotNull
+    private static String extractModulePath(Class modelClazz, String key) {
+      return key.replaceFirst(modelClazz.getName() + '@', "");
     }
 
     @Override
