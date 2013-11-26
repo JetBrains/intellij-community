@@ -214,7 +214,8 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub>
   @Override
   @NotNull
   public LanguageLevel getLanguageLevel() {
-    return LanguageLevel.HIGHEST;  // library classes should inherit language level from modules where they are referenced
+    List stubs = getStub().getChildrenStubs();
+    return !stubs.isEmpty() ? ((PsiClassStub<?>)stubs.get(0)).getLanguageLevel() : LanguageLevel.HIGHEST;
   }
 
   @Override
@@ -289,7 +290,7 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub>
           String fileName = (classes.length > 0 ? classes[0].getName() : file.getNameWithoutExtension()) + "." + ext;
           PsiFileFactory factory = PsiFileFactory.getInstance(getManager().getProject());
           PsiFile mirror = factory.createFileFromText(fileName, JavaLanguage.INSTANCE, mirrorText, false, false);
-          mirror.putUserData(PsiUtil.FILE_LANGUAGE_LEVEL_KEY, getSourceLanguageLevel());
+          mirror.putUserData(PsiUtil.FILE_LANGUAGE_LEVEL_KEY, getLanguageLevel());
           mirrorTreeElement = SourceTreeToPsiMap.psiToTreeNotNull(mirror);
 
           // IMPORTANT: do not take lock too early - FileDocumentManager.saveToString() can run write action
@@ -309,12 +310,6 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub>
       }
     }
     return mirrorTreeElement.getPsi();
-  }
-
-  @NotNull
-  public LanguageLevel getSourceLanguageLevel() {
-    final List stubs = getStub().getChildrenStubs();
-    return !stubs.isEmpty() ? ((PsiClassStub<?>)stubs.get(0)).getLanguageLevel() : LanguageLevel.HIGHEST;
   }
 
   @Override
