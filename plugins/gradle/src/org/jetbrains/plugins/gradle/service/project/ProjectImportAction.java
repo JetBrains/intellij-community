@@ -15,7 +15,6 @@
  */
 package org.jetbrains.plugins.gradle.service.project;
 
-import com.intellij.util.containers.ContainerUtil;
 import org.gradle.tooling.BuildAction;
 import org.gradle.tooling.BuildController;
 import org.gradle.tooling.model.build.BuildEnvironment;
@@ -104,12 +103,13 @@ public class ProjectImportAction implements BuildAction<ProjectImportAction.AllM
 
     /**
      * Return collection path of modules provides the model
+     *
      * @param modelClazz extra project model
      * @return modules path collection
      */
     @NotNull
     public Collection<String> findModulesWithModel(@NotNull Class modelClazz) {
-      List<String> modules = ContainerUtil.newArrayList();
+      List<String> modules = new ArrayList<String>();
       for (Map.Entry<String, Object> set : projectsByPath.entrySet()) {
         if (modelClazz.isInstance(set.getValue())) {
           modules.add(extractModulePath(modelClazz, set.getKey()));
