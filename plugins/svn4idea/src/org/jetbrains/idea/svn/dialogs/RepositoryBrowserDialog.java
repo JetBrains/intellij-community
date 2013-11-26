@@ -1062,7 +1062,7 @@ public class RepositoryBrowserDialog extends DialogWrapper {
     if (dirEntry != null) {
       if (dirEntry.getRepositoryRoot() != null) {
         if (! dirEntry.getRepositoryRoot().equals(url)) {
-          relativePath = SVNPathUtil.getRelativePath(dirEntry.getRepositoryRoot().toString(), url.toString());
+          relativePath = SVNPathUtil.getRelativePath(dirEntry.getRepositoryRoot().toString(), url.toDecodedString());
         }
       } else {
         relativePath = dirEntry.getRelativePath();
