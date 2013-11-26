@@ -258,6 +258,11 @@ public class MavenServerManager extends RemoteObjectWrapper<MavenServer> impleme
           params.getVMParametersList().addParametersString("-Xdebug -Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=" + mavenEmbedderDebugPort);
         }
 
+        String mavenEmbedderParameters = System.getProperty("idea.maven.embedder.parameters");
+        if (mavenEmbedderParameters != null) {
+          params.getProgramParametersList().addParametersString(mavenEmbedderParameters);
+        }
+
         return params;
       }
 
@@ -303,9 +308,9 @@ public class MavenServerManager extends RemoteObjectWrapper<MavenServer> impleme
     String root = pluginFileOrDir.getParent();
 
     boolean useMaven2 = this.useMaven2;
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
-      useMaven2 = true;
-    }
+//    if (ApplicationManager.getApplication().isUnitTestMode()) {
+//      useMaven2 = true;
+//    }
 
     if (pluginFileOrDir.isDirectory()) {
       classpath.add(new File(root, "maven-server-api"));
