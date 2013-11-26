@@ -32,11 +32,12 @@
     <langCodeStyleSettingsProvider implementation="com.jetbrains.json.formatter.JsonLanguageCodeStyleSettingsProvider"/>
     <lang.formatter language="JSON" implementationClass="com.jetbrains.json.formatter.JsonFormattingBuilderModel"/>
     <lang.braceMatcher language="JSON" implementationClass="com.jetbrains.json.JsonBraceMatcher"/>
+    <quoteHandler fileType="JSON" className="com.jetbrains.json.JsonQuoteHandler"/>
 
     <!-- Codeinsight -->
     <breadcrumbsInfoProvider implementation="com.jetbrains.json.breadcrumbs.JsonBreadcrumbsProvider"/>
     <completion.contributor language="JSON" implementationClass="com.jetbrains.json.codeinsight.JsonCompletionContributor"/>
-
+    <annotator language="JSON" implementationClass="com.jetbrains.json.codeinsight.JsonStringLiteralAnnotator"/>
 
   </extensions>
 </idea-plugin>
