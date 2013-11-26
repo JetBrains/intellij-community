@@ -1008,6 +1008,10 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
         }
 
         StubElement currentStubTree = ((IStubFileElementType)contentElementType).getBuilder().buildStubTree(this);
+        if (currentStubTree == null) {
+          throw new AssertionError("Stub tree wasn't built for " + contentElementType + "; file: " + this);
+        }
+
         tree = new StubTree((PsiFileStub)currentStubTree);
         tree.setDebugInfo("created in calcStubTree");
         try {
