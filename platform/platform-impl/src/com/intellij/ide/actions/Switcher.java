@@ -490,9 +490,9 @@ public class Switcher extends AnAction implements DumbAware {
       this.add(toolWindows, BorderLayout.WEST);
       if (filesModel.size() > 0) {
         files.setAlignmentY(1f);
-        if (files.getModel().getSize() > 30) {
+        if (files.getModel().getSize() > 20) {
           final JScrollPane pane = ScrollPaneFactory.createScrollPane(files, true);
-          pane.setPreferredSize(new Dimension(files.getPreferredSize().width + 10, 30 * 20));
+          pane.setPreferredSize(new Dimension(files.getPreferredSize().width + 10, 20 * 20));
           pane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
           this.add(pane, BorderLayout.EAST);
         } else {
@@ -556,16 +556,9 @@ public class Switcher extends AnAction implements DumbAware {
         }.registerCustomShortcutSet(CustomShortcutSet.fromString("ESCAPE"), this, myPopup);
       }
 
-      Component comp = null;
-      final EditorWindow result = FileEditorManagerEx.getInstanceEx(project).getActiveWindow().getResult();
-      if (result != null) {
-        comp = result.getOwner();
-      }
-      if (comp == null) {
-        comp = ideFrame.getContentPane();
-      }
+      final Window window = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusedWindow();
       myAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, myPopup);
-      myPopup.showInCenterOf(comp);
+      myPopup.showInCenterOf(window);
     }
 
 
