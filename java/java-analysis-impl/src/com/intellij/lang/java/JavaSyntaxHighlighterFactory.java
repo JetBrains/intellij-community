@@ -49,7 +49,7 @@ public class JavaSyntaxHighlighterFactory extends SyntaxHighlighterFactory imple
     if (project != null && file != null) {
       PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
       if (psiFile instanceof ClsFileImpl) {
-        LanguageLevel sourceLevel = ((ClsFileImpl)psiFile).getSourceLanguageLevel();
+        LanguageLevel sourceLevel = ((ClsFileImpl)psiFile).getLanguageLevel();
         return new JavaFileHighlighter(sourceLevel);
       }
     }
