@@ -51,4 +51,9 @@ public class XHtmlFileType extends HtmlFileType {
   public Icon getIcon() {
     return AllIcons.FileTypes.Xhtml;
   }
+
+  @Override
+  public boolean isCaseSensitive() {
+    return true;
+  }
 }
