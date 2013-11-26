@@ -23,7 +23,7 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.SourceFolder;
-import com.intellij.openapi.roots.ui.configuration.ModuleSourceRootEditHandler;
+import com.intellij.openapi.roots.ui.configuration.SourceRootPresentation;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.JavaDirectoryService;
@@ -63,7 +63,7 @@ public class JavaDirectoryIconProvider extends IconProvider implements DumbAware
         }
       }
       else if (sourceFolder != null) {
-        symbolIcon = ModuleSourceRootEditHandler.getEditHandler(sourceFolder.getRootType()).getRootIcon();
+        symbolIcon = SourceRootPresentation.getSourceRootIcon(sourceFolder);
       }
       else if (JavaDirectoryService.getInstance().getPackage(psiDirectory) != null) {
         symbolIcon = PlatformIcons.PACKAGE_ICON;

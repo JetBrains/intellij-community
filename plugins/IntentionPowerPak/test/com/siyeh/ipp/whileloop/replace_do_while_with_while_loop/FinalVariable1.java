@@ -5,6 +5,10 @@ class FinalVariable1 {
     <caret>do {
       final int j = 10;
       System.out.println(j);
-    } while (true);
+    } while (c());
+  }
+
+  boolean c() {
+    return true;
   }
 }

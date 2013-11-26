@@ -18,6 +18,7 @@ package org.jetbrains.idea.svn.checkout;
 import com.intellij.lifecycle.PeriodicalTasksCloser;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
@@ -43,6 +44,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.*;
 import org.jetbrains.idea.svn.actions.ExclusiveBackgroundVcsAction;
 import org.jetbrains.idea.svn.actions.SvnExcludingIgnoredOperation;
+import org.jetbrains.idea.svn.api.ClientFactory;
 import org.jetbrains.idea.svn.checkin.IdeaCommitHandler;
 import org.jetbrains.idea.svn.commandLine.CommitEventHandler;
 import org.jetbrains.idea.svn.dialogs.CheckoutDialog;
@@ -81,6 +83,16 @@ public class SvnCheckoutProvider implements CheckoutProvider {
     }
   }
 
+  @NotNull
+  public static ClientFactory getFactory(@NotNull SvnVcs vcs, @NotNull WorkingCopyFormat format) throws VcsException {
+    ClientFactory settingsFactory = vcs.getFactoryFromSettings();
+    ClientFactory otherFactory = vcs.getOtherFactory();
+    List<WorkingCopyFormat> settingsFactoryFormats = settingsFactory.createCheckoutClient().getSupportedFormats();
+    List<WorkingCopyFormat> otherFactoryFormats = otherFactory.createCheckoutClient().getSupportedFormats();
+
+    return settingsFactoryFormats.contains(format) || !otherFactoryFormats.contains(format) ? settingsFactory : otherFactory;
+  }
+
   public static void checkout(final Project project,
                                final File target,
                                final String url,
@@ -101,7 +113,7 @@ public class SvnCheckoutProvider implements CheckoutProvider {
         ISVNEventHandler handler = new CheckoutEventHandler(vcs, false, ProgressManager.getInstance().getProgressIndicator());
         ProgressManager.progress(SvnBundle.message("progress.text.checking.out", target.getAbsolutePath()));
         try {
-          vcs.getFactoryFromSettings().createCheckoutClient()
+          getFactory(vcs, format).createCheckoutClient()
             .checkout(SvnTarget.fromURL(SVNURL.parseURIEncoded(url)), target, revision, depth, ignoreExternals, true, format, handler);
           ProgressManager.checkCanceled();
           checkoutSuccessful.set(Boolean.TRUE);
@@ -282,6 +294,8 @@ public class SvnCheckoutProvider implements CheckoutProvider {
 
   public static class CheckoutFormatFromUserProvider {
 
+    private static final Logger LOG = Logger.getInstance(CheckoutFormatFromUserProvider.class);
+
     @NotNull private final Project myProject;
     @NotNull private final SvnVcs myVcs;
     @NotNull private final File myPath;
@@ -343,14 +357,22 @@ public class SvnCheckoutProvider implements CheckoutProvider {
     }
 
     private List<WorkingCopyFormat> loadSupportedFormats() {
-      List<WorkingCopyFormat> result;
+      List<WorkingCopyFormat> result = ContainerUtil.newArrayList();
 
       try {
-        result = myVcs.getFactoryFromSettings().createCheckoutClient().getSupportedFormats();
+        result.addAll(myVcs.getFactoryFromSettings().createCheckoutClient().getSupportedFormats());
       }
       catch (VcsException e) {
-        result = Collections.emptyList();
         error.set(e.getMessage());
+      }
+
+      try {
+        result.addAll(myVcs.getOtherFactory().createCheckoutClient().getSupportedFormats());
+      }
+      catch (VcsException e) {
+        // do not add error as it is just usability fix and "other factory" could be incorrectly configured (for instance, invalid
+        // executable path)
+        LOG.info("Failed to get checkout formats from other factory", e);
       }
 
       return result;

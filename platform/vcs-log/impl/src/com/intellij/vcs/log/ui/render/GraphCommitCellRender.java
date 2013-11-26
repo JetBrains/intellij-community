@@ -27,7 +27,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.font.FontRenderContext;
 import java.awt.image.BufferedImage;
 import java.util.Collection;
 
@@ -41,14 +40,12 @@ public class GraphCommitCellRender extends AbstractPaddingCellRender {
 
   @NotNull private final GraphCellPainter graphPainter;
   @NotNull private final VcsLogDataHolder myDataHolder;
-  @NotNull private final RefPainter refPainter;
 
   public GraphCommitCellRender(@NotNull GraphCellPainter graphPainter, @NotNull VcsLogDataHolder logDataHolder,
                                @NotNull VcsLogColorManager colorManager) {
-    super(logDataHolder.getProject());
+    super(logDataHolder.getProject(), colorManager);
     this.graphPainter = graphPainter;
     myDataHolder = logDataHolder;
-    refPainter = new RefPainter(colorManager, false);
   }
 
   @Override
@@ -59,8 +56,7 @@ public class GraphCommitCellRender extends AbstractPaddingCellRender {
       return 0;
     }
 
-    FontRenderContext fontContext = ((Graphics2D)table.getGraphics()).getFontRenderContext();
-    int refPadding = refPainter.padding(cell.getRefsToThisCommit(), fontContext);
+    int refPadding = calcRefsPadding(cell.getRefsToThisCommit(), (Graphics2D)table.getGraphics());
 
     int countCells = cell.getPrintCell().countCell();
     int graphPadding = countCells * WIDTH_NODE;
@@ -99,7 +95,7 @@ public class GraphCommitCellRender extends AbstractPaddingCellRender {
       VirtualFile root = refs.iterator().next().getRoot(); // all refs are from the same commit => they have the same root
       refs = myDataHolder.getLogProvider(root).getReferenceManager().sort(refs);
     }
-    refPainter.draw(g2, refs, padding, -1); // TODO think how to behave if there are too many refs here (even if tags are collapsed)
+    drawRefs(g2, refs, padding);
 
     UIUtil.drawImage(g, image, 0, 0, null);
   }

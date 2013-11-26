@@ -75,6 +75,10 @@
       <key>Properties</key>
       <dict>
         @@idea_properties@@
+
+        <key>idea.java.redist</key>
+        <string>NoJavaDistribution</string>
+
       </dict>
 
       <key>VMOptions</key>

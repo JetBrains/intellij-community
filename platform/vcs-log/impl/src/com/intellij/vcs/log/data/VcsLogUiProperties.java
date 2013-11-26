@@ -41,7 +41,7 @@ public class VcsLogUiProperties implements PersistentStateComponent<VcsLogUiProp
   private State myState = new State();
 
   public static class State {
-    public boolean SHOW_DETAILS = false;
+    public boolean SHOW_DETAILS = true;
     public Deque<String> RECENTLY_FILTERED_USERS = new ArrayDeque<String>();
   }
 

@@ -279,6 +279,7 @@ public abstract class RecentProjectsManagerBase implements PersistentStateCompon
     }
 
     public void projectClosed(final Project project) {
+      if (ApplicationManager.getApplication().isHeadlessEnvironment()) return;
       Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
       if (openProjects.length > 0) {
         String path = getProjectPath(openProjects[openProjects.length - 1]);

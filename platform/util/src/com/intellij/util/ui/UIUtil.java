@@ -1248,7 +1248,7 @@ public class UIUtil {
     g.setPaint(getGradientPaint(startX, 2, c1, startX, height - 5, c2));
 
     if (isRetina()) {
-      g.fillRoundRect(startX - 1, 3, endX - startX + 2, height - 5, 5, 5);
+      g.fillRoundRect(startX - 1, 2, endX - startX + 1, height - 4, 5, 5);
       g.setComposite(oldComposite);
       return;
     }

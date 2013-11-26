@@ -69,11 +69,15 @@ public abstract class AbstractUpdateIntegrateCrawler implements SvnWCRootCrawler
       LOG.info(e);
       myExceptions.add(new VcsException(e));
     }
+    catch (VcsException e) {
+      LOG.info(e);
+      myExceptions.add(e);
+    }
   }
 
   protected abstract void showProgressMessage(ProgressIndicator progress, File root);
 
-  protected abstract long doUpdate(File root) throws SVNException;
+  protected abstract long doUpdate(File root) throws SVNException, VcsException;
 
   protected abstract boolean isMerge();
 }

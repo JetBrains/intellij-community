@@ -35,10 +35,17 @@ import java.util.LinkedList;
 /**
  * @author gregsh
  */
-@SuppressWarnings("StringEquality")
 public class GeneratedParserUtilBase {
 
   private static final Logger LOG = Logger.getInstance("org.intellij.grammar.parser.GeneratedParserUtilBase");
+
+  private static final int MAX_RECURSION_LEVEL = 1000;
+  private static final int MAX_VARIANTS_SIZE = 10000;
+  private static final int MAX_VARIANTS_TO_DISPLAY = 50;
+
+  private static final int INITIAL_VARIANTS_SIZE = 1000;
+  private static final int VARIANTS_POOL_SIZE = 10000;
+  private static final int FRAMES_POOL_SIZE = 500;
 
   public static final IElementType DUMMY_BLOCK = new DummyBlockElementType();
 
@@ -66,16 +73,29 @@ public class GeneratedParserUtilBase {
     return builder_.eof();
   }
 
+  public static int current_position_(PsiBuilder builder_) {
+    return builder_.rawTokenIndex();
+  }
+
   public static boolean recursion_guard_(PsiBuilder builder_, int level_, String funcName_) {
-    if (level_ > 1000) {
-      builder_.error("Maximum recursion level (" + 1000 + ") reached in " + funcName_);
+    if (level_ > MAX_RECURSION_LEVEL) {
+      builder_.error("Maximum recursion level (" + MAX_RECURSION_LEVEL + ") reached in '" + funcName_ + "'");
       return false;
     }
     return true;
   }
 
+  @Deprecated
   public static void empty_element_parsed_guard_(PsiBuilder builder_, int offset_, String funcName_) {
-    builder_.error("Empty element parsed in " + funcName_ +" at offset " + offset_);
+    builder_.error("Empty element parsed in '" + funcName_ + "' at offset " + offset_);
+  }
+
+  public static boolean empty_element_parsed_guard_(PsiBuilder builder_, String funcName_, int prev_position_) {
+    if (prev_position_ == current_position_(builder_)) {
+      builder_.error("Empty element parsed in '" + funcName_ + "' at offset " + builder_.getCurrentOffset());
+      return false;
+    }
+    return true;
   }
 
   public static boolean invalid_left_marker_guard_(PsiBuilder builder_, PsiBuilder.Marker marker_, String funcName_) {
@@ -153,6 +173,33 @@ public class GeneratedParserUtilBase {
     return builder_.getTokenType() == token;
   }
 
+  public static boolean nextTokenIsFast(PsiBuilder builder_, IElementType... tokens) {
+    IElementType tokenType = builder_.getTokenType();
+    for (IElementType token : tokens) {
+      if (token == tokenType) return true;
+    }
+    return false;
+  }
+
+  public static boolean nextTokenIs(PsiBuilder builder_, String frameName, IElementType... tokens) {
+    ErrorState state = ErrorState.get(builder_);
+    if (state.completionState != null) return true;
+    boolean track = !state.suppressErrors && state.predicateCount < 2 && state.predicateSign;
+    if (!track) return nextTokenIsFast(builder_, tokens);
+    boolean useFrameName = StringUtil.isNotEmpty(frameName);
+    IElementType tokenType = builder_.getTokenType();
+    if (tokenType == null) return false;
+    boolean result = false;
+    for (IElementType token : tokens) {
+      if (!useFrameName) addVariant(builder_, state, token);
+      result |= tokenType == token;
+    }
+    if (useFrameName) {
+      addVariantInner(state, builder_.getCurrentOffset(), frameName);
+    }
+    return result;
+  }
+
   public static boolean nextTokenIs(PsiBuilder builder_, IElementType token) {
     return nextTokenIsInner(builder_, token, false);
   }
@@ -167,6 +214,7 @@ public class GeneratedParserUtilBase {
     return token == tokenType;
   }
 
+  @Deprecated
   public static boolean replaceVariants(PsiBuilder builder_, int variantCount, String frameName) {
     ErrorState state = ErrorState.get(builder_);
     if (!state.suppressErrors && state.predicateCount < 2 && state.predicateSign) {
@@ -282,6 +330,8 @@ public class GeneratedParserUtilBase {
   public static final String _SECTION_RECOVER_ = "_SECTION_RECOVER_";
   public static final String _SECTION_GENERAL_ = "_SECTION_GENERAL_";
 
+  @SuppressWarnings("StringEquality")
+  @Deprecated
   public static void enterErrorRecordingSection(PsiBuilder builder_, int level, @NotNull String sectionType, @Nullable String frameName) {
     int modifiers = sectionType == _SECTION_GENERAL_ ? _NONE_ :
                     sectionType == _SECTION_NOT_ ? _NOT_ :
@@ -289,6 +339,7 @@ public class GeneratedParserUtilBase {
     enter_section_impl_(builder_, level, modifiers, frameName);
   }
 
+  @Deprecated
   public static boolean exitErrorRecordingSection(PsiBuilder builder_,
                                                   int level,
                                                   boolean result,
@@ -356,7 +407,7 @@ public class GeneratedParserUtilBase {
   public static void exit_section_(PsiBuilder builder_,
                                    int level,
                                    PsiBuilder.Marker marker,
-                                   IElementType elementType,
+                                   @Nullable IElementType elementType,
                                    boolean result,
                                    boolean pinned,
                                    @Nullable Parser eatMore) {
@@ -464,7 +515,9 @@ public class GeneratedParserUtilBase {
       if ((frame.modifiers & _COLLAPSE_) != 0) {
         LighterASTNode last = result || pinned? builder_.getLatestDoneMarker() : null;
         if (last != null && last.getStartOffset() == frame.offset && state.typeExtends(last.getTokenType(), elementType)) {
-          marker.drop();
+          IElementType resultType = last.getTokenType();
+          ((PsiBuilder.Marker)last).drop();
+          marker.done(resultType);
           return;
         }
       }
@@ -527,7 +580,7 @@ public class GeneratedParserUtilBase {
   public static void report_error_(PsiBuilder builder_, ErrorState state, boolean advance) {
     Frame frame = state.frameStack.isEmpty()? null : state.frameStack.getLast();
     if (frame == null) {
-      LOG.error("Unbalanced error section: got null , expected " + frame);
+      LOG.error("unbalanced enter/exit section call: got null");
       return;
     }
     int offset = builder_.getCurrentOffset();
@@ -628,10 +681,10 @@ public class GeneratedParserUtilBase {
     public boolean altMode;
 
     private int lastExpectedVariantOffset = -1;
-    public MyList<Variant> variants = new MyList<Variant>(500);
-    public MyList<Variant> unexpected = new MyList<Variant>(10);
+    public MyList<Variant> variants = new MyList<Variant>(INITIAL_VARIANTS_SIZE);
+    public MyList<Variant> unexpected = new MyList<Variant>(INITIAL_VARIANTS_SIZE / 10);
 
-    final LimitedPool<Variant> VARIANTS = new LimitedPool<Variant>(1000, new LimitedPool.ObjectFactory<Variant>() {
+    final LimitedPool<Variant> VARIANTS = new LimitedPool<Variant>(VARIANTS_POOL_SIZE, new LimitedPool.ObjectFactory<Variant>() {
       @Override
       public Variant create() {
         return new Variant();
@@ -641,7 +694,7 @@ public class GeneratedParserUtilBase {
       public void cleanup(final Variant o) {
       }
     });
-    final LimitedPool<Frame> FRAMES = new LimitedPool<Frame>(100, new LimitedPool.ObjectFactory<Frame>() {
+    final LimitedPool<Frame> FRAMES = new LimitedPool<Frame>(FRAMES_POOL_SIZE, new LimitedPool.ObjectFactory<Frame>() {
       @Override
       public Frame create() {
         return new Frame();
@@ -677,7 +730,6 @@ public class GeneratedParserUtilBase {
       return sb.toString();
     }
 
-    private static final int MAX_VARIANTS_TO_DISPLAY = Integer.MAX_VALUE;
     private boolean addExpected(StringBuilder sb, int offset, boolean expected) {
       MyList<Variant> list = expected ? variants : unexpected;
       String[] strings = new String[list.size()];
@@ -729,14 +781,13 @@ public class GeneratedParserUtilBase {
     }
 
     boolean typeExtends(IElementType child_, IElementType parent_) {
-      if (extendsSets == null) {
-        return child_ == parent_ ||
-               altExtendsChecker != null && altExtendsChecker.process(child_, parent_);
+      if (child_ == parent_) return true;
+      if (extendsSets != null) {
+        for (TokenSet set : extendsSets) {
+          if (set.contains(child_) && set.contains(parent_)) return true;
+        }
       }
-      for (TokenSet set : extendsSets) {
-        if (set.contains(child_) && set.contains(parent_)) return true;
-      }
-      return false;
+      return altExtendsChecker != null && altExtendsChecker.process(child_, parent_);
     }
   }
 
@@ -814,15 +865,6 @@ public class GeneratedParserUtilBase {
       result = 31 * result + object.hashCode();
       return result;
     }
-  }
-
-  @Nullable
-  private static IElementType getClosingBracket(ErrorState state, IElementType type) {
-    if (state.braces == null) return null;
-    for (BracePair pair : state.braces) {
-      if (type == pair.getLeftBraceType()) return pair.getRightBraceType();
-    }
-    return null;
   }
 
 
@@ -961,7 +1003,16 @@ public class GeneratedParserUtilBase {
     }
 
     protected void setSize(int fromIndex) {
-      super.removeRange(fromIndex, size());
+      removeRange(fromIndex, size());
+    }
+
+    @Override
+    public void ensureCapacity(int minCapacity) {
+      int size = size();
+      if (size >= MAX_VARIANTS_SIZE) {
+        removeRange(MAX_VARIANTS_SIZE / 4, size - MAX_VARIANTS_SIZE / 4);
+      }
+      super.ensureCapacity(minCapacity);
     }
   }
 }

@@ -6,6 +6,10 @@ class FinalVariable2 {
     if (b) do<caret> {
       final int i = 10;
       System.out.println(i);
-    } while (true);
+    } while (c());
+  }
+
+  boolean c() {
+    return true;
   }
 }

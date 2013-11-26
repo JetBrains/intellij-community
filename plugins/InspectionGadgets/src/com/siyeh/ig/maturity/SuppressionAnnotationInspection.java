@@ -73,7 +73,7 @@ public class SuppressionAnnotationInspection extends SuppressionAnnotationInspec
           @NotNull
           @Override
           public String getName() {
-            return getFamilyName();
+            return "Allow these suppressions";
           }
 
           @NotNull

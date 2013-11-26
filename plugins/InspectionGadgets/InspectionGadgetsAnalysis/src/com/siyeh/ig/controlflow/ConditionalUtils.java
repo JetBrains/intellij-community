@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2008 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2013 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,12 +16,11 @@
 package com.siyeh.ig.controlflow;
 
 import com.intellij.psi.*;
+import com.siyeh.ig.psiutils.ParenthesesUtils;
 
-public class ConditionalUtils {
+class ConditionalUtils {
 
-  private ConditionalUtils() {
-    super();
-  }
+  private ConditionalUtils() {}
 
   public static boolean isReturn(PsiStatement statement, String value) {
     if (statement == null) {
@@ -30,9 +29,8 @@ public class ConditionalUtils {
     if (!(statement instanceof PsiReturnStatement)) {
       return false;
     }
-    final PsiReturnStatement returnStatement =
-      (PsiReturnStatement)statement;
-    final PsiExpression returnValue = returnStatement.getReturnValue();
+    final PsiReturnStatement returnStatement = (PsiReturnStatement)statement;
+    final PsiExpression returnValue = ParenthesesUtils.stripParentheses(returnStatement.getReturnValue());
     if (returnValue == null) {
       return false;
     }
@@ -53,9 +51,8 @@ public class ConditionalUtils {
     if (!(expression instanceof PsiAssignmentExpression)) {
       return false;
     }
-    final PsiAssignmentExpression assignment =
-      (PsiAssignmentExpression)expression;
-    final PsiExpression rhs = assignment.getRExpression();
+    final PsiAssignmentExpression assignment = (PsiAssignmentExpression)expression;
+    final PsiExpression rhs = ParenthesesUtils.stripParentheses(assignment.getRExpression());
     if (rhs == null) {
       return false;
     }
