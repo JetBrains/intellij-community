@@ -210,6 +210,15 @@ public class PluginsAdvertiser implements StartupActivity {
     return null;
   }
 
+  static boolean hasBundledNotInstalledPlugin(Collection<Plugin> plugins) {
+    for (Plugin plugin : plugins) {
+      if (plugin.myBundled && PluginManager.getPlugin(PluginId.getId(plugin.myPluginId)) == null) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   @Override
   public void runActivity(@NotNull final Project project) {
     if (!UpdateSettings.getInstance().CHECK_NEEDED) return;
@@ -258,12 +267,10 @@ public class PluginsAdvertiser implements StartupActivity {
                   if (pluginDescriptor != null) {
                     myDisabledPlugins.put(plugin, pluginDescriptor);
                   }
-                } else {
-                  if (plugin.myBundled) {
-                    myBundledPlugins = true;
-                  }
-                }
+                } 
               }
+
+              myBundledPlugins = hasBundledNotInstalledPlugin(ids.values());
 
               for (IdeaPluginDescriptor loadedPlugin : myAllPlugins) {
                 final PluginId pluginId = loadedPlugin.getPluginId();
