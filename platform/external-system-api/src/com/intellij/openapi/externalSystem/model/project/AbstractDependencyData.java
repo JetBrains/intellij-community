@@ -77,6 +77,7 @@ public abstract class AbstractDependencyData<T extends AbstractExternalEntityDat
   @Override
   public int hashCode() {
     int result = super.hashCode();
+    result = 31 * result + myScope.hashCode();
     result = 31 * result + myOwnerModule.hashCode();
     result = 31 * result + myTarget.hashCode();
     return result;
@@ -88,7 +89,7 @@ public abstract class AbstractDependencyData<T extends AbstractExternalEntityDat
       return false;
     }
     AbstractDependencyData<?> that = (AbstractDependencyData<?>)o;
-    return myOwnerModule.equals(that.myOwnerModule) && myTarget.equals(that.myTarget);
+    return  myScope.equals(that.myScope) && myOwnerModule.equals(that.myOwnerModule) && myTarget.equals(that.myTarget);
   }
 
   @Override
