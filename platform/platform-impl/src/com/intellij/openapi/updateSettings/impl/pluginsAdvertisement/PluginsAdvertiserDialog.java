@@ -74,14 +74,14 @@ public class PluginsAdvertiserDialog extends DialogWrapper {
 
   @Override
   protected void doOKAction() {
-    final Set<IdeaPluginDescriptor> pluginsToEnable = new HashSet<IdeaPluginDescriptor>();
+    final Set<String> pluginsToEnable = new HashSet<String>();
     final List<PluginNode> nodes = new ArrayList<PluginNode>();
     for (PluginDownloader downloader : myUploadedPlugins) {
-      if (!mySkippedPlugins.contains(downloader.getPluginId())) {
-        final IdeaPluginDescriptor descriptor = PluginManager.getPlugin(PluginId.getId(downloader.getPluginId()));
-        if (descriptor != null) {
-          pluginsToEnable.add(descriptor);
-        } else {
+      String pluginId = downloader.getPluginId();
+      if (!mySkippedPlugins.contains(pluginId)) {
+        pluginsToEnable.add(pluginId);
+        final IdeaPluginDescriptor descriptor = PluginManager.getPlugin(PluginId.getId(pluginId));
+        if (descriptor == null) {
           final PluginNode pluginNode = PluginDownloader.createPluginNode(null, downloader);
           if (pluginNode != null) {
             nodes.add(pluginNode);
@@ -95,8 +95,8 @@ public class PluginsAdvertiserDialog extends DialogWrapper {
         PluginManagerMain.notifyPluginsWereInstalled(null, myProject);
       }
     };
-    for (IdeaPluginDescriptor pluginDescriptor : pluginsToEnable) {
-      PluginManagerCore.enablePlugin(pluginDescriptor.getPluginId().getIdString());
+    for (String pluginId : pluginsToEnable) {
+      PluginManagerCore.enablePlugin(pluginId);
     }
     if (!nodes.isEmpty()) {
       try {
