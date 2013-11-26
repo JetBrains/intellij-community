@@ -420,6 +420,10 @@ class RootIndex {
   @Nullable
   public String getPackageName(@NotNull final VirtualFile dir) {
     if (dir.isDirectory()) {
+      if (FileTypeManager.getInstance().isFileIgnored(dir)) {
+        return null;
+      }
+
       for (final Map.Entry<String, HashSet<VirtualFile>> entry : myPackagePrefixRoots.entrySet()) {
         if (entry.getValue().contains(dir)) {
           return entry.getKey();

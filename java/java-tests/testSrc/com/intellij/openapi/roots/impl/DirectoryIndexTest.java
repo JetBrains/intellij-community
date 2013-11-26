@@ -186,7 +186,7 @@ public class DirectoryIndexTest extends IdeaTestCase {
     return instance;
   }
 
-  public void testDirInfos() {
+  public void testDirInfos() throws IOException {
     checkInfoNull(myRootVFile);
 
     // beware: files in directory index
@@ -215,9 +215,13 @@ public class DirectoryIndexTest extends IdeaTestCase {
     assertEquals(myModule1Dir, checkInfoNotNull(myLibClsDir).getContentRoot());
 
     checkInfo(myModule3Dir, myModule3, false, false, null, null);
+
+    VirtualFile cvs = myPack1Dir.createChildDirectory(this, "CVS");
+    checkInfoNull(cvs);
+    assertNull(ProjectRootManager.getInstance(myProject).getFileIndex().getPackageNameByDirectory(cvs));
   }
 
-  public void testDirsByPackageName() {
+  public void testDirsByPackageName() throws IOException {
     checkPackage("", true, myFileLibSrc, myFileLibCls, mySrcDir1, myTestSrc1, myResDir, myTestResDir, myLibSrcDir, myLibClsDir, mySrcDir2);
     checkPackage("", false, myFileLibCls, mySrcDir1, myTestSrc1, myResDir, myTestResDir, myLibClsDir, mySrcDir2);
     

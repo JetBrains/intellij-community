@@ -17,6 +17,7 @@ package com.intellij.designer.designSurface;
 
 import com.intellij.designer.*;
 import com.intellij.designer.actions.AbstractComboBoxAction;
+import com.intellij.designer.actions.CommonEditActionsProvider;
 import com.intellij.designer.actions.DesignerActionPanel;
 import com.intellij.designer.componentTree.TreeComponentDecorator;
 import com.intellij.designer.componentTree.TreeEditableArea;
@@ -579,7 +580,9 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
   }
 
   private void storeSourceSelectionState() {
-    mySourceSelectionState.put(getEditorText(), getSelectionState());
+    if (!CommonEditActionsProvider.isDeleting) {
+      mySourceSelectionState.put(getEditorText(), getSelectionState());
+    }
   }
 
   private int[][] getSelectionState() {

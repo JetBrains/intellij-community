@@ -45,8 +45,8 @@ import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
@@ -457,7 +457,7 @@ public class CodeCompletionHandlerBase {
       public void run() {
         AccessToken token = WriteAction.start();
         try {
-          hostCopy[0] = createFileCopy(hostFile);
+          hostCopy[0] = createFileCopy(hostFile, initContext.getStartOffset(), initContext.getSelectionEndOffset());
         }
         finally {
           token.finish();
@@ -748,7 +748,7 @@ public class CodeCompletionHandlerBase {
     }
   }
 
-  public static final Key<SoftReference<Pair<PsiFile, Document>>> FILE_COPY_KEY = Key.create("CompletionFileCopy");
+  private static final Key<SoftReference<Trinity<PsiFile, Document, Long>>> FILE_COPY_KEY = Key.create("CompletionFileCopy");
 
   private static boolean isCopyUpToDate(Document document, @NotNull PsiFile file) {
     if (!file.isValid()) {
@@ -760,31 +760,37 @@ public class CodeCompletionHandlerBase {
     return current != null && current.getViewProvider().getPsi(file.getLanguage()) == file;
   }
 
-  private static PsiFile createFileCopy(PsiFile file) {
+  private static PsiFile createFileCopy(PsiFile file, long caret, long selEnd) {
     final VirtualFile virtualFile = file.getVirtualFile();
-    if (file.isPhysical() && virtualFile != null && virtualFile.isInLocalFileSystem()
-        // must not cache injected file copy, since it does not reflect changes in host document
-        && !InjectedLanguageManager.getInstance(file.getProject()).isInjectedFragment(file)) {
-      final SoftReference<Pair<PsiFile, Document>> reference = file.getUserData(FILE_COPY_KEY);
-      if (reference != null) {
-        final Pair<PsiFile, Document> pair = reference.get();
-        if (pair != null && pair.first.getClass().equals(file.getClass()) && isCopyUpToDate(pair.second, pair.first)) {
-          final PsiFile copy = pair.first;
-          if (copy.getViewProvider().getModificationStamp() > file.getViewProvider().getModificationStamp()) {
-            ((PsiModificationTrackerImpl) file.getManager().getModificationTracker()).incCounter();
-          }
-          final Document document = pair.second;
-          assert document != null;
-          document.setText(file.getText());
-          return copy;
+    boolean mayCacheCopy = file.isPhysical() &&
+                           // we don't want to cache code fragment copies even if they appear to be physical
+                           virtualFile != null && virtualFile.isInLocalFileSystem();
+    long combinedOffsets = caret + (selEnd << 32);
+    if (mayCacheCopy) {
+      final Trinity<PsiFile, Document, Long> cached = SoftReference.dereference(file.getUserData(FILE_COPY_KEY));
+      if (cached != null && cached.first.getClass().equals(file.getClass()) && isCopyUpToDate(cached.second, cached.first)) {
+        final PsiFile copy = cached.first;
+        if (copy.getViewProvider().getModificationStamp() > file.getViewProvider().getModificationStamp() && 
+            cached.third.longValue() != combinedOffsets) {
+          // the copy PSI might have some caches that are not cleared on its modification because there are no events in the copy
+          //   so, clear all the caches
+          // hopefully it's a rare situation that the user invokes completion in different parts of the file 
+          //   without modifying anything physical in between
+          ((PsiModificationTrackerImpl) file.getManager().getModificationTracker()).incCounter();
         }
+        final Document document = cached.second;
+        assert document != null;
+        document.setText(file.getText());
+        return copy;
       }
     }
 
     final PsiFile copy = (PsiFile)file.copy();
-    final Document document = copy.getViewProvider().getDocument();
-    assert document != null;
-    file.putUserData(FILE_COPY_KEY, new SoftReference<Pair<PsiFile,Document>>(Pair.create(copy, document)));
+    if (mayCacheCopy) {
+      final Document document = copy.getViewProvider().getDocument();
+      assert document != null;
+      file.putUserData(FILE_COPY_KEY, new SoftReference<Trinity<PsiFile,Document, Long>>(Trinity.create(copy, document, combinedOffsets)));
+    }
     return copy;
   }
 
