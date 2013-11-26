@@ -93,10 +93,10 @@ public class CopyrightManager extends AbstractProjectComponent implements Persis
               final Document document = e.getDocument();
               final VirtualFile virtualFile = fileDocumentManager.getFile(document);
               if (virtualFile == null) return;
-              if (!newFileTracker.poll(virtualFile)) return;
-              if (!fileTypeUtil.isSupportedFile(virtualFile)) return;
               final Module module = projectRootManager.getFileIndex().getModuleForFile(virtualFile);
               if (module == null) return;
+              if (!newFileTracker.poll(virtualFile)) return;
+              if (!fileTypeUtil.isSupportedFile(virtualFile)) return;
               final PsiFile file = psiManager.findFile(virtualFile);
               if (file == null) return;
               application.invokeLater(new Runnable() {
