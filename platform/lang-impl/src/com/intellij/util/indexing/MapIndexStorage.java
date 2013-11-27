@@ -18,20 +18,24 @@ package com.intellij.util.indexing;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.LowMemoryWatcher;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.ProjectAndLibrariesScope;
+import com.intellij.psi.search.ProjectScopeImpl;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.Processor;
+import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.SLRUCache;
 import com.intellij.util.io.*;
+import com.intellij.util.io.DataOutputStream;
 import gnu.trove.TIntHashSet;
+import gnu.trove.TIntProcedure;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.DataInput;
-import java.io.DataOutput;
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -44,10 +48,12 @@ import java.util.concurrent.locks.ReentrantLock;
 */
 public final class MapIndexStorage<Key, Value> implements IndexStorage<Key, Value>{
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.indexing.MapIndexStorage");
+  private static final boolean ENABLE_CACHED_HASH_IDS = SystemProperties.getBooleanProperty("idea.index.no.cashed.hashids", true);
   private final boolean myBuildKeyHashToVirtualFileMapping;
   private PersistentMap<Key, ValueContainer<Value>> myMap;
   private PersistentBTreeEnumerator<int[]> myKeyHashToVirtualFileMapping;
   private SLRUCache<Key, ChangeTrackingValueContainer<Value>> myCache;
+  private volatile int myLastScannedId;
   private final File myStorageFile;
   private final KeyDescriptor<Key> myKeyDescriptor;
   private final int myCacheSize;
@@ -216,29 +222,58 @@ public final class MapIndexStorage<Key, Value> implements IndexStorage<Key, Valu
   }
 
   @Override
-  public boolean processKeys(final Processor<Key> processor, final IdFilter idFilter) throws StorageException {
+  public boolean processKeys(final Processor<Key> processor, GlobalSearchScope scope, final IdFilter idFilter) throws StorageException {
     l.lock();
     try {
       myCache.clear(); // this will ensure that all new keys are made into the map
       if (myBuildKeyHashToVirtualFileMapping && idFilter != null) {
-        final TIntHashSet hashMaskSet = new TIntHashSet(1000);
+        TIntHashSet hashMaskSet = null;
         long l = System.currentTimeMillis();
-        myKeyHashToVirtualFileMapping.iterateData(new Processor<int[]>() {
-          @Override
-          public boolean process(int[] key) {
-            if (!idFilter.containsFileId(key[1])) return true;
-            hashMaskSet.add(key[0]);
-            ProgressManager.checkCanceled();
-            return true;
+
+        File fileWithCaches = getSavedProjectFileValueIds(myLastScannedId, scope);
+        final boolean useCachedHashIds = ENABLE_CACHED_HASH_IDS &&
+                                         (scope instanceof ProjectScopeImpl || scope instanceof ProjectAndLibrariesScope) &&
+                                         fileWithCaches != null;
+        int id = myKeyHashToVirtualFileMapping.getLargestId();
+
+        if (useCachedHashIds && id == myLastScannedId) {
+          try {
+            hashMaskSet = loadHashedIds(fileWithCaches);
+          } catch (IOException ex) {
+            LOG.info(ex);
           }
-        });
+        }
+
+        if (hashMaskSet == null) {
+          if (useCachedHashIds && myLastScannedId != 0) {
+            FileUtil.asyncDelete(fileWithCaches);
+          }
+
+          hashMaskSet = new TIntHashSet(1000);
+          final TIntHashSet finalHashMaskSet = hashMaskSet;
+          myKeyHashToVirtualFileMapping.iterateData(new Processor<int[]>() {
+            @Override
+            public boolean process(int[] key) {
+              if (!idFilter.containsFileId(key[1])) return true;
+              finalHashMaskSet.add(key[0]);
+              ProgressManager.checkCanceled();
+              return true;
+            }
+          });
+
+          if (useCachedHashIds) {
+            saveHashedIds(hashMaskSet, id, scope);
+          }
+        }
+
         if (LOG.isDebugEnabled()) {
           LOG.debug("Scanned keyHashToVirtualFileMapping of " + myStorageFile + " for " + (System.currentTimeMillis() - l));
         }
+        final TIntHashSet finalHashMaskSet = hashMaskSet;
         return myMap.processKeys(new Processor<Key>() {
           @Override
           public boolean process(Key key) {
-            if (!hashMaskSet.contains(myKeyDescriptor.getHashCode(key))) return true;
+            if (!finalHashMaskSet.contains(myKeyDescriptor.getHashCode(key))) return true;
             return processor.process(key);
           }
         });
@@ -263,11 +298,70 @@ public final class MapIndexStorage<Key, Value> implements IndexStorage<Key, Valu
     }
   }
 
+  private static TIntHashSet loadHashedIds(File fileWithCaches) throws IOException {
+    DataInputStream inputStream = null;
+    try {
+      inputStream = new DataInputStream(new BufferedInputStream(new FileInputStream(fileWithCaches)));
+      int capacity = DataInputOutputUtil.readINT(inputStream);
+      TIntHashSet hashMaskSet = new TIntHashSet(capacity);
+      while(capacity > 0) {
+        hashMaskSet.add(DataInputOutputUtil.readINT(inputStream));
+        --capacity;
+      }
+      inputStream.close();
+      return hashMaskSet;
+    }
+    finally {
+      if (inputStream != null) {
+        try {
+          inputStream.close();
+        } catch (IOException ex) {}
+      }
+    }
+  }
+
+  private void saveHashedIds(TIntHashSet hashMaskSet, int largestId, GlobalSearchScope scope) {
+    File newFileWithCaches = getSavedProjectFileValueIds(largestId, scope);
+    assert newFileWithCaches != null;
+    DataOutputStream stream = null;
+
+    try {
+      stream = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(newFileWithCaches)));
+      DataInputOutputUtil.writeINT(stream, hashMaskSet.size());
+      final DataOutputStream finalStream = stream;
+      boolean result = hashMaskSet.forEach(new TIntProcedure() {
+        @Override
+        public boolean execute(int value) {
+          try {
+            DataInputOutputUtil.writeINT(finalStream, value);
+            return true;
+          } catch (IOException ex) {
+            return false;
+          }
+        }
+      });
+      if (result) myLastScannedId = largestId;
+    } catch (IOException ex) {}
+    finally {
+      if (stream != null) {
+        try {
+          stream.close();
+        } catch (IOException ex) {}
+      }
+    }
+  }
+
+  private @Nullable File getSavedProjectFileValueIds(int id, GlobalSearchScope scope) {
+    Project project = scope.getProject();
+    if (project == null) return null;
+    return new File(myStorageFile.getPath() + ".project."+project.hashCode() + "."+id + "." + scope.isSearchInLibraries());
+  }
+
   @NotNull
   @Override
   public Collection<Key> getKeys() throws StorageException {
     List<Key> keys = new ArrayList<Key>();
-    processKeys(new CommonProcessors.CollectProcessor<Key>(keys), null);
+    processKeys(new CommonProcessors.CollectProcessor<Key>(keys), null, null);
     return keys;
   }
 

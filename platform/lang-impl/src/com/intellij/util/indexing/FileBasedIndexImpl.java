@@ -725,7 +725,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
         return true;
       }
       ensureUpToDate(indexId, scope.getProject(), scope);
-      return index.processAllKeys(processor, idFilter);
+      return index.processAllKeys(processor, scope, idFilter);
     }
     catch (StorageException e) {
       scheduleRebuild(indexId, e);
