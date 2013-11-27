@@ -16,7 +16,6 @@
 package com.intellij.remoteServer.util;
 
 import com.intellij.remoteServer.agent.util.CloudGitApplication;
-import com.intellij.remoteServer.configuration.deployment.DeploymentSource;
 
 import java.io.File;
 
@@ -24,8 +23,6 @@ import java.io.File;
  * @author michael.golubev
  */
 public interface DeploymentSourceHandler {
-
-  boolean init(DeploymentSource deploymentSource) throws ServerRuntimeException;
 
   File getRepositoryRootFile();
 

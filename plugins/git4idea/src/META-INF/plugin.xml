@@ -197,4 +197,9 @@
     <extensionPoint qualifiedName="Git4Idea.remoteServer.CloudGitDeploymentSourceHandlerProvider"
                     interface="com.intellij.remoteServer.util.CloudGitDeploymentSourceHandlerProvider"/>
   </extensionPoints>
+
+  <extensions defaultExtensionNs="Git4Idea">
+    <remoteServer.CloudGitDeploymentSourceHandlerProvider
+        implementation="com.intellij.remoteServer.util.ModuleDeploymentSourceHandlerProvider"/>
+  </extensions>
 </idea-plugin>
