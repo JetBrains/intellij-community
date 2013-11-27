@@ -80,8 +80,7 @@ public class PluginsAdvertiserDialog extends DialogWrapper {
       String pluginId = downloader.getPluginId();
       if (!mySkippedPlugins.contains(pluginId)) {
         pluginsToEnable.add(pluginId);
-        final IdeaPluginDescriptor descriptor = PluginManager.getPlugin(PluginId.getId(pluginId));
-        if (descriptor == null) {
+        if (!PluginManagerCore.getDisabledPlugins().contains(pluginId)) {
           final PluginNode pluginNode = PluginDownloader.createPluginNode(null, downloader);
           if (pluginNode != null) {
             nodes.add(pluginNode);
