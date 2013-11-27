@@ -9,3 +9,5 @@
 .idea/tasks.xml
 .idea/vcs.xml
 .DS_Store
+
+out/
