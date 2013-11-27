@@ -35,7 +35,7 @@ public final class Urls {
   private static final Logger LOG = Logger.getInstance(Urls.class);
 
   // about ";" see WEB-100359
-  private static final Pattern URI_PATTERN = Pattern.compile("^([^:/?#]+)://([^/?#]*)([^?#;]*)(.*)");
+  private static final Pattern URI_PATTERN = Pattern.compile("^([^:/?#]+):(//)?([^/?#]*)([^?#;]*)(.*)");
 
   @NotNull
   public static Url newUri(@NotNull String scheme, @NotNull String path) {
@@ -44,7 +44,7 @@ public final class Urls {
 
   @NotNull
   public static Url newFromEncoded(@NotNull String url) {
-    Url result = parse(url, true);
+    Url result = parse(url, false);
     LOG.assertTrue(result != null, url);
     return result;
   }
@@ -112,19 +112,18 @@ public final class Urls {
       scheme = "jar:" + scheme;
     }
 
-    String authority = StringUtil.nullize(matcher.group(2));
+    String authority = StringUtil.nullize(matcher.group(3));
 
-    String path = StringUtil.nullize(matcher.group(3));
+    String path = StringUtil.nullize(matcher.group(4));
     if (path != null) {
       path = FileUtil.toCanonicalUriPath(path);
     }
 
-    String parameters = matcher.group(4);
-    if (authority != null && StandardFileSystems.FILE_PROTOCOL.equals(scheme)) {
+    if (authority != null && (StandardFileSystems.FILE_PROTOCOL.equals(scheme) || StringUtil.isEmpty(matcher.group(2)))) {
       path = path == null ? authority : (authority + path);
       authority = null;
     }
-    return new UrlImpl(scheme, authority, path, parameters);
+    return new UrlImpl(scheme, authority, path, matcher.group(5));
   }
 
   // must not be used in NodeJS
