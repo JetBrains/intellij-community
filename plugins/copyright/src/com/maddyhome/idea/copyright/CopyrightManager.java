@@ -143,8 +143,9 @@ public class CopyrightManager extends AbstractProjectComponent implements Persis
 
   @Override
   public Element getState() {
+    Element state = new Element("settings");
+
     try {
-      Element state = new Element("settings");
       if (!myCopyrights.isEmpty()) {
         for (CopyrightProfile copyright : myCopyrights.values()) {
           final Element copyrightElement = new Element(COPYRIGHT);
@@ -164,18 +165,22 @@ public class CopyrightManager extends AbstractProjectComponent implements Persis
         state.addContent(map);
       }
 
-      boolean hasAttributes = myDefaultCopyright != null;
-      // CR-IC-3403#CFR-62470, idea <= 12 compatibility
-      state.setAttribute(DEFAULT, hasAttributes ? myDefaultCopyright.getName() : "");
-
       myOptions.writeExternal(state);
-
-      return !hasAttributes && state.getChildren().isEmpty() ? null : state;
     }
     catch (WriteExternalException e) {
       LOG.error(e);
       return null;
     }
+
+    if (myDefaultCopyright != null) {
+      state.setAttribute(DEFAULT, myDefaultCopyright.getName());
+    }
+    else if (!state.getChildren().isEmpty()) {
+      // CR-IC-3403#CFR-62470, idea <= 12 compatibility
+      state.setAttribute(DEFAULT, "");
+    }
+
+    return state;
   }
 
   @Override
