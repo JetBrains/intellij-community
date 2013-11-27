@@ -17,6 +17,8 @@ package com.jetbrains.python.refactoring.surround.surrounders.statements;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.openapi.util.TextRange;
+import com.jetbrains.python.psi.PyFinallyPart;
+import com.jetbrains.python.psi.PyStatementList;
 import com.jetbrains.python.psi.PyTryExceptStatement;
 
 /**
@@ -37,6 +39,10 @@ public class PyWithTryFinallySurrounder extends PyWithTryExceptSurrounder {
 
   @Override
   protected TextRange getResultRange(PyTryExceptStatement tryStatement) {
-    return tryStatement.getFinallyPart().getStatementList().getTextRange();
+    final PyFinallyPart finallyPart = tryStatement.getFinallyPart();
+    assert finallyPart != null;
+    final PyStatementList statementList = finallyPart.getStatementList();
+    assert statementList != null;
+    return statementList.getTextRange();
   }
 }
