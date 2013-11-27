@@ -1,15 +1,20 @@
 package org.jetbrains.postfixCompletion.LookupItems;
 
-import com.intellij.codeInsight.completion.*;
-import com.intellij.codeInsight.lookup.*;
-import com.intellij.openapi.application.*;
-import com.intellij.openapi.editor.*;
-import com.intellij.openapi.util.*;
+import com.intellij.codeInsight.completion.InsertionContext;
+import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
-import org.jetbrains.annotations.*;
-import org.jetbrains.postfixCompletion.Infrastructure.*;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.postfixCompletion.Infrastructure.PostfixExecutionContext;
+import org.jetbrains.postfixCompletion.Infrastructure.PostfixTemplateContext;
+import org.jetbrains.postfixCompletion.Infrastructure.PostfixTemplatesService;
+import org.jetbrains.postfixCompletion.Infrastructure.PrefixExpressionContext;
 
-import java.util.*;
+import java.util.HashSet;
+import java.util.Set;
 
 public abstract class PostfixLookupElement<TPsiElement extends PsiElement> extends LookupElement {
   @NotNull private final PostfixExecutionContext myExecutionContext;
@@ -58,9 +63,9 @@ public abstract class PostfixLookupElement<TPsiElement extends PsiElement> exten
     PsiElement psiElement = file.findElementAt(startOffset);
     if (psiElement == null) return; // shit happens?
 
-    PostfixTemplatesManager manager =
-      ApplicationManager.getApplication().getComponent(PostfixTemplatesManager.class);
-    PostfixTemplateContext templateContext = manager.isAvailable(psiElement, myExecutionContext);
+    PostfixTemplatesService templatesService = ServiceManager.getService(PostfixTemplatesService.class);
+    if (templatesService == null) return;
+    PostfixTemplateContext templateContext = templatesService.isAvailable(psiElement, myExecutionContext);
     if (templateContext == null) return; // yes, shit happens
 
     PrefixExpressionContext originalExpression = findOriginalContext(templateContext);

@@ -1,24 +1,26 @@
-package org.jetbrains.postfixCompletion.TemplateProviders;
+package org.jetbrains.postfixCompletion.templates;
 
-import com.intellij.codeInsight.lookup.*;
-import org.jetbrains.annotations.*;
-import org.jetbrains.postfixCompletion.Infrastructure.*;
-import org.jetbrains.postfixCompletion.LookupItems.*;
+import com.intellij.codeInsight.lookup.LookupElement;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.postfixCompletion.Infrastructure.PostfixTemplateContext;
+import org.jetbrains.postfixCompletion.Infrastructure.PrefixExpressionContext;
+import org.jetbrains.postfixCompletion.Infrastructure.TemplateProvider;
+import org.jetbrains.postfixCompletion.LookupItems.NullCheckLookupElementBase;
 
-import java.util.*;
+import java.util.List;
 
 @TemplateProvider(
   templateName = "null",
   description = "Checks expression to be null",
   example = "if (expr == null)")
-public final class IsNullCheckTemplateProvider extends TemplateProviderBase {
+public final class IsNullCheckPostfixTemplateProvider extends PostfixTemplateProvider {
   @Override public void createItems(
       @NotNull PostfixTemplateContext context, @NotNull List<LookupElement> consumer) {
 
     PrefixExpressionContext expression = context.outerExpression();
     if (!expression.canBeStatement) return;
 
-    Boolean isNullable = NotNullCheckTemplateProvider.isNullableExpression(expression);
+    Boolean isNullable = NotNullCheckPostfixTemplateProvider.isNullableExpression(expression);
     if (isNullable != null) {
       if (!isNullable) return;
     } else { // unknown nullability

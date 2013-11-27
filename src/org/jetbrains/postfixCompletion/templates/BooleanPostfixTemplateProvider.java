@@ -1,14 +1,16 @@
-package org.jetbrains.postfixCompletion.TemplateProviders;
+package org.jetbrains.postfixCompletion.templates;
 
-import com.intellij.codeInsight.lookup.*;
+import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.psi.*;
-import com.intellij.psi.tree.*;
-import org.jetbrains.annotations.*;
-import org.jetbrains.postfixCompletion.Infrastructure.*;
+import com.intellij.psi.tree.IElementType;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.postfixCompletion.Infrastructure.PostfixTemplateContext;
+import org.jetbrains.postfixCompletion.Infrastructure.PrefixExpressionContext;
 
-import java.util.*;
+import java.util.List;
 
-public abstract class BooleanTemplateProviderBase extends TemplateProviderBase {
+public abstract class BooleanPostfixTemplateProvider extends PostfixTemplateProvider {
   public abstract boolean createBooleanItems(
     @NotNull PrefixExpressionContext context, @NotNull List<LookupElement> consumer);
 
@@ -29,16 +31,13 @@ public abstract class BooleanTemplateProviderBase extends TemplateProviderBase {
   }
 
   public static boolean isBooleanExpression(@NotNull PrefixExpressionContext context) {
-    if (context.expression instanceof PsiExpression) {
-      return isBooleanExpression((PsiExpression) context.expression, context.expressionType);
-    }
+    return context.expression instanceof PsiExpression 
+        && isBooleanExpression((PsiExpression) context.expression, context.expressionType);
 
-    return false;
   }
 
   private static boolean isBooleanExpression(@Nullable PsiExpression expression) {
-    if (expression == null) return false;
-    return isBooleanExpression(expression, expression.getType());
+    return expression != null && isBooleanExpression(expression, expression.getType());
   }
 
   private static boolean isBooleanExpression(@NotNull PsiExpression expression, @Nullable PsiType expressionType) {

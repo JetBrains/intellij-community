@@ -1,22 +1,24 @@
-package org.jetbrains.postfixCompletion.TemplateProviders;
+package org.jetbrains.postfixCompletion.templates;
 
-import com.intellij.codeInsight.*;
-import com.intellij.codeInsight.completion.*;
-import com.intellij.codeInsight.lookup.*;
-import com.intellij.openapi.application.*;
+import com.intellij.codeInsight.CodeInsightServicesUtil;
+import com.intellij.codeInsight.completion.InsertionContext;
+import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.*;
-import org.jetbrains.annotations.*;
-import org.jetbrains.postfixCompletion.Infrastructure.*;
-import org.jetbrains.postfixCompletion.LookupItems.*;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.postfixCompletion.Infrastructure.PrefixExpressionContext;
+import org.jetbrains.postfixCompletion.Infrastructure.TemplateProvider;
+import org.jetbrains.postfixCompletion.LookupItems.ExpressionPostfixLookupElement;
 
-import java.util.*;
+import java.util.List;
 
 @TemplateProvider(
   templateName = "not",
   description = "Negates boolean expression",
   example = "!expr",
   worksInsideFragments = true)
-public final class NotExpressionTemplateProvider extends BooleanTemplateProviderBase {
+public final class NotExpressionPostfixTemplateProvider extends BooleanPostfixTemplateProvider {
   @Override public boolean createBooleanItems(
       @NotNull PrefixExpressionContext context, @NotNull List<LookupElement> consumer) {
     consumer.add(new NotExpressionLookupElement(context));

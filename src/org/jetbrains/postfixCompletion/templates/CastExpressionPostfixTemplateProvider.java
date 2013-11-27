@@ -1,20 +1,24 @@
-package org.jetbrains.postfixCompletion.TemplateProviders;
+package org.jetbrains.postfixCompletion.templates;
 
-import com.intellij.codeInsight.completion.*;
-import com.intellij.codeInsight.lookup.*;
-import com.intellij.codeInsight.template.*;
-import com.intellij.codeInsight.template.impl.*;
-import com.intellij.codeInsight.template.macro.*;
-import com.intellij.openapi.application.*;
-import com.intellij.openapi.command.*;
-import com.intellij.openapi.editor.*;
+import com.intellij.codeInsight.completion.InsertionContext;
+import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.codeInsight.template.Template;
+import com.intellij.codeInsight.template.TemplateBuilderImpl;
+import com.intellij.codeInsight.template.TemplateManager;
+import com.intellij.codeInsight.template.impl.MacroCallNode;
+import com.intellij.codeInsight.template.macro.ExpectedTypeMacro;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.*;
-import org.jetbrains.annotations.*;
-import org.jetbrains.postfixCompletion.*;
-import org.jetbrains.postfixCompletion.Infrastructure.*;
-import org.jetbrains.postfixCompletion.LookupItems.*;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.postfixCompletion.CommonUtils;
+import org.jetbrains.postfixCompletion.Infrastructure.PostfixTemplateContext;
+import org.jetbrains.postfixCompletion.Infrastructure.PrefixExpressionContext;
+import org.jetbrains.postfixCompletion.Infrastructure.TemplateProvider;
+import org.jetbrains.postfixCompletion.LookupItems.ExpressionPostfixLookupElement;
 
-import java.util.*;
+import java.util.List;
 
 // todo: when invoked inside code fragment - insert ((T) expr)?
 // todo: also when can be expression-statements?
@@ -24,7 +28,7 @@ import java.util.*;
   description = "Surrounds expression with cast",
   example = "(SomeType) expr",
   worksInsideFragments = true)
-public final class CastExpressionTemplateProvider extends TemplateProviderBase {
+public final class CastExpressionPostfixTemplateProvider extends PostfixTemplateProvider {
   @Override public void createItems(
       @NotNull PostfixTemplateContext context, @NotNull List<LookupElement> consumer) {
     if (!context.executionContext.isForceMode) return;

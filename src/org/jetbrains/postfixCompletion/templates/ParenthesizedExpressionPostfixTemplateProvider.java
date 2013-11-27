@@ -1,20 +1,25 @@
-package org.jetbrains.postfixCompletion.TemplateProviders;
+package org.jetbrains.postfixCompletion.templates;
 
-import com.intellij.codeInsight.lookup.*;
-import com.intellij.psi.*;
-import org.jetbrains.annotations.*;
-import org.jetbrains.postfixCompletion.*;
-import org.jetbrains.postfixCompletion.Infrastructure.*;
-import org.jetbrains.postfixCompletion.LookupItems.*;
+import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiParenthesizedExpression;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.postfixCompletion.CommonUtils;
+import org.jetbrains.postfixCompletion.Infrastructure.PostfixTemplateContext;
+import org.jetbrains.postfixCompletion.Infrastructure.PrefixExpressionContext;
+import org.jetbrains.postfixCompletion.Infrastructure.TemplateProvider;
+import org.jetbrains.postfixCompletion.LookupItems.ExpressionPostfixLookupElement;
 
-import java.util.*;
+import java.util.List;
 
 @TemplateProvider(
   templateName = "par",
   description = "Parenthesizes current expression",
   example = "(expr)",
   worksInsideFragments = true)
-public final class ParenthesizedExpressionTemplateProvider extends TemplateProviderBase {
+public final class ParenthesizedExpressionPostfixTemplateProvider extends PostfixTemplateProvider {
   @Override public void createItems(
       @NotNull PostfixTemplateContext context, @NotNull List<LookupElement> consumer) {
     if (!context.executionContext.isForceMode) return;

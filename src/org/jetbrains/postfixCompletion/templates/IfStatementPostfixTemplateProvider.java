@@ -1,18 +1,22 @@
-package org.jetbrains.postfixCompletion.TemplateProviders;
+package org.jetbrains.postfixCompletion.templates;
 
-import com.intellij.codeInsight.lookup.*;
-import com.intellij.psi.*;
-import org.jetbrains.annotations.*;
-import org.jetbrains.postfixCompletion.Infrastructure.*;
-import org.jetbrains.postfixCompletion.LookupItems.*;
+import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiIfStatement;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.postfixCompletion.Infrastructure.PrefixExpressionContext;
+import org.jetbrains.postfixCompletion.Infrastructure.TemplateProvider;
+import org.jetbrains.postfixCompletion.LookupItems.IfStatementPostfixLookupItem;
 
-import java.util.*;
+import java.util.List;
 
 @TemplateProvider(
   templateName = "if",
   description = "Checks boolean expression to be 'true'",
   example = "if (expr)")
-public final class IfStatementTemplateProvider extends BooleanTemplateProviderBase {
+public final class IfStatementPostfixTemplateProvider extends BooleanPostfixTemplateProvider {
   @Override public boolean createBooleanItems(
     @NotNull PrefixExpressionContext context, @NotNull List<LookupElement> consumer) {
 

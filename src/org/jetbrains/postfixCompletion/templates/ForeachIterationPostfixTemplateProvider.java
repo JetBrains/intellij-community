@@ -1,28 +1,34 @@
-package org.jetbrains.postfixCompletion.TemplateProviders;
+package org.jetbrains.postfixCompletion.templates;
 
-import com.intellij.codeInsight.completion.*;
-import com.intellij.codeInsight.lookup.*;
-import com.intellij.codeInsight.template.*;
-import com.intellij.codeInsight.template.impl.*;
-import com.intellij.codeInsight.template.macro.*;
-import com.intellij.openapi.application.*;
-import com.intellij.openapi.command.*;
-import com.intellij.openapi.editor.*;
-import com.intellij.openapi.project.*;
+import com.intellij.codeInsight.completion.InsertionContext;
+import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.codeInsight.template.Template;
+import com.intellij.codeInsight.template.TemplateBuilderImpl;
+import com.intellij.codeInsight.template.TemplateManager;
+import com.intellij.codeInsight.template.impl.MacroCallNode;
+import com.intellij.codeInsight.template.macro.IterableComponentTypeMacro;
+import com.intellij.codeInsight.template.macro.SuggestVariableNameMacro;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.editor.CaretModel;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.util.*;
-import org.jetbrains.annotations.*;
-import org.jetbrains.postfixCompletion.Infrastructure.*;
-import org.jetbrains.postfixCompletion.LookupItems.*;
-import org.jetbrains.postfixCompletion.*;
+import com.intellij.psi.util.InheritanceUtil;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.postfixCompletion.Infrastructure.PostfixTemplateContext;
+import org.jetbrains.postfixCompletion.Infrastructure.PrefixExpressionContext;
+import org.jetbrains.postfixCompletion.Infrastructure.TemplateProvider;
+import org.jetbrains.postfixCompletion.LookupItems.StatementPostfixLookupElement;
+import org.jetbrains.postfixCompletion.PsiPointerExpression;
 
-import java.util.*;
+import java.util.List;
 
 @TemplateProvider(
   templateName = "for",
   description = "Iterates over enumerable collection",
   example = "for (T item : collection)")
-public final class ForeachIterationTemplateProvider extends TemplateProviderBase {
+public final class ForeachIterationPostfixTemplateProvider extends PostfixTemplateProvider {
   @Override public void createItems(
     @NotNull PostfixTemplateContext context, @NotNull List<LookupElement> consumer) {
     PrefixExpressionContext expression = context.outerExpression();

@@ -1,24 +1,30 @@
-package org.jetbrains.postfixCompletion.TemplateProviders;
+package org.jetbrains.postfixCompletion.templates;
 
-import com.intellij.codeInsight.completion.*;
-import com.intellij.codeInsight.lookup.*;
-import com.intellij.openapi.application.*;
-import com.intellij.openapi.command.*;
-import com.intellij.openapi.editor.*;
-import com.intellij.openapi.project.*;
+import com.intellij.codeInsight.completion.InsertionContext;
+import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.light.*;
-import com.intellij.refactoring.introduce.inplace.*;
-import com.intellij.refactoring.introduceVariable.*;
-import com.intellij.refactoring.ui.*;
-import org.jetbrains.annotations.*;
-import org.jetbrains.postfixCompletion.*;
-import org.jetbrains.postfixCompletion.Infrastructure.*;
-import org.jetbrains.postfixCompletion.LookupItems.*;
+import com.intellij.psi.impl.light.LightElement;
+import com.intellij.refactoring.introduce.inplace.OccurrencesChooser;
+import com.intellij.refactoring.introduceVariable.InputValidator;
+import com.intellij.refactoring.introduceVariable.IntroduceVariableHandler;
+import com.intellij.refactoring.introduceVariable.IntroduceVariableSettings;
+import com.intellij.refactoring.ui.TypeSelectorManagerImpl;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.postfixCompletion.CommonUtils;
+import org.jetbrains.postfixCompletion.Infrastructure.PostfixTemplateContext;
+import org.jetbrains.postfixCompletion.Infrastructure.PrefixExpressionContext;
+import org.jetbrains.postfixCompletion.Infrastructure.TemplateProvider;
+import org.jetbrains.postfixCompletion.LookupItems.ExpressionPostfixLookupElement;
+import org.jetbrains.postfixCompletion.LookupItems.StatementPostfixLookupElement;
 
-import java.util.*;
+import java.util.List;
 
-import static org.jetbrains.postfixCompletion.CommonUtils.*;
+import static org.jetbrains.postfixCompletion.CommonUtils.CtorAccessibility;
 
 // todo: support for int[].var (parses as .class access!)
 
@@ -27,7 +33,7 @@ import static org.jetbrains.postfixCompletion.CommonUtils.*;
   description = "Introduces variable for expression",
   example = "T name = expr;",
   worksOnTypes = true)
-public final class IntroduceVariableTemplateProvider extends TemplateProviderBase {
+public final class IntroduceVariablePostfixTemplateProvider extends PostfixTemplateProvider {
   @Override public void createItems(
       @NotNull PostfixTemplateContext context, @NotNull List<LookupElement> consumer) {
 

@@ -1,24 +1,27 @@
 package org.jetbrains.postfixCompletion.Infrastructure;
 
-import com.intellij.codeInsight.completion.*;
-import com.intellij.codeInsight.lookup.*;
-import com.intellij.openapi.application.*;
-import com.intellij.psi.*;
-import org.jetbrains.annotations.*;
+import com.intellij.codeInsight.completion.CompletionParameters;
+import com.intellij.codeInsight.completion.CompletionResultSet;
+import com.intellij.codeInsight.completion.PrefixMatcher;
+import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.openapi.components.ServiceManager;
+import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.List;
 
 public abstract class PostfixItemsCompletionProvider {
-  @NotNull public static List<LookupElement> getItems(
-      @NotNull CompletionParameters parameters, @NotNull CompletionResultSet result,
-      @NotNull PostfixExecutionContext executionContext) {
+  @NotNull
+  public static List<LookupElement> getItems(@NotNull CompletionParameters parameters,
+                                             @NotNull CompletionResultSet result,
+                                             @NotNull PostfixExecutionContext executionContext) {
 
-    Application application = ApplicationManager.getApplication();
-    PostfixTemplatesManager templatesManager = application.getComponent(PostfixTemplatesManager.class);
+    PostfixTemplatesService templatesService = ServiceManager.getService(PostfixTemplatesService.class);
+    if (templatesService == null) {
+      return Collections.emptyList();
+    }
 
-    PsiElement position = parameters.getPosition();
-
-    PostfixTemplateContext context = templatesManager.isAvailable(position, executionContext);
+    PostfixTemplateContext context = templatesService.isAvailable(parameters.getPosition(), executionContext);
     if (context == null) return Collections.emptyList();
 
     // fix prefix mather for cases like 'xs.length == 0.f|not'
@@ -29,7 +32,7 @@ public abstract class PostfixItemsCompletionProvider {
       result = result.withPrefixMatcher(extraMatcher);
     }
 
-    List<LookupElement> lookupElements = templatesManager.collectTemplates(context);
+    List<LookupElement> lookupElements = templatesService.collectTemplates(context);
     for (LookupElement postfixElement : lookupElements) {
       result.addElement(postfixElement);
     }

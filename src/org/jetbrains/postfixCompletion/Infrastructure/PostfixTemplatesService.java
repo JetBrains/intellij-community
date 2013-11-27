@@ -1,28 +1,33 @@
 package org.jetbrains.postfixCompletion.Infrastructure;
 
-import com.intellij.codeInsight.lookup.*;
-import com.intellij.codeInsight.template.impl.editorActions.*;
-import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.components.*;
-import com.intellij.openapi.diagnostic.*;
-import com.intellij.openapi.editor.actionSystem.*;
+import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.codeInsight.template.impl.editorActions.ExpandLiveTemplateByTabAction;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.actionSystem.EditorAction;
+import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.psi.*;
-import com.intellij.psi.util.*;
-import org.jetbrains.annotations.*;
-import org.jetbrains.postfixCompletion.*;
+import com.intellij.psi.util.PsiTreeUtil;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.postfixCompletion.ExpandPostfixEditorActionHandler;
+import org.jetbrains.postfixCompletion.templates.PostfixTemplateProvider;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 // todo: support '2 + 2 .var' (with spacing)
 /* todo: foo.bar
  *       123.fori    */
 
-public final class PostfixTemplatesManager implements ApplicationComponent {
+public final class PostfixTemplatesService {
   @NotNull private final List<TemplateProviderInfo> myProviders;
 
-  public PostfixTemplatesManager(@NotNull PostfixTemplateProvider[] providers) {
+  public PostfixTemplatesService() {
     List<TemplateProviderInfo> providerInfos = new ArrayList<TemplateProviderInfo>();
-    for (PostfixTemplateProvider provider : providers) {
+    for (PostfixTemplateProvider provider : PostfixTemplateProvider.EP_NAME.getExtensions()) {
       TemplateProvider annotation = provider.getClass().getAnnotation(TemplateProvider.class);
       if (annotation != null) {
         providerInfos.add(new TemplateProviderInfo(provider, annotation));
@@ -208,11 +213,4 @@ public final class PostfixTemplatesManager implements ApplicationComponent {
   }
 
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.postfixCompletion");
-
-  @Override public void initComponent() { }
-  @Override public void disposeComponent() { }
-
-  @NotNull @Override public String getComponentName() {
-    return PostfixTemplatesManager.class.getName();
-  }
 }

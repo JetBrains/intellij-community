@@ -1,14 +1,17 @@
-package org.jetbrains.postfixCompletion.TemplateProviders;
+package org.jetbrains.postfixCompletion.templates;
 
-import com.intellij.psi.*;
-import org.jetbrains.annotations.*;
-import org.jetbrains.postfixCompletion.Infrastructure.*;
+import com.intellij.psi.PsiBinaryExpression;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiForStatement;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.postfixCompletion.Infrastructure.PrefixExpressionContext;
+import org.jetbrains.postfixCompletion.Infrastructure.TemplateProvider;
 
 @TemplateProvider(
   templateName = "fori",
   description = "Iterates with index over collection",
   example = "for (int i = 0; i < expr.length; i++)")
-public final class ForIndexedIterationTemplateProvider extends ForIterationTemplateProviderBase {
+public final class ForIndexedIterationPostfixTemplateProvider extends ForIterationPostfixTemplateProvider {
   @Override @NotNull protected ForIndexedLookupElement createIterationLookupElement(
     @NotNull PrefixExpressionContext expression, @NotNull String indexVarType, @NotNull String sizeAccessSuffix) {
 

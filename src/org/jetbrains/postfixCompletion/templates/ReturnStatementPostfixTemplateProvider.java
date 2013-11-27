@@ -1,18 +1,20 @@
-package org.jetbrains.postfixCompletion.TemplateProviders;
+package org.jetbrains.postfixCompletion.templates;
 
-import com.intellij.codeInsight.lookup.*;
+import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.psi.*;
-import org.jetbrains.annotations.*;
-import org.jetbrains.postfixCompletion.Infrastructure.*;
-import org.jetbrains.postfixCompletion.LookupItems.*;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.postfixCompletion.Infrastructure.PostfixTemplateContext;
+import org.jetbrains.postfixCompletion.Infrastructure.PrefixExpressionContext;
+import org.jetbrains.postfixCompletion.Infrastructure.TemplateProvider;
+import org.jetbrains.postfixCompletion.LookupItems.StatementPostfixLookupElement;
 
-import java.util.*;
+import java.util.List;
 
 @TemplateProvider(
   templateName = "return",
   description = "Returns value from containing method",
   example = "return expr;")
-public final class ReturnStatementTemplateProvider extends TemplateProviderBase {
+public final class ReturnStatementPostfixTemplateProvider extends PostfixTemplateProvider {
   @Override public void createItems(@NotNull PostfixTemplateContext context, @NotNull List<LookupElement> consumer) {
     PrefixExpressionContext expression = context.outerExpression();
     if (!expression.canBeStatement) return;

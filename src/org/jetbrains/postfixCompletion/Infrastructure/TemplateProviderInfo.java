@@ -1,6 +1,7 @@
 package org.jetbrains.postfixCompletion.Infrastructure;
 
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.postfixCompletion.templates.PostfixTemplateProvider;
 
 public final class TemplateProviderInfo {
   @NotNull public final PostfixTemplateProvider provider;

@@ -1,21 +1,24 @@
 package org.jetbrains.postfixCompletion.SettingsPage;
 
-import com.intellij.openapi.application.*;
-import com.intellij.util.ui.*;
-import org.jetbrains.annotations.*;
-import org.jetbrains.postfixCompletion.Infrastructure.*;
+import com.intellij.openapi.components.ServiceManager;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.EditableModel;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.postfixCompletion.Infrastructure.PostfixTemplatesService;
+import org.jetbrains.postfixCompletion.Infrastructure.TemplateProviderInfo;
 
-import javax.swing.table.*;
-import java.util.*;
+import javax.swing.table.AbstractTableModel;
+import java.util.List;
 
 final class PostfixTemplatesModel extends AbstractTableModel implements EditableModel {
   @NotNull private final String[] myColumns;
   @NotNull private final List<TemplateProviderInfo> myTemplates;
 
   public PostfixTemplatesModel(@NotNull String[] columns) {
-    PostfixTemplatesManager templatesManager =
-      ApplicationManager.getApplication().getComponent(PostfixTemplatesManager.class);
-    myTemplates = templatesManager.getAllTemplates();
+    PostfixTemplatesService templatesService = ServiceManager.getService(PostfixTemplatesService.class);
+    myTemplates = templatesService != null
+        ? templatesService.getAllTemplates()
+        : ContainerUtil.<TemplateProviderInfo>newArrayList();
     myColumns = columns;
   }
 
