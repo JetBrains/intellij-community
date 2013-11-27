@@ -1,22 +1,26 @@
 package org.jetbrains.postfixCompletion.Infrastructure;
 
 import com.intellij.codeInsight.completion.*;
-import com.intellij.codeInsight.completion.impl.*;
-import com.intellij.codeInsight.completion.scope.*;
-import com.intellij.codeInsight.lookup.*;
-import com.intellij.openapi.application.*;
+import com.intellij.codeInsight.completion.impl.CamelHumpMatcher;
+import com.intellij.codeInsight.completion.scope.JavaCompletionProcessor;
+import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.psi.*;
-import com.intellij.psi.filters.*;
-import com.intellij.psi.impl.source.resolve.reference.impl.*;
-import com.intellij.psi.infos.*;
-import com.intellij.psi.search.*;
-import com.intellij.util.*;
-import com.intellij.util.containers.*;
-import org.jetbrains.annotations.*;
-import org.jetbrains.postfixCompletion.LookupItems.*;
+import com.intellij.psi.filters.ElementFilter;
+import com.intellij.psi.impl.source.resolve.reference.impl.PsiMultiReference;
+import com.intellij.psi.infos.CandidateInfo;
+import com.intellij.psi.search.PsiShortNamesCache;
+import com.intellij.util.CollectConsumer;
+import com.intellij.util.ReflectionCache;
+import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.postfixCompletion.LookupItems.PostfixChainLookupElement;
 
-import java.util.*;
+import java.util.Collections;
 import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Set;
 
 // todo: fix 'scn.nn' prefix matching
 public abstract class PostfixNoVariantsCompletionUtil {
@@ -42,9 +46,10 @@ public abstract class PostfixNoVariantsCompletionUtil {
 
     CompletionResultSet filteredResultSet = resultSet.withPrefixMatcher(fullPrefix);
 
-    Application application = ApplicationManager.getApplication();
-    PostfixTemplatesManager templatesManager = application.getComponent(PostfixTemplatesManager.class);
-
+    PostfixTemplatesService templatesService = ServiceManager.getService(PostfixTemplatesService.class);
+    if (templatesService == null) {
+      return;
+    }
     for (LookupElement qualifierElement : suggestQualifierItems(parameters, qualifierReference)) {
       PsiType type = JavaCompletionUtil.getLookupElementType(qualifierElement);
       if (type == null || PsiType.VOID.equals(type)) continue;
@@ -83,7 +88,7 @@ public abstract class PostfixNoVariantsCompletionUtil {
         }
       };
 
-      for (LookupElement postfixElement : templatesManager.collectTemplates(mockTemplateContext)) {
+      for (LookupElement postfixElement : templatesService.collectTemplates(mockTemplateContext)) {
         PostfixChainLookupElement chainedPostfix = new PostfixChainLookupElement(qualifierElement, postfixElement);
 
         PrefixMatcher prefixMatcher = new CamelHumpMatcher(fullPrefix);

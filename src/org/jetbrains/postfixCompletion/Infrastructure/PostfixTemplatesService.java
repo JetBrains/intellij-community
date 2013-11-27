@@ -4,7 +4,6 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.template.impl.editorActions.ExpandLiveTemplateByTabAction;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
@@ -23,10 +22,10 @@ import java.util.List;
 /* todo: foo.bar
  *       123.fori    */
 
-public final class PostfixTemplatesManager implements ApplicationComponent {
+public final class PostfixTemplatesService {
   @NotNull private final List<TemplateProviderInfo> myProviders;
 
-  public PostfixTemplatesManager() {
+  public PostfixTemplatesService() {
     List<TemplateProviderInfo> providerInfos = new ArrayList<TemplateProviderInfo>();
     for (PostfixTemplateProvider provider : PostfixTemplateProvider.EP_NAME.getExtensions()) {
       TemplateProvider annotation = provider.getClass().getAnnotation(TemplateProvider.class);
@@ -214,11 +213,4 @@ public final class PostfixTemplatesManager implements ApplicationComponent {
   }
 
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.postfixCompletion");
-
-  @Override public void initComponent() { }
-  @Override public void disposeComponent() { }
-
-  @NotNull @Override public String getComponentName() {
-    return PostfixTemplatesManager.class.getName();
-  }
 }

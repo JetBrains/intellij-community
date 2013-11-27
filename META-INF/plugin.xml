@@ -69,11 +69,6 @@
 
   <idea-version since-build="130.754"/>
 
-  <application-components>
-    <component><implementation-class>org.jetbrains.postfixCompletion.Infrastructure.PostfixTemplatesManager</implementation-class></component>
-  </application-components>
-
-
   <extensionPoints>
     <extensionPoint name="templateProvider" interface="org.jetbrains.postfixCompletion.templates.PostfixTemplateProvider"/>
   </extensionPoints>
@@ -102,6 +97,7 @@
   </extensions>
   
   <extensions defaultExtensionNs="com.intellij">
+    <applicationService id="postfixCompletionService" serviceImplementation="org.jetbrains.postfixCompletion.Infrastructure.PostfixTemplatesService"/>
     <completion.contributor language="JAVA" order="FIRST"
       implementationClass="org.jetbrains.postfixCompletion.PostfixCompletionContributor" />
 

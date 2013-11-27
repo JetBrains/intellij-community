@@ -1,34 +1,43 @@
 package org.jetbrains.postfixCompletion;
 
-import com.intellij.codeInsight.completion.*;
-import com.intellij.codeInsight.lookup.*;
-import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.application.*;
-import com.intellij.openapi.command.*;
-import com.intellij.openapi.editor.*;
-import com.intellij.openapi.editor.actionSystem.*;
-import com.intellij.openapi.project.*;
-import com.intellij.openapi.util.*;
-import com.intellij.psi.*;
-import com.intellij.psi.util.*;
-import org.jetbrains.annotations.*;
-import org.jetbrains.postfixCompletion.Infrastructure.*;
+import com.intellij.codeInsight.completion.CompletionInitializationContext;
+import com.intellij.codeInsight.completion.CompletionUtilCore;
+import com.intellij.codeInsight.completion.InsertionContext;
+import com.intellij.codeInsight.completion.OffsetMap;
+import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.PsiCodeFragment;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.util.PsiUtilBase;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.postfixCompletion.Infrastructure.PostfixExecutionContext;
+import org.jetbrains.postfixCompletion.Infrastructure.PostfixTemplateContext;
+import org.jetbrains.postfixCompletion.Infrastructure.PostfixTemplatesService;
 
 public final class ExpandPostfixEditorActionHandler extends EditorActionHandler {
   @NotNull private final EditorActionHandler myUnderlyingHandler;
-  @NotNull private final PostfixTemplatesManager myTemplatesManager;
+  @NotNull
+  private final PostfixTemplatesService myTemplatesService;
 
-  public ExpandPostfixEditorActionHandler(
-      @NotNull EditorActionHandler underlyingHandler, @NotNull PostfixTemplatesManager templatesManager) {
-    myTemplatesManager = templatesManager;
+  public ExpandPostfixEditorActionHandler(@NotNull EditorActionHandler underlyingHandler,
+                                          @NotNull PostfixTemplatesService templatesService) {
+    myTemplatesService = templatesService;
     myUnderlyingHandler = underlyingHandler;
   }
 
   @Override public boolean isEnabled(@NotNull Editor editor, @NotNull DataContext dataContext) {
-    if (findPostfixTemplate(editor, false) != null)
-      return true;
-
-    return myUnderlyingHandler.isEnabled(editor, dataContext);
+    return findPostfixTemplate(editor, false) != null || myUnderlyingHandler.isEnabled(editor, dataContext);
   }
 
   @Override public void execute(@NotNull Editor editor, @NotNull DataContext dataContext) {
@@ -108,10 +117,10 @@ public final class ExpandPostfixEditorActionHandler extends EditorActionHandler 
       PostfixExecutionContext executionContext =
         new PostfixExecutionContext(true, dummyIdentifier, (psiFile instanceof PsiCodeFragment));
 
-      PostfixTemplateContext templateContext = myTemplatesManager.isAvailable(position, executionContext);
+      PostfixTemplateContext templateContext = myTemplatesService.isAvailable(position, executionContext);
       if (templateContext == null) return null;
 
-      for (LookupElement element : myTemplatesManager.collectTemplates(templateContext)) {
+      for (LookupElement element : myTemplatesService.collectTemplates(templateContext)) {
         String lookupString = element.getLookupString();
         if (offset <= lookupString.length()) continue;
 
