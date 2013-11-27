@@ -37,7 +37,7 @@ final class SubServer implements CustomPortServerManager.CustomPortService, Disp
   }
 
   public boolean bind(int port) {
-    if (port == BuiltInServerManager.getInstance().getPort()) {
+    if (!user.isAvailableExternally() && port == BuiltInServerManager.getInstance().getPort()) {
       return true;
     }
 
