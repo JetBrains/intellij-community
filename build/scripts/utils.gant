@@ -773,9 +773,9 @@ binding.setVariable("buildWinLauncher", { String ch, String inputPath, String ou
   if (launcherPropertiesTempFile != null) {
     launcherPropertiesTempFile.delete()
   }
+
   File outputFile = new File(outputPath)
-  int index = outputFile.lastIndexOf(File.separator)
-  String outputDir = fullPath.substring(0, index)
+  def outputDir = outputPath.substring(0, outputPath.lastIndexOf(File.separatorChar))
   executeExternalAnt(["dirName": outputDir, "fileName": outputFile.getName()], "$home/build/signBuild.xml")
 })
 
