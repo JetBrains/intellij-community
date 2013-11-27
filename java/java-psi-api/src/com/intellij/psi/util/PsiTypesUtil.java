@@ -17,6 +17,7 @@ package com.intellij.psi.util;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
@@ -214,5 +215,17 @@ public class PsiTypesUtil {
       return PsiType.BOOLEAN.getBoxedType(parent);
     }
     return null;
+  }
+  
+  public static boolean compareTypes(PsiType leftType, PsiType rightType, boolean ignoreEllipsis) {
+    if (ignoreEllipsis) {
+      if (leftType instanceof PsiEllipsisType) {
+        leftType = ((PsiEllipsisType)leftType).toArrayType();
+      }
+      if (rightType instanceof PsiEllipsisType) {
+        rightType = ((PsiEllipsisType)rightType).toArrayType();
+      }
+    }
+    return Comparing.equal(leftType, rightType);
   }
 }
