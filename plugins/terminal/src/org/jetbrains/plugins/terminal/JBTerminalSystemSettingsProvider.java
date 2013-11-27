@@ -166,7 +166,7 @@ class JBTerminalSystemSettingsProvider extends DefaultTabbedSettingsProvider imp
 
   @Override
   public boolean useAntialiasing() {
-    return UISettings.getInstance().ANTIALIASING_IN_EDITOR;
+    return true; // we return true here because all the settings are checked again in UiSettings.setupAntialiasing
   }
 
   @Override
