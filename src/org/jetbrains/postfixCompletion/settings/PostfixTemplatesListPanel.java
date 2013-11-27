@@ -6,9 +6,12 @@ import com.intellij.ui.TableViewSpeedSearch;
 import com.intellij.ui.ToolbarDecorator;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.table.TableView;
+import com.intellij.util.Function;
+import com.intellij.util.NotNullFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.ListTableModel;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.postfixCompletion.Infrastructure.TemplateProviderInfo;
@@ -20,13 +23,37 @@ import java.util.List;
 import java.util.Map;
 
 public class PostfixTemplatesListPanel {
+  private static final NotNullFunction<TemplateProviderInfo, String> GET_SHORTCUT_FUNCTION = new NotNullFunction<TemplateProviderInfo, String>() {
+      @NotNull
+      @Override
+      public String fun(@NotNull TemplateProviderInfo info) {
+        return info.annotation.templateName();
+      }
+    };
+
+  private static final NotNullFunction<TemplateProviderInfo, String> GET_DESCRIPTION_FUNCTION = new NotNullFunction<TemplateProviderInfo, String>() {
+      @NotNull
+      @Override
+      public String fun(@NotNull TemplateProviderInfo info) {
+        return info.annotation.description();
+      }
+    };
+
+  private static final NotNullFunction<TemplateProviderInfo, String> GET_EXAMPLE_FUNCTION = new NotNullFunction<TemplateProviderInfo, String>() {
+      @NotNull
+      @Override
+      public String fun(@NotNull TemplateProviderInfo info) {
+        return info.annotation.example();
+      }
+    };
+
   @NotNull
   private final Map<String, Boolean> myTemplatesState = ContainerUtil.newHashMap();
   @NotNull
   private final JPanel myPanelWithTableView;
 
   public PostfixTemplatesListPanel(@NotNull List<TemplateProviderInfo> templates) {
-    ColumnInfo[] columns = {new BooleanColumnInfo(), new ShortcutColumnInfo(), new DescriptionColumnInfo(), new ExampleColumnInfo()};
+    ColumnInfo[] columns = generateColumns(templates);
     ListTableModel<TemplateProviderInfo> templatesTableModel = new ListTableModel<TemplateProviderInfo>(columns, templates, 0);
     TableView<TemplateProviderInfo> templatesTableView = new TableView<TemplateProviderInfo>();
     templatesTableView.setModelAndUpdateColumns(templatesTableModel);
@@ -45,6 +72,29 @@ public class PostfixTemplatesListPanel {
       .disableAddAction()
       .disableRemoveAction()
       .disableUpDownActions().createPanel();
+  }
+
+  @NotNull
+  private ColumnInfo[] generateColumns(@NotNull List<TemplateProviderInfo> templates) {
+    String longestTemplateName = "";
+    String longestDescription = "";
+    String longestExample = "";
+    for (TemplateProviderInfo template : templates) {
+      longestTemplateName = longestString(longestTemplateName, GET_SHORTCUT_FUNCTION.fun(template));
+      longestDescription = longestString(longestDescription, GET_DESCRIPTION_FUNCTION.fun(template));
+      longestExample = longestString(longestExample, GET_EXAMPLE_FUNCTION.fun(template));
+    }
+    return new ColumnInfo[]{
+      new BooleanColumnInfo(),
+      new StringColumnInfo("Shortcut", GET_SHORTCUT_FUNCTION, longestTemplateName),
+      new StringColumnInfo("Description", GET_DESCRIPTION_FUNCTION, longestDescription),
+      new StringColumnInfo("Example", GET_EXAMPLE_FUNCTION, longestExample),
+    };
+  }
+
+  @NotNull
+  private static String longestString(@NotNull String firstString, @NotNull String secondString) {
+    return secondString.length() > firstString.length() ? secondString : firstString;
   }
 
   @NotNull
@@ -113,33 +163,31 @@ public class PostfixTemplatesListPanel {
     }
   }
 
-  private static class ShortcutColumnInfo extends ColumnInfo<TemplateProviderInfo, String> {
-    public ShortcutColumnInfo() {
-      super("Shortcut");
+  private static class StringColumnInfo extends ColumnInfo<TemplateProviderInfo, String> {
+    @NotNull private final Function<TemplateProviderInfo, String> myValueOfFunction;
+    @Nullable private final String myPreferredStringValue;
+
+    public StringColumnInfo(@NotNull String name,
+                            @NotNull Function<TemplateProviderInfo, String> valueOfFunction,
+                            @Nullable String preferredStringValue) {
+      super(name);
+      myValueOfFunction = valueOfFunction;
+      myPreferredStringValue = preferredStringValue != null && !preferredStringValue.isEmpty() ? preferredStringValue : null;
+    }
+
+    @Override
+    public int getAdditionalWidth() {
+      return UIUtil.DEFAULT_HGAP;
+    }
+
+    @Nullable
+    @Override
+    public String getPreferredStringValue() {
+      return myPreferredStringValue;
     }
 
     public String valueOf(final TemplateProviderInfo template) {
-      return template.annotation.templateName();
-    }
-  }
-
-  private static class DescriptionColumnInfo extends ColumnInfo<TemplateProviderInfo, String> {
-    public DescriptionColumnInfo() {
-      super("Description");
-    }
-
-    public String valueOf(final TemplateProviderInfo template) {
-      return template.annotation.description();
-    }
-  }
-
-  private static class ExampleColumnInfo extends ColumnInfo<TemplateProviderInfo, String> {
-    public ExampleColumnInfo() {
-      super("Example");
-    }
-
-    public String valueOf(final TemplateProviderInfo template) {
-      return template.annotation.example();
+      return myValueOfFunction.fun(template);
     }
   }
 }
