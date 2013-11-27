@@ -43,7 +43,7 @@ import java.util.*;
 /**
  * @author cdr
  */
-public class RedundantSuppressInspection extends GlobalInspectionTool{
+public class RedundantSuppressInspectionBase extends GlobalInspectionTool {
   private BidirectionalMap<String, QuickFix> myQuickFixes = null;
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.RedundantSuppressInspection");
 
@@ -87,7 +87,7 @@ public class RedundantSuppressInspection extends GlobalInspectionTool{
                             @NotNull final ProblemDescriptionsProcessor problemDescriptionsProcessor) {
     globalContext.getRefManager().iterate(new RefJavaVisitor() {
       @Override public void visitClass(@NotNull RefClass refClass) {
-        if (!globalContext.shouldCheck(refClass, RedundantSuppressInspection.this)) return;
+        if (!globalContext.shouldCheck(refClass, RedundantSuppressInspectionBase.this)) return;
         CommonProblemDescriptor[] descriptors = checkElement(refClass, manager, globalContext.getProject());
         if (descriptors != null) {
           for (CommonProblemDescriptor descriptor : descriptors) {
@@ -192,7 +192,7 @@ public class RedundantSuppressInspection extends GlobalInspectionTool{
     PsiFile file = psiElement.getContainingFile();
     final AnalysisScope scope = new AnalysisScope(file);
 
-    final GlobalInspectionContextBase globalContext = new GlobalInspectionContextBase(file.getProject());
+    final GlobalInspectionContextBase globalContext = createContext(file);
     globalContext.setCurrentScope(scope);
     final RefManagerImpl refManager = (RefManagerImpl)globalContext.getRefManager();
     refManager.inspectionReadActionStarted();
@@ -312,6 +312,10 @@ public class RedundantSuppressInspection extends GlobalInspectionTool{
       globalContext.close(true);
     }
     return result.toArray(new ProblemDescriptor[result.size()]);
+  }
+
+  protected GlobalInspectionContextBase createContext(PsiFile file) {
+    return new GlobalInspectionContextBase(file.getProject());
   }
 
   protected InspectionToolWrapper[] getInspectionTools(PsiElement psiElement, @NotNull InspectionManager manager) {
