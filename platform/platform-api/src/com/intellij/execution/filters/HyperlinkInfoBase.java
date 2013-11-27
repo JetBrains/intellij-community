@@ -13,17 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.editor.impl.event;
+package com.intellij.execution.filters;
 
-import com.intellij.openapi.editor.ex.RangeHighlighterEx;
+import com.intellij.openapi.project.Project;
+import com.intellij.ui.awt.RelativePoint;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.EventListener;
+/**
+ * @author nik
+ */
+public abstract class HyperlinkInfoBase implements HyperlinkInfo {
+  public abstract void navigate(@NotNull Project project, @Nullable RelativePoint hyperlinkLocationPoint);
 
-public interface MarkupModelListener extends EventListener {
-  MarkupModelListener[] EMPTY_ARRAY = new MarkupModelListener[0];
-
-  void afterAdded(@NotNull RangeHighlighterEx highlighter);
-  void beforeRemoved(@NotNull RangeHighlighterEx highlighter);
-  void attributesChanged(@NotNull RangeHighlighterEx highlighter, boolean renderersChanged);
+  @Override
+  public void navigate(Project project) {
+    navigate(project, null);
+  }
 }

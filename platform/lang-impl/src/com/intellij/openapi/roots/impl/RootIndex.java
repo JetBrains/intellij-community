@@ -338,25 +338,35 @@ class RootIndex {
       DirectoryInfo info = myInfoCache.get(root);
       if (info != null) {
         if (dir != root) {
-          myInfoCache.put(dir, info);
+          cacheInfos(dir, root, info);
         }
         return info == NULL_INFO ? null : info;
       }
       
       info = myRoots.get(root);
       if (info != null) {
-        myInfoCache.put(dir, info);
+        cacheInfos(dir, root, info);
         return info;
       }
       
       if (isAnyExcludeRoot(root) || FileTypeManager.getInstance().isFileIgnored(root)) {
-        myInfoCache.put(dir, NULL_INFO);
+        cacheInfos(dir, root, NULL_INFO);
         return null;
       }
     }
 
-    myInfoCache.put(dir, NULL_INFO);
+    cacheInfos(dir, null, NULL_INFO);
     return null;
+  }
+
+  private void cacheInfos(VirtualFile dir, @Nullable VirtualFile stopAt, @NotNull DirectoryInfo info) {
+    while (dir != null) {
+      myInfoCache.put(dir, info);
+      if (dir == stopAt) {
+        break;
+      }
+      dir = dir.getParent();
+    }
   }
 
   private boolean isAnyExcludeRoot(VirtualFile root) {

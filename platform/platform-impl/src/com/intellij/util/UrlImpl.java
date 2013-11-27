@@ -84,10 +84,17 @@ public final class UrlImpl implements Url {
   public String toDecodedForm() {
     StringBuilder builder = new StringBuilder();
     if (scheme != null) {
-      builder.append(scheme).append(URLUtil.SCHEME_SEPARATOR);
-    }
-    if (authority != null) {
-      builder.append(authority);
+      builder.append(scheme);
+      if (authority != null || isInLocalFileSystem()) {
+        builder.append(URLUtil.SCHEME_SEPARATOR);
+      }
+      else {
+        builder.append(':');
+      }
+
+      if (authority != null) {
+        builder.append(authority);
+      }
     }
     builder.append(getPath());
     if (parameters != null) {
@@ -104,7 +111,8 @@ public final class UrlImpl implements Url {
     }
 
     // relative path - special url, encoding is not required
-    if (path.charAt(0) != '/' && !isInLocalFileSystem()) {
+    // authority is null in case of URI or file URL
+    if ((path.charAt(0) != '/' || authority == null) && !isInLocalFileSystem()) {
       return toDecodedForm();
     }
 

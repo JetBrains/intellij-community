@@ -17,7 +17,6 @@ package com.intellij.remoteServer.impl.util;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.packaging.artifacts.Artifact;
-import com.intellij.remoteServer.agent.util.CloudGitApplication;
 import com.intellij.remoteServer.configuration.deployment.ArtifactDeploymentSource;
 import com.intellij.remoteServer.configuration.deployment.DeploymentSource;
 import com.intellij.remoteServer.util.DeploymentSourceHandler;

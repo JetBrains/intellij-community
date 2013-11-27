@@ -93,12 +93,11 @@ public class ReformatCodeAction extends AnAction implements DumbAware {
         final boolean processOnlyChangedText = selectedFlags.isProcessOnlyChangedText();
         final boolean shouldOptimizeImports = selectedFlags.isOptimizeImports() && !DumbService.getInstance(project).isDumb();
 
+        AbstractLayoutCodeProcessor processor = new ReformatCodeProcessor(project, convertToPsiFiles(files, project), null, processOnlyChangedText);
         if (shouldOptimizeImports) {
-          new ReformatAndOptimizeImportsProcessor(project, convertToPsiFiles(files, project), processOnlyChangedText).run();
+          processor = new OptimizeImportsProcessor(processor);
         }
-        else {
-          new ReformatCodeProcessor(project, convertToPsiFiles(files, project), null, processOnlyChangedText).run();
-        }
+        processor.run();
       }
       return;
     }
@@ -107,26 +106,9 @@ public class ReformatCodeAction extends AnAction implements DumbAware {
       Module moduleContext = LangDataKeys.MODULE_CONTEXT.getData(dataContext);
 
       if (projectContext != null || moduleContext != null) {
-        ReformatFilesOptions selectedFlags = getLayoutProjectOptions(project, moduleContext);
-        if (selectedFlags == null)
-          return;
-
-        boolean shouldOptimize = selectedFlags.isOptimizeImports() && !DumbService.getInstance(project).isDumb();
-        if (shouldOptimize) {
-          if (moduleContext != null) {
-            new ReformatAndOptimizeImportsProcessor(project, moduleContext, selectedFlags.isProcessOnlyChangedText()).run();
-          }
-          else {
-            new ReformatAndOptimizeImportsProcessor(project, selectedFlags.isProcessOnlyChangedText()).run();
-          }
-        }
-        else {
-          if (moduleContext != null) {
-            new ReformatCodeProcessor(project, moduleContext, selectedFlags.isProcessOnlyChangedText()).run();
-          }
-          else {
-            new ReformatCodeProcessor(project, selectedFlags.isProcessOnlyChangedText()).run();
-          }
+        ReformatFilesOptions selectedFlags = getLayoutProjectOptions(project, moduleContext); // module menu - only 2 options available
+        if (selectedFlags != null) {
+          reformatModule(project, moduleContext, selectedFlags);
         }
         return;
       }
@@ -164,12 +146,11 @@ public class ReformatCodeAction extends AnAction implements DumbAware {
       processChangedTextOnly = selectedFlags.isProcessOnlyChangedText();
       
       if (selectedFlags.isProcessDirectory()) {
+        AbstractLayoutCodeProcessor processor = new ReformatCodeProcessor(project, dir, selectedFlags.isIncludeSubdirectories(), processChangedTextOnly);
         if (optimizeImports) {
-          new ReformatAndOptimizeImportsProcessor(project, dir, selectedFlags.isIncludeSubdirectories(), processChangedTextOnly).run();
+          processor = new OptimizeImportsProcessor(processor);
         }
-        else {
-          new ReformatCodeProcessor(project, dir, selectedFlags.isIncludeSubdirectories(), processChangedTextOnly).run();
-        }
+        processor.run();
         return;
       }
     }
@@ -184,10 +165,10 @@ public class ReformatCodeAction extends AnAction implements DumbAware {
 
     if (optimizeImports && range == null) {
       if (file != null || dir == null) {
-        new ReformatAndOptimizeImportsProcessor(project, file, processChangedTextOnly).run();
+        new OptimizeImportsProcessor(new ReformatCodeProcessor(project, file, null, processChangedTextOnly)).run();
       }
       else {
-        new ReformatAndOptimizeImportsProcessor(project, dir, true, processChangedTextOnly).run();
+        new OptimizeImportsProcessor(new ReformatCodeProcessor(project, dir, true, processChangedTextOnly)).run();
       }
     }
     else {
@@ -213,6 +194,27 @@ public class ReformatCodeAction extends AnAction implements DumbAware {
         PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
       }
     }
+  }
+
+  private static void reformatModule(@NotNull Project project,
+                                     @Nullable Module moduleContext,
+                                     @NotNull ReformatFilesOptions selectedFlags)
+  {
+    boolean shouldOptimizeImports = selectedFlags.isOptimizeImports() && !DumbService.getInstance(project).isDumb();
+    boolean processOnlyChangedText = selectedFlags.isProcessOnlyChangedText();
+
+    AbstractLayoutCodeProcessor processor;
+    if (moduleContext != null)
+      processor = new ReformatCodeProcessor(project, moduleContext, processOnlyChangedText);
+    else
+      processor = new ReformatCodeProcessor(project, processOnlyChangedText);
+
+
+    if (shouldOptimizeImports) {
+      processor = new OptimizeImportsProcessor(processor);
+    }
+
+    processor.run();
   }
 
   public static void updateShowDialogSetting(LayoutCodeDialog dialog, String title) {

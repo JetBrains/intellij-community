@@ -13,17 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.editor.impl.event;
+package com.intellij.execution.filters.impl;
 
-import com.intellij.openapi.editor.ex.RangeHighlighterEx;
+import com.intellij.execution.filters.*;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.EventListener;
+import java.util.List;
 
-public interface MarkupModelListener extends EventListener {
-  MarkupModelListener[] EMPTY_ARRAY = new MarkupModelListener[0];
+/**
+ * @author nik
+ */
+public class HyperlinkInfoFactoryImpl extends HyperlinkInfoFactory {
 
-  void afterAdded(@NotNull RangeHighlighterEx highlighter);
-  void beforeRemoved(@NotNull RangeHighlighterEx highlighter);
-  void attributesChanged(@NotNull RangeHighlighterEx highlighter, boolean renderersChanged);
+  @NotNull
+  @Override
+  public HyperlinkInfo createMultipleFilesHyperlinkInfo(@NotNull List<VirtualFile> files,
+                                                        int line, @NotNull Project project) {
+    return new MultipleFilesHyperlinkInfo(files, line, project);
+  }
 }

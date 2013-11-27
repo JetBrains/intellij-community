@@ -13,17 +13,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.editor.impl.event;
+package com.intellij.ui;
 
-import com.intellij.openapi.editor.ex.RangeHighlighterEx;
-import org.jetbrains.annotations.NotNull;
+import java.awt.*;
 
-import java.util.EventListener;
+/**
+ * @author Konstantin Bulenkov
+ */
+public class Gradient {
+  private final Color myStartColor;
+  private final Color myEndColor;
 
-public interface MarkupModelListener extends EventListener {
-  MarkupModelListener[] EMPTY_ARRAY = new MarkupModelListener[0];
+  public Gradient(Color startColor, Color endColor) {
+    myStartColor = startColor;
+    myEndColor = endColor;
+  }
 
-  void afterAdded(@NotNull RangeHighlighterEx highlighter);
-  void beforeRemoved(@NotNull RangeHighlighterEx highlighter);
-  void attributesChanged(@NotNull RangeHighlighterEx highlighter, boolean renderersChanged);
+  public Color getStartColor() {
+    return myStartColor;
+  }
+
+  public Color getEndColor() {
+    return myEndColor;
+  }
 }

@@ -15,14 +15,36 @@
  */
 package com.intellij.util.containers;
 
+import com.intellij.openapi.util.SystemInfo;
+
 import java.util.Map;
 
 /**
  * @author peter
  */
 public abstract class ConcurrentFactoryMap<T,V> extends FactoryMap<T,V> {
+
+  private interface MapFactory {
+    int DEFAULT_CONCURRENCY_LEVEL = Runtime.getRuntime().availableProcessors();
+
+    MapFactory V8_MAP_FACTORY = new MapFactory() {
+      public <T, V> Map<T, V> createMap() {
+        return new ConcurrentHashMap<T,V>();
+      }
+    };
+    MapFactory DEFAULT_MAP_FACTORY = new MapFactory() {
+      public <T, V> Map<T, V> createMap() {
+        return new java.util.concurrent.ConcurrentHashMap<T,V>(16, 0.75f, DEFAULT_CONCURRENCY_LEVEL);
+      }
+    };
+
+    <T, V> Map<T, V> createMap();
+  }
+
+  private static final MapFactory ourMapFactory = SystemInfo.isOracleJvm || SystemInfo.isAppleJvm? MapFactory.V8_MAP_FACTORY : MapFactory.DEFAULT_MAP_FACTORY;
+
   @Override
   protected Map<T, V> createMap() {
-    return new ConcurrentHashMap<T,V>();
+    return ourMapFactory.createMap();
   }
 }

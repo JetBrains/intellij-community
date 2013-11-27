@@ -65,6 +65,7 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.ui.EditorNotificationPanel;
+import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.Alarm;
 import com.intellij.util.Consumer;
 import com.intellij.util.EditorPopupHandler;
@@ -657,6 +658,10 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     final int oldLineCount = document.getLineCount();
     final boolean isAtEndOfDocument = myEditor.getCaretModel().getOffset() == document.getTextLength();
     boolean cycleUsed = myBuffer.isUseCyclicBuffer() && document.getTextLength() + text.length() > myBuffer.getCyclicBufferSize();
+    if (cycleUsed) {
+      clearHyperlinkAndFoldings();
+    }
+    
     CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
       @Override
       public void run() {
@@ -706,7 +711,6 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     myPsiDisposedCheck.performCheck();
     final int newLineCount = document.getLineCount();
     if (cycleUsed) {
-      clearHyperlinkAndFoldings();
       if (!myInSpareTimeUpdate) {
         myInSpareTimeUpdate = true;
         final EditorNotificationPanel comp = new EditorNotificationPanel() {
@@ -720,7 +724,6 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
           @Override
           public void run() {
             try {
-              myHyperlinks.clearHyperlinks();
               clearHyperlinkAndFoldings();
               highlightHyperlinksAndFoldings(0, document.getLineCount() - 1);
             }
@@ -742,15 +745,18 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
   }
 
   private void clearHyperlinkAndFoldings() {
-    for (Iterator<RangeHighlighter> it = myHyperlinks.getHyperlinks().keySet().iterator(); it.hasNext();) {
-      if (!it.next().isValid()) {
-        it.remove();
-      }
-    }
+    myHyperlinks.clearHyperlinks();
+    myEditor.getMarkupModel().removeAllHighlighters();
 
     myPendingFoldRegions.clear();
     myFolding.clear();
     myFoldingAlarm.cancelAllRequests();
+    myEditor.getFoldingModel().runBatchFoldingOperation(new Runnable() {
+      @Override
+      public void run() {
+        myEditor.getFoldingModel().clearFoldRegions();
+      }
+    });
 
     cancelHeavyAlarm();
   }
@@ -1384,10 +1390,18 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     return EditorHyperlinkSupport.getNextOccurrence(myEditor, hyperlinks.getHyperlinks().keySet(), delta, new Consumer<RangeHighlighter>() {
       @Override
       public void consume(RangeHighlighter next) {
-        scrollTo(next.getStartOffset());
+        int offset = next.getStartOffset();
+        scrollTo(offset);
         final HyperlinkInfo hyperlinkInfo = hyperlinks.getHyperlinks().get(next);
         if (hyperlinkInfo != null) {
-          hyperlinkInfo.navigate(myProject);
+          if (hyperlinkInfo instanceof HyperlinkInfoBase) {
+            VisualPosition position = myEditor.offsetToVisualPosition(offset);
+            Point point = myEditor.visualPositionToXY(new VisualPosition(position.getLine() + 1, position.getColumn()));
+            ((HyperlinkInfoBase)hyperlinkInfo).navigate(myProject, new RelativePoint(myEditor.getContentComponent(), point));
+          }
+          else {
+            hyperlinkInfo.navigate(myProject);
+          }
         }
       }
     });

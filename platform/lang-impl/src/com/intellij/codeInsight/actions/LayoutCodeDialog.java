@@ -57,7 +57,7 @@ public class LayoutCodeDialog extends DialogWrapper implements LayoutCodeOptions
   private final String myHelpId;
   @NotNull private String myRearrangeEntriesKeyForLanguage;
   @Nullable private CommonCodeStyleSettings myCommonSettings;
-  private boolean myForceArrangeModeEnabled;
+  private boolean myRearrangeAlwaysEnabled;
 
 
   public LayoutCodeDialog(@NotNull Project project,
@@ -73,9 +73,9 @@ public class LayoutCodeDialog extends DialogWrapper implements LayoutCodeOptions
     myTextSelected = isTextSelected;
 
     if (myFile != null) myCommonSettings = CodeStyleSettingsManager.getSettings(myProject).getCommonSettings(myFile.getLanguage());
-    myForceArrangeModeEnabled = myCommonSettings != null
-                                && myCommonSettings.isForceArrangeMenuAvailable()
-                                && myCommonSettings.FORCE_REARRANGE_MODE != CommonCodeStyleSettings.REARRANGE_ACCORDIND_TO_DIALOG;
+    myRearrangeAlwaysEnabled = myCommonSettings != null
+                               && myCommonSettings.isForceArrangeMenuAvailable()
+                               && myCommonSettings.FORCE_REARRANGE_MODE == CommonCodeStyleSettings.REARRANGE_ALWAYS;
 
     myRearrangeEntriesKeyForLanguage = LayoutCodeConstants.REARRANGE_ENTRIES_KEY + (myFile == null ? "" : myFile.getLanguage().getDisplayName());
     setOKButtonText(CodeInsightBundle.message("reformat.code.accept.button.text"));
@@ -103,9 +103,7 @@ public class LayoutCodeDialog extends DialogWrapper implements LayoutCodeOptions
     myCbIncludeSubdirs.setSelected(true);
     //Loading previous state
     myCbOptimizeImports.setSelected(PropertiesComponent.getInstance().getBoolean(LayoutCodeConstants.OPTIMIZE_IMPORTS_KEY, false));
-    myCbArrangeEntries.setSelected(myForceArrangeModeEnabled ? myCommonSettings.FORCE_REARRANGE_MODE == CommonCodeStyleSettings.REARRANGE_ALWAYS
-                                                             : PropertiesComponent.getInstance(myProject).getBoolean(myRearrangeEntriesKeyForLanguage, false));
-
+    myCbArrangeEntries.setSelected(myRearrangeAlwaysEnabled || PropertiesComponent.getInstance(myProject).getBoolean(myRearrangeEntriesKeyForLanguage, false));
     myCbOnlyVcsChangedRegions.setSelected(PropertiesComponent.getInstance().getBoolean(LayoutCodeConstants.PROCESS_CHANGED_TEXT_KEY, false));
 
     ItemListener listener = new ItemListener() {
@@ -128,11 +126,14 @@ public class LayoutCodeDialog extends DialogWrapper implements LayoutCodeOptions
       !myRbSelectedText.isSelected()
       && !(myFile != null && LanguageImportStatements.INSTANCE.forFile(myFile).isEmpty() && myRbFile.isSelected())
     );
-    myCbArrangeEntries.setEnabled(myFile != null
-                                  && Rearranger.EXTENSION.forLanguage(myFile.getLanguage()) != null
-                                  && !myForceArrangeModeEnabled
+    myCbArrangeEntries.setEnabled(isProcessDirectory()
+                                  || myFile != null
+                                     && Rearranger.EXTENSION.forLanguage(myFile.getLanguage()) != null
+                                     && !myRearrangeAlwaysEnabled
     );
-
+    if (myRearrangeAlwaysEnabled && !myCbArrangeEntries.isEnabled()) {
+      myCbArrangeEntries.setSelected(true);
+    }
     myCbOnlyVcsChangedRegions.setEnabled(canTargetVcsRegions());
     myDoNotAskMeCheckBox.setEnabled(!myRbDirectory.isSelected());
     myRbDirectory.setEnabled(!myDoNotAskMeCheckBox.isSelected());

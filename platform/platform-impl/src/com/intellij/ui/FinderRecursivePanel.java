@@ -427,10 +427,12 @@ public abstract class FinderRecursivePanel<T> extends JBSplitter implements Data
               @Override
               public void run() {
                 try {
+                  final List<T> listItems = getListItems();
+
                   SwingUtilities.invokeLater(new Runnable() {
                     @Override
                     public void run() {
-                      mergeListItems(myListModel, getListItems());
+                      mergeListItems(myListModel, listItems);
 
                       if (myList.getSelectedIndex() < 0) {
                         myList.setSelectedIndex(myListModel.getSize() > oldIndex ? oldIndex : 0);

@@ -176,4 +176,9 @@ public class FoldingModelWindow implements FoldingModelEx{
   public void rebuild() {
     myDelegate.rebuild();
   }
+
+  @Override
+  public void clearFoldRegions() {
+    myDelegate.clearFoldRegions();
+  }
 }

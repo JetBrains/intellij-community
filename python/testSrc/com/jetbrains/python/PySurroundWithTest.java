@@ -35,7 +35,7 @@ public class PySurroundWithTest extends PyTestCase {
     doTest(new PyWithWhileSurrounder());
   }
 
-  public void _testSurroundWithTryExcept() throws Exception {
+  public void testSurroundWithTryExcept() throws Exception {
     doTest(new PyWithTryExceptSurrounder());
   }
 
