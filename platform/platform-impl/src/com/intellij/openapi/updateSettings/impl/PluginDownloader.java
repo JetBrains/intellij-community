@@ -367,7 +367,7 @@ public class PluginDownloader {
             "&build=" + buildNumber + "&uuid=" + URLEncoder.encode(uuid, "UTF8");
     }
 
-    PluginDownloader downloader = new PluginDownloader(descriptor.getPluginId().getIdString(), url, null, null, descriptor.getName());
+    PluginDownloader downloader = new PluginDownloader(descriptor.getPluginId().getIdString(), url, descriptor.getVersion(), null, descriptor.getName());
     downloader.setDescriptor(descriptor);
     return downloader;
   }
