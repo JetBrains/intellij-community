@@ -50,7 +50,7 @@ public final class Urls {
   }
 
   @NotNull
-  public static Url newHttpUrl(@Nullable String authority, @Nullable String path) {
+  public static Url newHttpUrl(@NotNull String authority, @Nullable String path) {
     return new UrlImpl("http", authority, path);
   }
 
