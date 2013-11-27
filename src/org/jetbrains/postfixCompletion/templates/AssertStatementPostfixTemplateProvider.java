@@ -6,9 +6,9 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementFactory;
 import com.intellij.psi.PsiExpression;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.postfixCompletion.Infrastructure.PrefixExpressionContext;
-import org.jetbrains.postfixCompletion.Infrastructure.TemplateProvider;
-import org.jetbrains.postfixCompletion.LookupItems.StatementPostfixLookupElement;
+import org.jetbrains.postfixCompletion.infrastructure.PrefixExpressionContext;
+import org.jetbrains.postfixCompletion.infrastructure.TemplateProvider;
+import org.jetbrains.postfixCompletion.lookupItems.StatementPostfixLookupElement;
 
 import java.util.List;
 

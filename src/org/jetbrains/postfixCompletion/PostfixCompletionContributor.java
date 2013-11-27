@@ -3,7 +3,7 @@ package org.jetbrains.postfixCompletion;
 import com.intellij.codeInsight.completion.*;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.*;
-import org.jetbrains.postfixCompletion.Infrastructure.*;
+import org.jetbrains.postfixCompletion.infrastructure.*;
 
 import java.util.*;
 

@@ -21,9 +21,9 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilBase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.postfixCompletion.Infrastructure.PostfixExecutionContext;
-import org.jetbrains.postfixCompletion.Infrastructure.PostfixTemplateContext;
-import org.jetbrains.postfixCompletion.Infrastructure.PostfixTemplatesService;
+import org.jetbrains.postfixCompletion.infrastructure.PostfixExecutionContext;
+import org.jetbrains.postfixCompletion.infrastructure.PostfixTemplateContext;
+import org.jetbrains.postfixCompletion.infrastructure.PostfixTemplatesService;
 
 public final class ExpandPostfixEditorActionHandler extends EditorActionHandler {
   @NotNull private final EditorActionHandler myUnderlyingHandler;

@@ -5,10 +5,10 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.postfixCompletion.Infrastructure.PostfixTemplateContext;
-import org.jetbrains.postfixCompletion.Infrastructure.PrefixExpressionContext;
-import org.jetbrains.postfixCompletion.Infrastructure.TemplateProvider;
-import org.jetbrains.postfixCompletion.LookupItems.StatementPostfixLookupElement;
+import org.jetbrains.postfixCompletion.infrastructure.PostfixTemplateContext;
+import org.jetbrains.postfixCompletion.infrastructure.PrefixExpressionContext;
+import org.jetbrains.postfixCompletion.infrastructure.TemplateProvider;
+import org.jetbrains.postfixCompletion.lookupItems.StatementPostfixLookupElement;
 
 import java.util.List;
 

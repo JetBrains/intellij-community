@@ -3,7 +3,7 @@ package org.jetbrains.postfixCompletion.templates;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.postfixCompletion.Infrastructure.PostfixTemplateContext;
+import org.jetbrains.postfixCompletion.infrastructure.PostfixTemplateContext;
 
 import java.util.List;
 

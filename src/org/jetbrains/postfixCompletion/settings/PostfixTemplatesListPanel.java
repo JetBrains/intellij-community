@@ -14,7 +14,7 @@ import com.intellij.util.ui.ListTableModel;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.postfixCompletion.Infrastructure.TemplateProviderInfo;
+import org.jetbrains.postfixCompletion.infrastructure.TemplateProviderInfo;
 
 import javax.swing.*;
 import javax.swing.table.TableCellEditor;

@@ -97,7 +97,7 @@
   </extensions>
   
   <extensions defaultExtensionNs="com.intellij">
-    <applicationService id="postfixCompletionService" serviceImplementation="org.jetbrains.postfixCompletion.Infrastructure.PostfixTemplatesService"/>
+    <applicationService id="postfixCompletionService" serviceImplementation="org.jetbrains.postfixCompletion.infrastructure.PostfixTemplatesService"/>
     <applicationService id="postfixCompletionSettings" serviceImplementation="org.jetbrains.postfixCompletion.settings.PostfixCompletionSettings"/>
     
     <completion.contributor language="JAVA" order="FIRST"

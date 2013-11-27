@@ -6,7 +6,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.postfixCompletion.Infrastructure.TemplateProviderInfo;
+import org.jetbrains.postfixCompletion.infrastructure.TemplateProviderInfo;
 
 import java.io.File;
 import java.util.Map;

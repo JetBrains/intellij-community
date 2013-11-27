@@ -9,8 +9,8 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.postfixCompletion.Infrastructure.PostfixTemplatesService;
-import org.jetbrains.postfixCompletion.Infrastructure.TemplateProviderInfo;
+import org.jetbrains.postfixCompletion.infrastructure.PostfixTemplatesService;
+import org.jetbrains.postfixCompletion.infrastructure.TemplateProviderInfo;
 
 import javax.swing.*;
 import java.util.Collections;

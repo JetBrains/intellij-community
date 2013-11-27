@@ -5,8 +5,8 @@ import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.postfixCompletion.Infrastructure.PostfixTemplateContext;
-import org.jetbrains.postfixCompletion.Infrastructure.PrefixExpressionContext;
+import org.jetbrains.postfixCompletion.infrastructure.PostfixTemplateContext;
+import org.jetbrains.postfixCompletion.infrastructure.PrefixExpressionContext;
 
 import java.util.List;
 

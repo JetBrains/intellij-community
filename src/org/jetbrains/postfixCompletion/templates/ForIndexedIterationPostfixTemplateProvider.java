@@ -4,8 +4,8 @@ import com.intellij.psi.PsiBinaryExpression;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiForStatement;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.postfixCompletion.Infrastructure.PrefixExpressionContext;
-import org.jetbrains.postfixCompletion.Infrastructure.TemplateProvider;
+import org.jetbrains.postfixCompletion.infrastructure.PrefixExpressionContext;
+import org.jetbrains.postfixCompletion.infrastructure.TemplateProvider;
 
 @TemplateProvider(
   templateName = "fori",

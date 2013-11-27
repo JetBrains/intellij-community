@@ -7,9 +7,9 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.postfixCompletion.Infrastructure.PrefixExpressionContext;
-import org.jetbrains.postfixCompletion.Infrastructure.TemplateProvider;
-import org.jetbrains.postfixCompletion.LookupItems.ExpressionPostfixLookupElement;
+import org.jetbrains.postfixCompletion.infrastructure.PrefixExpressionContext;
+import org.jetbrains.postfixCompletion.infrastructure.TemplateProvider;
+import org.jetbrains.postfixCompletion.lookupItems.ExpressionPostfixLookupElement;
 
 import java.util.List;
 
