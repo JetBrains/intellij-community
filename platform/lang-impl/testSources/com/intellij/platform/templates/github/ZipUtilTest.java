@@ -51,6 +51,28 @@ public class ZipUtilTest {
     }
   }
 
+  @Test
+  public void testSimpleUnzipUsingFile() throws Exception {
+    File tempDir = FileUtil.createTempDirectory("unzip-test-", null);
+    File simpleZipFile = new File(getZipParentDir(), "simple.zip");
+    ZipUtil.unzip(null, tempDir, simpleZipFile, null, null, true);
+    checkFileStructure(tempDir,
+                       fs()
+                         .file("a.txt")
+                         .dir("dir").file("b.txt"));
+  }
+
+  @Test
+  public void testSingleRootDirUnzipUsingFile() throws Exception {
+    File tempDir = FileUtil.createTempDirectory("unzip-test-", null);
+    File simpleZipFile = new File(getZipParentDir(), "single-root-dir-archive.zip");
+    ZipUtil.unzip(null, tempDir, simpleZipFile, null, null, true);
+    checkFileStructure(tempDir,
+                       fs()
+                         .file("a.txt")
+                         .dir("dir").file("b.txt"));
+  }
+
   private static void checkFileStructure(@NotNull File parentDir, @NotNull TestFileSystemBuilder expected) {
     expected.build().assertDirectoryEqual(parentDir);
   }
