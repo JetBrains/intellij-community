@@ -29,8 +29,8 @@ import java.util.List;
   example = "(SomeType) expr",
   worksInsideFragments = true)
 public final class CastExpressionPostfixTemplateProvider extends PostfixTemplateProvider {
-  @Override public void createItems(
-      @NotNull PostfixTemplateContext context, @NotNull List<LookupElement> consumer) {
+  @Override
+  public void createItems(@NotNull PostfixTemplateContext context, @NotNull List<LookupElement> consumer) {
     if (!context.executionContext.isForceMode) return;
 
     PrefixExpressionContext bestContext = context.outerExpression();
@@ -52,59 +52,60 @@ public final class CastExpressionPostfixTemplateProvider extends PostfixTemplate
       super("cast", context);
     }
 
-    @NotNull @Override protected PsiTypeCastExpression createNewExpression(
-      @NotNull PsiElementFactory factory, @NotNull PsiElement expression, @NotNull PsiElement context) {
+    @NotNull
+    @Override
+    protected PsiTypeCastExpression createNewExpression(@NotNull PsiElementFactory factory,
+                                                        @NotNull PsiElement expression,
+                                                        @NotNull PsiElement context) {
+      PsiTypeCastExpression cast = (PsiTypeCastExpression)factory.createExpressionFromText("(T) expr", context);
+      PsiExpression operand = cast.getOperand();
+      assert operand != null;
 
-      PsiTypeCastExpression typeCastExpression =
-        (PsiTypeCastExpression) factory.createExpressionFromText("(T) expr", context);
-
-      PsiExpression operand = typeCastExpression.getOperand();
-      assert (operand != null) : "operand != null";
       operand.replace(expression);
+      PsiTypeElement type = cast.getCastType();
+      PsiJavaCodeReferenceElement element = type != null ? type.getInnermostComponentReferenceElement() : null;
+      if (element != null) element.delete();
 
-      return typeCastExpression;
+      return cast;
     }
 
-    @Override protected void postProcess(
-      @NotNull final InsertionContext context, @NotNull PsiTypeCastExpression expression) {
-
+    @Override
+    protected void postProcess(@NotNull final InsertionContext context, @NotNull PsiTypeCastExpression expression) {
       SmartPointerManager pointerManager = SmartPointerManager.getInstance(context.getProject());
-      final SmartPsiElementPointer<PsiTypeCastExpression> pointer =
-        pointerManager.createSmartPsiElementPointer(expression);
-
+      SmartPsiElementPointer<PsiTypeCastExpression> pointer = pointerManager.createSmartPsiElementPointer(expression);
+      final PsiTypeCastExpression cast = pointer.getElement();
+      if (cast == null) return;
+      final Template template = createTemplate(cast);
       final Runnable runnable = new Runnable() {
-        @Override public void run() {
-          PsiTypeCastExpression castExpression = pointer.getElement();
-          if (castExpression == null) return;
-
-          TemplateBuilderImpl builder = new TemplateBuilderImpl(castExpression);
-
-          PsiTypeElement castType = castExpression.getCastType();
-          assert (castType != null) : "castType != null";
-
-          builder.replaceElement(castType, new MacroCallNode(new ExpectedTypeMacro()), true);
-          builder.setEndVariableAfter(castExpression);
-
-          Template template = builder.buildInlineTemplate();
-
+        @Override
+        public void run() {
           Editor editor = context.getEditor();
-          editor.getCaretModel().moveToOffset(
-            castExpression.getTextRange().getStartOffset());
-
-          TemplateManager manager = TemplateManager.getInstance(context.getProject());
-          manager.startTemplate(editor, template);
+          editor.getCaretModel().moveToOffset(cast.getTextRange().getStartOffset());
+          TemplateManager.getInstance(context.getProject()).startTemplate(editor, template);
         }
       };
 
       context.setLaterRunnable(new Runnable() {
-        @Override public void run() {
+        @Override
+        public void run() {
           ApplicationManager.getApplication().runWriteAction(new Runnable() {
-            @Override public void run() {
+            @Override
+            public void run() {
               CommandProcessor.getInstance().runUndoTransparentAction(runnable);
             }
           });
         }
       });
+    }
+
+    @NotNull
+    private static Template createTemplate(@NotNull PsiTypeCastExpression castExpression) {
+      TemplateBuilderImpl builder = new TemplateBuilderImpl(castExpression);
+      PsiTypeElement castType = castExpression.getCastType();
+      assert castType != null;
+      builder.replaceElement(castType, new MacroCallNode(new ExpectedTypeMacro()), true);
+      builder.setEndVariableAfter(castExpression);
+      return builder.buildInlineTemplate();
     }
   }
 }
