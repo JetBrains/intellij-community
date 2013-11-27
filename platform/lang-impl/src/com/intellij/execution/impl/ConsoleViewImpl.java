@@ -658,6 +658,10 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     final int oldLineCount = document.getLineCount();
     final boolean isAtEndOfDocument = myEditor.getCaretModel().getOffset() == document.getTextLength();
     boolean cycleUsed = myBuffer.isUseCyclicBuffer() && document.getTextLength() + text.length() > myBuffer.getCyclicBufferSize();
+    if (cycleUsed) {
+      clearHyperlinkAndFoldings();
+    }
+    
     CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
       @Override
       public void run() {
@@ -707,7 +711,6 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     myPsiDisposedCheck.performCheck();
     final int newLineCount = document.getLineCount();
     if (cycleUsed) {
-      clearHyperlinkAndFoldings();
       if (!myInSpareTimeUpdate) {
         myInSpareTimeUpdate = true;
         final EditorNotificationPanel comp = new EditorNotificationPanel() {
@@ -721,7 +724,6 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
           @Override
           public void run() {
             try {
-              myHyperlinks.clearHyperlinks();
               clearHyperlinkAndFoldings();
               highlightHyperlinksAndFoldings(0, document.getLineCount() - 1);
             }
@@ -743,15 +745,18 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
   }
 
   private void clearHyperlinkAndFoldings() {
-    for (Iterator<RangeHighlighter> it = myHyperlinks.getHyperlinks().keySet().iterator(); it.hasNext();) {
-      if (!it.next().isValid()) {
-        it.remove();
-      }
-    }
+    myHyperlinks.clearHyperlinks();
+    myEditor.getMarkupModel().removeAllHighlighters();
 
     myPendingFoldRegions.clear();
     myFolding.clear();
     myFoldingAlarm.cancelAllRequests();
+    myEditor.getFoldingModel().runBatchFoldingOperation(new Runnable() {
+      @Override
+      public void run() {
+        myEditor.getFoldingModel().clearFoldRegions();
+      }
+    });
 
     cancelHeavyAlarm();
   }
