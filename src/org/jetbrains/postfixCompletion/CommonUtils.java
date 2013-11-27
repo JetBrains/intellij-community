@@ -1,8 +1,9 @@
 package org.jetbrains.postfixCompletion;
 
 import com.intellij.psi.*;
-import com.intellij.psi.util.*;
-import org.jetbrains.annotations.*;
+import com.intellij.psi.util.PsiTreeUtil;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public abstract class CommonUtils {
   private CommonUtils() { }

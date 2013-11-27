@@ -16,11 +16,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.postfixCompletion.PsiPointerExpression;
 import org.jetbrains.postfixCompletion.infrastructure.PostfixTemplateContext;
 import org.jetbrains.postfixCompletion.infrastructure.PrefixExpressionContext;
 import org.jetbrains.postfixCompletion.infrastructure.TemplateProvider;
 import org.jetbrains.postfixCompletion.lookupItems.StatementPostfixLookupElement;
-import org.jetbrains.postfixCompletion.PsiPointerExpression;
 
 import java.util.List;
 

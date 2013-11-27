@@ -1,9 +1,14 @@
 package org.jetbrains.postfixCompletion;
 
-import com.intellij.codeInsight.lookup.*;
-import com.intellij.codeInsight.template.*;
-import com.intellij.psi.*;
-import org.jetbrains.annotations.*;
+import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.codeInsight.template.Expression;
+import com.intellij.codeInsight.template.ExpressionContext;
+import com.intellij.codeInsight.template.PsiElementResult;
+import com.intellij.codeInsight.template.Result;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.SmartPsiElementPointer;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public final class PsiPointerExpression extends Expression {
   @NotNull private final SmartPsiElementPointer<PsiExpression> valuePointer;

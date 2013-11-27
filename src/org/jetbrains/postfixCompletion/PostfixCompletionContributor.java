@@ -1,11 +1,13 @@
 package org.jetbrains.postfixCompletion;
 
 import com.intellij.codeInsight.completion.*;
-import com.intellij.psi.*;
-import org.jetbrains.annotations.*;
-import org.jetbrains.postfixCompletion.infrastructure.*;
+import com.intellij.psi.PsiCodeFragment;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.postfixCompletion.infrastructure.PostfixExecutionContext;
+import org.jetbrains.postfixCompletion.infrastructure.PostfixItemsCompletionProvider;
+import org.jetbrains.postfixCompletion.infrastructure.PostfixNoVariantsCompletionUtil;
 
-import java.util.*;
+import java.util.LinkedHashSet;
 
 public final class PostfixCompletionContributor extends CompletionContributor {
   @NotNull private final Object myDummyIdentifierLock = new Object();
