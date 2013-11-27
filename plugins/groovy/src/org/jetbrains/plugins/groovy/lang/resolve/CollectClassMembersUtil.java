@@ -85,7 +85,7 @@ public class CollectClassMembersUtil {
 
   @NotNull
   private static ClassMembers getCachedMembers(@NotNull PsiClass aClass, boolean includeSynthetic) {
-    LOG.assertTrue(aClass.isValid());
+    PsiUtilCore.ensureValid(aClass);
     Key<CachedValue<ClassMembers>> key = includeSynthetic ? CACHED_MEMBERS_INCLUDING_SYNTHETIC : CACHED_MEMBERS;
     CachedValue<ClassMembers> cachedValue = aClass.getUserData(key);
     if (isCyclicDependence(aClass)) {
@@ -150,7 +150,7 @@ public class CollectClassMembersUtil {
                                    @NotNull Set<PsiClass> visitedClasses,
                                    @NotNull PsiSubstitutor substitutor,
                                    boolean includeSynthetic) {
-    LOG.assertTrue(aClass.isValid());
+    PsiUtilCore.ensureValid(aClass);
 
     if (!visitedClasses.add(aClass)) return;
 

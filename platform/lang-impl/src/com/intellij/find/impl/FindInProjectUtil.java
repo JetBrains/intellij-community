@@ -23,7 +23,6 @@ import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.editor.Document;
@@ -114,6 +113,13 @@ public class FindInProjectUtil {
     if (model.getModuleName() == null || editor == null) {
       model.setDirectoryName(directoryName);
       model.setProjectScope(directoryName == null && module == null && !model.isCustomScope() || editor != null);
+
+      // for convenience set directory name to directory of current file, note that we doesn't change default projectScope
+      if (directoryName == null) {
+        VirtualFile virtualFile = CommonDataKeys.VIRTUAL_FILE.getData(dataContext);
+        if (virtualFile != null && !virtualFile.isDirectory()) virtualFile = virtualFile.getParent();
+        if (virtualFile != null) model.setDirectoryName(virtualFile.getPresentableUrl());
+      }
     }
   }
 

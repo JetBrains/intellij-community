@@ -13,22 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.plugins.gradle.model.impl;
+package com.intellij.remoteServer.util;
 
-import org.gradle.tooling.model.Dependency;
+import com.intellij.remoteServer.agent.util.CloudGitApplication;
+import com.intellij.remoteServer.configuration.deployment.DeploymentSource;
 
-import java.io.Serializable;
+import java.io.File;
 
 /**
- * @author Vladislav.Soroka
- * @since 11/8/13
+ * @author michael.golubev
  */
-public interface GradleDependency extends Dependency, Serializable {
-  String getConfigurationName();
+public interface DeploymentSourceHandler {
 
-  String getDependencyName();
+  boolean init(DeploymentSource deploymentSource) throws ServerRuntimeException;
 
-  String getDependencyGroup();
+  File getRepositoryRootFile();
 
-  String getDependencyVersion();
+  CloudGitApplication deploy() throws ServerRuntimeException;
 }

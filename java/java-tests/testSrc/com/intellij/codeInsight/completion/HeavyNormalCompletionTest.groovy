@@ -20,6 +20,7 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiManager
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.testFramework.PsiTestUtil
@@ -141,5 +142,12 @@ public class Test {
     myFixture.assertPreferredCompletionItems 0, 'getBuilder'
   }
 
+  public void testNoJavaStructureModificationOnSecondInvocation() {
+    myFixture.configureByText 'a.java', 'class Foo { Xxxxx<caret> }'
+    def oldCount = PsiManager.getInstance(project).modificationTracker.javaStructureModificationCount
+    assert !myFixture.completeBasic()
+    assert !myFixture.completeBasic()
+    assert oldCount == PsiManager.getInstance(project).modificationTracker.javaStructureModificationCount
+  }
 
 }

@@ -313,7 +313,7 @@ public class InspectionProfileTest extends LightIdeaTestCase {
     assertEquals(0, countInitializedTools(profile));
     profile.writeExternal(new Element("profile"));
     List<InspectionToolWrapper> initializedTools = getInitializedTools(profile);
-    if (initializedTools.size() != 1) {
+    if (initializedTools.size() > 0) {
       for (InspectionToolWrapper initializedTool : initializedTools) {
         System.out.println(initializedTool.getShortName());
       }

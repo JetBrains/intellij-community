@@ -13,8 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.plugins.gradle.model.impl;
+package org.jetbrains.plugins.gradle.model.internal;
 
+import org.gradle.tooling.model.idea.IdeaDependency;
 import org.jetbrains.plugins.gradle.model.ProjectDependenciesModel;
 
 import java.util.List;
@@ -25,9 +26,9 @@ import java.util.List;
  */
 public class ProjectDependenciesModelImpl implements ProjectDependenciesModel {
   private final String projectName;
-  private final List<GradleDependency> myDependencies;
+  private final List<IdeaDependency> myDependencies;
 
-  public ProjectDependenciesModelImpl(String projectName, List<GradleDependency> dependencies) {
+  public ProjectDependenciesModelImpl(String projectName, List<IdeaDependency> dependencies) {
     this.projectName = projectName;
     myDependencies = dependencies;
   }
@@ -38,7 +39,7 @@ public class ProjectDependenciesModelImpl implements ProjectDependenciesModel {
   }
 
   @Override
-  public List<GradleDependency> getDependencies() {
+  public List<IdeaDependency> getDependencies() {
     return myDependencies;
   }
 

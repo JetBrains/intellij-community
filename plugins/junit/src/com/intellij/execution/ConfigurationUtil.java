@@ -24,6 +24,7 @@ import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiElementProcessor;
@@ -96,6 +97,7 @@ public class ConfigurationUtil {
         }
     );
     if (testAnnotation != null) {
+      //allScope is used to find all abstract test cases which probably have inheritors in the current 'scope'
       AnnotatedMembersSearch.search(testAnnotation, GlobalSearchScope.allScope(manager.getProject())).forEach(new Processor<PsiMember>() {
         public boolean process(final PsiMember annotated) {
           final PsiClass containingClass = annotated instanceof PsiClass ? (PsiClass)annotated : annotated.getContainingClass();
@@ -104,7 +106,8 @@ public class ConfigurationUtil {
               new Computable<Boolean>() {
                 @Override
                 public Boolean compute() {
-                  return scope.contains(PsiUtilCore.getVirtualFile(containingClass)) && testClassFilter.isAccepted(containingClass);
+                  final VirtualFile file = PsiUtilCore.getVirtualFile(containingClass);
+                  return file != null && scope.contains(file) && testClassFilter.isAccepted(containingClass);
                 }
               })) {
               found.add(containingClass);

@@ -138,8 +138,7 @@ public class PluginAdvertiserEditorNotificationProvider extends EditorNotificati
           });
         }
       });
-    } else {
-
+    } else if (PluginsAdvertiser.hasBundledNotInstalledPlugin(plugins)){
       if (PropertiesComponent.getInstance().isTrueValue(PluginsAdvertiser.IGNORE_ULTIMATE_EDITION)) {
         return null;
       }
@@ -159,6 +158,8 @@ public class PluginAdvertiserEditorNotificationProvider extends EditorNotificati
           myNotifications.updateAllNotifications();
         }
       });
+    } else {
+      return null;
     }
     panel.createActionLabel("Ignore extension", new Runnable() {
       @Override

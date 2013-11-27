@@ -455,7 +455,12 @@ public class LambdaUtil {
           if (!tryToSubstitute) return cachedType;
         }
 
-        final PsiElement gParent = expressionList.getParent();
+        PsiElement gParent = expressionList.getParent();
+
+        if (gParent instanceof PsiAnonymousClass) {
+          gParent = gParent.getParent();
+        }
+
         if (gParent instanceof PsiCall) {
           final PsiCall contextCall = (PsiCall)gParent;
           final JavaResolveResult resolveResult = contextCall.resolveMethodGenerics();

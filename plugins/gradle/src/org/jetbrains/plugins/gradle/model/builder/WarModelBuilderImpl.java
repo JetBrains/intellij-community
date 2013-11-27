@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.plugins.gradle.model.impl;
+package org.jetbrains.plugins.gradle.model.builder;
 
 import org.gradle.api.Action;
 import org.gradle.api.Project;
@@ -27,6 +27,7 @@ import org.gradle.api.tasks.bundling.War;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.model.ModelBuilderService;
 import org.jetbrains.plugins.gradle.model.WarModel;
+import org.jetbrains.plugins.gradle.model.internal.WarModelImpl;
 
 import java.io.File;
 import java.io.StringWriter;

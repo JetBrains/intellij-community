@@ -33,32 +33,10 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
   private static final Logger LOG = Logger.getInstance(LocalTerminalDirectRunner.class);
 
   private final Charset myDefaultCharset;
-  private final String[] myCommand;
 
   public LocalTerminalDirectRunner(Project project) {
     super(project);
     myDefaultCharset = Charset.forName("UTF-8");
-
-    String shellPath = TerminalOptionsProvider.getInstance().getShellPath();
-
-    if (SystemInfo.isUnix) {
-      File rcFile = findRCFile();
-
-      String shellName = getShellName(shellPath);
-
-      if (rcFile != null && (shellName.equals("bash") || shellName.equals("sh"))) {
-        myCommand = new String[]{shellPath, "--rcfile", rcFile.getAbsolutePath(), "-i"};
-      }
-      else if (hasLoginArgument(shellName)) {
-        myCommand = new String[]{shellPath, "--login"};
-      }
-      else {
-        myCommand = shellPath.split(" ");
-      }
-    }
-    else {
-      myCommand = new String[]{shellPath};
-    }
   }
 
   private static boolean hasLoginArgument(String name) {
@@ -71,7 +49,7 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
 
   private static File findRCFile() {
     try {
-      final String folder = PtyUtil.getJarFolder();
+      final String folder = PtyUtil.getPtyLibFolderPath();
       if (folder != null) {
         File rcFile = new File(folder, "jediterm.in");
         if (rcFile.exists()) {
@@ -90,7 +68,7 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
     Map<String, String> envs = new HashMap<String, String>(System.getenv());
     envs.put("TERM", "xterm");
     try {
-      return PtyProcess.exec(myCommand, envs, currentProjectFolder());
+      return PtyProcess.exec(getCommand(), envs, currentProjectFolder());
     }
     catch (IOException e) {
       throw new ExecutionException(e);
@@ -116,7 +94,33 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
 
   @Override
   protected String getTerminalConnectionName(PtyProcess process) {
-    return StringUtil.join(myCommand);
+    return "Local Terminal";
+  }
+
+  public String[] getCommand() {
+    String[] command;
+    String shellPath = TerminalOptionsProvider.getInstance().getShellPath();
+
+    if (SystemInfo.isUnix) {
+      File rcFile = findRCFile();
+
+      String shellName = getShellName(shellPath);
+
+      if (rcFile != null && (shellName.equals("bash") || shellName.equals("sh"))) {
+        command = new String[]{shellPath, "--rcfile", rcFile.getAbsolutePath(), "-i"};
+      }
+      else if (hasLoginArgument(shellName)) {
+        command = new String[]{shellPath, "--login"};
+      }
+      else {
+        command = shellPath.split(" ");
+      }
+    }
+    else {
+      command = new String[]{shellPath};
+    }
+
+    return command;
   }
 
   private static class PtyProcessHandler extends ProcessHandler implements TaskExecutor {

@@ -551,7 +551,6 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedDocumentLi
     caretModel.moveToVisualPosition(visualCaretPosition);
   }
 
-  @Override
   public void setPlace(@NotNull SoftWrapAppliancePlaces place) {
     myFoldBasedApplianceStrategy.setCurrentPlace(place);
   }
@@ -663,7 +662,6 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedDocumentLi
     myDeferredFoldRegions.clear();
   }
 
-  @Override
   public void recalculate() {
     myApplianceManager.reset();
     myStorage.removeAll();

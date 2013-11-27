@@ -441,7 +441,7 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
   private Converter createConverter(final JavaMethod method) {
     final Type returnType = method.getGenericReturnType();
     final Type type = returnType == void.class ? method.getGenericParameterTypes()[0] : returnType;
-    final Class parameter = ReflectionUtil.substituteGenericType(type, myType);
+    final Class parameter = DomUtil.substituteGenericType(type, myType);
     if (parameter == null) {
       LOG.error(type + " " + myType);
     }

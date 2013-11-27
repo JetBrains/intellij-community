@@ -315,7 +315,7 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
 
     final MyIndex<K> index = (MyIndex<K>)myIndices.get(indexKey);
     try {
-      return index.processAllKeys(processor, idFilter);
+      return index.processAllKeys(processor, scope, idFilter);
     }
     catch (StorageException e) {
       forceRebuild(e);

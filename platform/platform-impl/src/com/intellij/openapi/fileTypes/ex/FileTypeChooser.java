@@ -57,7 +57,7 @@ public class FileTypeChooser extends DialogWrapper {
     super(true);
     myFileName = fileName;
 
-    myOpenInIdea.setText("Open matching files in " + ApplicationNamesInfo.getInstance().getProductName() + ":");
+    myOpenInIdea.setText("Open matching files in " + ApplicationNamesInfo.getInstance().getFullProductName() + ":");
 
     FileType[] fileTypes = FileTypeManager.getInstance().getRegisteredFileTypes();
     Arrays.sort(fileTypes, new Comparator<FileType>() {

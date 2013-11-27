@@ -13,6 +13,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-org.jetbrains.plugins.gradle.model.impl.WarModelBuilderImpl
-org.jetbrains.plugins.gradle.model.impl.ModelDependenciesBuilderImpl
-org.jetbrains.plugins.gradle.model.impl.ModuleExtendedModelBuilderImpl
+org.jetbrains.plugins.gradle.model.builder.WarModelBuilderImpl
+org.jetbrains.plugins.gradle.model.builder.ModelDependenciesBuilderImpl
+org.jetbrains.plugins.gradle.model.builder.ModuleExtendedModelBuilderImpl

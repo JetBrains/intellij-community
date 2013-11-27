@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.plugins.gradle.model.impl;
+package org.jetbrains.plugins.gradle.model.builder;
 
 import org.gradle.api.Project;
 import org.gradle.api.Task;
@@ -29,6 +29,7 @@ import org.jetbrains.plugins.gradle.model.ModelBuilderService;
 import org.jetbrains.plugins.gradle.model.ModuleExtendedModel;
 import org.jetbrains.plugins.gradle.model.internal.IdeaContentRootImpl;
 import org.jetbrains.plugins.gradle.model.internal.IdeaSourceDirectoryImpl;
+import org.jetbrains.plugins.gradle.model.internal.ModuleExtendedModelImpl;
 
 import java.io.File;
 import java.io.IOException;
