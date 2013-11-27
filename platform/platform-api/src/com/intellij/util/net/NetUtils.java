@@ -129,6 +129,19 @@ public class NetUtils {
     }
   }
 
+  public static int tryToFindAvailableSocketPort(int defaultPort) {
+    try {
+      return findAvailableSocketPort();
+    }
+    catch (IOException ignored) {
+      return defaultPort;
+    }
+  }
+
+  public static int tryToFindAvailableSocketPort() {
+    return tryToFindAvailableSocketPort(-1);
+  }
+
   public static int[] findAvailableSocketPorts(int capacity) throws IOException {
     final int[] ports = new int[capacity];
     final ServerSocket[] sockets = new ServerSocket[capacity];
