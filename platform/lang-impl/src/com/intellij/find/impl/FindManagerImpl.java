@@ -467,12 +467,9 @@ public class FindManagerImpl extends FindManager implements PersistentStateCompo
           public Set<Language> compute() {
             THashSet<Language> result = new THashSet<Language>();
 
-            for(Project project: ProjectManager.getInstance().getOpenProjects()) {
-              FileViewProvider viewProvider = PsiManager.getInstance(project).findViewProvider(file);
-              if (viewProvider != null) {
-                result.addAll(viewProvider.getLanguages());
-                break;
-              }
+            FileViewProvider viewProvider = PsiManager.getInstance(myProject).findViewProvider(file);
+            if (viewProvider != null) {
+              result.addAll(viewProvider.getLanguages());
             }
 
             if (result.isEmpty()) {
