@@ -38,6 +38,11 @@ public final class Urls {
   private static final Pattern URI_PATTERN = Pattern.compile("^([^:/?#]+)://([^/?#]*)([^?#;]*)(.*)");
 
   @NotNull
+  public static Url newUri(@NotNull String scheme, @NotNull String path) {
+    return new UrlImpl(scheme, null, path);
+  }
+
+  @NotNull
   public static Url newFromEncoded(@NotNull String url) {
     Url result = parse(url, true);
     LOG.assertTrue(result != null, url);
@@ -125,7 +130,7 @@ public final class Urls {
   // must not be used in NodeJS
   public static Url newFromVirtualFile(@NotNull VirtualFile file) {
     if (file.isInLocalFileSystem()) {
-      return new UrlImpl(file.getFileSystem().getProtocol(), null, file.getPath());
+      return newUri(file.getFileSystem().getProtocol(), file.getPath());
     }
     else {
       return parseUrl(file.getUrl());
