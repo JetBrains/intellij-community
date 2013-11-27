@@ -7,8 +7,11 @@ import java.nio.channels.OverlappingFileLockException;
 import java.util.Map;
 import java.util.zip.ZipFile;
 import java.util.zip.ZipOutputStream;
+import org.apache.log4j.Logger;
 
 public abstract class PatchAction {
+
+  static Logger logger = Logger.getLogger(BaseUpdateAction.class);
   protected String myPath;
   protected long myChecksum;
   private boolean isCritical;
