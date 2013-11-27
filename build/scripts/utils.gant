@@ -777,7 +777,7 @@ binding.setVariable("buildWinLauncher", { String ch, String inputPath, String ou
   File outputFile = new File(outputPath)
   def outputFileName = outputFile.getName()
   projectBuilder.stage("outputFile: $outputFileName")
-  def outputDir = fileExample.substring(0, fileExample.length() - outputFileName.length())
+  def outputDir = outputPath.substring(0, outputPath.length() - outputFileName.length())
   projectBuilder.stage("outputDir: $outputDir")
 
   executeExternalAnt(["dirName": outputDir, "fileName": outputFileName], "$home/build/signBuild.xml")
