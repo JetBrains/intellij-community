@@ -21,8 +21,6 @@ import java.util.Map;
 
 public class PostfixTemplatesListPanel {
   @NotNull
-  private final TableView<TemplateProviderInfo> myTemplatesTableView;
-  @NotNull
   private final Map<String, Boolean> myTemplatesState = ContainerUtil.newHashMap();
   @NotNull
   private final JPanel myPanelWithTableView;
@@ -30,21 +28,20 @@ public class PostfixTemplatesListPanel {
   public PostfixTemplatesListPanel(@NotNull List<TemplateProviderInfo> templates) {
     ColumnInfo[] columns = {new BooleanColumnInfo(), new ShortcutColumnInfo(), new DescriptionColumnInfo(), new ExampleColumnInfo()};
     ListTableModel<TemplateProviderInfo> templatesTableModel = new ListTableModel<TemplateProviderInfo>(columns, templates, 0);
-    myTemplatesTableView = new TableView<TemplateProviderInfo>();
-    myTemplatesTableView.setModelAndUpdateColumns(templatesTableModel);
-    myTemplatesTableView.setShowColumns(false);
-    myTemplatesTableView.setShowGrid(false);
-    myTemplatesTableView.setStriped(true);
-    myTemplatesTableView.setBorder(null);
+    TableView<TemplateProviderInfo> templatesTableView = new TableView<TemplateProviderInfo>();
+    templatesTableView.setModelAndUpdateColumns(templatesTableModel);
+    templatesTableView.setShowGrid(false);
+    templatesTableView.setStriped(true);
+    templatesTableView.setBorder(null);
 
-    new TableViewSpeedSearch<TemplateProviderInfo>(myTemplatesTableView) {
+    new TableViewSpeedSearch<TemplateProviderInfo>(templatesTableView) {
       @Override
       protected String getItemText(@NotNull TemplateProviderInfo template) {
         return template.annotation.templateName();
       }
     };
 
-    myPanelWithTableView = ToolbarDecorator.createDecorator(myTemplatesTableView)
+    myPanelWithTableView = ToolbarDecorator.createDecorator(templatesTableView)
       .disableAddAction()
       .disableRemoveAction()
       .disableUpDownActions().createPanel();
