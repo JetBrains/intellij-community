@@ -98,11 +98,12 @@
   
   <extensions defaultExtensionNs="com.intellij">
     <applicationService id="postfixCompletionService" serviceImplementation="org.jetbrains.postfixCompletion.Infrastructure.PostfixTemplatesService"/>
+    <applicationService id="postfixCompletionSettings" serviceImplementation="org.jetbrains.postfixCompletion.settings.PostfixCompletionSettings"/>
+    
     <completion.contributor language="JAVA" order="FIRST"
       implementationClass="org.jetbrains.postfixCompletion.PostfixCompletionContributor" />
 
-    <applicationConfigurable id="editing.postfixCompletion"
-      instance="org.jetbrains.postfixCompletion.SettingsPage.PostfixCompletionConfigurable" />
+    <editorOptionsProvider id="editing.postfixCompletion" instance="org.jetbrains.postfixCompletion.settings.PostfixCompletionConfigurable"/>
 
   </extensions>
 </idea-plugin>
