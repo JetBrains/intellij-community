@@ -15,9 +15,12 @@
  */
 package org.jetbrains.plugins.terminal;
 
-import com.intellij.openapi.Disposable;
+import com.intellij.openapi.fileChooser.FileChooserDescriptor;
+import com.intellij.openapi.ui.TextComponentAccessor;
+import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.ui.components.JBCheckBox;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
@@ -26,7 +29,7 @@ import javax.swing.*;
  */
 public class TerminalSettingsPanel {
   private JPanel myWholePanel;
-  private JTextField myShellTextField;
+  private TextFieldWithBrowseButton myShellPathField;
   private JBCheckBox mySoundBellCheckBox;
   private JBCheckBox myCloseSessionCheckBox;
   private JBCheckBox myMouseReportCheckBox;
@@ -35,14 +38,25 @@ public class TerminalSettingsPanel {
   private JBCheckBox myCopyOnSelectionCheckBox;
   private TerminalOptionsProvider myOptionsProvider;
 
-  public JComponent createPanel(TerminalOptionsProvider provider) {
+  public JComponent createPanel(@NotNull TerminalOptionsProvider provider) {
     myOptionsProvider = provider;
+
+    FileChooserDescriptor fileChooserDescriptor = new FileChooserDescriptor(true, false, false, false, false, false);
+
+    myShellPathField.addBrowseFolderListener(
+      "",
+      "Shell Executable Path",
+      null,
+      fileChooserDescriptor,
+      TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT,
+      false
+    );
 
     return myWholePanel;
   }
 
   public boolean isModified() {
-    return !Comparing.equal(myShellTextField.getText(), myOptionsProvider.getShellPath())
+    return !Comparing.equal(myShellPathField.getText(), myOptionsProvider.getShellPath())
            || !Comparing.equal(myTabNameTextField.getText(), myOptionsProvider.getTabName())
            || (myCloseSessionCheckBox.isSelected() != myOptionsProvider.closeSessionOnLogout())
            || (myMouseReportCheckBox.isSelected() != myOptionsProvider.enableMouseReporting())
@@ -53,7 +67,7 @@ public class TerminalSettingsPanel {
   }
 
   public void apply() {
-    myOptionsProvider.setShellPath(myShellTextField.getText());
+    myOptionsProvider.setShellPath(myShellPathField.getText());
     myOptionsProvider.setTabName(myTabNameTextField.getText());
     myOptionsProvider.setCloseSessionOnLogout(myCloseSessionCheckBox.isSelected());
     myOptionsProvider.setReportMouse(myMouseReportCheckBox.isSelected());
@@ -63,7 +77,7 @@ public class TerminalSettingsPanel {
   }
 
   public void reset() {
-    myShellTextField.setText(myOptionsProvider.getShellPath());
+    myShellPathField.setText(myOptionsProvider.getShellPath());
     myTabNameTextField.setText(myOptionsProvider.getTabName());
     myCloseSessionCheckBox.setSelected(myOptionsProvider.closeSessionOnLogout());
     myMouseReportCheckBox.setSelected(myOptionsProvider.enableMouseReporting());
