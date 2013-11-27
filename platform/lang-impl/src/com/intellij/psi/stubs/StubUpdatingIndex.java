@@ -34,7 +34,6 @@ import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.IntInlineKeyDescriptor;
 import com.intellij.util.io.KeyDescriptor;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
 import java.util.*;
@@ -295,8 +294,7 @@ public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtensi
     @Override
     protected void updateWithMap(final int inputId,
                                  @NotNull final Map<Integer, SerializedStubTree> newData,
-                                 @NotNull Callable<Collection<Integer>> oldKeysGetter,
-                                 @Nullable FileContent content)
+                                 @NotNull Callable<Collection<Integer>> oldKeysGetter)
       throws StorageException {
 
       checkNameStorage();
@@ -329,7 +327,7 @@ public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtensi
             throw new StorageException(e);
           }
 
-          super.updateWithMap(inputId, newData, oldKeysGetter, content);
+          super.updateWithMap(inputId, newData, oldKeysGetter);
 
           updateStubIndices(getAffectedIndices(oldStubTree, newStubTree), inputId, oldStubTree, newStubTree);
         }
