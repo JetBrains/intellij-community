@@ -542,6 +542,7 @@ class OptimizedFileManager extends DefaultFileManager {
       myDirectoryCache.clear();
       myByteBufferCache.clear();
       myIsFile.clear();
+      Paths.clearPathExistanceCache();
     }
   }
 }

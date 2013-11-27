@@ -56,7 +56,6 @@ import org.jetbrains.jps.service.SharedThreadPool;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Future;
 
 /**
@@ -237,7 +236,7 @@ public class GroovyBuilder extends ModuleLevelBuilder {
   private static void rememberStubSources(CompileContext context, Map<ModuleBuildTarget, Collection<GroovycOSProcessHandler.OutputItem>> compiled) {
     Map<String, String> stubToSrc = STUB_TO_SRC.get(context);
     if (stubToSrc == null) {
-      STUB_TO_SRC.set(context, stubToSrc = new ConcurrentHashMap<String, String>());
+      STUB_TO_SRC.set(context, stubToSrc = new HashMap<String, String>());
     }
     for (Collection<GroovycOSProcessHandler.OutputItem> items : compiled.values()) {
       for (GroovycOSProcessHandler.OutputItem item : items) {

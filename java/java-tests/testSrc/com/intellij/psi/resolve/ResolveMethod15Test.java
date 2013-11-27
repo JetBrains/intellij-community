@@ -7,7 +7,6 @@ import com.intellij.navigation.NavigationItem;
 import org.jetbrains.annotations.NonNls;
 import static org.junit.Assert.assertThat;
 import static org.hamcrest.core.IsInstanceOf.instanceOf;
-import static org.junit.Assert.assertTrue;
 
 /**
  * @author dsl
@@ -127,6 +126,16 @@ public class ResolveMethod15Test extends Resolve15TestCase {
     assertTrue(resolve != null ? resolve.toString() : null, resolve instanceof PsiMethod);
     final PsiClass containingClass = ((PsiMethod)resolve).getContainingClass();
     assertTrue(containingClass != null ? containingClass.getName() : null, containingClass instanceof PsiAnonymousClass);
+  }
+
+  public void testCovariantReturnTypeAnonymous() throws Exception {
+    final PsiReference ref = configureByFile();
+    assertThat(ref, instanceOf(PsiReferenceExpression.class));
+    final PsiReferenceExpression refExpr = (PsiReferenceExpression)ref;
+    final PsiElement resolve = refExpr.resolve();
+    assertTrue(resolve != null ? resolve.toString() : null, resolve instanceof PsiMethod);
+    final PsiClass containingClass = ((PsiMethod)resolve).getContainingClass();
+    assertTrue(containingClass != null ? containingClass.getName() : null, !(containingClass instanceof PsiAnonymousClass));
   }
 
   public void testFilterFixedVsVarargs1() throws Exception {

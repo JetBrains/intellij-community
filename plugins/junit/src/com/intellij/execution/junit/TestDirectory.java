@@ -25,6 +25,7 @@ import com.intellij.execution.util.JavaParametersUtil;
 import com.intellij.execution.util.ProgramParametersUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -120,14 +121,12 @@ class TestDirectory extends TestPackage {
   public boolean isConfiguredByElement(JUnitConfiguration configuration,
                                        PsiClass testClass,
                                        PsiMethod testMethod,
-                                       PsiPackage testPackage) {
-    if (JUnitConfiguration.TEST_DIRECTORY.equals(configuration.getPersistentData().TEST_OBJECT) && testPackage != null) {
-      final PsiDirectory[] directories = testPackage.getDirectories(configuration.getConfigurationModule().getSearchScope());
-      final String dirName = configuration.getPersistentData().getDirName();
-      if (dirName != null) {
-        for (PsiDirectory directory : directories) {
-          if (dirName.equals(directory.getVirtualFile().getPath())) return true;
-        }
+                                       PsiPackage testPackage, 
+                                       PsiDirectory testDir) {
+    if (JUnitConfiguration.TEST_DIRECTORY.equals(configuration.getPersistentData().TEST_OBJECT) && testDir != null) {
+      if (Comparing.strEqual(FileUtil.toSystemIndependentName(configuration.getPersistentData().getDirName()), 
+                             testDir.getVirtualFile().getPath())) {
+        return true;
       }
     }
     return false;

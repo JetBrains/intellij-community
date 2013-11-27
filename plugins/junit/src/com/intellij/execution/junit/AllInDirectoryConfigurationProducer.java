@@ -43,6 +43,7 @@ public class AllInDirectoryConfigurationProducer extends JUnitConfigurationProdu
     final VirtualFile virtualFile = ((PsiDirectory)element).getVirtualFile();
     final Module module = ModuleUtilCore.findModuleForFile(virtualFile, project);
     if (module == null) return false;
+    if (!ModuleRootManager.getInstance(module).getFileIndex().isInTestSourceContent(virtualFile)) return false;
     int testRootCount = ModuleRootManager.getInstance(module).getSourceRoots(JavaSourceRootType.TEST_SOURCE).size();
     if (testRootCount < 2) return false;
     if (!LocationUtil.isJarAttached(context.getLocation(), aPackage, JUnitUtil.TESTCASE_CLASS)) return false;

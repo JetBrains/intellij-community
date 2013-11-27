@@ -143,9 +143,9 @@ public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx
   public void changeAttributesInBatch(@NotNull RangeHighlighterEx highlighter,
                                       @NotNull Consumer<RangeHighlighterEx> changeAttributesAction) {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    boolean changed = ((RangeHighlighterImpl)highlighter).changeAttributesNoEvents(changeAttributesAction);
-    if (changed) {
-      fireAttributesChanged(highlighter);
+    RangeHighlighterData.ChangeResult changed = ((RangeHighlighterImpl)highlighter).changeAttributesNoEvents(changeAttributesAction);
+    if (changed != RangeHighlighterData.ChangeResult.NOT_CHANGED) {
+      fireAttributesChanged(highlighter, changed == RangeHighlighterData.ChangeResult.RENDERERS_CHANGED);
     }
   }
 
@@ -216,9 +216,9 @@ public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx
   }
 
   @Override
-  public void fireAttributesChanged(@NotNull RangeHighlighterEx segmentHighlighter) {
+  public void fireAttributesChanged(@NotNull RangeHighlighterEx segmentHighlighter, boolean renderersChanged) {
     for (MarkupModelListener listener : myListeners) {
-      listener.attributesChanged(segmentHighlighter);
+      listener.attributesChanged(segmentHighlighter, renderersChanged);
     }
   }
 

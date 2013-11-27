@@ -112,7 +112,7 @@ public final class StripeButtonUI extends MetalToggleButtonUI{
       if (anchor == ToolWindowAnchor.LEFT) g2.translate(-1, 0);
       if (anchor.isHorizontal()) g2.translate(0, -1);
       final boolean dark = UIUtil.isUnderDarcula();
-      g2.setColor(dark ? Gray._15.withAlpha(85) : Gray._85.withAlpha(85));
+      g2.setColor(dark ? Gray._15.withAlpha(model.isSelected() ? 85: 40) : Gray._85.withAlpha(model.isSelected()? 85: 40));
       g2.fillRect(0, 0, button.getWidth(), button.getHeight());
       if (anchor == ToolWindowAnchor.LEFT) g2.translate(1, 0);
       if (anchor.isHorizontal()) g2.translate(0, 1);
@@ -157,7 +157,7 @@ public final class StripeButtonUI extends MetalToggleButtonUI{
       /* Draw the Text */
       if(model.isEnabled()){
         /*** paint the text normally */
-        g2.setColor(UIUtil.isUnderDarcula() && (model.isSelected() || model.isRollover()) ? button.getForeground().brighter() : button.getForeground());
+        g2.setColor(UIUtil.isUnderDarcula() && model.isSelected() ? button.getForeground().brighter() : button.getForeground());
         BasicGraphicsUtils.drawString(g2,clippedText,button.getMnemonic2(),ourTextRect.x,ourTextRect.y+fm.getAscent());
       } else{
         /*** paint the text disabled ***/
@@ -174,32 +174,5 @@ public final class StripeButtonUI extends MetalToggleButtonUI{
     }
     
     g2.dispose();
-  }
-
-
-  private static void paintLegacyDecoration(Graphics2D g2, AnchoredButton button, ButtonModel model, boolean vertical) {
-    final boolean dark = UIUtil.isUnderDarcula();
-    Color toBorder = model.isRollover() ? dark ? Gray._90 : new Color(0, 0, 0, 50) : null;
-    if (model.isArmed() && model.isPressed() || model.isSelected()) {
-      g2.setColor(dark ? Gray._85.withAlpha(85) : new Color(0, 0, 0, 30));
-      g2.fillRect(3, 3, button.getWidth() - (vertical ? 6 : 5), button.getHeight() - 6);
-
-      g2.setColor(dark ? Gray._40 : new Color(0, 0, 0, 120));
-      g2.drawLine(2, 2, 3 + button.getWidth() - (vertical ? 7 : 6), 2);
-      g2.drawLine(2, 3, 2, 3 + button.getHeight() - 7);
-
-      g2.setColor(dark ? Gray._65 : new Color(0, 0, 0, 40));
-      g2.drawRect(3, 3, button.getWidth() - (vertical ? 7 : 6), button.getHeight() - 7);
-
-      g2.setColor(dark ? Gray._75 : new Color(255, 255, 255, 110));
-      g2.drawLine(3, button.getHeight() - 3, 3 + button.getWidth() - (vertical ? 6 : 5), button.getHeight() - 3);
-      g2.drawLine(3 + button.getWidth() - (vertical ? 6 : 5), 2, 3 + button.getWidth() - (vertical ? 6 : 5),
-                  3 + button.getHeight() - 7);
-      toBorder = null;
-    }
-    if (toBorder != null) {
-      g2.setColor(toBorder);
-      g2.drawRect(2, 2, button.getWidth() - (vertical ? 6 : 5), button.getHeight() - 6);
-    }
   }
 }

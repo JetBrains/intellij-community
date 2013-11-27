@@ -270,7 +270,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   /**
    * There is a possible case that specific font is used for particular text drawing operation (e.g. for 'before' and 'after'
-   * soft wraps drawings). Hence, even if {@link #mySpacesHaveSameWidth} is <code>true</code>, space size for that specific
+   * soft wraps drawings). Hence, even if mySpacesHaveSameWidth is <code>true</code>, space size for that specific
    * font may be different. So, we define additional flag that should indicate that {@link #myLastCache} should be reset.
    */
   private boolean myForceRefreshFont;
@@ -334,18 +334,24 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
 
     MarkupModelListener markupModelListener = new MarkupModelListener() {
+      private boolean areRenderersInvolved(@NotNull RangeHighlighterEx highlighter) {
+        return highlighter.getCustomRenderer() != null ||
+               highlighter.getGutterIconRenderer() != null ||
+               highlighter.getLineMarkerRenderer() != null ||
+               highlighter.getLineSeparatorRenderer() != null;
+      }
       @Override
       public void afterAdded(@NotNull RangeHighlighterEx highlighter) {
-        attributesChanged(highlighter);
+        attributesChanged(highlighter, areRenderersInvolved(highlighter));
       }
 
       @Override
       public void beforeRemoved(@NotNull RangeHighlighterEx highlighter) {
-        attributesChanged(highlighter);
+        attributesChanged(highlighter, areRenderersInvolved(highlighter));
       }
 
       @Override
-      public void attributesChanged(@NotNull RangeHighlighterEx highlighter) {
+      public void attributesChanged(@NotNull RangeHighlighterEx highlighter, boolean renderersChanged) {
         if (myDocument.isInBulkUpdate()) return; // bulkUpdateFinished() will repaint anything
         int textLength = myDocument.getTextLength();
 
@@ -355,14 +361,13 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         int startLine = start == -1 ? 0 : myDocument.getLineNumber(start);
         int endLine = end == -1 ? myDocument.getLineCount() : myDocument.getLineNumber(end);
         repaintLines(Math.max(0, startLine - 1), Math.min(endLine + 1, getDocument().getLineCount()));
-        GutterMark renderer = highlighter.getGutterIconRenderer();
 
         // optimization: there is no need to repaint error stripe if the highlighter is invisible on it
-        if (renderer != null || highlighter.getErrorStripeMarkColor() != null) {
+        if (renderersChanged || highlighter.getErrorStripeMarkColor() != null) {
           ((EditorMarkupModelImpl)getMarkupModel()).repaint(start, end);
         }
 
-        if (renderer != null) {
+        if (renderersChanged) {
           updateGutterSize();
         }
         updateCaretCursor();

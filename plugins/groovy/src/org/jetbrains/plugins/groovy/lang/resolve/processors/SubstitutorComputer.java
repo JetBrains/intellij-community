@@ -83,7 +83,6 @@ public class SubstitutorComputer {
     }
   }
 
-  
   @Nullable
   protected PsiType inferContextType() {
     final PsiElement parent = myPlaceToInferContext.getParent();
@@ -188,7 +187,7 @@ public class SubstitutorComputer {
       }
     }
     final PsiResolveHelper helper = JavaPsiFacade.getInstance(method.getProject()).getResolveHelper();
-    PsiSubstitutor substitutor = helper.inferTypeArguments(typeParameters, parameterTypes, argumentTypes, LanguageLevel.HIGHEST);
+    PsiSubstitutor substitutor = helper.inferTypeArguments(typeParameters, parameterTypes, argumentTypes, LanguageLevel.JDK_1_7);
     for (PsiTypeParameter typeParameter : typeParameters) {
       if (!substitutor.getSubstitutionMap().containsKey(typeParameter)) {
         substitutor = inferFromContext(typeParameter, PsiUtil.getSmartReturnType(method), substitutor, helper);
@@ -215,7 +214,7 @@ public class SubstitutorComputer {
                                           PsiResolveHelper helper) {
     if (myPlace == null) return substitutor;
 
-    final PsiType inferred = helper.getSubstitutionForTypeParameter(typeParameter, lType, inferContextType(), false, LanguageLevel.HIGHEST);
+    final PsiType inferred = helper.getSubstitutionForTypeParameter(typeParameter, lType, inferContextType(), false, LanguageLevel.JDK_1_7);
     if (inferred != PsiType.NULL) {
       return substitutor.put(typeParameter, inferred);
     }

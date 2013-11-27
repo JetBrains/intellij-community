@@ -56,6 +56,7 @@ public abstract class JUnitConfigurationProducer extends JavaRunConfigurationPro
     } else {
       testPackage = null;
     }
+    PsiDirectory testDir = element instanceof PsiDirectory ? (PsiDirectory)element : null;
     RunnerAndConfigurationSettings template = RunManager.getInstance(location.getProject())
       .getConfigurationTemplate(getConfigurationFactory());
     final Module predefinedModule =
@@ -66,7 +67,7 @@ public abstract class JUnitConfigurationProducer extends JavaRunConfigurationPro
     if (vmParameters != null && !Comparing.strEqual(vmParameters, unitConfiguration.getVMParameters())) return false;
     final TestObject testobject = unitConfiguration.getTestObject();
     if (testobject != null) {
-      if (testobject.isConfiguredByElement(unitConfiguration, testClass, testMethod, testPackage)) {
+      if (testobject.isConfiguredByElement(unitConfiguration, testClass, testMethod, testPackage, testDir)) {
         final Module configurationModule = unitConfiguration.getConfigurationModule().getModule();
         if (Comparing.equal(location.getModule(), configurationModule)) return true;
         if (Comparing.equal(predefinedModule, configurationModule)) {

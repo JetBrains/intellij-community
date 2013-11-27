@@ -93,10 +93,10 @@ public class CopyrightManager extends AbstractProjectComponent implements Persis
               final Document document = e.getDocument();
               final VirtualFile virtualFile = fileDocumentManager.getFile(document);
               if (virtualFile == null) return;
-              if (!newFileTracker.poll(virtualFile)) return;
-              if (!fileTypeUtil.isSupportedFile(virtualFile)) return;
               final Module module = projectRootManager.getFileIndex().getModuleForFile(virtualFile);
               if (module == null) return;
+              if (!newFileTracker.poll(virtualFile)) return;
+              if (!fileTypeUtil.isSupportedFile(virtualFile)) return;
               final PsiFile file = psiManager.findFile(virtualFile);
               if (file == null) return;
               application.invokeLater(new Runnable() {
@@ -143,8 +143,9 @@ public class CopyrightManager extends AbstractProjectComponent implements Persis
 
   @Override
   public Element getState() {
+    Element state = new Element("settings");
+
     try {
-      Element state = new Element("settings");
       if (!myCopyrights.isEmpty()) {
         for (CopyrightProfile copyright : myCopyrights.values()) {
           final Element copyrightElement = new Element(COPYRIGHT);
@@ -164,18 +165,23 @@ public class CopyrightManager extends AbstractProjectComponent implements Persis
         state.addContent(map);
       }
 
-      if (myDefaultCopyright != null) {
-        state.setAttribute(DEFAULT, myDefaultCopyright.getName());
-      }
-
       myOptions.writeExternal(state);
-
-      return state.getChildren().isEmpty() && state.getAttributes().isEmpty() ? null : state;
     }
     catch (WriteExternalException e) {
       LOG.error(e);
       return null;
     }
+
+    if (myDefaultCopyright != null) {
+      state.setAttribute(DEFAULT, myDefaultCopyright.getName());
+    }
+    else {
+      // todo we still add empty attribute to avoid annoying change (idea 12 - attribute exists, idea 13 - attribute doesn't exists)
+      // CR-IC-3403#CFR-62470, idea <= 12 compatibility
+      state.setAttribute(DEFAULT, "");
+    }
+
+    return state;
   }
 
   @Override

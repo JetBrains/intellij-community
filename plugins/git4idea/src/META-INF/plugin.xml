@@ -193,6 +193,8 @@
 
   <extensionPoints>
     <extensionPoint qualifiedName="Git4Idea.GitHttpAuthDataProvider" interface="git4idea.jgit.GitHttpAuthDataProvider"/>
-  </extensionPoints>
 
+    <extensionPoint qualifiedName="Git4Idea.remoteServer.CloudGitDeploymentSourceHandlerProvider"
+                    interface="com.intellij.remoteServer.util.CloudGitDeploymentSourceHandlerProvider"/>
+  </extensionPoints>
 </idea-plugin>
