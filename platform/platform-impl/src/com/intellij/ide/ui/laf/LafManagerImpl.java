@@ -135,7 +135,11 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
       }
       for (UIManager.LookAndFeelInfo laf : UIManager.getInstalledLookAndFeels()) {
         String name = laf.getName();
-        if (!"Metal".equalsIgnoreCase(name) && !"CDE/Motif".equalsIgnoreCase(name)) {
+        if ( !"Metal".equalsIgnoreCase(name)
+          && !"CDE/Motif".equalsIgnoreCase(name)
+          && !"Nimbus".equalsIgnoreCase(name)
+          && !"Windows Classic".equalsIgnoreCase(name)
+          && !name.startsWith("JGoodies")) {
           lafList.add(laf);
         }
       }

@@ -29,6 +29,7 @@ import com.intellij.ide.ui.search.BooleanOptionDescription;
 import com.intellij.ide.ui.search.OptionDescription;
 import com.intellij.ide.ui.search.SearchableOptionsRegistrarImpl;
 import com.intellij.ide.util.DefaultPsiElementCellRenderer;
+import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.ide.util.gotoByName.*;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
@@ -92,6 +93,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.border.EmptyBorder;
 import javax.swing.event.DocumentEvent;
 import java.awt.*;
 import java.awt.event.*;
@@ -105,6 +107,7 @@ import java.util.concurrent.atomic.AtomicLong;
  * @author Konstantin Bulenkov
  */
 public class SearchEverywhereAction extends AnAction implements CustomComponentAction, DumbAware{
+  public static final String SE_HISTORY_KEY = "SearchEverywhereHistory";
   public static final int SEARCH_FIELD_COLUMNS = 25;
   private static final int MAX_CLASSES = 6;
   private static final int MAX_FILES = 6;
@@ -149,6 +152,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
   private static AtomicLong ourLastTimePressed = new AtomicLong(0);
   private static AtomicBoolean showAll = new AtomicBoolean(false);
   private ArrayList<VirtualFile> myAlreadyAddedFiles = new ArrayList<VirtualFile>();
+  private int myHistoryIndex = 0;
 
   static {
     IdeEventQueue.getInstance().addPostprocessor(new IdeEventQueue.EventDispatcher() {
@@ -250,8 +254,8 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       @Override
       protected void paintComponent(Graphics g) {
         if (myBalloon != null && !myBalloon.isDisposed() && myActionEvent != null && myActionEvent.getInputEvent() instanceof MouseEvent) {
-          ((Graphics2D)g).setPaint(new GradientPaint(0,0, new JBColor(new Color(147, 162, 174), new Color(64, 80, 94)), 0, getHeight(),
-                                                     new JBColor(new Color(116, 128, 143), new Color(53, 65, 87))));
+          final Gradient gradient = getGradientColors();
+          ((Graphics2D)g).setPaint(new GradientPaint(0, 0, gradient.getStartColor(), 0, getHeight(), gradient.getEndColor()));
           g.fillRect(0,0,getWidth(), getHeight());
         } else {
           super.paintComponent(g);
@@ -299,6 +303,11 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
     return panel;
   }
 
+  private static Gradient getGradientColors() {
+    return new Gradient(
+      new JBColor(new Color(101, 147, 242), new Color(64, 80, 94)),
+      new JBColor(new Color(46, 111, 205), new Color(53, 65, 87)));
+  }
 
   public SearchEverywhereAction() {
     myRenderer = new MyListRenderer();
@@ -591,6 +600,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
     }
     if (e == null) return;
     myContextComponent = PlatformDataKeys.CONTEXT_COMPONENT.getData(e.getDataContext());
+    final Project project = e.getProject();
     Window wnd = myContextComponent != null ? SwingUtilities.windowForComponent(myContextComponent)
       : KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusedWindow();
     if (wnd == null && myContextComponent instanceof Window) {
@@ -604,35 +614,53 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
     myPopupField = new MySearchTextField();
     initSearchField(myPopupField);
     myPopupField.setOpaque(false);
-    myPopupField.getTextEditor().setColumns(SEARCH_FIELD_COLUMNS);
+    final JTextField editor = myPopupField.getTextEditor();
+    editor.setColumns(SEARCH_FIELD_COLUMNS);
     final JPanel panel = new JPanel(new BorderLayout()) {
       @Override
       protected void paintComponent(Graphics g) {
-        ((Graphics2D)g).setPaint(new GradientPaint(0,0, new JBColor(new Color(147, 162, 174), new Color(64, 80, 94)), 0, getHeight(),
-                                                   new JBColor(new Color(116, 128, 143), new Color(53, 65, 87))));
+        final Gradient gradient = getGradientColors();
+        ((Graphics2D)g).setPaint(new GradientPaint(0, 0, gradient.getStartColor(), 0, getHeight(), gradient.getEndColor()));
         g.fillRect(0, 0, getWidth(), getHeight());
       }
    };
     final JLabel title = new JLabel(" Search Everywhere:       ");
     final JPanel topPanel = new NonOpaquePanel(new BorderLayout());
-    title.setForeground(new JBColor(Gray._50, Gray._180));
+    title.setForeground(new JBColor(Gray._240, Gray._200));
     if (SystemInfo.isMac) {
       title.setFont(title.getFont().deriveFont(Font.BOLD, title.getFont().getSize() - 1f));
     } else {
       title.setFont(title.getFont().deriveFont(Font.BOLD));
     }
     topPanel.add(title, BorderLayout.WEST);
+    myNonProjectCheckBox.setForeground(new JBColor(Gray._240, Gray._200));
     myNonProjectCheckBox.setText("Include non-project items (" + getShortcut() + ")");
     topPanel.add(myNonProjectCheckBox, BorderLayout.EAST);
     panel.add(myPopupField, BorderLayout.CENTER);
     panel.add(topPanel, BorderLayout.NORTH);
     panel.setBorder(IdeBorderFactory.createEmptyBorder(3, 5, 4, 5));
-    final ComponentPopupBuilder builder = JBPopupFactory.getInstance().createComponentPopupBuilder(panel, myPopupField.getTextEditor());
+    final ComponentPopupBuilder builder = JBPopupFactory.getInstance().createComponentPopupBuilder(panel, editor);
     myBalloon = builder
       .setCancelOnClickOutside(true)
       .setModalContext(false)
+      .setCancelCallback(new Computable<Boolean>() {
+        @Override
+        public Boolean compute() {
+          final String last = editor.getText().trim();
+          final PropertiesComponent storage = PropertiesComponent.getInstance(project);
+          final String historyString = storage.getValue(SE_HISTORY_KEY);
+          List<String> history = StringUtil.isEmpty(historyString) ? new ArrayList<String>() : StringUtil.split(historyString, "\n");
+          history.remove(last);
+          history.add(last);
+          if (history.size() > 10) {
+            history = history.subList(0, 10);
+          }
+          storage.setValue(SE_HISTORY_KEY, StringUtil.join(history, "\n"));
+          return true;
+        }
+      })
       .createPopup();
-
+    myBalloon.getContent().setBorder(new EmptyBorder(0,0,0,0));
     final Window window = WindowManager.getInstance().suggestParentWindow(e.getProject());
 
     Component parent = UIUtil.findUltimateParent(window);
@@ -659,7 +687,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
     myBalloon.show(showPoint);
     initSearchActions(myBalloon, myPopupField);
     IdeFocusManager focusManager = IdeFocusManager.getInstance(e.getProject());
-    focusManager.requestFocus(myPopupField.getTextEditor(), true);
+    focusManager.requestFocus(editor, true);
     FeatureUsageTracker.getInstance().triggerFeatureUsed(IdeActions.ACTION_SEARCH_EVERYWHERE);
   }
 
@@ -713,6 +741,28 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
         }
       }
     }.registerCustomShortcutSet(CustomShortcutSet.fromString("ENTER"), editor, balloon);
+    new DumbAwareAction(){
+      @Override
+      public void actionPerformed(AnActionEvent e) {
+        final PropertiesComponent storage = PropertiesComponent.getInstance(e.getProject());
+        final String historyString = storage.getValue(SE_HISTORY_KEY);
+        if (historyString != null) {
+          final List<String> history = StringUtil.split(historyString, "\n");
+          if (history.size() > myHistoryIndex) {
+            final String text = history.get(myHistoryIndex);
+            editor.setText(text);
+            editor.setCaretPosition(text.length());
+            editor.moveCaretPosition(0);
+            myHistoryIndex++;
+          }
+        }
+      }
+
+      @Override
+      public void update(AnActionEvent e) {
+        e.getPresentation().setEnabled(editor.getCaretPosition() == 0);
+      }
+    }.registerCustomShortcutSet(CustomShortcutSet.fromString("LEFT"), editor, balloon);
   }
 
   private static class MySearchTextField extends SearchTextField implements DataProvider, Disposable {
@@ -1463,6 +1513,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
                 }
               })
               .createPopup();
+            myPopup.getContent().setBorder(new EmptyBorder(0,0,0,0));
             Disposer.register(myPopup, new Disposable() {
               @Override
               public void dispose() {
@@ -1490,6 +1541,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
                 myRenderer.myProject = null;
                 myCalcThread = null;
                 myPopup = null;
+                myHistoryIndex = 0;
                 showAll.set(false);
                 myNonProjectCheckBox.setSelected(false);
                 ActionToolbarImpl.updateAllToolbarsImmediately();

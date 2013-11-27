@@ -64,7 +64,7 @@ public abstract class AbstractGithubTagDownloadedProjectGenerator extends WebPro
       unpackToDir(project, new File(baseDir.getPath()), tag);
     }
     catch (GeneratorException e) {
-      showErrorMessage(e.getMessage());
+      showErrorMessage(project, e.getMessage());
     }
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       @Override
@@ -149,10 +149,9 @@ public abstract class AbstractGithubTagDownloadedProjectGenerator extends WebPro
     return GithubDownloadUtil.findCacheFile(getGithubUserName(), getGithubRepositoryName(), fileName);
   }
 
-  private void showErrorMessage(@NotNull String message) {
+  private void showErrorMessage(@NotNull Project project, @NotNull String message) {
     String fullMessage = "Error creating " + getDisplayName() + " project. " + message;
     String title = "Create " + getDisplayName() + " Project";
-    Project project = null;
     Messages.showErrorDialog(project, fullMessage, title);
   }
 
