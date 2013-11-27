@@ -20,7 +20,7 @@ import java.util.Map;
 public final class PostfixCompletionConfigurable implements SearchableConfigurable, EditorOptionsProvider, Configurable.NoScroll {
   private static final Logger LOG = Logger.getInstance(PostfixCompletionConfigurable.class);
   @Nullable
-  private PostfixCompletionSettingsPanel myPanel;
+  private PostfixTemplatesListPanel myPanel;
 
   @NotNull
   @Override
@@ -54,7 +54,7 @@ public final class PostfixCompletionConfigurable implements SearchableConfigurab
         LOG.error("Can't retrieve postfix template settings");
         return null;
       }
-      myPanel = new PostfixCompletionSettingsPanel(templates);
+      myPanel = new PostfixTemplatesListPanel(templates);
     }
     return myPanel.getComponent();
   }

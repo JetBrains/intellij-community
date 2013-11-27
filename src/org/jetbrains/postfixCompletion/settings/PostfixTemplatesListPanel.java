@@ -19,7 +19,7 @@ import javax.swing.table.TableCellRenderer;
 import java.util.List;
 import java.util.Map;
 
-public class PostfixCompletionSettingsPanel {
+public class PostfixTemplatesListPanel {
   @NotNull
   private final TableView<TemplateProviderInfo> myTemplatesTableView;
   @NotNull
@@ -27,7 +27,7 @@ public class PostfixCompletionSettingsPanel {
   @NotNull
   private final JPanel myPanelWithTableView;
 
-  public PostfixCompletionSettingsPanel(@NotNull List<TemplateProviderInfo> templates) {
+  public PostfixTemplatesListPanel(@NotNull List<TemplateProviderInfo> templates) {
     ColumnInfo[] columns = {new BooleanColumnInfo(), new ShortcutColumnInfo(), new DescriptionColumnInfo(), new ExampleColumnInfo()};
     ListTableModel<TemplateProviderInfo> templatesTableModel = new ListTableModel<TemplateProviderInfo>(columns, templates, 0);
     myTemplatesTableView = new TableView<TemplateProviderInfo>();
