@@ -246,7 +246,8 @@ public class TestPackage extends TestObject {
   public boolean isConfiguredByElement(final JUnitConfiguration configuration,
                                        PsiClass testClass,
                                        PsiMethod testMethod,
-                                       PsiPackage testPackage) {
+                                       PsiPackage testPackage,
+                                       PsiDirectory testDir) {
     return testPackage != null
            && Comparing.equal(testPackage.getQualifiedName(), configuration.getPersistentData().getPackageName());
   }

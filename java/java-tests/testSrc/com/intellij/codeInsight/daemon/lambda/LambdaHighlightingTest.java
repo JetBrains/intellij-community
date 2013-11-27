@@ -18,6 +18,8 @@ package com.intellij.codeInsight.daemon.lambda;
 import com.intellij.codeInsight.daemon.LightDaemonAnalyzerTestCase;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.unusedSymbol.UnusedSymbolLocalInspection;
+import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.testFramework.IdeaTestUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -102,5 +104,10 @@ public class LambdaHighlightingTest extends LightDaemonAnalyzerTestCase {
 
   private void doTest(final boolean checkWarnings) {
     doTestNewInference(BASE_PATH + "/" + getTestName(false) + ".java", checkWarnings, false);
+  }
+
+  @Override
+  protected Sdk getProjectJDK() {
+    return IdeaTestUtil.getMockJdk18();
   }
 }

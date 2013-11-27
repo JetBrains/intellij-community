@@ -5,6 +5,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.api.SvnClient;
 import org.jetbrains.idea.svn.commandLine.CommitEventHandler;
+import org.tmatesoft.svn.core.wc.ISVNEventHandler;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 
@@ -33,4 +34,10 @@ public interface CopyMoveClient extends SvnClient {
             boolean makeParents,
             @NotNull String message,
             @Nullable CommitEventHandler handler) throws VcsException;
+
+  void copy(@NotNull SvnTarget source,
+            @NotNull File destination,
+            @Nullable SVNRevision revision,
+            boolean makeParents,
+            @Nullable ISVNEventHandler handler) throws VcsException;
 }

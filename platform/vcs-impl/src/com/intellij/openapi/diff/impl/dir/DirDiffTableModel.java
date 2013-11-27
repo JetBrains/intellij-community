@@ -27,7 +27,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.impl.dir.actions.popup.WarnOnDeletion;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.ui.MessageBuilder;
+import com.intellij.openapi.ui.MessageDialogBuilder;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.Balloon;
@@ -804,7 +804,7 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
   }
 
   private boolean confirmDeletion(int count) {
-    return MessageBuilder.yesNo("Confirm Delete", "Delete " + count + " items?").project(myProject).yesText("Delete").noText(CommonBundle.message("button.cancel")).doNotAsk(
+    return MessageDialogBuilder.yesNo("Confirm Delete", "Delete " + count + " items?").project(myProject).yesText("Delete").noText(CommonBundle.message("button.cancel")).doNotAsk(
       new DialogWrapper.DoNotAskOption() {
         @Override
         public boolean isToBeShown() {

@@ -41,7 +41,7 @@ class BuildMessageDispatcher extends SimpleChannelInboundHandler<CmdlineRemotePr
 
   private static final AttributeKey<SessionData> SESSION_DATA = new AttributeKey<SessionData>("BuildMessageDispatcher.sessionData");
 
-  private final Map<UUID, SessionData> myMessageHandlers = new ConcurrentHashMap<UUID, SessionData>();
+  private final Map<UUID, SessionData> myMessageHandlers = new ConcurrentHashMap<UUID, SessionData>(16, 0.75f, 1);
   private final Set<UUID> myCanceledSessions = new ConcurrentHashSet<UUID>();
 
   public void registerBuildMessageHandler(UUID sessionId,

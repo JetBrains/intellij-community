@@ -144,6 +144,7 @@ public class PsiPolyExpressionUtil {
     if (expr instanceof PsiParenthesizedExpression) {
       return isBooleanOrNumeric(((PsiParenthesizedExpression)expr).getExpression());
     }
+    if (expr == null) return null;
     PsiType type = null;
     if (expr instanceof PsiNewExpression || hasStandaloneForm(expr)) {
       type = expr.getType();
@@ -160,7 +161,8 @@ public class PsiPolyExpressionUtil {
       final PsiExpression elseExpression = ((PsiConditionalExpression)expr).getElseExpression();
       final ConditionalKind thenKind = isBooleanOrNumeric(thenExpression);
       final ConditionalKind elseKind = isBooleanOrNumeric(elseExpression);
-      if (thenKind == elseKind) return thenKind;
+      if (thenKind == elseKind || elseKind == null) return thenKind;
+      if (thenKind == null) return elseKind;
     }
     return null;
   }

@@ -511,6 +511,15 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
     if (myPopup != null && myPopup.isVisible()) {
       myPopup.cancel();
     }
+
+    if (value instanceof BooleanOptionDescription) {
+      final BooleanOptionDescription option = (BooleanOptionDescription)value;
+      option.setOptionState(!option.isOptionEnabled());
+      myList.revalidate();
+      myList.repaint();
+      return;
+    }
+
     AccessToken token = ApplicationManager.getApplication().acquireReadActionLock();
     try {
       if (value instanceof PsiElement) {
@@ -531,17 +540,11 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
         IdeFocusManager.getInstance(project).doWhenFocusSettlesDown(new Runnable() {
           @Override
           public void run() {
-            if (value instanceof BooleanOptionDescription) {
-              final BooleanOptionDescription option = (BooleanOptionDescription)value;
-              option.setOptionState(!option.isOptionEnabled());
+            Component c = comp;
+            if (c == null) {
+              c = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
             }
-            else {
-              Component c = comp;
-              if (c == null) {
-                c = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
-              }
-              GotoActionAction.openOptionOrPerformAction(value, pattern, project, c, event);
-            }
+            GotoActionAction.openOptionOrPerformAction(value, pattern, project, c, event);
           }
         });
         return;

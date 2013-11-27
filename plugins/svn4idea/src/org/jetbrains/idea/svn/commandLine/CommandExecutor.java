@@ -22,13 +22,18 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.EventDispatcher;
+import com.intellij.util.io.BaseDataReader;
+import com.intellij.util.io.BinaryOutputReader;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.tmatesoft.svn.core.SVNCancelException;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStreamWriter;
+import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -58,7 +63,6 @@ public class CommandExecutor {
   private final EventDispatcher<LineCommandListener> myListeners = EventDispatcher.create(LineCommandListener.class);
 
   private final AtomicBoolean myWasError = new AtomicBoolean(false);
-  @NotNull private final AtomicReference<Throwable> myExceptionRef;
   @Nullable private final LineCommandListener myResultBuilder;
   @NotNull private final Command myCommand;
 
@@ -81,7 +85,6 @@ public class CommandExecutor {
     myCommandLine.addParameter(command.getName().getName());
     myCommandLine.addParameters(command.getParameters());
     myExitCodeReference = new AtomicReference<Integer>();
-    myExceptionRef = new AtomicReference<Throwable>();
   }
 
   /**
@@ -97,7 +100,7 @@ public class CommandExecutor {
     return myDestroyReason;
   }
 
-  public void start() {
+  public void start() throws SvnBindException {
     synchronized (myLock) {
       checkNotStarted();
 
@@ -109,16 +112,23 @@ public class CommandExecutor {
         myHandler = createProcessHandler();
         myProcessWriter = new OutputStreamWriter(myHandler.getProcessInput());
         startHandlingStreams();
-      } catch (Throwable t) {
-        listeners().startFailed(t);
-        myExceptionRef.set(t);
+      } catch (ExecutionException e) {
+        // TODO: currently startFailed() is not used for some real logic in svn4idea plugin
+        listeners().startFailed(e);
+        throw new SvnBindException(e);
       }
     }
   }
 
   @NotNull
   protected OSProcessHandler createProcessHandler() {
-    return new OSProcessHandler(myProcess, myCommandLine.getCommandLineString());
+    return needsBinaryOutput()
+           ? new BinaryOSProcessHandler(myProcess, myCommandLine.getCommandLineString())
+           : new OSProcessHandler(myProcess, myCommandLine.getCommandLineString());
+  }
+
+  private boolean needsBinaryOutput() {
+    return SvnCommandName.cat.equals(myCommand.getName());
   }
 
   @NotNull
@@ -141,6 +151,11 @@ public class CommandExecutor {
 
   public String getErrorOutput() {
     return outputAdapter.getOutput().getStderr();
+  }
+
+  @Nullable
+  public ByteArrayOutputStream getBinaryOutput() {
+    return myHandler instanceof BinaryOSProcessHandler ? ((BinaryOSProcessHandler)myHandler).myBinaryOutput : null;
   }
 
   // TODO: Carefully here - do not modify command from threads other than the one started command execution
@@ -189,8 +204,6 @@ public class CommandExecutor {
       }
     }
     while (!finished);
-
-    throwIfError();
   }
 
   public void addListener(final LineCommandListener listener) {
@@ -306,14 +319,6 @@ public class CommandExecutor {
     return myWasError.get();
   }
 
-  public void throwIfError() throws SvnBindException {
-    Throwable error = myExceptionRef.get();
-
-    if (error != null) {
-      throw new SvnBindException(error);
-    }
-  }
-
   public void write(String value) throws SvnBindException {
     try {
       synchronized (myLock) {
@@ -352,6 +357,40 @@ public class CommandExecutor {
     public void onTextAvailable(ProcessEvent event, Key outputType) {
       if (ProcessOutputTypes.STDERR == outputType) {
         myWasError.set(true);
+      }
+    }
+  }
+
+  private static class BinaryOSProcessHandler extends OSProcessHandler {
+
+    @NotNull private final ByteArrayOutputStream myBinaryOutput;
+
+    public BinaryOSProcessHandler(@NotNull final Process process, @Nullable final String commandLine) {
+      super(process, commandLine);
+      myBinaryOutput = new ByteArrayOutputStream();
+    }
+
+    @NotNull
+    @Override
+    protected BaseDataReader createOutputDataReader(BaseDataReader.SleepingPolicy sleepingPolicy) {
+      return new SimpleBinaryOutputReader(myProcess.getInputStream(), sleepingPolicy);
+    }
+
+    private class SimpleBinaryOutputReader extends BinaryOutputReader {
+
+      public SimpleBinaryOutputReader(@NotNull InputStream stream, SleepingPolicy sleepingPolicy) {
+        super(stream, sleepingPolicy);
+        start();
+      }
+
+      @Override
+      protected void onBinaryAvailable(@NotNull byte[] data, int size) {
+        myBinaryOutput.write(data, 0, size);
+      }
+
+      @Override
+      protected Future<?> executeOnPooledThread(Runnable runnable) {
+        return BinaryOSProcessHandler.this.executeOnPooledThread(runnable);
       }
     }
   }

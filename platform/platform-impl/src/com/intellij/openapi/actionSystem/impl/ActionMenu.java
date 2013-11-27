@@ -71,6 +71,9 @@ public final class ActionMenu extends JMenu {
     if (SystemInfo.isMacSystemMenu) {
       installSynchronizer();
     }
+    if (UIUtil.isUnderIntelliJLaF()) {
+      setOpaque(true);
+    }
   }
 
   public void updateContext(DataContext context) {

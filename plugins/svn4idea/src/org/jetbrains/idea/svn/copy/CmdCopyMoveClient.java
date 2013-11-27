@@ -5,6 +5,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.api.BaseSvnClient;
 import org.jetbrains.idea.svn.commandLine.*;
+import org.tmatesoft.svn.core.wc.ISVNEventHandler;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 
@@ -64,5 +65,26 @@ public class CmdCopyMoveClient extends BaseSvnClient implements CopyMoveClient {
     CommandUtil.execute(myVcs, source, SvnCommandName.copy, parameters, listener);
 
     return listener.getCommittedRevision();
+  }
+
+  @Override
+  public void copy(@NotNull SvnTarget source,
+                   @NotNull File destination,
+                   @Nullable SVNRevision revision,
+                   boolean makeParents,
+                   @Nullable ISVNEventHandler handler) throws VcsException {
+    List<String> parameters = new ArrayList<String>();
+
+    CommandUtil.put(parameters, source);
+    CommandUtil.put(parameters, destination);
+    CommandUtil.put(parameters, revision);
+    CommandUtil.put(parameters, makeParents, "--parents");
+
+    File workingDirectory = CommandUtil.getHomeDirectory();
+    BaseUpdateCommandListener listener = new BaseUpdateCommandListener(workingDirectory, handler);
+
+    CommandUtil.execute(myVcs, source, workingDirectory, SvnCommandName.copy, parameters, listener);
+
+    listener.throwWrappedIfException();
   }
 }

@@ -5,6 +5,6 @@ class InfiniteLoop {
     do<caret> {
       int i = 10;
       System.out.println(i);
-    } while ((true));
+    } while (true);
   }
 }

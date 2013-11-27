@@ -112,7 +112,7 @@ public class LibraryDependencyDataService extends AbstractDependencyDataService<
         // The trick is that we should perform module settings modification inside try/finally block against target root model.
         // That means that we need to prepare all necessary data, obtain a model and modify it as necessary.
         Map<Set<String>/* library paths */, LibraryDependencyData> moduleLibrariesToImport = ContainerUtilRt.newHashMap();
-        Map<String/* library name */, LibraryDependencyData> projectLibrariesToImport = ContainerUtilRt.newHashMap();
+        Map<String/* library name + scope */, LibraryDependencyData> projectLibrariesToImport = ContainerUtilRt.newHashMap();
         Set<LibraryDependencyData> toImport = ContainerUtilRt.newLinkedHashSet();
         
         boolean hasUnresolved = false;
@@ -132,7 +132,7 @@ public class LibraryDependencyDataService extends AbstractDependencyDataService<
               }
               break;
             case PROJECT:
-              projectLibrariesToImport.put(ExternalSystemApiUtil.getLibraryName(libraryData), dependencyData);
+              projectLibrariesToImport.put(ExternalSystemApiUtil.getLibraryName(libraryData) + dependencyData.getScope().name(), dependencyData);
               toImport.add(dependencyData);
           }
         }
@@ -224,8 +224,8 @@ public class LibraryDependencyDataService extends AbstractDependencyDataService<
       else if (entry instanceof LibraryOrderEntry) {
         final LibraryOrderEntry libraryOrderEntry = (LibraryOrderEntry)entry;
         final String libraryName = libraryOrderEntry.getLibraryName();
-        final LibraryDependencyData existing = projectLibrariesToImport.remove(libraryName);
-        if (existing != null && libraryOrderEntry.getScope() == existing.getScope()) {
+        final LibraryDependencyData existing = projectLibrariesToImport.remove(libraryName + libraryOrderEntry.getScope().name());
+        if (existing != null) {
           toImport.remove(existing);
         }
         else if (!hasUnresolvedLibraries) {

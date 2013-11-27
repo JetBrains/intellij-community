@@ -99,6 +99,7 @@ public class GitBranchWidget extends EditorBasedWidget implements StatusBarWidge
     if (repo == null) {
       return null;
     }
+    update(); // update on click
     return GitBranchPopup.getInstance(project, repo).asListPopup();
   }
 
@@ -121,7 +122,7 @@ public class GitBranchWidget extends EditorBasedWidget implements StatusBarWidge
   }
 
   @Override
-  // Updates branch information on click
+  // have to effect since the click opens a list popup, and the consumer is not called for the MultipleTextValuesPresentation
   public Consumer<MouseEvent> getClickConsumer() {
     return new Consumer<MouseEvent>() {
       public void consume(MouseEvent mouseEvent) {

@@ -167,7 +167,7 @@ public class ShareProjectAction extends BasicAction {
                   indicator.setText(SvnBundle.message("share.directory.checkout.back.progress.text", checkoutUrl.toString()));
                 }
 
-                final ClientFactory factory = activeVcs.getFactoryFromSettings();
+                final ClientFactory factory = SvnCheckoutProvider.getFactory(activeVcs, format);
 
                 factory.createCheckoutClient()
                   .checkout(SvnTarget.fromURL(checkoutUrl), path, revision, SVNDepth.INFINITY, false, false, format, null);

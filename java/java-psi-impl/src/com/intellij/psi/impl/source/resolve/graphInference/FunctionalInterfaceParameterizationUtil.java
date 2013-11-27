@@ -18,6 +18,7 @@ package com.intellij.psi.impl.source.resolve.graphInference;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.graphInference.constraints.TypeEqualityConstraint;
+import com.intellij.psi.util.TypeConversionUtil;
 import org.jetbrains.annotations.Nullable;
 
 public class FunctionalInterfaceParameterizationUtil {
@@ -90,7 +91,7 @@ public class FunctionalInterfaceParameterizationUtil {
       }
 
       final PsiClassType parameterization = elementFactory.createType(psiClass, session.infer());
-      if (!isWildcardParameterized(parameterization)) return parameterization;
+      if (!TypeConversionUtil.containsWildcards(parameterization)) return parameterization;
     }
     return null;
   }

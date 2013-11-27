@@ -203,8 +203,8 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
   };
   private SvnCheckoutProvider myCheckoutProvider;
 
-  private final ClientFactory cmdClientFactory;
-  private final ClientFactory svnKitClientFactory;
+  @NotNull private final ClientFactory cmdClientFactory;
+  @NotNull private final ClientFactory svnKitClientFactory;
 
   private final boolean myLogExceptions;
 
@@ -1412,6 +1412,16 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
   @NotNull
   public ClientFactory getFactoryFromSettings() {
     return myConfiguration.isCommandLine() ? cmdClientFactory : svnKitClientFactory;
+  }
+
+  @NotNull
+  public ClientFactory getOtherFactory() {
+    return myConfiguration.isCommandLine() ? svnKitClientFactory : cmdClientFactory;
+  }
+
+  @NotNull
+  public ClientFactory getOtherFactory(@NotNull ClientFactory factory) {
+    return factory.equals(cmdClientFactory) ? svnKitClientFactory : cmdClientFactory;
   }
 
   @NotNull

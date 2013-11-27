@@ -164,8 +164,15 @@ abstract class FoldRegionsTree {
   boolean addRegion(FoldRegion range) {
     // During batchProcessing elements are inserted in ascending order,
     // binary search find acceptable insertion place first time
-    final boolean canUseCachedValue =
-      myCachedLastIndex != -1 && isBatchFoldingProcessing() && myRegions.get(myCachedLastIndex).getStartOffset() <= range.getStartOffset();
+    final boolean canUseCachedValue;
+    if (myCachedLastIndex >= myRegions.size()) {
+      // todo this happens after removeRegion()... myCachedListIndex must die!
+      canUseCachedValue = false;
+    }
+    else {
+      canUseCachedValue =
+        myCachedLastIndex != -1 && isBatchFoldingProcessing() && myRegions.get(myCachedLastIndex).getStartOffset() <= range.getStartOffset();
+    }
     int fastIndex = canUseCachedValue ? myCachedLastIndex + 1 : Collections.binarySearch(myRegions, range, RangeMarker.BY_START_OFFSET);
     if (fastIndex < 0) fastIndex = -fastIndex - 1;
     

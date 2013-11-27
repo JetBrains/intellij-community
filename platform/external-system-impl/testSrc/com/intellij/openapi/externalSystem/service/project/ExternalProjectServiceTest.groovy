@@ -54,7 +54,7 @@ public class ExternalProjectServiceTest extends AbstractExternalSystemTest {
         dependencies[name]++
       }
     }
-    ExternalSystemTestUtil.assertMapsEqual(['lib1': 1, 'lib2': 1], dependencies)
+    ExternalSystemTestUtil.assertMapsEqual(['Test_external_system_id: lib1': 1, 'Test_external_system_id: lib2': 1], dependencies)
   }
 
   void 'test changes in a project layout (content roots) could be detected on Refresh'() {

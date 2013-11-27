@@ -305,7 +305,7 @@ public class HippieWordCompletionHandler implements CodeInsightActionHandler {
 
     final CompletionData data = new CompletionData();
     
-    processWords(editor, offset - 1, new TokenProcessor() {
+    processWords(editor, Math.max(offset - 1, 0), new TokenProcessor() {
       @Override
       public boolean processToken(int start, int end) {
         if (start > offset) {

@@ -685,6 +685,12 @@ public class FileWatcherTest extends PlatformLangTestCase {
     LocalFileSystemTest.doTestPartialRefresh(top);
   }
 
+  public void testInterruptedRefresh() throws Exception {
+    // tests the same scenario with an active file watcher (prevents explicit marking of refreshed paths)
+    File top = createTestDir("top");
+    LocalFileSystemTest.doTestInterruptedRefresh(top);
+  }
+
   public void testUnicodePaths() throws Exception {
     if (!SystemInfo.isUnix || SystemInfo.isMac) {
       System.err.println("Ignored: well-defined FS required");

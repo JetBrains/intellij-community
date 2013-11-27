@@ -45,7 +45,6 @@ import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.ProperTextRange;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.Alarm;
@@ -1106,7 +1105,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
         needDelay = true;
         final JPanel editorFragmentPreviewPanel = new JPanel() {
           private static final int R = 6;
-          private static final int LEFT_INDENT = BalloonImpl.ARC;// + 5;
+          private static final int LEFT_INDENT = 0;//BalloonImpl.ARC;// + 5;
 
           @Override
           public Dimension getPreferredSize() {
@@ -1133,13 +1132,13 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
               UISettings.setupAntialiasing(cg);
               int lineShift = -myEditor.getLineHeight() * myCacheStartLine;
 
-              AffineTransform translateInstance = AffineTransform.getTranslateInstance(0, lineShift);
+              AffineTransform translateInstance = AffineTransform.getTranslateInstance(-4, lineShift);
               translateInstance.preConcatenate(t);
               cg.setTransform(translateInstance);
 
               cg.setClip(0, -lineShift, gutterWidth, myCacheLevel2.getHeight());
               gutterComponentEx.paint(cg);
-              translateInstance = AffineTransform.getTranslateInstance(gutterWidth, lineShift);
+              translateInstance = AffineTransform.getTranslateInstance(gutterWidth - 4, lineShift);
               translateInstance.preConcatenate(t);
               cg.setTransform(translateInstance);
               EditorComponentImpl contentComponent = myEditor.getContentComponent();
@@ -1261,7 +1260,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
             showEditorHint(hintManager, myPointHolder.get(), myHintHolder.get());
             myDelayed = false;
           }
-        }, Registry.intValue("ide.tooltip.initialDelay"));
+        }, /*Registry.intValue("ide.tooltip.initialDelay")*/300);
       }
       else if (!myDelayed) {
         showEditorHint(hintManager, point, hintInfo);

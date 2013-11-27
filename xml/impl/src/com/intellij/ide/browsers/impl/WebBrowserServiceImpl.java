@@ -15,8 +15,6 @@
  */
 package com.intellij.ide.browsers.impl;
 
-import com.intellij.ide.browsers.Url;
-import com.intellij.ide.browsers.Urls;
 import com.intellij.ide.browsers.WebBrowserService;
 import com.intellij.ide.browsers.WebBrowserUrlProvider;
 import com.intellij.openapi.project.DumbService;
@@ -27,6 +25,8 @@ import com.intellij.openapi.vfs.impl.http.HttpVirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.LightVirtualFile;
+import com.intellij.util.Url;
+import com.intellij.util.Urls;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.util.HtmlUtil;
 import org.jetbrains.annotations.NotNull;

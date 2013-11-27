@@ -10,7 +10,7 @@ package git4idea.branch;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.ui.MessageBuilder;
+import com.intellij.openapi.ui.MessageDialogBuilder;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
@@ -231,7 +231,7 @@ class GitDeleteRemoteBranchOperation extends GitBranchOperation {
       }
 
       final AtomicBoolean deleteChoice = new AtomicBoolean();
-      delete = MessageBuilder.yesNo(title, message).project(myProject).yesText("Delete").noText("Cancel").doNotAsk(new DialogWrapper.DoNotAskOption() {
+      delete = MessageDialogBuilder.yesNo(title, message).project(myProject).yesText("Delete").noText("Cancel").doNotAsk(new DialogWrapper.DoNotAskOption() {
         @Override
         public boolean isToBeShown() {
           return true;

@@ -34,15 +34,17 @@ import static com.intellij.openapi.util.text.StringUtil.stripQuotesAroundValue;
 
 public final class UriUtil {
   public static final CharMatcher PARAM_CHAR_MATCHER = CharMatcher.anyOf("?#;");
+  public static final CharMatcher SLASH_MATCHER = CharMatcher.is('/');
 
   private static final Pattern DATA_URI_PATTERN = Pattern.compile("data:([^,;]+/[^,;]+)(;charset=[^,;]+)?(;base64)?,(.+)");
 
   private UriUtil() {
   }
 
-  /**
-   * must be synchronized with trimUrlParameters in utils.js
-   */
+  public static String trimLastSlash(@NotNull String url) {
+    return SLASH_MATCHER.trimTrailingFrom(url);
+  }
+
   public static String trimParameters(@NotNull String url) {
     int end = PARAM_CHAR_MATCHER.indexIn(url);
     return end != -1 ? url.substring(0, end) : url;

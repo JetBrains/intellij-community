@@ -201,7 +201,7 @@ public class Messages {
     return dialog.getExitCode();
   }
 
-  private static boolean isApplicationInUnitTestOrHeadless(){
+  static boolean isApplicationInUnitTestOrHeadless(){
     final Application application = ApplicationManager.getApplication();
     return application != null && (application.isUnitTestMode() || application.isHeadlessEnvironment());
   }

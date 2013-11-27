@@ -72,6 +72,8 @@ public class ImportMavenRepositoriesTask implements Runnable {
 
   @Override
   public void run() {
+    if(myProject.isDisposed()) return;
+
     final LocalFileSystem localFileSystem = LocalFileSystem.getInstance();
     final List<PsiFile> psiFileList = ContainerUtil.newArrayList();
 

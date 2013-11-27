@@ -32,6 +32,7 @@ import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.Consumer;
+import com.intellij.util.Url;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.XmlBundle;
 import com.intellij.xml.util.HtmlUtil;
@@ -148,7 +149,7 @@ public class OpenFileInDefaultBrowserAction extends DumbAwareAction {
       protected void customizeCellRenderer(JList list, Object value, int index, boolean selected, boolean hasFocus) {
         // todo icons looks good, but is it really suitable for all URLs providers?
         setIcon(AllIcons.Nodes.Servlet);
-        append(((Url)value).getPath());
+        append(((Url)value).toDecodedForm());
       }
     });
 

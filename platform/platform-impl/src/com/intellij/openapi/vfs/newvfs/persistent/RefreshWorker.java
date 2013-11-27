@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.vfs.newvfs.persistent;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
@@ -29,6 +30,7 @@ import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
 import com.intellij.openapi.vfs.newvfs.events.*;
 import com.intellij.openapi.vfs.newvfs.impl.FakeVirtualFile;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualDirectoryImpl;
+import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.OpenTHashSet;
 import com.intellij.util.containers.Queue;
@@ -36,8 +38,12 @@ import com.intellij.util.text.FilePathHashingStrategy;
 import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Set;
 
 import static com.intellij.openapi.diagnostic.LogUtil.debug;
 import static com.intellij.util.containers.ContainerUtil.newTroveSet;
@@ -97,13 +103,13 @@ public class RefreshWorker {
     TObjectHashingStrategy<String> strategy = FilePathHashingStrategy.create(fs.isCaseSensitive());
 
     while (!myRefreshQueue.isEmpty()) {
-      checkCancelled();
-
       Pair<NewVirtualFile, FileAttributes> pair = myRefreshQueue.pullFirst();
       NewVirtualFile file = pair.first;
       boolean fileDirty = file.isDirty();
       debug(LOG, "file=%s dirty=%b", file, fileDirty);
       if (!fileDirty) continue;
+
+      checkCancelled(file);
 
       FileAttributes attributes = pair.second != null ? pair.second : fs.getAttributes(file);
       if (attributes == null) {
@@ -139,7 +145,7 @@ public class RefreshWorker {
           }
 
           for (String name : newNames) {
-            checkCancelled();
+            checkCancelled(file);
             FileAttributes childAttributes = fs.getAttributes(new FakeVirtualFile(file, name));
             if (childAttributes != null) {
               scheduleCreation(file, name, childAttributes.isDirectory(), false);
@@ -150,7 +156,7 @@ public class RefreshWorker {
           }
 
           for (VirtualFile child : file.getChildren()) {
-            checkCancelled();
+            checkCancelled(file);
             if (!deletedNames.contains(child.getName())) {
               FileAttributes childAttributes = fs.getAttributes(child);
               if (childAttributes != null) {
@@ -173,7 +179,7 @@ public class RefreshWorker {
           debug(LOG, "cached=%s actual=%s", cachedChildren, actualNames);
 
           for (VirtualFile child : cachedChildren) {
-            checkCancelled();
+            checkCancelled(file);
             FileAttributes childAttributes = fs.getAttributes(child);
             if (childAttributes != null) {
               checkAndScheduleChildRefresh(file, child, childAttributes);
@@ -187,7 +193,7 @@ public class RefreshWorker {
           List<String> names = dir.getSuspiciousNames();
           debug(LOG, "suspicious=%s", names);
           for (String name : names) {
-            checkCancelled();
+            checkCancelled(file);
             if (name.isEmpty()) continue;
 
             VirtualFile fake = new FakeVirtualFile(file, name);
@@ -250,10 +256,20 @@ public class RefreshWorker {
 
   private static class RefreshCancelledException extends RuntimeException { }
 
-  private void checkCancelled() {
-    if (myCancelled) {
+  private void checkCancelled(@NotNull NewVirtualFile stopAt) {
+    if (myCancelled || ourCancellingCondition != null && ourCancellingCondition.fun(stopAt)) {
+      forceMarkDirty(stopAt);
+      while (!myRefreshQueue.isEmpty()) {
+        NewVirtualFile next = myRefreshQueue.pullFirst().first;
+        forceMarkDirty(next);
+      }
       throw new RefreshCancelledException();
     }
+  }
+
+  private static void forceMarkDirty(NewVirtualFile file) {
+    file.markClean();  // otherwise consequent markDirty() won't have any effect
+    file.markDirty();
   }
 
   private void checkAndScheduleChildRefresh(@NotNull VirtualFile parent,
@@ -306,5 +322,13 @@ public class RefreshWorker {
       debug(LOG, "delete file=%s", file);
       myEvents.add(new VFileDeleteEvent(null, file, true));
     }
+  }
+
+  private static Function<VirtualFile, Boolean> ourCancellingCondition = null;
+
+  @TestOnly
+  public static void setCancellingCondition(@Nullable Function<VirtualFile, Boolean> condition) {
+    assert ApplicationManager.getApplication().isUnitTestMode();
+    ourCancellingCondition = condition;
   }
 }

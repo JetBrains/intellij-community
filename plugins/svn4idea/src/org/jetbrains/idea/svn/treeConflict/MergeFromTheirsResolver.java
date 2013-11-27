@@ -23,7 +23,7 @@ import com.intellij.openapi.diff.impl.patch.formove.PatchApplier;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.ui.MessageBuilder;
+import com.intellij.openapi.ui.MessageDialogBuilder;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
@@ -594,7 +594,7 @@ public class MergeFromTheirsResolver {
     if (!containAdditions(myTheirsChanges) && !containAdditions(myTheirsBinaryChanges)) {
       return false;
     }
-    return Messages.YES == MessageBuilder.yesNo(TreeConflictRefreshablePanel.TITLE, "Keep newly created file(s) in their original place?").yesText("Keep").noText("Move").doNotAsk(
+    return Messages.YES == MessageDialogBuilder.yesNo(TreeConflictRefreshablePanel.TITLE, "Keep newly created file(s) in their original place?").yesText("Keep").noText("Move").doNotAsk(
       new DialogWrapper.DoNotAskOption() {
         @Override
         public boolean isToBeShown() {

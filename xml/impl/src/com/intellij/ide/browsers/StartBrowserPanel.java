@@ -18,6 +18,7 @@ import com.intellij.psi.PsiBinaryFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.ui.AncestorListenerAdapter;
+import com.intellij.util.Url;
 import com.intellij.util.io.URLUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xml.XmlBundle;
@@ -126,7 +127,7 @@ public class StartBrowserPanel {
       @NotNull
       @Override
       protected String chosenFileToResultingText(@NotNull VirtualFile chosenFile) {
-        return virtualFileToUrl(chosenFile, project).toDecodedForm(false);
+        return virtualFileToUrl(chosenFile, project).toDecodedForm();
       }
     });
   }

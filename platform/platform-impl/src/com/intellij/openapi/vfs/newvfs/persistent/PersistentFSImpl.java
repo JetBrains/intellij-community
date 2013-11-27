@@ -23,21 +23,18 @@ import com.intellij.openapi.util.LowMemoryWatcher;
 import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.*;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.newvfs.*;
 import com.intellij.openapi.vfs.newvfs.events.*;
 import com.intellij.openapi.vfs.newvfs.impl.FakeVirtualFile;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualDirectoryImpl;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.Function;
-import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.SmartList;
+import com.intellij.util.*;
 import com.intellij.util.containers.ConcurrentIntObjectMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.StripedLockIntObjectConcurrentHashMap;
 import com.intellij.util.io.ReplicatorInputStream;
+import com.intellij.util.io.URLUtil;
 import com.intellij.util.messages.MessageBus;
 import gnu.trove.*;
 import org.jetbrains.annotations.NonNls;
@@ -942,8 +939,7 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
   @NotNull
   private static String normalizeRootUrl(@NotNull String basePath, @NotNull NewVirtualFileSystem fs) {
     // need to protect against relative path of the form "/x/../y"
-    String url = fs.getProtocol() + "://" + VfsImplUtil.normalize(fs, FileUtil.toCanonicalPath(basePath));
-    return StringUtil.trimEnd(url, "/");
+    return UriUtil.trimLastSlash(fs.getProtocol() + URLUtil.SCHEME_SEPARATOR + VfsImplUtil.normalize(fs, FileUtil.toCanonicalPath(basePath)));
   }
 
   @Override
