@@ -22,7 +22,7 @@ EOL="\r"|"\n"|"\r\n"
 LINE_WS=[\ \t\f]
 WHITE_SPACE=({LINE_WS}|{EOL})+
 
-STRING=\"([^\\\"\r\n]|\\([\\\"/bfnrt]|u[a-fA-F0-9]{4}))*\"?
+STRING=\"([^\\\"\r\n]|\\[^\r\n])*\"?
 NUMBER=-?[0-9]+(\.[0-9]+([eE][+-]?[0-9]+)?)?
 TEXT=[a-zA-Z_0-9]+
 
