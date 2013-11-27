@@ -92,6 +92,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.border.EmptyBorder;
 import javax.swing.event.DocumentEvent;
 import java.awt.*;
 import java.awt.event.*;
@@ -250,8 +251,8 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       @Override
       protected void paintComponent(Graphics g) {
         if (myBalloon != null && !myBalloon.isDisposed() && myActionEvent != null && myActionEvent.getInputEvent() instanceof MouseEvent) {
-          ((Graphics2D)g).setPaint(new GradientPaint(0,0, new JBColor(new Color(147, 162, 174), new Color(64, 80, 94)), 0, getHeight(),
-                                                     new JBColor(new Color(116, 128, 143), new Color(53, 65, 87))));
+          final Gradient gradient = getGradientColors();
+          ((Graphics2D)g).setPaint(new GradientPaint(0, 0, gradient.getStartColor(), 0, getHeight(), gradient.getEndColor()));
           g.fillRect(0,0,getWidth(), getHeight());
         } else {
           super.paintComponent(g);
@@ -299,6 +300,11 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
     return panel;
   }
 
+  private static Gradient getGradientColors() {
+    return new Gradient(
+      new JBColor(new Color(101, 147, 242), new Color(64, 80, 94)),
+      new JBColor(new Color(46, 111, 205), new Color(53, 65, 87)));
+  }
 
   public SearchEverywhereAction() {
     myRenderer = new MyListRenderer();
@@ -608,20 +614,21 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
     final JPanel panel = new JPanel(new BorderLayout()) {
       @Override
       protected void paintComponent(Graphics g) {
-        ((Graphics2D)g).setPaint(new GradientPaint(0,0, new JBColor(new Color(147, 162, 174), new Color(64, 80, 94)), 0, getHeight(),
-                                                   new JBColor(new Color(116, 128, 143), new Color(53, 65, 87))));
+        final Gradient gradient = getGradientColors();
+        ((Graphics2D)g).setPaint(new GradientPaint(0, 0, gradient.getStartColor(), 0, getHeight(), gradient.getEndColor()));
         g.fillRect(0, 0, getWidth(), getHeight());
       }
    };
     final JLabel title = new JLabel(" Search Everywhere:       ");
     final JPanel topPanel = new NonOpaquePanel(new BorderLayout());
-    title.setForeground(new JBColor(Gray._50, Gray._180));
+    title.setForeground(new JBColor(Gray._240, Gray._200));
     if (SystemInfo.isMac) {
       title.setFont(title.getFont().deriveFont(Font.BOLD, title.getFont().getSize() - 1f));
     } else {
       title.setFont(title.getFont().deriveFont(Font.BOLD));
     }
     topPanel.add(title, BorderLayout.WEST);
+    myNonProjectCheckBox.setForeground(new JBColor(Gray._240, Gray._200));
     myNonProjectCheckBox.setText("Include non-project items (" + getShortcut() + ")");
     topPanel.add(myNonProjectCheckBox, BorderLayout.EAST);
     panel.add(myPopupField, BorderLayout.CENTER);
@@ -632,7 +639,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       .setCancelOnClickOutside(true)
       .setModalContext(false)
       .createPopup();
-
+    myBalloon.getContent().setBorder(new EmptyBorder(0,0,0,0));
     final Window window = WindowManager.getInstance().suggestParentWindow(e.getProject());
 
     Component parent = UIUtil.findUltimateParent(window);
@@ -1463,6 +1470,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
                 }
               })
               .createPopup();
+            myPopup.getContent().setBorder(new EmptyBorder(0,0,0,0));
             Disposer.register(myPopup, new Disposable() {
               @Override
               public void dispose() {
