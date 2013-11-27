@@ -31,16 +31,13 @@ public abstract class BooleanPostfixTemplateProvider extends PostfixTemplateProv
   }
 
   public static boolean isBooleanExpression(@NotNull PrefixExpressionContext context) {
-    if (context.expression instanceof PsiExpression) {
-      return isBooleanExpression((PsiExpression) context.expression, context.expressionType);
-    }
+    return context.expression instanceof PsiExpression 
+        && isBooleanExpression((PsiExpression) context.expression, context.expressionType);
 
-    return false;
   }
 
   private static boolean isBooleanExpression(@Nullable PsiExpression expression) {
-    if (expression == null) return false;
-    return isBooleanExpression(expression, expression.getType());
+    return expression != null && isBooleanExpression(expression, expression.getType());
   }
 
   private static boolean isBooleanExpression(@NotNull PsiExpression expression, @Nullable PsiType expressionType) {
