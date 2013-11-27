@@ -26,6 +26,7 @@ package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInspection.dataFlow.value.*;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.UnorderedPair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.JavaTokenType;
@@ -101,7 +102,11 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     return myUnknownVariables.equals(that.myUnknownVariables);
   }
 
-  boolean equalsSuperficially(DfaMemoryStateImpl other) {
+  Object getSuperficialKey() {
+    return Pair.create(myEphemeral, myStack);
+  }
+
+  private boolean equalsSuperficially(DfaMemoryStateImpl other) {
     return myEphemeral == other.myEphemeral && myStack.equals(other.myStack);
   }
 
