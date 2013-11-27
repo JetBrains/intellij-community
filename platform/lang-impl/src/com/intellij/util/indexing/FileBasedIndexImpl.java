@@ -2077,7 +2077,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
           });
         }
         // the file is for sure not a dir and it was previously indexed by at least one index
-        scheduleForUpdate(file);
+        if (!isTooLarge(file)) scheduleForUpdate(file);
       }
       else {
         myFilesToUpdate.remove(file);
