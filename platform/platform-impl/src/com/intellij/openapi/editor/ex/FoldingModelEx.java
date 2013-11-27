@@ -51,5 +51,7 @@ public interface FoldingModelEx extends FoldingModel {
 
   boolean removeListener(@NotNull FoldingListener listener);
 
+  void clearFoldRegions();
+
   void rebuild();
 }
