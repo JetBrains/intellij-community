@@ -2,7 +2,6 @@ package org.jetbrains.postfixCompletion.LookupItems;
 
 import com.intellij.codeInsight.completion.InsertionContext;
 import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
@@ -63,7 +62,7 @@ public abstract class PostfixLookupElement<TPsiElement extends PsiElement> exten
     PsiElement psiElement = file.findElementAt(startOffset);
     if (psiElement == null) return; // shit happens?
 
-    PostfixTemplatesService templatesService = ServiceManager.getService(PostfixTemplatesService.class);
+    PostfixTemplatesService templatesService = PostfixTemplatesService.getInstance();
     if (templatesService == null) return;
     PostfixTemplateContext templateContext = templatesService.isAvailable(psiElement, myExecutionContext);
     if (templateContext == null) return; // yes, shit happens

@@ -4,7 +4,6 @@ import com.intellij.codeInsight.completion.*;
 import com.intellij.codeInsight.completion.impl.CamelHumpMatcher;
 import com.intellij.codeInsight.completion.scope.JavaCompletionProcessor;
 import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.impl.source.resolve.reference.impl.PsiMultiReference;
@@ -46,7 +45,7 @@ public abstract class PostfixNoVariantsCompletionUtil {
 
     CompletionResultSet filteredResultSet = resultSet.withPrefixMatcher(fullPrefix);
 
-    PostfixTemplatesService templatesService = ServiceManager.getService(PostfixTemplatesService.class);
+    PostfixTemplatesService templatesService = PostfixTemplatesService.getInstance();
     if (templatesService == null) {
       return;
     }

@@ -4,6 +4,7 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.template.impl.editorActions.ExpandLiveTemplateByTabAction;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
@@ -12,6 +13,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.postfixCompletion.ExpandPostfixEditorActionHandler;
+import org.jetbrains.postfixCompletion.settings.PostfixCompletionSettings;
 import org.jetbrains.postfixCompletion.templates.PostfixTemplateProvider;
 
 import java.util.ArrayList;
@@ -46,6 +48,11 @@ public final class PostfixTemplatesService {
       EditorActionHandler existingHandler = expandAction.getHandler(); // hack :(
       expandAction.setupHandler(new ExpandPostfixEditorActionHandler(existingHandler, this));
     }
+  }
+
+  @Nullable
+  public static PostfixTemplatesService getInstance() {
+    return ServiceManager.getService(PostfixTemplatesService.class);
   }
 
   @NotNull public final List<TemplateProviderInfo> getAllTemplates() {
@@ -188,6 +195,11 @@ public final class PostfixTemplatesService {
   }
 
   @NotNull public List<LookupElement> collectTemplates(@NotNull PostfixTemplateContext context) {
+    final PostfixCompletionSettings settings = PostfixCompletionSettings.getInstance();
+    if (settings == null) {
+      return Collections.emptyList();
+    }
+    
     // disable all providers over package names
     PsiElement referencedElement = context.innerExpression().referencedElement;
     if (referencedElement instanceof PsiPackage) return Collections.emptyList();
@@ -197,13 +209,14 @@ public final class PostfixTemplatesService {
     boolean insideCodeFragment = context.executionContext.insideCodeFragment;
     List<LookupElement> elements = new ArrayList<LookupElement>();
 
-    for (TemplateProviderInfo providerInfo : myProviders)
-    {
+
+    for (TemplateProviderInfo providerInfo : myProviders) {
       if (invokedOnType && !providerInfo.annotation.worksOnTypes()) continue;
       if (insideCodeFragment && !providerInfo.annotation.worksInsideFragments()) continue;
-
       try {
-        providerInfo.provider.createItems(context, elements);
+        if (settings.isTemplateEnabled(providerInfo)) {
+          providerInfo.provider.createItems(context, elements);
+        }
       } catch (Exception ex) {
         LOG.error(ex);
       }
