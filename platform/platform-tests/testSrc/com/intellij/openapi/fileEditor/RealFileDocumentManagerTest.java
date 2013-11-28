@@ -15,18 +15,24 @@
  */
 package com.intellij.openapi.fileEditor;
 
+import com.intellij.AppTopics;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.io.IoTestUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.testFramework.LightPlatformLangTestCase;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiFile;
+import com.intellij.testFramework.PlatformLangTestCase;
+import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
 
-public class RealFileDocumentManagerTest extends LightPlatformLangTestCase {
+public class RealFileDocumentManagerTest extends PlatformLangTestCase {
   public void testFileTypeModificationDocumentPreservation() throws Exception {
     File ioFile = IoTestUtil.createTestFile("test.html", "<html>some text</html>");
     VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(ioFile);
@@ -64,4 +70,44 @@ public class RealFileDocumentManagerTest extends LightPlatformLangTestCase {
       token.finish();
     }
   }
+
+  public void testNoPSIModificationsDuringSave() throws IOException {
+    File ioFile = IoTestUtil.createTestFile("test.txt", "<html>some text</html>");
+    VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(ioFile);
+    assertNotNull(ioFile.getPath(), virtualFile);
+
+    FileDocumentManager documentManager = FileDocumentManager.getInstance();
+    Document original = documentManager.getDocument(virtualFile);
+    assertNotNull(virtualFile.getPath(), original);
+
+    final PsiFile file = getPsiFile(original);
+    FileDocumentManagerListener saveListener = new FileDocumentManagerAdapter() {
+      @Override
+      public void beforeDocumentSaving(@NotNull Document document) {
+        WriteCommandAction.runWriteCommandAction(getProject(), new Runnable() {
+          @Override
+          public void run() {
+            try {
+              file.getFirstChild().delete();
+              fail("Must not modify PSI inside save listener");
+            }
+            catch (IncorrectOperationException e) {
+              assertEquals("Must not modify PSI inside save listener", e.getMessage());
+            }
+          }
+        });
+      }
+    };
+    getProject().getMessageBus().connect(getTestRootDisposable()).subscribe(AppTopics.FILE_DOCUMENT_SYNC, saveListener);
+    final Document document = PsiDocumentManager.getInstance(getProject()).getDocument(file);
+    WriteCommandAction.runWriteCommandAction(getProject(), new Runnable() {
+      @Override
+      public void run() {
+        document.insertString(1,"y");
+      }
+    });
+
+    FileDocumentManager.getInstance().saveAllDocuments();
+  }
+
 }
