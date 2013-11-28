@@ -17,14 +17,23 @@ package com.siyeh.ig.errorhandling;
 
 import com.intellij.codeInspection.ui.ListTable;
 import com.intellij.codeInspection.ui.ListWrappingTableModel;
+import com.intellij.psi.PsiElement;
 import com.intellij.util.ui.CheckBox;
 import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.fixes.SuppressForTestsScopeFix;
 import com.siyeh.ig.ui.UiUtils;
 
 import javax.swing.*;
 import java.awt.*;
 
 public class BadExceptionDeclaredInspection extends BadExceptionDeclaredInspectionBase {
+
+  @Override
+  protected InspectionGadgetsFix buildFix(Object... infos) {
+    final PsiElement context = (PsiElement)infos[0];
+    return SuppressForTestsScopeFix.build(this, context);
+  }
 
   @Override
   public JComponent createOptionsPanel() {
@@ -41,17 +50,12 @@ public class BadExceptionDeclaredInspection extends BadExceptionDeclaredInspecti
     constraints.fill = GridBagConstraints.BOTH;
     panel.add(tablePanel, constraints);
 
-    final CheckBox checkBox1 =
-      new CheckBox(InspectionGadgetsBundle.message("ignore.exceptions.declared.in.tests.option"), this,
-                   "ignoreTestCases");
-    constraints.gridy = 1;
-    constraints.weighty = 0.0;
-    panel.add(checkBox1, constraints);
 
     final CheckBox checkBox2 =
       new CheckBox(InspectionGadgetsBundle.message("ignore.exceptions.declared.on.library.override.option"), this,
                    "ignoreLibraryOverrides");
-    constraints.gridy = 2;
+    constraints.weighty = 0.0;
+    constraints.gridy = 1;
     panel.add(checkBox2, constraints);
     return panel;
   }
