@@ -160,13 +160,13 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
         }
         else {
           final int finalStart = whiteSpaceStart;
-          if (project != null) {
-            PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(this);
-          }
-          ApplicationManager.getApplication().runWriteAction(new DocumentRunnable(this, project) {
+          CommandProcessor.getInstance().runUndoTransparentAction(new Runnable() {
             @Override
             public void run() {
-              CommandProcessor.getInstance().runUndoTransparentAction(new Runnable() {
+              if (project != null) {
+                PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(DocumentImpl.this);
+              }
+              ApplicationManager.getApplication().runWriteAction(new DocumentRunnable(DocumentImpl.this, project) {
                 @Override
                 public void run() {
                   deleteString(finalStart, lineEnd);

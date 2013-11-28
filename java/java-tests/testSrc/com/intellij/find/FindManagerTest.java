@@ -23,6 +23,7 @@ import com.intellij.lang.properties.IProperty;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.PathManagerEx;
+import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.ProperTextRange;
@@ -370,7 +371,7 @@ public class FindManagerTest extends DaemonAnalyzerTestCase {
   }
 
   public void testReplaceAll() throws FindManager.MalformedReplacementStringException {
-    FindModel findModel = new FindModel();
+    final FindModel findModel = new FindModel();
     String toFind = "xxx";
     @SuppressWarnings("SpellCheckingInspection") String toReplace = "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX";
     findModel.setStringToFind(toFind);
@@ -389,11 +390,21 @@ public class FindManagerTest extends DaemonAnalyzerTestCase {
     String text = StringUtil.repeat(toFind + "\n",6);
     configureByText(FileTypes.PLAIN_TEXT, text);
 
-    List<Usage> usages = FindUtil.findAll(getProject(), myEditor, findModel);
+    final List<Usage> usages = FindUtil.findAll(getProject(), myEditor, findModel);
     assertNotNull(usages);
-    for (Usage usage : usages) {
-      ReplaceInProjectManager.getInstance(getProject()).replaceUsage(usage, findModel, Collections.<Usage>emptySet(), false);
-    }
+    CommandProcessor.getInstance().executeCommand(getProject(), new Runnable() {
+      @Override
+      public void run() {
+        for (Usage usage : usages) {
+          try {
+            ReplaceInProjectManager.getInstance(getProject()).replaceUsage(usage, findModel, Collections.<Usage>emptySet(), false);
+          }
+          catch (FindManager.MalformedReplacementStringException e) {
+            throw new RuntimeException(e);
+          }
+        }
+      }
+    }, "", null);
     String newText = StringUtil.repeat(toReplace + "\n",6);
     assertEquals(newText, getEditor().getDocument().getText());
   }

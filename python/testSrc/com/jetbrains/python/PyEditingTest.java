@@ -22,6 +22,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.util.Computable;
@@ -323,7 +324,7 @@ public class PyEditingTest extends PyTestCase {
   }
 
   private String doTestTyping(final String text, final int offset, final char character) {
-    final PsiFile file = ApplicationManager.getApplication().runWriteAction(new Computable<PsiFile>() {
+    final PsiFile file = WriteCommandAction.runWriteCommandAction(new Computable<PsiFile>() {
       @Override
       public PsiFile compute() {
         final PsiFile file = myFixture.configureByText(PythonFileType.INSTANCE, text);
@@ -344,7 +345,7 @@ public class PyEditingTest extends PyTestCase {
 
   private void doTyping(final char character) {
     final int offset = myFixture.getEditor().getCaretModel().getOffset();
-    final PsiFile file = ApplicationManager.getApplication().runWriteAction(new Computable<PsiFile>() {
+    final PsiFile file = WriteCommandAction.runWriteCommandAction(new Computable<PsiFile>() {
       @Override
       public PsiFile compute() {
         myFixture.getEditor().getCaretModel().moveToOffset(offset);
