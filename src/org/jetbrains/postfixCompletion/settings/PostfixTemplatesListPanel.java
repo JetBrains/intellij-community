@@ -26,7 +26,7 @@ public class PostfixTemplatesListPanel {
   private static final NotNullFunction<TemplateProviderInfo, String> GET_SHORTCUT_FUNCTION =
     new NotNullFunction<TemplateProviderInfo, String>() {
       @NotNull @Override public String fun(@NotNull TemplateProviderInfo info) {
-        return info.annotation.templateName();
+        return "." + info.annotation.templateName();
       }
     };
 
@@ -108,7 +108,7 @@ public class PostfixTemplatesListPanel {
   private class BooleanColumnInfo extends ColumnInfo<TemplateProviderInfo, Boolean> {
     private final BooleanTableCellRenderer CELL_RENDERER = new BooleanTableCellRenderer();
     private final BooleanTableCellEditor CELL_EDITOR = new BooleanTableCellEditor();
-    private final int WIDTH = new JBCheckBox().getPreferredSize().width;
+    private final int WIDTH = new JBCheckBox().getPreferredSize().width + 4;
 
     public BooleanColumnInfo() {
       super("");

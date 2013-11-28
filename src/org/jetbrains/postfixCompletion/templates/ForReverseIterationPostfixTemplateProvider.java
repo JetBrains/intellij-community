@@ -7,12 +7,11 @@ import org.jetbrains.postfixCompletion.infrastructure.TemplateProvider;
 
 @TemplateProvider(
   templateName = "forr",
-  description = "Iterates with index over collection in reverse order",
-  example = "for (int i = expr.Length - 1; i >= 0; i--)")
+  description = "Iterates with index in reverse order",
+  example = "for (int i = expr.length-1; i >= 0; i--)")
 public final class ForReverseIterationPostfixTemplateProvider extends ForIterationPostfixTemplateProvider {
   @Override @NotNull protected ForReverseLookupElement createIterationLookupElement(
     @NotNull PrefixExpressionContext expression, @NotNull String indexVarType, @NotNull String sizeAccessSuffix) {
-
     return new ForReverseLookupElement(expression, indexVarType, sizeAccessSuffix);
   }
 

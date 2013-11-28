@@ -1,7 +1,7 @@
 <idea-plugin version="2">
   <id>org.jetbrains.postfixCompletion</id>
   <name>Postfix Completion</name>
-  <version>0.7.5-beta</version>
+  <version>0.7.6-beta</version>
   <vendor email="alexander.shvedov@jetbrains.com" url="https://github.com/controlflow">Alexander Shvedov</vendor>
   <depends>com.intellij.modules.lang</depends>
   <depends>com.intellij.modules.java</depends>
@@ -42,10 +42,14 @@
         <li>Template expansion by <b>[Tab]</b> key in editor (like live templates)</li>
         <li>Support for IDEA chained code completion (<b>st.new</b> => <b>new SomeType()</b>)</li>
         <li>Works inside code fragments, like evaluate expression debugger window</li>
+        <li>Settings page to disable/enable particular postfix templates</li>
       </ul>
 ]]></description>
 
   <change-notes><![CDATA[
+      <b>Version 0.7.6-beta</b><br/>
+      Braces insertion in <b>.if</b>, <b>.else</b>, <b>.null</b> and <b>.notnull</b>.<br/><br/>
+
       <b>Version 0.7.5-beta</b><br/>
       Settings page to disable/enable particular templates. Better <b>.cast</b> template.<br/><br/>
 
@@ -58,15 +62,6 @@
       <b>Version 0.5-beta</b><br/>
       Various fixes for completion with over literals.<br/>
       New <b>.fori</b> and <b>.forr</b> templates iteration with index.<br/><br/>
-
-      <b>Version 0.4-beta</b><br/>
-      Various fixes. New <b>.new</b> template over types.<br/>
-      Postfix template expansion by <b>Tab</b> key in editor (like live templates).<br/><br/>
-
-      <b>Version 0.3-beta</b><br/>
-      Initial (and nearly final, I hope) support for IDEA's code completion with unresolved
-      reference-expression qualifier feature. It allows you to write <b>scn.nn</b> and expand
-      into <b>if (superCoolName != null)</b>, for example.<br/><br/>
 ]]></change-notes>
 
   <idea-version since-build="130.754"/>

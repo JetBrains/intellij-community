@@ -46,13 +46,13 @@ Available templates:
 
 Other features:
 
-* `.try` – surrounds resource expression with `try (T resource = expr)`
 * Template expansion by `Tab` key in editor (just like live templates)
 * Support for IDEA chained code completion (`st.new` => `new SomeType()`)
 * Works inside code fragments, like *evaluate expression* debugger window
+* Settings page to disable/enable particular postfix templates
 
 Future work:
-* Settings page to disable/enable templates
+* `.try` – surrounds resource expression with `try (T resource = expr)`
 * Control braces insertion for statements (use code style settings?)
 * Completion char handling `expr.var.usage()` => `T x = expr; x.usage()`?
 * Support non-Java languages
