@@ -606,8 +606,17 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
       }
 
       @Override
-      protected boolean checkSameConflicts(CandidateInfo method, CandidateInfo conflict) {
-        return method == conflict;
+      protected boolean nonComparable(CandidateInfo method, CandidateInfo conflict) {
+        if (method == conflict) return true;
+        PsiElement psiElement = method.getElement();
+        PsiElement conflictElement = conflict.getElement();
+        if (psiElement instanceof PsiMethod && conflictElement instanceof PsiMethod) {
+          if (((PsiMethod)psiElement).getParameterList().getParametersCount() !=
+              ((PsiMethod)conflictElement).getParameterList().getParametersCount()) {
+            return true;
+          }
+        }
+        return false;
       }
     }
   }

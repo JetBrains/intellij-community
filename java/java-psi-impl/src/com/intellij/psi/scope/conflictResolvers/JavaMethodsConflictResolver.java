@@ -145,7 +145,7 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
         for (int j = 0; j < i; j++) {
           ProgressManager.checkCanceled();
           final CandidateInfo conflict = newConflictsArray[j];
-          if (checkSameConflicts(method, conflict)) continue; 
+          if (nonComparable(method, conflict)) continue; 
           switch (isMoreSpecific(method, conflict, applicabilityLevel, languageLevel)) {
             case FIRST:
               conflicts.remove(conflict);
@@ -161,7 +161,7 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
     }
   }
 
-  protected boolean checkSameConflicts(CandidateInfo method, CandidateInfo conflict) {
+  protected boolean nonComparable(CandidateInfo method, CandidateInfo conflict) {
     assert method != conflict;
     return false;
   }
