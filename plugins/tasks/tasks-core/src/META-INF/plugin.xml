@@ -72,7 +72,7 @@
         <keyboard-shortcut keymap="$default" first-keystroke="alt shift T"/>
       </action>
       <add-to-group group-id="MainToolBar" anchor="last"/>
-      <add-to-group group-id="NavBarToolBar" anchor="last"/>
+      <add-to-group group-id="NavBarToolBarOthers" anchor="last"/>
     </group>
 
     <!--

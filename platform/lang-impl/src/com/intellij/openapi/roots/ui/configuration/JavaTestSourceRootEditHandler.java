@@ -38,7 +38,6 @@ public class JavaTestSourceRootEditHandler extends JavaSourceRootEditHandlerBase
     super(JavaSourceRootType.TEST_SOURCE);
   }
 
-
   @NotNull
   @Override
   public String getRootTypeName() {
@@ -55,6 +54,12 @@ public class JavaTestSourceRootEditHandler extends JavaSourceRootEditHandlerBase
   @Override
   public Icon getRootIcon() {
     return AllIcons.Modules.TestRoot;
+  }
+
+  @NotNull
+  @Override
+  protected Icon getGeneratedRootIcon() {
+    return AllIcons.Modules.GeneratedTestRoot;
   }
 
   @Nullable
