@@ -921,7 +921,7 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
         TextAttributes textAttributes = highlighter.getTextAttributes();
         if (textAttributes != null) {
           Color color = textAttributes.getBackgroundColor();
-          if (color.getBlue() > 128 && color.getRed() < 128 && color.getGreen() < 128) {
+          if (color != null && color.getBlue() > 128 && color.getRed() < 128 && color.getGreen() < 128) {
             TextAttributes clone = attributes.clone();
             clone.setForegroundColor(Color.orange);
             clone.setEffectColor(Color.orange);
