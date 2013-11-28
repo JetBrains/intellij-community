@@ -1,3 +1,5 @@
+package org.jetbrains.postfixCompletion;
+
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.openapi.application.*;
 import com.intellij.util.*;

@@ -1,10 +1,11 @@
+package org.jetbrains.postfixCompletion;
+
 import com.intellij.codeInsight.completion.*;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.editor.*;
 import com.intellij.testFramework.fixtures.*;
 import org.jetbrains.annotations.*;
-import org.jetbrains.postfixCompletion.*;
 
 import java.util.regex.*;
 
