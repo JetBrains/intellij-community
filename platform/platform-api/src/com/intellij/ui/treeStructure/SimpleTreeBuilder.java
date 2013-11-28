@@ -33,16 +33,17 @@ public class SimpleTreeBuilder extends AbstractTreeBuilder {
     super(tree, treeModel, treeStructure, comparator);
   }
 
+  @Override
   public boolean isAlwaysShowPlus(NodeDescriptor nodeDescriptor) {
     return ((SimpleNode) nodeDescriptor).isAlwaysShowPlus();
   }
 
+  @Override
   public boolean isAutoExpandNode(NodeDescriptor nodeDescriptor) {
     return ((SimpleNode) nodeDescriptor).isAutoExpandNode();
   }
 
-
-
+  @Override
   public final void updateFromRoot() {
     updateFromRoot(false);
   }
@@ -56,6 +57,7 @@ public class SimpleTreeBuilder extends AbstractTreeBuilder {
       SimpleTreeBuilder.super.updateFromRoot();
     } else {
       ApplicationManager.getApplication().invokeLater(new Runnable() {
+        @Override
         public void run() {
           if (!isDisposed()) {
             SimpleTreeBuilder.super.updateFromRoot();
