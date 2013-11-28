@@ -124,9 +124,14 @@ public abstract class LightDaemonAnalyzerTestCase extends LightCodeInsightTestCa
     myJavaFilesFilter.allowTreeAccessForFile(getVFile());
     getJavaFacade().setAssertOnFileLoadingFilter(myJavaFilesFilter, myTestRootDisposable); // check repository work
 
-    Collection<HighlightInfo> infos = doHighlighting();
+    try {
+      Collection<HighlightInfo> infos = doHighlighting();
 
-    data.checkResult(infos, getEditor().getDocument().getText(), filePath);
+      data.checkResult(infos, getEditor().getDocument().getText(), filePath);
+    }
+    finally {
+      getJavaFacade().setAssertOnFileLoadingFilter(VirtualFileFilter.NONE, myTestRootDisposable);
+    }
   }
 
   protected HighlightTestInfo doTestFile(@NonNls @NotNull String filePath) {
