@@ -131,7 +131,7 @@ public class PostfixCompletionTest extends LightCodeInsightFixtureTestCase {
 
   public void testWhile01() { doTest("while\n"); }
 
-  public void testCast01() { doTestForce("cast\n"); }
+  public void testCast01() { doTestForce("cast\n"); } // jdk mock required? 
 
   public void testPar01() { doTestForce("par\n"); }
 
