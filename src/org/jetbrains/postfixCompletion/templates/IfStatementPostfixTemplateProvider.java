@@ -1,14 +1,16 @@
 package org.jetbrains.postfixCompletion.templates;
 
+import com.intellij.codeInsight.completion.InsertionContext;
 import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementFactory;
 import com.intellij.psi.PsiExpression;
-import com.intellij.psi.PsiIfStatement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.postfixCompletion.infrastructure.PrefixExpressionContext;
 import org.jetbrains.postfixCompletion.infrastructure.TemplateProvider;
-import org.jetbrains.postfixCompletion.lookupItems.IfStatementPostfixLookupItem;
+import org.jetbrains.postfixCompletion.lookupItems.ExpressionPostfixLookupElement;
+import org.jetbrains.postfixCompletion.util.JavaSurroundersProxy;
 
 import java.util.List;
 
@@ -17,9 +19,7 @@ import java.util.List;
   description = "Checks boolean expression to be 'true'",
   example = "if (expr)")
 public final class IfStatementPostfixTemplateProvider extends BooleanPostfixTemplateProvider {
-  @Override public boolean createBooleanItems(
-    @NotNull PrefixExpressionContext context, @NotNull List<LookupElement> consumer) {
-
+  @Override public boolean createBooleanItems(@NotNull PrefixExpressionContext context, @NotNull List<LookupElement> consumer) {
     if (context.canBeStatement) {
       consumer.add(new IfLookupItem(context));
       return true;
@@ -28,17 +28,25 @@ public final class IfStatementPostfixTemplateProvider extends BooleanPostfixTemp
     return false;
   }
 
-  static final class IfLookupItem extends IfStatementPostfixLookupItem {
+  static final class IfLookupItem extends ExpressionPostfixLookupElement<PsiExpression> {
     public IfLookupItem(@NotNull PrefixExpressionContext context) {
       super("if", context);
     }
 
-    @Override protected void processStatement(
-        @NotNull PsiElementFactory factory, @NotNull PsiIfStatement ifStatement, @NotNull PsiElement expression) {
-      PsiExpression condition = ifStatement.getCondition();
-      assert (condition != null) : "condition != null";
+    @NotNull
+    @Override
+    protected PsiExpression createNewExpression(@NotNull PsiElementFactory factory,
+                                                @NotNull PsiElement expression,
+                                                @NotNull PsiElement context) {
+      return (PsiExpression)expression;
+    }
 
-      condition.replace(expression);
+    @Override
+    protected void postProcess(@NotNull InsertionContext context, @NotNull PsiExpression expression) {
+      TextRange range = JavaSurroundersProxy.ifStatement(context.getProject(), context.getEditor(), expression);
+      if (range != null) {
+        context.getEditor().getCaretModel().moveToOffset(range.getStartOffset());  
+      }
     }
   }
 }
