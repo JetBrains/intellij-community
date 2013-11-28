@@ -314,7 +314,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
                     final PsiSubstitutor substitutor = LambdaUtil.getSubstitutor(interfaceMethod, resolveResult);
                     if (expression.hasFormalParameterTypes()) {
                       for (int i = 0; i < lambdaParameters.length; i++) {
-                        if (!Comparing.equal(lambdaParameters[i].getType(), substitutor.substitute(parameters[i].getType()))) {
+                        if (!PsiTypesUtil.compareTypes(lambdaParameters[i].getType(), substitutor.substitute(parameters[i].getType()), true)) {
                           HighlightInfo result = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
                             .range(lambdaParameters[i])
                             .descriptionAndTooltip(incompatibleTypesMessage)

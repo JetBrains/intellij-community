@@ -31,7 +31,7 @@ public abstract class SurroundTestCase extends LightGroovyTestCase {
   protected void doTest(final Surrounder surrounder, String textBefore, String textAfter) {
     myFixture.configureByText("a.groovy", textBefore)
 
-    WriteCommandAction.runWriteCommandAction {
+    WriteCommandAction.runWriteCommandAction project, {
       SurroundWithHandler.invoke(project, myFixture.editor, myFixture.file, surrounder)
       doPostponedFormatting(project)
     }

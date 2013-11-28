@@ -364,7 +364,7 @@ public class PyFormatterTest extends PyTestCase {
 
   private void doTest(final boolean reformatText) {
     myFixture.configureByFile("formatter/" + getTestName(true) + ".py");
-    WriteCommandAction.runWriteCommandAction(new Runnable() {
+    WriteCommandAction.runWriteCommandAction(null, new Runnable() {
       @Override
       public void run() {
         CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(myFixture.getProject());

@@ -524,8 +524,8 @@ class Test {
   private def doInplaceRenameTest() {
     String prefix = "/${getTestName(false)}"
     myFixture.configureByFile prefix + ".groovy";
-    WriteCommandAction.runWriteCommandAction {
-    CodeInsightTestUtil.doInlineRename(new GrVariableInplaceRenameHandler(), "foo", myFixture);
+    WriteCommandAction.runWriteCommandAction project, {
+      CodeInsightTestUtil.doInlineRename(new GrVariableInplaceRenameHandler(), "foo", myFixture);
     }
     myFixture.checkResultByFile prefix + "_after.groovy"
   }

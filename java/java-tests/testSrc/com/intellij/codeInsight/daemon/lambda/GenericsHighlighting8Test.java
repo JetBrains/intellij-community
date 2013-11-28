@@ -44,7 +44,7 @@ public class GenericsHighlighting8Test extends LightDaemonAnalyzerTestCase {
 
   @Override
   protected Sdk getProjectJDK() {
-    return getTestName(false).contains("Jdk14") ? IdeaTestUtil.getMockJdk14() : super.getProjectJDK();
+    return IdeaTestUtil.getMockJdk18();
   }
 
   public void testReferenceTypeParams() {
@@ -762,19 +762,4 @@ public class GenericsHighlighting8Test extends LightDaemonAnalyzerTestCase {
     doTest();
   }
 
-  public void testJavaUtilCollections_NoVerify() throws Exception {
-    PsiClass collectionsClass = getJavaFacade().findClass("java.util.Collections", GlobalSearchScope.moduleWithLibrariesScope(getModule()));
-    assertNotNull(collectionsClass);
-    collectionsClass = (PsiClass)collectionsClass.getNavigationElement();
-    final String text = collectionsClass.getContainingFile().getText();
-    configureFromFileText("Collections.java", text.replaceAll("\r", "\n"));
-    final PsiResolveHelperImpl helper = (PsiResolveHelperImpl)JavaPsiFacade.getInstance(getProject()).getResolveHelper();
-    helper.setTestHelper(new PsiGraphInferenceHelper(getPsiManager()));
-    try {
-      doTestConfiguredFile(false, false, null);
-    }
-    finally {
-      helper.setTestHelper(null);
-    }
-  }
 }

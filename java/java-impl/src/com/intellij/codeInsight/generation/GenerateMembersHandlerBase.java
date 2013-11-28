@@ -69,7 +69,7 @@ public abstract class GenerateMembersHandlerBase implements CodeInsightActionHan
       final ClassMember[] members = chooseOriginalMembers(aClass, project, editor);
       if (members == null) return;
 
-      WriteCommandAction.runWriteCommandAction(new Runnable() {
+      WriteCommandAction.runWriteCommandAction(project, new Runnable() {
         @Override
         public void run() {
           doGenerate(project, editor, aClass, members);

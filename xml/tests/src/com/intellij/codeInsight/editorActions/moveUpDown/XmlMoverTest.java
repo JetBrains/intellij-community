@@ -71,7 +71,7 @@ public class XmlMoverTest extends CodeInsightTestCase {
     final boolean enabled = handler.isEnabled(myEditor, null);
     assertEquals("not enabled for " + afterFileName, new File(getTestDataPath(), afterFileName).exists(), enabled);
     if (enabled) {
-      WriteCommandAction.runWriteCommandAction(new Runnable() {
+      WriteCommandAction.runWriteCommandAction(null, new Runnable() {
         @Override
         public void run() {
           handler.execute(myEditor, null);

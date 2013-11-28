@@ -66,6 +66,10 @@ public class CastMethodArgumentFix extends MethodArgumentFix {
         parameterType = ((PsiPrimitiveType)parameterType).getBoxedType(context); //unboxing from type of cast expression will take place at runtime
         if (parameterType == null) return false;
       }
+      if (exprType instanceof PsiPrimitiveType && parameterType instanceof PsiClassType) {
+        parameterType = PsiPrimitiveType.getUnboxedType(parameterType);
+        if (parameterType == null) return false;
+      }
       return parameterType.isConvertibleFrom(exprType);
     }
   }

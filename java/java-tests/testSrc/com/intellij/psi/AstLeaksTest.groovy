@@ -32,7 +32,7 @@ class AstLeaksTest extends LightCodeInsightFixtureTestCase {
     assert file.findElementAt(0) instanceof PsiKeyword
     LeakHunter.checkLeak(file, JavaFileElement)
 
-    WriteCommandAction.runWriteCommandAction {
+    WriteCommandAction.runWriteCommandAction project, {
       file.viewProvider.document.insertString(0, ' ')
       PsiDocumentManager.getInstance(project).commitAllDocuments()
       assert file.findElementAt(0) instanceof PsiWhiteSpace

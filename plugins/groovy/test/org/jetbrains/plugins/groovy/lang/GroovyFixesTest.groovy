@@ -100,7 +100,7 @@ class FooBarGoo {
 
 class Foo {}
 ''')
-    WriteCommandAction.runWriteCommandAction { ((GroovyFile) myFixture.file).packageName = 'foo' }
+    WriteCommandAction.runWriteCommandAction project, { ((GroovyFile)myFixture.file).packageName = 'foo' }
     myFixture.checkResult '''\
 #!/usr/bin/groovy
 package foo

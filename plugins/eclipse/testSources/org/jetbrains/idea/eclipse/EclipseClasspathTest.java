@@ -81,7 +81,7 @@ public class EclipseClasspathTest extends IdeaTestCase {
       fileText = fileText.replaceAll(EclipseXml.FILE_PROTOCOL + "/", EclipseXml.FILE_PROTOCOL);
     }
     final Element classpathElement = JDOMUtil.loadDocument(fileText).getRootElement();
-    final Module module = WriteCommandAction.runWriteCommandAction(new Computable<Module>() {
+    final Module module = WriteCommandAction.runWriteCommandAction(null, new Computable<Module>() {
       @Override
       public Module compute() {
         return ModuleManager.getInstance(project)

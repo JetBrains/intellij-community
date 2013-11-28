@@ -61,7 +61,7 @@ public class WorkingWithOpenProjectTest extends MavenImportingTestCase {
 
     myProjectsManager.listenForExternalChanges();
     final Document d = FileDocumentManager.getInstance().getDocument(myProjectPom);
-    WriteCommandAction.runWriteCommandAction(new Runnable() {
+    WriteCommandAction.runWriteCommandAction(null, new Runnable() {
       public void run() {
         d.setText(createPomXml("<groupId>test</groupId>" +
                                "<artifactId>project</artifactId>" +

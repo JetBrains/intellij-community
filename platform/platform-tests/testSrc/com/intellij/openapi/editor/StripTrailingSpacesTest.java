@@ -61,7 +61,7 @@ public class StripTrailingSpacesTest extends LightPlatformCodeInsightTestCase {
   }
 
   private static void stripTrailingSpaces() {
-    WriteCommandAction.runWriteCommandAction(new Runnable() {
+    WriteCommandAction.runWriteCommandAction(null, new Runnable() {
       @Override
       public void run() {
         TrailingSpacesStripper.stripIfNotCurrentLine(getEditor().getDocument(), true);

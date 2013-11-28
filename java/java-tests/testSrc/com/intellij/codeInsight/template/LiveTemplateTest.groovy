@@ -57,7 +57,7 @@ public class LiveTemplateTest extends LightCodeInsightFixtureTestCase {
     CodeInsightSettings.instance.COMPLETION_CASE_SENSITIVE = CodeInsightSettings.FIRST_LETTER
     CodeInsightSettings.instance.SELECT_AUTOPOPUP_SUGGESTIONS_BY_CHARS = false
     if (state != null) {
-      WriteCommandAction.runWriteCommandAction {
+      WriteCommandAction.runWriteCommandAction project, {
         state.gotoEnd()
       };
     }
@@ -424,7 +424,7 @@ class Foo {
   }
 
   private writeCommand(Runnable runnable) {
-    WriteCommandAction.runWriteCommandAction(runnable)
+    WriteCommandAction.runWriteCommandAction(null, runnable)
   }
 
   public void testSearchByDescriptionWhenTemplatesListed() {

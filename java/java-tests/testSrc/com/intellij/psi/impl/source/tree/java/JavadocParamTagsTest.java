@@ -41,7 +41,7 @@ public class JavadocParamTagsTest extends LightIdeaTestCase {
     final PsiDocComment docComment = method.getDocComment();
     assertNotNull(docComment);
     final PsiDocTag[] tags = docComment.getTags();
-    WriteCommandAction.runWriteCommandAction(new Runnable() {
+    WriteCommandAction.runWriteCommandAction(null, new Runnable() {
       @Override
       public void run() {
         tags[0].delete();

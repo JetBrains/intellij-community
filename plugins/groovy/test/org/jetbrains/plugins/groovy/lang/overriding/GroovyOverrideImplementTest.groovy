@@ -145,7 +145,7 @@ class Test extends Base<String> {
   }
 
   private def generateImplementation(PsiMethod method) {
-    WriteCommandAction.runWriteCommandAction {
+    WriteCommandAction.runWriteCommandAction project, {
       GrTypeDefinition clazz = (myFixture.file as PsiClassOwner).classes[0] as GrTypeDefinition
       OverrideImplementUtil.overrideOrImplement(clazz, method);
       PostprocessReformattingAspect.getInstance(myFixture.project).doPostponedFormatting()

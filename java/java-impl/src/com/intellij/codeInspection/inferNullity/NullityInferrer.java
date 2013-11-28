@@ -195,7 +195,7 @@ public class NullityInferrer {
   private static void invoke(final Project project,
                              final PsiModifierListOwner element,
                              final String fqn, final String toRemove) {
-    WriteCommandAction.runWriteCommandAction(new Runnable() {
+    WriteCommandAction.runWriteCommandAction(project, new Runnable() {
       @Override
       public void run() {
         new AddAnnotationFix(fqn, element, toRemove).invoke(project, null, element.getContainingFile());
