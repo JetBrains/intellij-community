@@ -123,8 +123,9 @@ public class Main {
   private static void installPatch() throws IOException {
     String platform = System.getProperty(PLATFORM_PREFIX_PROPERTY, "idea");
     String patchFileName = ("jetbrains.patch.jar." + platform).toLowerCase();
-    File originalPatchFile = new File(System.getProperty("java.io.tmpdir"), patchFileName);
-    File copyPatchFile = new File(System.getProperty("java.io.tmpdir"), patchFileName + "_copy");
+    String tempDir = System.getProperty("java.io.tmpdir");
+    File originalPatchFile = new File(tempDir, patchFileName);
+    File copyPatchFile = new File(tempDir, patchFileName + "_copy");
 
     // always delete previous patch copy
     if (!FileUtilRt.delete(copyPatchFile)) {
@@ -153,6 +154,7 @@ public class Main {
                          "-Xmx500m",
                          "-classpath",
                          copyPatchFile.getPath(),
+                         "-Djava.io.tmpdir=" + tempDir,
                          "com.intellij.updater.Runner",
                          "install",
                          PathManager.getHomePath());
