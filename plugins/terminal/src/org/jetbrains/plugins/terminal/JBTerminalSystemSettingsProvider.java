@@ -151,19 +151,11 @@ class JBTerminalSystemSettingsProvider extends DefaultTabbedSettingsProvider imp
   public String getFontName() {
     List<String> fonts = myColorScheme.getConsoleFontPreferences().getEffectiveFontFamilies();
 
-    for (String font : fonts) {
-      if (isApplicable(font)) {
-        return font;
-      }
+    if (fonts.size()>0) {
+      return fonts.get(0);
     }
-    return "Monospaced-14";
-  }
 
-  private static boolean isApplicable(String font) {
-    if ("Source Code Pro".equals(font)) {
-      return false;
-    }
-    return true;
+    return "Monospaced-14";
   }
 
   @Override
