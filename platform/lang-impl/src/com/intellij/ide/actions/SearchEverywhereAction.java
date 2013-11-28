@@ -31,6 +31,7 @@ import com.intellij.ide.ui.search.SearchableOptionsRegistrarImpl;
 import com.intellij.ide.util.DefaultPsiElementCellRenderer;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.ide.util.gotoByName.*;
+import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
@@ -66,6 +67,7 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
+import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -542,7 +544,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
           return;
         }
       }
-      else {
+      else if (isActionValue(value) || isSetting(value)) {
         focusManager.requestDefaultFocus(true);
         final Component comp = myContextComponent;
         final AnActionEvent event = myActionEvent;
@@ -557,6 +559,14 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
           }
         });
         return;
+      }
+      else if (value instanceof Navigatable) {
+        IdeFocusManager.getInstance(project).doWhenFocusSettlesDown(new Runnable() {
+          @Override
+          public void run() {
+            OpenSourceUtil.navigate(true, (Navigatable)value);
+          }
+        });
       }
     }
     finally {
@@ -923,6 +933,12 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
           }
 
           append(templatePresentation.getText());
+          if (actionWithParentGroup != null) {
+            final Object groupName = actionWithParentGroup.getValue();
+            if (groupName instanceof String && StringUtil.isEmpty((String)groupName)) {
+              setLocationString((String)groupName);
+            }
+          }
 
           final String groupName = actionWithParentGroup == null ? null : (String)actionWithParentGroup.getValue();
           if (!StringUtil.isEmpty(groupName)) {
@@ -939,6 +955,13 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
           final String name = myConfigurables.get(id);
           if (name != null) {
             setLocationString(name);
+          }
+        } else if (value instanceof ItemPresentation) {
+          final String text = ((ItemPresentation)value).getPresentableText();
+          append(text == null ? value.toString() : text);
+          final String location = ((ItemPresentation)value).getLocationString();
+          if (!StringUtil.isEmpty(location)) {
+            setLocationString(location);
           }
         }
       }
@@ -1114,7 +1137,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
     }
 
     private void buildActionsAndSettings(String pattern) {
-      final Set<AnAction> actions = new HashSet<AnAction>();
+      final Set<Object> actions = new HashSet<Object>();
       final Set<Object> settings = new HashSet<Object>();
       final MinusculeMatcher matcher = new MinusculeMatcher("*" +pattern, NameUtil.MatchingCaseSensitivity.NONE);
       if (myActions == null) {
@@ -1134,7 +1157,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
             }
           }
           else if (!isToolWindowAction(object) && isActionValue(object) && actions.size() < MAX_ACTIONS) {
-            actions.add((AnAction)((Map.Entry)object).getKey());
+            actions.add(object);
           }
         }
       }
