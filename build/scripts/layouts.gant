@@ -725,11 +725,13 @@ def layoutCommunityJps(String home, String target) {
       include(name: "nanoxml-*.jar")
       include(name: "protobuf-*.jar")
       include(name: "cli-parser-*.jar")
-      include(name: "optimizedFileManager.jar")
       include(name: "log4j.jar")
       include(name: "jgoodies-forms.jar")
       include(name: "ecj*.jar")
       include(name: "jsr166e.jar")
+    }
+    fileset(dir: "$home/jps/lib") {
+      include(name: "optimizedFileManager.jar")
     }
     dir("test") {
       jar("jps-build-test.jar") {
