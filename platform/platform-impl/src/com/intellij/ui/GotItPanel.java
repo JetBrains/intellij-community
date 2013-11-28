@@ -42,8 +42,9 @@ public class GotItPanel {
         GraphicsUtil.setupAAPainting(g);
         ((Graphics2D)g).setPaint(new GradientPaint(0, 0, new JBColor(new Color(77, 143, 253), new Color(52, 74, 100)), 0, getHeight(),
                                                    new JBColor(new Color(71, 135, 237), new Color(38, 53, 73))));
-        g.fillRoundRect(0,0,getWidth()-1, getHeight()-1, 5,5);
-        g.setColor(new JBColor(new Color(48, 121, 237), new Color(87, 93, 101)));
+        g.fillRoundRect(0, 0, getWidth() - 1, getHeight() - 1, 5, 5);
+        ((Graphics2D)g).setStroke(new BasicStroke(UIUtil.isUnderDarcula() ? 2f : 1f));
+        g.setColor(new JBColor(new Color(71, 91, 167), new Color(78, 120, 161)));
         g.drawRoundRect(0,0,getWidth()-1, getHeight()-1, 5,5);
       }
     };

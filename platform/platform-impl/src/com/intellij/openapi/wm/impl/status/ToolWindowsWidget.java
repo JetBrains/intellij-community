@@ -189,6 +189,7 @@ class ToolWindowsWidget extends JLabel implements CustomStatusBarWidget, StatusB
     super.addNotify();
     final String key = "toolwindow.stripes.buttons.info.shown";
     if (UISettings.getInstance().HIDE_TOOL_STRIPES && !PropertiesComponent.getInstance().isTrueValue(key)) {
+      PropertiesComponent.getInstance().setValue(key, String.valueOf(true));
       final Alarm alarm = new Alarm();
       alarm.addRequest(new Runnable() {
         @Override
@@ -197,10 +198,9 @@ class ToolWindowsWidget extends JLabel implements CustomStatusBarWidget, StatusB
             "tool.window.quick.access.message"))
             .setDisposable(ToolWindowsWidget.this)
             .show(new RelativePoint(ToolWindowsWidget.this, new Point(10, 0)), Balloon.Position.above);
-            PropertiesComponent.getInstance().setValue(key, String.valueOf(true));
           Disposer.dispose(alarm);
         }
-      }, 30000);
+      }, 20000);
     }
   }
 
