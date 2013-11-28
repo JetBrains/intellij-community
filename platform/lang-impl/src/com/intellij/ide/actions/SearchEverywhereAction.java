@@ -136,6 +136,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
   private int myMoreFilesIndex = -1;
   private int myMoreActionsIndex = -1;
   private int myMoreSettingsIndex = -1;
+  private int myMoreSymbolsIndex = -1;
   private TitleIndexes myTitleIndexes;
   private Map<String, String> myConfigurables = new HashMap<String, String>();
 
@@ -507,6 +508,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       else if (index == myMoreFilesIndex) actionId = "GotoFile";
       else if (index == myMoreSettingsIndex) actionId = "ShowSettings";
       else if (index == myMoreActionsIndex) actionId = "GotoAction";
+      else if (index == myMoreSymbolsIndex) actionId = "GotoSymbol";
       if (actionId != null) {
         final AnAction action = ActionManager.getInstance().getAction(actionId);
         GotoActionAction.openOptionOrPerformAction(action, getField().getText(), project, getField(), myActionEvent);
@@ -577,7 +579,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
   }
 
   private boolean isMoreItem(int index) {
-    return index == myMoreClassesIndex || index == myMoreFilesIndex || index == myMoreSettingsIndex || index == myMoreActionsIndex;
+    return index == myMoreClassesIndex || index == myMoreFilesIndex || index == myMoreSettingsIndex || index == myMoreActionsIndex || index == myMoreSymbolsIndex;
   }
 
   private void rebuildList(final String pattern) {
@@ -606,11 +608,11 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       return;
     }
     if (e == null && myFocusOwner != null) {
-      e = new AnActionEvent(me, DataManager.getInstance().getDataContext(myFocusComponent), ActionPlaces.UNKNOWN, getTemplatePresentation(), ActionManager.getInstance(), 0);
+      e = new AnActionEvent(me, DataManager.getInstance().getDataContext(myFocusOwner), ActionPlaces.UNKNOWN, getTemplatePresentation(), ActionManager.getInstance(), 0);
     }
     if (e == null) return;
     myContextComponent = PlatformDataKeys.CONTEXT_COMPONENT.getData(e.getDataContext());
-    final Project project = myRenderer.myProject;
+    final Project project = e.getProject();
     Window wnd = myContextComponent != null ? SwingUtilities.windowForComponent(myContextComponent)
       : KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusedWindow();
     if (wnd == null && myContextComponent instanceof Window) {
@@ -664,7 +666,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
           final String historyString = storage.getValue(SE_HISTORY_KEY);
           List<String> history = StringUtil.isEmpty(historyString) ? new ArrayList<String>() : StringUtil.split(historyString, "\n");
           history.remove(last);
-          history.add(last);
+          history.add(0, last);
           if (history.size() > 10) {
             history = history.subList(0, 10);
           }
@@ -1286,7 +1288,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
               for (Object file : symbols) {
                 myListModel.addElement(file);
               }
-              myMoreFilesIndex = symbols.size() >= MAX_SYMBOLS ? myListModel.size() - 1 : -1;
+              myMoreSymbolsIndex = symbols.size() >= MAX_SYMBOLS ? myListModel.size() - 1 : -1;
             }
           }
         });
