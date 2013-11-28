@@ -19,12 +19,12 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.util.FileTypeUtils;
 import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
-import com.intellij.psi.util.FileTypeUtils;
 import com.siyeh.ig.psiutils.TestUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -32,7 +32,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-public class EmptyCatchBlockInspection extends BaseInspection {
+public class EmptyCatchBlockInspectionBase extends BaseInspection {
 
   /**
    * @noinspection PublicField
@@ -41,7 +41,7 @@ public class EmptyCatchBlockInspection extends BaseInspection {
   /**
    * @noinspection PublicField
    */
-  public boolean m_ignoreTestCases = true;
+  public boolean m_ignoreTestCases = true; // keep for compatibility
   /**
    * @noinspection PublicField
    */
@@ -68,7 +68,6 @@ public class EmptyCatchBlockInspection extends BaseInspection {
   public JComponent createOptionsPanel() {
     final MultipleCheckboxOptionsPanel optionsPanel = new MultipleCheckboxOptionsPanel(this);
     optionsPanel.addCheckbox(InspectionGadgetsBundle.message("empty.catch.block.comments.option"), "m_includeComments");
-    optionsPanel.addCheckbox(InspectionGadgetsBundle.message("empty.catch.block.ignore.option"), "m_ignoreTestCases");
     optionsPanel.addCheckbox(InspectionGadgetsBundle.message("empty.catch.block.ignore.ignore.option"), "m_ignoreIgnoreParameter");
     return optionsPanel;
   }
@@ -127,9 +126,6 @@ public class EmptyCatchBlockInspection extends BaseInspection {
       if (FileTypeUtils.isInServerPageFile(statement.getContainingFile())) {
         return;
       }
-      if (m_ignoreTestCases && TestUtils.isInTestCode(statement)) {
-        return;
-      }
       final PsiCatchSection[] catchSections = statement.getCatchSections();
       for (final PsiCatchSection section : catchSections) {
         checkCatchSection(section);
@@ -157,7 +153,7 @@ public class EmptyCatchBlockInspection extends BaseInspection {
       if (catchToken == null) {
         return;
       }
-      registerError(catchToken);
+      registerError(catchToken, catchToken);
     }
 
     private boolean isEmpty(PsiElement element) {
