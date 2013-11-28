@@ -33,6 +33,7 @@ import com.intellij.psi.impl.source.DummyHolder;
 import com.intellij.psi.impl.source.DummyHolderFactory;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.CharTable;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashMap;
@@ -135,7 +136,7 @@ public class ChangeUtil {
 
   @Nullable
   public static TreeElement generateTreeElement(PsiElement original, CharTable table, final PsiManager manager) {
-    LOG.assertTrue(original.isValid());
+    PsiUtilCore.ensureValid(original);
     if (SourceTreeToPsiMap.hasTreeElement(original)) {
       return copyElement((TreeElement)SourceTreeToPsiMap.psiElementToTree(original), table);
     }

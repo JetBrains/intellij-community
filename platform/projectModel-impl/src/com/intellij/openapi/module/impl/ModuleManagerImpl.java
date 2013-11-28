@@ -47,6 +47,7 @@ import com.intellij.util.graph.CachingSemiGraph;
 import com.intellij.util.graph.DFSTBuilder;
 import com.intellij.util.graph.Graph;
 import com.intellij.util.graph.GraphGenerator;
+import com.intellij.util.io.URLUtil;
 import com.intellij.util.messages.MessageBus;
 import gnu.trove.THashMap;
 import gnu.trove.TObjectHashingStrategy;
@@ -367,7 +368,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
     public final void writeExternal(Element parentElement) {
       Element moduleElement = new Element(ELEMENT_MODULE);
       final String moduleFilePath = getModuleFilePath();
-      final String url = VirtualFileManager.constructUrl(StandardFileSystems.FILE_PROTOCOL, moduleFilePath);
+      final String url = VirtualFileManager.constructUrl(URLUtil.FILE_PROTOCOL, moduleFilePath);
       moduleElement.setAttribute(ATTRIBUTE_FILEURL, url);
       // [dsl] support for older builds
       moduleElement.setAttribute(ATTRIBUTE_FILEPATH, moduleFilePath);

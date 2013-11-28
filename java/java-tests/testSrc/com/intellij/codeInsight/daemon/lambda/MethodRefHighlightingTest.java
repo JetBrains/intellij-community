@@ -94,6 +94,10 @@ public class MethodRefHighlightingTest extends LightDaemonAnalyzerTestCase {
     doTest();
   }
 
+  public void testUnknownQualifierClass() throws Exception {
+    doTest();
+  }
+
   private void doTest() {
     doTest(false);
   }

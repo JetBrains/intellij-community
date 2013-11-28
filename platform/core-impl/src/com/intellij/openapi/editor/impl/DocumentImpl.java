@@ -556,7 +556,6 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
 
   @NotNull
   private DocumentEvent beforeChangedUpdate(int offset, CharSequence oldString, CharSequence newString, boolean wholeTextReplaced) {
-    assertWriteAccess();
     myChangeInProgress = true;
     try {
       return doBeforeChangedUpdate(offset, oldString, newString, wholeTextReplaced);

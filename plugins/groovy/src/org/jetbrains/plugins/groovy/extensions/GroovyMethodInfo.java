@@ -11,6 +11,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightMethodBuilder;
+import org.jetbrains.plugins.groovy.lang.resolve.ClosureMissingMethodContributor;
 import org.jetbrains.plugins.groovy.refactoring.GroovyNamesUtil;
 import org.jetbrains.plugins.groovy.util.FixedValuesReferenceProvider;
 
@@ -39,6 +40,8 @@ public class GroovyMethodInfo {
   private GroovyNamedArgumentProvider myNamedArgProviderInstance;
 
   private Map<String, NamedArgumentReference> myNamedArgReferenceProviders;
+
+  private final GroovyMethodDescriptor myDescriptor;
 
   private static void ensureInit() {
     if (METHOD_INFOS != null) return;
@@ -131,6 +134,8 @@ public class GroovyMethodInfo {
 
   private GroovyMethodInfo(GroovyMethodDescriptor method, @NotNull ClassLoader classLoader) {
     myClassLoader = classLoader;
+    myDescriptor = method;
+
     myParams = method.getParams();
     myReturnType = method.returnType;
     myReturnTypeCalculatorClassName = method.returnTypeCalculator;
@@ -153,6 +158,12 @@ public class GroovyMethodInfo {
       for (NamedArgumentReference r : myNamedArgReferenceProviders.values()) {
         assertClassExists(r.myProviderClassName, PsiReferenceProvider.class, GroovyNamedArgumentReferenceProvider.class);
       }
+
+      if (method.myClosureArguments != null) {
+        for (GroovyMethodDescriptor.ClosureArgument argument : method.myClosureArguments) {
+          assertClassExists(argument.methodContributor, ClosureMissingMethodContributor.class);
+        }
+      }
     }
   }
 
@@ -172,6 +183,10 @@ public class GroovyMethodInfo {
     catch (Exception e) {
       throw new RuntimeException(e);
     }
+  }
+
+  public GroovyMethodDescriptor getDescriptor() {
+    return myDescriptor;
   }
 
   private static Map<String, NamedArgumentReference> getNamedArgumentsReferenceProviders(GroovyMethodDescriptor methodDescriptor) {
@@ -291,6 +306,10 @@ public class GroovyMethodInfo {
       myNamedArgProviderInstance = SingletonInstancesCache.getInstance(myNamedArgProviderClassName, myClassLoader);
     }
     return myNamedArgProviderInstance;
+  }
+
+  public ClassLoader getPluginClassLoader() {
+    return myClassLoader;
   }
 
   public boolean isApplicable(@NotNull PsiMethod method) {

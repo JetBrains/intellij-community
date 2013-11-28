@@ -76,9 +76,15 @@ class GitRepositoryReader {
     myPackedRefsFile = new File(myGitDir, "packed-refs");
   }
 
-  @NotNull
+  @Nullable
   private static Hash createHash(@Nullable String hash) {
-    return hash == null ? GitBranch.DUMMY_HASH : HashImpl.build(hash);
+    try {
+      return hash == null ? GitBranch.DUMMY_HASH : HashImpl.build(hash);
+    }
+    catch (Throwable t) {
+      LOG.info(t);
+      return null;
+    }
   }
 
   @NotNull
@@ -133,7 +139,11 @@ class GitRepositoryReader {
     if (head.isBranch) {
       String branchName = head.ref;
       String hash = readCurrentRevision();  // TODO we know the branch name, so no need to read head twice
-      return new GitLocalBranch(branchName, createHash(hash));
+      Hash h = createHash(hash);
+      if (h == null) {
+        return null;
+      }
+      return new GitLocalBranch(branchName, h);
     }
     if (isRebaseInProgress()) {
       GitLocalBranch branch = readRebaseBranch("rebase-apply");
@@ -164,7 +174,10 @@ class GitRepositoryReader {
     if (!branchFile.exists()) { // can happen when rebasing from detached HEAD: IDEA-93806
       return null;
     }
-    Hash hash = HashImpl.build(readBranchFile(branchFile));
+    Hash hash = createHash(readBranchFile(branchFile));
+    if (hash == null) {
+      return null;
+    }
     if (branchName.startsWith(REFS_HEADS_PREFIX)) {
       branchName = branchName.substring(REFS_HEADS_PREFIX.length());
     }
@@ -293,7 +306,10 @@ class GitRepositoryReader {
       String branchName = entry.getKey();
       File branchFile = entry.getValue();
       String hash = loadHashFromBranchFile(branchFile);
-      branches.add(new GitLocalBranch(branchName, createHash(hash)));
+      Hash h = createHash(hash);
+      if (h != null) {
+        branches.add(new GitLocalBranch(branchName, h));
+      }
     }
     return branches;
   }
@@ -327,9 +343,12 @@ class GitRepositoryReader {
           if (relativePath != null) {
             String branchName = FileUtil.toSystemIndependentName(relativePath);
             String hash = loadHashFromBranchFile(file);
-            GitRemoteBranch remoteBranch = GitBranchUtil.parseRemoteBranch(branchName, createHash(hash), remotes);
-            if (remoteBranch != null) {
-              branches.add(remoteBranch);
+            Hash h = createHash(hash);
+            if (h != null) {
+              GitRemoteBranch remoteBranch = GitBranchUtil.parseRemoteBranch(branchName, h, remotes);
+              if (remoteBranch != null) {
+                branches.add(remoteBranch);
+              }
             }
           }
         }
@@ -352,16 +371,20 @@ class GitRepositoryReader {
     }
 
     readPackedRefsFile(new PackedRefsLineResultHandler() {
-      @Override public void handleResult(@Nullable String hash, @Nullable String branchName) {
-        if (hash == null || branchName == null) {
+      @Override public void handleResult(@Nullable String hashString, @Nullable String branchName) {
+        if (hashString == null || branchName == null) {
           return;
         }
-        hash = shortBuffer(hash);
+        hashString = shortBuffer(hashString);
+        Hash hash = createHash(hashString);
+        if (hash == null) {
+          return;
+        }
         if (branchName.startsWith(REFS_HEADS_PREFIX)) {
-          localBranches.add(new GitLocalBranch(branchName, HashImpl.build(hash)));
+          localBranches.add(new GitLocalBranch(branchName, hash));
         }
         else if (branchName.startsWith(REFS_REMOTES_PREFIX)) {
-          GitRemoteBranch remoteBranch = GitBranchUtil.parseRemoteBranch(branchName, HashImpl.build(hash), remotes);
+          GitRemoteBranch remoteBranch = GitBranchUtil.parseRemoteBranch(branchName, hash, remotes);
           if (remoteBranch != null) {
             remoteBranches.add(remoteBranch);
           }

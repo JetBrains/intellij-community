@@ -27,13 +27,13 @@ import com.intellij.openapi.updateSettings.impl.UpdateChecker;
 import com.intellij.openapi.updateSettings.impl.UpdateSettings;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.openapi.vfs.ex.http.HttpFileSystem;
 import com.intellij.ui.AnActionButton;
 import com.intellij.ui.AnActionButtonRunnable;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.ToolbarDecorator;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.io.URLUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -158,7 +158,7 @@ public class PluginHostsConfigurable extends BaseConfigurable {
   private static String correctRepositoryRule(String input) {
     String protocol = VirtualFileManager.extractProtocol(input);
     if (protocol == null) {
-      input = VirtualFileManager.constructUrl(HttpFileSystem.PROTOCOL, input);
+      input = VirtualFileManager.constructUrl(URLUtil.HTTP_PROTOCOL, input);
     }
     return input;
   }

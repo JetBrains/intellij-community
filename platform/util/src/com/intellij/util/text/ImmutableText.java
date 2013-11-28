@@ -13,7 +13,6 @@ import org.jetbrains.annotations.NotNull;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.io.Writer;
-import java.lang.CharSequence;
 
 /**
  * A pruned and optimized version of javolution.text.Text
@@ -101,7 +100,7 @@ public final class ImmutableText implements CharSequence {
    * @param  obj the object to represent as text.
    * @return the textual representation of the specified object.
    */
-  public static ImmutableText valueOf(Object obj) {
+  public static ImmutableText valueOf(@NotNull Object obj) {
     if (obj instanceof Number) // Use faster primitive formatting.
       return valueOfNumber(obj);
     return valueOf(String.valueOf(obj));
@@ -120,11 +119,11 @@ public final class ImmutableText implements CharSequence {
     return valueOf(String.valueOf(num));
   }
 
-  private static ImmutableText valueOf(String str) {
+  private static ImmutableText valueOf(@NotNull String str) {
     return valueOf(str, 0, str.length());
   }
 
-  private static ImmutableText valueOf(String str, int start, int end) {
+  private static ImmutableText valueOf(@NotNull String str, int start, int end) {
     int length = end - start;
     if (length <= BLOCK_SIZE) {
       char[] chars = new char[length];
@@ -143,7 +142,7 @@ public final class ImmutableText implements CharSequence {
    * @param chars the array source of the characters.
    * @return the corresponding instance.
    */
-  public static ImmutableText valueOf(char[] chars) {
+  public static ImmutableText valueOf(@NotNull char[] chars) {
     return valueOf(chars, 0, chars.length);
   }
 
@@ -158,7 +157,7 @@ public final class ImmutableText implements CharSequence {
    * @throws IndexOutOfBoundsException if <code>(offset < 0) || 
    *         (length < 0) || ((offset + length) > chars.length)</code>
    */
-  public static ImmutableText valueOf(char[] chars, int offset, int length) {
+  public static ImmutableText valueOf(@NotNull char[] chars, int offset, int length) {
     if ((offset < 0) || (length < 0) || ((offset + length) > chars.length))
       throw new IndexOutOfBoundsException();
     if (length <= BLOCK_SIZE) {

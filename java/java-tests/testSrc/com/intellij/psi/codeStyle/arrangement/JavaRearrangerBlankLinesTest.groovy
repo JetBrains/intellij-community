@@ -24,14 +24,6 @@ import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.Mo
  */
 public class JavaRearrangerBlankLinesTest extends AbstractJavaRearrangerTest {
 
-  def classic = [rule(INTERFACE),
-                 rule(CLASS),
-                 rule(FIELD, STATIC),
-                 rule(FIELD, PUBLIC),
-                 rule(FIELD),
-                 rule(METHOD, PUBLIC),
-                 rule(METHOD)]
-
   void testPreserveRelativeBlankLines() {
     commonSettings.BLANK_LINES_AROUND_CLASS = 2
     commonSettings.BLANK_LINES_AROUND_FIELD = 1
