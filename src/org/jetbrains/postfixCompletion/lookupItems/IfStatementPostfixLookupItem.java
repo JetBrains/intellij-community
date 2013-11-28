@@ -27,7 +27,7 @@ public abstract class IfStatementPostfixLookupItem extends StatementPostfixLooku
 
   @Override protected void postProcess(@NotNull InsertionContext context, @NotNull PsiIfStatement statement) {
     PsiJavaToken rParenth = statement.getRParenth();
-    assert rParenth != null : "rParenth != null";
+    assert (rParenth != null) : "rParenth != null";
 
     int offset = rParenth.getTextRange().getEndOffset();
     context.getEditor().getCaretModel().moveToOffset(offset);

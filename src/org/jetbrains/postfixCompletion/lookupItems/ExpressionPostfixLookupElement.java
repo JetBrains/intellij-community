@@ -31,8 +31,10 @@ public abstract class ExpressionPostfixLookupElement<TExpression extends PsiExpr
     TExpression newExpression = createNewExpression(
       elementFactory, expressionCopy, fixedContext.expression);
 
-    //noinspection unchecked
-    return (TExpression) fixedContext.expression.replace(newExpression);
+    @SuppressWarnings("unchecked")
+    TExpression replaced = (TExpression) fixedContext.expression.replace(newExpression);
+
+    return replaced;
   }
 
   @NotNull protected abstract TExpression createNewExpression(
