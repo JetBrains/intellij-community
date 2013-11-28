@@ -31,6 +31,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.SystemProperties;
+import com.intellij.util.io.URLUtil;
 import com.intellij.util.io.UrlConnectionUtil;
 import com.intellij.util.net.HttpConfigurable;
 import org.jetbrains.annotations.NonNls;
@@ -157,7 +158,7 @@ public abstract class AbstractExternalFilter {
             referenceUnpackedImage = false;
             JarFileSystem jarFileSystem = JarFileSystem.getInstance();
             try {
-              JarFile jarFile = jarFileSystem.getJarFile(jarFileSystem.findFileByPath(jarPath + StandardFileSystems.JAR_SEPARATOR));
+              JarFile jarFile = jarFileSystem.getJarFile(jarFileSystem.findFileByPath(jarPath + URLUtil.JAR_SEPARATOR));
               if (jarFile != null) {
                 JarFile.JarEntry entry = jarFile.getEntry(imgPath);
                 if (entry != null) {

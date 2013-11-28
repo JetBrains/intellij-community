@@ -16,6 +16,7 @@
 package com.intellij.openapi.vfs;
 
 import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
+import com.intellij.util.io.URLUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -24,8 +25,8 @@ import java.io.IOException;
 
 public abstract class JarFileSystem extends NewVirtualFileSystem implements JarCopyingFileSystem, LocalFileProvider {
   @NonNls public static final String PROTOCOL = StandardFileSystems.JAR_PROTOCOL;
-  @NonNls public static final String PROTOCOL_PREFIX = "jar://";
-  @NonNls public static final String JAR_SEPARATOR = StandardFileSystems.JAR_SEPARATOR;
+  @NonNls public static final String PROTOCOL_PREFIX = StandardFileSystems.JAR_PROTOCOL_PREFIX;
+  @NonNls public static final String JAR_SEPARATOR = URLUtil.JAR_SEPARATOR;
 
   public static JarFileSystem getInstance(){
     return (JarFileSystem)VirtualFileManager.getInstance().getFileSystem(PROTOCOL);

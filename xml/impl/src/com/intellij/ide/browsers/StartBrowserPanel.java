@@ -11,7 +11,6 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.TextBrowseFolderListener;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.PsiBinaryFile;
@@ -62,7 +61,7 @@ public class StartBrowserPanel {
   public String getUrl() {
     String url = myUrlField.getText();
     if (!url.isEmpty() && !URLUtil.containsScheme(url)) {
-      return VirtualFileManager.constructUrl(StandardFileSystems.HTTP_PROTOCOL, url);
+      return VirtualFileManager.constructUrl(URLUtil.HTTP_PROTOCOL, url);
     }
     return url;
   }

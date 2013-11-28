@@ -35,8 +35,9 @@ import java.util.zip.ZipFile;
 
 public class URLUtil {
   public static final String SCHEME_SEPARATOR = "://";
-  public static final String JAR_PROTOCOL = "jar";
   public static final String FILE_PROTOCOL = "file";
+  public static final String HTTP_PROTOCOL = "http";
+  public static final String JAR_PROTOCOL = "jar";
   public static final String JAR_SEPARATOR = "!/";
 
   private URLUtil() { }
