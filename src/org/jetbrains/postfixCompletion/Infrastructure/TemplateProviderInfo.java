@@ -1,4 +1,4 @@
-package org.jetbrains.postfixCompletion.Infrastructure;
+package org.jetbrains.postfixCompletion.infrastructure;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.postfixCompletion.templates.PostfixTemplateProvider;

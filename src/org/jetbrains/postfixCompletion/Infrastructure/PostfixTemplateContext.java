@@ -1,10 +1,13 @@
-package org.jetbrains.postfixCompletion.Infrastructure;
+package org.jetbrains.postfixCompletion.infrastructure;
 
-import com.intellij.codeInsight.completion.*;
+import com.intellij.codeInsight.completion.CompletionUtilCore;
 import com.intellij.psi.*;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 public abstract class PostfixTemplateContext {
   @NotNull public final PsiJavaCodeReferenceElement postfixReference;

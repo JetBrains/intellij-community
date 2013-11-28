@@ -1,8 +1,9 @@
-package org.jetbrains.postfixCompletion.Infrastructure;
+package org.jetbrains.postfixCompletion.infrastructure;
 
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class PrefixExpressionContext {
   @NotNull public final PostfixTemplateContext parentContext;

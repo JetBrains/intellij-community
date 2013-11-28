@@ -1,13 +1,14 @@
-package org.jetbrains.postfixCompletion.Infrastructure;
+package org.jetbrains.postfixCompletion.infrastructure;
 
-import com.intellij.openapi.editor.*;
-import com.intellij.openapi.project.*;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.tree.*;
-import com.intellij.psi.util.*;
-import org.jetbrains.annotations.*;
+import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.PsiTreeUtil;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Arrays;
 
 final class BrokenLiteralPostfixTemplateContext extends PostfixTemplateContext {
   @NotNull private final PsiLiteralExpression myBrokenLiteral;

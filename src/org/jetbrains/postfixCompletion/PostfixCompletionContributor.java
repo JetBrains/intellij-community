@@ -7,6 +7,7 @@ import org.jetbrains.postfixCompletion.infrastructure.PostfixExecutionContext;
 import org.jetbrains.postfixCompletion.infrastructure.PostfixItemsCompletionProvider;
 import org.jetbrains.postfixCompletion.infrastructure.PostfixNoVariantsCompletionUtil;
 
+
 import java.util.LinkedHashSet;
 
 public final class PostfixCompletionContributor extends CompletionContributor {
@@ -44,13 +45,7 @@ public final class PostfixCompletionContributor extends CompletionContributor {
     PostfixItemsCompletionProvider.getItems(parameters, result, executionContext);
 
 
-    //if (results.isEmpty()) {
-      PostfixNoVariantsCompletionUtil.suggestChainedCalls(parameters, result, executionContext);
-    //}
+    PostfixNoVariantsCompletionUtil.suggestChainedCalls(parameters, result, executionContext);
+
   }
-
-
-
-
-
 }

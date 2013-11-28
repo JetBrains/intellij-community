@@ -1,9 +1,9 @@
-package org.jetbrains.postfixCompletion.LookupItems;
+package org.jetbrains.postfixCompletion.lookupItems;
 
-import com.intellij.codeInsight.completion.*;
+import com.intellij.codeInsight.completion.InsertionContext;
 import com.intellij.psi.*;
-import org.jetbrains.annotations.*;
-import org.jetbrains.postfixCompletion.Infrastructure.*;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.postfixCompletion.infrastructure.PrefixExpressionContext;
 
 public abstract class NullCheckLookupElementBase extends StatementPostfixLookupElement<PsiIfStatement> {
   public NullCheckLookupElementBase(@NotNull String lookupString, @NotNull PrefixExpressionContext context) {

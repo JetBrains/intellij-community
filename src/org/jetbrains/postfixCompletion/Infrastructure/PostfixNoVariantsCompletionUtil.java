@@ -1,4 +1,4 @@
-package org.jetbrains.postfixCompletion.Infrastructure;
+package org.jetbrains.postfixCompletion.infrastructure;
 
 import com.intellij.codeInsight.completion.*;
 import com.intellij.codeInsight.completion.impl.CamelHumpMatcher;
@@ -14,7 +14,7 @@ import com.intellij.util.ReflectionCache;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.postfixCompletion.LookupItems.PostfixChainLookupElement;
+import org.jetbrains.postfixCompletion.lookupItems.PostfixChainLookupElement;
 
 import java.util.Collections;
 import java.util.LinkedHashSet;

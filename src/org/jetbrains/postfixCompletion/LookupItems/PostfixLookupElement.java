@@ -1,4 +1,4 @@
-package org.jetbrains.postfixCompletion.LookupItems;
+package org.jetbrains.postfixCompletion.lookupItems;
 
 import com.intellij.codeInsight.completion.InsertionContext;
 import com.intellij.codeInsight.lookup.LookupElement;
@@ -7,10 +7,10 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.postfixCompletion.Infrastructure.PostfixExecutionContext;
-import org.jetbrains.postfixCompletion.Infrastructure.PostfixTemplateContext;
-import org.jetbrains.postfixCompletion.Infrastructure.PostfixTemplatesService;
-import org.jetbrains.postfixCompletion.Infrastructure.PrefixExpressionContext;
+import org.jetbrains.postfixCompletion.infrastructure.PostfixExecutionContext;
+import org.jetbrains.postfixCompletion.infrastructure.PostfixTemplateContext;
+import org.jetbrains.postfixCompletion.infrastructure.PostfixTemplatesService;
+import org.jetbrains.postfixCompletion.infrastructure.PrefixExpressionContext;
 
 import java.util.HashSet;
 import java.util.Set;

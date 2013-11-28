@@ -1,9 +1,12 @@
-package org.jetbrains.postfixCompletion.LookupItems;
+package org.jetbrains.postfixCompletion.lookupItems;
 
-import com.intellij.codeInsight.completion.*;
-import com.intellij.psi.*;
-import org.jetbrains.annotations.*;
-import org.jetbrains.postfixCompletion.Infrastructure.*;
+import com.intellij.codeInsight.completion.InsertionContext;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.PsiIfStatement;
+import com.intellij.psi.PsiJavaToken;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.postfixCompletion.infrastructure.PrefixExpressionContext;
 
 public abstract class IfStatementPostfixLookupItem extends StatementPostfixLookupElement<PsiIfStatement> {
   public IfStatementPostfixLookupItem(@NotNull String lookupString, @NotNull PrefixExpressionContext context) {

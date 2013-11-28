@@ -1,6 +1,6 @@
-package org.jetbrains.postfixCompletion.Infrastructure;
+package org.jetbrains.postfixCompletion.infrastructure;
 
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.NotNull;
 
 public final class PostfixExecutionContext {
   public final boolean isForceMode;
@@ -8,7 +8,7 @@ public final class PostfixExecutionContext {
   public final boolean insideCodeFragment;
 
   public PostfixExecutionContext(
-      boolean isForceMode, @NotNull String dummyIdentifier, boolean insideCodeFragment) {
+    boolean isForceMode, @NotNull String dummyIdentifier, boolean insideCodeFragment) {
     this.isForceMode = isForceMode;
     this.dummyIdentifier = dummyIdentifier;
     this.insideCodeFragment = insideCodeFragment;

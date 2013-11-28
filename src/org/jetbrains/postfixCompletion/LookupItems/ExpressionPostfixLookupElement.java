@@ -1,10 +1,13 @@
-package org.jetbrains.postfixCompletion.LookupItems;
+package org.jetbrains.postfixCompletion.lookupItems;
 
-import com.intellij.codeInsight.completion.*;
-import com.intellij.openapi.project.*;
-import com.intellij.psi.*;
-import org.jetbrains.annotations.*;
-import org.jetbrains.postfixCompletion.Infrastructure.*;
+import com.intellij.codeInsight.completion.InsertionContext;
+import com.intellij.openapi.project.Project;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.PsiExpression;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.postfixCompletion.infrastructure.PrefixExpressionContext;
 
 public abstract class ExpressionPostfixLookupElement<TExpression extends PsiExpression>
   extends PostfixLookupElement<TExpression> {
