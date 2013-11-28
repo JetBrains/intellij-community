@@ -18,6 +18,8 @@ package com.intellij.util.io;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.CharsetToolkit;
+import com.intellij.util.Base64Converter;
 import gnu.trove.TIntArrayList;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -30,8 +32,12 @@ import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.charset.Charset;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
+
+import static com.intellij.openapi.util.text.StringUtil.stripQuotesAroundValue;
 
 public class URLUtil {
   public static final String SCHEME_SEPARATOR = "://";
@@ -39,6 +45,8 @@ public class URLUtil {
   public static final String HTTP_PROTOCOL = "http";
   public static final String JAR_PROTOCOL = "jar";
   public static final String JAR_SEPARATOR = "!/";
+
+  public static final Pattern DATA_URI_PATTERN = Pattern.compile("data:([^,;]+/[^,;]+)(;charset=[^,;]+)?(;base64)?,(.+)");
 
   private URLUtil() { }
 
@@ -166,5 +174,31 @@ public class URLUtil {
 
   public static boolean containsScheme(@NotNull String url) {
     return url.contains(SCHEME_SEPARATOR);
+  }
+
+  public static boolean isDataUri(@NotNull String value) {
+    return !value.isEmpty() && value.startsWith("data:", value.charAt(0) == '"' || value.charAt(0) == '\'' ? 1 : 0);
+  }
+
+  /**
+   * Extracts byte array from given data:URL string.
+   * data:URL will be decoded from base64 if it contains the marker of base64 encoding.
+   *
+   * @param dataUrl data:URL-like string (may be quoted)
+   * @return extracted byte array or {@code null} if it cannot be extracted.
+   */
+  @Nullable
+  public static byte[] getBytesFromDataUri(@NotNull String dataUrl) {
+    Matcher matcher = DATA_URI_PATTERN.matcher(stripQuotesAroundValue(dataUrl));
+    if (matcher.matches()) {
+      try {
+        String content = matcher.group(4);
+        return ";base64".equalsIgnoreCase(matcher.group(3)) ? Base64Converter.decode(content.getBytes(CharsetToolkit.UTF8_CHARSET)) : content.getBytes(CharsetToolkit.UTF8_CHARSET);
+      }
+      catch (IllegalArgumentException e) {
+        return null;
+      }
+    }
+    return null;
   }
 }
