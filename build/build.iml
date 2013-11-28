@@ -31,6 +31,9 @@
     </orderEntry>
     <orderEntry type="module" module-name="antlayout" exported="" />
     <orderEntry type="module" module-name="util" exported="" />
+    <orderEntry type="module" module-name="ui-designer-jps-plugin" scope="RUNTIME" />
+    <orderEntry type="module" module-name="groovy-jps-plugin" scope="RUNTIME" />
+    <orderEntry type="module" module-name="groovy_rt" scope="RUNTIME" />
   </component>
 </module>
 
