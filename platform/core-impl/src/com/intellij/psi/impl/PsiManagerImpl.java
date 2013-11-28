@@ -143,9 +143,15 @@ public class PsiManagerImpl extends PsiManagerEx {
   }
 
   @TestOnly
-  public void setAssertOnFileLoadingFilter(@NotNull VirtualFileFilter filter) {
+  public void setAssertOnFileLoadingFilter(@NotNull VirtualFileFilter filter, Disposable parentDisposable) {
     // Find something to ensure there's no changed files waiting to be processed in repository indices.
     myAssertOnFileLoadingFilter = filter;
+    Disposer.register(parentDisposable, new Disposable() {
+      @Override
+      public void dispose() {
+        myAssertOnFileLoadingFilter = VirtualFileFilter.NONE;
+      }
+    });
   }
 
   @Override

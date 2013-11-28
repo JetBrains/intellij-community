@@ -320,14 +320,10 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
     }
     final JavaPsiFacadeEx facade = getJavaFacade();
     if (facade != null) {
-      facade.setAssertOnFileLoadingFilter(myFileTreeAccessFilter); // check repository work
+      facade.setAssertOnFileLoadingFilter(myFileTreeAccessFilter, myTestRootDisposable); // check repository work
     }
 
     Collection<HighlightInfo> infos = doHighlighting();
-
-    if (facade != null) {
-      facade.setAssertOnFileLoadingFilter(VirtualFileFilter.NONE);
-    }
 
     String text = myEditor.getDocument().getText();
     data.checkLineMarkers(DaemonCodeAnalyzerImpl.getLineMarkers(getDocument(getFile()), getProject()), text);

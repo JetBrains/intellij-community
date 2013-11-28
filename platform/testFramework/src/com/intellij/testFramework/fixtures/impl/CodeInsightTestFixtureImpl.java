@@ -1437,17 +1437,12 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
 
     List<HighlightInfo> infos;
     final long start = System.currentTimeMillis();
-    try {
-      ((PsiManagerImpl)PsiManager.getInstance(project)).setAssertOnFileLoadingFilter(myJavaFilesFilter);
+    ((PsiManagerImpl)PsiManager.getInstance(project)).setAssertOnFileLoadingFilter(myJavaFilesFilter, myTestRootDisposable);
 
-//    ProfilingUtil.startCPUProfiling();
-      infos = doHighlighting();
-      removeDuplicatedRangesForInjected(infos);
-//    ProfilingUtil.captureCPUSnapshot("testing");
-    }
-    finally {
-      ((PsiManagerImpl)PsiManager.getInstance(project)).setAssertOnFileLoadingFilter(VirtualFileFilter.NONE);
-    }
+    //    ProfilingUtil.startCPUProfiling();
+    infos = doHighlighting();
+    removeDuplicatedRangesForInjected(infos);
+    //    ProfilingUtil.captureCPUSnapshot("testing");
     final long elapsed = System.currentTimeMillis() - start;
 
     data.checkResult(infos, file.getText());

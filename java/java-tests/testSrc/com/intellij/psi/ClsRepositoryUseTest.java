@@ -232,13 +232,11 @@ public class ClsRepositoryUseTest extends PsiTestCase {
   }
 
   public void testFindClass() {
-    getJavaFacade().setAssertOnFileLoadingFilter(VirtualFileFilter.ALL);
+    getJavaFacade().setAssertOnFileLoadingFilter(VirtualFileFilter.ALL, myTestRootDisposable);
 
     PsiClass aClass = myJavaFacade.findClass("pack.MyClass", GlobalSearchScope.allScope(myProject));
     assertNotNull(aClass);
     checkValid(aClass);
-
-    getJavaFacade().setAssertOnFileLoadingFilter(VirtualFileFilter.NONE);
   }
 
   public void testIsInterface() {

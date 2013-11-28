@@ -114,12 +114,7 @@ public class DomStubUsingTest extends DomStubTest {
 
   public void testFileLoading() throws Exception {
     XmlFile file = prepareFile("foo.xml");
-    ((PsiManagerImpl)getPsiManager()).setAssertOnFileLoadingFilter(VirtualFileFilter.ALL);
-    try {
-      DomManager.getDomManager(getProject()).getFileElement(file, Foo.class);
-    }
-    finally {
-      ((PsiManagerImpl)getPsiManager()).setAssertOnFileLoadingFilter(VirtualFileFilter.NONE);
-    }
+    ((PsiManagerImpl)getPsiManager()).setAssertOnFileLoadingFilter(VirtualFileFilter.ALL, myTestRootDisposable);
+    DomManager.getDomManager(getProject()).getFileElement(file, Foo.class);
   }
 }
