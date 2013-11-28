@@ -28,8 +28,8 @@ import java.awt.*;
 import java.util.Comparator;
 
 public class SimpleTreeBuilder extends AbstractTreeBuilder {
-
   public SimpleTreeBuilder(JTree tree, DefaultTreeModel treeModel, AbstractTreeStructure treeStructure, @Nullable Comparator comparator) {
+    //noinspection unchecked
     super(tree, treeModel, treeStructure, comparator);
   }
 
@@ -54,13 +54,14 @@ public class SimpleTreeBuilder extends AbstractTreeBuilder {
     }
 
     if (EventQueue.isDispatchThread()) {
-      SimpleTreeBuilder.super.updateFromRoot();
-    } else {
+      SimpleTreeBuilder.super.queueUpdate();
+    }
+    else {
       ApplicationManager.getApplication().invokeLater(new Runnable() {
         @Override
         public void run() {
           if (!isDisposed()) {
-            SimpleTreeBuilder.super.updateFromRoot();
+            SimpleTreeBuilder.super.queueUpdate();
           }
         }
       });
