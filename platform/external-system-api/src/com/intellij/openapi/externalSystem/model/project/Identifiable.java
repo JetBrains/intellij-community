@@ -13,18 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.remoteServer.util;
+package com.intellij.openapi.externalSystem.model.project;
 
-import com.intellij.remoteServer.agent.util.CloudGitApplication;
-
-import java.io.File;
+import org.jetbrains.annotations.NotNull;
 
 /**
- * @author michael.golubev
+ * @author Vladislav.Soroka
+ * @since 11/27/13
  */
-public interface DeploymentSourceHandler {
+public interface Identifiable {
 
-  File getRepositoryRootFile();
-
-  CloudGitApplication deploy() throws ServerRuntimeException;
+  @NotNull
+  String getId();
 }

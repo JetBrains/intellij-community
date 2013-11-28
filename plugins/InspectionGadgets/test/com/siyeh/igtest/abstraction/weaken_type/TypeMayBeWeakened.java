@@ -126,3 +126,28 @@ public class TypeMayBeWeakened {
         return ref;
     }
 }
+class MyClass  {
+
+  public MyClass(java.util.Date date, String[] classNames) {}
+
+  static MyClass readMyClass(final ObjectInputStream objectInput) {
+    final long time = objectInput.readLong();
+    final int size = objectInput.readInt();
+    final String[] classNames = new String[size];
+    for (int i = 0; i < size; i++) {
+      classNames[i] = objectInput.readUTF();
+    }
+    return new MyClass(new java.util.Date(time), classNames);
+  }
+}
+interface DataInput {
+  long readLong();
+  int readInt();
+  String readUTF();
+}
+abstract class ObjectInputStream implements DataInput {
+
+  public String readUTF() {
+    return null;
+  }
+}

@@ -557,7 +557,7 @@ public class WeakestTypeFinder {
   @Nullable
   private static PsiClass getVisibleInheritor(@NotNull PsiClass superClass, PsiElement context) {
     final Query<PsiClass> search = DirectClassInheritorsSearch.search(superClass, context.getResolveScope());
-    Project project = superClass.getProject();
+    final Project project = superClass.getProject();
     for (PsiClass aClass : search) {
       if (superClass.isInheritor(aClass, true)) {
         if (PsiUtil.isAccessible(project, aClass, context, null)) {
@@ -576,21 +576,19 @@ public class WeakestTypeFinder {
       return false;
     }
     boolean shouldAdd = true;
-    for (Iterator<PsiClass> iterator = weakestTypeClasses.iterator(); iterator.hasNext(); ) {
+    for (final Iterator<PsiClass> iterator = weakestTypeClasses.iterator(); iterator.hasNext(); ) {
       final PsiClass weakestTypeClass = iterator.next();
-      if (!weakestTypeClass.equals(aClass)) {
-        if (aClass.isInheritor(weakestTypeClass, true)) {
-          iterator.remove();
-        }
-        else if (weakestTypeClass.isInheritor(aClass, true)) {
-          shouldAdd = false;
-        }
-        else {
-          iterator.remove();
-          shouldAdd = false;
-        }
+      if (weakestTypeClass.equals(aClass)) {
+        return true;
+      }
+      if (aClass.isInheritor(weakestTypeClass, true)) {
+        iterator.remove();
+      }
+      else if (weakestTypeClass.isInheritor(aClass, true)) {
+        shouldAdd = false;
       }
       else {
+        iterator.remove();
         shouldAdd = false;
       }
     }

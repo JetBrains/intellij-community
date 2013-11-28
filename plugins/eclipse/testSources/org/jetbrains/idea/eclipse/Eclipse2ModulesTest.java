@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ package org.jetbrains.idea.eclipse;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PluginPathManager;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.io.FileUtil;
@@ -69,18 +70,16 @@ public abstract class Eclipse2ModulesTest extends IdeaTestCase {
 
   protected void doTest(final String workspaceRoot, final String projectRoot) throws Exception {
     final VirtualFile file =
-      ApplicationManager.getApplication().runWriteAction(
-        new Computable<VirtualFile>() {
-          @Override
-          @Nullable
-          public VirtualFile compute() {
-            final VirtualFile baseDir = getProject().getBaseDir();
-            assert baseDir != null;
-            return LocalFileSystem.getInstance()
-              .refreshAndFindFileByPath(baseDir.getPath() + "/" + workspaceRoot + "/" + myDependantModulePath);
-          }
+      WriteCommandAction.runWriteCommandAction(new Computable<VirtualFile>() {
+        @Override
+        @Nullable
+        public VirtualFile compute() {
+          final VirtualFile baseDir = getProject().getBaseDir();
+          assert baseDir != null;
+          return LocalFileSystem.getInstance()
+            .refreshAndFindFileByPath(baseDir.getPath() + "/" + workspaceRoot + "/" + myDependantModulePath);
         }
-      );
+      });
     if (file != null) {
       PsiTestUtil.addContentRoot(getModule(), file);
     }

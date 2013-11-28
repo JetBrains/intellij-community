@@ -40,7 +40,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -90,16 +89,12 @@ public abstract class CloudGitDeploymentRuntime<DC extends CloudDeploymentNameCo
     myRemoteName = remoteName;
     myCloudName = cloudName;
 
-    List<DeploymentSourceHandler> handlers = new ArrayList<DeploymentSourceHandler>();
-    handlers.add(new ModuleDeploymentSourceHandler());
-    CloudGitDeploymentSourceHandlerProvider handlerProvider
-      = CloudGitDeploymentConfiguratorBase.getDeploymentSourceHandlerProvider(serverType);
-    if (handlerProvider != null) {
-      handlers.addAll(handlerProvider.getHandlers(this));
-    }
+    List<CloudGitDeploymentSourceHandlerProvider> handlerProviders
+      = CloudGitDeploymentConfiguratorBase.getDeploymentSourceHandlerProviders(serverType);
     DeploymentSource deploymentSource = task.getSource();
-    for (DeploymentSourceHandler sourceHandler : handlers) {
-      if (sourceHandler.init(deploymentSource)) {
+    for (CloudGitDeploymentSourceHandlerProvider handlerProvider : handlerProviders) {
+      DeploymentSourceHandler sourceHandler = handlerProvider.createHandler(this, deploymentSource);
+      if (sourceHandler != null) {
         mySourceHandler = sourceHandler;
         break;
       }
@@ -108,8 +103,7 @@ public abstract class CloudGitDeploymentRuntime<DC extends CloudDeploymentNameCo
       throw new ServerRuntimeException("Unknown deployment source");
     }
 
-    File contentRootFile = mySourceHandler.getRepositoryRootFile();
-    myContentRootFile = contentRootFile;
+    myContentRootFile = mySourceHandler.getRepositoryRootFile();
 
     VirtualFile contentRoot = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(myContentRootFile);
     LOG.assertTrue(contentRoot != null, "Repository root is not found");
@@ -539,29 +533,22 @@ public abstract class CloudGitDeploymentRuntime<DC extends CloudDeploymentNameCo
 
   public class ModuleDeploymentSourceHandler implements DeploymentSourceHandler {
 
-    private File myRepositoryRootFile;
+    private final File myRepositoryRootFile;
+
+    public ModuleDeploymentSourceHandler(ModuleDeploymentSource deploymentSource) throws ServerRuntimeException {
+      Module module = deploymentSource.getModule();
+      if (module == null) {
+        throw new ServerRuntimeException("Module not found: " + deploymentSource.getModulePointer().getModuleName());
+      }
+
+      File contentRootFile = deploymentSource.getFile();
+      LOG.assertTrue(contentRootFile != null, "Content root file is not found");
+      myRepositoryRootFile = contentRootFile;
+    }
 
     @Override
     public File getRepositoryRootFile() {
       return myRepositoryRootFile;
-    }
-
-    @Override
-    public boolean init(DeploymentSource deploymentSource) throws ServerRuntimeException {
-      if (!(deploymentSource instanceof ModuleDeploymentSource)) {
-        return false;
-      }
-
-      ModuleDeploymentSource moduleDeploymentSource = (ModuleDeploymentSource)deploymentSource;
-      Module module = moduleDeploymentSource.getModule();
-      if (module == null) {
-        throw new ServerRuntimeException("Module not found: " + moduleDeploymentSource.getModulePointer().getModuleName());
-      }
-
-      File contentRootFile = moduleDeploymentSource.getFile();
-      LOG.assertTrue(contentRootFile != null, "Content root file is not found");
-      myRepositoryRootFile = contentRootFile;
-      return true;
     }
 
     @Override

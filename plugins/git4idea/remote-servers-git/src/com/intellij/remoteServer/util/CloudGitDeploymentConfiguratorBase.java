@@ -1,17 +1,12 @@
 package com.intellij.remoteServer.util;
 
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.module.ModulePointerManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.remoteServer.ServerType;
 import com.intellij.remoteServer.configuration.ServerConfiguration;
 import com.intellij.remoteServer.configuration.deployment.DeploymentConfiguration;
 import com.intellij.remoteServer.configuration.deployment.DeploymentConfigurator;
 import com.intellij.remoteServer.configuration.deployment.DeploymentSource;
-import com.intellij.remoteServer.impl.configuration.deployment.ModuleDeploymentSourceImpl;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -31,14 +26,15 @@ public abstract class CloudGitDeploymentConfiguratorBase<D extends DeploymentCon
     myServerType = serverType;
   }
 
-  @Nullable
-  public static CloudGitDeploymentSourceHandlerProvider getDeploymentSourceHandlerProvider(ServerType<?> serverType) {
+  public static List<CloudGitDeploymentSourceHandlerProvider> getDeploymentSourceHandlerProviders(ServerType<?> serverType) {
+    List<CloudGitDeploymentSourceHandlerProvider> result = new ArrayList<CloudGitDeploymentSourceHandlerProvider>();
     for (CloudGitDeploymentSourceHandlerProvider provider : CloudGitDeploymentSourceHandlerProvider.EP_NAME.getExtensions()) {
-      if (provider.getServerType() == serverType) {
-        return provider;
+      ServerType<?> providerServerType = provider.getServerType();
+      if (providerServerType == null || providerServerType == serverType) {
+        result.add(provider);
       }
     }
-    return null;
+    return result;
   }
 
   @NotNull
@@ -46,12 +42,7 @@ public abstract class CloudGitDeploymentConfiguratorBase<D extends DeploymentCon
   public List<DeploymentSource> getAvailableDeploymentSources() {
     if (myProject.isDefault()) return Collections.emptyList();
     List<DeploymentSource> result = new ArrayList<DeploymentSource>();
-    ModulePointerManager pointerManager = ModulePointerManager.getInstance(myProject);
-    for (Module module : ModuleManager.getInstance(myProject).getModules()) {
-      result.add(new ModuleDeploymentSourceImpl(pointerManager.create(module)));
-    }
-    CloudGitDeploymentSourceHandlerProvider provider = getDeploymentSourceHandlerProvider(myServerType);
-    if (provider != null) {
+    for (CloudGitDeploymentSourceHandlerProvider provider : getDeploymentSourceHandlerProviders(myServerType)) {
       result.addAll(provider.getDeploymentSources(myProject));
     }
     return result;

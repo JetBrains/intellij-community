@@ -492,9 +492,9 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
   }
 
   protected void checkResultByFile(@NonNls final String filePath, final boolean stripTrailingSpaces) throws Exception {
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+    new WriteCommandAction<Document>(getProject()) {
       @Override
-      public void run() {
+      protected void run(@NotNull Result<Document> result) throws Throwable {
         getProject().getComponent(PostprocessReformattingAspect.class).doPostponedFormatting();
         if (stripTrailingSpaces) {
           ((DocumentImpl)myEditor.getDocument()).stripTrailingSpaces(getProject());
@@ -585,7 +585,7 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
                      !myEditor.getSelectionModel().hasSelection());
         }
       }
-    });
+    }.execute();
   }
 
   @Override

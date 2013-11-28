@@ -22,19 +22,21 @@ import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.MultiValuesMap;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.util.Function;
+import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.FList;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author Gregory.Shrago
@@ -138,10 +140,28 @@ public class DfaUtil {
         for (Map.Entry<DfaVariableValue, DfaVariableState> entry : map.entrySet()) {
           ValuableDataFlowRunner.ValuableDfaVariableState state = (ValuableDataFlowRunner.ValuableDfaVariableState)entry.getValue();
           DfaVariableValue variableValue = entry.getKey();
-          final PsiExpression psiExpression = state.myExpression;
-          if (psiExpression != null && variableValue.getQualifier() == null) {
+          final FList<PsiExpression> concatenation = state.myConcatenation;
+          if (!concatenation.isEmpty() && variableValue.getQualifier() == null) {
             PsiModifierListOwner element = variableValue.getPsiVariable();
             if (element instanceof PsiVariable) {
+              PsiExpression psiExpression;
+              if (concatenation.size() == 1) {
+                psiExpression = concatenation.getHead();
+              } else {
+                String text = StringUtil.join(ContainerUtil.reverse(new ArrayList<PsiExpression>(concatenation)), new Function<PsiExpression, String>() {
+                  @Override
+                  public String fun(PsiExpression expression) {
+                    return expression.getText();
+                  }
+                }, "+");
+                try {
+                  psiExpression = JavaPsiFacade.getElementFactory(element.getProject()).createExpressionFromText(text, concatenation.getHead());
+                }
+                catch (IncorrectOperationException e) {
+                  psiExpression = concatenation.getHead();
+                }
+              }
+
               myValues.put((PsiVariable)element, psiExpression);
             }
           }
@@ -177,25 +197,17 @@ public class DfaUtil {
         final IElementType type = parent instanceof PsiAssignmentExpression
                                   ? ((PsiAssignmentExpression)parent).getOperationTokenType() : JavaTokenType.EQ;
         // store current value - to use in case of '+='
-        final PsiExpression prevValue = ((ValuableDataFlowRunner.ValuableDfaVariableState)memState.getVariableState(var)).myExpression;
+        final FList<PsiExpression> prevValue = ((ValuableDataFlowRunner.ValuableDfaVariableState)memState.getVariableState(var)).myConcatenation;
         memState.setVarValue(var, dfaSource);
         // state may have been changed so re-retrieve it
         final ValuableDataFlowRunner.ValuableDfaVariableState curState = (ValuableDataFlowRunner.ValuableDfaVariableState)memState.getVariableState(var);
-        final PsiExpression curValue = curState.myExpression;
-        final PsiExpression nextValue;
-        if (type == JavaTokenType.PLUSEQ && prevValue != null) {
-          PsiExpression tmpExpression;
-          try {
-            tmpExpression = JavaPsiFacade.getElementFactory(myContext.getProject())
-              .createExpressionFromText(prevValue.getText() + "+" + rightValue.getText(), rightValue);
-          }
-          catch (Exception e) {
-            tmpExpression = curValue == null ? rightValue : curValue;
-          }
-          nextValue = tmpExpression;
+        final FList<PsiExpression> curValue = curState.myConcatenation;
+        final FList<PsiExpression> nextValue;
+        if (type == JavaTokenType.PLUSEQ && !prevValue.isEmpty()) {
+          nextValue = prevValue.prepend(rightValue);
         }
         else {
-          nextValue = curValue == null ? rightValue : curValue;
+          nextValue = curValue.isEmpty() ? curValue.prepend(rightValue) : curValue;
         }
         memState.setVariableState(var, curState.withExpression(nextValue));
       }

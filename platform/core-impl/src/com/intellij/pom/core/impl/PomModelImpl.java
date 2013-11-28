@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,6 +49,7 @@ import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.text.BlockSupport;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Stack;
 import com.intellij.util.lang.CompoundRuntimeException;
@@ -134,6 +135,9 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
 
   @Override
   public void runTransaction(@NotNull PomTransaction transaction) throws IncorrectOperationException{
+    if (!allowPsiModification) {
+      throw new IncorrectOperationException("Must not modify PSI inside save listener");
+    }
     List<Throwable> throwables = new ArrayList<Throwable>(0);
     synchronized(PsiLock.LOCK){
       final PomModelAspect aspect = transaction.getTransactionAspect();
@@ -326,5 +330,18 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
       psiFile = (PsiFile)fileElement.getPsi();
     }
     return psiFile.getNode() != null ? psiFile : null;
+  }
+
+  private static volatile boolean allowPsiModification = true;
+  public static <T extends Throwable> void guardPsiModificationsIn(@NotNull ThrowableRunnable<T> runnable) throws T {
+    ApplicationManager.getApplication().assertWriteAccessAllowed();
+    boolean old = allowPsiModification;
+    try {
+      allowPsiModification = false;
+      runnable.run();
+    }
+    finally {
+      allowPsiModification = old;
+    }
   }
 }
