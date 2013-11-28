@@ -34,8 +34,10 @@ public abstract class StatementPostfixLookupElement<TStatement extends PsiStatem
     PsiElement expressionCopy = fixedContext.expression.copy();
     TStatement newStatement = createNewStatement(elementFactory, expressionCopy, fixedContext.expression);
 
-    //noinspection unchecked
-    return (TStatement) targetStatement.replace(newStatement);
+    @SuppressWarnings("unchecked")
+    TStatement replaced = (TStatement) targetStatement.replace(newStatement);
+
+    return replaced;
   }
 
   @NotNull protected abstract TStatement createNewStatement(

@@ -17,67 +17,61 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-public final class PostfixCompletionConfigurable implements SearchableConfigurable, EditorOptionsProvider, Configurable.NoScroll {
-  private static final Logger LOG = Logger.getInstance(PostfixCompletionConfigurable.class);
-  @Nullable
-  private PostfixTemplatesListPanel myPanel;
+public final class PostfixCompletionConfigurable
+  implements SearchableConfigurable, EditorOptionsProvider, Configurable.NoScroll {
 
-  @NotNull
-  @Override
-  public String getId() {
+  @NotNull private static final Logger LOG = Logger.getInstance(PostfixCompletionConfigurable.class);
+  @Nullable private PostfixTemplatesListPanel myPanel;
+
+  @NotNull @Override public String getId() {
     return "reference.settingsdialog.IDE.editor.postfix.completion";
   }
 
-  @Nullable
-  @Override
-  public String getHelpTopic() {
+  @Nullable @Override public String getHelpTopic() {
     return getId();
   }
 
-  @Nls
-  @Override
-  public String getDisplayName() {
-    return "Postfix completion";
+  @Nls @Override public String getDisplayName() {
+    return "Postfix Completion";
   }
 
-  @Nullable
-  @Override
-  public JComponent createComponent() {
+  @Nullable @Override public JComponent createComponent() {
     if (myPanel == null) {
       PostfixTemplatesService templatesService = PostfixTemplatesService.getInstance();
       final List<TemplateProviderInfo> templates = templatesService != null
-                                                   ? templatesService.getAllTemplates()
-                                                   : Collections.<TemplateProviderInfo>emptyList();
+        ? templatesService.getAllTemplates()
+        : Collections.<TemplateProviderInfo>emptyList();
 
       PostfixCompletionSettings templatesSettings = PostfixCompletionSettings.getInstance();
       if (templatesSettings == null) {
         LOG.error("Can't retrieve postfix template settings");
         return null;
       }
+
       myPanel = new PostfixTemplatesListPanel(templates);
     }
+
     return myPanel.getComponent();
   }
 
-  @Override
-  public void apply() throws ConfigurationException {
+  @Override public void apply() throws ConfigurationException {
     if (myPanel != null) {
       PostfixCompletionSettings templatesSettings = PostfixCompletionSettings.getInstance();
       if (templatesSettings != null) {
-        final Map<String, Boolean> newTemplatesState = ContainerUtil.newHashMap();
+        Map<String, Boolean> newTemplatesState = ContainerUtil.newHashMap();
         for (Map.Entry<String, Boolean> entry : myPanel.getState().entrySet()) {
-          final Boolean value = entry.getValue();
+          Boolean value = entry.getValue();
           if (value != null && !value) {
             newTemplatesState.put(entry.getKey(), entry.getValue());
           }
         }
+
         templatesSettings.setTemplatesState(newTemplatesState);
       }
     }
   }
 
-  @Override
-  public void reset() {
+  @Override public void reset() {
     if (myPanel != null) {
       PostfixCompletionSettings templatesSettings = PostfixCompletionSettings.getInstance();
       if (templatesSettings != null) {
@@ -86,20 +80,18 @@ public final class PostfixCompletionConfigurable implements SearchableConfigurab
     }
   }
 
-  @Override
-  public void disposeUIResources() {
+  @Override public void disposeUIResources() {
     myPanel = null;
   }
 
-  @Override
-  public boolean isModified() {
+  @Override public boolean isModified() {
     PostfixCompletionSettings templatesSettings = PostfixCompletionSettings.getInstance();
-    return templatesSettings != null && myPanel != null && !myPanel.getState().equals(templatesSettings.getTemplatesState());
+    if (templatesSettings == null) return false;
+
+    return myPanel != null && !myPanel.getState().equals(templatesSettings.getTemplatesState());
   }
 
-  @Nullable
-  @Override
-  public Runnable enableSearch(String s) {
+  @Nullable @Override public Runnable enableSearch(String s) {
     return null;
   }
 }

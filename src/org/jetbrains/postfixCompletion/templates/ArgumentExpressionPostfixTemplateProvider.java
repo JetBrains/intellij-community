@@ -40,6 +40,10 @@ public final class ArgumentExpressionPostfixTemplateProvider extends PostfixTemp
     }
   }
 
+  static class A {
+    Object boo = ((Object)this);
+  }
+
   private static class ArgumentLookupElement extends ExpressionPostfixLookupElement<PsiMethodCallExpression> {
     public ArgumentLookupElement(@NotNull PrefixExpressionContext context) {
       super("arg", context);

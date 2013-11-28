@@ -14,51 +14,41 @@ import java.util.Map;
 @State(
   name = "PostfixCompletionSettings",
   storages = {
-    @Storage(
-      file = StoragePathMacros.APP_CONFIG + "/postfixCompletion.xml")
+    @Storage(file = StoragePathMacros.APP_CONFIG + "/postfixCompletion.xml")
   }
 )
 public class PostfixCompletionSettings implements PersistentStateComponent<PostfixCompletionSettings>, ExportableComponent {
-  private Map<String, Boolean> templatesState = ContainerUtil.newHashMap();
+  @NotNull private Map<String, Boolean> myTemplatesState = ContainerUtil.newHashMap();
 
   public boolean isTemplateEnabled(@NotNull TemplateProviderInfo providerInfo) {
-    return ContainerUtil.getOrElse(templatesState, providerInfo.annotation.templateName(), true);
+    return ContainerUtil.getOrElse(myTemplatesState, providerInfo.annotation.templateName(), true);
   }
 
-  @NotNull
-  public Map<String, Boolean> getTemplatesState() {
-    return templatesState;
+  @NotNull public Map<String, Boolean> getTemplatesState() {
+    return myTemplatesState;
   }
 
   public void setTemplatesState(@NotNull Map<String, Boolean> templatesState) {
-    this.templatesState = templatesState;
+    myTemplatesState = templatesState;
   }
 
-  @Nullable
-  public static PostfixCompletionSettings getInstance() {
+  @Nullable public static PostfixCompletionSettings getInstance() {
     return ServiceManager.getService(PostfixCompletionSettings.class);
   }
 
-  @Nullable
-  @Override
-  public PostfixCompletionSettings getState() {
+  @Nullable @Override public PostfixCompletionSettings getState() {
     return this;
   }
 
-  @Override
-  public void loadState(PostfixCompletionSettings settings) {
+  @Override public void loadState(PostfixCompletionSettings settings) {
     XmlSerializerUtil.copyBean(settings, this);
   }
 
-  @NotNull
-  @Override
-  public File[] getExportFiles() {
+  @NotNull @Override public File[] getExportFiles() {
     return new File[]{PathManager.getOptionsFile("postfixCompletion.xml")};
   }
 
-  @NotNull
-  @Override
-  public String getPresentableName() {
+  @NotNull @Override public String getPresentableName() {
     return "Postfix Completion";
   }
 }
