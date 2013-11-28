@@ -29,7 +29,7 @@ public final class ElseStatementPostfixTemplateProvider extends BooleanPostfixTe
     return false;
   }
 
-  static final class ElseLookupItem extends ExpressionPostfixLookupElement {
+  static final class ElseLookupItem extends ExpressionPostfixLookupElement<PsiExpression> {
     public ElseLookupItem(@NotNull PrefixExpressionContext context) {
       super("else", context);
     }

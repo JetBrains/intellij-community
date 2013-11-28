@@ -28,7 +28,7 @@ public final class IfStatementPostfixTemplateProvider extends BooleanPostfixTemp
     return false;
   }
 
-  static final class IfLookupItem extends ExpressionPostfixLookupElement {
+  static final class IfLookupItem extends ExpressionPostfixLookupElement<PsiExpression> {
     public IfLookupItem(@NotNull PrefixExpressionContext context) {
       super("if", context);
     }

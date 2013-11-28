@@ -6,7 +6,6 @@ import org.jetbrains.postfixCompletion.infrastructure.PostfixTemplateContext;
 import org.jetbrains.postfixCompletion.infrastructure.PrefixExpressionContext;
 import org.jetbrains.postfixCompletion.infrastructure.TemplateProvider;
 import org.jetbrains.postfixCompletion.lookupItems.NullCheckLookupElementBase;
-
 import java.util.List;
 
 @TemplateProvider(
@@ -15,7 +14,7 @@ import java.util.List;
   example = "if (expr == null)")
 public final class IsNullCheckPostfixTemplateProvider extends PostfixTemplateProvider {
   @Override public void createItems(
-      @NotNull PostfixTemplateContext context, @NotNull List<LookupElement> consumer) {
+    @NotNull PostfixTemplateContext context, @NotNull List<LookupElement> consumer) {
 
     PrefixExpressionContext expression = context.outerExpression();
     if (!expression.canBeStatement) return;
@@ -23,7 +22,8 @@ public final class IsNullCheckPostfixTemplateProvider extends PostfixTemplatePro
     Boolean isNullable = NotNullCheckPostfixTemplateProvider.isNullableExpression(expression);
     if (isNullable != null) {
       if (!isNullable) return;
-    } else { // unknown nullability
+    }
+    else { // unknown nullability
       if (!context.executionContext.isForceMode) return;
     }
 
@@ -35,6 +35,8 @@ public final class IsNullCheckPostfixTemplateProvider extends PostfixTemplatePro
       super("null", context);
     }
 
-    @NotNull @Override protected String getTemplate() { return "if(expr==null)"; }
+    @NotNull @Override protected String getConditionText() {
+      return "expr==null";
+    }
   }
 }
