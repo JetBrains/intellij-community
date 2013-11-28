@@ -1552,7 +1552,9 @@ public class FileBasedIndexImpl extends FileBasedIndex {
     final long previousDocStamp = myLastIndexedDocStamps.getAndSet(document, requestedIndexId, currentDocStamp);
     if (currentDocStamp != previousDocStamp) {
       final String contentText = content.getText();
-      if (!isTooLarge(vFile, contentText.length()) && getInputFilter(requestedIndexId).acceptInput(vFile)) {
+      if (!isTooLarge(vFile, contentText.length()) &&
+          getAffectedIndexCandidates(vFile).contains(requestedIndexId) &&
+          getInputFilter(requestedIndexId).acceptInput(vFile)) {
         // Reasonably attempt to use same file content when calculating indices as we can evaluate them several at once and store in file content
         WeakReference<FileContentImpl> previousContentRef = document.getUserData(ourFileContentKey);
         FileContentImpl previousContent = previousContentRef != null ? previousContentRef.get() : null;
