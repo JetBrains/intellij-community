@@ -1,7 +1,7 @@
 <idea-plugin version="2">
   <id>org.jetbrains.postfixCompletion</id>
   <name>Postfix Completion</name>
-  <version>0.7-beta</version>
+  <version>0.7.5-beta</version>
   <vendor email="alexander.shvedov@jetbrains.com" url="https://github.com/controlflow">Alexander Shvedov</vendor>
   <depends>com.intellij.modules.lang</depends>
   <depends>com.intellij.modules.java</depends>
@@ -46,6 +46,9 @@
 ]]></description>
 
   <change-notes><![CDATA[
+      <b>Version 0.7.5-beta</b><br/>
+      Settings page to disable/enable particular templates. Better <b>.cast</b> template.<br/><br/>
+
       <b>Version 0.7-beta</b><br/>
       New templates: <b>.switch</b>, <b>.throw</b>, <b>.assert</b> and <b>.synchronized</b>.<br/><br/>
 
@@ -61,7 +64,6 @@
       Postfix template expansion by <b>Tab</b> key in editor (like live templates).<br/><br/>
 
       <b>Version 0.3-beta</b><br/>
-      Lot of various fixes.<br/>
       Initial (and nearly final, I hope) support for IDEA's code completion with unresolved
       reference-expression qualifier feature. It allows you to write <b>scn.nn</b> and expand
       into <b>if (superCoolName != null)</b>, for example.<br/><br/>
@@ -104,6 +106,5 @@
       implementationClass="org.jetbrains.postfixCompletion.PostfixCompletionContributor" />
 
     <editorOptionsProvider id="editing.postfixCompletion" instance="org.jetbrains.postfixCompletion.settings.PostfixCompletionConfigurable"/>
-
   </extensions>
 </idea-plugin>
