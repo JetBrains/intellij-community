@@ -315,7 +315,7 @@ public abstract class UpdatePsiFileCopyright extends AbstractUpdateCopyright {
   }
 
   protected void processActions() throws IncorrectOperationException {
-    new WriteCommandAction.Simple(file.getProject(), "") {
+    new WriteCommandAction.Simple(file.getProject(), "Update copyright") {
       @Override
       protected void run() throws Throwable {
         Document doc = FileDocumentManager.getInstance().getDocument(getRoot());
