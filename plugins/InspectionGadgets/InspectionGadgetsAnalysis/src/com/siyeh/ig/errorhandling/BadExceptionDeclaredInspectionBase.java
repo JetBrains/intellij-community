@@ -45,7 +45,7 @@ public class BadExceptionDeclaredInspectionBase extends BaseInspection {
     );
 
   @SuppressWarnings("PublicField")
-  public boolean ignoreTestCases = false;
+  public boolean ignoreTestCases = false; // keep for compatibility
 
   @SuppressWarnings("PublicField")
   public boolean ignoreLibraryOverrides = false;
@@ -109,7 +109,7 @@ public class BadExceptionDeclaredInspectionBase extends BaseInspection {
         final PsiClass thrownClass = (PsiClass)element;
         final String qualifiedName = thrownClass.getQualifiedName();
         if (qualifiedName != null && exceptions.contains(qualifiedName)) {
-          registerError(reference);
+          registerError(reference, reference);
         }
       }
     }
