@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1653,6 +1653,9 @@ public class JBTabsImpl extends JComponent
 
   @Nullable
   protected Color getActiveTabColor(@Nullable final Color c) {
+    if (UIUtil.isUnderDarcula() || UIUtil.isUnderIntelliJLaF()) {
+      return new JBColor(new Color(162, 186, 224), new Color(65, 81, 109));
+    }
     final TabInfo info = getSelectedInfo();
     if (info == null) {
       return c;
@@ -1730,7 +1733,7 @@ public class JBTabsImpl extends JComponent
     }
 
     final Color tabColor = getActiveTabColor(null);
-    Color borderColor = tabColor == null ? UIUtil.getBoundsColor(paintFocused) : tabColor.darker();
+    Color borderColor = tabColor == null || UIUtil.isUnderDarcula() || UIUtil.isUnderIntelliJLaF() ? UIUtil.getBoundsColor(paintFocused) : tabColor.darker();
     g2d.setColor(borderColor);
 
     if (!isHideTabs()) {
