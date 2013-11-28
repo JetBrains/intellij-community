@@ -1189,7 +1189,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       });
     }
 
-    private void buildFiles(String pattern) {
+    private void buildFiles(final String pattern) {
       int filesCounter = 0;
       if (myFiles == null) {
         myFiles = myFileModel.getNames(showAll.get());
@@ -1208,7 +1208,9 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
           } else if (o instanceof PsiDirectory) {
             file = ((PsiDirectory)o).getVirtualFile();
           }
-          if (file != null && (showAll.get() || scope.accept(file))) {
+          if (file != null
+              && !(pattern.indexOf(' ') != -1 && file.getName().indexOf(' ') == -1)
+              && (showAll.get() || scope.accept(file))) {
             elements.add(o);
           }
           return elements.size() < 30;
