@@ -610,7 +610,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
     }
     if (e == null) return;
     myContextComponent = PlatformDataKeys.CONTEXT_COMPONENT.getData(e.getDataContext());
-    final Project project = e.getProject();
+    final Project project = myRenderer.myProject;
     Window wnd = myContextComponent != null ? SwingUtilities.windowForComponent(myContextComponent)
       : KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusedWindow();
     if (wnd == null && myContextComponent instanceof Window) {
@@ -657,6 +657,9 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
         @Override
         public Boolean compute() {
           final String last = editor.getText().trim();
+          if (project == null || project.isDisposed() || !project.isInitialized()) {
+            return true;
+          }
           final PropertiesComponent storage = PropertiesComponent.getInstance(project);
           final String historyString = storage.getValue(SE_HISTORY_KEY);
           List<String> history = StringUtil.isEmpty(historyString) ? new ArrayList<String>() : StringUtil.split(historyString, "\n");
