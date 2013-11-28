@@ -35,7 +35,7 @@ import java.util.List;
  */
 class JBTerminalSystemSettingsProvider extends DefaultTabbedSettingsProvider implements Disposable {
   private Set<TerminalSettingsListener> myListeners = Sets.newHashSet();
-  
+
   private final MyColorSchemeDelegate myColorScheme;
 
   JBTerminalSystemSettingsProvider() {
@@ -151,7 +151,7 @@ class JBTerminalSystemSettingsProvider extends DefaultTabbedSettingsProvider imp
   public String getFontName() {
     List<String> fonts = myColorScheme.getConsoleFontPreferences().getEffectiveFontFamilies();
 
-    if (fonts.size()>0) {
+    if (fonts.size() > 0) {
       return fonts.get(0);
     }
 
@@ -204,6 +204,11 @@ class JBTerminalSystemSettingsProvider extends DefaultTabbedSettingsProvider imp
   @NotNull
   private static MyColorSchemeDelegate createBoundColorSchemeDelegate(@Nullable final EditorColorsScheme customGlobalScheme) {
     return new MyColorSchemeDelegate(customGlobalScheme);
+  }
+
+  @Override
+  public boolean allowSelectionOnMouseReporting() {
+    return true;
   }
 
   @Override
@@ -306,7 +311,7 @@ class JBTerminalSystemSettingsProvider extends DefaultTabbedSettingsProvider imp
 
     @Override
     public void setFontPreferences(@NotNull FontPreferences preferences) {
-      throw new IllegalStateException();      
+      throw new IllegalStateException();
     }
 
     @Override
