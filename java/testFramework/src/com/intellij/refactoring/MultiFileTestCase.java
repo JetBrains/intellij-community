@@ -54,7 +54,7 @@ public abstract class MultiFileTestCase extends CodeInsightTestCase {
     final VirtualFile rootAfter = LocalFileSystem.getInstance().findFileByPath(pathAfter.replace(File.separatorChar, '/'));
 
     performAction.performAction(rootDir, rootAfter);
-    WriteCommandAction.runWriteCommandAction(new Runnable() {
+    WriteCommandAction.runWriteCommandAction(getProject(), new Runnable() {
       public void run() {
         myProject.getComponent(PostprocessReformattingAspect.class).doPostponedFormatting();
       }

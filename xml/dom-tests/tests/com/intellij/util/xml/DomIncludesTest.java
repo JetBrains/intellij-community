@@ -151,7 +151,7 @@ public class DomIncludesTest extends CodeInsightFixtureTestCase {
     }
 
     for (int i = 0; i < iterationCount; i++) {
-      WriteCommandAction.runWriteCommandAction(new Runnable() {
+      WriteCommandAction.runWriteCommandAction(null, new Runnable() {
         public void run() {
           fileB.getViewProvider().getDocument().insertString(0, " ");
           fileD.getViewProvider().getDocument().insertString(0, " ");
@@ -159,14 +159,14 @@ public class DomIncludesTest extends CodeInsightFixtureTestCase {
         }
       });
       Thread.sleep(10);
-      WriteCommandAction.runWriteCommandAction(new Runnable(){public void run() {
+      WriteCommandAction.runWriteCommandAction(null, new Runnable(){public void run() {
           fileC.getViewProvider().getDocument().insertString(0, " ");
           fileE.getViewProvider().getDocument().insertString(0, " ");
           PsiDocumentManager.getInstance(getProject()).commitAllDocuments(); //clear xinclude caches
         }
       });
       Thread.sleep(10);
-      WriteCommandAction.runWriteCommandAction(new Runnable(){public void run() {
+      WriteCommandAction.runWriteCommandAction(null, new Runnable(){public void run() {
 
           fileB.getViewProvider().getDocument().setText(textB);
           fileC.getViewProvider().getDocument().setText(textC);

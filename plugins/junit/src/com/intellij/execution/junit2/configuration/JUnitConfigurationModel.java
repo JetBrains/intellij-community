@@ -174,7 +174,7 @@ public class JUnitConfigurationModel {
     setDocumentText(index, text, myJUnitDocuments);
   }
 
-  private static void setDocumentText(final int index, final String text, final Object[] documents) {
+  private void setDocumentText(final int index, final String text, final Object[] documents) {
     final Object document = documents[index];
     if (document instanceof PlainDocument) {
       try {
@@ -186,7 +186,7 @@ public class JUnitConfigurationModel {
       }
     }
     else {
-      WriteCommandAction.runWriteCommandAction(new Runnable() {
+      WriteCommandAction.runWriteCommandAction(myProject, new Runnable() {
         public void run() {
           ((Document)document).replaceString(0, ((Document)document).getTextLength(), text);
         }

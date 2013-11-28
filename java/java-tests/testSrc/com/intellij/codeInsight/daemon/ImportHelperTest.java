@@ -74,7 +74,7 @@ public class ImportHelperTest extends DaemonAnalyzerTestCase {
       getProject(), new Runnable() {
       @Override
       public void run() {
-        WriteCommandAction.runWriteCommandAction(new Runnable() {
+        WriteCommandAction.runWriteCommandAction(null, new Runnable() {
           @Override
           public void run() {
             try {

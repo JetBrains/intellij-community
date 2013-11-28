@@ -46,7 +46,7 @@ public class XmlEventsTest extends LightCodeInsightTestCase {
     final Listener listener = new Listener(model.getModelAspect(XmlAspect.class));
     model.addModelListener(listener);
     final XmlTag tagFromText = XmlElementFactory.getInstance(getProject()).createTagFromText("<a/>");
-    WriteCommandAction.runWriteCommandAction(new Runnable() {
+    WriteCommandAction.runWriteCommandAction(null, new Runnable() {
       @Override
       public void run() {
         tagFromText.setAttribute("a", "b");
@@ -63,7 +63,7 @@ public class XmlEventsTest extends LightCodeInsightTestCase {
     final XmlTag tagFromText = XmlElementFactory.getInstance(getProject()).createTagFromText("<a>aaa</a>");
     final XmlTag otherTag = XmlElementFactory.getInstance(getProject()).createTagFromText("<a/>");
     final XmlText xmlText = tagFromText.getValue().getTextElements()[0];
-    WriteCommandAction.runWriteCommandAction(new Runnable(){public void run() {
+    WriteCommandAction.runWriteCommandAction(null, new Runnable(){public void run() {
         xmlText.insertAtOffset(otherTag, 2);
       }
     });
@@ -77,7 +77,7 @@ public class XmlEventsTest extends LightCodeInsightTestCase {
     model.addModelListener(listener);
     final XmlTag tagFromText = XmlElementFactory.getInstance(getProject()).createTagFromText("<a>aaa</a>");
     final XmlText xmlText = tagFromText.getValue().getTextElements()[0];
-    WriteCommandAction.runWriteCommandAction(new Runnable(){public void run() {
+    WriteCommandAction.runWriteCommandAction(null, new Runnable(){public void run() {
         xmlText.insertText("bb", 2);
       }
     });
@@ -90,7 +90,7 @@ public class XmlEventsTest extends LightCodeInsightTestCase {
     final Listener listener = new Listener(model.getModelAspect(XmlAspect.class));
     model.addModelListener(listener);
     final XmlTag tagFromText = XmlElementFactory.getInstance(getProject()).createTagFromText("<a>a </a>");
-    WriteCommandAction.runWriteCommandAction(new Runnable(){public void run() {
+    WriteCommandAction.runWriteCommandAction(null, new Runnable(){public void run() {
         tagFromText.addAfter(tagFromText.getValue().getTextElements()[0], tagFromText.getValue().getTextElements()[0]);
       }
     });
@@ -103,7 +103,7 @@ public class XmlEventsTest extends LightCodeInsightTestCase {
     final Listener listener = new Listener(model.getModelAspect(XmlAspect.class));
     model.addModelListener(listener);
     final XmlTag tagFromText = XmlElementFactory.getInstance(getProject()).createTagFromText("<a>aaa</a>");
-    WriteCommandAction.runWriteCommandAction(new Runnable(){public void run() {
+    WriteCommandAction.runWriteCommandAction(null, new Runnable(){public void run() {
         tagFromText.delete();
       }
     });
@@ -163,7 +163,7 @@ public class XmlEventsTest extends LightCodeInsightTestCase {
     final XmlTag tag = XmlElementFactory.getInstance(getProject()).createTagFromText(text);
     final XmlAttribute attribute = tag.getAttribute("name", null);
     assert attribute != null;
-    WriteCommandAction.runWriteCommandAction(new Runnable(){public void run() {
+    WriteCommandAction.runWriteCommandAction(null, new Runnable(){public void run() {
         attribute.setValue("new");
       }
     });
@@ -182,7 +182,7 @@ public class XmlEventsTest extends LightCodeInsightTestCase {
     final PsiFileImpl containingFile = (PsiFileImpl)tagFromText.getContainingFile();
     final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(getProject());
     final Document document = documentManager.getDocument(containingFile);
-    WriteCommandAction.runWriteCommandAction(new Runnable(){public void run() {
+    WriteCommandAction.runWriteCommandAction(null, new Runnable(){public void run() {
             document.insertString(positionToInsert, stringToInsert);
             documentManager.commitDocument(document);
           }

@@ -53,7 +53,7 @@ public class ImplementsExtendsQuickFixTest extends LightCodeInsightFixtureTestCa
       }
       else {
 
-        WriteCommandAction.runWriteCommandAction {
+        WriteCommandAction.runWriteCommandAction project, {
           ChangeExtendsImplementsQuickFix fix = new ChangeExtendsImplementsQuickFix(typeDefinition)
           fix.invoke(project, null, psiFile)
           doPostponedFormatting(project)

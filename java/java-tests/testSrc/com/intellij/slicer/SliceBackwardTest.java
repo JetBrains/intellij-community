@@ -133,7 +133,7 @@ public class SliceBackwardTest extends SliceTestCase {
   }
 
   private static void extract(final Document document, final Map<String, RangeMarker> sliceUsageName2Offset, final String name) {
-    WriteCommandAction.runWriteCommandAction(new Runnable() {
+    WriteCommandAction.runWriteCommandAction(null, new Runnable() {
       @Override
       public void run() {
         for (int i = 1; i < 9; i++) {

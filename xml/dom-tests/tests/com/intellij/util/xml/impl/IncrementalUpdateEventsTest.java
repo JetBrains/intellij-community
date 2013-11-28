@@ -123,7 +123,7 @@ public class IncrementalUpdateEventsTest extends DomTestCase {
 
 
   private void deleteTag(final int index) throws IncorrectOperationException {
-    WriteCommandAction.runWriteCommandAction(new Runnable() {
+    WriteCommandAction.runWriteCommandAction(null, new Runnable() {
       public void run() {
         myElement.getXmlTag().getSubTags()[index].delete();
       }

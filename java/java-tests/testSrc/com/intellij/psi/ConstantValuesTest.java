@@ -62,7 +62,7 @@ public class ConstantValuesTest extends PsiTestCase{
     final PsiJavaFile file = (PsiJavaFile)myClass.getContainingFile();
 
     WriteCommandAction.runWriteCommandAction(
-      new Runnable() {
+      null, new Runnable() {
         @Override
         public void run() {
           try {

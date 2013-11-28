@@ -87,7 +87,7 @@ public class MovePackageAsDirectoryTest extends MultiFileTestCase {
       protected void preprocessSrcDir(PsiDirectory srcDirectory) {
         final PsiFile empty = srcDirectory.findFile(EMPTY_TXT);
         assert empty != null;
-        WriteCommandAction.runWriteCommandAction(new Runnable() {
+        WriteCommandAction.runWriteCommandAction(null, new Runnable() {
           public void run() {
             empty.delete();
           }

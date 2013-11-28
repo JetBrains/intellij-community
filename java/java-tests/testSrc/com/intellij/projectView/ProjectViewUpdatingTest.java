@@ -68,7 +68,7 @@ public class ProjectViewUpdatingTest extends BaseProjectViewTestCase {
     final PsiClass[] classes = JavaDirectoryService.getInstance()
       .getPackage(getContentDirectory().findSubdirectory("src").findSubdirectory("com").findSubdirectory("package1")).getClasses();
     sortClassesByName(classes);
-    WriteCommandAction.runWriteCommandAction(new Runnable() {
+    WriteCommandAction.runWriteCommandAction(null, new Runnable() {
       public void run() {
         classes[0].delete();
       }

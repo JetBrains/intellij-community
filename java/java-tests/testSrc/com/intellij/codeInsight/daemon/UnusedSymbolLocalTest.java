@@ -46,7 +46,7 @@ public class UnusedSymbolLocalTest extends DaemonAnalyzerTestCase {
     assertEquals(0, collection.size());
 
     final int offset = myEditor.getCaretModel().getOffset();
-    WriteCommandAction.runWriteCommandAction(new Runnable() {
+    WriteCommandAction.runWriteCommandAction(null, new Runnable() {
       @Override
       public void run() {
         document.insertString(offset, "//");

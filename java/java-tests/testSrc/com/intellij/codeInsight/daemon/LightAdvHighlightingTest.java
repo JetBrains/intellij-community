@@ -270,7 +270,7 @@ public class LightAdvHighlightingTest extends LightDaemonAnalyzerTestCase {
     enableInspectionTool(deadCodeInspection);
 
     doTest(true, false);
-    WriteCommandAction.runWriteCommandAction(new Runnable() {
+    WriteCommandAction.runWriteCommandAction(null, new Runnable() {
       @Override
       public void run() {
         PsiDirectory directory = myFile.getParent();

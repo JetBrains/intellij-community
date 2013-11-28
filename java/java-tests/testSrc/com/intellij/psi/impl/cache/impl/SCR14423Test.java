@@ -51,7 +51,7 @@ public class SCR14423Test extends PsiTestCase {
     root.mkdir();
     myFilesToDelete.add(root);
 
-    WriteCommandAction.runWriteCommandAction(new Runnable() {
+    WriteCommandAction.runWriteCommandAction(null, new Runnable() {
       @Override
       public void run() {
         try {

@@ -388,7 +388,7 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
 
     try {
       doDoTest(true,true);
-      WriteCommandAction.runWriteCommandAction(new Runnable() {
+      WriteCommandAction.runWriteCommandAction(null, new Runnable() {
         @Override
         public void run() {
           myEditor.getDocument().insertString(myEditor.getDocument().getCharsSequence().toString().indexOf("?>") + 2, "\n");
@@ -548,7 +548,7 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
       final XmlAttribute attribute = t.getAttribute("name", null);
       final XmlAttributeValue valueElement = attribute.getValueElement();
       final PsiReference nameReference = valueElement.getReferences()[0];
-      WriteCommandAction.runWriteCommandAction(new Runnable(){public void run() {
+      WriteCommandAction.runWriteCommandAction(null, new Runnable(){public void run() {
           nameReference.handleElementRename("zzz");
         }
       });
@@ -561,7 +561,7 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
 
   public void testExternalValidatorOnValidXmlWithNamespacesNotSetup() throws Exception {
     final ExternalResourceManagerEx instanceEx = ExternalResourceManagerEx.getInstanceEx();
-    WriteCommandAction.runWriteCommandAction(new Runnable(){public void run() {
+    WriteCommandAction.runWriteCommandAction(null, new Runnable(){public void run() {
         instanceEx.addIgnoredResource("http://xml.apache.org/axis/wsdd2/");
         instanceEx.addIgnoredResource("http://xml.apache.org/axis/wsdd2/providers/java");
         instanceEx.addIgnoredResource("http://soapinterop.org/xsd2");
@@ -575,14 +575,14 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
   public void testExternalValidatorOnValidXmlWithNamespacesNotSetup2() throws Exception {
     final ExternalResourceManagerEx instanceEx = ExternalResourceManagerEx.getInstanceEx();
     try {
-      WriteCommandAction.runWriteCommandAction(new Runnable(){public void run() {
+      WriteCommandAction.runWriteCommandAction(null, new Runnable(){public void run() {
           instanceEx.addIgnoredResource("");
         }
       });
 
       doTest(getFullRelativeTestName(".xml"), true, false);
     } finally {
-      WriteCommandAction.runWriteCommandAction(new Runnable(){public void run() {
+      WriteCommandAction.runWriteCommandAction(null, new Runnable(){public void run() {
           instanceEx.removeIgnoredResource("");
         }
       });
@@ -1057,7 +1057,7 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
   }
 
   public void testIgnoredNamespaceHighlighting() throws Exception {
-    WriteCommandAction.runWriteCommandAction(new Runnable(){public void run() {
+    WriteCommandAction.runWriteCommandAction(null, new Runnable(){public void run() {
         ExternalResourceManagerEx.getInstanceEx().addIgnoredResource("http://ignored/uri");
       }
     });
@@ -1233,7 +1233,7 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
     doDoTest(true, false);
 
     final String text = myEditor.getDocument().getText();
-    WriteCommandAction.runWriteCommandAction(new Runnable() {
+    WriteCommandAction.runWriteCommandAction(null, new Runnable() {
       public void run() {
         myEditor.getSelectionModel().setSelection(0, myEditor.getDocument().getTextLength());
       }
@@ -1409,7 +1409,7 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
     final Editor schemaEditor = allEditors[0] == myEditor ? allEditors[1]:allEditors[0];
     final String text = schemaEditor.getDocument().getText();
     final String newText = text.replaceAll("xsd","xs");
-    WriteCommandAction.runWriteCommandAction(new Runnable(){public void run() {
+    WriteCommandAction.runWriteCommandAction(null, new Runnable(){public void run() {
         schemaEditor.getDocument().replaceString(0, text.length(), newText);
       }
     });
@@ -1567,7 +1567,7 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
     Collection<HighlightInfo> infos = filterInfos(doHighlighting());
     assertEquals(2, infos.size());
 
-    WriteCommandAction.runWriteCommandAction(new Runnable(){public void run() {
+    WriteCommandAction.runWriteCommandAction(null, new Runnable(){public void run() {
         EditorModificationUtil.deleteSelectedText(myEditor);
       }
     });
@@ -1576,7 +1576,7 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
 
     assertEquals(11, infos.size());
 
-    WriteCommandAction.runWriteCommandAction(new Runnable() {
+    WriteCommandAction.runWriteCommandAction(null, new Runnable() {
       public void run() {
         EditorModificationUtil.insertStringAtCaret(myEditor, "<");
       }

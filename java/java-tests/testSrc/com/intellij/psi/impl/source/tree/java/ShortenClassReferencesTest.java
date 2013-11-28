@@ -77,7 +77,7 @@ public class ShortenClassReferencesTest extends LightCodeInsightFixtureTestCase 
     CommandProcessor.getInstance().executeCommand(getProject(), new Runnable() {
       @Override
       public void run() {
-        WriteCommandAction.runWriteCommandAction(new Runnable() {
+        WriteCommandAction.runWriteCommandAction(null, new Runnable() {
           @Override
           public void run() {
             JavaCodeStyleManager.getInstance(getProject()).shortenClassReferences(myFixture.getFile());

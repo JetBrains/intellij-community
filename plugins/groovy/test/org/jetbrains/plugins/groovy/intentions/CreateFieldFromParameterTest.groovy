@@ -55,7 +55,7 @@ class CreateFieldFromParameterTest extends LightCodeInsightFixtureTestCase {
     for (intention in intentions) {
       if (intention instanceof IntentionActionWrapper) intention = intention.delegate
       if (intention instanceof GrCreateFieldForParameterIntention) {
-        WriteCommandAction.runWriteCommandAction(new Runnable(){
+        WriteCommandAction.runWriteCommandAction(null, new Runnable() {
           void run() {
             intention.invoke(myFixture.project, myFixture.editor, myFixture.file)
             doPostponedFormatting(myFixture.project)

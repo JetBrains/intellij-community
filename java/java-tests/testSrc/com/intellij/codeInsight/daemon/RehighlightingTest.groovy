@@ -54,7 +54,7 @@ import java.lang.reflect.Modifier;
     myFixture.type(' ')
     assert myFixture.doHighlighting().size() > 0
 
-    WriteCommandAction.runWriteCommandAction {
+    WriteCommandAction.runWriteCommandAction project, {
       myFixture.editor.document.insertString(myFixture.editor.caretModel.offset, caption)
     }
 

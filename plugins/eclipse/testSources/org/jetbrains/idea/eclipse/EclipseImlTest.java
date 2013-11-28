@@ -81,7 +81,7 @@ public class EclipseImlTest extends IdeaTestCase {
     }
     fileText = fileText.replaceAll("\\$" + JUNIT + "\\$", communityAppDir);
     final Element classpathElement = JDOMUtil.loadDocument(fileText).getRootElement();
-    final Module module = WriteCommandAction.runWriteCommandAction(new Computable<Module>() {
+    final Module module = WriteCommandAction.runWriteCommandAction(null, new Computable<Module>() {
       @Override
       public Module compute() {
         return ModuleManager.getInstance(project)

@@ -171,8 +171,8 @@ public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
     protected abstract void run() throws Throwable;
   }
 
-  public static void runWriteCommandAction(@NotNull final Runnable runnable) {
-    new Simple(null) {
+  public static void runWriteCommandAction(Project project, @NotNull final Runnable runnable) {
+    new Simple(project) {
       @Override
       protected void run() throws Throwable {
         runnable.run();
@@ -180,8 +180,8 @@ public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
     }.execute();
   }
 
-  public static <T> T runWriteCommandAction(@NotNull final Computable<T> computable) {
-    return new WriteCommandAction<T>(null) {
+  public static <T> T runWriteCommandAction(Project project, @NotNull final Computable<T> computable) {
+    return new WriteCommandAction<T>(project) {
       @Override
       protected void run(@NotNull Result<T> result) throws Throwable {
         result.setResult(computable.compute());

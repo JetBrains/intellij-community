@@ -103,7 +103,7 @@ public class IntroduceConstantTest extends LightCodeInsightFixtureTestCase {
     final GrIntroduceConstantSettings settings =
       new MockIntroduceConstantSettings(targetClass, replaceAllOccurences, getType(useExplicitType, expression, variable, stringPart), modifier);
 
-    WriteCommandAction.runWriteCommandAction(new Runnable() {
+    WriteCommandAction.runWriteCommandAction(null, new Runnable() {
       @Override
       public void run() {
         handler.runRefactoring(context, settings);
