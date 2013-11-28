@@ -239,7 +239,7 @@ public def layoutCommunityPlugins(String home) {
   }
 
   dir("plugins") {
-    def simplePlugins = ["commander", "copyright", "properties", "java-i18n", "hg4idea", "github", "ui-designer-core"] //, "tasks-time-tracking"]
+    def simplePlugins = ["commander", "copyright", "properties", "java-i18n", "hg4idea", "github"] //, "tasks-time-tracking"]
 
     simplePlugins.each {
       layoutPlugin it
@@ -635,9 +635,24 @@ def layoutAndroid(String androidHome) {
       }
     }
 
-    layoutPlugin("android-designer") {
-      jar("android-designer.jar") {
-        module("android-designer")
+    dir("android-designer") {
+      dir("lib") {
+        jar("resources_en.jar") {
+          module("ui-designer-core") {
+            patternset(refid: "resources.included")
+          }
+          module("android-designer") {
+            patternset(refid: "resources.included")
+          }
+        }
+        jar("android-designer.jar") {
+          module("ui-designer-core") {
+            patternset(refid: "resources.excluded")
+          }
+          module("android-designer") {
+            patternset(refid: "resources.excluded")
+          }
+        }
       }
     }
   }
