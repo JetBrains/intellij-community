@@ -3,6 +3,7 @@ package com.intellij.openapi.externalSystem.model.project;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Not thread-safe.
@@ -10,7 +11,7 @@ import org.jetbrains.annotations.NotNull;
  * @author Denis Zhdanov
  * @since 8/1/11 1:30 PM
  */
-public class ProjectData extends AbstractNamedData implements ExternalConfigPathAware {
+public class ProjectData extends AbstractNamedData implements ExternalConfigPathAware, Identifiable {
 
   private static final long serialVersionUID = 1L;
 
@@ -64,5 +65,11 @@ public class ProjectData extends AbstractNamedData implements ExternalConfigPath
   @Override
   public String toString() {
     return String.format("%s project '%s'", getOwner().toString().toLowerCase(), getName());
+  }
+
+  @NotNull
+  @Override
+  public String getId() {
+    return "";
   }
 }

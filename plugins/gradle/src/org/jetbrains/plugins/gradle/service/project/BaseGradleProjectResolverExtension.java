@@ -26,6 +26,7 @@ import com.intellij.openapi.externalSystem.model.ProjectKeys;
 import com.intellij.openapi.externalSystem.model.project.*;
 import com.intellij.openapi.externalSystem.model.task.TaskData;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
+import com.intellij.openapi.externalSystem.util.ExternalSystemDebugEnvironment;
 import com.intellij.openapi.externalSystem.util.Order;
 import com.intellij.openapi.module.EmptyModuleType;
 import com.intellij.openapi.module.JavaModuleType;
@@ -128,7 +129,13 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
     }
     final String moduleConfigPath = GradleUtil.getConfigPath(gradleModule.getGradleProject(), projectData.getLinkedExternalProjectPath());
 
-    ModuleData moduleData = new ModuleData(GradleConstants.SYSTEM_ID,
+    if(ExternalSystemDebugEnvironment.DEBUG_ORPHAN_MODULES_PROCESSING) {
+      LOG.info(String.format(
+        "Creating module data ('%s') with the external config path: '%s'", gradleModule.getGradleProject().getPath(), moduleConfigPath
+      ));
+    }
+    ModuleData moduleData = new ModuleData(gradleModule.getGradleProject().getPath(),
+                                           GradleConstants.SYSTEM_ID,
                                            StdModuleTypes.JAVA.getId(),
                                            moduleName,
                                            moduleConfigPath,
