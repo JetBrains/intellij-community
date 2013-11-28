@@ -19,10 +19,10 @@ import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiExpressionList;
 import com.intellij.psi.PsiPolyadicExpression;
+import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -75,35 +75,36 @@ public class JavaFormatterUtil {
     return expression1.getOperationTokenType() == expression2.getOperationTokenType();
   }
 
-  /**
-   * Allows to check if given expression list has given number of anonymous classes.
-   *
-   * @param count   interested number of anonymous classes used at the given expression list
-   * @return        <code>true</code> if given expression list contains given number of anonymous classes;
-   *                <code>false</code> otherwise
-   */
-  public static boolean hasAnonymousClassesArguments(@NotNull PsiExpressionList expressionList, int count) {
-    int found = 0;
-    for (PsiExpression expression : expressionList.getExpressions()) {
-      ASTNode node = expression.getNode();
-      if (isAnonymousClass(node)) {
-        found++;
-      }
-      if (found >= count) {
+
+  public static boolean hasMultilineArguments(@NotNull PsiExpressionList list) {
+    PsiExpression[] arguments = list.getExpressions();
+
+    for (PsiExpression argument: arguments) {
+      ASTNode node = argument.getNode();
+      if (node.textContains('\n'))
         return true;
-      }
     }
+
     return false;
   }
 
-  private static boolean isAnonymousClass(@Nullable final ASTNode node) {
-    if (node == null) {
-      return false;
+  public static boolean isMultilineExceptArguments(@NotNull PsiExpressionList list) {
+    PsiExpression[] arguments = list.getExpressions();
+
+    for (PsiExpression argument : arguments) {
+      ASTNode beforeArgument = argument.getNode().getTreePrev();
+      if (isWhiteSpaceWithLineFeed(beforeArgument))
+        return true;
     }
-    ASTNode nodeToCheck = node;
-    if (node.getElementType() == JavaElementType.NEW_EXPRESSION) {
-      nodeToCheck = node.getLastChildNode();
-    }
-    return nodeToCheck != null && nodeToCheck.getElementType() == JavaElementType.ANONYMOUS_CLASS;
+
+    PsiExpression lastArgument = arguments[arguments.length - 1];
+    ASTNode afterLastArgument = lastArgument.getNode().getTreeNext();
+    return isWhiteSpaceWithLineFeed(afterLastArgument);
   }
+
+  private static boolean isWhiteSpaceWithLineFeed(@NotNull ASTNode node) {
+    return node instanceof PsiWhiteSpace
+           && node.textContains('\n');
+  }
+
 }

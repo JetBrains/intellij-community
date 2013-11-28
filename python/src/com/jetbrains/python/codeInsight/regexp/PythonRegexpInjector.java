@@ -67,7 +67,7 @@ public class PythonRegexpInjector implements MultiHostInjector {
   @Override
   public void getLanguagesToInject(@NotNull MultiHostRegistrar registrar, @NotNull PsiElement context) {
     final PsiElement contextParent = context.getParent();
-    if (PyInjectionUtil.isLargestStringLiteral(context) && contextParent instanceof PyArgumentList) {
+    if (PyInjectionUtil.getLargestStringLiteral(context) == context && contextParent instanceof PyArgumentList) {
       final PyExpression[] args = ((PyArgumentList)contextParent).getArguments();
       int index = ArrayUtil.indexOf(args, context);
       PyCallExpression call = PsiTreeUtil.getParentOfType(context, PyCallExpression.class);

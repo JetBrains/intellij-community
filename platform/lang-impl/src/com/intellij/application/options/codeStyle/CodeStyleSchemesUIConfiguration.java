@@ -75,7 +75,10 @@ public class CodeStyleSchemesUIConfiguration implements PersistentStateComponent
     public static void setRecentImportFile(@NotNull VirtualFile recentFile) {
       CodeStyleSchemesUIConfiguration configuration = getInstance();
       if (configuration != null) {
-        configuration.RECENT_IMPORT_FILE_LOCATION = recentFile.getUrl();
+        URL url = VfsUtil.convertToURL(recentFile.getUrl());
+        if (url != null) {
+          configuration.RECENT_IMPORT_FILE_LOCATION = url.toString();
+        }
       }
     }
   }

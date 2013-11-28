@@ -9,6 +9,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
+import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -28,7 +29,7 @@ public class ProjectStructureHelper {
 
   @Nullable
   public Module findIdeModule(@NotNull ModuleData module, @NotNull Project ideProject) {
-    return findIdeModule(module.getName(), ideProject);
+    return findIdeModule(module.getIdeModuleFileName(), ideProject);
   }
 
   @Nullable

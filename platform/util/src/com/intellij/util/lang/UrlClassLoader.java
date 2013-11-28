@@ -235,7 +235,8 @@ public class UrlClassLoader extends ClassLoader {
       if (!new File(libPath = PathManager.getHomePath() + "/community/bin/" + platform + libFileName).exists()) {
         if (!new File(libPath = PathManager.getHomePath() + "/bin/" + platform + libFileName).exists()) {
           if (!new File(libPath = PathManager.getHomePathFor(IdeaWin32.class) + "/bin/" + libFileName).exists()) {
-            throw new UnsatisfiedLinkError("'" + libFileName + "' not found among " + Arrays.toString(new File(PathManager.getBinPath()).listFiles()));
+            File libDir = new File(PathManager.getBinPath());
+            throw new UnsatisfiedLinkError("'" + libFileName + "' not found in '" + libDir + "' among " + Arrays.toString(libDir.list()));
           }
         }
       }

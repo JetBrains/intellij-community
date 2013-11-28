@@ -27,13 +27,16 @@ import java.util.Collection;
 
 public class HgCreateTagAction extends HgAbstractGlobalAction {
 
-  protected void execute(@NotNull final Project project, @NotNull Collection<VirtualFile> repos, @Nullable VirtualFile selectedRepo) {
+  public void execute(@NotNull final Project project,
+                      @NotNull Collection<VirtualFile> repos,
+                      @Nullable VirtualFile selectedRepo,
+                      @Nullable final String reference) {
     final HgTagDialog dialog = new HgTagDialog(project);
     dialog.setRoots(repos, selectedRepo);
     dialog.show();
     if (dialog.isOK()) {
       try {
-        new HgTagCreateCommand(project, dialog.getRepository(), dialog.getTagName()).execute(new HgCommandResultHandler() {
+        new HgTagCreateCommand(project, dialog.getRepository(), dialog.getTagName(), reference).execute(new HgCommandResultHandler() {
           @Override
           public void process(@Nullable HgCommandResult result) {
             if (HgErrorUtil.hasErrorsInCommandExecution(result)) {
@@ -47,5 +50,9 @@ public class HgCreateTagAction extends HgAbstractGlobalAction {
         handleException(project, e);
       }
     }
+  }
+
+  protected void execute(@NotNull final Project project, @NotNull Collection<VirtualFile> repos, @Nullable VirtualFile selectedRepo) {
+    execute(project, repos, selectedRepo, null);
   }
 }

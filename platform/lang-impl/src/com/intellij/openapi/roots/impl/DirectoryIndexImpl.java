@@ -657,15 +657,10 @@ public class DirectoryIndexImpl extends DirectoryIndex {
       return getRootIndex().isProjectExcludeRoot(dir);
     }
 
-
-    //noinspection UnnecessaryLocalVariable
     boolean standardResult = myState.myProjectExcludeRoots.contains(((NewVirtualFile)dir).getId());
-/* todo
     RootIndex rootIndex = getRootIndex();
     Boolean riResult = rootIndex != null ? rootIndex.isProjectExcludeRoot(dir) : null;
     return assertConsistentResult(dir, riResult, standardResult);
-*/
-    return standardResult;
   }
 
   private VirtualFile findFileById(int dir) {

@@ -31,6 +31,10 @@ import com.intellij.psi.PsiElement;
 public class FindInPathAction extends AnAction implements DumbAware {
   static final NotificationGroup NOTIFICATION_GROUP = NotificationGroup.toolWindowGroup("FindInPath", ToolWindowId.FIND, false);
 
+  { // enabled in modal content for find in path <-> replace in path modal dialog transition
+    setEnabledInModalContext(true);
+  }
+
   @Override
   public void actionPerformed(AnActionEvent e) {
     DataContext dataContext = e.getDataContext();

@@ -114,6 +114,7 @@ public class JBTerminalPanel extends TerminalPanel implements FocusListener, Ter
 
   @Override
   protected void setupAntialiasing(Graphics graphics) {
+    UIUtil.setupComposite((Graphics2D)graphics);
     UISettings.setupAntialiasing(graphics);
   }
 

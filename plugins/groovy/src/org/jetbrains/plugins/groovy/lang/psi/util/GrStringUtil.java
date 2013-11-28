@@ -690,6 +690,10 @@ public class GrStringUtil {
           break;
         default:
           outChars.append('\\').append(c);
+          if (sourceOffsets != null) {
+            sourceOffsets[outChars.length() - outOffset] = index;
+          }
+
       }
     }
     return true;

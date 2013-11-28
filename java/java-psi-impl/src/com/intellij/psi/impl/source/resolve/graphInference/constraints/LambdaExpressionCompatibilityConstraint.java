@@ -1,10 +1,13 @@
 package com.intellij.psi.impl.source.resolve.graphInference.constraints;
 
 import com.intellij.psi.*;
+import com.intellij.psi.controlFlow.*;
 import com.intellij.psi.impl.source.resolve.graphInference.FunctionalInterfaceParameterizationUtil;
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceSession;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.containers.IntArrayList;
 
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -60,11 +63,11 @@ public class LambdaExpressionCompatibilityConstraint implements ConstraintFormul
           return false;
         }
       } else {
-        if (returnExpressions.isEmpty()) {  //not value-compatible
+        if (returnExpressions.isEmpty() && !myExpression.isValueCompatible()) {  //not value-compatible
           return false;
         }
         for (PsiExpression returnExpression : returnExpressions) {
-          constraints.add(new ExpressionCompatibilityConstraint(returnExpression, substitutor.substitute(returnType)));
+          constraints.add(new ExpressionCompatibilityConstraint(returnExpression, GenericsUtil.eliminateWildcards(substitutor.substitute(returnType))));
         }
       }
     }

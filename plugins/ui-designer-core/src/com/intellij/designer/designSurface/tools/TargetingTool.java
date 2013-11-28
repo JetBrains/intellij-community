@@ -155,7 +155,9 @@ public abstract class TargetingTool extends InputTool {
 
       RadLayout layout = target.getLayout();
       if (layout != null) {
+        myContext.setContainer(target);
         myOperation = layout.processChildOperation(myContext);
+        myContext.setContainer(null);
       }
 
       return myOperation != null;

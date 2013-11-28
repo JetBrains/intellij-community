@@ -26,6 +26,7 @@ import com.intellij.openapi.externalSystem.model.ProjectKeys;
 import com.intellij.openapi.externalSystem.model.project.*;
 import com.intellij.openapi.externalSystem.model.task.TaskData;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
+import com.intellij.openapi.externalSystem.util.ExternalSystemDebugEnvironment;
 import com.intellij.openapi.externalSystem.util.Order;
 import com.intellij.openapi.module.EmptyModuleType;
 import com.intellij.openapi.module.JavaModuleType;
@@ -34,7 +35,6 @@ import com.intellij.openapi.module.StdModuleTypes;
 import com.intellij.openapi.roots.DependencyScope;
 import com.intellij.openapi.util.KeyValue;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.util.BooleanFunction;
 import com.intellij.util.PathUtil;
@@ -53,7 +53,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.model.ExtIdeaContentRoot;
 import org.jetbrains.plugins.gradle.model.ModuleExtendedModel;
 import org.jetbrains.plugins.gradle.model.ProjectDependenciesModel;
-import org.jetbrains.plugins.gradle.model.impl.GradleDependency;
 import org.jetbrains.plugins.gradle.util.GradleBundle;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 import org.jetbrains.plugins.gradle.util.GradleUtil;
@@ -130,7 +129,13 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
     }
     final String moduleConfigPath = GradleUtil.getConfigPath(gradleModule.getGradleProject(), projectData.getLinkedExternalProjectPath());
 
-    ModuleData moduleData = new ModuleData(GradleConstants.SYSTEM_ID,
+    if(ExternalSystemDebugEnvironment.DEBUG_ORPHAN_MODULES_PROCESSING) {
+      LOG.info(String.format(
+        "Creating module data ('%s') with the external config path: '%s'", gradleModule.getGradleProject().getPath(), moduleConfigPath
+      ));
+    }
+    ModuleData moduleData = new ModuleData(gradleModule.getGradleProject().getPath(),
+                                           GradleConstants.SYSTEM_ID,
                                            StdModuleTypes.JAVA.getId(),
                                            moduleName,
                                            moduleConfigPath,
@@ -222,10 +227,11 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
 
     ProjectDependenciesModel dependenciesModel = resolverCtx.getExtraProject(gradleModule, ProjectDependenciesModel.class);
 
-    DomainObjectSet<? extends IdeaDependency> dependencies = gradleModule.getDependencies();
-    if (dependencies == null) {
-      return;
-    }
+    final List<? extends IdeaDependency> dependencies =
+      dependenciesModel != null ? dependenciesModel.getDependencies() : gradleModule.getDependencies().getAll();
+
+    if (dependencies == null) return;
+
     for (IdeaDependency dependency : dependencies) {
       if (dependency == null) {
         continue;
@@ -243,10 +249,6 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
       else if (dependency instanceof IdeaSingleEntryLibraryDependency) {
         LibraryDependencyData d = buildDependency(ideModule, (IdeaSingleEntryLibraryDependency)dependency, ideProject);
         d.setExported(dependency.getExported());
-        if (dependenciesModel != null) {
-          DependencyScope providedScope = parseProvidedScope(d, dependenciesModel.getDependencies());
-          scope = providedScope == null ? scope : providedScope;
-        }
         if (scope != null) {
           d.setScope(scope);
         }
@@ -496,20 +498,5 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
 
   private static boolean isIdeaTask(final String taskName) {
     return taskName.toLowerCase().contains("idea");
-  }
-
-  @Nullable
-  private static DependencyScope parseProvidedScope(LibraryDependencyData libraryDependencyData, List<GradleDependency> dependencies) {
-    for (GradleDependency dependency : dependencies) {
-      String s = dependency.getDependencyName() + '-' + dependency.getDependencyVersion();
-      if (libraryDependencyData.getName().equals(s)) {
-        String configurationName = dependency.getConfigurationName();
-        if (StringUtil.startsWith(configurationName, "provided")) {
-          return DependencyScope.PROVIDED;
-        }
-      }
-    }
-
-    return null;
   }
 }

@@ -476,6 +476,7 @@ public class CommentByLineCommentHandler implements CodeInsightActionHandler {
     }
     if (endOffset >= suffix.length() && CharArrayUtil.regionMatches(myDocument.getCharsSequence(), endOffset - suffix.length(), suffix)) {
       myDocument.deleteString(endOffset - suffix.length(), endOffset);
+      endOffset = myDocument.getTextLength();
     }
     if (commentedPrefix != null && commentedSuffix != null) {
       CommentByBlockCommentHandler.commentNestedComments(myDocument, new TextRange(startOffset, endOffset), commenter);

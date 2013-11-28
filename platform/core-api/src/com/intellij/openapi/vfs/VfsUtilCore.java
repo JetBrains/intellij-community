@@ -387,7 +387,7 @@ public class VfsUtilCore {
       String suffix = url.substring(index + 2);
 
       if (SystemInfoRt.isWindows) {
-        return prefix + "://" + suffix;
+        return prefix + URLUtil.SCHEME_SEPARATOR + suffix;
       }
       else if (removeLocalhostPrefix && prefix.equals(StandardFileSystems.FILE_PROTOCOL) && suffix.startsWith(LOCALHOST_URI_PATH_PREFIX)) {
         // sometimes (e.g. in Google Chrome for Mac) local file url is prefixed with 'localhost' so we need to remove it

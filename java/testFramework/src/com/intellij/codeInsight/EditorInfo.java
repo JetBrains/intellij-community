@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,8 @@
  */
 package com.intellij.codeInsight;
 
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.Result;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NonNls;
@@ -34,12 +35,12 @@ public class EditorInfo {
   RangeMarker selEndMarker = null;
 
   public EditorInfo(final String fileText) {
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+    new WriteCommandAction(null){
       @Override
-      public void run() {
+      protected void run(Result result) throws Throwable {
         updateCaretAndSelection(EditorFactory.getInstance().createDocument(fileText));
       }
-    });
+    }.execute();
   }
 
   private boolean updateCaretAndSelection(final Document document) {

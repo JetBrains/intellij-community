@@ -3,6 +3,6 @@ abstract class A<T>{
     <S extends Number & Comparable<?>> void baz(A<S> a){}
 
     void bar(A<Long> x, A<Integer> y){
-        baz<error descr="'baz(A<S>)' in 'A' cannot be applied to '(A<capture<? extends java.lang.Number & java.lang.Comparable<? extends java.lang.Comparable<?>>>>)'">(foo(x, y))</error>;
+        baz<error descr="'baz(A<java.lang.Number & java.lang.Comparable<?>>)' in 'A' cannot be applied to '(A<capture<? extends java.lang.Number & java.lang.Comparable<? extends java.lang.Comparable<?>>>>)'">(foo(x, y))</error>;
     }
 }

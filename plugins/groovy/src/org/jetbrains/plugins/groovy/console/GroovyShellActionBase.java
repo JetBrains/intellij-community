@@ -112,7 +112,7 @@ public abstract class GroovyShellActionBase extends DumbAwareAction {
     final Map<Module, String> versions = new HashMap<Module, String>();
 
     for (Module module : getGroovyCompatibleModules(project)) {
-      GroovyShellRunner runner = GroovyShellRunner.getAppropriateRunner(module);
+      GroovyShellRunner runner = getRunner(module);
       if (runner != null) {
         modules.add(module);
         versions.put(module, runner.getTitle(module));

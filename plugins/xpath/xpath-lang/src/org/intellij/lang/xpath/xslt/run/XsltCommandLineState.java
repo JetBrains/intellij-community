@@ -27,6 +27,7 @@ import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManager;
+import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.components.PathMacroManager;
@@ -50,7 +51,6 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.io.File;
-import java.io.IOException;
 import java.util.List;
 
 import static org.intellij.lang.xpath.xslt.run.XsltRunConfiguration.isEmpty;
@@ -86,105 +86,104 @@ public class XsltCommandLineState extends CommandLineState {
     }
 
     protected SimpleJavaParameters createJavaParameters() throws ExecutionException {
-        final Sdk jdk = myXsltRunConfiguration.getEffectiveJDK();
-        if (jdk == null) {
-            throw CantRunException.noJdkConfigured();
+      final Sdk jdk = myXsltRunConfiguration.getEffectiveJDK();
+      if (jdk == null) {
+        throw CantRunException.noJdkConfigured();
+      }
+
+      final SimpleJavaParameters parameters = new SimpleJavaParameters();
+      parameters.setJdk(jdk);
+
+      if (myXsltRunConfiguration.getJdkChoice() == XsltRunConfiguration.JdkChoice.FROM_MODULE) {
+        final Module module = myXsltRunConfiguration.getEffectiveModule();
+        // relaxed check for valid module: when running XSLTs that don't belong to any module, let's assume it is
+        // OK to run as if just a JDK has been selected (a missing JDK would already have been complained about above)
+        if (module != null) {
+          OrderEnumerator.orderEntries(module).productionOnly().recursively().classes().collectPaths(parameters.getClassPath());
         }
+      }
 
-        final SimpleJavaParameters parameters = new SimpleJavaParameters();
-        parameters.setJdk(jdk);
+      final ParametersList vmParameters = parameters.getVMParametersList();
+      vmParameters.addParametersString(myXsltRunConfiguration.myVmArguments);
+      if (isEmpty(myXsltRunConfiguration.getXsltFile())) {
+        throw new CantRunException("No XSLT file selected");
+      }
+      vmParameters.defineProperty("xslt.file", myXsltRunConfiguration.getXsltFile());
+      if (isEmpty(myXsltRunConfiguration.getXmlInputFile())) {
+        throw new CantRunException("No XML input file selected");
+      }
+      vmParameters.defineProperty("xslt.input", myXsltRunConfiguration.getXmlInputFile());
 
-        if (myXsltRunConfiguration.getJdkChoice() == XsltRunConfiguration.JdkChoice.FROM_MODULE) {
-            final Module module = myXsltRunConfiguration.getEffectiveModule();
-            // relaxed check for valid module: when running XSLTs that don't belong to any module, let's assume it is
-            // OK to run as if just a JDK has been selected (a missing JDK would already have been complained about above) 
-            if (module != null) {
-              OrderEnumerator.orderEntries(module).productionOnly().recursively().classes().collectPaths(parameters.getClassPath());
-            }
+      final XsltRunConfiguration.OutputType outputType = myXsltRunConfiguration.getOutputType();
+      if (outputType == XsltRunConfiguration.OutputType.CONSOLE) {
+        //noinspection deprecation
+        myPort = NetUtils.tryToFindAvailableSocketPort(myXsltRunConfiguration.myRunnerPort);
+        vmParameters.defineProperty("xslt.listen-port", String.valueOf(myPort));
+      }
+      if (myXsltRunConfiguration.isSaveToFile()) {
+        vmParameters.defineProperty("xslt.output", myXsltRunConfiguration.myOutputFile);
+      }
+
+      for (Pair<String, String> pair : myXsltRunConfiguration.getParameters()) {
+        final String name = pair.getFirst();
+        final String value = pair.getSecond();
+        if (isEmpty(name) || value == null) continue;
+        vmParameters.defineProperty("xslt.param." + name, value);
+      }
+      vmParameters.defineProperty("xslt.smart-error-handling", String.valueOf(myXsltRunConfiguration.mySmartErrorHandling));
+
+      final PluginId pluginId = PluginManagerCore.getPluginByClassName(getClass().getName());
+      assert pluginId != null || System.getProperty("xslt.plugin.path") != null : "PluginId not found - development builds need to specify -Dxslt.plugin.path=../out/classes/production/xslt-rt";
+
+      final File pluginPath;
+      if (pluginId != null) {
+        final IdeaPluginDescriptor descriptor = PluginManager.getPlugin(pluginId);
+        assert descriptor != null;
+        pluginPath = descriptor.getPath();
+      }
+      else {
+        // -Dxslt.plugin.path=C:\work\java\intellij/ultimate\out\classes\production\xslt-rt
+        pluginPath = new File(System.getProperty("xslt.plugin.path"));
+      }
+
+      LOG.debug("Plugin Path = " + pluginPath.getAbsolutePath());
+
+      final char c = File.separatorChar;
+      File rtClasspath = new File(pluginPath, "lib" + c + "rt" + c + "xslt-rt.jar");
+      //        File rtClasspath = new File("C:/Demetra/plugins/xpath/lib/rt/xslt-rt.jar");
+      if (!rtClasspath.exists()) {
+        LOG.warn("Plugin's Runtime classes not found in " + rtClasspath.getAbsolutePath());
+        if (!(rtClasspath = new File(pluginPath, "classes")).exists()) {
+          if (ApplicationManagerEx.getApplicationEx().isInternal() && new File(pluginPath, "org").exists()) {
+            rtClasspath = pluginPath;
+          }
+          else {
+            throw new CantRunException("Runtime classes not found");
+          }
         }
+        parameters.getVMParametersList().prepend("-ea");
+      }
+      parameters.getClassPath().addTail(rtClasspath.getAbsolutePath());
 
-        final ParametersList vmParameters = parameters.getVMParametersList();
-        vmParameters.addParametersString(myXsltRunConfiguration.myVmArguments);
-        if (isEmpty(myXsltRunConfiguration.getXsltFile())) {
-            throw new CantRunException("No XSLT file selected");
-        }
-        vmParameters.defineProperty("xslt.file", myXsltRunConfiguration.getXsltFile());
-        if (isEmpty(myXsltRunConfiguration.getXmlInputFile())) {
-            throw new CantRunException("No XML input file selected");
-        }
-        vmParameters.defineProperty("xslt.input", myXsltRunConfiguration.getXmlInputFile());
-
-        final XsltRunConfiguration.OutputType outputType = myXsltRunConfiguration.getOutputType();
-        if (outputType == XsltRunConfiguration.OutputType.CONSOLE) {
-            try {
-                myPort = NetUtils.findAvailableSocketPort();
-            } catch (IOException e) {
-                //noinspection deprecation
-                myPort = myXsltRunConfiguration.myRunnerPort;
-            }
-            vmParameters.defineProperty("xslt.listen-port", String.valueOf(myPort));
-        } 
-        if (myXsltRunConfiguration.isSaveToFile()) {
-            vmParameters.defineProperty("xslt.output", myXsltRunConfiguration.myOutputFile);
-        }
-
-        for (Pair<String, String> pair : myXsltRunConfiguration.getParameters()) {
-            final String name = pair.getFirst();
-            final String value = pair.getSecond();
-            if (isEmpty(name) || value == null) continue;
-            vmParameters.defineProperty("xslt.param." + name, value);
-        }
-        vmParameters.defineProperty("xslt.smart-error-handling", String.valueOf(myXsltRunConfiguration.mySmartErrorHandling));
-
-        final PluginId pluginId = PluginManager.getPluginByClassName(getClass().getName());
-        assert pluginId != null || System.getProperty("xslt.plugin.path") != null : "PluginId not found - development builds need to specify -Dxslt.plugin.path=../out/classes/production/xslt-rt";
-
-        final File pluginPath;
-        if (pluginId != null) {
-            final IdeaPluginDescriptor descriptor = PluginManager.getPlugin(pluginId);
-            assert descriptor != null;
-            pluginPath = descriptor.getPath();
-        } else {
-          // -Dxslt.plugin.path=C:\work\java\intellij/ultimate\out\classes\production\xslt-rt
-          pluginPath = new File(System.getProperty("xslt.plugin.path"));
-        }
-
-        LOG.debug("Plugin Path = " + pluginPath.getAbsolutePath());
-
-        final char c = File.separatorChar;
-        File rtClasspath = new File(pluginPath, "lib" + c + "rt" + c + "xslt-rt.jar");
-//        File rtClasspath = new File("C:/Demetra/plugins/xpath/lib/rt/xslt-rt.jar");
-        if (!rtClasspath.exists()) {
-            LOG.warn("Plugin's Runtime classes not found in " + rtClasspath.getAbsolutePath());
-            if (!(rtClasspath = new File(pluginPath, "classes")).exists()) {
-              if (ApplicationManagerEx.getApplicationEx().isInternal() && new File(pluginPath, "org").exists()) {
-                rtClasspath = pluginPath;
-              } else {
-                throw new CantRunException("Runtime classes not found");
-              }
-            }
-            parameters.getVMParametersList().prepend("-ea");
-        }
-        parameters.getClassPath().addTail(rtClasspath.getAbsolutePath());
-
-        parameters.setMainClass("org.intellij.plugins.xslt.run.rt.XSLTRunner");
+      parameters.setMainClass("org.intellij.plugins.xslt.run.rt.XSLTRunner");
 
       if (isEmpty(myXsltRunConfiguration.myWorkingDirectory)) {
         parameters.setWorkingDirectory(new File(myXsltRunConfiguration.getXsltFile()).getParentFile().getAbsolutePath());
-      } else {
+      }
+      else {
         parameters.setWorkingDirectory(expandPath(myXsltRunConfiguration.myWorkingDirectory, myXsltRunConfiguration.getEffectiveModule(),
                                                   myXsltRunConfiguration.getProject()));
       }
 
-        myExtensionData = new UserDataHolderBase();
-        final List<XsltRunnerExtension> extensions = XsltRunnerExtension.getExtensions(myXsltRunConfiguration, myIsDebugger);
-        for (XsltRunnerExtension extension : extensions) {
-            extension.patchParameters(parameters, myXsltRunConfiguration, myExtensionData);
-        }
+      myExtensionData = new UserDataHolderBase();
+      final List<XsltRunnerExtension> extensions = XsltRunnerExtension.getExtensions(myXsltRunConfiguration, myIsDebugger);
+      for (XsltRunnerExtension extension : extensions) {
+        extension.patchParameters(parameters, myXsltRunConfiguration, myExtensionData);
+      }
 
-        parameters.setUseDynamicClasspath(JdkUtil.useDynamicClasspath(myXsltRunConfiguration.getProject()));
+      parameters.setUseDynamicClasspath(JdkUtil.useDynamicClasspath(myXsltRunConfiguration.getProject()));
 
-        return parameters;
+      return parameters;
     }
 
   protected static String expandPath(String path, Module module, Project project) {

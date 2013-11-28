@@ -68,7 +68,8 @@ class ExternalProjectBuilder extends BuilderSupport {
         ProjectSystemId projectSystemId = attributes.projectSystemId ?: TEST_EXTERNAL_SYSTEM_ID
         String moduleFilePath = attributes.moduleFilePath ?: projectDir.path
         String externalConfigPath = attributes.externalConfigPath ?: projectDir.path
-        ModuleData moduleData = new ModuleData(projectSystemId,
+        ModuleData moduleData = new ModuleData(attributes.name ?: name as String,
+                                               projectSystemId,
                                                ModuleTypeId.JAVA_MODULE,
                                                attributes.name ?: name as String,
                                                moduleFilePath,

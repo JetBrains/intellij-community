@@ -15,9 +15,7 @@
  */
 package com.intellij.openapi.wm.impl;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.wm.ToolWindowAnchor;
-import com.intellij.ui.ColorUtil;
 import com.intellij.ui.Gray;
 import com.intellij.util.ui.UIUtil;
 
@@ -27,7 +25,6 @@ import javax.swing.plaf.basic.BasicGraphicsUtils;
 import javax.swing.plaf.metal.MetalToggleButtonUI;
 import java.awt.*;
 import java.awt.geom.AffineTransform;
-import java.awt.geom.RoundRectangle2D;
 
 /**
  * @author Vladimir Kondratyev
@@ -52,7 +49,7 @@ public final class StripeButtonUI extends MetalToggleButtonUI{
     final Dimension dim=super.getPreferredSize(button);
 
     dim.width=(int)(4+dim.width*1.1f);
-    dim.height+=4;
+    dim.height+=2;
 
     final ToolWindowAnchor anchor=button.getAnchor();
     if(ToolWindowAnchor.LEFT==anchor||ToolWindowAnchor.RIGHT==anchor){
@@ -109,20 +106,16 @@ public final class StripeButtonUI extends MetalToggleButtonUI{
 
     final ButtonModel model=button.getModel();
     final Color background = button.getBackground();
-    final boolean vertical = anchor == ToolWindowAnchor.LEFT || anchor == ToolWindowAnchor.RIGHT;
-
-    if (ApplicationManager.getApplication().isInternal()) {
-      ourIconRect.x-=2;
-      ourTextRect.x-=2;
+    ourIconRect.x -= 2;
+    ourTextRect.x -= 2;
+    if (model.isArmed() && model.isPressed() || model.isSelected() || model.isRollover()) {
       if (anchor == ToolWindowAnchor.LEFT) g2.translate(-1, 0);
       if (anchor.isHorizontal()) g2.translate(0, -1);
-      paintNewDecoration(g2, button, model, vertical);
+      final boolean dark = UIUtil.isUnderDarcula();
+      g2.setColor(dark ? Gray._15.withAlpha(model.isSelected() ? 85: 40) : Gray._85.withAlpha(model.isSelected()? 85: 40));
+      g2.fillRect(0, 0, button.getWidth(), button.getHeight());
       if (anchor == ToolWindowAnchor.LEFT) g2.translate(1, 0);
       if (anchor.isHorizontal()) g2.translate(0, 1);
-    } else {
-      if (anchor == ToolWindowAnchor.RIGHT) g2.translate(1, 0);
-      paintLegacyDecoration(g2, button, model, vertical);
-      if (anchor == ToolWindowAnchor.RIGHT) g2.translate(-1, 0);
     }
 
 
@@ -164,7 +157,7 @@ public final class StripeButtonUI extends MetalToggleButtonUI{
       /* Draw the Text */
       if(model.isEnabled()){
         /*** paint the text normally */
-        g2.setColor(button.getForeground());
+        g2.setColor(UIUtil.isUnderDarcula() && model.isSelected() ? button.getForeground().brighter() : button.getForeground());
         BasicGraphicsUtils.drawString(g2,clippedText,button.getMnemonic2(),ourTextRect.x,ourTextRect.y+fm.getAscent());
       } else{
         /*** paint the text disabled ***/
@@ -181,51 +174,5 @@ public final class StripeButtonUI extends MetalToggleButtonUI{
     }
     
     g2.dispose();
-  }
-
-  private static void paintNewDecoration(Graphics2D g2, AnchoredButton button, ButtonModel model, boolean vertical) {
-    final boolean dark = UIUtil.isUnderDarcula();
-    Color toBorder = model.isRollover() ? dark ? Gray._90 : new Color(0, 0, 0, 50) : null;
-    double gap = 2;
-    double r = (((vertical? button.getWidth() : button.getHeight()) - 2 * gap) - 1)/4;
-    Shape shape = new RoundRectangle2D.Double(gap, gap, button.getWidth() - 2 * gap, button.getHeight() - 2 * gap, r, r);
-
-    if (model.isArmed() && model.isPressed() || model.isSelected()) {
-      g2.setColor(ColorUtil.mix(dark ? Gray._85.withAlpha(85) : new Color(0, 0, 0, 30), new Color(100, 150, 230, 50), .5));
-      g2.fill(shape);
-      g2.setColor(dark ? Gray._40 : new Color(0, 0, 0, 120));
-      g2.draw(shape);
-      toBorder = null;
-    }
-    if (toBorder != null) {
-      g2.setColor(toBorder);
-      g2.draw(shape);
-    }
-  }
-
-  private static void paintLegacyDecoration(Graphics2D g2, AnchoredButton button, ButtonModel model, boolean vertical) {
-    final boolean dark = UIUtil.isUnderDarcula();
-    Color toBorder = model.isRollover() ? dark ? Gray._90 : new Color(0, 0, 0, 50) : null;
-    if (model.isArmed() && model.isPressed() || model.isSelected()) {
-      g2.setColor(dark ? Gray._85.withAlpha(85) : new Color(0, 0, 0, 30));
-      g2.fillRect(3, 3, button.getWidth() - (vertical ? 6 : 5), button.getHeight() - 6);
-
-      g2.setColor(dark ? Gray._40 : new Color(0, 0, 0, 120));
-      g2.drawLine(2, 2, 3 + button.getWidth() - (vertical ? 7 : 6), 2);
-      g2.drawLine(2, 3, 2, 3 + button.getHeight() - 7);
-
-      g2.setColor(dark ? Gray._65 : new Color(0, 0, 0, 40));
-      g2.drawRect(3, 3, button.getWidth() - (vertical ? 7 : 6), button.getHeight() - 7);
-
-      g2.setColor(dark ? Gray._75 : new Color(255, 255, 255, 110));
-      g2.drawLine(3, button.getHeight() - 3, 3 + button.getWidth() - (vertical ? 6 : 5), button.getHeight() - 3);
-      g2.drawLine(3 + button.getWidth() - (vertical ? 6 : 5), 2, 3 + button.getWidth() - (vertical ? 6 : 5),
-                  3 + button.getHeight() - 7);
-      toBorder = null;
-    }
-    if (toBorder != null) {
-      g2.setColor(toBorder);
-      g2.drawRect(2, 2, button.getWidth() - (vertical ? 6 : 5), button.getHeight() - 6);
-    }
   }
 }

@@ -37,8 +37,9 @@ def patch_args(args):
                 host, port = pydevd.dispatch()
 
                 if port is not None:
-                    args[indC + 1] = "import sys; sys.path.append('%s'); import pydevd; pydevd.settrace(host='%s', port=%s, suspend=False); %s"%(helpers, host, port, args[indC + 1])
-                    return args
+                    new_args.extend(args)
+                    new_args[indC + 1] = "import sys; sys.path.append('%s'); import pydevd; pydevd.settrace(host='%s', port=%s, suspend=False); %s"%(helpers, host, port, args[indC + 1])
+                    return new_args
             else:
                 new_args.append(args[0])
         else:

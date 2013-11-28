@@ -81,7 +81,7 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner
 
   public AbstractInplaceIntroducer(Project project,
                                    Editor editor,
-                                   E expr,
+                                   @Nullable E expr,
                                    @Nullable V localVariable,
                                    E[] occurrences,
                                    String title,

@@ -31,7 +31,7 @@ public class EnclosingLoopOrSwitchMatcherExpression implements PsiMatcherExpress
     if (element instanceof PsiWhileStatement) return Boolean.TRUE;
     if (element instanceof PsiDoWhileStatement) return Boolean.TRUE;
     if (element instanceof PsiSwitchStatement) return Boolean.TRUE;
-    if (element instanceof PsiMethod || element instanceof PsiClassInitializer) return null;
+    if (element instanceof PsiMethod || element instanceof PsiClassInitializer || element instanceof PsiLambdaExpression) return null;
     return Boolean.FALSE;
   }
 }

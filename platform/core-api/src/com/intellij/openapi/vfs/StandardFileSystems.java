@@ -17,6 +17,7 @@ package com.intellij.openapi.vfs;
 
 import com.intellij.ide.highlighter.ArchiveFileType;
 import com.intellij.openapi.util.NotNullLazyValue;
+import com.intellij.util.io.URLUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -24,12 +25,12 @@ import org.jetbrains.annotations.Nullable;
  * @author yole
  */
 public class StandardFileSystems {
-  public static String FILE_PROTOCOL = "file";
-  public static String FILE_PROTOCOL_PREFIX = "file://";
-  public static String JAR_PROTOCOL = "jar";
-  public static String JAR_PROTOCOL_PREFIX = "jar://";
-  public static String JAR_SEPARATOR = "!/";
-  public static String HTTP_PROTOCOL = "http";
+  public static final String FILE_PROTOCOL = "file";
+  public static final String FILE_PROTOCOL_PREFIX = FILE_PROTOCOL + URLUtil.SCHEME_SEPARATOR;
+  public static final String JAR_PROTOCOL = "jar";
+  public static final String JAR_PROTOCOL_PREFIX = JAR_PROTOCOL + URLUtil.SCHEME_SEPARATOR;
+  public static final String JAR_SEPARATOR = "!/";
+  public static final String HTTP_PROTOCOL = "http";
 
   private static final NotNullLazyValue<VirtualFileSystem> ourLocal = new NotNullLazyValue<VirtualFileSystem>() {
     @NotNull

@@ -4,7 +4,6 @@ import com.intellij.ide.highlighter.ModuleFileType;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.ContainerUtilRt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -17,12 +16,13 @@ import java.util.Map;
  * @author Denis Zhdanov
  * @since 8/8/11 12:11 PM
  */
-public class ModuleData extends AbstractNamedData implements Named, ExternalConfigPathAware {
+public class ModuleData extends AbstractNamedData implements Named, ExternalConfigPathAware, Identifiable {
 
   private static final long serialVersionUID = 1L;
 
-  @NotNull private final Map<ExternalSystemSourceType, String> myCompileOutputPaths = ContainerUtilRt.newHashMap();
-
+  @NotNull private final Map<ExternalSystemSourceType, String> myCompileOutputPaths = ContainerUtil.newHashMap();
+  @NotNull private final String myId;
+  @NotNull private final String myIdeModuleFileName;
   @NotNull private final String myModuleTypeId;
   @NotNull private final String myExternalConfigPath;
   @NotNull private String myModuleFilePath;
@@ -32,16 +32,39 @@ public class ModuleData extends AbstractNamedData implements Named, ExternalConf
 
   private boolean myInheritProjectCompileOutputPath = true;
 
+  @Deprecated
   public ModuleData(@NotNull ProjectSystemId owner,
                     @NotNull String typeId,
                     @NotNull String name,
                     @NotNull String moduleFileDirectoryPath,
                     @NotNull String externalConfigPath) {
+    this("", owner, typeId, name, moduleFileDirectoryPath, externalConfigPath);
+  }
+
+  public ModuleData(@NotNull String id,
+                    @NotNull ProjectSystemId owner,
+                    @NotNull String typeId,
+                    @NotNull String name,
+                    @NotNull String moduleFileDirectoryPath,
+                    @NotNull String externalConfigPath) {
     super(owner, name);
+    myId = id;
+    myIdeModuleFileName = name.replaceAll("(/|\\\\)", "_");
     myModuleTypeId = typeId;
     myExternalConfigPath = externalConfigPath;
     myArtifacts = Collections.emptyList();
     setModuleFileDirectoryPath(moduleFileDirectoryPath);
+  }
+
+  @NotNull
+  @Override
+  public String getId() {
+    return myId;
+  }
+
+  @NotNull
+  public String getIdeModuleFileName() {
+    return myIdeModuleFileName;
   }
 
   @NotNull
@@ -61,7 +84,7 @@ public class ModuleData extends AbstractNamedData implements Named, ExternalConf
   }
 
   public void setModuleFileDirectoryPath(@NotNull String path) {
-    myModuleFilePath = ExternalSystemApiUtil.toCanonicalPath(path + "/" + getName() + ModuleFileType.DOT_DEFAULT_EXTENSION);
+    myModuleFilePath = ExternalSystemApiUtil.toCanonicalPath(path + "/" + myIdeModuleFileName + ModuleFileType.DOT_DEFAULT_EXTENSION);
   }
 
   public boolean isInheritProjectCompileOutputPath() {

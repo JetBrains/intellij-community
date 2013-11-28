@@ -19,7 +19,6 @@ import com.intellij.diagnostic.Dumpable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.text.CharArrayCharSequence;
 import com.intellij.util.text.CharArrayUtil;
@@ -468,7 +467,7 @@ abstract class CharArray implements CharSequenceBackedByArray, Dumpable {
       try {
         flushDeferredChanged();
         if (myOriginalSequence != null && myArray == null) {
-          myArray = array = ArrayUtil.realloc(CharArrayUtil.fromSequence(myOriginalSequence), myOriginalSequence.length());
+          myArray = array = CharArrayUtil.fromSequence(myOriginalSequence);
           myStringRef = null;
         }
       }

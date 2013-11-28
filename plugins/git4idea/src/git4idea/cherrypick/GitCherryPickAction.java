@@ -15,6 +15,7 @@
  */
 package git4idea.cherrypick;
 
+import com.intellij.dvcs.DvcsUtil;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
@@ -29,7 +30,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.*;
 import git4idea.GitLocalBranch;
 import git4idea.GitPlatformFacade;
-import git4idea.GitUtil;
 import git4idea.GitVcs;
 import git4idea.commands.Git;
 import git4idea.config.GitVcsSettings;
@@ -133,7 +133,7 @@ public class GitCherryPickAction extends DumbAwareAction {
   public void update(AnActionEvent e) {
     super.update(e);
     final VcsLog log = getVcsLog(e);
-    if (log != null && !GitUtil.logHasGitRoot(log)) {
+    if (log != null && !DvcsUtil.logHasRootForVcs(log, GitVcs.getKey())) {
       e.getPresentation().setEnabledAndVisible(false);
     }
     else {

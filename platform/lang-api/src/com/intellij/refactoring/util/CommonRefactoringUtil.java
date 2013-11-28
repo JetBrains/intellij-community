@@ -84,7 +84,7 @@ public class CommonRefactoringUtil {
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       @Override
       public void run() {
-        if (editor == null) {
+        if (editor == null || editor.getComponent().getRootPane() == null) {
           showErrorMessage(title, message, helpId, project);
         }
         else {

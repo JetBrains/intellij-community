@@ -125,7 +125,7 @@ class StateMerger {
         List<DfaMemoryStateImpl> complementary = ContainerUtil.filter(similarStates, new Condition<DfaMemoryStateImpl>() {
           @Override
           public boolean value(DfaMemoryStateImpl state2) {
-            return state1.equalsSuperficially(state2) && state1.equalsByRelations(state2) && state1.equalsByVariableStates(state2);
+            return state1.equalsByRelations(state2) && state1.equalsByVariableStates(state2);
           }
         });
         if (complementary.size() > 1) {
@@ -162,8 +162,7 @@ class StateMerger {
           List<DfaMemoryStateImpl> complementary = ContainerUtil.filter(similarStates, new Condition<DfaMemoryStateImpl>() {
             @Override
             public boolean value(DfaMemoryStateImpl state2) {
-              return state1.equalsSuperficially(state2) && 
-                     state1.equalsByRelations(state2) && 
+              return state1.equalsByRelations(state2) && 
                      areEquivalentModuloVar(state1, state2, var) &&
                      areVarStatesEqualModuloNullability(state1, state2, var);
             }
@@ -300,9 +299,6 @@ class StateMerger {
   }
 
   private boolean seemCompatible(DfaMemoryStateImpl state1, DfaMemoryStateImpl state2, DfaVariableValue differentVar) {
-    if (!state1.equalsSuperficially(state2)) {
-      return false;
-    }
     Map<DfaVariableValue, DfaConstValue> varValues1 = getVarValues(state1);
     Map<DfaVariableValue, DfaConstValue> varValues2 = getVarValues(state2);
     

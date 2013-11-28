@@ -94,7 +94,7 @@ public class BuiltInServer implements Disposable {
         int customPortServerManagerPort = customPortServerManager.getPort();
         SubServer subServer = new SubServer(customPortServerManager, eventLoopGroup);
         Disposer.register(this, subServer);
-        if (customPortServerManagerPort != firstPort && customPortServerManagerPort != port) {
+        if (customPortServerManager.isAvailableExternally() || (customPortServerManagerPort != firstPort && customPortServerManagerPort != port)) {
           subServer.bind(customPortServerManagerPort);
         }
       }

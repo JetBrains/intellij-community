@@ -20,6 +20,8 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiDocumentManager
+import com.intellij.psi.PsiManager
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.testFramework.PsiTestUtil
@@ -141,5 +143,30 @@ public class Test {
     myFixture.assertPreferredCompletionItems 0, 'getBuilder'
   }
 
+  public void testNoJavaStructureModificationOnSecondInvocation() {
+    myFixture.configureByText 'a.java', 'class Foo { Xxxxx<caret> }'
+    def oldCount = PsiManager.getInstance(project).modificationTracker.javaStructureModificationCount
+    assert !myFixture.completeBasic()
+    assert !myFixture.completeBasic()
+    assert oldCount == PsiManager.getInstance(project).modificationTracker.javaStructureModificationCount
+  }
+
+  public void testNoJavaStructureModificationOnSecondInvocationAfterTyping() {
+    myFixture.configureByText 'a.java', 'class Foo { Xxxxx<caret> }'
+
+    def tracker = PsiManager.getInstance(project).modificationTracker
+    def oldCount = tracker.javaStructureModificationCount
+    assert !myFixture.completeBasic()
+    assert oldCount == tracker.javaStructureModificationCount
+
+    myFixture.type 'x'
+    PsiDocumentManager.getInstance(project).commitAllDocuments()
+    assert oldCount != tracker.javaStructureModificationCount
+    oldCount = tracker.javaStructureModificationCount
+    
+    assert !myFixture.completeBasic()
+    assert !myFixture.completeBasic()
+    assert oldCount == tracker.javaStructureModificationCount
+  }
 
 }

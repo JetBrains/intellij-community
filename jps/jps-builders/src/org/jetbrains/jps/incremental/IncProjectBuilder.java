@@ -85,9 +85,10 @@ public class IncProjectBuilder {
   static {
     int maxThreads = Math.min(6, Runtime.getRuntime().availableProcessors() - 1);
     try {
-      maxThreads = Math.max(2, Integer.parseInt(System.getProperty(GlobalOptions.COMPILE_PARALLEL_MAX_THREADS_OPTION, Integer.toString(maxThreads))));
+      maxThreads = Math.max(1, Integer.parseInt(System.getProperty(GlobalOptions.COMPILE_PARALLEL_MAX_THREADS_OPTION, Integer.toString(maxThreads))));
     }
     catch (NumberFormatException ignored) {
+      maxThreads = Math.max(1, maxThreads);
     }
     MAX_BUILDER_THREADS = maxThreads;
   }
@@ -568,7 +569,7 @@ public class IncProjectBuilder {
 
   private void buildChunks(final CompileContextImpl context) throws ProjectBuildException {
     try {
-      if (BuildRunner.PARALLEL_BUILD_ENABLED) {
+      if (BuildRunner.PARALLEL_BUILD_ENABLED && MAX_BUILDER_THREADS > 1) {
         new BuildParallelizer(context).buildInParallel();
       }
       else {
@@ -632,9 +633,7 @@ public class IncProjectBuilder {
   }
 
   private class BuildParallelizer {
-    private final BoundedTaskExecutor myParallelBuildExecutor =
-      new BoundedTaskExecutor(SharedThreadPool.getInstance(),
-                              Math.min(MAX_BUILDER_THREADS, Math.max(2, Runtime.getRuntime().availableProcessors())));
+    private final BoundedTaskExecutor myParallelBuildExecutor = new BoundedTaskExecutor(SharedThreadPool.getInstance(), MAX_BUILDER_THREADS);
     private final CompileContext myContext;
     private final AtomicReference<Throwable> myException = new AtomicReference<Throwable>();
     private final Object myQueueLock = new Object();

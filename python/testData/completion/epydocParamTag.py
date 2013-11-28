@@ -1,2 +1,2 @@
 def foo(bar):
-    """ @param <caret> """
+    """ @param b<caret> """

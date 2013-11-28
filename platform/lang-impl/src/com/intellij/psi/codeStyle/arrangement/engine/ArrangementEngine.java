@@ -273,14 +273,18 @@ public class ArrangementEngine {
 
     for (int i = 0; i < arranged.size() && !dependent.isEmpty(); i++) {
       E e = arranged.get(i);
+      List<E> shouldBeAddedAfterCurrentElement = ContainerUtil.newArrayList();
+
       for (Iterator<Pair<Set<ArrangementEntry>, E>> iterator = dependent.iterator(); iterator.hasNext(); ) {
         Pair<Set<ArrangementEntry>, E> pair = iterator.next();
         pair.first.remove(e);
         if (pair.first.isEmpty()) {
           iterator.remove();
-          arranged.add(i + 1, pair.second);
+          shouldBeAddedAfterCurrentElement.add(pair.second);
         }
       }
+
+      arranged.addAll(i + 1, shouldBeAddedAfterCurrentElement);
     }
 
     return arranged;
@@ -351,7 +355,17 @@ public class ArrangementEngine {
     for (int i = arranged.size() - 1; i >= 0; i--) {
       ArrangementEntryWrapper<E> arrangedWrapper = map.get(arranged.get(i));
       ArrangementEntryWrapper<E> initialWrapper = wrappers.get(i);
-      context.changer.replace(arrangedWrapper, initialWrapper, i > 0 ? map.get(arranged.get(i - 1)) : null, context);
+
+      ArrangementEntryWrapper<E> previous = i > 0 ? map.get(arranged.get(i - 1)) : null;
+      ArrangementEntryWrapper<E> previousInitial = i > 0 ? wrappers.get(i - 1) : null;
+
+      if (arrangedWrapper.equals(initialWrapper)) {
+        if (previous != null && previous.equals(previousInitial) || previous == null && previousInitial == null) {
+          continue;
+        }
+      }
+
+      context.changer.replace(arrangedWrapper, initialWrapper, previous, context);
     }
   }
 

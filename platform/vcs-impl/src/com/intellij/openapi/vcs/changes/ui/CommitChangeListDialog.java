@@ -28,10 +28,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.*;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Getter;
-import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.*;
@@ -585,15 +582,17 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
       @Override
       public void run() {
         try {
-          runBeforeCommitHandlers(new Runnable() {
-              @Override
-              public void run() {
-                CommitChangeListDialog.super.doOKAction();
-                doCommit(myResultHandler);
-              }
-            }, null);
+          CheckinHandler.ReturnResult result = runBeforeCommitHandlers(new Runnable() {
+            @Override
+            public void run() {
+              CommitChangeListDialog.super.doOKAction();
+              doCommit(myResultHandler);
+            }
+          }, null);
 
-          defaultListCleaner.clean();
+          if (result == CheckinHandler.ReturnResult.COMMIT) {
+            defaultListCleaner.clean();
+          }
         }
         catch (InputException ex) {
           ex.show();
@@ -854,10 +853,10 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     myUpdateButtonsRunnable.restart(this);
   }
   
-  private void runBeforeCommitHandlers(final Runnable okAction, final CommitExecutor executor) {
-    Runnable proceedRunnable = new Runnable() {
+  private CheckinHandler.ReturnResult runBeforeCommitHandlers(final Runnable okAction, final CommitExecutor executor) {
+    final Computable<CheckinHandler.ReturnResult> proceedRunnable = new Computable<CheckinHandler.ReturnResult>() {
       @Override
-      public void run() {
+      public CheckinHandler.ReturnResult compute() {
         FileDocumentManager.getInstance().saveAllDocuments();
 
         for (CheckinHandler handler : myHandlers) {
@@ -866,7 +865,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
           if (result == CheckinHandler.ReturnResult.COMMIT) continue;
           if (result == CheckinHandler.ReturnResult.CANCEL) {
             restartUpdate();
-            return;
+            return CheckinHandler.ReturnResult.CANCEL;
           }
 
           if (result == CheckinHandler.ReturnResult.CLOSE_WINDOW) {
@@ -877,16 +876,23 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
                              VcsBundle.message("commit.dialog.rejected.commit.template", changeList.getName()),
                              myProject);
             doCancelAction();
-            return;
+            return CheckinHandler.ReturnResult.CLOSE_WINDOW;
           }
         }
 
         okAction.run();
+        return CheckinHandler.ReturnResult.COMMIT;
       }
     };
 
     stopUpdate();
-    Runnable runnable = proceedRunnable;
+    final Ref<CheckinHandler.ReturnResult> compoundResultRef = Ref.create();
+    Runnable runnable = new Runnable() {
+      @Override
+      public void run() {
+        compoundResultRef.set(proceedRunnable.compute());
+      }
+    };
     for(final CheckinHandler handler: myHandlers) {
       if (handler instanceof CheckinMetaHandler) {
         final Runnable previousRunnable = runnable;
@@ -899,6 +905,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
       }
     }
     runnable.run();
+    return compoundResultRef.get();
   }
 
   private boolean saveDialogState() {

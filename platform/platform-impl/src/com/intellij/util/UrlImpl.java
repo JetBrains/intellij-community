@@ -22,18 +22,16 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public final class UrlImpl implements Url {
-  private String externalForm;
-  private UrlImpl withoutParameters;
-
-  @Nullable
   private final String scheme;
-
   private final String authority;
 
   private final String path;
   private String decodedPath;
 
   private final String parameters;
+
+  private String externalForm;
+  private UrlImpl withoutParameters;
 
   public UrlImpl(@Nullable String path) {
     this(null, null, path, null);
@@ -86,10 +84,17 @@ public final class UrlImpl implements Url {
   public String toDecodedForm() {
     StringBuilder builder = new StringBuilder();
     if (scheme != null) {
-      builder.append(scheme).append(URLUtil.SCHEME_SEPARATOR);
-    }
-    if (authority != null) {
-      builder.append(authority);
+      builder.append(scheme);
+      if (authority != null || isInLocalFileSystem()) {
+        builder.append(URLUtil.SCHEME_SEPARATOR);
+      }
+      else {
+        builder.append(':');
+      }
+
+      if (authority != null) {
+        builder.append(authority);
+      }
     }
     builder.append(getPath());
     if (parameters != null) {
@@ -103,6 +108,12 @@ public final class UrlImpl implements Url {
   public String toExternalForm() {
     if (externalForm != null) {
       return externalForm;
+    }
+
+    // relative path - special url, encoding is not required
+    // authority is null in case of URI or file URL
+    if ((path.charAt(0) != '/' || authority == null) && !isInLocalFileSystem()) {
+      return toDecodedForm();
     }
 
     String result = Urls.toUriWithoutParameters(this).toASCIIString();

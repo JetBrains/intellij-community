@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package org.jetbrains.plugins.groovy.lang.psi.impl;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiClassType;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -38,6 +39,8 @@ public class GrRangeType extends GrLiteralClassType {
   private final PsiType myIterationType;
   private final String myQualifiedName;
 
+  private final PsiType[] myParameters;
+
   public GrRangeType(LanguageLevel languageLevel,
                      GlobalSearchScope scope,
                      JavaPsiFacade facade,
@@ -53,6 +56,8 @@ public class GrRangeType extends GrLiteralClassType {
     else {
       myQualifiedName = GroovyCommonClassNames.GROOVY_LANG_OBJECT_RANGE;
     }
+
+    myParameters = inferParameters();
   }
 
   public GrRangeType(GlobalSearchScope scope, JavaPsiFacade facade, @Nullable PsiType left, @Nullable PsiType right) {
@@ -74,7 +79,16 @@ public class GrRangeType extends GrLiteralClassType {
   @NotNull
   @Override
   public PsiType[] getParameters() {
-    return PsiType.EMPTY_ARRAY;
+    return myParameters;
+  }
+
+  private PsiType[] inferParameters() {
+    if (myIterationType == null) return EMPTY_ARRAY;
+
+    PsiClass resolved = resolve();
+    if (resolved == null || resolved.getTypeParameters().length == 0) return EMPTY_ARRAY;
+
+    return new PsiType[]{myIterationType};
   }
 
   @NotNull

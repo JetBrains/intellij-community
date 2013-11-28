@@ -347,6 +347,8 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
               }
             }
           }
+        } else if (LambdaUtil.getFunctionalInterfaceType(expression, true) != null) {
+          myHolder.add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip("Cannot infer functional interface type").create());
         }
       }
       else {
@@ -1222,8 +1224,33 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
         }
       }
     }
+
+    if (!myHolder.hasErrorResults()) {
+      PsiElement qualifier = expression.getQualifier();
+      if (qualifier instanceof PsiTypeElement) {
+        final PsiType psiType = ((PsiTypeElement)qualifier).getType();
+        final HighlightInfo genericArrayCreationInfo = GenericsHighlightUtil.checkGenericArrayCreation(qualifier, psiType);
+        if (genericArrayCreationInfo != null) {
+          myHolder.add(genericArrayCreationInfo);
+        } else {
+          final String wildcardMessage = PsiMethodReferenceUtil.checkTypeArguments((PsiTypeElement)qualifier, psiType);
+          if (wildcardMessage != null) {
+            myHolder.add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(qualifier).descriptionAndTooltip(wildcardMessage).create());
+          }
+        }
+      }
+    }
+    
+    if (!myHolder.hasErrorResults()) {
+      myHolder.add(PsiMethodReferenceHighlightingUtil.checkRawConstructorReference(expression));
+    }
+
     if (!myHolder.hasErrorResults()) {
       myHolder.add(HighlightUtil.checkUnhandledExceptions(expression, expression.getTextRange()));
+    }
+
+    if (!myHolder.hasErrorResults() && method instanceof PsiTypeParameterListOwner) {
+      myHolder.add(GenericsHighlightUtil.checkInferredTypeArguments((PsiTypeParameterListOwner)method, expression, result.getSubstitutor()));
     }
   }
 

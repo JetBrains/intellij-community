@@ -32,6 +32,8 @@
     <orderEntry type="library" name="proxy-vole" level="project" />
     <orderEntry type="module" module-name="analysis-api" exported="" />
     <orderEntry type="module" module-name="editor-ui-api" exported="" />
+    <orderEntry type="library" name="pty4j" level="project" />
+    <orderEntry type="library" name="Guava" level="project" />
   </component>
 </module>
 

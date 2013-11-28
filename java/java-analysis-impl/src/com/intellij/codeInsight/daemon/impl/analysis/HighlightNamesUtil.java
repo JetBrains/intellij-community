@@ -234,15 +234,14 @@ public class HighlightNamesUtil {
     DependencyValidationManagerImpl validationManager = (DependencyValidationManagerImpl)DependencyValidationManager.getInstance(file.getProject());
     List<Pair<NamedScope,NamedScopesHolder>> scopes = validationManager.getScopeBasedHighlightingCachedScopes();
     for (Pair<NamedScope, NamedScopesHolder> scope : scopes) {
-      NamedScope namedScope = scope.getFirst();
-      NamedScopesHolder scopesHolder = scope.getSecond();
-      PackageSet packageSet = namedScope.getValue();
-      if (packageSet != null && packageSet.contains(file, scopesHolder)) {
-        TextAttributesKey scopeKey = ScopeAttributesUtil.getScopeTextAttributeKey(namedScope.getName());
-        TextAttributes attributes = colorsScheme.getAttributes(scopeKey);
-        if (attributes == null || attributes.isEmpty()) {
-          continue;
-        }
+      final NamedScope namedScope = scope.getFirst();
+      final TextAttributesKey scopeKey = ScopeAttributesUtil.getScopeTextAttributeKey(namedScope.getName());
+      final TextAttributes attributes = colorsScheme.getAttributes(scopeKey);
+      if (attributes == null || attributes.isEmpty()) {
+        continue;
+      }
+      final PackageSet packageSet = namedScope.getValue();
+      if (packageSet != null && packageSet.contains(file, scope.getSecond())) {
         result = TextAttributes.merge(attributes, result);
       }
     }

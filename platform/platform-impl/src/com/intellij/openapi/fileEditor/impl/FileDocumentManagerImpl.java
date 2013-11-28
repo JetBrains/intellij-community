@@ -55,6 +55,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.ex.dummy.DummyFileSystem;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
+import com.intellij.pom.core.impl.PomModelImpl;
 import com.intellij.psi.ExternalChangeAction;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.SingleRootFileViewProvider;
@@ -62,6 +63,7 @@ import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.ui.UIBundle;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.Function;
+import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.ConcurrentHashSet;
 import com.intellij.util.messages.MessageBus;
 import org.jetbrains.annotations.NotNull;
@@ -397,7 +399,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
     }
   }
 
-  private void doSaveDocumentInWriteAction(@NotNull Document document, @NotNull VirtualFile file) throws IOException {
+  private void doSaveDocumentInWriteAction(@NotNull final Document document, @NotNull final VirtualFile file) throws IOException {
     if (!file.isValid()) {
       removeFromUnsaved(document);
       return;
@@ -416,22 +418,26 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
       return;
     }
 
-    myMultiCaster.beforeDocumentSaving(document);
+    PomModelImpl.guardPsiModificationsIn(new ThrowableRunnable<IOException>() {
+      @Override
+      public void run() throws IOException {
+        myMultiCaster.beforeDocumentSaving(document);
+        LOG.assertTrue(file.isValid());
 
-    LOG.assertTrue(file.isValid());
+        String text = document.getText();
+        String lineSeparator = getLineSeparator(document, file);
+        if (!lineSeparator.equals("\n")) {
+          text = StringUtil.convertLineSeparators(text, lineSeparator);
+        }
 
-    String text = document.getText();
-    String lineSeparator = getLineSeparator(document, file);
-    if (!lineSeparator.equals("\n")) {
-      text = StringUtil.convertLineSeparators(text, lineSeparator);
-    }
+        Project project = ProjectLocator.getInstance().guessProjectForFile(file);
+        LoadTextUtil.write(project, file, FileDocumentManagerImpl.this, text, document.getModificationStamp());
 
-    Project project = ProjectLocator.getInstance().guessProjectForFile(file);
-    LoadTextUtil.write(project, file, this, text, document.getModificationStamp());
-
-    myUnsavedDocuments.remove(document);
-    LOG.assertTrue(!myUnsavedDocuments.contains(document));
-    myTrailingSpacesStripper.clearLineModificationFlags(document);
+        myUnsavedDocuments.remove(document);
+        LOG.assertTrue(!myUnsavedDocuments.contains(document));
+        myTrailingSpacesStripper.clearLineModificationFlags(document);
+      }
+    });
   }
 
   private static void updateModifiedProperty(@NotNull VirtualFile file) {

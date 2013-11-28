@@ -1350,6 +1350,11 @@ public class FileUtil extends FileUtilRt {
   }
 
   @NotNull
+  public static List<String> loadLines(@NotNull File file) throws IOException {
+    return loadLines(file.getPath());
+  }
+
+  @NotNull
   public static List<String> loadLines(@NotNull String path) throws IOException {
     BufferedReader reader = new BufferedReader(new FileReader(path));
     try {
@@ -1418,5 +1423,22 @@ public class FileUtil extends FileUtilRt {
     }
     final String name = file.getName();
     return StringUtil.endsWithIgnoreCase(name, ".jar") || StringUtil.endsWithIgnoreCase(name, ".zip");
+  }
+
+  public static boolean visitFiles(@NotNull File root, @NotNull Processor<File> processor) {
+    if (!processor.process(root)) {
+      return false;
+    }
+
+    File[] children = root.listFiles();
+    if (children != null) {
+      for (File child : children) {
+        if (!visitFiles(child, processor)) {
+          return false;
+        }
+      }
+    }
+
+    return true;
   }
 }

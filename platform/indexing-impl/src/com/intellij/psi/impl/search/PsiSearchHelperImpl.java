@@ -22,13 +22,18 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.progress.util.TooManyUsagesStatus;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.FileIndexFacade;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -40,6 +45,7 @@ import com.intellij.psi.search.*;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.Processor;
+import com.intellij.util.SmartList;
 import com.intellij.util.codeInsight.CommentUtilCore;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
@@ -344,13 +350,14 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     final AtomicBoolean canceled = new AtomicBoolean(false);
 
     AsyncFutureResult<Boolean> asyncFutureResult = AsyncFutureFactory.getInstance().createAsyncFutureResult();
-    final List<VirtualFile> failedFiles = new ArrayList<VirtualFile>();
+    final List<VirtualFile> failedFiles = Collections.synchronizedList(new SmartList<VirtualFile>());
     try {
       boolean completed =
         JobLauncher.getInstance().invokeConcurrentlyUnderProgress(files, progress, false, false, new Processor<VirtualFile>() {
           @Override
           public boolean process(final VirtualFile vfile) {
             try {
+              TooManyUsagesStatus.getFrom(progress).pauseProcessingIfTooManyUsages();
               processVirtualFile(vfile, progress, localProcessor, canceled, counter, totalSize);
             }
             catch (CannotRunReadActionException action) {
@@ -361,6 +368,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
         });
       if (!failedFiles.isEmpty()) {
         for (final VirtualFile vfile : failedFiles) {
+          TooManyUsagesStatus.getFrom(progress).pauseProcessingIfTooManyUsages();
           // we failed to run read action in job launcher thread
           // run read action in our thread instead
           ApplicationManager.getApplication().runReadAction(new Runnable() {
@@ -381,10 +389,12 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     return asyncFutureResult;
   }
 
-  private void processVirtualFile(final VirtualFile vfile,
+  private void processVirtualFile(@NotNull final VirtualFile vfile,
                                   final ProgressIndicator progress,
-                                  final Processor<? super PsiFile> localProcessor,
-                                  final AtomicBoolean canceled, AtomicInteger counter, int totalSize) {
+                                  @NotNull final Processor<? super PsiFile> localProcessor,
+                                  @NotNull final AtomicBoolean canceled,
+                                  @NotNull AtomicInteger counter,
+                                  int totalSize) {
     final PsiFile file = tryRead(new Computable<PsiFile>() {
       @Override
       public PsiFile compute() {
@@ -392,19 +402,16 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
       }
     });
     if (file != null && !(file instanceof PsiBinaryFile)) {
-      file.getViewProvider().getContents(); // load contents outside read action
-      if (myManager.getProject().isDisposed()) throw new ProcessCanceledException();
-      final List<PsiFile> psiRoots = tryRead(new Computable<List<PsiFile>>() {
-        @Override
-        public List<PsiFile> compute() {
-          return file.getViewProvider().getAllFiles();
-        }
-      });
-      final Set<PsiElement> processed = new THashSet<PsiElement>(psiRoots.size() * 2, (float)0.5);
-      TooManyUsagesStatus.getFrom(progress).pauseProcessingIfTooManyUsages();
+      // load contents outside read action
+      if (FileDocumentManager.getInstance().getCachedDocument(vfile) == null) {
+        LoadTextUtil.loadText(vfile); // cache bytes in vfs
+      }
       tryRead(new Computable<Void>() {
         @Override
         public Void compute() {
+          if (myManager.getProject().isDisposed()) throw new ProcessCanceledException();
+          List<PsiFile> psiRoots = file.getViewProvider().getAllFiles();
+          Set<PsiElement> processed = new THashSet<PsiElement>(psiRoots.size() * 2, (float)0.5);
           for (final PsiFile psiRoot : psiRoots) {
             checkCanceled(progress);
             assert psiRoot != null : "One of the roots of file " + file + " is null. All roots: " + psiRoots +

@@ -231,8 +231,11 @@ public class HgLogProvider implements VcsLogProvider {
     if (userName == null) {
       userName = System.getenv("HGUSER");
     }
+    if (userName == null) {
+      return null;
+    }
     Pair<String, String> userArgs = HgUtil.parseUserNameAndEmail(userName);
-    return userName == null ? null : myVcsObjectsFactory.createUser(userArgs.getFirst(), userArgs.getSecond());
+    return myVcsObjectsFactory.createUser(userArgs.getFirst(), userArgs.getSecond());
   }
 
   private static String prepareParameter(String paramName, String value) {

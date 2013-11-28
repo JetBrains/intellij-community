@@ -61,7 +61,8 @@ public class ContainerUtilRt {
     return map;
   }
 
-  public static <K, V> Map<K,V> newHashMap(Pair<K, V> first, Pair<K, V>[] entries) {
+  @NotNull
+  public static <K, V> Map<K,V> newHashMap(@NotNull Pair<K, V> first, Pair<K, V>[] entries) {
     Map<K, V> map = newHashMap();
     map.put(first.getFirst(), first.getSecond());
     for (Pair<K, V> entry : entries) {
@@ -88,6 +89,16 @@ public class ContainerUtilRt {
   @NotNull
   public static <K, V> LinkedHashMap<K, V> newLinkedHashMap(@NotNull Map<K, V> map) {
     return new com.intellij.util.containers.LinkedHashMap<K, V>(map);
+  }
+
+  @NotNull
+  public static <K, V> LinkedHashMap<K,V> newLinkedHashMap(@NotNull Pair<K, V> first, Pair<K, V>[] entries) {
+    LinkedHashMap<K, V> map = newLinkedHashMap();
+    map.put(first.getFirst(), first.getSecond());
+    for (Pair<K, V> entry : entries) {
+      map.put(entry.getFirst(), entry.getSecond());
+    }
+    return map;
   }
 
   @NotNull

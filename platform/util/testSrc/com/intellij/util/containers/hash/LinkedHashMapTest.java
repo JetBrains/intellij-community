@@ -87,9 +87,9 @@ public class LinkedHashMapTest {
     for (int i = 0; i < 10000; ++i) {
       tested.put(i, Integer.toString(i));
     }
-    int i = 10000;
+    int i = 0;
     for (Integer key : tested.keySet()) {
-      assertEquals(--i, key.intValue());
+      assertEquals(i++, key.intValue());
     }
   }
 
@@ -109,7 +109,7 @@ public class LinkedHashMapTest {
 
     assertEquals(5000, tested.size());
     it = tested.keySet().iterator();
-    for (int i = 9999; i > 0; i -= 2) {
+    for (int i = 1; i <= 9999; i += 2) {
       Assert.assertTrue(it.hasNext());
       assertEquals(i, it.next().intValue());
     }
@@ -180,16 +180,28 @@ public class LinkedHashMapTest {
   }
 
   @Test
-  public void iteration() {
-    ///todo[nik] it iterates in reversed order, may be it is a bug?
+  public void valuesIteration() {
     Map<Integer, String> map = new LinkedHashMap<Integer, String>();
     map.put(1, "a");
     map.put(2, "b");
     map.put(3, "c");
     Iterator<String> iterator = map.values().iterator();
-    assertEquals("c", iterator.next());
-    assertEquals("b", iterator.next());
     assertEquals("a", iterator.next());
+    assertEquals("b", iterator.next());
+    assertEquals("c", iterator.next());
+    assertFalse(iterator.hasNext());
+  }
+
+  @Test
+  public void accessOrderValuesIteration() {
+    Map<Integer, String> map = new LinkedHashMap<Integer, String>(0, true);
+    map.put(1, "a");
+    map.put(2, "b");
+    map.put(3, "c");
+    Iterator<String> iterator = map.values().iterator();
+    assertEquals("a", iterator.next());
+    assertEquals("b", iterator.next());
+    assertEquals("c", iterator.next());
     assertFalse(iterator.hasNext());
   }
 

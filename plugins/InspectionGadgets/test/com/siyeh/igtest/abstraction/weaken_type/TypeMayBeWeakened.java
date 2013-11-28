@@ -120,4 +120,34 @@ public class TypeMayBeWeakened {
     Integer simpleConditional(Boolean condition, Integer value1, Integer value2) {
         return condition ? value1 : value2;
     }
+
+    private static <T, V extends T> java.util.concurrent.atomic.AtomicReference<T> nullSafeReference(java.util.concurrent.atomic.AtomicReference<T> ref, V value) {
+        if (ref != null) ref.set(value);
+        return ref;
+    }
+}
+class MyClass  {
+
+  public MyClass(java.util.Date date, String[] classNames) {}
+
+  static MyClass readMyClass(final ObjectInputStream objectInput) {
+    final long time = objectInput.readLong();
+    final int size = objectInput.readInt();
+    final String[] classNames = new String[size];
+    for (int i = 0; i < size; i++) {
+      classNames[i] = objectInput.readUTF();
+    }
+    return new MyClass(new java.util.Date(time), classNames);
+  }
+}
+interface DataInput {
+  long readLong();
+  int readInt();
+  String readUTF();
+}
+abstract class ObjectInputStream implements DataInput {
+
+  public String readUTF() {
+    return null;
+  }
 }

@@ -83,6 +83,30 @@ public class GraphInferenceHighlightingTest extends LightDaemonAnalyzerTestCase 
     doTest();
   }
 
+  public void testAfterAbstractPipeline() throws Exception {
+    doTest();
+  }
+
+  public void testCapturedReturnTypes() throws Exception {
+    doTest();
+  }
+
+  public void testOverloadChooserOfReturnType() throws Exception {
+    doTest();
+  }
+
+  public void testIDEA98866() throws Exception {
+    doTest();
+  }
+
+  public void testIncompleteSubstitution() throws Exception {
+    doTest();
+  }
+
+  public void testJDK8028774() throws Exception {
+    doTest();
+  }
+
   private void doTest() throws Exception {
     doTest(false);
   }

@@ -18,23 +18,22 @@ package com.intellij.codeInspection.localCanBeFinal;
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
+import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
-import java.awt.*;
 import java.util.*;
-import java.util.List;
 
 /**
  * @author max
@@ -44,12 +43,26 @@ public class LocalCanBeFinal extends BaseJavaBatchLocalInspectionTool {
 
   public boolean REPORT_VARIABLES = true;
   public boolean REPORT_PARAMETERS = true;
+  public boolean REPORT_CATCH_PARAMETERS = true;
+  public boolean REPORT_FOREACH_PARAMETERS = true;
 
   private final LocalQuickFix myQuickFix;
   @NonNls public static final String SHORT_NAME = "LocalCanBeFinal";
 
   public LocalCanBeFinal() {
     myQuickFix = new AcceptSuggested();
+  }
+
+  @Override
+  public void writeSettings(@NotNull Element node) throws WriteExternalException {
+    node.addContent(new Element("option").setAttribute("name", "REPORT_VARIABLES").setAttribute("value", String.valueOf(REPORT_VARIABLES)));
+    node.addContent(new Element("option").setAttribute("name", "REPORT_PARAMETERS").setAttribute("value", String.valueOf(REPORT_PARAMETERS)));
+    if (!REPORT_CATCH_PARAMETERS) {
+      node.addContent(new Element("option").setAttribute("name", "REPORT_CATCH_PARAMETERS").setAttribute("value", "false"));
+    }
+    if (!REPORT_FOREACH_PARAMETERS) {
+      node.addContent(new Element("option").setAttribute("name", "REPORT_FOREACH_PARAMETERS").setAttribute("value", "false"));
+    }
   }
 
   @Override
@@ -148,6 +161,7 @@ public class LocalCanBeFinal extends BaseJavaBatchLocalInspectionTool {
       @Override
       public void visitCatchSection(PsiCatchSection section) {
         super.visitCatchSection(section);
+        if (!REPORT_CATCH_PARAMETERS) return;
         final PsiParameter parameter = section.getParameter();
         if (PsiTreeUtil.getParentOfType(parameter, PsiClass.class) != PsiTreeUtil.getParentOfType(body, PsiClass.class)) {
           return;
@@ -164,6 +178,7 @@ public class LocalCanBeFinal extends BaseJavaBatchLocalInspectionTool {
 
       @Override public void visitForeachStatement(PsiForeachStatement statement) {
         super.visitForeachStatement(statement);
+        if (!REPORT_FOREACH_PARAMETERS) return;
         final PsiParameter param = statement.getIterationParameter();
         if (PsiTreeUtil.getParentOfType(param, PsiClass.class) != PsiTreeUtil.getParentOfType(body, PsiClass.class)) {
           return;
@@ -219,7 +234,7 @@ public class LocalCanBeFinal extends BaseJavaBatchLocalInspectionTool {
       }
     });
 
-    if (body.getParent() instanceof PsiMethod && isReportParameters()) {
+    if (body.getParent() instanceof PsiMethod && REPORT_PARAMETERS) {
       final PsiMethod method = (PsiMethod)body.getParent();
       if (!(method instanceof SyntheticElement)) { // e.g. JspHolderMethod
         Collections.addAll(result, method.getParameterList().getParameters());
@@ -230,6 +245,16 @@ public class LocalCanBeFinal extends BaseJavaBatchLocalInspectionTool {
       final PsiVariable variable = iterator.next();
       if (shouldBeIgnored(variable)) {
         iterator.remove();
+      }
+      final PsiElement parent = variable.getParent();
+      if (!(parent instanceof PsiDeclarationStatement)) {
+        continue;
+      }
+      final PsiDeclarationStatement declarationStatement = (PsiDeclarationStatement)parent;
+      final PsiElement[] elements = declarationStatement.getDeclaredElements();
+      final PsiElement grandParent = parent.getParent();
+      if (elements.length > 1 && grandParent instanceof PsiForStatement) {
+        iterator.remove(); // do not report when more than 1 variable declared in for loop
       }
     }
 
@@ -261,19 +286,21 @@ public class LocalCanBeFinal extends BaseJavaBatchLocalInspectionTool {
 
   private boolean shouldBeIgnored(PsiVariable psiVariable) {
     if (psiVariable.hasModifierProperty(PsiModifier.FINAL)) return true;
-    return isLocalVariable(psiVariable) ? !isReportVariables() : !isReportParameters();
-  }
-
-  private static boolean isLocalVariable(PsiVariable variable) {
-    if (variable instanceof PsiLocalVariable) {
-      return true;
+    if (psiVariable instanceof PsiLocalVariable) {
+      return !REPORT_VARIABLES;
     }
-    if (!(variable instanceof PsiParameter)) {
-      return false;
+    if (psiVariable instanceof PsiParameter) {
+      final PsiParameter parameter = (PsiParameter)psiVariable;
+      final PsiElement declarationScope = parameter.getDeclarationScope();
+      if (declarationScope instanceof PsiCatchSection) {
+        return !REPORT_CATCH_PARAMETERS;
+      }
+      else if (declarationScope instanceof PsiForeachStatement) {
+        return !REPORT_FOREACH_PARAMETERS;
+      }
+      return !REPORT_PARAMETERS;
     }
-    final PsiParameter parameter = (PsiParameter)variable;
-    final PsiElement declarationScope = parameter.getDeclarationScope();
-    return !(declarationScope instanceof PsiMethod) && !(declarationScope instanceof PsiLambdaExpression);
+    return true;
   }
 
   @Override
@@ -326,55 +353,12 @@ public class LocalCanBeFinal extends BaseJavaBatchLocalInspectionTool {
 
   @Override
   public JComponent createOptionsPanel() {
-    return new OptionsPanel();
-  }
-
-  private boolean isReportVariables() {
-    return REPORT_VARIABLES;
-  }
-
-  private boolean isReportParameters() {
-    return REPORT_PARAMETERS;
-  }
-
-  private class OptionsPanel extends JPanel {
-    private final JCheckBox myReportVariablesCheckbox;
-    private final JCheckBox myReportParametersCheckbox;
-
-    private OptionsPanel() {
-      super(new GridBagLayout());
-
-      GridBagConstraints gc = new GridBagConstraints();
-      gc.weighty = 0;
-      gc.weightx = 1;
-      gc.fill = GridBagConstraints.HORIZONTAL;
-      gc.anchor = GridBagConstraints.NORTHWEST;
-
-
-      myReportVariablesCheckbox = new JCheckBox(InspectionsBundle.message("inspection.local.can.be.final.option"));
-      myReportVariablesCheckbox.setSelected(REPORT_VARIABLES);
-      myReportVariablesCheckbox.getModel().addChangeListener(new ChangeListener() {
-        @Override
-        public void stateChanged(ChangeEvent e) {
-          REPORT_VARIABLES = myReportVariablesCheckbox.isSelected();
-        }
-      });
-      gc.gridy = 0;
-      add(myReportVariablesCheckbox, gc);
-
-      myReportParametersCheckbox = new JCheckBox(InspectionsBundle.message("inspection.local.can.be.final.option1"));
-      myReportParametersCheckbox.setSelected(REPORT_PARAMETERS);
-      myReportParametersCheckbox.getModel().addChangeListener(new ChangeListener() {
-        @Override
-        public void stateChanged(ChangeEvent e) {
-          REPORT_PARAMETERS = myReportParametersCheckbox.isSelected();
-        }
-      });
-
-      gc.weighty = 1;
-      gc.gridy++;
-      add(myReportParametersCheckbox, gc);
-    }
+    final MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
+    panel.addCheckbox(InspectionsBundle.message("inspection.local.can.be.final.option"), "REPORT_VARIABLES");
+    panel.addCheckbox(InspectionsBundle.message("inspection.local.can.be.final.option1"), "REPORT_PARAMETERS");
+    panel.addCheckbox(InspectionsBundle.message("inspection.local.can.be.final.option2"), "REPORT_CATCH_PARAMETERS");
+    panel.addCheckbox(InspectionsBundle.message("inspection.local.can.be.final.option3"), "REPORT_FOREACH_PARAMETERS");
+    return panel;
   }
 
   @Override

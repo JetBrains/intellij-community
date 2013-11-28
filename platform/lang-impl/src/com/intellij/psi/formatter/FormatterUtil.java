@@ -15,7 +15,6 @@
  */
 package com.intellij.psi.formatter;
 
-import com.intellij.codeInsight.actions.ReformatAndOptimizeImportsProcessor;
 import com.intellij.codeInsight.actions.ReformatCodeProcessor;
 import com.intellij.lang.ASTFactory;
 import com.intellij.lang.ASTNode;
@@ -40,7 +39,7 @@ import java.util.Collections;
 public class FormatterUtil {
 
   public static final Collection<String> FORMATTER_ACTION_NAMES = Collections.unmodifiableCollection(ContainerUtilRt.newHashSet(
-    ReformatAndOptimizeImportsProcessor.COMMAND_NAME, ReformatCodeProcessor.COMMAND_NAME, ReformatBeforeCheckinHandler.COMMAND_NAME
+    ReformatCodeProcessor.COMMAND_NAME, ReformatBeforeCheckinHandler.COMMAND_NAME
   ));
 
   private FormatterUtil() {

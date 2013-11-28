@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,13 +15,16 @@
  */
 package com.intellij.psi.formatter.java;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaCodeFragmentFactory;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiCodeFragment;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
@@ -1150,7 +1153,7 @@ public class JavaFormatterTest extends AbstractJavaFormatterTest {
     CommandProcessor.getInstance().executeCommand(getProject(), new Runnable() {
       @Override
       public void run() {
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
+        WriteCommandAction.runWriteCommandAction(new Runnable() {
           @Override
           public void run() {
             try {
