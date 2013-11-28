@@ -187,7 +187,7 @@ public class PathManager {
     if (System.getProperty(PROPERTY_PLUGINS_PATH) != null) {
       ourPluginsPath = getAbsolutePath(trimPathQuotes(System.getProperty(PROPERTY_PLUGINS_PATH)));
     }
-    if (SystemInfo.isMac && PATHS_SELECTOR != null) {
+    else if (SystemInfo.isMac && PATHS_SELECTOR != null) {
       ourPluginsPath = getUserHome() + File.separator + "Library/Application Support" + File.separator + PATHS_SELECTOR;
     }
     else {
