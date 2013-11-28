@@ -236,7 +236,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
                   }
                   final AnActionEvent anActionEvent = new AnActionEvent(event,
                                                                         DataManager.getInstance().getDataContext(IdeFocusManager.findInstance().getFocusOwner()),
-                                                                        ActionPlaces.UNKNOWN,
+                                                                        ActionPlaces.MAIN_MENU,
                                                                         action.getTemplatePresentation(),
                                                                         actionManager,
                                                                         0);
