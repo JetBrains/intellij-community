@@ -1350,6 +1350,11 @@ public class FileUtil extends FileUtilRt {
   }
 
   @NotNull
+  public static List<String> loadLines(@NotNull File file) throws IOException {
+    return loadLines(file.getPath());
+  }
+
+  @NotNull
   public static List<String> loadLines(@NotNull String path) throws IOException {
     BufferedReader reader = new BufferedReader(new FileReader(path));
     try {
