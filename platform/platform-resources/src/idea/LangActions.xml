@@ -353,10 +353,14 @@
       <add-to-group group-id="MainToolBar" relative-to-action="Forward" anchor="after"/>
     </group>
 
+    <group id="NavBarToolBarOthers"/>
     <group id="NavBarToolBar">
       <reference ref="ToolbarRunGroup"/>
       <separator/>
-      <reference ref="MainToolBarSettings"/>
+      <reference ref="NavBarVcsGroup"/>
+      <separator/>
+      <reference id="NavBarToolBarOthers"/>
+      <separator/>
     </group>
 
     <group id="Bookmarks">
