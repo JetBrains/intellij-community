@@ -28,7 +28,7 @@ import java.util.List;
  * @author Alexander Lobas
  */
 public class SelectAllAction extends AnAction {
-  private final EditableArea myArea;
+  protected final EditableArea myArea;
 
   public SelectAllAction(EditableArea area) {
     super("Select All", "Select All", null);

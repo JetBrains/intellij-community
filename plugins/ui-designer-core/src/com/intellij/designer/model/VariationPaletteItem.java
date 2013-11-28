@@ -12,16 +12,16 @@ import javax.swing.*;
  * Implementation of a {@link PaletteItem} which delegates to another {@linkplain PaletteItem}
  * but which possibly overrides the title, icon and or creation properties.
  */
-final class VariationPaletteItem implements PaletteItem {
+public class VariationPaletteItem implements PaletteItem {
   private final PaletteItem myDefaultItem;
-  private final MetaModel myModel;
   private final String myTitle;
   private final String myIconPath;
   private final String myTooltip;
   private final String myCreation;
   private Icon myIcon;
+  private MetaModel myModel;
 
-  VariationPaletteItem(PaletteItem defaultItem, MetaModel model, Element element) {
+  protected VariationPaletteItem(PaletteItem defaultItem, MetaModel model, Element element) {
     myDefaultItem = defaultItem;
     myModel = model;
 
@@ -89,6 +89,11 @@ final class VariationPaletteItem implements PaletteItem {
   @Override
   public MetaModel getMetaModel() {
     return myModel;
+  }
+
+  @Override
+  public void setMetaModel(MetaModel metaModel) {
+    myModel = metaModel;
   }
 
   @Nullable

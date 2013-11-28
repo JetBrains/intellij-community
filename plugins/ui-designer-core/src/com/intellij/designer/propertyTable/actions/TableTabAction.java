@@ -20,11 +20,12 @@ import com.intellij.designer.propertyTable.PropertyTableTab;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.project.DumbAware;
 
 /**
  * @author Alexander Lobas
  */
-public class TableTabAction extends ToggleAction {
+public class TableTabAction extends ToggleAction implements DumbAware {
   private final PropertyTablePanel myPanel;
   private final PropertyTableTab myTab;
   private final ActionButton myButton;

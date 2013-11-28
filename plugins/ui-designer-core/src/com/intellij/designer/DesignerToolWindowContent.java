@@ -13,20 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package icons;
+package com.intellij.designer;
 
-import com.intellij.openapi.util.IconLoader;
+public interface DesignerToolWindowContent extends LightToolWindowContent {
+  void refresh(boolean updateProperties);
 
-import javax.swing.*;
+  void expandFromState();
 
-/**
- * NOTE THIS FILE IS AUTO-GENERATED
- * DO NOT EDIT IT BY HAND, run build/scripts/icons.gant instead
- */
-public class UIDesignerNewIcons {
-  private static Icon load(String path) {
-    return IconLoader.getIcon(path, UIDesignerNewIcons.class);
-  }
-
-  public static final Icon ToolWindow = load("/com/intellij/designer/icons/toolWindow.png"); // 13x13
+  void updateInspections();
 }

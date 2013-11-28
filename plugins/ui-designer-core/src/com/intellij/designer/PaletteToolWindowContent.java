@@ -13,20 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package icons;
+package com.intellij.designer;
 
-import com.intellij.openapi.util.IconLoader;
+import com.intellij.designer.designSurface.DesignerEditorPanel;
+import com.intellij.designer.palette.PaletteItem;
+import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+public interface PaletteToolWindowContent extends LightToolWindowContent {
+  @Nullable
+  PaletteItem getActiveItem();
 
-/**
- * NOTE THIS FILE IS AUTO-GENERATED
- * DO NOT EDIT IT BY HAND, run build/scripts/icons.gant instead
- */
-public class UIDesignerNewIcons {
-  private static Icon load(String path) {
-    return IconLoader.getIcon(path, UIDesignerNewIcons.class);
-  }
+  void clearActiveItem();
 
-  public static final Icon ToolWindow = load("/com/intellij/designer/icons/toolWindow.png"); // 13x13
+  void refresh();
+
+  boolean isEmpty();
+
+  void loadPalette(@Nullable DesignerEditorPanel designer);
 }
