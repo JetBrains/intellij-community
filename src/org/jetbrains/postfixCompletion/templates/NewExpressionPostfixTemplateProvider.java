@@ -5,7 +5,7 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.editor.CaretModel;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.postfixCompletion.CommonUtils;
+import org.jetbrains.postfixCompletion.util.CommonUtils;
 import org.jetbrains.postfixCompletion.infrastructure.PostfixTemplateContext;
 import org.jetbrains.postfixCompletion.infrastructure.PrefixExpressionContext;
 import org.jetbrains.postfixCompletion.infrastructure.TemplateProvider;
@@ -13,7 +13,7 @@ import org.jetbrains.postfixCompletion.lookupItems.ExpressionPostfixLookupElemen
 
 import java.util.List;
 
-import static org.jetbrains.postfixCompletion.CommonUtils.CtorAccessibility;
+import static org.jetbrains.postfixCompletion.util.CommonUtils.CtorAccessibility;
 
 // todo: force mode!
 

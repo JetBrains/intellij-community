@@ -6,7 +6,7 @@ import com.intellij.psi.PsiElementFactory;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiParenthesizedExpression;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.postfixCompletion.CommonUtils;
+import org.jetbrains.postfixCompletion.util.CommonUtils;
 import org.jetbrains.postfixCompletion.infrastructure.PostfixTemplateContext;
 import org.jetbrains.postfixCompletion.infrastructure.PrefixExpressionContext;
 import org.jetbrains.postfixCompletion.infrastructure.TemplateProvider;

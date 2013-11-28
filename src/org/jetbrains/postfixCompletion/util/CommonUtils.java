@@ -1,4 +1,4 @@
-package org.jetbrains.postfixCompletion;
+package org.jetbrains.postfixCompletion.util;
 
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;

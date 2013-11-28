@@ -15,7 +15,7 @@ import com.intellij.refactoring.introduceVariable.IntroduceVariableSettings;
 import com.intellij.refactoring.ui.TypeSelectorManagerImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.postfixCompletion.CommonUtils;
+import org.jetbrains.postfixCompletion.util.CommonUtils;
 import org.jetbrains.postfixCompletion.infrastructure.PostfixTemplateContext;
 import org.jetbrains.postfixCompletion.infrastructure.PrefixExpressionContext;
 import org.jetbrains.postfixCompletion.infrastructure.TemplateProvider;
@@ -24,7 +24,7 @@ import org.jetbrains.postfixCompletion.lookupItems.StatementPostfixLookupElement
 
 import java.util.List;
 
-import static org.jetbrains.postfixCompletion.CommonUtils.CtorAccessibility;
+import static org.jetbrains.postfixCompletion.util.CommonUtils.CtorAccessibility;
 
 // todo: support for int[].var (parses as .class access!)
 
