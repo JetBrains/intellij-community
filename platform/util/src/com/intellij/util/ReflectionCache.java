@@ -32,16 +32,19 @@ import java.lang.reflect.TypeVariable;
 @SuppressWarnings({"MismatchedQueryAndUpdateOfCollection"})
 public class ReflectionCache {
 
+  @Deprecated
   public static Class getSuperClass(@NotNull Class aClass) {
     return aClass.getSuperclass();
   }
 
   @NotNull
+  @Deprecated
   public static Class[] getInterfaces(@NotNull Class aClass) {
     return aClass.getInterfaces();
   }
 
   @NotNull
+  @Deprecated
   public static Method[] getMethods(@NotNull Class aClass) {
     return aClass.getMethods();
   }
@@ -50,25 +53,30 @@ public class ReflectionCache {
     return ancestor == descendant || ancestor.isAssignableFrom(descendant);
   }
 
+  @Deprecated
   public static boolean isInstance(Object instance, @NotNull Class clazz) {
     return clazz.isInstance(instance);
   }
 
+  @Deprecated
   public static boolean isInterface(@NotNull Class aClass) {
     return aClass.isInterface();
   }
 
   @NotNull
+  @Deprecated
   public static <T> TypeVariable<Class<T>>[] getTypeParameters(@NotNull Class<T> aClass) {
     return aClass.getTypeParameters();
   }
 
   @NotNull
+  @Deprecated
   public static Type[] getGenericInterfaces(@NotNull Class aClass) {
     return aClass.getGenericInterfaces();
   }
 
   @NotNull
+  @Deprecated
   public static Type[] getActualTypeArguments(@NotNull ParameterizedType type) {
     return type.getActualTypeArguments();
   }
