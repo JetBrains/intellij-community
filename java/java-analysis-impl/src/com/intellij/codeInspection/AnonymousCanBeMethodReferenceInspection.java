@@ -118,7 +118,7 @@ public class AnonymousCanBeMethodReferenceInspection extends BaseJavaBatchLocalI
           .canBeMethodReferenceProblem(methods[0].getBody(), parameters, anonymousClass.getBaseClassType());
         if (callExpression == null) return;
         final String methodRefText =
-          LambdaCanBeMethodReferenceInspection.createMethodReferenceText(callExpression, anonymousClass.getBaseClassType());
+          LambdaCanBeMethodReferenceInspection.createMethodReferenceText(callExpression, anonymousClass.getBaseClassType(), parameters);
 
         if (methodRefText != null) {
           final String canonicalText = anonymousClass.getBaseClassType().getCanonicalText();
