@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2012 Bas Leijdekkers
+ * Copyright 2010-2013 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,19 +27,18 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.ExceptionUtils;
 import com.siyeh.ig.psiutils.LibraryUtil;
-import com.siyeh.ig.psiutils.TestUtils;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.util.*;
 
-public class TooBroadThrowsInspection extends BaseInspection {
+public class TooBroadThrowsInspectionBase extends BaseInspection {
 
   @SuppressWarnings({"PublicField"})
   public boolean onlyWarnOnRootExceptions = false;
 
-  @SuppressWarnings("PublicField")
-  public boolean ignoreInTestCode = false;
+  @SuppressWarnings({"PublicField", "UnusedDeclaration"})
+  public boolean ignoreInTestCode = false; // keep for compatibility
 
   @SuppressWarnings("PublicField")
   public boolean ignoreLibraryOverrides = false;
@@ -89,7 +88,6 @@ public class TooBroadThrowsInspection extends BaseInspection {
   public JComponent createOptionsPanel() {
     final MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
     panel.addCheckbox(InspectionGadgetsBundle.message("too.broad.catch.option"), "onlyWarnOnRootExceptions");
-    panel.addCheckbox(InspectionGadgetsBundle.message("ignore.exceptions.declared.in.tests.option"), "ignoreInTestCode");
     panel.addCheckbox(InspectionGadgetsBundle.message("ignore.exceptions.declared.on.library.override.option"), "ignoreLibraryOverrides");
     panel.addCheckbox(InspectionGadgetsBundle.message("overly.broad.throws.clause.ignore.thrown.option"), "ignoreThrown");
     return panel;
@@ -174,9 +172,6 @@ public class TooBroadThrowsInspection extends BaseInspection {
       if (body == null) {
         return;
       }
-      if (ignoreInTestCode && TestUtils.isInTestCode(method)) {
-        return;
-      }
       if (ignoreLibraryOverrides && LibraryUtil.isOverrideOfLibraryMethod(method)) {
         return;
       }
@@ -206,7 +201,7 @@ public class TooBroadThrowsInspection extends BaseInspection {
           if (ignoreThrown && originalNeeded) {
             continue;
           }
-          registerError(throwsReference, exceptionsMasked, Boolean.valueOf(originalNeeded));
+          registerError(throwsReference, exceptionsMasked, Boolean.valueOf(originalNeeded), throwsReference);
         }
       }
     }
