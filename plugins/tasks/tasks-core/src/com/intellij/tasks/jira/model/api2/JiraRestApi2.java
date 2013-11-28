@@ -2,6 +2,7 @@ package com.intellij.tasks.jira.model.api2;
 
 import com.google.gson.reflect.TypeToken;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.tasks.TaskState;
 import com.intellij.tasks.jira.JiraRepository;
 import com.intellij.tasks.jira.JiraRestApi;
 import com.intellij.tasks.jira.JiraUtil;
@@ -57,6 +58,23 @@ public class JiraRestApi2 extends JiraRestApi {
   @Override
   protected JiraIssue parseIssue(String response) {
     return JiraUtil.GSON.fromJson(response, JiraIssueApi2.class);
+  }
+
+  @Nullable
+  @Override
+  protected String getRequestForStateTransition(@NotNull TaskState state) {
+    // REST API 2.0 require double quotes both around field names and values (even numbers)
+    switch (state) {
+      case IN_PROGRESS:
+        return  "{\"transition\": {\"id\": \"4\"}}";
+      case RESOLVED:
+        // 5 for "Resolved", 2 for "Closed"
+        return  "{\"transition\": {\"id\": \"5\"}, \"fields\": {\"resolution\": {\"name\": \"Fixed\"}}}";
+      case REOPENED:
+        return  "{\"transition\": {\"id\": \"3\"}}";
+      default:
+        return null;
+    }
   }
 
   @NotNull
