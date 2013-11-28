@@ -89,13 +89,6 @@ public class BadExceptionDeclaredInspectionBase extends BaseInspection {
     @Override
     public void visitMethod(@NotNull PsiMethod method) {
       super.visitMethod(method);
-      if (ignoreTestCases) {
-        final PsiClass containingClass = method.getContainingClass();
-        final TestFrameworks testFrameworks = TestFrameworks.getInstance();
-        if (containingClass != null && testFrameworks.isTestOrConfig(containingClass)) {
-          return;
-        }
-      }
       if (ignoreLibraryOverrides && LibraryUtil.isOverrideOfLibraryMethod(method)) {
         return;
       }
