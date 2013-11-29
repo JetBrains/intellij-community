@@ -924,8 +924,6 @@ public class BuildManager implements ApplicationComponent{
     launcherCp.add(ClasspathBootstrap.getResourcePath(launcherClass));
     launcherCp.add(compilerPath);
     ClasspathBootstrap.appendJavaCompilerClasspath(launcherCp);
-    // this will disable standard extensions to ensure javac is loaded from the right tools.jar
-    cmdLine.addParameter("-Djava.ext.dirs=");
     cmdLine.addParameter("-classpath");
     cmdLine.addParameter(classpathToString(launcherCp));
     
