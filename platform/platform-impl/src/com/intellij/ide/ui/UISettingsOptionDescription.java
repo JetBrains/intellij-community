@@ -15,46 +15,21 @@
  */
 package com.intellij.ide.ui;
 
-import com.intellij.ide.ui.search.BooleanOptionDescription;
-
-import java.lang.reflect.Field;
-
 /**
  * @author Konstantin Bulenkov
  */
-public class UISettingsOptionDescription extends BooleanOptionDescription {
-  private final String myFieldName;
-
+public class UISettingsOptionDescription extends PublicFieldBasedOptionDescription {
   public UISettingsOptionDescription(String fieldName, String option, String configurableId) {
-    super(option, configurableId);
-    myFieldName = fieldName;
+    super(option, configurableId, fieldName);
   }
 
   @Override
-  public boolean isOptionEnabled() {
-    try {
-      final Field field = UISettings.class.getField(myFieldName);
-      return field.getBoolean(UISettings.getInstance());
-    }
-    catch (NoSuchFieldException ignore) {
-    }
-    catch (IllegalAccessException ignore) {
-    }
-    return false;
+  public Object getInstance() {
+    return UISettings.getInstance();
   }
 
   @Override
-  public void setOptionState(boolean enabled) {
-    try {
-      final Field field = UISettings.class.getField(myFieldName);
-      field.setBoolean(UISettings.getInstance(), enabled);
-    }
-    catch (NoSuchFieldException ignore) {
-    }
-    catch (IllegalAccessException ignore) {
-    }
+  protected void fireUpdated() {
     UISettings.getInstance().fireUISettingsChanged();
   }
-
-
 }
