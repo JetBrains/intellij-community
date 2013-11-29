@@ -99,7 +99,7 @@ public abstract class DebugProcessImpl implements DebugProcess {
   private final Project myProject;
   private final RequestManagerImpl myRequestManager;
 
-  private VirtualMachineProxyImpl myVirtualMachineProxy = null;
+  private volatile VirtualMachineProxyImpl myVirtualMachineProxy = null;
   protected EventDispatcher<DebugProcessListener> myDebugProcessDispatcher = EventDispatcher.create(DebugProcessListener.class);
   protected EventDispatcher<EvaluationListener> myEvaluationDispatcher = EventDispatcher.create(EvaluationListener.class);
 
@@ -685,11 +685,13 @@ public abstract class DebugProcessImpl implements DebugProcess {
   }
 
   public boolean canRedefineClasses() {
-    return myVirtualMachineProxy != null && myVirtualMachineProxy.canRedefineClasses();
+    final VirtualMachineProxyImpl vm = myVirtualMachineProxy;
+    return vm != null && vm.canRedefineClasses();
   }
 
   public boolean canWatchFieldModification() {
-    return myVirtualMachineProxy != null && myVirtualMachineProxy.canWatchFieldModification();
+    final VirtualMachineProxyImpl vm = myVirtualMachineProxy;
+    return vm != null && vm.canWatchFieldModification();
   }
 
   public boolean isInInitialState() {
@@ -714,10 +716,11 @@ public abstract class DebugProcessImpl implements DebugProcess {
 
   public VirtualMachineProxyImpl getVirtualMachineProxy() {
     DebuggerManagerThreadImpl.assertIsManagerThread();
-    if (myVirtualMachineProxy == null) {
+    final VirtualMachineProxyImpl vm = myVirtualMachineProxy;
+    if (vm == null) {
       throw new VMDisconnectedException();
     }
-    return myVirtualMachineProxy;
+    return vm;
   }
 
   public void appendPositionManager(final PositionManager positionManager) {
@@ -1820,7 +1823,8 @@ public abstract class DebugProcessImpl implements DebugProcess {
   }
 
   public boolean isPausePressed() {
-    return myVirtualMachineProxy != null && myVirtualMachineProxy.isPausePressed();
+    final VirtualMachineProxyImpl vm = myVirtualMachineProxy;
+    return vm != null && vm.isPausePressed();
   }
 
   public DebuggerCommandImpl createPauseCommand() {
