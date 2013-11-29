@@ -301,7 +301,7 @@ public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtensi
     protected void updateWithMap(final int inputId,
                                  @NotNull final Map<Integer, SerializedStubTree> newData,
                                  @NotNull Callable<Collection<Integer>> oldKeysGetter,
-                                 boolean merge)
+                                 FileContent content)
       throws StorageException {
 
       checkNameStorage();
@@ -324,8 +324,17 @@ public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtensi
         try {
           getWriteLock().lock();
 
-          final Map<Integer, SerializedStubTree> oldData =
-            merge ? readOldData(inputId) : Collections.<Integer, SerializedStubTree>emptyMap();
+          VirtualFile file = content.getFile();
+          ID stubId = IndexInfrastructure.getStubId(INDEX_ID, file.getFileType());
+          IndexingStamp.State state = IndexingStamp.getIndexingState(file, stubId);
+
+          final Map<Integer, SerializedStubTree> oldData;
+          if (state == IndexingStamp.State.INDEX_VERSION_CHANGED) {
+            oldData = Collections.emptyMap();
+          }
+          else {
+            oldData = readOldData(inputId);
+          }
           final Map<StubIndexKey, Map<Object, StubIdList>> oldStubTree;
           try {
             oldStubTree = getStubTree(oldData);
@@ -334,7 +343,7 @@ public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtensi
             throw new StorageException(e);
           }
 
-          super.updateWithMap(inputId, newData, oldKeysGetter, merge);
+          super.updateWithMap(inputId, newData, oldKeysGetter, content);
 
           updateStubIndices(getAffectedIndices(oldStubTree, newStubTree), inputId, oldStubTree, newStubTree);
         }

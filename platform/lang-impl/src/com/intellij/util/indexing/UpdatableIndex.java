@@ -32,9 +32,8 @@ public interface UpdatableIndex<Key, Value, Input> extends AbstractIndex<Key,Val
   void flush() throws StorageException;
 
   /**
-   * @param merge true if merge with old data needed (e.g. file content changed), false if not needed (e.g. index version changed)
    */
-  Computable<Boolean> update(int inputId, @Nullable Input content, boolean merge);
+  Computable<Boolean> update(int inputId, @Nullable Input content);
   
   Lock getReadLock();
   
