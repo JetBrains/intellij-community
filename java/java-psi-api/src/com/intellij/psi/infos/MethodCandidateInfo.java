@@ -111,22 +111,24 @@ public class MethodCandidateInfo extends CandidateInfo{
       }
       else {
         final PsiSubstitutor substitutor = getSubstitutor();
-        level = ourOverloadGuard.doPreventingRecursion(myArgumentList, false, new Computable<Integer>() {
+        Integer boxedLevel = ourOverloadGuard.doPreventingRecursion(myArgumentList, false, new Computable<Integer>() {
           @Override
           public Integer compute() {
             return PsiUtil.getApplicabilityLevel(getElement(), substitutor, myArgumentTypes, myLanguageLevel);
           }
         });
+        level = boxedLevel != null ? boxedLevel : getApplicabilityLevel();
       }
       if (level > ApplicabilityLevel.NOT_APPLICABLE && !isTypeArgumentsApplicable()) level = ApplicabilityLevel.NOT_APPLICABLE;
       return level;
     }
-    return ourOverloadGuard.doPreventingRecursion(myArgumentList, false, new Computable<Integer>() {
+    Integer boxedLevel = ourOverloadGuard.doPreventingRecursion(myArgumentList, false, new Computable<Integer>() {
       @Override
       public Integer compute() {
         return getApplicabilityLevelInner();
       }
     });
+    return boxedLevel != null ? boxedLevel : getApplicabilityLevel();
   }
 
   public PsiSubstitutor getSiteSubstitutor() {
