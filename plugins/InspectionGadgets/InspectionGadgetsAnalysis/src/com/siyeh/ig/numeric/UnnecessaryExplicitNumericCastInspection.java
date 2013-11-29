@@ -232,10 +232,12 @@ public class UnnecessaryExplicitNumericCastInspection extends BaseInspection {
       final Project project = expression.getProject();
       final JavaPsiFacade javaPsiFacade = JavaPsiFacade.getInstance(project);
       final PsiElementFactory factory = javaPsiFacade.getElementFactory();
-      final PsiCallExpression newMethodCall = (PsiCallExpression)
-        factory.createExpressionFromText(newMethodCallText.toString(), expression);
-      if (targetMethod != newMethodCall.resolveMethod()) {
-        return true;
+      final PsiExpression expressionFromText = factory.createExpressionFromText(newMethodCallText.toString(), expression);
+      if (expressionFromText instanceof PsiCallExpression) {
+        final PsiCallExpression newMethodCall = (PsiCallExpression)expressionFromText;
+        if (targetMethod != newMethodCall.resolveMethod()) {
+          return true;
+        }
       }
     }
     final PsiType expectedType = ExpectedTypeUtils.findExpectedType(expression, false);
