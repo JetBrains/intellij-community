@@ -3,13 +3,11 @@ package org.jetbrains.postfixCompletion.templates;
 import com.intellij.codeInsight.completion.InsertionContext;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiElementFactory;
 import com.intellij.psi.PsiExpression;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.postfixCompletion.infrastructure.PrefixExpressionContext;
 import org.jetbrains.postfixCompletion.infrastructure.TemplateProvider;
-import org.jetbrains.postfixCompletion.lookupItems.ExpressionPostfixLookupElementBase;
+import org.jetbrains.postfixCompletion.lookupItems.ExpressionPostfixLookupElement;
 import org.jetbrains.postfixCompletion.util.JavaSurroundersProxy;
 import java.util.List;
 
@@ -28,14 +26,9 @@ public final class IfStatementPostfixTemplateProvider extends BooleanPostfixTemp
     return false;
   }
 
-  static final class IfLookupItem extends ExpressionPostfixLookupElementBase<PsiExpression> {
+  static final class IfLookupItem extends ExpressionPostfixLookupElement {
     public IfLookupItem(@NotNull PrefixExpressionContext context) {
       super("if", context);
-    }
-
-    @NotNull @Override protected PsiExpression createNewExpression(
-      @NotNull PsiElementFactory factory, @NotNull PsiElement expression, @NotNull PsiElement context) {
-      return (PsiExpression)expression;
     }
 
     @Override protected void postProcess(@NotNull InsertionContext context, @NotNull PsiExpression expression) {

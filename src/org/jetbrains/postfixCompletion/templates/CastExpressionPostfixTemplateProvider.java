@@ -2,17 +2,14 @@ package org.jetbrains.postfixCompletion.templates;
 
 import com.intellij.codeInsight.completion.InsertionContext;
 import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiElementFactory;
 import com.intellij.psi.PsiExpression;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.postfixCompletion.infrastructure.PostfixTemplateContext;
 import org.jetbrains.postfixCompletion.infrastructure.PrefixExpressionContext;
 import org.jetbrains.postfixCompletion.infrastructure.TemplateProvider;
-import org.jetbrains.postfixCompletion.lookupItems.ExpressionPostfixLookupElementBase;
+import org.jetbrains.postfixCompletion.lookupItems.ExpressionPostfixLookupElement;
 import org.jetbrains.postfixCompletion.util.CommonUtils;
 import org.jetbrains.postfixCompletion.util.JavaSurroundersProxy;
-
 import java.util.List;
 
 @TemplateProvider(
@@ -39,17 +36,9 @@ public final class CastExpressionPostfixTemplateProvider extends PostfixTemplate
     consumer.add(new CastLookupElement(bestContext));
   }
 
-  static final class CastLookupElement extends ExpressionPostfixLookupElementBase<PsiExpression> {
+  static final class CastLookupElement extends ExpressionPostfixLookupElement {
     public CastLookupElement(@NotNull PrefixExpressionContext context) {
       super("cast", context);
-    }
-
-    @NotNull
-    @Override
-    protected PsiExpression createNewExpression(@NotNull PsiElementFactory factory,
-                                                @NotNull PsiElement expression,
-                                                @NotNull PsiElement context) {
-      return (PsiExpression)expression;
     }
 
     @Override
