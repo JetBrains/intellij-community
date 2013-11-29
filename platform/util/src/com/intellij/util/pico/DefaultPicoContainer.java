@@ -16,7 +16,7 @@
 package com.intellij.util.pico;
 
 import com.intellij.util.ReflectionCache;
-import com.intellij.util.containers.ConcurrentHashMap;
+import com.intellij.util.containers.ConcurrentMapFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FList;
 import org.jetbrains.annotations.NotNull;
@@ -34,9 +34,9 @@ public class DefaultPicoContainer implements MutablePicoContainer, Serializable 
   private final PicoContainer parent;
   private final Set<PicoContainer> children = new HashSet<PicoContainer>();
 
-  private final Map<Object, ComponentAdapter> componentKeyToAdapterCache = new ConcurrentHashMap<Object, ComponentAdapter>();
+  private final Map<Object, ComponentAdapter> componentKeyToAdapterCache = ConcurrentMapFactory.DEFAULT_FACTORY.createMap();
   private final LinkedHashSetWrapper<ComponentAdapter> componentAdapters = new LinkedHashSetWrapper<ComponentAdapter>();
-  private final Map<String, ComponentAdapter> classNameToAdapter = new ConcurrentHashMap<String, ComponentAdapter>();
+  private final Map<String, ComponentAdapter> classNameToAdapter = ConcurrentMapFactory.DEFAULT_FACTORY.createMap();
   private final AtomicReference<FList<ComponentAdapter>> nonAssignableComponentAdapters = new AtomicReference<FList<ComponentAdapter>>(FList.<ComponentAdapter>emptyList());
 
   public DefaultPicoContainer(@NotNull ComponentAdapterFactory componentAdapterFactory, PicoContainer parent) {
