@@ -1575,7 +1575,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
 
         final int inputId = Math.abs(getFileId(vFile));
         try {
-          getIndex(requestedIndexId).update(inputId, newFc, true).compute();
+          getIndex(requestedIndexId).update(inputId, newFc).compute();
         } catch (ProcessCanceledException pce) {
           myLastIndexedDocStamps.getAndSet(document, requestedIndexId, previousDocStamp);
           throw pce;
@@ -1793,7 +1793,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
     assert index != null;
 
     // important: no hard referencing currentFC to avoid OOME, the methods introduced for this purpose!
-    final Computable<Boolean> update = index.update(inputId, currentFC, merge);
+    final Computable<Boolean> update = index.update(inputId, currentFC);
     final FileType fileType = file.getFileType();
 
     scheduleUpdate(indexId,

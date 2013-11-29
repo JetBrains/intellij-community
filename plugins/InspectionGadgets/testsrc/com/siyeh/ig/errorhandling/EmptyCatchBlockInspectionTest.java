@@ -70,7 +70,7 @@ public class EmptyCatchBlockInspectionTest extends LightInspectionTestCase {
   public void testTest() {
     doTest("import junit.framework.TestCase;\n" +
            "class C extends TestCase {\n" +
-           "  void m() {\n" +
+           "  public void testM() {\n" +
            "    try {\n" +
            "      throw new Exception();\n" +
            "    } catch (Exception e) {}\n" +

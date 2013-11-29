@@ -57,7 +57,12 @@ public class IndexingStamp {
             if (id != null) {
               long stamp = IndexInfrastructure.getIndexCreationStamp(id);
               if (myIndexStamps == null) myIndexStamps = new TObjectLongHashMap<ID<?, ?>>(5, 0.98f);
-              myIndexStamps.put(id, stamp <= dominatingIndexStamp ? stamp : INDEX_VERSION_CHANGED_STAMP);
+              if (stamp <= dominatingIndexStamp) {
+                myIndexStamps.put(id, stamp);
+              }
+              else {
+                myIndexStamps.put(id, INDEX_VERSION_CHANGED_STAMP);
+              }
             }
           }
         }

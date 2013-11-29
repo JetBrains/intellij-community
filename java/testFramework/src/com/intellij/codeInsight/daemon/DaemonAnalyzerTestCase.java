@@ -320,19 +320,22 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
     }
     final JavaPsiFacadeEx facade = getJavaFacade();
     if (facade != null) {
-      facade.setAssertOnFileLoadingFilter(myFileTreeAccessFilter); // check repository work
+      facade.setAssertOnFileLoadingFilter(myFileTreeAccessFilter, myTestRootDisposable); // check repository work
     }
 
-    Collection<HighlightInfo> infos = doHighlighting();
+    try {
+      Collection<HighlightInfo> infos = doHighlighting();
 
-    if (facade != null) {
-      facade.setAssertOnFileLoadingFilter(VirtualFileFilter.NONE);
+      String text = myEditor.getDocument().getText();
+      data.checkLineMarkers(DaemonCodeAnalyzerImpl.getLineMarkers(getDocument(getFile()), getProject()), text);
+      data.checkResult(infos, text);
+      return infos;
     }
-
-    String text = myEditor.getDocument().getText();
-    data.checkLineMarkers(DaemonCodeAnalyzerImpl.getLineMarkers(getDocument(getFile()), getProject()), text);
-    data.checkResult(infos, text);
-    return infos;
+    finally {
+      if (facade != null) {
+        facade.setAssertOnFileLoadingFilter(VirtualFileFilter.NONE, myTestRootDisposable);
+      }
+    }
   }
 
   public void allowTreeAccessForFile(@NotNull VirtualFile file) {

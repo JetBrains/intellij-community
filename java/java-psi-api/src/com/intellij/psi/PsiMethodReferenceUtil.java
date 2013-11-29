@@ -87,6 +87,7 @@ public class PsiMethodReferenceUtil {
       myReferenceTypeQualified = referenceTypeQualified;
     }
 
+    @Nullable
     public PsiClass getContainingClass() {
       return myContainingClass;
     }

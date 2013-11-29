@@ -52,7 +52,7 @@ public class JavaSOEOnReparsePerformanceTest extends LightDaemonAnalyzerTestCase
     final int pos = getEditor().getDocument().getText().indexOf("\"\"");
 
     // replace small expression with huge binary one
-    WriteCommandAction.runWriteCommandAction(new Runnable() {
+    WriteCommandAction.runWriteCommandAction(null, new Runnable() {
       @Override
       public void run() {
         getEditor().getDocument().replaceString(pos, pos + 2, myHugeExpr);

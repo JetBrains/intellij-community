@@ -450,7 +450,7 @@ public class VirtualFilePointerTest extends PlatformLangTestCase {
   }
 
   private static VirtualFile refreshAndFind(@NotNull final String url) {
-    return WriteCommandAction.runWriteCommandAction(new Computable<VirtualFile>() {
+    return WriteCommandAction.runWriteCommandAction(null, new Computable<VirtualFile>() {
       @Override
       public VirtualFile compute() {
         return VirtualFileManager.getInstance().refreshAndFindFileByUrl(url);

@@ -15,7 +15,6 @@
  */
 package com.intellij.psi;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
@@ -33,7 +32,7 @@ import java.io.File;
 public class SCR17094Test extends PsiTestCase {
   protected void setUpClasses(final String s) throws Exception {
     final String testRoot = PathManagerEx.getTestDataPath() + "/psi/repositoryUse/scr17094";
-    VirtualFile classesRoot = WriteCommandAction.runWriteCommandAction(new Computable<VirtualFile>() {
+    VirtualFile classesRoot = WriteCommandAction.runWriteCommandAction(null, new Computable<VirtualFile>() {
       @Override
       public VirtualFile compute() {
         String path = testRoot + "/" + s;

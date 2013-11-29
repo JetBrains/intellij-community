@@ -709,7 +709,7 @@ public class GeneratedParserUtilBase {
       return ((Builder)builder).state;
     }
 
-    private static void initState(ErrorState state, PsiBuilder builder, IElementType root, TokenSet[] extendsSets) {
+    public static void initState(ErrorState state, PsiBuilder builder, IElementType root, TokenSet[] extendsSets) {
       state.extendsSets = extendsSets;
       PsiFile file = builder.getUserDataUnprotected(FileContextUtil.CONTAINING_FILE_KEY);
       state.completionState = file == null? null: file.getUserData(COMPLETION_STATE_KEY);

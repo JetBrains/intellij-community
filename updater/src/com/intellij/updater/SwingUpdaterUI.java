@@ -63,6 +63,7 @@ public class SwingUpdaterUI implements UpdaterUI {
     myConsole.setWrapStyleWord(true);
     myConsole.setCaretPosition(myConsole.getText().length());
     myConsole.setTabSize(1);
+    myConsole.setMargin(new Insets(2, 4, 2, 4));
     myConsolePane = new JPanel(new BorderLayout());
     myConsolePane.add(new JScrollPane(myConsole));
     myConsolePane.setBorder(BUTTONS_BORDER);
@@ -314,18 +315,25 @@ public class SwingUpdaterUI implements UpdaterUI {
   }
 
   public void showError(final Throwable e) {
+    hasError.set(true);
+
     myQueue.add(new UpdateRequest() {
       public void perform() {
         StringWriter w = new StringWriter();
+        if (!myConsolePane.isVisible()) {
+          w.write("Temp. directory: ");
+          w.write(System.getProperty("java.io.tmpdir"));
+          w.write("\n\n");
+        }
         e.printStackTrace(new PrintWriter(w));
         w.append("\n");
         myConsole.append(w.getBuffer().toString());
         if (!myConsolePane.isVisible()) {
+          myConsole.setCaretPosition(0);
           myConsolePane.setVisible(true);
           myConsolePane.setPreferredSize(new Dimension(10, 200));
           myFrame.pack();
         }
-        hasError.set(true);
       }
     });
   }

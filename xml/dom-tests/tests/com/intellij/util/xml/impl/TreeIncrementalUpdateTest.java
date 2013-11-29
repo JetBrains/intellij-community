@@ -372,7 +372,7 @@ public class TreeIncrementalUpdateTest extends DomTestCase {
 
     final XmlTag tag = element.getXmlTag();
     final XmlTag childTag = tag.getSubTags()[0];
-    WriteCommandAction.runWriteCommandAction(new Runnable() {
+    WriteCommandAction.runWriteCommandAction(null, new Runnable() {
       public void run() {
         childTag.delete();
       }
@@ -391,7 +391,7 @@ public class TreeIncrementalUpdateTest extends DomTestCase {
     final Sepulka element = createElement("<a><foo/><bar/></a>", Sepulka.class);
     final List<MyElement> list = element.getCustomChildren();
     final XmlTag tag = element.getXmlTag();
-    WriteCommandAction.runWriteCommandAction(new Runnable(){public void run() {
+    WriteCommandAction.runWriteCommandAction(null, new Runnable(){public void run() {
         tag.getSubTags()[0].delete();
         tag.getSubTags()[0].delete();
       }

@@ -87,13 +87,13 @@ public class GradleLibraryNamesMixer {
   private static boolean doMixNames(@NotNull Collection<Wrapped> libraries, @NotNull Map<String, Wrapped> cache) {
     cache.clear();
     for (Wrapped current : libraries) {
-      Wrapped previous = cache.remove(current.library.getName());
+      Wrapped previous = cache.remove(current.library.getExternalName());
       if (previous == null) {
-        cache.put(current.library.getName(), current);
+        cache.put(current.library.getExternalName(), current);
       }
       else {
         mixNames(current, previous);
-        return current.library.getName().equals(previous.library.getName()); // Stop processing if it's not possible to generate
+        return current.library.getExternalName().equals(previous.library.getExternalName()); // Stop processing if it's not possible to generate
       }
     }
     return true;
@@ -143,17 +143,17 @@ public class GradleLibraryNamesMixer {
       if (file1 == null) {
         wrapped1.nextFile();
       }
-      else if (!wrapped1.library.getName().startsWith(file1.getName())) {
-        wrapped1.library.setName(file1.getName() + NAME_SEPARATOR + wrapped1.library.getName());
+      else if (!wrapped1.library.getExternalName().startsWith(file1.getName())) {
+        wrapped1.library.setExternalName(file1.getName() + NAME_SEPARATOR + wrapped1.library.getExternalName());
       }
       if (file2 == null) {
         wrapped2.nextFile();
       }
-      else if (!wrapped2.library.getName().startsWith(file2.getName())) {
-        wrapped2.library.setName(file2.getName() + NAME_SEPARATOR + wrapped2.library.getName());
+      else if (!wrapped2.library.getExternalName().startsWith(file2.getName())) {
+        wrapped2.library.setExternalName(file2.getName() + NAME_SEPARATOR + wrapped2.library.getExternalName());
       }
 
-      if (wrapped1.library.getName().equals(wrapped2.library.getName())) {
+      if (wrapped1.library.getExternalName().equals(wrapped2.library.getExternalName())) {
         if (wrapped1AltText != null) {
           diversifyName(wrapped1AltText, wrapped1, file1);
           return;
@@ -175,7 +175,7 @@ public class GradleLibraryNamesMixer {
 
   @SuppressWarnings("ConstantConditions")
   private static void diversifyName(@NotNull String changeText, @NotNull Wrapped wrapped, @Nullable File file) {
-    String name = wrapped.library.getName();
+    String name = wrapped.library.getExternalName();
     int i = file == null ? - 1 : name.indexOf(file.getName());
     final String newName;
     if (i >= 0) {
@@ -184,7 +184,7 @@ public class GradleLibraryNamesMixer {
     else {
       newName = changeText + NAME_SEPARATOR + name;
     }
-    wrapped.library.setName(newName);
+    wrapped.library.setExternalName(newName);
   }
 
   /**

@@ -84,7 +84,7 @@ public class MatchPatchPaths {
           for (VirtualFile file : files) {
             Pair<VirtualFile, Integer> pair = compareNamesImpl(strings, file, i);
             if (pair != null && pair.getSecond() < i) {
-              if (best == null || pair.getSecond() > best.getSecond()) {
+              if (best == null || pair.getSecond() < best.getSecond()) {
                 best = pair;
               }
             }

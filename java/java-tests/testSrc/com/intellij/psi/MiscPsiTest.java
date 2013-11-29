@@ -116,7 +116,7 @@ public class MiscPsiTest extends LightCodeInsightFixtureTestCase {
     final PsiClass aClass = getJavaFacade().getElementFactory().createClassFromText("public int i, j;", null);
 
     final PsiField aField = aClass.getFields()[0];
-    WriteCommandAction.runWriteCommandAction(new Runnable() {
+    WriteCommandAction.runWriteCommandAction(null, new Runnable() {
       public void run() {
         aField.delete();
       }

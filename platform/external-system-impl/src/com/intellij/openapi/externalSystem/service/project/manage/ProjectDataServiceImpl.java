@@ -52,8 +52,8 @@ public class ProjectDataServiceImpl implements ProjectDataService<ProjectData, P
       return;
     }
     
-    if (!project.getName().equals(projectData.getName())) {
-      renameProject(projectData.getName(), projectData.getOwner(), project, synchronous);
+    if (!project.getName().equals(projectData.getInternalName())) {
+      renameProject(projectData.getInternalName(), projectData.getOwner(), project, synchronous);
     }
   }
 

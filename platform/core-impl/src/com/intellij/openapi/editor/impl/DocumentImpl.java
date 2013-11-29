@@ -33,6 +33,7 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
+import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
@@ -556,7 +557,6 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
 
   @NotNull
   private DocumentEvent beforeChangedUpdate(int offset, CharSequence oldString, CharSequence newString, boolean wholeTextReplaced) {
-    assertWriteAccess();
     myChangeInProgress = true;
     try {
       return doBeforeChangedUpdate(offset, oldString, newString, wholeTextReplaced);
@@ -578,6 +578,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
         }
       }
     }
+    assertInsideCommand();
 
     DocumentEvent event = new DocumentEventImpl(this, offset, oldString, newString, myModificationStamp, wholeTextReplaced);
 
@@ -595,6 +596,15 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
 
     myEventsHandling = true;
     return event;
+  }
+
+  private void assertInsideCommand() {
+    CommandProcessor commandProcessor = CommandProcessor.getInstance();
+    if (!commandProcessor.isUndoTransparentActionInProgress() &&
+        commandProcessor.getCurrentCommand() == null &&
+      myAssertThreading) {
+      throw new IncorrectOperationException("Must not change document outside command or undo-transparent action.");
+    }
   }
 
   private void changedUpdate(DocumentEvent event, long newModificationStamp) {

@@ -587,7 +587,7 @@ public class TemplateManagerImpl extends TemplateManager implements ProjectCompo
     file = (PsiFile)file.copy();
     final Document document = file.getViewProvider().getDocument();
     assert document != null;
-    WriteCommandAction.runWriteCommandAction(new Runnable() {
+    WriteCommandAction.runWriteCommandAction(file.getProject(), new Runnable() {
       @Override
       public void run() {
         document.replaceString(startOffset, endOffset, CompletionUtil.DUMMY_IDENTIFIER_TRIMMED);

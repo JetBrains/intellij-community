@@ -167,18 +167,8 @@ public class ExternalSystemApiUtil {
     return "unknown-lib";
   }
 
-  @NotNull
-  public static String getLibraryName(@NotNull LibraryData libraryData) {
-    return String.format("%s: %s", libraryData.getOwner().getReadableName(), libraryData.getName());
-  }
-
-  @NotNull
-  public static String getLibraryName(@NotNull LibraryDependencyData libraryDependencyData) {
-    return String.format("%s: %s", libraryDependencyData.getOwner().getReadableName(), libraryDependencyData.getName());
-  }
-
   public static boolean isRelated(@NotNull Library library, @NotNull LibraryData libraryData) {
-    return getLibraryName(library).equals(getLibraryName(libraryData));
+    return getLibraryName(library).equals(libraryData.getInternalName());
   }
 
   public static boolean isExternalSystemLibrary(@NotNull Library library, @NotNull ProjectSystemId externalSystemId) {

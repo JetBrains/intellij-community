@@ -207,7 +207,7 @@ public class IndexTest extends IdeaTestCase {
     final GlobalSearchScope scope = GlobalSearchScope.allScope(getProject());
     final JavaPsiFacade facade = JavaPsiFacade.getInstance(getProject());
     assertNotNull(facade.findClass("Foo", scope));
-    WriteCommandAction.runWriteCommandAction(new Runnable() {
+    WriteCommandAction.runWriteCommandAction(null, new Runnable() {
       @Override
       public void run() {
         PsiFile psiFile = PsiManager.getInstance(getProject()).findFile(vFile);
@@ -236,7 +236,7 @@ public class IndexTest extends IdeaTestCase {
     final GlobalSearchScope scope = GlobalSearchScope.allScope(getProject());
     final JavaPsiFacade facade = JavaPsiFacade.getInstance(getProject());
     assertNull(facade.findClass("Foo", scope));
-    WriteCommandAction.runWriteCommandAction(new Runnable() {
+    WriteCommandAction.runWriteCommandAction(null, new Runnable() {
       @Override
       public void run() {
         PsiFile psiFile = PsiManager.getInstance(getProject()).findFile(vFile);

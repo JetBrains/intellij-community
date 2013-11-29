@@ -53,7 +53,7 @@ public class OptimizeImportsTest extends PsiTestCase{
       getProject(), new Runnable() {
       @Override
       public void run() {
-        WriteCommandAction.runWriteCommandAction(new Runnable() {
+        WriteCommandAction.runWriteCommandAction(null, new Runnable() {
           @Override
           public void run() {
             String fileName = getTestName(false) + extension;
