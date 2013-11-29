@@ -24,6 +24,6 @@ public abstract class ConcurrentFactoryMap<T,V> extends FactoryMap<T,V> {
 
   @Override
   protected Map<T, V> createMap() {
-    return ConcurrentMapFactory.DEFAULT_FACTORY.createMap();
+    return ConcurrentMapFactory.createMap();
   }
 }

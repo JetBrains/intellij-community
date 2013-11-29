@@ -49,7 +49,7 @@ public final class IconLoader {
   private static boolean USE_DARK_ICONS = UIUtil.isUnderDarcula();
 
   @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
-  private static final ConcurrentMap<URL, CachedImageIcon> ourIconsCache = ConcurrentMapFactory.DEFAULT_FACTORY.createMap(100, 0.9f, 2);
+  private static final ConcurrentMap<URL, CachedImageIcon> ourIconsCache = ConcurrentMapFactory.createMap(100, 0.9f, 2);
 
   /**
    * This cache contains mapping between icons and disabled icons.

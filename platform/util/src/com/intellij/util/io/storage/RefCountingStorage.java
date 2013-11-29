@@ -39,7 +39,7 @@ import java.util.zip.Inflater;
 import java.util.zip.InflaterInputStream;
 
 public class RefCountingStorage extends AbstractStorage {
-  private final Map<Integer, Future<?>> myPendingWriteRequests = ConcurrentMapFactory.DEFAULT_FACTORY.createMap();
+  private final Map<Integer, Future<?>> myPendingWriteRequests = ConcurrentMapFactory.createMap();
   private int myPendingWriteRequestsSize;
   private final ThreadPoolExecutor myPendingWriteRequestsExecutor = new ThreadPoolExecutor(1, 1, Long.MAX_VALUE, TimeUnit.DAYS, new LinkedBlockingQueue<Runnable>(), ConcurrencyUtil.newNamedThreadFactory("RefCountingStorage write content helper"));
 
