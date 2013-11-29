@@ -110,7 +110,7 @@ public class DarculaLaf extends BasicLookAndFeel {
       if (SystemInfo.isWindows) {
         //JFrame.setDefaultLookAndFeelDecorated(true);
       }
-
+      defaults.put("EditorPane.font", defaults.getFont("TextField.font"));
       return defaults;
     }
     catch (Exception e) {
