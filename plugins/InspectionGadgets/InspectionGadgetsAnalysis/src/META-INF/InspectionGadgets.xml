@@ -2631,11 +2631,11 @@
                      level="WARNING" implementationClass="com.siyeh.ig.visibility.MethodOverridesStaticMethodInspection"/>
     <localInspection language="JAVA" shortName="TypeParameterHidesVisibleType" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="type.parameter.hides.visible.type.display.name" groupBundle="messages.InspectionsBundle"
-                     groupKey="group.names.visibility.issues" enabledByDefault="false" level="WARNING"
+                     groupKey="group.names.visibility.issues" enabledByDefault="true" level="WARNING"
                      implementationClass="com.siyeh.ig.visibility.TypeParameterHidesVisibleTypeInspection"/>
     <localInspection language="JAVA" suppressId="ParameterHidesMemberVariable" shortName="ParameterHidingMemberVariable"
                      bundle="com.siyeh.InspectionGadgetsBundle" key="parameter.hides.member.variable.display.name"
-                     groupBundle="messages.InspectionsBundle" groupKey="group.names.visibility.issues" enabledByDefault="true"
+                     groupBundle="messages.InspectionsBundle" groupKey="group.names.visibility.issues" enabledByDefault="false"
                      level="WARNING" implementationClass="com.siyeh.ig.visibility.ParameterHidingMemberVariableInspection"/>
   </extensions>
 
