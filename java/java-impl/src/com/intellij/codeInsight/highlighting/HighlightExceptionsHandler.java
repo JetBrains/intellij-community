@@ -89,7 +89,9 @@ public class HighlightExceptionsHandler extends HighlightUsagesHandlerBase<PsiCl
               }
               else if (psiExpression instanceof PsiNewExpression) {
                 PsiJavaCodeReferenceElement ref = ((PsiNewExpression)psiExpression).getClassReference();
-                addOccurrence(ref);
+                if (ref != null) {
+                  addOccurrence(ref);
+                }
               }
               else {
                 addOccurrence(statement.getException());
