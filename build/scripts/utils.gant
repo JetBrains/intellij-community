@@ -773,14 +773,6 @@ binding.setVariable("buildWinLauncher", { String ch, String inputPath, String ou
   if (launcherPropertiesTempFile != null) {
     launcherPropertiesTempFile.delete()
   }
-
-  File outputFile = new File(outputPath)
-  def outputFileName = outputFile.getName()
-  projectBuilder.stage("outputFile: $outputFileName")
-  def outputDir = outputPath.substring(0, outputPath.length() - outputFileName.length())
-  projectBuilder.stage("outputDir: $outputDir")
-
-  executeExternalAnt(["dirName": outputDir, "fileName": outputFileName], "$home/build/signBuild.xml")
 })
 
 binding.setVariable("collectUsedJars", { List modules, List approvedJars, List forbiddenJars, List modulesToBuild ->
