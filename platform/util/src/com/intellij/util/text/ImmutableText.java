@@ -686,7 +686,7 @@ public final class ImmutableText implements CharSequence {
   public char charAt(int index) {
     InnerLeaf leaf = myLastLeaf;
     if (leaf == null || index < leaf.offset || index >= leaf.offset + leaf.leafText._count) {
-      leaf = myLastLeaf = findLeaf(index, 0);
+      myLastLeaf = leaf = findLeaf(index, 0);
     }
     return leaf.leafText._data[index - leaf.offset];
   }
