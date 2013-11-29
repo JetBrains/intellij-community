@@ -497,6 +497,10 @@ public class MavenExternalParameters {
       cmdList.add("--update-snapshots");
     }
 
+    if (StringUtil.isNotEmpty(coreSettings.getThreads())) {
+      cmdList.add("-T", coreSettings.getThreads());
+    }
+
     addIfNotEmpty(cmdList, coreSettings.getFailureBehavior().getCommandLineOption());
     addIfNotEmpty(cmdList, coreSettings.getChecksumPolicy().getCommandLineOption());
 
