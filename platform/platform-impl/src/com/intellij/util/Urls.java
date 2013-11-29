@@ -131,13 +131,14 @@ public final class Urls {
     return new UrlImpl(scheme, authority, path, matcher.group(5));
   }
 
-  // must not be used in NodeJS
+  @NotNull
   public static Url newFromVirtualFile(@NotNull VirtualFile file) {
     if (file.isInLocalFileSystem()) {
       return newUri(file.getFileSystem().getProtocol(), file.getPath());
     }
     else {
-      return parseUrl(file.getUrl());
+      Url url = parseUrl(file.getUrl());
+      return url == null ? new UrlImpl(file.getPath()) : url;
     }
   }
 
