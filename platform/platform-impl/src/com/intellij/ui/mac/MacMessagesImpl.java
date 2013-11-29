@@ -36,13 +36,11 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.InputEvent;
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
 
 import static com.intellij.ui.mac.foundation.Foundation.*;
-import static com.intellij.ui.mac.foundation.Foundation.invoke;
 
 /**
  * @author pegov
@@ -73,6 +71,7 @@ public class MacMessagesImpl extends MacMessages {
         resultsFromDocumentRoot.put(documentRoot, new MessageResult(returnCode.intValue(), suppressState.intValue() == 1));
         queuesFromDocumentRoot.get(windowFromId.get(contextInfo.longValue())).runFromQueue();
       }
+      JDK7WindowReorderingWorkaround.enableReordering();
       cfRelease(self);
     }
   };
@@ -204,6 +203,7 @@ public class MacMessagesImpl extends MacMessages {
   private MacMessagesImpl() {}
 
   private static final Callback windowDidBecomeMainCallback = new Callback() {
+    @SuppressWarnings("UnusedDeclaration") // this is a native up-call
     public void callback(ID self,
                          ID nsNotification)
     {
@@ -358,6 +358,7 @@ public class MacMessagesImpl extends MacMessages {
   private static void startModal(final Window w, ID windowId) {
     long windowPtr = windowId.longValue();
     synchronized (lock) {
+      JDK7WindowReorderingWorkaround.disableReordering();
       windowFromId.put(windowPtr, w);
       if (blockedDocumentRoots.keySet().contains(w)) {
         blockedDocumentRoots.put(w, blockedDocumentRoots.get(w) + 1);
@@ -567,7 +568,7 @@ public class MacMessagesImpl extends MacMessages {
 
     final Window documentRoot = getDocumentRootFromWindow(foremostWindow);
 
-    final ID nativeFocusedWindow = windowIdFromWindow(foremostWindow);
+    final ID nativeFocusedWindow = MacUtil.findWindowFromJavaWindow(foremostWindow);
 
     paramsWrapper.setNativeWindow(nativeFocusedWindow);
 
@@ -592,52 +593,8 @@ public class MacMessagesImpl extends MacMessages {
     return documentRoot;
   }
 
-  private static ID windowIdFromWindow (Window w) {
-
-    ID windowId = null;
-
-    if (SystemInfo.isJavaVersionAtLeast("1.7") && Registry.is("skip.untitled.windows.for.mac.messages")) {
-      try {
-        Class <?> cWindowPeerClass  = w.getPeer().getClass();
-        Method getPlatformWindowMethod = cWindowPeerClass.getDeclaredMethod("getPlatformWindow");
-        Object cPlatformWindow = getPlatformWindowMethod.invoke(w.getPeer());
-        Class <?> cPlatformWindowClass = cPlatformWindow.getClass();
-        Method getNSWindowPtrMethod = cPlatformWindowClass.getDeclaredMethod("getNSWindowPtr");
-        windowId = new ID((Long)getNSWindowPtrMethod.invoke(cPlatformWindow));
-      }
-      catch (NoSuchMethodException e) {
-        LOG.debug(e);
-      }
-      catch (InvocationTargetException e) {
-        LOG.debug(e);
-      }
-      catch (IllegalAccessException e) {
-        LOG.debug(e);
-      }
-
-    } else {
-      String foremostWindowTitle = getWindowTitle(w);
-      windowId = MacUtil.findWindowForTitle(foremostWindowTitle);
-    }
-
-    return windowId;
-
-  }
-
   private static int convertReturnCodeFromNativeMessageDialog(int result) {
     return result - 1000;
-  }
-
-  private static String getWindowTitle(Window documentRoot) {
-    String windowTitle;
-    if (documentRoot instanceof Frame) {
-      windowTitle = ((Frame)documentRoot).getTitle();
-    } else if (documentRoot instanceof Dialog) {
-      windowTitle = ((Dialog)documentRoot).getTitle();
-    } else {
-      throw new RuntimeException("The window is not a frame and not a dialog!");
-    }
-    return windowTitle;
   }
 
   @Messages.YesNoCancelResult
@@ -745,8 +702,8 @@ public class MacMessagesImpl extends MacMessages {
     }
 
     //Actually can, but not in this implementation. If you know a reasonable scenario, please ask Denis Fokin for the improvement.
-    LOG.assertTrue(getWindowTitle(_window) != null, "A window without a title should not be used for showing MacMessages");
-    while (_window != null && getWindowTitle(_window) == null) {
+    LOG.assertTrue(MacUtil.getWindowTitle(_window) != null, "A window without a title should not be used for showing MacMessages");
+    while (_window != null && MacUtil.getWindowTitle(_window) == null) {
       _window = _window.getOwner();
       //At least our frame should have a title
     }
