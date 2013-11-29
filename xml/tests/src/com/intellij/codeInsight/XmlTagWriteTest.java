@@ -16,6 +16,7 @@
 package com.intellij.codeInsight;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.psi.XmlElementFactory;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlText;
@@ -30,7 +31,7 @@ public class XmlTagWriteTest extends LightCodeInsightTestCase{
   public void test1() throws IncorrectOperationException {
     XmlElementFactory elementFactory = XmlElementFactory.getInstance(getProject());
     final XmlTag xmlTag = XmlElementFactory.getInstance(getProject()).createTagFromText("<tag1/>");
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+    WriteCommandAction.runWriteCommandAction(null, new Runnable() {
       @Override
       public void run() {
         xmlTag.add(xmlTag.createChildTag("tag2", XmlUtil.EMPTY_URI, null, false));
@@ -47,9 +48,7 @@ public class XmlTagWriteTest extends LightCodeInsightTestCase{
 
   public void test2() throws IncorrectOperationException {
     final XmlTag xmlTag = XmlElementFactory.getInstance(getProject()).createTagFromText("<tag1></tag1>");
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
+    WriteCommandAction.runWriteCommandAction(null, new Runnable(){public void run() {
         xmlTag.add(xmlTag.createChildTag("tag2", XmlUtil.EMPTY_URI, null, false));
       }
     });

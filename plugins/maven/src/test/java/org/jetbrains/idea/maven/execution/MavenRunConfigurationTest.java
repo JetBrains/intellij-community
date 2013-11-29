@@ -41,6 +41,7 @@ public class MavenRunConfigurationTest extends IdeaTestCase {
     s.myGeneralSettings.setChecksumPolicy(MavenExecutionOptions.ChecksumPolicy.WARN);
     s.myGeneralSettings.setFailureBehavior(MavenExecutionOptions.FailureMode.AT_END);
     s.myGeneralSettings.setOutputLevel(MavenExecutionOptions.LoggingLevel.FATAL);
+    s.myGeneralSettings.setThreads("1.5C");
 
     s.myRunnerSettings = new MavenRunnerSettings();
     s.myRunnerSettings.setMavenProperties(ImmutableMap.of("a", "1", "b", "2", "c", "3"));

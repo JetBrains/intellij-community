@@ -66,7 +66,10 @@ public class MavenShowEffectivePom extends AnAction implements DumbAware {
             if (project.isDisposed()) return;
 
             if (s == null) { // null means UnsupportedOperationException
-              showUnsupportedNotification(project, file);
+              new Notification(MavenUtil.MAVEN_NOTIFICATION_GROUP,
+                               "Error",
+                               "Failed to evaluate effective pom.",
+                               NotificationType.ERROR).notify(project);
               return;
             }
 

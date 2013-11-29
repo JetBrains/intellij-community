@@ -25,6 +25,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.impl.libraries.LibraryEx;
 import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -32,6 +33,7 @@ import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import gnu.trove.TObjectIntHashMap;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.java.JavaSourceRootType;
@@ -44,6 +46,7 @@ class RootIndex {
   private static final DirectoryInfo NULL_INFO = DirectoryInfo.createNew();
 
   private final Set<VirtualFile> myProjectExcludedRoots = ContainerUtil.newHashSet();
+  private final Set<VirtualFile> myModuleExcludedRoots = ContainerUtil.newHashSet();
   private final Set<VirtualFile> myLibraryExcludedRoots = ContainerUtil.newHashSet();
   private final Map<VirtualFile, DirectoryInfo> myRoots = ContainerUtil.newTroveMap();
   private final Map<String, HashSet<VirtualFile>> myPackagePrefixRoots = ContainerUtil.newHashMap();
@@ -71,7 +74,13 @@ class RootIndex {
 
       for (ContentEntry contentEntry : contentEntries) {
         // Init excluded roots
-        Collections.addAll(myProjectExcludedRoots, contentEntry.getExcludeFolderFiles());
+        VirtualFile[] excluded = contentEntry.getExcludeFolderFiles();
+        for (VirtualFile excludeRoot : excluded) {
+          if (!FileUtil.startsWith(excludeRoot.getUrl(), contentEntry.getUrl())) {
+            myProjectExcludedRoots.add(excludeRoot);
+          }
+          myModuleExcludedRoots.add(excludeRoot);
+        }
 
         // Init module sources
         SourceFolder[] sourceFolders = contentEntry.getSourceFolders();
@@ -157,7 +166,9 @@ class RootIndex {
     }
 
     for (DirectoryIndexExcludePolicy policy : Extensions.getExtensions(DirectoryIndexExcludePolicy.EP_NAME, project)) {
-      Collections.addAll(myProjectExcludedRoots, policy.getExcludeRootsForProject());
+      VirtualFile[] excludeRoots = policy.getExcludeRootsForProject();
+      Collections.addAll(myModuleExcludedRoots, excludeRoots);
+      Collections.addAll(myProjectExcludedRoots, excludeRoots);
     }
 
     // fill ordered entries
@@ -224,7 +235,10 @@ class RootIndex {
   }
 
   public void checkConsistency() {
-    for (VirtualFile file : myProjectExcludedRoots) {
+    for (VirtualFile file : myLibraryExcludedRoots) {
+      assert file.exists() : file.getPath() + " does not exist";
+    }
+    for (VirtualFile file : myModuleExcludedRoots) {
       assert file.exists() : file.getPath() + " does not exist";
     }
     for (VirtualFile file : myLibraryExcludedRoots) {
@@ -324,29 +338,39 @@ class RootIndex {
       DirectoryInfo info = myInfoCache.get(root);
       if (info != null) {
         if (dir != root) {
-          myInfoCache.put(dir, info);
+          cacheInfos(dir, root, info);
         }
         return info == NULL_INFO ? null : info;
       }
       
       info = myRoots.get(root);
       if (info != null) {
-        myInfoCache.put(dir, info);
+        cacheInfos(dir, root, info);
         return info;
       }
       
       if (isAnyExcludeRoot(root) || FileTypeManager.getInstance().isFileIgnored(root)) {
-        myInfoCache.put(dir, NULL_INFO);
+        cacheInfos(dir, root, NULL_INFO);
         return null;
       }
     }
 
-    myInfoCache.put(dir, NULL_INFO);
+    cacheInfos(dir, null, NULL_INFO);
     return null;
   }
 
+  private void cacheInfos(VirtualFile dir, @Nullable VirtualFile stopAt, @NotNull DirectoryInfo info) {
+    while (dir != null) {
+      myInfoCache.put(dir, info);
+      if (dir == stopAt) {
+        break;
+      }
+      dir = dir.getParent();
+    }
+  }
+
   private boolean isAnyExcludeRoot(VirtualFile root) {
-    return myProjectExcludedRoots.contains(root) || myLibraryExcludedRoots.contains(root);
+    return myModuleExcludedRoots.contains(root) || myLibraryExcludedRoots.contains(root);
   }
 
   public boolean isProjectExcludeRoot(@NotNull final VirtualFile dir) {
@@ -390,6 +414,7 @@ class RootIndex {
     return result;
   }
 
+  @Contract("_,null->false")
   private boolean isValidPackageDirectory(boolean includeLibrarySources, @Nullable VirtualFile file) {
     if (file != null) {
       DirectoryInfo info = getInfoForDirectory(file);
@@ -405,6 +430,10 @@ class RootIndex {
   @Nullable
   public String getPackageName(@NotNull final VirtualFile dir) {
     if (dir.isDirectory()) {
+      if (FileTypeManager.getInstance().isFileIgnored(dir)) {
+        return null;
+      }
+
       for (final Map.Entry<String, HashSet<VirtualFile>> entry : myPackagePrefixRoots.entrySet()) {
         if (entry.getValue().contains(dir)) {
           return entry.getKey();

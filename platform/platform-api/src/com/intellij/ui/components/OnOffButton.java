@@ -17,7 +17,6 @@ package com.intellij.ui.components;
 
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
-import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
@@ -67,6 +66,8 @@ public class OnOffButton extends JToggleButton {
 
     @SuppressWarnings({"MethodOverridesStaticMethodOfSuperclass", "UnusedDeclaration"})
     public static ComponentUI createUI(JComponent c) {
+      c.setOpaque(false);
+      c.setAlignmentY(0.5f);
       return new OnOffButtonUI((OnOffButton)c);
     }
 
@@ -92,31 +93,33 @@ public class OnOffButton extends JToggleButton {
         h--;
       }
       Graphics2D g = ((Graphics2D)gr);
-      GraphicsUtil.setupAAPainting(g);
-      g.translate(1,1);
+      g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+      int xOff = (myButton.getWidth() - w) / 2;
+      int yOff = (myButton.getHeight() - h) / 2;
+      g.translate(xOff, yOff);
       if (button.isSelected()) {
-        g.setColor(new JBColor(new Color(57, 113, 238), new Color(13, 41, 62)));
-        g.fillRoundRect(0, 0, w, h, h, h);
-        g.setColor(UIUtil.getBorderColor());
-        g.drawRoundRect(0, 0, w, h, h, h);
-        g.setColor(new JBColor(Gray._220, Gray._128));
-        g.fillOval(w - h + 1, 1, h - 1, h - 1);
+        g.setColor(new JBColor(new Color(74, 146, 73), new Color(77, 105, 76)));
+        g.fillRoundRect(0, 0, w, h, 5, 5);
+        g.setColor(new JBColor(Gray._192, Gray._80));
+        g.drawRoundRect(0, 0, w, h, 5, 5);
+        g.setColor(new JBColor(Gray._200, Gray._100));
+        g.fillRoundRect(w - h, 1, h, h-1, 3, 3);
         g.setColor(UIUtil.getListForeground(true));
         g.drawString(button.getOnText(), h/2, h - 4);
       } else {
         g.setColor(UIUtil.getPanelBackground());
-        g.fillRoundRect(0, 0, w, h, h, h);
-        g.setColor(UIUtil.getBorderColor());
-        g.drawRoundRect(0, 0, w, h, h, h);
+        g.fillRoundRect(0, 0, w, h, 5, 5);
+        g.setColor(new JBColor(Gray._192, Gray._100));
+        g.drawRoundRect(0, 0, w, h, 5, 5);
         g.setColor(UIUtil.getLabelDisabledForeground());
         g.drawString(button.getOffText(), h + 4 , h - 4);
         g.setColor(UIUtil.getBorderColor());
-        g.setPaint(new GradientPaint(h,0, Gray._178, 0,h, Gray._240));
-        g.fillOval(0, 0, h, h);
-        g.setColor(UIUtil.getBorderColor());
-        g.drawOval(0, 0, h, h);
+        g.setPaint(new GradientPaint(h, 0, new JBColor(Gray._158, Gray._100), 0, h, new JBColor(Gray._210, Gray._100)));
+        g.fillRoundRect(0, 0, h, h, 3, 3);
+//        g.setColor(UIUtil.getBorderColor());
+//        g.drawOval(0, 0, h, h);
       }
-      g.translate(-1, -1);
+      g.translate(-xOff, -yOff);
     }
 
     @Override

@@ -114,7 +114,7 @@ public class DependsOnGroupsInspection extends BaseJavaLocalInspectionTool {
       if (dep != null) {
         final PsiAnnotationMemberValue value = dep.getValue();
         if (value != null) {
-          LOGGER.info("Found " + dep.getName() + " with: " + value.getText());
+          LOGGER.debug("Found " + dep.getName() + " with: " + value.getText());
           String text = value.getText();
           if (value instanceof PsiReferenceExpression) {
             final PsiElement resolve = ((PsiReferenceExpression)value).resolve();
@@ -131,7 +131,7 @@ public class DependsOnGroupsInspection extends BaseJavaLocalInspectionTool {
           while (matcher.find()) {
             String methodName = matcher.group(1);
             if (!groups.contains(methodName)) {
-              LOGGER.info("group doesn't exist:" + methodName);
+              LOGGER.debug("group doesn't exist:" + methodName);
               ProblemDescriptor descriptor = manager.createProblemDescriptor(annotation, "Group '" + methodName + "' is undefined.",
                                                                              new GroupNameQuickFix(methodName),
                                                                              ProblemHighlightType.GENERIC_ERROR_OR_WARNING, isOnTheFly);

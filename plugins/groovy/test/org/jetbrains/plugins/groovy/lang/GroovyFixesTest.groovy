@@ -14,7 +14,8 @@
  * limitations under the License.
  */
 package org.jetbrains.plugins.groovy.lang
-import com.intellij.openapi.application.ApplicationManager
+
+import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 import org.jetbrains.plugins.groovy.codeInspection.control.GroovyConstantIfStatementInspection
 import org.jetbrains.plugins.groovy.codeInspection.style.JavaStylePropertiesInvocationInspection
@@ -99,7 +100,7 @@ class FooBarGoo {
 
 class Foo {}
 ''')
-    ApplicationManager.application.runWriteAction { ((GroovyFile) myFixture.file).packageName = 'foo' }
+    WriteCommandAction.runWriteCommandAction project, { ((GroovyFile)myFixture.file).packageName = 'foo' }
     myFixture.checkResult '''\
 #!/usr/bin/groovy
 package foo

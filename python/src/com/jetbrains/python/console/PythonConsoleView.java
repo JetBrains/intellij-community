@@ -152,7 +152,9 @@ public class PythonConsoleView extends JPanel implements LanguageConsoleView, Ob
 
 
   private void doExecute(String code) {
-    executeInConsole(PyConsoleIndentUtil.normalize(code, myExecuteActionHandler.getCurrentIndentSize()));
+    String codeFragment = PyConsoleIndentUtil.normalize(code, myExecuteActionHandler.getCurrentIndentSize());
+    codeFragment += "\n";
+    executeInConsole(codeFragment);
   }
 
   public void executeInConsole(final String code) {
@@ -383,7 +385,7 @@ public class PythonConsoleView extends JPanel implements LanguageConsoleView, Ob
     final XStandaloneVariablesView view = new XStandaloneVariablesView(myProject, new PyDebuggerEditorsProvider(), stackFrame);
     consoleCommunication.addCommunicationListener(new ConsoleCommunicationListener() {
       @Override
-      public void commandExecuted() {
+      public void commandExecuted(boolean more) {
         view.rebuildView();
       }
 

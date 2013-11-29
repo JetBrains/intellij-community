@@ -36,7 +36,7 @@ public interface MavenServerEmbedder extends Remote {
                                             @NotNull Collection<String> activeProfiles) throws RemoteException,
                                                                                                MavenServerProcessCanceledException;
 
-  @NotNull
+  @Nullable
   String evaluateEffectivePom(@NotNull File file, @NotNull List<String> activeProfiles) throws RemoteException,
                                                                                                  MavenServerProcessCanceledException;
 

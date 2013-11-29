@@ -23,7 +23,6 @@ import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.editor.Document;
@@ -36,6 +35,8 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.util.ProgressWrapper;
+import com.intellij.openapi.progress.util.TooManyUsagesStatus;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
@@ -112,6 +113,13 @@ public class FindInProjectUtil {
     if (model.getModuleName() == null || editor == null) {
       model.setDirectoryName(directoryName);
       model.setProjectScope(directoryName == null && module == null && !model.isCustomScope() || editor != null);
+
+      // for convenience set directory name to directory of current file, note that we doesn't change default projectScope
+      if (directoryName == null) {
+        VirtualFile virtualFile = CommonDataKeys.VIRTUAL_FILE.getData(dataContext);
+        if (virtualFile != null && !virtualFile.isDirectory()) virtualFile = virtualFile.getParent();
+        if (virtualFile != null) model.setDirectoryName(virtualFile.getPresentableUrl());
+      }
     }
   }
 
@@ -282,7 +290,10 @@ public class FindInProjectUtil {
     final int[] offset = {0};
     int count = 0;
     int found;
+    ProgressIndicator indicator = ProgressWrapper.unwrap(ProgressManager.getInstance().getProgressIndicator());
+    TooManyUsagesStatus tooManyUsagesStatus = TooManyUsagesStatus.getFrom(indicator);
     do {
+      tooManyUsagesStatus.pauseProcessingIfTooManyUsages(); // wait for user out of read action
       found = ApplicationManager.getApplication().runReadAction(new Computable<Integer>() {
         @Override
         @NotNull

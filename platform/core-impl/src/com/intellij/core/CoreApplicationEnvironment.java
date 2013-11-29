@@ -19,6 +19,7 @@ import com.intellij.concurrency.*;
 import com.intellij.lang.*;
 import com.intellij.lang.impl.PsiBuilderFactoryImpl;
 import com.intellij.mock.MockApplication;
+import com.intellij.mock.MockApplicationEx;
 import com.intellij.mock.MockFileDocumentManagerImpl;
 import com.intellij.mock.MockReferenceProvidersRegistry;
 import com.intellij.openapi.Disposable;
@@ -135,7 +136,7 @@ public class CoreApplicationEnvironment {
   }
 
   protected MockApplication createApplication(Disposable parentDisposable) {
-    return new MockApplication(parentDisposable);
+    return new MockApplicationEx(parentDisposable);
   }
 
   protected JobLauncher createJobLauncher() {

@@ -45,7 +45,7 @@ public class BadExceptionDeclaredInspectionBase extends BaseInspection {
     );
 
   @SuppressWarnings("PublicField")
-  public boolean ignoreTestCases = false;
+  public boolean ignoreTestCases = false; // keep for compatibility
 
   @SuppressWarnings("PublicField")
   public boolean ignoreLibraryOverrides = false;
@@ -89,13 +89,6 @@ public class BadExceptionDeclaredInspectionBase extends BaseInspection {
     @Override
     public void visitMethod(@NotNull PsiMethod method) {
       super.visitMethod(method);
-      if (ignoreTestCases) {
-        final PsiClass containingClass = method.getContainingClass();
-        final TestFrameworks testFrameworks = TestFrameworks.getInstance();
-        if (containingClass != null && testFrameworks.isTestOrConfig(containingClass)) {
-          return;
-        }
-      }
       if (ignoreLibraryOverrides && LibraryUtil.isOverrideOfLibraryMethod(method)) {
         return;
       }
@@ -109,7 +102,7 @@ public class BadExceptionDeclaredInspectionBase extends BaseInspection {
         final PsiClass thrownClass = (PsiClass)element;
         final String qualifiedName = thrownClass.getQualifiedName();
         if (qualifiedName != null && exceptions.contains(qualifiedName)) {
-          registerError(reference);
+          registerError(reference, reference);
         }
       }
     }

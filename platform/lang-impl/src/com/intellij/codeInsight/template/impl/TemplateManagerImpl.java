@@ -23,6 +23,7 @@ import com.intellij.lang.Language;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.event.EditorFactoryAdapter;
@@ -586,7 +587,7 @@ public class TemplateManagerImpl extends TemplateManager implements ProjectCompo
     file = (PsiFile)file.copy();
     final Document document = file.getViewProvider().getDocument();
     assert document != null;
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+    WriteCommandAction.runWriteCommandAction(file.getProject(), new Runnable() {
       @Override
       public void run() {
         document.replaceString(startOffset, endOffset, CompletionUtil.DUMMY_IDENTIFIER_TRIMMED);

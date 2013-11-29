@@ -21,6 +21,7 @@ import com.intellij.lang.ant.AntBundle;
 import com.intellij.lang.ant.AntSupport;
 import com.intellij.lang.ant.quickfix.AntChangeContextLocalFix;
 import com.intellij.lang.ant.quickfix.AntCreatePropertyFix;
+import com.intellij.lang.ant.quickfix.AntCreateTargetFix;
 import com.intellij.lang.ant.validation.AntInspection;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.psi.PsiFile;
@@ -125,6 +126,9 @@ public class AntResolveInspection extends AntInspection {
               quickFixList.add(new AntCreatePropertyFix(canonicalText, propertyFile));
             }
           }
+        }
+        else if (ref instanceof AntDomTargetReference) {
+          quickFixList.add(new AntCreateTargetFix(ref.getCanonicalText()));
         }
 
         holder.createProblem(

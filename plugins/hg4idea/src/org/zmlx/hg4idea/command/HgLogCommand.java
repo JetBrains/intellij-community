@@ -18,6 +18,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.HgFile;
@@ -38,16 +39,6 @@ import java.util.*;
 public class HgLogCommand {
 
   private static final Logger LOG = Logger.getInstance(HgLogCommand.class.getName());
-  private static final String[] SHORT_TEMPLATE_ITEMS =
-    {"{rev}", "{node}", "{parents}", "{date|isodatesec}", "{author}", "{branch}", "{desc}"};
-  private static final String[] LONG_TEMPLATE_ITEMS =
-    {"{rev}", "{node}", "{parents}", "{date|isodatesec}", "{author}", "{branch}", "{desc}", "{file_adds}",
-      "{file_mods}",
-      "{file_dels}", "{join(file_copies,'" + HgChangesetUtil.FILE_SEPARATOR + "')}"};
-  private static final String[] LONG_TEMPLATE_FOR_OLD_VERSIONS =
-    {"{rev}", "{node}", "{parents}", "{date|isodatesec}", "{author}", "{branch}", "{desc}", "{file_adds}",
-      "{file_mods}",
-      "{file_dels}", "{file_copies}"};
   private static final int REVISION_INDEX = 0;
   private static final int CHANGESET_INDEX = 1;
   private static final int PARENTS_INDEX = 2;
@@ -64,11 +55,10 @@ public class HgLogCommand {
   private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss Z");
 
   @NotNull private final Project myProject;
-
+  @NotNull private HgVersion myVersion;
   private boolean myIncludeRemoved;
   private boolean myFollowCopies;
   private boolean myLogFile = true;
-  private boolean myBuiltInSupported = false;
   private boolean myLargeFilesWithFollowSupported = false;
 
   public void setIncludeRemoved(boolean includeRemoved) {
@@ -90,9 +80,8 @@ public class HgLogCommand {
       LOG.info("Vcs couldn't be null for project");
       return;
     }
-    HgVersion version = vcs.getVersion();
-    myBuiltInSupported = version.isBuiltInFunctionSupported();
-    myLargeFilesWithFollowSupported = version.isLargeFilesWithFollowSupported();
+    myVersion = vcs.getVersion();
+    myLargeFilesWithFollowSupported = myVersion.isLargeFilesWithFollowSupported();
   }
 
   /**
@@ -111,23 +100,10 @@ public class HgLogCommand {
       return Collections.emptyList();
     }
 
-    String template;
-    boolean shouldParseOldTemplate = false;
-
-    if (!includeFiles) {
-      template = HgChangesetUtil.makeTemplate(SHORT_TEMPLATE_ITEMS);
-    }
-    else {
-      if (!myBuiltInSupported) {
-        template = HgChangesetUtil.makeTemplate(LONG_TEMPLATE_FOR_OLD_VERSIONS);
-        shouldParseOldTemplate = true;
-      }
-      else {
-        template = HgChangesetUtil.makeTemplate(LONG_TEMPLATE_ITEMS);
-      }
-    }
-
-    int expectedItemCount = includeFiles ? LONG_TEMPLATE_ITEMS.length : SHORT_TEMPLATE_ITEMS.length;
+    String[] templates = constructTemplateArgument(includeFiles, myVersion);
+    String template = HgChangesetUtil.makeTemplate(templates);
+    int expectedItemCount = templates.length;
+    boolean shouldParseOldTemplate = !myVersion.isBuiltInFunctionSupported();
 
     FilePath originalFileName = HgUtil.getOriginalFileName(hgFile.toFilePath(), ChangeListManager.getInstance(myProject));
     HgFile originalHgFile = new HgFile(hgFile.getRepo(), originalFileName);
@@ -163,23 +139,7 @@ public class HgLogCommand {
         String changeset = attributes[CHANGESET_INDEX];
         String parentsString = attributes[PARENTS_INDEX];
 
-        List<HgRevisionNumber> parents = new ArrayList<HgRevisionNumber>(2);
-        if (StringUtil.isEmpty(parentsString)) {
-          Long revision = Long.valueOf(revisionString);
-          HgRevisionNumber parentRevision = HgRevisionNumber.getLocalInstance(String.valueOf(revision - 1));
-          parents.add(parentRevision);
-        }
-        else {
-          //hg returns parents in the format 'rev:node rev:node ' (note the trailing space)
-          String[] parentStrings = parentsString.trim().split(" ");
-          for (String parentString : parentStrings) {
-            String[] parentParts = parentString.split(":");
-            //if revision has only 1 parent and "--debug" argument were added,  its second parent has revision number  -1
-            if (Integer.valueOf(parentParts[0]) >= 0) {
-              parents.add(HgRevisionNumber.getInstance(parentParts[0], parentParts[1]));
-            }
-          }
-        }
+        List<HgRevisionNumber> parents = parseParentRevisions(parentsString, revisionString);
 
         Date revisionDate = DATE_FORMAT.parse(attributes[DATE_INDEX]);
         String author = attributes[AUTHOR_INDEX];
@@ -354,4 +314,46 @@ public class HgLogCommand {
     return -1;
   }
 
+  @NotNull
+  private static String[] constructTemplateArgument(boolean includeFiles, @NotNull HgVersion currentVersion) {
+    List<String> templates = new ArrayList<String>();
+    templates.add("{rev}");
+    templates.add("{node}");
+    if (currentVersion.isParentRevisionTemplateSupported()) {
+      templates.add("{p1rev}:{p1node} {p2rev}:{p2node}");
+    }
+    else {
+      templates.add("{parents}");
+    }
+    templates.addAll(Arrays.asList("{date|isodatesec}", "{author}", "{branch}", "{desc}"));
+    if (!includeFiles) {
+      return ArrayUtil.toStringArray(templates);
+    }
+    templates.addAll(Arrays.asList("{file_adds}", "{file_mods}", "{file_dels}"));
+    templates
+      .add(currentVersion.isBuiltInFunctionSupported() ? "{join(file_copies,'" + HgChangesetUtil.FILE_SEPARATOR + "')}" : "{file_copies}");
+    return ArrayUtil.toStringArray(templates);
+  }
+
+  @NotNull
+  private static List<HgRevisionNumber> parseParentRevisions(@NotNull String parentsString, @NotNull String currentRevisionString) {
+    List<HgRevisionNumber> parents = new ArrayList<HgRevisionNumber>(2);
+    if (StringUtil.isEmptyOrSpaces(parentsString)) {
+      // parents shouldn't be empty  only if not supported
+      Long revision = Long.valueOf(currentRevisionString);
+      HgRevisionNumber parentRevision = HgRevisionNumber.getLocalInstance(String.valueOf(revision - 1));
+      parents.add(parentRevision);
+      return parents;
+    }
+    //hg returns parents in the format 'rev:node rev:node ' (note the trailing space)
+    String[] parentStrings = parentsString.trim().split(" ");
+    for (String parentString : parentStrings) {
+      String[] parentParts = parentString.split(":");
+      //if revision has only 1 parent and "--debug" argument were added or if appropriate parent template were used,  its second parent has revision number  -1
+      if (Integer.valueOf(parentParts[0]) >= 0) {
+        parents.add(HgRevisionNumber.getInstance(parentParts[0], parentParts[1]));
+      }
+    }
+    return parents;
+  }
 }

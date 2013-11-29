@@ -4,9 +4,11 @@ import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.File;
 import java.io.IOException;
 import java.text.MessageFormat;
 
@@ -24,6 +26,20 @@ public class AttachmentFactory {
   public static Attachment createAttachment(@NotNull VirtualFile file) {
     return new Attachment(file.getPresentableUrl(), getBytes(file),
                           file.getFileType().isBinary() ? "File is binary" : LoadTextUtil.loadText(file).toString());
+  }
+
+  public static Attachment createAttachment(@NotNull File file, boolean isBinary) {
+    byte[] bytes = getBytes(file);
+    return new Attachment(file.getPath(), bytes, isBinary ? "File is binary" : new String(bytes));
+  }
+
+  private static byte[] getBytes(File file) {
+    try {
+      return FileUtil.loadFileBytes(file);
+    }
+    catch (IOException e) {
+      return Attachment.getBytes(MessageFormat.format(ERROR_MESSAGE_PATTERN, e.getMessage()));
+    }
   }
 
   private static byte[] getBytes(VirtualFile file) {

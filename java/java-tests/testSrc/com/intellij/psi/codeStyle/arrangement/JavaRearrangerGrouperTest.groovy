@@ -126,7 +126,8 @@ class Sub extends Base {
   void test2() {}
 }''')
   }
-  void "test overriden and utility methods"() {
+
+  void "do not test overriden and utility methods"() {
     doTest(
       initial: '''\
 class Base {
@@ -188,4 +189,51 @@ class Test {
 }'''
     )
   }
+
+
+  void "test keep dependent methods together multiple times produce same result"() {
+    def groups = [group(DEPENDENT_METHODS, BREADTH_FIRST)]
+    def before = "public class SuperClass {\n" +
+                 "\n" +
+                 "    public void doSmth1() {\n" +
+                 "    }\n" +
+                 "\n" +
+                 "    public void doSmth2() {\n" +
+                 "    }\n" +
+                 "\n" +
+                 "    public void doSmth3() {\n" +
+                 "    }\n" +
+                 "\n" +
+                 "    public void doSmth4() {\n" +
+                 "    }\n" +
+                 "\n" +
+                 "    public void doSmth() {\n" +
+                 "        this.doSmth1();\n" +
+                 "        this.doSmth2();\n" +
+                 "        this.doSmth3();\n" +
+                 "        this.doSmth4();\n" +
+                 "    }\n" +
+                 "}"
+    def after = "public class SuperClass {\n" +
+                "\n" +
+                "    public void doSmth() {\n" +
+                "        this.doSmth1();\n" +
+                "        this.doSmth2();\n" +
+                "        this.doSmth3();\n" +
+                "        this.doSmth4();\n" +
+                "    }\n" +
+                "    public void doSmth1() {\n" +
+                "    }\n" +
+                "    public void doSmth2() {\n" +
+                "    }\n" +
+                "    public void doSmth3() {\n" +
+                "    }\n" +
+                "    public void doSmth4() {\n" +
+                "    }\n" +
+                "}"
+    doTest(initial: before, expected: after, groups: groups)
+    doTest(initial: after, expected: after, groups: groups)
+  }
+
+
 }

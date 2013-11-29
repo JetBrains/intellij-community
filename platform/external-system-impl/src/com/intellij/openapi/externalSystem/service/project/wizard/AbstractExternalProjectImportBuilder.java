@@ -38,6 +38,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.packaging.artifacts.ModifiableArtifactModel;
 import com.intellij.projectImport.ProjectImportBuilder;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -237,9 +238,7 @@ public abstract class AbstractExternalProjectImportBuilder<C extends AbstractImp
             }
 
             // Register libraries.
-            Set<DataNode<?>> toImport = ContainerUtilRt.newHashSet();
-            toImport.add(projectWithResolvedLibraries);
-            myProjectDataManager.importData(toImport, project, false);
+            myProjectDataManager.importData(Collections.<DataNode<?>>singletonList(projectWithResolvedLibraries), project, false);
           }
         });
       }
@@ -376,7 +375,7 @@ public abstract class AbstractExternalProjectImportBuilder<C extends AbstractImp
       assert false;
       return;
     }
-    context.setProjectName(myExternalProjectNode.getData().getName());
+    context.setProjectName(myExternalProjectNode.getData().getInternalName());
     context.setProjectFileDirectory(myExternalProjectNode.getData().getIdeProjectFileDirectoryPath());
     applyExtraSettings(context);
   }

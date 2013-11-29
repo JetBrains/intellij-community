@@ -93,7 +93,7 @@ public class PythonUnitTestUtil {
       }
     }
     for (PyFunction cls : file.getTopLevelFunctions()) {
-      if (isTestCaseFunction(cls)) {
+      if (isTestCaseFunction(cls, false)) {
         result.add(cls);
       }
     }
@@ -115,9 +115,9 @@ public class PythonUnitTestUtil {
     }
     if (checkAssert) {
       boolean hasAssert = hasAssertOrYield(function.getStatementList());
-      if (!hasAssert) return false;
+      if (hasAssert) return true;
     }
-    return true;
+    return false;
   }
 
   private static boolean hasAssertOrYield(PyStatementList list) {

@@ -15,8 +15,7 @@
  */
 package org.jetbrains.plugins.gradle.model;
 
-import org.jetbrains.plugins.gradle.model.impl.GradleDependency;
-import org.jetbrains.plugins.gradle.model.impl.GradleDependencyImpl;
+import org.gradle.tooling.model.idea.IdeaDependency;
 
 import java.io.Serializable;
 import java.util.List;
@@ -29,5 +28,5 @@ public interface ProjectDependenciesModel extends Serializable {
 
   String getProjectName();
 
-  List<GradleDependency> getDependencies();
+  List<IdeaDependency> getDependencies();
 }

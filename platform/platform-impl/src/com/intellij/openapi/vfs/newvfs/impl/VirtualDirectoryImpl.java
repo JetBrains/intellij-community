@@ -61,7 +61,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.newvfs.impl.VirtualDirectoryImpl");
   public static boolean CHECK = ApplicationManager.getApplication().isUnitTestMode();
 
-  static final VirtualDirectoryImpl NULL_VIRTUAL_FILE = new VirtualDirectoryImpl("*?;%NULL", null, LocalFileSystem.getInstance(), -42, 0) {
+  static final VirtualDirectoryImpl NULL_VIRTUAL_FILE = new VirtualDirectoryImpl(FileNameCache.storeName("*?;%NULL"), null, LocalFileSystem.getInstance(), -42, 0) {
     public String toString() {
       return "NULL";
     }
@@ -82,12 +82,12 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
    */
   private VirtualFileSystemEntry[] myChildren = EMPTY_ARRAY;
 
-  public VirtualDirectoryImpl(@NonNls @NotNull final String name,
+  public VirtualDirectoryImpl(@NonNls final int nameId,
                               @Nullable final VirtualDirectoryImpl parent,
                               @NotNull final NewVirtualFileSystem fs,
                               final int id,
                               @PersistentFS.Attributes final int attributes) {
-    super(name, parent, id, attributes);
+    super(nameId, parent, id, attributes);
     myFS = fs;
   }
 
@@ -99,32 +99,32 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
 
   @Nullable
   private VirtualFileSystemEntry findChild(@NotNull String name,
-                                           final boolean doRefresh,
+                                           boolean doRefresh,
                                            boolean ensureCanonicalName,
                                            @NotNull NewVirtualFileSystem delegate) {
     boolean ignoreCase = !delegate.isCaseSensitive();
-    Comparator comparator = getComparator(name, ignoreCase);
+    Comparator comparator = getComparator(ignoreCase);
     VirtualFileSystemEntry result = doFindChild(name, ensureCanonicalName, delegate, comparator);
+
     if (result == NULL_VIRTUAL_FILE) {
       result = doRefresh ? createAndFindChildWithEventFire(name, delegate) : null;
     }
-    else if (result != null) {
-      if (doRefresh && delegate.isDirectory(result) != result.isDirectory()) {
-        RefreshQueue.getInstance().refresh(false, false, null, result);
-        result = findChild(name, false, ensureCanonicalName, delegate);
-      }
+    else if (result != null && doRefresh && delegate.isDirectory(result) != result.isDirectory()) {
+      RefreshQueue.getInstance().refresh(false, false, null, result);
+      result = findChild(name, false, ensureCanonicalName, delegate);
     }
 
     if (result == null) {
-      addToAdoptedChildren(name, !delegate.isCaseSensitive(), comparator);
+      addToAdoptedChildren(!delegate.isCaseSensitive(), name, comparator);
     }
+
     return result;
   }
 
-  private synchronized void addToAdoptedChildren(@NotNull final String name,
-                                                 final boolean ignoreCase,
+  private synchronized void addToAdoptedChildren(final boolean ignoreCase,
+                                                 @NotNull final String name,
                                                  @NotNull Comparator comparator) {
-    long r = findIndexInBoth(myChildren, comparator);
+    long r = findIndexInBoth(myChildren, name, comparator);
     int indexInReal = (int)(r >> 32);
     int indexInAdopted = (int)r;
     if (indexInAdopted >= 0) return; //already added
@@ -141,15 +141,45 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
   }
 
   private static class AdoptedChild extends VirtualFileImpl {
+    private final String myName;
+    
     private AdoptedChild(String name) {
-      super(name, NULL_VIRTUAL_FILE, -42, -1);
+      super(-1, NULL_VIRTUAL_FILE, -42, -1);
+      myName = name;
+    }
+
+    @NotNull
+    @Override
+    public String getName() {
+      return myName;
+    }
+
+    @Override
+    public void setNewName(@NotNull String newName) {
+      throw new IncorrectOperationException();
+    }
+
+    @Override
+    public int compareNameTo(@NotNull String name, boolean ignoreCase) {
+      return compareNames(myName, name, ignoreCase);
+    }
+
+    @Override
+    protected char[] appendPathOnFileSystem(int accumulatedPathLength, int[] positionRef) {
+      char[] chars = getParent().appendPathOnFileSystem(accumulatedPathLength + 1 + myName.length(), positionRef);
+      if (positionRef[0] > 0 && chars[positionRef[0] - 1] != '/') {
+        chars[positionRef[0]++] = '/';
+      }
+      positionRef[0] = VirtualFileSystemEntry.copyString(chars, positionRef[0], myName);
+      return chars;
+
     }
   }
 
   @Nullable // null if there can't be a child with this name, NULL_VIRTUAL_FILE
-  private synchronized VirtualFileSystemEntry doFindChildInArray(@NotNull Comparator comparator) {
+  private synchronized VirtualFileSystemEntry doFindChildInArray(@NotNull String name, @NotNull Comparator comparator) {
     VirtualFileSystemEntry[] array = myChildren;
-    long r = findIndexInBoth(array, comparator);
+    long r = findIndexInBoth(array, name, comparator);
     int indexInReal = (int)(r >> 32);
     int indexInAdopted = (int)r;
     if (indexInAdopted >= 0) return NULL_VIRTUAL_FILE;
@@ -169,7 +199,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
       return null;
     }
 
-    VirtualFileSystemEntry found = doFindChildInArray(comparator);
+    VirtualFileSystemEntry found = doFindChildInArray(name, comparator);
     if (found != null) return found;
 
     if (allChildrenLoaded()) {
@@ -185,7 +215,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
     synchronized (this) {
       // maybe another doFindChild() sneaked in the middle
       VirtualFileSystemEntry[] array = myChildren;
-      long r = findIndexInBoth(array, comparator);
+      long r = findIndexInBoth(array, name, comparator);
       int indexInReal = (int)(r >> 32);
       int indexInAdopted = (int)r;
       if (indexInAdopted >= 0) return NULL_VIRTUAL_FILE;
@@ -199,8 +229,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
       if (id <= 0) {
         return null;
       }
-      String shorty = new String(name);
-      VirtualFileSystemEntry child = createChild(shorty, id, delegate); // So we don't hold whole char[] buffer of a lengthy path
+      VirtualFileSystemEntry child = createChild(FileNameCache.storeName(name), id, delegate); 
 
       VirtualFileSystemEntry[] after = myChildren;
       if (after != array)  {
@@ -216,14 +245,21 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
     }
   }
 
+  private static final Comparator CASE_SENSITIVE = new Comparator() {
+    @Override
+    public int compareFileNameTo(@NotNull String myName, @NotNull VirtualFileSystemEntry file) {
+      return -file.compareNameTo(myName, false);
+    }
+  };
+  private static final Comparator CASE_INSENSITIVE = new Comparator() {
+    @Override
+    public int compareFileNameTo(@NotNull String myName, @NotNull VirtualFileSystemEntry file) {
+      return -file.compareNameTo(myName, true);
+    }
+  };
   @NotNull
-  private static Comparator getComparator(@NotNull final String name, final boolean ignoreCase) {
-    return new Comparator() {
-      @Override
-      public int compareMyKeyTo(@NotNull VirtualFileSystemEntry file) {
-        return -file.compareNameTo(name, ignoreCase);
-      }
-    };
+  private static Comparator getComparator(final boolean ignoreCase) {
+    return ignoreCase ? CASE_INSENSITIVE : CASE_SENSITIVE;
   }
 
   private synchronized VirtualFileSystemEntry[] getArraySafely() {
@@ -231,15 +267,20 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
   }
 
   @NotNull
-  public VirtualFileSystemEntry createChild(@NotNull String name, int id, @NotNull NewVirtualFileSystem delegate) {
+  public VirtualFileSystemEntry createChild(String name, int id, @NotNull NewVirtualFileSystem delegate) {
+    return createChild(FileNameCache.storeName(name), id, delegate);
+  }
+  
+  @NotNull
+  private VirtualFileSystemEntry createChild(int nameId, int id, @NotNull NewVirtualFileSystem delegate) {
     VirtualFileSystemEntry child;
 
     final int attributes = ourPersistence.getFileAttributes(id);
     if (PersistentFS.isDirectory(attributes)) {
-      child = new VirtualDirectoryImpl(name, this, delegate, id, attributes);
+      child = new VirtualDirectoryImpl(nameId, this, delegate, id, attributes);
     }
     else {
-      child = new VirtualFileImpl(name, this, id, attributes);
+      child = new VirtualFileImpl(nameId, this, id, attributes);
       //noinspection TestOnlyProblems
       assertAccessInTests(child, delegate);
     }
@@ -391,19 +432,21 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
                                         int start,
                                         int end,
                                         final boolean isAdopted,
-                                        @NotNull final Comparator comparator) {
-    return binSearch(array, start, end, new Comparator() {
+                                        @NotNull String name, @NotNull final Comparator comparator) {
+    return binSearch(array, start, end, name, new Comparator() {
       @Override
-      public int compareMyKeyTo(@NotNull VirtualFileSystemEntry file) {
+      public int compareFileNameTo(@NotNull String myName, @NotNull VirtualFileSystemEntry file) {
         if (isAdopted && !isAdoptedChild(file)) return 1;
         if (!isAdopted && isAdoptedChild(file)) return -1;
-        return comparator.compareMyKeyTo(file);
+        return comparator.compareFileNameTo(myName, file);
       }
     });
   }
 
   // returns two int indices packed into one long. left index is for the real file array half, right is for the adopted children name array
-  private static long findIndexInBoth(@NotNull VirtualFileSystemEntry[] array, @NotNull Comparator comparator) {
+  private static long findIndexInBoth(@NotNull VirtualFileSystemEntry[] array,
+                                      @NotNull String name,
+                                      @NotNull Comparator comparator) {
     int high = array.length - 1;
     if (high == -1) {
       return pack(-1, -1);
@@ -412,7 +455,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
     boolean startInAdopted = isAdoptedChild(array[low]);
     boolean endInAdopted = isAdoptedChild(array[high]);
     if (startInAdopted == endInAdopted) {
-      int index = findIndexInOneHalf(array, low, high + 1, startInAdopted, comparator);
+      int index = findIndexInOneHalf(array, low, high + 1, startInAdopted, name, comparator);
       int otherIndex = startInAdopted ? -1 : -array.length - 1;
       return startInAdopted ? pack(otherIndex, index) : pack(index, otherIndex);
     }
@@ -423,15 +466,15 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
     while (low <= high) {
       mid = low + high >>> 1;
       VirtualFileSystemEntry file = array[mid];
-      cmp = comparator.compareMyKeyTo(file);
+      cmp = comparator.compareFileNameTo(name, file);
       adopted = isAdoptedChild(file);
       if (cmp == 0) {
         foundIndex = mid;
         break;
       }
       if ((adopted || cmp <= 0) && (!adopted || cmp >= 0)) {
-        int indexInAdopted = findIndexInOneHalf(array, mid + 1, high + 1, true, comparator);
-        int indexInReal = findIndexInOneHalf(array, low, mid, false, comparator);
+        int indexInAdopted = findIndexInOneHalf(array, mid + 1, high + 1, true, name, comparator);
+        int indexInReal = findIndexInOneHalf(array, low, mid, false, name, comparator);
         return pack(indexInReal, indexInAdopted);
       }
 
@@ -447,7 +490,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
     if (cmp != 0) foundIndex = -low-1;
     int newStart = adopted ? low : mid + 1;
     int newEnd = adopted ? mid + 1 : high + 1;
-    int theOtherHalfIndex = newStart < newEnd ? findIndexInOneHalf(array, newStart, newEnd, !adopted, comparator) : -newStart-1;
+    int theOtherHalfIndex = newStart < newEnd ? findIndexInOneHalf(array, newStart, newEnd, !adopted, name, comparator) : -newStart-1;
     return adopted ? pack(theOtherHalfIndex, foundIndex) : pack(foundIndex, theOtherHalfIndex);
   }
 
@@ -459,8 +502,8 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
   @Nullable
   public synchronized NewVirtualFile findChildIfCached(@NotNull String name) {
     final boolean ignoreCase = !getFileSystem().isCaseSensitive();
-    Comparator comparator = getComparator(name, ignoreCase);
-    VirtualFileSystemEntry found = doFindChildInArray(comparator);
+    Comparator comparator = getComparator(ignoreCase);
+    VirtualFileSystemEntry found = doFindChildInArray(name, comparator);
     return found == NULL_VIRTUAL_FILE ? null : found;
   }
 
@@ -492,6 +535,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
       return children;
     }
 
+    final boolean wasChildrenLoaded = ourPersistence.areChildrenLoaded(this);
     final FSRecords.NameId[] childrenIds = ourPersistence.listAll(this);
     VirtualFileSystemEntry[] result;
     if (childrenIds.length == 0) {
@@ -509,6 +553,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
                       " ignoreCase: "+ignoreCase+
                       " SystemInfo.isFileSystemCaseSensitive: "+ SystemInfo.isFileSystemCaseSensitive+
                       " SystemInfo.OS: "+ SystemInfo.OS_NAME+" "+SystemInfo.OS_VERSION+
+                      " wasChildrenLoaded: "+wasChildrenLoaded+
                       " in the dir: "+VirtualDirectoryImpl.this+";" +
                       " children: "+Arrays.toString(childrenIds));
           }
@@ -532,7 +577,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
           resultFile = children[i++];
         }
         else {
-          resultFile = createChild(nameId.name, nameId.id, delegate);
+          resultFile = createChild(nameId.nameId, nameId.id, delegate);
         }
         result[delegateI++] = resultFile;
       }
@@ -563,36 +608,43 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
         String prevName = prev.getName();
         int cmp = file.compareNameTo(prevName, ignoreCase);
         if (cmp == 0) {
-          Function<VirtualFileSystemEntry, String> verboseToString = new Function<VirtualFileSystemEntry, String>() {
-            @Override
-            public String fun(VirtualFileSystemEntry entry) {
-              return entry + " (name: '" + entry.getName()
-                     + "', " + entry.getClass()
-                     + ", parent:"+entry.getParent()
-                     + "; id:"+entry.getId()
-                     + "; FS:" +entry.getFileSystem()
-                     + "; delegate.attrs:" +entry.getFileSystem().getAttributes(entry)
-                     + "; caseSensitive:" +entry.getFileSystem().isCaseSensitive()
-                     + "; canonical:" +entry.getFileSystem().getCanonicallyCasedName(entry)
-                     + ") ";
-            }
-          };
-          String children = StringUtil.join(array, verboseToString, ",");
-          throw new AssertionError(
-            verboseToString.fun(prev) + " equals to " + verboseToString.fun(file) + "; children: " + children + "\nDetails: " + ContainerUtil.map(
-              details, new Function<Object, Object>() {
-              @Override
-              public Object fun(Object o) {
-                return o instanceof Object[] ? Arrays.toString((Object[])o) : o;
-              }
-            }));
+          error(verboseToString.fun(prev) + " equals to " + verboseToString.fun(file), array, details);
         }
 
         if (isAdopted == isAdoptedChild(prev)) {
-          assert cmp > 0 : "Not sorted. "+Arrays.toString(details);
+          if (cmp <= 0) {
+            error("Not sorted: "+verboseToString.fun(prev) + " is not less than " + verboseToString.fun(file), array, details);
+          }
         }
       }
     }
+  }
+
+  private static final Function<VirtualFileSystemEntry, String> verboseToString = new Function<VirtualFileSystemEntry, String>() {
+    @Override
+    public String fun(VirtualFileSystemEntry file) {
+      //noinspection HardCodedStringLiteral
+      return file + " (name: '" + file.getName()
+             + "', " + file.getClass()
+             + ", parent: "+file.getParent()
+             + "; id: "+file.getId()
+             + "; FS: " +file.getFileSystem()
+             + "; delegate.attrs: " +file.getFileSystem().getAttributes(file)
+             + "; caseSensitive: " +file.getFileSystem().isCaseSensitive()
+             + "; canonical: " +file.getFileSystem().getCanonicallyCasedName(file)
+             + ") ";
+    }
+  };
+  private static void error(@NonNls String message, VirtualFileSystemEntry[] array, Object... details) {
+    String children = StringUtil.join(array, verboseToString, ",");
+    throw new AssertionError(
+      message + "; children: " + children + "\nDetails: " + ContainerUtil.map(
+        details, new Function<Object, Object>() {
+        @Override
+        public Object fun(Object o) {
+          return o instanceof Object[] ? Arrays.toString((Object[])o) : o;
+        }
+      }));
   }
 
   @Override
@@ -628,7 +680,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
     VirtualFileSystemEntry[] array = myChildren;
     final String childName = child.getName();
     final boolean ignoreCase = !getFileSystem().isCaseSensitive();
-    long r = findIndexInBoth(array, getComparator(childName, ignoreCase));
+    long r = findIndexInBoth(array, childName, getComparator(ignoreCase));
     int indexInReal = (int)(r >> 32);
     int indexInAdopted = (int)r;
 
@@ -657,7 +709,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
     boolean ignoreCase = !getFileSystem().isCaseSensitive();
     String name = file.getName();
 
-    addToAdoptedChildren(name, ignoreCase, getComparator(name, ignoreCase));
+    addToAdoptedChildren(ignoreCase, name, getComparator(ignoreCase));
     assertConsistency(myChildren, ignoreCase, file);
   }
 
@@ -690,9 +742,9 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
   }
 
   private int getAdoptedChildrenStart() {
-    int index = binSearch(myChildren, 0, myChildren.length, new Comparator() {
+    int index = binSearch(myChildren, 0, myChildren.length, "", new Comparator() {
       @Override
-      public int compareMyKeyTo(@NotNull VirtualFileSystemEntry v) {
+      public int compareFileNameTo(@NotNull String myName, @NotNull VirtualFileSystemEntry v) {
         return isAdoptedChild(v) ? -1 : 1;
       }
     });
@@ -704,12 +756,13 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
   }
 
   private interface Comparator {
-    int compareMyKeyTo(@NotNull VirtualFileSystemEntry file);
+    int compareFileNameTo(@NotNull String myName, @NotNull VirtualFileSystemEntry file);
   }
 
   private static int binSearch(@NotNull VirtualFileSystemEntry[] array,
                                int start,
                                int end,
+                               @NotNull String name,
                                @NotNull Comparator comparator) {
     int low = start;
     int high = end - 1;
@@ -717,7 +770,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
 
     while (low <= high) {
       int mid = low + high >>> 1;
-      int cmp = comparator.compareMyKeyTo(array[mid]);
+      int cmp = comparator.compareFileNameTo(name, array[mid]);
       if (cmp > 0) {
         low = mid + 1;
       }

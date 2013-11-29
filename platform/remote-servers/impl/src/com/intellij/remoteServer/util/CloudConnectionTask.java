@@ -43,11 +43,13 @@ public abstract class CloudConnectionTask<
 
   private static final Logger LOG = Logger.getInstance("#" + CloudConnectionTask.class.getName());
 
+  private final Project myProject;
   private final String myTitle;
   private final boolean myModal;
   private final boolean myCancellable;
 
-  public CloudConnectionTask(String title, boolean modal, boolean cancellable) {
+  public CloudConnectionTask(Project project, String title, boolean modal, boolean cancellable) {
+    myProject = project;
     myTitle = title;
     myModal = modal;
     myCancellable = cancellable;
@@ -77,10 +79,9 @@ public abstract class CloudConnectionTask<
       }
     };
 
-    Project project = getProject();
     Task task;
     if (myModal) {
-      task = new Task.Modal(project, myTitle, myCancellable) {
+      task = new Task.Modal(myProject, myTitle, myCancellable) {
 
         @Override
         public void run(@NotNull ProgressIndicator indicator) {
@@ -89,7 +90,7 @@ public abstract class CloudConnectionTask<
       };
     }
     else {
-      task = new Task.Backgroundable(project, myTitle, myCancellable) {
+      task = new Task.Backgroundable(myProject, myTitle, myCancellable) {
 
         @Override
         public void run(@NotNull ProgressIndicator indicator) {
@@ -142,8 +143,6 @@ public abstract class CloudConnectionTask<
   }
 
   protected abstract RemoteServer<SC> getServer();
-
-  protected abstract Project getProject();
 
   protected abstract T run(SR serverRuntime) throws ServerRuntimeException;
 }

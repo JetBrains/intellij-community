@@ -53,7 +53,7 @@ public class RerunTestsNotification {
           return;
         }
 
-        GotItMessage message = GotItMessage.createMessage("Press " + shortcutText + " to rerun tests", "");
+        GotItMessage message = GotItMessage.createMessage("Rerun tests with " + shortcutText, "");
         message.setDisposable(executionConsole);
         message.setCallback(new Runnable() {
           @Override

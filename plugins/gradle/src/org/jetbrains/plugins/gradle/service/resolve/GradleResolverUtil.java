@@ -15,7 +15,8 @@
  */
 package org.jetbrains.plugins.gradle.service.resolve;
 
-import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.RecursionManager;
 import com.intellij.psi.*;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -43,7 +44,6 @@ import java.util.Arrays;
  * @since 8/30/13
  */
 public class GradleResolverUtil {
-  private static final Key<Integer> TYPE_RESOLVE_IN_PROGRESS_KEY = Key.create("TYPE_RESOLVE_IN_PROGRESS_KEY");
 
   public static int getGrMethodArumentsCount(@NotNull GrArgumentList args) {
     int argsCount = 0;
@@ -235,17 +235,13 @@ public class GradleResolverUtil {
   }
 
   @Nullable
-  public static PsiType getTypeOf(@Nullable GrExpression expression) {
-    PsiType psiType = null;
-    if (expression != null) {
-      Integer count = expression.getUserData(TYPE_RESOLVE_IN_PROGRESS_KEY);
-      if (count == null) count = 0;
-      if (count < 15) {
-        expression.putUserData(TYPE_RESOLVE_IN_PROGRESS_KEY, ++count);
-        psiType = expression.getNominalType();
-        expression.putUserData(TYPE_RESOLVE_IN_PROGRESS_KEY, null);
+  public static PsiType getTypeOf(@Nullable final GrExpression expression) {
+    if (expression == null) return null;
+    return RecursionManager.doPreventingRecursion(expression, true, new Computable<PsiType>() {
+      @Override
+      public PsiType compute() {
+        return expression.getNominalType();
       }
-    }
-    return psiType;
+    });
   }
 }

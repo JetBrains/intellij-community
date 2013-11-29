@@ -101,7 +101,7 @@ public abstract class MavenEmbedderWrapper extends RemoteObjectWrapper<MavenServ
     });
   }
 
-  @NotNull
+  @Nullable
   public String evaluateEffectivePom(@NotNull final VirtualFile file, @NotNull final Collection<String> activeProfiles)
     throws MavenProcessCanceledException {
     return perform(new RetriableCancelable<String>() {

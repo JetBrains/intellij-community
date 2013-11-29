@@ -21,7 +21,6 @@ import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.Function;
 import com.intellij.util.SmartList;
@@ -57,7 +56,7 @@ public class HgHistoryUtil {
   @NotNull
   public static List<VcsFullCommitDetails> history(@NotNull final Project project,
                                                    @NotNull final VirtualFile root, int limit,
-                                                   String... parameters)
+                                                   List<String> parameters)
     throws VcsException {
     List<HgCommittedChangeList> result = getCommittedChangeList(project, root, limit, true, parameters);
     return ContainerUtil.mapNotNull(result, new Function<HgCommittedChangeList, VcsFullCommitDetails>() {
@@ -71,10 +70,8 @@ public class HgHistoryUtil {
   @NotNull
   private static List<HgCommittedChangeList> getCommittedChangeList(@NotNull final Project project,
                                                                     @NotNull final VirtualFile root, int limit, boolean withFiles,
-                                                                    String... parameters) {
+                                                                    List<String> parameters) {
     HgFile hgFile = new HgFile(root, VcsUtil.getFilePath(root.getPath()));
-    List<String> args = ContainerUtil.newArrayList(parameters);
-    args.add("--debug");
     List<HgCommittedChangeList> result = new LinkedList<HgCommittedChangeList>();
     final List<HgFileRevision> localRevisions;
     HgLogCommand hgLogCommand = new HgLogCommand(project);
@@ -83,7 +80,10 @@ public class HgHistoryUtil {
     HgVcs hgvcs = HgVcs.getInstance(project);
     assert hgvcs != null;
     try {
-      localRevisions = hgLogCommand.execute(hgFile, limit, withFiles, args);
+      if (!hgvcs.getVersion().isParentRevisionTemplateSupported()) {
+        parameters.add("--debug");
+      }
+      localRevisions = hgLogCommand.execute(hgFile, limit, withFiles, parameters);
     }
     catch (HgCommandException e) {
       new HgCommandResultNotifier(project).notifyError(null, HgVcsMessages.message("hg4idea.error.log.command.execution"), e.getMessage());
@@ -143,7 +143,7 @@ public class HgHistoryUtil {
                                                    @NotNull final Consumer<VcsUser> userRegistry) throws VcsException {
 
     final VcsLogObjectsFactory factory = ServiceManager.getService(project, VcsLogObjectsFactory.class);
-    return ContainerUtil.map(getCommittedChangeList(project, root, -1, false, ""), new Function<HgCommittedChangeList, TimedVcsCommit>() {
+    return ContainerUtil.map(getCommittedChangeList(project, root, -1, false, Collections.<String>emptyList()), new Function<HgCommittedChangeList, TimedVcsCommit>() {
       @Override
       public TimedVcsCommit fun(HgCommittedChangeList record) {
         HgRevisionNumber revNumber = (HgRevisionNumber)record.getRevisionNumber();
@@ -194,16 +194,15 @@ public class HgHistoryUtil {
   }
 
   @Nullable
-  public static String[] prepareHashes(@NotNull List<String> hashes) {
+  public static List<String> prepareHashes(@NotNull List<String> hashes) {
     if (hashes.isEmpty()) {
-      return ArrayUtil.EMPTY_STRING_ARRAY;
+      return Collections.emptyList();
     }
-    StringBuilder builder = new StringBuilder();
+    List<String> hashArgs = new ArrayList<String>();
     for (String hash : hashes) {
-      builder.append(hash).append('+');
+      hashArgs.add("-r");
+      hashArgs.add(hash);
     }
-    builder.deleteCharAt(builder.length() - 1);
-    //todo change ugly style
-    return new String[]{"--rev", builder.toString()};
+    return hashArgs;
   }
 }

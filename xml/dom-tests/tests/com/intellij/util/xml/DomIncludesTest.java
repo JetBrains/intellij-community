@@ -1,12 +1,24 @@
 /*
- * Copyright (c) 2000-2005 by JetBrains s.r.o. All Rights Reserved.
- * Use is subject to license terms.
+ * Copyright 2000-2013 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package com.intellij.util.xml;
 
 import com.intellij.codeInsight.navigation.actions.GotoDeclarationAction;
 import com.intellij.concurrency.JobLauncher;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.PomTargetPsiElement;
@@ -139,7 +151,7 @@ public class DomIncludesTest extends CodeInsightFixtureTestCase {
     }
 
     for (int i = 0; i < iterationCount; i++) {
-      ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      WriteCommandAction.runWriteCommandAction(null, new Runnable() {
         public void run() {
           fileB.getViewProvider().getDocument().insertString(0, " ");
           fileD.getViewProvider().getDocument().insertString(0, " ");
@@ -147,16 +159,15 @@ public class DomIncludesTest extends CodeInsightFixtureTestCase {
         }
       });
       Thread.sleep(10);
-      ApplicationManager.getApplication().runWriteAction(new Runnable() {
-        public void run() {
+      WriteCommandAction.runWriteCommandAction(null, new Runnable(){public void run() {
           fileC.getViewProvider().getDocument().insertString(0, " ");
           fileE.getViewProvider().getDocument().insertString(0, " ");
           PsiDocumentManager.getInstance(getProject()).commitAllDocuments(); //clear xinclude caches
         }
       });
       Thread.sleep(10);
-      ApplicationManager.getApplication().runWriteAction(new Runnable() {
-        public void run() {
+      WriteCommandAction.runWriteCommandAction(null, new Runnable(){public void run() {
+
           fileB.getViewProvider().getDocument().setText(textB);
           fileC.getViewProvider().getDocument().setText(textC);
           fileD.getViewProvider().getDocument().setText(textD);

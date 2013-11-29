@@ -632,7 +632,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
       final String fragment = myFragments.get(i);
       final int fragmentWidth = isOracleRetina ? GraphicsUtil.stringWidth(fragment, font) : metrics.stringWidth(fragment);
 
-      final Color bgColor = attributes.getBgColor();
+      final Color bgColor = attributes.isSearchMatch() ? null : attributes.getBgColor();
       if ((attributes.isOpaque() || isOpaque()) && bgColor != null) {
         g.setColor(bgColor);
         g.fillRect(offset, 0, fragmentWidth, getHeight());

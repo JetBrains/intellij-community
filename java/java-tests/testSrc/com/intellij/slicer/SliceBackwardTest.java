@@ -17,7 +17,7 @@ package com.intellij.slicer;
 
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
@@ -133,7 +133,7 @@ public class SliceBackwardTest extends SliceTestCase {
   }
 
   private static void extract(final Document document, final Map<String, RangeMarker> sliceUsageName2Offset, final String name) {
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+    WriteCommandAction.runWriteCommandAction(null, new Runnable() {
       @Override
       public void run() {
         for (int i = 1; i < 9; i++) {

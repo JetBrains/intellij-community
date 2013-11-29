@@ -1,17 +1,21 @@
 package com.intellij.vcs.log.ui.frame;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.util.ProgressWindow;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.changes.issueLinks.IssueLinkHtmlRenderer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.BrowserHyperlinkListener;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.components.JBLoadingPanel;
+import com.intellij.util.Function;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.VcsFullCommitDetails;
 import com.intellij.vcs.log.VcsRef;
+import com.intellij.vcs.log.data.DataPack;
 import com.intellij.vcs.log.data.LoadingDetails;
 import com.intellij.vcs.log.data.VcsLogDataHolder;
 import com.intellij.vcs.log.graph.render.PrintParameters;
@@ -61,7 +65,7 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
     content.add(myDataPanel);
     content.setBorder(BorderFactory.createEmptyBorder(0, 5, 0, 5));
 
-    myLoadingPanel = new JBLoadingPanel(new BorderLayout(), logDataHolder);
+    myLoadingPanel = new JBLoadingPanel(new BorderLayout(), logDataHolder, ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS);
     myLoadingPanel.add(ScrollPaneFactory.createScrollPane(content));
 
     add(myLoadingPanel, STANDARD_LAYER);
@@ -82,21 +86,24 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
     }
     else {
       ((CardLayout)getLayout()).show(this, STANDARD_LAYER);
-      Hash hash = ((AbstractVcsLogTableModel)myGraphTable.getModel()).getHashAtRow(rows[0]);
+      int row = rows[0];
+      Hash hash = ((AbstractVcsLogTableModel)myGraphTable.getModel()).getHashAtRow(row);
       if (hash == null) {
         showMessage("No commits selected");
         return;
       }
 
       VcsFullCommitDetails commitData = myLogDataHolder.getCommitDetailsGetter().getCommitData(hash);
-      if (commitData instanceof LoadingDetails) {
+      DataPack dataPack = myLogDataHolder.getDataPack();
+      List<VcsRef> branches = myLogDataHolder.getContainingBranchesGetter().requestContainingBranches(dataPack, dataPack.getNode(row));
+      if (commitData instanceof LoadingDetails || branches == null) {
         myLoadingPanel.startLoading();
-        myDataPanel.setData(null);
+        myDataPanel.setData(null, null);
         myRefsPanel.setRefs(Collections.<VcsRef>emptyList());
       }
       else {
         myLoadingPanel.stopLoading();
-        myDataPanel.setData(commitData);
+        myDataPanel.setData(commitData, branches);
         myRefsPanel.setRefs(sortRefs(hash, commitData.getRoot()));
       }
     }
@@ -123,17 +130,28 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
       setEditable(false);
       myProject = project;
       addHyperlinkListener(new BrowserHyperlinkListener());
+      setPreferredSize(new Dimension(150, 100));
     }
 
-    void setData(@Nullable VcsFullCommitDetails commit) {
-      if (commit == null) {
+    void setData(@Nullable VcsFullCommitDetails commit, @Nullable List<VcsRef> branches) {
+      if (commit == null || branches == null) {
         setText("");
       }
       else {
-        String body = getHashText(commit) + "<br/>" + getAuthorText(commit) + "<p>" + getMessageText(commit) + "</p>";
+        String body = getHashText(commit) + "<br/>" + getAuthorText(commit) + "<p>" + getMessageText(commit) + "</p>" +
+                      "<p>" + getContainedBranchesText(branches) + "</p>";
         setText("<html><head>" + UIUtil.getCssFontDeclaration(UIUtil.getLabelFont()) + "</head><body>" + body + "</body></html>");
         setCaretPosition(0);
       }
+    }
+
+    private static String getContainedBranchesText(List<VcsRef> branches) {
+      return "<i>Contained in branches:</i> " + StringUtil.join(branches, new Function<VcsRef, String>() {
+        @Override
+        public String fun(VcsRef ref) {
+          return ref.getName();
+        }
+      }, ", ");
     }
 
     private String getMessageText(VcsFullCommitDetails commit) {
@@ -148,11 +166,11 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
     }
 
     private static String getAuthorText(VcsFullCommitDetails commit) {
-      String authorText = commit.getAuthor().getName() + " at " + DateFormatUtil.formatDateTime(commit.getTime());
+      String authorText = commit.getAuthor().getName() + " at " + DateFormatUtil.formatDateTime(commit.getAuthorTime());
       if (!commit.getAuthor().equals(commit.getCommitter())) {
         String commitTime;
         if (commit.getAuthorTime() != commit.getTime()) {
-          commitTime = " at " + DateFormatUtil.formatDateTime(commit.getAuthorTime());
+          commitTime = " at " + DateFormatUtil.formatDateTime(commit.getTime());
         }
         else {
           commitTime = "";

@@ -734,6 +734,11 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
   }
 
   @Override
+  public int rawTokenIndex() {
+    return myCurrentLexeme;
+  }
+
+  @Override
   public void setWhitespaceSkippedCallback(@Nullable final WhitespaceSkippedCallback callback) {
     myWhitespaceSkippedCallback = callback;
   }

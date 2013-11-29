@@ -47,6 +47,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.artifactResolver.MavenArtifactResolvedM2RtMarker;
+import org.jetbrains.idea.maven.artifactResolver.MavenArtifactResolvedM31RtMarker;
 import org.jetbrains.idea.maven.artifactResolver.MavenArtifactResolvedM3RtMarker;
 import org.jetbrains.idea.maven.artifactResolver.common.MavenModuleMap;
 import org.jetbrains.idea.maven.project.MavenGeneralSettings;
@@ -126,7 +127,7 @@ public class MavenExternalParameters {
 
     if (project != null && parameters.isResolveToWorkspace()) {
       try {
-        String resolverJar = getArtifactResolverJar(MavenUtil.isMaven3(mavenHome));
+        String resolverJar = getArtifactResolverJar(MavenUtil.getMavenVersion(mavenHome));
         confFile = patchConfFile(confFile, resolverJar);
 
         File modulesPathsFile = dumpModulesPaths(project);
@@ -196,11 +197,24 @@ public class MavenExternalParameters {
     finally {
       sc.close();
     }
-
   }
 
-  private static String getArtifactResolverJar(boolean isMaven3) throws IOException {
-    Class marker = isMaven3 ? MavenArtifactResolvedM3RtMarker.class : MavenArtifactResolvedM2RtMarker.class;
+  private static String getArtifactResolverJar(@Nullable String mavenVersion) throws IOException {
+    boolean isMaven3;
+    Class marker;
+
+    if (mavenVersion != null && mavenVersion.compareTo("3.1.0") >= 0) {
+      isMaven3 = true;
+      marker = MavenArtifactResolvedM31RtMarker.class;
+    }
+    else if (mavenVersion != null && mavenVersion.compareTo("3.0.0") >= 0) {
+      isMaven3 = true;
+      marker = MavenArtifactResolvedM3RtMarker.class;
+    }
+    else {
+      isMaven3 = false;
+      marker = MavenArtifactResolvedM2RtMarker.class;
+    }
 
     File classDirOrJar = new File(PathUtil.getJarPathForClass(marker));
 
@@ -245,6 +259,12 @@ public class MavenExternalParameters {
                           + ":pom"
                           + ':' + mavenProject.getMavenId().getVersion(),
                           mavenProject.getFile().getPath());
+
+          res.setProperty(mavenProject.getMavenId().getGroupId()
+                          + ':' + mavenProject.getMavenId().getArtifactId()
+                          + ":test-jar"
+                          + ':' + mavenProject.getMavenId().getVersion(),
+                          mavenProject.getTestOutputDirectory());
 
           res.setProperty(mavenProject.getMavenId().getGroupId()
                           + ':' + mavenProject.getMavenId().getArtifactId()
@@ -481,6 +501,10 @@ public class MavenExternalParameters {
 
     if (coreSettings.isAlwaysUpdateSnapshots()) {
       cmdList.add("--update-snapshots");
+    }
+
+    if (StringUtil.isNotEmpty(coreSettings.getThreads())) {
+      cmdList.add("-T", coreSettings.getThreads());
     }
 
     addIfNotEmpty(cmdList, coreSettings.getFailureBehavior().getCommandLineOption());

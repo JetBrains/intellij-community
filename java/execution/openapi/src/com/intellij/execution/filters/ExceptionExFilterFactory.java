@@ -20,6 +20,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.Trinity;
 import com.intellij.psi.*;
@@ -84,10 +85,16 @@ public class ExceptionExFilterFactory implements ExceptionFilterFactory {
             worker.execute(text, lineEndOffset);
             Result result = worker.getResult();
             if (result == null) continue;
-            OpenFileHyperlinkInfo hyperlinkInfo = ExceptionWorker.getOpenFileHyperlinkInfo(result);
-            int offset = hyperlinkInfo == null? -1 : hyperlinkInfo.getDescriptor().getOffset();
+            HyperlinkInfo hyperlinkInfo = result.hyperlinkInfo;
+            if (!(hyperlinkInfo instanceof FileHyperlinkInfo)) continue;
+
+            OpenFileDescriptor descriptor = ((FileHyperlinkInfo)hyperlinkInfo).getDescriptor();
+            if (descriptor == null) continue;
+
+            int offset = descriptor.getOffset();
             PsiFile psiFile = worker.getFile();
             if (offset <= 0 || psiFile == null) continue;
+
             PsiElement element = psiFile.findElementAt(offset);
             PsiTryStatement parent = PsiTreeUtil.getParentOfType(element, PsiTryStatement.class, true, PsiClass.class);
             PsiCodeBlock tryBlock = parent != null? parent.getTryBlock() : null;

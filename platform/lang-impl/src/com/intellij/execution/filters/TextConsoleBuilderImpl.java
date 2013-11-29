@@ -54,7 +54,7 @@ public class TextConsoleBuilderImpl extends TextConsoleBuilder {
   }
 
   protected ConsoleView createConsole() {
-    return new ConsoleViewImpl(myProject, myScope, myViewer, null, myUsePredefinedMessageFilter);
+    return new ConsoleViewImpl(myProject, myScope, myViewer, myUsePredefinedMessageFilter);
   }
 
   @Override

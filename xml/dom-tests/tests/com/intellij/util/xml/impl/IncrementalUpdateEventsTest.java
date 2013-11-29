@@ -15,7 +15,7 @@
  */
 package com.intellij.util.xml.impl;
 
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.xml.DomElement;
@@ -123,7 +123,7 @@ public class IncrementalUpdateEventsTest extends DomTestCase {
 
 
   private void deleteTag(final int index) throws IncorrectOperationException {
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+    WriteCommandAction.runWriteCommandAction(null, new Runnable() {
       public void run() {
         myElement.getXmlTag().getSubTags()[index].delete();
       }

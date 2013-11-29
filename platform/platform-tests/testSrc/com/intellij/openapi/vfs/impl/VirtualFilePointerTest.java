@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -450,7 +450,7 @@ public class VirtualFilePointerTest extends PlatformLangTestCase {
   }
 
   private static VirtualFile refreshAndFind(@NotNull final String url) {
-    return ApplicationManager.getApplication().runWriteAction(new Computable<VirtualFile>() {
+    return WriteCommandAction.runWriteCommandAction(null, new Computable<VirtualFile>() {
       @Override
       public VirtualFile compute() {
         return VirtualFileManager.getInstance().refreshAndFindFileByUrl(url);

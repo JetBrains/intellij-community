@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,7 @@ package com.intellij.execution.junit2.configuration;
 import com.intellij.execution.JavaExecutionUtil;
 import com.intellij.execution.junit.JUnitConfiguration;
 import com.intellij.execution.junit.JUnitUtil;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -174,7 +174,7 @@ public class JUnitConfigurationModel {
     setDocumentText(index, text, myJUnitDocuments);
   }
 
-  private static void setDocumentText(final int index, final String text, final Object[] documents) {
+  private void setDocumentText(final int index, final String text, final Object[] documents) {
     final Object document = documents[index];
     if (document instanceof PlainDocument) {
       try {
@@ -186,7 +186,7 @@ public class JUnitConfigurationModel {
       }
     }
     else {
-      ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      WriteCommandAction.runWriteCommandAction(myProject, new Runnable() {
         public void run() {
           ((Document)document).replaceString(0, ((Document)document).getTextLength(), text);
         }

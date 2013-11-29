@@ -51,20 +51,13 @@ public class ErrorRethrownInspection extends BaseInspection {
   private static class ErrorRethrownVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitTryStatement(@NotNull PsiTryStatement statement) {
-      super.visitTryStatement(statement);
-      final PsiCatchSection[] catchSections = statement.getCatchSections();
-      for (PsiCatchSection catchSection : catchSections) {
-        checkCatchSection(catchSection);
-      }
-    }
-
-    private void checkCatchSection(PsiCatchSection catchSection) {
-      final PsiParameter parameter = catchSection.getParameter();
+    public void visitCatchSection(PsiCatchSection section) {
+      super.visitCatchSection(section);
+      final PsiParameter parameter = section.getParameter();
       if (parameter == null) {
         return;
       }
-      final PsiCodeBlock catchBlock = catchSection.getCatchBlock();
+      final PsiCodeBlock catchBlock = section.getCatchBlock();
       if (catchBlock == null) {
         return;
       }

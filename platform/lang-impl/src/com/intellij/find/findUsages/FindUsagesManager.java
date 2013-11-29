@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -87,7 +87,7 @@ public class FindUsagesManager implements JDOMExternalizable {
   @NonNls private static final String VALUE_START_USAGE_AGAIN = "START_AGAIN";
   private final Project myProject;
   private final com.intellij.usages.UsageViewManager myAnotherManager;
-  private boolean myToOpenInNewTab = false;
+  private boolean myToOpenInNewTab = true;
 
   public static class SearchData {
     public SmartPsiElementPointer[] myElements = null;

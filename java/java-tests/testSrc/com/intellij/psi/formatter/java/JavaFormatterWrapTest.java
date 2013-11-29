@@ -325,7 +325,8 @@ public class JavaFormatterWrapTest extends AbstractJavaFormatterTest {
       "test(1,\n" +
       "     2,\n" +
       "     Test.\n" +
-      "             loooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooongMethod());\n" +
+      "             loooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooongMethod()\n" +
+      ");\n" +
       "int i = 1;\n" +
       "int j = 2;";
     doMethodTest(text, text);

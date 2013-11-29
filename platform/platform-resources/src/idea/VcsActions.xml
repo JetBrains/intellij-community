@@ -232,6 +232,15 @@
       <add-to-group group-id="MainToolBarSettings" relative-to-action="ShowSettings" anchor="before"/>
     </group>
 
+    <group id="VcsNavBarToobarActions">
+      <reference ref="Vcs.UpdateProject"/>
+      <reference ref="CheckinProject"/>
+      <reference ref="Vcs.ShowTabbedFileHistory"/>
+      <reference ref="ChangesView.Rollback"/>
+      <separator/>
+      <add-to-group group-id="NavBarVcsGroup" anchor="first"/>
+    </group>
+
     <!-- Window -->
     <action id="CloseAllUnmodifiedEditors" class="com.intellij.ide.actions.CloseAllUnmodifiedEditorsAction">
       <add-to-group group-id="CloseEditorsGroup" anchor="before" relative-to-action="CloseAllUnpinnedEditors"/>

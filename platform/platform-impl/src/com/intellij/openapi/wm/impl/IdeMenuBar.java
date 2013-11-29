@@ -161,8 +161,13 @@ public class IdeMenuBar extends JMenuBar implements IdeEventQueue.EventDispatche
 
   @Override
   public void menuSelectionChanged(boolean isIncluded) {
-    if (!getSelectionModel().isSelected()) return;
-    if (myState == State.COLLAPSED) {
+    if (!isIncluded && myState == State.TEMPORARY_EXPANDED) {
+      myActivated = false;
+      setState(State.COLLAPSING);
+      restartAnimator();
+      return;
+    }
+    if (isIncluded && myState == State.COLLAPSED) {
       myActivated = true;
       setState(State.TEMPORARY_EXPANDED);
       revalidate();

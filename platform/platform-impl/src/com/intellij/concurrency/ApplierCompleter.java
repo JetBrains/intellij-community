@@ -219,7 +219,7 @@ public class ApplierCompleter extends CountedCompleter<Void> {
           }
         }
       });
-      assert task.failedSubTasks == null;
+      assert task.failedSubTasks == null : task.failedSubTasks;
     }
     return result[0];
   }

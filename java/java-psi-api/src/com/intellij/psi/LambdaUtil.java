@@ -455,7 +455,12 @@ public class LambdaUtil {
           if (!tryToSubstitute) return cachedType;
         }
 
-        final PsiElement gParent = expressionList.getParent();
+        PsiElement gParent = expressionList.getParent();
+
+        if (gParent instanceof PsiAnonymousClass) {
+          gParent = gParent.getParent();
+        }
+
         if (gParent instanceof PsiCall) {
           final PsiCall contextCall = (PsiCall)gParent;
           final JavaResolveResult resolveResult = contextCall.resolveMethodGenerics();
@@ -582,23 +587,12 @@ public class LambdaUtil {
                                                    final Project project) {
     if (interfaceMethodReturnType == null) return psiSubstitutor;
     final PsiResolveHelper resolveHelper = JavaPsiFacade.getInstance(project).getResolveHelper();
+    final PsiSubstitutor substitutor =
+      resolveHelper.inferTypeArguments(typeParameters, new PsiType[]{interfaceMethodReturnType}, new PsiType[]{returnType}, languageLevel);
     for (PsiTypeParameter typeParameter : typeParameters) {
-      final PsiType constraint = resolveHelper.getSubstitutionForTypeParameter(typeParameter, returnType, interfaceMethodReturnType, false, languageLevel);
-      if (constraint != PsiType.NULL && constraint != null) {
-        PsiType inferredType = null;
-        final PsiClassType[] bounds = typeParameter.getExtendsListTypes();
-        for (PsiClassType classTypeBound : bounds) {
-          if (TypeConversionUtil.isAssignable(classTypeBound, constraint)) {
-            inferredType = constraint;
-            break;
-          }
-        }
-        if (bounds.length == 0) {
-          inferredType = constraint;
-        }
-        if (inferredType != null) {
-          psiSubstitutor = psiSubstitutor.put(typeParameter, inferredType);
-        }
+      final PsiType inferredType = substitutor.substitute(typeParameter);
+      if (PsiUtil.resolveClassInType(inferredType) != typeParameter) {
+        psiSubstitutor = psiSubstitutor.put(typeParameter, inferredType);
       }
     }
     return psiSubstitutor;

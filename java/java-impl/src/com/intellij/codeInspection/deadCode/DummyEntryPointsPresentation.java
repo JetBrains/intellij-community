@@ -46,6 +46,11 @@ public class DummyEntryPointsPresentation extends UnusedDeclarationPresentation 
     return myQuickFixActions;
   }
 
+  @Override
+  protected String getSeverityDelegateName() {
+    return UnusedDeclarationInspection.SHORT_NAME;
+  }
+
   private class MoveEntriesToSuspicious extends QuickFixAction {
     private MoveEntriesToSuspicious(@NotNull InspectionToolWrapper toolWrapper) {
       super(InspectionsBundle.message("inspection.dead.code.remove.from.entry.point.quickfix"), null, null, toolWrapper);

@@ -57,6 +57,12 @@ public class JavaModuleSourceRootEditHandler extends JavaSourceRootEditHandlerBa
     return AllIcons.Modules.SourceRoot;
   }
 
+  @NotNull
+  @Override
+  protected Icon getGeneratedRootIcon() {
+    return AllIcons.Modules.GeneratedSourceRoot;
+  }
+
   @Nullable
   @Override
   public Icon getFolderUnderRootIcon() {

@@ -56,7 +56,6 @@ def layoutFull(String home, String targetDirectory, String patchedDescriptorDir 
     "java-analysis-api",
     "java-indexing-api",
     "java-psi-api",
-    "js-analysis-api",
     "jsp-openapi",
     "jsp-base-openapi",
     "openapi",
@@ -78,7 +77,6 @@ def layoutFull(String home, String targetDirectory, String patchedDescriptorDir 
     "java-indexing-impl",
     "java-impl",
     "java-psi-impl",
-    "js-analysis-impl",
     "jsp-spi",
     "manifest",
     "platform-main",
@@ -296,6 +294,13 @@ public def layoutCommunityPlugins(String home) {
 
       jar("artifact-resolver-m3.jar") {
         module("maven-artifact-resolver-m3")
+        module("maven-artifact-resolver-m2") {
+          include(name: 'org/jetbrains/idea/maven/artifactResolver/common/*')
+        }
+      }
+
+      jar("artifact-resolver-m31.jar") {
+        module("maven-artifact-resolver-m31")
         module("maven-artifact-resolver-m2") {
           include(name: 'org/jetbrains/idea/maven/artifactResolver/common/*')
         }
@@ -718,11 +723,13 @@ def layoutCommunityJps(String home, String target) {
       include(name: "nanoxml-*.jar")
       include(name: "protobuf-*.jar")
       include(name: "cli-parser-*.jar")
-      include(name: "optimizedFileManager.jar")
       include(name: "log4j.jar")
       include(name: "jgoodies-forms.jar")
       include(name: "ecj*.jar")
       include(name: "jsr166e.jar")
+    }
+    fileset(dir: "$home/jps/lib") {
+      include(name: "optimizedFileManager.jar")
     }
     dir("test") {
       jar("jps-build-test.jar") {

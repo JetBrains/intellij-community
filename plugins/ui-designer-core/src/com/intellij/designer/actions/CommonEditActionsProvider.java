@@ -50,6 +50,8 @@ import java.util.Map;
 public class CommonEditActionsProvider implements DeleteProvider, CopyProvider, PasteProvider, CutProvider {
   private static final DataFlavor DATA_FLAVOR = FileCopyPasteUtil.createJvmDataFlavor(SerializedComponentData.class);
 
+  public static boolean isDeleting;
+
   private final DesignerEditorPanel myDesigner;
 
   public CommonEditActionsProvider(DesignerEditorPanel designer) {
@@ -141,12 +143,19 @@ public class CommonEditActionsProvider implements DeleteProvider, CopyProvider, 
   }
 
   public static void updateSelectionBeforeDelete(EditableArea area, RadComponent component, List<RadComponent> excludes) {
-    RadComponent newSelection = getNewSelection(component, excludes);
-    if (newSelection == null) {
-      area.deselectAll();
+    try {
+      isDeleting = true;
+
+      RadComponent newSelection = getNewSelection(component, excludes);
+      if (newSelection == null) {
+        area.deselectAll();
+      }
+      else {
+        area.select(newSelection);
+      }
     }
-    else {
-      area.select(newSelection);
+    finally {
+      isDeleting = false;
     }
   }
 

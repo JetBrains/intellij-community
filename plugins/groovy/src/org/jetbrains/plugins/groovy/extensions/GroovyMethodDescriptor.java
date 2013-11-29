@@ -80,6 +80,19 @@ public class GroovyMethodDescriptor {
     }
   }
 
+  @Property(surroundWithTag = false)
+  @AbstractCollection(surroundWithTag = false)
+  public ClosureArgument[] myClosureArguments;
+
+  @Tag("closureArgument")
+  public static class ClosureArgument {
+    @Attribute("index")
+    public int index;
+
+    @Attribute("methodContributor")
+    public String methodContributor;
+  }
+
   @Nullable
   public List<String> getParams() {
     if (params != null) {

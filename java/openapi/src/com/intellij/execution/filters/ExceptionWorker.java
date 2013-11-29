@@ -15,26 +15,29 @@
  */
 package com.intellij.execution.filters;
 
-import com.intellij.openapi.application.AccessToken;
-import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.markup.TextAttributes;
-import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiShortNamesCache;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * User: Irina.Chernushina
@@ -61,8 +64,8 @@ public class ExceptionWorker {
   private final Project myProject;
   private final GlobalSearchScope mySearchScope;
   private Filter.Result myResult;
-  private PsiClass myClass;
-  private PsiFile myFile;
+  private PsiClass[] myClasses = PsiClass.EMPTY_ARRAY;
+  private PsiFile[] myFiles = PsiFile.EMPTY_ARRAY;
   private String myMethod;
   private Trinity<TextRange, TextRange, TextRange> myInfo;
 
@@ -90,16 +93,17 @@ public class ExceptionWorker {
     final String lineString = fileAndLine.substring(colonIndex + 1);
     try {
       final int lineNumber = Integer.parseInt(lineString);
-      myClass = findPositionClass(line);
-      myFile = myClass == null ? null : (PsiFile)myClass.getContainingFile().getNavigationElement();
-      if (myFile == null) {
-        // try find the file with the required name
-        PsiFile[] files = PsiShortNamesCache.getInstance(myProject).getFilesByName(fileAndLine.substring(0, colonIndex).trim());
-        if (files.length > 0) {
-          myFile = files[0];
-        }
+      myClasses = findPositionClasses(line);
+      myFiles = new PsiFile[myClasses.length];
+      for (int i = 0; i < myClasses.length; i++) {
+        myFiles[i] = (PsiFile)myClasses[i].getContainingFile().getNavigationElement();
       }
-      if (myFile == null) return;
+      if (myFiles.length == 0) {
+        // try find the file with the required name
+        //todo[nik] it would be better to use FilenameIndex here to honor the scope by it isn't accessible in Open API
+        myFiles = PsiShortNamesCache.getInstance(myProject).getFilesByName(fileAndLine.substring(0, colonIndex).trim());
+      }
+      if (myFiles.length == 0) return;
 
       /*
        IDEADEV-4976: Some scramblers put something like SourceFile mock instead of real class name.
@@ -113,12 +117,31 @@ public class ExceptionWorker {
 
       final int highlightStartOffset = textStartOffset + lparenthIndex + 1;
       final int highlightEndOffset = textStartOffset + rparenthIndex;
-      final VirtualFile virtualFile = myFile.getVirtualFile();
 
-      HyperlinkInfo linkInfo = new MyHyperlinkInfo(myProject, virtualFile, lineNumber);
+      ProjectFileIndex index = ProjectRootManager.getInstance(myProject).getFileIndex();
+      List<VirtualFile> virtualFilesInLibraries = new ArrayList<VirtualFile>();
+      List<VirtualFile> virtualFilesInContent = new ArrayList<VirtualFile>();
+      for (PsiFile file : myFiles) {
+        VirtualFile virtualFile = file.getVirtualFile();
+        if (index.isInContent(virtualFile)) {
+          virtualFilesInContent.add(virtualFile);
+        }
+        else {
+          virtualFilesInLibraries.add(virtualFile);
+        }
+      }
 
-      boolean inContent = ProjectRootManager.getInstance(myProject).getFileIndex().isInContent(virtualFile);
-      TextAttributes attributes = inContent ? HYPERLINK_ATTRIBUTES : LIBRARY_HYPERLINK_ATTRIBUTES;
+      List<VirtualFile> virtualFiles;
+      TextAttributes attributes;
+      if (virtualFilesInContent.isEmpty()) {
+        attributes = LIBRARY_HYPERLINK_ATTRIBUTES;
+        virtualFiles = virtualFilesInLibraries;
+      }
+      else {
+        attributes = HYPERLINK_ATTRIBUTES;
+        virtualFiles = virtualFilesInContent;
+      }
+      HyperlinkInfo linkInfo = HyperlinkInfoFactory.getInstance().createMultipleFilesHyperlinkInfo(virtualFiles, lineNumber - 1, myProject);
       myResult = new Filter.Result(highlightStartOffset, highlightEndOffset, linkInfo, attributes);
     }
     catch (NumberFormatException e) {
@@ -126,22 +149,23 @@ public class ExceptionWorker {
     }
   }
 
-  private PsiClass findPositionClass(String line) {
+  private PsiClass[] findPositionClasses(String line) {
     String className = myInfo.first.substring(line).trim();
-    PsiClass result = findClassPreferringMyScope(className);
-    if (result == null) {
+    PsiClass[] result = findClassesPreferringMyScope(className);
+    if (result.length == 0) {
       final int dollarIndex = className.indexOf('$');
       if (dollarIndex >= 0) {
-        result = findClassPreferringMyScope(className.substring(0, dollarIndex));
+        result = findClassesPreferringMyScope(className.substring(0, dollarIndex));
       }
     }
     return result;
   }
 
-  private PsiClass findClassPreferringMyScope(String className) {
+  @NotNull
+  private PsiClass[] findClassesPreferringMyScope(String className) {
     JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(myProject);
-    PsiClass result = psiFacade.findClass(className, mySearchScope);
-    return result != null ? result : psiFacade.findClass(className, GlobalSearchScope.allScope(myProject));
+    PsiClass[] result = psiFacade.findClasses(className, mySearchScope);
+    return result.length != 0 ? result : psiFacade.findClasses(className, GlobalSearchScope.allScope(myProject));
   }
 
   public Filter.Result getResult() {
@@ -149,7 +173,7 @@ public class ExceptionWorker {
   }
 
   public PsiClass getPsiClass() {
-    return myClass;
+    return ArrayUtil.getFirstElement(myClasses);
   }
 
   public String getMethod() {
@@ -157,7 +181,7 @@ public class ExceptionWorker {
   }
 
   public PsiFile getFile() {
-    return myFile;
+    return ArrayUtil.getFirstElement(myFiles);
   }
 
   public Trinity<TextRange, TextRange, TextRange> getInfo() {
@@ -204,60 +228,5 @@ public class ExceptionWorker {
       pos += delta;
     }
     return pos;
-  }
-
-  @Nullable
-  static OpenFileHyperlinkInfo getOpenFileHyperlinkInfo(Filter.Result result) {
-    if (result.hyperlinkInfo instanceof MyHyperlinkInfo) {
-      MyHyperlinkInfo info = (MyHyperlinkInfo)result.hyperlinkInfo;
-      return new OpenFileHyperlinkInfo(info.myProject, info.myVirtualFile, info.myLineNumber);
-    }
-    return null;
-  }
-
-  private static class MyHyperlinkInfo implements FileHyperlinkInfo {
-    private final VirtualFile myVirtualFile;
-    private final int myLineNumber;
-    private final Project myProject;
-
-    public MyHyperlinkInfo(@NotNull Project project, @NotNull VirtualFile virtualFile, int lineNumber) {
-      myProject = project;
-      myVirtualFile = virtualFile;
-      myLineNumber = lineNumber;
-    }
-
-    @Override
-    public void navigate(Project project) {
-      VirtualFile currentVirtualFile = null;
-
-      AccessToken accessToken = ReadAction.start();
-
-      try {
-        if (!myVirtualFile.isValid()) return;
-
-        PsiFile psiFile = PsiManager.getInstance(project).findFile(myVirtualFile);
-        if (psiFile != null) {
-          PsiElement navigationElement = psiFile.getNavigationElement(); // Sources may be downloaded.
-          if (navigationElement instanceof PsiFile) {
-            currentVirtualFile = ((PsiFile)navigationElement).getVirtualFile();
-          }
-        }
-
-        if (currentVirtualFile == null) {
-          currentVirtualFile = myVirtualFile;
-        }
-      }
-      finally {
-        accessToken.finish();
-      }
-
-      new OpenFileHyperlinkInfo(myProject, currentVirtualFile, myLineNumber - 1).navigate(project);
-    }
-
-    @Nullable
-    @Override
-    public OpenFileDescriptor getDescriptor() {
-      return new OpenFileDescriptor(myProject, myVirtualFile, myLineNumber - 1, 0);
-    }
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import com.intellij.openapi.compiler.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -32,14 +33,14 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * This is an adapter for running any FileProcessingCompiler as a compiler task
- *
+ * This is an adapter for running any FileProcessingCompiler as a compiler task.
  *
  * @author Eugene Zhuravlev
  *         Date: 9/5/12
  */
-public class FileProcessingCompilerAdapterTask implements CompileTask{
+public class FileProcessingCompilerAdapterTask implements CompileTask {
   private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.impl.FileProcessingCompilerAdapterTask");
+
   private final FileProcessingCompiler myCompiler;
 
   public FileProcessingCompilerAdapterTask(FileProcessingCompiler compiler) {
@@ -56,15 +57,15 @@ public class FileProcessingCompilerAdapterTask implements CompileTask{
     if (!CompilerWorkspaceConfiguration.getInstance(project).useOutOfProcessBuild()) {
       return true;
     }
+
     try {
       final FileProcessingCompiler.ProcessingItem[] items = myCompiler.getProcessingItems(context);
       if (items.length == 0) {
         return true;
       }
+
       final List<FileProcessingCompiler.ProcessingItem> toProcess = new ArrayList<FileProcessingCompiler.ProcessingItem>();
       final Ref<IOException> ex = new Ref<IOException>(null);
-
-
       final FileProcessingCompilerStateCache cache = getCache(context);
       final boolean isMake = context.isMake();
       DumbService.getInstance(project).runReadActionInSmartMode(new Runnable() {
@@ -76,7 +77,7 @@ public class FileProcessingCompilerAdapterTask implements CompileTask{
               if (isMake && cache.getTimestamp(url) == file.getTimeStamp()) {
                 final ValidityState state = cache.getExtState(url);
                 final ValidityState itemState = item.getValidityState();
-                if (state != null ? state.equalsTo(itemState) : itemState == null) {
+                if (Comparing.equal(state, itemState)) {
                   continue;
                 }
               }
@@ -89,16 +90,17 @@ public class FileProcessingCompilerAdapterTask implements CompileTask{
         }
       });
 
-      if (ex.get() != null) {
-        throw ex.get();
+      IOException exception = ex.get();
+      if (exception != null) {
+        throw exception;
       }
 
       if (toProcess.isEmpty()) {
         return true;
       }
 
-      final FileProcessingCompiler.ProcessingItem[] processed = myCompiler.process(context, toProcess.toArray(new FileProcessingCompiler.ProcessingItem[toProcess.size()]));
-
+      final FileProcessingCompiler.ProcessingItem[] array = toProcess.toArray(new FileProcessingCompiler.ProcessingItem[toProcess.size()]);
+      final FileProcessingCompiler.ProcessingItem[] processed = myCompiler.process(context, array);
       if (processed.length == 0) {
         return true;
       }

@@ -16,6 +16,7 @@
 package com.intellij.openapi.updateSettings.impl;
 
 import com.intellij.openapi.components.ApplicationComponent;
+import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginsAdvertiser;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.Alarm;
 import com.intellij.util.text.DateFormatUtil;
@@ -41,6 +42,7 @@ public class UpdateCheckerComponent implements ApplicationComponent {
 
   @Override
   public void initComponent() {
+    PluginsAdvertiser.ensureDeleted();
     final long interval = UpdateSettings.getInstance().LAST_TIME_CHECKED + CHECK_INTERVAL - System.currentTimeMillis();
     queueNextUpdateCheck(UpdateChecker.checkNeeded()
                          ? CHECK_INTERVAL

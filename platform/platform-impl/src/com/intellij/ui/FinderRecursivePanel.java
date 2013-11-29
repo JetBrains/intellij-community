@@ -34,6 +34,10 @@ import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.util.List;
 
+/**
+ * @param <T> List item type.
+ * @since 13.0
+ */
 public abstract class FinderRecursivePanel<T> extends JBSplitter implements DataProvider, Disposable {
 
   @NotNull
@@ -127,9 +131,7 @@ public abstract class FinderRecursivePanel<T> extends JBSplitter implements Data
     return null;
   }
 
-  protected boolean hasChildren(T t) {
-    return false;
-  }
+  protected abstract boolean hasChildren(T t);
 
   /**
    * To determine item list background color (if enabled).
@@ -140,6 +142,10 @@ public abstract class FinderRecursivePanel<T> extends JBSplitter implements Data
   @Nullable
   protected VirtualFile getContainingFile(T t) {
     return null;
+  }
+
+  protected boolean isEditable() {
+    return getSelectedValue() != null;
   }
 
   @Nullable
@@ -185,7 +191,7 @@ public abstract class FinderRecursivePanel<T> extends JBSplitter implements Data
     });
     ListScrollingUtil.installActions(list);
 
-//    installSpeedSearch(list); // TODO
+    //    installSpeedSearch(list); // TODO
 
     installEditOnDoubleClick(list);
     return list;
@@ -241,7 +247,7 @@ public abstract class FinderRecursivePanel<T> extends JBSplitter implements Data
 
       @Override
       public void update(AnActionEvent e) {
-        e.getPresentation().setEnabled(getSelectedValue() != null);
+        e.getPresentation().setEnabled(isEditable());
       }
 
       @Override
@@ -362,9 +368,8 @@ public abstract class FinderRecursivePanel<T> extends JBSplitter implements Data
   @Override
   public Object getData(@NonNls String dataId) {
     Object selectedValue = getSelectedValue();
-    if (PlatformDataKeys.COPY_PROVIDER.is(dataId) && selectedValue != null) {
-      return myCopyProvider;
-    }
+    if (selectedValue == null) return null;
+
     if (CommonDataKeys.PSI_ELEMENT.is(dataId) && selectedValue instanceof PsiElement) {
       return selectedValue;
     }
@@ -374,15 +379,20 @@ public abstract class FinderRecursivePanel<T> extends JBSplitter implements Data
     if (selectedValue instanceof DataProvider) {
       return ((DataProvider)selectedValue).getData(dataId);
     }
+    if (PlatformDataKeys.COPY_PROVIDER.is(dataId)) {
+      return myCopyProvider;
+    }
     return null;
   }
 
   @Override
   public void dispose() {
+    super.dispose();
     myMergingUpdateQueue.cancelAllUpdates();
   }
 
   @SuppressWarnings("unchecked")
+  @Nullable
   public T getSelectedValue() {
     return (T)myList.getSelectedValue();
   }
@@ -398,7 +408,7 @@ public abstract class FinderRecursivePanel<T> extends JBSplitter implements Data
   }
 
   @Nullable
-  public String getGroupId() {
+  protected String getGroupId() {
     return myGroupId;
   }
 
@@ -417,10 +427,12 @@ public abstract class FinderRecursivePanel<T> extends JBSplitter implements Data
               @Override
               public void run() {
                 try {
+                  final List<T> listItems = getListItems();
+
                   SwingUtilities.invokeLater(new Runnable() {
                     @Override
                     public void run() {
-                      mergeListItems(myListModel, getListItems());
+                      mergeListItems(myListModel, listItems);
 
                       if (myList.getSelectedIndex() < 0) {
                         myList.setSelectedIndex(myListModel.getSize() > oldIndex ? oldIndex : 0);
@@ -451,11 +463,15 @@ public abstract class FinderRecursivePanel<T> extends JBSplitter implements Data
       }
     }
     // add items
-    List<T> items = listModel.getItems();
     for (int i = 0; i < newItems.size(); i++) {
       T newItem = newItems.get(i);
-      if (!items.contains(newItem)) {
-        listModel.add(i, newItem);
+      if (i < listModel.getSize()) {
+        if (!listModel.getElementAt(i).equals(newItem)) {
+          listModel.add(i, newItem);
+        }
+      }
+      else {
+        listModel.add(newItem);
       }
     }
   }

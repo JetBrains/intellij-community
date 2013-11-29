@@ -1,0 +1,11 @@
+Compiling files:
+src/package2/A.java
+End of files
+Cleaning output files:
+out/production/AddClassHidingImportedClass/package2/B.class
+out/production/AddClassHidingImportedClass/package3/C.class
+End of files
+Compiling files:
+src/package2/B.java
+src/package3/C.java
+End of files

@@ -41,10 +41,4 @@ public interface CustomLiveTemplate {
   String getTitle();
 
   char getShortcut();
-
-  /**
-   * Implementation should returns {@code true} if it has own lookup item in completion autopopup
-   * and it is supposed that template should be expanded while completion auto-popup is active.
-   */
-  boolean hasCompletionItem(@NotNull PsiFile file, int offset);
 }

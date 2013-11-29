@@ -19,6 +19,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceBound;
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceSession;
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceVariable;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 
 import java.util.List;
@@ -41,7 +42,8 @@ public class SubtypingConstraint implements ConstraintFormula {
   public boolean reduce(InferenceSession session, List<ConstraintFormula> constraints) {
     if (myIsRefTypes) {
       if (session.isProperType(myS) && session.isProperType(myT)) {
-        if (myT == null || myS == null) return myS == myT;
+        if (myT == null) return myS == null || myS.equalsToText(CommonClassNames.JAVA_LANG_OBJECT); 
+        if (myS == null) return myT.equalsToText(CommonClassNames.JAVA_LANG_OBJECT); 
         return TypeConversionUtil.isAssignable(myT, myS);
       }
       InferenceVariable inferenceVariable = session.getInferenceVariable(myS);
@@ -49,7 +51,7 @@ public class SubtypingConstraint implements ConstraintFormula {
         inferenceVariable.addBound(myT, InferenceBound.UPPER);
         return true;
       }
-      if (PsiType.NULL.equals(myS)) return true;
+      if (PsiType.NULL.equals(myS) || myS == null) return true;
       inferenceVariable = session.getInferenceVariable(myT);
       if (inferenceVariable != null) {
         inferenceVariable.addBound(myS, InferenceBound.LOWER);
@@ -85,6 +87,11 @@ public class SubtypingConstraint implements ConstraintFormula {
           final PsiSubstitutor tSubstitutor = TResult.getSubstitutor();
           final PsiSubstitutor sSubstitutor = SClass != null ? TypeConversionUtil.getClassSubstitutor(CClass, SClass, SResult.getSubstitutor()) : null;
           if (sSubstitutor != null) {
+            //18.2.2 Type Compatibility Constraints
+            if (PsiUtil.isRawSubstitutor(CClass, sSubstitutor)) {
+              session.setErased();
+              return true;
+            }
             for (PsiTypeParameter parameter : CClass.getTypeParameters()) {
               final PsiType tSubstituted = tSubstitutor.substitute(parameter);
               final PsiType sSubstituted = sSubstitutor.substituteWithBoundsPromotion(parameter);
@@ -110,18 +117,23 @@ public class SubtypingConstraint implements ConstraintFormula {
         if (tBound == null) {
           return true;
         }
+
+        if (myS instanceof PsiCapturedWildcardType) {
+          myS = ((PsiCapturedWildcardType)myS).getWildcard();
+        }
+
         if (((PsiWildcardType)myT).isExtends()) {
           if (tBound.equalsToText(CommonClassNames.JAVA_LANG_OBJECT)) {
             return true;
           }
 
-          if (myS instanceof PsiCapturedWildcardType) {
-            myS = ((PsiCapturedWildcardType)myS).getWildcard();
-          }
-
           if (myS instanceof PsiWildcardType) {
             final PsiType sBound = ((PsiWildcardType)myS).getBound();
-            if (sBound != null && ((PsiWildcardType)myS).isExtends()) {
+            if (sBound == null) {
+              return true;
+            }
+
+            if (((PsiWildcardType)myS).isExtends()) {
               constraints.add(new SubtypingConstraint(tBound, sBound, true));
               return true;
             }
@@ -131,10 +143,6 @@ public class SubtypingConstraint implements ConstraintFormula {
           }
           return false;
         } else {
-
-          if (myS instanceof PsiCapturedWildcardType) {
-            myS = ((PsiCapturedWildcardType)myS).getWildcard();
-          }
 
           if (myS instanceof PsiWildcardType) {
             final PsiType sBound = ((PsiWildcardType)myS).getBound();

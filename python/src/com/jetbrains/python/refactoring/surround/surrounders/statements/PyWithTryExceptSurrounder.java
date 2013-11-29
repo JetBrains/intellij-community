@@ -22,7 +22,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyBundle;
@@ -53,9 +52,10 @@ public class PyWithTryExceptSurrounder extends PyStatementSurrounder {
 
     final PsiFile psiFile = parent.getContainingFile();
     final Document document = psiFile.getViewProvider().getDocument();
-    final RangeMarker rangeMarker = document.createRangeMarker(tryStatement.getTextRange());
+    final TextRange range = tryStatement.getTextRange();
+    assert document != null;
+    final RangeMarker rangeMarker = document.createRangeMarker(range);
 
-    CodeStyleManager.getInstance(project).reformat(psiFile);
     final PsiElement element = psiFile.findElementAt(rangeMarker.getStartOffset());
     tryStatement = PsiTreeUtil.getParentOfType(element, PyTryExceptStatement.class);
     if (tryStatement != null) {
@@ -70,7 +70,9 @@ public class PyWithTryExceptSurrounder extends PyStatementSurrounder {
 
   protected TextRange getResultRange(PyTryExceptStatement tryStatement) {
     final PyExceptPart part = tryStatement.getExceptParts()[0];
-    return part.getStatementList().getTextRange();
+    final PyStatementList list = part.getStatementList();
+    assert list != null;
+    return list.getTextRange();
   }
 
   public String getTemplateDescription() {

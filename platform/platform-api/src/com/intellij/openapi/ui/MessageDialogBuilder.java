@@ -24,29 +24,35 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-public final class MessageDialogBuilder {
-  private final String myMessage;
-  private final String myTitle;
+public abstract class MessageDialogBuilder<T extends MessageDialogBuilder> {
+  protected final String myMessage;
+  protected final String myTitle;
 
-  private String myYesText;
-  private String myNoText;
+  protected String myYesText;
+  protected String myNoText;
 
-  private Project myProject;
-  private Icon myIcon;
-  private DialogWrapper.DoNotAskOption myDoNotAskOption;
+  protected Project myProject;
+  protected Icon myIcon;
+  protected DialogWrapper.DoNotAskOption myDoNotAskOption;
 
   private MessageDialogBuilder(@NotNull String title, @NotNull String message) {
     myTitle = title;
     myMessage = message;
   }
 
-  public static MessageDialogBuilder yesNo(@NotNull String title, @NotNull String message) {
-    return new MessageDialogBuilder(title, message).icon(Messages.getQuestionIcon());
+  public static YesNo yesNo(@NotNull String title, @NotNull String message) {
+    return new YesNo(title, message).icon(Messages.getQuestionIcon());
   }
 
-  public MessageDialogBuilder project(@Nullable Project project) {
+  public static YesNoCancel yesNoCancel(@NotNull String title, @NotNull String message) {
+    return new YesNoCancel(title, message).icon(Messages.getQuestionIcon());
+  }
+
+  protected abstract T getThis();
+
+  public T project(@Nullable Project project) {
     myProject = project;
-    return this;
+    return getThis();
   }
 
   /**
@@ -55,36 +61,78 @@ public final class MessageDialogBuilder {
    * @see {@link com.intellij.openapi.ui.Messages#getErrorIcon()}
    * @see {@link com.intellij.openapi.ui.Messages#getQuestionIcon()}
    */
-  public MessageDialogBuilder icon(@Nullable Icon icon) {
+  public T icon(@Nullable Icon icon) {
     myIcon = icon;
-    return this;
+    return getThis();
   }
 
-  public MessageDialogBuilder doNotAsk(@NotNull DialogWrapper.DoNotAskOption doNotAskOption) {
+  public T doNotAsk(@NotNull DialogWrapper.DoNotAskOption doNotAskOption) {
     myDoNotAskOption = doNotAskOption;
-    return this;
+    return getThis();
   }
 
-  public MessageDialogBuilder yesText(@NotNull String yesText) {
+  public T yesText(@NotNull String yesText) {
     myYesText = yesText;
-    return this;
+    return getThis();
   }
 
-  public MessageDialogBuilder noText(@NotNull String noText) {
+  public T noText(@NotNull String noText) {
     myNoText = noText;
-    return this;
+    return getThis();
   }
 
-  @Messages.YesNoResult
-  public int show() {
-    String yesText = ObjectUtils.chooseNotNull(myYesText, Messages.YES_BUTTON);
-    String noText = ObjectUtils.chooseNotNull(myNoText, Messages.NO_BUTTON);
-    if (Messages.canShowMacSheetPanel()) {
-      return MacMessages.getInstance().showYesNoDialog(myTitle, myMessage, yesText, noText, WindowManager.getInstance().suggestParentWindow(myProject), myDoNotAskOption);
+  public static final class YesNo extends MessageDialogBuilder<YesNo> {
+    private YesNo(@NotNull String title, @NotNull String message) {
+      super(title, message);
     }
-    else {
-      //noinspection MagicConstant
-      return Messages.showDialog(myProject, myMessage, myTitle, new String[]{yesText, noText}, 0, myIcon, myDoNotAskOption);
+
+    @Override
+    protected YesNo getThis() {
+      return this;
+    }
+
+    @Messages.YesNoResult
+    public int show() {
+      String yesText = ObjectUtils.chooseNotNull(myYesText, Messages.YES_BUTTON);
+      String noText = ObjectUtils.chooseNotNull(myNoText, Messages.NO_BUTTON);
+      if (Messages.canShowMacSheetPanel() && !Messages.isApplicationInUnitTestOrHeadless()) {
+        return MacMessages.getInstance().showYesNoDialog(myTitle, myMessage, yesText, noText, WindowManager.getInstance().suggestParentWindow(myProject), myDoNotAskOption);
+      }
+      else {
+        return Messages.showDialog(myProject, myMessage, myTitle, new String[]{yesText, noText}, 0, myIcon, myDoNotAskOption) == 0 ? Messages.YES : Messages.NO;
+      }
+    }
+  }
+
+  public static final class YesNoCancel extends MessageDialogBuilder<YesNoCancel> {
+    private String myCancelText;
+
+    private YesNoCancel(@NotNull String title, @NotNull String message) {
+      super(title, message);
+    }
+
+    public YesNoCancel cancelText(@NotNull String cancelText) {
+      myCancelText = cancelText;
+      return getThis();
+    }
+
+    @Override
+    protected YesNoCancel getThis() {
+      return this;
+    }
+
+    @Messages.YesNoCancelResult
+    public int show() {
+      String yesText = ObjectUtils.chooseNotNull(myYesText, Messages.YES_BUTTON);
+      String noText = ObjectUtils.chooseNotNull(myNoText, Messages.NO_BUTTON);
+      String cancelText = ObjectUtils.chooseNotNull(myCancelText, Messages.CANCEL_BUTTON);
+      if (Messages.canShowMacSheetPanel() && !Messages.isApplicationInUnitTestOrHeadless()) {
+        return MacMessages.getInstance().showYesNoCancelDialog(myTitle, myMessage, yesText, noText, cancelText, WindowManager.getInstance().suggestParentWindow(myProject), myDoNotAskOption);
+      }
+      else {
+        int buttonNumber = Messages.showDialog(myProject, myMessage, myTitle, new String[]{yesText, noText, cancelText}, 0, myIcon, myDoNotAskOption);
+        return buttonNumber == 0 ? Messages.YES : buttonNumber == 1 ? Messages.NO : Messages.CANCEL;
+      }
     }
   }
 }

@@ -35,7 +35,7 @@ public class UnusedCatchParameterInspectionBase extends BaseInspection {
   /**
    * @noinspection PublicField
    */
-  public boolean m_ignoreTestCases = false;
+  public boolean m_ignoreTestCases = false; // keep for compatibility
 
   @Override
   @NotNull
@@ -51,9 +51,6 @@ public class UnusedCatchParameterInspectionBase extends BaseInspection {
     optionsPanel.addCheckbox(InspectionGadgetsBundle.message(
       "unused.catch.parameter.ignore.catch.option"),
                              "m_ignoreCatchBlocksWithComments");
-    optionsPanel.addCheckbox(InspectionGadgetsBundle.message(
-      "unused.catch.parameter.ignore.empty.option"),
-                             "m_ignoreTestCases");
     return optionsPanel;
   }
 
@@ -62,12 +59,9 @@ public class UnusedCatchParameterInspectionBase extends BaseInspection {
   protected String buildErrorString(Object... infos) {
     final boolean namedIgnoreButUsed = ((Boolean)infos[0]).booleanValue();
     if (namedIgnoreButUsed) {
-      return InspectionGadgetsBundle.message(
-        "used.catch.parameter.named.ignore.problem.descriptor"
-      );
+      return InspectionGadgetsBundle.message("used.catch.parameter.named.ignore.problem.descriptor");
     }
-    return InspectionGadgetsBundle.message(
-      "unused.catch.parameter.problem.descriptor");
+    return InspectionGadgetsBundle.message("unused.catch.parameter.problem.descriptor");
   }
 
   @Override
@@ -113,14 +107,14 @@ public class UnusedCatchParameterInspectionBase extends BaseInspection {
       final boolean namedIgnore = PsiUtil.isIgnoredName(parameterName);
       if (visitor.isUsed()) {
         if (namedIgnore) {
-          registerVariableError(parameter, Boolean.TRUE);
+          registerVariableError(parameter, Boolean.TRUE, parameter);
         }
         return;
       }
       else if (namedIgnore) {
         return;
       }
-      registerVariableError(parameter, Boolean.FALSE);
+      registerVariableError(parameter, Boolean.FALSE, parameter);
     }
   }
 }

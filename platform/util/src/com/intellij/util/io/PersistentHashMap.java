@@ -715,7 +715,7 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
     }
     if (doHardConsistencyChecks) {
       long checkRecord = readValueId(keyId);
-      if (checkRecord != value) {
+      if (checkRecord != (value & ~USED_LONG_VALUE_MASK)) {
         assert false:value;
       }
     }

@@ -18,10 +18,7 @@ package org.jetbrains.plugins.terminal;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.*;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.text.StringUtil;
-import com.jediterm.terminal.emulator.ColorPalette;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -90,6 +87,12 @@ public class TerminalOptionsProvider implements PersistentStateComponent<Termina
   }
 
   private static String getDefaultShellPath() {
+    String shell = System.getenv("SHELL");
+    
+    if (shell != null && new File(shell).canExecute()) {
+      return shell;
+    }
+    
     if (SystemInfo.isUnix) {
       return "/bin/bash";
     }

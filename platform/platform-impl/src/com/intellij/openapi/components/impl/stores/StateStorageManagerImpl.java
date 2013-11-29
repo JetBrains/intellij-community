@@ -31,6 +31,7 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import com.intellij.util.io.fs.IFile;
 import gnu.trove.THashMap;
+import gnu.trove.THashSet;
 import gnu.trove.TObjectLongHashMap;
 import org.jdom.Document;
 import org.jdom.Element;
@@ -468,19 +469,18 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
     @Override
     @Nullable
     public Set<String> analyzeExternalChanges(@NotNull final Set<Pair<VirtualFile, StateStorage>> changedFiles) {
-      Set<String> result = new HashSet<String>();
-
-      nextStorage:
+      Set<String> result = new THashSet<String>();
       for (Pair<VirtualFile, StateStorage> pair : changedFiles) {
-        final StateStorage stateStorage = pair.second;
-        final StateStorage.SaveSession saveSession = myCompoundSaveSession.getSaveSession(stateStorage);
-        if (saveSession == null) continue nextStorage;
-        final Set<String> s = saveSession.analyzeExternalChanges(changedFiles);
-
-        if (s == null) return null;
-        result.addAll(s);
+        final StateStorage.SaveSession saveSession = myCompoundSaveSession.getSaveSession(pair.second);
+        if (saveSession == null) {
+          continue;
+        }
+        final Set<String> changes = saveSession.analyzeExternalChanges(changedFiles);
+        if (changes == null) {
+          return null;
+        }
+        result.addAll(changes);
       }
-
       return result;
     }
   }

@@ -15,15 +15,6 @@ import java.util.List;
 public class RemoteSdkDataHolder extends RemoteCredentialsHolder implements RemoteSdkData {
 
   public static final String SSH_PREFIX = "ssh://";
-  private static final String HOST = "HOST";
-  private static final String PORT = "PORT";
-  private static final String ANONYMOUS = "ANONYMOUS";
-  private static final String USERNAME = "USERNAME";
-  private static final String PASSWORD = "PASSWORD";
-  private static final String USE_KEY_PAIR = "USE_KEY_PAIR";
-  private static final String PRIVATE_KEY_FILE = "PRIVATE_KEY_FILE";
-  private static final String KNOWN_HOSTS_FILE = "MY_KNOWN_HOSTS_FILE";
-  private static final String PASSPHRASE = "PASSPHRASE";
   private static final String INTERPRETER_PATH = "INTERPRETER_PATH";
   private static final String HELPERS_PATH = "HELPERS_PATH";
   private static final String REMOTE_ROOTS = "REMOTE_ROOTS";

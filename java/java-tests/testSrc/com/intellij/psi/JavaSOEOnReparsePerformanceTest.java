@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.intellij.psi;
 
 import com.intellij.codeInsight.daemon.LightDaemonAnalyzerTestCase;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.command.WriteCommandAction;
 
 public class JavaSOEOnReparsePerformanceTest extends LightDaemonAnalyzerTestCase {
   private StringBuilder myHugeExpr;
@@ -51,11 +52,13 @@ public class JavaSOEOnReparsePerformanceTest extends LightDaemonAnalyzerTestCase
     final int pos = getEditor().getDocument().getText().indexOf("\"\"");
 
     // replace small expression with huge binary one
-    ApplicationManager.getApplication().runWriteAction(new Runnable() { @Override
-                                                                        public void run() {
-      getEditor().getDocument().replaceString(pos, pos + 2, myHugeExpr);
-      PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
-    }});
+    WriteCommandAction.runWriteCommandAction(null, new Runnable() {
+      @Override
+      public void run() {
+        getEditor().getDocument().replaceString(pos, pos + 2, myHugeExpr);
+        PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
+      }
+    });
     doTestConfiguredFile(false, false, null);
 
     // modify huge binary expression (1)

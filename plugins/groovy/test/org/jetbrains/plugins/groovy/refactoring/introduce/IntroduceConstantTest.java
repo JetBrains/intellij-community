@@ -15,7 +15,7 @@
  */
 package org.jetbrains.plugins.groovy.refactoring.introduce;
 
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
@@ -103,7 +103,7 @@ public class IntroduceConstantTest extends LightCodeInsightFixtureTestCase {
     final GrIntroduceConstantSettings settings =
       new MockIntroduceConstantSettings(targetClass, replaceAllOccurences, getType(useExplicitType, expression, variable, stringPart), modifier);
 
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+    WriteCommandAction.runWriteCommandAction(null, new Runnable() {
       @Override
       public void run() {
         handler.runRefactoring(context, settings);

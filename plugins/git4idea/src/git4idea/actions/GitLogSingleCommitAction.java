@@ -15,6 +15,7 @@
  */
 package git4idea.actions;
 
+import com.intellij.dvcs.DvcsUtil;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.components.ServiceManager;
@@ -24,7 +25,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.vcs.log.VcsFullCommitDetails;
 import com.intellij.vcs.log.VcsLog;
 import com.intellij.vcs.log.VcsLogDataKeys;
-import git4idea.GitUtil;
+import git4idea.GitVcs;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
 import org.jetbrains.annotations.NotNull;
@@ -56,10 +57,10 @@ public abstract class GitLogSingleCommitAction extends DumbAwareAction {
     GitRepositoryManager repositoryManager = ServiceManager.getService(data.project, GitRepositoryManager.class);
     final GitRepository repository = repositoryManager.getRepositoryForRoot(commit.getRoot());
     if (repository == null) {
-      GitUtil.noRepositoryForRoot(LOG, commit.getRoot(), data.project);
+      DvcsUtil.noVcsRepositoryForRoot(LOG, commit.getRoot(), data.project, repositoryManager, GitVcs.getInstance(data.project));
       return;
     }
-    
+
     actionPerformed(repository, commit);
   }
 
@@ -67,8 +68,8 @@ public abstract class GitLogSingleCommitAction extends DumbAwareAction {
   public void update(AnActionEvent e) {
     Data data = Data.collect(e);
     boolean enabled = data.isValid() && data.log.getSelectedCommits().size() == 1;
-    getTemplatePresentation().setVisible(data.isValid());
-    getTemplatePresentation().setEnabled(enabled);
+    e.getPresentation().setVisible(data.isValid());
+    e.getPresentation().setEnabled(enabled);
   }
 
   private static class Data {
@@ -83,7 +84,7 @@ public abstract class GitLogSingleCommitAction extends DumbAwareAction {
     }
 
     boolean isValid() {
-      return project != null && log != null && GitUtil.logHasGitRoot(log);
+      return project != null && log != null && DvcsUtil.logHasRootForVcs(log, GitVcs.getKey());
     }
   }
 

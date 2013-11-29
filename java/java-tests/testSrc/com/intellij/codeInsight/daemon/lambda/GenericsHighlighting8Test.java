@@ -44,7 +44,7 @@ public class GenericsHighlighting8Test extends LightDaemonAnalyzerTestCase {
 
   @Override
   protected Sdk getProjectJDK() {
-    return getTestName(false).contains("Jdk14") ? IdeaTestUtil.getMockJdk14() : super.getProjectJDK();
+    return IdeaTestUtil.getMockJdk18();
   }
 
   public void testReferenceTypeParams() {
@@ -71,13 +71,13 @@ public class GenericsHighlighting8Test extends LightDaemonAnalyzerTestCase {
   public void testInferenceWithBounds() {
     doTest();
   }
-  public void _testInferenceWithSuperBounds() {
+  public void testInferenceWithSuperBounds() {
     doTest();
   }
   public void testInferenceWithUpperBoundPromotion() {
     doTest();
   }
-  public void _testVariance() {//todo
+  public void testVariance() {
     doTest();
   }
   public void testForeachTypes() {
@@ -86,7 +86,7 @@ public class GenericsHighlighting8Test extends LightDaemonAnalyzerTestCase {
   public void testRawOverridingMethods() {
     doTest();
   }    
-  public void _testAutoboxing() { //todo
+  public void testAutoboxing() {
     doTest();
   }                
   public void testAutoboxingMethods() {
@@ -98,7 +98,7 @@ public class GenericsHighlighting8Test extends LightDaemonAnalyzerTestCase {
   public void testEnumWithAbstractMethods() {
     doTest();
   }                                   
-  public void _testEnum() { doTest(); } //todo     
+  public void testEnum() { doTest(); }
   public void testEnum56239() {
     doTest();
   }
@@ -297,7 +297,7 @@ public class GenericsHighlighting8Test extends LightDaemonAnalyzerTestCase {
   public void testIDEA57563() {
     doTest();
   }
-  public void _testIDEA57275() {
+  public void testIDEA57275() {
     doTest();
   }
   public void testIDEA57533() {
@@ -315,15 +315,19 @@ public class GenericsHighlighting8Test extends LightDaemonAnalyzerTestCase {
   public void testIDEA57484() {
     doTest();
   }
-  public void _testIDEA57485() {//todo
+  public void testIDEA57485() {
     doTest();
   }
   public void testIDEA57486() {
     doTest();
   }
-  public void testIDEA57492() {
+
+  //compiles with java 6
+  public void _testIDEA57492() {
     doTest();
   }
+  
+  //compiles with java 6
   public void _testIDEA57493() {
     doTest();
   }
@@ -619,7 +623,7 @@ public class GenericsHighlighting8Test extends LightDaemonAnalyzerTestCase {
   public void testIDEA67571(){
     doTest();
   }
-  public void _testTypeArgumentsOnRawType(){//todo
+  public void testTypeArgumentsOnRawType(){
     doTest();
   }
 
@@ -758,19 +762,4 @@ public class GenericsHighlighting8Test extends LightDaemonAnalyzerTestCase {
     doTest();
   }
 
-  public void _testJavaUtilCollections_NoVerify() throws Exception {   //todo
-    PsiClass collectionsClass = getJavaFacade().findClass("java.util.Collections", GlobalSearchScope.moduleWithLibrariesScope(getModule()));
-    assertNotNull(collectionsClass);
-    collectionsClass = (PsiClass)collectionsClass.getNavigationElement();
-    final String text = collectionsClass.getContainingFile().getText();
-    configureFromFileText("Collections.java", text.replaceAll("\r", "\n"));
-    final PsiResolveHelperImpl helper = (PsiResolveHelperImpl)JavaPsiFacade.getInstance(getProject()).getResolveHelper();
-    helper.setTestHelper(new PsiGraphInferenceHelper(getPsiManager()));
-    try {
-      doTestConfiguredFile(false, false, null);
-    }
-    finally {
-      helper.setTestHelper(null);
-    }
-  }
 }

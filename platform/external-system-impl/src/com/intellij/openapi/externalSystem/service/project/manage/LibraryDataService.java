@@ -82,7 +82,7 @@ public class LibraryDataService implements ProjectDataService<LibraryData, Libra
       syncPaths(toImport, library, project, synchronous);
       return;
     }
-    importLibrary(toImport.getName(), libraryFiles, project, synchronous);
+    importLibrary(toImport.getInternalName(), libraryFiles, project, synchronous);
   }
 
   @NotNull
@@ -227,7 +227,7 @@ public class LibraryDataService implements ProjectDataService<LibraryData, Libra
           for (Map.Entry<OrderRootType, Set<String>> entry : toAdd.entrySet()) {
             Map<OrderRootType, Collection<File>> roots = ContainerUtilRt.newHashMap();
             roots.put(entry.getKey(), ContainerUtil.map(entry.getValue(), PATH_TO_FILE));
-            registerPaths(roots, model, externalLibrary.getName());
+            registerPaths(roots, model, externalLibrary.getInternalName());
           }
         }
         finally {

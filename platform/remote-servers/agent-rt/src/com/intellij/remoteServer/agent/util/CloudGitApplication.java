@@ -23,4 +23,6 @@ public interface CloudGitApplication {
   String getName();
 
   String getGitUrl();
+
+  String getWebUrl();
 }

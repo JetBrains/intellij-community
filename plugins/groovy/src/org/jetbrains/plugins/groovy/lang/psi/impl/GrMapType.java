@@ -37,8 +37,6 @@ import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.
  * @author peter
  */
 public class GrMapType extends GrLiteralClassType {
-  private static final PsiType[] RAW_PARAMETERS = new PsiType[]{null, null};
-  
   private final Map<String, PsiType> myStringEntries;
   private final List<Pair<PsiType, PsiType>> myOtherEntries;
   private final String myJavaClassName;
@@ -81,12 +79,6 @@ public class GrMapType extends GrLiteralClassType {
         myOtherEntries.add(new Pair<PsiType, PsiType>(type, expression.getType()));
       }
     }
-  }
-
-  @NotNull
-  @Override
-  public PsiClassType rawType() {
-    return new GrMapType(myFacade, getResolveScope(), Collections.<String, PsiType>emptyMap(), Collections.<Pair<PsiType,PsiType>>emptyList(), getLanguageLevel());
   }
 
   @NotNull
@@ -136,7 +128,7 @@ public class GrMapType extends GrLiteralClassType {
     final PsiType[] keyTypes = getAllKeyTypes();
     final PsiType[] valueTypes = getAllValueTypes();
     if (keyTypes.length == 0 && valueTypes.length == 0) {
-      return RAW_PARAMETERS;
+      return EMPTY_ARRAY;
     }
 
     return new PsiType[]{getLeastUpperBound(keyTypes), getLeastUpperBound(valueTypes)};

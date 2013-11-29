@@ -39,6 +39,15 @@ public abstract class JavaSourceRootEditHandlerBase extends ModuleSourceRootEdit
     super(rootType);
   }
 
+  @NotNull
+  @Override
+  public Icon getRootIcon(@NotNull JavaSourceRootProperties properties) {
+    return properties.isForGeneratedSources() ? getGeneratedRootIcon() : getRootIcon();
+  }
+
+  @NotNull
+  protected abstract Icon getGeneratedRootIcon();
+
   @Nullable
   @Override
   public String getPropertiesString(@NotNull JavaSourceRootProperties properties) {

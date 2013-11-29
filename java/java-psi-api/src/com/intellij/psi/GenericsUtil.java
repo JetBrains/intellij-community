@@ -279,6 +279,12 @@ public class GenericsUtil {
             if (acceptExtendsBound(extendsType, extendsBound)) continue nextTypeParam;
           }
         }
+        else if (substituted instanceof PsiCapturedWildcardType) {
+          final PsiType extendsBound = ((PsiCapturedWildcardType)substituted).getUpperBound();
+          if (acceptExtendsBound(extendsType, extendsBound)) {
+            continue nextTypeParam;
+          }
+        }
         if (extendsType != null && !TypeConversionUtil.isAssignable(extendsType, substituted, allowUncheckedConversion)) {
           return Pair.create(typeParameter, extendsType);
         }

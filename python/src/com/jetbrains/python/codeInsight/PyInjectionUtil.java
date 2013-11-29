@@ -23,6 +23,7 @@ import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Arrays;
 import java.util.List;
 
 import static com.jetbrains.python.inspections.PyStringFormatParser.*;
@@ -31,15 +32,22 @@ import static com.jetbrains.python.inspections.PyStringFormatParser.*;
  * @author vlan
  */
 public class PyInjectionUtil {
+  public static final List<Class<? extends PyExpression>> ELEMENTS_TO_INJECT_IN =
+    Arrays.asList(PyStringLiteralExpression.class, PyParenthesizedExpression.class, PyBinaryExpression.class, PyCallExpression.class);
+
   private PyInjectionUtil() {}
 
   /**
-   * Returns true if the element is the largest expression that represents a string literal, possibly with concatenation, parentheses,
-   * or formatting.
+   * Returns the largest expression in the specified context that represents a string literal suitable for language injection, possibly
+   * with concatenation, parentheses, or formatting.
    */
-  public static boolean isLargestStringLiteral(@NotNull PsiElement element) {
-    final PsiElement parent = element.getParent();
-    return isStringLiteralPart(element) && (parent == null || !isStringLiteralPart(parent));
+  @Nullable
+  public static PsiElement getLargestStringLiteral(@NotNull PsiElement context) {
+    PsiElement element = null;
+    for (PsiElement current = context; current != null && isStringLiteralPart(current); current = current.getParent()) {
+      element = current;
+    }
+    return element;
   }
 
   /**
@@ -47,7 +55,7 @@ public class PyInjectionUtil {
    * string concatenations or formatting.
    */
   public static void registerStringLiteralInjection(@NotNull PsiElement element, @NotNull MultiHostRegistrar registrar) {
-    processStringLiteral(element, registrar, "", "", Formatting.NONE);
+    processStringLiteral(element, registrar, "", "", Formatting.PERCENT);
   }
 
   private static boolean isStringLiteralPart(@NotNull PsiElement element) {
@@ -100,9 +108,25 @@ public class PyInjectionUtil {
             final FormatStringChunk chunk = chunks.get(i);
             if (chunk instanceof ConstantChunk) {
               final int nextIndex = i + 1;
-              final String chunkPrefix = i == 1 && chunks.get(0) instanceof SubstitutionChunk ? missingValue : "";
-              final String chunkSuffix = nextIndex < chunks.size() &&
-                                         chunks.get(nextIndex) instanceof SubstitutionChunk ? missingValue : "";
+              final String chunkPrefix;
+              if (i == 1 && chunks.get(0) instanceof SubstitutionChunk) {
+                chunkPrefix = missingValue;
+              }
+              else if (i == 0) {
+                chunkPrefix = prefix;
+              } else {
+                chunkPrefix = "";
+              }
+              final String chunkSuffix;
+              if (nextIndex < chunks.size() && chunks.get(nextIndex) instanceof SubstitutionChunk) {
+                chunkSuffix = missingValue;
+              }
+              else if (nextIndex == chunks.size()) {
+                chunkSuffix = suffix;
+              }
+              else {
+                chunkSuffix = "";
+              }
               final TextRange chunkRange = chunk.getTextRange().shiftRight(range.getStartOffset());
               registrar.addPlace(chunkPrefix, chunkSuffix, expr, chunkRange);
             }

@@ -265,9 +265,9 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
     }
     for (int i = 0; i < actions.size(); i++) {
       final AnAction action = actions.get(i);
-      if (action instanceof Separator && isNavBar()) {
-        continue;
-      }
+//      if (action instanceof Separator && isNavBar()) {
+//        continue;
+//      }
 
       //if (action instanceof ComboBoxAction) {
       //  ((ComboBoxAction)action).setSmallVariant(true);

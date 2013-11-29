@@ -16,7 +16,7 @@
 package com.intellij.openapi.updateSettings.impl.pluginsAdvertisement;
 
 import com.intellij.ide.plugins.*;
-import com.intellij.openapi.extensions.PluginId;
+import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileTypes.FileTypeFactory;
 import com.intellij.openapi.fileTypes.PlainTextFileType;
@@ -24,16 +24,18 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.updateSettings.impl.PluginDownloader;
+import com.intellij.openapi.updateSettings.impl.*;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.EditorNotificationPanel;
 import com.intellij.ui.EditorNotifications;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 /**
  * User: anna
@@ -62,7 +64,7 @@ public class PluginAdvertiserEditorNotificationProvider extends EditorNotificati
 
     final String extension = file.getExtension();
     final String fileName = file.getName();
-    if (extension != null && isIgnored(extension) || isIgnored(fileName)) return null;
+    if (extension != null && isIgnored("*." + extension) || isIgnored(fileName)) return null;
 
     final PluginsAdvertiser.KnownExtensions knownExtensions = PluginsAdvertiser.loadExtensions();
     if (knownExtensions != null) {
@@ -81,29 +83,28 @@ public class PluginAdvertiserEditorNotificationProvider extends EditorNotificati
   }
 
   private EditorNotificationPanel createPanel(String extension, PluginsAdvertiser.KnownExtensions knownExtensions) {
-    Set<String> plugins = knownExtensions.find(extension);
+    final Set<PluginsAdvertiser.Plugin> plugins = knownExtensions.find(extension);
     if (plugins != null && !plugins.isEmpty()) {
       return createPanel(extension, plugins);
     }
     return null;
   }
 
-  @NotNull
-  private EditorNotificationPanel createPanel(final String extension, final Set<String> plugins) {
+  @Nullable
+  private EditorNotificationPanel createPanel(final String extension, final Set<PluginsAdvertiser.Plugin> plugins) {
     final EditorNotificationPanel panel = new EditorNotificationPanel();
     panel.setText("Plugins supporting files with " + extension + " are found");
-    final IdeaPluginDescriptor disabledPlugin = getDisabledPlugin(plugins);
+    final IdeaPluginDescriptor disabledPlugin = PluginsAdvertiser.getDisabledPlugin(plugins);
     if (disabledPlugin != null) {
       panel.createActionLabel("Enable " + disabledPlugin.getName() + " plugin", new Runnable() {
         @Override
         public void run() {
           myEnabledExtensions.add(extension);
-          PluginManagerCore.enablePlugin(disabledPlugin.getPluginId().getIdString());
           myNotifications.updateAllNotifications();
-          PluginManagerMain.notifyPluginsWereUpdated("Plugin was successfully enabled", myProject);
+          PluginsAdvertiser.enablePlugins(myProject, Collections.singletonList(disabledPlugin));
         }
       });
-    } else {
+    } else if (hasNonBundledPlugin(plugins)) {
       panel.createActionLabel("Install plugins", new Runnable() {
         @Override
         public void run() {
@@ -116,7 +117,7 @@ public class PluginAdvertiserEditorNotificationProvider extends EditorNotificati
               try {
                 myAllPlugins = RepositoryHelper.loadPluginsFromRepository(indicator);
                 for (IdeaPluginDescriptor loadedPlugin : myAllPlugins) {
-                  if (plugins.contains(loadedPlugin.getPluginId().getIdString())) {
+                  if (plugins.contains(new PluginsAdvertiser.Plugin(loadedPlugin.getPluginId(), false))) {
                     myPlugins.add(PluginDownloader.createDownloader(loadedPlugin));
                   }
                 }
@@ -137,26 +138,44 @@ public class PluginAdvertiserEditorNotificationProvider extends EditorNotificati
           });
         }
       });
+    } else if (PluginsAdvertiser.hasBundledNotInstalledPlugin(plugins)){
+      if (PropertiesComponent.getInstance().isTrueValue(PluginsAdvertiser.IGNORE_ULTIMATE_EDITION)) {
+        return null;
+      }
+
+      panel.createActionLabel(PluginsAdvertiser.CHECK_ULTIMATE_EDITION_TITLE, new Runnable() {
+        @Override
+        public void run() {
+          myEnabledExtensions.add(extension);
+          PluginsAdvertiser.openDownloadPage();
+        }
+      });
+
+      panel.createActionLabel(PluginsAdvertiser.ULTIMATE_EDITION_SUGGESTION, new Runnable() {
+        @Override
+        public void run() {
+          PropertiesComponent.getInstance().setValue(PluginsAdvertiser.IGNORE_ULTIMATE_EDITION, "true");
+          myNotifications.updateAllNotifications();
+        }
+      });
+    } else {
+      return null;
     }
     panel.createActionLabel("Ignore extension", new Runnable() {
       @Override
       public void run() {
-        final UnknownFeaturesCollector collectorSuggester = UnknownFeaturesCollector.getInstance(myProject);
-        collectorSuggester.ignoreFeature(createExtensionFeature(extension));
+        UnknownFeaturesCollector.getInstance(myProject).ignoreFeature(createExtensionFeature(extension));
         myNotifications.updateAllNotifications();
       }
     });
     return panel;
   }
 
-  @Nullable
-  private static IdeaPluginDescriptor getDisabledPlugin(Set<String> plugins) {
-    final List<String> disabledPlugins = new ArrayList<String>(PluginManagerCore.getDisabledPlugins());
-    disabledPlugins.retainAll(plugins);
-    if (disabledPlugins.size() == 1) {
-      return PluginManager.getPlugin(PluginId.getId(disabledPlugins.get(0)));
+  private static boolean hasNonBundledPlugin(Set<PluginsAdvertiser.Plugin> plugins) {
+    for (PluginsAdvertiser.Plugin plugin : plugins) {
+      if (!plugin.myBundled) return true;
     }
-    return null;
+    return false;
   }
 
   private static UnknownFeature createExtensionFeature(String extension) {

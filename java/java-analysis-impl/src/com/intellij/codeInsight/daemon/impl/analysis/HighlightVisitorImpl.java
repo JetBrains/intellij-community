@@ -314,7 +314,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
                     final PsiSubstitutor substitutor = LambdaUtil.getSubstitutor(interfaceMethod, resolveResult);
                     if (expression.hasFormalParameterTypes()) {
                       for (int i = 0; i < lambdaParameters.length; i++) {
-                        if (!Comparing.equal(lambdaParameters[i].getType(), substitutor.substitute(parameters[i].getType()))) {
+                        if (!PsiTypesUtil.compareTypes(lambdaParameters[i].getType(), substitutor.substitute(parameters[i].getType()), true)) {
                           HighlightInfo result = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
                             .range(lambdaParameters[i])
                             .descriptionAndTooltip(incompatibleTypesMessage)
@@ -347,6 +347,8 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
               }
             }
           }
+        } else if (LambdaUtil.getFunctionalInterfaceType(expression, true) != null) {
+          myHolder.add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip("Cannot infer functional interface type").create());
         }
       }
       else {
@@ -1222,8 +1224,33 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
         }
       }
     }
+
+    if (!myHolder.hasErrorResults()) {
+      PsiElement qualifier = expression.getQualifier();
+      if (qualifier instanceof PsiTypeElement) {
+        final PsiType psiType = ((PsiTypeElement)qualifier).getType();
+        final HighlightInfo genericArrayCreationInfo = GenericsHighlightUtil.checkGenericArrayCreation(qualifier, psiType);
+        if (genericArrayCreationInfo != null) {
+          myHolder.add(genericArrayCreationInfo);
+        } else {
+          final String wildcardMessage = PsiMethodReferenceUtil.checkTypeArguments((PsiTypeElement)qualifier, psiType);
+          if (wildcardMessage != null) {
+            myHolder.add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(qualifier).descriptionAndTooltip(wildcardMessage).create());
+          }
+        }
+      }
+    }
+    
+    if (!myHolder.hasErrorResults()) {
+      myHolder.add(PsiMethodReferenceHighlightingUtil.checkRawConstructorReference(expression));
+    }
+
     if (!myHolder.hasErrorResults()) {
       myHolder.add(HighlightUtil.checkUnhandledExceptions(expression, expression.getTextRange()));
+    }
+
+    if (!myHolder.hasErrorResults() && method instanceof PsiTypeParameterListOwner) {
+      myHolder.add(GenericsHighlightUtil.checkInferredTypeArguments((PsiTypeParameterListOwner)method, expression, result.getSubstitutor()));
     }
   }
 

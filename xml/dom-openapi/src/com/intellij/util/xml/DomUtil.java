@@ -55,13 +55,16 @@ public class DomUtil {
   private static final ConcurrentFactoryMap<Type, Class> ourTypeParameters = new ConcurrentFactoryMap<Type, Class>() {
     @NotNull
     protected Class create(final Type key) {
-      final Class<?> result = ReflectionUtil.substituteGenericType(GENERIC_VALUE_TYPE_VARIABLE, key);
+      final Class<?> result = substituteGenericType(GENERIC_VALUE_TYPE_VARIABLE, key);
       return result == null ? DUMMY : result;
     }
   };
-
-  private DomUtil() {
-  }
+  private static final ConcurrentFactoryMap<Pair<Type, Type>, Class> ourVariableSubstitutions = new ConcurrentFactoryMap<Pair<Type, Type>, Class>() {
+    @Nullable
+    protected Class create(final Pair<Type, Type> key) {
+      return ReflectionUtil.substituteGenericType(key.first, key.second);
+    }
+  };
 
   public static Class extractParameterClassFromGenericType(Type type) {
     return getGenericValueParameter(type);
@@ -154,6 +157,10 @@ public class DomUtil {
 
     final DomFixedChildDescription description = genericInfo.getFixedChildDescription(xmlElementName, namespace);
     return description != null ? description.getGetterMethod(description.getValues(parent).indexOf(element)) : null;
+  }
+
+  public static Class<?> substituteGenericType(Type genericType, Type classType) {
+    return ourVariableSubstitutions.get(Pair.create(genericType, classType));
   }
 
   @Nullable

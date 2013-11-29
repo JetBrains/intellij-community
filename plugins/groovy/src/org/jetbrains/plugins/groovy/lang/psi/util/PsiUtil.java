@@ -968,6 +968,44 @@ public class PsiUtil {
     }
   }
 
+  public static int getArgumentIndex(@NotNull GrCall call, @NotNull PsiElement argument) {
+    GrArgumentList argumentList = call.getArgumentList();
+    if (argumentList == null) return -1;
+
+    GrExpression[] expressionArguments = argumentList.getExpressionArguments();
+
+    for (int i = 0; i < expressionArguments.length; i++) {
+      if (argument.equals(expressionArguments[i])) {
+        int res = i;
+
+        if (argumentList.getNamedArguments().length > 0) {
+          res++; // first argument is map defined by named arguments
+        }
+
+        return res;
+      }
+    }
+
+    if (argument instanceof GrClosableBlock) {
+      GrClosableBlock[] closureArgs = call.getClosureArguments();
+
+      for (int i = 0; i < closureArgs.length; i++) {
+        if (argument.equals(closureArgs[i])) {
+          int res = i + expressionArguments.length;
+
+          if (argumentList.getNamedArguments().length > 0) {
+            res++; // first argument is map defined by named arguments
+          }
+
+          return res;
+        }
+      }
+
+    }
+
+    return -1;
+  }
+
   /**
    * Returns all arguments passed to method. First argument is null if Named Arguments is present.
    */

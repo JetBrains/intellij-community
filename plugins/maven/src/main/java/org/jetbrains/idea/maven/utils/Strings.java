@@ -15,6 +15,7 @@
  */
 package org.jetbrains.idea.maven.utils;
 
+import com.intellij.util.PatternUtil;
 import org.jetbrains.annotations.NonNls;
 
 import java.util.ArrayList;
@@ -53,12 +54,9 @@ public class Strings {
       if (patterns.length() != 0) {
         patterns.append('|');
       }
-      patterns.append(translateToRegex(mask));
+      patterns.append(PatternUtil.convertToRegex(mask));
     }
     return patterns.toString();
   }
 
-  private static String translateToRegex(final String mask) {
-    return mask.replaceAll("\\.", "\\.").replaceAll("\\*", ".*").replaceAll("\\?", ".");
-  }
 }

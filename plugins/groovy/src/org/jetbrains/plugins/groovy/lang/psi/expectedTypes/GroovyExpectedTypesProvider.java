@@ -105,32 +105,6 @@ public class GroovyExpectedTypesProvider {
     return result;
   }
 
-  @Nullable
-  public static PsiType getExpectedClosureReturnType(GrClosableBlock closure) {
-  final Set<PsiType> expectedTypes = getDefaultExpectedTypes(closure);
-
-  List<PsiType> expectedReturnTypes = new ArrayList<PsiType>();
-  for (PsiType expectedType : expectedTypes) {
-    if (!(expectedType instanceof PsiClassType)) return null;
-
-    final PsiClassType.ClassResolveResult resolveResult = ((PsiClassType)expectedType).resolveGenerics();
-    final PsiClass resolved = resolveResult.getElement();
-    if (resolved == null || !(GroovyCommonClassNames.GROOVY_LANG_CLOSURE.equals(resolved.getQualifiedName()))) return null;
-
-    final PsiTypeParameter[] typeParameters = resolved.getTypeParameters();
-    if (typeParameters.length != 1) return null;
-
-    final PsiTypeParameter expected = typeParameters[0];
-    final PsiType expectedReturnType = resolveResult.getSubstitutor().substitute(expected);
-    if (expectedReturnType == PsiType.VOID || expectedReturnType == null) return null;
-
-    expectedReturnTypes.add(expectedReturnType);
-  }
-
-  return TypesUtil.getLeastUpperBoundNullable(expectedReturnTypes, closure.getManager());
-}
-
-
   private static class MyCalculator extends GroovyElementVisitor {
     private TypeConstraint[] myResult;
     private final GrExpression myExpression;
@@ -214,7 +188,7 @@ public class GroovyExpectedTypesProvider {
           final GrExpression[] expressionArgs = argumentList == null ? GrExpression.EMPTY_ARRAY : argumentList.getExpressionArguments();
           try {
             final Map<GrExpression, Pair<PsiParameter, PsiType>> map =
-              GrClosureSignatureUtil.mapArgumentsToParameters(variant, methodCall, true, true, namedArgs, expressionArgs, closureArgs);
+              GrClosureSignatureUtil.mapArgumentsToParameters(variant, methodCall, true, false, namedArgs, expressionArgs, closureArgs);
             addConstraintsFromMap(constraints, map);
           }
           catch (RuntimeException e) {

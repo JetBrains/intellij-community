@@ -112,7 +112,7 @@ public class LibraryDependencyDataService extends AbstractDependencyDataService<
         // The trick is that we should perform module settings modification inside try/finally block against target root model.
         // That means that we need to prepare all necessary data, obtain a model and modify it as necessary.
         Map<Set<String>/* library paths */, LibraryDependencyData> moduleLibrariesToImport = ContainerUtilRt.newHashMap();
-        Map<String/* library name */, LibraryDependencyData> projectLibrariesToImport = ContainerUtilRt.newHashMap();
+        Map<String/* library name + scope */, LibraryDependencyData> projectLibrariesToImport = ContainerUtilRt.newHashMap();
         Set<LibraryDependencyData> toImport = ContainerUtilRt.newLinkedHashSet();
         
         boolean hasUnresolved = false;
@@ -132,7 +132,7 @@ public class LibraryDependencyDataService extends AbstractDependencyDataService<
               }
               break;
             case PROJECT:
-              projectLibrariesToImport.put(libraryData.getName(), dependencyData);
+              projectLibrariesToImport.put(libraryData.getInternalName() + dependencyData.getScope().name(), dependencyData);
               toImport.add(dependencyData);
           }
         }
@@ -164,20 +164,21 @@ public class LibraryDependencyDataService extends AbstractDependencyDataService<
   {
     for (LibraryDependencyData dependencyData : toImport) {
       LibraryData libraryData = dependencyData.getTarget();
+      String libraryName = libraryData.getInternalName();
       switch (dependencyData.getLevel()) {
         case MODULE:
-          @SuppressWarnings("ConstantConditions") Library moduleLib = moduleLibraryTable.createLibrary(dependencyData.getName());
+          @SuppressWarnings("ConstantConditions") Library moduleLib = moduleLibraryTable.createLibrary(libraryName);
           Library.ModifiableModel libModel = moduleLib.getModifiableModel();
           try {
             Map<OrderRootType, Collection<File>> files = myLibraryManager.prepareLibraryFiles(libraryData);
-            myLibraryManager.registerPaths(files, libModel, dependencyData.getName());
+            myLibraryManager.registerPaths(files, libModel, libraryName);
           }
           finally {
             libModel.commit();
           }
           break;
         case PROJECT:
-          final Library projectLib = libraryTable.getLibraryByName(dependencyData.getName());
+          final Library projectLib = libraryTable.getLibraryByName(libraryName);
           if (projectLib == null) {
             assert false;
             continue;
@@ -223,8 +224,8 @@ public class LibraryDependencyDataService extends AbstractDependencyDataService<
       else if (entry instanceof LibraryOrderEntry) {
         final LibraryOrderEntry libraryOrderEntry = (LibraryOrderEntry)entry;
         final String libraryName = libraryOrderEntry.getLibraryName();
-        final LibraryDependencyData existing = projectLibrariesToImport.remove(libraryName);
-        if (existing != null && libraryOrderEntry.getScope() == existing.getScope()) {
+        final LibraryDependencyData existing = projectLibrariesToImport.remove(libraryName + libraryOrderEntry.getScope().name());
+        if (existing != null) {
           toImport.remove(existing);
         }
         else if (!hasUnresolvedLibraries) {
@@ -247,7 +248,7 @@ public class LibraryDependencyDataService extends AbstractDependencyDataService<
       if (dependencyData.getLevel() != LibraryLevel.PROJECT) {
         continue;
       }
-      final Library library = libraryTable.getLibraryByName(dependencyData.getName());
+      final Library library = libraryTable.getLibraryByName(dependencyData.getInternalName());
       if (library == null) {
         DataNode<ProjectData> projectNode = dataNode.getDataNode(ProjectKeys.PROJECT);
         if (projectNode != null) {

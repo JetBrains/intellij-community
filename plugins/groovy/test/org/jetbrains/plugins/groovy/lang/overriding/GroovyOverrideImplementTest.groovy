@@ -15,7 +15,7 @@
  */
 package org.jetbrains.plugins.groovy.lang.overriding
 import com.intellij.codeInsight.generation.OverrideImplementUtil
-import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.PsiClassOwner
 import com.intellij.psi.PsiMethod
@@ -145,7 +145,7 @@ class Test extends Base<String> {
   }
 
   private def generateImplementation(PsiMethod method) {
-    ApplicationManager.application.runWriteAction {
+    WriteCommandAction.runWriteCommandAction project, {
       GrTypeDefinition clazz = (myFixture.file as PsiClassOwner).classes[0] as GrTypeDefinition
       OverrideImplementUtil.overrideOrImplement(clazz, method);
       PostprocessReformattingAspect.getInstance(myFixture.project).doPostponedFormatting()

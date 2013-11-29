@@ -349,7 +349,9 @@ public class MvcModuleStructureSynchronizer extends AbstractProjectComponent {
     SyncLibrariesInPluginsModule {
       @Override
       void doAction(Module module, MvcFramework framework) {
-        framework.syncSdkAndLibrariesInPluginsModule(module);
+        if (MvcModuleStructureUtil.isEnabledStructureUpdate()) {
+          framework.syncSdkAndLibrariesInPluginsModule(module);
+        }
       }
     },
 

@@ -58,16 +58,47 @@ public abstract class AbstractDependencyData<T extends AbstractExternalEntityDat
     myExported = exported;
   }
 
+  /**
+   * please use {@link #getExternalName()} or {@link #getInternalName()} instead
+   */
   @NotNull
+  @Deprecated
   @Override
   public String getName() {
     return myTarget.getName();
   }
-  
+
+  /**
+   * please use {@link #setExternalName(String)} or {@link #setInternalName(String)} instead
+   */
+  @Deprecated
   @Override
   public void setName(@NotNull String name) {
     myTarget.setName(name);
   }
+
+  @NotNull
+  @Override
+  public String getExternalName() {
+    return myTarget.getExternalName();
+  }
+
+  @Override
+  public void setExternalName(@NotNull String name) {
+    myTarget.setExternalName(name);
+  }
+
+  @NotNull
+  @Override
+  public String getInternalName() {
+    return myTarget.getInternalName();
+  }
+
+  @Override
+  public void setInternalName(@NotNull String name) {
+    myTarget.setInternalName(name);
+  }
+
 
   @SuppressWarnings("MethodOverridesPrivateMethodOfSuperclass")
   private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
@@ -77,6 +108,7 @@ public abstract class AbstractDependencyData<T extends AbstractExternalEntityDat
   @Override
   public int hashCode() {
     int result = super.hashCode();
+    result = 31 * result + myScope.hashCode();
     result = 31 * result + myOwnerModule.hashCode();
     result = 31 * result + myTarget.hashCode();
     return result;
@@ -88,7 +120,7 @@ public abstract class AbstractDependencyData<T extends AbstractExternalEntityDat
       return false;
     }
     AbstractDependencyData<?> that = (AbstractDependencyData<?>)o;
-    return myOwnerModule.equals(that.myOwnerModule) && myTarget.equals(that.myTarget);
+    return  myScope.equals(that.myScope) && myOwnerModule.equals(that.myOwnerModule) && myTarget.equals(that.myTarget);
   }
 
   @Override

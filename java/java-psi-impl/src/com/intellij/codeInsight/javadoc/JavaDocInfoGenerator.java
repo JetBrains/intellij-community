@@ -30,6 +30,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.JavaConstantExpressionEvaluator;
+import com.intellij.psi.impl.source.javadoc.PsiInlineDocTagImpl;
 import com.intellij.psi.impl.source.tree.JavaDocElementType;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
@@ -1039,7 +1040,7 @@ public class JavaDocInfoGenerator {
           generateLinkValue(tag, buffer, false);
         }
         else if (tagName.equals(LITERAL_TAG)) {
-          generateLiteralValue(tag, buffer);
+          generateLiteralValue(buffer, ((PsiInlineDocTagImpl)tag).getDataElementsIgnoreWhitespaces());
         }
         else if (tagName.equals(CODE_TAG)) {
           generateCodeValue(tag, buffer);
@@ -1073,14 +1074,12 @@ public class JavaDocInfoGenerator {
   @SuppressWarnings({"HardCodedStringLiteral"})
   private static void generateCodeValue(PsiInlineDocTag tag, StringBuilder buffer) {
     buffer.append("<code>");
-    generateLiteralValue(tag, buffer);
+    generateLiteralValue(buffer, tag.getDataElements());
     buffer.append("</code>");
   }
 
-  private static void generateLiteralValue(PsiInlineDocTag tag, StringBuilder buffer) {
-    PsiElement[] elements = tag.getDataElements();
-
-    for (PsiElement element : elements) {
+  private static void generateLiteralValue(StringBuilder buffer, final PsiElement[] dataElements) {
+    for (PsiElement element : dataElements) {
       appendPlainText(element.getText(), buffer);
     }
   }
@@ -1489,6 +1488,7 @@ public class JavaDocInfoGenerator {
         if (!isAbstract) continue;
       }
       PsiClass superClass = superMethod.getContainingClass();
+      if (superClass == null) continue;
       if (!headerGenerated) {
         buffer.append("<DD><DL>");
         buffer.append("<DT><b>");

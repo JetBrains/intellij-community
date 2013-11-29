@@ -23,10 +23,7 @@ import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotifica
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.ArrayUtilRt;
-import com.intellij.util.Function;
-import com.intellij.util.PathUtil;
-import com.intellij.util.SystemProperties;
+import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ContainerUtilRt;
 import org.gradle.StartParameter;
@@ -47,7 +44,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.lang.reflect.Field;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -79,7 +79,7 @@ public class GradleExecutionHelper {
                                         @NotNull ExternalSystemTaskNotificationListener listener,
                                         @Nullable final String vmOptions) {
     BuildLauncher result = connection.newBuild();
-    List<String> extraJvmArgs = vmOptions == null ? ContainerUtil.<String>emptyList() : ContainerUtil.newArrayList(vmOptions.trim());
+    List<String> extraJvmArgs = vmOptions == null ? Collections.<String>emptyList() : ContainerUtil.newArrayList(vmOptions.trim());
     prepare(result, id, settings, listener, extraJvmArgs, connection);
     return result;
   }
@@ -124,7 +124,7 @@ public class GradleExecutionHelper {
       return;
     }
 
-    List<String> jvmArgs = ContainerUtilRt.newArrayList();
+    Set<String> jvmArgs = ContainerUtilRt.newHashSet();
 
     String vmOptions = settings.getDaemonVmOptions();
     if (!StringUtil.isEmpty(vmOptions)) {
@@ -141,9 +141,18 @@ public class GradleExecutionHelper {
 
     if (!jvmArgs.isEmpty()) {
       BuildEnvironment buildEnvironment = getBuildEnvironment(connection);
-      List<String> merged =
+      Collection<String> merged =
         buildEnvironment != null ? mergeJvmArgs(buildEnvironment.getJava().getJvmArguments(), jvmArgs) : jvmArgs;
-      operation.setJvmArguments(ArrayUtilRt.toStringArray(merged));
+
+      // filter nulls and empty strings
+      List<String> filteredArgs = ContainerUtil.mapNotNull(merged, new Function<String, String>() {
+        @Override
+        public String fun(String s) {
+          return StringUtil.isEmpty(s) ? null : s;
+        }
+      });
+
+      operation.setJvmArguments(ArrayUtil.toStringArray(filteredArgs));
     }
 
     listener.onStart(id);
@@ -258,7 +267,7 @@ public class GradleExecutionHelper {
     }
   }
 
-  private static List<String> mergeJvmArgs(List<String> jvmArgs1, List<String> jvmArgs2) {
+  private static List<String> mergeJvmArgs(Iterable<String> jvmArgs1, Iterable<String> jvmArgs2) {
     JvmOptions jvmOptions = new JvmOptions(null);
     jvmOptions.setAllJvmArgs(ContainerUtil.concat(jvmArgs1, jvmArgs2));
     return jvmOptions.getAllJvmArgs();

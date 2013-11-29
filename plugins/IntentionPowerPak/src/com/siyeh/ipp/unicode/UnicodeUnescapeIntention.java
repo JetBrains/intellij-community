@@ -140,14 +140,19 @@ public class UnicodeUnescapeIntention extends Intention {
         return false;
       }
       final SelectionModel selectionModel = editor.getSelectionModel();
+      final Document document = editor.getDocument();
       if (selectionModel.hasSelection()) {
-        final String text = selectionModel.getSelectedText();
-        // an editor can have a selection, but still null for selected text (because of threading?).
-        return text != null && indexOfUnicodeEscape(text, 1) >= 0;
+        final int start = selectionModel.getSelectionStart();
+        final int end = selectionModel.getSelectionEnd();
+        if (start < 0 || end < 0 || start > end) {
+          // shouldn't happen but http://ea.jetbrains.com/browser/ea_problems/50192
+          return false;
+        }
+        final String text = document.getCharsSequence().subSequence(start, end).toString();
+        return indexOfUnicodeEscape(text, 1) >= 0;
       }
       else {
         final CaretModel caretModel = editor.getCaretModel();
-        final Document document = editor.getDocument();
         final int lineNumber = document.getLineNumber(caretModel.getOffset());
         final String line = document.getText(new TextRange(document.getLineStartOffset(lineNumber), document.getLineEndOffset(lineNumber)));
         final int column = caretModel.getLogicalPosition().column;

@@ -20,7 +20,7 @@ class MyTest {
     static void foo(I3 i) {}
 
     static {
-         foo<error descr="Cannot resolve method 'foo(<method reference>)'">(MyTest::m)</error>;
+         foo<error descr="Ambiguous method call: both 'MyTest.foo(I1)' and 'MyTest.foo(I2)' match">(MyTest::m)</error>;
          foo<error descr="Ambiguous method call: both 'MyTest.foo(I1)' and 'MyTest.foo(I2)' match">(MyTest::m1)</error>;
     }
 }

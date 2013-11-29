@@ -17,6 +17,7 @@ import org.jdom.input.SAXBuilder;
 import org.jdom.output.Format;
 import org.jdom.output.XMLOutputter;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
@@ -43,38 +44,43 @@ public class MavenEffectivePomDumper {
   private static final String SETTINGS_XSD_URL = "http://maven.apache.org/xsd/settings-1.0.0.xsd";
 
   // See org.apache.maven.plugins.help.EffectivePomMojo#execute from maven-help-plugin
-
+  @Nullable
   public static String evaluateEffectivePom(final Maven3ServerEmbedderImpl embedder,
                                             @NotNull final File file,
                                             @NotNull List<String> activeProfiles)
     throws RemoteException, MavenServerProcessCanceledException {
 
-    final MavenExecutionRequest
-      request = embedder.createRequest(file, activeProfiles, Collections.<String>emptyList(), Collections.<String>emptyList());
-
     final StringWriter w = new StringWriter();
 
-    embedder.executeWithMavenSession(request, new Runnable() {
-      @Override
-      public void run() {
-        try {
-          // copied from DefaultMavenProjectBuilder.buildWithDependencies
-          ProjectBuilder builder = embedder.getComponent(ProjectBuilder.class);
-          ProjectBuildingResult buildingResult = builder.build(new File(file.getPath()), request.getProjectBuildingRequest());
+    try {
+      final MavenExecutionRequest
+        request = embedder.createRequest(file, activeProfiles, Collections.<String>emptyList(), Collections.<String>emptyList());
 
-          MavenProject project = buildingResult.getProject();
+      embedder.executeWithMavenSession(request, new Runnable() {
+        @Override
+        public void run() {
+          try {
+            // copied from DefaultMavenProjectBuilder.buildWithDependencies
+            ProjectBuilder builder = embedder.getComponent(ProjectBuilder.class);
+            ProjectBuildingResult buildingResult = builder.build(new File(file.getPath()), request.getProjectBuildingRequest());
 
-          XMLWriter writer = new PrettyPrintXMLWriter(w, StringUtils.repeat(" ", XmlWriterUtil.DEFAULT_INDENTATION_SIZE));
+            MavenProject project = buildingResult.getProject();
 
-          writeHeader(writer);
+            XMLWriter writer = new PrettyPrintXMLWriter(w, StringUtils.repeat(" ", XmlWriterUtil.DEFAULT_INDENTATION_SIZE));
 
-          writeEffectivePom(project, writer);
+            writeHeader(writer);
+
+            writeEffectivePom(project, writer);
+          }
+          catch (Exception e) {
+            throw new RuntimeException(e);
+          }
         }
-        catch (Exception e) {
-          throw new RuntimeException(e);
-        }
-      }
-    });
+      });
+    }
+    catch (Exception e) {
+      return null;
+    }
 
     return w.toString();
   }

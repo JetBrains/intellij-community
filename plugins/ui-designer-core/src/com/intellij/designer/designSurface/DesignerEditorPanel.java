@@ -17,6 +17,7 @@ package com.intellij.designer.designSurface;
 
 import com.intellij.designer.*;
 import com.intellij.designer.actions.AbstractComboBoxAction;
+import com.intellij.designer.actions.CommonEditActionsProvider;
 import com.intellij.designer.actions.DesignerActionPanel;
 import com.intellij.designer.componentTree.TreeComponentDecorator;
 import com.intellij.designer.componentTree.TreeEditableArea;
@@ -33,6 +34,7 @@ import com.intellij.diagnostic.LogMessageEx;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
@@ -344,8 +346,12 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
     if (info.myShowLog) {
       LOG.error(LogMessageEx.createEvent(info.myDisplayMessage,
                                          info.myMessage + "\n" + ExceptionUtil.getThrowableText(info.myThrowable),
-                                         AttachmentFactory.createAttachment(myFile)));
+                                         getErrorAttachments(info)));
     }
+  }
+
+  protected Attachment[] getErrorAttachments(ErrorInfo info) {
+    return new Attachment[]{AttachmentFactory.createAttachment(myFile)};
   }
 
   protected abstract void configureError(final @NotNull ErrorInfo info);
@@ -574,7 +580,9 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
   }
 
   private void storeSourceSelectionState() {
-    mySourceSelectionState.put(getEditorText(), getSelectionState());
+    if (!CommonEditActionsProvider.isDeleting) {
+      mySourceSelectionState.put(getEditorText(), getSelectionState());
+    }
   }
 
   private int[][] getSelectionState() {

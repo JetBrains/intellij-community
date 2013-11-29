@@ -206,7 +206,7 @@ public class DomChildrenTest extends DomTestCase {
     assertTrue(child2.isValid());
     assertEquals(element, child2.getParent());
 
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+    WriteCommandAction.runWriteCommandAction(null, new Runnable() {
       public void run() {
         child2.undefine();
         assertFalse(child2.isValid());

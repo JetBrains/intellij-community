@@ -43,21 +43,16 @@ import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.EditorEx;
-import com.intellij.openapi.editor.ex.MarkupModelEx;
-import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.HighlighterClient;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapAppliancePlaces;
-import com.intellij.openapi.editor.markup.HighlighterLayer;
-import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
-import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
@@ -67,12 +62,14 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.ui.EditorNotificationPanel;
-import com.intellij.util.*;
+import com.intellij.ui.awt.RelativePoint;
+import com.intellij.util.Alarm;
+import com.intellij.util.Consumer;
+import com.intellij.util.EditorPopupHandler;
+import com.intellij.util.SystemProperties;
 import com.intellij.util.text.CharArrayUtil;
 import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.annotations.NonNls;
@@ -249,41 +246,15 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
   private final Alarm myFoldingAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, this);
   private final List<FoldRegion> myPendingFoldRegions = new ArrayList<FoldRegion>();
 
-  private FileType myFileType;
-
-  /**
-   * Use it for custom highlighting for user text.
-   * This will be highlighted as appropriate file to this file type.
-   *
-   * @param fileType according to which use highlighting
-   */
-  public void setFileType(FileType fileType) {
-    myFileType = fileType;
-  }
-
   public ConsoleViewImpl(final Project project, boolean viewer) {
-    this(project, viewer, null);
-  }
-
-  public ConsoleViewImpl(@NotNull final Project project, boolean viewer, @Nullable FileType fileType) {
-    this(project, GlobalSearchScope.allScope(project), viewer, fileType);
+    this(project, GlobalSearchScope.allScope(project), viewer, true);
   }
 
   public ConsoleViewImpl(@NotNull final Project project,
                          @NotNull GlobalSearchScope searchScope,
                          boolean viewer,
-                         @Nullable FileType fileType)
-  {
-    this(project, searchScope, viewer, fileType, true);
-  }
-
-  public ConsoleViewImpl(@NotNull final Project project,
-                         @NotNull GlobalSearchScope searchScope,
-                         boolean viewer,
-                         @Nullable FileType fileType,
-                         boolean usePredefinedMessageFilter)
-  {
-    this(project, searchScope, viewer, fileType,
+                         boolean usePredefinedMessageFilter) {
+    this(project, searchScope, viewer,
          new ConsoleState.NotStartedStated() {
            @Override
            public ConsoleState attachTo(ConsoleViewImpl console, ProcessHandler processHandler) {
@@ -296,7 +267,6 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
   protected ConsoleViewImpl(@NotNull final Project project,
                             @NotNull GlobalSearchScope searchScope,
                             boolean viewer,
-                            @Nullable FileType fileType,
                             @NotNull final ConsoleState initialState,
                             boolean usePredefinedMessageFilter)
   {
@@ -305,7 +275,6 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     myState = initialState;
     myPsiDisposedCheck = new DisposedPsiManagerCheck(project);
     myProject = project;
-    myFileType = fileType;
 
     myCustomFilter = new CompositeFilter(project);
     myPredefinedMessageFilter = new CompositeFilter(project);
@@ -597,13 +566,6 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     }
   }
 
-  /**
-   * todo python plugin compatibility. Remove on the next update.
-   */
-  @Deprecated
-  protected void beforeExternalAddContentToDocument(int length, ConsoleViewContentType contentType) {
-  }
-
   private void addToken(int length, @Nullable HyperlinkInfo info, ConsoleViewContentType contentType) {
     ConsoleUtil.addToken(length, info, contentType, myTokens);
   }
@@ -696,6 +658,10 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     final int oldLineCount = document.getLineCount();
     final boolean isAtEndOfDocument = myEditor.getCaretModel().getOffset() == document.getTextLength();
     boolean cycleUsed = myBuffer.isUseCyclicBuffer() && document.getTextLength() + text.length() > myBuffer.getCyclicBufferSize();
+    if (cycleUsed) {
+      clearHyperlinkAndFoldings();
+    }
+    
     CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
       @Override
       public void run() {
@@ -745,7 +711,6 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     myPsiDisposedCheck.performCheck();
     final int newLineCount = document.getLineCount();
     if (cycleUsed) {
-      clearHyperlinkAndFoldings();
       if (!myInSpareTimeUpdate) {
         myInSpareTimeUpdate = true;
         final EditorNotificationPanel comp = new EditorNotificationPanel() {
@@ -759,7 +724,6 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
           @Override
           public void run() {
             try {
-              myHyperlinks.clearHyperlinks();
               clearHyperlinkAndFoldings();
               highlightHyperlinksAndFoldings(0, document.getLineCount() - 1);
             }
@@ -781,15 +745,18 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
   }
 
   private void clearHyperlinkAndFoldings() {
-    for (Iterator<RangeHighlighter> it = myHyperlinks.getHyperlinks().keySet().iterator(); it.hasNext();) {
-      if (!it.next().isValid()) {
-        it.remove();
-      }
-    }
+    myHyperlinks.clearHyperlinks();
+    myEditor.getMarkupModel().removeAllHighlighters();
 
     myPendingFoldRegions.clear();
     myFolding.clear();
     myFoldingAlarm.cancelAllRequests();
+    myEditor.getFoldingModel().runBatchFoldingOperation(new Runnable() {
+      @Override
+      public void run() {
+        myEditor.getFoldingModel().clearFoldRegions();
+      }
+    });
 
     cancelHeavyAlarm();
   }
@@ -928,9 +895,6 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
         LOG.warn("unhandled external change: " + event);
       }
     }
-    if (myFileType != null) {
-      highlightUserTokens();
-    }
   }
 
   protected EditorEx createRealEditor() {
@@ -939,40 +903,6 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
 
   protected MyHighlighter createHighlighter() {
     return new MyHighlighter();
-  }
-
-  private void highlightUserTokens() {
-    if (myTokens.isEmpty()) return;
-    final TokenInfo token = myTokens.get(myTokens.size() - 1);
-    if (token.contentType == ConsoleViewContentType.USER_INPUT) {
-      String text = myEditor.getDocument().getText().substring(token.startOffset, token.endOffset);
-      PsiFile file = PsiFileFactory.getInstance(myProject).
-        createFileFromText("dummy", myFileType, text, LocalTimeCounter.currentTime(), true);
-      Document document = PsiDocumentManager.getInstance(myProject).getDocument(file);
-      assert document != null;
-      Editor editor = EditorFactory.getInstance().createEditor(document, myProject, myFileType, false);
-      try {
-        MarkupModelEx markup = (MarkupModelEx)myEditor.getMarkupModel();
-        List<RangeHighlighterEx> list = new ArrayList<RangeHighlighterEx>();
-        markup.processRangeHighlightersOutside(0, token.startOffset-1, new CommonProcessors.CollectProcessor<RangeHighlighterEx>(list));
-        for (RangeHighlighter highlighter : list) {
-          if (highlighter.getStartOffset() >= token.startOffset) {
-            highlighter.dispose();
-          }
-        }
-        HighlighterIterator iterator = ((EditorEx)editor).getHighlighter().createIterator(0);
-        while (!iterator.atEnd()) {
-          markup
-            .addRangeHighlighter(iterator.getStart() + token.startOffset, iterator.getEnd() + token.startOffset, HighlighterLayer.SYNTAX,
-                                 iterator.getTextAttributes(),
-                                 HighlighterTargetArea.EXACT_RANGE);
-          iterator.advance();
-        }
-      }
-      finally {
-        EditorFactory.getInstance().releaseEditor(editor);
-      }
-    }
   }
 
   private static void registerConsoleEditorActions(Editor editor) {
@@ -1212,9 +1142,6 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
 
         @Override
         public TextAttributes getTextAttributes() {
-          if (myFileType != null && getTokenInfo().contentType == ConsoleViewContentType.USER_INPUT) {
-            return ConsoleViewContentType.NORMAL_OUTPUT.getAttributes();
-          }
           return getTokenInfo() == null ? null : getTokenInfo().attributes;
         }
 
@@ -1463,10 +1390,18 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     return EditorHyperlinkSupport.getNextOccurrence(myEditor, hyperlinks.getHyperlinks().keySet(), delta, new Consumer<RangeHighlighter>() {
       @Override
       public void consume(RangeHighlighter next) {
-        scrollTo(next.getStartOffset());
+        int offset = next.getStartOffset();
+        scrollTo(offset);
         final HyperlinkInfo hyperlinkInfo = hyperlinks.getHyperlinks().get(next);
         if (hyperlinkInfo != null) {
-          hyperlinkInfo.navigate(myProject);
+          if (hyperlinkInfo instanceof HyperlinkInfoBase) {
+            VisualPosition position = myEditor.offsetToVisualPosition(offset);
+            Point point = myEditor.visualPositionToXY(new VisualPosition(position.getLine() + 1, position.getColumn()));
+            ((HyperlinkInfoBase)hyperlinkInfo).navigate(myProject, new RelativePoint(myEditor.getContentComponent(), point));
+          }
+          else {
+            hyperlinkInfo.navigate(myProject);
+          }
         }
       }
     });

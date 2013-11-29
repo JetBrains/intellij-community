@@ -24,6 +24,7 @@ import org.jetbrains.plugins.gradle.util.GradleConstants;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCommandArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.util.GrNamedArgumentsOwner;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.literals.GrLiteralImpl;
 
 import static com.intellij.patterns.PlatformPatterns.psiElement;
@@ -39,9 +40,9 @@ public abstract class AbstractGradleCompletionContributor extends CompletionCont
     .inFile(psiFile().withName(string().endsWith('.' + GradleConstants.EXTENSION)));
 
   @Nullable
-  protected String findNamedArgumentValue(@Nullable GrCommandArgumentList argumentList, @NotNull String label) {
-    if (argumentList == null) return null;
-    GrNamedArgument namedArgument = argumentList.findNamedArgument(label);
+  protected String findNamedArgumentValue(@Nullable GrNamedArgumentsOwner namedArgumentsOwner, @NotNull String label) {
+    if (namedArgumentsOwner == null) return null;
+    GrNamedArgument namedArgument = namedArgumentsOwner.findNamedArgument(label);
     if (namedArgument == null) return null;
 
     GrExpression expression = namedArgument.getExpression();

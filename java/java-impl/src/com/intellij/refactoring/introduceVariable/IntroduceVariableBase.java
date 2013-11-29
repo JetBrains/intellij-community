@@ -588,15 +588,36 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
       }
     }
 
-    if (!CommonRefactoringUtil.checkReadOnlyStatus(project, file)) return false;
-
     final ExpressionOccurrenceManager occurrenceManager = createOccurrenceManager(expr, tempContainer);
     final PsiExpression[] occurrences = occurrenceManager.getOccurrences();
     final PsiElement anchorStatementIfAll = occurrenceManager.getAnchorStatementForAll();
 
-    final LinkedHashMap<OccurrencesChooser.ReplaceChoice, List<PsiExpression>> occurrencesMap = ContainerUtil.newLinkedHashMap();
 
-    final boolean hasWriteAccess = fillChoices(expr, occurrences, occurrencesMap);
+    final List<PsiExpression> nonWrite = new ArrayList<PsiExpression>();
+    boolean cantReplaceAll = false;
+    boolean cantReplaceAllButWrite = false;
+    for (PsiExpression occurrence : occurrences) {
+      if (!RefactoringUtil.isAssignmentLHS(occurrence)) {
+        nonWrite.add(occurrence);
+      } else if (isFinalVariableOnLHS(occurrence)) {
+        cantReplaceAll = true;
+      } else if (!nonWrite.isEmpty()){
+        cantReplaceAllButWrite = true;
+        cantReplaceAll = true;
+      }
+    }
+    if (!CommonRefactoringUtil.checkReadOnlyStatus(project, file)) return false;
+
+    final LinkedHashMap<OccurrencesChooser.ReplaceChoice, List<PsiExpression>> occurrencesMap = ContainerUtil.newLinkedHashMap();
+    occurrencesMap.put(OccurrencesChooser.ReplaceChoice.NO, Collections.singletonList(expr));
+    final boolean hasWriteAccess = occurrences.length > nonWrite.size() && occurrences.length > 1;
+    if (hasWriteAccess && !cantReplaceAllButWrite) {
+      occurrencesMap.put(OccurrencesChooser.ReplaceChoice.NO_WRITE, nonWrite);
+    }
+
+    if (occurrences.length > 1 && !cantReplaceAll) {
+      occurrencesMap.put(OccurrencesChooser.ReplaceChoice.ALL, Arrays.asList(occurrences));
+    }
 
     final boolean inFinalContext = occurrenceManager.isInFinalContext();
     final InputValidator validator = new InputValidator(this, project, anchorStatementIfAll, anchorStatement, occurrenceManager);
@@ -605,8 +626,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
     final Pass<OccurrencesChooser.ReplaceChoice> callback = new Pass<OccurrencesChooser.ReplaceChoice>() {
       @Override
       public void pass(final OccurrencesChooser.ReplaceChoice choice) {
-        final boolean allOccurences = choice != OccurrencesChooser.ReplaceChoice.NO;
-        final PsiElement chosenAnchor = allOccurences ? anchorStatementIfAll : anchorStatement;
+        final boolean allOccurences = choice == OccurrencesChooser.ReplaceChoice.ALL || choice == OccurrencesChooser.ReplaceChoice.NO_WRITE;
         final Ref<SmartPsiElementPointer<PsiVariable>> variable = new Ref<SmartPsiElementPointer<PsiVariable>>();
 
         final Editor topLevelEditor;
@@ -616,8 +636,16 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
           topLevelEditor = editor;
         }
 
-        final IntroduceVariableSettings settings =
-          getSettings(project, topLevelEditor, expr, occurrences, typeSelectorManager, inFinalContext, hasWriteAccess, validator, chosenAnchor, choice);
+        final IntroduceVariableSettings settings;
+        final PsiElement chosenAnchor;
+        if (choice != null) {
+          chosenAnchor = chooseAnchor(allOccurences, choice == OccurrencesChooser.ReplaceChoice.NO_WRITE, nonWrite, anchorStatementIfAll, anchorStatement);
+          settings = getSettings(project, topLevelEditor, expr, occurrences, typeSelectorManager, inFinalContext, hasWriteAccess, validator, chosenAnchor, choice);
+        }
+        else {
+          settings = getSettings(project, topLevelEditor, expr, occurrences, typeSelectorManager, inFinalContext, hasWriteAccess, validator, anchorStatement, choice);
+          chosenAnchor = chooseAnchor(settings.isReplaceAllOccurrences(), hasWriteAccess, nonWrite, anchorStatementIfAll, anchorStatement);
+        }
         if (!settings.isOK()) {
           wasSucceed[0] = false;
           return;
@@ -634,8 +662,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
           }
         }
         final String expressionText = expr.getText();
-        final Runnable runnable =
-          introduce(project, expr, topLevelEditor, anchorStatement, tempContainer, occurrences, anchorStatementIfAll, settings, variable);
+        final Runnable runnable = introduce(project, expr, topLevelEditor, chosenAnchor, occurrences, settings, variable);
         CommandProcessor.getInstance().executeCommand(
           project,
           new Runnable() {
@@ -649,7 +676,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
                   final JavaVariableInplaceIntroducer renamer =
                     new JavaVariableInplaceIntroducer(project, expression, topLevelEditor, elementToRename, cantChangeFinalModifier,
                                                   typeSelectorManager.getTypesForAll().length > 1, exprMarker, occurrenceMarkers,
-                                                  IntroduceVariableBase.REFACTORING_NAME);
+                                                  REFACTORING_NAME);
                   renamer.initInitialText(expressionText);
                   PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(topLevelEditor.getDocument());
                   renamer.performInplaceRefactoring(new LinkedHashSet<String>(Arrays.asList(suggestedName.names)));
@@ -667,6 +694,24 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
       OccurrencesChooser.<PsiExpression>simpleChooser(editor).showChooser(callback, occurrencesMap);
     }
     return wasSucceed[0];
+  }
+
+  protected PsiElement chooseAnchor(boolean allOccurences,
+                                    boolean hasWriteAccess,
+                                    List<PsiExpression> nonWrite,
+                                    PsiElement anchorStatementIfAll, 
+                                    PsiElement anchorStatement) {
+    if (allOccurences) {
+      if (hasWriteAccess) {
+        return RefactoringUtil.getAnchorElementForMultipleExpressions(nonWrite.toArray(new PsiExpression[nonWrite.size()]), null);
+      }
+      else {
+        return anchorStatementIfAll;
+      }
+    }
+    else {
+      return anchorStatement;
+    }
   }
 
   protected boolean isInplaceAvailableInTestMode() {
@@ -713,50 +758,14 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
     return parent3 instanceof JspHolderMethod;
   }
 
-  /**
-   * @return true if write usages found
-   */
-  private static boolean fillChoices(final PsiExpression expr,
-                                     final PsiExpression[] occurrences,
-                                     final LinkedHashMap<OccurrencesChooser.ReplaceChoice, List<PsiExpression>> occurrencesMap) {
-    occurrencesMap.put(OccurrencesChooser.ReplaceChoice.NO, Collections.singletonList(expr));
-
-    final List<PsiExpression> nonWrite = new ArrayList<PsiExpression>();
-    boolean cantReplaceAll = false;
-    for (PsiExpression occurrence : occurrences) {
-      if (!RefactoringUtil.isAssignmentLHS(occurrence)) {
-        nonWrite.add(occurrence);
-      } else if (isFinalVariableOnLHS(occurrence)) {
-        cantReplaceAll = true;
-      }
-    }
-    final boolean hasWriteAccess = occurrences.length > nonWrite.size() && occurrences.length > 1;
-    if (hasWriteAccess) {
-      occurrencesMap.put(OccurrencesChooser.ReplaceChoice.NO_WRITE, nonWrite);
-    }
-
-    if (occurrences.length > 1 && !cantReplaceAll) {
-      occurrencesMap.put(OccurrencesChooser.ReplaceChoice.ALL, Arrays.asList(occurrences));
-    }
-    return hasWriteAccess;
-  }
-
   private static Runnable introduce(final Project project,
                                     final PsiExpression expr,
                                     final Editor editor,
-                                    PsiElement anchorStatement,
-                                    PsiElement tempContainer,
+                                    final PsiElement anchorStatement,
                                     final PsiExpression[] occurrences,
-                                    PsiElement anchorStatementIfAll,
                                     final IntroduceVariableSettings settings,
                                     final Ref<SmartPsiElementPointer<PsiVariable>> variable) {
-    if (settings.isReplaceAllOccurrences()) {
-      anchorStatement = anchorStatementIfAll;
-      tempContainer = anchorStatement.getParent();
-    }
-
-    final PsiElement container = tempContainer;
-
+    final PsiElement container = anchorStatement.getParent();
     PsiElement child = anchorStatement;
     if (!RefactoringUtil.isLoopOrIf(container)) {
       child = locateAnchor(child);
@@ -794,7 +803,6 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
 
     final PsiCodeBlock newDeclarationScope = PsiTreeUtil.getParentOfType(container, PsiCodeBlock.class, false);
     final FieldConflictsResolver fieldConflictsResolver = new FieldConflictsResolver(settings.getEnteredName(), newDeclarationScope);
-    final PsiElement finalAnchorStatement = anchorStatement;
     return new Runnable() {
       public void run() {
         try {
@@ -867,7 +875,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
             }
           }
 
-          declaration = (PsiDeclarationStatement) RefactoringUtil.putStatementInLoopBody(declaration, container, finalAnchorStatement);
+          declaration = (PsiDeclarationStatement) RefactoringUtil.putStatementInLoopBody(declaration, container, anchorStatement);
           declaration = (PsiDeclarationStatement)JavaCodeStyleManager.getInstance(project).shortenClassReferences(declaration);
           PsiVariable var = (PsiVariable) declaration.getDeclaredElements()[0];
           PsiUtil.setModifierProperty(var, PsiModifier.FINAL, settings.isDeclareFinal());

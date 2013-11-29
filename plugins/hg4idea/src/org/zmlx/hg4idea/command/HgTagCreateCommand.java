@@ -19,26 +19,40 @@ import org.jetbrains.annotations.NotNull;
 import org.zmlx.hg4idea.execution.HgCommandException;
 import org.zmlx.hg4idea.execution.HgCommandExecutor;
 import org.zmlx.hg4idea.execution.HgCommandResultHandler;
+import org.zmlx.hg4idea.repo.HgRepositoryManager;
+import org.zmlx.hg4idea.util.HgUtil;
 
-import java.util.Arrays;
+import java.util.ArrayList;
+import java.util.List;
 
 public class HgTagCreateCommand {
 
   private final Project project;
   private final VirtualFile repo;
   private final String tagName;
+  private final String revisionNumberOrHash;
 
-  public HgTagCreateCommand(Project project, @NotNull VirtualFile repo, String tagName) {
+  public HgTagCreateCommand(Project project, @NotNull VirtualFile repo, String tagName, String revisionNumberOrHash) {
     this.project = project;
     this.repo = repo;
     this.tagName = tagName;
+    this.revisionNumberOrHash = revisionNumberOrHash;
   }
 
   public void execute(HgCommandResultHandler resultHandler) throws HgCommandException {
     if (StringUtil.isEmptyOrSpaces(tagName)) {
       throw new HgCommandException("tag name is empty");
     }
-    new HgCommandExecutor(project).execute(repo, "tag", Arrays.asList(tagName), resultHandler);
+    List<String> arguments = new ArrayList<String>();
+    arguments.add(tagName);
+    if (!StringUtil.isEmptyOrSpaces(revisionNumberOrHash)) {
+      arguments.add("--rev");
+      arguments.add(revisionNumberOrHash);
+    }
+    new HgCommandExecutor(project).execute(repo, "tag", arguments, resultHandler);
+    if (!project.isDisposed()) {
+      HgRepositoryManager manager = HgUtil.getRepositoryManager(project);
+      manager.updateRepository(repo);
+    }
   }
-
 }

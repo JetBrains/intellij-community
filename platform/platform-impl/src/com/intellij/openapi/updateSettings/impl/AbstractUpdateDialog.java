@@ -76,7 +76,7 @@ public abstract class AbstractUpdateDialog extends DialogWrapper {
       css += "<style>body {background: #" + ColorUtil.toHex(UIUtil.getPanelBackground()) + ";}</style>";
     }
     updateLinkPane.setBorder(IdeBorderFactory.createEmptyBorder());
-    updateLinkPane.setText(IdeBundle.message("updates.configure.label", css));
+    updateLinkPane.setText(IdeBundle.message("updates.configure.label", css, ShowSettingsUtil.getSettingsMenuName()));
     updateLinkPane.setEditable(false);
     LabelTextReplacingUtil.replaceText(panel);
 

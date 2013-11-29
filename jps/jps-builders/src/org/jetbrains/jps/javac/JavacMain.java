@@ -32,6 +32,7 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * @author Eugene Zhuravlev
@@ -334,6 +335,7 @@ public class JavacMain {
     private final DiagnosticOutputConsumer myOutConsumer;
     private final OutputFileConsumer myOutputFileSink;
     private final CanceledStatus myCanceledStatus;
+    private static final AtomicBoolean ourOptimizedManagerMissingReported = new AtomicBoolean(false);
 
     public ContextImpl(@NotNull JavaCompiler compiler,
                        @NotNull DiagnosticOutputConsumer outConsumer,
@@ -357,16 +359,12 @@ public class JavacMain {
           }
           catch (Throwable e) {
             if (SystemInfo.isWindows) {
-              outConsumer.report(new PlainMessageDiagnostic(Diagnostic.Kind.OTHER, "JPS build failed to load optimized file manager for javac: " + e.getMessage()));
+              reportMissingOptimizedManager(outConsumer, e.getMessage());
             }
           }
         }
         else {
-          String error = ClasspathBootstrap.getOptimizedFileManagerLoadError();
-          if (error == null) {
-            error = "";
-          }
-          outConsumer.report(new PlainMessageDiagnostic(Diagnostic.Kind.OTHER, "JPS build failed to load optimized file manager for javac:\n" + error));
+          reportMissingOptimizedManager(outConsumer, null);
         }
       }
       myCacheClearMethod = cacheClearMethod;
@@ -375,6 +373,18 @@ public class JavacMain {
       }
       else {
         myStdManager = compiler.getStandardFileManager(outConsumer, Locale.US, null);
+      }
+    }
+
+    private static void reportMissingOptimizedManager(DiagnosticOutputConsumer outConsumer, String message) {
+      if (!ourOptimizedManagerMissingReported.getAndSet(true)) {
+        if (message == null) {
+          message = ClasspathBootstrap.getOptimizedFileManagerLoadError();
+          if (message == null) {
+            message = "";
+          }
+        }
+        outConsumer.report(new PlainMessageDiagnostic(Diagnostic.Kind.OTHER, "JPS build failed to load optimized file manager for javac:\n" + message));
       }
     }
 

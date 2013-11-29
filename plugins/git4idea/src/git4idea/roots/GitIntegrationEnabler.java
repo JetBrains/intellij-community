@@ -61,8 +61,8 @@ public class GitIntegrationEnabler {
     Collection<VcsRoot> gitRoots = ContainerUtil.filter(detectInfo.getRoots(), new Condition<VcsRoot>() {
       @Override
       public boolean value(VcsRoot root) {
-        AbstractVcs gitVcs = root.getVcs();
-        return gitVcs != null && gitVcs.getName().equals(GitVcs.NAME);
+        AbstractVcs vcs = root.getVcs();
+        return vcs != null && vcs.getName().equals(GitVcs.NAME);
       }
     });
     Collection<VirtualFile> roots = VcsRootErrorsFinder.vcsRootsToVirtualFiles(gitRoots);

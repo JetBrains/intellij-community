@@ -159,4 +159,8 @@
   <tip file="RefactorThis.html"/>
   <tip file="FavoritesToolWindow1.html"/>
   <tip file="FavoritesToolWindow2.html"/>
+
+  <tip file="WideScreen.html"/>
+  <tip file="Terminal.html"/>
+  <tip file="ConfiguringTerminal.html"/>
 </tips>

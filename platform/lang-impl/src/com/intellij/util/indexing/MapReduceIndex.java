@@ -22,6 +22,7 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.Processor;
 import com.intellij.util.io.PersistentHashMap;
 import gnu.trove.THashMap;
@@ -155,11 +156,11 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
   }
 
   @Override
-  public boolean processAllKeys(Processor<Key> processor, IdFilter idFilter) throws StorageException {
+  public boolean processAllKeys(Processor<Key> processor, GlobalSearchScope scope, IdFilter idFilter) throws StorageException {
     final Lock lock = getReadLock();
     try {
       lock.lock();
-      return myStorage.processKeys(processor, idFilter);
+      return myStorage.processKeys(processor, scope, idFilter);
     }
     finally {
       lock.unlock();
@@ -202,7 +203,7 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
   }
 
   @Override
-  public final Computable<Boolean> update(final int inputId, @Nullable Input content) {
+  public final Computable<Boolean> update(final int inputId, @Nullable final Input content) {
     assert myInputsIndex != null;
 
     final Map<Key, Value> data = content != null ? myIndexer.map(content) : Collections.<Key, Value>emptyMap();
@@ -224,7 +225,7 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
                   final Collection<Key> oldKeys = myInputsIndex.get(inputId);
                   return oldKeys == null? Collections.<Key>emptyList() : oldKeys;
                 }
-              });
+              }, content);
             } catch (StorageException ex) {
               exRef.set(ex);
             }
@@ -242,7 +243,10 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
     };
   }
 
-  protected void updateWithMap(final int inputId, @NotNull Map<Key, Value> newData, @NotNull Callable<Collection<Key>> oldKeysGetter) throws StorageException {
+  protected void updateWithMap(final int inputId,
+                               @NotNull Map<Key, Value> newData,
+                               @NotNull Callable<Collection<Key>> oldKeysGetter,
+                               Input input) throws StorageException {
     getWriteLock().lock();
     try {
       try {

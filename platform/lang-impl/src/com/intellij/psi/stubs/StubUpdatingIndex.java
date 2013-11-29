@@ -34,6 +34,7 @@ import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.IntInlineKeyDescriptor;
 import com.intellij.util.io.KeyDescriptor;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
 import java.util.*;
@@ -89,7 +90,7 @@ public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtensi
           return true;
         }
         final ID indexId = IndexInfrastructure.getStubId(INDEX_ID, fileType);
-        if (IndexingStamp.isFileIndexed(file, indexId, IndexInfrastructure.getIndexCreationStamp(indexId))) {
+        if (IndexingStamp.getIndexingState(file, indexId) == IndexingStamp.State.INDEXED) {
           return true;
         }
       }
@@ -298,7 +299,10 @@ public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtensi
     }
 
     @Override
-    protected void updateWithMap(final int inputId, @NotNull final Map<Integer, SerializedStubTree> newData, @NotNull Callable<Collection<Integer>> oldKeysGetter)
+    protected void updateWithMap(final int inputId,
+                                 @NotNull final Map<Integer, SerializedStubTree> newData,
+                                 @NotNull Callable<Collection<Integer>> oldKeysGetter,
+                                 @Nullable FileContent content)
       throws StorageException {
 
       checkNameStorage();
@@ -321,7 +325,20 @@ public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtensi
         try {
           getWriteLock().lock();
 
-          final Map<Integer, SerializedStubTree> oldData = readOldData(inputId);
+          IndexingStamp.State state = IndexingStamp.State.FILE_CONTENT_CHANGED;
+          if (content != null) {
+            VirtualFile file = content.getFile();
+            ID stubId = IndexInfrastructure.getStubId(INDEX_ID, file.getFileType());
+            state = IndexingStamp.getIndexingState(file, stubId);
+          }
+
+          final Map<Integer, SerializedStubTree> oldData;
+          if (state == IndexingStamp.State.INDEX_VERSION_CHANGED) {
+            oldData = Collections.emptyMap();
+          }
+          else {
+            oldData = readOldData(inputId);
+          }
           final Map<StubIndexKey, Map<Object, StubIdList>> oldStubTree;
           try {
             oldStubTree = getStubTree(oldData);
@@ -330,7 +347,7 @@ public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtensi
             throw new StorageException(e);
           }
 
-          super.updateWithMap(inputId, newData, oldKeysGetter);
+          super.updateWithMap(inputId, newData, oldKeysGetter, content);
 
           updateStubIndices(getAffectedIndices(oldStubTree, newStubTree), inputId, oldStubTree, newStubTree);
         }

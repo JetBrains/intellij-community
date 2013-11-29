@@ -55,7 +55,7 @@ public class ContainerUtil extends ContainerUtilRt {
   }
 
   @NotNull
-  public static <K, V> Map<K, V> newHashMap(Pair<K, V> first, Pair<K, V>... entries) {
+  public static <K, V> Map<K, V> newHashMap(@NotNull Pair<K, V> first, Pair<K, V>... entries) {
     return ContainerUtilRt.newHashMap(first, entries);
   }
 
@@ -82,6 +82,11 @@ public class ContainerUtil extends ContainerUtilRt {
   @NotNull
   public static <K, V> LinkedHashMap<K, V> newLinkedHashMap(@NotNull Map<K, V> map) {
     return ContainerUtilRt.newLinkedHashMap(map);
+  }
+
+  @NotNull
+  public static <K, V> LinkedHashMap<K, V> newLinkedHashMap(@NotNull Pair<K, V> first, Pair<K, V>... entries) {
+    return ContainerUtilRt.newLinkedHashMap(first, entries);
   }
 
   @NotNull
@@ -1004,6 +1009,21 @@ public class ContainerUtil extends ContainerUtilRt {
     for (T element : elements) {
       modified |= collection.remove(element);
     }
+    return modified;
+  }
+
+  // returns true if the collection was modified
+  public static <T> boolean retainAll(@NotNull Collection<T> collection, @NotNull Condition<? super T> condition) {
+    boolean modified = false;
+
+    for (Iterator<T> iterator = collection.iterator(); iterator.hasNext(); ) {
+      T next = iterator.next();
+      if (!condition.value(next)) {
+        iterator.remove();
+        modified = true;
+      }
+    }
+
     return modified;
   }
 

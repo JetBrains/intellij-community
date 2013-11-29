@@ -21,6 +21,7 @@ import com.intellij.debugger.engine.*;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationListener;
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
+import com.intellij.debugger.engine.jdi.StackFrameProxy;
 import com.intellij.debugger.engine.requests.RequestManagerImpl;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
@@ -43,9 +44,11 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiCompiledElement;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
@@ -284,7 +287,12 @@ public class DebuggerSession implements AbstractDebuggerSession {
   public void resume() {
     final SuspendContextImpl suspendContext = getSuspendContext();
     if(suspendContext != null) {
-      mySteppingThroughThreads.clear();
+      if (suspendContext.getSuspendPolicy() == EventRequest.SUSPEND_ALL) {
+        mySteppingThroughThreads.clear();
+      }
+      else {
+        mySteppingThroughThreads.remove(suspendContext.getThread());
+      }
       resetIgnoreStepFiltersFlag();
       resumeAction(myDebugProcess.createResumeCommand(suspendContext), EVENT_RESUME);
     }
@@ -408,6 +416,15 @@ public class DebuggerSession implements AbstractDebuggerSession {
         LOG.debug("paused");
       }
 
+      if (!shouldSetAsActiveContext(suspendContext)) {
+        DebuggerInvocationUtil.invokeLater(getProject(), new Runnable() {
+          public void run() {
+            getContextManager().fireStateChanged(getContextManager().getContext(), EVENT_THREADS_REFRESH);
+          }
+        });
+        return;
+      }
+
       ThreadReferenceProxyImpl currentThread   = suspendContext.getThread();
       final StackFrameContext positionContext;
 
@@ -503,9 +520,10 @@ public class DebuggerSession implements AbstractDebuggerSession {
             else if (sourceMissing) {
               // adjust position to be position of the breakpoint in order to show the real originator of the event
               position = breakpointPosition;
+              final StackFrameProxy frameProxy = positionContext.getFrameProxy();
               String className;
               try {
-                className = positionContext.getFrameProxy().location().declaringType().name();
+                className = frameProxy != null? frameProxy.location().declaringType().name() : "";
               }
               catch (EvaluateException e) {
                 className = "";
@@ -526,6 +544,23 @@ public class DebuggerSession implements AbstractDebuggerSession {
         }
       });
     }
+
+    private boolean shouldSetAsActiveContext(final SuspendContextImpl suspendContext) {
+      final ThreadReferenceProxyImpl newThread = suspendContext.getThread();
+      if (newThread == null || suspendContext.getSuspendPolicy() == EventRequest.SUSPEND_ALL || isSteppingThrough(newThread)) {
+        return true;
+      }
+      final SuspendContextImpl currentSuspendContext = getContextManager().getContext().getSuspendContext();
+      if (currentSuspendContext == null) {
+        return true;
+      }
+      if (enableBreakpointsDuringEvaluation()) {
+        final ThreadReferenceProxyImpl currentThread = currentSuspendContext.getThread();
+        return currentThread == null || Comparing.equal(currentThread.getThreadReference(), newThread.getThreadReference());
+      }
+      return false;
+    }
+
 
     public void resumed(final SuspendContextImpl suspendContext) {
       final SuspendContextImpl currentContext = getProcess().getSuspendManager().getPausedContext();
@@ -626,4 +661,9 @@ public class DebuggerSession implements AbstractDebuggerSession {
       });
     }
   }
+
+  public static boolean enableBreakpointsDuringEvaluation() {
+    return Registry.is("debugger.enable.breakpoints.during.evaluation");
+  }
+
 }

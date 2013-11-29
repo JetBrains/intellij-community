@@ -87,6 +87,7 @@ public class PsiMethodReferenceUtil {
       myReferenceTypeQualified = referenceTypeQualified;
     }
 
+    @Nullable
     public PsiClass getContainingClass() {
       return myContainingClass;
     }
@@ -203,20 +204,22 @@ public class PsiMethodReferenceUtil {
         subst = subst.putAll(result.getSubstitutor());
         final MethodSignature signature2 = ((PsiMethod)resolve).getSignature(subst);
 
-        final PsiType interfaceReturnType = LambdaUtil.getFunctionalInterfaceReturnType(left);
+        if (methodReferenceExpression.isExact()) {
+          final PsiType interfaceReturnType = LambdaUtil.getFunctionalInterfaceReturnType(left);
 
-        PsiType returnType = PsiTypesUtil.patchMethodGetClassReturnType(methodReferenceExpression, methodReferenceExpression,
-                                                                        (PsiMethod)resolve, null,
-                                                                        PsiUtil.getLanguageLevel(methodReferenceExpression));
-        if (returnType == null) {
-          returnType = ((PsiMethod)resolve).getReturnType();
-        }
-        PsiType methodReturnType = subst.substitute(returnType);
-        if (interfaceReturnType != null && interfaceReturnType != PsiType.VOID) {
-          if (methodReturnType == null) {
-            methodReturnType = JavaPsiFacade.getElementFactory(methodReferenceExpression.getProject()).createType(((PsiMethod)resolve).getContainingClass(), subst);
+          PsiType returnType = PsiTypesUtil.patchMethodGetClassReturnType(methodReferenceExpression, methodReferenceExpression,
+                                                                          (PsiMethod)resolve, null,
+                                                                          PsiUtil.getLanguageLevel(methodReferenceExpression));
+          if (returnType == null) {
+            returnType = ((PsiMethod)resolve).getReturnType();
           }
-          //if (!TypeConversionUtil.isAssignable(interfaceReturnType, methodReturnType, false)) return false;
+          PsiType methodReturnType = subst.substitute(returnType);
+          if (interfaceReturnType != null && interfaceReturnType != PsiType.VOID) {
+            if (methodReturnType == null) {
+              methodReturnType = JavaPsiFacade.getElementFactory(methodReferenceExpression.getProject()).createType(((PsiMethod)resolve).getContainingClass(), subst);
+            }
+            if (!TypeConversionUtil.isAssignable(interfaceReturnType, methodReturnType, false)) return false;
+          }
         }
         if (areAcceptable(signature1, signature2, qualifierResolveResult.getContainingClass(), qualifierResolveResult.getSubstitutor(), ((PsiMethod)resolve).isVarArgs())) return true;
       } else if (resolve instanceof PsiClass) {
@@ -443,5 +446,20 @@ public class PsiMethodReferenceUtil {
     final QualifierResolveResult qualifierResolveResult = getQualifierResolveResult(methodRef);
     return method.getParameterList().getParametersCount() + 1 == parameterTypes.length &&
            hasReceiver(parameterTypes, qualifierResolveResult, methodRef);
+  }
+
+  public static String checkTypeArguments(PsiTypeElement qualifier, PsiType psiType) {
+    if (psiType instanceof PsiClassType) {
+      final PsiJavaCodeReferenceElement referenceElement = qualifier.getInnermostComponentReferenceElement();
+      if (referenceElement != null) {
+        PsiType[] typeParameters = referenceElement.getTypeParameters();
+        for (PsiType typeParameter : typeParameters) {
+          if (typeParameter instanceof PsiWildcardType) {
+            return "Unexpected wildcard";
+          }
+        }
+      }
+    }
+    return null;
   }
 }

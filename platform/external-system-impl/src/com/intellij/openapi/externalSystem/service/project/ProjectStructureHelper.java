@@ -3,15 +3,13 @@ package com.intellij.openapi.externalSystem.service.project;
 import com.intellij.openapi.externalSystem.model.project.LibraryData;
 import com.intellij.openapi.externalSystem.model.project.ModuleData;
 import com.intellij.openapi.externalSystem.model.project.ModuleDependencyData;
-import com.intellij.openapi.externalSystem.util.ArtifactInfo;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
-import com.intellij.openapi.roots.impl.ModuleLibraryOrderEntryImpl;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -24,16 +22,14 @@ import org.jetbrains.annotations.Nullable;
 public class ProjectStructureHelper {
 
   @NotNull private final PlatformFacade myFacade;
-  @NotNull private final ExternalLibraryPathTypeMapper myLibraryPathTypeMapper;
 
-  public ProjectStructureHelper(@NotNull PlatformFacade facade, @NotNull ExternalLibraryPathTypeMapper mapper) {
+  public ProjectStructureHelper(@NotNull PlatformFacade facade) {
     myFacade = facade;
-    myLibraryPathTypeMapper = mapper;
   }
 
   @Nullable
   public Module findIdeModule(@NotNull ModuleData module, @NotNull Project ideProject) {
-    return findIdeModule(module.getName(), ideProject);
+    return findIdeModule(module.getInternalName(), ideProject);
   }
 
   @Nullable
@@ -47,134 +43,28 @@ public class ProjectStructureHelper {
   }
 
   @Nullable
-  public Library findIdeLibrary(@NotNull final LibraryData library, @NotNull Project ideProject) {
-    return findIdeLibrary(library.getName(), ideProject);
-  }
-
-  /**
-   * Gradle library names follow the following pattern: {@code '[base library name]-[library-version]'}.
-   * <p/>
-   * This methods serves as an utility which tries to find a library by it's given base name.
-   *
-   * @param baseName   base name of the target library
-   * @param ideProject target ide project
-   * @return target library for the given base name if there is one and only one library for it;
-   * <code>null</code> otherwise (if there are no libraries or more than one library for the given base name)
-   */
-  @Nullable
-  public Library findIdeLibraryByBaseName(@NotNull String baseName, @NotNull Project ideProject) {
-    final LibraryTable libraryTable = myFacade.getProjectLibraryTable(ideProject);
-    Library result = null;
-    for (Library library : libraryTable.getLibraries()) {
-      ArtifactInfo info = ExternalSystemApiUtil.parseArtifactInfo(ExternalSystemApiUtil.getLibraryName(library));
-      if (info == null || !baseName.equals(info.getName())) {
-        continue;
-      }
-      if (result != null) {
-        return null;
-      }
-      result = library;
-    }
-    return result;
-  }
-
-  @Nullable
-  public Library findIdeLibrary(@NotNull String libraryName, @NotNull Project ideProject) {
+  public Library findIdeLibrary(@NotNull final LibraryData libraryData, @NotNull Project ideProject) {
     final LibraryTable libraryTable = myFacade.getProjectLibraryTable(ideProject);
     for (Library ideLibrary : libraryTable.getLibraries()) {
-      if (libraryName.equals(ExternalSystemApiUtil.getLibraryName(ideLibrary))) {
-        return ideLibrary;
-      }
+      if (ExternalSystemApiUtil.isRelated(ideLibrary, libraryData)) return ideLibrary;
     }
     return null;
   }
 
-  @Nullable
-  public Library findIdeLibrary(@NotNull String libraryName,
-                                @NotNull OrderRootType jarType,
-                                @NotNull String jarPath,
-                                @NotNull Project ideProject) {
-    Library library = findIdeLibrary(libraryName, ideProject);
-    if (library == null) {
-      return null;
-    }
-    for (VirtualFile file : library.getFiles(jarType)) {
-      if (jarPath.equals(ExternalSystemApiUtil.getLocalFileSystemPath(file))) {
-        return library;
-      }
-    }
-    return null;
-  }
-
-  @Nullable
-  public LibraryOrderEntry findIdeLibraryDependency(@NotNull final String moduleName,
-                                                    @NotNull final String libraryName,
-                                                    @NotNull Project ideProject) {
-    final Module ideModule = findIdeModule(moduleName, ideProject);
-    if (ideModule == null) {
-      return null;
-    }
-    RootPolicy<LibraryOrderEntry> visitor = new RootPolicy<LibraryOrderEntry>() {
+  public static boolean isOrphanProjectLibrary(@NotNull final Library library,
+                                               @NotNull final Iterable<Module> ideModules) {
+    RootPolicy<Boolean> visitor = new RootPolicy<Boolean>() {
       @Override
-      public LibraryOrderEntry visitLibraryOrderEntry(LibraryOrderEntry ideDependency, LibraryOrderEntry value) {
-        if (libraryName.equals(ideDependency.getLibraryName())) {
-          return ideDependency;
-        }
-        return value;
+      public Boolean visitLibraryOrderEntry(LibraryOrderEntry ideDependency, Boolean value) {
+        return !ideDependency.isModuleLevel() && library == ideDependency.getLibrary();
       }
     };
-    for (OrderEntry entry : myFacade.getOrderEntries(ideModule)) {
-      final LibraryOrderEntry result = entry.accept(visitor, null);
-      if (result != null) {
-        return result;
+    for (Module module : ideModules) {
+      for (OrderEntry entry : ModuleRootManager.getInstance(module).getOrderEntries()) {
+        if (entry.accept(visitor, false)) return false;
       }
     }
-    return null;
-  }
-
-  @Nullable
-  public ModuleLibraryOrderEntryImpl findIdeModuleLocalLibraryDependency(@NotNull final String moduleName,
-                                                                         @NotNull final String libraryName,
-                                                                         @NotNull Project ideProject) {
-    final Module ideModule = findIdeModule(moduleName, ideProject);
-    if (ideModule == null) {
-      return null;
-    }
-    RootPolicy<ModuleLibraryOrderEntryImpl> visitor = new RootPolicy<ModuleLibraryOrderEntryImpl>() {
-      @Override
-      public ModuleLibraryOrderEntryImpl visitLibraryOrderEntry(LibraryOrderEntry ideDependency, ModuleLibraryOrderEntryImpl value) {
-        Library library = ideDependency.getLibrary();
-        if (library == null) {
-          return value;
-        }
-        if (ideDependency instanceof ModuleLibraryOrderEntryImpl && libraryName.equals(ExternalSystemApiUtil.getLibraryName(library))) {
-          return (ModuleLibraryOrderEntryImpl)ideDependency;
-        }
-        return value;
-      }
-    };
-    for (OrderEntry entry : myFacade.getOrderEntries(ideModule)) {
-      final ModuleLibraryOrderEntryImpl result = entry.accept(visitor, null);
-      if (result != null) {
-        return result;
-      }
-    }
-    return null;
-  }
-
-  @SuppressWarnings("MethodMayBeStatic")
-  @Nullable
-  public LibraryOrderEntry findIdeLibraryDependency(@NotNull final String libraryName,
-                                                    @NotNull ModifiableRootModel model) {
-    for (OrderEntry entry : model.getOrderEntries()) {
-      if (entry instanceof LibraryOrderEntry) {
-        LibraryOrderEntry candidate = (LibraryOrderEntry)entry;
-        if (libraryName.equals(candidate.getLibraryName())) {
-          return candidate;
-        }
-      }
-    }
-    return null;
+    return true;
   }
 
   @SuppressWarnings("MethodMayBeStatic")
@@ -183,7 +73,7 @@ public class ProjectStructureHelper {
     for (OrderEntry entry : model.getOrderEntries()) {
       if (entry instanceof ModuleOrderEntry) {
         ModuleOrderEntry candidate = (ModuleOrderEntry)entry;
-        if (dependency.getName().equals(candidate.getModuleName()) &&
+        if (dependency.getInternalName().equals(candidate.getModuleName()) &&
             dependency.getScope().equals(candidate.getScope())) {
           return candidate;
         }

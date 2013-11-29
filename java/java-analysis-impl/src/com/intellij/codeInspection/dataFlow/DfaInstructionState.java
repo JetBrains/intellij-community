@@ -28,12 +28,10 @@ import com.intellij.codeInspection.dataFlow.instructions.Instruction;
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collections;
-import java.util.List;
-import java.util.PriorityQueue;
-import java.util.Set;
+import java.util.*;
 
 public class DfaInstructionState implements Comparable<DfaInstructionState> {
   public static final DfaInstructionState[] EMPTY_ARRAY = new DfaInstructionState[0];
@@ -96,15 +94,16 @@ class StateQueue {
     }
 
     if (memoryStates.size() > 1 && joinInstructions.contains(instruction)) {
-      StateMerger merger = new StateMerger();
-      while (true) {
-        List<DfaMemoryStateImpl> nextStates = merger.mergeByEquality(memoryStates);
-        if (nextStates == null) nextStates = merger.mergeByType(memoryStates);
-        if (nextStates == null) nextStates = merger.mergeByNullability(memoryStates);
-        if (nextStates == null) nextStates = merger.mergeByUnknowns(memoryStates);
-        if (nextStates == null) break;
-        memoryStates = nextStates;
+      MultiMap<Object, DfaMemoryStateImpl> groups = MultiMap.create();
+      for (DfaMemoryStateImpl memoryState : memoryStates) {
+        groups.putValue(memoryState.getSuperficialKey(), memoryState);
       }
+
+      memoryStates = ContainerUtil.newArrayList();
+      for (Map.Entry<Object, Collection<DfaMemoryStateImpl>> entry : groups.entrySet()) {
+        memoryStates.addAll(mergeGroup((List<DfaMemoryStateImpl>)entry.getValue()));
+      }
+      
     }
 
     return ContainerUtil.map(memoryStates, new Function<DfaMemoryStateImpl, DfaInstructionState>() {
@@ -113,7 +112,22 @@ class StateQueue {
         return new DfaInstructionState(instruction, state);
       }
     });
+  }                                                                      
+
+  private static List<DfaMemoryStateImpl> mergeGroup(List<DfaMemoryStateImpl> group) {
+    if (group.size() < 2) {
+      return group;
+    }
+
+    StateMerger merger = new StateMerger();
+    while (true) {
+      List<DfaMemoryStateImpl> nextStates = merger.mergeByEquality(group);
+      if (nextStates == null) nextStates = merger.mergeByType(group);
+      if (nextStates == null) nextStates = merger.mergeByNullability(group);
+      if (nextStates == null) nextStates = merger.mergeByUnknowns(group);
+      if (nextStates == null) break;
+      group = nextStates;
+    }
+    return group;
   }
-  
-  
 }

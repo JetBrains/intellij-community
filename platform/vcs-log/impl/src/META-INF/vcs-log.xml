@@ -19,12 +19,11 @@
             icon="AllIcons.Actions.Copy" text="Copy Hash" description="Copy hash value of the selected commit to clipboard" />
     <action class="com.intellij.vcs.log.ui.VcsLogCreatePatchAction" id="Vcs.Log.CreatePatch" />
     <action class="com.intellij.vcs.log.ui.GoToRefAction" id="Vcs.Log.GoToRef" icon="AllIcons.Actions.Menu_find" use-shortcut-of="Find"
-            text="Go To Reference" description="Specify hash or name of a branch or a tag to navigate to the commit it points"/>
+            text="Go To Hash/Branch/Tag" description="Specify hash or name of a branch or a tag to navigate to the commit it points"/>
     <action class="com.intellij.vcs.log.ui.VcsLogQuickSettingsActions" id="Vcs.Log.QuickSettings"
             icon="AllIcons.General.Gear" text="Quick Settings" description="Quick Settings" />
     
     <group id="Vcs.Log.Toolbar">
-      <reference id="Vcs.Log.CopyHash"/>
       <reference id="Vcs.Log.GoToRef" />
       <reference id="Vcs.Log.QuickSettings" />
     </group>

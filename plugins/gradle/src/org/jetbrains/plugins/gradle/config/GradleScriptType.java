@@ -218,7 +218,9 @@ public class GradleScriptType extends GroovyScriptType {
           throw new CantRunException(String.format("Module '%s' is not backed by gradle", module.getName()));
         }
         final VirtualFile gradleHome = libraryManager.getGradleHome(module, project, rootProjectPath);
-        assert gradleHome != null;
+        if(gradleHome == null) {
+          throw new CantRunException("Gradle home can not be found");
+        }
 
         params.setMainClass(findMainClass(gradleHome, script, project));
 

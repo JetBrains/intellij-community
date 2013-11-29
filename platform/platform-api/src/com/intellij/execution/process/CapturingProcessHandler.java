@@ -66,6 +66,16 @@ public class CapturingProcessHandler extends OSProcessHandler {
    * @param timeoutInMilliseconds non-positive means infinity
    */
   public ProcessOutput runProcess(int timeoutInMilliseconds) {
+    return runProcess(timeoutInMilliseconds, true);
+  }
+
+  /**
+   * Starts process with specified timeout
+   *
+   * @param timeoutInMilliseconds non-positive means infinity
+   * @param destroyOnTimeout whether to kill the process after timeout passes
+   */
+  public ProcessOutput runProcess(int timeoutInMilliseconds, boolean destroyOnTimeout) {
     if (timeoutInMilliseconds <= 0) {
       return runProcess();
     }
@@ -75,7 +85,9 @@ public class CapturingProcessHandler extends OSProcessHandler {
         myOutput.setExitCode(getProcess().exitValue());
       }
       else {
-        destroyProcess();
+        if (destroyOnTimeout) {
+          destroyProcess();
+        }
         myOutput.setTimeout();
       }
       return myOutput;

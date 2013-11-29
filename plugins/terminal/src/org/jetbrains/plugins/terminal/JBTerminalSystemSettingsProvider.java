@@ -35,7 +35,7 @@ import java.util.List;
  */
 class JBTerminalSystemSettingsProvider extends DefaultTabbedSettingsProvider implements Disposable {
   private Set<TerminalSettingsListener> myListeners = Sets.newHashSet();
-  
+
   private final MyColorSchemeDelegate myColorScheme;
 
   JBTerminalSystemSettingsProvider() {
@@ -151,19 +151,11 @@ class JBTerminalSystemSettingsProvider extends DefaultTabbedSettingsProvider imp
   public String getFontName() {
     List<String> fonts = myColorScheme.getConsoleFontPreferences().getEffectiveFontFamilies();
 
-    for (String font : fonts) {
-      if (isApplicable(font)) {
-        return font;
-      }
+    if (fonts.size() > 0) {
+      return fonts.get(0);
     }
-    return "Monospaced-14";
-  }
 
-  private static boolean isApplicable(String font) {
-    if ("Source Code Pro".equals(font)) {
-      return false;
-    }
-    return true;
+    return "Monospaced-14";
   }
 
   @Override
@@ -174,7 +166,7 @@ class JBTerminalSystemSettingsProvider extends DefaultTabbedSettingsProvider imp
 
   @Override
   public boolean useAntialiasing() {
-    return UISettings.getInstance().ANTIALIASING_IN_EDITOR;
+    return true; // we return true here because all the settings are checked again in UiSettings.setupAntialiasing
   }
 
   @Override
@@ -212,6 +204,11 @@ class JBTerminalSystemSettingsProvider extends DefaultTabbedSettingsProvider imp
   @NotNull
   private static MyColorSchemeDelegate createBoundColorSchemeDelegate(@Nullable final EditorColorsScheme customGlobalScheme) {
     return new MyColorSchemeDelegate(customGlobalScheme);
+  }
+
+  @Override
+  public boolean allowSelectionOnMouseReporting() {
+    return true;
   }
 
   @Override
@@ -314,7 +311,7 @@ class JBTerminalSystemSettingsProvider extends DefaultTabbedSettingsProvider imp
 
     @Override
     public void setFontPreferences(@NotNull FontPreferences preferences) {
-      throw new IllegalStateException();      
+      throw new IllegalStateException();
     }
 
     @Override

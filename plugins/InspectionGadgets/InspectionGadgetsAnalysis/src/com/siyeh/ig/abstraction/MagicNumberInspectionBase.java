@@ -30,8 +30,8 @@ import javax.swing.*;
 public class MagicNumberInspectionBase extends BaseInspection {
   @SuppressWarnings("PublicField")
   public boolean ignoreInHashCode = true;
-  @SuppressWarnings("PublicField")
-  public boolean ignoreInTestCode = false;
+  @SuppressWarnings({"PublicField", "UnusedDeclaration"})
+  public boolean ignoreInTestCode = false; // keep for compatibility
   @SuppressWarnings("PublicField")
   public boolean ignoreInAnnotations = true;
   @SuppressWarnings("PublicField")
@@ -53,15 +53,9 @@ public class MagicNumberInspectionBase extends BaseInspection {
   public JComponent createOptionsPanel() {
     final MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
     panel.addCheckbox(InspectionGadgetsBundle.message("magic.number.ignore.option"), "ignoreInHashCode");
-    panel.addCheckbox(InspectionGadgetsBundle.message("ignore.in.test.code"), "ignoreInTestCode");
     panel.addCheckbox(InspectionGadgetsBundle.message("ignore.in.annotations"),"ignoreInAnnotations");
     panel.addCheckbox(InspectionGadgetsBundle.message("ignore.as.initial.capacity"), "ignoreInitialCapacity");
     return panel;
-  }
-
-  @Override
-  protected boolean buildQuickFixesOnlyForOnTheFlyErrors() {
-    return true;
   }
 
   @Override
@@ -87,9 +81,6 @@ public class MagicNumberInspectionBase extends BaseInspection {
           return;
         }
       }
-      if (ignoreInTestCode && TestUtils.isInTestCode(expression)) {
-        return;
-      }
       if (ignoreInAnnotations) {
         final boolean insideAnnotation = AnnotationUtil.isInsideAnnotation(expression);
         if (insideAnnotation) {
@@ -111,10 +102,10 @@ public class MagicNumberInspectionBase extends BaseInspection {
       }
       final PsiElement parent = expression.getParent();
       if (parent instanceof PsiPrefixExpression) {
-        registerError(parent);
+        registerError(parent, parent);
       }
       else {
-        registerError(expression);
+        registerError(expression, expression);
       }
     }
 

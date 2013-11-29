@@ -310,7 +310,7 @@ public class LinkedHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V> 
 
   private abstract class LinkedHashIterator<T> implements Iterator<T> {
 
-    private LinkedHashMap.Entry<K, V> e = top;
+    private LinkedHashMap.Entry<K, V> e = back;
     private LinkedHashMap.Entry<K, V> last;
 
     @Override
@@ -329,7 +329,7 @@ public class LinkedHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V> 
 
     protected LinkedHashMap.Entry<K, V> nextEntry() {
       final LinkedHashMap.Entry<K, V> result = last = e;
-      e = result.next;
+      e = result.previous;
       return result;
     }
   }

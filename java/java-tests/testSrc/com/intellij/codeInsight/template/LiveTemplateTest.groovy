@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 package com.intellij.codeInsight.template
-
 import com.intellij.JavaTestUtil
 import com.intellij.codeInsight.CodeInsightSettings
 import com.intellij.codeInsight.lookup.LookupManager
@@ -25,9 +24,7 @@ import com.intellij.codeInsight.template.macro.ClassNameCompleteMacro
 import com.intellij.codeInsight.template.macro.CompleteMacro
 import com.intellij.codeInsight.template.macro.MethodReturnTypeMacro
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.AccessToken
-import com.intellij.openapi.application.WriteAction
-import com.intellij.openapi.command.CommandProcessor
+import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.impl.DocumentImpl
 import com.intellij.openapi.util.Disposer
@@ -39,7 +36,6 @@ import com.intellij.util.containers.ContainerUtil
 import org.jetbrains.annotations.NotNull
 
 import static com.intellij.codeInsight.template.Template.Property.USE_STATIC_IMPORT_IF_POSSIBLE
-
 /**
  * @author spleaner
  */
@@ -61,7 +57,9 @@ public class LiveTemplateTest extends LightCodeInsightFixtureTestCase {
     CodeInsightSettings.instance.COMPLETION_CASE_SENSITIVE = CodeInsightSettings.FIRST_LETTER
     CodeInsightSettings.instance.SELECT_AUTOPOPUP_SUGGESTIONS_BY_CHARS = false
     if (state != null) {
-      state.gotoEnd();
+      WriteCommandAction.runWriteCommandAction project, {
+        state.gotoEnd()
+      };
     }
     super.tearDown();
   }
@@ -426,15 +424,7 @@ class Foo {
   }
 
   private writeCommand(Runnable runnable) {
-    CommandProcessor.instance.executeCommand(project, {
-      AccessToken token = WriteAction.start()
-      try {
-        runnable.run()
-      }
-      finally {
-        token.finish()
-      }
-    }, null, null)
+    WriteCommandAction.runWriteCommandAction(null, runnable)
   }
 
   public void testSearchByDescriptionWhenTemplatesListed() {

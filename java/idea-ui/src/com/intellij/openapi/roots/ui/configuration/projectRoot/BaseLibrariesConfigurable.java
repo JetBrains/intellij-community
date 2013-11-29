@@ -46,6 +46,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeNode;
+import javax.swing.tree.TreePath;
 import java.util.*;
 
 public abstract class BaseLibrariesConfigurable extends BaseStructureConfigurable  {
@@ -233,37 +234,46 @@ public abstract class BaseLibrariesConfigurable extends BaseStructureConfigurabl
   @Override
   protected void updateSelection(@Nullable NamedConfigurable configurable) {
     boolean selectionChanged = !Comparing.equal(myCurrentConfigurable, configurable);
-    if (myCurrentConfigurable != null && selectionChanged) {
+    if (myCurrentConfigurable instanceof LibraryConfigurable && selectionChanged) {
       ((LibraryConfigurable)myCurrentConfigurable).onUnselected();
     }
     super.updateSelection(configurable);
-    if (myCurrentConfigurable != null && selectionChanged) {
+    if (myCurrentConfigurable instanceof LibraryConfigurable && selectionChanged) {
       ((LibraryConfigurable)myCurrentConfigurable).onSelected();
     }
   }
 
   @Override
   public void onStructureUnselected() {
-    if (myCurrentConfigurable != null) {
+    if (myCurrentConfigurable instanceof LibraryConfigurable) {
       ((LibraryConfigurable)myCurrentConfigurable).onUnselected();
     }
   }
 
   @Override
   public void onStructureSelected() {
-    if (myCurrentConfigurable != null) {
+    if (myCurrentConfigurable instanceof LibraryConfigurable) {
       ((LibraryConfigurable)myCurrentConfigurable).onSelected();
     }
   }
 
   public void removeLibrary(@NotNull LibraryProjectStructureElement element) {
-    getModelProvider().getModifiableModel().removeLibrary(element.getLibrary());
-    myContext.getDaemonAnalyzer().removeElement(element);
-    final MyNode node = findNodeByObject(myRoot, element.getLibrary());
-    if (node != null) {
-      removePaths(TreeUtil.getPathFromRoot(node));
-    }
+    removeLibraries(Collections.singletonList(element));
   }
+
+  public void removeLibraries(@NotNull List<LibraryProjectStructureElement> libraries) {
+    List<TreePath> pathsToRemove = new ArrayList<TreePath>();
+    for (LibraryProjectStructureElement element : libraries) {
+      getModelProvider().getModifiableModel().removeLibrary(element.getLibrary());
+      MyNode node = findNodeByObject(myRoot, element.getLibrary());
+      if (node != null) {
+        pathsToRemove.add(TreeUtil.getPathFromRoot(node));
+      }
+    }
+    myContext.getDaemonAnalyzer().removeElements(libraries);
+    removePaths(pathsToRemove.toArray(new TreePath[pathsToRemove.size()]));
+  }
+
 
   @Override
   protected boolean removeLibrary(final Library library) {

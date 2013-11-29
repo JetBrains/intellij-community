@@ -16,7 +16,6 @@
 package com.intellij.execution.console;
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
-import com.intellij.execution.impl.ConsoleViewImpl;
 import com.intellij.execution.impl.ConsoleViewUtil;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.ide.DataManager;
@@ -50,7 +49,10 @@ import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -76,7 +78,6 @@ import java.awt.event.ComponentEvent;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.util.Collections;
-import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -403,8 +404,7 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
 
     Document history = myHistoryViewer.getDocument();
     MarkupModel markupModel = DocumentMarkupModel.forDocument(history, myProject, true);
-    int offset = history.getTextLength();
-    appendToHistoryDocument(history, text);
+    int offset = appendToHistoryDocument(history, text);
     if (attributes == null) return;
     markupModel.addRangeHighlighter(offset, offset + text.length(), HighlighterLayer.SYNTAX, attributes, HighlighterTargetArea.EXACT_RANGE);
   }
@@ -481,8 +481,7 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
       highlighter = consoleEditor.getHighlighter();
     }
     //offset can be changed after text trimming after insert due to buffer constraints
-    appendToHistoryDocument(history, text);
-    int offset = history.getTextLength() - text.length();
+    int offset = appendToHistoryDocument(history, text);
 
     final HighlighterIterator iterator = highlighter.createIterator(localStartOffset);
     final int localEndOffset = textRange.getEndOffset();
@@ -513,9 +512,11 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
     addTextToHistory(myPrompt, ConsoleViewContentType.USER_INPUT.getAttributes());
   }
 
-  protected void appendToHistoryDocument(@NotNull Document history, @NotNull CharSequence text) {
+  // returns the real (cyclic-buffer-aware) start offset of the inserted text
+  protected int appendToHistoryDocument(@NotNull Document history, @NotNull CharSequence text) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     history.insertString(history.getTextLength(), text);
+    return history.getTextLength() - text.length();
   }
 
   private static void duplicateHighlighters(@NotNull MarkupModel to, @NotNull MarkupModel from, int offset, @NotNull TextRange textRange) {
@@ -646,20 +647,6 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
         myConsoleEditor.getDocument().setText(query);
       }
     });
-  }
-
-  /**
-   * todo ruby plugin compatibility. Remove on the next update.
-   */
-  @Deprecated
-  public static void printToConsole(@NotNull LanguageConsoleImpl console, @NotNull ConsoleViewContentType mainType,
-                                    @NotNull List<Pair<String, ConsoleViewContentType>> textToPrint) {
-    ConsoleViewImpl consoleView = console.getHistoryViewer().getUserData(ConsoleViewImpl.CONSOLE_VIEW_IN_EDITOR_VIEW);
-    if (consoleView != null) {
-      for (Pair<String, ConsoleViewContentType> pair : textToPrint) {
-        consoleView.print(pair.first, ObjectUtils.chooseNotNull(pair.second, mainType));
-      }
-    }
   }
 
   @NotNull

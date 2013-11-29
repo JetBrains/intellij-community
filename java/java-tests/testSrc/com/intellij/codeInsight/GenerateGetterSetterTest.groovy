@@ -16,6 +16,7 @@
 package com.intellij.codeInsight
 import com.intellij.codeInsight.generation.ClassMember
 import com.intellij.codeInsight.generation.GenerateGetterHandler
+import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
@@ -65,6 +66,7 @@ class Foo {
   }
 
   private void generateGetter() {
+    WriteCommandAction.runWriteCommandAction(getProject(), {
     new GenerateGetterHandler() {
       @Override
       protected ClassMember[] chooseMembers(
@@ -76,5 +78,6 @@ class Foo {
         return members
       }
     }.invoke(project, myFixture.editor, myFixture.file)
+    })
   }
 }
