@@ -90,6 +90,10 @@ public class IntroduceVariableTest extends LightCodeInsightTestCase {
     doTest(new MockIntroduceVariableHandler("j", true, false, false, "int"));
   }
 
+  public void testLambda() throws Exception {
+    doTest(new MockIntroduceVariableHandler("j", true, false, false, "int"));
+  }
+
   public void testParenthized() throws Exception {
     doTest(new MockIntroduceVariableHandler("temp", true, false, false, "int"));
   }
