@@ -16,6 +16,7 @@
 package com.intellij.util.containers;
 
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.text.StringUtil;
 import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
 
@@ -79,7 +80,12 @@ public abstract class ConcurrentMapFactory {
     }
   };
 
-  private static final ConcurrentMapFactory DEFAULT_FACTORY = SystemInfo.isOracleJvm || SystemInfo.isAppleJvm? V8_MAP_FACTORY : PLATFORM_MAP_FACTORY;
+  private static final ConcurrentMapFactory DEFAULT_FACTORY = SystemInfo.isOracleJvm || SystemInfo.isAppleJvm || isAtLeastJava7() ? V8_MAP_FACTORY : PLATFORM_MAP_FACTORY;
+
+  private static boolean isAtLeastJava7() {
+    // IBM JDK provides correct version in java.version property, but not in java.runtime.version property
+    return StringUtil.compareVersionNumbers(SystemInfo.JAVA_VERSION, "1.7") >= 0;
+  }
 
   public static <T, V> ConcurrentMap<T,V> createMap() {
     return DEFAULT_FACTORY._createMap();
