@@ -34,6 +34,7 @@ import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.IntInlineKeyDescriptor;
 import com.intellij.util.io.KeyDescriptor;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
 import java.util.*;
@@ -301,7 +302,7 @@ public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtensi
     protected void updateWithMap(final int inputId,
                                  @NotNull final Map<Integer, SerializedStubTree> newData,
                                  @NotNull Callable<Collection<Integer>> oldKeysGetter,
-                                 FileContent content)
+                                 @Nullable FileContent content)
       throws StorageException {
 
       checkNameStorage();
@@ -324,9 +325,12 @@ public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtensi
         try {
           getWriteLock().lock();
 
-          VirtualFile file = content.getFile();
-          ID stubId = IndexInfrastructure.getStubId(INDEX_ID, file.getFileType());
-          IndexingStamp.State state = IndexingStamp.getIndexingState(file, stubId);
+          IndexingStamp.State state = IndexingStamp.State.FILE_CONTENT_CHANGED;
+          if (content != null) {
+            VirtualFile file = content.getFile();
+            ID stubId = IndexInfrastructure.getStubId(INDEX_ID, file.getFileType());
+            state = IndexingStamp.getIndexingState(file, stubId);
+          }
 
           final Map<Integer, SerializedStubTree> oldData;
           if (state == IndexingStamp.State.INDEX_VERSION_CHANGED) {
