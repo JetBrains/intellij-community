@@ -147,26 +147,11 @@ public final class UrlImpl implements Url {
       return true;
     }
     if (!(o instanceof UrlImpl)) {
-      if (o instanceof Url && isInLocalFileSystem()) {
-        Url url = (Url)o;
-        if (url.isInLocalFileSystem()) {
-          return url.getPath().equals(path);
-        }
-      }
       return false;
     }
 
     UrlImpl url = (UrlImpl)o;
-    if (scheme == null ? url.scheme == null : !scheme.equals(url.scheme)) {
-      return false;
-    }
-    if (authority == null ? url.authority != null : !authority.equals(url.authority)) {
-      return false;
-    }
-    if (!getPath().equals(url.getPath())) {
-      return false;
-    }
-    return parameters == null ? url.parameters == null : parameters.equals(url.parameters);
+    return StringUtil.equals(scheme, url.scheme) && StringUtil.equals(authority, url.authority) && getPath().equals(url.getPath()) && StringUtil.equals(parameters, url.parameters);
   }
 
   @Override
@@ -177,10 +162,10 @@ public final class UrlImpl implements Url {
   @Override
   public int hashCode() {
     int result = scheme == null ? 0 : scheme.hashCode();
-    result = 31 * result + (authority != null ? authority.hashCode() : 0);
+    result = 31 * result + (authority == null ? 0 : authority.hashCode());
     String decodedPath = getPath();
     result = 31 * result + decodedPath.hashCode();
-    result = 31 * result + (parameters != null ? parameters.hashCode() : 0);
+    result = 31 * result + (parameters == null ? 0 : parameters.hashCode());
     return result;
   }
 }
