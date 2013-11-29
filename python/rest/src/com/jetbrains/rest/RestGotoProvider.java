@@ -20,19 +20,21 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.rest.psi.RestReference;
+import org.jetbrains.annotations.Nullable;
 
 /**
- * User : catherine
+ * @author catherine
  */
 public class RestGotoProvider extends GotoDeclarationHandlerBase {
-
-  public PsiElement getGotoDeclarationTarget(PsiElement source, Editor editor) {
+  @Override
+  public PsiElement getGotoDeclarationTarget(@Nullable PsiElement source, Editor editor) {
     if (source != null && source.getLanguage() instanceof RestLanguage) {
       RestReference ref = PsiTreeUtil.getParentOfType(source, RestReference.class);
       if (ref != null) {
         return ref.resolve();
       }
     }
+
     return null;
   }
 }
