@@ -299,7 +299,7 @@ public class ContainerUtil extends ContainerUtilRt {
 
   @NotNull
   public static <K, V> ConcurrentMap<K, V> newConcurrentMap() {
-    return ConcurrentMapFactory.DEFAULT_FACTORY.createMap();
+    return ConcurrentMapFactory.createMap();
   }
 
   @NotNull

@@ -13,7 +13,7 @@ import java.util.Map;
  * @author peter
  */
 public class SharedProcessingContext {
-  private final Map<Object, Object> myMap = ConcurrentMapFactory.DEFAULT_FACTORY.createMap();
+  private final Map<Object, Object> myMap = ConcurrentMapFactory.createMap();
 
   public Object get(@NotNull @NonNls final String key) {
     return myMap.get(key);

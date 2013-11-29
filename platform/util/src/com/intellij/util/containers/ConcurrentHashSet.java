@@ -28,13 +28,13 @@ public class ConcurrentHashSet<K> implements Set<K> {
   private final ConcurrentMap<K, Boolean> map;
 
   public ConcurrentHashSet(int initialCapacity) {
-    map = ConcurrentMapFactory.DEFAULT_FACTORY.createMap(initialCapacity);
+    map = ConcurrentMapFactory.createMap(initialCapacity);
   }
   public ConcurrentHashSet() {
-    map = ConcurrentMapFactory.DEFAULT_FACTORY.createMap();
+    map = ConcurrentMapFactory.createMap();
   }
   public ConcurrentHashSet(@NotNull TObjectHashingStrategy<K> hashingStrategy) {
-    map = ConcurrentMapFactory.DEFAULT_FACTORY.createMap(hashingStrategy);
+    map = ConcurrentMapFactory.createMap(hashingStrategy);
   }
 
   @Override

@@ -149,7 +149,7 @@ abstract class ConcurrentRefHashMap<K, V> extends AbstractMap<K, V> implements C
                               int concurrencyLevel,
                               @NotNull TObjectHashingStrategy<K> hashingStrategy) {
     myHashingStrategy = hashingStrategy == THIS ? this : hashingStrategy;
-    myMap = ConcurrentMapFactory.DEFAULT_FACTORY.<Key<K, V>, V>createMap(initialCapacity, loadFactor, concurrencyLevel, CANONICAL);
+    myMap = ConcurrentMapFactory.<Key<K, V>, V>createMap(initialCapacity, loadFactor, concurrencyLevel, CANONICAL);
   }
 
   @Override
