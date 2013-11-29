@@ -10,6 +10,10 @@ public class BrokenAlignment {
     } else {
       System.out.println("4");
     }
+    
+    if (0 == (long)<error descr="Cannot resolve symbol 'i'">i</error>) {
+      System.out.println("0");
+    }
   }
 
 }
