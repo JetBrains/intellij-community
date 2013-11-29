@@ -40,7 +40,7 @@ public class ExternalProjectPojo implements Comparable<ExternalProjectPojo> {
 
   @NotNull
   public static <T extends Named & ExternalConfigPathAware & Identifiable> ExternalProjectPojo from(@NotNull T data) {
-    String projectUniqueName = StringUtil.isEmpty(data.getId()) ? data.getName() : data.getId();
+    String projectUniqueName = StringUtil.isEmpty(data.getId()) ? data.getExternalName() : data.getId();
     return new ExternalProjectPojo(projectUniqueName, data.getLinkedExternalProjectPath());
   }
 

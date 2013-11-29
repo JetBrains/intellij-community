@@ -375,7 +375,7 @@ public abstract class AbstractExternalProjectImportBuilder<C extends AbstractImp
       assert false;
       return;
     }
-    context.setProjectName(myExternalProjectNode.getData().getName());
+    context.setProjectName(myExternalProjectNode.getData().getInternalName());
     context.setProjectFileDirectory(myExternalProjectNode.getData().getIdeProjectFileDirectoryPath());
     applyExtraSettings(context);
   }
