@@ -33,6 +33,7 @@ import com.intellij.debugger.settings.NodeRendererSettings;
 import com.intellij.debugger.ui.tree.FieldDescriptor;
 import com.intellij.debugger.ui.tree.NodeDescriptor;
 import com.intellij.debugger.ui.tree.render.ClassRenderer;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Ref;
@@ -131,7 +132,11 @@ public class FieldDescriptorImpl extends ValueDescriptorImpl implements FieldDes
                 return Priority.HIGH;
               }
               public void threadAction() {
-                classRef.set(classComputable.compute());
+                ApplicationManager.getApplication().runReadAction(new Runnable() {
+                  public void run() {
+                    classRef.set(classComputable.compute());
+                  }
+                });
               }
             });
             aClass = classRef.get();
