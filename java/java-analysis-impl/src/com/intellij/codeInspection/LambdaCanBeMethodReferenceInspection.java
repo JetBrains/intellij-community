@@ -188,6 +188,12 @@ public class LambdaCanBeMethodReferenceInspection extends BaseJavaBatchLocalInsp
             }
 
             @Override
+            public void visitNewExpression(PsiNewExpression expression) {
+              usedInQualifier.set(true);
+              super.visitNewExpression(expression);
+            }
+
+            @Override
             public void visitMethodCallExpression(PsiMethodCallExpression expression) {
               usedInQualifier.set(true);
               super.visitMethodCallExpression(expression);
