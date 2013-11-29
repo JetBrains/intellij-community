@@ -9,7 +9,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.postfixCompletion.infrastructure.PrefixExpressionContext;
 import org.jetbrains.postfixCompletion.infrastructure.TemplateProvider;
-import org.jetbrains.postfixCompletion.lookupItems.ExpressionPostfixLookupElement;
+import org.jetbrains.postfixCompletion.lookupItems.ExpressionPostfixLookupElementBase;
 
 import java.util.List;
 
@@ -25,7 +25,7 @@ public final class NotExpressionPostfixTemplateProvider extends BooleanPostfixTe
     return true;
   }
 
-  private static final class NotExpressionLookupElement extends ExpressionPostfixLookupElement<PsiExpression> {
+  private static final class NotExpressionLookupElement extends ExpressionPostfixLookupElementBase<PsiExpression> {
     public NotExpressionLookupElement(@NotNull PrefixExpressionContext context) {
       super("not", context);
     }

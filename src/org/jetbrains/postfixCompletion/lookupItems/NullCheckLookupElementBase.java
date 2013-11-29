@@ -9,7 +9,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.postfixCompletion.infrastructure.PrefixExpressionContext;
 import org.jetbrains.postfixCompletion.util.JavaSurroundersProxy;
 
-public abstract class NullCheckLookupElementBase extends ExpressionPostfixLookupElement<PsiExpression> {
+public abstract class NullCheckLookupElementBase extends ExpressionPostfixLookupElementBase<PsiExpression> {
   public NullCheckLookupElementBase(@NotNull String lookupString, @NotNull PrefixExpressionContext context) {
     super(lookupString, context);
   }

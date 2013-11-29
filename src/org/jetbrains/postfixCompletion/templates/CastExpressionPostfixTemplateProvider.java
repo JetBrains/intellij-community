@@ -9,7 +9,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.postfixCompletion.infrastructure.PostfixTemplateContext;
 import org.jetbrains.postfixCompletion.infrastructure.PrefixExpressionContext;
 import org.jetbrains.postfixCompletion.infrastructure.TemplateProvider;
-import org.jetbrains.postfixCompletion.lookupItems.ExpressionPostfixLookupElement;
+import org.jetbrains.postfixCompletion.lookupItems.ExpressionPostfixLookupElementBase;
 import org.jetbrains.postfixCompletion.util.CommonUtils;
 import org.jetbrains.postfixCompletion.util.JavaSurroundersProxy;
 
@@ -39,7 +39,7 @@ public final class CastExpressionPostfixTemplateProvider extends PostfixTemplate
     consumer.add(new CastLookupElement(bestContext));
   }
 
-  static final class CastLookupElement extends ExpressionPostfixLookupElement<PsiExpression> {
+  static final class CastLookupElement extends ExpressionPostfixLookupElementBase<PsiExpression> {
     public CastLookupElement(@NotNull PrefixExpressionContext context) {
       super("cast", context);
     }

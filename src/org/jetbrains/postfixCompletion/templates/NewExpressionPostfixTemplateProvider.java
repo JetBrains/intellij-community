@@ -5,11 +5,11 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.editor.CaretModel;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.postfixCompletion.lookupItems.ExpressionPostfixLookupElementBase;
 import org.jetbrains.postfixCompletion.util.CommonUtils;
 import org.jetbrains.postfixCompletion.infrastructure.PostfixTemplateContext;
 import org.jetbrains.postfixCompletion.infrastructure.PrefixExpressionContext;
 import org.jetbrains.postfixCompletion.infrastructure.TemplateProvider;
-import org.jetbrains.postfixCompletion.lookupItems.ExpressionPostfixLookupElement;
 
 import java.util.List;
 
@@ -39,7 +39,7 @@ public final class NewExpressionPostfixTemplateProvider extends PostfixTemplateP
     }
   }
 
-  static class NewObjectLookupElement extends ExpressionPostfixLookupElement<PsiNewExpression> {
+  static class NewObjectLookupElement extends ExpressionPostfixLookupElementBase<PsiNewExpression> {
     @NotNull private final CtorAccessibility myAccessibility;
     private final boolean myTypeRequiresRefinement;
 

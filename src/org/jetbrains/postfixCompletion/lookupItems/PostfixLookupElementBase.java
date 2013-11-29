@@ -15,14 +15,14 @@ import org.jetbrains.postfixCompletion.infrastructure.PrefixExpressionContext;
 import java.util.HashSet;
 import java.util.Set;
 
-public abstract class PostfixLookupElement<TPsiElement extends PsiElement> extends LookupElement {
+public abstract class PostfixLookupElementBase<T extends PsiElement> extends LookupElement {
   @NotNull private final PostfixExecutionContext myExecutionContext;
   @NotNull private final Class<?> myExpressionType;
   @NotNull private final TextRange myExpressionRange;
   @NotNull private final String myLookupString;
   private final int myContextIndex;
 
-  public PostfixLookupElement(@NotNull String lookupString, @NotNull PrefixExpressionContext context) {
+  public PostfixLookupElementBase(@NotNull String lookupString, @NotNull PrefixExpressionContext context) {
     myExecutionContext = context.parentContext.executionContext;
     myExpressionType = context.expression.getClass();
     myLookupString = lookupString;
@@ -69,11 +69,11 @@ public abstract class PostfixLookupElement<TPsiElement extends PsiElement> exten
 
     PrefixExpressionContext originalExpression = findOriginalContext(templateContext);
     if (originalExpression != null) {
-      TPsiElement newElement = handlePostfixInsert(context, originalExpression);
+      T newElement = handlePostfixInsert(context, originalExpression);
       assert newElement.isPhysical() : "newElement.isPhysical()";
 
       SmartPointerManager pointerManager = SmartPointerManager.getInstance(context.getProject());
-      SmartPsiElementPointer<TPsiElement> pointer = pointerManager.createSmartPsiElementPointer(newElement);
+      SmartPsiElementPointer<T> pointer = pointerManager.createSmartPsiElementPointer(newElement);
 
       documentManager.doPostponedOperationsAndUnblockDocument(document);
 
@@ -100,9 +100,8 @@ public abstract class PostfixLookupElement<TPsiElement extends PsiElement> exten
     return null;
   }
 
-  @NotNull protected abstract TPsiElement handlePostfixInsert(
-    @NotNull InsertionContext context, @NotNull PrefixExpressionContext expressionContext);
+  @NotNull 
+  protected abstract T handlePostfixInsert(@NotNull InsertionContext context, @NotNull PrefixExpressionContext expressionContext);
 
-  protected abstract void postProcess(
-    @NotNull InsertionContext context, @NotNull TPsiElement element);
+  protected abstract void postProcess(@NotNull InsertionContext context, @NotNull T element);
 }

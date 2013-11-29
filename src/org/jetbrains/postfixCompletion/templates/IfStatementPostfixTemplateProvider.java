@@ -9,7 +9,7 @@ import com.intellij.psi.PsiExpression;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.postfixCompletion.infrastructure.PrefixExpressionContext;
 import org.jetbrains.postfixCompletion.infrastructure.TemplateProvider;
-import org.jetbrains.postfixCompletion.lookupItems.ExpressionPostfixLookupElement;
+import org.jetbrains.postfixCompletion.lookupItems.ExpressionPostfixLookupElementBase;
 import org.jetbrains.postfixCompletion.util.JavaSurroundersProxy;
 import java.util.List;
 
@@ -28,7 +28,7 @@ public final class IfStatementPostfixTemplateProvider extends BooleanPostfixTemp
     return false;
   }
 
-  static final class IfLookupItem extends ExpressionPostfixLookupElement<PsiExpression> {
+  static final class IfLookupItem extends ExpressionPostfixLookupElementBase<PsiExpression> {
     public IfLookupItem(@NotNull PrefixExpressionContext context) {
       super("if", context);
     }

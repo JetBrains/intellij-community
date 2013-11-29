@@ -10,7 +10,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.postfixCompletion.infrastructure.PrefixExpressionContext;
 
 public abstract class StatementPostfixLookupElement<TStatement extends PsiStatement>
-  extends PostfixLookupElement<TStatement> {
+  extends PostfixLookupElementBase<TStatement> {
 
   public StatementPostfixLookupElement(
     @NotNull String lookupString, @NotNull PrefixExpressionContext context) {

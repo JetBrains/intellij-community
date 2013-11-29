@@ -10,7 +10,7 @@ import org.jetbrains.postfixCompletion.util.CommonUtils;
 import org.jetbrains.postfixCompletion.infrastructure.PostfixTemplateContext;
 import org.jetbrains.postfixCompletion.infrastructure.PrefixExpressionContext;
 import org.jetbrains.postfixCompletion.infrastructure.TemplateProvider;
-import org.jetbrains.postfixCompletion.lookupItems.ExpressionPostfixLookupElement;
+import org.jetbrains.postfixCompletion.lookupItems.ExpressionPostfixLookupElementBase;
 
 import java.util.List;
 
@@ -39,7 +39,7 @@ public final class ParenthesizedExpressionPostfixTemplateProvider extends Postfi
     consumer.add(new ParenthesizeLookupElement(bestContext));
   }
 
-  private static class ParenthesizeLookupElement extends ExpressionPostfixLookupElement<PsiParenthesizedExpression> {
+  private static class ParenthesizeLookupElement extends ExpressionPostfixLookupElementBase<PsiParenthesizedExpression> {
     public ParenthesizeLookupElement(@NotNull PrefixExpressionContext context) {
       super("par", context);
     }

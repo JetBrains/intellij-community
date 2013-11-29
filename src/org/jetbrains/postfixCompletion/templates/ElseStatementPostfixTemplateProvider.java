@@ -10,7 +10,7 @@ import com.intellij.psi.PsiExpression;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.postfixCompletion.infrastructure.PrefixExpressionContext;
 import org.jetbrains.postfixCompletion.infrastructure.TemplateProvider;
-import org.jetbrains.postfixCompletion.lookupItems.ExpressionPostfixLookupElement;
+import org.jetbrains.postfixCompletion.lookupItems.ExpressionPostfixLookupElementBase;
 import org.jetbrains.postfixCompletion.util.JavaSurroundersProxy;
 import java.util.List;
 
@@ -29,7 +29,7 @@ public final class ElseStatementPostfixTemplateProvider extends BooleanPostfixTe
     return false;
   }
 
-  static final class ElseLookupItem extends ExpressionPostfixLookupElement<PsiExpression> {
+  static final class ElseLookupItem extends ExpressionPostfixLookupElementBase<PsiExpression> {
     public ElseLookupItem(@NotNull PrefixExpressionContext context) {
       super("else", context);
     }

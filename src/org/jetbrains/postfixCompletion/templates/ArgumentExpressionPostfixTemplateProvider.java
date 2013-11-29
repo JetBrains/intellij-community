@@ -15,7 +15,7 @@ import org.jetbrains.postfixCompletion.util.CommonUtils;
 import org.jetbrains.postfixCompletion.infrastructure.PostfixTemplateContext;
 import org.jetbrains.postfixCompletion.infrastructure.PrefixExpressionContext;
 import org.jetbrains.postfixCompletion.infrastructure.TemplateProvider;
-import org.jetbrains.postfixCompletion.lookupItems.ExpressionPostfixLookupElement;
+import org.jetbrains.postfixCompletion.lookupItems.ExpressionPostfixLookupElementBase;
 
 import java.util.List;
 
@@ -44,7 +44,7 @@ public final class ArgumentExpressionPostfixTemplateProvider extends PostfixTemp
     Object boo = ((Object)this);
   }
 
-  private static class ArgumentLookupElement extends ExpressionPostfixLookupElement<PsiMethodCallExpression> {
+  private static class ArgumentLookupElement extends ExpressionPostfixLookupElementBase<PsiMethodCallExpression> {
     public ArgumentLookupElement(@NotNull PrefixExpressionContext context) {
       super("arg", context);
     }

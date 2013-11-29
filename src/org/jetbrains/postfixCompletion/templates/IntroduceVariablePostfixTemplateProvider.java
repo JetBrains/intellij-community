@@ -15,11 +15,11 @@ import com.intellij.refactoring.introduceVariable.IntroduceVariableSettings;
 import com.intellij.refactoring.ui.TypeSelectorManagerImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.postfixCompletion.lookupItems.ExpressionPostfixLookupElementBase;
 import org.jetbrains.postfixCompletion.util.CommonUtils;
 import org.jetbrains.postfixCompletion.infrastructure.PostfixTemplateContext;
 import org.jetbrains.postfixCompletion.infrastructure.PrefixExpressionContext;
 import org.jetbrains.postfixCompletion.infrastructure.TemplateProvider;
-import org.jetbrains.postfixCompletion.lookupItems.ExpressionPostfixLookupElement;
 import org.jetbrains.postfixCompletion.lookupItems.StatementPostfixLookupElement;
 
 import java.util.List;
@@ -157,7 +157,7 @@ public final class IntroduceVariablePostfixTemplateProvider extends PostfixTempl
     }
   }
 
-  private static class IntroduceVarExpressionLookupElement extends ExpressionPostfixLookupElement<PsiExpression> {
+  private static class IntroduceVarExpressionLookupElement extends ExpressionPostfixLookupElementBase<PsiExpression> {
     private final boolean myInvokedOnType, myIsAbstractType;
 
     public IntroduceVarExpressionLookupElement(
