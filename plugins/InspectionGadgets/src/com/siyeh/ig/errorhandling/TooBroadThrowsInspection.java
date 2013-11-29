@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2013 Dave Griffith, Bas Leijdekkers
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,29 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.siyeh.ig.abstraction;
+package com.siyeh.ig.errorhandling;
 
 import com.intellij.psi.PsiElement;
 import com.siyeh.ig.InspectionGadgetsFix;
-import com.siyeh.ig.fixes.IntroduceConstantFix;
 import com.siyeh.ig.fixes.SuppressForTestsScopeFix;
 import org.jetbrains.annotations.NotNull;
 
-public class MagicNumberInspection extends MagicNumberInspectionBase {
+/**
+ * @author Bas Leijdekkers
+ */
+public class TooBroadThrowsInspection extends TooBroadThrowsInspectionBase {
 
   @NotNull
   @Override
   protected InspectionGadgetsFix[] buildFixes(Object... infos) {
-    final PsiElement context = (PsiElement)infos[0];
-    final InspectionGadgetsFix fix = SuppressForTestsScopeFix.build(this, context);
-    if (fix == null) {
-      return new InspectionGadgetsFix[] {new IntroduceConstantFix()};
+    final PsiElement context = (PsiElement)infos[2];
+    final SuppressForTestsScopeFix suppressFix = SuppressForTestsScopeFix.build(this, context);
+    if (suppressFix == null) {
+      return new InspectionGadgetsFix[] {buildFix(infos)};
     }
-    return new InspectionGadgetsFix[] {new IntroduceConstantFix(), fix};
-  }
-
-  @Override
-  protected boolean buildQuickFixesOnlyForOnTheFlyErrors() {
-    return true;
+    return new InspectionGadgetsFix[] {buildFix(infos), suppressFix};
   }
 }

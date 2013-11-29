@@ -15,19 +15,30 @@
  */
 package com.siyeh.ig.errorhandling;
 
+import com.intellij.psi.PsiElement;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.RenameFix;
-import org.jetbrains.annotations.Nullable;
+import com.siyeh.ig.fixes.SuppressForTestsScopeFix;
+import org.jetbrains.annotations.NotNull;
 
 public class UnusedCatchParameterInspection extends UnusedCatchParameterInspectionBase {
 
+  @NotNull
   @Override
-  @Nullable
-  protected InspectionGadgetsFix buildFix(Object... infos) {
+  protected InspectionGadgetsFix[] buildFixes(Object... infos) {
     final boolean namedIgnoreButUsed = ((Boolean)infos[0]).booleanValue();
+    final PsiElement context = (PsiElement)infos[1];
+    final InspectionGadgetsFix fix = SuppressForTestsScopeFix.build(this, context);
     if (namedIgnoreButUsed) {
-      return null;
+      if (fix == null) {
+        return InspectionGadgetsFix.EMPTY_ARRAY;
+      }
+      return new InspectionGadgetsFix[] {fix};
     }
-    return new RenameFix("ignored", false, false);
+    final RenameFix renameFix = new RenameFix("ignored", false, false);
+    if (fix == null) {
+      return new InspectionGadgetsFix[] {renameFix};
+    }
+    return new InspectionGadgetsFix[] {renameFix, fix};
   }
 }

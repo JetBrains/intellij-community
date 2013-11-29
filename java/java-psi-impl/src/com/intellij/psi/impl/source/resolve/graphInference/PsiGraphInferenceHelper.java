@@ -18,6 +18,8 @@ package com.intellij.psi.impl.source.resolve.graphInference;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.ParameterTypeInferencePolicy;
+import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.TypeConversionUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -86,6 +88,14 @@ public class PsiGraphInferenceHelper implements PsiInferenceHelper {
                                                  boolean isContraVariantPosition,
                                                  LanguageLevel languageLevel) {
     if (arg == PsiType.VOID || param == PsiType.VOID) return PsiType.NULL;
+    if (param instanceof PsiArrayType && arg instanceof PsiArrayType) {
+      return getSubstitutionForTypeParameter(typeParam, ((PsiArrayType)param).getComponentType(), ((PsiArrayType)arg).getComponentType(), isContraVariantPosition, languageLevel);
+    } 
+
+    if (!(param instanceof PsiClassType)) return PsiType.NULL;
+    if (arg == null) {
+      return PsiType.NULL;
+    }
     final PsiType[] leftTypes;
     final PsiType[] rightTypes;
     if (isContraVariantPosition) {
