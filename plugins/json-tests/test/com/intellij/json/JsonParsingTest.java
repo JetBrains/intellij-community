@@ -7,8 +7,8 @@ import com.jetbrains.json.JsonParserDefinition;
 /**
  * @author Mikhail Golubev
  */
-public class ParsingTest extends ParsingTestCase {
-  public ParsingTest() {
+public class JsonParsingTest extends ParsingTestCase {
+  public JsonParsingTest() {
     super("psi", "json", new JsonParserDefinition());
   }
 

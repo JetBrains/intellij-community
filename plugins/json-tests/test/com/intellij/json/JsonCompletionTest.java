@@ -7,7 +7,7 @@ import com.intellij.util.ArrayUtil;
 /**
  * @author Mikhail Golubev
  */
-public class CompletionTest extends CodeInsightFixtureTestCase {
+public class JsonCompletionTest extends CodeInsightFixtureTestCase {
   private static final String[] KEYWORDS = new String[]{"true", "false", "null"};
   private static final String[] NOTHING = ArrayUtil.EMPTY_STRING_ARRAY;
 
@@ -20,6 +20,8 @@ public class CompletionTest extends CodeInsightFixtureTestCase {
   protected String getBasePath() {
     return "/plugins/json-tests/testData/completion";
   }
+
+
 
   @Override
   protected boolean isCommunity() {
