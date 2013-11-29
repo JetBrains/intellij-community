@@ -27,8 +27,7 @@ import org.jetbrains.postfixCompletion.infrastructure.PostfixTemplatesService;
 
 public final class ExpandPostfixEditorActionHandler extends EditorActionHandler {
   @NotNull private final EditorActionHandler myUnderlyingHandler;
-  @NotNull
-  private final PostfixTemplatesService myTemplatesService;
+  @NotNull private final PostfixTemplatesService myTemplatesService;
 
   public ExpandPostfixEditorActionHandler(@NotNull EditorActionHandler underlyingHandler,
                                           @NotNull PostfixTemplatesService templatesService) {
@@ -36,11 +35,13 @@ public final class ExpandPostfixEditorActionHandler extends EditorActionHandler 
     myUnderlyingHandler = underlyingHandler;
   }
 
-  @Override public boolean isEnabled(@NotNull Editor editor, @NotNull DataContext dataContext) {
+  @Override
+  public boolean isEnabled(@NotNull Editor editor, @NotNull DataContext dataContext) {
     return findPostfixTemplate(editor, false) != null || myUnderlyingHandler.isEnabled(editor, dataContext);
   }
 
-  @Override public void execute(@NotNull Editor editor, @NotNull DataContext dataContext) {
+  @Override
+  public void execute(@NotNull Editor editor, @NotNull DataContext dataContext) {
     final LookupElement postfixElement = findPostfixTemplate(editor, true);
     if (postfixElement == null) {
       myUnderlyingHandler.execute(editor, dataContext);
@@ -66,7 +67,8 @@ public final class ExpandPostfixEditorActionHandler extends EditorActionHandler 
 
     Application application = ApplicationManager.getApplication();
     application.runWriteAction(new Runnable() {
-      @Override public void run() {
+      @Override
+      public void run() {
         postfixElement.handleInsert(insertionContext);
       }
     });
@@ -75,13 +77,15 @@ public final class ExpandPostfixEditorActionHandler extends EditorActionHandler 
     if (laterRunnable != null) {
       if (application.isUnitTestMode()) {
         laterRunnable.run();
-      } else {
+      }
+      else {
         application.invokeLater(laterRunnable);
       }
     }
   }
 
-  @Nullable protected LookupElement findPostfixTemplate(@NotNull Editor editor, boolean leaveReparseOnSuccess) {
+  @Nullable
+  private LookupElement findPostfixTemplate(@NotNull Editor editor, boolean leaveReparseOnSuccess) {
     Project project = editor.getProject();
     if (project == null) return null;
 
@@ -96,9 +100,11 @@ public final class ExpandPostfixEditorActionHandler extends EditorActionHandler 
     try {
       // ugly physical reparse with dummy identifier
       application.runWriteAction(new Runnable() {
-        @Override public void run() {
+        @Override
+        public void run() {
           commandProcessor.runUndoTransparentAction(new Runnable() {
-            @Override public void run() {
+            @Override
+            public void run() {
               document.insertString(offset, dummyIdentifier);
             }
           });
@@ -130,12 +136,15 @@ public final class ExpandPostfixEditorActionHandler extends EditorActionHandler 
           return element;
         }
       }
-    } finally {
+    }
+    finally {
       if (reparseBack) {
         application.runWriteAction(new Runnable() {
-          @Override public void run() {
+          @Override
+          public void run() {
             commandProcessor.runUndoTransparentAction(new Runnable() {
-              @Override public void run() {
+              @Override
+              public void run() {
                 document.deleteString(offset, offset + dummyIdentifier.length());
               }
             });
@@ -143,7 +152,6 @@ public final class ExpandPostfixEditorActionHandler extends EditorActionHandler 
         });
       }
     }
-
     return null;
   }
 }

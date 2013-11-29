@@ -25,21 +25,27 @@ import java.util.Map;
 public class PostfixTemplatesListPanel {
   private static final NotNullFunction<TemplateProviderInfo, String> GET_SHORTCUT_FUNCTION =
     new NotNullFunction<TemplateProviderInfo, String>() {
-      @NotNull @Override public String fun(@NotNull TemplateProviderInfo info) {
+      @NotNull
+      @Override
+      public String fun(@NotNull TemplateProviderInfo info) {
         return "." + info.annotation.templateName();
       }
     };
 
   private static final NotNullFunction<TemplateProviderInfo, String> GET_DESCRIPTION_FUNCTION =
     new NotNullFunction<TemplateProviderInfo, String>() {
-      @NotNull @Override public String fun(@NotNull TemplateProviderInfo info) {
+      @NotNull
+      @Override
+      public String fun(@NotNull TemplateProviderInfo info) {
         return info.annotation.description();
       }
     };
 
   private static final NotNullFunction<TemplateProviderInfo, String> GET_EXAMPLE_FUNCTION =
     new NotNullFunction<TemplateProviderInfo, String>() {
-      @NotNull @Override public String fun(@NotNull TemplateProviderInfo info) {
+      @NotNull
+      @Override
+      public String fun(@NotNull TemplateProviderInfo info) {
         return info.annotation.example();
       }
     };
@@ -69,7 +75,8 @@ public class PostfixTemplatesListPanel {
       .disableUpDownActions().createPanel();
   }
 
-  @NotNull private ColumnInfo[] generateColumns(@NotNull List<TemplateProviderInfo> templates) {
+  @NotNull
+  private ColumnInfo[] generateColumns(@NotNull List<TemplateProviderInfo> templates) {
     String longestTemplateName = "";
     String longestDescription = "";
     String longestExample = "";
@@ -86,11 +93,13 @@ public class PostfixTemplatesListPanel {
     };
   }
 
-  @NotNull private static String longestString(@NotNull String firstString, @NotNull String secondString) {
+  @NotNull
+  private static String longestString(@NotNull String firstString, @NotNull String secondString) {
     return secondString.length() > firstString.length() ? secondString : firstString;
   }
 
-  @NotNull public JComponent getComponent() {
+  @NotNull
+  public JComponent getComponent() {
     return myPanelWithTableView;
   }
 
@@ -101,7 +110,8 @@ public class PostfixTemplatesListPanel {
     }
   }
 
-  @NotNull public Map<String, Boolean> getState() {
+  @NotNull
+  public Map<String, Boolean> getState() {
     return myTemplatesState;
   }
 
@@ -114,31 +124,42 @@ public class PostfixTemplatesListPanel {
       super("");
     }
 
-    @Nullable @Override public TableCellRenderer getRenderer(TemplateProviderInfo template) {
+    @Nullable
+    @Override
+    public TableCellRenderer getRenderer(TemplateProviderInfo template) {
       return CELL_RENDERER;
     }
 
-    @Nullable @Override public TableCellEditor getEditor(TemplateProviderInfo template) {
+    @Nullable
+    @Override
+    public TableCellEditor getEditor(TemplateProviderInfo template) {
       return CELL_EDITOR;
     }
 
-    @Override public int getWidth(JTable table) {
+    @Override
+    public int getWidth(JTable table) {
       return WIDTH;
     }
 
-    @NotNull @Override public Class getColumnClass() {
+    @NotNull
+    @Override
+    public Class getColumnClass() {
       return Boolean.class;
     }
 
-    @Override public boolean isCellEditable(TemplateProviderInfo bean) {
+    @Override
+    public boolean isCellEditable(TemplateProviderInfo bean) {
       return true;
     }
 
-    @Nullable @Override public Boolean valueOf(@NotNull TemplateProviderInfo template) {
+    @Nullable
+    @Override
+    public Boolean valueOf(@NotNull TemplateProviderInfo template) {
       return ContainerUtil.getOrElse(myTemplatesState, template.annotation.templateName(), true);
     }
 
-    @Override public void setValue(@NotNull TemplateProviderInfo template, Boolean value) {
+    @Override
+    public void setValue(@NotNull TemplateProviderInfo template, Boolean value) {
       myTemplatesState.put(template.annotation.templateName(), value);
     }
   }
@@ -157,11 +178,14 @@ public class PostfixTemplatesListPanel {
       myPreferredStringValue = hasValue ? preferredStringValue : null;
     }
 
-    @Override public int getAdditionalWidth() {
+    @Override
+    public int getAdditionalWidth() {
       return UIUtil.DEFAULT_HGAP;
     }
 
-    @Nullable @Override public String getPreferredStringValue() {
+    @Nullable
+    @Override
+    public String getPreferredStringValue() {
       return myPreferredStringValue;
     }
 

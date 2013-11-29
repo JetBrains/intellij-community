@@ -8,6 +8,7 @@ import org.jetbrains.postfixCompletion.infrastructure.PostfixTemplateContext;
 import org.jetbrains.postfixCompletion.infrastructure.PrefixExpressionContext;
 import org.jetbrains.postfixCompletion.infrastructure.TemplateProvider;
 import org.jetbrains.postfixCompletion.lookupItems.NullCheckLookupElementBase;
+
 import java.util.List;
 import java.util.Set;
 
@@ -16,8 +17,8 @@ import java.util.Set;
   description = "Checks expression to be not-null",
   example = "if (expr != null)")
 public final class NotNullCheckPostfixTemplateProvider extends PostfixTemplateProvider {
-  @Override public void createItems(
-    @NotNull PostfixTemplateContext context, @NotNull List<LookupElement> consumer) {
+  @Override
+  public void createItems(@NotNull PostfixTemplateContext context, @NotNull List<LookupElement> consumer) {
     PrefixExpressionContext expression = context.outerExpression();
     if (!expression.canBeStatement) return;
 
@@ -32,7 +33,8 @@ public final class NotNullCheckPostfixTemplateProvider extends PostfixTemplatePr
     consumer.add(new CheckNotNullLookupElement(expression));
   }
 
-  @Nullable public static Boolean isNullableExpression(@NotNull PrefixExpressionContext context) {
+  @Nullable
+  public static Boolean isNullableExpression(@NotNull PrefixExpressionContext context) {
     if (context.expression instanceof PsiExpression) {
       return isNullableExpression((PsiExpression)context.expression, context.expressionType);
     }
@@ -40,13 +42,14 @@ public final class NotNullCheckPostfixTemplateProvider extends PostfixTemplatePr
     return Boolean.FALSE;
   }
 
-  @Nullable private static Boolean isNullableExpression(@Nullable PsiExpression expression) {
+  @Nullable
+  private static Boolean isNullableExpression(@Nullable PsiExpression expression) {
     if (expression == null) return null;
     return isNullableExpression(expression, expression.getType());
   }
 
-  @Nullable private static Boolean isNullableExpression(
-    @NotNull PsiExpression expression, @Nullable PsiType expressionType) {
+  @Nullable
+  private static Boolean isNullableExpression(@NotNull PsiExpression expression, @Nullable PsiType expressionType) {
     // filter out some known non-nullable expressions
     if (expression instanceof PsiPostfixExpression) return false;
     if (expression instanceof PsiPrefixExpression) return false;
@@ -76,7 +79,8 @@ public final class NotNullCheckPostfixTemplateProvider extends PostfixTemplatePr
       super("notnull", context);
     }
 
-    @Override public Set<String> getAllLookupStrings() {
+    @Override
+    public Set<String> getAllLookupStrings() {
       Set<String> strings = super.getAllLookupStrings();
       strings.add("notNull");
       strings.add("notNull ");
@@ -84,7 +88,9 @@ public final class NotNullCheckPostfixTemplateProvider extends PostfixTemplatePr
       return strings;
     }
 
-    @NotNull @Override protected String getConditionText() {
+    @NotNull
+    @Override
+    protected String getConditionText() {
       return "expr!=null";
     }
   }

@@ -29,8 +29,8 @@ import java.util.List;
   description = "Iterates over enumerable collection",
   example = "for (T item : collection)")
 public final class ForeachIterationPostfixTemplateProvider extends PostfixTemplateProvider {
-  @Override public void createItems(
-    @NotNull PostfixTemplateContext context, @NotNull List<LookupElement> consumer) {
+  @Override
+  public void createItems(@NotNull PostfixTemplateContext context, @NotNull List<LookupElement> consumer) {
     PrefixExpressionContext expression = context.outerExpression();
 
     if (!context.executionContext.isForceMode) {
@@ -39,7 +39,9 @@ public final class ForeachIterationPostfixTemplateProvider extends PostfixTempla
 
       // for-statements can take expressions of array or Iterable<T>-derived types
       if (!(expressionType instanceof PsiArrayType) &&
-        !InheritanceUtil.isInheritor(expressionType, CommonClassNames.JAVA_LANG_ITERABLE)) return;
+          !InheritanceUtil.isInheritor(expressionType, CommonClassNames.JAVA_LANG_ITERABLE)) {
+        return;
+      }
     }
 
     consumer.add(new ForeachLookupElement(expression));
@@ -50,21 +52,20 @@ public final class ForeachIterationPostfixTemplateProvider extends PostfixTempla
       super("for", context);
     }
 
-    @NotNull @Override protected PsiForeachStatement createNewStatement(
-      @NotNull PsiElementFactory factory, @NotNull PsiElement expression, @NotNull PsiElement context) {
-
-      PsiForeachStatement forStatement = (PsiForeachStatement)
-        factory.createStatementFromText("for(T item:expr)", context);
-
+    @NotNull
+    @Override
+    protected PsiForeachStatement createNewStatement(@NotNull PsiElementFactory factory,
+                                                     @NotNull PsiElement expression,
+                                                     @NotNull PsiElement context) {
+      PsiForeachStatement forStatement = (PsiForeachStatement)factory.createStatementFromText("for(T item:expr)", context);
       PsiExpression iteratedValue = forStatement.getIteratedValue();
       assert (iteratedValue != null) : "iteratedValue != null";
-
       iteratedValue.replace(expression);
-
       return forStatement;
     }
 
-    @Override protected void postProcess(
+    @Override
+    protected void postProcess(
       @NotNull final InsertionContext context, @NotNull PsiForeachStatement forStatement) {
       final Project project = context.getProject();
       final SmartPointerManager pointerManager = SmartPointerManager.getInstance(project);
@@ -72,7 +73,8 @@ public final class ForeachIterationPostfixTemplateProvider extends PostfixTempla
         pointerManager.createSmartPsiElementPointer(forStatement);
 
       final Runnable runnable = new Runnable() {
-        @Override public void run() {
+        @Override
+        public void run() {
           PsiForeachStatement statement = statementPointer.getElement();
           if (statement == null) return;
 
@@ -112,9 +114,11 @@ public final class ForeachIterationPostfixTemplateProvider extends PostfixTempla
       };
 
       context.setLaterRunnable(new Runnable() {
-        @Override public void run() {
+        @Override
+        public void run() {
           ApplicationManager.getApplication().runWriteAction(new Runnable() {
-            @Override public void run() {
+            @Override
+            public void run() {
               CommandProcessor.getInstance().runUndoTransparentAction(runnable);
             }
           });

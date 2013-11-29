@@ -15,7 +15,8 @@ import java.util.List;
   description = "Returns value from containing method",
   example = "return expr;")
 public final class ReturnStatementPostfixTemplateProvider extends PostfixTemplateProvider {
-  @Override public void createItems(@NotNull PostfixTemplateContext context, @NotNull List<LookupElement> consumer) {
+  @Override
+  public void createItems(@NotNull PostfixTemplateContext context, @NotNull List<LookupElement> consumer) {
     PrefixExpressionContext expression = context.outerExpression();
     if (!expression.canBeStatement) return;
 
@@ -28,18 +29,20 @@ public final class ReturnStatementPostfixTemplateProvider extends PostfixTemplat
       if (node instanceof PsiClass) return;
 
       if (node instanceof PsiMethod) {
-        method = (PsiMethod) node;
+        method = (PsiMethod)node;
         break;
       }
 
       node = node.getParent();
-    } while (node != null);
+    }
+    while (node != null);
 
     if (method == null) return; // :(
 
     if (context.executionContext.isForceMode) {
       consumer.add(new ReturnLookupElement(expression));
-    } else {
+    }
+    else {
       PsiType returnType = method.getReturnType();
       if (returnType == null || returnType.equals(PsiType.VOID)) return;
 
@@ -56,15 +59,15 @@ public final class ReturnStatementPostfixTemplateProvider extends PostfixTemplat
       super("return", expression);
     }
 
-    @NotNull @Override protected PsiReturnStatement createNewStatement(
-        @NotNull PsiElementFactory factory, @NotNull PsiElement expression, @NotNull PsiElement context) {
-      PsiReturnStatement returnStatement =
-        (PsiReturnStatement) factory.createStatementFromText("return expr;", expression);
-
+    @NotNull
+    @Override
+    protected PsiReturnStatement createNewStatement(@NotNull PsiElementFactory factory,
+                                                    @NotNull PsiElement expression,
+                                                    @NotNull PsiElement context) {
+      PsiReturnStatement returnStatement = (PsiReturnStatement)factory.createStatementFromText("return expr;", expression);
       PsiExpression returnValue = returnStatement.getReturnValue();
       assert (returnValue != null) : "returnValue != null";
       returnValue.replace(expression);
-
       return returnStatement;
     }
   }

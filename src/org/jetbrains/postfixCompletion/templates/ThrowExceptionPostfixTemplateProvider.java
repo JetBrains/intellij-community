@@ -7,11 +7,11 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.postfixCompletion.util.CommonUtils;
 import org.jetbrains.postfixCompletion.infrastructure.PostfixTemplateContext;
 import org.jetbrains.postfixCompletion.infrastructure.PrefixExpressionContext;
 import org.jetbrains.postfixCompletion.infrastructure.TemplateProvider;
 import org.jetbrains.postfixCompletion.lookupItems.StatementPostfixLookupElement;
+import org.jetbrains.postfixCompletion.util.CommonUtils;
 
 import java.util.List;
 
@@ -23,9 +23,8 @@ import static org.jetbrains.postfixCompletion.util.CommonUtils.CtorAccessibility
   example = "throw expr;",
   worksOnTypes = true)
 public final class ThrowExceptionPostfixTemplateProvider extends PostfixTemplateProvider {
-  @Override public void createItems(
-      @NotNull PostfixTemplateContext context, @NotNull List<LookupElement> consumer) {
-
+  @Override
+  public void createItems(@NotNull PostfixTemplateContext context, @NotNull List<LookupElement> consumer) {
     PrefixExpressionContext expression = context.outerExpression();
     if (!expression.canBeStatement) return;
 
@@ -34,11 +33,13 @@ public final class ThrowExceptionPostfixTemplateProvider extends PostfixTemplate
     PsiClass throwableClass = null;
 
     if (expressionType instanceof PsiClassType) {
-      throwableClass = ((PsiClassType) expressionType).resolve();
-    } else {
+      throwableClass = ((PsiClassType)expressionType).resolve();
+    }
+    else {
       PsiElement referencedElement = expression.referencedElement;
-      if (referencedElement instanceof PsiClass)
-        throwableClass = (PsiClass) referencedElement;
+      if (referencedElement instanceof PsiClass) {
+        throwableClass = (PsiClass)referencedElement;
+      }
     }
 
     if (!context.executionContext.isForceMode) {
@@ -62,31 +63,32 @@ public final class ThrowExceptionPostfixTemplateProvider extends PostfixTemplate
     consumer.add(new ThrowStatementLookupElement(expression, psiClass, accessibility));
   }
 
-  static class ThrowStatementLookupElement extends StatementPostfixLookupElement<PsiThrowStatement> {
+  private static class ThrowStatementLookupElement extends StatementPostfixLookupElement<PsiThrowStatement> {
     @Nullable private final PsiClass myThrowableClass;
     @NotNull private final CtorAccessibility myAccessibility;
     private final boolean myTypeRequiresRefinement;
 
-    public ThrowStatementLookupElement(
-        @NotNull PrefixExpressionContext context, @Nullable PsiClass throwableClass,
-        @NotNull CtorAccessibility accessibility) {
+    public ThrowStatementLookupElement(@NotNull PrefixExpressionContext context,
+                                       @Nullable PsiClass throwableClass,
+                                       @NotNull CtorAccessibility accessibility) {
       super("throw", context);
       myThrowableClass = throwableClass;
       myAccessibility = accessibility;
-      myTypeRequiresRefinement = (throwableClass != null)
-        && CommonUtils.isTypeRequiresRefinement(throwableClass);
+      myTypeRequiresRefinement = (throwableClass != null) && CommonUtils.isTypeRequiresRefinement(throwableClass);
     }
 
-    @NotNull @Override protected PsiThrowStatement createNewStatement(
-        @NotNull PsiElementFactory factory, @NotNull PsiElement expression, @NotNull PsiElement context) {
+    @NotNull
+    @Override
+    protected PsiThrowStatement createNewStatement(@NotNull PsiElementFactory factory, @NotNull PsiElement expression, @NotNull PsiElement context) {
       PsiExpression throwableValue;
       if (myThrowableClass == null) {
-        throwableValue = (PsiExpression) expression;
-      } else {
+        throwableValue = (PsiExpression)expression;
+      }
+      else {
         String template = "new Throwable()";
         if (myTypeRequiresRefinement) template += "{}";
 
-        PsiNewExpression newExpression = (PsiNewExpression) factory.createExpressionFromText(template, context);
+        PsiNewExpression newExpression = (PsiNewExpression)factory.createExpressionFromText(template, context);
         PsiJavaCodeReferenceElement typeReference = newExpression.getClassOrAnonymousClassReference();
         assert (typeReference != null) : "typeReference != null";
 
@@ -94,7 +96,8 @@ public final class ThrowExceptionPostfixTemplateProvider extends PostfixTemplate
           if (myThrowableClass.isValid()) {
             typeReference.replace(factory.createClassReferenceElement(myThrowableClass));
           }
-        } else {
+        }
+        else {
           typeReference.replace(expression);
         }
 
@@ -102,7 +105,7 @@ public final class ThrowExceptionPostfixTemplateProvider extends PostfixTemplate
       }
 
       PsiThrowStatement throwStatement =
-        (PsiThrowStatement) factory.createStatementFromText("throw expr;", context);
+        (PsiThrowStatement)factory.createStatementFromText("throw expr;", context);
 
       PsiExpression exception = throwStatement.getException();
       assert (exception != null) : "exception != null";
@@ -111,10 +114,10 @@ public final class ThrowExceptionPostfixTemplateProvider extends PostfixTemplate
       return throwStatement;
     }
 
-    @Override protected void postProcess(
-        @NotNull final InsertionContext context, @NotNull PsiThrowStatement statement) {
+    @Override
+    protected void postProcess(@NotNull final InsertionContext context, @NotNull PsiThrowStatement statement) {
       if (myThrowableClass != null) {
-        PsiNewExpression newExpression = (PsiNewExpression) statement.getException();
+        PsiNewExpression newExpression = (PsiNewExpression)statement.getException();
         assert (newExpression != null) : "newExpression != null";
 
         CaretModel caretModel = context.getEditor().getCaretModel();

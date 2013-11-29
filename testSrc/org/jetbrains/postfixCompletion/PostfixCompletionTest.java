@@ -29,13 +29,9 @@ public class PostfixCompletionTest extends LightCodeInsightFixtureTestCase {
     }
 
     myFixture.configureByFile(name + ".java");
-
     PostfixCompletionContributor.behaveAsAutoPopupForTests = !useBasic;
-
     myFixture.complete(CompletionType.BASIC);
-
     final LookupElement[] autoItems = myFixture.getLookupElements();
-
     PostfixCompletionContributor.behaveAsAutoPopupForTests = false;
 
     for (int index = 0; index < typingChars.length(); index++) {

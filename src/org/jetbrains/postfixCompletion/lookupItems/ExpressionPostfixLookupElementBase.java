@@ -14,7 +14,7 @@ public abstract class ExpressionPostfixLookupElementBase<T extends PsiExpression
     super(lookupString, context);
   }
 
-  @Override 
+  @Override
   @NotNull
   protected T handlePostfixInsert(@NotNull InsertionContext context, @NotNull PrefixExpressionContext expressionContext) {
     // get facade and factory while all elements are physical and valid
@@ -38,7 +38,7 @@ public abstract class ExpressionPostfixLookupElementBase<T extends PsiExpression
   @NotNull
   protected abstract T createNewExpression(@NotNull PsiElementFactory factory, @NotNull PsiElement expression, @NotNull PsiElement context);
 
-  @Override 
+  @Override
   protected void postProcess(@NotNull InsertionContext context, @NotNull T expression) {
     int offset = expression.getTextRange().getEndOffset();
     context.getEditor().getCaretModel().moveToOffset(offset);

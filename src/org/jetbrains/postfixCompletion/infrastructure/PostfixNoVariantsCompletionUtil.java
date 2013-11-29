@@ -23,18 +23,17 @@ import java.util.Set;
 
 // todo: fix 'scn.nn' prefix matching
 public abstract class PostfixNoVariantsCompletionUtil {
-  public static void suggestChainedCalls(
-    @NotNull CompletionParameters parameters, @NotNull CompletionResultSet resultSet,
-    @NotNull PostfixExecutionContext executionContext) {
-
+  public static void suggestChainedCalls(@NotNull CompletionParameters parameters,
+                                         @NotNull CompletionResultSet resultSet,
+                                         @NotNull PostfixExecutionContext executionContext) {
     PsiElement position = parameters.getPosition(), parent = position.getParent();
     if ((!(parent instanceof PsiJavaCodeReferenceElement))) return;
     if (executionContext.insideCodeFragment) return;
 
-    PsiElement qualifier = ((PsiJavaCodeReferenceElement) parent).getQualifier();
+    PsiElement qualifier = ((PsiJavaCodeReferenceElement)parent).getQualifier();
     if (!(qualifier instanceof PsiJavaCodeReferenceElement)) return;
 
-    PsiJavaCodeReferenceElement qualifierReference = (PsiJavaCodeReferenceElement) qualifier;
+    PsiJavaCodeReferenceElement qualifierReference = (PsiJavaCodeReferenceElement)qualifier;
     if (qualifierReference.isQualified()) return;
 
     PsiElement target = qualifierReference.resolve();
@@ -62,18 +61,21 @@ public abstract class PostfixNoVariantsCompletionUtil {
 
       // todo: EXTRACT ME PLZ
       PostfixTemplateContext mockTemplateContext = new PostfixTemplateContext(
-          (PsiJavaCodeReferenceElement) parent, qualifierReference, executionContext) {
-        @NotNull @Override
+        (PsiJavaCodeReferenceElement)parent, qualifierReference, executionContext) {
+        @NotNull
+        @Override
         protected List<PrefixExpressionContext> buildExpressionContexts(
-            @NotNull PsiElement reference, @NotNull PsiElement expression) {
+          @NotNull PsiElement reference, @NotNull PsiElement expression) {
           return Collections.<PrefixExpressionContext>singletonList(
             new PrefixExpressionContext(this, expression) {
-              @Nullable @Override // mock expression's type and referenced element
+              @Nullable
+              @Override // mock expression's type and referenced element
               protected PsiType calculateExpressionType(@NotNull PsiElement expression) {
                 return super.calculateExpressionType(mockReferenceQualifier);
               }
 
-              @Nullable @Override
+              @Nullable
+              @Override
               protected PsiElement calculateReferencedElement(@NotNull PsiElement expression) {
                 return super.calculateReferencedElement(mockReferenceQualifier);
               }
@@ -81,7 +83,8 @@ public abstract class PostfixNoVariantsCompletionUtil {
           );
         }
 
-        @NotNull @Override
+        @NotNull
+        @Override
         public PrefixExpressionContext fixExpression(@NotNull PrefixExpressionContext context) {
           return context; // is it right?
         }
@@ -91,7 +94,7 @@ public abstract class PostfixNoVariantsCompletionUtil {
         PostfixChainLookupElement chainedPostfix = new PostfixChainLookupElement(qualifierElement, postfixElement);
 
         PrefixMatcher prefixMatcher = new CamelHumpMatcher(fullPrefix);
-        boolean b = prefixMatcher.prefixMatches(chainedPostfix);
+        boolean b = prefixMatcher.prefixMatches(chainedPostfix); // todo: wtf?
 
         filteredResultSet.addElement(chainedPostfix);
       }
@@ -99,9 +102,9 @@ public abstract class PostfixNoVariantsCompletionUtil {
   }
 
   // NOTE: this is copy & paste from IDEA CE chained code completion :((
-  @NotNull private static Set<LookupElement> suggestQualifierItems(
-    @NotNull CompletionParameters parameters, @NotNull PsiJavaCodeReferenceElement qualifier) {
-
+  @NotNull
+  private static Set<LookupElement> suggestQualifierItems(@NotNull CompletionParameters parameters,
+                                                          @NotNull PsiJavaCodeReferenceElement qualifier) {
     String referenceName = qualifier.getReferenceName();
     if (referenceName == null) return Collections.emptySet();
 
@@ -109,8 +112,7 @@ public abstract class PostfixNoVariantsCompletionUtil {
     ElementFilter filter = JavaCompletionContributor.getReferenceFilter(parameters.getPosition());
     if (filter == null) return Collections.emptySet();
 
-    Set<LookupElement> variants = completeReference(
-      qualifier, qualifier, filter, parameters, qualifierMatcher);
+    Set<LookupElement> variants = completeReference(qualifier, qualifier, filter, parameters, qualifierMatcher);
 
     // add type names available in context
     PsiShortNamesCache namesCache = PsiShortNamesCache.getInstance(qualifier.getProject());
@@ -122,20 +124,23 @@ public abstract class PostfixNoVariantsCompletionUtil {
 
     // add import items (types)
     Set<LookupElement> allClasses = new LinkedHashSet<LookupElement>();
-    CompletionParameters qualifierParameters = parameters.withPosition(
-      qualifier.getReferenceNameElement(), qualifier.getTextRange().getEndOffset());
-    JavaClassNameCompletionContributor.addAllClasses(
-      qualifierParameters, true, qualifierMatcher, new CollectConsumer<LookupElement>(allClasses));
+    CompletionParameters qualifierParameters = parameters.withPosition(qualifier.getReferenceNameElement(),
+                                                                       qualifier.getTextRange().getEndOffset());
+    JavaClassNameCompletionContributor.addAllClasses(qualifierParameters, true, qualifierMatcher,
+                                                     new CollectConsumer<LookupElement>(allClasses));
 
     return allClasses;
   }
 
-  @NotNull private static Set<LookupElement> completeReference(
-    @NotNull PsiElement element, PsiReference reference, @NotNull ElementFilter filter,
-    @NotNull CompletionParameters parameters, @NotNull PrefixMatcher matcher) {
+  @NotNull
+  private static Set<LookupElement> completeReference(@NotNull PsiElement element,
+                                                      PsiReference reference,
+                                                      @NotNull ElementFilter filter,
+                                                      @NotNull CompletionParameters parameters,
+                                                      @NotNull PrefixMatcher matcher) {
 
     if (reference instanceof PsiMultiReference) {
-      PsiReference[] references = ((PsiMultiReference) reference).getReferences();
+      PsiReference[] references = ((PsiMultiReference)reference).getReferences();
       reference = ContainerUtil.findInstance(references, PsiJavaReference.class);
     }
 
@@ -145,7 +150,7 @@ public abstract class PostfixNoVariantsCompletionUtil {
 
       MyElementFilter elementFilter = new MyElementFilter(filter);
       return JavaCompletionUtil.processJavaReference(
-        element, (PsiJavaReference) reference, elementFilter, options, matcher, parameters);
+        element, (PsiJavaReference)reference, elementFilter, options, matcher, parameters);
     }
 
     return Collections.emptySet();
@@ -153,18 +158,22 @@ public abstract class PostfixNoVariantsCompletionUtil {
 
   static final class MyElementFilter implements ElementFilter {
     @NotNull private final ElementFilter myFilter;
-    public MyElementFilter(@NotNull ElementFilter filter) { myFilter = filter; }
 
-    @Override public boolean isAcceptable(Object element, PsiElement context) {
+    public MyElementFilter(@NotNull ElementFilter filter) {
+      myFilter = filter;
+    }
+
+    @Override
+    public boolean isAcceptable(Object element, PsiElement context) {
       return myFilter.isAcceptable(element, context);
     }
 
-    @Override public boolean isClassAcceptable(Class hintClass) {
+    @Override
+    public boolean isClassAcceptable(Class hintClass) {
       return ReflectionCache.isAssignable(PsiClass.class, hintClass)
-          || ReflectionCache.isAssignable(PsiVariable.class, hintClass)
-          || ReflectionCache.isAssignable(PsiMethod.class, hintClass)
-          || ReflectionCache.isAssignable(CandidateInfo.class, hintClass);
+             || ReflectionCache.isAssignable(PsiVariable.class, hintClass)
+             || ReflectionCache.isAssignable(PsiMethod.class, hintClass)
+             || ReflectionCache.isAssignable(CandidateInfo.class, hintClass);
     }
   }
-
 }

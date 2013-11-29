@@ -6,7 +6,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public abstract class CommonUtils {
-  private CommonUtils() { }
+  private CommonUtils() {
+  }
 
   public static boolean isNiceExpression(@NotNull PsiElement expression) {
     if (expression instanceof PsiAssignmentExpression) return false;
@@ -14,15 +15,16 @@ public abstract class CommonUtils {
     if (expression instanceof PsiPostfixExpression) return false;
 
     if (expression instanceof PsiMethodCallExpression) {
-      PsiType expressionType = ((PsiMethodCallExpression) expression).getType();
+      PsiType expressionType = ((PsiMethodCallExpression)expression).getType();
       if (expressionType != null && expressionType.equals(PsiType.VOID)) return false;
     }
 
     return true;
   }
 
-  @NotNull public static CtorAccessibility isTypeCanBeInstantiatedWithNew(
-      @Nullable PsiClass psiClass, @NotNull PsiElement accessContext) {
+  @NotNull
+  public static CtorAccessibility isTypeCanBeInstantiatedWithNew(
+    @Nullable PsiClass psiClass, @NotNull PsiElement accessContext) {
     if (psiClass == null) return CtorAccessibility.NotAccessible;
 
     if (psiClass.isEnum()) return CtorAccessibility.NotAccessible;
@@ -48,7 +50,7 @@ public abstract class CommonUtils {
     if (!hasAccessibleCtors) return CtorAccessibility.NotAccessible;
 
     return hasParametricCtors ? CtorAccessibility.WithParametricCtor
-                              : CtorAccessibility.WithDefaultCtor;
+      : CtorAccessibility.WithDefaultCtor;
   }
 
   public enum CtorAccessibility {

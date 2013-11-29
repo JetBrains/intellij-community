@@ -17,15 +17,21 @@ public final class PsiPointerExpression extends Expression {
     this.valuePointer = valuePointer;
   }
 
-  @Nullable @Override public Result calculateResult(ExpressionContext expressionContext) {
+  @Nullable
+  @Override
+  public Result calculateResult(ExpressionContext expressionContext) {
     return new PsiElementResult(valuePointer.getElement());
   }
 
-  @Nullable @Override public Result calculateQuickResult(ExpressionContext expressionContext) {
+  @Nullable
+  @Override
+  public Result calculateQuickResult(ExpressionContext expressionContext) {
     return calculateResult(expressionContext);
   }
 
-  @Nullable @Override public LookupElement[] calculateLookupItems(ExpressionContext expressionContext) {
+  @Nullable
+  @Override
+  public LookupElement[] calculateLookupItems(ExpressionContext expressionContext) {
     return LookupElement.EMPTY_ARRAY;
   }
 }

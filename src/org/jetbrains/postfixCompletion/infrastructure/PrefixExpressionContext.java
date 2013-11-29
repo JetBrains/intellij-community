@@ -14,7 +14,7 @@ public class PrefixExpressionContext {
   public final boolean canBeStatement;
 
   public PrefixExpressionContext(
-      @NotNull PostfixTemplateContext parentContext, @NotNull PsiElement expression) {
+    @NotNull PostfixTemplateContext parentContext, @NotNull PsiElement expression) {
     assert expression.isValid() : "expression.isValid()";
 
     this.parentContext = parentContext;
@@ -26,27 +26,31 @@ public class PrefixExpressionContext {
     canBeStatement = (getContainingStatement() != null);
   }
 
-  @Nullable public final PsiStatement getContainingStatement() {
+  @Nullable
+  public final PsiStatement getContainingStatement() {
     return parentContext.getContainingStatement(this);
   }
 
-  @Nullable protected PsiType calculateExpressionType(@NotNull PsiElement expression) {
+  @Nullable
+  protected PsiType calculateExpressionType(@NotNull PsiElement expression) {
     if (expression instanceof PsiExpression) {
-      return ((PsiExpression) expression).getType();
+      return ((PsiExpression)expression).getType();
     }
 
     return null;
   }
 
-  @Nullable protected PsiElement calculateReferencedElement(@NotNull PsiElement expression) {
+  @Nullable
+  protected PsiElement calculateReferencedElement(@NotNull PsiElement expression) {
     if (expression instanceof PsiJavaCodeReferenceElement) {
-      return ((PsiJavaCodeReferenceElement) expression).resolve();
+      return ((PsiJavaCodeReferenceElement)expression).resolve();
     }
 
     return null;
   }
 
-  @NotNull protected TextRange calculateExpressionRange() {
+  @NotNull
+  protected TextRange calculateExpressionRange() {
     TextRange expressionRange = expression.getTextRange();
     PsiJavaCodeReferenceElement reference = parentContext.postfixReference;
 
@@ -55,14 +59,16 @@ public class PrefixExpressionContext {
 
     if (qualifier != null && qualifier.isValid()) {
       int qualifierEndRange = qualifier.getTextRange().getEndOffset();
-      if (expressionRange.getEndOffset() > qualifierEndRange)
+      if (expressionRange.getEndOffset() > qualifierEndRange) {
         return new TextRange(expressionRange.getStartOffset(), qualifierEndRange);
+      }
     }
 
     return expressionRange;
   }
 
-  @NotNull public final PrefixExpressionContext fixExpression() {
+  @NotNull
+  public final PrefixExpressionContext fixExpression() {
     PrefixExpressionContext fixedContext = parentContext.fixExpression(this);
     PsiElement fixedExpression = fixedContext.expression;
 

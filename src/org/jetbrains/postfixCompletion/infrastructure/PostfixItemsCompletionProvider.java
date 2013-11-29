@@ -14,7 +14,6 @@ public abstract class PostfixItemsCompletionProvider {
   public static List<LookupElement> getItems(@NotNull CompletionParameters parameters,
                                              @NotNull CompletionResultSet result,
                                              @NotNull PostfixExecutionContext executionContext) {
-
     PostfixTemplatesService templatesService = PostfixTemplatesService.getInstance();
     if (templatesService == null) {
       return Collections.emptyList();

@@ -16,8 +16,8 @@ import java.util.List;
   description = "Produces synchronization statement",
   example = "synchronized (expr)")
 public final class SynchronizedStatementPostfixTemplateProvider extends PostfixTemplateProvider {
-  @Override public void createItems(
-      @NotNull PostfixTemplateContext context, @NotNull List<LookupElement> consumer) {
+  @Override
+  public void createItems(@NotNull PostfixTemplateContext context, @NotNull List<LookupElement> consumer) {
     PrefixExpressionContext expression = context.outerExpression();
     if (!expression.canBeStatement) return;
 
@@ -37,24 +37,24 @@ public final class SynchronizedStatementPostfixTemplateProvider extends PostfixT
       super("synchronized", context);
     }
 
-    @NotNull @Override protected PsiSynchronizedStatement createNewStatement(
-      @NotNull PsiElementFactory factory, @NotNull PsiElement expression, @NotNull PsiElement context) {
-
+    @NotNull
+    @Override
+    protected PsiSynchronizedStatement createNewStatement(@NotNull PsiElementFactory factory,
+                                                          @NotNull PsiElement expression,
+                                                          @NotNull PsiElement context) {
       PsiSynchronizedStatement synchronizedStatement =
-        (PsiSynchronizedStatement) factory.createStatementFromText("synchronized (expr)", context);
-
+        (PsiSynchronizedStatement)factory.createStatementFromText("synchronized (expr)", context);
       PsiExpression lockExpression = synchronizedStatement.getLockExpression();
       assert (lockExpression != null) : "lockExpression != null";
       lockExpression.replace(expression);
-
       return synchronizedStatement;
     }
 
-    @Override protected void postProcess(
-        @NotNull final InsertionContext context, @NotNull PsiSynchronizedStatement statement) {
+    @Override
+    protected void postProcess(@NotNull final InsertionContext context, @NotNull PsiSynchronizedStatement statement) {
       // look for right parenthesis
       for (PsiElement node = statement.getLockExpression(); node != null; node = node.getNextSibling()) {
-        if (node instanceof PsiJavaToken && ((PsiJavaToken) node).getTokenType() == JavaTokenType.RPARENTH) {
+        if (node instanceof PsiJavaToken && ((PsiJavaToken)node).getTokenType() == JavaTokenType.RPARENTH) {
           int offset = node.getTextRange().getEndOffset();
           context.getEditor().getCaretModel().moveToOffset(offset);
           return;

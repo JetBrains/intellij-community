@@ -4,7 +4,10 @@ import com.intellij.codeInsight.completion.InsertionContext;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiBinaryExpression;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.PsiExpression;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.postfixCompletion.infrastructure.PrefixExpressionContext;
 import org.jetbrains.postfixCompletion.util.JavaSurroundersProxy;
@@ -14,17 +17,20 @@ public abstract class NullCheckLookupElementBase extends ExpressionPostfixLookup
     super(lookupString, context);
   }
 
-  @NotNull @Override protected PsiExpression createNewExpression(
-    @NotNull PsiElementFactory factory, @NotNull PsiElement expression, @NotNull PsiElement context) {
-    PsiBinaryExpression condition = (PsiBinaryExpression) factory.createExpressionFromText(getConditionText(), context);
-    condition.getLOperand().replace(expression);
+  @NotNull
+  protected abstract String getConditionText();
 
+  @NotNull
+  @Override
+  protected PsiExpression createNewExpression(
+    @NotNull PsiElementFactory factory, @NotNull PsiElement expression, @NotNull PsiElement context) {
+    PsiBinaryExpression condition = (PsiBinaryExpression)factory.createExpressionFromText(getConditionText(), context);
+    condition.getLOperand().replace(expression);
     return condition;
   }
 
-  @NotNull protected abstract String getConditionText();
-
-  @Override protected void postProcess(@NotNull final InsertionContext context, @NotNull final PsiExpression expression) {
+  @Override
+  protected void postProcess(@NotNull final InsertionContext context, @NotNull final PsiExpression expression) {
     final Application application = ApplicationManager.getApplication();
     if (!application.isUnitTestMode()) {
       surround(context, expression);
@@ -32,9 +38,13 @@ public abstract class NullCheckLookupElementBase extends ExpressionPostfixLookup
     else {
       // I'm using this shit just to workaround code completion tail watcher assertion in tests :(
       context.setLaterRunnable(new Runnable() {
-        @Override public void run() {
+        @Override
+        public void run() {
           application.runWriteAction(new Runnable() {
-            @Override public void run() { surround(context, expression); }
+            @Override
+            public void run() {
+              surround(context, expression);
+            }
           });
         }
       });

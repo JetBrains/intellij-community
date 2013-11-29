@@ -19,8 +19,8 @@ import java.util.List;
   example = "!expr",
   worksInsideFragments = true)
 public final class NotExpressionPostfixTemplateProvider extends BooleanPostfixTemplateProvider {
-  @Override public boolean createBooleanItems(
-      @NotNull PrefixExpressionContext context, @NotNull List<LookupElement> consumer) {
+  @Override
+  public boolean createBooleanItems(@NotNull PrefixExpressionContext context, @NotNull List<LookupElement> consumer) {
     consumer.add(new NotExpressionLookupElement(context));
     return true;
   }
@@ -30,20 +30,22 @@ public final class NotExpressionPostfixTemplateProvider extends BooleanPostfixTe
       super("not", context);
     }
 
-    @NotNull @Override protected PsiExpression createNewExpression(
-      @NotNull PsiElementFactory factory, @NotNull PsiElement expression, @NotNull PsiElement context) {
-      return CodeInsightServicesUtil.invertCondition((PsiExpression) expression);
+    @NotNull
+    @Override
+    protected PsiExpression createNewExpression(@NotNull PsiElementFactory factory, @NotNull PsiElement expression, @NotNull PsiElement context) {
+      return CodeInsightServicesUtil.invertCondition((PsiExpression)expression);
     }
 
-    @Override protected void postProcess(
-        @NotNull InsertionContext context, @NotNull final PsiExpression expression) {
+    @Override
+    protected void postProcess(@NotNull InsertionContext context, @NotNull final PsiExpression expression) {
       // collapse '!!b' into 'b'
       if (isUnaryNegation(expression)) {
-        final PsiExpression operand = ((PsiPrefixExpression) expression).getOperand();
+        final PsiExpression operand = ((PsiPrefixExpression)expression).getOperand();
         final PsiElement parent = expression.getParent();
         if (operand != null && isUnaryNegation(parent)) {
           ApplicationManager.getApplication().runWriteAction(new Runnable() {
-            @Override public void run() {
+            @Override
+            public void run() {
               parent.replace(operand);
             }
           });
@@ -54,9 +56,8 @@ public final class NotExpressionPostfixTemplateProvider extends BooleanPostfixTe
       super.postProcess(context, expression);
     }
 
-    private boolean isUnaryNegation(@Nullable PsiElement element) {
-      return (element instanceof PsiPrefixExpression)
-          && ((PsiPrefixExpression) element).getOperationTokenType() == JavaTokenType.EXCL;
+    private static boolean isUnaryNegation(@Nullable PsiElement element) {
+      return (element instanceof PsiPrefixExpression) && ((PsiPrefixExpression)element).getOperationTokenType() == JavaTokenType.EXCL;
     }
   }
 }

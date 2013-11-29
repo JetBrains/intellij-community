@@ -7,7 +7,6 @@ import org.jetbrains.postfixCompletion.infrastructure.PostfixExecutionContext;
 import org.jetbrains.postfixCompletion.infrastructure.PostfixItemsCompletionProvider;
 import org.jetbrains.postfixCompletion.infrastructure.PostfixNoVariantsCompletionUtil;
 
-
 import java.util.LinkedHashSet;
 
 public final class PostfixCompletionContributor extends CompletionContributor {
@@ -16,7 +15,8 @@ public final class PostfixCompletionContributor extends CompletionContributor {
   @NotNull private String myDummyIdentifier = CompletionUtilCore.DUMMY_IDENTIFIER_TRIMMED;
   public static boolean behaveAsAutoPopupForTests = false;
 
-  @Override public void duringCompletion(@NotNull CompletionInitializationContext context) {
+  @Override
+  public void duringCompletion(@NotNull CompletionInitializationContext context) {
     synchronized (myDummyIdentifierLock) {
       myDummyIdentifier = context.getDummyIdentifier();
     }
@@ -24,13 +24,17 @@ public final class PostfixCompletionContributor extends CompletionContributor {
 
   // todo: control postfix lookup elements to be on top/bottom of the list
 
-  @Override public void fillCompletionVariants(final CompletionParameters parameters, final CompletionResultSet result) {
+  @Override
+  public void fillCompletionVariants(final CompletionParameters parameters, final CompletionResultSet result) {
     final String dummyIdentifier;
-    synchronized (myDummyIdentifierLock) { dummyIdentifier = myDummyIdentifier; }
+    synchronized (myDummyIdentifierLock) {
+      dummyIdentifier = myDummyIdentifier;
+    }
 
     CompletionType completionType = parameters.getCompletionType();
     if (completionType != CompletionType.BASIC) return;
 
+    // todo
     LinkedHashSet<CompletionResult> results = result.runRemainingContributors(parameters, true);
 
     // build PostfixExecutionContext

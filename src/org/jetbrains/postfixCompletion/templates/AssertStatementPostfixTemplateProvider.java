@@ -17,13 +17,12 @@ import java.util.List;
   description = "Creates assertion from boolean expression",
   example = "assert expr;")
 public final class AssertStatementPostfixTemplateProvider extends BooleanPostfixTemplateProvider {
-  @Override public boolean createBooleanItems(
-      @NotNull PrefixExpressionContext context, @NotNull List<LookupElement> consumer) {
+  @Override
+  public boolean createBooleanItems(@NotNull PrefixExpressionContext context, @NotNull List<LookupElement> consumer) {
     if (context.canBeStatement) {
       consumer.add(new AssertLookupElement(context));
       return true;
     }
-
     return false;
   }
 
@@ -32,10 +31,12 @@ public final class AssertStatementPostfixTemplateProvider extends BooleanPostfix
       super("assert", expression);
     }
 
-    @NotNull @Override protected PsiAssertStatement createNewStatement(
-        @NotNull PsiElementFactory factory, @NotNull PsiElement expression, @NotNull PsiElement context) {
-      PsiAssertStatement assertStatement =
-        (PsiAssertStatement) factory.createStatementFromText("assert expr;", expression);
+    @NotNull
+    @Override
+    protected PsiAssertStatement createNewStatement(@NotNull PsiElementFactory factory,
+                                                    @NotNull PsiElement expression,
+                                                    @NotNull PsiElement context) {
+      PsiAssertStatement assertStatement = (PsiAssertStatement)factory.createStatementFromText("assert expr;", expression);
 
       PsiExpression condition = assertStatement.getAssertCondition();
       assert (condition != null) : "condition != null";

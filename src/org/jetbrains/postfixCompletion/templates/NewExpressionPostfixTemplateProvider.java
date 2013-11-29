@@ -5,11 +5,11 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.editor.CaretModel;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.postfixCompletion.lookupItems.ExpressionPostfixLookupElementBase;
-import org.jetbrains.postfixCompletion.util.CommonUtils;
 import org.jetbrains.postfixCompletion.infrastructure.PostfixTemplateContext;
 import org.jetbrains.postfixCompletion.infrastructure.PrefixExpressionContext;
 import org.jetbrains.postfixCompletion.infrastructure.TemplateProvider;
+import org.jetbrains.postfixCompletion.lookupItems.ExpressionPostfixLookupElementBase;
+import org.jetbrains.postfixCompletion.util.CommonUtils;
 
 import java.util.List;
 
@@ -23,17 +23,19 @@ import static org.jetbrains.postfixCompletion.util.CommonUtils.CtorAccessibility
   example = "new SomeType()",
   worksOnTypes = true)
 public final class NewExpressionPostfixTemplateProvider extends PostfixTemplateProvider {
-  @Override public void createItems(
-      @NotNull PostfixTemplateContext context, @NotNull List<LookupElement> consumer) {
+  @Override
+  public void createItems(@NotNull PostfixTemplateContext context, @NotNull List<LookupElement> consumer) {
     PrefixExpressionContext expression = context.outerExpression();
 
     PsiElement referencedElement = context.innerExpression().referencedElement;
     if (referencedElement instanceof PsiClass) {
-      PsiClass psiClass = (PsiClass) referencedElement;
+      PsiClass psiClass = (PsiClass)referencedElement;
       CtorAccessibility accessibility =
         CommonUtils.isTypeCanBeInstantiatedWithNew(psiClass, expression.expression);
       if (accessibility == CtorAccessibility.NotAccessible &&
-          !context.executionContext.isForceMode) return;
+          !context.executionContext.isForceMode) {
+        return;
+      }
 
       consumer.add(new NewObjectLookupElement(expression, psiClass, accessibility));
     }
@@ -43,20 +45,20 @@ public final class NewExpressionPostfixTemplateProvider extends PostfixTemplateP
     @NotNull private final CtorAccessibility myAccessibility;
     private final boolean myTypeRequiresRefinement;
 
-    public NewObjectLookupElement(
-        @NotNull PrefixExpressionContext context, @NotNull PsiClass referencedElement,
-        @NotNull CtorAccessibility accessibility) {
+    public NewObjectLookupElement(@NotNull PrefixExpressionContext context, @NotNull PsiClass referencedElement,
+      @NotNull CtorAccessibility accessibility) {
       super("new", context);
       myAccessibility = accessibility;
       myTypeRequiresRefinement = CommonUtils.isTypeRequiresRefinement(referencedElement);
     }
 
-    @NotNull @Override protected PsiNewExpression createNewExpression(
-      @NotNull PsiElementFactory factory, @NotNull PsiElement expression, @NotNull PsiElement context) {
+    @NotNull
+    @Override
+    protected PsiNewExpression createNewExpression(@NotNull PsiElementFactory factory, @NotNull PsiElement expression, @NotNull PsiElement context) {
       String template = "new T()";
       if (myTypeRequiresRefinement) template += "{}";
 
-      PsiNewExpression newExpression = (PsiNewExpression) factory.createExpressionFromText(template, context);
+      PsiNewExpression newExpression = (PsiNewExpression)factory.createExpressionFromText(template, context);
       PsiJavaCodeReferenceElement typeReference = newExpression.getClassOrAnonymousClassReference();
       assert (typeReference != null) : "typeReference != null";
 
@@ -65,9 +67,8 @@ public final class NewExpressionPostfixTemplateProvider extends PostfixTemplateP
       return newExpression;
     }
 
-    @Override protected void postProcess(
-      @NotNull final InsertionContext context, @NotNull PsiNewExpression expression) {
-
+    @Override
+    protected void postProcess(@NotNull final InsertionContext context, @NotNull PsiNewExpression expression) {
       CaretModel caretModel = context.getEditor().getCaretModel();
       PsiExpressionList argumentList = expression.getArgumentList();
       assert (argumentList != null) : "argumentList != null";
@@ -75,7 +76,8 @@ public final class NewExpressionPostfixTemplateProvider extends PostfixTemplateP
       if (myAccessibility == CtorAccessibility.WithParametricCtor ||
           myAccessibility == CtorAccessibility.NotAccessible) { // new T(<caret>)
         caretModel.moveToOffset(argumentList.getFirstChild().getTextRange().getEndOffset());
-      } else if (myTypeRequiresRefinement) {
+      }
+      else if (myTypeRequiresRefinement) {
         PsiAnonymousClass anonymousClass = expression.getAnonymousClass();
         assert (anonymousClass != null) : "anonymousClass != null";
 
@@ -83,7 +85,8 @@ public final class NewExpressionPostfixTemplateProvider extends PostfixTemplateP
         assert (lBrace != null) : "lBrace != null";
 
         caretModel.moveToOffset(lBrace.getTextRange().getEndOffset());
-      } else { // new T()<caret>
+      }
+      else { // new T()<caret>
         caretModel.moveToOffset(argumentList.getTextRange().getEndOffset());
       }
     }

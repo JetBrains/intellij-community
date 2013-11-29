@@ -17,25 +17,31 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-public final class PostfixCompletionConfigurable
-  implements SearchableConfigurable, EditorOptionsProvider, Configurable.NoScroll {
-
-  @NotNull private static final Logger LOG = Logger.getInstance(PostfixCompletionConfigurable.class);
+public final class PostfixCompletionConfigurable implements SearchableConfigurable, EditorOptionsProvider, Configurable.NoScroll {
+  private static final Logger LOG = Logger.getInstance(PostfixCompletionConfigurable.class);
   @Nullable private PostfixTemplatesListPanel myPanel;
 
-  @NotNull @Override public String getId() {
+  @NotNull
+  @Override
+  public String getId() {
     return "reference.settingsdialog.IDE.editor.postfix.completion";
   }
 
-  @Nullable @Override public String getHelpTopic() {
+  @Nullable
+  @Override
+  public String getHelpTopic() {
     return getId();
   }
 
-  @Nls @Override public String getDisplayName() {
+  @Nls
+  @Override
+  public String getDisplayName() {
     return "Postfix Completion";
   }
 
-  @Nullable @Override public JComponent createComponent() {
+  @Nullable
+  @Override
+  public JComponent createComponent() {
     if (myPanel == null) {
       PostfixTemplatesService templatesService = PostfixTemplatesService.getInstance();
       final List<TemplateProviderInfo> templates = templatesService != null
@@ -54,7 +60,8 @@ public final class PostfixCompletionConfigurable
     return myPanel.getComponent();
   }
 
-  @Override public void apply() throws ConfigurationException {
+  @Override
+  public void apply() throws ConfigurationException {
     if (myPanel != null) {
       PostfixCompletionSettings templatesSettings = PostfixCompletionSettings.getInstance();
       if (templatesSettings != null) {
@@ -71,7 +78,8 @@ public final class PostfixCompletionConfigurable
     }
   }
 
-  @Override public void reset() {
+  @Override
+  public void reset() {
     if (myPanel != null) {
       PostfixCompletionSettings templatesSettings = PostfixCompletionSettings.getInstance();
       if (templatesSettings != null) {
@@ -80,18 +88,22 @@ public final class PostfixCompletionConfigurable
     }
   }
 
-  @Override public void disposeUIResources() {
+  @Override
+  public void disposeUIResources() {
     myPanel = null;
   }
 
-  @Override public boolean isModified() {
+  @Override
+  public boolean isModified() {
     PostfixCompletionSettings templatesSettings = PostfixCompletionSettings.getInstance();
     if (templatesSettings == null) return false;
 
     return myPanel != null && !myPanel.getState().equals(templatesSettings.getTemplatesState());
   }
 
-  @Nullable @Override public Runnable enableSearch(String s) {
+  @Nullable
+  @Override
+  public Runnable enableSearch(String s) {
     return null;
   }
 }

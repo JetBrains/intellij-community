@@ -15,12 +15,12 @@ import com.intellij.refactoring.introduceVariable.IntroduceVariableSettings;
 import com.intellij.refactoring.ui.TypeSelectorManagerImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.postfixCompletion.lookupItems.ExpressionPostfixLookupElementBase;
-import org.jetbrains.postfixCompletion.util.CommonUtils;
 import org.jetbrains.postfixCompletion.infrastructure.PostfixTemplateContext;
 import org.jetbrains.postfixCompletion.infrastructure.PrefixExpressionContext;
 import org.jetbrains.postfixCompletion.infrastructure.TemplateProvider;
+import org.jetbrains.postfixCompletion.lookupItems.ExpressionPostfixLookupElementBase;
 import org.jetbrains.postfixCompletion.lookupItems.StatementPostfixLookupElement;
+import org.jetbrains.postfixCompletion.util.CommonUtils;
 
 import java.util.List;
 
@@ -34,9 +34,8 @@ import static org.jetbrains.postfixCompletion.util.CommonUtils.CtorAccessibility
   example = "T name = expr;",
   worksOnTypes = true)
 public final class IntroduceVariablePostfixTemplateProvider extends PostfixTemplateProvider {
-  @Override public void createItems(
-      @NotNull PostfixTemplateContext context, @NotNull List<LookupElement> consumer) {
-
+  @Override
+  public void createItems(@NotNull PostfixTemplateContext context, @NotNull List<LookupElement> consumer) {
     PrefixExpressionContext forcedTarget = null;
     PsiClass invokedOnType = null;
 
@@ -52,12 +51,13 @@ public final class IntroduceVariablePostfixTemplateProvider extends PostfixTempl
       PsiElement referenced = expressionContext.referencedElement;
       if (referenced != null) {
         if (referenced instanceof PsiClass) {
-          invokedOnType = (PsiClass) referenced;
+          invokedOnType = (PsiClass)referenced;
 
           // if enum/class without constructors accessible in current context
           CtorAccessibility accessibility = CommonUtils.isTypeCanBeInstantiatedWithNew(invokedOnType, expression);
           if (accessibility == CtorAccessibility.NotAccessible) break;
-        } else {
+        }
+        else {
           // and 'too simple' expressions (except force mode)
           if (referenced instanceof PsiLocalVariable ||
               referenced instanceof PsiParameter ||
@@ -81,7 +81,8 @@ public final class IntroduceVariablePostfixTemplateProvider extends PostfixTempl
       if (expressionContext.canBeStatement) {
         consumer.add(new IntroduceVarStatementLookupElement(expressionContext, invokedOnType));
         return; // avoid multiple .var templates
-      } else {
+      }
+      else {
         forcedTarget = expressionContext;
       }
     }
@@ -89,30 +90,33 @@ public final class IntroduceVariablePostfixTemplateProvider extends PostfixTempl
     // force mode - enable inside expressions/for locals/parameters/etc
     if (forcedTarget != null && context.executionContext.isForceMode) {
       if (forcedTarget.referencedElement instanceof PsiClass) {
-        invokedOnType = (PsiClass) forcedTarget.referencedElement;
+        invokedOnType = (PsiClass)forcedTarget.referencedElement;
       }
 
       if (forcedTarget.canBeStatement) {
         consumer.add(new IntroduceVarStatementLookupElement(forcedTarget, invokedOnType));
-      } else {
+      }
+      else {
         consumer.add(new IntroduceVarExpressionLookupElement(forcedTarget, invokedOnType));
       }
     }
   }
 
-  private static class IntroduceVarStatementLookupElement
-    extends StatementPostfixLookupElement<PsiExpressionStatement> {
-    private final boolean myInvokedOnType, myIsAbstractType;
+  private static class IntroduceVarStatementLookupElement extends StatementPostfixLookupElement<PsiExpressionStatement> {
+    private final boolean myInvokedOnType;
+    private final boolean myIsAbstractType;
 
-    public IntroduceVarStatementLookupElement(
-      @NotNull PrefixExpressionContext context, @Nullable PsiClass invokedOnType) {
+    public IntroduceVarStatementLookupElement(@NotNull PrefixExpressionContext context, @Nullable PsiClass invokedOnType) {
       super("var", context);
       myInvokedOnType = (invokedOnType != null);
       myIsAbstractType = myInvokedOnType && CommonUtils.isTypeRequiresRefinement(invokedOnType);
     }
 
-    @NotNull @Override protected PsiExpressionStatement createNewStatement(
-      @NotNull PsiElementFactory factory, @NotNull PsiElement expression, @NotNull PsiElement context) {
+    @NotNull
+    @Override
+    protected PsiExpressionStatement createNewStatement(@NotNull PsiElementFactory factory,
+                                                        @NotNull PsiElement expression,
+                                                        @NotNull PsiElement context) {
       if (myInvokedOnType) {
         String template = "new " + expression.getText() + "()";
         if (myIsAbstractType) template += "{}";
@@ -120,35 +124,37 @@ public final class IntroduceVariablePostfixTemplateProvider extends PostfixTempl
       }
 
       PsiExpressionStatement expressionStatement =
-        (PsiExpressionStatement) factory.createStatementFromText("expr", context);
+        (PsiExpressionStatement)factory.createStatementFromText("expr", context);
 
       expressionStatement.getExpression().replace(expression);
       return expressionStatement;
     }
 
-    @Override public void handleInsert(@NotNull final InsertionContext context) {
+    @Override
+    public void handleInsert(@NotNull final InsertionContext context) {
       // execute insertion without undo manager enabled
       CommandProcessor.getInstance().runUndoTransparentAction(new Runnable() {
-        @Override public void run() {
+        @Override
+        public void run() {
           IntroduceVarStatementLookupElement.super.handleInsert(context);
         }
       });
     }
 
-    @Override protected void postProcess(
-      @NotNull final InsertionContext context, @NotNull final PsiExpressionStatement statement) {
-
-      context.getEditor().getCaretModel().moveToOffset(
-        statement.getExpression().getTextRange().getEndOffset());
+    @Override
+    protected void postProcess(@NotNull final InsertionContext context, @NotNull final PsiExpressionStatement statement) {
+      context.getEditor().getCaretModel().moveToOffset(statement.getExpression().getTextRange().getEndOffset());
 
       if (ApplicationManager.getApplication().isUnitTestMode()) {
         context.setLaterRunnable(new Runnable() {
-          @Override public void run() {
+          @Override
+          public void run() {
             IntroduceVariableHandler handler = getMockHandler();
             handler.invoke(context.getProject(), context.getEditor(), statement.getExpression());
           }
         });
-      } else {
+      }
+      else {
         IntroduceVariableHandler handler = new IntroduceVariableHandler();
         handler.invoke(context.getProject(), context.getEditor(), statement.getExpression());
       }
@@ -158,30 +164,32 @@ public final class IntroduceVariablePostfixTemplateProvider extends PostfixTempl
   }
 
   private static class IntroduceVarExpressionLookupElement extends ExpressionPostfixLookupElementBase<PsiExpression> {
-    private final boolean myInvokedOnType, myIsAbstractType;
+    private final boolean myInvokedOnType;
+    private final boolean myIsAbstractType;
 
-    public IntroduceVarExpressionLookupElement(
-      @NotNull PrefixExpressionContext context, @Nullable PsiClass invokedOnType) {
+    public IntroduceVarExpressionLookupElement(@NotNull PrefixExpressionContext context, @Nullable PsiClass invokedOnType) {
       super("var", context);
       myInvokedOnType = (invokedOnType != null);
-      myIsAbstractType = myInvokedOnType &&
-        (invokedOnType.isInterface() || invokedOnType.hasModifierProperty(PsiModifier.ABSTRACT));
+      myIsAbstractType = myInvokedOnType && (invokedOnType.isInterface() || invokedOnType.hasModifierProperty(PsiModifier.ABSTRACT));
     }
 
-    @NotNull @Override protected PsiExpression createNewExpression(
-      @NotNull PsiElementFactory factory, @NotNull PsiElement expression, @NotNull PsiElement context) {
+    @NotNull
+    @Override
+    protected PsiExpression createNewExpression(@NotNull PsiElementFactory factory, @NotNull PsiElement expression, @NotNull PsiElement context) {
       if (myInvokedOnType) {
         String template = "new " + expression.getText() + "()";
         if (myIsAbstractType) template += "{}";
         expression = factory.createExpressionFromText(template, context);
       }
 
-      return (PsiExpression) expression;
+      return (PsiExpression)expression;
     }
 
-    @Override public void handleInsert(@NotNull final InsertionContext context) {
+    @Override
+    public void handleInsert(@NotNull final InsertionContext context) {
       final Runnable runnable = new Runnable() {
-        @Override public void run() {
+        @Override
+        public void run() {
           IntroduceVarExpressionLookupElement.super.handleInsert(context);
         }
       };
@@ -194,17 +202,16 @@ public final class IntroduceVariablePostfixTemplateProvider extends PostfixTempl
 
       // execute postponed to workaround watching completion context
       context.setLaterRunnable(new Runnable() {
-        @Override public void run() {
+        @Override
+        public void run() {
           ApplicationManager.getApplication().runWriteAction(runnable);
         }
       });
     }
 
-    @Override protected void postProcess(
-      @NotNull InsertionContext context, @NotNull PsiExpression expression) {
-
-      context.getEditor().getCaretModel().moveToOffset(
-        expression.getTextRange().getEndOffset());
+    @Override
+    protected void postProcess(@NotNull InsertionContext context, @NotNull PsiExpression expression) {
+      context.getEditor().getCaretModel().moveToOffset(expression.getTextRange().getEndOffset());
 
       boolean unitTestMode = ApplicationManager.getApplication().isUnitTestMode();
       IntroduceVariableHandler handler = unitTestMode ? getMockHandler() : new IntroduceVariableHandler();
@@ -214,20 +221,45 @@ public final class IntroduceVariablePostfixTemplateProvider extends PostfixTempl
     }
   }
 
-  @NotNull private static IntroduceVariableHandler getMockHandler() {
+  @NotNull
+  private static IntroduceVariableHandler getMockHandler() {
     return new IntroduceVariableHandler() {
       // mock default settings
-      @Override public final IntroduceVariableSettings getSettings(
+      @Override
+      public final IntroduceVariableSettings getSettings(
         Project project, Editor editor, final PsiExpression expr, PsiExpression[] occurrences,
         TypeSelectorManagerImpl typeSelectorManager, boolean declareFinalIfAll, boolean anyAssignmentLHS,
         InputValidator validator, PsiElement anchor, OccurrencesChooser.ReplaceChoice replaceChoice) {
         return new IntroduceVariableSettings() {
-          @Override public String getEnteredName() { return "foo"; }
-          @Override public boolean isReplaceAllOccurrences() { return false; }
-          @Override public boolean isDeclareFinal() { return false; }
-          @Override public boolean isReplaceLValues() { return false; }
-          @Override public PsiType getSelectedType() { return expr.getType(); }
-          @Override public boolean isOK() { return true; }
+          @Override
+          public String getEnteredName() {
+            return "foo";
+          }
+
+          @Override
+          public boolean isReplaceAllOccurrences() {
+            return false;
+          }
+
+          @Override
+          public boolean isDeclareFinal() {
+            return false;
+          }
+
+          @Override
+          public boolean isReplaceLValues() {
+            return false;
+          }
+
+          @Override
+          public PsiType getSelectedType() {
+            return expr.getType();
+          }
+
+          @Override
+          public boolean isOK() {
+            return true;
+          }
         };
       }
     };

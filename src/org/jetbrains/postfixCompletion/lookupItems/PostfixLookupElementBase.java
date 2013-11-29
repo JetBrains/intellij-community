@@ -30,15 +30,19 @@ public abstract class PostfixLookupElementBase<T extends PsiElement> extends Loo
     myContextIndex = context.parentContext.expressions().indexOf(context);
   }
 
-  @NotNull @Override public final String getLookupString() {
+  @NotNull
+  @Override
+  public final String getLookupString() {
     return myLookupString;
   }
 
-  @Override public final boolean isWorthShowingInAutoPopup() {
+  @Override
+  public final boolean isWorthShowingInAutoPopup() {
     return true; // thx IDEA folks for implementing this!
   }
 
-  @Override public Set<String> getAllLookupStrings() {
+  @Override
+  public Set<String> getAllLookupStrings() {
     HashSet<String> set = new HashSet<String>();
 
     // this hack prevents completion list from closing
@@ -49,7 +53,8 @@ public abstract class PostfixLookupElementBase<T extends PsiElement> extends Loo
     return set;
   }
 
-  @Override public void handleInsert(@NotNull InsertionContext context) {
+  @Override
+  public void handleInsert(@NotNull InsertionContext context) {
     Document document = context.getDocument();
     int startOffset = context.getStartOffset();
     PsiDocumentManager documentManager = PsiDocumentManager.getInstance(context.getProject());
@@ -84,23 +89,26 @@ public abstract class PostfixLookupElementBase<T extends PsiElement> extends Loo
     }
   }
 
-  @Nullable private PrefixExpressionContext findOriginalContext(@NotNull PostfixTemplateContext context) {
+  @Nullable
+  private PrefixExpressionContext findOriginalContext(@NotNull PostfixTemplateContext context) {
     for (PrefixExpressionContext expressionContext : context.expressions()) {
       if (myExpressionType.isInstance(expressionContext.expression) &&
-          expressionContext.expressionRange.equals(myExpressionRange))
+          expressionContext.expressionRange.equals(myExpressionRange)) {
         return expressionContext;
+      }
     }
 
     int index = 0;
     for (PrefixExpressionContext expressionContext : context.expressions()) {
-      if (myContextIndex == index++)
+      if (myContextIndex == index++) {
         return expressionContext;
+      }
     }
 
     return null;
   }
 
-  @NotNull 
+  @NotNull
   protected abstract T handlePostfixInsert(@NotNull InsertionContext context, @NotNull PrefixExpressionContext expressionContext);
 
   protected abstract void postProcess(@NotNull InsertionContext context, @NotNull T element);

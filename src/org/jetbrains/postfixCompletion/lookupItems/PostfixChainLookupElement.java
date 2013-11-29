@@ -9,16 +9,17 @@ import java.util.LinkedHashSet;
 import java.util.Set;
 
 public final class PostfixChainLookupElement extends JavaChainLookupElement {
-  public PostfixChainLookupElement(
-      @NotNull LookupElement qualifier, @NotNull LookupElement element) {
+  public PostfixChainLookupElement(@NotNull LookupElement qualifier, @NotNull LookupElement element) {
     super(qualifier, element);
   }
 
-  @Override public PsiType getType() {
+  @Override
+  public PsiType getType() {
     return null;
   }
 
-  @Override public Set<String> getAllLookupStrings() {
+  @Override
+  public Set<String> getAllLookupStrings() {
     String qualifierString = getQualifier().getLookupString() + ".";
     Set<String> prefixedStrings = new LinkedHashSet<String>();
 

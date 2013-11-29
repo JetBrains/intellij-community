@@ -21,11 +21,12 @@ import java.util.Collections;
 import java.util.List;
 
 // todo: support '2 + 2 .var' (with spacing)
-/* todo: foo.bar
- *       123.fori    */
+// todo: foo.bar
+// todo: 123.fori
 
-public final class PostfixTemplatesService {
-  @NotNull private final List<TemplateProviderInfo> myProviders;
+public class PostfixTemplatesService {
+  private static Logger LOG = Logger.getInstance(PostfixTemplatesService.class);
+  @NotNull private List<TemplateProviderInfo> myProviders;
 
   public PostfixTemplatesService() {
     List<TemplateProviderInfo> providerInfos = new ArrayList<TemplateProviderInfo>();
@@ -43,8 +44,7 @@ public final class PostfixTemplatesService {
     ActionManager actionManager = ActionManager.getInstance();
     AnAction expandLiveTemplate = actionManager.getAction("ExpandLiveTemplateByTab");
     if (expandLiveTemplate instanceof ExpandLiveTemplateByTabAction) {
-      EditorAction expandAction = (EditorAction) expandLiveTemplate;
-
+      EditorAction expandAction = (EditorAction)expandLiveTemplate;
       EditorActionHandler existingHandler = expandAction.getHandler(); // hack :(
       expandAction.setupHandler(new ExpandPostfixEditorActionHandler(existingHandler, this));
     }
@@ -55,32 +55,33 @@ public final class PostfixTemplatesService {
     return ServiceManager.getService(PostfixTemplatesService.class);
   }
 
-  @NotNull public final List<TemplateProviderInfo> getAllTemplates() {
+  @NotNull
+  public List<TemplateProviderInfo> getAllTemplates() {
     return myProviders;
   }
 
-  @Nullable public final PostfixTemplateContext isAvailable(
-      @NotNull PsiElement positionElement, @NotNull PostfixExecutionContext executionContext) {
-
+  @Nullable
+  public PostfixTemplateContext isAvailable(@NotNull PsiElement positionElement, @NotNull PostfixExecutionContext executionContext) {
     // postfix name always is identifier
     if (!(positionElement instanceof PsiIdentifier)) return null;
 
     final PsiElement parent = positionElement.getParent();
     if (parent instanceof PsiReferenceExpression) {
-      final PsiReferenceExpression reference = (PsiReferenceExpression) parent;
+      PsiReferenceExpression reference = (PsiReferenceExpression)parent;
 
       // easy case: 'expr.postfix'
       PsiExpression qualifier = reference.getQualifierExpression();
       if (qualifier != null) {
         return new PostfixTemplateContext(reference, qualifier, executionContext) {
-          @Override @NotNull
+          @Override
+          @NotNull
           public PrefixExpressionContext fixExpression(@NotNull PrefixExpressionContext context) {
-            PsiExpression expression = (PsiExpression) context.expression;
-            PsiReferenceExpression referenceExpression = (PsiReferenceExpression) postfixReference;
+            PsiExpression expression = (PsiExpression)context.expression;
+            PsiReferenceExpression referenceExpression = (PsiReferenceExpression)postfixReference;
 
             // replace 'expr.postfix' with 'expr'
             if (expression.getParent() == referenceExpression) {
-              PsiExpression newExpression = (PsiExpression) referenceExpression.replace(expression);
+              PsiExpression newExpression = (PsiExpression)referenceExpression.replace(expression);
               return new PrefixExpressionContext(this, newExpression);
             }
 
@@ -99,10 +100,9 @@ public final class PostfixTemplatesService {
       }
 
       // cases like 'x > 0.if' and '2.var + 2' (two expression-statement and broken literal)
-      if (reference.getFirstChild() instanceof PsiReferenceParameterList &&
-          reference.getLastChild() == positionElement) {
+      if (reference.getFirstChild() instanceof PsiReferenceParameterList && reference.getLastChild() == positionElement) {
         // find enclosing expression-statement through expressions
-        final PsiExpressionStatement exprStatement = findContainingExprStatement(reference.getParent());
+        PsiExpressionStatement exprStatement = findContainingExprStatement(reference.getParent());
         if (exprStatement != null) {
           PsiStatement lhsStatement = PsiTreeUtil.getPrevSiblingOfType(exprStatement, PsiStatement.class);
           PsiExpression lhsExpression = BrokenLiteralPostfixTemplateContext.findUnfinishedExpression(lhsStatement);
@@ -114,22 +114,24 @@ public final class PostfixTemplatesService {
           }
         }
       }
-    } else if (parent instanceof PsiJavaCodeReferenceElement) {
+    }
+    else if (parent instanceof PsiJavaCodeReferenceElement) {
       // check for qualifier of '.postfix' parsed as code-reference-element
-      final PsiElement qualifier = ((PsiJavaCodeReferenceElement) parent).getQualifier();
+      final PsiElement qualifier = ((PsiJavaCodeReferenceElement)parent).getQualifier();
       if (!(qualifier instanceof PsiJavaCodeReferenceElement)) return null;
 
       PsiElement referenceParent = parent.getParent();
       if (referenceParent instanceof PsiTypeElement) {
-        final PsiElement psiElement = referenceParent.getParent();
+        PsiElement psiElement = referenceParent.getParent();
 
         // handle 'foo instanceof Bar.postfix' expressions (not 'Bar' type itself)
         if (psiElement instanceof PsiInstanceOfExpression) {
-          PsiJavaCodeReferenceElement reference = (PsiJavaCodeReferenceElement) parent;
-          PsiExpression instanceOfExpression = (PsiInstanceOfExpression) psiElement;
+          PsiJavaCodeReferenceElement reference = (PsiJavaCodeReferenceElement)parent;
+          PsiExpression instanceOfExpression = (PsiInstanceOfExpression)psiElement;
 
           return new PostfixTemplateContext(reference, instanceOfExpression, executionContext) {
-            @NotNull @Override
+            @NotNull
+            @Override
             public PrefixExpressionContext fixExpression(@NotNull PrefixExpressionContext context) {
               parent.replace(qualifier);
               assert context.expression.isValid();
@@ -142,9 +144,10 @@ public final class PostfixTemplatesService {
         if (psiElement instanceof PsiDeclarationStatement &&
             psiElement.getLastChild() instanceof PsiErrorElement && // only simple
             psiElement.getFirstChild() == referenceParent) {
-          final PsiJavaCodeReferenceElement reference = (PsiJavaCodeReferenceElement) parent;
+          final PsiJavaCodeReferenceElement reference = (PsiJavaCodeReferenceElement)parent;
           return new PostfixTemplateContext(reference, qualifier, executionContext) {
-            @NotNull @Override
+            @NotNull
+            @Override
             public PrefixExpressionContext fixExpression(@NotNull PrefixExpressionContext context) {
               // note: sometimes it can be required to use document-level fix
               // todo: test .new with various statements as next statements in block
@@ -153,7 +156,8 @@ public final class PostfixTemplatesService {
               return new PrefixExpressionContext(this, fixedReference);
             }
 
-            @Nullable @Override
+            @Nullable
+            @Override
             public PsiStatement getContainingStatement(@NotNull PrefixExpressionContext context) {
               // note: not always correct?
               if (context.expression instanceof PsiJavaCodeReferenceElement) {
@@ -165,7 +169,7 @@ public final class PostfixTemplatesService {
                 if (parent instanceof PsiTypeElement) {
                   PsiElement typeElementOwner = parent.getParent();
                   if (typeElementOwner instanceof PsiDeclarationStatement) {
-                    return (PsiStatement) typeElementOwner;
+                    return (PsiStatement)typeElementOwner;
                   }
                 }
               }
@@ -180,26 +184,28 @@ public final class PostfixTemplatesService {
     return null;
   }
 
-  @Nullable private static PsiExpressionStatement findContainingExprStatement(@NotNull PsiElement element) {
-    while (element instanceof PsiBinaryExpression ||
-           element instanceof PsiPolyadicExpression) {
+  @Nullable
+  private static PsiExpressionStatement findContainingExprStatement(@NotNull PsiElement element) {
+    // todo: PsiTreUtil?
+    while (element instanceof PsiBinaryExpression || element instanceof PsiPolyadicExpression) {
       // todo: check with postfix/prefix expressions
       element = element.getParent();
     }
 
     if (element instanceof PsiExpressionStatement) {
-      return (PsiExpressionStatement) element;
+      return (PsiExpressionStatement)element;
     }
 
     return null;
   }
 
-  @NotNull public List<LookupElement> collectTemplates(@NotNull PostfixTemplateContext context) {
-    final PostfixCompletionSettings settings = PostfixCompletionSettings.getInstance();
+  @NotNull
+  public List<LookupElement> collectTemplates(@NotNull PostfixTemplateContext context) {
+    PostfixCompletionSettings settings = PostfixCompletionSettings.getInstance();
     if (settings == null) {
       return Collections.emptyList();
     }
-    
+
     // disable all providers over package names
     PsiElement referencedElement = context.innerExpression().referencedElement;
     if (referencedElement instanceof PsiPackage) return Collections.emptyList();
@@ -217,13 +223,12 @@ public final class PostfixTemplatesService {
         if (settings.isTemplateEnabled(providerInfo)) {
           providerInfo.provider.createItems(context, elements);
         }
-      } catch (Exception ex) {
+      }
+      catch (Exception ex) {
         LOG.error(ex);
       }
     }
 
     return elements;
   }
-
-  private static final Logger LOG = Logger.getInstance("#org.jetbrains.postfixCompletion");
 }

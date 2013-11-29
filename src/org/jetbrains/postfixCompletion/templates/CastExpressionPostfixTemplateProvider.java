@@ -10,6 +10,7 @@ import org.jetbrains.postfixCompletion.infrastructure.TemplateProvider;
 import org.jetbrains.postfixCompletion.lookupItems.ExpressionPostfixLookupElement;
 import org.jetbrains.postfixCompletion.util.CommonUtils;
 import org.jetbrains.postfixCompletion.util.JavaSurroundersProxy;
+
 import java.util.List;
 
 @TemplateProvider(
