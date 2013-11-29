@@ -101,10 +101,7 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
   public ProjectData createProject() {
     final String projectDirPath = resolverCtx.getProjectPath();
     final IdeaProject ideaProject = resolverCtx.getModels().getIdeaProject();
-
-    ProjectData projectData = new ProjectData(GradleConstants.SYSTEM_ID, projectDirPath, projectDirPath);
-    projectData.setName(ideaProject.getName());
-    return projectData;
+    return new ProjectData(GradleConstants.SYSTEM_ID, ideaProject.getName(), projectDirPath, projectDirPath);
   }
 
   @NotNull
@@ -129,7 +126,7 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
     }
     final String moduleConfigPath = GradleUtil.getConfigPath(gradleModule.getGradleProject(), projectData.getLinkedExternalProjectPath());
 
-    if(ExternalSystemDebugEnvironment.DEBUG_ORPHAN_MODULES_PROCESSING) {
+    if (ExternalSystemDebugEnvironment.DEBUG_ORPHAN_MODULES_PROCESSING) {
       LOG.info(String.format(
         "Creating module data ('%s') with the external config path: '%s'", gradleModule.getGradleProject().getPath(), moduleConfigPath
       ));
@@ -414,7 +411,7 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
     Set<String> registeredModuleNames = ContainerUtilRt.newHashSet();
     Collection<DataNode<ModuleData>> modulesDataNode = ExternalSystemApiUtil.getChildren(ideProject, ProjectKeys.MODULE);
     for (DataNode<ModuleData> moduleDataNode : modulesDataNode) {
-      String name = moduleDataNode.getData().getName();
+      String name = moduleDataNode.getData().getExternalName();
       registeredModuleNames.add(name);
       if (name.equals(moduleName)) {
         return new ModuleDependencyData(ownerModule.getData(), moduleDataNode.getData());

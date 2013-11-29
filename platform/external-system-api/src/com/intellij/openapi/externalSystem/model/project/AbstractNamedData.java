@@ -10,29 +10,68 @@ import org.jetbrains.annotations.NotNull;
 public abstract class AbstractNamedData extends AbstractExternalEntityData implements Named {
 
   private static final long serialVersionUID = 1L;
-  
-  private String myName;
 
-  public AbstractNamedData(@NotNull ProjectSystemId owner, @NotNull String name) {
+  @NotNull
+  private String myExternalName;
+  @NotNull
+  private String myInternalName;
+
+  public AbstractNamedData(@NotNull ProjectSystemId owner, @NotNull String externalName) {
+    this(owner, externalName, externalName);
+  }
+
+  public AbstractNamedData(@NotNull ProjectSystemId owner, @NotNull String externalName, @NotNull String internalName) {
     super(owner);
-    myName = name;
+    myExternalName = externalName;
+    myInternalName = internalName;
+  }
+
+  /**
+   * please use {@link #getExternalName()} or {@link #getInternalName()} instead
+   */
+  @NotNull
+  @Deprecated
+  @Override
+  public String getName() {
+    return getExternalName();
+  }
+
+  /**
+   * please use {@link #setExternalName(String)} or {@link #setInternalName(String)} instead
+   */
+  @Deprecated
+  @Override
+  public void setName(@NotNull String name) {
+    setExternalName(name);
   }
 
   @NotNull
   @Override
-  public String getName() {
-    return myName;
+  public String getExternalName() {
+    return myExternalName;
   }
 
   @Override
-  public void setName(@NotNull String name) {
-    myName = name;
+  public void setExternalName(@NotNull String name) {
+    myExternalName = name;
+  }
+
+  @NotNull
+  @Override
+  public String getInternalName() {
+    return myInternalName;
+  }
+
+  @Override
+  public void setInternalName(@NotNull String name) {
+    myInternalName = name;
   }
 
   @Override
   public int hashCode() {
     int result = super.hashCode();
-    result = 31 * result + myName.hashCode();
+    result = 31 * result + myExternalName.hashCode();
+    result = 31 * result + myInternalName.hashCode();
     return result;
   }
 
@@ -40,7 +79,10 @@ public abstract class AbstractNamedData extends AbstractExternalEntityData imple
   public boolean equals(Object o) {
     if (!super.equals(o)) return false;
 
-    AbstractNamedData that = (AbstractNamedData)o;
-    return myName.equals(that.myName);
+    AbstractNamedData data = (AbstractNamedData)o;
+
+    if (!myExternalName.equals(data.myExternalName)) return false;
+    if (!myInternalName.equals(data.myInternalName)) return false;
+    return true;
   }
 }

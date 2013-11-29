@@ -132,7 +132,7 @@ public class LibraryDependencyDataService extends AbstractDependencyDataService<
               }
               break;
             case PROJECT:
-              projectLibrariesToImport.put(ExternalSystemApiUtil.getLibraryName(libraryData) + dependencyData.getScope().name(), dependencyData);
+              projectLibrariesToImport.put(libraryData.getInternalName() + dependencyData.getScope().name(), dependencyData);
               toImport.add(dependencyData);
           }
         }
@@ -164,7 +164,7 @@ public class LibraryDependencyDataService extends AbstractDependencyDataService<
   {
     for (LibraryDependencyData dependencyData : toImport) {
       LibraryData libraryData = dependencyData.getTarget();
-      String libraryName = ExternalSystemApiUtil.getLibraryName(libraryData);
+      String libraryName = libraryData.getInternalName();
       switch (dependencyData.getLevel()) {
         case MODULE:
           @SuppressWarnings("ConstantConditions") Library moduleLib = moduleLibraryTable.createLibrary(libraryName);
@@ -248,7 +248,7 @@ public class LibraryDependencyDataService extends AbstractDependencyDataService<
       if (dependencyData.getLevel() != LibraryLevel.PROJECT) {
         continue;
       }
-      final Library library = libraryTable.getLibraryByName(ExternalSystemApiUtil.getLibraryName(dependencyData));
+      final Library library = libraryTable.getLibraryByName(dependencyData.getInternalName());
       if (library == null) {
         DataNode<ProjectData> projectNode = dataNode.getDataNode(ProjectKeys.PROJECT);
         if (projectNode != null) {

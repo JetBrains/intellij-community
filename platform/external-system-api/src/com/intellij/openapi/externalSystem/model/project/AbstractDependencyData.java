@@ -58,16 +58,47 @@ public abstract class AbstractDependencyData<T extends AbstractExternalEntityDat
     myExported = exported;
   }
 
+  /**
+   * please use {@link #getExternalName()} or {@link #getInternalName()} instead
+   */
   @NotNull
+  @Deprecated
   @Override
   public String getName() {
     return myTarget.getName();
   }
-  
+
+  /**
+   * please use {@link #setExternalName(String)} or {@link #setInternalName(String)} instead
+   */
+  @Deprecated
   @Override
   public void setName(@NotNull String name) {
     myTarget.setName(name);
   }
+
+  @NotNull
+  @Override
+  public String getExternalName() {
+    return myTarget.getExternalName();
+  }
+
+  @Override
+  public void setExternalName(@NotNull String name) {
+    myTarget.setExternalName(name);
+  }
+
+  @NotNull
+  @Override
+  public String getInternalName() {
+    return myTarget.getInternalName();
+  }
+
+  @Override
+  public void setInternalName(@NotNull String name) {
+    myTarget.setInternalName(name);
+  }
+
 
   @SuppressWarnings("MethodOverridesPrivateMethodOfSuperclass")
   private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
