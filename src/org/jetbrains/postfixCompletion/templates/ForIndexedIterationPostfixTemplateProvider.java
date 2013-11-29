@@ -30,7 +30,7 @@ public final class ForIndexedIterationPostfixTemplateProvider extends ForIterati
     @NotNull
     protected PsiExpression findBoundExpression(@NotNull PsiForStatement forStatement) {
       PsiBinaryExpression condition = (PsiBinaryExpression)forStatement.getCondition();
-      assert (condition != null) : "condition != null";
+      assert condition != null;
 
       PsiExpression boundExpression = condition.getROperand();
       boundExpression = unwrapExpression(boundExpression);

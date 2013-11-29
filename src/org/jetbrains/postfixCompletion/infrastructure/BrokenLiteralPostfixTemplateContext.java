@@ -39,7 +39,7 @@ final class BrokenLiteralPostfixTemplateContext extends PostfixTemplateContext {
     // fix literal at PSI-level first
     String brokenLiteralText = myBrokenLiteral.getText();
     int dotIndex = brokenLiteralText.lastIndexOf('.');
-    assert (dotIndex > 0) : "dotIndex > 0";
+    assert dotIndex > 0;
 
     String fixedLiteralText = brokenLiteralText.substring(0, dotIndex);
     PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
@@ -49,12 +49,12 @@ final class BrokenLiteralPostfixTemplateContext extends PostfixTemplateContext {
     // now let's fix broken statements at document-level
     PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
     Document document = documentManager.getDocument(fixedLiteral.getContainingFile());
-    assert (document != null) : "document != null";
+    assert document != null;
 
     documentManager.doPostponedOperationsAndUnblockDocument(document);
 
     PsiExpression lhsExpression = lhsExpressionPointer.getElement();
-    assert (lhsExpression != null) : "element != null";
+    assert lhsExpression != null;
 
     // calculate ranges to modify
     int literalStart = fixedLiteral.getTextRange().getEndOffset();
@@ -68,7 +68,7 @@ final class BrokenLiteralPostfixTemplateContext extends PostfixTemplateContext {
 
     // let's find restored expressions in fresh PSI
     lhsExpression = lhsExpressionPointer.getElement();
-    assert (lhsExpression != null) : "element != null";
+    assert lhsExpression != null;
 
     // pointer may resolve in more outer expression, try to correct
     PsiElement leftPar = lhsExpression.getContainingFile().findElementAt(exprStart /* "(" now */);

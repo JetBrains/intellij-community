@@ -66,7 +66,7 @@ public final class ReturnStatementPostfixTemplateProvider extends PostfixTemplat
                                                     @NotNull PsiElement context) {
       PsiReturnStatement returnStatement = (PsiReturnStatement)factory.createStatementFromText("return expr;", expression);
       PsiExpression returnValue = returnStatement.getReturnValue();
-      assert (returnValue != null) : "returnValue != null";
+      assert returnValue != null;
       returnValue.replace(expression);
       return returnStatement;
     }

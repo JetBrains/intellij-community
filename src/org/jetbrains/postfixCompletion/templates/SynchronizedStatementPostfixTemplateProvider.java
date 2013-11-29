@@ -45,7 +45,7 @@ public final class SynchronizedStatementPostfixTemplateProvider extends PostfixT
       PsiSynchronizedStatement synchronizedStatement =
         (PsiSynchronizedStatement)factory.createStatementFromText("synchronized (expr)", context);
       PsiExpression lockExpression = synchronizedStatement.getLockExpression();
-      assert (lockExpression != null) : "lockExpression != null";
+      assert lockExpression != null;
       lockExpression.replace(expression);
       return synchronizedStatement;
     }

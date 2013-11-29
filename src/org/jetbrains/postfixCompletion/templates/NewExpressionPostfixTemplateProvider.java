@@ -60,7 +60,7 @@ public final class NewExpressionPostfixTemplateProvider extends PostfixTemplateP
 
       PsiNewExpression newExpression = (PsiNewExpression)factory.createExpressionFromText(template, context);
       PsiJavaCodeReferenceElement typeReference = newExpression.getClassOrAnonymousClassReference();
-      assert (typeReference != null) : "typeReference != null";
+      assert typeReference != null;
 
       typeReference.replace(expression);
 
@@ -71,7 +71,7 @@ public final class NewExpressionPostfixTemplateProvider extends PostfixTemplateP
     protected void postProcess(@NotNull final InsertionContext context, @NotNull PsiNewExpression expression) {
       CaretModel caretModel = context.getEditor().getCaretModel();
       PsiExpressionList argumentList = expression.getArgumentList();
-      assert (argumentList != null) : "argumentList != null";
+      assert argumentList != null;
 
       if (myAccessibility == CtorAccessibility.WithParametricCtor ||
           myAccessibility == CtorAccessibility.NotAccessible) { // new T(<caret>)
@@ -79,10 +79,10 @@ public final class NewExpressionPostfixTemplateProvider extends PostfixTemplateP
       }
       else if (myTypeRequiresRefinement) {
         PsiAnonymousClass anonymousClass = expression.getAnonymousClass();
-        assert (anonymousClass != null) : "anonymousClass != null";
+        assert anonymousClass != null;
 
         PsiElement lBrace = anonymousClass.getLBrace();
-        assert (lBrace != null) : "lBrace != null";
+        assert lBrace != null;
 
         caretModel.moveToOffset(lBrace.getTextRange().getEndOffset());
       }

@@ -49,13 +49,13 @@ public final class ExpandPostfixEditorActionHandler extends EditorActionHandler 
     }
 
     Project project = editor.getProject();
-    assert (project != null) : "project != null";
+    assert project != null;
 
     Document document = editor.getDocument();
     PsiDocumentManager.getInstance(project).commitDocument(document);
 
     PsiFile psiFile = PsiUtilBase.getPsiFileInEditor(editor, project);
-    assert (psiFile != null) : "psiFile != null";
+    assert psiFile != null;
 
     OffsetMap offsetMap = new OffsetMap(document);
     int caretOffset = editor.getCaretModel().getOffset();

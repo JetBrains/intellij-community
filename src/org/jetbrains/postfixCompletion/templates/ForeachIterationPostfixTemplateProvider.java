@@ -59,7 +59,7 @@ public final class ForeachIterationPostfixTemplateProvider extends PostfixTempla
                                                      @NotNull PsiElement context) {
       PsiForeachStatement forStatement = (PsiForeachStatement)factory.createStatementFromText("for(T item:expr)", context);
       PsiExpression iteratedValue = forStatement.getIteratedValue();
-      assert (iteratedValue != null) : "iteratedValue != null";
+      assert iteratedValue != null;
       iteratedValue.replace(expression);
       return forStatement;
     }
@@ -84,7 +84,7 @@ public final class ForeachIterationPostfixTemplateProvider extends PostfixTempla
 
           // store pointer to iterated value
           PsiExpression iteratedValue = statement.getIteratedValue();
-          assert (iteratedValue != null) : "iteratedValue != null";
+          assert iteratedValue != null;
           final SmartPsiElementPointer<PsiExpression> valuePointer =
             pointerManager.createSmartPsiElementPointer(iteratedValue);
 

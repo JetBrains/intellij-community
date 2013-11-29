@@ -90,7 +90,7 @@ public final class ThrowExceptionPostfixTemplateProvider extends PostfixTemplate
 
         PsiNewExpression newExpression = (PsiNewExpression)factory.createExpressionFromText(template, context);
         PsiJavaCodeReferenceElement typeReference = newExpression.getClassOrAnonymousClassReference();
-        assert (typeReference != null) : "typeReference != null";
+        assert typeReference != null;
 
         if (expression instanceof PsiReferenceExpression) {
           if (myThrowableClass.isValid()) {
@@ -108,7 +108,7 @@ public final class ThrowExceptionPostfixTemplateProvider extends PostfixTemplate
         (PsiThrowStatement)factory.createStatementFromText("throw expr;", context);
 
       PsiExpression exception = throwStatement.getException();
-      assert (exception != null) : "exception != null";
+      assert exception != null;
       exception.replace(throwableValue);
 
       return throwStatement;
@@ -118,11 +118,11 @@ public final class ThrowExceptionPostfixTemplateProvider extends PostfixTemplate
     protected void postProcess(@NotNull final InsertionContext context, @NotNull PsiThrowStatement statement) {
       if (myThrowableClass != null) {
         PsiNewExpression newExpression = (PsiNewExpression)statement.getException();
-        assert (newExpression != null) : "newExpression != null";
+        assert newExpression != null;
 
         CaretModel caretModel = context.getEditor().getCaretModel();
         PsiExpressionList argumentList = newExpression.getArgumentList();
-        assert (argumentList != null) : "argumentList != null";
+        assert argumentList != null;
 
         if (myAccessibility == CtorAccessibility.WithParametricCtor ||
             myAccessibility == CtorAccessibility.NotAccessible) { // new Throwable(<caret>)
@@ -132,10 +132,10 @@ public final class ThrowExceptionPostfixTemplateProvider extends PostfixTemplate
 
         if (myTypeRequiresRefinement) {
           PsiAnonymousClass anonymousClass = newExpression.getAnonymousClass();
-          assert (anonymousClass != null) : "anonymousClass != null";
+          assert anonymousClass != null;
 
           PsiElement lBrace = anonymousClass.getLBrace();
-          assert (lBrace != null) : "lBrace != null";
+          assert lBrace != null;
 
           caretModel.moveToOffset(lBrace.getTextRange().getEndOffset());
         }

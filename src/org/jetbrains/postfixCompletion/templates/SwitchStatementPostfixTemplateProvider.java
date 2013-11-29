@@ -65,7 +65,7 @@ public final class SwitchStatementPostfixTemplateProvider extends PostfixTemplat
                                                     @NotNull PsiElement context) {
       PsiSwitchStatement switchStatement = (PsiSwitchStatement)factory.createStatementFromText("switch (expr)", expression);
       PsiExpression condition = switchStatement.getExpression();
-      assert (condition != null) : "condition != null";
+      assert condition != null;
       condition.replace(expression);
       return switchStatement;
     }
@@ -73,7 +73,7 @@ public final class SwitchStatementPostfixTemplateProvider extends PostfixTemplat
     @Override
     protected void postProcess(@NotNull InsertionContext context, @NotNull PsiSwitchStatement statement) {
       PsiJavaToken rParenth = statement.getRParenth();
-      assert (rParenth != null) : "rParenth != null";
+      assert rParenth != null;
       int offset = rParenth.getTextRange().getEndOffset();
       context.getEditor().getCaretModel().moveToOffset(offset);
     }

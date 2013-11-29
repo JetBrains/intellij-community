@@ -101,7 +101,7 @@ public final class IntroduceFieldPostfixTemplateProvider extends PostfixTemplate
   @NotNull
   private static IntroduceFieldHandler getMockHandler(@NotNull final PsiExpression expression) {
     final PsiClass containingClass = PsiTreeUtil.getParentOfType(expression, PsiClass.class);
-    assert (containingClass != null) : "containingClass != null";
+    assert containingClass != null;
 
     return new IntroduceFieldHandler() {
       // mock default settings

@@ -39,7 +39,7 @@ public final class AssertStatementPostfixTemplateProvider extends BooleanPostfix
       PsiAssertStatement assertStatement = (PsiAssertStatement)factory.createStatementFromText("assert expr;", expression);
 
       PsiExpression condition = assertStatement.getAssertCondition();
-      assert (condition != null) : "condition != null";
+      assert condition != null;
       condition.replace(expression);
 
       return assertStatement;

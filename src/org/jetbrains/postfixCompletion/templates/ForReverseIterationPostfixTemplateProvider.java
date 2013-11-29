@@ -30,11 +30,11 @@ public final class ForReverseIterationPostfixTemplateProvider extends ForIterati
     @NotNull
     protected PsiExpression findBoundExpression(@NotNull PsiForStatement forStatement) {
       PsiDeclarationStatement initialization = (PsiDeclarationStatement)forStatement.getInitialization();
-      assert (initialization != null) : "initialization != null";
+      assert initialization != null;
 
       PsiLocalVariable indexVariable = (PsiLocalVariable)initialization.getDeclaredElements()[0];
       PsiExpression boundExpression = indexVariable.getInitializer();
-      assert (boundExpression != null) : "boundExpression != null";
+      assert boundExpression != null;
 
       if (boundExpression instanceof PsiBinaryExpression) {
         boundExpression = ((PsiBinaryExpression)boundExpression).getLOperand();

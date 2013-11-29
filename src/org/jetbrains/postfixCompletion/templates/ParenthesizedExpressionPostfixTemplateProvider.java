@@ -51,7 +51,7 @@ public final class ParenthesizedExpressionPostfixTemplateProvider extends Postfi
                                                              @NotNull PsiElement context) {
       PsiParenthesizedExpression parenthesizedExpression = (PsiParenthesizedExpression)factory.createExpressionFromText("(expr)", context);
       PsiExpression operand = parenthesizedExpression.getExpression();
-      assert (operand != null) : "operand != null";
+      assert operand != null;
       operand.replace(expression);
       return parenthesizedExpression;
     }

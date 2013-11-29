@@ -73,7 +73,7 @@ public abstract class ForIterationPostfixTemplateProvider extends PostfixTemplat
 
     @NotNull
     protected PsiExpression unwrapExpression(PsiExpression boundExpression) {
-      assert (boundExpression != null) : "boundExpression != null";
+      assert boundExpression != null;
 
       if (boundExpression instanceof PsiMethodCallExpression) { // expr.size()
         boundExpression = ((PsiMethodCallExpression)boundExpression).getMethodExpression();
@@ -86,7 +86,7 @@ public abstract class ForIterationPostfixTemplateProvider extends PostfixTemplat
         }
       }
 
-      assert (boundExpression != null) : "boundExpression != null";
+      assert boundExpression != null;
       return boundExpression;
     }
 
@@ -134,17 +134,17 @@ public abstract class ForIterationPostfixTemplateProvider extends PostfixTemplat
 
     protected void buildTemplate(@NotNull TemplateBuilderImpl builder, @NotNull PsiForStatement forStatement) {
       PsiDeclarationStatement initialization = (PsiDeclarationStatement)forStatement.getInitialization();
-      assert (initialization != null) : "initialization != null";
+      assert initialization != null;
 
       PsiLocalVariable indexVariable = (PsiLocalVariable)initialization.getDeclaredElements()[0];
 
       PsiBinaryExpression condition = (PsiBinaryExpression)forStatement.getCondition();
-      assert (condition != null) : "condition != null";
+      assert condition != null;
 
       PsiReferenceExpression indexRef1 = (PsiReferenceExpression)condition.getLOperand();
 
       PsiExpressionStatement updateStatement = (PsiExpressionStatement)forStatement.getUpdate();
-      assert (updateStatement != null) : "updateStatement != null";
+      assert updateStatement != null;
 
       PsiPostfixExpression increment = (PsiPostfixExpression)updateStatement.getExpression();
       PsiReferenceExpression indexRef2 = (PsiReferenceExpression)increment.getOperand();
