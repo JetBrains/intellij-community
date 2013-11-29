@@ -4,30 +4,28 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.postfixCompletion.infrastructure.PostfixTemplateContext;
 import org.jetbrains.postfixCompletion.infrastructure.PrefixExpressionContext;
-import org.jetbrains.postfixCompletion.infrastructure.TemplateProvider;
+import org.jetbrains.postfixCompletion.infrastructure.TemplateInfo;
 import org.jetbrains.postfixCompletion.lookupItems.NullCheckLookupElementBase;
 
-import java.util.List;
-
-@TemplateProvider(
+@TemplateInfo(
   templateName = "null",
   description = "Checks expression to be null",
   example = "if (expr == null)")
-public final class IsNullCheckPostfixTemplateProvider extends PostfixTemplateProvider {
+public final class IsNullCheckPostfixTemplate extends PostfixTemplate {
   @Override
-  public void createItems(@NotNull PostfixTemplateContext context, @NotNull List<LookupElement> consumer) {
+  public LookupElement createLookupElement(@NotNull PostfixTemplateContext context) {
     PrefixExpressionContext expression = context.outerExpression();
-    if (!expression.canBeStatement) return;
+    if (!expression.canBeStatement) return null;
 
-    Boolean isNullable = NotNullCheckPostfixTemplateProvider.isNullableExpression(expression);
+    Boolean isNullable = NotNullCheckPostfixTemplate.isNullableExpression(expression);
     if (isNullable != null) {
-      if (!isNullable) return;
+      if (!isNullable) return null;
     }
     else { // unknown nullability
-      if (!context.executionContext.isForceMode) return;
+      if (!context.executionContext.isForceMode) return null;
     }
 
-    consumer.add(new CheckIsNullLookupElement(expression));
+    return new CheckIsNullLookupElement(expression);
   }
 
   private static final class CheckIsNullLookupElement extends NullCheckLookupElementBase {

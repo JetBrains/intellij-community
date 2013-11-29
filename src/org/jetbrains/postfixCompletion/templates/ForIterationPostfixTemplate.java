@@ -20,28 +20,25 @@ import org.jetbrains.postfixCompletion.infrastructure.PostfixTemplateContext;
 import org.jetbrains.postfixCompletion.infrastructure.PrefixExpressionContext;
 import org.jetbrains.postfixCompletion.lookupItems.StatementPostfixLookupElement;
 
-import java.util.List;
-
-public abstract class ForIterationPostfixTemplateProvider extends PostfixTemplateProvider {
+public abstract class ForIterationPostfixTemplate extends PostfixTemplate {
   @Override
-  public void createItems(@NotNull PostfixTemplateContext context, @NotNull List<LookupElement> consumer) {
+  public LookupElement createLookupElement(@NotNull PostfixTemplateContext context) {
     PrefixExpressionContext expression = context.innerExpression();
-    if (!expression.canBeStatement) return;
+    if (!expression.canBeStatement) return null;
 
     PsiType expressionType = expression.expressionType;
 
     Pair<String, String> info = findSizeLikeMethod(expressionType, expression.expression);
     if (info == null) {
       if (!context.executionContext.isForceMode) {
-        return;
+        return null;
       }
       else {
         info = Pair.create("", "int");
       }
     }
 
-    ForLookupElementBase element = createIterationLookupElement(expression, info.second, info.first);
-    consumer.add(element);
+    return createIterationLookupElement(expression, info.second, info.first);
   }
 
   @NotNull

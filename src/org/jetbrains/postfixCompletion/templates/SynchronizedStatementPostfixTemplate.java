@@ -6,30 +6,28 @@ import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.postfixCompletion.infrastructure.PostfixTemplateContext;
 import org.jetbrains.postfixCompletion.infrastructure.PrefixExpressionContext;
-import org.jetbrains.postfixCompletion.infrastructure.TemplateProvider;
+import org.jetbrains.postfixCompletion.infrastructure.TemplateInfo;
 import org.jetbrains.postfixCompletion.lookupItems.StatementPostfixLookupElement;
 
-import java.util.List;
-
-@TemplateProvider(
+@TemplateInfo(
   templateName = "synchronized",
   description = "Produces synchronization statement",
   example = "synchronized (expr)")
-public final class SynchronizedStatementPostfixTemplateProvider extends PostfixTemplateProvider {
+public final class SynchronizedStatementPostfixTemplate extends PostfixTemplate {
   @Override
-  public void createItems(@NotNull PostfixTemplateContext context, @NotNull List<LookupElement> consumer) {
+  public LookupElement createLookupElement(@NotNull PostfixTemplateContext context) {
     PrefixExpressionContext expression = context.outerExpression();
-    if (!expression.canBeStatement) return;
+    if (!expression.canBeStatement) return null;
 
     PsiType expressionType = expression.expressionType;
-    if (expressionType instanceof PsiPrimitiveType) return;
+    if (expressionType instanceof PsiPrimitiveType) return null;
 
     if (!context.executionContext.isForceMode) {
-      if (expressionType == null) return;
-      if (!expressionType.equalsToText(CommonClassNames.JAVA_LANG_OBJECT)) return;
+      if (expressionType == null) return null;
+      if (!expressionType.equalsToText(CommonClassNames.JAVA_LANG_OBJECT)) return null;
     }
 
-    consumer.add(new SynchronizedLookupElement(expression));
+    return new SynchronizedLookupElement(expression);
   }
 
   static final class SynchronizedLookupElement extends StatementPostfixLookupElement<PsiSynchronizedStatement> {

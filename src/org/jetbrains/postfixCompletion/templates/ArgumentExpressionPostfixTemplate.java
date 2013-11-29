@@ -13,32 +13,33 @@ import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.postfixCompletion.infrastructure.PostfixTemplateContext;
 import org.jetbrains.postfixCompletion.infrastructure.PrefixExpressionContext;
-import org.jetbrains.postfixCompletion.infrastructure.TemplateProvider;
+import org.jetbrains.postfixCompletion.infrastructure.TemplateInfo;
 import org.jetbrains.postfixCompletion.lookupItems.ExpressionPostfixLookupElementBase;
 import org.jetbrains.postfixCompletion.util.CommonUtils;
 
-import java.util.List;
-
-@TemplateProvider(
+@TemplateInfo(
   templateName = "arg",
   description = "Surrounds expression with invocation",
   example = "someMethod(expr)",
   worksInsideFragments = true)
-public final class ArgumentExpressionPostfixTemplateProvider extends PostfixTemplateProvider {
+public final class ArgumentExpressionPostfixTemplate extends PostfixTemplate {
   @Override
-  public void createItems(@NotNull PostfixTemplateContext context, @NotNull List<LookupElement> consumer) {
+  public LookupElement createLookupElement(@NotNull PostfixTemplateContext context) {
     PrefixExpressionContext expression = context.outerExpression();
     if (context.executionContext.isForceMode) {
-      consumer.add(new ArgumentLookupElement(expression));
+      return new ArgumentLookupElement(expression);
     }
-    else if (expression.canBeStatement) {
-      if (expression.expressionType == null) return; // do not show over unresolved symbols
-      if (expression.referencedElement instanceof PsiClass) return; // do not show over types
-      if (!CommonUtils.isNiceExpression(expression.expression)) return; // void expressions and etc.
+
+    if (expression.canBeStatement) {
+      if (expression.expressionType == null) return null; // do not show over unresolved symbols
+      if (expression.referencedElement instanceof PsiClass) return null; // do not show over types
+      if (!CommonUtils.isNiceExpression(expression.expression)) return null; // void expressions and etc.
 
       // foo.bar().baz.arg
-      consumer.add(new ArgumentLookupElement(expression));
+      return new ArgumentLookupElement(expression);
     }
+
+    return null;
   }
 
   private static class ArgumentLookupElement extends ExpressionPostfixLookupElementBase<PsiMethodCallExpression> {

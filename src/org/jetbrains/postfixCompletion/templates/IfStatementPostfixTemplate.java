@@ -6,24 +6,22 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiExpression;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.postfixCompletion.infrastructure.PrefixExpressionContext;
-import org.jetbrains.postfixCompletion.infrastructure.TemplateProvider;
+import org.jetbrains.postfixCompletion.infrastructure.TemplateInfo;
 import org.jetbrains.postfixCompletion.lookupItems.ExpressionPostfixLookupElement;
 import org.jetbrains.postfixCompletion.util.JavaSurroundersProxy;
 
-import java.util.List;
-
-@TemplateProvider(
+@TemplateInfo(
   templateName = "if",
   description = "Checks boolean expression to be 'true'",
   example = "if (expr)")
-public final class IfStatementPostfixTemplateProvider extends BooleanPostfixTemplateProvider {
+public final class IfStatementPostfixTemplate extends BooleanPostfixTemplate {
   @Override
-  public boolean createBooleanItems(@NotNull PrefixExpressionContext context, @NotNull List<LookupElement> consumer) {
+  public LookupElement createLookupElement(@NotNull PrefixExpressionContext context) {
     if (context.canBeStatement) {
-      consumer.add(new IfLookupItem(context));
-      return true;
+      return new IfLookupItem(context);
     }
-    return false;
+
+    return null;
   }
 
   static final class IfLookupItem extends ExpressionPostfixLookupElement {

@@ -14,7 +14,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.postfixCompletion.ExpandPostfixEditorActionHandler;
 import org.jetbrains.postfixCompletion.settings.PostfixCompletionSettings;
-import org.jetbrains.postfixCompletion.templates.PostfixTemplateProvider;
+import org.jetbrains.postfixCompletion.templates.PostfixTemplate;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -30,8 +30,8 @@ public class PostfixTemplatesService {
 
   public PostfixTemplatesService() {
     List<TemplateProviderInfo> providerInfos = new ArrayList<TemplateProviderInfo>();
-    for (PostfixTemplateProvider provider : PostfixTemplateProvider.EP_NAME.getExtensions()) {
-      TemplateProvider annotation = provider.getClass().getAnnotation(TemplateProvider.class);
+    for (PostfixTemplate provider : PostfixTemplate.EP_NAME.getExtensions()) {
+      TemplateInfo annotation = provider.getClass().getAnnotation(TemplateInfo.class);
       if (annotation != null) {
         providerInfos.add(new TemplateProviderInfo(provider, annotation));
       }
@@ -215,13 +215,13 @@ public class PostfixTemplatesService {
     boolean insideCodeFragment = context.executionContext.insideCodeFragment;
     List<LookupElement> elements = new ArrayList<LookupElement>();
 
-
     for (TemplateProviderInfo providerInfo : myProviders) {
       if (invokedOnType && !providerInfo.annotation.worksOnTypes()) continue;
       if (insideCodeFragment && !providerInfo.annotation.worksInsideFragments()) continue;
       try {
         if (settings.isTemplateEnabled(providerInfo)) {
-          providerInfo.provider.createItems(context, elements);
+          LookupElement element = providerInfo.provider.createLookupElement(context);
+          if (element != null) elements.add(element);
         }
       }
       catch (Exception ex) {

@@ -8,29 +8,31 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.postfixCompletion.infrastructure.PostfixTemplateContext;
 import org.jetbrains.postfixCompletion.infrastructure.PrefixExpressionContext;
 
-import java.util.List;
-
-public abstract class BooleanPostfixTemplateProvider extends PostfixTemplateProvider {
-  public abstract boolean createBooleanItems(@NotNull PrefixExpressionContext context, @NotNull List<LookupElement> consumer);
+public abstract class BooleanPostfixTemplate extends PostfixTemplate {
+  public abstract LookupElement createLookupElement(@NotNull PrefixExpressionContext context);
 
   @Override
-  public void createItems(@NotNull PostfixTemplateContext context, @NotNull List<LookupElement> consumer) {
-
+  public LookupElement createLookupElement(@NotNull PostfixTemplateContext context) {
     for (PrefixExpressionContext expression : context.expressions()) {
       if (isBooleanExpression(expression)) {
-        if (createBooleanItems(expression, consumer)) return;
+        LookupElement element = createLookupElement(expression);
+        if (element != null) return element;
       }
     }
 
     if (context.executionContext.isForceMode) {
       for (PrefixExpressionContext expression : context.expressions()) {
-        if (createBooleanItems(expression, consumer)) return;
+        LookupElement element = createLookupElement(expression);
+        if (element != null) return element;
       }
     }
+
+    return null;
   }
 
   public static boolean isBooleanExpression(@NotNull PrefixExpressionContext context) {
-    return context.expression instanceof PsiExpression && isBooleanExpression((PsiExpression)context.expression, context.expressionType);
+    return context.expression instanceof PsiExpression &&
+           isBooleanExpression((PsiExpression)context.expression, context.expressionType);
   }
 
   private static boolean isBooleanExpression(@Nullable PsiExpression expression) {
@@ -83,7 +85,8 @@ public abstract class BooleanPostfixTemplateProvider extends PostfixTemplateProv
 
       if (expression instanceof PsiBinaryExpression) {
         PsiBinaryExpression binary = (PsiBinaryExpression)expression;
-        return isBooleanExpression(binary.getLOperand()) || isBooleanExpression(binary.getROperand());
+        return isBooleanExpression(binary.getLOperand()) ||
+               isBooleanExpression(binary.getROperand());
       }
       else {
         PsiPolyadicExpression polyadic = (PsiPolyadicExpression)expression;

@@ -9,24 +9,22 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.postfixCompletion.infrastructure.PostfixTemplateContext;
 import org.jetbrains.postfixCompletion.infrastructure.PrefixExpressionContext;
-import org.jetbrains.postfixCompletion.infrastructure.TemplateProvider;
+import org.jetbrains.postfixCompletion.infrastructure.TemplateInfo;
 import org.jetbrains.postfixCompletion.lookupItems.StatementPostfixLookupElement;
 import org.jetbrains.postfixCompletion.util.CommonUtils;
 
-import java.util.List;
-
 import static org.jetbrains.postfixCompletion.util.CommonUtils.CtorAccessibility;
 
-@TemplateProvider(
+@TemplateInfo(
   templateName = "throw",
   description = "Throws expression of 'Throwable' type",
   example = "throw expr;",
   worksOnTypes = true)
-public final class ThrowExceptionPostfixTemplateProvider extends PostfixTemplateProvider {
+public final class ThrowExceptionPostfixTemplate extends PostfixTemplate {
   @Override
-  public void createItems(@NotNull PostfixTemplateContext context, @NotNull List<LookupElement> consumer) {
+  public LookupElement createLookupElement(@NotNull PostfixTemplateContext context) {
     PrefixExpressionContext expression = context.outerExpression();
-    if (!expression.canBeStatement) return;
+    if (!expression.canBeStatement) return null;
 
     CtorAccessibility accessibility = CtorAccessibility.NotAccessible;
     PsiType expressionType = expression.expressionType;
@@ -43,24 +41,26 @@ public final class ThrowExceptionPostfixTemplateProvider extends PostfixTemplate
     }
 
     if (!context.executionContext.isForceMode) {
-      if (throwableClass == null) return;
+      if (throwableClass == null) return null;
       if (expressionType == null) {
         accessibility = CommonUtils.isTypeCanBeInstantiatedWithNew(throwableClass, expression.expression);
-        if (accessibility == CtorAccessibility.NotAccessible) return;
+        if (accessibility == CtorAccessibility.NotAccessible) return null;
 
         String fqnName = throwableClass.getQualifiedName();
-        if (fqnName == null) return;
+        if (fqnName == null) return null;
 
         expressionType = JavaPsiFacade
           .getElementFactory(expression.expression.getProject())
           .createTypeByFQClassName(fqnName, throwableClass.getResolveScope());
       }
 
-      if (!InheritanceUtil.isInheritor(expressionType, CommonClassNames.JAVA_LANG_THROWABLE)) return;
+      if (!InheritanceUtil.isInheritor(expressionType, CommonClassNames.JAVA_LANG_THROWABLE)) {
+        return null;
+      }
     }
 
     PsiClass psiClass = (expression.referencedElement == throwableClass) ? throwableClass : null;
-    consumer.add(new ThrowStatementLookupElement(expression, psiClass, accessibility));
+    return new ThrowStatementLookupElement(expression, psiClass, accessibility);
   }
 
   private static class ThrowStatementLookupElement extends StatementPostfixLookupElement<PsiThrowStatement> {
@@ -79,7 +79,8 @@ public final class ThrowExceptionPostfixTemplateProvider extends PostfixTemplate
 
     @NotNull
     @Override
-    protected PsiThrowStatement createNewStatement(@NotNull PsiElementFactory factory, @NotNull PsiElement expression, @NotNull PsiElement context) {
+    protected PsiThrowStatement createNewStatement(
+      @NotNull PsiElementFactory factory, @NotNull PsiElement expression, @NotNull PsiElement context) {
       PsiExpression throwableValue;
       if (myThrowableClass == null) {
         throwableValue = (PsiExpression)expression;

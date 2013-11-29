@@ -5,13 +5,13 @@ import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiForStatement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.postfixCompletion.infrastructure.PrefixExpressionContext;
-import org.jetbrains.postfixCompletion.infrastructure.TemplateProvider;
+import org.jetbrains.postfixCompletion.infrastructure.TemplateInfo;
 
-@TemplateProvider(
+@TemplateInfo(
   templateName = "fori",
   description = "Iterates with index over collection",
   example = "for (int i = 0; i < expr.length; i++)")
-public final class ForIndexedIterationPostfixTemplateProvider extends ForIterationPostfixTemplateProvider {
+public final class ForIndexedIterationPostfixTemplate extends ForIterationPostfixTemplate {
   @Override
   @NotNull
   protected ForIndexedLookupElement createIterationLookupElement(@NotNull PrefixExpressionContext expression,

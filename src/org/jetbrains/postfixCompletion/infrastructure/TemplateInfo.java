@@ -9,10 +9,11 @@ import java.lang.annotation.Target;
 
 @Target(value = ElementType.TYPE)
 @Retention(value = RetentionPolicy.RUNTIME)
-public @interface TemplateProvider {
+public @interface TemplateInfo {
   @NotNull String templateName();
   @NotNull String description();
   @NotNull String example();
+  // todo: move behavior to org.jetbrains.postfixCompletion.templates.PostfixTemplate
   boolean worksOnTypes() default false;
   boolean worksInsideFragments() default false;
 }

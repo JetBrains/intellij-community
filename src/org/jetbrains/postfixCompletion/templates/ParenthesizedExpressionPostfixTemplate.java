@@ -8,21 +8,21 @@ import com.intellij.psi.PsiParenthesizedExpression;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.postfixCompletion.infrastructure.PostfixTemplateContext;
 import org.jetbrains.postfixCompletion.infrastructure.PrefixExpressionContext;
-import org.jetbrains.postfixCompletion.infrastructure.TemplateProvider;
+import org.jetbrains.postfixCompletion.infrastructure.TemplateInfo;
 import org.jetbrains.postfixCompletion.lookupItems.ExpressionPostfixLookupElementBase;
 import org.jetbrains.postfixCompletion.util.CommonUtils;
 
 import java.util.List;
 
-@TemplateProvider(
+@TemplateInfo(
   templateName = "par",
   description = "Parenthesizes current expression",
   example = "(expr)",
   worksInsideFragments = true)
-public final class ParenthesizedExpressionPostfixTemplateProvider extends PostfixTemplateProvider {
+public final class ParenthesizedExpressionPostfixTemplate extends PostfixTemplate {
   @Override
-  public void createItems(@NotNull PostfixTemplateContext context, @NotNull List<LookupElement> consumer) {
-    if (!context.executionContext.isForceMode) return;
+  public LookupElement createLookupElement(@NotNull PostfixTemplateContext context) {
+    if (!context.executionContext.isForceMode) return null;
 
     List<PrefixExpressionContext> expressions = context.expressions();
     PrefixExpressionContext bestContext = context.outerExpression();
@@ -36,7 +36,7 @@ public final class ParenthesizedExpressionPostfixTemplateProvider extends Postfi
       }
     }
 
-    consumer.add(new ParenthesizeLookupElement(bestContext));
+    return new ParenthesizeLookupElement(bestContext);
   }
 
   private static class ParenthesizeLookupElement extends ExpressionPostfixLookupElementBase<PsiParenthesizedExpression> {

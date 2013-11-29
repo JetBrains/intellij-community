@@ -5,20 +5,18 @@ import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.postfixCompletion.infrastructure.PostfixTemplateContext;
 import org.jetbrains.postfixCompletion.infrastructure.PrefixExpressionContext;
-import org.jetbrains.postfixCompletion.infrastructure.TemplateProvider;
+import org.jetbrains.postfixCompletion.infrastructure.TemplateInfo;
 import org.jetbrains.postfixCompletion.lookupItems.StatementPostfixLookupElement;
 
-import java.util.List;
-
-@TemplateProvider(
+@TemplateInfo(
   templateName = "return",
   description = "Returns value from containing method",
   example = "return expr;")
-public final class ReturnStatementPostfixTemplateProvider extends PostfixTemplateProvider {
+public final class ReturnStatementPostfixTemplate extends PostfixTemplate {
   @Override
-  public void createItems(@NotNull PostfixTemplateContext context, @NotNull List<LookupElement> consumer) {
+  public LookupElement createLookupElement(@NotNull PostfixTemplateContext context) {
     PrefixExpressionContext expression = context.outerExpression();
-    if (!expression.canBeStatement) return;
+    if (!expression.canBeStatement) return null;
 
     PsiElement node = expression.expression;
     PsiMethod method = null;
@@ -26,7 +24,7 @@ public final class ReturnStatementPostfixTemplateProvider extends PostfixTemplat
     // check we are inside method
     do {
       // (stop on anonymous/local classes)
-      if (node instanceof PsiClass) return;
+      if (node instanceof PsiClass) return null;
 
       if (node instanceof PsiMethod) {
         method = (PsiMethod)node;
@@ -37,21 +35,18 @@ public final class ReturnStatementPostfixTemplateProvider extends PostfixTemplat
     }
     while (node != null);
 
-    if (method == null) return; // :(
+    if (method == null) return null; // :(
 
-    if (context.executionContext.isForceMode) {
-      consumer.add(new ReturnLookupElement(expression));
-    }
-    else {
+    if (!context.executionContext.isForceMode) {
       PsiType returnType = method.getReturnType();
-      if (returnType == null || returnType.equals(PsiType.VOID)) return;
+      if (returnType == null || returnType.equals(PsiType.VOID)) return null;
 
       // check expression type if type is known
       PsiType expressionType = expression.expressionType;
-      if (expressionType != null && !returnType.isAssignableFrom(expressionType)) return;
-
-      consumer.add(new ReturnLookupElement(expression));
+      if (expressionType != null && !returnType.isAssignableFrom(expressionType)) return null;
     }
+
+    return new ReturnLookupElement(expression);
   }
 
   static final class ReturnLookupElement extends StatementPostfixLookupElement<PsiReturnStatement> {

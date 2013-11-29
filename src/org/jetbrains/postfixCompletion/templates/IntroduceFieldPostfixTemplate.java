@@ -12,20 +12,18 @@ import com.intellij.refactoring.introduceField.IntroduceFieldHandler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.postfixCompletion.infrastructure.PostfixTemplateContext;
 import org.jetbrains.postfixCompletion.infrastructure.PrefixExpressionContext;
-import org.jetbrains.postfixCompletion.infrastructure.TemplateProvider;
+import org.jetbrains.postfixCompletion.infrastructure.TemplateInfo;
 import org.jetbrains.postfixCompletion.lookupItems.StatementPostfixLookupElement;
 
-import java.util.List;
-
-@TemplateProvider(
+@TemplateInfo(
   templateName = "field",
   description = "Introduces field for expression",
   example = "_field = expr;")
-public final class IntroduceFieldPostfixTemplateProvider extends PostfixTemplateProvider {
+public final class IntroduceFieldPostfixTemplate extends PostfixTemplate {
   @Override
-  public void createItems(@NotNull PostfixTemplateContext context, @NotNull List<LookupElement> consumer) {
+  public LookupElement createLookupElement(@NotNull PostfixTemplateContext context) {
     PsiMethod containingMethod = PsiTreeUtil.getParentOfType(context.postfixReference, PsiMethod.class);
-    if (containingMethod == null) return;
+    if (containingMethod == null) return null;
 
     if (context.executionContext.isForceMode || containingMethod.isConstructor()) {
       for (PrefixExpressionContext expressionContext : context.expressions()) {
@@ -50,9 +48,11 @@ public final class IntroduceFieldPostfixTemplateProvider extends PostfixTemplate
           }
         }
 
-        consumer.add(new IntroduceFieldLookupElement(expressionContext));
+        return new IntroduceFieldLookupElement(expressionContext);
       }
     }
+
+    return null;
   }
 
   private static class IntroduceFieldLookupElement extends StatementPostfixLookupElement<PsiExpressionStatement> {
@@ -62,7 +62,8 @@ public final class IntroduceFieldPostfixTemplateProvider extends PostfixTemplate
 
     @NotNull
     @Override
-    protected PsiExpressionStatement createNewStatement(@NotNull PsiElementFactory factory, @NotNull PsiElement expression, @NotNull PsiElement context) {
+    protected PsiExpressionStatement createNewStatement(
+      @NotNull PsiElementFactory factory, @NotNull PsiElement expression, @NotNull PsiElement context) {
       PsiExpressionStatement expressionStatement = (PsiExpressionStatement)factory.createStatementFromText("expr", context);
       expressionStatement.getExpression().replace(expression);
       return expressionStatement;

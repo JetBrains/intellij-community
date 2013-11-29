@@ -5,24 +5,21 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.postfixCompletion.infrastructure.PrefixExpressionContext;
-import org.jetbrains.postfixCompletion.infrastructure.TemplateProvider;
+import org.jetbrains.postfixCompletion.infrastructure.TemplateInfo;
 import org.jetbrains.postfixCompletion.lookupItems.StatementPostfixLookupElement;
 
-import java.util.List;
-
-@TemplateProvider(
+@TemplateInfo(
   templateName = "while",
   description = "Iterating while boolean statement is 'true'",
   example = "while (expr)")
-public final class WhileStatementPostfixTemplateProvider extends BooleanPostfixTemplateProvider {
+public final class WhileStatementPostfixTemplate extends BooleanPostfixTemplate {
   @Override
-  public boolean createBooleanItems(@NotNull PrefixExpressionContext context, @NotNull List<LookupElement> consumer) {
+  public LookupElement createLookupElement(@NotNull PrefixExpressionContext context) {
     if (context.canBeStatement) {
-      consumer.add(new WhileLookupItem(context));
-      return true;
+      return new WhileLookupItem(context);
     }
 
-    return false;
+    return null;
   }
 
   static final class WhileLookupItem extends StatementPostfixLookupElement<PsiWhileStatement> {
@@ -32,7 +29,8 @@ public final class WhileStatementPostfixTemplateProvider extends BooleanPostfixT
 
     @NotNull
     @Override
-    protected PsiWhileStatement createNewStatement(@NotNull PsiElementFactory factory, @NotNull PsiElement expression, @NotNull PsiElement context) {
+    protected PsiWhileStatement createNewStatement(
+      @NotNull PsiElementFactory factory, @NotNull PsiElement expression, @NotNull PsiElement context) {
       PsiWhileStatement whileStatement = (PsiWhileStatement)factory.createStatementFromText("while(expr)", context);
       PsiExpression condition = whileStatement.getCondition();
       assert condition != null : "condition != null";

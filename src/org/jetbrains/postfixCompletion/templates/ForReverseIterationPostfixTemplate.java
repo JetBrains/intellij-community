@@ -3,13 +3,13 @@ package org.jetbrains.postfixCompletion.templates;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.postfixCompletion.infrastructure.PrefixExpressionContext;
-import org.jetbrains.postfixCompletion.infrastructure.TemplateProvider;
+import org.jetbrains.postfixCompletion.infrastructure.TemplateInfo;
 
-@TemplateProvider(
+@TemplateInfo(
   templateName = "forr",
   description = "Iterates with index in reverse order",
   example = "for (int i = expr.length-1; i >= 0; i--)")
-public final class ForReverseIterationPostfixTemplateProvider extends ForIterationPostfixTemplateProvider {
+public final class ForReverseIterationPostfixTemplate extends ForIterationPostfixTemplate {
   @Override
   @NotNull
   protected ForReverseLookupElement createIterationLookupElement(@NotNull PrefixExpressionContext expression,

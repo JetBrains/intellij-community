@@ -17,25 +17,23 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.postfixCompletion.infrastructure.PostfixTemplateContext;
 import org.jetbrains.postfixCompletion.infrastructure.PrefixExpressionContext;
-import org.jetbrains.postfixCompletion.infrastructure.TemplateProvider;
+import org.jetbrains.postfixCompletion.infrastructure.TemplateInfo;
 import org.jetbrains.postfixCompletion.lookupItems.ExpressionPostfixLookupElementBase;
 import org.jetbrains.postfixCompletion.lookupItems.StatementPostfixLookupElement;
 import org.jetbrains.postfixCompletion.util.CommonUtils;
-
-import java.util.List;
 
 import static org.jetbrains.postfixCompletion.util.CommonUtils.CtorAccessibility;
 
 // todo: support for int[].var (parses as .class access!)
 
-@TemplateProvider(
+@TemplateInfo(
   templateName = "var",
   description = "Introduces variable for expression",
   example = "T name = expr;",
   worksOnTypes = true)
-public final class IntroduceVariablePostfixTemplateProvider extends PostfixTemplateProvider {
+public final class IntroduceVariablePostfixTemplate extends PostfixTemplate {
   @Override
-  public void createItems(@NotNull PostfixTemplateContext context, @NotNull List<LookupElement> consumer) {
+  public LookupElement createLookupElement(@NotNull PostfixTemplateContext context) {
     PrefixExpressionContext forcedTarget = null;
     PsiClass invokedOnType = null;
 
@@ -79,8 +77,8 @@ public final class IntroduceVariablePostfixTemplateProvider extends PostfixTempl
       if (expressionType != null && expressionType.equals(PsiType.VOID)) continue;
 
       if (expressionContext.canBeStatement) {
-        consumer.add(new IntroduceVarStatementLookupElement(expressionContext, invokedOnType));
-        return; // avoid multiple .var templates
+        return new IntroduceVarStatementLookupElement(expressionContext, invokedOnType);
+        // avoid multiple .var templates
       }
       else {
         forcedTarget = expressionContext;
@@ -94,12 +92,14 @@ public final class IntroduceVariablePostfixTemplateProvider extends PostfixTempl
       }
 
       if (forcedTarget.canBeStatement) {
-        consumer.add(new IntroduceVarStatementLookupElement(forcedTarget, invokedOnType));
+        return new IntroduceVarStatementLookupElement(forcedTarget, invokedOnType);
       }
       else {
-        consumer.add(new IntroduceVarExpressionLookupElement(forcedTarget, invokedOnType));
+        return new IntroduceVarExpressionLookupElement(forcedTarget, invokedOnType);
       }
     }
+
+    return null;
   }
 
   private static class IntroduceVarStatementLookupElement extends StatementPostfixLookupElement<PsiExpressionStatement> {
@@ -170,12 +170,14 @@ public final class IntroduceVariablePostfixTemplateProvider extends PostfixTempl
     public IntroduceVarExpressionLookupElement(@NotNull PrefixExpressionContext context, @Nullable PsiClass invokedOnType) {
       super("var", context);
       myInvokedOnType = (invokedOnType != null);
-      myIsAbstractType = myInvokedOnType && (invokedOnType.isInterface() || invokedOnType.hasModifierProperty(PsiModifier.ABSTRACT));
+      myIsAbstractType = myInvokedOnType &&
+                         (invokedOnType.isInterface() || invokedOnType.hasModifierProperty(PsiModifier.ABSTRACT));
     }
 
     @NotNull
     @Override
-    protected PsiExpression createNewExpression(@NotNull PsiElementFactory factory, @NotNull PsiElement expression, @NotNull PsiElement context) {
+    protected PsiExpression createNewExpression(
+      @NotNull PsiElementFactory factory, @NotNull PsiElement expression, @NotNull PsiElement context) {
       if (myInvokedOnType) {
         String template = "new " + expression.getText() + "()";
         if (myIsAbstractType) template += "{}";

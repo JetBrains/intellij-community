@@ -7,24 +7,22 @@ import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.postfixCompletion.infrastructure.PostfixTemplateContext;
 import org.jetbrains.postfixCompletion.infrastructure.PrefixExpressionContext;
-import org.jetbrains.postfixCompletion.infrastructure.TemplateProvider;
+import org.jetbrains.postfixCompletion.infrastructure.TemplateInfo;
 import org.jetbrains.postfixCompletion.lookupItems.ExpressionPostfixLookupElementBase;
 import org.jetbrains.postfixCompletion.util.CommonUtils;
-
-import java.util.List;
 
 import static org.jetbrains.postfixCompletion.util.CommonUtils.CtorAccessibility;
 
 // todo: force mode!
 
-@TemplateProvider(
+@TemplateInfo(
   templateName = "new",
   description = "Produces instantiation expression for type",
   example = "new SomeType()",
   worksOnTypes = true)
-public final class NewExpressionPostfixTemplateProvider extends PostfixTemplateProvider {
+public final class NewExpressionPostfixTemplate extends PostfixTemplate {
   @Override
-  public void createItems(@NotNull PostfixTemplateContext context, @NotNull List<LookupElement> consumer) {
+  public LookupElement createLookupElement(@NotNull PostfixTemplateContext context) {
     PrefixExpressionContext expression = context.outerExpression();
 
     PsiElement referencedElement = context.innerExpression().referencedElement;
@@ -34,11 +32,13 @@ public final class NewExpressionPostfixTemplateProvider extends PostfixTemplateP
         CommonUtils.isTypeCanBeInstantiatedWithNew(psiClass, expression.expression);
       if (accessibility == CtorAccessibility.NotAccessible &&
           !context.executionContext.isForceMode) {
-        return;
+        return null;
       }
 
-      consumer.add(new NewObjectLookupElement(expression, psiClass, accessibility));
+      return new NewObjectLookupElement(expression, psiClass, accessibility);
     }
+
+    return null;
   }
 
   static class NewObjectLookupElement extends ExpressionPostfixLookupElementBase<PsiNewExpression> {
@@ -54,7 +54,8 @@ public final class NewExpressionPostfixTemplateProvider extends PostfixTemplateP
 
     @NotNull
     @Override
-    protected PsiNewExpression createNewExpression(@NotNull PsiElementFactory factory, @NotNull PsiElement expression, @NotNull PsiElement context) {
+    protected PsiNewExpression createNewExpression(
+      @NotNull PsiElementFactory factory, @NotNull PsiElement expression, @NotNull PsiElement context) {
       String template = "new T()";
       if (myTypeRequiresRefinement) template += "{}";
 

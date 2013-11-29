@@ -7,23 +7,21 @@ import com.intellij.psi.PsiElementFactory;
 import com.intellij.psi.PsiExpression;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.postfixCompletion.infrastructure.PrefixExpressionContext;
-import org.jetbrains.postfixCompletion.infrastructure.TemplateProvider;
+import org.jetbrains.postfixCompletion.infrastructure.TemplateInfo;
 import org.jetbrains.postfixCompletion.lookupItems.StatementPostfixLookupElement;
 
-import java.util.List;
-
-@TemplateProvider(
+@TemplateInfo(
   templateName = "assert",
   description = "Creates assertion from boolean expression",
   example = "assert expr;")
-public final class AssertStatementPostfixTemplateProvider extends BooleanPostfixTemplateProvider {
+public final class AssertStatementPostfixTemplate extends BooleanPostfixTemplate {
   @Override
-  public boolean createBooleanItems(@NotNull PrefixExpressionContext context, @NotNull List<LookupElement> consumer) {
+  public LookupElement createLookupElement(@NotNull PrefixExpressionContext context) {
     if (context.canBeStatement) {
-      consumer.add(new AssertLookupElement(context));
-      return true;
+      return new AssertLookupElement(context);
     }
-    return false;
+
+    return null;
   }
 
   static final class AssertLookupElement extends StatementPostfixLookupElement<PsiAssertStatement> {

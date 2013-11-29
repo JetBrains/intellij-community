@@ -7,18 +7,16 @@ import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.postfixCompletion.infrastructure.PostfixTemplateContext;
 import org.jetbrains.postfixCompletion.infrastructure.PrefixExpressionContext;
-import org.jetbrains.postfixCompletion.infrastructure.TemplateProvider;
+import org.jetbrains.postfixCompletion.infrastructure.TemplateInfo;
 import org.jetbrains.postfixCompletion.lookupItems.StatementPostfixLookupElement;
 
-import java.util.List;
-
-@TemplateProvider(
+@TemplateInfo(
   templateName = "switch",
   description = "Produces switch over integral/enum/string values",
   example = "switch (expr)")
-public final class SwitchStatementPostfixTemplateProvider extends PostfixTemplateProvider {
+public final class SwitchStatementPostfixTemplate extends PostfixTemplate {
   @Override
-  public void createItems(@NotNull PostfixTemplateContext context, @NotNull List<LookupElement> consumer) {
+  public LookupElement createLookupElement(@NotNull PostfixTemplateContext context) {
     for (PrefixExpressionContext expressionContext : context.expressions()) {
       if (!expressionContext.canBeStatement) continue;
 
@@ -28,9 +26,10 @@ public final class SwitchStatementPostfixTemplateProvider extends PostfixTemplat
         if (!isSwitchCompatibleType(expressionType, expressionContext.expression)) continue;
       }
 
-      consumer.add(new ReturnLookupElement(expressionContext));
-      break;
+      return new ReturnLookupElement(expressionContext);
     }
+
+    return null;
   }
 
   private static boolean isSwitchCompatibleType(@NotNull PsiType type, @NotNull PsiElement context) {

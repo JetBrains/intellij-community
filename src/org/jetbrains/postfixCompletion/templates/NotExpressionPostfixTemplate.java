@@ -8,21 +8,18 @@ import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.postfixCompletion.infrastructure.PrefixExpressionContext;
-import org.jetbrains.postfixCompletion.infrastructure.TemplateProvider;
+import org.jetbrains.postfixCompletion.infrastructure.TemplateInfo;
 import org.jetbrains.postfixCompletion.lookupItems.ExpressionPostfixLookupElementBase;
 
-import java.util.List;
-
-@TemplateProvider(
+@TemplateInfo(
   templateName = "not",
   description = "Negates boolean expression",
   example = "!expr",
   worksInsideFragments = true)
-public final class NotExpressionPostfixTemplateProvider extends BooleanPostfixTemplateProvider {
+public final class NotExpressionPostfixTemplate extends BooleanPostfixTemplate {
   @Override
-  public boolean createBooleanItems(@NotNull PrefixExpressionContext context, @NotNull List<LookupElement> consumer) {
-    consumer.add(new NotExpressionLookupElement(context));
-    return true;
+  public LookupElement createLookupElement(@NotNull PrefixExpressionContext context) {
+    return new NotExpressionLookupElement(context);
   }
 
   private static final class NotExpressionLookupElement extends ExpressionPostfixLookupElementBase<PsiExpression> {

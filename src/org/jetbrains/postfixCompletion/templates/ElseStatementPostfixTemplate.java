@@ -9,25 +9,22 @@ import com.intellij.psi.PsiElementFactory;
 import com.intellij.psi.PsiExpression;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.postfixCompletion.infrastructure.PrefixExpressionContext;
-import org.jetbrains.postfixCompletion.infrastructure.TemplateProvider;
+import org.jetbrains.postfixCompletion.infrastructure.TemplateInfo;
 import org.jetbrains.postfixCompletion.lookupItems.ExpressionPostfixLookupElementBase;
 import org.jetbrains.postfixCompletion.util.JavaSurroundersProxy;
 
-import java.util.List;
-
-@TemplateProvider(
+@TemplateInfo(
   templateName = "else",
   description = "Checks boolean expression to be 'false'",
   example = "if (!expr)")
-public final class ElseStatementPostfixTemplateProvider extends BooleanPostfixTemplateProvider {
+public final class ElseStatementPostfixTemplate extends BooleanPostfixTemplate {
   @Override
-  public boolean createBooleanItems(@NotNull PrefixExpressionContext context, @NotNull List<LookupElement> consumer) {
+  public LookupElement createLookupElement(@NotNull PrefixExpressionContext context) {
     if (context.canBeStatement) {
-      consumer.add(new ElseLookupItem(context));
-      return true;
+      return new ElseLookupItem(context);
     }
 
-    return false;
+    return null;
   }
 
   static final class ElseLookupItem extends ExpressionPostfixLookupElementBase<PsiExpression> {
@@ -37,7 +34,8 @@ public final class ElseStatementPostfixTemplateProvider extends BooleanPostfixTe
 
     @NotNull
     @Override
-    protected PsiExpression createNewExpression(@NotNull PsiElementFactory factory, @NotNull PsiElement expression, @NotNull PsiElement context) {
+    protected PsiExpression createNewExpression(
+      @NotNull PsiElementFactory factory, @NotNull PsiElement expression, @NotNull PsiElement context) {
       return CodeInsightServicesUtil.invertCondition((PsiExpression)expression);
     }
 

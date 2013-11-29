@@ -19,32 +19,30 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.postfixCompletion.PsiPointerExpression;
 import org.jetbrains.postfixCompletion.infrastructure.PostfixTemplateContext;
 import org.jetbrains.postfixCompletion.infrastructure.PrefixExpressionContext;
-import org.jetbrains.postfixCompletion.infrastructure.TemplateProvider;
+import org.jetbrains.postfixCompletion.infrastructure.TemplateInfo;
 import org.jetbrains.postfixCompletion.lookupItems.StatementPostfixLookupElement;
 
-import java.util.List;
-
-@TemplateProvider(
+@TemplateInfo(
   templateName = "for",
   description = "Iterates over enumerable collection",
   example = "for (T item : collection)")
-public final class ForeachIterationPostfixTemplateProvider extends PostfixTemplateProvider {
+public final class ForeachIterationPostfixTemplate extends PostfixTemplate {
   @Override
-  public void createItems(@NotNull PostfixTemplateContext context, @NotNull List<LookupElement> consumer) {
+  public LookupElement createLookupElement(@NotNull PostfixTemplateContext context) {
     PrefixExpressionContext expression = context.outerExpression();
 
     if (!context.executionContext.isForceMode) {
       PsiType expressionType = expression.expressionType;
-      if (expressionType == null) return;
+      if (expressionType == null) return null;
 
       // for-statements can take expressions of array or Iterable<T>-derived types
       if (!(expressionType instanceof PsiArrayType) &&
           !InheritanceUtil.isInheritor(expressionType, CommonClassNames.JAVA_LANG_ITERABLE)) {
-        return;
+        return null;
       }
     }
 
-    consumer.add(new ForeachLookupElement(expression));
+    return new ForeachLookupElement(expression);
   }
 
   private static final class ForeachLookupElement extends StatementPostfixLookupElement<PsiForeachStatement> {
