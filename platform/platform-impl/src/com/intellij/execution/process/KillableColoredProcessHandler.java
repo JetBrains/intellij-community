@@ -18,9 +18,11 @@ package com.intellij.execution.process;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.KillableProcess;
 import com.intellij.execution.configurations.GeneralCommandLine;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.IOException;
 import java.nio.charset.Charset;
 
 /**
@@ -32,6 +34,8 @@ import java.nio.charset.Charset;
  *         P.S: probably OSProcessHandler is better place for this feature but it can affect other run configurations and should be tested
  */
 public class KillableColoredProcessHandler extends ColoredProcessHandler implements KillableProcess {
+  private static final Logger LOG = Logger.getInstance(KillableColoredProcessHandler .class);
+
   private boolean myShouldKillProcessSoftly = true;
 
   public KillableColoredProcessHandler(GeneralCommandLine commandLine) throws ExecutionException {
@@ -71,6 +75,31 @@ public class KillableColoredProcessHandler extends ColoredProcessHandler impleme
       }
     }
     return false;
+  }
+
+  @Override
+  protected void destroyProcessImpl() {
+    // call super.closeStreams() after process termination, because
+    // otherwise process's output stream can also be closed for no reason
+    try {
+      myProcess.getOutputStream().flush();
+    }
+    catch (IOException e) {
+      LOG.warn(e);
+    }
+    finally {
+      doDestroyProcess();
+    }
+  }
+
+  @Override
+  protected void notifyProcessTerminated(int exitCode) {
+    try {
+      super.closeStreams();
+    }
+    finally {
+      super.notifyProcessTerminated(exitCode);
+    }
   }
 
   @Override
