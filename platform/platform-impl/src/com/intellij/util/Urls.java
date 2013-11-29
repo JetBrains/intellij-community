@@ -44,9 +44,14 @@ public final class Urls {
 
   @NotNull
   public static Url newFromEncoded(@NotNull String url) {
-    Url result = parse(url, false);
+    Url result = parseEncoded(url);
     LOG.assertTrue(result != null, url);
     return result;
+  }
+
+  @Nullable
+  public static Url parseEncoded(@NotNull String url) {
+    return parse(url, false);
   }
 
   @NotNull
