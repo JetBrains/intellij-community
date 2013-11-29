@@ -46,6 +46,10 @@ public class KillableColoredProcessHandler extends ColoredProcessHandler impleme
     super(process, commandLine);
   }
 
+  /**
+   * Sets whether the process will be terminated gracefully.
+   * @param shouldKillProcessSoftly true, if graceful process termination should be attempted first (i.e. soft kill)
+   */
   public void setShouldKillProcessSoftly(boolean shouldKillProcessSoftly) {
     myShouldKillProcessSoftly = shouldKillProcessSoftly;
   }
@@ -56,30 +60,42 @@ public class KillableColoredProcessHandler extends ColoredProcessHandler impleme
    * @return
    */
   private boolean canKillProcessSoftly() {
-    // soft-kill works on Unix systems
-    return SystemInfo.isUnix && processCanBeKilledByOS(getProcess());
+    if (processCanBeKilledByOS(myProcess)) {
+      if (SystemInfo.isWindows) {
+        // runnerw.exe can send Ctrl+C events to a wrapped process
+        return myProcess instanceof RunnerWinProcess;
+      }
+      else if (SystemInfo.isUnix) {
+        // 'kill -SIGINT <pid>' will be executed
+        return true;
+      }
+    }
+    return false;
   }
 
   @Override
   protected void doDestroyProcess() {
+    boolean gracefulTerminationAttempted = false;
     if (canKillProcessSoftly() && shouldKillProcessSoftly()) {
-      // Unix: [soft-kill] at first send INT signal:
-      final Process process = getProcess();
-      if (UnixProcessManager.sendSigIntToProcessTree(process)) {
-        return;
+      if (SystemInfo.isWindows) {
+        if (myProcess instanceof RunnerWinProcess) {
+          RunnerWinProcess runnerWinProcess = (RunnerWinProcess) myProcess;
+          runnerWinProcess.destroyGracefully(true);
+          gracefulTerminationAttempted = true;
+        }
+      }
+      else if (SystemInfo.isUnix) {
+        gracefulTerminationAttempted = UnixProcessManager.sendSigIntToProcessTree(myProcess);
       }
     }
-
-    // if soft kill isn't supported - use default implementation
-    super.doDestroyProcess();
-    // else IDE will suggest 'terminate dialog'
-
+    if (!gracefulTerminationAttempted) {
+      // execute default process destroy
+      super.doDestroyProcess();
+    }
   }
 
   /**
-   * This method should be overridden by children if the process shouldn't be killed softly (e.g. by kill -2)
-   *
-   * @return
+   * @return true, if graceful process termination should be attempted first
    */
   protected boolean shouldKillProcessSoftly() {
     return myShouldKillProcessSoftly;
@@ -92,7 +108,22 @@ public class KillableColoredProcessHandler extends ColoredProcessHandler impleme
 
   @Override
   public void killProcess() {
-    // kill -9
+    // execute 'kill -SIGKILL <pid>' on Unix
     killProcessTree(getProcess());
   }
+
+  @NotNull
+  public static KillableColoredProcessHandler create(@NotNull GeneralCommandLine commandLine) throws ExecutionException {
+    final Process process;
+    if (SystemInfo.isWindows) {
+      process = RunnerWinProcess.create(commandLine);
+    }
+    else {
+      process = commandLine.createProcess();
+    }
+    return new KillableColoredProcessHandler(process,
+                                             commandLine.getCommandLineString(),
+                                             commandLine.getCharset());
+  }
+
 }
