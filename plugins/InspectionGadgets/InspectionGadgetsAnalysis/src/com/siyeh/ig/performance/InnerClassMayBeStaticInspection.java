@@ -54,7 +54,8 @@ public class InnerClassMayBeStaticInspection extends BaseInspection {
   }
 
   private static class InnerClassMayBeStaticFix extends InspectionGadgetsFix {
-        @Override
+
+    @Override
     @NotNull
     public String getFamilyName() {
       return getName();
