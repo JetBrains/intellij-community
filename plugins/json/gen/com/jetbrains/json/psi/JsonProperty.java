@@ -16,6 +16,4 @@ public interface JsonProperty extends PsiElement {
   @NotNull
   String getName();
 
-  void delete();
-
 }

@@ -6,10 +6,8 @@ import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.json.psi.JsonObject;
 import com.jetbrains.json.psi.JsonProperty;
-import com.jetbrains.json.psi.JsonPsiImplUtils;
 import com.jetbrains.json.psi.JsonVisitor;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -28,11 +26,6 @@ public class JsonObjectImpl extends JsonValueImpl implements JsonObject {
   @NotNull
   public List<JsonProperty> getPropertyList() {
     return PsiTreeUtil.getChildrenOfTypeAsList(this, JsonProperty.class);
-  }
-
-  @Nullable
-  public JsonProperty findProperty(String name) {
-    return JsonPsiImplUtils.findProperty(this, name);
   }
 
 }

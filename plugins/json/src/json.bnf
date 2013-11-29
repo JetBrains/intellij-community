@@ -45,17 +45,11 @@ json ::= object | array
 
 object ::= L_CURLY [properties] R_CURLY {
   pin=1
-  methods=[
-    findProperty
-  ]
 }
 private properties ::= property (COMMA property)* { pin(".*")=1 }
 property ::= property_name COLON value {
   pin = 1
-  methods=[
-    getName
-    delete
-  ]
+  methods=[ getName ]
   recoverUntil = brace_or_comma
 }
 
@@ -73,10 +67,7 @@ number_literal ::= NUMBER
 boolean_literal ::= TRUE | FALSE
 null_literal ::= NULL
 
-literal ::= string_literal | number_literal | boolean_literal | null_literal {
-  methods=[isQuotedString]
-  mixin="com.jetbrains.json.psi.impl.JsonLiteralMixin"
-}
+literal ::= string_literal | number_literal | boolean_literal | null_literal
 
 private bracket_or_comma ::= !(R_BRACKET|COMMA)
 private brace_or_comma ::= !(R_CURLY|COMMA)

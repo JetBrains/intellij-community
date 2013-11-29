@@ -3,6 +3,4 @@ package com.jetbrains.json.psi;
 
 public interface JsonLiteral extends JsonValue {
 
-  boolean isQuotedString();
-
 }
