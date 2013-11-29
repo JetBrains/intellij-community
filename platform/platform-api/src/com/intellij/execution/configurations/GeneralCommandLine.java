@@ -278,7 +278,7 @@ public class GeneralCommandLine implements UserDataHolder {
     if (myRedirectErrorStream) {
       LOG.error("Launching process with PTY and redirected error stream is unsupported yet");
     }
-    return PtyProcess.exec(ArrayUtil.toStringArray(commands), env, myWorkDirectory.getPath(), true);  
+    return PtyProcess.exec(ArrayUtil.toStringArray(commands), env, myWorkDirectory != null? myWorkDirectory.getPath() : null, true);
   }
 
   private Process startProcess(List<String> commands) throws IOException {
