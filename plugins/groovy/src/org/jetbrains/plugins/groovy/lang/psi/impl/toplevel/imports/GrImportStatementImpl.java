@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,13 +17,16 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.toplevel.imports;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.scope.NameHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
+import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -31,10 +34,12 @@ import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
-import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GrStubElementBase;
+import org.jetbrains.plugins.groovy.lang.psi.stubs.GrImportStatementStub;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
@@ -45,10 +50,20 @@ import java.util.List;
 /**
  * @author ilyas
  */
-public class GrImportStatementImpl extends GroovyPsiElementImpl implements GrImportStatement {
+public class GrImportStatementImpl extends GrStubElementBase<GrImportStatementStub> implements GrImportStatement, StubBasedPsiElement<GrImportStatementStub> {
 
   public GrImportStatementImpl(@NotNull ASTNode node) {
     super(node);
+  }
+
+  public GrImportStatementImpl(GrImportStatementStub stub, IStubElementType nodeType) {
+    super(stub, nodeType);
+  }
+
+
+  @Override
+  public PsiElement getParent() {
+    return getParentByStub();
   }
 
   public void accept(GroovyElementVisitor visitor) {
@@ -240,12 +255,36 @@ public class GrImportStatementImpl extends GroovyPsiElementImpl implements GrImp
   }
 
   public GrCodeReferenceElement getImportReference() {
+    GrImportStatementStub stub = getStub();
+    if (stub != null) {
+      String referenceText = stub.getReferenceText();
+      if (referenceText == null) {
+        return null;
+      }
+
+      return GroovyPsiElementFactory.getInstance(getProject()).createCodeReferenceElementFromText(referenceText);
+    }
+
     return (GrCodeReferenceElement)findChildByType(GroovyElementTypes.REFERENCE_ELEMENT);
   }
 
   @Nullable
   public String getImportedName() {
     if (isOnDemand()) return null;
+
+    GrImportStatementStub stub = getStub();
+    if (stub != null) {
+      String name = stub.getAliasName();
+      if (name != null) {
+        return name;
+      }
+
+      String referenceText = stub.getReferenceText();
+      if (referenceText == null) return null;
+
+      return StringUtil.getShortName(referenceText);
+    }
+
 
     PsiElement aliasNameElement = getAliasNameElement();
     if (aliasNameElement != null) {
@@ -257,19 +296,36 @@ public class GrImportStatementImpl extends GroovyPsiElementImpl implements GrImp
   }
 
   public boolean isStatic() {
+    GrImportStatementStub stub = getStub();
+    if (stub != null) {
+      return stub.isStatic();
+    }
+
     return findChildByType(GroovyTokenTypes.kSTATIC) != null;
   }
 
   public boolean isAliasedImport() {
+    GrImportStatementStub stub = getStub();
+    if (stub != null) {
+      return stub.getAliasName() != null;
+    }
     return getAliasNameElement() != null;
   }
 
   public boolean isOnDemand() {
+    GrImportStatementStub stub = getStub();
+    if (stub != null) {
+      return stub.isOnDemand();
+    }
     return findChildByType(GroovyTokenTypes.mSTAR) != null;
   }
 
   @NotNull
   public GrModifierList getAnnotationList() {
+    GrImportStatementStub stub = getStub();
+    if (stub != null) {
+      return ObjectUtils.assertNotNull(getStubOrPsiChild(GroovyElementTypes.MODIFIERS));
+    }
     return findNotNullChildByClass(GrModifierList.class);
   }
 
@@ -293,6 +349,15 @@ public class GrImportStatementImpl extends GroovyPsiElementImpl implements GrImp
   @Nullable
   @Override
   public PsiElement getAliasNameElement() {
+    GrImportStatementStub stub = getStub();
+    if (stub != null) {
+      String alias = stub.getAliasName();
+      if (alias == null) return null;
+
+      GrImportStatement imp = GroovyPsiElementFactory.getInstance(getProject()).createImportStatementFromText("import A as " + alias);
+      return imp.getAliasNameElement();
+    }
+
     return findChildByType(GroovyTokenTypes.mIDENT);
   }
 }
