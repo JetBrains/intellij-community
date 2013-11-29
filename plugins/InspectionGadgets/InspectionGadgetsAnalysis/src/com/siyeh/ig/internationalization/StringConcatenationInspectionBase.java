@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2013 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,7 +30,6 @@ import com.siyeh.ig.DelegatingFix;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.MethodUtils;
-import com.siyeh.ig.psiutils.TestUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -40,7 +39,7 @@ import javax.swing.*;
 import java.util.ArrayList;
 import java.util.Collection;
 
-public class StringConcatenationInspection extends BaseInspection {
+public class StringConcatenationInspectionBase extends BaseInspection {
 
   @SuppressWarnings({"PublicField"})
   public boolean ignoreAsserts = false;
@@ -57,8 +56,8 @@ public class StringConcatenationInspection extends BaseInspection {
   @SuppressWarnings({"PublicField"})
   public boolean ignoreConstantInitializers = false;
 
-  @SuppressWarnings({"PublicField"})
-  public boolean ignoreInTestCode = false;
+  @SuppressWarnings({"PublicField", "UnusedDeclaration"})
+  public boolean ignoreInTestCode = false; // keep for compatibility
 
   @SuppressWarnings("PublicField")
   public boolean ignoreInToString = false;
@@ -143,9 +142,7 @@ public class StringConcatenationInspection extends BaseInspection {
     optionsPanel.addCheckbox(InspectionGadgetsBundle.message("string.concatenation.ignore.system.out.option"), "ignoreSystemOuts");
     optionsPanel.addCheckbox(InspectionGadgetsBundle.message("string.concatenation.ignore.system.err.option"), "ignoreSystemErrs");
     optionsPanel.addCheckbox(InspectionGadgetsBundle.message("string.concatenation.ignore.exceptions.option"), "ignoreThrowableArguments");
-    optionsPanel.addCheckbox(InspectionGadgetsBundle.message("string.concatenation.ignore.constant.initializers.option"),
-                             "ignoreConstantInitializers");
-    optionsPanel.addCheckbox(InspectionGadgetsBundle.message("ignore.in.test.code"), "ignoreInTestCode");
+    optionsPanel.addCheckbox(InspectionGadgetsBundle.message("string.concatenation.ignore.constant.initializers.option"), "ignoreConstantInitializers");
     optionsPanel.addCheckbox(InspectionGadgetsBundle.message("ignore.in.tostring"), "ignoreInToString");
     return optionsPanel;
   }
@@ -175,9 +172,6 @@ public class StringConcatenationInspection extends BaseInspection {
         }
       }
       if (AnnotationUtil.isInsideAnnotation(expression)) {
-        return;
-      }
-      if (ignoreInTestCode && TestUtils.isInTestCode(expression)) {
         return;
       }
       if (ignoreAsserts) {
