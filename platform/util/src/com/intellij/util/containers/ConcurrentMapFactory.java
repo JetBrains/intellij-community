@@ -22,7 +22,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.concurrent.ConcurrentMap;
 
 public abstract class ConcurrentMapFactory {
-  private static final int DEFAULT_CONCURRENCY_LEVEL = Runtime.getRuntime().availableProcessors();
+  private static final int DEFAULT_CONCURRENCY_LEVEL = Math.min(16, Runtime.getRuntime().availableProcessors());
 
   private ConcurrentMapFactory() {
   }
