@@ -599,7 +599,7 @@ public abstract class HgUtil {
         return false;
       }
       HgCommandResult result = getVersionOutput(executable);
-      return result.getRawError().isEmpty();
+      return result.getExitValue() == 0 && !result.getRawOutput().isEmpty();
     }
     catch (Throwable e) {
       LOG.info("Error during hg executable validation: ", e);

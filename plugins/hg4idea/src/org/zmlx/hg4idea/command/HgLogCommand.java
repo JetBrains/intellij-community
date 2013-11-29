@@ -96,7 +96,7 @@ public class HgLogCommand {
    */
   public final List<HgFileRevision> execute(final HgFile hgFile, int limit, boolean includeFiles, @Nullable List<String> argsForCmd)
     throws HgCommandException {
-    if ((limit <= 0 && limit != -1) || hgFile == null || hgFile.getRepo() == null) {
+    if ((limit <= 0 && limit != -1) || hgFile == null) {
       return Collections.emptyList();
     }
 
@@ -116,7 +116,10 @@ public class HgLogCommand {
 
     List<String> errors = result.getErrorLines();
     if (errors != null && !errors.isEmpty()) {
-      throw new HgCommandException(errors.toString());
+      if (result.getExitValue() != 0) {
+        throw new HgCommandException(errors.toString());
+      }
+      LOG.warn(errors.toString());
     }
     String output = result.getRawOutput();
     String[] changeSets = output.split(HgChangesetUtil.CHANGESET_SEPARATOR);

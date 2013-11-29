@@ -15,10 +15,16 @@
  */
 package hg4idea.test.version;
 
+import com.intellij.openapi.vcs.VcsTestUtil;
+import com.intellij.util.containers.HashSet;
 import hg4idea.test.HgPlatformTest;
 import org.zmlx.hg4idea.util.HgVersion;
 
 import java.lang.reflect.Field;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
 
 /**
  * @author Nadya Zabrodina
@@ -41,18 +47,35 @@ public class HgVersionTest extends HgPlatformTest {
   };
 
   public void testParseSupported() throws Exception {
+    Set<String> unsupportedExceptions = new HashSet<String>();
     for (TestHgVersion test : commonTests) {
-      HgVersion version = HgVersion.parseVersion(test.output);
+      HgVersion version = HgVersion.parseVersionAndExtensionInfo(test.output, Collections.<String>emptyList(), unsupportedExceptions);
       assertEqualVersions(version, test);
       assertTrue(version.isSupported());
     }
   }
 
   public void testParseUnsupported() throws Exception {
+    Set<String> unsupportedExceptions = new HashSet<String>();
     TestHgVersion unsupportedVersion = new TestHgVersion("Mercurial Distributed SCM (version 1.5.1)", 1, 5, 1);
-    HgVersion parsedVersion = HgVersion.parseVersion(unsupportedVersion.output);
+    HgVersion parsedVersion =
+      HgVersion.parseVersionAndExtensionInfo(unsupportedVersion.output, Collections.<String>emptyList(), unsupportedExceptions);
     assertEqualVersions(parsedVersion, unsupportedVersion);
     assertFalse(parsedVersion.isSupported());
+  }
+
+  public void testParseImportExtensionsError() {
+    List<String> errorLines = Arrays.asList("*** failed to import extension hgcr-gui: No module named hgcr-gui",
+                                            "*** failed to import extension hgcr-gui-qt: No module named hgcr-gui-qt");
+    VcsTestUtil.assertEqualCollections(HgVersion.parseUnsupportedExtensions(errorLines), Arrays.asList("hgcr-gui", "hgcr-gui-qt"));
+  }
+
+  public void testParseImportDeprecatedExtensionsError() {
+    List<String> errorLines = Arrays.asList("*** failed to import extension kilnpath from" +
+                                            " C:\\Users\\Developer\\AppData\\Local\\KilnExtensions\\kilnpath.py:" +
+                                            " kilnpath is deprecated, and does not work in Mercurial 2.3 or higher." +
+                                            "  Use the official schemes extension instead");
+    VcsTestUtil.assertEqualCollections(HgVersion.parseUnsupportedExtensions(errorLines), Arrays.asList("kilnpath"));
   }
 
   private static void assertEqualVersions(HgVersion actual, TestHgVersion expected) throws Exception {

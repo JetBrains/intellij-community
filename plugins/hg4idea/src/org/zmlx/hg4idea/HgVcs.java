@@ -66,7 +66,9 @@ import org.zmlx.hg4idea.util.HgVersion;
 import javax.swing.event.HyperlinkEvent;
 import java.io.File;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public class HgVcs extends AbstractVcs<CommittedChangeList> {
 
@@ -111,6 +113,7 @@ public class HgVcs extends AbstractVcs<CommittedChangeList> {
   private HgIncomingOutgoingWidget myIncomingWidget;
   private HgIncomingOutgoingWidget myOutgoingWidget;
   @NotNull private HgVersion myVersion = HgVersion.NULL;  // version of Hg which this plugin uses.
+  @NotNull private Set<String> unsupportedExtension = new HashSet<String>();
 
   public HgVcs(Project project,
                @NotNull HgGlobalSettings globalSettings,
@@ -451,7 +454,7 @@ public class HgVcs extends AbstractVcs<CommittedChangeList> {
       }
     };
     try {
-      myVersion = HgVersion.identifyVersion(executable);
+      myVersion = HgVersion.identifyVersion(executable, unsupportedExtension);
       //if version is not supported, but have valid hg executable
       if (!myVersion.isSupported()) {
         LOG.info("Unsupported Hg version: " + myVersion);
@@ -459,7 +462,12 @@ public class HgVcs extends AbstractVcs<CommittedChangeList> {
                                 "The minimal supported version is %s. Please <a href='" + UPDATE_LINK + "'>update</a>.",
                                 myVersion, HgVersion.MIN);
         errorNotification.notifyError(null, "Unsupported Hg version", message, linkAdapter);
-
+      }
+      if (!unsupportedExtension.isEmpty()) {
+        LOG.warn("Unsupported Hg extensions: " + unsupportedExtension.toString());
+        message = String.format("Some hg extensions %s are not found or not supported by your hg version and will be ignored.\n" +
+                                "Please, update your hgrc or Mercurial.ini file", unsupportedExtension.toString());
+        errorNotification.notifyWarning("Unsupported Hg version", message);
       }
     }
     catch (Exception e) {
