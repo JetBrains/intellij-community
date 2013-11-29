@@ -117,7 +117,9 @@ public class SchemaReferencesProvider extends PsiReferenceProvider {
     }
 
     public TextRange getRangeInElement() {
-      return new TextRange(1,myElement.getTextLength()-1);
+      return myElement instanceof XmlAttributeValue 
+             ? ((XmlAttributeValue)myElement).getValueTextRange() 
+             : new TextRange(1,myElement.getTextLength()-1);
     }
 
     @Nullable
