@@ -29,15 +29,15 @@ import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.ExpectedTypeUtils;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.HashSet;
 import java.util.Set;
 
 public class UnnecessaryExplicitNumericCastInspection extends BaseInspection {
 
-  private static final Set<IElementType> binaryPromotionOperators = new HashSet();
+  private static final Set<IElementType> binaryPromotionOperators = new THashSet<IElementType>();
 
   static {
     binaryPromotionOperators.add(JavaTokenType.ASTERISK);
