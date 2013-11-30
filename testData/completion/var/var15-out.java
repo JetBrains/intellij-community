@@ -1,4 +1,4 @@
-// Items: arg, cast, for, not, par, var
+// Items: arg, cast, for, instanceof, not, par, var
 public class Foo {
     void m() {
         int foo = 2 * 2;

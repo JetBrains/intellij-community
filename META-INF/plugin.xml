@@ -91,6 +91,7 @@
     <postfixTemplate implementation="org.jetbrains.postfixCompletion.templates.ThrowExceptionPostfixTemplate"/>
     <postfixTemplate implementation="org.jetbrains.postfixCompletion.templates.AssertStatementPostfixTemplate"/>
     <postfixTemplate implementation="org.jetbrains.postfixCompletion.templates.SynchronizedStatementPostfixTemplate"/>
+    <postfixTemplate implementation="org.jetbrains.postfixCompletion.templates.InstanceofExpressionPostfixTemplate"/>
   </extensions>
   
   <extensions defaultExtensionNs="com.intellij">
