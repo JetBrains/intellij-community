@@ -23,6 +23,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
+import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightMethodBuilder;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightParameter;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
@@ -48,8 +49,7 @@ public class ConstructorAnnotationsProcessor extends AstTransformContributor {
     if (modifierList == null) return;
 
     final PsiAnnotation tupleConstructor = modifierList.findAnnotation(GROOVY_TRANSFORM_TUPLE_CONSTRUCTOR);
-    final boolean immutable = modifierList.findAnnotation(GROOVY_LANG_IMMUTABLE) != null ||
-                              modifierList.findAnnotation(GROOVY_TRANSFORM_IMMUTABLE) != null;
+    final boolean immutable = PsiImplUtil.hasImmutableAnnotation(modifierList);
     final boolean canonical = modifierList.findAnnotation(GROOVY_TRANSFORM_CANONICAL) != null;
     if (!immutable && !canonical && tupleConstructor == null) {
       return;
