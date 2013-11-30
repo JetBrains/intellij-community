@@ -35,18 +35,18 @@ abstract class ConcurrentRefValueHashMap<K, V> implements ConcurrentMap<K, V> {
   }
 
   public ConcurrentRefValueHashMap() {
-    myMap = ConcurrentMapFactory.createMap();
+    myMap = ContainerUtil.newConcurrentMap();
   }
 
   public ConcurrentRefValueHashMap(int initialCapacity, float loadFactor, int concurrencyLevel) {
-    myMap = ConcurrentMapFactory.createMap(initialCapacity, loadFactor, concurrencyLevel);
+    myMap = ContainerUtil.newConcurrentMap(initialCapacity, loadFactor, concurrencyLevel);
   }
 
   public ConcurrentRefValueHashMap(int initialCapacity,
                                    float loadFactor,
                                    int concurrencyLevel,
                                    @NotNull TObjectHashingStrategy<K> hashingStrategy) {
-    myMap = ConcurrentMapFactory.createMap(initialCapacity, loadFactor, concurrencyLevel, hashingStrategy);
+    myMap = ContainerUtil.newConcurrentMap(initialCapacity, loadFactor, concurrencyLevel, hashingStrategy);
   }
 
   protected interface MyValueReference<K, V> {
