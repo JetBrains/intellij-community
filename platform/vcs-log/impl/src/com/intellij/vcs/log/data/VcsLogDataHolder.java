@@ -148,8 +148,9 @@ public class VcsLogDataHolder implements Disposable {
   private final NotNullFunction<Hash, Integer> myIndexGetter;
   private final ContainingBranchesGetter myContainingBranchesGetter;
 
-  public VcsLogDataHolder(@NotNull Project project,
+  public VcsLogDataHolder(@NotNull Project project, @NotNull Disposable parentDisposable,
                           @NotNull Map<VirtualFile, VcsLogProvider> logProviders, @NotNull VcsLogSettings settings) {
+    Disposer.register(parentDisposable, this);
     myProject = project;
     myLogProviders = logProviders;
     myDataLoaderQueue = new BackgroundTaskQueue(project, "Loading history...");
