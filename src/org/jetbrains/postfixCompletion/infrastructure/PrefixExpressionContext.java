@@ -13,9 +13,8 @@ public class PrefixExpressionContext {
   @NotNull public final TextRange expressionRange;
   public final boolean canBeStatement;
 
-  public PrefixExpressionContext(
-    @NotNull PostfixTemplateContext parentContext, @NotNull PsiElement expression) {
-    assert expression.isValid() : "expression.isValid()";
+  public PrefixExpressionContext(@NotNull PostfixTemplateContext parentContext, @NotNull PsiElement expression) {
+    assert expression.isValid();
 
     this.parentContext = parentContext;
     this.expression = expression;
@@ -72,7 +71,7 @@ public class PrefixExpressionContext {
     PrefixExpressionContext fixedContext = parentContext.fixExpression(this);
     PsiElement fixedExpression = fixedContext.expression;
 
-    assert fixedExpression.isPhysical() : "fixedExpression.isPhysical()";
+    assert fixedExpression.isPhysical();
 
     return fixedContext;
   }
