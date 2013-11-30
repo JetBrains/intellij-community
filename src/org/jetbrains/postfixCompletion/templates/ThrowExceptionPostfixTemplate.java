@@ -79,8 +79,9 @@ public final class ThrowExceptionPostfixTemplate extends PostfixTemplate {
 
     @NotNull
     @Override
-    protected PsiThrowStatement createNewStatement(
-      @NotNull PsiElementFactory factory, @NotNull PsiElement expression, @NotNull PsiElement context) {
+    protected PsiThrowStatement createNewStatement(@NotNull PsiElementFactory factory,
+                                                   @NotNull PsiElement expression,
+                                                   @NotNull PsiElement context) {
       PsiExpression throwableValue;
       if (myThrowableClass == null) {
         throwableValue = (PsiExpression)expression;

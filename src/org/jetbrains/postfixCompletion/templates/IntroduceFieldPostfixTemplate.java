@@ -62,8 +62,9 @@ public final class IntroduceFieldPostfixTemplate extends PostfixTemplate {
 
     @NotNull
     @Override
-    protected PsiExpressionStatement createNewStatement(
-      @NotNull PsiElementFactory factory, @NotNull PsiElement expression, @NotNull PsiElement context) {
+    protected PsiExpressionStatement createNewStatement(@NotNull PsiElementFactory factory,
+                                                        @NotNull PsiElement expression,
+                                                        @NotNull PsiElement context) {
       PsiExpressionStatement expressionStatement = (PsiExpressionStatement)factory.createStatementFromText("expr", context);
       expressionStatement.getExpression().replace(expression);
       return expressionStatement;
@@ -107,10 +108,9 @@ public final class IntroduceFieldPostfixTemplate extends PostfixTemplate {
     return new IntroduceFieldHandler() {
       // mock default settings
       @Override
-      protected Settings showRefactoringDialog(
-        Project project, Editor editor, PsiClass parentClass, PsiExpression expr, PsiType type,
-        PsiExpression[] occurrences, PsiElement anchorElement, PsiElement anchorElementIfAll) {
-
+      protected Settings showRefactoringDialog(Project project, Editor editor, PsiClass parentClass,
+                                               PsiExpression expr, PsiType type, PsiExpression[] occurrences,
+                                               PsiElement anchorElement, PsiElement anchorElementIfAll) {
         return new Settings(
           "foo", expression, PsiExpression.EMPTY_ARRAY, false, false, false,
           InitializationPlace.IN_CURRENT_METHOD, PsiModifier.PRIVATE, null,

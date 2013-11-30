@@ -36,7 +36,9 @@ public abstract class ExpressionPostfixLookupElementBase<T extends PsiExpression
   }
 
   @NotNull
-  protected abstract T createNewExpression(@NotNull PsiElementFactory factory, @NotNull PsiElement expression, @NotNull PsiElement context);
+  protected abstract T createNewExpression(@NotNull PsiElementFactory factory,
+                                           @NotNull PsiElement expression,
+                                           @NotNull PsiElement context);
 
   @Override
   protected void postProcess(@NotNull InsertionContext context, @NotNull T expression) {

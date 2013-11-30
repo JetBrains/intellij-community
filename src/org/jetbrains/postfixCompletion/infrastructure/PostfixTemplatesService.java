@@ -61,7 +61,8 @@ public class PostfixTemplatesService {
   }
 
   @Nullable
-  public PostfixTemplateContext isAvailable(@NotNull PsiElement positionElement, @NotNull PostfixExecutionContext executionContext) {
+  public PostfixTemplateContext isAvailable(@NotNull PsiElement positionElement,
+                                            @NotNull PostfixExecutionContext executionContext) {
     // postfix name always is identifier
     if (!(positionElement instanceof PsiIdentifier)) return null;
 

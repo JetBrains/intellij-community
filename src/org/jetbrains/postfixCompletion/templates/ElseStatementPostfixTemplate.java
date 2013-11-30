@@ -34,8 +34,9 @@ public final class ElseStatementPostfixTemplate extends BooleanPostfixTemplate {
 
     @NotNull
     @Override
-    protected PsiExpression createNewExpression(
-      @NotNull PsiElementFactory factory, @NotNull PsiElement expression, @NotNull PsiElement context) {
+    protected PsiExpression createNewExpression(@NotNull PsiElementFactory factory,
+                                                @NotNull PsiElement expression,
+                                                @NotNull PsiElement context) {
       return CodeInsightServicesUtil.invertCondition((PsiExpression)expression);
     }
 

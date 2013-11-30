@@ -29,8 +29,9 @@ public final class WhileStatementPostfixTemplate extends BooleanPostfixTemplate 
 
     @NotNull
     @Override
-    protected PsiWhileStatement createNewStatement(
-      @NotNull PsiElementFactory factory, @NotNull PsiElement expression, @NotNull PsiElement context) {
+    protected PsiWhileStatement createNewStatement(@NotNull PsiElementFactory factory,
+                                                   @NotNull PsiElement expression,
+                                                   @NotNull PsiElement context) {
       PsiWhileStatement whileStatement = (PsiWhileStatement)factory.createStatementFromText("while(expr)", context);
       PsiExpression condition = whileStatement.getCondition();
       assert condition != null : "condition != null";

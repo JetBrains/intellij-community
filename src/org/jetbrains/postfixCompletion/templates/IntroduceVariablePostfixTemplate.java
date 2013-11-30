@@ -228,10 +228,10 @@ public final class IntroduceVariablePostfixTemplate extends PostfixTemplate {
     return new IntroduceVariableHandler() {
       // mock default settings
       @Override
-      public final IntroduceVariableSettings getSettings(
-        Project project, Editor editor, final PsiExpression expr, PsiExpression[] occurrences,
-        TypeSelectorManagerImpl typeSelectorManager, boolean declareFinalIfAll, boolean anyAssignmentLHS,
-        InputValidator validator, PsiElement anchor, OccurrencesChooser.ReplaceChoice replaceChoice) {
+      public final IntroduceVariableSettings getSettings(Project project, Editor editor, final PsiExpression expr,
+                                                         PsiExpression[] occurrences, TypeSelectorManagerImpl typeSelectorManager,
+                                                         boolean declareFinalIfAll, boolean anyAssignmentLHS, InputValidator validator,
+                                                         PsiElement anchor, OccurrencesChooser.ReplaceChoice replaceChoice) {
         return new IntroduceVariableSettings() {
           @Override
           public String getEnteredName() {
