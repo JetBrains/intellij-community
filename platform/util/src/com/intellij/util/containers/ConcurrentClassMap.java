@@ -20,6 +20,6 @@ package com.intellij.util.containers;
  */
 public class ConcurrentClassMap<T> extends ClassMap<T> {
   public ConcurrentClassMap() {
-    super(new ConcurrentHashMap<Class,T>());
+    super(ConcurrentMapFactory.<Class, T>createMap());
   }
 }

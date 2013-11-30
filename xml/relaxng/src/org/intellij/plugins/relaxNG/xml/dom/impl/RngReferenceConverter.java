@@ -53,7 +53,7 @@ public class RngReferenceConverter implements CustomReferenceConverter {
       }
 
       return new PsiReference[]{
-              new PsiReferenceBase<XmlAttributeValue>(value, TextRange.from(1, value.getTextLength() - 2), true) {
+              new PsiReferenceBase<XmlAttributeValue>(value, value.getValueTextRange(), true) {
                 public PsiElement resolve() {
 //                  final XmlTag tag = PsiTreeUtil.getParentOfType(value, XmlTag.class);
 //                  final XmlTag include = getAncestorTag(tag, "include", ProjectLoader.RNG_NAMESPACE);

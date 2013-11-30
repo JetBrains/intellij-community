@@ -65,7 +65,7 @@ public class TypeUtils {
     return getType(CommonClassNames.JAVA_LANG_STRING, context);
   }
 
-  public static boolean isNarrowingConversion(PsiType operandType, PsiType castType) {
+  public static boolean isNarrowingConversion(@NotNull PsiType operandType, @NotNull PsiType castType) {
     final Integer operandPrecision = typePrecisions.get(operandType);
     final Integer castPrecision = typePrecisions.get(castType);
     return operandPrecision.intValue() > castPrecision.intValue();
