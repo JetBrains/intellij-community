@@ -274,4 +274,9 @@ public class VcsLogUI {
   public Component getToolbar() {
     return myMainFrame.getToolbar();
   }
+
+  @NotNull
+  public VcsLog getVcsLog() {
+    return myLog;
+  }
 }

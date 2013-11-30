@@ -38,10 +38,10 @@ public class VcsLogQuickSettingsActions extends DumbAwareAction {
     }
     VcsLogSettings settings = ServiceManager.getService(project, VcsLogSettings.class);
     VcsLogManager logManager = ServiceManager.getService(project, VcsLogManager.class);
-    if (settings == null || logManager == null) {
+    VcsLogUI logUi = logManager.getLogUi();
+    if (logUi == null) {
       return;
     }
-    VcsLogUI logUi = logManager.getLogUi();
 
     ActionGroup settingsGroup = new MySettingsActionGroup(settings, logUi);
     ActionPopupMenu popupMenu = ActionManager.getInstance().createActionPopupMenu(ToolWindowContentUi.POPUP_PLACE, settingsGroup);
@@ -53,6 +53,18 @@ public class VcsLogQuickSettingsActions extends DumbAwareAction {
       y = ((MouseEvent)inputEvent).getY();
     }
     popupMenu.getComponent().show(inputEvent.getComponent(), x, y);
+  }
+
+  @Override
+  public void update(AnActionEvent e) {
+    Project project = e.getProject();
+    if (project == null) {
+      e.getPresentation().setEnabledAndVisible(false);
+    }
+    else {
+      VcsLogManager logManager = ServiceManager.getService(project, VcsLogManager.class);
+      e.getPresentation().setEnabledAndVisible(logManager.getLogUi() != null);
+    }
   }
 
   private static class MySettingsActionGroup extends ActionGroup {
