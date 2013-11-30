@@ -16,7 +16,7 @@ import java.util.List;
 @TemplateInfo(
   templateName = "cast",
   description = "Surrounds expression with cast",
-  example = "(SomeType) expr",
+  example = "((SomeType) expr)",
   worksInsideFragments = true)
 public final class CastExpressionPostfixTemplate extends PostfixTemplate {
   @Override
