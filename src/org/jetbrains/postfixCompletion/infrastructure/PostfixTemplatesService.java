@@ -25,8 +25,8 @@ import java.util.List;
 // todo: 123.fori
 
 public class PostfixTemplatesService {
-  private static Logger LOG = Logger.getInstance(PostfixTemplatesService.class);
-  @NotNull private List<TemplateProviderInfo> myProviders;
+  private final static Logger LOG = Logger.getInstance(PostfixTemplatesService.class);
+  @NotNull private final List<TemplateProviderInfo> myProviders;
 
   public PostfixTemplatesService() {
     List<TemplateProviderInfo> providerInfos = new ArrayList<TemplateProviderInfo>();
