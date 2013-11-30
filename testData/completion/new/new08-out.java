@@ -1,4 +1,3 @@
-// Items: class, new, throw
 public abstract class Foo {
     void m() {
         new FooBar(<caret>)

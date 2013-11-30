@@ -1,4 +1,3 @@
-// Items: not
 public class Foo {
     Foo[] xs;
     void m() {

@@ -1,9 +1,6 @@
 package org.jetbrains.postfixCompletion;
 
 import com.intellij.codeInsight.completion.CompletionType;
-import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NotNull;
 
@@ -31,19 +28,11 @@ public class PostfixCompletionTest extends LightCodeInsightFixtureTestCase {
     myFixture.configureByFile(name + ".java");
     PostfixCompletionContributor.behaveAsAutoPopupForTests = !useBasic;
     myFixture.complete(CompletionType.BASIC);
-    final LookupElement[] autoItems = myFixture.getLookupElements();
     PostfixCompletionContributor.behaveAsAutoPopupForTests = false;
 
     for (int index = 0; index < typingChars.length(); index++) {
       myFixture.type(typingChars.charAt(index));
     }
-
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override public void run() {
-        Editor editor = myFixture.getEditor();
-        editor.getDocument().insertString(0, PostfixTestUtils.dumpItems(autoItems));
-      }
-    });
 
     myFixture.checkResultByFile(name + "-out.java");
   }

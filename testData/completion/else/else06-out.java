@@ -1,4 +1,3 @@
-// Items: else, while, assert
 public class Foo {
     Foo[] xs;
     void m() {

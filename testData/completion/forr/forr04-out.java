@@ -1,4 +1,3 @@
-// Items: m, size, arg, fori, forr, notnull, null
 public class Foo {
     long size() { }
     void m() {

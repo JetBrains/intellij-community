@@ -1,4 +1,3 @@
-// Items: f, arg, notnull, null, switch
 public enum Foo {
     A, B, C;
 

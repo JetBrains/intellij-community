@@ -1,4 +1,3 @@
-// Items: var
 public class Foo {
     Foo f;
     Foo m() {

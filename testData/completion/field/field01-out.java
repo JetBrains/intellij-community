@@ -1,4 +1,3 @@
-// Items: arg, field, fori, forr, switch
 public class Foo {
     private int foo;
 

@@ -1,4 +1,3 @@
-// Items: arg, fori, forr, switch
 public class Foo {
     void m() {
         byte foo = 100;

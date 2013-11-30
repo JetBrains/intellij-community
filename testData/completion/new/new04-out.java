@@ -1,4 +1,3 @@
-// Items: Foo.new, Foo.var, FooBar3.new, FooBar3.var, FooBar4.new, FooBar4.var
 public abstract class Foo {
     void m() {
         new Foo() {<caret>
