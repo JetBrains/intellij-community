@@ -217,7 +217,7 @@ public class ExternalSystemTasksTree extends Tree implements Producer<ExternalTa
     }
 
     // Disable tasks execution if it comes from different projects
-    if(map.values().size() > 1) return null;
+    if(map.values().size() != 1) return null;
     return map.values().iterator().next();
   }
 }

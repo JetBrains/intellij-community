@@ -137,6 +137,7 @@ public class MacFileChooserDialogImpl implements PathChooserDialog {
       finally {
         Foundation.cfRelease(self);
         Foundation.cfRelease(contextInfo);
+        JDK7WindowReorderingWorkaround.enableReordering();
       }
     }
   };
@@ -323,6 +324,7 @@ public class MacFileChooserDialogImpl implements PathChooserDialog {
     ourImplMap.put(delegate, impl);
 
     final ID select = toSelect == null ? null : Foundation.nsString(toSelect);
+    JDK7WindowReorderingWorkaround.disableReordering();
     invoke(delegate, "performSelectorOnMainThread:withObject:waitUntilDone:", Foundation.createSelector("showOpenPanel:"), select, false);
   }
 
