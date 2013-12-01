@@ -142,7 +142,13 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
 
   private Alarm myAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, ApplicationManager.getApplication());
   private Alarm myUpdateAlarm = new Alarm(ApplicationManager.getApplication());
-  private JBList myList = new JBList(myListModel);
+  private JBList myList = new JBList(myListModel) {
+    @Override
+    public Dimension getPreferredSize() {
+      final Dimension size = super.getPreferredSize();
+      return new Dimension(Math.min(size.width, 800), size.height);
+    }
+  };
   private JCheckBox myNonProjectCheckBox = new JCheckBox();
   private AnActionEvent myActionEvent;
   private Component myContextComponent;
@@ -860,7 +866,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
                  && myProject != null
                  && (((VirtualFile)value).isDirectory()
                      || (file = PsiManager.getInstance(myProject).findFile((VirtualFile)value)) != null)) {
-        cmp = new GotoFileCellRenderer(list.getWidth()).getListCellRendererComponent(list, file == null ? value : file, index, isSelected, cellHasFocus);
+        cmp = new GotoFileCellRenderer(Math.min(800, list.getWidth())).getListCellRendererComponent(list, file == null ? value : file, index, isSelected, cellHasFocus);
       } else if (value instanceof PsiElement) {
         cmp = myPsiRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
       } else {
@@ -1685,18 +1691,16 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       size.height = 70;
     }
     Dimension sz = new Dimension(size.width, myList.getPreferredSize().height);
-    if (sz.width > 1200 || sz.height > 800) {
+    if (sz.width > 800 || sz.height > 800) {
       final JBScrollPane pane = new JBScrollPane();
       final int extraWidth = pane.getVerticalScrollBar().getWidth() + 1;
       final int extraHeight = pane.getHorizontalScrollBar().getHeight() + 1;
-      sz = new Dimension(Math.min(1000, Math.max(getField().getWidth(), size.width + extraWidth)), Math.min(800, size.height + extraHeight));
-      sz.width += 16;
-    }
-    else {
-      sz.height++;
-      sz.height++;
-      sz.width++;
-      sz.width++;
+      sz = new Dimension(Math.min(800, Math.max(getField().getWidth(), sz.width + extraWidth)), Math.min(800, sz.height + extraHeight));
+      sz.width += 20;
+      sz.height+=2;
+    } else {
+      sz.width+=2;
+      sz.height+=2;
     }
     myPopup.setSize(sz);
     if (myActionEvent != null && myActionEvent.getInputEvent() == null) {
