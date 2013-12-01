@@ -2,6 +2,8 @@ package org.jetbrains.postfixCompletion.templates;
 
 import com.intellij.codeInsight.completion.InsertionContext;
 import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.postfixCompletion.infrastructure.PostfixTemplateContext;
@@ -35,6 +37,11 @@ public final class CastExpressionPostfixTemplate extends PostfixTemplate {
     }
 
     return new CastLookupElement(bestContext);
+  }
+  
+  @Override
+  public void expand(@NotNull PsiElement context, @NotNull Editor editor) {
+    throw new UnsupportedOperationException("Implement me please");
   }
 
   static final class CastLookupElement extends ExpressionPostfixLookupElement {

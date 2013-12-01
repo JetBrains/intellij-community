@@ -48,6 +48,11 @@ public class InstanceofExpressionPostfixTemplate extends PostfixTemplate {
     return new CastLookupElement(bestContext);
   }
 
+  @Override
+  public void expand(@NotNull PsiElement context, @NotNull Editor editor) {
+    throw new UnsupportedOperationException();
+  }
+
   static class CastLookupElement extends ExpressionPostfixLookupElement {
     public CastLookupElement(@NotNull PrefixExpressionContext context) {
       super("instanceof", context);

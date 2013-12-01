@@ -1,6 +1,7 @@
 package org.jetbrains.postfixCompletion.templates;
 
 import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementFactory;
 import com.intellij.psi.PsiExpression;
@@ -37,6 +38,11 @@ public final class ParenthesizedExpressionPostfixTemplate extends PostfixTemplat
     }
 
     return new ParenthesizeLookupElement(bestContext);
+  }
+  
+  @Override
+  public void expand(@NotNull PsiElement context, @NotNull Editor editor) {
+    throw new UnsupportedOperationException("Implement me please");
   }
 
   private static class ParenthesizeLookupElement extends ExpressionPostfixLookupElementBase<PsiParenthesizedExpression> {

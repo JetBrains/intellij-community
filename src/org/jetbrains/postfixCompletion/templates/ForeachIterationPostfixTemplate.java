@@ -45,6 +45,11 @@ public final class ForeachIterationPostfixTemplate extends PostfixTemplate {
     return new ForeachLookupElement(expression);
   }
 
+  @Override
+  public void expand(@NotNull PsiElement context, @NotNull Editor editor) {
+    throw new UnsupportedOperationException("Implement me please");
+  }
+
   private static final class ForeachLookupElement extends StatementPostfixLookupElement<PsiForeachStatement> {
     public ForeachLookupElement(@NotNull PrefixExpressionContext context) {
       super("for", context);

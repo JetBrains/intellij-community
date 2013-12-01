@@ -22,20 +22,22 @@ import java.util.Arrays;
 public class JavaSurroundersProxy {
   public static final Surrounder[] SURROUNDERS = new JavaExpressionSurroundDescriptor().getSurrounders();
 
-  public static void cast(
-    @NotNull Project project, @NotNull Editor editor, @NotNull PsiExpression expr) throws IncorrectOperationException {
+  public static void cast(@NotNull Project project, @NotNull Editor editor, @NotNull PsiExpression expr)
+    throws IncorrectOperationException {
     findAndApply("JavaWithCastSurrounder", project, editor, expr);
   }
 
   @Nullable
-  public static TextRange ifStatement(
-    @NotNull Project project, @NotNull Editor editor, @NotNull PsiExpression expr) throws IncorrectOperationException {
+  public static TextRange ifStatement(@NotNull Project project, @NotNull Editor editor, @NotNull PsiExpression expr)
+    throws IncorrectOperationException {
     return findAndApply("JavaWithIfExpressionSurrounder", project, editor, expr);
   }
 
   @Nullable
-  private static TextRange findAndApply(
-    final String name, Project project, Editor editor, PsiExpression expr) {
+  private static TextRange findAndApply(@NotNull final String name,
+                                        @NotNull Project project,
+                                        @NotNull Editor editor,
+                                        @NotNull PsiExpression expr) {
     Surrounder surrounder = ContainerUtil.find(SURROUNDERS, new Condition<Surrounder>() {
       @Override
       public boolean value(Surrounder surrounder) {

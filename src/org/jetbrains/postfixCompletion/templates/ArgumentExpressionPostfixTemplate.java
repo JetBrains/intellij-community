@@ -42,6 +42,11 @@ public final class ArgumentExpressionPostfixTemplate extends PostfixTemplate {
     return null;
   }
 
+  @Override
+  public void expand(@NotNull PsiElement context, @NotNull Editor editor) {
+    throw new UnsupportedOperationException("Implement me please");
+  }
+
   private static class ArgumentLookupElement extends ExpressionPostfixLookupElementBase<PsiMethodCallExpression> {
     public ArgumentLookupElement(@NotNull PrefixExpressionContext context) {
       super("arg", context);

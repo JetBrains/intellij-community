@@ -2,6 +2,7 @@ package org.jetbrains.postfixCompletion.templates;
 
 import com.intellij.codeInsight.completion.InsertionContext;
 import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.postfixCompletion.infrastructure.PostfixTemplateContext;
@@ -28,6 +29,11 @@ public final class SynchronizedStatementPostfixTemplate extends PostfixTemplate 
     }
 
     return new SynchronizedLookupElement(expression);
+  }
+  
+  @Override
+  public void expand(@NotNull PsiElement context, @NotNull Editor editor) {
+    throw new UnsupportedOperationException("Implement me please");
   }
 
   static final class SynchronizedLookupElement extends StatementPostfixLookupElement<PsiSynchronizedStatement> {

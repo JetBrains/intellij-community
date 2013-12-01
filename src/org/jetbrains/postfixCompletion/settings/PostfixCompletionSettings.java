@@ -6,7 +6,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.postfixCompletion.infrastructure.TemplateProviderInfo;
+import org.jetbrains.postfixCompletion.templates.PostfixTemplate;
 
 import java.io.File;
 import java.util.Map;
@@ -20,8 +20,8 @@ import java.util.Map;
 public class PostfixCompletionSettings implements PersistentStateComponent<PostfixCompletionSettings>, ExportableComponent {
   @NotNull private Map<String, Boolean> myTemplatesState = ContainerUtil.newHashMap();
 
-  public boolean isTemplateEnabled(@NotNull TemplateProviderInfo providerInfo) {
-    return ContainerUtil.getOrElse(myTemplatesState, providerInfo.annotation.templateName(), true);
+  public boolean isTemplateEnabled(@NotNull PostfixTemplate template) {
+    return ContainerUtil.getOrElse(myTemplatesState, template.getName(), true);
   }
 
   @NotNull

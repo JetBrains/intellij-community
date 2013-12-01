@@ -41,6 +41,11 @@ public abstract class ForIterationPostfixTemplate extends PostfixTemplate {
     return createIterationLookupElement(expression, info.second, info.first);
   }
 
+  @Override
+  public void expand(@NotNull PsiElement context, @NotNull Editor editor) {
+    throw new UnsupportedOperationException("Implement me please");
+  }
+
   @NotNull
   protected abstract ForLookupElementBase createIterationLookupElement(@NotNull PrefixExpressionContext expression,
                                                                        @NotNull String indexVarType,

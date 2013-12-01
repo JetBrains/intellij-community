@@ -2,6 +2,7 @@ package org.jetbrains.postfixCompletion.templates;
 
 import com.intellij.codeInsight.completion.InsertionContext;
 import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
@@ -30,6 +31,11 @@ public final class SwitchStatementPostfixTemplate extends PostfixTemplate {
     }
 
     return null;
+  }
+  
+  @Override
+  public void expand(@NotNull PsiElement context, @NotNull Editor editor) {
+    throw new UnsupportedOperationException("Implement me please");
   }
 
   private static boolean isSwitchCompatibleType(@NotNull PsiType type, @NotNull PsiElement context) {

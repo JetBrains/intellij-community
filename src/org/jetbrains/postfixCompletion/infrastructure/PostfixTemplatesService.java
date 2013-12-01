@@ -220,7 +220,7 @@ public class PostfixTemplatesService {
       if (invokedOnType && !providerInfo.annotation.worksOnTypes()) continue;
       if (insideCodeFragment && !providerInfo.annotation.worksInsideFragments()) continue;
       try {
-        if (settings.isTemplateEnabled(providerInfo)) {
+        if (settings.isTemplateEnabled(providerInfo.provider)) {
           LookupElement element = providerInfo.provider.createLookupElement(context);
           if (element != null) elements.add(element);
         }

@@ -102,6 +102,11 @@ public final class IntroduceVariablePostfixTemplate extends PostfixTemplate {
     return null;
   }
 
+  @Override
+  public void expand(@NotNull PsiElement context, @NotNull Editor editor) {
+    throw new UnsupportedOperationException("Implement me please");
+  }
+  
   private static class IntroduceVarStatementLookupElement extends StatementPostfixLookupElement<PsiExpressionStatement> {
     private final boolean myInvokedOnType;
     private final boolean myIsAbstractType;

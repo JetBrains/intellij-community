@@ -1,6 +1,7 @@
 package org.jetbrains.postfixCompletion.templates;
 
 import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
@@ -28,6 +29,11 @@ public abstract class BooleanPostfixTemplate extends PostfixTemplate {
     }
 
     return null;
+  }
+  
+  @Override
+  public void expand(@NotNull PsiElement context, @NotNull Editor editor) {
+    throw new UnsupportedOperationException("Implement me please");
   }
 
   public static boolean isBooleanExpression(@NotNull PrefixExpressionContext context) {

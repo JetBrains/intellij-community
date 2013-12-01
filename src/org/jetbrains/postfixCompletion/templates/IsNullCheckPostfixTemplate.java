@@ -1,6 +1,8 @@
 package org.jetbrains.postfixCompletion.templates;
 
 import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.postfixCompletion.infrastructure.PostfixTemplateContext;
 import org.jetbrains.postfixCompletion.infrastructure.PrefixExpressionContext;
@@ -26,6 +28,11 @@ public final class IsNullCheckPostfixTemplate extends PostfixTemplate {
     }
 
     return new CheckIsNullLookupElement(expression);
+  }
+  
+  @Override
+  public void expand(@NotNull PsiElement context, @NotNull Editor editor) {
+    throw new UnsupportedOperationException("Implement me please");
   }
 
   private static final class CheckIsNullLookupElement extends NullCheckLookupElementBase {

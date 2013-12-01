@@ -55,6 +55,11 @@ public final class IntroduceFieldPostfixTemplate extends PostfixTemplate {
     return null;
   }
 
+  @Override
+  public void expand(@NotNull PsiElement context, @NotNull Editor editor) {
+    throw new UnsupportedOperationException("Implement me please");
+  }
+
   private static class IntroduceFieldLookupElement extends StatementPostfixLookupElement<PsiExpressionStatement> {
     public IntroduceFieldLookupElement(@NotNull PrefixExpressionContext context) {
       super("field", context);
