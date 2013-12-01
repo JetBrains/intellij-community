@@ -31,46 +31,54 @@ import org.jetbrains.annotations.NotNull;
  * @author <a href="mailto:aefimov.box@gmail.com">Alexey Efimov</a>
  */
 final class ImageFileEditorProvider implements FileEditorProvider, DumbAware {
-    @NonNls private static final String EDITOR_TYPE_ID = "images";
+  @NonNls private static final String EDITOR_TYPE_ID = "images";
 
-    private final ImageFileTypeManager typeManager;
+  private final ImageFileTypeManager typeManager;
 
-    ImageFileEditorProvider(ImageFileTypeManager typeManager) {
-        this.typeManager = typeManager;
-    }
+  ImageFileEditorProvider(ImageFileTypeManager typeManager) {
+    this.typeManager = typeManager;
+  }
 
-    public boolean accept(@NotNull Project project, @NotNull VirtualFile file) {
-        return typeManager.isImage(file);
-    }
+  @Override
+  public boolean accept(@NotNull Project project, @NotNull VirtualFile file) {
+    return typeManager.isImage(file);
+  }
 
-    @NotNull
-    public FileEditor createEditor(@NotNull Project project, @NotNull VirtualFile file) {
-        return new ImageFileEditorImpl(project, file);
-    }
+  @Override
+  @NotNull
+  public FileEditor createEditor(@NotNull Project project, @NotNull VirtualFile file) {
+    return new ImageFileEditorImpl(project, file);
+  }
 
-    public void disposeEditor(@NotNull FileEditor editor) {
-      Disposer.dispose(editor);
-    }
+  @Override
+  public void disposeEditor(@NotNull FileEditor editor) {
+    Disposer.dispose(editor);
+  }
 
-    @NotNull
-    public FileEditorState readState(@NotNull Element sourceElement, @NotNull Project project, @NotNull VirtualFile file) {
-        return new FileEditorState() {
-            public boolean canBeMergedWith(FileEditorState otherState, FileEditorStateLevel level) {
-                return false;
-            }
-        };
-    }
+  @Override
+  @NotNull
+  public FileEditorState readState(@NotNull Element sourceElement, @NotNull Project project, @NotNull VirtualFile file) {
+    return new FileEditorState() {
+      @Override
+      public boolean canBeMergedWith(FileEditorState otherState, FileEditorStateLevel level) {
+        return false;
+      }
+    };
+  }
 
-    public void writeState(@NotNull FileEditorState state, @NotNull Project project, @NotNull Element targetElement) {
-    }
+  @Override
+  public void writeState(@NotNull FileEditorState state, @NotNull Project project, @NotNull Element targetElement) {
+  }
 
-    @NotNull
-    public String getEditorTypeId() {
-        return EDITOR_TYPE_ID;
-    }
+  @Override
+  @NotNull
+  public String getEditorTypeId() {
+    return EDITOR_TYPE_ID;
+  }
 
-    @NotNull
-    public FileEditorPolicy getPolicy() {
-        return FileEditorPolicy.HIDE_DEFAULT_EDITOR;
-    }
+  @Override
+  @NotNull
+  public FileEditorPolicy getPolicy() {
+    return FileEditorPolicy.HIDE_DEFAULT_EDITOR;
+  }
 }
