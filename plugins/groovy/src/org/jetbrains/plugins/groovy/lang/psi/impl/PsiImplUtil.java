@@ -95,6 +95,8 @@ import static com.intellij.psi.impl.source.tree.Factory.createSingleLeafElement;
 import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.*;
 import static org.jetbrains.plugins.groovy.lang.lexer.TokenSets.RELATIONS;
 import static org.jetbrains.plugins.groovy.lang.lexer.TokenSets.SHIFT_SIGNS;
+import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.GROOVY_LANG_IMMUTABLE;
+import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.GROOVY_TRANSFORM_IMMUTABLE;
 
 public class PsiImplUtil {
   private static final Logger LOG = Logger.getInstance("org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil");
@@ -841,5 +843,10 @@ public class PsiImplUtil {
     }
 
     return null;
+  }
+
+  public static boolean hasImmutableAnnotation(PsiModifierList modifierList) {
+    return modifierList.findAnnotation(GROOVY_LANG_IMMUTABLE) != null ||
+           modifierList.findAnnotation(GROOVY_TRANSFORM_IMMUTABLE) != null;
   }
 }

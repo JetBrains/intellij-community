@@ -55,7 +55,7 @@ public class GrStubFileElementType extends IStubFileElementType<GrFileStub> {
 
   @Override
   public int getStubVersion() {
-    return super.getStubVersion() + 18;
+    return super.getStubVersion() + 19;
   }
 
   @NotNull

@@ -1,5 +1,6 @@
 package com.intellij.vcs.log.impl;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.NotNullFunction;
@@ -13,6 +14,8 @@ import java.util.List;
  * @author Kirill Likhodedov
  */
 public class VcsLogObjectsFactoryImpl implements VcsLogObjectsFactory {
+
+  private static final Logger LOG = Logger.getInstance(VcsLogObjectsFactoryImpl.class);
 
   @NotNull private final VcsLogManager myLogManager;
 
@@ -77,7 +80,12 @@ public class VcsLogObjectsFactoryImpl implements VcsLogObjectsFactory {
       @NotNull
       @Override
       public Integer fun(Hash hash) {
-        return myLogManager.getDataHolder().putHash(hash);
+        VcsLogDataHolder dataHolder = myLogManager.getDataHolder();
+        if (dataHolder == null) {
+          LOG.error("The log data holder should have been initialized at this point");
+          return -1;
+        }
+        return dataHolder.putHash(hash);
       }
     }, commitHash, name, type, root);
   }

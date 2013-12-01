@@ -627,7 +627,9 @@ public class DirectoryIndexImpl extends DirectoryIndex {
   private static <T> T assertConsistentResult(@NotNull Object arg, @Nullable T rootIndexResult, T standardResult) {
     //noinspection ConstantConditions
     if (ourCompareImplementations && !Comparing.equal(rootIndexResult, standardResult)) {
-      LOG.error("DirectoryIndex differs from RootIndex at " + arg + "\nriInfo=" + rootIndexResult + "\nstandardResult=" + standardResult);
+      LOG.error("DirectoryIndex differs from RootIndex at " + arg +
+                "\nriInfo         =  " + rootIndexResult +
+                "\nstandardResult =  " + standardResult);
     }
     return standardResult;
   }
@@ -657,10 +659,14 @@ public class DirectoryIndexImpl extends DirectoryIndex {
       return getRootIndex().isProjectExcludeRoot(dir);
     }
 
+    //noinspection UnnecessaryLocalVariable
     boolean standardResult = myState.myProjectExcludeRoots.contains(((NewVirtualFile)dir).getId());
+/*
     RootIndex rootIndex = getRootIndex();
     Boolean riResult = rootIndex != null ? rootIndex.isProjectExcludeRoot(dir) : null;
-    return assertConsistentResult(dir, riResult, standardResult);
+    assertConsistentResult(dir, riResult, standardResult);
+*/
+    return standardResult;
   }
 
   private VirtualFile findFileById(int dir) {
