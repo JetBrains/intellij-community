@@ -27,31 +27,38 @@ import org.jetbrains.annotations.NotNull;
  * @author peter
  */
 public abstract class PerspectiveFileEditorProvider extends WeighedFileEditorProvider {
+  @Override
   @NotNull
   public abstract PerspectiveFileEditor createEditor(@NotNull Project project, @NotNull VirtualFile file);
 
+  @Override
   public void disposeEditor(@NotNull FileEditor editor) {
     Disposer.dispose(editor);
   }
 
+  @Override
   @NotNull
   public FileEditorState readState(@NotNull Element sourceElement, @NotNull Project project, @NotNull VirtualFile file) {
     return new FileEditorState() {
+      @Override
       public boolean canBeMergedWith(FileEditorState otherState, FileEditorStateLevel level) {
         return true;
       }
     };
   }
 
+  @Override
   public void writeState(@NotNull FileEditorState state, @NotNull Project project, @NotNull Element targetElement) {
   }
 
+  @Override
   @NotNull
   @NonNls
   public final String getEditorTypeId() {
     return getComponentName();
   }
 
+  @Override
   @NotNull
   public final FileEditorPolicy getPolicy() {
     return FileEditorPolicy.PLACE_AFTER_DEFAULT_EDITOR;
