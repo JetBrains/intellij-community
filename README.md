@@ -56,7 +56,7 @@ Future work:
 * Control braces insertion for statements (use code style settings?)
 * Completion char handling `expr.var.usage()` => `T x = expr; x.usage()`?
 * `1..10` - for (int i = 1; i < 10; i++) {}
-* `list.each` - for (E : list) {}
+* `list.each` - for (E e : list) {}
 * `map`, `filter` and other stuff from `ContainerUtil` or Guava collections
 * Support non-Java languages
 
