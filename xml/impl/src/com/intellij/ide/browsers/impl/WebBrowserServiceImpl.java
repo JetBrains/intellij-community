@@ -90,7 +90,7 @@ public class WebBrowserServiceImpl extends WebBrowserService {
 
   private static Pair<WebBrowserUrlProvider, Collection<Url>> getProvider(PsiElement element, PsiFile psiFile) {
     Ref<Collection<Url>> result = Ref.create();
-    DumbService dumbService = DumbService.getInstance(element.getProject());
+    DumbService dumbService = DumbService.getInstance(psiFile.getProject());
     for (WebBrowserUrlProvider urlProvider : WebBrowserUrlProvider.EP_NAME.getExtensions()) {
       if ((!dumbService.isDumb() || DumbService.isDumbAware(urlProvider)) && urlProvider.canHandleElement(element, psiFile, result)) {
         return Pair.create(urlProvider, result.get());
