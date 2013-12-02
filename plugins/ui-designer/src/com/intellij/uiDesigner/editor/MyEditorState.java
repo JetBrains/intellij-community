@@ -50,6 +50,7 @@ final class MyEditorState implements FileEditorState{
     return (int)(myDocumentModificationStamp ^ (myDocumentModificationStamp >>> 32));
   }
 
+  @Override
   public boolean canBeMergedWith(FileEditorState otherState, FileEditorStateLevel level) {
     return otherState instanceof MyEditorState;
   }

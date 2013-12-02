@@ -15,7 +15,10 @@
  */
 package com.intellij.util.xml.ui;
 
-import com.intellij.openapi.fileEditor.*;
+import com.intellij.openapi.fileEditor.FileEditor;
+import com.intellij.openapi.fileEditor.FileEditorPolicy;
+import com.intellij.openapi.fileEditor.FileEditorState;
+import com.intellij.openapi.fileEditor.WeighedFileEditorProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -39,12 +42,7 @@ public abstract class PerspectiveFileEditorProvider extends WeighedFileEditorPro
   @Override
   @NotNull
   public FileEditorState readState(@NotNull Element sourceElement, @NotNull Project project, @NotNull VirtualFile file) {
-    return new FileEditorState() {
-      @Override
-      public boolean canBeMergedWith(FileEditorState otherState, FileEditorStateLevel level) {
-        return true;
-      }
-    };
+    return FileEditorState.INSTANCE;
   }
 
   @Override
