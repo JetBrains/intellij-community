@@ -58,12 +58,7 @@ final class ImageFileEditorProvider implements FileEditorProvider, DumbAware {
   @Override
   @NotNull
   public FileEditorState readState(@NotNull Element sourceElement, @NotNull Project project, @NotNull VirtualFile file) {
-    return new FileEditorState() {
-      @Override
-      public boolean canBeMergedWith(FileEditorState otherState, FileEditorStateLevel level) {
-        return false;
-      }
-    };
+    return new NullFileEditorState();
   }
 
   @Override
