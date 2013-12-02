@@ -31,7 +31,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.api.CanceledStatus;
 import org.jetbrains.jps.service.SharedThreadPool;
 
-import javax.tools.*;
+import javax.tools.Diagnostic;
+import javax.tools.JavaFileObject;
 import java.io.File;
 import java.util.*;
 
@@ -72,6 +73,7 @@ public class JavacServer {
   }
 
   public static void main(String[] args) {
+    JavacServer server = null;
     try {
       int port = DEFAULT_SERVER_PORT;
       if (args.length > 0) {
@@ -84,12 +86,13 @@ public class JavacServer {
         }
       }
 
-      final JavacServer server = new JavacServer();
+      server = new JavacServer();
       server.start(port);
+      final JavacServer finalServer = server;
       Runtime.getRuntime().addShutdownHook(new Thread("Shutdown hook thread") {
         @Override
         public void run() {
-          server.stop();
+          finalServer.stop();
         }
       });
 
@@ -99,7 +102,14 @@ public class JavacServer {
     catch (Throwable e) {
       System.err.println(SERVER_ERROR_START_MESSAGE + e.getMessage());
       e.printStackTrace(System.err);
-      System.exit(-1);
+      try {
+        if (server != null) {
+          server.stop();
+        }
+      }
+      finally {
+        System.exit(-1);
+      }
     }
   }
 

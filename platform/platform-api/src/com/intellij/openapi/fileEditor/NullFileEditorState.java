@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,20 +15,9 @@
  */
 package com.intellij.openapi.fileEditor;
 
-/**
- * This object is used to store/restore editor state between restarts.
- * For example, text editor can store caret position, scroll position,
- * information about folded regions, etc.
- *
- * @author Vladimir Kondratyev
- */
-public interface FileEditorState {
-  FileEditorState INSTANCE = new FileEditorState() {
-    @Override
-    public boolean canBeMergedWith(FileEditorState otherState, FileEditorStateLevel level) {
-      return true;
-    }
-  };
-
-  boolean canBeMergedWith(FileEditorState otherState, FileEditorStateLevel level);
+public final class NullFileEditorState implements FileEditorState {
+  @Override
+  public boolean canBeMergedWith(FileEditorState otherState, FileEditorStateLevel level) {
+    return false;
+  }
 }
