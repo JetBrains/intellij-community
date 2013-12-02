@@ -47,15 +47,14 @@ public final class CastExpressionPostfixTemplate extends PostfixTemplate {
       doIt(editor, expressions.get(0));
     }
     else {
-
-    IntroduceTargetChooser.showChooser(editor, expressions,
-                                       new Pass<PsiExpression>() {
-                                         public void pass(@NotNull PsiExpression e) {
-                                           doIt(editor, e);
-                                         }
-                                       },
-                                       new PsiExpressionTrimRenderer.RenderFunction(),
-                                       "Expressions", 0, ScopeHighlighter.NATURAL_RANGER);
+      IntroduceTargetChooser.showChooser(editor, expressions,
+                                         new Pass<PsiExpression>() {
+                                           public void pass(@NotNull PsiExpression e) {
+                                             doIt(editor, e);
+                                           }
+                                         },
+                                         new PsiExpressionTrimRenderer.RenderFunction(),
+                                         "Expressions", 0, ScopeHighlighter.NATURAL_RANGER);
     }
   }
 
