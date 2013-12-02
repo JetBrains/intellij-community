@@ -15,15 +15,23 @@
  */
 package com.intellij.util.text;
 
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.util.Clock;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.junit.Test;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.GregorianCalendar;
+import java.util.List;
 
 import static org.junit.Assert.assertEquals;
 
@@ -42,12 +50,16 @@ public class DateFormatUtilTest {
   }
 
   @Test
-  public void testTime() throws ParseException {
+  public void testTime() throws Exception {
     Clock.setTime(2004, 11, 10, 17, 10, 15);
 
     if (SystemInfo.isMac) {
       assertEquals("17:10", DateFormatUtil.formatTime(Clock.getTime()));
       assertEquals("17:10:15", DateFormatUtil.formatTimeWithSeconds(Clock.getTime()));
+    }
+    else if (SystemInfo.isUnix) {
+      assertEquals("5:10:15 PM", printTimeForLocale("en_US.UTF-8"));
+      assertEquals("17:10:15", printTimeForLocale("de_DE.UTF-8"));
     }
     else {
       assertEquals(DateFormat.getTimeInstance(DateFormat.SHORT).format(Clock.getTime()),
@@ -95,5 +107,28 @@ public class DateFormatUtilTest {
 
   private static Date date(final int year, final int month, final int day, final int hour, final int minute, final int second) {
     return new GregorianCalendar(year, month - 1, day, hour, minute, second).getTime();
+  }
+
+  private static String printTimeForLocale(String locale) throws IOException {
+    List<String> classpath = ContainerUtil.newArrayList();
+    classpath.addAll(PathManager.getUtilClassPath());
+    classpath.add(PathManager.getJarPathForClass(PrintTime.class));
+    ProcessBuilder builder = new ProcessBuilder()
+      .command(System.getProperty("java.home") + "/bin/java",
+               "-classpath",
+               StringUtil.join(classpath, File.pathSeparator),
+               PrintTime.class.getName(),
+               String.valueOf(Clock.getTime()))
+      .redirectErrorStream(true);
+    builder.environment().put("LC_TIME", locale);
+    Process process = builder.start();
+
+    BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+    try {
+      return reader.readLine();
+    }
+    finally {
+      reader.close();
+    }
   }
 }
