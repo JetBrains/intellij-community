@@ -52,8 +52,8 @@ public class VcsLogManager implements Disposable {
   @NotNull private final VcsLogUiProperties myUiProperties;
 
   private PostponeableLogRefresher myLogRefresher;
-  private VcsLogDataHolder myLogDataHolder;
-  private VcsLogUI myUi;
+  private volatile VcsLogDataHolder myLogDataHolder;
+  private volatile VcsLogUI myUi;
 
   public VcsLogManager(@NotNull Project project, @NotNull ProjectLevelVcsManager vcsManager,
                        @NotNull VcsLogSettings settings,
