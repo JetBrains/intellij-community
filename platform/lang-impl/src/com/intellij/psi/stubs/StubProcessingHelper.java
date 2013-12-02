@@ -35,7 +35,7 @@ public class StubProcessingHelper extends StubProcessingHelperBase {
 
 
   @Override
-  protected String stubTreeAndIndexDoNotMatch(StubTree stubTree,
+  protected Object stubTreeAndIndexDoNotMatch(StubTree stubTree,
                                             PsiFileWithStubSupport psiFile,
                                             List<StubElement<?>> plained,
                                             VirtualFile virtualFile,
@@ -51,6 +51,6 @@ public class StubProcessingHelper extends StubProcessingHelperBase {
                                     new Attachment("stubTree.txt", ((PsiFileStubImpl)stubTree.getRoot()).printTree()),
                                     new Attachment("stubTreeFromIndex.txt", stubTreeFromIndex == null
                                                                             ? "null"
-                                                                            : ((PsiFileStubImpl)stubTreeFromIndex.getRoot()).printTree())).toString();
+                                                                            : ((PsiFileStubImpl)stubTreeFromIndex.getRoot()).printTree()));
   }
 }
