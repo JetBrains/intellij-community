@@ -6,6 +6,6 @@ abstract public class PostfixTemplateTestCase extends LightPlatformCodeInsightFi
   protected void doTest() {
     myFixture.configureByFile(getTestName(true) + ".java");
     myFixture.type('\t');
-    myFixture.checkResultByFile(getTestName(true) + "_after.java", false);
+    myFixture.checkResultByFile(getTestName(true) + "_after.java", true);
   }
 }

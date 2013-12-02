@@ -1,5 +1,6 @@
 public class Foo {
     void m(boolean x) {
-        while (x)<caret>
+        x.while<caret>
+        return;
     }
 }

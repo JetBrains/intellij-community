@@ -1,5 +1,6 @@
 public class Foo {
     void m(boolean x) {
-        x.<caret>
+        while(x) <caret>
+        return;
     }
 }
