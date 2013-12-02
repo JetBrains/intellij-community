@@ -28,6 +28,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -44,9 +45,14 @@ public final class Urls {
 
   @NotNull
   public static Url newFromEncoded(@NotNull String url) {
-    Url result = parse(url, false);
+    Url result = parseEncoded(url);
     LOG.assertTrue(result != null, url);
     return result;
+  }
+
+  @Nullable
+  public static Url parseEncoded(@NotNull String url) {
+    return parse(url, false);
   }
 
   @NotNull
@@ -126,14 +132,24 @@ public final class Urls {
     return new UrlImpl(scheme, authority, path, matcher.group(5));
   }
 
-  // must not be used in NodeJS
+  @NotNull
   public static Url newFromVirtualFile(@NotNull VirtualFile file) {
     if (file.isInLocalFileSystem()) {
       return newUri(file.getFileSystem().getProtocol(), file.getPath());
     }
     else {
-      return parseUrl(file.getUrl());
+      Url url = parseUrl(file.getUrl());
+      return url == null ? new UrlImpl(file.getPath()) : url;
     }
+  }
+
+  public static boolean equalsIgnoreParameters(@NotNull Url url, @NotNull List<Url> urls) {
+    for (Url otherUrl : urls) {
+      if (url.equalsIgnoreParameters(otherUrl)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   public static boolean equalsIgnoreParameters(@NotNull Url url, @NotNull VirtualFile file) {

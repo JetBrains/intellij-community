@@ -21,14 +21,14 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.Url;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collections;
-import java.util.Set;
+import java.util.Collection;
 
 public abstract class WebBrowserUrlProvider {
-  public static ExtensionPointName<WebBrowserUrlProvider> EP_NAME = ExtensionPointName.create("com.intellij.webBrowserUrlProvider");
+  public static final ExtensionPointName<WebBrowserUrlProvider> EP_NAME = ExtensionPointName.create("com.intellij.webBrowserUrlProvider");
 
   /**
    * Browser exceptions are printed in Error Dialog when user presses any browser button
@@ -39,14 +39,14 @@ public abstract class WebBrowserUrlProvider {
     }
   }
 
-  public boolean canHandleElement(@NotNull PsiElement element, @NotNull PsiFile psiFile, @NotNull Ref<Set<Url>> result) {
+  public boolean canHandleElement(@NotNull PsiElement element, @NotNull PsiFile psiFile, @NotNull Ref<Collection<Url>> result) {
     VirtualFile file = psiFile.getVirtualFile();
     if (file == null) {
       return false;
     }
 
     try {
-      Set<Url> urls = getUrls(element, psiFile, file);
+      Collection<Url> urls = getUrls(element, psiFile, file);
       if (!urls.isEmpty()) {
         result.set(urls);
         return true;
@@ -63,9 +63,8 @@ public abstract class WebBrowserUrlProvider {
     return null;
   }
 
-  public Set<Url> getUrls(@NotNull PsiElement element, @NotNull PsiFile psiFile, @NotNull VirtualFile virtualFile) throws BrowserException {
-    Url url = getUrl(element, psiFile, virtualFile);
-    return url == null ? Collections.<Url>emptySet() : Collections.singleton(url);
+  public Collection<Url> getUrls(@NotNull PsiElement element, @NotNull PsiFile psiFile, @NotNull VirtualFile virtualFile) throws BrowserException {
+    return ContainerUtil.createMaybeSingletonSet(getUrl(element, psiFile, virtualFile));
   }
 
   @Nullable

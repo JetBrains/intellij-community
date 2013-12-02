@@ -72,7 +72,7 @@ public class CodeInsightTestUtil {
     return null;
   }
 
-  public static void doIntentionTest(CodeInsightTestFixture fixture, @NonNls String file, @NonNls String actionText) throws Throwable {
+  public static void doIntentionTest(CodeInsightTestFixture fixture, @NonNls String file, @NonNls String actionText) {
     doIntentionTest(fixture, actionText, file + ".xml", file + "_after.xml");
   }
 

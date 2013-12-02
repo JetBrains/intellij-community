@@ -1,0 +1,5 @@
+//noinspection GrPackage
+
+include 'group1:subgroup11:project'
+include 'group2:subgroup11:project'
+include 'project'

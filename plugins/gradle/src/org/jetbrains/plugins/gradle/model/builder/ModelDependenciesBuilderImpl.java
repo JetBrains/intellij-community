@@ -18,6 +18,7 @@ package org.jetbrains.plugins.gradle.model.builder;
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.artifacts.ModuleVersionIdentifier;
+import org.gradle.plugins.ide.idea.GenerateIdeaModule;
 import org.gradle.plugins.ide.idea.IdeaPlugin;
 import org.gradle.plugins.ide.idea.model.IdeaModel;
 import org.gradle.plugins.ide.internal.IdeDependenciesExtractor;
@@ -35,6 +36,10 @@ import java.util.*;
  * @since 11/5/13
  */
 public class ModelDependenciesBuilderImpl implements ModelBuilderService {
+
+  private static final String MODULE_PROPERTY = "ideaModule";
+  private static final String VERSION_PROPERTY = "version";
+  private static final String GROUP_PROPERTY = "group";
 
   @Override
   public boolean canBuild(String modelName) {
@@ -108,13 +113,21 @@ public class ModelDependenciesBuilderImpl implements ModelBuilderService {
           dependencies.add(libraryDependency);
         }
         else if (versionId.getIdeDependency() instanceof IdeDependenciesExtractor.IdeProjectDependency) {
+          IdeDependenciesExtractor.IdeProjectDependency projectDependency =
+            (IdeDependenciesExtractor.IdeProjectDependency)versionId.getIdeDependency();
+
+          String ideaModuleName = findDeDuplicatedModuleName(projectDependency.getProject());
+          if(ideaModuleName == null) {
+            ideaModuleName = versionId.getName();
+          }
+
           IdeaModuleDependencyImpl moduleDependency = new IdeaModuleDependencyImpl(
             new IdeaDependencyScopeImpl(scope),
-            versionId.getName(),
+            ideaModuleName,
             versionId.getGroup(),
             versionId.getVersion()
           );
-          moduleDependency.setIdeaModule(new StubIdeaModule(versionId.getName()));
+          moduleDependency.setIdeaModule(new StubIdeaModule(ideaModuleName));
           dependencies.add(moduleDependency);
         }
         else if (versionId.getIdeDependency() instanceof IdeDependenciesExtractor.IdeLocalFileDependency) {
@@ -135,14 +148,26 @@ public class ModelDependenciesBuilderImpl implements ModelBuilderService {
     return new ProjectDependenciesModelImpl(project.getPath(), dependencies);
   }
 
+  @Nullable
+  private static String findDeDuplicatedModuleName(Project project) {
+    if(project.hasProperty(MODULE_PROPERTY)) {
+      Object ideaModule = project.property(MODULE_PROPERTY);
+      if(ideaModule instanceof GenerateIdeaModule) {
+        GenerateIdeaModule generateIdeaModule = (GenerateIdeaModule)ideaModule;
+        return generateIdeaModule.getModule().getName();
+      }
+    }
+    return null;
+  }
+
   private static void merge(Map<DependencyVersionId, Scopes> map, IdeDependenciesExtractor.IdeProjectDependency dependency) {
     final String configurationName = dependency.getDeclaredConfiguration().getName();
     final GradleDependencyScope scope = GradleDependencyScope.fromName(configurationName);
     if (scope == null) return;
 
     final Project project = dependency.getProject();
-    final String version = project.hasProperty("version") ? str(project.property("version")) : "";
-    final String group = project.hasProperty("group") ? str(project.property("group")) : "";
+    final String version = project.hasProperty(VERSION_PROPERTY) ? str(project.property(VERSION_PROPERTY)) : "";
+    final String group = project.hasProperty(GROUP_PROPERTY) ? str(project.property(GROUP_PROPERTY)) : "";
 
     DependencyVersionId versionId =
       new DependencyVersionId(dependency, project.getName(), group, version);

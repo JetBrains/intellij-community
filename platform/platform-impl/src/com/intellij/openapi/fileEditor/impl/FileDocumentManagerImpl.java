@@ -18,6 +18,7 @@ package com.intellij.openapi.fileEditor.impl;
 import com.intellij.AppTopics;
 import com.intellij.CommonBundle;
 import com.intellij.codeStyle.CodeStyleFacade;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
@@ -49,6 +50,7 @@ import com.intellij.openapi.ui.DialogBuilder;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
@@ -63,6 +65,7 @@ import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.ui.UIBundle;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.Function;
+import com.intellij.util.PairProcessor;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.ConcurrentHashSet;
 import com.intellij.util.messages.MessageBus;
@@ -649,47 +652,67 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
     myMultiCaster.fileContentReloaded(file, document);
   }
 
-  protected boolean askReloadFromDisk(final VirtualFile file, final Document document) {
+  private PairProcessor<VirtualFile, Document> askReloadFromDisk = new PairProcessor<VirtualFile, Document>() {
+    @Override
+    public boolean process(final VirtualFile file, final Document document) {
+      String message = UIBundle.message("file.cache.conflict.message.text", file.getPresentableUrl());
+
+      final DialogBuilder builder = new DialogBuilder((Project)null);
+      builder.setCenterPanel(new JLabel(message, Messages.getQuestionIcon(), SwingConstants.CENTER));
+      builder.addOkAction().setText(UIBundle.message("file.cache.conflict.load.fs.changes.button"));
+      builder.addCancelAction().setText(UIBundle.message("file.cache.conflict.keep.memory.changes.button"));
+      builder.addAction(new AbstractAction(UIBundle.message("file.cache.conflict.show.difference.button")) {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+          String title = UIBundle.message("file.cache.conflict.for.file.dialog.title", file.getPresentableUrl());
+          final ProjectEx project = (ProjectEx)ProjectLocator.getInstance().guessProjectForFile(file);
+
+          SimpleDiffRequest request = new SimpleDiffRequest(project, title);
+          FileType fileType = file.getFileType();
+          String fsContent = LoadTextUtil.loadText(file).toString();
+          request.setContents(new SimpleContent(fsContent, fileType),
+                              new DocumentContent(project, document, fileType));
+          request.setContentTitles(UIBundle.message("file.cache.conflict.diff.content.file.system.content"),
+                                   UIBundle.message("file.cache.conflict.diff.content.memory.content"));
+          DialogBuilder diffBuilder = new DialogBuilder(project);
+          DiffPanelImpl diffPanel = (DiffPanelImpl)DiffManager.getInstance().createDiffPanel(diffBuilder.getWindow(), project, diffBuilder, null);
+          diffPanel.getOptions().setShowSourcePolicy(DiffPanelOptions.ShowSourcePolicy.DONT_SHOW);
+          diffBuilder.setCenterPanel(diffPanel.getComponent());
+          diffBuilder.setDimensionServiceKey("FileDocumentManager.FileCacheConflict");
+          diffPanel.setDiffRequest(request);
+          diffBuilder.addOkAction().setText(UIBundle.message("file.cache.conflict.save.changes.button"));
+          diffBuilder.addCancelAction();
+          diffBuilder.setTitle(title);
+          if (diffBuilder.show() == DialogWrapper.OK_EXIT_CODE) {
+            builder.getDialogWrapper().close(DialogWrapper.CANCEL_EXIT_CODE);
+          }
+        }
+      });
+      builder.setTitle(UIBundle.message("file.cache.conflict.dialog.title"));
+      builder.setButtonsAlignment(SwingConstants.CENTER);
+      builder.setHelpId("reference.dialogs.fileCacheConflict");
+      return builder.show() == 0;
+    }
+  };
+
+  @TestOnly
+  public void setAskReloadFromDisk(@NotNull Disposable disposable,
+                                   @NotNull PairProcessor<VirtualFile, Document> newProcessor) {
+    final PairProcessor<VirtualFile, Document> old = askReloadFromDisk;
+    askReloadFromDisk = newProcessor;
+    Disposer.register(disposable, new Disposable() {
+      @Override
+      public void dispose() {
+        askReloadFromDisk = old;
+      }
+    });
+  }
+
+  private boolean askReloadFromDisk(final VirtualFile file, final Document document) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     if (!isDocumentUnsaved(document)) return true;
 
-    String message = UIBundle.message("file.cache.conflict.message.text", file.getPresentableUrl());
-    if (ApplicationManager.getApplication().isUnitTestMode()) throw new RuntimeException(message);
-    final DialogBuilder builder = new DialogBuilder((Project)null);
-    builder.setCenterPanel(new JLabel(message, Messages.getQuestionIcon(), SwingConstants.CENTER));
-    builder.addOkAction().setText(UIBundle.message("file.cache.conflict.load.fs.changes.button"));
-    builder.addCancelAction().setText(UIBundle.message("file.cache.conflict.keep.memory.changes.button"));
-    builder.addAction(new AbstractAction(UIBundle.message("file.cache.conflict.show.difference.button")) {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        String title = UIBundle.message("file.cache.conflict.for.file.dialog.title", file.getPresentableUrl());
-        final ProjectEx project = (ProjectEx)ProjectLocator.getInstance().guessProjectForFile(file);
-
-        SimpleDiffRequest request = new SimpleDiffRequest(project, title);
-        FileType fileType = file.getFileType();
-        String fsContent = LoadTextUtil.loadText(file).toString();
-        request.setContents(new SimpleContent(fsContent, fileType),
-                            new DocumentContent(project, document, fileType));
-        request.setContentTitles(UIBundle.message("file.cache.conflict.diff.content.file.system.content"),
-                                 UIBundle.message("file.cache.conflict.diff.content.memory.content"));
-        DialogBuilder diffBuilder = new DialogBuilder(project);
-        DiffPanelImpl diffPanel = (DiffPanelImpl)DiffManager.getInstance().createDiffPanel(diffBuilder.getWindow(), project, diffBuilder, null);
-        diffPanel.getOptions().setShowSourcePolicy(DiffPanelOptions.ShowSourcePolicy.DONT_SHOW);
-        diffBuilder.setCenterPanel(diffPanel.getComponent());
-        diffBuilder.setDimensionServiceKey("FileDocumentManager.FileCacheConflict");
-        diffPanel.setDiffRequest(request);
-        diffBuilder.addOkAction().setText(UIBundle.message("file.cache.conflict.save.changes.button"));
-        diffBuilder.addCancelAction();
-        diffBuilder.setTitle(title);
-        if (diffBuilder.show() == DialogWrapper.OK_EXIT_CODE) {
-          builder.getDialogWrapper().close(DialogWrapper.CANCEL_EXIT_CODE);
-        }
-      }
-    });
-    builder.setTitle(UIBundle.message("file.cache.conflict.dialog.title"));
-    builder.setButtonsAlignment(SwingConstants.CENTER);
-    builder.setHelpId("reference.dialogs.fileCacheConflict");
-    return builder.show() == 0;
+    return askReloadFromDisk.process(file, document);
   }
 
   @Override
@@ -799,7 +822,13 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
     return FileDocumentManagerListener.EP_NAME.getExtensions();
   }
 
-  protected void handleErrorsOnSave(@NotNull Map<Document, IOException> failures) {
+  private void handleErrorsOnSave(@NotNull Map<Document, IOException> failures) {
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      for (IOException exception : failures.values()) {
+        throw new RuntimeException(exception);
+      }
+      return;
+    }
     for (IOException exception : failures.values()) {
       LOG.warn(exception);
     }

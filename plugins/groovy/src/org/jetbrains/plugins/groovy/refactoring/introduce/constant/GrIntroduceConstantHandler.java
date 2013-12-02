@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.groovy.refactoring.introduce.constant;
 
+import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.HelpID;
@@ -93,9 +94,14 @@ public class GrIntroduceConstantHandler extends GrIntroduceFieldHandlerBase<GrIn
   }
 
   @Override
-  protected GrAbstractInplaceIntroducer<GrIntroduceConstantSettings> getIntroducer(@NotNull GrIntroduceContext context,
-                                                                                   OccurrencesChooser.ReplaceChoice choice) {
-    return new GrInplaceConstantIntroducer(context, choice);
+  protected GrAbstractInplaceIntroducer<GrIntroduceConstantSettings> getIntroducer(@NotNull GrIntroduceContext context, @NotNull OccurrencesChooser.ReplaceChoice choice) {
+    final Ref<GrIntroduceContext> contextRef = Ref.create(context);
+
+    if (context.getStringPart() != null) {
+      extractStringPart(contextRef);
+    }
+
+    return new GrInplaceConstantIntroducer(contextRef.get(), choice);
   }
 
   private static class ConstantChecker extends GroovyRecursiveElementVisitor {

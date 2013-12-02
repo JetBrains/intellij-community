@@ -452,14 +452,15 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
   }
 
   @Override
-  protected <Psi extends PsiElement> void reportStubPsiMismatch(Psi psi, VirtualFile file) {
+  protected <Psi extends PsiElement> void reportStubPsiMismatch(Psi psi, VirtualFile file, Class<Psi> requiredClass) {
     if (file == null) {
-      super.reportStubPsiMismatch(psi, file);
+      super.reportStubPsiMismatch(psi, file, requiredClass);
       return;
     }
 
     String msg = "Invalid stub element type in index: " + file;
     msg += "; found: " + psi;
+    msg += "; found: " + requiredClass;
     msg += "\nfile stamp: " + file.getModificationStamp();
     msg += "; file size: " + file.getLength();
     msg += "; file modCount: " + file.getModificationCount();

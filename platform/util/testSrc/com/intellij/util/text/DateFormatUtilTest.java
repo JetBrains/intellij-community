@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,7 @@ package com.intellij.util.text;
 
 import com.intellij.openapi.util.Clock;
 import com.intellij.openapi.util.SystemInfo;
-import junit.framework.TestCase;
+import org.junit.Test;
 
 import java.text.DateFormat;
 import java.text.ParseException;
@@ -25,9 +25,13 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.GregorianCalendar;
 
-public class DateFormatUtilTest extends TestCase {
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+
+public class DateFormatUtilTest {
   private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("dd.MM.yyyy hh.mm.ss");
 
+  @Test
   public void testBasics() throws ParseException {
     Clock.setTime(2004, 11, 10, 17, 10);
 
@@ -38,12 +42,14 @@ public class DateFormatUtilTest extends TestCase {
     doTestPrettyDate(DateFormatUtil.formatDate(DATE_FORMAT.parse("10.12.2003 17.00.00")), "10.12.2003 17.00.00");
   }
 
+  @Test
   public void testTime() throws ParseException {
     Clock.setTime(2004, 11, 10, 17, 10, 15);
 
     if (SystemInfo.isMac) {
       assertEquals("17:10", DateFormatUtil.formatTime(Clock.getTime()));
       assertEquals("17:10:15", DateFormatUtil.formatTimeWithSeconds(Clock.getTime()));
+      assertEquals("17:10:15", DateFormatUtil.formatTimeWithSeconds(new Date(Clock.getTime())));
     }
     else {
       assertEquals(DateFormat.getTimeInstance(DateFormat.SHORT).format(Clock.getTime()),
@@ -53,6 +59,7 @@ public class DateFormatUtilTest extends TestCase {
     }
   }
 
+  @Test
   public void testPrettyDateTime() throws ParseException {
     Clock.setTime(2004, 11, 10, 17, 0);
 
@@ -85,6 +92,7 @@ public class DateFormatUtilTest extends TestCase {
     return new GregorianCalendar(year, month - 1, day, hour, minute, second).getTime();
   }
 
+  @Test
   public void testConvertingMacToJavaPattern() throws Throwable {
     Clock.setTime(date(2004, 2, 5, 16, 6, 7).getTime() + 8);
 
@@ -118,7 +126,7 @@ public class DateFormatUtilTest extends TestCase {
   }
 
   private static void assertConvertedFormat(String pattern, String expected) throws Throwable {
-    String converted = DateFormatUtil.convertMacPattern(pattern);
+    String converted = convertMacPattern(pattern);
     try {
       assertEquals(expected, new SimpleDateFormat(converted).format(Clock.getTime()));
     }
@@ -129,7 +137,7 @@ public class DateFormatUtilTest extends TestCase {
   }
 
   private static void assertConvertedFormatMatches(String pattern, String expectedPattern) throws Throwable {
-    String converted = DateFormatUtil.convertMacPattern(pattern);
+    String converted = convertMacPattern(pattern);
     try {
       String actual = new SimpleDateFormat(converted).format(Clock.getTime());
       assertTrue(actual, actual.matches(expectedPattern));
@@ -140,10 +148,102 @@ public class DateFormatUtilTest extends TestCase {
     }
   }
 
-  public void testAboutDialogDataFormatter() throws Exception {
+  private static String convertMacPattern(String macPattern) {
+    StringBuilder b = new StringBuilder();
+    boolean isSpecial = false;
+    boolean isText = false;
+
+    for (int i = 0; i < macPattern.length(); i++) {
+      char c = macPattern.charAt(i);
+      if (isSpecial) {
+        String replacement = null;
+        if (c == '%') replacement = "$";
+
+        // year
+        if (c == 'y') replacement = "yy";
+        if (c == 'Y') replacement = "yyyy";
+
+        // month
+        if (c == 'm') replacement = "MM";
+        if (c == 'b') replacement = "MMM";
+        if (c == 'B') replacement = "MMMMM";
+
+        // day on month
+        if (c == 'e') replacement = "d";
+        if (c == 'd') replacement = "dd";
+
+        // day of year
+        if (c == 'j') replacement = "DDD";
+
+        // day of week
+        if (c == 'w') replacement = "E"; // SimpleDateFormat doesn't support formatting weekday as a number
+        if (c == 'a') replacement = "EEE";
+        if (c == 'A') replacement = "EEEEE";
+
+        // hours
+        if (c == 'H') replacement = "HH"; // 0-24
+        //if (c == 'H') replacement = "k"; // 1-24
+        //if (c == 'I') replacement = "K"; // 0-11
+        if (c == 'I') replacement = "hh"; // 1-12
+
+        //minute
+        if (c == 'M') replacement = "mm";
+        //second
+        if (c == 'S') replacement = "ss";
+        //millisecond
+        if (c == 'F') replacement = "SSS";
+
+        //millisecond
+        if (c == 'p') replacement = "a";
+
+        //millisecond
+        if (c == 'Z') replacement = "zzz";
+        //millisecond
+        if (c == 'z') replacement = "Z";
+
+        //todo if (c == 'c') replacement = "MMMMM";, x, X
+
+        if (replacement == null) replacement = "'?%" + c + "?'";
+
+        b.append(replacement);
+        isSpecial = false;
+      }
+      else {
+        isSpecial = c == '%';
+        if (isSpecial) {
+          isText = false;
+        }
+        else {
+          if (isText) {
+            if (c == '\'' || Character.isWhitespace(c)) b.append('\'');
+            isText = !Character.isWhitespace(c);
+          }
+          else {
+            if (c == '\'' || !Character.isWhitespace(c)) b.append('\'');
+            isText = !Character.isWhitespace(c) && c != '\'';
+          }
+          b.append(c);
+
+          if (isText && i == macPattern.length() - 1) b.append('\'');
+        }
+      }
+    }
+    return b.toString();
+  }
+
+  @Test
+  public void testAboutDialogDataFormatter() {
     assertEquals("December 12, 2012",
                  DateFormatUtil.formatAboutDialogDate(date(2012, 12, 12, 15, 35, 12)));
     assertEquals("January 1, 1999",
                  DateFormatUtil.formatAboutDialogDate(date(1999, 1, 1, 0, 0, 0)));
+  }
+
+  @Test
+  public void testFormatFrequency() {
+    assertEquals("Once in 2 minutes",
+                 DateFormatUtil.formatFrequency(2 * 60 * 1000));
+    assertEquals("Once in a few moments",
+                 DateFormatUtil.formatFrequency(1000));
   }
 }

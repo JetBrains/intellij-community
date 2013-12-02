@@ -318,8 +318,11 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
   @Override
   public void mergeRootsChangesDuring(@NotNull Runnable runnable) {
     if (getBatchSession(false).myBatchLevel == 0 && !myMergedCallStarted) {
-      LOG.assertTrue(myRootsChangesDepth == 0,
-                     "Merged rootsChanged not allowed inside rootsChanged, rootsChanged level == " + myRootsChangesDepth);
+      if (myRootsChangesDepth != 0) {
+        int depth = myRootsChangesDepth;
+        myRootsChangesDepth = 0;
+        LOG.error("Merged rootsChanged not allowed inside rootsChanged, rootsChanged level == " + depth);
+      }
       myMergedCallStarted = true;
       myMergedCallHasRootChange = false;
       try {
@@ -408,6 +411,10 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
 
     myRootsChangesDepth--;
     if (myRootsChangesDepth > 0) return false;
+    if (myRootsChangesDepth < 0) {
+      LOG.info("Restoring from roots change start/finish mismatch: ", new Throwable());
+      myRootsChangesDepth = 0;
+    }
 
     clearScopesCaches();
 

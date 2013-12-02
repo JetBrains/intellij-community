@@ -16,6 +16,7 @@
 package org.jetbrains.idea.maven.project;
 
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
@@ -44,6 +45,8 @@ public class MavenGeneralSettings implements Cloneable {
   private boolean nonRecursive = false;
 
   private boolean alwaysUpdateSnapshots = false;
+
+  private String threads;
 
   private MavenExecutionOptions.LoggingLevel outputLevel = MavenExecutionOptions.LoggingLevel.INFO;
   private MavenExecutionOptions.ChecksumPolicy checksumPolicy = MavenExecutionOptions.ChecksumPolicy.NOT_SET;
@@ -287,6 +290,16 @@ public class MavenGeneralSettings implements Cloneable {
     changed();
   }
 
+  @Nullable
+  public String getThreads() {
+    return threads;
+  }
+
+  public void setThreads(@Nullable String threads) {
+    this.threads = StringUtil.nullize(threads);
+    changed();
+  }
+
   public boolean equals(final Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
@@ -305,6 +318,7 @@ public class MavenGeneralSettings implements Cloneable {
     if (!overriddenLocalRepository.equals(that.overriddenLocalRepository)) return false;
     if (!mavenHome.equals(that.mavenHome)) return false;
     if (!mavenSettingsFile.equals(that.mavenSettingsFile)) return false;
+    if (!Comparing.equal(threads, that.threads)) return false;
 
     return true;
   }

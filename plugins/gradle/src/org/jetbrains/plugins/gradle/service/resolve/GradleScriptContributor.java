@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.gradle.service.resolve;
 
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.psi.*;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -60,9 +61,8 @@ public class GradleScriptContributor extends NonCodeMembersContributor {
     }
 
     PsiFile file = aClass.getContainingFile();
-    if (file == null || !file.getName().endsWith(GradleConstants.EXTENSION) || GradleConstants.SETTINGS_FILE_NAME.equals(file.getName())) {
-      return;
-    }
+    if (file == null || !FileUtilRt.extensionEquals(file.getName(), GradleConstants.EXTENSION)
+        || GradleConstants.SETTINGS_FILE_NAME.equals(file.getName())) return;
 
     List<String> methodInfo = ContainerUtilRt.newArrayList();
     for (GrMethodCall current = PsiTreeUtil.getParentOfType(place, GrMethodCall.class);

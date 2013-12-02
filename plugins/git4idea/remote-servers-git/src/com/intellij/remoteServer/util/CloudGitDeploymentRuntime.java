@@ -89,11 +89,13 @@ public abstract class CloudGitDeploymentRuntime<DC extends CloudDeploymentNameCo
     myRemoteName = remoteName;
     myCloudName = cloudName;
 
+    DC deploymentConfiguration = task.getConfiguration();
+
     List<CloudGitDeploymentSourceHandlerProvider> handlerProviders
       = CloudGitDeploymentConfiguratorBase.getDeploymentSourceHandlerProviders(serverType);
     DeploymentSource deploymentSource = task.getSource();
     for (CloudGitDeploymentSourceHandlerProvider handlerProvider : handlerProviders) {
-      DeploymentSourceHandler sourceHandler = handlerProvider.createHandler(this, deploymentSource);
+      DeploymentSourceHandler sourceHandler = handlerProvider.createHandler(this, deploymentSource, deploymentConfiguration);
       if (sourceHandler != null) {
         mySourceHandler = sourceHandler;
         break;
@@ -121,7 +123,6 @@ public abstract class CloudGitDeploymentRuntime<DC extends CloudDeploymentNameCo
 
     myPresentableName = deploymentSource.getPresentableName();
 
-    DC deploymentConfiguration = task.getConfiguration();
     myApplicationName = deploymentConfiguration.isDefaultDeploymentName()
                         ? deploymentNameProvider.getDeploymentName(deploymentSource)
                         : deploymentConfiguration.getDeploymentName();

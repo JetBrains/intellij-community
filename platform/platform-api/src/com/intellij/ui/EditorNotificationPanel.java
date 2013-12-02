@@ -28,7 +28,6 @@ import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
-import javax.swing.event.HyperlinkListener;
 import java.awt.*;
 
 /**
@@ -63,6 +62,7 @@ public class EditorNotificationPanel extends JPanel {
 
   public HyperlinkLabel createActionLabel(final String text, @NonNls final String actionId) {
     return createActionLabel(text, new Runnable() {
+      @Override
       public void run() {
         executeAction(actionId);
       }
@@ -71,11 +71,10 @@ public class EditorNotificationPanel extends JPanel {
 
   public HyperlinkLabel createActionLabel(final String text, final Runnable action) {
     HyperlinkLabel label = new HyperlinkLabel(text, PlatformColors.BLUE, getBackground(), PlatformColors.BLUE);
-    label.addHyperlinkListener(new HyperlinkListener() {
-      public void hyperlinkUpdate(final HyperlinkEvent e) {
-        if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
-          action.run();
-        }
+    label.addHyperlinkListener(new HyperlinkAdapter() {
+      @Override
+      protected void hyperlinkActivated(HyperlinkEvent e) {
+        action.run();
       }
     });
     myLinksPanel.add(label);

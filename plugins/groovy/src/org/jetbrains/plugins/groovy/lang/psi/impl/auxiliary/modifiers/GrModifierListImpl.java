@@ -49,8 +49,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrEn
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.packaging.GrPackageDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrStubElementBase;
+import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.GrModifierListStub;
-import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 
 import java.util.ArrayList;
 import java.util.Map;
@@ -187,8 +187,7 @@ public class GrModifierListImpl extends GrStubElementBase<GrModifierListStub> im
       }
       if (pParent instanceof GrTypeDefinition) {
         PsiModifierList pModifierList = ((GrTypeDefinition)pParent).getModifierList();
-        if (pModifierList != null && (pModifierList.findAnnotation(GroovyCommonClassNames.GROOVY_LANG_IMMUTABLE) != null ||
-                                      pModifierList.findAnnotation(GroovyCommonClassNames.GROOVY_TRANSFORM_IMMUTABLE) != null)) {
+        if (pModifierList != null && !modifierList.hasExplicitVisibilityModifiers() && PsiImplUtil.hasImmutableAnnotation(pModifierList)) {
           if (modifier.equals(GrModifier.FINAL)) return true;
         }
       }

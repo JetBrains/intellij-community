@@ -1874,7 +1874,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     }
 
     final PsiTypeElement typeElement = castExpression.getCastType();
-    if (typeElement != null && operand != null) {
+    if (typeElement != null && operand != null && operand.getType() != null) {
       if (typeElement.getType() instanceof PsiPrimitiveType &&
           UnnecessaryExplicitNumericCastInspection.isPrimitiveNumericCastNecessary(castExpression)) {
         addInstruction(new PopInstruction());

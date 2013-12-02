@@ -117,7 +117,7 @@ public class SchemaReferencesProvider extends PsiReferenceProvider {
     }
 
     public TextRange getRangeInElement() {
-      return new TextRange(1,myElement.getTextLength()-1);
+      return ElementManipulators.getValueTextRange(myElement);
     }
 
     @Nullable

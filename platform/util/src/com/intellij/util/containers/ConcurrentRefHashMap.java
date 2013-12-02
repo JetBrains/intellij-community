@@ -36,7 +36,7 @@ import java.util.concurrent.ConcurrentMap;
  */
 abstract class ConcurrentRefHashMap<K, V> extends AbstractMap<K, V> implements ConcurrentMap<K, V>, TObjectHashingStrategy<K> {
   protected final ReferenceQueue<K> myReferenceQueue = new ReferenceQueue<K>();
-  private final ConcurrentHashMap<Key<K, V>, V> myMap; // hashing strategy must be canonical, we compute corresponding hash codes using our own myHashingStrategy
+  private final ConcurrentMap<Key<K, V>, V> myMap; // hashing strategy must be canonical, we compute corresponding hash codes using our own myHashingStrategy
   @NotNull
   private final TObjectHashingStrategy<K> myHashingStrategy;
 
@@ -149,7 +149,7 @@ abstract class ConcurrentRefHashMap<K, V> extends AbstractMap<K, V> implements C
                               int concurrencyLevel,
                               @NotNull TObjectHashingStrategy<K> hashingStrategy) {
     myHashingStrategy = hashingStrategy == THIS ? this : hashingStrategy;
-    myMap = new ConcurrentHashMap<Key<K, V>, V>(initialCapacity, loadFactor, concurrencyLevel, CANONICAL);
+    myMap = ContainerUtil.<Key<K, V>, V>newConcurrentMap(initialCapacity, loadFactor, concurrencyLevel, CANONICAL);
   }
 
   @Override

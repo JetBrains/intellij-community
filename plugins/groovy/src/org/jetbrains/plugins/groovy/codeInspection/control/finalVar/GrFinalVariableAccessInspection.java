@@ -43,6 +43,7 @@ import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.ReadWriteVariableInstruction;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.ControlFlowBuilder;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.GrFieldControlFlowPolicy;
+import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 import java.util.*;
@@ -310,6 +311,8 @@ public class GrFinalVariableAccessInspection extends BaseInspection {
     if (field instanceof GrEnumConstant) return true;
     if (field.getInitializerGroovy() != null) return true;
 
+    if (isImmutableField(field)) return true;
+
     final boolean isStatic = field.hasModifierProperty(PsiModifier.STATIC);
 
     final GrTypeDefinition aClass = ((GrTypeDefinition)field.getContainingClass());
@@ -365,6 +368,19 @@ public class GrFinalVariableAccessInspection extends BaseInspection {
       return false;
     }
     return true;
+  }
+
+  private static boolean isImmutableField(@NotNull GrField field) {
+    GrModifierList fieldModifierList = field.getModifierList();
+    if (fieldModifierList != null && fieldModifierList.hasExplicitVisibilityModifiers()) return false;
+
+    PsiClass aClass = field.getContainingClass();
+    if (aClass == null) return false;
+
+    PsiModifierList modifierList = aClass.getModifierList();
+    if (modifierList == null) return false;
+
+    return PsiImplUtil.hasImmutableAnnotation(modifierList);
   }
 
   @NotNull

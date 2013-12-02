@@ -5,6 +5,7 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModulePointerManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.remoteServer.ServerType;
+import com.intellij.remoteServer.configuration.deployment.DeploymentConfiguration;
 import com.intellij.remoteServer.configuration.deployment.DeploymentSource;
 import com.intellij.remoteServer.configuration.deployment.ModuleDeploymentSource;
 import com.intellij.remoteServer.impl.configuration.deployment.ModuleDeploymentSourceImpl;
@@ -36,7 +37,9 @@ public class ModuleDeploymentSourceHandlerProvider implements CloudGitDeployment
   }
 
   @Override
-  public DeploymentSourceHandler createHandler(CloudGitDeploymentRuntime<?, ?, ?> deploymentRuntime, DeploymentSource deploymentSource)
+  public DeploymentSourceHandler createHandler(CloudGitDeploymentRuntime<?, ?, ?> deploymentRuntime,
+                                               DeploymentSource deploymentSource,
+                                               DeploymentConfiguration deploymentConfiguration)
     throws ServerRuntimeException {
     if (!(deploymentSource instanceof ModuleDeploymentSource)) {
       return null;

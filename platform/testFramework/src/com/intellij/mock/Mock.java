@@ -78,12 +78,7 @@ public class Mock {
     @Override
     @NotNull
     public FileEditorState getState(@NotNull FileEditorStateLevel level) {
-      return new FileEditorState() {
-            @Override
-            public boolean canBeMergedWith(FileEditorState fileEditorState, FileEditorStateLevel fileEditorStateLevel) {
-                return false;
-            }
-        };
+      return FileEditorState.INSTANCE;
     }
 
     @Override
@@ -316,10 +311,10 @@ public class Mock {
 
     @Override
     @NotNull
-    public Pair<FileEditor[],FileEditorProvider[]> openFileWithProviders(@NotNull VirtualFile file,
-                                                                         boolean focusEditor,
-                                                                         boolean searchForSplitter) {
-      return Pair.create (new FileEditor[0], new FileEditorProvider [0]);
+    public Pair<FileEditor[], FileEditorProvider[]> openFileWithProviders(@NotNull VirtualFile file,
+                                                                          boolean focusEditor,
+                                                                          boolean searchForSplitter) {
+      return Pair.create(new FileEditor[0], new FileEditorProvider[0]);
     }
 
     @Override
@@ -387,11 +382,11 @@ public class Mock {
     }
 
     @Override
-    public void removeEditorAnnotation(@NotNull FileEditor editor, @NotNull JComponent annotationComoponent) {
+    public void removeEditorAnnotation(@NotNull FileEditor editor, @NotNull JComponent annotationComponent) {
     }
 
     @Override
-    public void showEditorAnnotation(@NotNull FileEditor editor, @NotNull JComponent annotationComoponent) {
+    public void showEditorAnnotation(@NotNull FileEditor editor, @NotNull JComponent annotationComponent) {
     }
 
     @Override

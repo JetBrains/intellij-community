@@ -25,7 +25,6 @@ import com.intellij.debugger.engine.JVMNameUtil;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
-import com.intellij.debugger.engine.events.DebuggerContextCommandImpl;
 import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.impl.DebuggerSession;
 import com.intellij.debugger.impl.PositionUtil;
@@ -34,8 +33,6 @@ import com.intellij.debugger.ui.tree.FieldDescriptor;
 import com.intellij.debugger.ui.tree.NodeDescriptor;
 import com.intellij.debugger.ui.tree.render.ClassRenderer;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -104,40 +101,20 @@ public class FieldDescriptorImpl extends ValueDescriptorImpl implements FieldDes
         // trying to search, assuming declaring class is an anonymous class
         final DebugProcessImpl debugProcess = context.getDebugProcess();
         if (debugProcess != null) {
-          final Computable<PsiClass> classComputable = new Computable<PsiClass>() {
-            public PsiClass compute() {
-              try {
-                final List<Location> locations = type.allLineLocations();
-                if (!locations.isEmpty()) {
-                  // important: use the last location to be sure the position will be within the anonymous class
-                  final Location lastLocation = locations.get(locations.size() - 1);
-                  final SourcePosition position = debugProcess.getPositionManager().getSourcePosition(lastLocation);
-                  if (position != null) {
-                    return JVMNameUtil.getClassAt(position);
-                  }
-                }
+          try {
+            final List<Location> locations = type.allLineLocations();
+            if (!locations.isEmpty()) {
+              // important: use the last location to be sure the position will be within the anonymous class
+              final Location lastLocation = locations.get(locations.size() - 1);
+              final SourcePosition position = debugProcess.getPositionManager().getSourcePosition(lastLocation);
+              if (position != null) {
+                aClass = JVMNameUtil.getClassAt(position);
               }
-              catch (AbsentInformationException ignored) {
-              }
-              catch (ClassNotPreparedException ignored) {
-              }
-              return null;
             }
-          };
-          if (!DebuggerManagerThreadImpl.isManagerThread()) {
-            final Ref<PsiClass> classRef = new Ref<PsiClass>(null);
-            debugProcess.getManagerThread().invokeAndWait(new DebuggerContextCommandImpl(context) {
-              public Priority getPriority() {
-                return Priority.HIGH;
-              }
-              public void threadAction() {
-                classRef.set(classComputable.compute());
-              }
-            });
-            aClass = classRef.get();
           }
-          else {
-            aClass = classComputable.compute();
+          catch (AbsentInformationException ignored) {
+          }
+          catch (ClassNotPreparedException ignored) {
           }
         }
       }

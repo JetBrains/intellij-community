@@ -74,21 +74,20 @@ BOOL Scan(char buf[], int count) {
 BOOL CtrlHandler(DWORD fdwCtrlType) {
 	switch (fdwCtrlType) {
 	case CTRL_C_EVENT:
-		return FALSE;
+		return TRUE;
 	case CTRL_CLOSE_EVENT:
 	case CTRL_LOGOFF_EVENT:
 	case CTRL_SHUTDOWN_EVENT:
 		CtrlBreak();
 		return (TRUE);
 	case CTRL_BREAK_EVENT:
-		return FALSE;
+		return TRUE;
 	default:
 		return FALSE;
 	}
 }
 
 struct StdInThreadParams {
-	HANDLE hEvent;
 	HANDLE write_stdin;
 };
 
@@ -109,7 +108,7 @@ DWORD WINAPI StdInThread(void *param) {
 			BOOL ctrlBroken = Scan(buf, 1);
 			WriteFile(threadParams->write_stdin, buf, 1, &cbWrite, NULL);
 			if (ctrlBroken == TRUE) {
-				SetEvent(threadParams->hEvent);
+				// break the loop, because the pipe has been ended
 				break;
 			}
 		}
@@ -195,7 +194,9 @@ int main(int argc, char * argv[]) {
 	char* c_args = new char[args.size() + 1];
 	strcpy(c_args, args.c_str());
 
-	SetConsoleCtrlHandler((PHANDLER_ROUTINE) CtrlHandler, TRUE);
+	if (!SetConsoleCtrlHandler((PHANDLER_ROUTINE) CtrlHandler, TRUE)) {
+		ErrorMessage("SetConsoleCtrlHandler");
+	}
 
 	if (!CreateProcess(c_app, // Application name
 			c_args, // Application arguments
@@ -206,32 +207,27 @@ int main(int argc, char * argv[]) {
 		exit(0);
 	}
 
-	unsigned long exit = 0;
+	unsigned long exitCode = 0;
 
 	HANDLE threadEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
 
 	StdInThreadParams params;
-	params.hEvent = threadEvent;
 	params.write_stdin = write_stdin;
 
 	CreateThread(NULL, 0, &StdInThread, &params, 0, NULL);
 
-	HANDLE objects_to_wait[2];
-	objects_to_wait[0] = threadEvent;
-	objects_to_wait[1] = pi.hProcess;
-
 	while (true) {
-		int rc = WaitForMultipleObjects(2, objects_to_wait, FALSE, INFINITE);
-		if (rc == WAIT_OBJECT_0 + 1) {
+		int rc = WaitForSingleObject(pi.hProcess, INFINITE);
+		if (rc == WAIT_OBJECT_0) {
 			break;
 		}
 	}
 
-	GetExitCodeProcess(pi.hProcess, &exit);
+	GetExitCodeProcess(pi.hProcess, &exitCode);
 
 	CloseHandle(pi.hThread);
 	CloseHandle(pi.hProcess);
 	CloseHandle(newstdin);
 	CloseHandle(write_stdin);
-	return exit;
+	return exitCode;
 }

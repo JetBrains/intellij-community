@@ -26,7 +26,7 @@ import java.util.*;
 import java.util.concurrent.ConcurrentMap;
 
 abstract class ConcurrentRefValueHashMap<K, V> implements ConcurrentMap<K, V> {
-  private final ConcurrentHashMap<K, MyValueReference<K, V>> myMap;
+  private final ConcurrentMap<K, MyValueReference<K, V>> myMap;
   protected final ReferenceQueue<V> myQueue = new ReferenceQueue<V>();
 
   public ConcurrentRefValueHashMap(@NotNull Map<K, V> map) {
@@ -35,18 +35,18 @@ abstract class ConcurrentRefValueHashMap<K, V> implements ConcurrentMap<K, V> {
   }
 
   public ConcurrentRefValueHashMap() {
-    myMap = new ConcurrentHashMap<K, MyValueReference<K, V>>();
+    myMap = ContainerUtil.newConcurrentMap();
   }
 
   public ConcurrentRefValueHashMap(int initialCapacity, float loadFactor, int concurrencyLevel) {
-    myMap = new ConcurrentHashMap<K, MyValueReference<K, V>>(initialCapacity, loadFactor, concurrencyLevel);
+    myMap = ContainerUtil.newConcurrentMap(initialCapacity, loadFactor, concurrencyLevel);
   }
 
   public ConcurrentRefValueHashMap(int initialCapacity,
                                    float loadFactor,
                                    int concurrencyLevel,
                                    @NotNull TObjectHashingStrategy<K> hashingStrategy) {
-    myMap = new ConcurrentHashMap<K, MyValueReference<K, V>>(initialCapacity, loadFactor, concurrencyLevel, hashingStrategy);
+    myMap = ContainerUtil.newConcurrentMap(initialCapacity, loadFactor, concurrencyLevel, hashingStrategy);
   }
 
   protected interface MyValueReference<K, V> {

@@ -37,20 +37,27 @@ public class DarculaButtonUI extends BasicButtonUI {
     return new DarculaButtonUI();
   }
 
+  public static boolean isSquare(Component c) {
+    return c instanceof JButton && "square".equals(((JButton)c).getClientProperty("JButton.buttonType"));
+  }
+
   @Override
   public void paint(Graphics g, JComponent c) {
     final Border border = c.getBorder();
     final GraphicsConfig config = GraphicsUtil.setupAAPainting(g);
+    final boolean square = isSquare(c);
     if (c.isEnabled() && border != null) {
       final Insets ins = border.getBorderInsets(c);
       final int yOff = (ins.top + ins.bottom) / 4;
-      if (((JButton)c).isDefaultButton()) {
-        ((Graphics2D)g).setPaint(UIUtil.getGradientPaint(0, 0, getSelectedButtonColor1(), 0, c.getHeight(), getSelectedButtonColor2()));
+      if (!square) {
+        if (((JButton)c).isDefaultButton()) {
+          ((Graphics2D)g).setPaint(UIUtil.getGradientPaint(0, 0, getSelectedButtonColor1(), 0, c.getHeight(), getSelectedButtonColor2()));
+        }
+        else {
+          ((Graphics2D)g).setPaint(UIUtil.getGradientPaint(0, 0, getButtonColor1(), 0, c.getHeight(), getButtonColor2()));
+        }
       }
-      else {
-        ((Graphics2D)g).setPaint(UIUtil.getGradientPaint(0, 0, getButtonColor1(), 0, c.getHeight(), getButtonColor2()));
-      }
-      g.fillRoundRect(4, yOff, c.getWidth() - 2 * 4, c.getHeight() - 2 * yOff, 5, 5);
+      g.fillRoundRect(square ? 2 : 4, yOff, c.getWidth() - 2 * 4, c.getHeight() - 2 * yOff, square ? 3 : 5, square ? 3 : 5);
     }
     config.restore();
     super.paint(g, c);

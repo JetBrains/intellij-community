@@ -27,6 +27,7 @@ import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.TooManyUsagesStatus;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.FileIndexFacade;
@@ -368,6 +369,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
         });
       if (!failedFiles.isEmpty()) {
         for (final VirtualFile vfile : failedFiles) {
+          checkCanceled(progress);
           TooManyUsagesStatus.getFrom(progress).pauseProcessingIfTooManyUsages();
           // we failed to run read action in job launcher thread
           // run read action in our thread instead
@@ -437,7 +439,12 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
   }
 
   private static void checkCanceled(ProgressIndicator progress) {
-    if (progress != null) progress.checkCanceled();
+    if (progress != null) {
+      progress.checkCanceled();
+    }
+    else {
+      ProgressManager.checkCanceled();
+    }
   }
 
   private void getFilesWithText(@NotNull GlobalSearchScope scope,
