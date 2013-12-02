@@ -11,7 +11,6 @@
 		1A564BCFE66693BF0B2DD4A9 /* VMOptionsReader.m in Sources */ = {isa = PBXBuildFile; fileRef = 1A564EDDE28564EF1AEBCD13 /* VMOptionsReader.m */; };
 		1A564C27F0BA05F900F34907 /* utils.m in Sources */ = {isa = PBXBuildFile; fileRef = 1A564EEF77B93DBD7FD23161 /* utils.m */; };
 		50E17738155444B900E97451 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 50E17737155444B900E97451 /* Cocoa.framework */; };
-		50E1775715552D2900E97451 /* JavaVM.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C0B58A123544A15DA59B13E3 /* JavaVM.framework */; settings = {ATTRIBUTES = (Weak, ); }; };
 		C0B58A123544A15DA59B13E4 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = C0B58A123544A15DA59B13DC /* main.m */; };
 		C0B58A123544A15DA59B13E5 /* Launcher.m in Sources */ = {isa = PBXBuildFile; fileRef = C0B58A123544A15DA59B13E0 /* Launcher.m */; };
 /* End PBXBuildFile section */
@@ -31,7 +30,6 @@
 		C0B58A123544A15DA59B13DE /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
 		C0B58A123544A15DA59B13E0 /* Launcher.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = Launcher.m; sourceTree = "<group>"; };
 		C0B58A123544A15DA59B13E2 /* Launcher.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Launcher.h; sourceTree = "<group>"; };
-		C0B58A123544A15DA59B13E3 /* JavaVM.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaVM.framework; path = System/Library/Frameworks/JavaVM.framework; sourceTree = SDKROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -39,7 +37,6 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				50E1775715552D2900E97451 /* JavaVM.framework in Frameworks */,
 				50E17738155444B900E97451 /* Cocoa.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -77,7 +74,6 @@
 		C0B58A123544A15DA59B13D6 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
-				C0B58A123544A15DA59B13E3 /* JavaVM.framework */,
 				C0B58A123544A15DA59B13DE /* Foundation.framework */,
 				50E17737155444B900E97451 /* Cocoa.framework */,
 			);
@@ -110,7 +106,7 @@
 		C0B58A123544A15DA59B13C8 /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
-				LastUpgradeCheck = 0450;
+				LastUpgradeCheck = 0500;
 			};
 			buildConfigurationList = C0B58A123544A15DA59B13C9 /* Build configuration list for PBXProject "MacLauncher" */;
 			compatibilityVersion = "Xcode 3.2";
@@ -159,15 +155,16 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ARCHS = "$(ARCHS_STANDARD_32_64_BIT)";
+				CLANG_ENABLE_OBJC_ARC = NO;
 				COMBINE_HIDPI_IMAGES = YES;
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = Launcher.pch;
-				GCC_VERSION = com.apple.compilers.llvmgcc42;
+				GCC_VERSION = "";
 				INFOPLIST_FILE = Info.plist;
 				MACOSX_DEPLOYMENT_TARGET = 10.5;
 				ONLY_ACTIVE_ARCH = NO;
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				SDKROOT = macosx10.7;
+				SDKROOT = macosx;
 				WRAPPER_EXTENSION = app;
 			};
 			name = Release;
@@ -176,15 +173,16 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ARCHS = "$(ARCHS_STANDARD_32_64_BIT)";
+				CLANG_ENABLE_OBJC_ARC = NO;
 				COMBINE_HIDPI_IMAGES = YES;
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = Launcher.pch;
-				GCC_VERSION = com.apple.compilers.llvmgcc42;
+				GCC_VERSION = "";
 				INFOPLIST_FILE = Info.plist;
 				MACOSX_DEPLOYMENT_TARGET = 10.5;
 				ONLY_ACTIVE_ARCH = NO;
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				SDKROOT = macosx10.7;
+				SDKROOT = macosx;
 				WRAPPER_EXTENSION = app;
 			};
 			name = Debug;
@@ -193,7 +191,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
-				ARCHS = "$(ARCHS_STANDARD_64_BIT)";
+				ARCHS = "$(ARCHS_STANDARD_32_64_BIT)";
 				CLANG_ENABLE_OBJC_ARC = YES;
 				COPY_PHASE_STRIP = YES;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
@@ -213,7 +211,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
-				ARCHS = "$(ARCHS_STANDARD_64_BIT)";
+				ARCHS = "$(ARCHS_STANDARD_32_64_BIT)";
 				CLANG_ENABLE_OBJC_ARC = YES;
 				COPY_PHASE_STRIP = NO;
 				GCC_C_LANGUAGE_STANDARD = gnu99;

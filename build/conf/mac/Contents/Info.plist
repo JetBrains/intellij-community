@@ -62,7 +62,7 @@
     <key>LSRequiresNativeExecution</key>
     <string>YES</string>
     @@url_schemes@@
-    <key>Java</key>
+    <key>JVMOptions</key>
     <dict>
       <key>ClassPath</key>
       <string>@@class_path@@</string>
