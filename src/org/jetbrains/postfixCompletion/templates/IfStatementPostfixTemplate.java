@@ -8,6 +8,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.postfixCompletion.util.JavaSurroundersProxy;
 
 public final class IfStatementPostfixTemplate extends BooleanPostfixTemplate2 {
+  public IfStatementPostfixTemplate() {
+    super("if", ".if");
+  }
+
   @Override
   public void expand(@NotNull PsiElement context, @NotNull final Editor editor) {
     PsiExpression expression = getTopmostExpression(context);
@@ -16,11 +20,6 @@ public final class IfStatementPostfixTemplate extends BooleanPostfixTemplate2 {
     if (range != null) {
       editor.getCaretModel().moveToOffset(range.getStartOffset());
     }
-  }
-
-  @Override
-  public String getName() {
-    return "if";
   }
 }
 

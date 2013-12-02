@@ -5,6 +5,11 @@ import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 
 public final class AssertStatementPostfixTemplate extends BooleanPostfixTemplate2 {
+
+  public AssertStatementPostfixTemplate() {
+    super("assert", ".assert");
+  }
+
   @Override
   public void expand(@NotNull PsiElement context, @NotNull Editor editor) {
     PsiExpression expression = getTopmostExpression(context);
@@ -18,10 +23,5 @@ public final class AssertStatementPostfixTemplate extends BooleanPostfixTemplate
     condition.replace(expression);
     PsiElement newStatement = statement.replace(assertStatement);
     editor.getCaretModel().moveToOffset(newStatement.getTextRange().getEndOffset());
-  }
-
-  @Override
-  public String getName() {
-    return "assert";
   }
 }

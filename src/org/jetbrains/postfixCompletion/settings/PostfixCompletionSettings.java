@@ -21,7 +21,7 @@ public class PostfixCompletionSettings implements PersistentStateComponent<Postf
   @NotNull private Map<String, Boolean> myTemplatesState = ContainerUtil.newHashMap();
 
   public boolean isTemplateEnabled(@NotNull PostfixTemplate template) {
-    return ContainerUtil.getOrElse(myTemplatesState, template.getName(), true);
+    return ContainerUtil.getOrElse(myTemplatesState, template.getPresentableName(), true);
   }
 
   @NotNull

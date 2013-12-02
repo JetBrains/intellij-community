@@ -3,6 +3,7 @@ package org.jetbrains.postfixCompletion.templates;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -11,6 +12,19 @@ import org.jetbrains.postfixCompletion.infrastructure.TemplateInfo;
 import org.jetbrains.postfixCompletion.settings.PostfixCompletionSettings;
 
 public abstract class PostfixTemplate {
+  @Nullable private final String myPresentableName;
+  @Nullable private final String myKey;
+
+  @Deprecated
+  protected PostfixTemplate() {
+    this(null, null);
+  }
+
+  protected PostfixTemplate(@Nullable String name, @Nullable String key) {
+    myPresentableName = name;
+    myKey = key;
+  }
+
   @NotNull
   public static final ExtensionPointName<PostfixTemplate> EP_NAME =
     ExtensionPointName.create("org.jetbrains.postfixCompletion.postfixTemplate");
@@ -24,11 +38,14 @@ public abstract class PostfixTemplate {
   
   @NotNull
   public String getKey() {
-    return "." + getName();
+    return StringUtil.notNullize(myKey,  "." + getPresentableName());
   }
 
-  public String getName() {
-    //todo: implement it in each template, remove annotations, make method abstract
+  @NotNull
+  public String getPresentableName() {
+    if (myPresentableName != null) {
+      return myPresentableName;
+    }
     TemplateInfo annotation = getClass().getAnnotation(TemplateInfo.class);
     return annotation.templateName();
   }
