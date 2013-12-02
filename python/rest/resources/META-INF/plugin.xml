@@ -3,12 +3,16 @@
   <id>org.jetbrains.plugins.rest</id>
   <description>This plugin enables support for reStructuredText files (*.rst)</description>
   <vendor>JetBrains</vendor>
-  <version>132.SNAPSHOT</version>
-  <idea-version since-build="130.1" until-build="133.0"/>
+  <version>134.SNAPSHOT</version>
+  <idea-version since-build="130.1"/>
   <depends>com.intellij.modules.lang</depends>
 
   <xi:include href="/META-INF/rest.xml" xpointer="xpointer(/idea-plugin/*)"/>
-
+  <change-notes><![CDATA[
+    <ul>
+    <li>Added inspection for title & underline length math (PY-10998)</li>
+    </ul>
+]]></change-notes>
   <extensions defaultExtensionNs="com.intellij">
     <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
   </extensions>
