@@ -112,7 +112,7 @@ public class SvnMergeInfoCache {
       mergeChecker = rootMapping.getBranchInfo(branchPath);
     }
     if (mergeChecker == null) {
-      mergeChecker = new BranchInfo(SvnVcs.getInstance(myProject), info.getRepoUrl(), branchUrl, currentUrl, info.getTrunkRoot(), myClient);
+      mergeChecker = new BranchInfo(SvnVcs.getInstance(myProject), info.getRepoUrl(), branchUrl, currentUrl, info.getTrunkRoot());
       rootMapping.addBranchInfo(branchPath, mergeChecker);
     }
 
