@@ -22,7 +22,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsBundle;
-import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -142,7 +142,7 @@ public class RemoteFileInfoImpl implements RemoteContentProvider.DownloadingCall
 
     VirtualFile localFile = new WriteAction<VirtualFile>() {
       @Override
-      protected void run(final Result<VirtualFile> result) {
+      protected void run(@NotNull final Result<VirtualFile> result) {
         final VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(localIOFile);
         if (file != null) {
           file.refresh(false, false);
@@ -234,7 +234,7 @@ public class RemoteFileInfoImpl implements RemoteContentProvider.DownloadingCall
       myCancelled.set(true);
       if (myPrevLocalFile != null) {
         myLocalVirtualFile = myPrevLocalFile;
-        myLocalFile = VfsUtil.virtualToIoFile(myLocalVirtualFile);
+        myLocalFile = VfsUtilCore.virtualToIoFile(myLocalVirtualFile);
         myState = RemoteFileState.DOWNLOADED;
         myErrorMessage = null;
       }
