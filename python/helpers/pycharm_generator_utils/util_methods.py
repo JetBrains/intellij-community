@@ -340,15 +340,18 @@ def out_docstring(out_func, docstring, indent):
                     continue
             out_func(indent, '"""')
 
-def out_doc_attr(out_func, p_object, indent, p_class=None):
+def out_doc_attr(out_func, p_object, indent, p_class=None, doc=None):
     the_doc = getattr(p_object, "__doc__", None)
+    if doc is None:
+        doc = ""
     if the_doc:
         if p_class and the_doc == object.__init__.__doc__ and p_object is not object.__init__ and p_class.__doc__:
             the_doc = str(p_class.__doc__) # replace stock init's doc with class's; make it a certain string.
             the_doc += "\n# (copied from class doc)"
-        out_docstring(out_func, the_doc, indent)
+        the_doc = "%s\n%s" % (the_doc, doc)
     else:
-        out_func(indent, "# no doc")
+        the_doc = "\n%s\n%s" % ("# no doc", doc)
+    out_docstring(out_func, the_doc, indent)
 
 def is_skipped_in_module(p_module, p_value):
     """

@@ -6,7 +6,7 @@ import string
 import time
 
 
-VERSION = "1.131"
+VERSION = "1.132"
 
 OUT_ENCODING = 'utf-8'
 
@@ -446,6 +446,8 @@ else:
 # value is ("signature", "return_literal")
 PREDEFINED_MOD_CLASS_SIGS = {                                       #TODO: user-skeleton
     (BUILTIN_MOD_NAME, None, 'divmod'): ("(x, y)", "(0, 0)"),
+    (BUILTIN_MOD_NAME, "str", "__mod__"): ("(self, y)", DEFAULT_STR_LIT),
+    (BUILTIN_MOD_NAME, "unicode", "__mod__"): ("(self, y)", UNICODE_LIT),
 
     ("binascii", None, "hexlify"): ("(data)", BYTES_LIT),
     ("binascii", None, "unhexlify"): ("(hexstr)", BYTES_LIT),

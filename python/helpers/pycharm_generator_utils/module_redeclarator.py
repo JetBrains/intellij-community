@@ -490,7 +490,10 @@ class ModuleRedeclarator(object):
             else:
                 ofwhat = "%s.%s" % (p_modname, p_name)
             out(indent, "def ", p_name, sig, ": # known case of ", ofwhat)
-            out_doc_attr(out, p_func, indent + 1, p_class)
+            add_doc = None
+            if ret_literal:
+                add_doc = "\n:type: %s\n" % type(eval(ret_literal)).__name__
+            out_doc_attr(out, p_func, indent + 1, p_class, add_doc)
         else:
         # __doc__ is our best source of arglist
             sig_note = "real signature unknown"
