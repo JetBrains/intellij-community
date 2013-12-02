@@ -7,6 +7,7 @@ import com.intellij.openapi.util.Pass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.util.PsiExpressionTrimRenderer;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.IntroduceTargetChooser;
 import com.intellij.refactoring.introduceVariable.IntroduceVariableBase;
 import org.jetbrains.annotations.NotNull;
@@ -22,7 +23,7 @@ public final class CastExpressionPostfixTemplate extends PostfixTemplate {
 
   @Override
   public boolean isApplicable(@NotNull PsiElement context) {
-    return getTopmostExpression(context) != null;
+    return PsiTreeUtil.getParentOfType(context, PsiExpression.class) != null;
   }
 
   @Override
