@@ -15,7 +15,10 @@
  */
 package org.intellij.images.editor.impl;
 
-import com.intellij.openapi.fileEditor.*;
+import com.intellij.openapi.fileEditor.FileEditor;
+import com.intellij.openapi.fileEditor.FileEditorPolicy;
+import com.intellij.openapi.fileEditor.FileEditorProvider;
+import com.intellij.openapi.fileEditor.FileEditorState;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
@@ -58,7 +61,7 @@ final class ImageFileEditorProvider implements FileEditorProvider, DumbAware {
   @Override
   @NotNull
   public FileEditorState readState(@NotNull Element sourceElement, @NotNull Project project, @NotNull VirtualFile file) {
-    return new NullFileEditorState();
+    return FileEditorState.INSTANCE;
   }
 
   @Override
