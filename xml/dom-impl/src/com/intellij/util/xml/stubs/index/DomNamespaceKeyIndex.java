@@ -42,7 +42,7 @@ public class DomNamespaceKeyIndex extends StringStubIndexExtension<PsiFile> {
 
   public boolean hasStubElementsWithNamespaceKey(final DomFileElement domFileElement, final String namespaceKey) {
     final VirtualFile file = domFileElement.getFile().getVirtualFile();
-    assert file instanceof VirtualFileWithId : file;
+    if (!(file instanceof VirtualFileWithId)) return false;
 
     final int virtualFileId = ((VirtualFileWithId)file).getId();
     CommonProcessors.FindFirstProcessor<String> processor =
