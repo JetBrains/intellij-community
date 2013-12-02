@@ -522,7 +522,10 @@ public class SvnHistoryProvider
               // mergeLevel >= 0 indicates that we are currently processing some "merge source" revision. This "merge source" revision
               // contains changes from some other branch - so checkForChildChanges() and checkForParentChanges() return "false".
               // Because of this case we apply these methods only for non-"merge source" revisions - this means mergeLevel < 0.
-              if (mergeLevel < 0 && !checkForChildChanges(logEntry) && !checkForParentChanges(logEntry)) return;
+              // TODO: Do not apply path filtering even for log entries on the first level => just output of 'svn log' should be returned.
+              // TODO: Looks like there is no cases when we issue 'svn log' for some parent paths or some other cases where we need such
+              // TODO: filtering. Check user feedback on this.
+//              if (mergeLevel < 0 && !checkForChildChanges(logEntry) && !checkForParentChanges(logEntry)) return;
             }
           }
 
@@ -548,6 +551,7 @@ public class SvnHistoryProvider
       while (path.length() > 0) {
         final SVNLogEntryPath entryPath = logEntry.getChangedPaths().get(path);
         // A & D are checked since we are not interested in parent folders property changes, only in structure changes
+        // TODO: seems that R (replaced) should also be checked here
         if (entryPath != null && (entryPath.getType() == 'A' || entryPath.getType() == 'D')) {
           if (entryPath.getCopyPath() != null) {
             return true;
@@ -559,6 +563,8 @@ public class SvnHistoryProvider
       return false;
     }
 
+    // TODO: this makes sense only for directories, but should always return true if something under the directory was changed in revision
+    // TODO: as svn will provide child changes in history for directory
     private boolean checkForChildChanges(SVNLogEntry logEntry) {
       final String lastPathBefore = myLastPathCorrector.getBefore();
       for (String key : logEntry.getChangedPaths().keySet()) {
