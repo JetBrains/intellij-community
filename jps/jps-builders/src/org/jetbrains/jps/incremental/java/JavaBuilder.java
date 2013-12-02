@@ -25,6 +25,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.concurrency.SequentialTaskExecutor;
+import com.intellij.util.io.PersistentEnumeratorBase;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
@@ -191,6 +192,9 @@ public class JavaBuilder extends ModuleLevelBuilder {
       return compile(context, chunk, dirtyFilesHolder, filesToCompile, outputConsumer);
     }
     catch (ProjectBuildException e) {
+      throw e;
+    }
+    catch (PersistentEnumeratorBase.CorruptedException e) {
       throw e;
     }
     catch (Exception e) {
