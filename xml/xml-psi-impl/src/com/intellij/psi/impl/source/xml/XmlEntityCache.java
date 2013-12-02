@@ -1,6 +1,7 @@
 package com.intellij.psi.impl.source.xml;
 
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.psi.*;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
@@ -27,7 +28,7 @@ public class XmlEntityCache {
             if (declElement instanceof XmlEntityDecl && declElement.isValid() && name.equals(((XmlEntityDecl)declElement).getName()))
               return new Result<XmlEntityDecl>((XmlEntityDecl)declElement, declElement);
             cachingMap.put(name,null);
-            return new Result<XmlEntityDecl>(null,null);
+            return new Result<XmlEntityDecl>(null, ModificationTracker.NEVER_CHANGED);
           }
         },
         false
