@@ -33,9 +33,9 @@ public interface CustomLiveTemplate {
 
   boolean supportsWrapping();
 
-  void expand(String key, @NotNull CustomTemplateCallback callback);
+  void expand(@NotNull String key, @NotNull CustomTemplateCallback callback);
 
-  void wrap(String selection, @NotNull CustomTemplateCallback callback);
+  void wrap(@NotNull String selection, @NotNull CustomTemplateCallback callback);
 
   @NotNull
   String getTitle();
