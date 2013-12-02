@@ -1,4 +1,4 @@
-package templates.
+package templates;
 
 public class Foo {
     void m(boolean[] xs) {

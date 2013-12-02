@@ -1,4 +1,4 @@
-package templates.
+package templates;
 
 public class Foo {
     boolean m(Object o) {
