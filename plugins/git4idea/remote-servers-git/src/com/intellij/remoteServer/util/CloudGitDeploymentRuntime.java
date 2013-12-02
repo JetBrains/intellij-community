@@ -366,7 +366,6 @@ public abstract class CloudGitDeploymentRuntime<DC extends CloudDeploymentNameCo
       if (GitUtil.hasLocalChanges(true, getProject(), myContentRoot)) {
         GitSimpleHandler handler = new GitSimpleHandler(getProject(), myContentRoot, GitCommand.COMMIT);
         handler.setSilent(false);
-        handler.addParameters("-a");
         handler.addParameters("-m", "Deploy");
         handler.endOptions();
         handler.run();

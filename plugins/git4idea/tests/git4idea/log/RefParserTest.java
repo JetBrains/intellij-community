@@ -65,7 +65,11 @@ public class RefParserTest {
     );
   }
 
-
+  @Test
+  public void noTagName() {
+    runTest("787ec72f340d740433ba068d4d58a6e58f6226bf", "");
+  }
+  
   private class TestLogObjectsFactory implements VcsLogObjectsFactory {
     @NotNull
     @Override
