@@ -46,6 +46,7 @@ import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.wc.SVNInfo;
 import org.tmatesoft.svn.core.wc.SVNLogClient;
 import org.tmatesoft.svn.core.wc.SVNRevision;
+import org.tmatesoft.svn.core.wc2.SvnTarget;
 import org.tmatesoft.svn.util.SVNLogType;
 
 import javax.swing.*;
@@ -311,11 +312,12 @@ public class SvnHistoryProvider
         myPI.setText2(SvnBundle.message("progress.text2.changes.establishing.connection", myUrl));
       }
       final SVNRevision pegRevision = myInfo.getRevision();
+      final SvnTarget target = SvnTarget.fromFile(myFile.getIOFile(), myPeg);
       try {
-        myVcs.getFactory(myFile.getIOFile()).createHistoryClient().doLog(
-          myFile.getIOFile(),
+        myVcs.getFactory(target).createHistoryClient().doLog(
+          target,
           myFrom == null ? SVNRevision.HEAD : myFrom,
-          myTo == null ? SVNRevision.create(1) : myTo, myPeg,
+          myTo == null ? SVNRevision.create(1) : myTo,
           false, true, myShowMergeSources && mySupport15, myLimit + 1, null,
           new MyLogEntryHandler(myVcs, myUrl, pegRevision, relativeUrl,
                                 createConsumerAdapter(myConsumer),

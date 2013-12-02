@@ -20,7 +20,6 @@ import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlValue;
-import java.io.File;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -32,10 +31,9 @@ import java.util.Map;
 public class CmdHistoryClient extends BaseSvnClient implements HistoryClient {
 
   @Override
-  public void doLog(@NotNull File path,
+  public void doLog(@NotNull SvnTarget target,
                     @NotNull SVNRevision startRevision,
                     @NotNull SVNRevision endRevision,
-                    @Nullable SVNRevision pegRevision,
                     boolean stopOnCopy,
                     boolean discoverChangedPaths,
                     boolean includeMergedRevisions,
@@ -45,10 +43,10 @@ public class CmdHistoryClient extends BaseSvnClient implements HistoryClient {
     // TODO: add revision properties parameter if necessary
 
     List<String> parameters =
-      prepareCommand(path, startRevision, endRevision, pegRevision, stopOnCopy, discoverChangedPaths, includeMergedRevisions, limit);
+      prepareCommand(target, startRevision, endRevision, stopOnCopy, discoverChangedPaths, includeMergedRevisions, limit);
 
     try {
-      CommandExecutor command = CommandUtil.execute(myVcs, SvnTarget.fromFile(path, pegRevision), SvnCommandName.log, parameters, null);
+      CommandExecutor command = CommandUtil.execute(myVcs, target, SvnCommandName.log, parameters, null);
       // TODO: handler should be called in parallel with command execution, but this will be in other thread
       // TODO: check if that is ok for current handler implementation
       parseOutput(command, handler);
@@ -87,14 +85,13 @@ public class CmdHistoryClient extends BaseSvnClient implements HistoryClient {
     }
   }
 
-  private static List<String> prepareCommand(@NotNull File path,
+  private static List<String> prepareCommand(@NotNull SvnTarget target,
                                              @NotNull SVNRevision startRevision,
                                              @NotNull SVNRevision endRevision,
-                                             @Nullable SVNRevision pegRevision,
                                              boolean stopOnCopy, boolean discoverChangedPaths, boolean includeMergedRevisions, long limit) {
     List<String> parameters = new ArrayList<String>();
 
-    CommandUtil.put(parameters, path, pegRevision);
+    CommandUtil.put(parameters, target);
     parameters.add("--revision");
     parameters.add(startRevision + ":" + endRevision);
 
