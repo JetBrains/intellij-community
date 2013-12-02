@@ -3,6 +3,7 @@ package com.intellij.remoteServer.util;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.remoteServer.ServerType;
+import com.intellij.remoteServer.configuration.deployment.DeploymentConfiguration;
 import com.intellij.remoteServer.configuration.deployment.DeploymentSource;
 import org.jetbrains.annotations.Nullable;
 
@@ -21,6 +22,8 @@ public interface CloudGitDeploymentSourceHandlerProvider {
 
   Collection<DeploymentSource> getDeploymentSources(Project project);
 
-  DeploymentSourceHandler createHandler(CloudGitDeploymentRuntime<?, ?, ?> deploymentRuntime, DeploymentSource deploymentSource)
+  DeploymentSourceHandler createHandler(CloudGitDeploymentRuntime<?, ?, ?> deploymentRuntime,
+                                        DeploymentSource deploymentSource,
+                                        DeploymentConfiguration deploymentConfiguration)
     throws ServerRuntimeException;
 }
