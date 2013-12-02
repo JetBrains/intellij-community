@@ -35,6 +35,7 @@ import git4idea.commands.*;
 import git4idea.repo.GitRemote;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
+import git4idea.util.GitFileUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -351,10 +352,7 @@ public abstract class CloudGitDeploymentRuntime<DC extends CloudDeploymentNameCo
 
   protected void add() throws ServerRuntimeException {
     try {
-      GitSimpleHandler handler = new GitSimpleHandler(getProject(), myContentRoot, GitCommand.ADD);
-      handler.setSilent(false);
-      handler.addParameters(".");
-      handler.run();
+      GitFileUtils.addFiles(getProject(), myContentRoot, myContentRoot);
     }
     catch (VcsException e) {
       throw new ServerRuntimeException(e);
