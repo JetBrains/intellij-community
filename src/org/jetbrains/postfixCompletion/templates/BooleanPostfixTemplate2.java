@@ -6,8 +6,10 @@ import com.intellij.psi.PsiStatement;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 abstract public class BooleanPostfixTemplate2 extends PostfixTemplate {
+  @Nullable
   public PsiExpression getTopmostExpression(PsiElement context) {
     return PsiTreeUtil.getTopmostParentOfType(context, PsiExpression.class);
   }

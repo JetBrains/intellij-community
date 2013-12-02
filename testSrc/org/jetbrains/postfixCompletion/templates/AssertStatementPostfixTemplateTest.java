@@ -1,10 +1,6 @@
 package org.jetbrains.postfixCompletion.templates;
 
-import com.intellij.testFramework.TestDataPath;
-
-@TestDataPath("$CONTENT_ROOT/testData/templates/if")
-public class IfStatementPostfixTemplateTest extends PostfixTemplateTestCase {
-
+public class AssertStatementPostfixTemplateTest extends PostfixTemplateTestCase {
   public void testBooleanVariableBeforeAssignment() throws Exception {
     doTest();
   }
@@ -12,7 +8,7 @@ public class IfStatementPostfixTemplateTest extends PostfixTemplateTestCase {
   public void testNotBooleanExpression() throws Exception {
     doTest();
   }
-  
+
   public void testUnresolvedVariable() throws Exception {
     doTest();
   }
@@ -36,9 +32,13 @@ public class IfStatementPostfixTemplateTest extends PostfixTemplateTestCase {
   public void testInstanceofBeforeReturnStatement() throws Exception {
     doTest();
   }
+  
+  public void testNotNull() throws Exception {
+    doTest();
+  }
 
   @Override
   protected String getTestDataPath() {
-    return "testData/templates/if";
+    return "testData/templates/assert";
   }
 }
