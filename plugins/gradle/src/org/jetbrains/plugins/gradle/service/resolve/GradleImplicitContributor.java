@@ -94,7 +94,7 @@ public class GradleImplicitContributor implements GradleMethodContextContributor
         checkForAvailableTasks(1, place.getText(), processor, state, place);
       }
       if (methodCallInfo.size() == 2) {
-        processAvailableTasks(methodCall, processor, state, place);
+        processAvailableTasks(methodCallInfo, methodCall, processor, state, place);
       }
     }
 
@@ -192,7 +192,7 @@ public class GradleImplicitContributor implements GradleMethodContextContributor
     }
   }
 
-  private static void processAvailableTasks(@NotNull String taskName,
+  private static void processAvailableTasks(List<String> methodCallInfo, @NotNull String taskName,
                                             @NotNull PsiScopeProcessor processor,
                                             @NotNull ResolveState state,
                                             @NotNull PsiElement place) {
@@ -202,7 +202,8 @@ public class GradleImplicitContributor implements GradleMethodContextContributor
     if (canBeMethodOf(GroovyPropertyUtils.getGetterNameNonBoolean(taskName), gradleApiProjectClass)) return;
     final String className = BUILT_IN_TASKS.get(taskName);
     if (className != null) {
-      GradleResolverUtil.processDeclarations(psiManager, processor, state, place, className);
+      GradleResolverUtil.processDeclarations(
+        methodCallInfo.size() > 0 ? methodCallInfo.get(0) : null, psiManager, processor, state, place, className);
     }
   }
 }

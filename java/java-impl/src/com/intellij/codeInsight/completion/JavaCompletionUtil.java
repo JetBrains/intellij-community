@@ -30,10 +30,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.NullableLazyKey;
-import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.patterns.PsiJavaPatterns;
@@ -449,7 +446,7 @@ public class JavaCompletionUtil {
             PsiSubstitutor plainSub = plainResult.getSubstitutor();
             PsiSubstitutor castSub = TypeConversionUtil.getSuperClassSubstitutor(plainClass, (PsiClassType)castType);
             if (method.getSignature(plainSub).equals(method.getSignature(castSub)) &&
-                plainSub.substitute(method.getReturnType()).equals(castSub.substitute(method.getReturnType())) &&
+                Comparing.equal(plainSub.substitute(method.getReturnType()), castSub.substitute(method.getReturnType())) &&
                 processor.isAccessible(plainClass.findMethodBySignature(method, true))
               ) {
               return item;

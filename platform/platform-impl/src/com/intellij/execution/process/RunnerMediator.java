@@ -51,15 +51,11 @@ public class RunnerMediator {
    */
   private static void sendCtrlEventThroughStream(@NotNull final Process process, final char event) {
     OutputStream os = process.getOutputStream();
+    @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
     PrintWriter pw = new PrintWriter(os);
-    try {
-      pw.print(IAC);
-      pw.print(event);
-      pw.flush();
-    }
-    finally {
-      pw.close();
-    }
+    pw.print(IAC);
+    pw.print(event);
+    pw.flush();
   }
 
   /**

@@ -16,6 +16,7 @@
 package git4idea.log;
 
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
@@ -24,6 +25,7 @@ import com.intellij.openapi.vcs.VcsKey;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
+import com.intellij.util.ExceptionUtil;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.*;
@@ -138,10 +140,16 @@ public class GitLogProvider implements VcsLogProvider {
     tagHandler.addParameters("--tags", "--no-walk", "--format=%H%d" + GitLogParser.RECORD_START_GIT, "--decorate=full");
     String out = tagHandler.run();
     Collection<VcsRef> refs = new ArrayList<VcsRef>();
-    for (String record : out.split(GitLogParser.RECORD_START)) {
-      if (!StringUtil.isEmptyOrSpaces(record)) {
-        refs.addAll(new RefParser(myVcsObjectsFactory).parseCommitRefs(record.trim(), root));
+    try {
+      for (String record : out.split(GitLogParser.RECORD_START)) {
+        if (!StringUtil.isEmptyOrSpaces(record)) {
+          refs.addAll(new RefParser(myVcsObjectsFactory).parseCommitRefs(record.trim(), root));
+        }
       }
+    }
+    catch (Exception e) {
+      LOG.error("Error during tags parsing", new Attachment("stack_trace.txt", ExceptionUtil.getThrowableText(e)),
+                new Attachment("git_output.txt", out));
     }
     return refs;
   }

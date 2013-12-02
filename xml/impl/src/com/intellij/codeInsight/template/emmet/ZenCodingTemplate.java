@@ -116,7 +116,7 @@ public class ZenCodingTemplate extends CustomLiveTemplateBase {
     return parse(key, callback, generator, null) != null;
   }
 
-  public void expand(String key, @NotNull CustomTemplateCallback callback) {
+  public void expand(@NotNull String key, @NotNull CustomTemplateCallback callback) {
     ZenCodingGenerator defaultGenerator = findApplicableDefaultGenerator(callback.getContext(), false);
     assert defaultGenerator != null;
     expand(key, callback, null, defaultGenerator, Collections.<ZenCodingFilter>emptyList(), true);

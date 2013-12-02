@@ -87,30 +87,31 @@ BOOL CtrlHandler(DWORD fdwCtrlType) {
 	}
 }
 
-struct StdInThreadParams {
-	HANDLE write_stdin;
-};
-
-DWORD WINAPI StdInThread(void *param) {
-	StdInThreadParams *threadParams = (StdInThreadParams *) param;
+DWORD WINAPI scanStdinThread(void *param) {
+	HANDLE *write_stdin = (HANDLE *) param;
 	char buf[1];
 	memset(buf, 0, sizeof(buf));
 
 	HANDLE hStdin = GetStdHandle(STD_INPUT_HANDLE);
-	while (true) {
-		DWORD cbRead = 0;
-		DWORD cbWrite = 0;
+	BOOL endOfInput = false;
+	while (!endOfInput) {
+		DWORD nBytesRead = 0;
+		DWORD nBytesWritten = 0;
 
 		char c;
-		ReadFile(hStdin, &c, 1, &cbRead, NULL);
-		if (cbRead > 0) {
+		BOOL bResult = ReadFile(hStdin, &c, 1, &nBytesRead, NULL);
+		if (nBytesRead > 0) {
 			buf[0] = c;
 			BOOL ctrlBroken = Scan(buf, 1);
-			WriteFile(threadParams->write_stdin, buf, 1, &cbWrite, NULL);
-			if (ctrlBroken == TRUE) {
-				// break the loop, because the pipe has been ended
-				break;
-			}
+			WriteFile(*write_stdin, buf, 1, &nBytesWritten, NULL);
+		}
+		else {
+			/*
+			 When a synchronous read operation reaches the end of a file,
+			 ReadFile returns TRUE and sets *lpNumberOfBytesRead to zero.
+			 See http://msdn.microsoft.com/en-us/library/windows/desktop/aa365467(v=vs.85).aspx
+			 */
+			endOfInput = bResult;
 		}
 	}
 	return 0;
@@ -207,14 +208,9 @@ int main(int argc, char * argv[]) {
 		exit(0);
 	}
 
+	CreateThread(NULL, 0, &scanStdinThread, &write_stdin, 0, NULL);
+
 	unsigned long exitCode = 0;
-
-	HANDLE threadEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
-
-	StdInThreadParams params;
-	params.write_stdin = write_stdin;
-
-	CreateThread(NULL, 0, &StdInThread, &params, 0, NULL);
 
 	while (true) {
 		int rc = WaitForSingleObject(pi.hProcess, INFINITE);

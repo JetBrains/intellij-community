@@ -20,6 +20,9 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.search.FilenameIndex;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.PathUtil;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyFileTypeLoader;
@@ -51,7 +54,17 @@ public class GroovyHotSwapper extends JavaProgramPatcher {
     return false;
   }
 
-  private static boolean containsGroovyClasses(Project project) {
+  private static boolean containsGroovyClasses(final Project project) {
+    return CachedValuesManager.getManager(project).getCachedValue(project, new CachedValueProvider<Boolean>() {
+      @Nullable
+      @Override
+      public Result<Boolean> compute() {
+        return Result.create(calcContainsGroovyClasses(project), PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
+      }
+    });
+  }
+
+  private static boolean calcContainsGroovyClasses(Project project) {
     final List<String> extensions = new ArrayList<String>();
     for (String extension : GroovyFileTypeLoader.getAllGroovyExtensions()) {
       extensions.add("." + extension);
