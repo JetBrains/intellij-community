@@ -47,6 +47,11 @@ Available templates:
 Other features:
 
 * Template expansion by `Tab` key in editor (just like live templates)
+* `.each` – expand iterable/iterator expression to foreach statement
+* `.map` – search Guava and expand iterable expression to Collections2.map()
+* `.filter` – search Guava and expand iterable expression to Collections2.filter()
+* `.for` should be equals to fori for int expressions and to `.each` for iterables
+* `.while` should expand iterator expressions to while(iterator.hasNext()) { SomeType next = iterator.next() } 
 * Support for IDEA chained code completion (`st.new` => `new SomeType()`)
 * Works inside code fragments, like *evaluate expression* debugger window
 * Settings page to disable/enable particular postfix templates
