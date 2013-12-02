@@ -1550,6 +1550,11 @@ public class ContainerUtil extends ContainerUtilRt {
   }
 
   @NotNull
+  public static <T> Set<T> createMaybeSingletonSet(@Nullable T element) {
+    return element == null ? Collections.<T>emptySet() : Collections.singleton(element);
+  }
+
+  @NotNull
   public static <T, V> V getOrCreate(@NotNull Map<T, V> result, final T key, @NotNull V defaultValue) {
     V value = result.get(key);
     if (value == null) {
