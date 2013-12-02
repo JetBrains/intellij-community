@@ -136,8 +136,9 @@ public class PostfixLiveTemplate implements CustomLiveTemplate {
     assert copyDocument != null;
     int currentOffset = editor.getCaretModel().getOffset();
     PsiElement newContext = deleteTemplateKey(copy, copyDocument, currentOffset, template.getKey());
-    newContext = addSemicolonIfNeeded(editor, copyDocument, newContext, currentOffset - template.getKey().length());
-    return template.isApplicable(newContext);
+    int newOffset = currentOffset - template.getKey().length();
+    newContext = addSemicolonIfNeeded(editor, copyDocument, newContext, newOffset);
+    return template.isApplicable(newContext, copyDocument, newOffset);
   }
 
   @NotNull

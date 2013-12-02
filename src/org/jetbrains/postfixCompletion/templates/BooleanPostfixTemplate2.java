@@ -1,5 +1,6 @@
 package org.jetbrains.postfixCompletion.templates;
 
+import com.intellij.openapi.editor.Document;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiStatement;
@@ -13,7 +14,7 @@ abstract public class BooleanPostfixTemplate2 extends PostfixTemplate {
   }
 
   @Override
-  public boolean isApplicable(@NotNull PsiElement context) {
+  public boolean isApplicable(@NotNull PsiElement context, @NotNull Document copyDocument, int newOffset) {
     PsiExpression topmostExpression = getTopmostExpression(context);
     return topmostExpression != null &&
            topmostExpression.getParent() instanceof PsiStatement &&

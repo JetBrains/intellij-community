@@ -1,6 +1,7 @@
 package org.jetbrains.postfixCompletion.templates;
 
 import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.util.text.StringUtil;
@@ -66,7 +67,7 @@ public abstract class PostfixTemplate {
     return PsiTreeUtil.getTopmostParentOfType(context, PsiExpression.class);
   }
 
-  public boolean isApplicable(@NotNull PsiElement context) {
+  public boolean isApplicable(@NotNull PsiElement context, @NotNull Document copyDocument, int newOffset) {
     //todo: implement it in each template, make method abstract
     return false;
   }
