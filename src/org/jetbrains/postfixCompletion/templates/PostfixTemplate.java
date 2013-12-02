@@ -17,19 +17,23 @@ import org.jetbrains.postfixCompletion.settings.PostfixCompletionSettings;
 public abstract class PostfixTemplate {
   @Nullable private final String myPresentableName;
   @Nullable private final String myKey;
+  @Nullable private final String myDescription;
+  @Nullable private final String myExample;
 
   @Deprecated
   protected PostfixTemplate() {
-    this(null, null);
+    this(null, null, null, null);
   }
 
-  protected PostfixTemplate(@Nullable String name) {
-    this(name, null);
+  protected PostfixTemplate(@Nullable String name, @Nullable String description, @Nullable String example) {
+    this(name, null, description, example);
   }
   
-  protected PostfixTemplate(@Nullable String name, @Nullable String key) {
+  protected PostfixTemplate(@Nullable String name, @Nullable String key, @Nullable String description, @Nullable String example) {
     myPresentableName = name;
     myKey = key;
+    myDescription = description;
+    myExample = example;
   }
 
   @NotNull
@@ -45,7 +49,7 @@ public abstract class PostfixTemplate {
   
   @NotNull
   public final String getKey() {
-    return StringUtil.notNullize(myKey,  "." + getPresentableName());
+    return StringUtil.notNullize(myKey, "." + getPresentableName());
   }
 
   @NotNull
@@ -55,6 +59,24 @@ public abstract class PostfixTemplate {
     }
     TemplateInfo annotation = getClass().getAnnotation(TemplateInfo.class);
     return annotation.templateName();
+  }
+
+  @NotNull
+  public String getDescription() {
+    if (myDescription != null) {
+      return myDescription;
+    }
+    TemplateInfo annotation = getClass().getAnnotation(TemplateInfo.class);
+    return annotation.description();
+  }
+
+  @NotNull
+  public String getExample() {
+    if (myExample != null) {
+      return myExample;
+    }
+    TemplateInfo annotation = getClass().getAnnotation(TemplateInfo.class);
+    return annotation.example();
   }
 
   public boolean isEnabled() {

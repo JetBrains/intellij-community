@@ -14,7 +14,7 @@ import com.intellij.util.ui.ListTableModel;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.postfixCompletion.infrastructure.TemplateProviderInfo;
+import org.jetbrains.postfixCompletion.templates.PostfixTemplate;
 
 import javax.swing.*;
 import javax.swing.table.TableCellEditor;
@@ -23,49 +23,49 @@ import java.util.List;
 import java.util.Map;
 
 public class PostfixTemplatesListPanel {
-  private static final NotNullFunction<TemplateProviderInfo, String> GET_SHORTCUT_FUNCTION =
-    new NotNullFunction<TemplateProviderInfo, String>() {
+  private static final NotNullFunction<PostfixTemplate, String> GET_SHORTCUT_FUNCTION =
+    new NotNullFunction<PostfixTemplate, String>() {
       @NotNull
       @Override
-      public String fun(@NotNull TemplateProviderInfo info) {
-        return "." + info.annotation.templateName();
+      public String fun(@NotNull PostfixTemplate template) {
+        return template.getKey();
       }
     };
 
-  private static final NotNullFunction<TemplateProviderInfo, String> GET_DESCRIPTION_FUNCTION =
-    new NotNullFunction<TemplateProviderInfo, String>() {
+  private static final NotNullFunction<PostfixTemplate, String> GET_DESCRIPTION_FUNCTION =
+    new NotNullFunction<PostfixTemplate, String>() {
       @NotNull
       @Override
-      public String fun(@NotNull TemplateProviderInfo info) {
-        return info.annotation.description();
+      public String fun(@NotNull PostfixTemplate template) {
+        return template.getDescription();
       }
     };
 
-  private static final NotNullFunction<TemplateProviderInfo, String> GET_EXAMPLE_FUNCTION =
-    new NotNullFunction<TemplateProviderInfo, String>() {
+  private static final NotNullFunction<PostfixTemplate, String> GET_EXAMPLE_FUNCTION =
+    new NotNullFunction<PostfixTemplate, String>() {
       @NotNull
       @Override
-      public String fun(@NotNull TemplateProviderInfo info) {
-        return info.annotation.example();
+      public String fun(@NotNull PostfixTemplate template) {
+        return template.getExample();
       }
     };
 
   @NotNull private final Map<String, Boolean> myTemplatesState = ContainerUtil.newHashMap();
   @NotNull private final JPanel myPanelWithTableView;
 
-  public PostfixTemplatesListPanel(@NotNull List<TemplateProviderInfo> templates) {
+  public PostfixTemplatesListPanel(@NotNull List<PostfixTemplate> templates) {
     ColumnInfo[] columns = generateColumns(templates);
-    ListTableModel<TemplateProviderInfo> templatesTableModel = new ListTableModel<TemplateProviderInfo>(columns, templates, 0);
-    TableView<TemplateProviderInfo> templatesTableView = new TableView<TemplateProviderInfo>();
+    ListTableModel<PostfixTemplate> templatesTableModel = new ListTableModel<PostfixTemplate>(columns, templates, 0);
+    TableView<PostfixTemplate> templatesTableView = new TableView<PostfixTemplate>();
     templatesTableView.setModelAndUpdateColumns(templatesTableModel);
     templatesTableView.setShowGrid(false);
     templatesTableView.setStriped(true);
     templatesTableView.setBorder(null);
 
-    new TableViewSpeedSearch<TemplateProviderInfo>(templatesTableView) {
+    new TableViewSpeedSearch<PostfixTemplate>(templatesTableView) {
       @Override
-      protected String getItemText(@NotNull TemplateProviderInfo template) {
-        return template.annotation.templateName();
+      protected String getItemText(@NotNull PostfixTemplate template) {
+        return template.getPresentableName();
       }
     };
 
@@ -76,11 +76,11 @@ public class PostfixTemplatesListPanel {
   }
 
   @NotNull
-  private ColumnInfo[] generateColumns(@NotNull List<TemplateProviderInfo> templates) {
+  private ColumnInfo[] generateColumns(@NotNull List<PostfixTemplate> templates) {
     String longestTemplateName = "";
     String longestDescription = "";
     String longestExample = "";
-    for (TemplateProviderInfo template : templates) {
+    for (PostfixTemplate template : templates) {
       longestTemplateName = longestString(longestTemplateName, GET_SHORTCUT_FUNCTION.fun(template));
       longestDescription = longestString(longestDescription, GET_DESCRIPTION_FUNCTION.fun(template));
       longestExample = longestString(longestExample, GET_EXAMPLE_FUNCTION.fun(template));
@@ -115,7 +115,7 @@ public class PostfixTemplatesListPanel {
     return myTemplatesState;
   }
 
-  private class BooleanColumnInfo extends ColumnInfo<TemplateProviderInfo, Boolean> {
+  private class BooleanColumnInfo extends ColumnInfo<PostfixTemplate, Boolean> {
     private final BooleanTableCellRenderer CELL_RENDERER = new BooleanTableCellRenderer();
     private final BooleanTableCellEditor CELL_EDITOR = new BooleanTableCellEditor();
     private final int WIDTH = new JBCheckBox().getPreferredSize().width + 4;
@@ -126,13 +126,13 @@ public class PostfixTemplatesListPanel {
 
     @Nullable
     @Override
-    public TableCellRenderer getRenderer(TemplateProviderInfo template) {
+    public TableCellRenderer getRenderer(PostfixTemplate template) {
       return CELL_RENDERER;
     }
 
     @Nullable
     @Override
-    public TableCellEditor getEditor(TemplateProviderInfo template) {
+    public TableCellEditor getEditor(PostfixTemplate template) {
       return CELL_EDITOR;
     }
 
@@ -148,28 +148,28 @@ public class PostfixTemplatesListPanel {
     }
 
     @Override
-    public boolean isCellEditable(TemplateProviderInfo bean) {
+    public boolean isCellEditable(PostfixTemplate bean) {
       return true;
     }
 
     @Nullable
     @Override
-    public Boolean valueOf(@NotNull TemplateProviderInfo template) {
-      return ContainerUtil.getOrElse(myTemplatesState, template.annotation.templateName(), true);
+    public Boolean valueOf(@NotNull PostfixTemplate template) {
+      return ContainerUtil.getOrElse(myTemplatesState, template.getKey(), true);
     }
 
     @Override
-    public void setValue(@NotNull TemplateProviderInfo template, Boolean value) {
-      myTemplatesState.put(template.annotation.templateName(), value);
+    public void setValue(@NotNull PostfixTemplate template, Boolean value) {
+      myTemplatesState.put(template.getKey(), value);
     }
   }
 
-  private static class StringColumnInfo extends ColumnInfo<TemplateProviderInfo, String> {
-    @NotNull private final Function<TemplateProviderInfo, String> myValueOfFunction;
+  private static class StringColumnInfo extends ColumnInfo<PostfixTemplate, String> {
+    @NotNull private final Function<PostfixTemplate, String> myValueOfFunction;
     @Nullable private final String myPreferredStringValue;
 
     public StringColumnInfo(@NotNull String name,
-                            @NotNull Function<TemplateProviderInfo, String> valueOfFunction,
+                            @NotNull Function<PostfixTemplate, String> valueOfFunction,
                             @Nullable String preferredStringValue) {
       super(name);
       myValueOfFunction = valueOfFunction;
@@ -189,7 +189,7 @@ public class PostfixTemplatesListPanel {
       return myPreferredStringValue;
     }
 
-    public String valueOf(final TemplateProviderInfo template) {
+    public String valueOf(final PostfixTemplate template) {
       return myValueOfFunction.fun(template);
     }
   }

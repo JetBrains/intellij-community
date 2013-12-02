@@ -9,7 +9,7 @@ import org.jetbrains.postfixCompletion.util.JavaSurroundersProxy;
 
 public final class IfStatementPostfixTemplate extends BooleanPostfixTemplate2 {
   public IfStatementPostfixTemplate() {
-    super("if");
+    super("if", "Checks boolean expression to be 'true'", "if (expr)");
   }
 
   @Override

@@ -25,7 +25,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.HashMap;
 
 public class PostfixLiveTemplate implements CustomLiveTemplate {
-  public static final Logger LOG = Logger.getInstance(PostfixLiveTemplate.class);
+  private static final Logger LOG = Logger.getInstance(PostfixLiveTemplate.class);
   private final HashMap<String, PostfixTemplate> myTemplates = ContainerUtil.newHashMap();
 
   public PostfixLiveTemplate() {

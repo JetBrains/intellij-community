@@ -19,7 +19,7 @@ import java.util.List;
 
 public final class CastExpressionPostfixTemplate extends PostfixTemplate {
   public CastExpressionPostfixTemplate() {
-    super("cast");
+    super("cast", "Surrounds expression with cast", "((SomeType) expr)");
   }
 
   @Override

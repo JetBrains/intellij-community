@@ -7,7 +7,7 @@ import org.jetbrains.annotations.NotNull;
 public final class AssertStatementPostfixTemplate extends BooleanPostfixTemplate2 {
 
   public AssertStatementPostfixTemplate() {
-    super("assert");
+    super("assert", "Creates assertion from boolean expression", "assert expr;");
   }
 
   @Override

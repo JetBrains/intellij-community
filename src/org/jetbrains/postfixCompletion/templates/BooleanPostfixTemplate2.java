@@ -9,8 +9,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 abstract public class BooleanPostfixTemplate2 extends PostfixTemplate {
-  protected BooleanPostfixTemplate2(@Nullable String name) {
-    super(name);
+  protected BooleanPostfixTemplate2(@Nullable String name, @NotNull String description, @NotNull String example) {
+    super(name, description, example);
   }
 
   @Override

@@ -9,12 +9,10 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.postfixCompletion.infrastructure.PostfixTemplatesService;
-import org.jetbrains.postfixCompletion.infrastructure.TemplateProviderInfo;
+import org.jetbrains.postfixCompletion.templates.PostfixTemplate;
 
 import javax.swing.*;
-import java.util.Collections;
-import java.util.List;
+import java.util.Arrays;
 import java.util.Map;
 
 public final class PostfixCompletionConfigurable implements SearchableConfigurable, EditorOptionsProvider, Configurable.NoScroll {
@@ -43,10 +41,7 @@ public final class PostfixCompletionConfigurable implements SearchableConfigurab
   @Override
   public JComponent createComponent() {
     if (myPanel == null) {
-      PostfixTemplatesService templatesService = PostfixTemplatesService.getInstance();
-      final List<TemplateProviderInfo> templates = templatesService != null
-        ? templatesService.getAllTemplates()
-        : Collections.<TemplateProviderInfo>emptyList();
+      final PostfixTemplate[] templates = PostfixTemplate.EP_NAME.getExtensions();
 
       PostfixCompletionSettings templatesSettings = PostfixCompletionSettings.getInstance();
       if (templatesSettings == null) {
@@ -54,7 +49,7 @@ public final class PostfixCompletionConfigurable implements SearchableConfigurab
         return null;
       }
 
-      myPanel = new PostfixTemplatesListPanel(templates);
+      myPanel = new PostfixTemplatesListPanel(Arrays.asList(templates));
     }
 
     return myPanel.getComponent();
