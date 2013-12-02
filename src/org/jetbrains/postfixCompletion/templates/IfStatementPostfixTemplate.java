@@ -11,6 +11,7 @@ public final class IfStatementPostfixTemplate extends BooleanPostfixTemplate2 {
   @Override
   public void expand(@NotNull PsiElement context, @NotNull final Editor editor) {
     PsiExpression expression = getTopmostExpression(context);
+    assert expression != null;
     TextRange range = JavaSurroundersProxy.ifStatement(expression.getProject(), editor, expression);
     if (range != null) {
       editor.getCaretModel().moveToOffset(range.getStartOffset());

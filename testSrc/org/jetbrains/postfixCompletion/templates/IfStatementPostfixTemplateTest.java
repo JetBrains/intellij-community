@@ -1,7 +1,5 @@
 package org.jetbrains.postfixCompletion.templates;
 
-import com.intellij.codeInsight.template.TemplateManager;
-import com.intellij.codeInsight.template.impl.TemplateSettings;
 import com.intellij.testFramework.TestDataPath;
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
 
@@ -9,6 +7,14 @@ import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCa
 public class IfStatementPostfixTemplateTest extends LightPlatformCodeInsightFixtureTestCase {
 
   public void testBooleanVariableBeforeAssignment() throws Exception {
+    doTest();
+  }
+
+  public void testNotBooleanExpression() throws Exception {
+    doTest();
+  }
+  
+  public void testUnresolvedVariable() throws Exception {
     doTest();
   }
 
@@ -34,8 +40,8 @@ public class IfStatementPostfixTemplateTest extends LightPlatformCodeInsightFixt
 
   private void doTest() {
     myFixture.configureByFile(getTestName(true) + ".java");
-    TemplateManager.getInstance(getProject()).startTemplate(myFixture.getEditor(), TemplateSettings.TAB_CHAR);
-    myFixture.checkResultByFile(getTestName(true) + "_after.java");
+    myFixture.type('\t');
+    myFixture.checkResultByFile(getTestName(true) + "_after.java", false);
   }
 
   @Override
