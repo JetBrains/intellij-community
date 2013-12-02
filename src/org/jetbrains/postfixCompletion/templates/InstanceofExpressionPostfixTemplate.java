@@ -1,10 +1,10 @@
 package org.jetbrains.postfixCompletion.templates;
 
-import com.intellij.codeInsight.completion.InsertionContext;
 import com.intellij.codeInsight.guess.GuessManager;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.PsiTypeLookupItem;
 import com.intellij.codeInsight.template.*;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.ScrollType;
@@ -14,54 +14,25 @@ import com.intellij.psi.*;
 import com.intellij.refactoring.introduceField.ElementToWorkOn;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.postfixCompletion.infrastructure.PostfixTemplateContext;
-import org.jetbrains.postfixCompletion.infrastructure.PrefixExpressionContext;
-import org.jetbrains.postfixCompletion.infrastructure.TemplateInfo;
-import org.jetbrains.postfixCompletion.lookupItems.ExpressionPostfixLookupElement;
-import org.jetbrains.postfixCompletion.util.CommonUtils;
 
 import java.util.LinkedHashSet;
-import java.util.List;
 import java.util.Set;
 
-@TemplateInfo(
-  templateName = "instanceof",
-  description = "Surrounds expression with instanceof",
-  example = "expr instanceof SomeType ? ((SomeType) expr). : null",
-  worksInsideFragments = true)
 public class InstanceofExpressionPostfixTemplate extends PostfixTemplate {
+  public InstanceofExpressionPostfixTemplate() {
+    super("instanceof", "Surrounds expression with instanceof", "expr instanceof SomeType ? ((SomeType) expr). : null");
+  }
+
   @Override
-  public LookupElement createLookupElement(@NotNull PostfixTemplateContext context) {
-    if (!context.executionContext.isForceMode) return null;
-
-    PrefixExpressionContext bestContext = context.outerExpression();
-    List<PrefixExpressionContext> expressions = context.expressions();
-
-    for (int index = expressions.size() - 1; index >= 0; index--) {
-      PrefixExpressionContext expressionContext = expressions.get(index);
-      if (CommonUtils.isNiceExpression(expressionContext.expression)) {
-        bestContext = expressionContext;
-        break;
-      }
-    }
-
-    return new CastLookupElement(bestContext);
+  public boolean isApplicable(@NotNull PsiElement context, @NotNull Document copyDocument, int newOffset) {
+    return getTopmostExpression(context) != null;
   }
 
   @Override
   public void expand(@NotNull PsiElement context, @NotNull Editor editor) {
-    throw new UnsupportedOperationException();
-  }
-
-  static class CastLookupElement extends ExpressionPostfixLookupElement {
-    public CastLookupElement(@NotNull PrefixExpressionContext context) {
-      super("instanceof", context);
-    }
-
-    @Override
-    protected void postProcess(@NotNull InsertionContext context, @NotNull PsiExpression expression) {
-      surroundExpression(context.getProject(), context.getEditor(), expression);
-    }
+    PsiExpression expression = getTopmostExpression(context);
+    if (expression == null) return;
+    surroundExpression(context.getProject(), editor, expression);
   }
 
   public static TextRange surroundExpression(Project project, Editor editor, PsiExpression expr) throws IncorrectOperationException {

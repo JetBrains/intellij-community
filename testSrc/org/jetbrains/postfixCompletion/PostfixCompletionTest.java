@@ -123,7 +123,5 @@ public class PostfixCompletionTest extends LightCodeInsightFixtureTestCase {
   public void testNoVariants04() { doTest("nul\n"); }
   public void testNoVariants05() { doTest("var\n"); }
   public void testNoVariants06() { doTest("var\n"); }
-
-  public void testInstanceof01() { doTest("instanceof\t"); } // caret position tbd
 }
 
