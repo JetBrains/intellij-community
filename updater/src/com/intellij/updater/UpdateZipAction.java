@@ -149,11 +149,11 @@ public class UpdateZipAction extends BaseUpdateAction {
 
   protected void doApply(final ZipFile patchFile, File toFile) throws IOException {
     File temp = Utils.createTempFile();
-    @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
-    final ZipOutputWrapper out = new ZipOutputWrapper(new FileOutputStream(temp));
-    out.setCompressionLevel(0);
-
+    FileOutputStream fileOut = new FileOutputStream(temp);
     try {
+      final ZipOutputWrapper out = new ZipOutputWrapper(fileOut);
+      out.setCompressionLevel(0);
+
       processZipFile(toFile, new Processor() {
         public void process(ZipEntry entry, InputStream in) throws IOException {
           String path = entry.getName();
@@ -183,9 +183,11 @@ public class UpdateZipAction extends BaseUpdateAction {
           in.close();
         }
       }
+
+      out.finish();
     }
     finally {
-      out.close();
+      fileOut.close();
     }
 
     replaceUpdated(temp, toFile);

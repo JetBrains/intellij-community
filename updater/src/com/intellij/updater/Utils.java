@@ -17,12 +17,12 @@ public class Utils {
   @SuppressWarnings({"SSBasedInspection"})
   public static File createTempFile() throws IOException {
     if (myTempDir == null) {
-      myTempDir = File.createTempFile("idea.updater", "tmp");
+      myTempDir = File.createTempFile("idea.updater.", ".tmp");
       delete(myTempDir);
       myTempDir.mkdirs();
     }
 
-    return File.createTempFile("temp", "tmp", myTempDir);
+    return File.createTempFile("temp.", ".tmp", myTempDir);
   }
 
   public static File createTempDir() throws IOException {

@@ -54,7 +54,13 @@ public class Runner {
     }
   }
 
-  public static List<String> extractFiles(String[] args, String paramName) {
+  public class SomeClass {
+    private static Logger log = Logger.getLogger(SomeClass.class.getName());
+    public void someMethod(){
+      log.info("Some message");
+    }
+  }
+    public static List<String> extractFiles(String[] args, String paramName) {
     List<String> result = new ArrayList<String>();
     for (String param : args) {
       if (param.startsWith(paramName + "=")) {
@@ -70,7 +76,8 @@ public class Runner {
 
   private static void printUsage() {
     System.err.println("Usage:\n" +
-                       "create <old_version_description> <new_version_description> <old_version_folder> <new_version_folder> <patch_file_name> [ignored=file1;file2;...] [critical=file1;file2;...] [optional=file1;file2;...]\n" +
+                       "create <old_version_description> <new_version_description> <old_version_folder> <new_version_folder>" +
+                       " <patch_file_name> [ignored=file1;file2;...] [critical=file1;file2;...] [optional=file1;file2;...]\n" +
                        "install <destination_folder>\n");
   }
 
@@ -94,8 +101,10 @@ public class Runner {
                               ui);
 
       ui.startProcess("Packing jar file '" + patchFile + "'...");
-      ZipOutputWrapper out = new ZipOutputWrapper(new FileOutputStream(patchFile));
+
+      FileOutputStream fileOut = new FileOutputStream(patchFile);
       try {
+        ZipOutputWrapper out = new ZipOutputWrapper(fileOut);
         ZipInputStream in = new ZipInputStream(new FileInputStream(resolveJarFile()));
         try {
           ZipEntry e;
@@ -110,8 +119,8 @@ public class Runner {
         ByteArrayOutputStream byteOut = new ByteArrayOutputStream();
         try {
           Properties props = new Properties();
-          props.put(OLD_BUILD_DESCRIPTION, oldBuildDesc);
-          props.put(NEW_BUILD_DESCRIPTION, newBuildDesc);
+          props.setProperty(OLD_BUILD_DESCRIPTION, oldBuildDesc);
+          props.setProperty(NEW_BUILD_DESCRIPTION, newBuildDesc);
           props.store(byteOut, "");
         }
         finally {
@@ -120,9 +129,10 @@ public class Runner {
 
         out.zipBytes(PATCH_PROPERTIES_ENTRY, byteOut);
         out.zipFile(PATCH_FILE_NAME, tempPatchFile);
+        out.finish();
       }
       finally {
-        out.close();
+        fileOut.close();
       }
     }
     finally {
@@ -146,11 +156,16 @@ public class Runner {
       in.close();
     }
 
-    try {
-      UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-    }
-    catch (Exception ignore) {
-    }
+    SwingUtilities.invokeAndWait(new Runnable() {
+      @Override
+      public void run() {
+        try {
+          UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+        }
+        catch (Exception ignore) {
+        }
+      }
+    });
 
     new SwingUpdaterUI(props.getProperty(OLD_BUILD_DESCRIPTION),
                   props.getProperty(NEW_BUILD_DESCRIPTION),
