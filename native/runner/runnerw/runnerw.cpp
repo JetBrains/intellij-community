@@ -74,14 +74,14 @@ BOOL Scan(char buf[], int count) {
 BOOL CtrlHandler(DWORD fdwCtrlType) {
 	switch (fdwCtrlType) {
 	case CTRL_C_EVENT:
-		return FALSE;
+		return TRUE;
 	case CTRL_CLOSE_EVENT:
 	case CTRL_LOGOFF_EVENT:
 	case CTRL_SHUTDOWN_EVENT:
 		CtrlBreak();
 		return (TRUE);
 	case CTRL_BREAK_EVENT:
-		return FALSE;
+		return TRUE;
 	default:
 		return FALSE;
 	}
@@ -195,7 +195,9 @@ int main(int argc, char * argv[]) {
 	char* c_args = new char[args.size() + 1];
 	strcpy(c_args, args.c_str());
 
-	SetConsoleCtrlHandler((PHANDLER_ROUTINE) CtrlHandler, TRUE);
+	if (!SetConsoleCtrlHandler((PHANDLER_ROUTINE) CtrlHandler, TRUE)) {
+		ErrorMessage("SetConsoleCtrlHandler");
+	}
 
 	if (!CreateProcess(c_app, // Application name
 			c_args, // Application arguments
