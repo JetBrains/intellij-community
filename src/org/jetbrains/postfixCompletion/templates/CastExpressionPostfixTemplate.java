@@ -37,8 +37,7 @@ public final class CastExpressionPostfixTemplate extends PostfixTemplate {
 
   @Override
   public void expand(@NotNull PsiElement context, @NotNull final Editor editor) {
-    List<PsiExpression> expressions =
-      getExpressions(context, editor, editor.getCaretModel().getOffset());
+    List<PsiExpression> expressions = getExpressions(context, editor, editor.getCaretModel().getOffset());
 
     if (expressions.isEmpty()) {
       CommonUtils.showErrorHint(context.getProject(), editor);
