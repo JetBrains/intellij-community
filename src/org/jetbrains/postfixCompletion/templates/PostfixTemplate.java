@@ -37,7 +37,7 @@ public abstract class PostfixTemplate {
   //NEW API
   
   @NotNull
-  public String getKey() {
+  public final String getKey() {
     return StringUtil.notNullize(myKey,  "." + getPresentableName());
   }
 
@@ -55,7 +55,7 @@ public abstract class PostfixTemplate {
     return settings != null && settings.isTemplateEnabled(this);
   }
 
-  public boolean isMyContext(@NotNull PsiElement context) {
+  public boolean isApplicable(@NotNull PsiElement context) {
     //todo: implement it in each template, make method abstract
     return false;
   }
