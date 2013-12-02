@@ -4,41 +4,15 @@ import com.intellij.testFramework.TestDataPath;
 
 @TestDataPath("$CONTENT_ROOT/testData/templates/if")
 public class ElseStatementPostfixTemplateTest extends PostfixTemplateTestCase {
-
-  public void testBooleanVariable() throws Exception {
-    doTest();
-  }
-  
-  public void testBitOperations() throws Exception {
-    doTest();
-  }
-
-  public void testBitOperationsWithMethod() throws Exception {
-    doTest();
-  }
-  
-  public void testUnresolvedVariable() throws Exception {
-    doTest();
-  }
-
-  public void testInstanceof() throws Exception {
-    doTest();
-  }
-
-  public void testIntegerComparison() throws Exception {
-    doTest();
-  }
-
-  public void testLogicalOperations() throws Exception {
-    doTest();
-  }
-
-  public void testNotNull() throws Exception {
-    doTest();
-  }
+  public void testBooleanVariable() { doTest(); }
+  public void testBitOperations() { doTest(); }
+  public void testBitOperationsWithMethod() { doTest(); }
+  public void testUnresolvedVariable() { doTest(); }
+  public void testInstanceof() { doTest(); }
+  public void testIntegerComparison() { doTest(); }
+  public void testLogicalOperations() { doTest(); }
+  public void testNotNull() { doTest(); }
 
   @Override
-  protected String getTestDataPath() {
-    return "testData/templates/else";
-  }
+  protected String getTestDataPath() { return "testData/templates/else"; }
 }
