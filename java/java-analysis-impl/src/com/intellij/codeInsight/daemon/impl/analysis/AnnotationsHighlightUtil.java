@@ -292,11 +292,14 @@ public class AnnotationsHighlightUtil {
   private static final ElementPattern<PsiElement> ANY_ANNOTATION_ALLOWED = psiElement().andOr(
     psiElement().withParent(PsiNameValuePair.class),
     psiElement().withParents(PsiArrayInitializerMemberValue.class, PsiNameValuePair.class),
+    psiElement().withParents(PsiArrayInitializerMemberValue.class, PsiAnnotationMethod.class),
     psiElement().withParent(PsiAnnotationMethod.class).afterLeaf(PsiKeyword.DEFAULT)
   );
 
   @Nullable
-  public static HighlightInfo checkApplicability(@NotNull PsiAnnotation annotation, @NotNull LanguageLevel languageLevel,@NotNull PsiFile containingFile) {
+  public static HighlightInfo checkApplicability(@NotNull PsiAnnotation annotation,
+                                                 @NotNull LanguageLevel languageLevel,
+                                                 @NotNull PsiFile containingFile) {
     if (ANY_ANNOTATION_ALLOWED.accepts(annotation)) {
       return null;
     }
