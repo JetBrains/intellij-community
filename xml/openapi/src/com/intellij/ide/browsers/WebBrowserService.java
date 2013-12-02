@@ -20,7 +20,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.util.Url;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Set;
+import java.util.Collection;
 
 public abstract class WebBrowserService {
   public static WebBrowserService getInstance() {
@@ -30,5 +30,5 @@ public abstract class WebBrowserService {
   public abstract boolean canOpenInBrowser(@NotNull PsiElement psiElement);
 
   @NotNull
-  public abstract Set<Url> getUrlToOpen(@NotNull PsiElement psiElement, boolean preferLocalUrl) throws WebBrowserUrlProvider.BrowserException;
+  public abstract Collection<Url> getUrlToOpen(@NotNull PsiElement psiElement, boolean preferLocalUrl) throws WebBrowserUrlProvider.BrowserException;
 }

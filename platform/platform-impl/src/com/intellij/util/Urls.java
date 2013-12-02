@@ -28,6 +28,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -140,6 +141,15 @@ public final class Urls {
       Url url = parseUrl(file.getUrl());
       return url == null ? new UrlImpl(file.getPath()) : url;
     }
+  }
+
+  public static boolean equalsIgnoreParameters(@NotNull Url url, @NotNull List<Url> urls) {
+    for (Url otherUrl : urls) {
+      if (url.equalsIgnoreParameters(otherUrl)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   public static boolean equalsIgnoreParameters(@NotNull Url url, @NotNull VirtualFile file) {
