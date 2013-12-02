@@ -63,6 +63,8 @@ public class PostfixLiveTemplate implements CustomLiveTemplate {
 
   @Override
   public void expand(@NotNull final String key, @NotNull final CustomTemplateCallback callback) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
+
     final PostfixTemplate template = myTemplates.get(key);
     final Editor editor = callback.getEditor();
     if (isApplicableTemplate(template, callback.getContext(), editor)) {
@@ -124,7 +126,7 @@ public class PostfixLiveTemplate implements CustomLiveTemplate {
   }
 
   private static boolean isApplicableTemplate(@Nullable PostfixTemplate template, @NotNull PsiElement context, @NotNull Editor editor) {
-    if (template == null || !template.isEnabled()) {
+    if (template == null || !template.isEnabled() || !ApplicationManager.getApplication().isDispatchThread()) {
       return false;
     }
     PsiFile file = context.getContainingFile();
