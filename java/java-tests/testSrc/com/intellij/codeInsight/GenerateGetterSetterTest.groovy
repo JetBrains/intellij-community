@@ -42,7 +42,8 @@ class Foo {
 
     public YesNoRAMField getIsStateForceMailField() {
         return isStateForceMailField;
-    }}
+    }
+}
 '''
   }
   
@@ -61,7 +62,8 @@ class Foo {
 
     public boolean isStateForceMailField() {
         return isStateForceMailField;
-    }}
+    }
+}
 '''
   }
 
