@@ -88,7 +88,6 @@ BOOL CtrlHandler(DWORD fdwCtrlType) {
 }
 
 struct StdInThreadParams {
-	HANDLE hEvent;
 	HANDLE write_stdin;
 };
 
@@ -109,7 +108,7 @@ DWORD WINAPI StdInThread(void *param) {
 			BOOL ctrlBroken = Scan(buf, 1);
 			WriteFile(threadParams->write_stdin, buf, 1, &cbWrite, NULL);
 			if (ctrlBroken == TRUE) {
-				SetEvent(threadParams->hEvent);
+				// break the loop, because the pipe has been ended
 				break;
 			}
 		}
@@ -208,32 +207,27 @@ int main(int argc, char * argv[]) {
 		exit(0);
 	}
 
-	unsigned long exit = 0;
+	unsigned long exitCode = 0;
 
 	HANDLE threadEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
 
 	StdInThreadParams params;
-	params.hEvent = threadEvent;
 	params.write_stdin = write_stdin;
 
 	CreateThread(NULL, 0, &StdInThread, &params, 0, NULL);
 
-	HANDLE objects_to_wait[2];
-	objects_to_wait[0] = threadEvent;
-	objects_to_wait[1] = pi.hProcess;
-
 	while (true) {
-		int rc = WaitForMultipleObjects(2, objects_to_wait, FALSE, INFINITE);
-		if (rc == WAIT_OBJECT_0 + 1) {
+		int rc = WaitForSingleObject(pi.hProcess, INFINITE);
+		if (rc == WAIT_OBJECT_0) {
 			break;
 		}
 	}
 
-	GetExitCodeProcess(pi.hProcess, &exit);
+	GetExitCodeProcess(pi.hProcess, &exitCode);
 
 	CloseHandle(pi.hThread);
 	CloseHandle(pi.hProcess);
 	CloseHandle(newstdin);
 	CloseHandle(write_stdin);
-	return exit;
+	return exitCode;
 }
