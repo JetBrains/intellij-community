@@ -2061,67 +2061,42 @@ public class FileBasedIndexImpl extends FileBasedIndex {
       cleanProcessedFlag(file);
       IndexingStamp.flushCache(file);
 
-      final List<ID<?, ?>> affectedIndexCandidates = getAffectedIndexCandidates(file);
-      final List<ID<?, ?>> affectedIndices = new ArrayList<ID<?, ?>>(affectedIndexCandidates.size());
+      Collection<ID<?, ?>> existingIndexedIds = IndexingStamp.getIndexedIds(file);
 
-      //noinspection ForLoopReplaceableByForEach
-      for (int i = 0, size = affectedIndexCandidates.size(); i < size; ++i) {
-        final ID<?, ?> indexId = affectedIndexCandidates.get(i);
-        try {
-          if (!needsFileContentLoading(indexId)) {
-            if (shouldUpdateIndex(file, indexId)) {
-              updateSingleIndex(indexId, file, null, true);  // todo: set merge to false?
-            }
+      for(ID<?, ?> indexId:existingIndexedIds) {
+        if (myNotRequiringContentIndices.contains(indexId)) {
+          try {
+            updateSingleIndex(indexId, file, null, true);
+          } catch (StorageException e) {
+            LOG.info(e);
+            requestRebuild(indexId);
           }
-          else { // the index requires file content
-            if (shouldUpdateIndex(file, indexId)) {
-              affectedIndices.add(indexId);
-            }
-          }
-        }
-        catch (StorageException e) {
-          LOG.info(e);
-          requestRebuild(indexId);
         }
       }
 
-      if (!affectedIndices.isEmpty()) {
-        if (markForReindex && !isTooLarge(file)) {
-          // only mark the file as unindexed, reindex will be done lazily
+      final Collection<ID<?, ?>> indexedIdsToUpdate = ContainerUtil.intersection(existingIndexedIds, myRequiringContentIndices);
+
+      if (markForReindex) {
+        // only mark the file as unindexed, reindex will be done lazily
+        if (!indexedIdsToUpdate.isEmpty()) {
           ApplicationManager.getApplication().runReadAction(new Runnable() {
             @Override
             public void run() {
-              FileType fileType = file.getFileType();
-              for (ID<?, ?> indexId : affectedIndices) {
-                ID id = IndexInfrastructure.getStubId(indexId, fileType);
-                IndexingStamp.update(file, id, IndexInfrastructure.INVALID_STAMP2);
-              }
-            }
-          });
-          // the file is for sure not a dir and it was previously indexed by at least one index
-          scheduleForUpdate(file);
-        }
-        else {
-          myFutureInvalidations.offer(new InvalidationTask(file) {
-            @Override
-            public void run() {
-              removeFileDataFromIndices(affectedIndices, file);
+              IndexingStamp.removeAllIndexedState(file);
             }
           });
         }
+        // the file is for sure not a dir and it was previously indexed by at least one index
+        scheduleForUpdate(file);
       }
-      if (!markForReindex) {
-        final boolean removedFromUpdateQueue = myFilesToUpdate.remove(file);// no need to update it anymore
-        if (removedFromUpdateQueue && affectedIndices.isEmpty()) {
-          // Currently the file is about to be deleted and previously it was scheduled for update and not processed up to now.
-          // Because the file was scheduled for update, at the moment of scheduling it was marked as unindexed,
-          // so, to be on the safe side, we have to schedule data invalidation from all content-requiring indices for this file
+      else {
+        myFilesToUpdate.remove(file);
+
+        if (!indexedIdsToUpdate.isEmpty()) {
           myFutureInvalidations.offer(new InvalidationTask(file) {
             @Override
             public void run() {
-              List<ID<?, ?>> candidates = new ArrayList<ID<?, ?>>(affectedIndexCandidates);
-              candidates.retainAll(myRequiringContentIndices);
-              removeFileDataFromIndices(candidates, file);
+              removeFileDataFromIndices(indexedIdsToUpdate, file);
             }
           });
         }
