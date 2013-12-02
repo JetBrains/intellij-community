@@ -22,6 +22,10 @@ public abstract class PostfixTemplate {
     this(null, null);
   }
 
+  protected PostfixTemplate(@Nullable String name) {
+    this(name, null);
+  }
+  
   protected PostfixTemplate(@Nullable String name, @Nullable String key) {
     myPresentableName = name;
     myKey = key;

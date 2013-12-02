@@ -10,7 +10,7 @@ import org.jetbrains.postfixCompletion.util.JavaSurroundersProxy;
 
 public final class ElseStatementPostfixTemplate extends BooleanPostfixTemplate2 {
   public ElseStatementPostfixTemplate() {
-    super("else", ".else");
+    super("else");
   }
 
   @Override

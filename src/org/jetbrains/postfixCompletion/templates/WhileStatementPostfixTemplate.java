@@ -6,7 +6,7 @@ import org.jetbrains.annotations.NotNull;
 
 public final class WhileStatementPostfixTemplate extends BooleanPostfixTemplate2 {
   public WhileStatementPostfixTemplate() {
-    super("while", ".while");
+    super("while");
   }
 
   @Override

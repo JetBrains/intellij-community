@@ -17,7 +17,7 @@ import java.util.List;
 
 public final class CastExpressionPostfixTemplate extends PostfixTemplate {
   public CastExpressionPostfixTemplate() {
-    super("cast", ".cast");
+    super("cast");
   }
 
   @Override
