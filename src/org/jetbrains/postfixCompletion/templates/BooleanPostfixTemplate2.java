@@ -15,7 +15,7 @@ abstract public class BooleanPostfixTemplate2 extends PostfixTemplate {
   }
 
   @Override
-  public boolean isMyContext(@NotNull PsiElement context) {
+  public boolean isApplicable(@NotNull PsiElement context) {
     PsiExpression topmostExpression = getTopmostExpression(context);
     return topmostExpression != null &&
            topmostExpression.getParent() instanceof PsiStatement &&
