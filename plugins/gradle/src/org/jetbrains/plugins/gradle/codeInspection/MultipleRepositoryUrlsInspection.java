@@ -17,11 +17,14 @@ package org.jetbrains.plugins.gradle.codeInspection;
 
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemHighlightType;
+import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.gradle.util.GradleConstants;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
@@ -67,6 +70,9 @@ public class MultipleRepositoryUrlsInspection extends GradleBaseInspection {
   private static class MyVisitor extends BaseInspectionVisitor {
     @Override
     public void visitClosure(GrClosableBlock closure) {
+      PsiFile file = closure.getContainingFile();
+      if (file == null || !FileUtilRt.extensionEquals(file.getName(), GradleConstants.EXTENSION)) return;
+
       super.visitClosure(closure);
       GrMethodCall mavenMethodCall = PsiTreeUtil.getParentOfType(closure, GrMethodCall.class);
       if (mavenMethodCall == null) return;
