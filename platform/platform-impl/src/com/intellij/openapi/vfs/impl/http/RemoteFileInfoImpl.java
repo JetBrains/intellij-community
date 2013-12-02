@@ -19,6 +19,7 @@ import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.util.AsyncResult;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsBundle;
@@ -290,5 +291,46 @@ public class RemoteFileInfoImpl implements RemoteContentProvider.DownloadingCall
         myPostRunnable.run();
       }
     }
+  }
+
+  @NotNull
+  @Override
+  public AsyncResult<VirtualFile> download() {
+    synchronized (myLock) {
+      switch (getState()) {
+        case DOWNLOADING_NOT_STARTED:
+          startDownloading();
+          return createDownloadedCallback(this);
+        case DOWNLOADING_IN_PROGRESS:
+          return createDownloadedCallback(this);
+        case DOWNLOADED:
+          return new AsyncResult.Done<VirtualFile>(myLocalVirtualFile);
+
+        case ERROR_OCCURRED:
+        default:
+          return new AsyncResult.Rejected<VirtualFile>();
+      }
+    }
+  }
+
+  private static AsyncResult<VirtualFile> createDownloadedCallback(@NotNull RemoteFileInfo remoteFileInfo) {
+    final AsyncResult<VirtualFile> callback = new AsyncResult<VirtualFile>();
+    remoteFileInfo.addDownloadingListener(new FileDownloadingAdapter() {
+      @Override
+      public void fileDownloaded(VirtualFile localFile) {
+        callback.setDone(localFile);
+      }
+
+      @Override
+      public void errorOccurred(@NotNull String errorMessage) {
+        callback.reject(errorMessage);
+      }
+
+      @Override
+      public void downloadingCancelled() {
+        callback.setRejected();
+      }
+    });
+    return callback;
   }
 }
