@@ -1,7 +1,10 @@
 package org.jetbrains.postfixCompletion.util;
 
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.refactoring.util.CommonRefactoringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -51,6 +54,10 @@ public abstract class CommonUtils {
 
     return hasParametricCtors ? CtorAccessibility.WithParametricCtor
       : CtorAccessibility.WithDefaultCtor;
+  }
+
+  public static void showErrorHint(Project project, Editor editor) {
+    CommonRefactoringUtil.showErrorHint(project, editor, "Can't perform postfix completion", "Can't perform postfix completion", "");
   }
 
   public enum CtorAccessibility {

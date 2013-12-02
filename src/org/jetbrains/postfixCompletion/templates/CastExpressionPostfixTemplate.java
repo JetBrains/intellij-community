@@ -1,57 +1,60 @@
 package org.jetbrains.postfixCompletion.templates;
 
-import com.intellij.codeInsight.completion.InsertionContext;
-import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.codeInsight.unwrap.ScopeHighlighter;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.util.Pass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
+import com.intellij.psi.util.PsiExpressionTrimRenderer;
+import com.intellij.refactoring.IntroduceTargetChooser;
+import com.intellij.refactoring.introduceVariable.IntroduceVariableBase;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.postfixCompletion.infrastructure.PostfixTemplateContext;
-import org.jetbrains.postfixCompletion.infrastructure.PrefixExpressionContext;
-import org.jetbrains.postfixCompletion.infrastructure.TemplateInfo;
-import org.jetbrains.postfixCompletion.lookupItems.ExpressionPostfixLookupElement;
 import org.jetbrains.postfixCompletion.util.CommonUtils;
 import org.jetbrains.postfixCompletion.util.JavaSurroundersProxy;
 
 import java.util.List;
 
-@TemplateInfo(
-  templateName = "cast",
-  description = "Surrounds expression with cast",
-  example = "((SomeType) expr)",
-  worksInsideFragments = true)
 public final class CastExpressionPostfixTemplate extends PostfixTemplate {
+  public CastExpressionPostfixTemplate() {
+    super("cast", ".cast");
+  }
+
   @Override
-  public LookupElement createLookupElement(@NotNull PostfixTemplateContext context) {
-    if (!context.executionContext.isForceMode) return null;
+  public boolean isApplicable(@NotNull PsiElement context) {
+    return getTopmostExpression(context) != null;
+  }
 
-    PrefixExpressionContext bestContext = context.outerExpression();
-    List<PrefixExpressionContext> expressions = context.expressions();
+  @Override
+  public void expand(@NotNull PsiElement context, @NotNull final Editor editor) {
+    List<PsiExpression> expressions =
+      IntroduceVariableBase.collectExpressions(context.getContainingFile(), editor, editor.getCaretModel().getOffset());
 
-    for (int index = expressions.size() - 1; index >= 0; index--) {
-      PrefixExpressionContext expressionContext = expressions.get(index);
-      if (CommonUtils.isNiceExpression(expressionContext.expression)) {
-        bestContext = expressionContext;
-        break;
+    if (expressions.isEmpty()) {
+      CommonUtils.showErrorHint(context.getProject(), editor);
+    }
+    else if (expressions.size() == 1) {
+      doIt(editor, expressions.get(0));
+    }
+    else {
+
+    IntroduceTargetChooser.showChooser(editor, expressions,
+                                       new Pass<PsiExpression>() {
+                                         public void pass(@NotNull PsiExpression e) {
+                                           doIt(editor, e);
+                                         }
+                                       },
+                                       new PsiExpressionTrimRenderer.RenderFunction(),
+                                       "Expressions", 0, ScopeHighlighter.NATURAL_RANGER);
+    }
+  }
+
+  private static void doIt(@NotNull final Editor editor, @NotNull final PsiExpression expression) {
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
+      public void run() {
+        JavaSurroundersProxy.cast(expression.getProject(), editor, expression);
       }
-    }
-
-    return new CastLookupElement(bestContext);
-  }
-  
-  @Override
-  public void expand(@NotNull PsiElement context, @NotNull Editor editor) {
-    throw new UnsupportedOperationException("Implement me please");
-  }
-
-  static final class CastLookupElement extends ExpressionPostfixLookupElement {
-    public CastLookupElement(@NotNull PrefixExpressionContext context) {
-      super("cast", context);
-    }
-
-    @Override
-    protected void postProcess(@NotNull final InsertionContext context, @NotNull PsiExpression expression) {
-      JavaSurroundersProxy.cast(context.getProject(), context.getEditor(), expression);
-    }
+    });
   }
 }

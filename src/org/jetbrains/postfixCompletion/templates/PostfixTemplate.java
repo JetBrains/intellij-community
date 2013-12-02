@@ -5,6 +5,8 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.postfixCompletion.infrastructure.PostfixTemplateContext;
@@ -53,6 +55,11 @@ public abstract class PostfixTemplate {
   public boolean isEnabled() {
     final PostfixCompletionSettings settings = PostfixCompletionSettings.getInstance();
     return settings != null && settings.isTemplateEnabled(this);
+  }
+
+  @Nullable
+  public PsiExpression getTopmostExpression(PsiElement context) {
+    return PsiTreeUtil.getTopmostParentOfType(context, PsiExpression.class);
   }
 
   public boolean isApplicable(@NotNull PsiElement context) {

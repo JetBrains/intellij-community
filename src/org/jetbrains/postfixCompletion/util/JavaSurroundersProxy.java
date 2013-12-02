@@ -8,7 +8,6 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
-import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -51,7 +50,7 @@ public class JavaSurroundersProxy {
         return surrounder.surroundElements(project, editor, elements);
       }
       else {
-        CommonRefactoringUtil.showErrorHint(project, editor, "Can't perform postfix completion", "Can't perform postfix completion", "");
+        CommonUtils.showErrorHint(project, editor);
       }
     }
     else {
