@@ -1,5 +1,5 @@
 public class Foo {
     void m(Object o) {
-        o != null.<caret>
+        o != null.else<caret>
     }
 }

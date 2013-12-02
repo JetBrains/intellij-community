@@ -2,6 +2,6 @@ package completion;
 
 public class Foo {
     void m(Object o) {
-        o instanceof String.<caret>
+        o instanceof String.else<caret>
     }
 }

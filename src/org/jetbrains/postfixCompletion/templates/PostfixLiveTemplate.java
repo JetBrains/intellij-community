@@ -5,8 +5,8 @@ import com.intellij.codeInsight.completion.CompletionType;
 import com.intellij.codeInsight.completion.JavaCompletionContributor;
 import com.intellij.codeInsight.template.CustomLiveTemplate;
 import com.intellij.codeInsight.template.CustomTemplateCallback;
-import com.intellij.codeInsight.template.JavaCodeContextType;
 import com.intellij.codeInsight.template.impl.TemplateSettings;
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
@@ -17,6 +17,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -25,7 +26,6 @@ import java.util.HashMap;
 
 public class PostfixLiveTemplate implements CustomLiveTemplate {
   public static final Logger LOG = Logger.getInstance(PostfixLiveTemplate.class);
-  private static final JavaCodeContextType.Statement MY_CONTEXT_TYPE = new JavaCodeContextType.Statement();
   private final HashMap<String, PostfixTemplate> myTemplates = ContainerUtil.newHashMap();
 
   public PostfixLiveTemplate() {
@@ -79,7 +79,7 @@ public class PostfixLiveTemplate implements CustomLiveTemplate {
 
   @Override
   public boolean isApplicable(PsiFile file, int offset, boolean wrapping) {
-    return !wrapping && file != null && MY_CONTEXT_TYPE.isInContext(file, offset);
+    return !wrapping && file != null && PsiUtilCore.getLanguageAtOffset(file, offset) == JavaLanguage.INSTANCE;
   }
 
   @Override

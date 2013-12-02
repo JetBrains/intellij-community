@@ -39,13 +39,6 @@ public class PostfixCompletionTest extends LightCodeInsightFixtureTestCase {
 
   public void testArg01() { doTest("arg\n"); }
 
-  public void testElse01() { doTest("else\n"); }
-  public void testElse02() { doTest("else\n"); }
-  public void testElse03() { doTest("else\n"); }
-  public void testElse04() { doTest("else\n"); }
-  public void testElse05() { doTest("else\n"); }
-  public void testElse06() { doTest("lse\n"); }
-
   public void testFori01() { doTest("fori\n"); }
   public void testFori02() { doTest("fori\n"); }
   public void testFori03() { doTest("fori\n"); }
