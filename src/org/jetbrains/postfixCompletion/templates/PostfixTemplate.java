@@ -23,7 +23,7 @@ public abstract class PostfixTemplate {
   //NEW API
   
   @NotNull
-  public String getKey() {
+  public final String getKey() {
     return "." + getName();
   }
 
