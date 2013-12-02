@@ -389,12 +389,13 @@ public class SvnHistoryProvider
         if (myUrl.startsWith(root)) {
           relativeUrl = myUrl.substring(root.length());
         }
-        // TODO: Update this call to myVcs.getFactory.createHistoryClient
-        SVNLogClient client = myVcs.createLogClient();
-        // a bug noticed when testing: we should pass "limit + 1" to get "limit" rows
-        client.doLog(svnurl, new String[]{}, myPeg == null ? myFrom : myPeg,
-                     operationalFrom, myTo == null ? SVNRevision.create(1) : myTo, false, true, myShowMergeSources && mySupport15, myLimit + 1, null,
-                     new RepositoryLogEntryHandler(myVcs, myUrl, SVNRevision.UNDEFINED, relativeUrl, createConsumerAdapter(myConsumer), rootURL));
+        SvnTarget target = SvnTarget.fromURL(svnurl, myPeg == null ? myFrom : myPeg);
+        RepositoryLogEntryHandler handler =
+          new RepositoryLogEntryHandler(myVcs, myUrl, SVNRevision.UNDEFINED, relativeUrl, createConsumerAdapter(myConsumer), rootURL);
+
+        myVcs.getFactory(target).createHistoryClient()
+          .doLog(target, operationalFrom, myTo == null ? SVNRevision.create(1) : myTo, false, true, myShowMergeSources && mySupport15,
+                 myLimit + 1, null, handler);
       }
       catch (SVNCancelException e) {
         //
@@ -432,6 +433,9 @@ public class SvnHistoryProvider
         client.doLog(rootURL, new String[]{}, myFrom, myFrom, myTo == null ? SVNRevision.create(1) : myTo, false, true, myShowMergeSources && mySupport15, 0, null, repositoryLogEntryHandler);
     }
 
+    // TODO: try to rewrite without separately retrieving repository url by item url - as this command could require authentication
+    // TODO: and it is not "clear enough/easy to implement" with current design (for some cases) how to cache credentials (if in
+    // TODO: non-interactive mode)
     private SVNURL getRepositoryRoot(SVNURL svnurl, SVNRevision operationalFrom) throws SVNException {
       SVNInfo info = myVcs.getInfo(svnurl, SVNRevision.HEAD);
 
