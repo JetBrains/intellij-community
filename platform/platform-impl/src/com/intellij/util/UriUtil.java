@@ -41,8 +41,14 @@ public final class UriUtil {
   private UriUtil() {
   }
 
-  public static String trimLastSlash(@NotNull String url) {
+  @NotNull
+  public static String trimTrailingSlashes(@NotNull String url) {
     return SLASH_MATCHER.trimTrailingFrom(url);
+  }
+
+  @NotNull
+  public static String trimLeadingSlashes(@NotNull String url) {
+    return SLASH_MATCHER.trimLeadingFrom(url);
   }
 
   public static String trimParameters(@NotNull String url) {
