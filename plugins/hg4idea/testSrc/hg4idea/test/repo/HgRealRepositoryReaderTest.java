@@ -19,6 +19,7 @@ import com.intellij.dvcs.repo.Repository;
 import com.intellij.openapi.vcs.VcsTestUtil;
 import hg4idea.test.HgPlatformTest;
 import org.jetbrains.annotations.NotNull;
+import org.zmlx.hg4idea.HgVcs;
 import org.zmlx.hg4idea.repo.HgRepositoryReader;
 import org.zmlx.hg4idea.util.HgUtil;
 
