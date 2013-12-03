@@ -22,15 +22,15 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
 import org.jetbrains.annotations.NotNull;
 
-public class ClassNamingConventionInspectionBase extends ConventionInspection {
+public class AbstractClassNamingConventionInspectionBase extends ConventionInspection {
+
   private static final int DEFAULT_MIN_LENGTH = 8;
   private static final int DEFAULT_MAX_LENGTH = 64;
 
   @Override
   @NotNull
   public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "class.naming.convention.display.name");
+    return InspectionGadgetsBundle.message("abstract.class.naming.convention.display.name");
   }
 
   @Override
@@ -43,15 +43,12 @@ public class ClassNamingConventionInspectionBase extends ConventionInspection {
   public String buildErrorString(Object... infos) {
     final String className = (String)infos[0];
     if (className.length() < getMinLength()) {
-      return InspectionGadgetsBundle.message(
-        "class.name.convention.problem.descriptor.short");
+      return InspectionGadgetsBundle.message("abstract.class.name.convention.problem.descriptor.short");
     }
     else if (className.length() > getMaxLength()) {
-      return InspectionGadgetsBundle.message(
-        "class.name.convention.problem.descriptor.long");
+      return InspectionGadgetsBundle.message("abstract.class.name.convention.problem.descriptor.long");
     }
-    return InspectionGadgetsBundle.message(
-      "class.name.convention.problem.descriptor.regex.mismatch",
+    return InspectionGadgetsBundle.message("abstract.class.name.convention.problem.descriptor.regex.mismatch",
       getRegex());
   }
 
@@ -82,10 +79,7 @@ public class ClassNamingConventionInspectionBase extends ConventionInspection {
       if (aClass.isInterface() || aClass.isAnnotationType() || aClass.isEnum()) {
         return;
       }
-      if (aClass instanceof PsiTypeParameter) {
-        return;
-      }
-      if (aClass.hasModifierProperty(PsiModifier.ABSTRACT) && isInspectionEnabled("AbstractClassNamingConvention", aClass)) {
+      if (aClass instanceof PsiTypeParameter || !aClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
         return;
       }
       final String name = aClass.getName();
