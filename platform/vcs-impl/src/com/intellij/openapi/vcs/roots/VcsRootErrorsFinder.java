@@ -50,7 +50,7 @@ public class VcsRootErrorsFinder {
       }
       String vcsPath = virtualFileFromRoot.getPath();
       if (!mappedPaths.contains(vcsPath) && root.getVcs() != null) {
-        errors.add(new VcsRootError(VcsRootError.Type.UNREGISTERED_ROOT, vcsPath, root.getVcs().getName()));
+        errors.add(new VcsRootErrorImpl(VcsRootError.Type.UNREGISTERED_ROOT, vcsPath, root.getVcs().getName()));
       }
     }
     return errors;
@@ -65,13 +65,13 @@ public class VcsRootErrorsFinder {
       }
       if (mapping.isDefaultMapping()) {
         if (!isRoot(mapping)) {
-          errors.add(new VcsRootError(VcsRootError.Type.EXTRA_MAPPING, VcsDirectoryMapping.PROJECT_CONSTANT, mapping.getVcs()));
+          errors.add(new VcsRootErrorImpl(VcsRootError.Type.EXTRA_MAPPING, VcsDirectoryMapping.PROJECT_CONSTANT, mapping.getVcs()));
         }
       }
       else {
         String mappedPath = mapping.systemIndependentPath();
         if (!isRoot(mapping)) {
-          errors.add(new VcsRootError(VcsRootError.Type.EXTRA_MAPPING, mappedPath, mapping.getVcs()));
+          errors.add(new VcsRootErrorImpl(VcsRootError.Type.EXTRA_MAPPING, mappedPath, mapping.getVcs()));
         }
       }
     }
