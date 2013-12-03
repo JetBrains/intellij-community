@@ -94,6 +94,10 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       return null;
     }
 
+    PsiElement parent = codeFragment.getParent();
+    if (parent instanceof PsiLambdaExpression && codeFragment instanceof PsiExpression) {
+      addInstruction(new CheckReturnValueInstruction(codeFragment));
+    }
     myCurrentFlow.setFields(myFields.toArray(new DfaVariableValue[myFields.size()]));
 
     addInstruction(new ReturnInstruction(false));
@@ -528,6 +532,15 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     finishElement(statement);
   }
 
+  @Override
+  public void visitLambdaExpression(PsiLambdaExpression expression) {
+    startElement(expression);
+    DfaValue dfaValue = myFactory.createValue(expression);
+    addInstruction(new PushInstruction(dfaValue, expression));
+    addInstruction(new LambdaInstruction(expression));
+    finishElement(expression);
+  }
+
   @Override public void visitReturnStatement(PsiReturnStatement statement) {
     startElement(statement);
 
@@ -538,7 +551,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       if (method != null) {
         generateBoxingUnboxingInstructionFor(returnValue, method.getReturnType());
       }
-      addInstruction(new CheckReturnValueInstruction(statement));
+      addInstruction(new CheckReturnValueInstruction(returnValue));
     }
 
     returnCheckingFinally();
