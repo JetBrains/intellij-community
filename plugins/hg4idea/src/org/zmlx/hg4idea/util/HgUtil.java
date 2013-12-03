@@ -652,7 +652,7 @@ public abstract class HgUtil {
       userName = convertUserName(authorString);
       email = "";
     }
-    return new Pair<String, String>(userName, email);
+    return Pair.create(userName, email);
   }
 
   private static String convertUserName(@NotNull String userNameInfo) {
