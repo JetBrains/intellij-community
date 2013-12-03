@@ -93,7 +93,7 @@ public final class WindowManagerImpl extends WindowManagerEx implements Applicat
   }
 
   private static final boolean ORACLE_BUG_8007219 = SystemInfo.isMac && SystemInfo.isJavaVersionAtLeast("1.7");
-  private static final int ORACLE_BUG_8007219_THRESHOLD = 10;
+  private static final int ORACLE_BUG_8007219_THRESHOLD = 5;
 
   private Boolean myAlphaModeSupported = null;
 
@@ -557,25 +557,36 @@ public final class WindowManagerImpl extends WindowManagerEx implements Applicat
 
   private void fixForOracleBug8007219(IdeFrameImpl frame) {
     if ((myFrameExtendedState & Frame.MAXIMIZED_BOTH) > 0 && ORACLE_BUG_8007219) {
-      final Rectangle rect = ScreenUtil.getMainScreenBounds();
+      final Rectangle screenBounds = ScreenUtil.getMainScreenBounds();
       final Insets screenInsets = ScreenUtil.getScreenInsets(frame.getGraphicsConfiguration());
 
+      final int leftGap = myFrameBounds.x - screenInsets.left;
 
-      myFrameBounds.x = myFrameBounds.x - screenInsets.left > ORACLE_BUG_8007219_THRESHOLD ?
+      myFrameBounds.x = leftGap > ORACLE_BUG_8007219_THRESHOLD ?
                         myFrameBounds.x :
                         screenInsets.left + ORACLE_BUG_8007219_THRESHOLD + 1;
 
-      myFrameBounds.y = myFrameBounds.y - screenInsets.top > ORACLE_BUG_8007219_THRESHOLD ?
+      final int topGap = myFrameBounds.y - screenInsets.top;
+
+      myFrameBounds.y = topGap > ORACLE_BUG_8007219_THRESHOLD ?
                         myFrameBounds.y :
                         screenInsets.top + ORACLE_BUG_8007219_THRESHOLD + 1;
 
-      myFrameBounds.width = rect.width - (myFrameBounds.width + myFrameBounds.x) > ORACLE_BUG_8007219_THRESHOLD ?
-                            myFrameBounds.width :
-                            rect.width - ORACLE_BUG_8007219_THRESHOLD - 1;
+      final int maximumFrameWidth = screenBounds.width - screenInsets.right - myFrameBounds.x;
 
-      myFrameBounds.height = rect.height - (myFrameBounds.height + myFrameBounds.y) > ORACLE_BUG_8007219_THRESHOLD ?
+      final int rightGap = maximumFrameWidth - myFrameBounds.width;
+
+      myFrameBounds.width = rightGap > ORACLE_BUG_8007219_THRESHOLD ?
+                            myFrameBounds.width :
+                            maximumFrameWidth - ORACLE_BUG_8007219_THRESHOLD - 1;
+
+      final int maximumFrameHeight = screenBounds.height - screenInsets.bottom - myFrameBounds.y;
+
+      final int bottomGap = maximumFrameHeight - myFrameBounds.height;
+
+      myFrameBounds.height =  bottomGap > ORACLE_BUG_8007219_THRESHOLD ?
                              myFrameBounds.height :
-                             rect.height - ORACLE_BUG_8007219_THRESHOLD - 1;
+                             - ORACLE_BUG_8007219_THRESHOLD - 1;
     }
   }
 
