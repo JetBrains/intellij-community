@@ -475,7 +475,17 @@ public class VfsUtilTest extends PlatformLangTestCase {
     assertNotNull(vDir.findChild("libFiles"));
     assertNotNull(vDir.findChild("CssInvalidElement"));
 
-    VirtualFile ext = vDir.findChild("/extFiles/");
-    assertNotNull(ext);
+    assertNotNull(vDir.findChild("extFiles"));
+    assertNotNull(vDir.findChild("/extFiles/"));
+    assertNotNull(vDir.findChild("extFiles/"));
+    assertNotNull(vDir.findChild("/extFiles"));
+    assertNotNull(vDir.findChild("//extFiles"));
+    assertNotNull(vDir.findChild("extFiles///"));
+
+    assertNull(vDir.findChild("/xxx/extFiles/"));
+    assertNull(vDir.findChild("xxx/extFiles/"));
+    assertNull(vDir.findChild("/xxx/extFiles"));
+    assertNull(vDir.findChild("xxx/extFiles"));
+    assertNull(vDir.findChild("xxx//extFiles"));
   }
 }
