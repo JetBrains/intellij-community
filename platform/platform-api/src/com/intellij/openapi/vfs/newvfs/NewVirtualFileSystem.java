@@ -25,7 +25,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
@@ -117,8 +116,7 @@ public abstract class NewVirtualFileSystem extends VirtualFileSystem implements 
   }
 
   public String getCanonicallyCasedName(@NotNull VirtualFile file) {
-    // have to perform at least some canonicalization, e.g. remove multiple '///'
-    return new File(file.getPath()).getName();
+    return file.getName();
   }
 
   /**
