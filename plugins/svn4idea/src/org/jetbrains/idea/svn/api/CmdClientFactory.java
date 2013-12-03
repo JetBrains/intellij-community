@@ -4,6 +4,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.add.CmdAddClient;
 import org.jetbrains.idea.svn.annotate.CmdAnnotateClient;
+import org.jetbrains.idea.svn.browse.CmdBrowseClient;
 import org.jetbrains.idea.svn.change.CmdChangeListClient;
 import org.jetbrains.idea.svn.checkin.CmdImportClient;
 import org.jetbrains.idea.svn.checkout.CmdCheckoutClient;
@@ -55,6 +56,7 @@ public class CmdClientFactory extends ClientFactory {
     myImportClient = new CmdImportClient();
     myExportClient = new CmdExportClient();
     myUpgradeClient = new CmdUpgradeClient();
+    myBrowseClient = new CmdBrowseClient();
     statusClient = new SvnCommandLineStatusClient(myVcs);
     infoClient = new SvnCommandLineInfoClient(myVcs);
   }
