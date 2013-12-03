@@ -54,13 +54,7 @@ public class Runner {
     }
   }
 
-  public class SomeClass {
-    private static Logger log = Logger.getLogger(SomeClass.class.getName());
-    public void someMethod(){
-      log.info("Some message");
-    }
-  }
-    public static List<String> extractFiles(String[] args, String paramName) {
+  public static List<String> extractFiles(String[] args, String paramName) {
     List<String> result = new ArrayList<String>();
     for (String param : args) {
       if (param.startsWith(paramName + "=")) {
