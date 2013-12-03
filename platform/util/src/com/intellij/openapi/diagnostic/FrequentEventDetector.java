@@ -37,13 +37,15 @@ public class FrequentEventDetector {
   public void eventHappened() {
     if (myEventsPosted.incrementAndGet() > myEventCountThreshold) {
       synchronized (myEventsPosted) {
+        boolean shouldLog = false;
         if (myEventsPosted.get() > myEventCountThreshold) {
           long timeNow = System.currentTimeMillis();
-          if (timeNow - myStartedCounting < myTimeSpanMs) {
-            LOG.info("Too many events posted\n" + ExceptionUtil.getThrowableText(new Throwable()));
-          }
+          shouldLog = timeNow - myStartedCounting < myTimeSpanMs;
           myEventsPosted.set(0);
           myStartedCounting = timeNow;
+        }
+        if (shouldLog) {
+          LOG.info("Too many events posted\n" + ExceptionUtil.getThrowableText(new Throwable()));
         }
       }
     }
