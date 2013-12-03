@@ -18,6 +18,7 @@ package com.intellij.openapi.vcs.roots;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vcs.VcsDirectoryMapping;
 import com.intellij.openapi.vcs.VcsRootError;
+import com.intellij.openapi.vcs.VcsRootErrorImpl;
 import com.intellij.openapi.vcs.VcsTestUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -261,12 +262,12 @@ public class VcsRootErrorsFinderTest extends VcsRootPlatformTest {
 
   @NotNull
   VcsRootError unreg(@NotNull String path) {
-    return new VcsRootError(VcsRootError.Type.UNREGISTERED_ROOT, VcsTestUtil.toAbsolute(path, myProject), myVcsName);
+    return new VcsRootErrorImpl(VcsRootError.Type.UNREGISTERED_ROOT, VcsTestUtil.toAbsolute(path, myProject), myVcsName);
   }
 
   @NotNull
   VcsRootError extra(@NotNull String path) {
-    return new VcsRootError(VcsRootError.Type.EXTRA_MAPPING, PROJECT.equals(path) ? PROJECT : VcsTestUtil.toAbsolute(path, myProject),
+    return new VcsRootErrorImpl(VcsRootError.Type.EXTRA_MAPPING, PROJECT.equals(path) ? PROJECT : VcsTestUtil.toAbsolute(path, myProject),
                             myVcsName);
   }
 }
