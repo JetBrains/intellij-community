@@ -64,7 +64,7 @@ public class BranchesLoader {
     return new ISVNDirEntryHandler() {
       public void handleDirEntry(final SVNDirEntry dirEntry) throws SVNException {
         if (!branchesUrl.equals(dirEntry.getURL()) && dirEntry.getDate() != null) {
-          result.add(new SvnBranchItem(dirEntry.getURL().toString(), dirEntry.getDate(), dirEntry.getRevision()));
+          result.add(new SvnBranchItem(dirEntry.getURL().toDecodedString(), dirEntry.getDate(), dirEntry.getRevision()));
         }
       }
     };
