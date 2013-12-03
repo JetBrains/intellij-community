@@ -52,8 +52,10 @@ public class EditorChangeAction extends BasicUndoableAction {
                             long oldTimeStamp) {
     super(document);
 
-    Charset charset = EncodingManager.getInstance().getEncoding(FileDocumentManager.getInstance().getFile(document), false);
-    myCharset = charset == null ? Charset.defaultCharset() : charset;
+    Charset charset = EncodingManager.getInstance().getEncoding(FileDocumentManager.getInstance().getFile(document), true);
+    if (charset == null) charset = EncodingManager.getInstance().getDefaultCharset();
+    if (charset == null) charset = Charset.defaultCharset();
+    myCharset = charset;
 
     myOffset = offset;
     myOldString = oldString == null ? "" : compressCharSequence(oldString, myCharset);
