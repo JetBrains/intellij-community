@@ -7,5 +7,5 @@ public class InstanceofPostfixTemplateTest extends PostfixTemplateTestCase {
   @Override
   protected String getTestDataPath() { return "testData/templates/instanceof"; }
 
-  public void testSingleExpression() throws Exception { doTest(); }
+  public void testSingleExpression() { doTest(); }
 }

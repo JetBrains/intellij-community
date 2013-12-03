@@ -7,6 +7,6 @@ public class CastPostfixTemplateTest extends PostfixTemplateTestCase {
   @Override
   protected String getTestDataPath() { return "testData/templates/cast"; }
 
-  public void testSingleExpression() throws Exception { doTest(); } // jdk mock needed
-  public void testVoidExpression() throws Exception { doTest(); }
+  public void testSingleExpression() { doTest(); } // jdk mock needed
+  public void testVoidExpression()   { doTest(); }
 }
