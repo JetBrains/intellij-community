@@ -865,6 +865,8 @@
     <actionPromoter implementation="com.intellij.ui.EditorTextFieldActionPromoter"/>
 
     <stepsBeforeRunProvider implementation="com.intellij.execution.impl.RunConfigurationBeforeRunProvider"/>
+
+    <lang.foldingBuilder language="TEXT" implementationClass="com.intellij.ide.highlighter.custom.impl.CustomFileTypeFoldingBuilder"/>
   </extensions>
 </idea-plugin>
 
