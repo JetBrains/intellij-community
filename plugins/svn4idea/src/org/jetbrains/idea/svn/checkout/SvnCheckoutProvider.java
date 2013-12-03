@@ -38,7 +38,6 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.*;
@@ -58,7 +57,6 @@ import org.tmatesoft.svn.core.wc2.SvnTarget;
 
 import javax.swing.*;
 import java.io.File;
-import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -88,7 +86,7 @@ public class SvnCheckoutProvider implements CheckoutProvider {
     ClientFactory settingsFactory = vcs.getFactoryFromSettings();
     ClientFactory otherFactory = vcs.getOtherFactory();
     List<WorkingCopyFormat> settingsFactoryFormats = settingsFactory.createCheckoutClient().getSupportedFormats();
-    List<WorkingCopyFormat> otherFactoryFormats = otherFactory.createCheckoutClient().getSupportedFormats();
+    List<WorkingCopyFormat> otherFactoryFormats = CheckoutFormatFromUserProvider.getOtherFactoryFormats(otherFactory);
 
     return settingsFactoryFormats.contains(format) || !otherFactoryFormats.contains(format) ? settingsFactory : otherFactory;
   }
@@ -361,17 +359,25 @@ public class SvnCheckoutProvider implements CheckoutProvider {
 
       try {
         result.addAll(myVcs.getFactoryFromSettings().createCheckoutClient().getSupportedFormats());
+        result.addAll(getOtherFactoryFormats(myVcs.getOtherFactory()));
       }
       catch (VcsException e) {
         error.set(e.getMessage());
       }
 
+      return result;
+    }
+
+    private static List<WorkingCopyFormat> getOtherFactoryFormats(@NotNull ClientFactory otherFactory) {
+      List<WorkingCopyFormat> result;
+
       try {
-        result.addAll(myVcs.getOtherFactory().createCheckoutClient().getSupportedFormats());
+        result = otherFactory.createCheckoutClient().getSupportedFormats();
       }
       catch (VcsException e) {
         // do not add error as it is just usability fix and "other factory" could be incorrectly configured (for instance, invalid
         // executable path)
+        result = ContainerUtil.newArrayList();
         LOG.info("Failed to get checkout formats from other factory", e);
       }
 
