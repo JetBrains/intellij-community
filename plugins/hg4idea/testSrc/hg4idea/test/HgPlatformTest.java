@@ -55,6 +55,7 @@ public abstract class HgPlatformTest extends UsefulTestCase {
   protected VirtualFile myProjectRoot;
   protected VirtualFile myRepository;
   protected VirtualFile myChildRepo;
+  protected HgVcs myVcs;
 
   protected static final String COMMIT_MESSAGE = "text";
 
@@ -79,9 +80,10 @@ public abstract class HgPlatformTest extends UsefulTestCase {
     hg("version");
 
     createRepository(myProjectRoot);
-    HgVcs hgVcs = HgVcs.getInstance(myProject);
-    assertNotNull(hgVcs);
-    hgVcs.getGlobalSettings().setHgExecutable(HgExecutor.getHgExecutable());
+    myVcs = HgVcs.getInstance(myProject);
+    assertNotNull(myVcs);
+    myVcs.getGlobalSettings().setHgExecutable(HgExecutor.getHgExecutable());
+    myVcs.checkVersion();
     myRepository = myProjectRoot;
     setUpHgrc(myRepository);
   }
