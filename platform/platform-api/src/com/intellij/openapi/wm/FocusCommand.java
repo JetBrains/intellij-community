@@ -149,9 +149,7 @@ public abstract class FocusCommand extends ActiveRunnable implements Expirable {
     @NotNull
     public final ActionCallback run() {
       if (myToFocus != null) {
-        if (!myToFocus.requestFocusInWindow()) {
-          myToFocus.requestFocus();
-        }
+        myToFocus.requestFocusInWindow();
       }
       clear();
       return new ActionCallback.Done();

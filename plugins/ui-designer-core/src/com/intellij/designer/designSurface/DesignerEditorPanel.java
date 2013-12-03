@@ -131,7 +131,7 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
   private FixableMessageAction myWarnAction;
 
   private JPanel myErrorPanel;
-  private JPanel myErrorMessages;
+  protected JPanel myErrorMessages;
   private JPanel myErrorStackPanel;
   private CardLayout myErrorStackLayout;
   private JTextArea myErrorStack;
@@ -386,7 +386,7 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
     repaint();
   }
 
-  private void addErrorMessage(final FixableMessageInfo message, Icon icon) {
+  protected void addErrorMessage(final FixableMessageInfo message, Icon icon) {
     if (message.myLinkText.length() > 0 || message.myAfterLinkText.length() > 0) {
       HyperlinkLabel warnLabel = new HyperlinkLabel();
       warnLabel.setOpaque(false);

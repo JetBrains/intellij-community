@@ -16,7 +16,6 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.HgProjectSettings;
 import org.zmlx.hg4idea.HgVcs;
 import org.zmlx.hg4idea.HgVcsMessages;
@@ -33,7 +32,7 @@ public class HgConfigurationProjectPanel {
   private TextFieldWithBrowseButton myPathSelector;
   private final HgVcs myVcs;
 
-  public HgConfigurationProjectPanel(@NotNull HgProjectSettings projectSettings, @Nullable Project project) {
+  public HgConfigurationProjectPanel(@NotNull HgProjectSettings projectSettings, @NotNull Project project) {
     myProjectSettings = projectSettings;
     myVcs = HgVcs.getInstance(project);
     loadSettings();

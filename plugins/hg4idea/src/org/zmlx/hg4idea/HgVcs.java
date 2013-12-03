@@ -242,7 +242,6 @@ public class HgVcs extends AbstractVcs<CommittedChangeList> {
     return in;
   }
 
-
   @Override
   public RootsConvertor getCustomConvertor() {
     return HgRootsHandler.getInstance(myProject);
@@ -437,7 +436,6 @@ public class HgVcs extends AbstractVcs<CommittedChangeList> {
   public void checkVersion() {
     final String executable = getGlobalSettings().getHgExecutable();
     HgCommandResultNotifier errorNotification = new HgCommandResultNotifier(myProject);
-    String message;
     final String SETTINGS_LINK = "settings";
     final String UPDATE_LINK = "update";
     NotificationListener linkAdapter = new NotificationListener.Adapter() {
@@ -458,15 +456,15 @@ public class HgVcs extends AbstractVcs<CommittedChangeList> {
       //if version is not supported, but have valid hg executable
       if (!myVersion.isSupported()) {
         LOG.info("Unsupported Hg version: " + myVersion);
-        message = String.format("The <a href='" + SETTINGS_LINK + "'>configured</a> version of Hg is not supported: %s.<br/> " +
-                                "The minimal supported version is %s. Please <a href='" + UPDATE_LINK + "'>update</a>.",
-                                myVersion, HgVersion.MIN);
+        String message = String.format("The <a href='" + SETTINGS_LINK + "'>configured</a> version of Hg is not supported: %s.<br/> " +
+                                       "The minimal supported version is %s. Please <a href='" + UPDATE_LINK + "'>update</a>.",
+                                       myVersion, HgVersion.MIN);
         errorNotification.notifyError(null, "Unsupported Hg version", message, linkAdapter);
       }
-      if (!unsupportedExtension.isEmpty()) {
+      else if (!unsupportedExtension.isEmpty()) {
         LOG.warn("Unsupported Hg extensions: " + unsupportedExtension.toString());
-        message = String.format("Some hg extensions %s are not found or not supported by your hg version and will be ignored.\n" +
-                                "Please, update your hgrc or Mercurial.ini file", unsupportedExtension.toString());
+        String message = String.format("Some hg extensions %s are not found or not supported by your hg version and will be ignored.\n" +
+                                       "Please, update your hgrc or Mercurial.ini file", unsupportedExtension.toString());
         errorNotification.notifyWarning("Unsupported Hg version", message);
       }
     }
@@ -475,10 +473,13 @@ public class HgVcs extends AbstractVcs<CommittedChangeList> {
         //sometimes not hg application has version command, but we couldn't parse an answer as valid hg,
         // so parse(output) throw ParseException, but hg and git executable seems to be valid in this case
         final String reason = (e.getCause() != null ? e.getCause() : e).getMessage();
-        message = HgVcsMessages.message("hg4idea.unable.to.run.hg", executable);
+        String message = HgVcsMessages.message("hg4idea.unable.to.run.hg", executable);
         errorNotification.notifyError(null, message,
                                       String.format(
-                                        reason + "<br/> Please check your hg executable path in <a href='" + SETTINGS_LINK + "'> settings </a>"),
+                                        reason +
+                                        "<br/> Please check your hg executable path in <a href='" +
+                                        SETTINGS_LINK +
+                                        "'> settings </a>"),
                                       linkAdapter);
       }
     }
