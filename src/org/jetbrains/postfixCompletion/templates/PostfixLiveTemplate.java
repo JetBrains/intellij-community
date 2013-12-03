@@ -25,6 +25,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.HashMap;
 
 public class PostfixLiveTemplate implements CustomLiveTemplate {
+  public static final String POSTFIX_TEMPLATE_ID = "POSTFIX_TEMPLATE_ID";
+
   private static final Logger LOG = Logger.getInstance(PostfixLiveTemplate.class);
   private final HashMap<String, PostfixTemplate> myTemplates = ContainerUtil.newHashMap();
 
@@ -120,7 +122,7 @@ public class PostfixLiveTemplate implements CustomLiveTemplate {
           public void run() {
             template.expand(context, editor);
           }
-        }, "Expand postfix template", null);
+        }, "Expand postfix template", POSTFIX_TEMPLATE_ID);
       }
     });
   }

@@ -1,5 +1,5 @@
 public class Foo {
     void m(Object o) {
-        (Foo) o.<caret>
+        (10)<caret>
     }
 }
