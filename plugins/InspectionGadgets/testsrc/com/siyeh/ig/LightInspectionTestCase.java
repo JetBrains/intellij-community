@@ -40,6 +40,7 @@ public abstract class LightInspectionTestCase extends LightCodeInsightFixtureTes
   protected abstract InspectionProfileEntry getInspection();
 
   @NonNls
+  @Language("JAVA")
   protected String[] getEnvironmentClasses() {
     return ArrayUtil.EMPTY_STRING_ARRAY;
   }
