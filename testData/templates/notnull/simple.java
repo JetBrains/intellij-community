@@ -1,5 +1,5 @@
 public class Foo {
     void m(Object o) {
-        o.<caret>
+        o.notnull<caret>
     }
 }
