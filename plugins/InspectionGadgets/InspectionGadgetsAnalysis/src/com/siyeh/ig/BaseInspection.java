@@ -15,11 +15,15 @@
  */
 package com.siyeh.ig;
 
+import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInspection.BaseJavaBatchLocalInspectionTool;
 import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.util.ui.UIUtil;
@@ -208,5 +212,12 @@ public abstract class BaseInspection extends BaseJavaBatchLocalInspectionTool {
       InspectionGadgetsTelemetry.getInstance().reportRun(displayName, end - timestamp);
       timestamp = -1L;
     }
+  }
+
+  public static boolean isInspectionEnabled(@NonNls String shortName, PsiElement context) {
+    final InspectionProjectProfileManager profileManager = InspectionProjectProfileManager.getInstance(context.getProject());
+    final InspectionProfileImpl profile = (InspectionProfileImpl)profileManager.getInspectionProfile();
+    final HighlightDisplayKey key = HighlightDisplayKey.find(shortName);
+    return profile.isToolEnabled(key, context);
   }
 }

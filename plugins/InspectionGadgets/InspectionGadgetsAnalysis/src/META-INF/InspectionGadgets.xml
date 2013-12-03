@@ -1584,6 +1584,9 @@
                       implementationClass="com.siyeh.ig.modularization.ModuleWithTooFewClassesInspection"/>
 
     <!--group.names.naming.conventions-->
+    <localInspection language="JAVA" shortName="AbstractClassNamingConvention" bundle="com.siyeh.InspectionGadgetsBundle" key="abstract.class.naming.convention.display.name"
+                     groupBundle="messages.InspectionsBundle" groupKey="group.names.naming.conventions" enabledByDefault="false"
+                     level="WARNING" implementationClass="com.siyeh.ig.naming.AbstractClassNamingConventionInspection"/>
     <localInspection language="JAVA" shortName="AnnotationNamingConvention" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="annotation.naming.convention.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.naming.conventions" enabledByDefault="false" level="WARNING"
