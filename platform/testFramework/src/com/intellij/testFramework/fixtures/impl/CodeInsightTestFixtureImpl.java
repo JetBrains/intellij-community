@@ -778,22 +778,27 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   private boolean _performEditorAction(String actionId) {
     final DataContext dataContext = getEditorDataContext();
 
-    ActionManagerEx managerEx = ActionManagerEx.getInstanceEx();
-    AnAction action = managerEx.getAction(actionId);
-    AnActionEvent event = new AnActionEvent(null, dataContext, ActionPlaces.UNKNOWN, new Presentation(), managerEx, 0);
+    final ActionManagerEx managerEx = ActionManagerEx.getInstanceEx();
+    final AnAction action = managerEx.getAction(actionId);
+    final AnActionEvent event = new AnActionEvent(null, dataContext, ActionPlaces.UNKNOWN, new Presentation(), managerEx, 0);
 
-    action.update(event);
+    return WriteCommandAction.runWriteCommandAction(getProject(), new Computable<Boolean>() {
+      @Override
+      public Boolean compute() {
+        action.update(event);
 
-    if (!event.getPresentation().isEnabled()) {
-      return false;
-    }
+        if (!event.getPresentation().isEnabled()) {
+          return false;
+        }
 
-    managerEx.fireBeforeActionPerformed(action, dataContext, event);
+        managerEx.fireBeforeActionPerformed(action, dataContext, event);
 
-    action.actionPerformed(event);
+        action.actionPerformed(event);
 
-    managerEx.fireAfterActionPerformed(action, dataContext, event);
-    return true;
+        managerEx.fireAfterActionPerformed(action, dataContext, event);
+        return true;
+      }
+    });
   }
 
   @Override
