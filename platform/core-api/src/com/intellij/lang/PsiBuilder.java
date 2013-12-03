@@ -104,7 +104,7 @@ public interface PsiBuilder extends UserDataHolder, UserDataHolderUnprotected {
   int rawTokenTypeStart(int steps);
 
   /**
-   * Returns the index of the current token index in the original sequence.
+   * Returns the index of the current token in the original sequence.
    *
    * @return token index
    */

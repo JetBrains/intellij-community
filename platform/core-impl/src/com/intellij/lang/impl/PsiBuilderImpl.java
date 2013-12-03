@@ -282,6 +282,14 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     public void remapTokenType(IElementType type) {
       throw new UnsupportedOperationException("Shall not be called on this kind of markers");
     }
+
+    public int getStartIndex() {
+      return myLexemeIndex;
+    }
+
+    public int getEndIndex() {
+      throw new UnsupportedOperationException("Shall not be called on this kind of markers");
+    }
   }
 
   private static class StartMarker extends ProductionMarker implements Marker {
@@ -350,6 +358,11 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     @Override
     public int getEndOffset() {
       return myBuilder.myLexStarts[myDoneMarker.myLexemeIndex];
+    }
+
+    @Override
+    public int getEndIndex() {
+      return myDoneMarker.myLexemeIndex;
     }
 
     public void addChild(ProductionMarker node) {
@@ -736,6 +749,10 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
   @Override
   public int rawTokenIndex() {
     return myCurrentLexeme;
+  }
+
+  public int rawTokenOffset(int tokenIndex) {
+    return myLexStarts[tokenIndex];
   }
 
   @Override
