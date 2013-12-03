@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,28 +19,26 @@ import com.intellij.codeInspection.dataFlow.DataFlowRunner;
 import com.intellij.codeInspection.dataFlow.DfaInstructionState;
 import com.intellij.codeInspection.dataFlow.DfaMemoryState;
 import com.intellij.codeInspection.dataFlow.InstructionVisitor;
-import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiLambdaExpression;
 
-/**
- * @author max
- */
-public class CheckReturnValueInstruction extends Instruction {
-  private final PsiElement myReturnValue;
+public class LambdaInstruction extends Instruction {
+  private final PsiLambdaExpression myLambdaExpression;
 
-  public CheckReturnValueInstruction(final PsiElement returnValue) {
-    myReturnValue = returnValue;
+  public LambdaInstruction(PsiLambdaExpression lambdaExpression) {
+    myLambdaExpression = lambdaExpression;
+  }
+
+  public PsiLambdaExpression getLambdaExpression() {
+    return myLambdaExpression;
   }
 
   @Override
   public DfaInstructionState[] accept(DataFlowRunner runner, DfaMemoryState stateBefore, InstructionVisitor visitor) {
-    return visitor.visitCheckReturnValue(this, runner, stateBefore);
+    return visitor.visitLambdaExpression(this, runner, stateBefore);
   }
 
-  public PsiElement getReturn() {
-    return myReturnValue;
-  }
-
+  @Override
   public String toString() {
-    return "CheckReturnValue";
+    return "LambdaInstruction";
   }
 }
