@@ -82,7 +82,7 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
 
     if (usageTargets == null) {
       PsiElement targetElement = getTargetElement(editor, file);
-      if (targetElement != null) {
+      if (targetElement != null && targetElement != file) {
         if (!(targetElement instanceof NavigationItem)) {
           targetElement = targetElement.getNavigationElement();
         }
