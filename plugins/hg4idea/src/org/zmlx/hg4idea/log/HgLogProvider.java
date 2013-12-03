@@ -119,7 +119,7 @@ public class HgLogProvider implements VcsLogProvider {
     }
     String currentRevision = repository.getCurrentRevision();
     if (currentRevision != null) { // null => fresh repository
-      refs.add(myVcsObjectsFactory.createRef(myVcsObjectsFactory.createHash(currentRevision), "HEAD", HgRefManager.HEAD, root));
+      refs.add(myVcsObjectsFactory.createRef(myVcsObjectsFactory.createHash(currentRevision), "tip", HgRefManager.HEAD, root));
     }
     for (HgNameWithHashInfo tagInfo : tags) {
       refs.add(myVcsObjectsFactory.createRef(myVcsObjectsFactory.createHash(tagInfo.getHash()), tagInfo.getName(), HgRefManager.TAG, root));
