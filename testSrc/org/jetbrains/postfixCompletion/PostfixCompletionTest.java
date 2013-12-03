@@ -75,10 +75,6 @@ public class PostfixCompletionTest extends LightCodeInsightFixtureTestCase {
   public void testVar16() { doTestForce("var\n"); }
   public void testVar17() { doTestForce("var\n"); }
 
-  public void testNotNull01() { doTest("nn\n"); }
-  public void testNotNull02() { doTest("nn\n"); }
-  public void testNull01() { doTest("null\n"); }
-
   public void testNew01() { doTest("new\n"); }
   public void testNew02() { doTest("new\n"); }
   public void testNew03() { doTest("new\n"); }
@@ -107,9 +103,7 @@ public class PostfixCompletionTest extends LightCodeInsightFixtureTestCase {
   public void testField02() { doTestForce("field\n"); }
 
   public void testNoVariants01() { doTest(""); }
-  public void testNoVariants02() { doTest("nn\n"); }
   public void testNoVariants03() { doTest("v\n"); }
-  public void testNoVariants04() { doTest("nul\n"); }
   public void testNoVariants05() { doTest("var\n"); }
   public void testNoVariants06() { doTest("var\n"); }
 }
