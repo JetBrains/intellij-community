@@ -331,7 +331,7 @@ public class CopiesPanel {
 
     try {
       result.addAll(factory.createUpgradeClient().getSupportedFormats());
-      result.addAll(otherFactory.createUpgradeClient().getSupportedFormats());
+      result.addAll(SvnFormatWorker.getOtherFactoryFormats(otherFactory));
     }
     catch (VcsException e) {
       LOG.info(e);
