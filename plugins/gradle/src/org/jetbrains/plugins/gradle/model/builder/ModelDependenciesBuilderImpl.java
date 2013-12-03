@@ -17,6 +17,7 @@ package org.jetbrains.plugins.gradle.model.builder;
 
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.Configuration;
+import org.gradle.api.artifacts.ModuleIdentifier;
 import org.gradle.api.artifacts.ModuleVersionIdentifier;
 import org.gradle.plugins.ide.idea.GenerateIdeaModule;
 import org.gradle.plugins.ide.idea.IdeaPlugin;
@@ -29,6 +30,7 @@ import org.jetbrains.plugins.gradle.model.ModelBuilderService;
 import org.jetbrains.plugins.gradle.model.ProjectDependenciesModel;
 import org.jetbrains.plugins.gradle.model.internal.*;
 
+import java.io.Serializable;
 import java.util.*;
 
 /**
@@ -117,7 +119,7 @@ public class ModelDependenciesBuilderImpl implements ModelBuilderService {
             (IdeDependenciesExtractor.IdeProjectDependency)versionId.getIdeDependency();
 
           String ideaModuleName = findDeDuplicatedModuleName(projectDependency.getProject());
-          if(ideaModuleName == null) {
+          if (ideaModuleName == null) {
             ideaModuleName = versionId.getName();
           }
 
@@ -150,9 +152,9 @@ public class ModelDependenciesBuilderImpl implements ModelBuilderService {
 
   @Nullable
   private static String findDeDuplicatedModuleName(Project project) {
-    if(project.hasProperty(MODULE_PROPERTY)) {
+    if (project.hasProperty(MODULE_PROPERTY)) {
       Object ideaModule = project.property(MODULE_PROPERTY);
-      if(ideaModule instanceof GenerateIdeaModule) {
+      if (ideaModule instanceof GenerateIdeaModule) {
         GenerateIdeaModule generateIdeaModule = (GenerateIdeaModule)ideaModule;
         return generateIdeaModule.getModule().getName();
       }
@@ -189,7 +191,16 @@ public class ModelDependenciesBuilderImpl implements ModelBuilderService {
     final GradleDependencyScope scope = GradleDependencyScope.fromName(configurationName);
     if (scope == null) return;
 
-    ModuleVersionIdentifier dependencyId = dependency.getId();
+    final ModuleVersionIdentifier dependencyId;
+    if (dependency instanceof IdeDependenciesExtractor.UnresolvedIdeRepoFileDependency) {
+      IdeDependenciesExtractor.UnresolvedIdeRepoFileDependency unresolvedDependency =
+        (IdeDependenciesExtractor.UnresolvedIdeRepoFileDependency)dependency;
+      dependencyId = new MyModuleVersionIdentifier(unresolvedDependency.getFile().getName());
+    }
+    else {
+      dependencyId = dependency.getId();
+    }
+
     DependencyVersionId versionId =
       new DependencyVersionId(dependency, dependencyId.getName(), dependencyId.getGroup(), dependencyId.getVersion());
     Scopes scopes = map.get(versionId);
@@ -216,6 +227,35 @@ public class ModelDependenciesBuilderImpl implements ModelBuilderService {
     }
     else {
       scopes.add(scope);
+    }
+  }
+
+  private static class MyModuleVersionIdentifier implements ModuleVersionIdentifier, Serializable {
+    private final String myName;
+
+    public MyModuleVersionIdentifier(String name) {
+
+      myName = name;
+    }
+
+    @Override
+    public String getVersion() {
+      return null;
+    }
+
+    @Override
+    public String getGroup() {
+      return null;
+    }
+
+    @Override
+    public String getName() {
+      return myName;
+    }
+
+    @Override
+    public ModuleIdentifier getModule() {
+      return null;
     }
   }
 }

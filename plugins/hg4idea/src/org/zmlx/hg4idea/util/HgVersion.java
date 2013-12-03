@@ -54,6 +54,7 @@ public final class HgVersion implements Comparable<HgVersion> {
   // see http://mercurial.808500.n3.nabble.com/Bug-3887-New-hg-log-template-quot-rev-join-file-copies-n-quot-prints-literal-quot-sourcename-quot-fos-td4000129.html
   public static final HgVersion BUILT_IN_FUNCTION_SUPPORTED = new HgVersion(2, 6, 0);
   public static final HgVersion PARENT_REVISION_TEMPLATES_SUPPORTED = new HgVersion(2, 4, 0);
+  public static final HgVersion BRANCH_HEADS_SERVED_FILE_EXIST = new HgVersion(2, 5, 0);
 
   //see http://selenic.com/pipermail/mercurial-devel/2013-May/051209.html  fixed since 2.7
   private static final HgVersion LARGEFILES_WITH_FOLLOW_SUPPORTED = new HgVersion(2, 7, 0);
@@ -155,6 +156,10 @@ public final class HgVersion implements Comparable<HgVersion> {
 
   public boolean isParentRevisionTemplateSupported() {
     return !isNull() && compareTo(PARENT_REVISION_TEMPLATES_SUPPORTED) >= 0;
+  }
+
+  public boolean hasBranchHeadsServed() {
+    return !isNull() && compareTo(BRANCH_HEADS_SERVED_FILE_EXIST) >= 0;
   }
 
   /**

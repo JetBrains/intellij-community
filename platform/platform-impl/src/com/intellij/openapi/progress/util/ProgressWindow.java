@@ -629,7 +629,7 @@ public class ProgressWindow extends BlockingProgressIndicator implements Disposa
               }
             }
 
-            getFocusManager().requestFocus(myCancelButton, true);
+            myCancelButton.requestFocusInWindow();
           }
         }
       });

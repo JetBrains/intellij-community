@@ -106,7 +106,18 @@ public class JavaFxAntGenerator {
     createJarTag.add(new SimpleTag("fileset", fileset2Jar.toArray(new Pair[fileset2Jar.size()])));
 
     createJarTag.add(createResourcesTag(preloaderFiles, false, allButPreloader, allButSelf, all));
-    
+
+    List<JavaFxManifestAttribute> manifestAttributes = packager.getCustomManifestAttributes();
+    if (manifestAttributes != null) {
+      final SimpleTag manifestTag = new SimpleTag("manifest");
+      for (JavaFxManifestAttribute pair : manifestAttributes) {
+        manifestTag.add(new SimpleTag("attribute", 
+                                      new Pair<String, String>("name", pair.getName()), 
+                                      new Pair<String, String>("value", pair.getValue())));
+      }
+      createJarTag.add(manifestTag);
+    }
+
     topLevelTagsCollector.add(createJarTag);
 
     //deploy task

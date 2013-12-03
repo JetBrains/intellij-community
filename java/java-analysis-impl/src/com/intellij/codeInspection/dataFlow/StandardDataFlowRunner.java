@@ -27,10 +27,7 @@ package com.intellij.codeInspection.dataFlow;
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInspection.dataFlow.instructions.InstanceofInstruction;
 import com.intellij.codeInspection.dataFlow.instructions.Instruction;
-import com.intellij.psi.CommonClassNames;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashSet;
@@ -49,13 +46,23 @@ public class StandardDataFlowRunner extends DataFlowRunner {
 
   @Override
   protected void prepareAnalysis(@NotNull PsiElement psiBlock, Iterable<DfaMemoryState> initialStates) {
-    myIsInMethod = psiBlock.getParent() instanceof PsiMethod;
+    PsiElement parent = psiBlock.getParent();
+    myIsInMethod = parent instanceof PsiMethod;
     if (myIsInMethod) {
-      PsiMethod method = (PsiMethod)psiBlock.getParent();
+      PsiMethod method = (PsiMethod)parent;
       PsiType returnType = method.getReturnType();
       myInNullableMethod = NullableNotNullManager.isNullable(method) ||
                            returnType != null && returnType.equalsToText(CommonClassNames.JAVA_LANG_VOID);
       myInNotNullMethod = NullableNotNullManager.isNotNull(method);
+    } else if (parent instanceof PsiLambdaExpression) {
+      PsiMethod method = LambdaUtil.getFunctionalInterfaceMethod(((PsiLambdaExpression)parent).getFunctionalInterfaceType());
+      if (method != null) {
+        myIsInMethod = true;
+        PsiType returnType = method.getReturnType();
+        myInNullableMethod = NullableNotNullManager.isNullable(method) ||
+                             returnType != null && returnType.equalsToText(CommonClassNames.JAVA_LANG_VOID);
+        myInNotNullMethod = NullableNotNullManager.isNotNull(method);
+      }
     }
 
     myCCEInstructions.clear();

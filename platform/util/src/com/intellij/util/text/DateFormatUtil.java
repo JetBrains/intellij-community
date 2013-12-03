@@ -21,6 +21,7 @@ import com.intellij.openapi.util.Clock;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.mac.foundation.Foundation;
 import com.intellij.ui.mac.foundation.ID;
+import com.intellij.util.EnvironmentUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.text.DateFormat;
@@ -275,6 +276,15 @@ public class DateFormatUtil {
       }
     }
 
+    if (SystemInfo.isUnix && !SystemInfo.isMac) {
+      try {
+        result = getUnixTimeFormat(format, type);
+      }
+      catch (Throwable t) {
+        LOG.error(t);
+      }
+    }
+
     if (result == null) {
       switch (type) {
         case TIME:
@@ -384,5 +394,36 @@ public class DateFormatUtil {
     finally {
       Foundation.invoke(autoReleasePool, Foundation.createSelector("release"));
     }
+  }
+
+  private static DateFormat getUnixTimeFormat(int format, DateType type) {
+    String localeStr = EnvironmentUtil.getValue("LC_TIME");
+    if (localeStr == null) return null;
+
+    localeStr = localeStr.trim();
+    int p = localeStr.indexOf('.');
+    if (p > 0) localeStr = localeStr.substring(0, p);
+    p = localeStr.indexOf('@');
+    if (p > 0) localeStr = localeStr.substring(0, p);
+
+    Locale locale;
+    p = localeStr.indexOf('_');
+    if (p < 0) {
+      locale = new Locale(localeStr);
+    }
+    else {
+      locale = new Locale(localeStr.substring(0, p), localeStr.substring(p + 1));
+    }
+
+    switch (type) {
+      case TIME:
+        return DateFormat.getTimeInstance(format, locale);
+      case DATE:
+        return DateFormat.getDateInstance(format, locale);
+      case DATETIME:
+        return DateFormat.getDateTimeInstance(format, format, locale);
+    }
+
+    return null;
   }
 }

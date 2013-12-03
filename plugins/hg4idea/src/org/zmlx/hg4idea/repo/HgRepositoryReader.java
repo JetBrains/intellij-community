@@ -24,6 +24,7 @@ import com.intellij.vcs.log.VcsLogObjectsFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.HgNameWithHashInfo;
+import org.zmlx.hg4idea.HgVcs;
 
 import java.io.File;
 import java.util.*;
@@ -42,7 +43,8 @@ public class HgRepositoryReader {
   private static Pattern HASH_NAME = Pattern.compile("\\s*([0-9a-fA-F]+)\\s+(.+)");
 
   @NotNull private final File myHgDir;            // .hg
-  @NotNull private final File myBranchHeadsFile;  // .hg/cache/branchheads (does not exist before first commit)
+  @NotNull private final File myBranchHeadsFile;  // .hg/cache/branchheads
+  @NotNull private final File myCacheDir; // .hg/cache (does not exist before first commit)
   @NotNull private final File myCurrentBranch;    // .hg/branch
   @NotNull private final File myBookmarksFile; //.hg/bookmarks
   @NotNull private final File myCurrentBookmark; //.hg/bookmarks.current
@@ -53,9 +55,11 @@ public class HgRepositoryReader {
   public HgRepositoryReader(@NotNull Project project, @NotNull File hgDir) {
     myHgDir = hgDir;
     RepositoryUtil.assertFileExists(myHgDir, ".hg directory not found in " + myHgDir);
-    File branchesFile = new File(new File(myHgDir, "cache"), "branchheads-served");  //branchheads-served exist after mercurial 2.5,
+    myCacheDir = new File(myHgDir, "cache");
+    File branchesFile = new File(myCacheDir, "branchheads-served");  //branchheads-served exist after mercurial 2.5,
     //before 2.5 only branchheads exist
-    myBranchHeadsFile = branchesFile.exists() ? branchesFile : new File(new File(myHgDir, "cache"), "branchheads");
+    HgVcs vcs = HgVcs.getInstance(project);
+    myBranchHeadsFile = vcs != null && vcs.getVersion().hasBranchHeadsServed() ? branchesFile : new File(myCacheDir, "branchheads");
     myCurrentBranch = new File(myHgDir, "branch");
     myBookmarksFile = new File(myHgDir, "bookmarks");
     myCurrentBookmark = new File(myHgDir, "bookmarks.current");
@@ -71,7 +75,7 @@ public class HgRepositoryReader {
    */
   @Nullable
   public String readCurrentRevision() {
-    if (checkIsFresh()) return null;
+    if (checkIsFresh() || !myBranchHeadsFile.exists()) return null;
     String[] branchesWithHeads = RepositoryUtil.tryLoadFile(myBranchHeadsFile).split("\n");
     String head = branchesWithHeads[0];
     Matcher matcher = HASH_NAME.matcher(head);
@@ -93,7 +97,7 @@ public class HgRepositoryReader {
   public Collection<HgNameWithHashInfo> readBranches() {
     List<HgNameWithHashInfo> branches = new ArrayList<HgNameWithHashInfo>();
     // Set<String> branchNames = new HashSet<String>();
-    if (!checkIsFresh()) {
+    if (!checkIsFresh() && myBranchHeadsFile.exists()) {
       String[] branchesWithHeads = RepositoryUtil.tryLoadFile(myBranchHeadsFile).split("\n");
       // first one - is a head revision: head hash + head number;
       for (int i = 1; i < branchesWithHeads.length; ++i) {
@@ -119,7 +123,7 @@ public class HgRepositoryReader {
   }
 
   public boolean checkIsFresh() {
-    return !myBranchHeadsFile.exists();
+    return !myCacheDir.exists();
   }
 
   public boolean branchExist() {

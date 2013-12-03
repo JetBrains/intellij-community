@@ -116,7 +116,7 @@ public abstract class StubProcessingHelperBase {
   /***
    * Returns a message to log when stub tree and index do not match
    */
-  protected abstract String stubTreeAndIndexDoNotMatch(StubTree stubTree,
+  protected abstract Object stubTreeAndIndexDoNotMatch(StubTree stubTree,
                                           PsiFileWithStubSupport psiFile,
                                           List<StubElement<?>> plained,
                                           VirtualFile virtualFile,

@@ -479,8 +479,8 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
 
   private static void reportNullableReturns(StandardDataFlowRunner runner, DataFlowInstructionVisitor visitor, ProblemsHolder holder, Set<PsiElement> reportedAnchors) {
     for (PsiElement statement : visitor.getProblems(NullabilityProblem.nullableReturn)) {
-      final PsiExpression expr = ((PsiReturnStatement)statement).getReturnValue();
-      assert expr != null;
+      assert statement instanceof PsiExpression; 
+      final PsiExpression expr = (PsiExpression)statement;
       if (!reportedAnchors.add(expr)) continue;
 
       if (runner.isInNotNullMethod()) {

@@ -1386,7 +1386,7 @@
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.junit.issues" enabledByDefault="false" level="WARNING"
                      implementationClass="com.siyeh.ig.junit.MisspelledTearDownInspection"/>
     <localInspection language="JAVA" suppressId="MisorderedAssertEqualsArguments" alternativeId="MisorderedAssertEqualsArguments" shortName="MisorderedAssertEqualsParameters"
-                     bundle="com.siyeh.InspectionGadgetsBundle" key="misordered.assert.equals.parameters.display.name"
+                     bundle="com.siyeh.InspectionGadgetsBundle" key="misordered.assert.equals.arguments.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.junit.issues" enabledByDefault="false" level="WARNING"
                      implementationClass="com.siyeh.ig.junit.MisorderedAssertEqualsParametersInspection"/>
     <localInspection language="JAVA" shortName="MultipleExceptionsDeclaredOnTestMethod" bundle="com.siyeh.InspectionGadgetsBundle"
