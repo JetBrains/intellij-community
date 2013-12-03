@@ -32,7 +32,6 @@ import java.util.LinkedList;
 import java.util.List;
 
 public class BranchesLoader {
-  private static final Logger LOG = Logger.getInstance("#org.jetbrains.idea.svn.branchConfig.BranchesLoader");
 
   private BranchesLoader() {
   }
@@ -64,13 +63,8 @@ public class BranchesLoader {
   private static ISVNDirEntryHandler createHandler(@NotNull final SVNURL branchesUrl, @NotNull final List<SvnBranchItem> result) {
     return new ISVNDirEntryHandler() {
       public void handleDirEntry(final SVNDirEntry dirEntry) throws SVNException {
-        final SVNURL currentUrl = dirEntry.getURL();
-        if (!branchesUrl.equals(currentUrl)) {
-          final String url = currentUrl.toString();
-          // if have permissions
-          if (dirEntry.getDate() != null) {
-            result.add(new SvnBranchItem(url, dirEntry.getDate(), dirEntry.getRevision()));
-          }
+        if (!branchesUrl.equals(dirEntry.getURL()) && dirEntry.getDate() != null) {
+          result.add(new SvnBranchItem(dirEntry.getURL().toString(), dirEntry.getDate(), dirEntry.getRevision()));
         }
       }
     };
