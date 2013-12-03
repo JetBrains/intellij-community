@@ -8,7 +8,7 @@ import com.intellij.psi.PsiExpression;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.postfixCompletion.util.JavaSurroundersProxy;
 
-public final class ElseStatementPostfixTemplate extends BooleanPostfixTemplate2 {
+public final class ElseStatementPostfixTemplate extends BooleanPostfixTemplate {
   public ElseStatementPostfixTemplate() {
     super("else", "Checks boolean expression to be 'false'", "if (!expr)");
   }

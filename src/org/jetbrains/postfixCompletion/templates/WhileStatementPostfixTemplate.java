@@ -4,7 +4,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 
-public final class WhileStatementPostfixTemplate extends BooleanPostfixTemplate2 {
+public final class WhileStatementPostfixTemplate extends BooleanPostfixTemplate {
   public WhileStatementPostfixTemplate() {
     super("while", "Iterating while boolean statement is 'true'", "while (expr)");
   }

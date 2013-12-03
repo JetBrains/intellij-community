@@ -4,7 +4,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 
-public final class AssertStatementPostfixTemplate extends BooleanPostfixTemplate2 {
+public final class AssertStatementPostfixTemplate extends BooleanPostfixTemplate {
 
   public AssertStatementPostfixTemplate() {
     super("assert", "Creates assertion from boolean expression", "assert expr;");
