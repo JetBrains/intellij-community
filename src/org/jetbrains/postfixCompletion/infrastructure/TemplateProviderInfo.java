@@ -3,7 +3,7 @@ package org.jetbrains.postfixCompletion.infrastructure;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.postfixCompletion.templates.PostfixTemplate;
 
-public final class TemplateProviderInfo {
+public class TemplateProviderInfo {
   @NotNull public final PostfixTemplate provider;
   @NotNull public final TemplateInfo annotation;
 

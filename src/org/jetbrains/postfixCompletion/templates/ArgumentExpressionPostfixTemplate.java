@@ -22,7 +22,7 @@ import org.jetbrains.postfixCompletion.util.CommonUtils;
   description = "Surrounds expression with invocation",
   example = "someMethod(expr)",
   worksInsideFragments = true)
-public final class ArgumentExpressionPostfixTemplate extends PostfixTemplate {
+public class ArgumentExpressionPostfixTemplate extends PostfixTemplate {
   @Override
   public LookupElement createLookupElement(@NotNull PostfixTemplateContext context) {
     PrefixExpressionContext expression = context.outerExpression();

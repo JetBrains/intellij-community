@@ -8,7 +8,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
-public final class PostfixChainLookupElement extends JavaChainLookupElement {
+public class PostfixChainLookupElement extends JavaChainLookupElement {
   public PostfixChainLookupElement(@NotNull LookupElement qualifier, @NotNull LookupElement element) {
     super(qualifier, element);
   }

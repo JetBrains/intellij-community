@@ -7,7 +7,7 @@ import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NotNull;
 
-public final class NotExpressionPostfixTemplate extends ExpressionPostfixTemplateWithExpressionChooser {
+public class NotExpressionPostfixTemplate extends ExpressionPostfixTemplateWithExpressionChooser {
   public NotExpressionPostfixTemplate() {
     super("not", "Negates boolean expression", "!expr");
   }

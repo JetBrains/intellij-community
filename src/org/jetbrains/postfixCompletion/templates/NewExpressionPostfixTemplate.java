@@ -21,7 +21,7 @@ import static org.jetbrains.postfixCompletion.util.CommonUtils.CtorAccessibility
   description = "Produces instantiation expression for type",
   example = "new SomeType()",
   worksOnTypes = true)
-public final class NewExpressionPostfixTemplate extends PostfixTemplate {
+public class NewExpressionPostfixTemplate extends PostfixTemplate {
   @Override
   public LookupElement createLookupElement(@NotNull PostfixTemplateContext context) {
     PrefixExpressionContext expression = context.outerExpression();

@@ -10,7 +10,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 
-final class BrokenLiteralPostfixTemplateContext extends PostfixTemplateContext {
+public class BrokenLiteralPostfixTemplateContext extends PostfixTemplateContext {
   @NotNull private final PsiLiteralExpression myBrokenLiteral;
   @NotNull private final PsiExpression myLhsExpression;
   @NotNull private final PsiStatement myLhsStatement;

@@ -2,7 +2,7 @@ package org.jetbrains.postfixCompletion.infrastructure;
 
 import org.jetbrains.annotations.NotNull;
 
-public final class PostfixExecutionContext {
+public class PostfixExecutionContext {
   @NotNull public final String dummyIdentifier;
   public final boolean isForceMode;
   public final boolean insideCodeFragment;

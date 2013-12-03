@@ -10,7 +10,7 @@ import com.intellij.psi.SmartPsiElementPointer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public final class PsiPointerExpression extends Expression {
+public class PsiPointerExpression extends Expression {
   @NotNull private final SmartPsiElementPointer<PsiExpression> valuePointer;
 
   public PsiPointerExpression(@NotNull SmartPsiElementPointer<PsiExpression> valuePointer) {

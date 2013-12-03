@@ -15,7 +15,7 @@ import org.jetbrains.postfixCompletion.lookupItems.StatementPostfixLookupElement
   templateName = "switch",
   description = "Produces switch over integral/enum/string values",
   example = "switch (expr)")
-public final class SwitchStatementPostfixTemplate extends PostfixTemplate {
+public class SwitchStatementPostfixTemplate extends PostfixTemplate {
   @Override
   public LookupElement createLookupElement(@NotNull PostfixTemplateContext context) {
     for (PrefixExpressionContext expressionContext : context.expressions()) {

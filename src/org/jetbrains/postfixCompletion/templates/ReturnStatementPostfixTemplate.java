@@ -5,7 +5,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 
-public final class ReturnStatementPostfixTemplate extends PostfixTemplate {
+public class ReturnStatementPostfixTemplate extends PostfixTemplate {
   public ReturnStatementPostfixTemplate() {
     super("return", "Returns value from containing method", "return expr;");
   }

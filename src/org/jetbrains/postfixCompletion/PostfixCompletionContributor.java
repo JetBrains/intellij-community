@@ -9,7 +9,7 @@ import org.jetbrains.postfixCompletion.infrastructure.PostfixNoVariantsCompletio
 
 import java.util.LinkedHashSet;
 
-public final class PostfixCompletionContributor extends CompletionContributor {
+public class PostfixCompletionContributor extends CompletionContributor {
   // I'm really sorry:
   @NotNull private final Object myDummyIdentifierLock = new Object();
   @NotNull private String myDummyIdentifier = CompletionUtilCore.DUMMY_IDENTIFIER_TRIMMED;

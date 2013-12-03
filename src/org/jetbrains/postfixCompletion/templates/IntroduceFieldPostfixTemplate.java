@@ -19,7 +19,7 @@ import org.jetbrains.postfixCompletion.lookupItems.StatementPostfixLookupElement
   templateName = "field",
   description = "Introduces field for expression",
   example = "_field = expr;")
-public final class IntroduceFieldPostfixTemplate extends PostfixTemplate {
+public class IntroduceFieldPostfixTemplate extends PostfixTemplate {
   @Override
   public LookupElement createLookupElement(@NotNull PostfixTemplateContext context) {
     PsiMethod containingMethod = PsiTreeUtil.getParentOfType(context.postfixReference, PsiMethod.class);

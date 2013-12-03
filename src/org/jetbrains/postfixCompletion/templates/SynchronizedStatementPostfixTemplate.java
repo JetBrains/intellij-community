@@ -14,7 +14,7 @@ import org.jetbrains.postfixCompletion.lookupItems.StatementPostfixLookupElement
   templateName = "synchronized",
   description = "Produces synchronization statement",
   example = "synchronized (expr)")
-public final class SynchronizedStatementPostfixTemplate extends PostfixTemplate {
+public class SynchronizedStatementPostfixTemplate extends PostfixTemplate {
   @Override
   public LookupElement createLookupElement(@NotNull PostfixTemplateContext context) {
     PrefixExpressionContext expression = context.outerExpression();

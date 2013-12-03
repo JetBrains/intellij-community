@@ -26,7 +26,7 @@ import org.jetbrains.postfixCompletion.lookupItems.StatementPostfixLookupElement
   templateName = "for",
   description = "Iterates over enumerable collection",
   example = "for (T item : collection)")
-public final class ForeachIterationPostfixTemplate extends PostfixTemplate {
+public class ForeachIterationPostfixTemplate extends PostfixTemplate {
   @Override
   public LookupElement createLookupElement(@NotNull PostfixTemplateContext context) {
     PrefixExpressionContext expression = context.outerExpression();

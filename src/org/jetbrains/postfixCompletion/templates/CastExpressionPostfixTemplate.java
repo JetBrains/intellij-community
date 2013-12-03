@@ -5,7 +5,7 @@ import com.intellij.psi.PsiExpression;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.postfixCompletion.util.JavaSurroundersProxy;
 
-public final class CastExpressionPostfixTemplate extends ExpressionPostfixTemplateWithExpressionChooser {
+public class CastExpressionPostfixTemplate extends ExpressionPostfixTemplateWithExpressionChooser {
   public CastExpressionPostfixTemplate() {
     super("cast", "Surrounds expression with cast", "((SomeType) expr)");
   }

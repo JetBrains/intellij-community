@@ -15,7 +15,7 @@ import javax.swing.*;
 import java.util.Arrays;
 import java.util.Map;
 
-public final class PostfixCompletionConfigurable implements SearchableConfigurable, EditorOptionsProvider, Configurable.NoScroll {
+public class PostfixCompletionConfigurable implements SearchableConfigurable, EditorOptionsProvider, Configurable.NoScroll {
   private static final Logger LOG = Logger.getInstance(PostfixCompletionConfigurable.class);
   @Nullable private PostfixTemplatesListPanel myPanel;
 

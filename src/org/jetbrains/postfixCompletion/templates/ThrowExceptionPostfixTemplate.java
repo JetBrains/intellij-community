@@ -21,7 +21,7 @@ import static org.jetbrains.postfixCompletion.util.CommonUtils.CtorAccessibility
   description = "Throws expression of 'Throwable' type",
   example = "throw expr;",
   worksOnTypes = true)
-public final class ThrowExceptionPostfixTemplate extends PostfixTemplate {
+public class ThrowExceptionPostfixTemplate extends PostfixTemplate {
   @Override
   public LookupElement createLookupElement(@NotNull PostfixTemplateContext context) {
     PrefixExpressionContext expression = context.outerExpression();

@@ -9,7 +9,7 @@ import org.jetbrains.postfixCompletion.infrastructure.TemplateInfo;
   templateName = "forr",
   description = "Iterates with index in reverse order",
   example = "for (int i = expr.length-1; i >= 0; i--)")
-public final class ForReverseIterationPostfixTemplate extends ForIterationPostfixTemplate {
+public class ForReverseIterationPostfixTemplate extends ForIterationPostfixTemplate {
   @Override
   @NotNull
   protected ForReverseLookupElement createIterationLookupElement(@NotNull PrefixExpressionContext expression,

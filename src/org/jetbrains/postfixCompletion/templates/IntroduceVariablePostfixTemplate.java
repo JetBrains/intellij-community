@@ -31,7 +31,7 @@ import static org.jetbrains.postfixCompletion.util.CommonUtils.CtorAccessibility
   description = "Introduces variable for expression",
   example = "T name = expr;",
   worksOnTypes = true)
-public final class IntroduceVariablePostfixTemplate extends PostfixTemplate {
+public class IntroduceVariablePostfixTemplate extends PostfixTemplate {
   @Override
   public LookupElement createLookupElement(@NotNull PostfixTemplateContext context) {
     PrefixExpressionContext forcedTarget = null;

@@ -25,7 +25,7 @@ import org.jetbrains.postfixCompletion.infrastructure.PostfixExecutionContext;
 import org.jetbrains.postfixCompletion.infrastructure.PostfixTemplateContext;
 import org.jetbrains.postfixCompletion.infrastructure.PostfixTemplatesService;
 
-public final class ExpandPostfixEditorActionHandler extends EditorActionHandler {
+public class ExpandPostfixEditorActionHandler extends EditorActionHandler {
   @NotNull private final EditorActionHandler myUnderlyingHandler;
   @NotNull private final PostfixTemplatesService myTemplatesService;
 
