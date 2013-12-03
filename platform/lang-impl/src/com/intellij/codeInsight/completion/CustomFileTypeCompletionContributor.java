@@ -17,8 +17,12 @@ package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.ide.highlighter.custom.SyntaxTable;
+import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.fileTypes.impl.CustomSyntaxTableFileType;
+import com.intellij.psi.CustomHighlighterTokenType;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
 
@@ -39,6 +43,10 @@ public class CustomFileTypeCompletionContributor extends CompletionContributor {
              protected void addCompletions(@NotNull CompletionParameters parameters,
                                            ProcessingContext context,
                                            @NotNull CompletionResultSet result) {
+               if (inCommentOrLiteral(parameters)) {
+                 return;
+               }
+
                CustomSyntaxTableFileType fileType = (CustomSyntaxTableFileType)parameters.getOriginalFile().getFileType();
                SyntaxTable syntaxTable = fileType.getSyntaxTable();
                String prefix = findPrefix(parameters.getPosition(), parameters.getOffset());
@@ -50,6 +58,19 @@ public class CustomFileTypeCompletionContributor extends CompletionContributor {
                addVariants(resultSetWithPrefix, syntaxTable.getKeywords4());
              }
            });
+  }
+
+  private static boolean inCommentOrLiteral(CompletionParameters parameters) {
+    HighlighterIterator iterator = ((EditorEx)parameters.getEditor()).getHighlighter().createIterator(parameters.getOffset());
+    IElementType elementType = iterator.getTokenType();
+    if (elementType == CustomHighlighterTokenType.WHITESPACE) {
+      iterator.retreat();
+      elementType = iterator.getTokenType();
+    }
+    return elementType == CustomHighlighterTokenType.LINE_COMMENT ||
+           elementType == CustomHighlighterTokenType.MULTI_LINE_COMMENT ||
+           elementType == CustomHighlighterTokenType.STRING ||
+           elementType == CustomHighlighterTokenType.SINGLE_QUOTED_STRING;
   }
 
   private static void addVariants(CompletionResultSet resultSet, Set<String> keywords) {
