@@ -148,8 +148,8 @@ public class SliceTreeTest extends SliceTestCase {
     SliceNode root = (SliceNode)treeStructure.getRootElement();
     Collection<PsiElement> leaves = SliceLeafAnalyzer.calcLeafExpressions(root, treeStructure, SliceLeafAnalyzer.createMap());
     assertNotNull(leaves);
-    assertEquals(2, leaves.size());
     List<PsiElement> list = new ArrayList<PsiElement>(leaves);
+    assertEquals(list.toString(), 2, leaves.size());
     Collections.sort(list, new Comparator<PsiElement>() {
       @Override
       public int compare(PsiElement o1, PsiElement o2) {
