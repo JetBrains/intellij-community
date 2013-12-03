@@ -79,10 +79,6 @@ public class PostfixCompletionTest extends LightCodeInsightFixtureTestCase {
   public void testNotNull02() { doTest("nn\n"); }
   public void testNull01() { doTest("null\n"); }
 
-  public void testNot01() { doTest("not\n"); }
-  public void testNot02() { doTest("not\n"); }
-  public void testNot03() { doTest("not\n"); }
-
   public void testNew01() { doTest("new\n"); }
   public void testNew02() { doTest("new\n"); }
   public void testNew03() { doTest("new\n"); }

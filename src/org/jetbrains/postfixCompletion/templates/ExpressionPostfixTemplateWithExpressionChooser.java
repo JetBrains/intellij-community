@@ -6,6 +6,7 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
@@ -76,7 +77,13 @@ public abstract class ExpressionPostfixTemplateWithExpressionChooser extends Pos
   @NotNull
   public List<PsiExpression> getExpressions(@NotNull PsiElement context, @NotNull Editor editor, int offset) {
     List<PsiExpression> expressions = IntroduceVariableBase.collectExpressions(context.getContainingFile(), editor, offset);
-    return expressions.isEmpty() ? maybeTopmostExpression(context) : expressions;
+    return ContainerUtil.filter(expressions.isEmpty() ? maybeTopmostExpression(context) : expressions, getTypeCondition());
+  }
+
+  @NotNull
+  @SuppressWarnings("unchecked")
+  protected Condition<PsiExpression> getTypeCondition() {
+    return Condition.TRUE;
   }
 
   @NotNull

@@ -1,60 +1,30 @@
 package org.jetbrains.postfixCompletion.templates;
 
 import com.intellij.codeInsight.CodeInsightServicesUtil;
-import com.intellij.codeInsight.completion.InsertionContext;
-import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.psi.*;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.util.Condition;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.postfixCompletion.infrastructure.PrefixExpressionContext;
-import org.jetbrains.postfixCompletion.infrastructure.TemplateInfo;
-import org.jetbrains.postfixCompletion.lookupItems.ExpressionPostfixLookupElementBase;
 
-@TemplateInfo(
-  templateName = "not",
-  description = "Negates boolean expression",
-  example = "!expr",
-  worksInsideFragments = true)
-public final class NotExpressionPostfixTemplate extends BooleanPostfixTemplate {
-  @Override
-  public LookupElement createLookupElement(@NotNull PrefixExpressionContext context) {
-    return new NotExpressionLookupElement(context);
+public final class NotExpressionPostfixTemplate extends ExpressionPostfixTemplateWithExpressionChooser {
+  public NotExpressionPostfixTemplate() {
+    super("not", "Negates boolean expression", "!expr");
   }
 
-  private static final class NotExpressionLookupElement extends ExpressionPostfixLookupElementBase<PsiExpression> {
-    public NotExpressionLookupElement(@NotNull PrefixExpressionContext context) {
-      super("not", context);
-    }
+  @Override
+  protected void doIt(@NotNull Editor editor, @NotNull PsiExpression expression) {
+    expression.replace(CodeInsightServicesUtil.invertCondition(expression));
+  }
 
-    @NotNull
-    @Override
-    protected PsiExpression createNewExpression(@NotNull PsiElementFactory factory, @NotNull PsiElement expression, @NotNull PsiElement context) {
-      return CodeInsightServicesUtil.invertCondition((PsiExpression)expression);
-    }
-
-    @Override
-    protected void postProcess(@NotNull InsertionContext context, @NotNull final PsiExpression expression) {
-      // collapse '!!b' into 'b'
-      if (isUnaryNegation(expression)) {
-        final PsiExpression operand = ((PsiPrefixExpression)expression).getOperand();
-        final PsiElement parent = expression.getParent();
-        if (operand != null && isUnaryNegation(parent)) {
-          ApplicationManager.getApplication().runWriteAction(new Runnable() {
-            @Override
-            public void run() {
-              parent.replace(operand);
-            }
-          });
-          return;
-        }
+  @NotNull
+  @Override
+  protected Condition<PsiExpression> getTypeCondition() {
+    return new Condition<PsiExpression>() {
+      @Override
+      public boolean value(PsiExpression expression) {
+        return PsiType.BOOLEAN.equals(expression.getType());
       }
-
-      super.postProcess(context, expression);
-    }
-
-    private static boolean isUnaryNegation(@Nullable PsiElement element) {
-      return (element instanceof PsiPrefixExpression) && ((PsiPrefixExpression)element).getOperationTokenType() == JavaTokenType.EXCL;
-    }
+    };
   }
 }

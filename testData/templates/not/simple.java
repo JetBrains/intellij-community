@@ -1,5 +1,5 @@
 public class Foo {
     void m(boolean b) {
-        m(b.<caret>);
+        m(b.not<caret>);
     }
 }
