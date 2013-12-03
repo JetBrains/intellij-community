@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2013 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -102,6 +102,9 @@ public class PointlessArithmeticExpressionInspection
       }
     }
     else if (tokenType.equals(JavaTokenType.MINUS)) {
+      if (rhs instanceof PsiReferenceExpression) {
+        return "0";
+      }
       return lhs.getText();
     }
     else if (tokenType.equals(JavaTokenType.ASTERISK)) {
@@ -116,6 +119,9 @@ public class PointlessArithmeticExpressionInspection
       }
     }
     else if (tokenType.equals(JavaTokenType.DIV)) {
+      if (rhs instanceof PsiReferenceExpression) {
+        return "1";
+      }
       return lhs.getText();
     }
     else if (tokenType.equals(JavaTokenType.PERC)) {
@@ -197,16 +203,16 @@ public class PointlessArithmeticExpressionInspection
         isPointless = additionExpressionIsPointless(lhs, rhs);
       }
       else if (tokenType.equals(JavaTokenType.MINUS)) {
-        isPointless = subtractionExpressionIsPointless(rhs);
+        isPointless = subtractionExpressionIsPointless(lhs, rhs);
       }
       else if (tokenType.equals(JavaTokenType.ASTERISK)) {
         isPointless = multiplyExpressionIsPointless(lhs, rhs);
       }
       else if (tokenType.equals(JavaTokenType.DIV)) {
-        isPointless = divideExpressionIsPointless(rhs);
+        isPointless = divideExpressionIsPointless(lhs, rhs);
       }
       else if (tokenType.equals(JavaTokenType.PERC)) {
-        isPointless = modExpressionIsPointless(rhs);
+        isPointless = modExpressionIsPointless(lhs, rhs);
       }
       else if (tokenType.equals(JavaTokenType.LE) ||
                tokenType.equals(JavaTokenType.GE) ||
@@ -233,7 +239,14 @@ public class PointlessArithmeticExpressionInspection
       registerError(expression, expression);
     }
 
-    private boolean subtractionExpressionIsPointless(PsiExpression rhs) {
+    private boolean subtractionExpressionIsPointless(PsiExpression lhs, PsiExpression rhs) {
+      if (PsiType.INT.equals(lhs.getType()) && lhs instanceof PsiReferenceExpression && rhs instanceof PsiReferenceExpression) {
+        final PsiReferenceExpression lhsReference = (PsiReferenceExpression)lhs;
+        final PsiReferenceExpression rhsReference = (PsiReferenceExpression)rhs;
+        if (lhsReference.resolve() == rhsReference.resolve()) {
+          return true;
+        }
+      }
       return isZero(rhs);
     }
 
@@ -247,11 +260,25 @@ public class PointlessArithmeticExpressionInspection
       return isZero(lhs) || isZero(rhs) || isOne(lhs) || isOne(rhs);
     }
 
-    private boolean divideExpressionIsPointless(PsiExpression rhs) {
+    private boolean divideExpressionIsPointless(PsiExpression lhs, PsiExpression rhs) {
+      if (PsiType.INT.equals(lhs.getType()) && lhs instanceof PsiReferenceExpression && rhs instanceof PsiReferenceExpression) {
+        final PsiReferenceExpression lhsReference = (PsiReferenceExpression)lhs;
+        final PsiReferenceExpression rhsReference = (PsiReferenceExpression)rhs;
+        if (lhsReference.resolve() == rhsReference.resolve()) {
+          return true;
+        }
+      }
       return isOne(rhs);
     }
 
-    private boolean modExpressionIsPointless(PsiExpression rhs) {
+    private boolean modExpressionIsPointless(PsiExpression lhs, PsiExpression rhs) {
+      if (PsiType.INT.equals(lhs.getType()) && lhs instanceof PsiReferenceExpression && rhs instanceof PsiReferenceExpression) {
+        final PsiReferenceExpression lhsReference = (PsiReferenceExpression)lhs;
+        final PsiReferenceExpression rhsReference = (PsiReferenceExpression)rhs;
+        if (lhsReference.resolve() == rhsReference.resolve()) {
+          return true;
+        }
+      }
       return PsiType.INT.equals(rhs.getType()) && isOne(rhs);
     }
 

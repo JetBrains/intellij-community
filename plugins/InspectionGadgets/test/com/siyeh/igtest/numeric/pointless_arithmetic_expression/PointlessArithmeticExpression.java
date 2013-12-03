@@ -88,4 +88,10 @@ public class PointlessArithmeticExpression
     double floatsOrDoubles() {
         return 123.001 % 1.0;
     }
+
+    void more(int i) {
+        System.out.println(i / i);
+        System.out.println(i - i);
+        System.out.println(i % i);
+    }
 }
