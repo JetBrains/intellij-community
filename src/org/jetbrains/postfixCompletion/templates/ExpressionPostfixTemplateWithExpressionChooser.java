@@ -9,9 +9,11 @@ import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.util.Pass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiType;
 import com.intellij.psi.util.PsiExpressionTrimRenderer;
 import com.intellij.refactoring.IntroduceTargetChooser;
 import com.intellij.refactoring.introduceVariable.IntroduceVariableBase;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.postfixCompletion.util.CommonUtils;
@@ -72,8 +74,17 @@ public abstract class ExpressionPostfixTemplateWithExpressionChooser extends Pos
   }
 
   @NotNull
-  public static List<PsiExpression> getExpressions(@NotNull PsiElement context, @NotNull Editor editor, int offset) {
-    return IntroduceVariableBase.collectExpressions(context.getContainingFile(), editor, offset);
+  public List<PsiExpression> getExpressions(@NotNull PsiElement context, @NotNull Editor editor, int offset) {
+    List<PsiExpression> expressions = IntroduceVariableBase.collectExpressions(context.getContainingFile(), editor, offset);
+    return expressions.isEmpty() ? maybeTopmostExpression(context) : expressions;
+  }
+
+  @NotNull
+  private List<PsiExpression> maybeTopmostExpression(@NotNull PsiElement context) {
+    PsiExpression expression = getTopmostExpression(context);
+    PsiType type = expression != null ? expression.getType() : null;
+    if (type == null || PsiType.VOID.equals(type)) return ContainerUtil.emptyList();
+    return ContainerUtil.createMaybeSingletonList(expression);
   }
 
   protected abstract void doIt(@NotNull Editor editor, @NotNull PsiExpression expression);
