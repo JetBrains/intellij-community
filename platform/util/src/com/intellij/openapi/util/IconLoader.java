@@ -22,7 +22,7 @@ import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.ImageLoader;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.RetinaImage;
-import com.intellij.util.containers.ConcurrentHashMap;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.WeakHashMap;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
@@ -49,7 +49,7 @@ public final class IconLoader {
   private static boolean USE_DARK_ICONS = UIUtil.isUnderDarcula();
 
   @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
-  private static final ConcurrentMap<URL, CachedImageIcon> ourIconsCache = new ConcurrentHashMap<URL, CachedImageIcon>(100, 0.9f,2);
+  private static final ConcurrentMap<URL, CachedImageIcon> ourIconsCache = ContainerUtil.newConcurrentMap(100, 0.9f, 2);
 
   /**
    * This cache contains mapping between icons and disabled icons.

@@ -25,6 +25,7 @@ import com.intellij.openapi.util.NotNullLazyKey;
 import com.intellij.openapi.util.Ref;
 import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.ArrayList;
@@ -83,6 +84,22 @@ public abstract class DumbService {
       }
     });
     return result.get();
+  }
+
+  @Nullable
+  public <T> T tryRunReadActionInSmartMode(@NotNull Computable<T> task, @NotNull String notification) {
+    if (ApplicationManager.getApplication().isDispatchThread()) {
+      try {
+        return task.compute();
+      }
+      catch (IndexNotReadyException e) {
+        showDumbModeNotification(notification);
+        return null;
+      }
+    }
+    else {
+      return runReadActionInSmartMode(task);
+    }
   }
 
   /**

@@ -2,6 +2,7 @@ package git4idea.history.wholeTree;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsDataKeys;
@@ -13,7 +14,9 @@ import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
-import git4idea.history.browser.GitProjectLogManager;
+import com.intellij.vcs.log.impl.VcsLogContentProvider;
+import com.intellij.vcs.log.impl.VcsLogManager;
+import com.intellij.vcs.log.ui.VcsLogUI;
 import git4idea.i18n.GitBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -36,7 +39,7 @@ public class SelectRevisionInGitLogAction extends DumbAwareAction {
       return;
     }
 
-    final GitLog log = GitProjectLogManager.getInstance(project).getLog();
+    final VcsLogManager log = ServiceManager.getService(project, VcsLogManager.class);
     if (log == null) {
       return;
     }
@@ -45,7 +48,7 @@ public class SelectRevisionInGitLogAction extends DumbAwareAction {
     ContentManager cm = window.getContentManager();
     Content[] contents = cm.getContents();
     for (Content content : contents) {
-      if (GitProjectLogManager.CONTENT_KEY.equals(content.getDisplayName())) {
+      if (VcsLogContentProvider.TAB_NAME.equals(content.getDisplayName())) {
         cm.setSelectedContent(content);
       }
     }
@@ -53,7 +56,11 @@ public class SelectRevisionInGitLogAction extends DumbAwareAction {
     Runnable selectCommit = new Runnable() {
       @Override
       public void run() {
-        log.selectCommit(revision.asString());
+        VcsLogUI logUi = log.getLogUi();
+        if (logUi == null) {
+          return;
+        }
+        logUi.getVcsLog().jumpToReference(revision.asString());
       }
     };
 

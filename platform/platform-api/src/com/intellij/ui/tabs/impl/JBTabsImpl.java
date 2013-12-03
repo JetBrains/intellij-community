@@ -169,6 +169,7 @@ public class JBTabsImpl extends JComponent
   private SelectionChangeHandler mySelectionChangeHandler;
 
   private Runnable myDeferredFocusRequest;
+  private boolean myAlwaysPaintSelectedTab;
 
   public JBTabsImpl(@NotNull Project project) {
     this(project, project);
@@ -1653,9 +1654,6 @@ public class JBTabsImpl extends JComponent
 
   @Nullable
   protected Color getActiveTabColor(@Nullable final Color c) {
-    if (UIUtil.isUnderDarcula() || UIUtil.isUnderIntelliJLaF()) {
-      return new JBColor(new Color(162, 186, 224), new Color(65, 81, 109));
-    }
     final TabInfo info = getSelectedInfo();
     if (info == null) {
       return c;
@@ -1677,7 +1675,7 @@ public class JBTabsImpl extends JComponent
     final int alpha;
     int paintTopY = shapeInfo.labelTopY;
     int paintBottomY = shapeInfo.labelBottomY;
-    final boolean paintFocused = myPaintFocus && (myFocused || myActivePopup != null);
+    final boolean paintFocused = myPaintFocus && (myFocused || myActivePopup != null || myAlwaysPaintSelectedTab);
     Color bgPreFill = null;
     if (paintFocused) {
       final Color bgColor = getActiveTabColor(getActiveTabFillIn());
@@ -1733,7 +1731,7 @@ public class JBTabsImpl extends JComponent
     }
 
     final Color tabColor = getActiveTabColor(null);
-    Color borderColor = tabColor == null || UIUtil.isUnderDarcula() || UIUtil.isUnderIntelliJLaF() ? UIUtil.getBoundsColor(paintFocused) : tabColor.darker();
+    Color borderColor = tabColor == null ? UIUtil.getBoundsColor(paintFocused) : tabColor.darker();
     g2d.setColor(borderColor);
 
     if (!isHideTabs()) {
@@ -2758,6 +2756,12 @@ public class JBTabsImpl extends JComponent
   @Override
   public JBTabsPresentation setPaintFocus(final boolean paintFocus) {
     myPaintFocus = paintFocus;
+    return this;
+  }
+
+  @Override
+  public JBTabsPresentation setAlwaysPaintSelectedTab(final boolean paintSelected) {
+    myAlwaysPaintSelectedTab = paintSelected;
     return this;
   }
 

@@ -135,11 +135,12 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
       }
       for (UIManager.LookAndFeelInfo laf : UIManager.getInstalledLookAndFeels()) {
         String name = laf.getName();
-        if ( !"Metal".equalsIgnoreCase(name)
-          && !"CDE/Motif".equalsIgnoreCase(name)
-          && !"Nimbus".equalsIgnoreCase(name)
-          && !"Windows Classic".equalsIgnoreCase(name)
-          && !name.startsWith("JGoodies")) {
+        if (Registry.is("show.all.look.and.feels") ||
+            (   !"Metal".equalsIgnoreCase(name)
+             && !"CDE/Motif".equalsIgnoreCase(name)
+             && !"Nimbus".equalsIgnoreCase(name)
+             && !"Windows Classic".equalsIgnoreCase(name)
+             && !name.startsWith("JGoodies"))) {
           lafList.add(laf);
         }
       }
@@ -154,7 +155,6 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
     if (!SystemInfo.isMac) {
       // do not sort LaFs on mac - the order is determined as Default, Darcula.
       // when we leave only system LaFs on other OSes, the order also should be determined as Default, Darcula
-      
       Arrays.sort(myLaFs, new Comparator<UIManager.LookAndFeelInfo>() {
         @Override
         public int compare(UIManager.LookAndFeelInfo obj1, UIManager.LookAndFeelInfo obj2) {

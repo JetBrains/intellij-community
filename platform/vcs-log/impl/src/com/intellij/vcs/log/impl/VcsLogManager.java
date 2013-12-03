@@ -31,6 +31,7 @@ import com.intellij.vcs.log.data.VcsLogUiProperties;
 import com.intellij.vcs.log.ui.VcsLogColorManagerImpl;
 import com.intellij.vcs.log.ui.VcsLogUI;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -51,8 +52,8 @@ public class VcsLogManager implements Disposable {
   @NotNull private final VcsLogUiProperties myUiProperties;
 
   private PostponeableLogRefresher myLogRefresher;
-  private VcsLogDataHolder myLogDataHolder;
-  private VcsLogUI myUi;
+  private volatile VcsLogDataHolder myLogDataHolder;
+  private volatile VcsLogUI myUi;
 
   public VcsLogManager(@NotNull Project project, @NotNull ProjectLevelVcsManager vcsManager,
                        @NotNull VcsLogSettings settings,
@@ -69,11 +70,10 @@ public class VcsLogManager implements Disposable {
     final Map<VirtualFile, VcsLogProvider> logProviders = findLogProviders();
     final VcsLogContainer mainPanel = new VcsLogContainer(myProject);
 
-    myLogDataHolder = new VcsLogDataHolder(myProject, logProviders, mySettings);
+    myLogDataHolder = new VcsLogDataHolder(myProject, this, logProviders, mySettings);
     myLogDataHolder.initialize(new Consumer<VcsLogDataHolder>() {
       @Override
       public void consume(VcsLogDataHolder vcsLogDataHolder) {
-        Disposer.register(VcsLogManager.this, vcsLogDataHolder);
         VcsLogUI logUI = new VcsLogUI(vcsLogDataHolder, myProject, mySettings,
                                       new VcsLogColorManagerImpl(logProviders.keySet()), myUiProperties);
         myLogDataHolder = vcsLogDataHolder;
@@ -114,11 +114,18 @@ public class VcsLogManager implements Disposable {
     return logProviders;
   }
 
+  /**
+   * The instance of the {@link VcsLogDataHolder} or null if the log was not initialized yet.
+   */
+  @Nullable
   public VcsLogDataHolder getDataHolder() {
     return myLogDataHolder;
   }
 
-  @NotNull
+  /**
+   * The instance of the {@link VcsLogUI} or null if the log was not initialized yet.
+   */
+  @Nullable
   public VcsLogUI getLogUi() {
     return myUi;
   }
@@ -155,7 +162,6 @@ public class VcsLogManager implements Disposable {
   private static class PostponeableLogRefresher implements VcsLogRefresher, Disposable {
 
     private  static final String TOOLWINDOW_ID = ChangesViewContentManager.TOOLWINDOW_ID;
-    private static final String TAB_NAME = "Log";
 
     @NotNull private final VcsLogDataHolder myDataHolder;
     @NotNull private final ToolWindowManagerImpl myToolWindowManager;
@@ -211,7 +217,7 @@ public class VcsLogManager implements Disposable {
     private boolean isOurContentPaneShowing() {
       if (myToolWindowManager.isToolWindowRegistered(TOOLWINDOW_ID) && myToolWindow.isVisible()) {
         Content content = myToolWindow.getContentManager().getSelectedContent();
-        return content != null && content.getTabName().equals(TAB_NAME);
+        return content != null && content.getTabName().equals(VcsLogContentProvider.TAB_NAME);
       }
       return false;
     }

@@ -62,7 +62,8 @@ public interface FileEditorProvider {
   void disposeEditor(@NotNull FileEditor editor);
 
   /**
-   * Deserializes state from the specified <code>sourceElemet</code>
+   * Deserialize state from the specified <code>sourceElement</code>
+   * Use {@link FileEditorState#INSTANCE} as default implementation
    */
   @NotNull
   FileEditorState readState(@NotNull Element sourceElement, @NotNull Project project, @NotNull VirtualFile file);
