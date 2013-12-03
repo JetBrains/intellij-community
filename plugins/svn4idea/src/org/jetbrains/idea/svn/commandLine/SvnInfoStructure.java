@@ -15,9 +15,10 @@
  */
 package org.jetbrains.idea.svn.commandLine;
 
+import com.intellij.util.containers.ContainerUtil;
 import org.apache.subversion.javahl.ConflictDescriptor;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.svn.portable.ConflictActionConvertor;
 import org.jetbrains.idea.svn.portable.IdeaSVNInfo;
 import org.tmatesoft.svn.core.*;
 import org.tmatesoft.svn.core.internal.wc.SVNConflictVersion;
@@ -26,6 +27,7 @@ import org.xml.sax.SAXException;
 
 import java.io.File;
 import java.util.Date;
+import java.util.Map;
 
 /**
  * Created with IntelliJ IDEA.
@@ -34,6 +36,16 @@ import java.util.Date;
  * Time: 2:11 PM
  */
 public class SvnInfoStructure {
+
+  private static final Map<String, SVNConflictAction> ourConflictActions = ContainerUtil.newHashMap();
+
+  static {
+    ourConflictActions.put("add", SVNConflictAction.ADD);
+    ourConflictActions.put("edit", SVNConflictAction.EDIT);
+    ourConflictActions.put("delete", SVNConflictAction.DELETE);
+    ourConflictActions.put("replace", SVNConflictAction.REPLACE);
+  }
+
   @Nullable public File myFile;
   public String relativeUrl;
   public SVNURL myUrl;
@@ -87,15 +99,25 @@ public class SvnInfoStructure {
     else {
       assert myFile != null;
 
-      final SVNConflictAction action = ConflictActionConvertor.create(ConflictDescriptor.Action.valueOf(myTreeConflict.myAction));
+      final SVNConflictAction action = parseConflictAction(myTreeConflict.myAction);
       final SVNConflictReason reason = parseConflictReason(myTreeConflict.myReason);
-      //final SVNConflictReason reason = ConflictReasonConvertor.convert(ConflictDescriptor.Reason.valueOf(myTreeConflict.myReason));
       SVNOperation operation = SVNOperation.fromString(myTreeConflict.myOperation);
       operation = operation == null ? SVNOperation.NONE : operation;
       return new SVNTreeConflictDescription(myFile, myKind, action, reason, operation,
                                             createVersion(myTreeConflict.mySourceLeft),
                                             createVersion(myTreeConflict.mySourceRight));
     }
+  }
+
+  private SVNConflictAction parseConflictAction(@NotNull String actionName) {
+    SVNConflictAction action = SVNConflictAction.fromString(actionName);
+    action = action == null ? ourConflictActions.get(actionName) : null;
+
+    if (action == null) {
+      throw new IllegalArgumentException("Unknown conflict action " + actionName);
+    }
+
+    return action;
   }
 
   private SVNConflictReason parseConflictReason(String reason) throws SAXException {
