@@ -93,7 +93,7 @@ public class InstanceofExpressionPostfixTemplate extends PostfixTemplate {
     String type = "type";
     template.addVariable(type, expr, expr, true);
     template.addTextSegment(" ? ((");
-    template.addVariable(type, expr, expr, true);
+    template.addVariableSegment(type);
     template.addTextSegment(")" + exprText + ")");
     template.addEndVariable();
     template.addTextSegment(" : null;");
