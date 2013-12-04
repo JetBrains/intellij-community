@@ -222,12 +222,12 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
   protected void buildOptions(JPanel searchOptions) {
     searchIncrementally = new JCheckBox(SSRBundle.message("find.with.prompt.checkbox"), false);
     if (isSearchOnDemandEnabled()) {
-      searchOptions.add(searchIncrementally);
+      searchOptions.add(UIUtil.createOptionLine(searchIncrementally));
     }
 
     recursiveMatching = new JCheckBox(SSRBundle.message("recursive.matching.checkbox"), true);
     if (isRecursiveSearchEnabled()) {
-      searchOptions.add(recursiveMatching);
+      searchOptions.add(UIUtil.createOptionLine(recursiveMatching));
     }
 
     //searchOptions.add(
@@ -239,7 +239,7 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
     //distinctResults.setMnemonic('D');
 
     caseSensitiveMatch = new JCheckBox(SSRBundle.message("case.sensitive.checkbox"), true);
-    searchOptions.add(caseSensitiveMatch);
+    searchOptions.add(UIUtil.createOptionLine(caseSensitiveMatch));
 
     maxMatchesSwitch = new JCheckBox(SSRBundle.message("maximum.matches.checkbox"), false);
     maxMatches = new JTextField(Integer.toString(MatchOptions.DEFAULT_MAX_MATCHES_COUNT), 3);
