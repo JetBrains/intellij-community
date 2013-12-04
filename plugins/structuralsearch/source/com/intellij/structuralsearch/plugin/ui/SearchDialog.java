@@ -264,6 +264,7 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
     });
 
     contexts = new JComboBox(new DefaultComboBoxModel());
+    contexts.setPreferredSize(new Dimension(60, -1));
 
     dialects = new JComboBox(new DefaultComboBoxModel());
     dialects.setRenderer(new ListCellRendererWrapper() {
@@ -283,6 +284,7 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
         updateEditor();
       }
     });
+    dialects.setPreferredSize(new Dimension(120, -1));
 
     final JLabel jLabel = new JLabel(SSRBundle.message("search.dialog.file.type.label"));
     final JLabel jLabel2 = new JLabel(SSRBundle.message("search.dialog.context.label"));
