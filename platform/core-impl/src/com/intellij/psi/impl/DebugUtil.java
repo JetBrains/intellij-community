@@ -516,6 +516,13 @@ public class DebugUtil {
   private static final ThreadLocal<Object> ourPsiModificationTrace = new ThreadLocal<Object>();
   private static final ThreadLocal<Integer> ourPsiModificationDepth = new ThreadLocal<Integer>();
 
+  /**
+   * Marks a start of PSI modification action. Any PSI/AST elements invalidated inside such an action will contain a debug trace
+   * identifying this transaction, and so will {@link com.intellij.psi.PsiInvalidElementAccessException} thrown when accessing such invalid 
+   * elements. This should help finding out why a specific PSI element has become invalid.
+   * 
+   * @param trace The debug trace that the invalidated elements should be identified by. May be null, then current stack trace is used.
+   */
   public static void startPsiModification(@Nullable String trace) {
     if (!PsiInvalidElementAccessException.isTrackingInvalidation()) {
       return;
@@ -530,6 +537,10 @@ public class DebugUtil {
     ourPsiModificationDepth.set(depth + 1);
   }
 
+  /**
+   * Finished PSI modification action.
+   * @see #startPsiModification(String) 
+   */
   public static void finishPsiModification() {
     if (!PsiInvalidElementAccessException.isTrackingInvalidation()) {
       return;
@@ -558,7 +569,7 @@ public class DebugUtil {
     Object trace = ourPsiModificationTrace.get();
     if (trace == null) {
       trace = new Throwable();
-      LOG.error("PSI invalidated outside transaction", (Throwable)trace);
+      LOG.info("PSI invalidated outside transaction", (Throwable)trace);
     }
     PsiInvalidElementAccessException.setInvalidationTrace(treeElement, trace);
   }
