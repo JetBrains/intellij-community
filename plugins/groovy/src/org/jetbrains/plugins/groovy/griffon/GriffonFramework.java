@@ -202,15 +202,18 @@ public class GriffonFramework extends MvcFramework {
   }
 
   @Override
+  protected boolean isCoreJar(@NotNull VirtualFile localFile) {
+    return GriffonLibraryPresentationProvider.isGriffonCoreJar(localFile);
+  }
+
+  @Override
   public VirtualFile getSdkRoot(@Nullable Module module) {
     VirtualFile coreJar = findCoreJar(module);
     if (coreJar == null) return null;
 
-    if (GriffonLibraryPresentationProvider.isGriffonCoreJar(coreJar)) {
-      final VirtualFile parent = coreJar.getParent();
-      if (parent != null) {
-        return parent.getParent();
-      }
+    final VirtualFile parent = coreJar.getParent();
+    if (parent != null) {
+      return parent.getParent();
     }
     return null;
   }
