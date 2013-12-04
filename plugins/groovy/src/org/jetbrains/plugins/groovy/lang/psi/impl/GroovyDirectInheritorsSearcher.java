@@ -59,7 +59,7 @@ class GroovyDirectInheritorsSearcher implements QueryExecutor<PsiClass, DirectCl
       }
     }
     final Collection<GrAnonymousClassDefinition> classes =
-      StubIndex.getInstance().get(GrAnonymousClassIndex.KEY, name, clazz.getProject(), scope);
+      StubIndex.getInstance().safeGet(GrAnonymousClassIndex.KEY, name, clazz.getProject(), scope, GrAnonymousClassDefinition.class);
     for (GrAnonymousClassDefinition aClass : classes) {
       inheritors.add(aClass);
     }
