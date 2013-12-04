@@ -83,20 +83,27 @@ public class TemplateDataElementType extends IFileElementType implements ITempla
     final PsiFile templateFile = createTemplateFile(file, language, chars, viewProvider);
 
     final FileElement parsed = ((PsiFileImpl)templateFile).calcTreeElement();
-    prepareParsedTemplateFile(parsed);
-    Lexer langLexer = LanguageParserDefinitions.INSTANCE.forLanguage(language).createLexer(file.getProject());
-    final Lexer lexer = new MergingLexerAdapter(
-      new TemplateBlackAndWhiteLexer(createBaseLexer(viewProvider), langLexer, myTemplateElementType, myOuterElementType),
-      TokenSet.create(myTemplateElementType, myOuterElementType));
-    lexer.start(chars);
-    insertOuters(parsed, lexer, table);
 
-    if (parsed != null) {
-      final TreeElement element = parsed.getFirstChildNode();
-      if (element != null) {
-        parsed.rawRemoveAllChildren();
-        treeElement.rawAddChildren(element);
+    DebugUtil.startPsiModification("template language parsing");
+    try {
+      prepareParsedTemplateFile(parsed);
+      Lexer langLexer = LanguageParserDefinitions.INSTANCE.forLanguage(language).createLexer(file.getProject());
+      final Lexer lexer = new MergingLexerAdapter(
+        new TemplateBlackAndWhiteLexer(createBaseLexer(viewProvider), langLexer, myTemplateElementType, myOuterElementType),
+        TokenSet.create(myTemplateElementType, myOuterElementType));
+      lexer.start(chars);
+      insertOuters(parsed, lexer, table);
+
+      if (parsed != null) {
+        final TreeElement element = parsed.getFirstChildNode();
+        if (element != null) {
+          parsed.rawRemoveAllChildren();
+          treeElement.rawAddChildren(element);
+        }
       }
+    }
+    finally {
+      DebugUtil.finishPsiModification();
     }
 
     treeElement.subtreeChanged();

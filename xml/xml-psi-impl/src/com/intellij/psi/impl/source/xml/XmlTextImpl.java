@@ -174,20 +174,18 @@ public class XmlTextImpl extends XmlElementImpl implements XmlText, PsiLanguageI
     doSetValue(s, getPolicy());
   }
 
-  public void doSetValue(final String s, XmlPsiPolicy policy) throws IncorrectOperationException {
-    final ASTNode firstEncodedElement = policy.encodeXmlTextContents(s, this);
-
-    if (firstEncodedElement == null) {
-      delete();
-      return;
-    }
-
+  public void doSetValue(final String s, final XmlPsiPolicy policy) throws IncorrectOperationException {
     final PomModel model = PomManager.getModel(getProject());
     final XmlAspect aspect = model.getModelAspect(XmlAspect.class);
     model.runTransaction(new PomTransactionBase(this, aspect) {
       public PomModelEvent runInner() {
         final String oldText = getText();
-        replaceAllChildrenToChildrenOf(firstEncodedElement.getTreeParent());
+        final ASTNode firstEncodedElement = policy.encodeXmlTextContents(s, XmlTextImpl.this);
+        if (firstEncodedElement == null) {
+          delete();
+        } else {
+          replaceAllChildrenToChildrenOf(firstEncodedElement.getTreeParent());
+        }
         clearCaches();
         return XmlTextChangedImpl.createXmlTextChanged(model, XmlTextImpl.this, oldText);
       }
