@@ -270,7 +270,7 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
       @Override
       public void customize(JList list, Object value, int index, boolean selected, boolean hasFocus) {
         if (value == null) {
-          setText("<no dialect>");
+          setText("None");
         }
         else if (value instanceof Language) {
           setText(((Language)value).getDisplayName());
@@ -344,6 +344,7 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
       variants[0] = null;
       System.arraycopy(languageDialects, 0, variants, 1, languageDialects.length);
       dialects.setModel(new DefaultComboBoxModel(variants));
+      dialects.setEnabled(variants.length > 1);
     }
 
     final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByFileType(fileType);
