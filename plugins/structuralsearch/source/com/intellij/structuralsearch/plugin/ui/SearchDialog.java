@@ -680,15 +680,17 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
     allOptions.add(searchOptions, BorderLayout.CENTER);
     optionsContent.add(allOptions, BorderLayout.CENTER);
 
-    JPanel panel = new JPanel(new BorderLayout());
-    panel.setBorder(BorderFactory.createEmptyBorder(0, 4, 0, 0));
-    openInNewTab = new JCheckBox(SSRBundle.message("open.in.new.tab.checkbox"));
-    openInNewTab.setSelected(ourOpenInNewTab);
-    ToolWindow findWindow = ToolWindowManager.getInstance(searchContext.getProject()).getToolWindow(ToolWindowId.FIND);
-    openInNewTab.setEnabled(findWindow != null && findWindow.isAvailable());
-    panel.add(openInNewTab, BorderLayout.EAST);
+    if (myRunFindActionOnClose) {
+      JPanel panel = new JPanel(new BorderLayout());
+      panel.setBorder(BorderFactory.createEmptyBorder(0, 4, 0, 0));
+      openInNewTab = new JCheckBox(SSRBundle.message("open.in.new.tab.checkbox"));
+      openInNewTab.setSelected(ourOpenInNewTab);
+      ToolWindow findWindow = ToolWindowManager.getInstance(searchContext.getProject()).getToolWindow(ToolWindowId.FIND);
+      openInNewTab.setEnabled(findWindow != null && findWindow.isAvailable());
+      panel.add(openInNewTab, BorderLayout.EAST);
 
-    optionsContent.add(BorderLayout.SOUTH, panel);
+      optionsContent.add(BorderLayout.SOUTH, panel);
+    }
 
     updateEditor();
     return centerPanel;
