@@ -9,13 +9,11 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.BrowserHyperlinkListener;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.components.JBLoadingPanel;
-import com.intellij.util.Function;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.VcsFullCommitDetails;
 import com.intellij.vcs.log.VcsRef;
-import com.intellij.vcs.log.data.DataPack;
 import com.intellij.vcs.log.data.LoadingDetails;
 import com.intellij.vcs.log.data.VcsLogDataHolder;
 import com.intellij.vcs.log.graph.render.PrintParameters;
@@ -94,8 +92,10 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
       }
 
       VcsFullCommitDetails commitData = myLogDataHolder.getCommitDetailsGetter().getCommitData(hash);
-      DataPack dataPack = myLogDataHolder.getDataPack();
-      List<VcsRef> branches = myLogDataHolder.getContainingBranchesGetter().requestContainingBranches(dataPack, dataPack.getNode(row));
+      List<String> branches = null;
+      if (!(commitData instanceof LoadingDetails)) {
+        branches = myLogDataHolder.getContainingBranchesGetter().requestContainingBranches(commitData.getRoot(), hash);
+      }
       if (commitData instanceof LoadingDetails || branches == null) {
         myLoadingPanel.startLoading();
         myDataPanel.setData(null, null);
@@ -133,7 +133,7 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
       setPreferredSize(new Dimension(150, 100));
     }
 
-    void setData(@Nullable VcsFullCommitDetails commit, @Nullable List<VcsRef> branches) {
+    void setData(@Nullable VcsFullCommitDetails commit, @Nullable List<String> branches) {
       if (commit == null || branches == null) {
         setText("");
       }
@@ -145,13 +145,8 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
       }
     }
 
-    private static String getContainedBranchesText(List<VcsRef> branches) {
-      return "<i>Contained in branches:</i> " + StringUtil.join(branches, new Function<VcsRef, String>() {
-        @Override
-        public String fun(VcsRef ref) {
-          return ref.getName();
-        }
-      }, ", ");
+    private static String getContainedBranchesText(List<String> branches) {
+      return "<i>Contained in branches:</i> " + StringUtil.join(branches, ", ");
     }
 
     private String getMessageText(VcsFullCommitDetails commit) {
