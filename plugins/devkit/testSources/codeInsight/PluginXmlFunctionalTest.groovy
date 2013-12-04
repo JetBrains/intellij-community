@@ -196,6 +196,10 @@ public class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
     myFixture.testHighlighting("deprecatedExtensionAttribute.xml", "MyExtBean.java");
   }
 
+  public void testDeprecatedAttributes() {
+    myFixture.testHighlighting("deprecatedAttributes.xml")
+  }
+
   public void testExtensionAttributeDeclaredUsingAccessors() {
     myFixture.testHighlighting("extensionAttributeWithAccessors.xml", "ExtBeanWithAccessors.java");
   }
