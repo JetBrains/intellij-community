@@ -208,7 +208,7 @@ public class SystemInfo extends SystemInfoRt {
 
   private static boolean isOracleJvm() {
     final String vendor = SystemProperties.getJavaVmVendor();
-    return vendor != null && StringUtil.containsIgnoreCase(vendor, "Oracle");
+    return vendor != null && (StringUtil.containsIgnoreCase(vendor, "Oracle") || StringUtil.containsIgnoreCase(vendor, "Sun"));
   }
 
   private static boolean isAppleJvm() {
