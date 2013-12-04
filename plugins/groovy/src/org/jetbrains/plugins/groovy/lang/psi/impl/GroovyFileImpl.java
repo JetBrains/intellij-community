@@ -64,9 +64,7 @@ import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint;
 
 import javax.swing.*;
-import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.List;
 import java.util.concurrent.ConcurrentMap;
 
 import static org.jetbrains.plugins.groovy.editor.GroovyImportHelper.processImplicitImports;
@@ -296,11 +294,12 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
   }
 
   public GrImportStatement[] getImportStatements() {
-    List<GrImportStatement> result = new ArrayList<GrImportStatement>();
-    for (PsiElement child : getChildren()) {
-      if (child instanceof GrImportStatement) result.add((GrImportStatement)child);
+    final StubElement<?> stub = getStub();
+    if (stub != null) {
+      return stub.getChildrenByType(GroovyElementTypes.IMPORT_STATEMENT, GrImportStatement.ARRAY_FACTORY);
     }
-    return result.toArray(new GrImportStatement[result.size()]);
+
+    return calcTreeElement().getChildrenAsPsiElements(GroovyElementTypes.IMPORT_STATEMENT, GrImportStatement.ARRAY_FACTORY);
   }
 
   @Nullable
