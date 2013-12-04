@@ -158,6 +158,8 @@ libraryLicense(name: "CGLib", libraryName: "CGLIB", version: "2.2.2", license: "
 libraryLicense(name: "classworlds", libraryName: "classworlds-1.1.jar", version: "1.1", license: "codehaus", url: "http://classworlds.codehaus.org/", licenseUrl: "http://classworlds.codehaus.org/license.html")
 libraryLicense(name: "Android SDK Tools", libraryName: "android-sdk-tools", license: "Apache 2.0", url: "http://source.android.com/")
 libraryLicense(name: "Android SDK Tools JPS", libraryName: "android-sdk-tools-jps", license: "Apache 2.0", url: "http://source.android.com/")
+libraryLicense(name: "Android Builder", libraryName: "android-builder", license: "Apache 2.0", url: "http://source.android.com/")
+libraryLicense(name: "Android Builder Model", libraryName: "builder-model", license: "Apache 2.0", url: "http://source.android.com/")
 libraryLicense(name: "Apache Commons BeanUtils", libraryName: "commons-beanutils.jar", version: "1.6", license: "Apache 2.0", url: "http://commons.apache.org/beanutils/")
 libraryLicense(name: "Apache Commons Codec", libraryName: "commons-codec", version: "1.8", license: "Apache 2.0", url: "http://commons.apache.org/codec/", licenseUrl: "http://commons.apache.org/license.html")
 libraryLicense(name: "Apache Commons Compress", libraryName: "commons-compress", version: "1.0", license: "Apache 2.0", url: "http://commons.apache.org/proper/commons-compress/", licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0")
