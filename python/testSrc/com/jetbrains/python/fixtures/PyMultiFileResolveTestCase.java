@@ -46,6 +46,7 @@ public abstract class PyMultiFileResolveTestCase extends PyResolveTestCase {
       }
     }, myTestRootDisposable);
     final ResolveResult[] resolveResults = ref.multiResolve(false);
+    psiManager.setAssertOnFileLoadingFilter(VirtualFileFilter.NONE, myTestRootDisposable);
     if (resolveResults.length == 0) {
       return null;
     }
