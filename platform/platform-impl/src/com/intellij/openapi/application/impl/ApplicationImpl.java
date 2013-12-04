@@ -1067,9 +1067,10 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
 
   @Override
   public boolean isReadAccessAllowed() {
-    return holdsReadLock() ||
-           ourDispatchThread == Thread.currentThread() ||
+    Thread currentThread = Thread.currentThread();
+    return ourDispatchThread == currentThread ||
            isExceptionalThreadWithReadAccess() ||
+           holdsReadLock() ||
            isDispatchThread();
   }
 
