@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -80,6 +80,8 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
   public transient Getter<PasswordAuthentication> myTestAuthRunnable = new StaticGetter<PasswordAuthentication>(null);
   public transient Getter<PasswordAuthentication> myTestGenericAuthRunnable = new StaticGetter<PasswordAuthentication>(null);
   public String PROXY_EXCEPTIONS = "";
+  public boolean USE_PAC_URL = false;
+  public String PAC_URL = "";
 
   public static HttpConfigurable getInstance() {
     return ServiceManager.getService(HttpConfigurable.class);
