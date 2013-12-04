@@ -1,53 +1,33 @@
 package org.jetbrains.postfixCompletion.templates;
 
-import com.intellij.codeInsight.completion.InsertionContext;
-import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.codeInsight.CodeInsightUtilCore;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.CodeStyleManager;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.postfixCompletion.infrastructure.PostfixTemplateContext;
-import org.jetbrains.postfixCompletion.infrastructure.PrefixExpressionContext;
-import org.jetbrains.postfixCompletion.infrastructure.TemplateInfo;
-import org.jetbrains.postfixCompletion.lookupItems.StatementPostfixLookupElement;
+import org.jetbrains.annotations.Nullable;
 
-@TemplateInfo(
-  templateName = "switch",
-  description = "Produces switch over integral/enum/string values",
-  example = "switch (expr)")
 public class SwitchStatementPostfixTemplate extends PostfixTemplate {
-  @Override
-  public LookupElement createLookupElement(@NotNull PostfixTemplateContext context) {
-    for (PrefixExpressionContext expressionContext : context.expressions()) {
-      if (!expressionContext.canBeStatement) continue;
-
-      if (!context.executionContext.isForceMode) {
-        PsiType expressionType = expressionContext.expressionType;
-        if (expressionType == null) continue;
-        if (!isSwitchCompatibleType(expressionType, expressionContext.expression)) continue;
-      }
-
-      return new ReturnLookupElement(expressionContext);
-    }
-
-    return null;
-  }
-  
-  @Override
-  public void expand(@NotNull PsiElement context, @NotNull Editor editor) {
-    throw new UnsupportedOperationException("Implement me please");
+  public SwitchStatementPostfixTemplate() {
+    super("switch", "Produces switch over integral/enum/string values", "switch (expr)");
   }
 
-  private static boolean isSwitchCompatibleType(@NotNull PsiType type, @NotNull PsiElement context) {
-    // byte, short, char, int
+  private static boolean isSwitchCompatibleType(@Nullable PsiType type, @NotNull PsiElement context) {
+    if (type == null) return false;
     if (PsiType.INT.isAssignableFrom(type)) return true;
 
-    if (type instanceof PsiClassType) { // enum
+    if (type instanceof PsiClassType) {
       PsiClass psiClass = ((PsiClassType)type).resolve();
       if (psiClass != null && psiClass.isEnum()) return true;
     }
 
-    if (type.equalsToText(CommonClassNames.JAVA_LANG_STRING)) { // string
+    if (type.equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
+      if (ApplicationManager.getApplication().isUnitTestMode()) return true; // todo: mock jdk 6 and 7
       PsiFile containingFile = context.getContainingFile();
       if (containingFile instanceof PsiJavaFile) {
         LanguageLevel level = ((PsiJavaFile)containingFile).getLanguageLevel();
@@ -58,29 +38,30 @@ public class SwitchStatementPostfixTemplate extends PostfixTemplate {
     return false;
   }
 
-  static final class ReturnLookupElement extends StatementPostfixLookupElement<PsiSwitchStatement> {
-    public ReturnLookupElement(@NotNull PrefixExpressionContext expression) {
-      super("switch", expression);
-    }
+  @Override
+  public boolean isApplicable(@NotNull PsiElement context, @NotNull Document copyDocument, int newOffset) {
+    PsiExpression expr = getTopmostExpression(context);
+    return expr != null && isSwitchCompatibleType(expr.getType(), context);
+  }
 
-    @NotNull
-    @Override
-    protected PsiSwitchStatement createNewStatement(@NotNull PsiElementFactory factory,
-                                                    @NotNull PsiElement expression,
-                                                    @NotNull PsiElement context) {
-      PsiSwitchStatement switchStatement = (PsiSwitchStatement)factory.createStatementFromText("switch (expr)", expression);
-      PsiExpression condition = switchStatement.getExpression();
-      assert condition != null;
-      condition.replace(expression);
-      return switchStatement;
-    }
+  @Override
+  public void expand(@NotNull PsiElement context, @NotNull Editor editor) {
+    PsiExpression expr = getTopmostExpression(context);
+    PsiElement parent = expr != null ? expr.getParent() : null;
+    if (!(parent instanceof PsiExpressionStatement)) return;
+    
+    Project project = context.getProject();
+    PsiElementFactory factory = JavaPsiFacade.getInstance(project).getElementFactory();
+    CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(project);
+    PsiSwitchStatement switchStatement = (PsiSwitchStatement)codeStyleManager.reformat(factory.createStatementFromText(
+      "switch (" + expr.getText() + ") {\nst;\n}", context));
+    switchStatement = (PsiSwitchStatement)parent.replace(switchStatement);
 
-    @Override
-    protected void postProcess(@NotNull InsertionContext context, @NotNull PsiSwitchStatement statement) {
-      PsiJavaToken rParenth = statement.getRParenth();
-      assert rParenth != null;
-      int offset = rParenth.getTextRange().getEndOffset();
-      context.getEditor().getCaretModel().moveToOffset(offset);
-    }
+    //noinspection ConstantConditions
+    PsiCodeBlock block = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(switchStatement.getBody());
+    TextRange range = block.getStatements()[0].getTextRange();
+    editor.getDocument().deleteString(range.getStartOffset(), range.getEndOffset());
+
+    editor.getCaretModel().moveToOffset(range.getStartOffset());
   }
 }

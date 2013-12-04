@@ -1,5 +1,5 @@
 public class Foo {
     int f(char x) {
-        switch (x)<caret>
+        x.switch<caret>
     }
 }
