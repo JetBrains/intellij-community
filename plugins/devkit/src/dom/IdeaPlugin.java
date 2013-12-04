@@ -105,6 +105,7 @@ public interface IdeaPlugin extends DomElement {
 
   @NotNull
   @SubTagList("extensions")
+  @Stubbed
   List<Extensions> getExtensions();
   Extensions addExtensions();
 

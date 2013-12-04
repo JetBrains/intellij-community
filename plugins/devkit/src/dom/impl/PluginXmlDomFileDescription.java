@@ -103,4 +103,9 @@ public class PluginXmlDomFileDescription extends DomFileDescription<IdeaPlugin> 
   public boolean hasStubs() {
     return true;
   }
+
+  @Override
+  public int getStubVersion() {
+    return 2;
+  }
 }
