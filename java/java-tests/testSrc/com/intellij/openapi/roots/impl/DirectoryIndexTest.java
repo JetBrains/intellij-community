@@ -724,4 +724,13 @@ public class DirectoryIndexTest extends IdeaTestCase {
     assertNotNull(actualDirs);
     assertSameElements(actualDirs, expectedDirs);
   }
+
+  public void testFileLibraryInsideFolderLibrary() throws IOException {
+    VirtualFile file = myLibSrcDir.createChildData(this, "empty.txt");
+    ModuleRootModificationUtil.addModuleLibrary(myModule2, "lib2",
+                                                Collections.<String>emptyList(), singletonList(file.getUrl()),
+                                                Collections.<String>emptyList(), DependencyScope.COMPILE, true);
+    checkInfo(file, null, false, true, "", null, myModule2, myModule3);
+
+  }
 }

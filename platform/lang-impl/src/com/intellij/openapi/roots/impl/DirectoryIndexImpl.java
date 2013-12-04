@@ -507,7 +507,7 @@ public class DirectoryIndexImpl extends DirectoryIndex {
     }
     RootIndex rootIndex = myRootIndex;
     if (rootIndex == null) {
-      rootIndex = myRootIndex = new RootIndex(myProject);
+      myRootIndex = rootIndex = new RootIndex(myProject);
     }
     return rootIndex;
   }
@@ -621,15 +621,40 @@ public class DirectoryIndexImpl extends DirectoryIndex {
       return riInfo;
     }
 
-    return assertConsistentResult(dir, riInfo, myState.getInfo(((NewVirtualFile)dir).getId()));
+    DirectoryInfo standardResult = myState.getInfo(((NewVirtualFile)dir).getId());
+    assertConsistentResult(dir, riInfo, standardResult);
+    if (standardResult != riInfo && standardResult.equals(riInfo) && rootIndex != null) {
+      rootIndex.cacheInfos(dir, dir, standardResult);
+    }
+    return standardResult;
   }
 
-  private static <T> T assertConsistentResult(@NotNull Object arg, @Nullable T rootIndexResult, T standardResult) {
+  private <T> T assertConsistentResult(@NotNull Object arg, @Nullable T rootIndexResult, T standardResult) {
     //noinspection ConstantConditions
     if (ourCompareImplementations && !Comparing.equal(rootIndexResult, standardResult)) {
-      LOG.error("DirectoryIndex differs from RootIndex at " + arg +
-                "\nriInfo         =  " + rootIndexResult +
-                "\nstandardResult =  " + standardResult);
+      String msg = "DirectoryIndex differs from RootIndex at " + arg +
+                       "\nriInfo         =  " + rootIndexResult +
+                       "\nstandardResult =  " + standardResult + 
+                       "\nRoot model:";
+      for (Module module : ModuleManager.getInstance(myProject).getModules()) {
+        msg += "\nModule " + module.getName();
+        for (ContentEntry entry : ModuleRootManager.getInstance(module).getContentEntries()) {
+          msg += "\n  Content " + entry.getFile();
+          for (VirtualFile file : entry.getSourceFolderFiles()) {
+            msg += "\n    Source " + file;
+          }
+          for (VirtualFile file : entry.getExcludeFolderFiles()) {
+            msg += "\n    Excluded " + file;
+          }
+        }
+      }
+      for (DirectoryIndexExcludePolicy policy : Extensions.getExtensions(DirectoryIndexExcludePolicy.EP_NAME, myProject)) {
+        for (VirtualFile root : policy.getExcludeRootsForProject()) {
+          msg += "\nProject exclude " + root;
+        }
+      }
+
+      LOG.error(msg);
     }
     return standardResult;
   }
