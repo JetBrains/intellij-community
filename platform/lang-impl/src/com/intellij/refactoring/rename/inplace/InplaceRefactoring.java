@@ -269,7 +269,7 @@ public abstract class InplaceRefactoring {
     final TemplateBuilderImpl builder = new TemplateBuilderImpl(myScope);
 
     PsiElement nameIdentifier = getNameIdentifier();
-    int offset = myEditor.getCaretModel().getOffset();
+    int offset = InjectedLanguageUtil.getTopLevelEditor(myEditor).getCaretModel().getOffset();
     PsiElement selectedElement = getSelectedInEditorElement(nameIdentifier, refs, stringUsages, offset);
 
     boolean subrefOnPrimaryElement = false;
@@ -732,6 +732,7 @@ public abstract class InplaceRefactoring {
       if (initialInjectedHost != null && initialInjectedHost != injectionHost) {
         return false;
       }
+      startOffset += injectionHost.getTextOffset();
     }
     return textRange.shiftRight(startOffset).containsOffset(offset);
   }
