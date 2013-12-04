@@ -183,6 +183,9 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
           } else {
             ourLastTimePressed.set(System.currentTimeMillis());
             ourOtherKeyWasPressed.set(true);
+            if (keyCode == KeyEvent.VK_ESCAPE || keyCode == KeyEvent.VK_TAB)  {
+              ourLastTimePressed.set(0);
+            }
           }
           resetState();
         }
