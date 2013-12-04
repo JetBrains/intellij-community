@@ -336,7 +336,7 @@ public class SearchTextField extends JPanel {
         // move item to top of the list
         myFullList.remove(index);
       }
-      else if (myFullList.size() >= myHistorySize) {
+      else if (myFullList.size() >= myHistorySize && myFullList.size() > 0) {
         // trim list
         myFullList.remove(myFullList.size() - 1);
       }
