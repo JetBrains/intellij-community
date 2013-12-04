@@ -182,7 +182,7 @@ public class VcsLogDataHolder implements Disposable {
         return putHash(hash);
       }
     };
-    myContainingBranchesGetter = new ContainingBranchesGetter(this);
+    myContainingBranchesGetter = new ContainingBranchesGetter(this, this);
   }
 
   @NotNull
