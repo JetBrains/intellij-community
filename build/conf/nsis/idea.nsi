@@ -15,7 +15,7 @@
 Name "${MUI_PRODUCT}"
 SetCompressor lzma
 ; http://nsis.sourceforge.net/Shortcuts_removal_fails_on_Windows_Vista
-RequestExecutionLevel user
+;RequestExecutionLevel user
 
 ;------------------------------------------------------------------------------
 ; include "Modern User Interface"
@@ -34,6 +34,9 @@ ReserveFile "desktop.ini"
 ReserveFile "DeleteSettings.ini"
 ReserveFile '${NSISDIR}\Plugins\InstallOptions.dll'
 !insertmacro MUI_RESERVEFILE_LANGDLL
+
+!define MULTIUSER_EXECUTIONLEVEL Highest
+!include MultiUser.nsh
 
 !define MUI_ICON "${IMAGES_LOCATION}\${PRODUCT_ICON_FILE}"
 !define MUI_UNICON "${IMAGES_LOCATION}\${PRODUCT_UNINST_ICON_FILE}"
@@ -340,6 +343,7 @@ LicenseLangString myLicenseData ${LANG_JAPANESE} "${LICENSE_FILE}.txt"
 !endif
 
 Function .onInit
+  !insertmacro MULTIUSER_INIT
   MessageBox MB_OK ".onInit"
 ; Check if user has permissions to write in Program Files folder
   UserInfo::GetOriginalAccountType
@@ -353,7 +357,6 @@ Function .onInit
     goto Done
 UserNotAdmin:
     MessageBox MB_OK "the user does not have required permissions"
-    SetShellVarContext current
     StrCpy $INSTDIR "$APPDATA\${MANUFACTURER}\${PRODUCT_WITH_VER}"
     StrCpy $baseRegKey "HKCU"
 Done:
@@ -629,6 +632,8 @@ Section "IDEA Files" CopyIdeaFiles
   StrCmp $R2 1 "" skip_desktop_shortcut
   CreateShortCut "$DESKTOP\${PRODUCT_FULL_NAME_WITH_VER}.lnk" \
                  "$INSTDIR\bin\${PRODUCT_EXE_FILE}" "" "" "" SW_SHOWNORMAL
+  MessageBox MB_OK "CreateShortCut: $DESKTOP\${PRODUCT_FULL_NAME_WITH_VER}.lnk"
+  MessageBox MB_OK "CreateShortCut: $INSTDIR\bin\${PRODUCT_EXE_FILE}"
 
 skip_desktop_shortcut:
   ; OS is not win7
@@ -776,6 +781,7 @@ FunctionEnd
 ;------------------------------------------------------------------------------
 
 Function un.onInit
+  !insertmacro MULTIUSER_UNINIT
   !insertmacro MUI_UNGETLANGUAGE
   !insertmacro INSTALLOPTIONS_EXTRACT "DeleteSettings.ini"
 FunctionEnd
