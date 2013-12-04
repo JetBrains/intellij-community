@@ -41,7 +41,7 @@ public class PyClassNameIndex extends StringStubIndexExtension<PyClass> {
   }
 
   public static Collection<PyClass> find(String name, Project project, GlobalSearchScope scope) {
-    return StubIndex.getInstance().get(KEY, name, project, scope);
+    return StubIndex.getElements(KEY, name, project, scope, PyClass.class);
   }
 
   public static Collection<PyClass> find(String name, Project project, boolean includeNonProjectItems) {

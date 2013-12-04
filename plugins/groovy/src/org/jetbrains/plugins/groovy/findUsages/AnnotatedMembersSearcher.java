@@ -53,7 +53,7 @@ public class AnnotatedMembersSearcher implements QueryExecutor<PsiModifierListOw
     final Collection<PsiElement> members = ApplicationManager.getApplication().runReadAction(new Computable<Collection<PsiElement>>() {
       @Override
       public Collection<PsiElement> compute() {
-        return StubIndex.getInstance().get(GrAnnotatedMemberIndex.KEY, name, clazz.getProject(), scope);
+        return StubIndex.getElements(GrAnnotatedMemberIndex.KEY, name, clazz.getProject(), scope, PsiElement.class);
       }
     });
     if (members.isEmpty()) {

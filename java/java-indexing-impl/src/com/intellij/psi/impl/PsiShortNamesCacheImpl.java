@@ -134,7 +134,8 @@ public class PsiShortNamesCacheImpl extends PsiShortNamesCache {
   @Override
   @NotNull
   public PsiMethod[] getMethodsByName(@NotNull String name, @NotNull final GlobalSearchScope scope) {
-    Collection<PsiMethod> methods = StubIndex.getInstance().get(JavaStubIndexKeys.METHODS, name, myManager.getProject(), new JavaSourceFilterScope(scope));
+    Collection<PsiMethod> methods = StubIndex.getElements(JavaStubIndexKeys.METHODS, name, myManager.getProject(),
+                                                          new JavaSourceFilterScope(scope), PsiMethod.class);
     if (methods.isEmpty()) return PsiMethod.EMPTY_ARRAY;
 
     List<PsiMethod> list = filterMembers(methods, scope);

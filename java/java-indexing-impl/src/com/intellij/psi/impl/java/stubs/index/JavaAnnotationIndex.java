@@ -26,7 +26,6 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.stubs.StringStubIndexExtension;
 import com.intellij.psi.stubs.StubIndex;
 import com.intellij.psi.stubs.StubIndexKey;
-import com.intellij.psi.stubs.StubProcessingHelperBase;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -46,6 +45,6 @@ public class JavaAnnotationIndex extends StringStubIndexExtension<PsiAnnotation>
 
   @Override
   public Collection<PsiAnnotation> get(final String s, final Project project, @NotNull final GlobalSearchScope scope) {
-    return StubIndex.getInstance().safeGet(getKey(), s, project, new JavaSourceFilterScope(scope), PsiAnnotation.class);
+    return StubIndex.getElements(getKey(), s, project, new JavaSourceFilterScope(scope), PsiAnnotation.class);
   }
 }
