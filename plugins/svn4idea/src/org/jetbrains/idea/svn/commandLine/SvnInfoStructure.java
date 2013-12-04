@@ -16,7 +16,6 @@
 package org.jetbrains.idea.svn.commandLine;
 
 import com.intellij.util.containers.ContainerUtil;
-import org.apache.subversion.javahl.ConflictDescriptor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.portable.IdeaSVNInfo;
@@ -38,12 +37,21 @@ import java.util.Map;
 public class SvnInfoStructure {
 
   private static final Map<String, SVNConflictAction> ourConflictActions = ContainerUtil.newHashMap();
+  private static final Map<String, SVNConflictReason> ourConflictReasons = ContainerUtil.newHashMap();
 
   static {
     ourConflictActions.put("add", SVNConflictAction.ADD);
     ourConflictActions.put("edit", SVNConflictAction.EDIT);
     ourConflictActions.put("delete", SVNConflictAction.DELETE);
     ourConflictActions.put("replace", SVNConflictAction.REPLACE);
+
+    ourConflictReasons.put("edit", SVNConflictReason.EDITED);
+    ourConflictReasons.put("obstruct", SVNConflictReason.OBSTRUCTED);
+    ourConflictReasons.put("delete", SVNConflictReason.DELETED);
+    ourConflictReasons.put("miss", SVNConflictReason.MISSING);
+    ourConflictReasons.put("unversion", SVNConflictReason.UNVERSIONED);
+    ourConflictReasons.put("add", SVNConflictReason.ADDED);
+    ourConflictReasons.put("replace", SVNConflictReason.REPLACED);
   }
 
   @Nullable public File myFile;
@@ -120,38 +128,15 @@ public class SvnInfoStructure {
     return action;
   }
 
-  private SVNConflictReason parseConflictReason(String reason) throws SAXException {
-    if (ConflictDescriptor.Reason.edited.name().equals(reason)) {
-      return SVNConflictReason.EDITED;
-    } else if (ConflictDescriptor.Reason.obstructed.name().equals(reason)) {
-      return SVNConflictReason.OBSTRUCTED;
-    } else if (ConflictDescriptor.Reason.deleted.name().equals(reason)) {
-      return SVNConflictReason.DELETED;
-    } else if (ConflictDescriptor.Reason.missing.name().equals(reason)) {
-      return SVNConflictReason.MISSING;
-    } else if (ConflictDescriptor.Reason.unversioned.name().equals(reason)) {
-      return SVNConflictReason.UNVERSIONED;
-    } else if (ConflictDescriptor.Reason.added.name().equals(reason)) {
-      return SVNConflictReason.ADDED;
-    } else if (ConflictDescriptor.Reason.replaced.name().equals(reason)) {
-      return SVNConflictReason.REPLACED;
+  private SVNConflictReason parseConflictReason(@NotNull String reasonName) throws SAXException {
+    SVNConflictReason reason = SVNConflictReason.fromString(reasonName);
+    reason = reason == null ? ourConflictReasons.get(reasonName) : null;
+
+    if (reason == null) {
+      throw new SAXException("Can not parse conflict reason: " + reason);
     }
-    if ("edit".equals(reason)) {
-      return SVNConflictReason.EDITED;
-    } else if (reason.contains("obstruct")) {
-      return SVNConflictReason.OBSTRUCTED;
-    } else if ("delete".equals(reason)) {
-      return SVNConflictReason.DELETED;
-    } else if (reason.contains("miss")) {
-      return SVNConflictReason.MISSING;
-    } else if (reason.contains("unversion")) {
-      return SVNConflictReason.UNVERSIONED;
-    } else if (reason.contains("add")) {
-      return SVNConflictReason.ADDED;
-    } else if (reason.contains("replace")) {
-      return SVNConflictReason.REPLACED;
-    }
-    throw new SAXException("Can not parse conflict reason: " + reason);
+
+    return reason;
   }
 
   private SVNConflictVersion createVersion(final ConflictVersion version) throws SVNException, SAXException {
