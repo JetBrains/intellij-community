@@ -99,11 +99,10 @@ public class SourceUtil {
     }
 
     newChild.putUserData(CharTable.CHAR_TABLE_KEY, SharedImplUtil.findCharTableByTree(newChild));
-    dummyExpr.rawReplaceWithList(newChild);
+    dummyExpr.getTreeParent().replaceChild(dummyExpr, newChild);
 
-    newChild = parenthExpr;
     // TODO remove explicit caches drop since this should be ok if we will use ChangeUtil for the modification
-    TreeUtil.clearCaches(TreeUtil.getFileElement(newChild));
-    return newChild;
+    TreeUtil.clearCaches(TreeUtil.getFileElement(parenthExpr));
+    return parenthExpr;
   }
 }

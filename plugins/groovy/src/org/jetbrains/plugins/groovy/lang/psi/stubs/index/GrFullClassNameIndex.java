@@ -43,6 +43,6 @@ public class GrFullClassNameIndex extends IntStubIndexExtension<PsiClass> {
   }
 
   public Collection<PsiClass> get(final Integer integer, final Project project, final GlobalSearchScope scope) {
-    return StubIndex.getInstance().safeGet(getKey(), integer, project, new GrSourceFilterScope(scope), PsiClass.class);
+    return StubIndex.getElements(getKey(), integer, project, new GrSourceFilterScope(scope), PsiClass.class);
   }
 }

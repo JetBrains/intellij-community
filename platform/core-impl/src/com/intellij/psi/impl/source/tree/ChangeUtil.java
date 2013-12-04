@@ -29,6 +29,7 @@ import com.intellij.pom.tree.events.TreeChangeEvent;
 import com.intellij.pom.tree.events.impl.TreeChangeEventImpl;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
+import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.impl.source.DummyHolder;
 import com.intellij.psi.impl.source.DummyHolderFactory;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
@@ -51,7 +52,13 @@ public class ChangeUtil {
   }
 
   private static void encodeInformation(TreeElement element, ASTNode original) {
-    encodeInformation(element, original, new HashMap<Object, Object>());
+    DebugUtil.startPsiModification("encodeInformation");
+    try {
+      encodeInformation(element, original, new HashMap<Object, Object>());
+    }
+    finally {
+      DebugUtil.finishPsiModification();
+    }
   }
 
   private static void encodeInformation(TreeElement element, ASTNode original, Map<Object, Object> state) {
@@ -71,7 +78,13 @@ public class ChangeUtil {
   }
 
   public static TreeElement decodeInformation(TreeElement element) {
-    return decodeInformation(element, new HashMap<Object, Object>());
+    DebugUtil.startPsiModification("decodeInformation");
+    try {
+      return decodeInformation(element, new HashMap<Object, Object>());
+    }
+    finally {
+      DebugUtil.finishPsiModification();
+    }
   }
 
   private static TreeElement decodeInformation(TreeElement element, Map<Object, Object> state) {

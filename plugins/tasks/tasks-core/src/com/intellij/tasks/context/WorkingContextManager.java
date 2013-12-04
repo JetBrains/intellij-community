@@ -169,7 +169,7 @@ public class WorkingContextManager {
     File tasksFolder = new File(PathManager.getConfigPath(), TASKS_FOLDER);
     if (!tasksFolder.exists()) {
       //noinspection ResultOfMethodCallIgnored
-      tasksFolder.mkdir();
+      tasksFolder.mkdirs();
     }
     String projectName = FileUtil.sanitizeFileName(myProject.getName());
     return new File(tasksFolder, projectName + postfix);

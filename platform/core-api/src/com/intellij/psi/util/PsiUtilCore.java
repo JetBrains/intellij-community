@@ -486,7 +486,7 @@ public class PsiUtilCore {
 
   @NotNull
   public static Language findLanguageFromElement(final PsiElement elt) {
-    if (elt.getFirstChild() == null) { //is leaf
+    if (!(elt instanceof PsiFile) && elt.getFirstChild() == null) { //is leaf
       final PsiElement parent = elt.getParent();
       if (parent != null) {
         return parent.getLanguage();

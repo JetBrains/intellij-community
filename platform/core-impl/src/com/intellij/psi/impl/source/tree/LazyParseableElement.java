@@ -23,6 +23,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.LogUtil;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.ILazyParseableElementType;
 import com.intellij.util.text.CharArrayUtil;
@@ -162,24 +163,30 @@ public class LazyParseableElement extends CompositeElement {
 
     ApplicationManager.getApplication().assertReadAccessAllowed();
 
-    ILazyParseableElementType type = (ILazyParseableElementType)getElementType();
-    ASTNode parsedNode = type.parseContents(this);
+    DebugUtil.startPsiModification("lazy-parsing");
+    try {
+      ILazyParseableElementType type = (ILazyParseableElementType)getElementType();
+      ASTNode parsedNode = type.parseContents(this);
 
-    if (parsedNode == null && text.length() > 0) {
-      CharSequence diagText = ApplicationManager.getApplication().isInternal() ? text : "";
-      LOG.error("No parse for a non-empty string: " + diagText + "; type=" + LogUtil.objectAndClass(type));
-    }
-
-    synchronized (lock) {
-      if (myText == null) return;
-      if (rawFirstChild() != null) {
-        LOG.error("Reentrant parsing?");
+      if (parsedNode == null && text.length() > 0) {
+        CharSequence diagText = ApplicationManager.getApplication().isInternal() ? text : "";
+        LOG.error("No parse for a non-empty string: " + diagText + "; type=" + LogUtil.objectAndClass(type));
       }
 
-      myText = null;
-
-      if (parsedNode == null) return;
-      super.rawAddChildrenWithoutNotifications((TreeElement)parsedNode);
+      synchronized (lock) {
+        if (myText == null) return;
+        if (rawFirstChild() != null) {
+          LOG.error("Reentrant parsing?");
+        }
+  
+        myText = null;
+  
+        if (parsedNode == null) return;
+        super.rawAddChildrenWithoutNotifications((TreeElement)parsedNode);
+      }
+    }
+    finally {
+      DebugUtil.finishPsiModification();
     }
 
     if (!Boolean.TRUE.equals(ourSuppressEagerPsiCreation.get())) {

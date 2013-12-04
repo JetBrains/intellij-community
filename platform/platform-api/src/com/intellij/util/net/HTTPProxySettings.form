@@ -207,14 +207,6 @@
           </component>
         </children>
       </grid>
-      <component id="c299" class="javax.swing.JButton" binding="myClearPasswordsButton" default-binding="true">
-        <constraints>
-          <grid row="4" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="2" use-parent-layout="false"/>
-        </constraints>
-        <properties>
-          <text resource-bundle="messages/CommonBundle" key="autodetected.proxies.clear.button"/>
-        </properties>
-      </component>
       <component id="ffae6" class="javax.swing.JLabel" binding="myErrorLabel">
         <constraints>
           <grid row="9" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
@@ -237,6 +229,45 @@
         </constraints>
         <properties/>
       </component>
+      <grid id="fee34" layout-manager="GridLayoutManager" row-count="2" column-count="3" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+        <margin top="0" left="0" bottom="0" right="0"/>
+        <constraints>
+          <grid row="4" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="true"/>
+        </constraints>
+        <properties/>
+        <border type="none"/>
+        <children>
+          <component id="8f836" class="javax.swing.JCheckBox" binding="myPacUrlCheckBox">
+            <constraints>
+              <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="2" use-parent-layout="false"/>
+            </constraints>
+            <properties>
+              <text resource-bundle="messages/CommonBundle" key="checkbox.automatic.proxy.configuration.url"/>
+            </properties>
+          </component>
+          <component id="c299" class="javax.swing.JButton" binding="myClearPasswordsButton" default-binding="true">
+            <constraints>
+              <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="2" use-parent-layout="false"/>
+            </constraints>
+            <properties>
+              <text resource-bundle="messages/CommonBundle" key="autodetected.proxies.clear.button"/>
+            </properties>
+          </component>
+          <component id="77d11" class="javax.swing.JTextField" binding="myPacUrlTextField">
+            <constraints>
+              <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="8" fill="1" indent="0" use-parent-layout="false">
+                <preferred-size width="150" height="-1"/>
+              </grid>
+            </constraints>
+            <properties/>
+          </component>
+          <hspacer id="21dc">
+            <constraints>
+              <grid row="0" column="2" row-span="1" col-span="1" vsize-policy="1" hsize-policy="6" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+            </constraints>
+          </hspacer>
+        </children>
+      </grid>
     </children>
   </grid>
 </form>

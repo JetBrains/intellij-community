@@ -569,6 +569,15 @@ public class StringUtil extends StringUtilRt {
     return s.substring(1, s.length() - 1);
   }
 
+  @NotNull
+  public static String unquoteString(@NotNull String s, char quotationChar) {
+    char c;
+    if (s.length() <= 1 || (c = s.charAt(0)) != quotationChar || s.charAt(s.length() - 1) != c) {
+      return s;
+    }
+    return s.substring(1, s.length() - 1);
+  }
+
   /**
    * This is just an optimized version of Matcher.quoteReplacement
    */

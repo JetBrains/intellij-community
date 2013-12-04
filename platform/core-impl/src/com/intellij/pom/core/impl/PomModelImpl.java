@@ -143,6 +143,7 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
       final PomModelAspect aspect = transaction.getTransactionAspect();
       startTransaction(transaction);
       try{
+        DebugUtil.startPsiModification(null);
         myBlockedAspects.push(new Pair<PomModelAspect, PomTransaction>(aspect, transaction));
 
         final PomModelEvent event;
@@ -195,6 +196,9 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
         }
         catch (Throwable t) {
           throwables.add(t);
+        }
+        finally {
+          DebugUtil.finishPsiModification();
         }
       }
     }

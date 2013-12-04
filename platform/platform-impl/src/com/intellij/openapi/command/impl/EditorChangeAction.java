@@ -27,6 +27,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.testFramework.LightVirtualFile;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.nio.charset.Charset;
 
@@ -39,13 +40,13 @@ public class EditorChangeAction extends BasicUndoableAction {
   private final Object myNewString;
   private final long myOldTimeStamp;
   private final long myNewTimeStamp;
-  private final Charset myCharset;
+  @NotNull private final Charset myCharset;
 
   public EditorChangeAction(DocumentEvent e) {
     this((DocumentEx)e.getDocument(), e.getOffset(), e.getOldFragment(), e.getNewFragment(), e.getOldTimeStamp());
   }
 
-  public EditorChangeAction(DocumentEx document,
+  public EditorChangeAction(@NotNull DocumentEx document,
                             int offset,
                             CharSequence oldString,
                             CharSequence newString,
