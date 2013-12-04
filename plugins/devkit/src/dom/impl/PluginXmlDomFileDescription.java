@@ -28,10 +28,7 @@ import com.intellij.util.xml.GenericAttributeValue;
 import com.intellij.util.xml.highlighting.DomElementAnnotationHolder;
 import com.intellij.util.xml.highlighting.DomElementsAnnotator;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.devkit.dom.Extension;
-import org.jetbrains.idea.devkit.dom.ExtensionPoint;
-import org.jetbrains.idea.devkit.dom.IdeaPlugin;
-import org.jetbrains.idea.devkit.dom.Vendor;
+import org.jetbrains.idea.devkit.dom.*;
 
 import javax.swing.*;
 
@@ -49,6 +46,14 @@ public class PluginXmlDomFileDescription extends DomFileDescription<IdeaPlugin> 
       else if (element instanceof Vendor) {
         annotateVendor((Vendor)element, holder);
       }
+      else if (element instanceof IdeaVersion) {
+        annotateIdeaVersion((IdeaVersion)element, holder);
+      }
+    }
+
+    private void annotateIdeaVersion(IdeaVersion ideaVersion, DomElementAnnotationHolder holder) {
+      highlightNotUsedAnymore(ideaVersion.getMin(), holder);
+      highlightNotUsedAnymore(ideaVersion.getMax(), holder);
     }
 
     private void annotateExtension(Extension extension, DomElementAnnotationHolder holder) {
@@ -65,10 +70,16 @@ public class PluginXmlDomFileDescription extends DomFileDescription<IdeaPlugin> 
     }
 
     private void annotateVendor(Vendor vendor, DomElementAnnotationHolder holder) {
-      final GenericAttributeValue<String> logoAttribute = vendor.getLogo();
-      if (!DomUtil.hasXml(logoAttribute)) return;
+      highlightNotUsedAnymore(vendor.getLogo(), holder);
+    }
 
-      final Annotation annotation = holder.createAnnotation(logoAttribute, HighlightSeverity.WARNING, "Not used anymore");
+    private void highlightNotUsedAnymore(GenericAttributeValue attributeValue,
+                                         DomElementAnnotationHolder holder) {
+      if (!DomUtil.hasXml(attributeValue)) return;
+
+      final Annotation annotation = holder.createAnnotation(attributeValue,
+                                                            HighlightSeverity.WARNING,
+                                                            "Not used anymore");
       annotation.setHighlightType(ProblemHighlightType.LIKE_DEPRECATED);
     }
   };
