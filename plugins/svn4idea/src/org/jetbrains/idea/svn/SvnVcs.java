@@ -497,11 +497,7 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
       }
     }
 
-    final SvnConfiguration.UseAcceleration accelerationType = SvnConfiguration.getInstance(myProject).myUseAcceleration;
-    if (SvnConfiguration.UseAcceleration.javaHL.equals(accelerationType)) {
-      CheckJavaHL.runtimeCheck(myProject);
-    }
-    else if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
+    if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
       checkCommandLineVersion();
     }
 

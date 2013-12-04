@@ -709,7 +709,6 @@ public class SvnConfiguration implements PersistentStateComponent<Element> {
   }
 
   public enum UseAcceleration {
-    javaHL,
     commandLine,
     nothing
   }
