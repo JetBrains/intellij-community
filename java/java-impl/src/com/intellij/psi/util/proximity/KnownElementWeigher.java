@@ -81,7 +81,7 @@ public class KnownElementWeigher extends ProximityWeigher {
     if (qname != null) {
       String pkg = StringUtil.getPackageName(qname);
       if (qname.equals(CommonClassNames.JAVA_LANG_OBJECT)) return 5;
-      if (qname.startsWith(CommonClassNames.JAVA_LANG_STRING) || qname.equals(System.class.getName())) return 8;
+      if (isPopularJdkClass(qname)) return 8;
       if (pkg.equals("java.lang")) return 6;
       if (pkg.equals("java.util")) return 7;
 
@@ -95,5 +95,15 @@ public class KnownElementWeigher extends ProximityWeigher {
       if (qname.startsWith("net.")) return -1;
     }
     return 0;
+  }
+
+  private static boolean isPopularJdkClass(String qname) {
+    return qname.startsWith(CommonClassNames.JAVA_LANG_STRING) || 
+           qname.equals(System.class.getName()) || 
+           qname.equals(CommonClassNames.JAVA_LANG_EXCEPTION) || 
+           qname.equals(CommonClassNames.JAVA_LANG_THROWABLE) || 
+           qname.equals(CommonClassNames.JAVA_LANG_RUNTIME_EXCEPTION) || 
+           qname.equals(CommonClassNames.JAVA_LANG_RUNNABLE) || 
+           qname.equals(CommonClassNames.JAVA_LANG_CLASS);
   }
 }
