@@ -118,6 +118,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
   private static final int MAX_SETTINGS = 5;
   private static final int MAX_ACTIONS = 5;
   private static final int MAX_RECENT_FILES = 10;
+  public static final int MAX_SEARCH_EVERYWHERE_HISTORY = 50;
 
   private SearchEverywhereAction.MyListRenderer myRenderer;
   MySearchTextField myPopupField;
@@ -684,8 +685,8 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
           List<String> history = StringUtil.isEmpty(historyString) ? new ArrayList<String>() : StringUtil.split(historyString, "\n");
           history.remove(last);
           history.add(0, last);
-          if (history.size() > 10) {
-            history = history.subList(0, 10);
+          if (history.size() > MAX_SEARCH_EVERYWHERE_HISTORY) {
+            history = history.subList(0, MAX_SEARCH_EVERYWHERE_HISTORY);
           }
           storage.setValue(SE_HISTORY_KEY, StringUtil.join(history, "\n"));
           return true;
