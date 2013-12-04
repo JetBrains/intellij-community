@@ -2069,7 +2069,10 @@ public class ContainerUtil extends ContainerUtilRt {
       return new java.util.concurrent.ConcurrentHashMap<T,V>(initialCapacity);
     }
 
-    public <T, V> ConcurrentMap<T, V> createMap(TObjectHashingStrategy<T> hashStrategy) {
+    public <T, V> ConcurrentMap<T, V> createMap(TObjectHashingStrategy<T> hashingStrategy) {
+      if (hashingStrategy != canonicalStrategy()) {
+        throw new UnsupportedOperationException("Custom hashStrategy is not supported in java.util.concurrent.ConcurrentHashMap");
+      }
       // ignoring strategy parameter, because it is not supported by this implementation
       return createMap();
     }
@@ -2079,6 +2082,9 @@ public class ContainerUtil extends ContainerUtilRt {
     }
 
     public <T, V> ConcurrentMap<T, V> createMap(int initialCapacity, float loadFactor, int concurrencyLevel, @NotNull TObjectHashingStrategy<T> hashingStrategy) {
+      if (hashingStrategy != canonicalStrategy()) {
+        throw new UnsupportedOperationException("Custom hashStrategy is not supported in java.util.concurrent.ConcurrentHashMap");
+      }
       // ignoring strategy parameter, because it is not supported by this implementation
       return createMap(initialCapacity, loadFactor, concurrencyLevel);
     }
