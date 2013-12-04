@@ -61,7 +61,9 @@
                     interface="com.intellij.execution.runners.JavaProgramPatcher"/>
 
     <extensionPoint name="OrderRootTypeUI"
-                    beanClass="com.intellij.openapi.extensions.KeyedFactoryEPBean"/>
+                    beanClass="com.intellij.openapi.extensions.KeyedFactoryEPBean">
+      <with attribute="implementationClass" implements="com.intellij.openapi.roots.ui.OrderRootTypeUIFactory"/>
+    </extensionPoint>
 
     <extensionPoint name="packaging.elementType" interface="com.intellij.packaging.elements.PackagingElementType"/>
     <extensionPoint name="packaging.artifactPropertiesProvider" interface="com.intellij.packaging.artifacts.ArtifactPropertiesProvider"/>
@@ -79,7 +81,9 @@
     <extensionPoint name="projectImportBuilder" interface="com.intellij.projectImport.ProjectImportBuilder"/>
     <extensionPoint name="projectStructureDetector" interface="com.intellij.ide.util.projectWizard.importSources.ProjectStructureDetector"/>
 
-    <extensionPoint name="codeInsight.wordCompletionFilter" beanClass="com.intellij.lang.LanguageExtensionPoint"/>
+    <extensionPoint name="codeInsight.wordCompletionFilter" beanClass="com.intellij.lang.LanguageExtensionPoint">
+      <with attribute="implementationClass" implements="com.intellij.lang.WordCompletionElementFilter"/>
+    </extensionPoint>
 
     <extensionPoint name="projectStructureConfigurableFilter" interface="com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurableFilter"/>
     <extensionPoint name="projectStructureConfigurableAdder" interface="com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurableContributor"/>
