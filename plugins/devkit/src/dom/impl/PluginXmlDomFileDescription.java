@@ -31,6 +31,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.dom.Extension;
 import org.jetbrains.idea.devkit.dom.ExtensionPoint;
 import org.jetbrains.idea.devkit.dom.IdeaPlugin;
+import org.jetbrains.idea.devkit.dom.Vendor;
 
 import javax.swing.*;
 
@@ -45,6 +46,9 @@ public class PluginXmlDomFileDescription extends DomFileDescription<IdeaPlugin> 
       if (element instanceof Extension) {
         annotateExtension((Extension)element, holder);
       }
+      else if (element instanceof Vendor) {
+        annotateVendor((Vendor)element, holder);
+      }
     }
 
     private void annotateExtension(Extension extension, DomElementAnnotationHolder holder) {
@@ -58,6 +62,14 @@ public class PluginXmlDomFileDescription extends DomFileDescription<IdeaPlugin> 
         final Annotation annotation = holder.createAnnotation(extension, HighlightSeverity.WARNING, "Deprecated EP");
         annotation.setHighlightType(ProblemHighlightType.LIKE_DEPRECATED);
       }
+    }
+
+    private void annotateVendor(Vendor vendor, DomElementAnnotationHolder holder) {
+      final GenericAttributeValue<String> logoAttribute = vendor.getLogo();
+      if (!DomUtil.hasXml(logoAttribute)) return;
+
+      final Annotation annotation = holder.createAnnotation(logoAttribute, HighlightSeverity.WARNING, "Not used anymore");
+      annotation.setHighlightType(ProblemHighlightType.LIKE_DEPRECATED);
     }
   };
 
