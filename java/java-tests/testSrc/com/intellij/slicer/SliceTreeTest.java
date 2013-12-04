@@ -149,7 +149,13 @@ public class SliceTreeTest extends SliceTestCase {
     Collection<PsiElement> leaves = SliceLeafAnalyzer.calcLeafExpressions(root, treeStructure, SliceLeafAnalyzer.createMap());
     assertNotNull(leaves);
     List<PsiElement> list = new ArrayList<PsiElement>(leaves);
-    assertEquals(list.toString(), 2, leaves.size());
+    String message = ContainerUtil.map(list, new Function<PsiElement, String>() {
+      @Override
+      public String fun(PsiElement element) {
+        return element.getClass() +": '"+element.getText()+"' ("+System.identityHashCode(element)+") ";
+      }
+    }).toString();
+    assertEquals(message, 2, leaves.size());
     Collections.sort(list, new Comparator<PsiElement>() {
       @Override
       public int compare(PsiElement o1, PsiElement o2) {
