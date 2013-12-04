@@ -26,6 +26,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
+import java.util.Set;
 
 public abstract class WebBrowserUrlProvider {
   public static final ExtensionPointName<WebBrowserUrlProvider> EP_NAME = ExtensionPointName.create("com.intellij.webBrowserUrlProvider");
@@ -39,7 +40,20 @@ public abstract class WebBrowserUrlProvider {
     }
   }
 
-  public boolean canHandleElement(@NotNull PsiElement element, @NotNull PsiFile psiFile, @NotNull Ref<Collection<Url>> result) {
+  @Deprecated
+  /**
+   * @deprecated to remove in IDEA 14
+   */
+  public boolean canHandleElement(@NotNull PsiElement element, @NotNull PsiFile psiFile, @NotNull Ref<Set<Url>> result) {
+    Ref<Collection<Url>> ref = Ref.create();
+    boolean canHandle = canHandle(element, psiFile, ref);
+    if (!ref.isNull()) {
+      result.set(ContainerUtil.newHashSet(ref.get()));
+    }
+    return canHandle;
+  }
+
+  public boolean canHandle(@NotNull PsiElement element, @NotNull PsiFile psiFile, @NotNull Ref<Collection<Url>> result) {
     VirtualFile file = psiFile.getVirtualFile();
     if (file == null) {
       return false;
