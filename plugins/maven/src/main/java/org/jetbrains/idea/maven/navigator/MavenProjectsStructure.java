@@ -22,11 +22,14 @@ import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
+import com.intellij.pom.NavigatableAdapter;
+import com.intellij.psi.xml.XmlElement;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.treeStructure.*;
@@ -39,6 +42,9 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.idea.maven.dom.MavenPluginDomUtil;
+import org.jetbrains.idea.maven.dom.plugin.MavenDomMojo;
+import org.jetbrains.idea.maven.dom.plugin.MavenDomPluginModel;
 import org.jetbrains.idea.maven.execution.MavenRunConfiguration;
 import org.jetbrains.idea.maven.execution.MavenRunConfigurationType;
 import org.jetbrains.idea.maven.execution.MavenRunner;
@@ -1092,7 +1098,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
       myGoalNodes.clear();
       if (myPluginInfo != null) {
         for (MavenPluginInfo.Mojo mojo : myPluginInfo.getMojos()) {
-          myGoalNodes.add(new PluginGoalNode(this, mojo.getQualifiedGoal(), mojo.getDisplayName()));
+          myGoalNodes.add(new PluginGoalNode(this, mojo.getQualifiedGoal(), mojo.getGoal(), mojo.getDisplayName()));
         }
       }
 
@@ -1109,9 +1115,41 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
   }
 
   public class PluginGoalNode extends GoalNode {
-    public PluginGoalNode(PluginNode parent, String goal, String displayName) {
+
+    private final String myUnqualifiedGoal;
+
+    public PluginGoalNode(PluginNode parent, String goal, String unqualifiedGoal, String displayName) {
       super(parent, goal, displayName);
       setUniformIcon(MavenIcons.PluginGoal);
+      myUnqualifiedGoal = unqualifiedGoal;
+    }
+
+    @Nullable
+    @Override
+    public Navigatable getNavigatable() {
+      PluginNode pluginNode = (PluginNode)getParent();
+
+      MavenDomPluginModel pluginModel = MavenPluginDomUtil.getMavenPluginModel(myProject,
+                                                                               pluginNode.getPlugin().getGroupId(),
+                                                                               pluginNode.getPlugin().getArtifactId(),
+                                                                               pluginNode.getPlugin().getVersion());
+
+      if (pluginModel == null) return null;
+
+      for (MavenDomMojo mojo : pluginModel.getMojos().getMojos()) {
+        final XmlElement xmlElement = mojo.getGoal().getXmlElement();
+
+        if (xmlElement instanceof Navigatable && Comparing.equal(myUnqualifiedGoal, mojo.getGoal().getStringValue())) {
+          return new NavigatableAdapter() {
+            @Override
+            public void navigate(boolean requestFocus) {
+              ((Navigatable)xmlElement).navigate(requestFocus);
+            }
+          };
+        }
+      }
+
+      return null;
     }
   }
 
