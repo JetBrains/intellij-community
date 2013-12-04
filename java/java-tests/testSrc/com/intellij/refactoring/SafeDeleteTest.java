@@ -3,24 +3,18 @@ package com.intellij.refactoring;
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.TargetElementUtilBase;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
-import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.safeDelete.SafeDeleteHandler;
-import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.PsiTestUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.jps.model.java.JavaSourceRootType;
 import org.jetbrains.jps.model.java.JpsJavaExtensionService;
 
-import java.io.File;
-
 public class SafeDeleteTest extends MultiFileTestCase {
-  private VirtualFile myRootBefore;
-
   @Override
   protected String getTestDataPath() {
     return JavaTestUtil.getJavaTestDataPath();
@@ -29,11 +23,6 @@ public class SafeDeleteTest extends MultiFileTestCase {
   @Override
   protected String getTestRoot() {
     return "/refactoring/safeDelete/";
-  }
-
-  @Override
-  protected boolean clearModelBeforeConfiguring() {
-    return true;
   }
 
   public void testImplicitCtrCall() throws Exception {
@@ -59,12 +48,10 @@ public class SafeDeleteTest extends MultiFileTestCase {
   }
 
   public void testMultipleInterfacesImplementation() throws Exception {
-    myDoCompare = false;
     doTest("IFoo");
   }
 
   public void testMultipleInterfacesImplementationThroughCommonInterface() throws Exception {
-    myDoCompare = false;
     doTest("IFoo");
   }
 
@@ -73,43 +60,35 @@ public class SafeDeleteTest extends MultiFileTestCase {
   }
 
   public void testParameterInHierarchy() throws Exception {
-    myDoCompare = false;
     doTest("C2");
   }
 
 
   public void testTopLevelDocComment() throws Exception {
-    myDoCompare = false;
     doTest("foo.C1");
   }
 
   public void testTopParameterInHierarchy() throws Exception {
-    myDoCompare = false;
     doTest("I");
   }
 
   public void testExtendsList() throws Exception {
-    myDoCompare = false;
     doTest("B");
   }
 
   public void testJavadocParamRef() throws Exception {
-    myDoCompare = false;
     doTest("Super");
   }
 
   public void testEnumConstructorParameter() throws Exception {
-    myDoCompare = false;
     doTest("UserFlags");
   }
 
   public void testSafeDeleteStaticImports() throws Exception {
-    myDoCompare = false;
     doTest("A");
   }
 
   public void testRemoveOverridersInspiteOfUnsafeUsages() throws Exception {
-    myDoCompare = false;
     try {
       BaseRefactoringProcessor.ConflictsInTestsException.setTestIgnore(true);
       doTest("A");
@@ -120,17 +99,14 @@ public class SafeDeleteTest extends MultiFileTestCase {
   }
 
   public void testLocalVariable() throws Exception {
-    myDoCompare = false;
     doTest("Super");
   }
 
   public void testOverrideAnnotation() throws Exception {
-    myDoCompare = false;
     doTest("Super");
   }
 
   public void testSuperCall() throws Exception {
-    myDoCompare = false;
     try {
       doTest("Super");
       fail("Conflict was not detected");
@@ -142,7 +118,6 @@ public class SafeDeleteTest extends MultiFileTestCase {
   }
 
   public void testMethodDeepHierarchy() throws Exception {
-    myDoCompare = false;
     doTest("Super");
   }
 
@@ -151,7 +126,6 @@ public class SafeDeleteTest extends MultiFileTestCase {
   }
 
   public void testLocalVariableSideEffect() throws Exception {
-    myDoCompare = false;
     try {
       doTest("Super");
       fail("Side effect was ignored");
@@ -163,7 +137,6 @@ public class SafeDeleteTest extends MultiFileTestCase {
   }
 
   public void testUsageInGenerated() throws Exception {
-    myDoCompare = false;
     doTest("A");
   }
 
@@ -196,7 +169,6 @@ public class SafeDeleteTest extends MultiFileTestCase {
       @Override
       public void performAction(VirtualFile rootDir, VirtualFile rootAfter) throws Exception {
         SafeDeleteTest.this.performAction(qClassName);
-        PlatformTestUtil.assertDirectoriesEqual(rootAfter, myRootBefore);
       }
     });
   }
@@ -226,9 +198,7 @@ public class SafeDeleteTest extends MultiFileTestCase {
   private void performAction(final String qClassName) throws Exception {
     final PsiClass aClass = myJavaFacade.findClass(qClassName, GlobalSearchScope.allScope(getProject()));
     assertNotNull("Class " + qClassName + " not found", aClass);
-
-    final String root = ProjectRootManager.getInstance(getProject()).getContentRoots()[0].getPath();
-    myRootBefore = configureByFiles(new File(root), aClass.getContainingFile().getVirtualFile());
+    configureByExistingFile(aClass.getContainingFile().getVirtualFile());
 
     performAction();
   }
