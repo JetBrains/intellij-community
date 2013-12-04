@@ -615,7 +615,7 @@ public abstract class UsefulTestCase extends TestCase {
     assertTrue(s, StringUtil.isEmpty(s));
   }
 
-  public static void assertEmpty(final String errorMsg, final Collection<?> collection) {
+  public static <T> void assertEmpty(final String errorMsg, final Collection<T> collection) {
     assertOrderedEquals(errorMsg, collection);
   }
 
