@@ -2014,6 +2014,14 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
     }, true, false);
   }
 
+  public void testPrefixedSubstitution() throws Exception {
+    doTest(new VirtualFile[]{
+      getVirtualFile(BASE_PATH + "Substitute/prefixed.xml"),
+      getVirtualFile(BASE_PATH + "Substitute/schema-b.xsd"),
+      getVirtualFile(BASE_PATH + "Substitute/schema-a.xsd")
+    }, true, false);
+  }
+
   public void testDtdWithXsd() throws Exception {
     doTest(
       new VirtualFile[] {

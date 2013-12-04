@@ -256,7 +256,7 @@ public class XmlElementDescriptorImpl extends XsdEnumerationDescriptor<XmlTag>
             XmlNSDescriptor descriptor = ((XmlTag)context).getNSDescriptor(namespace, false);
             if (descriptor instanceof XmlNSDescriptorImpl && ((XmlNSDescriptorImpl)descriptor).hasSubstitutions()) {
               for (XmlElementDescriptor element : elements) {
-                String name = element.getName(context);
+                String name = XmlUtil.getLocalName(element.getName(context)).toString();
                 String s = ((XmlNSDescriptorImpl)element.getNSDescriptor()).getDefaultNamespace();
                 XmlElementDescriptor[] substitutes = ((XmlNSDescriptorImpl)descriptor).getSubstitutes(name, s);
                 result.addAll(Arrays.asList(substitutes));
