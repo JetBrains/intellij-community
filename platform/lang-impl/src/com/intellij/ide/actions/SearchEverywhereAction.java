@@ -142,14 +142,8 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
 
   private Alarm myAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, ApplicationManager.getApplication());
   private Alarm myUpdateAlarm = new Alarm(ApplicationManager.getApplication());
-  private JBList myList = new JBList(myListModel) {
-    @Override
-    public Dimension getPreferredSize() {
-      final Dimension size = super.getPreferredSize();
-      return new Dimension(Math.min(size.width, 800), size.height);
-    }
-  };
-  private JCheckBox myNonProjectCheckBox = new JCheckBox();
+  private JBList myList;
+  private JCheckBox myNonProjectCheckBox;
   private AnActionEvent myActionEvent;
   private Component myContextComponent;
   private CalcThread myCalcThread;
@@ -319,7 +313,25 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
   }
 
   public SearchEverywhereAction() {
+    updateComponents();
+    //noinspection SSBasedInspection
+    SwingUtilities.invokeLater(new Runnable() {
+      public void run() {
+        onFocusLost();
+      }
+    });
+
+  }
+
+  private void updateComponents() {
     myRenderer = new MyListRenderer();
+    myList = new JBList(myListModel) {
+      @Override
+      public Dimension getPreferredSize() {
+        final Dimension size = super.getPreferredSize();
+        return new Dimension(Math.min(size.width, 800), size.height);
+      }
+    };
     myList.setCellRenderer(myRenderer);
     myList.addMouseListener(new MouseAdapter() {
       @Override
@@ -332,6 +344,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       }
     });
 
+    myNonProjectCheckBox = new JCheckBox();
     myNonProjectCheckBox.setOpaque(false);
     myNonProjectCheckBox.setAlignmentX(1.0f);
     myNonProjectCheckBox.addActionListener(new ActionListener() {
@@ -355,13 +368,6 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
         }
       }
     });
-    //noinspection SSBasedInspection
-    SwingUtilities.invokeLater(new Runnable() {
-      public void run() {
-        onFocusLost();
-      }
-    });
-
   }
 
   private void initTooltip(JLabel label) {
@@ -617,6 +623,8 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       e = new AnActionEvent(me, DataManager.getInstance().getDataContext(myFocusOwner), ActionPlaces.UNKNOWN, getTemplatePresentation(), ActionManager.getInstance(), 0);
     }
     if (e == null) return;
+
+    updateComponents();
     myContextComponent = PlatformDataKeys.CONTEXT_COMPONENT.getData(e.getDataContext());
     final Project project = e.getProject();
     Window wnd = myContextComponent != null ? SwingUtilities.windowForComponent(myContextComponent)
