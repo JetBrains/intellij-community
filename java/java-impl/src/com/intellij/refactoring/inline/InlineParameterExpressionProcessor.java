@@ -50,7 +50,7 @@ public class InlineParameterExpressionProcessor extends BaseRefactoringProcessor
   private final PsiParameter myParameter;
   private PsiExpression myInitializer;
   private final boolean mySameClass;
-  private final PsiMethod myCallingMethod;
+  private final PsiCodeBlock myCallingBlock;
   private final boolean myCreateLocal;
 
   public InlineParameterExpressionProcessor(final PsiCallExpression methodCall,
@@ -67,7 +67,7 @@ public class InlineParameterExpressionProcessor extends BaseRefactoringProcessor
 
     PsiClass callingClass = PsiTreeUtil.getParentOfType(methodCall, PsiClass.class);
     mySameClass = (callingClass == myMethod.getContainingClass());
-    myCallingMethod = PsiTreeUtil.getParentOfType(myMethodCall, PsiMethod.class);
+    myCallingBlock = PsiTreeUtil.getTopmostParentOfType(myMethodCall, PsiCodeBlock.class);
   }
 
   @Override
@@ -110,7 +110,7 @@ public class InlineParameterExpressionProcessor extends BaseRefactoringProcessor
         final PsiElement element = expression.resolve();
         if (element instanceof PsiLocalVariable) {
           final PsiLocalVariable localVariable = (PsiLocalVariable)element;
-          final PsiElement[] elements = DefUseUtil.getDefs(myCallingMethod.getBody(), localVariable, expression);
+          final PsiElement[] elements = DefUseUtil.getDefs(myCallingBlock, localVariable, expression);
           if (elements.length == 1) {
             PsiExpression localInitializer = null;
             if (elements[0] instanceof PsiLocalVariable) {
