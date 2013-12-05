@@ -342,7 +342,15 @@ public class InlineParameterExpressionProcessor extends BaseRefactoringProcessor
           myConflicts.putValue(expression, "Parameter initializer depends on value which is not available inside method");
         }
       } else if (element instanceof PsiParameter) {
-        myConflicts.putValue(expression, "Parameter initializer depends on callers parameter");
+        boolean bound = false;
+        for (PsiParameter parameter : myMethod.getParameterList().getParameters()) {
+          if (parameter.getType().equals(((PsiParameter)element).getType()) && parameter.getName().equals(((PsiParameter)element).getName())) {
+            bound = true;
+          }
+        }
+        if (!bound) {
+          myConflicts.putValue(expression, "Parameter initializer depends on callers parameter");
+        }
       }
     }
 
