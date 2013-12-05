@@ -2,7 +2,7 @@
   <id>org.jetbrains.postfixCompletion</id>
   <name>Postfix Completion</name>
   <version>0.7.6-beta</version>
-  <vendor email="alexander.shvedov@jetbrains.com" url="https://github.com/controlflow">Alexander Shvedov</vendor>
+  <vendor email="alexander.shvedov@jetbrains.com" url="https://github.com/controlflow">Alexander Shvedov, Alexander Zolotov, Sergey Ignatov</vendor>
   <depends>com.intellij.modules.lang</depends>
   <depends>com.intellij.modules.java</depends>
 
