@@ -68,8 +68,7 @@ public class ForeachIterationPostfixTemplate extends PostfixTemplate {
     }
 
     @Override
-    protected void postProcess(
-      @NotNull final InsertionContext context, @NotNull PsiForeachStatement forStatement) {
+    protected void postProcess(@NotNull final InsertionContext context, @NotNull PsiForeachStatement forStatement) {
       final Project project = context.getProject();
       final SmartPointerManager pointerManager = SmartPointerManager.getInstance(project);
       final SmartPsiElementPointer<PsiForeachStatement> statementPointer =
