@@ -17,7 +17,9 @@ package org.jetbrains.plugins.gradle.model.builder;
 
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.Configuration;
+import org.gradle.api.artifacts.ModuleIdentifier;
 import org.gradle.api.artifacts.ModuleVersionIdentifier;
+import org.gradle.plugins.ide.idea.GenerateIdeaModule;
 import org.gradle.plugins.ide.idea.IdeaPlugin;
 import org.gradle.plugins.ide.idea.model.IdeaModel;
 import org.gradle.plugins.ide.internal.IdeDependenciesExtractor;
@@ -28,6 +30,8 @@ import org.jetbrains.plugins.gradle.model.ModelBuilderService;
 import org.jetbrains.plugins.gradle.model.ProjectDependenciesModel;
 import org.jetbrains.plugins.gradle.model.internal.*;
 
+import java.io.File;
+import java.io.Serializable;
 import java.util.*;
 
 /**
@@ -35,6 +39,10 @@ import java.util.*;
  * @since 11/5/13
  */
 public class ModelDependenciesBuilderImpl implements ModelBuilderService {
+
+  private static final String MODULE_PROPERTY = "ideaModule";
+  private static final String VERSION_PROPERTY = "version";
+  private static final String GROUP_PROPERTY = "group";
 
   @Override
   public boolean canBuild(String modelName) {
@@ -100,7 +108,8 @@ public class ModelDependenciesBuilderImpl implements ModelBuilderService {
             new IdeaDependencyScopeImpl(scope),
             versionId.getName(),
             versionId.getGroup(),
-            versionId.getVersion()
+            versionId.getVersion(),
+            versionId.getClassifier()
           );
           libraryDependency.setFile(repoFileDependency.getFile());
           libraryDependency.setSource(repoFileDependency.getSourceFile());
@@ -108,13 +117,22 @@ public class ModelDependenciesBuilderImpl implements ModelBuilderService {
           dependencies.add(libraryDependency);
         }
         else if (versionId.getIdeDependency() instanceof IdeDependenciesExtractor.IdeProjectDependency) {
+          IdeDependenciesExtractor.IdeProjectDependency projectDependency =
+            (IdeDependenciesExtractor.IdeProjectDependency)versionId.getIdeDependency();
+
+          String ideaModuleName = findDeDuplicatedModuleName(projectDependency.getProject());
+          if (ideaModuleName == null) {
+            ideaModuleName = versionId.getName();
+          }
+
           IdeaModuleDependencyImpl moduleDependency = new IdeaModuleDependencyImpl(
             new IdeaDependencyScopeImpl(scope),
-            versionId.getName(),
+            ideaModuleName,
             versionId.getGroup(),
-            versionId.getVersion()
+            versionId.getVersion(),
+            versionId.getClassifier()
           );
-          moduleDependency.setIdeaModule(new StubIdeaModule(versionId.getName()));
+          moduleDependency.setIdeaModule(new StubIdeaModule(ideaModuleName));
           dependencies.add(moduleDependency);
         }
         else if (versionId.getIdeDependency() instanceof IdeDependenciesExtractor.IdeLocalFileDependency) {
@@ -124,7 +142,8 @@ public class ModelDependenciesBuilderImpl implements ModelBuilderService {
             new IdeaDependencyScopeImpl(scope),
             versionId.getName(),
             versionId.getGroup(),
-            versionId.getVersion()
+            versionId.getVersion(),
+            versionId.getClassifier()
           );
           libraryDependency.setFile(fileDependency.getFile());
           dependencies.add(libraryDependency);
@@ -135,17 +154,29 @@ public class ModelDependenciesBuilderImpl implements ModelBuilderService {
     return new ProjectDependenciesModelImpl(project.getPath(), dependencies);
   }
 
+  @Nullable
+  private static String findDeDuplicatedModuleName(Project project) {
+    if (project.hasProperty(MODULE_PROPERTY)) {
+      Object ideaModule = project.property(MODULE_PROPERTY);
+      if (ideaModule instanceof GenerateIdeaModule) {
+        GenerateIdeaModule generateIdeaModule = (GenerateIdeaModule)ideaModule;
+        return generateIdeaModule.getModule().getName();
+      }
+    }
+    return null;
+  }
+
   private static void merge(Map<DependencyVersionId, Scopes> map, IdeDependenciesExtractor.IdeProjectDependency dependency) {
     final String configurationName = dependency.getDeclaredConfiguration().getName();
     final GradleDependencyScope scope = GradleDependencyScope.fromName(configurationName);
     if (scope == null) return;
 
     final Project project = dependency.getProject();
-    final String version = project.hasProperty("version") ? str(project.property("version")) : "";
-    final String group = project.hasProperty("group") ? str(project.property("group")) : "";
+    final String version = project.hasProperty(VERSION_PROPERTY) ? str(project.property(VERSION_PROPERTY)) : "";
+    final String group = project.hasProperty(GROUP_PROPERTY) ? str(project.property(GROUP_PROPERTY)) : "";
 
     DependencyVersionId versionId =
-      new DependencyVersionId(dependency, project.getName(), group, version);
+      new DependencyVersionId(dependency, project.getName(), group, version, null);
     Scopes scopes = map.get(versionId);
     if (scopes == null) {
       map.put(versionId, new Scopes(scope));
@@ -164,9 +195,19 @@ public class ModelDependenciesBuilderImpl implements ModelBuilderService {
     final GradleDependencyScope scope = GradleDependencyScope.fromName(configurationName);
     if (scope == null) return;
 
-    ModuleVersionIdentifier dependencyId = dependency.getId();
+    final ModuleVersionIdentifier dependencyId;
+    if (dependency instanceof IdeDependenciesExtractor.UnresolvedIdeRepoFileDependency) {
+      IdeDependenciesExtractor.UnresolvedIdeRepoFileDependency unresolvedDependency =
+        (IdeDependenciesExtractor.UnresolvedIdeRepoFileDependency)dependency;
+      dependencyId = new MyModuleVersionIdentifier(unresolvedDependency.getFile().getName());
+    }
+    else {
+      dependencyId = dependency.getId();
+    }
+
+    String classifier = parseClassifier(dependencyId, dependency.getFile());
     DependencyVersionId versionId =
-      new DependencyVersionId(dependency, dependencyId.getName(), dependencyId.getGroup(), dependencyId.getVersion());
+      new DependencyVersionId(dependency, dependencyId.getName(), dependencyId.getGroup(), dependencyId.getVersion(), classifier);
     Scopes scopes = map.get(versionId);
     if (scopes == null) {
       map.put(versionId, new Scopes(scope));
@@ -174,6 +215,13 @@ public class ModelDependenciesBuilderImpl implements ModelBuilderService {
     else {
       scopes.add(scope);
     }
+  }
+
+  private static String parseClassifier(ModuleVersionIdentifier dependencyId, File dependencyFile) {
+    if(dependencyFile == null) return null;
+    String dependencyFileName = dependencyFile.getName();
+    int i = dependencyFileName.indexOf(dependencyId.getName() + '-' + dependencyId.getVersion() + '-');
+    return i != -1 ? dependencyFileName.substring(i, dependencyFileName.length()) : null;
   }
 
   private static void merge(Map<DependencyVersionId, Scopes> map, IdeDependenciesExtractor.IdeLocalFileDependency dependency) {
@@ -184,13 +232,42 @@ public class ModelDependenciesBuilderImpl implements ModelBuilderService {
 
     String path = dependency.getFile().getPath();
     DependencyVersionId versionId =
-      new DependencyVersionId(dependency, path, "", "");
+      new DependencyVersionId(dependency, path, "", "", null);
     Scopes scopes = map.get(versionId);
     if (scopes == null) {
       map.put(versionId, new Scopes(scope));
     }
     else {
       scopes.add(scope);
+    }
+  }
+
+  private static class MyModuleVersionIdentifier implements ModuleVersionIdentifier, Serializable {
+    private final String myName;
+
+    public MyModuleVersionIdentifier(String name) {
+
+      myName = name;
+    }
+
+    @Override
+    public String getVersion() {
+      return null;
+    }
+
+    @Override
+    public String getGroup() {
+      return null;
+    }
+
+    @Override
+    public String getName() {
+      return myName;
+    }
+
+    @Override
+    public ModuleIdentifier getModule() {
+      return null;
     }
   }
 }

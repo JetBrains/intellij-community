@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.gradle.service.project;
 
+import com.intellij.openapi.externalSystem.model.ExternalSystemException;
 import org.gradle.tooling.BuildAction;
 import org.gradle.tooling.BuildController;
 import org.gradle.tooling.model.build.BuildEnvironment;
@@ -62,11 +63,20 @@ public class ProjectImportAction implements BuildAction<ProjectImportAction.AllM
 
     for (IdeaModule module : ideaProject.getModules()) {
       for (Class aClass : myExtraProjectModelClasses) {
-        Object extraProject = controller.findModel(module, aClass);
-        if (extraProject == null) continue;
-        allModels.addExtraProject(extraProject, aClass, module);
+        try {
+          Object extraProject = controller.findModel(module, aClass);
+          if (extraProject == null) continue;
+          allModels.addExtraProject(extraProject, aClass, module);
+        }
+        catch (Exception e) {
+          // do not fail project import in a preview mode
+          if (!myIsPreviewMode) {
+            throw new ExternalSystemException(e);
+          }
+        }
       }
     }
+
     return allModels;
   }
 
