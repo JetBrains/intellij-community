@@ -17,13 +17,12 @@
 
     <applicationService serviceInterface="org.zmlx.hg4idea.HgGlobalSettings"
                         serviceImplementation="org.zmlx.hg4idea.HgGlobalSettings"/>
+    <applicationService serviceInterface="org.zmlx.hg4idea.HgRememberedInputs"
+                        serviceImplementation="org.zmlx.hg4idea.HgRememberedInputs"/>
     <projectService serviceInterface="org.zmlx.hg4idea.HgProjectSettings"
                     serviceImplementation="org.zmlx.hg4idea.HgProjectSettings"/>
     <projectService serviceInterface="org.zmlx.hg4idea.HgRootsHandler"
                     serviceImplementation="org.zmlx.hg4idea.HgRootsHandler" />
-    <projectService serviceInterface="org.zmlx.hg4idea.HgRememberedInputs"
-                            serviceImplementation="org.zmlx.hg4idea.HgRememberedInputs"/>
-
     <projectService serviceImplementation="org.zmlx.hg4idea.log.HgContentRevisionFactory"/>
   </extensions>
 

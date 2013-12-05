@@ -52,6 +52,7 @@ public class HgCheckoutProvider implements CheckoutProvider {
     if (!dialog.isOK()) {
       return;
     }
+    dialog.rememberSettings();
     final VirtualFile destinationParent = LocalFileSystem.getInstance().findFileByIoFile(new File(dialog.getParentDirectory()));
     if (destinationParent == null) {
       return;
@@ -69,7 +70,7 @@ public class HgCheckoutProvider implements CheckoutProvider {
         // handle result
         HgCommandResult myCloneResult = clone.execute();
         if (myCloneResult == null) {
-          new HgCommandResultNotifier(project).notifyError(myCloneResult, "Clone failed", "Clone failed due to unknown error");
+          new HgCommandResultNotifier(project).notifyError(null, "Clone failed", "Clone failed due to unknown error");
         } else if (HgErrorUtil.hasErrorsInCommandExecution(myCloneResult)) {
           new HgCommandResultNotifier(project).notifyError(myCloneResult, "Clone failed", "Clone from " +
                                                                                           sourceRepositoryURL +
