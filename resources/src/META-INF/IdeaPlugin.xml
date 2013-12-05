@@ -44,7 +44,7 @@
     </component>
 
     <component>
-      <implementation-class>com.intellij.compilerOutputIndex.api.indexer.CompilerOutputIndexer</implementation-class>
+      <implementation-class>com.intellij.compiler.compilerOutputIndex.api.index.ClassFilesIndexFeaturesHolder</implementation-class>
     </component>
   </project-components>
 
@@ -232,9 +232,6 @@
                     interface="com.intellij.psi.impl.compiled.ClsCustomNavigationPolicy"/>
     <extensionPoint name="psi.clsDecompiledFileProvider"
                     interface="com.intellij.psi.ClsFileDecompiledPsiFileProvider"/>
-
-    <extensionPoint name="java.compilerOutputIndex" area="IDEA_PROJECT"
-                    interface="com.intellij.compilerOutputIndex.api.indexer.CompilerOutputBaseIndex"/>
 
     <extensionPoint name="vetoSPICondition" interface="com.intellij.openapi.util.Condition"/>
 
@@ -1462,11 +1459,10 @@
 
     <gotoDeclarationHandler implementation="com.intellij.codeInsight.navigation.actions.GotoLambdaParameterHandler"/>
 
-    <java.compilerOutputIndex implementation="com.intellij.compilerOutputIndex.impl.MethodsUsageIndex"/>
     <completion.contributor language="JAVA" id="methodsChainsCompletionContributor" order="first"
-                            implementationClass="com.intellij.codeInsight.completion.methodChains.completion.MethodsChainsCompletionContributor"/>
+                            implementationClass="com.intellij.compiler.compilerOutputIndex.chainsSearch.completion.MethodsChainsCompletionContributor"/>
     <weigher order="first" key="completion" id="methodsChains"
-             implementationClass="com.intellij.codeInsight.completion.methodChains.completion.MethodsChainsWeigher"/>
+             implementationClass="com.intellij.compiler.compilerOutputIndex.chainsSearch.completion.MethodsChainsWeigher"/>
 
     <applicationService serviceInterface="org.jetbrains.generate.tostring.template.TemplatesManager"
                         serviceImplementation="org.jetbrains.generate.tostring.template.TemplatesManager"/>
