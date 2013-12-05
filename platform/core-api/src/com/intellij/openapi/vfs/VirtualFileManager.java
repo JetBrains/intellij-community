@@ -19,6 +19,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
+import com.intellij.util.io.URLUtil;
 import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -130,7 +131,7 @@ public abstract class VirtualFileManager implements ModificationTracker {
    */
   @NotNull
   public static String constructUrl(@NotNull String protocol, @NotNull String path) {
-    return protocol + "://" + path;
+    return protocol + URLUtil.SCHEME_SEPARATOR + path;
   }
 
   /**
@@ -142,7 +143,7 @@ public abstract class VirtualFileManager implements ModificationTracker {
    */
   @Nullable
   public static String extractProtocol(@NotNull String url) {
-    int index = url.indexOf("://");
+    int index = url.indexOf(URLUtil.SCHEME_SEPARATOR);
     if (index < 0) return null;
     return url.substring(0, index);
   }
@@ -156,9 +157,9 @@ public abstract class VirtualFileManager implements ModificationTracker {
    */
   @NotNull
   public static String extractPath(@NotNull String url) {
-    int index = url.indexOf("://");
+    int index = url.indexOf(URLUtil.SCHEME_SEPARATOR);
     if (index < 0) return url;
-    return url.substring(index + "://".length());
+    return url.substring(index + URLUtil.SCHEME_SEPARATOR.length());
   }
 
   public abstract void addVirtualFileManagerListener(@NotNull VirtualFileManagerListener listener);

@@ -25,6 +25,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsBundle;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.Url;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -40,7 +41,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class RemoteFileInfoImpl implements RemoteContentProvider.DownloadingCallback, RemoteFileInfo {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.impl.http.RemoteFileInfoImpl");
   private final Object myLock = new Object();
-  private final String myUrl;
+  private final Url myUrl;
   private final RemoteFileManagerImpl myManager;
   private @Nullable RemoteContentProvider myContentProvider;
   private File myLocalFile;
@@ -51,7 +52,7 @@ public class RemoteFileInfoImpl implements RemoteContentProvider.DownloadingCall
   private final AtomicBoolean myCancelled = new AtomicBoolean();
   private final List<FileDownloadingListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
-  public RemoteFileInfoImpl(final @NotNull String url, final @NotNull RemoteFileManagerImpl manager) {
+  public RemoteFileInfoImpl(final @NotNull Url url, final @NotNull RemoteFileManagerImpl manager) {
     myUrl = url;
     myManager = manager;
   }
@@ -64,10 +65,6 @@ public class RemoteFileInfoImpl implements RemoteContentProvider.DownloadingCall
   @Override
   public void removeDownloadingListener(final @NotNull FileDownloadingListener listener) {
     myListeners.remove(listener);
-  }
-
-  public String getUrl() {
-    return myUrl;
   }
 
   @Override

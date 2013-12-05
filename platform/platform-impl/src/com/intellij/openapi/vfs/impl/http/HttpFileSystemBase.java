@@ -20,6 +20,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.ex.http.HttpFileSystem;
 import com.intellij.openapi.vfs.ex.http.HttpVirtualFileListener;
+import com.intellij.util.Urls;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -41,8 +42,7 @@ public abstract class HttpFileSystemBase extends HttpFileSystem {
 
   public VirtualFile findFileByPath(@NotNull String path, boolean isDirectory) {
     try {
-      String url = VirtualFileManager.constructUrl(myProtocol, path);
-      return getRemoteFileManager().getOrCreateFile(url, path, isDirectory);
+      return getRemoteFileManager().getOrCreateFile(Urls.newFromIdea(VirtualFileManager.constructUrl(myProtocol, path)), path, isDirectory);
     }
     catch (IOException e) {
       return null;
