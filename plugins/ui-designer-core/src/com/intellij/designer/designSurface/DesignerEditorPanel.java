@@ -505,6 +505,10 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
     return myEditor;
   }
 
+  public VirtualFile getFile() {
+    return myFile;
+  }
+
   @Override
   public final Project getProject() {
     return myProject;
