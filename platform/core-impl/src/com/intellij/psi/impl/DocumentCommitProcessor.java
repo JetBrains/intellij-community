@@ -104,7 +104,6 @@ public abstract class DocumentCommitProcessor {
                                       final boolean synchronously) {
     Document document = task.document;
     if (PsiDocumentManager.getInstance(task.project).isCommitted(document)) return null;
-    final TextBlock textBlock = TextBlock.get(file);
     final long startDocModificationTimeStamp = document.getModificationStamp();
     final FileElement myTreeElementBeingReparsedSoItWontBeCollected = ((PsiFileImpl)file).calcTreeElement();
     final CharSequence chars = document.getCharsSequence();
@@ -135,21 +134,16 @@ public abstract class DocumentCommitProcessor {
           return false; // optimistic locking failed
         }
 
-        try {
-          CodeStyleManager.getInstance(file.getProject()).performActionWithFormatterDisabled(new Runnable() {
-            @Override
-            public void run() {
-              synchronized (PsiLock.LOCK) {
-                doActualPsiChange(file, diffLog);
-              }
+        CodeStyleManager.getInstance(file.getProject()).performActionWithFormatterDisabled(new Runnable() {
+          @Override
+          public void run() {
+            synchronized (PsiLock.LOCK) {
+              doActualPsiChange(file, diffLog);
             }
-          });
+          }
+        });
 
-          assertAfterCommit(document, file, oldPsiText, myTreeElementBeingReparsedSoItWontBeCollected);
-        }
-        finally {
-          textBlock.clear();
-        }
+        assertAfterCommit(document, file, oldPsiText, myTreeElementBeingReparsedSoItWontBeCollected);
 
         return true;
       }

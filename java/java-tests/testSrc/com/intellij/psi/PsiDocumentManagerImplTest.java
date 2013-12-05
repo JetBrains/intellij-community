@@ -30,7 +30,6 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.impl.PsiDocumentManagerImpl;
-import com.intellij.psi.impl.TextBlock;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.testFramework.LeakHunter;
 import com.intellij.testFramework.LightVirtualFile;
@@ -113,15 +112,14 @@ public class PsiDocumentManagerImplTest extends PlatformTestCase {
   }
 
   public void testGetUncommittedDocuments_documentChanged_DontProcessEvents() throws Exception {
-    PsiFile file = getPsiManager().findFile(createFile());
+    final PsiFile file = getPsiManager().findFile(createFile());
 
     final Document document = getPsiDocumentManager().getDocument(file);
 
-    final TextBlock block = TextBlock.get(file);
     WriteCommandAction.runWriteCommandAction(null, new Runnable() {
       @Override
       public void run() {
-        block.performAtomically(new Runnable() {
+        getPsiDocumentManager().getSynchronizer().performAtomically(file, new Runnable() {
           @Override
           public void run() {
             getPsiDocumentManager().documentChanged(new DocumentEventImpl(document, 0, "", "", document.getModificationStamp(), false));

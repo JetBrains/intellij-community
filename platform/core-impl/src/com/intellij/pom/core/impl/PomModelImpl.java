@@ -261,12 +261,7 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
         FileElement fileElement = ((PsiFileImpl)file).getTreeElement();
         if (fileElement != null) {
           String oldText = fileElement.getText();
-          try {
-            reparseFile(file, newText, oldText);
-          }
-          finally {
-            TextBlock.get(file).clear();
-          }
+          reparseFile(file, newText, oldText);
         }
       }
     }
