@@ -463,7 +463,6 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
       for (Iterator<String> i = matchOptions.getVariableConstraintNames(); i.hasNext(); ) {
         final MatchVariableConstraint constraint = (MatchVariableConstraint)matchOptions.getVariableConstraint(i.next()).clone();
         model.getConfig().getMatchOptions().addVariableConstraint(constraint);
-        if (isReplaceDialog()) constraint.setPartOfSearchResults(false);
       }
     }
 
