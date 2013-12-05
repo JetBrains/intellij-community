@@ -15,6 +15,7 @@
  */
 package com.jetbrains.python.spellchecker;
 
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.spellchecker.inspections.PlainTextSplitter;
@@ -40,9 +41,9 @@ public class PythonSpellcheckerStrategy extends SpellcheckingStrategy {
       Splitter splitter = PlainTextSplitter.getInstance();
       String text = element.getText();
       if (text.indexOf('\\') >= 0) {
-        for (PyStringLiteralExpression.DecodedFragment fragment : element.getDecodedFragments()) {
-          final String value = fragment.getValue();
-          consumer.consumeToken(element, value, false, fragment.getEncodedTextRange().getStartOffset(), TextRange.allOf(value),
+        for (Pair<TextRange, String> fragment : element.getDecodedFragments()) {
+          final String value = fragment.getSecond();
+          consumer.consumeToken(element, value, false, fragment.getFirst().getStartOffset(), TextRange.allOf(value),
                                 PlainTextSplitter.getInstance());
         }
       }

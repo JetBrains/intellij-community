@@ -16,6 +16,7 @@
 package com.jetbrains.python.psi;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiLanguageInjectionHost;
 import org.jetbrains.annotations.NotNull;
@@ -29,16 +30,8 @@ public interface PyStringLiteralExpression extends PyLiteralExpression, StringLi
 
   int valueOffsetToTextOffset(int valueOffset);
 
-  interface DecodedFragment {
-    @NotNull
-    TextRange getEncodedTextRange();
-
-    @NotNull
-    String getValue();
-  }
-
   @NotNull
-  List<DecodedFragment> getDecodedFragments();
+  List<Pair<TextRange, String>> getDecodedFragments();
 
   void iterateCharacterRanges(TextRangeConsumer consumer);
 

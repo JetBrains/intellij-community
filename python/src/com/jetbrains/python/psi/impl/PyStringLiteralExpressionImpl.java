@@ -153,45 +153,18 @@ public class PyStringLiteralExpressionImpl extends PyElementImpl implements PySt
     return text.length() > 0 && Character.toUpperCase(text.charAt(0)) == 'C';
   }
 
-  public static class DecodedFragmentImpl implements DecodedFragment {
-    @NotNull private final TextRange myRange;
-    @NotNull private final String myValue;
-
-    public DecodedFragmentImpl(@NotNull TextRange range, @NotNull String value) {
-      myRange = range;
-      myValue = value;
-    }
-
-    @Override
-    @NotNull
-    public TextRange getEncodedTextRange() {
-      return myRange;
-    }
-
-    @Override
-    @NotNull
-    public String getValue() {
-      return myValue;
-    }
-
-    @Override
-    public String toString() {
-      return String.format("DecodedFragmentImpl(%s, \"%s\")", myRange, myValue);
-    }
-  }
-
   @Override
   public void iterateCharacterRanges(PyStringLiteralExpression.TextRangeConsumer consumer) {
-    for (PyStringLiteralExpression.DecodedFragment fragment : getDecodedFragments()) {
-      final TextRange range = fragment.getEncodedTextRange();
-      consumer.process(range.getStartOffset(), range.getEndOffset(), fragment.getValue());
+    for (Pair<TextRange, String> fragment : getDecodedFragments()) {
+      final TextRange range = fragment.getFirst();
+      consumer.process(range.getStartOffset(), range.getEndOffset(), fragment.getSecond());
     }
   }
 
   @Override
   @NotNull
-  public List<DecodedFragment> getDecodedFragments() {
-    final List<DecodedFragment> result = new ArrayList<DecodedFragment>();
+  public List<Pair<TextRange, String>> getDecodedFragments() {
+    final List<Pair<TextRange, String>> result = new ArrayList<Pair<TextRange, String>>();
     final int elementStart = getTextRange().getStartOffset();
     for (ASTNode node : getStringNodes()) {
       final String text = node.getText();
@@ -204,15 +177,15 @@ public class PyStringLiteralExpressionImpl extends PyElementImpl implements PySt
   }
 
   @NotNull
-  private static List<DecodedFragment> getDecodedFragments(@NotNull String encoded, int offset, boolean raw, boolean unicode) {
-    final List<DecodedFragment> result = new ArrayList<DecodedFragment>();
+  private static List<Pair<TextRange, String>> getDecodedFragments(@NotNull String encoded, int offset, boolean raw, boolean unicode) {
+    final List<Pair<TextRange, String>> result = new ArrayList<Pair<TextRange, String>>();
     final Matcher escMatcher = PATTERN_ESCAPE.matcher(encoded);
     int index = 0;
     while (escMatcher.find(index)) {
       if (index < escMatcher.start()) {
         final TextRange range = TextRange.create(index, escMatcher.start());
         final TextRange offsetRange = range.shiftRight(offset);
-        result.add(new DecodedFragmentImpl(offsetRange, range.substring(encoded)));
+        result.add(Pair.create(offsetRange, range.substring(encoded)));
       }
 
       final String octal = escapeRegexGroup(escMatcher, EscapeRegexGroup.OCTAL);
@@ -246,14 +219,14 @@ public class PyStringLiteralExpressionImpl extends PyElementImpl implements PySt
 
       if (str != null) {
         final TextRange wholeMatch = TextRange.create(escMatcher.start(), escMatcher.end());
-        result.add(new DecodedFragmentImpl(wholeMatch.shiftRight(offset), str));
+        result.add(Pair.create(wholeMatch.shiftRight(offset), str));
       }
 
       index = escMatcher.end();
     }
     final TextRange range = TextRange.create(index, encoded.length());
     final TextRange offRange = range.shiftRight(offset);
-    result.add(new DecodedFragmentImpl(offRange, range.substring(encoded)));
+    result.add(Pair.create(offRange, range.substring(encoded)));
     return result;
   }
 
@@ -271,8 +244,8 @@ public class PyStringLiteralExpressionImpl extends PyElementImpl implements PySt
     //assert child != null;
     if (stringValue == null) {
       final StringBuilder out = new StringBuilder();
-      for (DecodedFragment fragment : getDecodedFragments()) {
-        out.append(fragment.getValue());
+      for (Pair<TextRange, String> fragment : getDecodedFragments()) {
+        out.append(fragment.getSecond());
       }
       stringValue = out.toString();
     }
@@ -369,11 +342,11 @@ public class PyStringLiteralExpressionImpl extends PyElementImpl implements PySt
 
     @Override
     public boolean decode(@NotNull final TextRange rangeInsideHost, @NotNull final StringBuilder outChars) {
-      for (DecodedFragment fragment : myHost.getDecodedFragments()) {
-        final TextRange encodedTextRange = fragment.getEncodedTextRange();
+      for (Pair<TextRange, String> fragment : myHost.getDecodedFragments()) {
+        final TextRange encodedTextRange = fragment.getFirst();
         final TextRange intersection = encodedTextRange.intersection(rangeInsideHost);
         if (intersection != null && !intersection.isEmpty()) {
-          final String value = fragment.getValue();
+          final String value = fragment.getSecond();
           final String intersectedValue;
           if (value.length() == 1 || value.length() == intersection.getLength()) {
             intersectedValue = value;
@@ -393,11 +366,11 @@ public class PyStringLiteralExpressionImpl extends PyElementImpl implements PySt
     public int getOffsetInHost(final int offsetInDecoded, @NotNull final TextRange rangeInsideHost) {
       int offset = 0;
       int endOffset = -1;
-      for (DecodedFragment fragment : myHost.getDecodedFragments()) {
-        final TextRange encodedTextRange = fragment.getEncodedTextRange();
+      for (Pair<TextRange, String> fragment : myHost.getDecodedFragments()) {
+        final TextRange encodedTextRange = fragment.getFirst();
         final TextRange intersection = encodedTextRange.intersection(rangeInsideHost);
         if (intersection != null && !intersection.isEmpty()) {
-          final String value = fragment.getValue();
+          final String value = fragment.getSecond();
           final int valueLength = value.length();
           if (valueLength == 0) {
             return -1;
