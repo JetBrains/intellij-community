@@ -25,6 +25,10 @@ import com.intellij.openapi.externalSystem.ExternalSystemManager;
 import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.project.ProjectData;
+import com.intellij.openapi.externalSystem.model.task.ExternalSystemTask;
+import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskState;
+import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskType;
+import com.intellij.openapi.externalSystem.service.internal.ExternalSystemProcessingManager;
 import com.intellij.openapi.externalSystem.service.project.ExternalProjectRefreshCallback;
 import com.intellij.openapi.externalSystem.service.project.manage.ProjectDataManager;
 import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemSettings;
@@ -51,7 +55,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
-import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.*;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -332,10 +336,28 @@ public class ExternalSystemAutoImporter implements BulkFileListener, DocumentLis
       documentLock.unlock();
     }
 
+    boolean scheduleRefresh = false;
+    ExternalSystemProcessingManager processingManager = ServiceManager.getService(ExternalSystemProcessingManager.class);
     for (Map.Entry<ProjectSystemId, Set<String>> entry : copy.entrySet()) {
       for (String path : entry.getValue()) {
-        ExternalSystemUtil.refreshProject(myProject, entry.getKey(), path, myRefreshCallback, false, ProgressExecutionMode.IN_BACKGROUND_ASYNC, false);
+        final ExternalSystemTask resolveTask = processingManager.findTask(ExternalSystemTaskType.RESOLVE_PROJECT, entry.getKey(), path);
+        final ExternalSystemTaskState taskState = resolveTask == null ? null : resolveTask.getState();
+        if (taskState == null || taskState.isStopped() ||
+            (taskState == ExternalSystemTaskState.IN_PROGRESS && resolveTask.cancel())) {
+          ExternalSystemUtil.refreshProject(
+            myProject, entry.getKey(), path, myRefreshCallback, false, ProgressExecutionMode.IN_BACKGROUND_ASYNC, false);
+        }
+        else if (taskState != ExternalSystemTaskState.NOT_STARTED) {
+          // re-schedule to wait for the project import task end
+          scheduleRefresh = true;
+          addPath(entry.getKey(), path);
+        }
       }
+    }
+
+    if (scheduleRefresh) {
+      myVfsAlarm.cancelAllRequests();
+      myVfsAlarm.addRequest(myFilesRequest, ExternalSystemConstants.AUTO_IMPORT_DELAY_MILLIS);
     }
   }
   

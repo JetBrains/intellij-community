@@ -35,7 +35,7 @@ import org.jetbrains.annotations.Nullable;
  * <p/>
  * That's why that stuff is covered by the current interface, i.e. different implementations are supposed to provide
  * different 'in process' modes.
- * 
+ *
  * @author Denis Zhdanov
  * @since 8/9/13 3:21 PM
  */
@@ -43,18 +43,27 @@ public interface ExternalSystemCommunicationManager {
 
   /**
    * Creates new external system facade for the given arguments.
-   * 
-   * @param id                   if for which new facade is to be created
-   * @param externalSystemId     target external system id
-   * @return                     newly created facade for the given arguments (if it was possible to create one)
-   * @throws Exception           in case something goes wrong
+   *
+   * @param id               if for which new facade is to be created
+   * @param externalSystemId target external system id
+   * @return newly created facade for the given arguments (if it was possible to create one)
+   * @throws Exception in case something goes wrong
    */
   @Nullable
   RemoteExternalSystemFacade acquire(@NotNull String id, @NotNull ProjectSystemId externalSystemId)
     throws Exception;
 
+  /**
+   * Release resource acquired by the current manager
+   *
+   * @param id               resource id
+   * @param externalSystemId target external system id
+   * @throws Exception in case something goes wrong
+   */
+  void release(@NotNull String id, @NotNull ProjectSystemId externalSystemId) throws Exception;
+
   boolean isAlive(@NotNull RemoteExternalSystemFacade facade);
-  
+
   /**
    * Disposes all resources acquired by the current manager.
    */
