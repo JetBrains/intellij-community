@@ -8,8 +8,11 @@ import com.intellij.openapi.vcs.changes.issueLinks.IssueLinkHtmlRenderer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.BrowserHyperlinkListener;
 import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBLoadingPanel;
+import com.intellij.ui.components.JBTextField;
 import com.intellij.util.text.DateFormatUtil;
+import com.intellij.util.ui.AsyncProcessIcon;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.VcsFullCommitDetails;
@@ -46,6 +49,7 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
 
   @NotNull private final RefsPanel myRefsPanel;
   @NotNull private final DataPanel myDataPanel;
+  @NotNull private final ContainingBranchesPanel myContainingBranchesPanel;
   @NotNull private final MessagePanel myMessagePanel;
   @NotNull private final JBLoadingPanel myLoadingPanel;
 
@@ -56,11 +60,13 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
 
     myRefsPanel = new RefsPanel(colorManager);
     myDataPanel = new DataPanel(logDataHolder.getProject());
+    myContainingBranchesPanel = new ContainingBranchesPanel();
     myMessagePanel = new MessagePanel();
 
     Box content = Box.createVerticalBox();
     content.add(myRefsPanel);
     content.add(myDataPanel);
+    content.add(myContainingBranchesPanel);
     content.setBorder(BorderFactory.createEmptyBorder(0, 5, 0, 5));
 
     myLoadingPanel = new JBLoadingPanel(new BorderLayout(), logDataHolder, ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS);
@@ -92,20 +98,22 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
       }
 
       VcsFullCommitDetails commitData = myLogDataHolder.getCommitDetailsGetter().getCommitData(hash);
-      List<String> branches = null;
-      if (!(commitData instanceof LoadingDetails)) {
-        branches = myLogDataHolder.getContainingBranchesGetter().requestContainingBranches(commitData.getRoot(), hash);
-      }
-      if (commitData instanceof LoadingDetails || branches == null) {
+      if (commitData instanceof LoadingDetails) {
         myLoadingPanel.startLoading();
-        myDataPanel.setData(null, null);
+        myDataPanel.setData(null);
         myRefsPanel.setRefs(Collections.<VcsRef>emptyList());
       }
       else {
         myLoadingPanel.stopLoading();
-        myDataPanel.setData(commitData, branches);
+        myDataPanel.setData(commitData);
         myRefsPanel.setRefs(sortRefs(hash, commitData.getRoot()));
       }
+
+      List<String> branches = null;
+      if (!(commitData instanceof LoadingDetails)) {
+        branches = myLogDataHolder.getContainingBranchesGetter().requestContainingBranches(commitData.getRoot(), hash);
+      }
+      myContainingBranchesPanel.setBranches(branches);
     }
   }
 
@@ -133,20 +141,15 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
       setPreferredSize(new Dimension(150, 100));
     }
 
-    void setData(@Nullable VcsFullCommitDetails commit, @Nullable List<String> branches) {
-      if (commit == null || branches == null) {
+    void setData(@Nullable VcsFullCommitDetails commit) {
+      if (commit == null) {
         setText("");
       }
       else {
-        String body = getHashText(commit) + "<br/>" + getAuthorText(commit) + "<p>" + getMessageText(commit) + "</p>" +
-                      "<p>" + getContainedBranchesText(branches) + "</p>";
+        String body = getHashText(commit) + "<br/>" + getAuthorText(commit) + "<p>" + getMessageText(commit) + "</p>";
         setText("<html><head>" + UIUtil.getCssFontDeclaration(UIUtil.getLabelFont()) + "</head><body>" + body + "</body></html>");
         setCaretPosition(0);
       }
-    }
-
-    private static String getContainedBranchesText(List<String> branches) {
-      return "<i>Contained in branches:</i> " + StringUtil.join(branches, ", ");
     }
 
     private String getMessageText(VcsFullCommitDetails commit) {
@@ -177,6 +180,46 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
       }
       return authorText;
     }
+  }
+
+  private static class ContainingBranchesPanel extends JPanel {
+
+    private final JComponent myLoadingIcon;
+    private final JTextField myBranchesList;
+
+    ContainingBranchesPanel() {
+      JLabel label = new JBLabel("Contained in branches: ");
+      label.setFont(label.getFont().deriveFont(Font.ITALIC));
+      myLoadingIcon = new AsyncProcessIcon("Loading...");
+      myBranchesList = new JBTextField("");
+      myBranchesList.setEditable(false);
+      myBranchesList.setBorder(null);
+
+      setOpaque(false);
+      setLayout(new BoxLayout(this, BoxLayout.X_AXIS));
+      add(label);
+      add(myLoadingIcon);
+      add(myBranchesList);
+      add(Box.createHorizontalGlue());
+    }
+
+    void setBranches(@Nullable List<String> branches) {
+      if (branches == null) {
+        myLoadingIcon.setVisible(true);
+        myBranchesList.setVisible(false);
+      }
+      else {
+        myLoadingIcon.setVisible(false);
+        myBranchesList.setVisible(true);
+        myBranchesList.setText(getContainedBranchesText(branches));
+      }
+    }
+
+    @NotNull
+    private static String getContainedBranchesText(@NotNull List<String> branches) {
+      return StringUtil.join(branches, ", ");
+    }
+
   }
 
   private static class RefsPanel extends JPanel {
