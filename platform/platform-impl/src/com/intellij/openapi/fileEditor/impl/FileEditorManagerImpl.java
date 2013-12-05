@@ -69,6 +69,7 @@ import com.intellij.ui.docking.DockManager;
 import com.intellij.ui.docking.impl.DockManagerImpl;
 import com.intellij.ui.tabs.impl.JBTabsImpl;
 import com.intellij.util.Consumer;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.messages.impl.MessageListenerList;
@@ -1040,7 +1041,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
       return openEditor(realDescriptor, focusEditor);
     }
 
-    final List<FileEditor> result = new ArrayList<FileEditor>();
+    final List<FileEditor> result = new SmartList<FileEditor>();
     CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
       @Override
       public void run() {
