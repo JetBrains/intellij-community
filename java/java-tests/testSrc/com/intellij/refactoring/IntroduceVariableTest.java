@@ -18,10 +18,9 @@ package com.intellij.refactoring;
 import com.intellij.JavaTestUtil;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.CommonClassNames;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiExpression;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.*;
+import com.intellij.psi.impl.source.resolve.PsiResolveHelperImpl;
+import com.intellij.psi.impl.source.resolve.graphInference.PsiGraphInferenceHelper;
 import com.intellij.refactoring.introduce.inplace.OccurrencesChooser;
 import com.intellij.refactoring.introduceVariable.InputValidator;
 import com.intellij.refactoring.introduceVariable.IntroduceVariableBase;
@@ -96,6 +95,18 @@ public class IntroduceVariableTest extends LightCodeInsightTestCase {
 
   public void testParenthized() throws Exception {
     doTest(new MockIntroduceVariableHandler("temp", true, false, false, "int"));
+  }
+
+  public void testExpectedType8Inference() throws Exception {
+    final PsiResolveHelperImpl helper = (PsiResolveHelperImpl)JavaPsiFacade.getInstance(getProject()).getResolveHelper();
+    helper.setTestHelper(new PsiGraphInferenceHelper(getPsiManager()));
+    try {
+      doTest(new MockIntroduceVariableHandler("temp", true, false, false,
+                                              "java.util.Map<java.lang.String,java.util.List<java.lang.String>>"));
+    }
+    finally {
+      helper.setTestHelper(null);
+    }
   }
 
   public void testMethodCall() throws Exception {
