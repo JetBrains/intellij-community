@@ -2,12 +2,12 @@ package com.intellij.codeInsight.completion;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.compiler.compilerOutputIndex.api.index.ClassFilesIndexFeature;
-import com.intellij.compiler.compilerOutputIndex.api.index.ClassFilesIndexFeaturesHolder;
-import com.intellij.compiler.compilerOutputIndex.chainsSearch.ChainRelevance;
-import com.intellij.compiler.compilerOutputIndex.chainsSearch.completion.MethodsChainsCompletionContributor;
-import com.intellij.compiler.compilerOutputIndex.chainsSearch.completion.lookup.ChainCompletionMethodCallLookupElement;
-import com.intellij.compiler.compilerOutputIndex.chainsSearch.completion.lookup.WeightableChainLookupElement;
+import com.intellij.compiler.classFilesIndex.api.index.ClassFilesIndexFeature;
+import com.intellij.compiler.classFilesIndex.api.index.ClassFilesIndexFeaturesHolder;
+import com.intellij.compiler.classFilesIndex.chainsSearch.ChainRelevance;
+import com.intellij.compiler.classFilesIndex.chainsSearch.completion.MethodsChainsCompletionContributor;
+import com.intellij.compiler.classFilesIndex.chainsSearch.completion.lookup.ChainCompletionMethodCallLookupElement;
+import com.intellij.compiler.classFilesIndex.chainsSearch.completion.lookup.WeightableChainLookupElement;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.util.SmartList;
 

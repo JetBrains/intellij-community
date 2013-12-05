@@ -44,7 +44,7 @@
     </component>
 
     <component>
-      <implementation-class>com.intellij.compiler.compilerOutputIndex.api.index.ClassFilesIndexFeaturesHolder</implementation-class>
+      <implementation-class>com.intellij.compiler.classFilesIndex.api.index.ClassFilesIndexFeaturesHolder</implementation-class>
     </component>
   </project-components>
 
@@ -1460,9 +1460,9 @@
     <gotoDeclarationHandler implementation="com.intellij.codeInsight.navigation.actions.GotoLambdaParameterHandler"/>
 
     <completion.contributor language="JAVA" id="methodsChainsCompletionContributor" order="first"
-                            implementationClass="com.intellij.compiler.compilerOutputIndex.chainsSearch.completion.MethodsChainsCompletionContributor"/>
+                            implementationClass="com.intellij.compiler.classFilesIndex.chainsSearch.completion.MethodsChainsCompletionContributor"/>
     <weigher order="first" key="completion" id="methodsChains"
-             implementationClass="com.intellij.compiler.compilerOutputIndex.chainsSearch.completion.MethodsChainsWeigher"/>
+             implementationClass="com.intellij.compiler.classFilesIndex.chainsSearch.completion.MethodsChainsWeigher"/>
 
     <applicationService serviceInterface="org.jetbrains.generate.tostring.template.TemplatesManager"
                         serviceImplementation="org.jetbrains.generate.tostring.template.TemplatesManager"/>
