@@ -1,69 +1,51 @@
 package org.jetbrains.postfixCompletion.templates;
 
-import com.intellij.codeInsight.completion.InsertionContext;
-import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.codeInsight.CodeInsightUtilCore;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.CodeStyleManager;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.postfixCompletion.infrastructure.PostfixTemplateContext;
-import org.jetbrains.postfixCompletion.infrastructure.PrefixExpressionContext;
-import org.jetbrains.postfixCompletion.infrastructure.TemplateInfo;
-import org.jetbrains.postfixCompletion.lookupItems.StatementPostfixLookupElement;
 
-@TemplateInfo(
-  templateName = "synchronized",
-  description = "Produces synchronization statement",
-  example = "synchronized (expr)")
 public class SynchronizedStatementPostfixTemplate extends PostfixTemplate {
-  @Override
-  public LookupElement createLookupElement(@NotNull PostfixTemplateContext context) {
-    PrefixExpressionContext expression = context.outerExpression();
-    if (!expression.canBeStatement) return null;
-
-    PsiType expressionType = expression.expressionType;
-    if (expressionType instanceof PsiPrimitiveType) return null;
-
-    if (!context.executionContext.isForceMode) {
-      if (expressionType == null) return null;
-      if (!expressionType.equalsToText(CommonClassNames.JAVA_LANG_OBJECT)) return null;
-    }
-
-    return new SynchronizedLookupElement(expression);
+  public SynchronizedStatementPostfixTemplate() {
+    super("synchronized", "Produces synchronization statement", "synchronized (expr)");
   }
-  
+
+  @Override
+  public boolean isApplicable(@NotNull PsiElement context, @NotNull Document copyDocument, int newOffset) {
+    PsiExpression expression = getTopmostExpression(context);
+    PsiElement parent = expression != null ? expression.getParent() : null;
+    return parent instanceof PsiExpressionStatement && goodEnoughType(expression);
+  }
+
+  private static boolean goodEnoughType(@NotNull PsiExpression expression) {
+    PsiType expressionType = expression.getType();
+    return !(expressionType instanceof PsiPrimitiveType) && expressionType != null;
+    // if (!expressionType.equalsToText(CommonClassNames.JAVA_LANG_OBJECT)) return null;  // todo: what does it mean?
+  }
+
+  // todo: very common code with switch, ideas?
   @Override
   public void expand(@NotNull PsiElement context, @NotNull Editor editor) {
-    throw new UnsupportedOperationException("Implement me please");
-  }
+    PsiExpression expr = getTopmostExpression(context);
+    PsiElement parent = expr != null ? expr.getParent() : null;
+    if (!(parent instanceof PsiExpressionStatement)) return;
+    PsiElementFactory factory = JavaPsiFacade.getInstance(context.getProject()).getElementFactory();
+    PsiSynchronizedStatement synchronizedStatement;
 
-  static final class SynchronizedLookupElement extends StatementPostfixLookupElement<PsiSynchronizedStatement> {
-    public SynchronizedLookupElement(@NotNull PrefixExpressionContext context) {
-      super("synchronized", context);
-    }
+    Project project = context.getProject();
+    CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(project);
+    synchronizedStatement = (PsiSynchronizedStatement)codeStyleManager
+      .reformat(factory.createStatementFromText("synchronized (" + expr.getText() + "){\nst;\n}", context));
+    synchronizedStatement = (PsiSynchronizedStatement)parent.replace(synchronizedStatement);
 
-    @NotNull
-    @Override
-    protected PsiSynchronizedStatement createNewStatement(@NotNull PsiElementFactory factory,
-                                                          @NotNull PsiElement expression,
-                                                          @NotNull PsiElement context) {
-      PsiSynchronizedStatement synchronizedStatement =
-        (PsiSynchronizedStatement)factory.createStatementFromText("synchronized (expr)", context);
-      PsiExpression lockExpression = synchronizedStatement.getLockExpression();
-      assert lockExpression != null;
-      lockExpression.replace(expression);
-      return synchronizedStatement;
-    }
-
-    @Override
-    protected void postProcess(@NotNull final InsertionContext context, @NotNull PsiSynchronizedStatement statement) {
-      // look for right parenthesis
-      for (PsiElement node = statement.getLockExpression(); node != null; node = node.getNextSibling()) {
-        if (node instanceof PsiJavaToken && ((PsiJavaToken)node).getTokenType() == JavaTokenType.RPARENTH) {
-          int offset = node.getTextRange().getEndOffset();
-          context.getEditor().getCaretModel().moveToOffset(offset);
-          return;
-        }
-      }
-    }
+    // noinspection ConstantConditions
+    PsiCodeBlock block = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(synchronizedStatement.getBody());
+    TextRange range = block.getStatements()[0].getTextRange();
+    editor.getDocument().deleteString(range.getStartOffset(), range.getEndOffset());
+    editor.getCaretModel().moveToOffset(range.getStartOffset());
   }
 }
