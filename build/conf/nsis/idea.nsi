@@ -36,6 +36,7 @@ ReserveFile '${NSISDIR}\Plugins\InstallOptions.dll'
 !insertmacro MUI_RESERVEFILE_LANGDLL
 
 !define MULTIUSER_EXECUTIONLEVEL Highest
+!define MULTIUSER_INSTALLMODE_COMMANDLINE
 !include MultiUser.nsh
 
 !define MUI_ICON "${IMAGES_LOCATION}\${PRODUCT_ICON_FILE}"
@@ -344,6 +345,8 @@ LicenseLangString myLicenseData ${LANG_JAPANESE} "${LICENSE_FILE}.txt"
 
 Function .onInit
   !insertmacro MULTIUSER_INIT
+  StrCpy $baseRegKey "HKCU"
+  IfSilent Done
   UserInfo::GetOriginalAccountType
   Pop $R2
   StrCmp $R2 "Admin" 0 UserNotAdmin
@@ -353,7 +356,6 @@ Function .onInit
     goto Done
 UserNotAdmin:
     StrCpy $INSTDIR "$APPDATA\${MANUFACTURER}\${PRODUCT_WITH_VER}"
-    StrCpy $baseRegKey "HKCU"
 Done:
 FunctionEnd
 
