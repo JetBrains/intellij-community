@@ -599,16 +599,13 @@ public class FileUtil extends FileUtilRt {
     return findSequentNonexistentFile(aParentFolder, aFilePrefix, aExtension).getName();
   }
 
-  public static File findSequentNonexistentFile(@NotNull File aParentFolder,
-                                                @NotNull @NonNls final String aFilePrefix,
-                                                @NotNull String aExtension) {
+  public static File findSequentNonexistentFile(@NotNull File parentFolder, @NotNull  String filePrefix, @NotNull String extension) {
     int postfix = 0;
-    String ext = aExtension.isEmpty() ? "" : "." + aExtension;
-
-    File candidate = new File(aParentFolder, aFilePrefix + ext);
+    String ext = extension.isEmpty() ? "" : '.' + extension;
+    File candidate = new File(parentFolder, filePrefix + ext);
     while (candidate.exists()) {
       postfix++;
-      candidate = new File(aParentFolder, aFilePrefix + Integer.toString(postfix) + ext);
+      candidate = new File(parentFolder, filePrefix + Integer.toString(postfix) + ext);
     }
     return candidate;
   }
