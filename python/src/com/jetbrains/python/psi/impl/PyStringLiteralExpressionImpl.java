@@ -63,6 +63,7 @@ public class PyStringLiteralExpressionImpl extends PyElementImpl implements PySt
   private static final Map<String, String> escapeMap = initializeEscapeMap();
   private String stringValue;
   private List<TextRange> valueTextRanges;
+  @Nullable private List<Pair<TextRange, String>> myDecodedFragments;
   private final DefaultRegExpPropertiesProvider myPropertiesProvider;
 
   private static Map<String, String> initializeEscapeMap() {
@@ -95,6 +96,7 @@ public class PyStringLiteralExpressionImpl extends PyElementImpl implements PySt
     super.subtreeChanged();
     stringValue = null;
     valueTextRanges = null;
+    myDecodedFragments = null;
   }
 
   public List<TextRange> getStringValueTextRanges() {
@@ -156,16 +158,19 @@ public class PyStringLiteralExpressionImpl extends PyElementImpl implements PySt
   @Override
   @NotNull
   public List<Pair<TextRange, String>> getDecodedFragments() {
-    final List<Pair<TextRange, String>> result = new ArrayList<Pair<TextRange, String>>();
-    final int elementStart = getTextRange().getStartOffset();
-    for (ASTNode node : getStringNodes()) {
-      final String text = node.getText();
-      final TextRange textRange = getNodeTextRange(text);
-      final int offset = node.getTextRange().getStartOffset() - elementStart + textRange.getStartOffset();
-      final String encoded = textRange.substring(text);
-      result.addAll(getDecodedFragments(encoded, offset, isRaw(text), isUnicode(text)));
+    if (myDecodedFragments == null) {
+      final List<Pair<TextRange, String>> result = new ArrayList<Pair<TextRange, String>>();
+      final int elementStart = getTextRange().getStartOffset();
+      for (ASTNode node : getStringNodes()) {
+        final String text = node.getText();
+        final TextRange textRange = getNodeTextRange(text);
+        final int offset = node.getTextRange().getStartOffset() - elementStart + textRange.getStartOffset();
+        final String encoded = textRange.substring(text);
+        result.addAll(getDecodedFragments(encoded, offset, isRaw(text), isUnicode(text)));
+      }
+      myDecodedFragments = result;
     }
-    return result;
+    return myDecodedFragments;
   }
 
   @NotNull
