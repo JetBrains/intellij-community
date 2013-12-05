@@ -50,13 +50,6 @@ public final class GitBranchesCollection {
   }
 
   /**
-   * Copy constructor. Sets inside are also copied.
-   */
-  public GitBranchesCollection(@NotNull GitBranchesCollection branches) {
-    this(branches.getLocalBranches(), branches.getRemoteBranches());
-  }
-
-  /**
    * @return the copy of local branches set.
    */
   @NotNull
