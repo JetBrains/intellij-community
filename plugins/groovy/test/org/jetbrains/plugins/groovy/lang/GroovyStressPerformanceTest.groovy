@@ -135,6 +135,21 @@ class GroovyStressPerformanceTest extends LightGroovyTestCase {
     measureHighlighting(defs + text, 10000)
   }
 
+  public void testDeeplyNestedClosuresInCompileStatic() {
+    RecursionManager.assertOnRecursionPrevention(testRootDisposable)
+
+    String text = "println 'hi'"
+    String defs = ""
+    for (i in 1..10) {
+      text = "foo$i {a = 5; $text }"
+      defs += "def foo$i(Closure cl) {}\n"
+    }
+    myFixture.enableInspections(new MissingReturnInspection())
+
+    addCompileStatic()
+    measureHighlighting(defs + "\n @groovy.transform.CompileStatic def compiledStatically() {\ndef a = ''\n" + text + "\n}", 10000)
+  }
+
   public void testDeeplyNestedClosuresInGenericCalls() {
     RecursionManager.assertOnRecursionPrevention(testRootDisposable)
     String text = "println it"
