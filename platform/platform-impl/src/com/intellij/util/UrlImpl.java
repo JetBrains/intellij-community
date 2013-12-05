@@ -37,7 +37,7 @@ public final class UrlImpl implements Url {
     this(null, null, path, null);
   }
 
-  public UrlImpl(@NotNull String scheme, @Nullable String authority, @Nullable String path) {
+  UrlImpl(@NotNull String scheme, @Nullable String authority, @Nullable String path) {
     this(scheme, authority, path, null);
   }
 

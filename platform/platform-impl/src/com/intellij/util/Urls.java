@@ -57,10 +57,18 @@ public final class Urls {
 
   @NotNull
   public static Url newHttpUrl(@NotNull String authority, @Nullable String path) {
-    return new UrlImpl("http", authority, path);
+    return newUrl("http", authority, path);
   }
 
   @NotNull
+  public static Url newUrl(@NotNull String scheme, @NotNull String authority, @Nullable String path) {
+    return new UrlImpl(scheme, authority, path);
+  }
+
+  @NotNull
+  /**
+   * Url will not be normalized (see {@link VfsUtilCore#toIdeaUrl(String)}), parsed as is
+   */
   public static Url newFromIdea(@NotNull String url) {
     Url result = parseFromIdea(url);
     LOG.assertTrue(result != null, url);
