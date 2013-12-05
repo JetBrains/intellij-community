@@ -43,7 +43,7 @@ import java.util.regex.Pattern;
 /**
  * @author Nadya Zabrodina
  */
-public abstract class DvcsCloneDialog extends DialogWrapper {
+public abstract class CloneDvcsDialog extends DialogWrapper {
   /**
    * The pattern for SSH URL-s in form [user@]host:path
    */
@@ -70,7 +70,7 @@ public abstract class DvcsCloneDialog extends DialogWrapper {
   @NotNull protected final Project myProject;
   @NotNull protected final String myVcsDirectoryName;
 
-  public DvcsCloneDialog(@NotNull Project project, @NotNull String vcsDirectoryName) {
+  public CloneDvcsDialog(@NotNull Project project, @NotNull String vcsDirectoryName) {
     super(project, true);
     myProject = project;
     myVcsDirectoryName = vcsDirectoryName;

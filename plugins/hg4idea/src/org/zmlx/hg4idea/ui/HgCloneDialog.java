@@ -16,8 +16,8 @@
 package org.zmlx.hg4idea.ui;
 
 import com.intellij.dvcs.DvcsRememberedInputs;
+import com.intellij.dvcs.ui.CloneDvcsDialog;
 import com.intellij.dvcs.ui.DvcsBundle;
-import com.intellij.dvcs.ui.DvcsCloneDialog;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -33,7 +33,7 @@ import org.zmlx.hg4idea.util.HgUtil;
 /**
  * A dialog for the mercurial clone options
  */
-public class HgCloneDialog extends DvcsCloneDialog {
+public class HgCloneDialog extends CloneDvcsDialog {
 
   public HgCloneDialog(@NotNull Project project) {
     super(project, HgUtil.DOT_HG);

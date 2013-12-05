@@ -16,8 +16,8 @@
 package git4idea.checkout;
 
 import com.intellij.dvcs.DvcsRememberedInputs;
+import com.intellij.dvcs.ui.CloneDvcsDialog;
 import com.intellij.dvcs.ui.DvcsBundle;
-import com.intellij.dvcs.ui.DvcsCloneDialog;
 import com.intellij.openapi.project.Project;
 import git4idea.GitUtil;
 import git4idea.commands.GitCommand;
@@ -32,7 +32,7 @@ import java.io.File;
 /**
  * @author Nadya Zabrodina
  */
-public class GitCloneDialog extends DvcsCloneDialog {
+public class GitCloneDialog extends CloneDvcsDialog {
 
   public GitCloneDialog(@NotNull Project project) {
     super(project, GitUtil.DOT_GIT);
