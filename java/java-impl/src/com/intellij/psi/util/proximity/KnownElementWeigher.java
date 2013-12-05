@@ -98,7 +98,7 @@ public class KnownElementWeigher extends ProximityWeigher {
   }
 
   private static boolean isPopularJdkClass(String qname) {
-    return qname.startsWith(CommonClassNames.JAVA_LANG_STRING) || 
+    return qname.equals(CommonClassNames.JAVA_LANG_STRING) || 
            qname.equals(System.class.getName()) || 
            qname.equals(CommonClassNames.JAVA_LANG_EXCEPTION) || 
            qname.equals(CommonClassNames.JAVA_LANG_THROWABLE) || 
