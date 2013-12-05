@@ -356,7 +356,7 @@ public abstract class DefaultMessageHandler implements BuilderMessageHandler {
   }
 
   private Collection<PsiReferenceExpression> doFindReferences(final PsiField psiField, int fieldAccessFlags, boolean ignoreAccessScope) {
-    final Collection<PsiReferenceExpression> result = new SmartList<PsiReferenceExpression>();
+    final Collection<PsiReferenceExpression> result = Collections.synchronizedList(new SmartList<PsiReferenceExpression>());
 
     final SearchScope searchScope = ignoreAccessScope? GlobalSearchScope.projectScope(myProject) : getSearchScope(psiField.getContainingClass(), fieldAccessFlags);
 
