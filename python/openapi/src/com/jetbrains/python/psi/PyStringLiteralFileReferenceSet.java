@@ -72,15 +72,19 @@ public class PyStringLiteralFileReferenceSet extends RootFileReferenceSet {
     int index = 0;
     final List<FileReference> results = new ArrayList<FileReference>();
     while (matcher.find()) {
-      final TextRange range = TextRange.create(expression.valueOffsetToTextOffset(start),
-                                               expression.valueOffsetToTextOffset(matcher.start()));
-      results.add(createFileReference(range, index++, value.substring(start, matcher.start())));
+      final String s = value.substring(start, matcher.start());
+      if (!s.isEmpty()) {
+        final TextRange range = TextRange.create(expression.valueOffsetToTextOffset(start),
+                                                 expression.valueOffsetToTextOffset(matcher.start()));
+        results.add(createFileReference(range, index++, s));
+      }
       start = matcher.end();
     }
-    if (start != 0) {
+    final String s = value.substring(start);
+    if (!s.isEmpty()) {
       final TextRange range = TextRange.create(expression.valueOffsetToTextOffset(start),
                                                expression.valueOffsetToTextOffset(value.length()));
-      results.add(createFileReference(range, index, value.substring(start)));
+      results.add(createFileReference(range, index, s));
     }
     return results;
   }
