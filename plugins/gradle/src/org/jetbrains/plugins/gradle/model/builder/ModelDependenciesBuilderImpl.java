@@ -30,6 +30,7 @@ import org.jetbrains.plugins.gradle.model.ModelBuilderService;
 import org.jetbrains.plugins.gradle.model.ProjectDependenciesModel;
 import org.jetbrains.plugins.gradle.model.internal.*;
 
+import java.io.File;
 import java.io.Serializable;
 import java.util.*;
 
@@ -107,7 +108,8 @@ public class ModelDependenciesBuilderImpl implements ModelBuilderService {
             new IdeaDependencyScopeImpl(scope),
             versionId.getName(),
             versionId.getGroup(),
-            versionId.getVersion()
+            versionId.getVersion(),
+            versionId.getClassifier()
           );
           libraryDependency.setFile(repoFileDependency.getFile());
           libraryDependency.setSource(repoFileDependency.getSourceFile());
@@ -127,7 +129,8 @@ public class ModelDependenciesBuilderImpl implements ModelBuilderService {
             new IdeaDependencyScopeImpl(scope),
             ideaModuleName,
             versionId.getGroup(),
-            versionId.getVersion()
+            versionId.getVersion(),
+            versionId.getClassifier()
           );
           moduleDependency.setIdeaModule(new StubIdeaModule(ideaModuleName));
           dependencies.add(moduleDependency);
@@ -139,7 +142,8 @@ public class ModelDependenciesBuilderImpl implements ModelBuilderService {
             new IdeaDependencyScopeImpl(scope),
             versionId.getName(),
             versionId.getGroup(),
-            versionId.getVersion()
+            versionId.getVersion(),
+            versionId.getClassifier()
           );
           libraryDependency.setFile(fileDependency.getFile());
           dependencies.add(libraryDependency);
@@ -172,7 +176,7 @@ public class ModelDependenciesBuilderImpl implements ModelBuilderService {
     final String group = project.hasProperty(GROUP_PROPERTY) ? str(project.property(GROUP_PROPERTY)) : "";
 
     DependencyVersionId versionId =
-      new DependencyVersionId(dependency, project.getName(), group, version);
+      new DependencyVersionId(dependency, project.getName(), group, version, null);
     Scopes scopes = map.get(versionId);
     if (scopes == null) {
       map.put(versionId, new Scopes(scope));
@@ -201,8 +205,9 @@ public class ModelDependenciesBuilderImpl implements ModelBuilderService {
       dependencyId = dependency.getId();
     }
 
+    String classifier = parseClassifier(dependencyId, dependency.getFile());
     DependencyVersionId versionId =
-      new DependencyVersionId(dependency, dependencyId.getName(), dependencyId.getGroup(), dependencyId.getVersion());
+      new DependencyVersionId(dependency, dependencyId.getName(), dependencyId.getGroup(), dependencyId.getVersion(), classifier);
     Scopes scopes = map.get(versionId);
     if (scopes == null) {
       map.put(versionId, new Scopes(scope));
@@ -210,6 +215,13 @@ public class ModelDependenciesBuilderImpl implements ModelBuilderService {
     else {
       scopes.add(scope);
     }
+  }
+
+  private static String parseClassifier(ModuleVersionIdentifier dependencyId, File dependencyFile) {
+    if(dependencyFile == null) return null;
+    String dependencyFileName = dependencyFile.getName();
+    int i = dependencyFileName.indexOf(dependencyId.getName() + '-' + dependencyId.getVersion() + '-');
+    return i != -1 ? dependencyFileName.substring(i, dependencyFileName.length()) : null;
   }
 
   private static void merge(Map<DependencyVersionId, Scopes> map, IdeDependenciesExtractor.IdeLocalFileDependency dependency) {
@@ -220,7 +232,7 @@ public class ModelDependenciesBuilderImpl implements ModelBuilderService {
 
     String path = dependency.getFile().getPath();
     DependencyVersionId versionId =
-      new DependencyVersionId(dependency, path, "", "");
+      new DependencyVersionId(dependency, path, "", "", null);
     Scopes scopes = map.get(versionId);
     if (scopes == null) {
       map.put(versionId, new Scopes(scope));

@@ -25,15 +25,18 @@ import java.io.Serializable;
  */
 public abstract class AbstractGradleDependency implements Serializable {
   private final IdeaDependencyScope myScope;
-  private final String dependencyName;
-  private final String dependencyGroup;
-  private final String dependencyVersion;
+  private final String myDependencyName;
+  private final String myDependencyGroup;
+  private final String myDependencyVersion;
+  private final String myClassifier;
 
-  public AbstractGradleDependency(IdeaDependencyScope myScope, String dependencyName, String dependencyGroup, String dependencyVersion) {
-    this.myScope = myScope;
-    this.dependencyName = dependencyName;
-    this.dependencyGroup = dependencyGroup;
-    this.dependencyVersion = dependencyVersion;
+  public AbstractGradleDependency(IdeaDependencyScope scope, String dependencyName,
+                                  String dependencyGroup, String dependencyVersion, String classifier) {
+    myScope = scope;
+    myDependencyName = dependencyName;
+    myDependencyGroup = dependencyGroup;
+    myDependencyVersion = dependencyVersion;
+    myClassifier = classifier;
   }
 
   public IdeaDependencyScope getScope() {
@@ -45,15 +48,19 @@ public abstract class AbstractGradleDependency implements Serializable {
   }
 
   public String getDependencyName() {
-    return dependencyName;
+    return myDependencyName;
   }
 
   public String getDependencyGroup() {
-    return dependencyGroup;
+    return myDependencyGroup;
   }
 
   public String getDependencyVersion() {
-    return dependencyVersion;
+    return myDependencyVersion;
+  }
+
+  public String getClassifier() {
+    return myClassifier;
   }
 
   @Override
@@ -63,10 +70,13 @@ public abstract class AbstractGradleDependency implements Serializable {
 
     AbstractGradleDependency that = (AbstractGradleDependency)o;
 
-    if (dependencyGroup != null ? !dependencyGroup.equals(that.dependencyGroup) : that.dependencyGroup != null) return false;
-    if (dependencyName != null ? !dependencyName.equals(that.dependencyName) : that.dependencyName != null) return false;
-    if (dependencyVersion != null ? !dependencyVersion.equals(that.dependencyVersion) : that.dependencyVersion != null) return false;
+    if (myDependencyGroup != null ? !myDependencyGroup.equals(that.myDependencyGroup) : that.myDependencyGroup != null) return false;
+    if (myDependencyName != null ? !myDependencyName.equals(that.myDependencyName) : that.myDependencyName != null) return false;
+    if (myDependencyVersion != null ? !myDependencyVersion.equals(that.myDependencyVersion) : that.myDependencyVersion != null) {
+      return false;
+    }
     if (myScope != null ? !myScope.equals(that.myScope) : that.myScope != null) return false;
+    if (myClassifier != null ? !myClassifier.equals(that.myClassifier) : that.myClassifier != null) return false;
 
     return true;
   }
@@ -74,9 +84,10 @@ public abstract class AbstractGradleDependency implements Serializable {
   @Override
   public int hashCode() {
     int result = myScope != null ? myScope.hashCode() : 0;
-    result = 31 * result + (dependencyName != null ? dependencyName.hashCode() : 0);
-    result = 31 * result + (dependencyGroup != null ? dependencyGroup.hashCode() : 0);
-    result = 31 * result + (dependencyVersion != null ? dependencyVersion.hashCode() : 0);
+    result = 31 * result + (myDependencyName != null ? myDependencyName.hashCode() : 0);
+    result = 31 * result + (myDependencyGroup != null ? myDependencyGroup.hashCode() : 0);
+    result = 31 * result + (myDependencyVersion != null ? myDependencyVersion.hashCode() : 0);
+    result = 31 * result + (myClassifier != null ? myClassifier.hashCode() : 0);
     return result;
   }
 
@@ -84,9 +95,10 @@ public abstract class AbstractGradleDependency implements Serializable {
   public String toString() {
     return "GradleDependency{" +
            "myScope=" + myScope +
-           ", dependencyName='" + dependencyName + '\'' +
-           ", dependencyGroup='" + dependencyGroup + '\'' +
-           ", dependencyVersion='" + dependencyVersion + '\'' +
+           ", dependencyName='" + myDependencyName + '\'' +
+           ", dependencyGroup='" + myDependencyGroup + '\'' +
+           ", dependencyVersion='" + myDependencyVersion + '\'' +
+           ", classifier='" + myClassifier + '\'' +
            ", exported=" + getExported() +
            '}';
   }
