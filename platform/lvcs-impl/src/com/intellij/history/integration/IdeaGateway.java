@@ -70,16 +70,7 @@ public class IdeaGateway {
   }
 
   private static boolean isInLocalFS(VirtualFile file) {
-    if (!file.isInLocalFileSystem()) {
-      return false;
-    }
-
-    VirtualFileSystem fs = file.getFileSystem();
-    if (fs instanceof TempFileSystem) {
-      return false;
-    }
-
-    return true;
+    return file.isInLocalFileSystem() && !(file.getFileSystem() instanceof TempFileSystem);
   }
 
   public boolean areContentChangesVersioned(@NotNull VirtualFile f) {
