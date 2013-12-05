@@ -44,6 +44,7 @@ import java.util.Collections;
 import java.util.List;
 
 public class MavenAttachSourcesProvider implements AttachSourcesProvider {
+  @Override
   @NotNull
   public Collection<AttachSourcesAction> getActions(final List<LibraryOrderEntry> orderEntries, final PsiFile psiFile) {
     Collection<MavenProject> projects = getMavenProjects(psiFile);
@@ -51,14 +52,17 @@ public class MavenAttachSourcesProvider implements AttachSourcesProvider {
     if (findArtifacts(projects, orderEntries).isEmpty()) return Collections.emptyList();
 
     return Collections.<AttachSourcesAction>singleton(new AttachSourcesAction() {
+      @Override
       public String getName() {
         return ProjectBundle.message("maven.action.download.sources");
       }
 
+      @Override
       public String getBusyText() {
         return ProjectBundle.message("maven.action.download.sources.busy.text");
       }
 
+      @Override
       public ActionCallback perform(List<LibraryOrderEntry> orderEntries) {
         // may have been changed by this time...
         Collection<MavenProject> mavenProjects = getMavenProjects(psiFile);
@@ -75,6 +79,7 @@ public class MavenAttachSourcesProvider implements AttachSourcesProvider {
         final ActionCallback resultWrapper = new ActionCallback();
 
         result.doWhenDone(new Consumer<MavenArtifactDownloader.DownloadResult>() {
+          @Override
           public void consume(MavenArtifactDownloader.DownloadResult downloadResult) {
             if (!downloadResult.unresolvedSources.isEmpty()) {
               final StringBuilder message = new StringBuilder();
@@ -92,6 +97,7 @@ public class MavenAttachSourcesProvider implements AttachSourcesProvider {
               message.append("</html>");
 
               SwingUtilities.invokeLater(new Runnable() {
+                @Override
                 public void run() {
                   Notifications.Bus.notify(new Notification(MavenUtil.MAVEN_NOTIFICATION_GROUP,
                                                             "Cannot download sources",
