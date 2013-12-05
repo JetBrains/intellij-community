@@ -567,18 +567,18 @@ public class JavaCoverageEngine extends CoverageEngine {
   }
 
   protected static void generateJavaReport(@NotNull final Project project,
-                                           final boolean trackTestFolders,
-                                           @NotNull final ProjectData projectData,
-                                           final String outputDir,
-                                           final boolean openInBrowser) {
-
+                                           final File tempFile,
+                                           final CoverageSuitesBundle currentSuite) {
+    final ExportToHTMLSettings settings = ExportToHTMLSettings.getInstance(project);
+    final ProjectData projectData = currentSuite.getCoverageData();
     ProgressManager.getInstance().run(new Task.Backgroundable(project, "Generating coverage report ...") {
       final Exception[] myExceptions = new Exception[1];
 
       public void run(@NotNull final ProgressIndicator indicator) {
         try {
+          new SaveHook(tempFile, true, new IdeaClassFinder(project, currentSuite)).save(projectData);
           final HTMLReportBuilder builder = ReportBuilderFactory.createHTMLReportBuilder();
-          builder.setReportDir(new File(outputDir));
+          builder.setReportDir(new File(settings.OUTPUT_DIRECTORY));
           final SourceCodeProvider sourceCodeProvider = new SourceCodeProvider() {
             public String getSourceCode(@NotNull final String classname) throws IOException {
               return ApplicationManager.getApplication().runReadAction(new Computable<String>() {
@@ -594,7 +594,7 @@ public class JavaCoverageEngine extends CoverageEngine {
             @Override
             public Collection<ClassInfo> getClasses() {
               final Collection<ClassInfo> classes = super.getClasses();
-              if (!trackTestFolders) {
+              if (!currentSuite.isTrackTestFolders()) {
                 final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
                 final GlobalSearchScope productionScope = GlobalSearchScopes.projectProductionScope(project);
                 for (Iterator<ClassInfo> iterator = classes.iterator(); iterator.hasNext();) {
@@ -627,8 +627,8 @@ public class JavaCoverageEngine extends CoverageEngine {
           Messages.showErrorDialog(project, myExceptions[0].getMessage(), CommonBundle.getErrorTitle());
           return;
         }
-        if (openInBrowser) {
-          BrowserUtil.browse(new File(outputDir, "index.html"));
+        if (settings.OPEN_IN_BROWSER) {
+          BrowserUtil.browse(new File(settings.OUTPUT_DIRECTORY, "index.html"));
         }
       }
     });
@@ -649,14 +649,7 @@ public class JavaCoverageEngine extends CoverageEngine {
     try {
       final File tempFile = FileUtil.createTempFile("temp", "");
       tempFile.deleteOnExit();
-      final ProjectData projectData = currentSuite.getCoverageData();
-      new SaveHook(tempFile, true, new IdeaClassFinder(project, currentSuite)).save(projectData);
-      final ExportToHTMLSettings settings = ExportToHTMLSettings.getInstance(project);
-      generateJavaReport(project,
-                         currentSuite.isTrackTestFolders(),
-                         projectData,
-                         settings.OUTPUT_DIRECTORY,
-                         settings.OPEN_IN_BROWSER);
+      generateJavaReport(project, tempFile, currentSuite);
     }
     catch (IOException e1) {
       LOG.error(e1);
