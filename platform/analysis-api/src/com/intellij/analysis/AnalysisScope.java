@@ -282,8 +282,12 @@ public class AnalysisScope {
         @Override
         public void run() {
           final PsiElement[] psiElements = ((LocalSearchScope)myScope).getScope();
+          final Set<PsiFile> files = new LinkedHashSet<PsiFile>();
           for (PsiElement element : psiElements) {
-            element.accept(visitor);
+            final PsiFile file = element.getContainingFile();
+            if (file != null && files.add(file)) {
+              file.accept(visitor);
+            }
           }
         }
       });
