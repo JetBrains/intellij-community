@@ -98,6 +98,23 @@ public class PyStringLiteralTest extends PyTestCase {
                        Arrays.asList("\nfoo.", "\\", "\nbar\n"));
   }
 
+  public void testEscaperOffsetInEscapedBackslash() {
+    final PyStringLiteralExpression expr = createLiteralFromText("'XXX foo.\\\\bar YYY'");
+    assertNotNull(expr);
+    final LiteralTextEscaper<? extends PsiLanguageInjectionHost> escaper = expr.createLiteralTextEscaper();
+    final TextRange range = TextRange.create(5, 14);
+    assertEquals(5, escaper.getOffsetInHost(0, range));
+    assertEquals(6, escaper.getOffsetInHost(1, range));
+    assertEquals(7, escaper.getOffsetInHost(2, range));
+    assertEquals(8, escaper.getOffsetInHost(3, range));
+    assertEquals(9, escaper.getOffsetInHost(4, range));
+    assertEquals(11, escaper.getOffsetInHost(5, range));
+    assertEquals(12, escaper.getOffsetInHost(6, range));
+    assertEquals(13, escaper.getOffsetInHost(7, range));
+    assertEquals(14, escaper.getOffsetInHost(8, range));
+    assertEquals(-1, escaper.getOffsetInHost(9, range));
+  }
+
   private static String decodeRange(PyStringLiteralExpression expr, TextRange range) {
     final StringBuilder builder = new StringBuilder();
     expr.createLiteralTextEscaper().decode(range, builder);

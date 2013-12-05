@@ -369,6 +369,7 @@ public class PyStringLiteralExpressionImpl extends PyElementImpl implements PySt
         if (intersection != null && !intersection.isEmpty()) {
           final String value = fragment.getSecond();
           final int valueLength = value.length();
+          final int intersectionLength = intersection.getLength();
           if (valueLength == 0) {
             return -1;
           }
@@ -376,14 +377,15 @@ public class PyStringLiteralExpressionImpl extends PyElementImpl implements PySt
             if (offset == offsetInDecoded) {
               return intersection.getStartOffset();
             }
+            offset++;
           }
           else {
-            if (offset + valueLength >= offsetInDecoded) {
+            if (offset + intersectionLength >= offsetInDecoded) {
               final int delta = offsetInDecoded - offset;
               return intersection.getStartOffset() + delta;
             }
+            offset += intersectionLength;
           }
-          offset += valueLength;
           endOffset = intersection.getEndOffset();
         }
       }
