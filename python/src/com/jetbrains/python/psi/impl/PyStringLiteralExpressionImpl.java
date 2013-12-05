@@ -173,6 +173,11 @@ public class PyStringLiteralExpressionImpl extends PyElementImpl implements PySt
     public String getValue() {
       return myValue;
     }
+
+    @Override
+    public String toString() {
+      return String.format("DecodedFragmentImpl(%s, \"%s\")", myRange, myValue);
+    }
   }
 
   @Override
