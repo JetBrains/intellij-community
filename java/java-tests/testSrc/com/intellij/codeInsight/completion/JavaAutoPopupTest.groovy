@@ -81,7 +81,7 @@ class JavaAutoPopupTest extends CompletionAutoPopupTestCase {
     les = myFixture.lookupElementStrings
     assert 'iterable' in les
     assert 'iter' in les
-    assertEquals 'iterable', lookup.currentItem.lookupString
+    assertEquals 'iter', lookup.currentItem.lookupString
     assert lookup.focused
 
     type 'a'
@@ -116,7 +116,7 @@ class JavaAutoPopupTest extends CompletionAutoPopupTestCase {
       }
     """)
     type "r"
-    myFixture.assertPreferredCompletionItems 1, "iter", "iterable"
+    myFixture.assertPreferredCompletionItems 0, "iter", "iterable"
 
     type '\b'
     assertContains "iterable"
@@ -131,7 +131,7 @@ class JavaAutoPopupTest extends CompletionAutoPopupTestCase {
     assertContains "iterable"
 
     type "r"
-    myFixture.assertPreferredCompletionItems 1, "iter", "iterable"
+    myFixture.assertPreferredCompletionItems 0, "iter", "iterable"
   }
 
   public void testExplicitSelectionShouldSurvive() {
@@ -1305,7 +1305,7 @@ class Foo {
     type 'e'
     myFixture.assertPreferredCompletionItems 0, 'itera', 'itex'
     type 'r'
-    myFixture.assertPreferredCompletionItems 1, 'iter', 'itera'
+    myFixture.assertPreferredCompletionItems 0, 'iter', 'itera'
     type '\b'
     myFixture.assertPreferredCompletionItems 0, 'itera', 'itex'
   }
@@ -1544,7 +1544,7 @@ class Foo {
 }
 '''
     type 'tpl'
-    myFixture.assertPreferredCompletionItems 1, 'tpl', 'tplMn'
+    myFixture.assertPreferredCompletionItems 0, 'tpl', 'tplMn'
 
     LookupElementPresentation p = LookupElementPresentation.renderElement(myFixture.lookupElements[0])
     assert p.itemText == 'tpl'
