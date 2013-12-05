@@ -21,7 +21,6 @@ import com.intellij.lang.Language;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
@@ -50,9 +49,21 @@ public class PyStringLiteralExpressionImpl extends PyElementImpl implements PySt
   public static final Pattern PATTERN_ESCAPE = Pattern
       .compile("\\\\(\n|\\\\|'|\"|a|b|f|n|r|t|v|([0-7]{1,3})|x([0-9a-fA-F]{1,2})" + "|N(\\{.*?\\})|u([0-9a-fA-F]{4})|U([0-9a-fA-F]{8}))");
          //        -> 1                        ->   2      <-->     3          <-     ->   4     <-->    5      <-   ->  6           <-<-
+
+  private enum EscapeRegexGroup {
+    WHOLE_MATCH,
+    ESCAPED_SUBSTRING,
+    OCTAL,
+    HEXADECIMAL,
+    UNICODE_NAMED,
+    UNICODE_16BIT,
+    UNICODE_32BIT
+  }
+
   private static final Map<String, String> escapeMap = initializeEscapeMap();
   private String stringValue;
   private List<TextRange> valueTextRanges;
+  @Nullable private List<Pair<TextRange, String>> myDecodedFragments;
   private final DefaultRegExpPropertiesProvider myPropertiesProvider;
 
   private static Map<String, String> initializeEscapeMap() {
@@ -85,6 +96,7 @@ public class PyStringLiteralExpressionImpl extends PyElementImpl implements PySt
     super.subtreeChanged();
     stringValue = null;
     valueTextRanges = null;
+    myDecodedFragments = null;
   }
 
   public List<TextRange> getStringValueTextRanges() {
@@ -143,20 +155,82 @@ public class PyStringLiteralExpressionImpl extends PyElementImpl implements PySt
     return text.length() > 0 && Character.toUpperCase(text.charAt(0)) == 'C';
   }
 
-  public void iterateCharacterRanges(TextRangeConsumer consumer) {
-    int elStart = getTextRange().getStartOffset();
-    for (ASTNode child : getStringNodes()) {
-      final String text = child.getText();
-      TextRange textRange = getNodeTextRange(text);
-      int offset = child.getTextRange().getStartOffset() - elStart + textRange.getStartOffset();
-      String undecoded = textRange.substring(text);
-      if (!iterateCharacterRanges(consumer, undecoded, offset, isRaw(text), isUnicode(text))) {
-        break;
+  @Override
+  @NotNull
+  public List<Pair<TextRange, String>> getDecodedFragments() {
+    if (myDecodedFragments == null) {
+      final List<Pair<TextRange, String>> result = new ArrayList<Pair<TextRange, String>>();
+      final int elementStart = getTextRange().getStartOffset();
+      for (ASTNode node : getStringNodes()) {
+        final String text = node.getText();
+        final TextRange textRange = getNodeTextRange(text);
+        final int offset = node.getTextRange().getStartOffset() - elementStart + textRange.getStartOffset();
+        final String encoded = textRange.substring(text);
+        result.addAll(getDecodedFragments(encoded, offset, isRaw(text), isUnicode(text)));
       }
+      myDecodedFragments = result;
     }
+    return myDecodedFragments;
   }
 
+  @NotNull
+  private static List<Pair<TextRange, String>> getDecodedFragments(@NotNull String encoded, int offset, boolean raw, boolean unicode) {
+    final List<Pair<TextRange, String>> result = new ArrayList<Pair<TextRange, String>>();
+    final Matcher escMatcher = PATTERN_ESCAPE.matcher(encoded);
+    int index = 0;
+    while (escMatcher.find(index)) {
+      if (index < escMatcher.start()) {
+        final TextRange range = TextRange.create(index, escMatcher.start());
+        final TextRange offsetRange = range.shiftRight(offset);
+        result.add(Pair.create(offsetRange, range.substring(encoded)));
+      }
 
+      final String octal = escapeRegexGroup(escMatcher, EscapeRegexGroup.OCTAL);
+      final String hex = escapeRegexGroup(escMatcher, EscapeRegexGroup.HEXADECIMAL);
+      // TODO: Implement unicode character name escapes: EscapeRegexGroup.UNICODE_NAMED
+      final String unicode16 = escapeRegexGroup(escMatcher, EscapeRegexGroup.UNICODE_16BIT);
+      final String unicode32 = escapeRegexGroup(escMatcher, EscapeRegexGroup.UNICODE_32BIT);
+
+      final boolean escapedUnicode = raw && unicode || !raw;
+
+      final String str;
+      if (!raw && octal != null) {
+        str = new String(new char[]{(char)Integer.parseInt(octal, 8)});
+      }
+      else if (!raw && hex != null) {
+        str = new String(new char[]{(char)Integer.parseInt(hex, 16)});
+      }
+      else if (escapedUnicode && unicode16 != null) {
+        str = unicode ? new String(new char[]{(char)Integer.parseInt(unicode16, 16)}) : unicode16;
+      }
+      else if (escapedUnicode && unicode32 != null) {
+        str = unicode ? new String(Character.toChars((int)Long.parseLong(unicode32, 16))) : unicode32;
+      }
+      else if (raw) {
+        str = escapeRegexGroup(escMatcher, EscapeRegexGroup.WHOLE_MATCH);
+      }
+      else {
+        final String toReplace = escapeRegexGroup(escMatcher, EscapeRegexGroup.ESCAPED_SUBSTRING);
+        str = escapeMap.get(toReplace);
+      }
+
+      if (str != null) {
+        final TextRange wholeMatch = TextRange.create(escMatcher.start(), escMatcher.end());
+        result.add(Pair.create(wholeMatch.shiftRight(offset), str));
+      }
+
+      index = escMatcher.end();
+    }
+    final TextRange range = TextRange.create(index, encoded.length());
+    final TextRange offRange = range.shiftRight(offset);
+    result.add(Pair.create(offRange, range.substring(encoded)));
+    return result;
+  }
+
+  @Nullable
+  private static String escapeRegexGroup(@NotNull Matcher matcher, EscapeRegexGroup group) {
+    return matcher.group(group.ordinal());
+  }
 
   public List<ASTNode> getStringNodes() {
     return Arrays.asList(getNode().getChildren(PyTokenTypes.STRING_NODES));
@@ -165,14 +239,11 @@ public class PyStringLiteralExpressionImpl extends PyElementImpl implements PySt
   public String getStringValue() {
     //ASTNode child = getNode().getFirstChildNode();
     //assert child != null;
-   if (stringValue == null) {
+    if (stringValue == null) {
       final StringBuilder out = new StringBuilder();
-      iterateCharacterRanges(new TextRangeConsumer() {
-        public boolean process(int startOffset, int endOffset, String value) {
-          out.append(value);
-          return true;
-        }
-      });
+      for (Pair<TextRange, String> fragment : getDecodedFragments()) {
+        out.append(fragment.getSecond());
+      }
       stringValue = out.toString();
     }
     return stringValue;
@@ -188,106 +259,6 @@ public class PyStringLiteralExpressionImpl extends PyElementImpl implements PySt
       return new TextRange(allRanges.get(0).getStartOffset(), allRanges.get(allRanges.size()-1).getEndOffset());
     }
     return new TextRange(0, getTextLength());
-  }
-
-  private static boolean iterateCharacterRanges(TextRangeConsumer consumer, String undecoded, int off, boolean raw, boolean unicode) {
-    if (raw) {
-      return iterateRawCharacterRanges(consumer, undecoded, off, unicode);
-    }
-    Matcher escMatcher = PATTERN_ESCAPE.matcher(undecoded);
-    int index = 0;
-    while (escMatcher.find(index)) {
-      for (int i = index; i < escMatcher.start(); i++) {
-        if (!consumer.process(off + i, off + i + 1, Character.toString(undecoded.charAt(i)))) {
-          return false;
-        }
-      }
-      String octal = escMatcher.group(2);
-      String hex = escMatcher.group(3);
-      String str = null;
-      if (octal != null) {
-        str = new String(new char[]{(char)Integer.parseInt(octal, 8)});
-
-      }
-      else if (hex != null) {
-        str = new String(new char[]{(char)Integer.parseInt(hex, 16)});
-
-      }
-      else {
-        String toReplace = escMatcher.group(1);
-        String replacement = escapeMap.get(toReplace);
-        if (replacement != null) {
-          str = replacement;
-        }
-      }
-      String unicodeName = escMatcher.group(4);
-      String unicode32 = escMatcher.group(6);
-
-      if (unicode32 != null) {
-        str = unicode ? new String(Character.toChars((int)Long.parseLong(unicode32, 16))) : unicode32;
-      }
-      if (unicodeName != null) {
-        //TOLATER: implement unicode character name escapes
-      }
-      String unicode16 = escMatcher.group(5);
-      if (unicode16 != null) {
-        str = unicode ? new String(new char[]{(char)Integer.parseInt(unicode16, 16)}) : unicode16;
-      }
-
-      if (str != null) {
-        int start = escMatcher.start();
-        int end = escMatcher.end();
-        if (!consumer.process(off + start, off + end, str)) {
-          return false;
-        }
-      }
-      index = escMatcher.end();
-    }
-    for (int i = index; i < undecoded.length(); i++) {
-      if (!consumer.process(off + i, off + i + 1, Character.toString(undecoded.charAt(i)))) {
-        return false;
-      }
-    }
-    return true;
-  }
-
-  private static boolean iterateRawCharacterRanges(TextRangeConsumer consumer, String undecoded, int off, boolean unicode) {
-    for (int i = 0; i < undecoded.length(); i++) {
-      char c = undecoded.charAt(i);
-      if (unicode && c == '\\' && i < undecoded.length()-1) {
-        char c2 = undecoded.charAt(i+1);
-        if (c2 == 'u' && i < undecoded.length()-5) {
-          try {
-            char u = (char) Integer.parseInt(undecoded.substring(i+2, i+6), 16);
-            if (!consumer.process(off+i, off+i+ 6, Character.toString(u))) {
-              return false;
-            }
-          }
-          catch (NumberFormatException ignore) { }
-          //noinspection AssignmentToForLoopParameter
-          i += 5;
-          continue;
-        }
-        if (c2 == 'U' && i < undecoded.length()-9) {
-          // note: Java has 16-bit chars, so this code will truncate characters which don't fit in 16 bits
-          try {
-            char u = (char) Long.parseLong(undecoded.substring(i+2, i+10), 16);
-            if (!consumer.process(off+i, off+i+10, Character.toString(u))) {
-              return false;
-            }
-          }
-          catch (NumberFormatException ignore) { }
-          //noinspection AssignmentToForLoopParameter
-          i += 9;
-          continue;
-        }
-      }
-      if (!consumer.process(off + i, off + i + 1, Character.toString(c))) {
-        return false;
-      }
-    }
-
-    return true;
   }
 
   @Override
@@ -368,57 +339,60 @@ public class PyStringLiteralExpressionImpl extends PyElementImpl implements PySt
 
     @Override
     public boolean decode(@NotNull final TextRange rangeInsideHost, @NotNull final StringBuilder outChars) {
-      final PyDocStringOwner
-        docStringOwner = PsiTreeUtil.getParentOfType(myHost, PyDocStringOwner.class);
-      if (docStringOwner != null && myHost.equals(docStringOwner.getDocStringExpression())) {
-        outChars.append(myHost.getText(), rangeInsideHost.getStartOffset(), rangeInsideHost.getEndOffset());
-      }
-      else {
-        myHost.iterateCharacterRanges(new TextRangeConsumer() {
-          public boolean process(int startOffset, int endOffset, String value) {
-            int xsectStart = Math.max(startOffset, rangeInsideHost.getStartOffset());
-            int xsectEnd = Math.min(endOffset, rangeInsideHost.getEndOffset());
-            if (xsectEnd > xsectStart) {
-              outChars.append(value);
-            }
-            return endOffset < rangeInsideHost.getEndOffset();
+      for (Pair<TextRange, String> fragment : myHost.getDecodedFragments()) {
+        final TextRange encodedTextRange = fragment.getFirst();
+        final TextRange intersection = encodedTextRange.intersection(rangeInsideHost);
+        if (intersection != null && !intersection.isEmpty()) {
+          final String value = fragment.getSecond();
+          final String intersectedValue;
+          if (value.length() == 1 || value.length() == intersection.getLength()) {
+            intersectedValue = value;
           }
-        });
+          else {
+            final int start = Math.max(0, rangeInsideHost.getStartOffset() - encodedTextRange.getStartOffset());
+            final int end = Math.min(value.length(), start + intersection.getLength());
+            intersectedValue = value.substring(start, end);
+          }
+          outChars.append(intersectedValue);
+        }
       }
       return true;
     }
 
     @Override
     public int getOffsetInHost(final int offsetInDecoded, @NotNull final TextRange rangeInsideHost) {
-      final Ref<Integer> resultRef = Ref.create(-1);
-      final Ref<Integer> indexRef = Ref.create(0);
-      final Ref<Integer> lastEndOffsetRef = Ref.create(-1);
-      myHost.iterateCharacterRanges(new TextRangeConsumer() {
-        @Override
-        public boolean process(int startOffset, int endOffset, String value) {
-          if (startOffset > rangeInsideHost.getEndOffset()) {
-            return false;
+      int offset = 0;
+      int endOffset = -1;
+      for (Pair<TextRange, String> fragment : myHost.getDecodedFragments()) {
+        final TextRange encodedTextRange = fragment.getFirst();
+        final TextRange intersection = encodedTextRange.intersection(rangeInsideHost);
+        if (intersection != null && !intersection.isEmpty()) {
+          final String value = fragment.getSecond();
+          final int valueLength = value.length();
+          final int intersectionLength = intersection.getLength();
+          if (valueLength == 0) {
+            return -1;
           }
-          lastEndOffsetRef.set(endOffset);
-          if (startOffset >= rangeInsideHost.getStartOffset()) {
-            final int i = indexRef.get();
-            if (i == offsetInDecoded) {
-              resultRef.set(startOffset);
-              return false;
+          else if (valueLength == 1) {
+            if (offset == offsetInDecoded) {
+              return intersection.getStartOffset();
             }
-            indexRef.set(i + 1);
+            offset++;
           }
-          return true;
+          else {
+            if (offset + intersectionLength >= offsetInDecoded) {
+              final int delta = offsetInDecoded - offset;
+              return intersection.getStartOffset() + delta;
+            }
+            offset += intersectionLength;
+          }
+          endOffset = intersection.getEndOffset();
         }
-      });
-      final int result = resultRef.get();
-      if (result != -1) {
-        return result;
       }
-      // We should handle the position of a character at the end of rangeInsideHost, because LeafPatcher expects it to be valid
-      final int lastEndOffset = lastEndOffsetRef.get();
-      if (indexRef.get() == offsetInDecoded && lastEndOffset == rangeInsideHost.getEndOffset()) {
-        return lastEndOffset;
+      // XXX: According to the real use of getOffsetInHost() it should return the correct host offset for the offset in decoded at the
+      // end of the range inside host, not -1
+      if (offset == offsetInDecoded) {
+        return endOffset;
       }
       return -1;
     }
@@ -431,23 +405,7 @@ public class PyStringLiteralExpressionImpl extends PyElementImpl implements PySt
 
   @Override
   public int valueOffsetToTextOffset(int valueOffset) {
-    final Ref<Integer> offsetInDecodedRef = new Ref<Integer>(valueOffset);
-    final Ref<Integer> result = new Ref<Integer>(-1);
-    iterateCharacterRanges(new TextRangeConsumer() {
-      public boolean process(int startOffset, int endOffset, String value) {
-        if (value.length() > offsetInDecodedRef.get()) {
-          result.set(startOffset + offsetInDecodedRef.get());
-          return false;
-        }
-        offsetInDecodedRef.set(offsetInDecodedRef.get() - value.length());
-        if (offsetInDecodedRef.get() == 0) {
-          result.set(endOffset);
-          return false;
-        }
-        return true;
-      }
-    });
-    return result.get();
+    return createLiteralTextEscaper().getOffsetInHost(valueOffset, getStringValueTextRange());
   }
 
   public boolean characterNeedsEscaping(char c) {

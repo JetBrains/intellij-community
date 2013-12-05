@@ -23,6 +23,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.CalledInBackground;
+import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
@@ -172,16 +173,24 @@ public class NewRootBunch implements SvnBranchConfigManager {
           callbackCalled = true;
         }
       }
+      catch (VcsException e) {
+        showError(e);
+      }
       catch (SVNException e) {
-        // already logged inside
-        if (InfoReliability.setByUser.equals(myInfoReliability)) {
-          VcsBalloonProblemNotifier.showOverChangesView(myProject, "Branches load error: " + e.getMessage(), MessageType.ERROR);
-        }
-      } finally {
+        showError(e);
+      }
+      finally {
         // callback must be called by contract
         if (myCallback != null && (! callbackCalled)) {
           myCallback.consume(null);
         }
+      }
+    }
+
+    private void showError(Exception e) {
+      // already logged inside
+      if (InfoReliability.setByUser.equals(myInfoReliability)) {
+        VcsBalloonProblemNotifier.showOverChangesView(myProject, "Branches load error: " + e.getMessage(), MessageType.ERROR);
       }
     }
   }

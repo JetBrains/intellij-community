@@ -465,6 +465,13 @@ public class QuickMerge {
   // true if errors found
   static boolean checkListForPaths(String relativeLocal,
                                    String relativeBranch, Pair<SvnChangeList, TreeStructureNode<SVNLogEntry>> pair) {
+    // TODO: Such filtering logic is not clear enough so far (and probably not correct for all cases - for instance when we perform merge
+    // TODO: from branch1 to branch2 and have revision which contain merge changes from branch3 to branch1.
+    // TODO: In this case paths of child log entries will not contain neither urls from branch1 nor from branch2 - and checkEntry() method
+    // TODO: will return true => so such revision will not be used (and displayed) further.
+
+    // TODO: Why do we check entries recursively - we have a revision - set of changes in the "merge from" branch? Why do we need to check
+    // TODO: where they came from - we want avoid some circular merges or what? Does subversion itself perform such checks or not?
     final List<TreeStructureNode<SVNLogEntry>> children = pair.getSecond().getChildren();
     boolean localChange = false;
     for (TreeStructureNode<SVNLogEntry> child : children) {
@@ -497,6 +504,10 @@ public class QuickMerge {
   }
 
   // true if errors found
+  // checks if either some changed path is in current branch => treat as local change
+  // or if no changed paths in current branch, checks if at least one path in "merge from" branch
+  // NOTE: this fails for "merge-source" log entries from other branches - when all changed paths are from some
+  // third branch - this logic treats such log entry as local.
   private static boolean checkForEntry(final SVNLogEntry entry, final String localURL, String relativeBranch) {
     boolean atLeastOneUnderBranch = false;
     final Map map = entry.getChangedPaths();

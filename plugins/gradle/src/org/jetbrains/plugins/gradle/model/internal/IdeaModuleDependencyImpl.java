@@ -31,8 +31,10 @@ public class IdeaModuleDependencyImpl extends AbstractGradleDependency
 
   public IdeaModuleDependencyImpl(IdeaDependencyScope myScope,
                                   String dependencyName,
-                                  String dependencyGroup, String dependencyVersion) {
-    super(myScope, dependencyName, dependencyGroup, dependencyVersion);
+                                  String dependencyGroup,
+                                  String dependencyVersion,
+                                  String classifier) {
+    super(myScope, dependencyName, dependencyGroup, dependencyVersion, classifier);
   }
 
   @Override

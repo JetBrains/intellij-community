@@ -65,7 +65,8 @@ public interface RemoteExternalSystemProjectResolver<S extends ExternalSystemExe
     }
 
     @Override
-    public void cancelTask(@NotNull ExternalSystemTaskId id) throws RemoteException {
+    public boolean cancelTask(@NotNull ExternalSystemTaskId id) throws RemoteException {
+      return false;
     }
 
     @NotNull

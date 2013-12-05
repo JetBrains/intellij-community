@@ -101,9 +101,7 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
     //noinspection ResultOfMethodCallIgnored
     myBaseDir.mkdirs();
 
-    if (ApplicationManager.getApplication().isUnitTestMode() || !ApplicationManager.getApplication().isCommandLine()) {
-      addVFSListener();
-    }
+    addVFSListener();
   }
 
   @Override

@@ -147,6 +147,37 @@ public class StringUtilTest extends TestCase {
     assertEquals("foo\\\"bar'\\\"", StringUtil.escapeQuotes("foo\"bar'\""));
   }
 
+  public void testUnqote() {
+    assertEquals("", StringUtil.unquoteString(""));
+    assertEquals("\"", StringUtil.unquoteString("\""));
+    assertEquals("", StringUtil.unquoteString("\"\""));
+    assertEquals("\"", StringUtil.unquoteString("\"\"\""));
+    assertEquals("foo", StringUtil.unquoteString("\"foo\""));
+    assertEquals("\"foo", StringUtil.unquoteString("\"foo"));
+    assertEquals("foo\"", StringUtil.unquoteString("foo\""));
+    assertEquals("", StringUtil.unquoteString(""));
+    assertEquals("\'", StringUtil.unquoteString("\'"));
+    assertEquals("", StringUtil.unquoteString("\'\'"));
+    assertEquals("\'", StringUtil.unquoteString("\'\'\'"));
+    assertEquals("foo", StringUtil.unquoteString("\'foo\'"));
+    assertEquals("\'foo", StringUtil.unquoteString("\'foo"));
+    assertEquals("foo\'", StringUtil.unquoteString("foo\'"));
+
+    assertEquals("\'\"", StringUtil.unquoteString("\'\""));
+    assertEquals("\"\'", StringUtil.unquoteString("\"\'"));
+    assertEquals("\"foo\'", StringUtil.unquoteString("\"foo\'"));
+  }
+
+  public void testUnqoteWithQuotationChar() {
+    assertEquals("", StringUtil.unquoteString("", '|'));
+    assertEquals("|", StringUtil.unquoteString("|", '|'));
+    assertEquals("", StringUtil.unquoteString("||", '|'));
+    assertEquals("|", StringUtil.unquoteString("|||", '|'));
+    assertEquals("foo", StringUtil.unquoteString("|foo|", '|'));
+    assertEquals("|foo", StringUtil.unquoteString("|foo", '|'));
+    assertEquals("foo|", StringUtil.unquoteString("foo|", '|'));
+  }
+
   public void testJoin() {
     assertEquals("foo,,bar", StringUtil.join(Arrays.asList("foo", "", "bar"), ","));
     assertEquals("foo,,bar", StringUtil.join(new String[]{"foo", "", "bar"}, ","));

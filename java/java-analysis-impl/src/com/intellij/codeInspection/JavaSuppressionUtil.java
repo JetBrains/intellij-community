@@ -205,7 +205,7 @@ public class JavaSuppressionUtil {
           return statement;
         }
 
-        PsiVariable local = PsiTreeUtil.getParentOfType(place, PsiVariable.class);
+        PsiVariable local = PsiTreeUtil.getParentOfType(place, PsiVariable.class, false);
         if (local != null && getAnnotationMemberSuppressedIn(local, toolId) != null) {
           PsiModifierList modifierList = local.getModifierList();
           return modifierList != null ? modifierList.findAnnotation(SUPPRESS_INSPECTIONS_ANNOTATION_NAME) : null;

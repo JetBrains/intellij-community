@@ -35,7 +35,7 @@ public interface ExternalSystemTaskAware {
    *            <code>false</code> otherwise
    * @throws RemoteException      as required by RMI
    */
-  void cancelTask(@NotNull ExternalSystemTaskId id) throws RemoteException;
+  boolean cancelTask(@NotNull ExternalSystemTaskId id) throws RemoteException;
 
   /**
    * Allows to ask current service for all tasks being executed at the moment.  

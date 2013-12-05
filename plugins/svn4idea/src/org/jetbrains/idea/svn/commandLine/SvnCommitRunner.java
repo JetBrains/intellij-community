@@ -20,7 +20,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
-import org.apache.subversion.javahl.types.Revision;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnVcs;
@@ -42,6 +41,8 @@ public class SvnCommitRunner {
 
   private static final Logger LOG = Logger.getInstance("org.jetbrains.idea.svn.commandLine.SvnCommitRunner");
 
+  public static final long INVALID_REVISION_NUMBER = -1L;
+
   private SvnCommitRunner.CommandListener myCommandListener;
   private SvnVcs myVcs;
 
@@ -57,7 +58,7 @@ public class SvnCommitRunner {
                      boolean keepChangelist,
                      Collection<String> changelists,
                      Map revpropTable) throws VcsException {
-    if (paths.length == 0) return Revision.SVN_INVALID_REVNUM;
+    if (paths.length == 0) return INVALID_REVISION_NUMBER;
 
     final List<String> parameters = new ArrayList<String>();
     CommandUtil.put(parameters, depth);
@@ -106,7 +107,7 @@ public class SvnCommitRunner {
 
     @Nullable private final CommitEventHandler myHandler;
     private SvnBindException myException;
-    private long myCommittedRevision = Revision.SVN_INVALID_REVNUM;
+    private long myCommittedRevision = INVALID_REVISION_NUMBER;
     private File myBase;
 
     public CommandListener(@Nullable CommitEventHandler handler) {

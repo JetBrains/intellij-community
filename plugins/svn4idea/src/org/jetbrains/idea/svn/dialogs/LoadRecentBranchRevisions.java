@@ -115,9 +115,11 @@ class LoadRecentBranchRevisions extends TaskDescriptor {
     for (Pair<SvnChangeList, TreeStructureNode<SVNLogEntry>> pair : list) {
       // do not take first since it's equal
       if (myFirst > 0 && myFirst == pair.getFirst().getNumber()) continue;
-      if (! QuickMerge.checkListForPaths(relativeLocal, relativeBranch, pair)) {
+      // TODO: Currently path filtering with QuickMerge.checkListForPaths is not applied as it removes some necessary revisions
+      // TODO: (merge revisions) from list. Check if that filtering was really necessary here - in "Quick merge".
+//      if (! QuickMerge.checkListForPaths(relativeLocal, relativeBranch, pair)) {
         myCommittedChangeLists.add(pair.getFirst());
-      }
+//      }
     }
 
     try {

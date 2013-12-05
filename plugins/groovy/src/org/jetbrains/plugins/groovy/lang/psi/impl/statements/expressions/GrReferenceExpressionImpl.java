@@ -696,9 +696,6 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
   private static final class OurTypesCalculator implements Function<GrReferenceExpressionImpl, PsiType> {
     @Nullable
     public PsiType fun(GrReferenceExpressionImpl refExpr) {
-      PsiType result = GrReassignedLocalVarsChecker.checkReassignedVar(refExpr, true);
-      if (result != null) return result;
-
       if (GrUnresolvedAccessInspection.isClassReference(refExpr)) {
         GrExpression qualifier = refExpr.getQualifier();
         LOG.assertTrue(qualifier != null);
@@ -706,8 +703,14 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
       }
 
       final PsiElement resolved = refExpr.resolve();
-      final PsiType inferred = getInferredTypes(refExpr, resolved);
       final PsiType nominal = refExpr.getNominalType();
+
+      Boolean reassigned = GrReassignedLocalVarsChecker.isReassignedVar(refExpr);
+      if (reassigned != null && reassigned.booleanValue()) {
+        return GrReassignedLocalVarsChecker.getReassignedVarType(refExpr, true);
+      }
+
+      final PsiType inferred = getInferredTypes(refExpr, resolved);
       if (inferred == null || PsiType.NULL.equals(inferred)) {
         if (nominal == null) {
           //inside nested closure we could still try to infer from variable initializer. Not sound, but makes sense

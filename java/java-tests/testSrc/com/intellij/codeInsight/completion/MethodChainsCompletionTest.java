@@ -1,19 +1,16 @@
 package com.intellij.codeInsight.completion;
 
 import com.intellij.JavaTestUtil;
-import com.intellij.codeInsight.completion.methodChains.completion.MethodsChainsCompletionContributor;
-import com.intellij.codeInsight.completion.methodChains.completion.lookup.ChainCompletionMethodCallLookupElement;
-import com.intellij.codeInsight.completion.methodChains.completion.lookup.WeightableChainLookupElement;
-import com.intellij.codeInsight.completion.methodChains.search.ChainRelevance;
 import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.compilerOutputIndex.api.fs.FileVisitorService;
-import com.intellij.compilerOutputIndex.api.indexer.CompilerOutputIndexFeature;
-import com.intellij.compilerOutputIndex.api.indexer.CompilerOutputIndexer;
+import com.intellij.compiler.classFilesIndex.api.index.ClassFilesIndexFeature;
+import com.intellij.compiler.classFilesIndex.api.index.ClassFilesIndexFeaturesHolder;
+import com.intellij.compiler.classFilesIndex.chainsSearch.ChainRelevance;
+import com.intellij.compiler.classFilesIndex.chainsSearch.completion.MethodsChainsCompletionContributor;
+import com.intellij.compiler.classFilesIndex.chainsSearch.completion.lookup.ChainCompletionMethodCallLookupElement;
+import com.intellij.compiler.classFilesIndex.chainsSearch.completion.lookup.WeightableChainLookupElement;
 import com.intellij.ide.util.PropertiesComponent;
-import com.intellij.mock.MockProgressIndicator;
 import com.intellij.util.SmartList;
 
-import java.io.File;
 import java.util.List;
 
 /**
@@ -22,19 +19,18 @@ import java.util.List;
 public class MethodChainsCompletionTest extends AbstractCompilerAwareTest {
   private final static String TEST_INDEX_FILE_NAME = "TestIndex.java";
   private final static String TEST_COMPLETION_FILE_NAME = "TestCompletion.java";
-
   private final static String BEFORE_COMPLETION_FILE = "BeforeCompletion.java";
   private final static String AFTER_COMPLETION_FILE = "AfterCompletion.java";
 
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    CompilerOutputIndexFeature.METHOD_CHAINS_COMPLETION.enable();
+    ClassFilesIndexFeature.METHOD_CHAINS_COMPLETION.enable();
   }
 
   @Override
   protected void tearDown() throws Exception {
-    CompilerOutputIndexFeature.METHOD_CHAINS_COMPLETION.disable();
+    ClassFilesIndexFeature.METHOD_CHAINS_COMPLETION.disable();
     super.tearDown();
   }
 
@@ -52,7 +48,8 @@ public class MethodChainsCompletionTest extends AbstractCompilerAwareTest {
 
   public void testStaticMethod() {
     final List<WeightableChainLookupElement> elements = doCompletion();
-    assertAdvisorLookupElementEquals("getInstance", 0, 2, 1, 0, assertOneElement(elements));
+    assertSize(2, elements);
+    assertAdvisorLookupElementEquals("getInstance", 0, 2, 1, 0, elements.get(0));
   }
 
   public void testStaticMethodAndMethod() {
@@ -86,12 +83,13 @@ public class MethodChainsCompletionTest extends AbstractCompilerAwareTest {
     assertOneElement(doCompletion());
   }
 
-  public void testMethodReturnsSubclassOfTargetClassNotShowed2() {
-    assertEmpty(doCompletion());
+  public void testMethodReturnsSubclassOfTargetClassShowed2() {
+    assertOneElement(doCompletion());
   }
 
-  public void testResultsForSuperClassesNotShowed() {
-    assertEmpty(doCompletion());
+  public void testResultsForSuperClassesShowed() {
+    // if no other elements found we search by super classes
+    assertOneElement(doCompletion());
   }
 
   public void testInnerClasses() {
@@ -108,8 +106,9 @@ public class MethodChainsCompletionTest extends AbstractCompilerAwareTest {
   }
 
   public void testBigrams3() {
-    final List<WeightableChainLookupElement> collection = doCompletion();
-    assertAdvisorLookupElementEquals("getInstance().findFile().findElementAt", 2, 8, 3, 0, assertOneElement(collection));
+    final List<WeightableChainLookupElement> elements = doCompletion();
+    assertSize(2, elements);
+    assertAdvisorLookupElementEquals("getInstance().findFile().findElementAt", 2, 8, 3, 0, elements.get(0));
   }
 
   public void testMethodWithNoQualifiedVariableInContext() {
@@ -217,18 +216,24 @@ public class MethodChainsCompletionTest extends AbstractCompilerAwareTest {
   }
 
   private void doTestRendering() {
-    PropertiesComponent.getInstance(getProject()).setValue(ChainCompletionMethodCallLookupElement.PROP_METHODS_CHAIN_COMPLETION_AUTO_COMPLETION, String.valueOf(true));
-    indexCompiledData(compileData(getName(), TEST_INDEX_FILE_NAME));
+    final ClassFilesIndexFeaturesHolder indicesHolder = ClassFilesIndexFeaturesHolder.getInstance(getProject());
+    PropertiesComponent.getInstance(getProject())
+      .setValue(ChainCompletionMethodCallLookupElement.PROP_METHODS_CHAIN_COMPLETION_AUTO_COMPLETION, String.valueOf(true));
+    indicesHolder.projectOpened();
+    compileAndIndexData(TEST_INDEX_FILE_NAME);
     myFixture.configureByFiles(getBeforeCompletionFilePath());
     myFixture.complete(CompletionType.BASIC, MethodsChainsCompletionContributor.INVOCATIONS_THRESHOLD);
-    PropertiesComponent.getInstance(getProject()).setValue(ChainCompletionMethodCallLookupElement.PROP_METHODS_CHAIN_COMPLETION_AUTO_COMPLETION, String.valueOf(false));
+    PropertiesComponent.getInstance(getProject())
+      .setValue(ChainCompletionMethodCallLookupElement.PROP_METHODS_CHAIN_COMPLETION_AUTO_COMPLETION, String.valueOf(false));
     myFixture.checkResultByFile(getAfterCompletionFilePath());
+    indicesHolder.projectClosed();
   }
 
   private List<WeightableChainLookupElement> doCompletion() {
+    final ClassFilesIndexFeaturesHolder indicesHolder = ClassFilesIndexFeaturesHolder.getInstance(getProject());
     try {
-      indexCompiledData(compileData(getName(), TEST_INDEX_FILE_NAME));
-
+      indicesHolder.projectOpened();
+      compileAndIndexData(TEST_INDEX_FILE_NAME);
       final LookupElement[] allLookupElements = runCompletion();
       final List<WeightableChainLookupElement> targetLookupElements = new SmartList<WeightableChainLookupElement>();
       for (final LookupElement lookupElement : allLookupElements) {
@@ -236,28 +241,18 @@ public class MethodChainsCompletionTest extends AbstractCompilerAwareTest {
           targetLookupElements.add((WeightableChainLookupElement)lookupElement);
         }
       }
-
       return targetLookupElements;
     }
     finally {
-      final CompilerOutputIndexer indexer = CompilerOutputIndexer.getInstance(getProject());
-      indexer.projectClosed();
-      indexer.removeIndexes();
+      indicesHolder.projectClosed();
     }
   }
 
   private LookupElement[] runCompletion() {
     myFixture.configureByFiles(getTestCompletionFilePath());
-    final LookupElement[] lookupElements = myFixture.complete(CompletionType.BASIC, MethodsChainsCompletionContributor.INVOCATIONS_THRESHOLD);
+    final LookupElement[] lookupElements =
+      myFixture.complete(CompletionType.BASIC, MethodsChainsCompletionContributor.INVOCATIONS_THRESHOLD);
     return lookupElements == null ? LookupElement.EMPTY_ARRAY : lookupElements;
-  }
-
-  private void indexCompiledData(final File compilerOutput) {
-    final FileVisitorService.DirectoryClassFiles visitorService = new FileVisitorService.DirectoryClassFiles(compilerOutput);
-    final CompilerOutputIndexer indexer = CompilerOutputIndexer.getInstance(getProject());
-    indexer.projectOpened();
-    indexer.clear();
-    indexer.reindex(visitorService, new MockProgressIndicator());
   }
 
   private String getTestCompletionFilePath() {

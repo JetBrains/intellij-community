@@ -12,6 +12,7 @@
 // limitations under the License.
 package org.zmlx.hg4idea.ui;
 
+import com.intellij.dvcs.DvcsRememberedInputs;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
@@ -56,8 +57,8 @@ public class HgPullDialog extends DialogWrapper {
 
   public void createUIComponents() {
     myRepositoryURL = new EditorComboBox("");
-    final HgRememberedInputs rememberedInputs = HgRememberedInputs.getInstance(project);
-    myRepositoryURL.setHistory(ArrayUtil.toObjectArray(rememberedInputs.getRepositoryUrls(), String.class));
+    final DvcsRememberedInputs rememberedInputs = HgRememberedInputs.getInstance();
+    myRepositoryURL.setHistory(ArrayUtil.toObjectArray(rememberedInputs.getVisitedUrls(), String.class));
     myRepositoryURL.addDocumentListener(new DocumentAdapter() {
       @Override
       public void documentChanged(DocumentEvent e) {
@@ -74,10 +75,9 @@ public class HgPullDialog extends DialogWrapper {
   }
 
   public void rememberSettings() {
-    final HgRememberedInputs rememberedInputs = HgRememberedInputs.getInstance(project);
-    rememberedInputs.addRepositoryUrl(HgUtil.removePasswordIfNeeded(getSource()));
+    final DvcsRememberedInputs rememberedInputs = HgRememberedInputs.getInstance();
+    rememberedInputs.addUrl(HgUtil.removePasswordIfNeeded(getSource()));
   }
-
 
   public VirtualFile getRepository() {
     return hgRepositorySelector.getRepository();

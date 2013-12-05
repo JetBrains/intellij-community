@@ -1,7 +1,6 @@
 package com.intellij.openapi.externalSystem.service;
 
 import com.intellij.execution.rmi.RemoteServer;
-import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.settings.ExternalSystemExecutionSettings;
 import com.intellij.openapi.externalSystem.model.task.*;
 import com.intellij.openapi.externalSystem.service.project.ExternalSystemProjectResolver;
@@ -190,11 +189,11 @@ public abstract class AbstractExternalSystemFacadeImpl<S extends ExternalSystemE
   }
 
   @Override
-  public void cancelTask(@NotNull ExternalSystemTaskId id) throws RemoteException {
+  public boolean cancelTask(@NotNull ExternalSystemTaskId id) throws RemoteException {
     if(id.getType() == ExternalSystemTaskType.RESOLVE_PROJECT) {
-      myProjectResolver.cancelTask(id);
+      return myProjectResolver.cancelTask(id);
     } else{
-      myTaskManager.cancelTask(id);
+      return myTaskManager.cancelTask(id);
     }
   }
 

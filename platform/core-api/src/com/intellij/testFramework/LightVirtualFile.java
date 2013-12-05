@@ -271,7 +271,7 @@ public class LightVirtualFile extends VirtualFile {
 
   @Override
   public long getTimeStamp() {
-    return 0; // todo[max] : Add UnsupporedOperationException at better times.
+    return 0; // todo[max] : Add UnsupportedOperationException at better times.
   }
 
   @Override
@@ -280,6 +280,7 @@ public class LightVirtualFile extends VirtualFile {
       return contentsToByteArray().length;
     }
     catch (IOException e) {
+      //noinspection CallToPrintStackTrace
       e.printStackTrace();
       assert false;
       return 0;
@@ -295,6 +296,7 @@ public class LightVirtualFile extends VirtualFile {
     myModStamp = LocalTimeCounter.currentTime();
   }
 
+  @Override
   public void setWritable(boolean b) {
     myIsWritable = b;
   }

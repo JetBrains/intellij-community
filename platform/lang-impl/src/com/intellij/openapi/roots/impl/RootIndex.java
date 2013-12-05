@@ -18,15 +18,14 @@ package com.intellij.openapi.roots.impl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.FileTypeManager;
-import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.impl.libraries.LibraryEx;
 import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -71,15 +70,9 @@ class RootIndex {
       }
 
       for (ContentEntry contentEntry : contentEntries) {
-        // Init excluded roots
-        VirtualFile[] excluded = contentEntry.getExcludeFolderFiles();
-        for (VirtualFile excludeRoot : excluded) {
+        for (VirtualFile excludeRoot : contentEntry.getExcludeFolderFiles()) {
           RootInfo info = getOrCreateRootInfo(excludeRoot);
           info.excludedFromModule = module;
-          if (!FileUtil.startsWith(excludeRoot.getUrl(), contentEntry.getUrl())) {
-            info.excludedFromProject = true;
-            myProjectExcludedRoots.add(excludeRoot);
-          }
         }
 
         // Init module sources
@@ -150,15 +143,29 @@ class RootIndex {
     for (DirectoryIndexExcludePolicy policy : Extensions.getExtensions(DirectoryIndexExcludePolicy.EP_NAME, project)) {
       for (VirtualFile root : policy.getExcludeRootsForProject()) {
         getOrCreateRootInfo(root).excludedFromProject = true;
-        myProjectExcludedRoots.add(root);
       }
     }
 
     for (RootInfo info : myRoots.values()) {
-      Pair<DirectoryInfo, String> pair = calcDirectoryInfo(info);
+      List<RootInfo> hierarchy = getHierarchy(info);
+      Pair<DirectoryInfo, String> pair = hierarchy == null ? new Pair<DirectoryInfo, String>(null, null) : calcDirectoryInfo(info, hierarchy);
       cacheInfos(info.root, info.root, pair.first);
       myPackagePrefixRoots.putValue(pair.second, info.root);
+      if (shouldMarkAsProjectExcluded(info, hierarchy)) {
+        myProjectExcludedRoots.add(info.root);
+      }
     }
+  }
+
+  private static boolean shouldMarkAsProjectExcluded(RootInfo info, List<RootInfo> hierarchy) {
+    if (hierarchy == null) return false;
+    if (!(info.excludedFromProject || info.excludedFromModule != null)) return false;
+    return ContainerUtil.find(hierarchy, new Condition<RootInfo>() {
+      @Override
+      public boolean value(RootInfo info) {
+        return info.contentRootOf != null;
+      }
+    }) == null;
   }
 
   public void checkConsistency() {
@@ -368,12 +375,7 @@ class RootIndex {
   }
 
   @NotNull
-  private Pair<DirectoryInfo, String> calcDirectoryInfo(RootInfo info) {
-    List<RootInfo> hierarchy = getHierarchy(info);
-    if (hierarchy == null) {
-      return new Pair<DirectoryInfo, String>(null, null);
-    }
-
+  private static Pair<DirectoryInfo, String> calcDirectoryInfo(RootInfo info, @NotNull final List<RootInfo> hierarchy) {
     RootInfo moduleContentInfo = findModuleRootInfo(hierarchy);
     RootInfo libraryClassInfo = findLibraryRootInfo(hierarchy, false);
     RootInfo librarySourceInfo = findLibraryRootInfo(hierarchy, true);

@@ -17,48 +17,56 @@ package org.jetbrains.idea.svn.branchConfig;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vcs.VcsException;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.SvnConfiguration;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.integrate.SvnBranchItem;
 import org.tmatesoft.svn.core.*;
-import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.wc.SVNLogClient;
 import org.tmatesoft.svn.core.wc.SVNRevision;
+import org.tmatesoft.svn.core.wc2.SvnTarget;
 
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 
 public class BranchesLoader {
-  private static final Logger LOG = Logger.getInstance("#org.jetbrains.idea.svn.branchConfig.BranchesLoader");
 
   private BranchesLoader() {
   }
 
-  public static List<SvnBranchItem> loadBranches(final Project project, final String url, boolean passive) throws SVNException {
-    final List<SvnBranchItem> result = new LinkedList<SvnBranchItem>();
-
+  public static List<SvnBranchItem> loadBranches(final Project project, final String url, boolean passive) throws SVNException,
+                                                                                                                  VcsException {
     final SvnConfiguration configuration = SvnConfiguration.getInstance(project);
     final SvnVcs vcs = SvnVcs.getInstance(project);
-    final ISVNAuthenticationManager passiveManager = passive ?
-      configuration.getPassiveAuthenticationManager(project) : configuration.getInteractiveManager(vcs);
-    final SVNURL branchesUrl = SVNURL.parseURIEncoded(url);
+    SVNURL branchesUrl = SVNURL.parseURIEncoded(url);
+    List<SvnBranchItem> result = new LinkedList<SvnBranchItem>();
+    SvnTarget target = SvnTarget.fromURL(branchesUrl);
+    ISVNDirEntryHandler handler = createHandler(branchesUrl, result);
 
-    // TODO: Currently this method works for 1.8 - but should be updated to command line implementation
-    final SVNLogClient logClient = vcs.createLogClient(passiveManager);
-    logClient.doList(branchesUrl, SVNRevision.UNDEFINED, SVNRevision.HEAD, false, SVNDepth.IMMEDIATES, SVNDirEntry.DIRENT_ALL, new ISVNDirEntryHandler() {
-      public void handleDirEntry(final SVNDirEntry dirEntry) throws SVNException {
-        final SVNURL currentUrl = dirEntry.getURL();
-        if (! branchesUrl.equals(currentUrl)) {
-          final String url = currentUrl.toString();
-          // if have permissions
-          if (dirEntry.getDate() != null) {
-            result.add(new SvnBranchItem(url, dirEntry.getDate(), dirEntry.getRevision()));
-          }
-        }
-      }
-    });
+    if (!passive) {
+      // TODO: Implement ability to specify interactive/non-interactive auth mode for clients
+      vcs.getFactory(target).createBrowseClient().list(target, SVNRevision.HEAD, SVNDepth.IMMEDIATES, handler);
+    }
+    else {
+      SVNLogClient client = vcs.createLogClient(configuration.getPassiveAuthenticationManager(project));
+      client
+        .doList(target.getURL(), target.getPegRevision(), SVNRevision.HEAD, false, SVNDepth.IMMEDIATES, SVNDirEntry.DIRENT_ALL, handler);
+    }
+
     Collections.sort(result);
     return result;
+  }
+
+  @NotNull
+  private static ISVNDirEntryHandler createHandler(@NotNull final SVNURL branchesUrl, @NotNull final List<SvnBranchItem> result) {
+    return new ISVNDirEntryHandler() {
+      public void handleDirEntry(final SVNDirEntry dirEntry) throws SVNException {
+        if (!branchesUrl.equals(dirEntry.getURL()) && dirEntry.getDate() != null) {
+          result.add(new SvnBranchItem(dirEntry.getURL().toDecodedString(), dirEntry.getDate(), dirEntry.getRevision()));
+        }
+      }
+    };
   }
 }

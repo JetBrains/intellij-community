@@ -223,9 +223,13 @@ public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtensi
           }
         }
       }
-      final BinaryFileStubBuilder builder = BinaryFileStubBuilders.INSTANCE.forFileType(fileType);
+
+      BinaryFileStubBuilder builder = BinaryFileStubBuilders.INSTANCE.forFileType(fileType);
       if (builder != null) {
-        map.put(fileType, builder.getStubVersion());
+        Integer integer = map.get(fileType);
+        int value = integer != null ? integer : 0;
+        value = value * 31 + builder.getStubVersion() + builder.getClass().getName().hashCode();
+        map.put(fileType, value);
       }
     }
     return map;

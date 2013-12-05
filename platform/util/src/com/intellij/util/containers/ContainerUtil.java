@@ -2090,7 +2090,7 @@ public class ContainerUtil extends ContainerUtilRt {
     }
   };
 
-  private static final ConcurrentMapFactory CHM_FACTORY = SystemInfo.isOracleJvm || SystemInfo.isAppleJvm || isAtLeastJava7() ? V8_MAP_FACTORY : PLATFORM_MAP_FACTORY;
+  private static final ConcurrentMapFactory CHM_FACTORY = SystemInfo.isOracleJvm || SystemInfo.isSunJvm || SystemInfo.isAppleJvm || isAtLeastJava7() ? V8_MAP_FACTORY : PLATFORM_MAP_FACTORY;
 
   private static boolean isAtLeastJava7() {
     // IBM JDK provides correct version in java.version property, but not in java.runtime.version property

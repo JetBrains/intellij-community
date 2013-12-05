@@ -12,6 +12,7 @@
 // limitations under the License.
 package org.zmlx.hg4idea.ui;
 
+import com.intellij.dvcs.DvcsRememberedInputs;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.editor.event.DocumentAdapter;
@@ -82,8 +83,8 @@ public class HgPushDialog extends DialogWrapper {
 
   public void createUIComponents() {
     myRepositoryURL = new EditorComboBox("");
-    final HgRememberedInputs rememberedInputs = HgRememberedInputs.getInstance(myProject);
-    myRepositoryURL.setHistory(ArrayUtil.toObjectArray(rememberedInputs.getRepositoryUrls(), String.class));
+    final DvcsRememberedInputs rememberedInputs = HgRememberedInputs.getInstance();
+    myRepositoryURL.setHistory(ArrayUtil.toObjectArray(rememberedInputs.getVisitedUrls(), String.class));
     myRepositoryURL.addDocumentListener(new DocumentAdapter() {
       @Override
       public void documentChanged(com.intellij.openapi.editor.event.DocumentEvent e) {
@@ -187,8 +188,8 @@ public class HgPushDialog extends DialogWrapper {
   }
 
   public void rememberSettings() {
-    final HgRememberedInputs rememberedInputs = HgRememberedInputs.getInstance(myProject);
-    rememberedInputs.addRepositoryUrl(HgUtil.removePasswordIfNeeded(myRepositoryURL.getText()));
+    final DvcsRememberedInputs rememberedInputs = HgRememberedInputs.getInstance();
+    rememberedInputs.addUrl(HgUtil.removePasswordIfNeeded(myRepositoryURL.getText()));
   }
 
   /**

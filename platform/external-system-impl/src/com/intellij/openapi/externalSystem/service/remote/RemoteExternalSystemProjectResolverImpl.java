@@ -43,10 +43,9 @@ public class RemoteExternalSystemProjectResolverImpl<S extends ExternalSystemExe
     });
   }
 
-  @Nullable
   @Override
-  public void cancelTask(@NotNull final ExternalSystemTaskId id)
+  public boolean cancelTask(@NotNull final ExternalSystemTaskId id)
     throws ExternalSystemException, IllegalArgumentException, IllegalStateException {
-    // canceling of the project resolving does not support yet
+    return myDelegate.cancelTask(id, getNotificationListener());
   }
 }

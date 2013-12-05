@@ -451,8 +451,8 @@ public class SvnAnnotationProvider implements AnnotationProvider, VcsCacheableAn
     }
 
     private void doLog(final boolean includeMerged, final SVNRevision truncateTo, final int max) throws VcsException {
-      myClient.doLog(myIoFile, myEndRevision, truncateTo == null ? SVNRevision.create(1L) : truncateTo,
-                     SVNRevision.UNDEFINED, false, false, includeMerged, max, null,
+      myClient.doLog(SvnTarget.fromFile(myIoFile), myEndRevision, truncateTo == null ? SVNRevision.create(1L) : truncateTo,
+                     false, false, includeMerged, max, null,
                      new ISVNLogEntryHandler() {
                        public void handleLogEntry(SVNLogEntry logEntry) {
                          if (SVNRevision.UNDEFINED.getNumber() == logEntry.getRevision()) {

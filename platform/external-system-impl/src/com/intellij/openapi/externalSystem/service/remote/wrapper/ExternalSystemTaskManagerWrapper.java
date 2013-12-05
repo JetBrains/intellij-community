@@ -70,11 +70,11 @@ public class ExternalSystemTaskManagerWrapper<S extends ExternalSystemExecutionS
   }
 
   @Override
-  public void cancelTask(@NotNull ExternalSystemTaskId id) throws RemoteException, ExternalSystemException
+  public boolean cancelTask(@NotNull ExternalSystemTaskId id) throws RemoteException, ExternalSystemException
   {
     myProgressManager.onQueued(id);
     try {
-      getDelegate().cancelTask(id);
+      return getDelegate().cancelTask(id);
     }
     finally {
       myProgressManager.onEnd(id);

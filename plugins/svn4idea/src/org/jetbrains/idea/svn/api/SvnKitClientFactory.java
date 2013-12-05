@@ -4,6 +4,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.add.SvnKitAddClient;
 import org.jetbrains.idea.svn.annotate.SvnKitAnnotateClient;
+import org.jetbrains.idea.svn.browse.SvnKitBrowseClient;
 import org.jetbrains.idea.svn.change.SvnKitChangeListClient;
 import org.jetbrains.idea.svn.checkin.SvnKitImportClient;
 import org.jetbrains.idea.svn.checkout.SvnKitCheckoutClient;
@@ -55,6 +56,7 @@ public class SvnKitClientFactory extends ClientFactory {
     myImportClient = new SvnKitImportClient();
     myExportClient = new SvnKitExportClient();
     myUpgradeClient = new SvnKitUpgradeClient();
+    myBrowseClient = new SvnKitBrowseClient();
     statusClient = new SvnkitSvnStatusClient(myVcs, null);
     infoClient = new SvnkitSvnWcClient(myVcs);
   }

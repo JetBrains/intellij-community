@@ -145,6 +145,11 @@ public class ExternalSystemFacadeManager {
     }
   }
 
+  public ExternalSystemCommunicationManager getCommunicationManager(@NotNull ProjectSystemId externalSystemId) {
+    final boolean currentInProcess = ExternalSystemApiUtil.isInProcessMode(externalSystemId);
+    return currentInProcess ? myInProcessCommunicationManager : myRemoteCommunicationManager;
+  }
+
   @SuppressWarnings("ConstantConditions")
   @NotNull
   private RemoteExternalSystemFacade doGetFacade(@NotNull IntegrationKey key, @NotNull Project project) throws Exception {

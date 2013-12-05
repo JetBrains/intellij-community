@@ -23,7 +23,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashSet;
 
 /**
  * <p>
@@ -49,27 +48,14 @@ public final class GitBranchesCollection {
     myLocalBranches = localBranches;
   }
 
-  /**
-   * Copy constructor. Sets inside are also copied.
-   */
-  public GitBranchesCollection(@NotNull GitBranchesCollection branches) {
-    this(branches.getLocalBranches(), branches.getRemoteBranches());
-  }
-
-  /**
-   * @return the copy of local branches set.
-   */
   @NotNull
   public Collection<GitLocalBranch> getLocalBranches() {
-    return new HashSet<GitLocalBranch>(myLocalBranches);
+    return Collections.unmodifiableCollection(myLocalBranches);
   }
 
-  /**
-   * @return the copy of remote branches set.
-   */
   @NotNull
   public Collection<GitRemoteBranch> getRemoteBranches() {
-    return new HashSet<GitRemoteBranch>(myRemoteBranches);
+    return Collections.unmodifiableCollection(myRemoteBranches);
   }
 
   public GitLocalBranch findLocalBranch(@NotNull final String name) {

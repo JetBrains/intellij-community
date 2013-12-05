@@ -460,7 +460,7 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
 
     String msg = "Invalid stub element type in index: " + file;
     msg += "; found: " + psi;
-    msg += "; found: " + requiredClass;
+    msg += "; expected: " + requiredClass;
     msg += "\nfile stamp: " + file.getModificationStamp();
     msg += "; file size: " + file.getLength();
     msg += "; file modCount: " + file.getModificationCount();
