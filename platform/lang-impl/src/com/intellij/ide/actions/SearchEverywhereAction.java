@@ -118,6 +118,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
   private static final int MAX_SETTINGS = 5;
   private static final int MAX_ACTIONS = 5;
   private static final int MAX_RECENT_FILES = 10;
+  public static final int MAX_SEARCH_EVERYWHERE_HISTORY = 50;
 
   private SearchEverywhereAction.MyListRenderer myRenderer;
   MySearchTextField myPopupField;
@@ -142,14 +143,8 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
 
   private Alarm myAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, ApplicationManager.getApplication());
   private Alarm myUpdateAlarm = new Alarm(ApplicationManager.getApplication());
-  private JBList myList = new JBList(myListModel) {
-    @Override
-    public Dimension getPreferredSize() {
-      final Dimension size = super.getPreferredSize();
-      return new Dimension(Math.min(size.width, 800), size.height);
-    }
-  };
-  private JCheckBox myNonProjectCheckBox = new JCheckBox();
+  private JBList myList;
+  private JCheckBox myNonProjectCheckBox;
   private AnActionEvent myActionEvent;
   private Component myContextComponent;
   private CalcThread myCalcThread;
@@ -189,6 +184,9 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
           } else {
             ourLastTimePressed.set(System.currentTimeMillis());
             ourOtherKeyWasPressed.set(true);
+            if (keyCode == KeyEvent.VK_ESCAPE || keyCode == KeyEvent.VK_TAB)  {
+              ourLastTimePressed.set(0);
+            }
           }
           resetState();
         }
@@ -319,7 +317,25 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
   }
 
   public SearchEverywhereAction() {
+    updateComponents();
+    //noinspection SSBasedInspection
+    SwingUtilities.invokeLater(new Runnable() {
+      public void run() {
+        onFocusLost();
+      }
+    });
+
+  }
+
+  private void updateComponents() {
     myRenderer = new MyListRenderer();
+    myList = new JBList(myListModel) {
+      @Override
+      public Dimension getPreferredSize() {
+        final Dimension size = super.getPreferredSize();
+        return new Dimension(Math.min(size.width, 800), size.height);
+      }
+    };
     myList.setCellRenderer(myRenderer);
     myList.addMouseListener(new MouseAdapter() {
       @Override
@@ -332,6 +348,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       }
     });
 
+    myNonProjectCheckBox = new JCheckBox();
     myNonProjectCheckBox.setOpaque(false);
     myNonProjectCheckBox.setAlignmentX(1.0f);
     myNonProjectCheckBox.addActionListener(new ActionListener() {
@@ -355,13 +372,6 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
         }
       }
     });
-    //noinspection SSBasedInspection
-    SwingUtilities.invokeLater(new Runnable() {
-      public void run() {
-        onFocusLost();
-      }
-    });
-
   }
 
   private void initTooltip(JLabel label) {
@@ -617,6 +627,8 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       e = new AnActionEvent(me, DataManager.getInstance().getDataContext(myFocusOwner), ActionPlaces.UNKNOWN, getTemplatePresentation(), ActionManager.getInstance(), 0);
     }
     if (e == null) return;
+
+    updateComponents();
     myContextComponent = PlatformDataKeys.CONTEXT_COMPONENT.getData(e.getDataContext());
     final Project project = e.getProject();
     Window wnd = myContextComponent != null ? SwingUtilities.windowForComponent(myContextComponent)
@@ -673,8 +685,8 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
           List<String> history = StringUtil.isEmpty(historyString) ? new ArrayList<String>() : StringUtil.split(historyString, "\n");
           history.remove(last);
           history.add(0, last);
-          if (history.size() > 10) {
-            history = history.subList(0, 10);
+          if (history.size() > MAX_SEARCH_EVERYWHERE_HISTORY) {
+            history = history.subList(0, MAX_SEARCH_EVERYWHERE_HISTORY);
           }
           storage.setValue(SE_HISTORY_KEY, StringUtil.join(history, "\n"));
           return true;

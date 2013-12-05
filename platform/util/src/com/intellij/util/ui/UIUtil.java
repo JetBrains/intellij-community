@@ -221,6 +221,11 @@ public class UIUtil {
   }
 
   public static boolean isRetina() {
+    //Temporary workaround for HiDPI on Windows/Linux
+    if ("true".equalsIgnoreCase(System.getProperty("is.hidpi"))) {
+      return true;
+    }
+
     synchronized (ourRetina) {
       if (ourRetina.isNull()) {
         ourRetina.set(false); // in case HiDPIScaledImage.drawIntoImage is not called for some reason

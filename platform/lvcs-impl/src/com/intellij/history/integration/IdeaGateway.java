@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,13 +31,11 @@ import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.util.Clock;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.encoding.EncodingRegistry;
+import com.intellij.openapi.vfs.ex.temp.TempFileSystem;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.util.NullableFunction;
@@ -54,7 +52,7 @@ public class IdeaGateway {
     = Key.create("LocalHistory.SAVED_DOCUMENT_CONTENT_AND_STAMP_KEY");
 
   public boolean isVersioned(@NotNull VirtualFile f) {
-    if (!f.isInLocalFileSystem()) return false;
+    if (!isInLocalFS(f)) return false;
 
     String fileName = f.getName();
     if (!f.isDirectory() && fileName.endsWith(".class")) return false;
@@ -69,6 +67,10 @@ public class IdeaGateway {
 
     // optimisation: FileTypeManager.isFileIgnored(f) already checked inside ProjectFileIndex.isIgnored()
     return openProjects.length != 0 || !FileTypeManager.getInstance().isFileIgnored(f);
+  }
+
+  private static boolean isInLocalFS(VirtualFile file) {
+    return file.isInLocalFileSystem() && !(file.getFileSystem() instanceof TempFileSystem);
   }
 
   public boolean areContentChangesVersioned(@NotNull VirtualFile f) {
@@ -151,16 +153,27 @@ public class IdeaGateway {
   public RootEntry createTransientRootEntry() {
     ApplicationManager.getApplication().assertReadAccessAllowed();
     RootEntry root = new RootEntry();
-    doCreateChildren(root, Arrays.asList(ManagingFS.getInstance().getLocalRoots()), false);
+    doCreateChildren(root, getLocalRoots(), false);
     return root;
   }
+
   @NotNull
   public RootEntry createTransientRootEntryForPathOnly(@NotNull String path) {
     ApplicationManager.getApplication().assertReadAccessAllowed();
     RootEntry root = new RootEntry();
-    doCreateChildrenForPathOnly(root, path, Arrays.asList(ManagingFS.getInstance().getLocalRoots()));
+    doCreateChildrenForPathOnly(root, path, getLocalRoots());
     return root;
   }
+
+  private static List<VirtualFile> getLocalRoots() {
+    return ContainerUtil.filter(ManagingFS.getInstance().getLocalRoots(), new Condition<VirtualFile>() {
+      @Override
+      public boolean value(VirtualFile file) {
+        return isInLocalFS(file);
+      }
+    });
+  }
+
   private void doCreateChildrenForPathOnly(@NotNull DirectoryEntry parent,
                                            @NotNull String path,
                                            @NotNull Collection<VirtualFile> children) {
