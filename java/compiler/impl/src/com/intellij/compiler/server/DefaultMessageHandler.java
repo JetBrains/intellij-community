@@ -218,24 +218,17 @@ public abstract class DefaultMessageHandler implements BuilderMessageHandler {
     }
     final Set<PsiElement> usages = new HashSet<PsiElement>();
     try {
-      boolean success = addUsages(field, usages, accessFlags, isAccessibilityChange);
-      if (!success) {
-        return false;
-      }
-      success = ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
-        public Boolean compute() {
+      addUsages(field, usages, accessFlags, isAccessibilityChange);
+      ApplicationManager.getApplication().runReadAction(new Runnable() {
+        public void run() {
           for (final PsiElement usage : usages) {
             if (!usage.isValid()) {
-              return Boolean.FALSE;
+              // if usage is invalid the file should be changed anyway and thus compiled later
+              affect(usage, affectedPaths);
             }
-            affect(usage, affectedPaths);
           }
-          return Boolean.TRUE;
         }
       });
-      if (!success) {
-        return false;
-      }
     }
     catch (PsiInvalidElementAccessException ignored) {
       LOG.debug("Constant search task: PIEAE thrown while searching of usages of changed constant");
@@ -315,7 +308,7 @@ public abstract class DefaultMessageHandler implements BuilderMessageHandler {
     return helper.processElementsWithWord(processor1, searchScope, identifier, searchContext, true, false);
   }
 
-  private boolean addUsages(final PsiField psiField, final Collection<PsiElement> usages, final int fieldAccessFlags, final boolean ignoreAccessScope) throws ProcessCanceledException {
+  private void addUsages(final PsiField psiField, final Collection<PsiElement> usages, final int fieldAccessFlags, final boolean ignoreAccessScope) throws ProcessCanceledException {
     final Queue<PsiField> fieldsToProcess = new ArrayDeque<PsiField>();
     fieldsToProcess.add(psiField);
     for (PsiField field = fieldsToProcess.poll(); field != null; field = fieldsToProcess.poll()) {
@@ -324,10 +317,12 @@ public abstract class DefaultMessageHandler implements BuilderMessageHandler {
         throw new ProcessCanceledException();
       }
       final PsiField fieldToCheck = field;
-      final boolean success = ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
-        public Boolean compute() {
+      ApplicationManager.getApplication().runReadAction(new Runnable() {
+        public void run() {
           if (!fieldToCheck.isValid()) {
-            return Boolean.FALSE;
+            // if field is invalid, the file might be changed, so next time it is compiled,
+            // the constant value change, if any, will be processed
+            return;
           }
           final Collection<PsiReferenceExpression> references = doFindReferences(fieldToCheck, fieldAccessFlags, ignoreAccessScope);
 
@@ -345,14 +340,9 @@ public abstract class DefaultMessageHandler implements BuilderMessageHandler {
               }
             }
           }
-          return Boolean.TRUE;
         }
       });
-      if (!success) {
-        return false;
-      }
     }
-    return true;
   }
 
   private Collection<PsiReferenceExpression> doFindReferences(final PsiField psiField, int fieldAccessFlags, boolean ignoreAccessScope) {
