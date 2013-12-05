@@ -56,7 +56,7 @@ class VirtualFileImpl extends HttpVirtualFile {
               FileDocumentManager.getInstance().reloadFiles(file);
               if (!localFile.getFileType().equals(myInitialFileType)) {
                 VFilePropertyChangeEvent event = new VFilePropertyChangeEvent(this, file, PROP_NAME, file.getName(), file.getName(), false);
-                BulkFileListener publisher = ApplicationManager.getApplication().getMessageBus().asyncPublisher(VirtualFileManager.VFS_CHANGES);
+                BulkFileListener publisher = ApplicationManager.getApplication().getMessageBus().syncPublisher(VirtualFileManager.VFS_CHANGES);
                 publisher.after(Collections.singletonList(event));
               }
             }

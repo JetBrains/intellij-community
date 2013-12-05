@@ -21,6 +21,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.ex.http.HttpVirtualFileListener;
 import com.intellij.util.EventDispatcher;
+import com.intellij.util.Url;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 
@@ -34,19 +35,18 @@ import java.util.Map;
  */
 public class RemoteFileManagerImpl extends RemoteFileManager implements Disposable {
   private final LocalFileStorage myStorage;
-  private final Map<Pair<Boolean, String>, VirtualFileImpl> myRemoteFiles;
+  private final Map<Pair<Boolean, Url>, VirtualFileImpl> myRemoteFiles = new THashMap<Pair<Boolean, Url>, VirtualFileImpl>();
   private final EventDispatcher<HttpVirtualFileListener> myDispatcher = EventDispatcher.create(HttpVirtualFileListener.class);
   private final List<RemoteContentProvider> myProviders = new ArrayList<RemoteContentProvider>();
   private final DefaultRemoteContentProvider myDefaultRemoteContentProvider;
 
   public RemoteFileManagerImpl() {
     myStorage = new LocalFileStorage();
-    myRemoteFiles = new THashMap<Pair<Boolean, String>, VirtualFileImpl>();
     myDefaultRemoteContentProvider = new DefaultRemoteContentProvider();
   }
 
   @NotNull
-  public RemoteContentProvider findContentProvider(final @NotNull String url) {
+  public RemoteContentProvider findContentProvider(final @NotNull Url url) {
     for (RemoteContentProvider provider : myProviders) {
       if (provider.canProvideContent(url)) {
         return provider;
@@ -55,10 +55,9 @@ public class RemoteFileManagerImpl extends RemoteFileManager implements Disposab
     return myDefaultRemoteContentProvider;
   }
 
-  public synchronized VirtualFileImpl getOrCreateFile(final @NotNull String url, final @NotNull String path, final boolean directory) throws IOException {
-    Pair<Boolean, String> key = Pair.create(directory, url);
+  public synchronized VirtualFileImpl getOrCreateFile(final @NotNull Url url, final @NotNull String path, final boolean directory) throws IOException {
+    Pair<Boolean, Url> key = Pair.create(directory, url);
     VirtualFileImpl file = myRemoteFiles.get(key);
-
     if (file == null) {
       if (!directory) {
         RemoteFileInfoImpl fileInfo = new RemoteFileInfoImpl(url, this);
@@ -73,8 +72,9 @@ public class RemoteFileManagerImpl extends RemoteFileManager implements Disposab
     return file;
   }
 
-  private static HttpFileSystemBase getHttpFileSystem(@NotNull String url) {
-    return url.startsWith(HttpsFileSystem.HTTPS_PROTOCOL) ? HttpsFileSystem.getHttpsInstance() : HttpFileSystemImpl.getInstanceImpl();
+  private static HttpFileSystemBase getHttpFileSystem(@NotNull Url url) {
+    return HttpsFileSystem.HTTPS_PROTOCOL.equals(url.getScheme())
+           ? HttpsFileSystem.getHttpsInstance() : HttpFileSystemImpl.getInstanceImpl();
   }
 
   @Override
