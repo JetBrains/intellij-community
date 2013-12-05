@@ -15,7 +15,7 @@
 Name "${MUI_PRODUCT}"
 SetCompressor lzma
 ; http://nsis.sourceforge.net/Shortcuts_removal_fails_on_Windows_Vista
-RequestExecutionLevel user
+;RequestExecutionLevel user
 
 ;------------------------------------------------------------------------------
 ; include "Modern User Interface"
@@ -34,6 +34,9 @@ ReserveFile "desktop.ini"
 ReserveFile "DeleteSettings.ini"
 ReserveFile '${NSISDIR}\Plugins\InstallOptions.dll'
 !insertmacro MUI_RESERVEFILE_LANGDLL
+
+!define MULTIUSER_EXECUTIONLEVEL Highest
+!include MultiUser.nsh
 
 !define MUI_ICON "${IMAGES_LOCATION}\${PRODUCT_ICON_FILE}"
 !define MUI_UNICON "${IMAGES_LOCATION}\${PRODUCT_UNINST_ICON_FILE}"
@@ -340,29 +343,18 @@ LicenseLangString myLicenseData ${LANG_JAPANESE} "${LICENSE_FILE}.txt"
 !endif
 
 Function .onInit
-  StrCpy $baseRegKey "HKCU"
-  IfSilent UAC_Done
-UAC_Elevate:
-    !insertmacro UAC_RunElevated
-    StrCmp 1223 $0 UAC_ElevationAborted ; UAC dialog aborted by user? - continue install under user
-    StrCmp 0 $0 0 UAC_Err ; Error?
-    StrCmp 1 $1 0 UAC_Success ;Are we the real deal or just the wrapper?
-    Quit
-UAC_Err:
-    Abort
-UAC_ElevationAborted:
-    StrCpy $INSTDIR "$APPDATA\${MANUFACTURER}\${PRODUCT_WITH_VER}"
-    goto UAC_Done
-UAC_Success:
-    StrCmp 1 $3 UAC_Admin ;Admin?
-    StrCmp 3 $1 0 UAC_ElevationAborted ;Try again?
-    goto UAC_Elevate
-UAC_Admin:
-    StrCpy $INSTDIR "$PROGRAMFILES\${MANUFACTURER}\${PRODUCT_WITH_VER}"
+  !insertmacro MULTIUSER_INIT
+  UserInfo::GetOriginalAccountType
+  Pop $R2
+  StrCmp $R2 "Admin" 0 UserNotAdmin
     SetShellVarContext all
+    StrCpy $INSTDIR "$PROGRAMFILES\${MANUFACTURER}\${PRODUCT_WITH_VER}"
     StrCpy $baseRegKey "HKLM"
-UAC_Done:	
-;  !insertmacro MUI_LANGDLL_DISPLAY
+    goto Done
+UserNotAdmin:
+    StrCpy $INSTDIR "$APPDATA\${MANUFACTURER}\${PRODUCT_WITH_VER}"
+    StrCpy $baseRegKey "HKCU"
+Done:
 FunctionEnd
 
 Function checkVersion
@@ -782,6 +774,7 @@ FunctionEnd
 ;------------------------------------------------------------------------------
 
 Function un.onInit
+  !insertmacro MULTIUSER_UNINIT
   !insertmacro MUI_UNGETLANGUAGE
   !insertmacro INSTALLOPTIONS_EXTRACT "DeleteSettings.ini"
 FunctionEnd
