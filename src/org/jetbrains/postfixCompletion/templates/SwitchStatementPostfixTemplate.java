@@ -41,7 +41,7 @@ public class SwitchStatementPostfixTemplate extends PostfixTemplate {
   @Override
   public boolean isApplicable(@NotNull PsiElement context, @NotNull Document copyDocument, int newOffset) {
     PsiExpression expr = getTopmostExpression(context);
-    return expr != null && isSwitchCompatibleType(expr.getType(), context);
+    return expr != null && expr.getParent() instanceof PsiExpressionStatement && isSwitchCompatibleType(expr.getType(), context);
   }
 
   @Override
