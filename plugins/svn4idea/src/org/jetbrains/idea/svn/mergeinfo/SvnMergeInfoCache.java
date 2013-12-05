@@ -33,8 +33,6 @@ import org.jetbrains.idea.svn.history.CopyData;
 import org.jetbrains.idea.svn.history.FirstInBranch;
 import org.jetbrains.idea.svn.history.SvnChangeList;
 import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.internal.wc.DefaultSVNOptions;
-import org.tmatesoft.svn.core.wc.SVNWCClient;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -44,7 +42,6 @@ public class SvnMergeInfoCache {
 
   private final Project myProject;
   private final MyState myState;
-  private final SVNWCClient myClient;
 
   public static Topic<SvnMergeInfoCacheListener> SVN_MERGE_INFO_CACHE = new Topic<SvnMergeInfoCacheListener>("SVN_MERGE_INFO_CACHE",
                                                                                                  SvnMergeInfoCacheListener.class);
@@ -52,14 +49,6 @@ public class SvnMergeInfoCache {
   private SvnMergeInfoCache(final Project project) {
     myProject = project;
     myState = new MyState();
-    final SvnVcs vcs = SvnVcs.getInstance(myProject);
-    myClient = vcs.createWCClient();
-    myClient.setOptions(new DefaultSVNOptions() {
-      @Override
-      public byte[] getNativeEOL() {
-        return new byte[]{'\n'};
-      }
-    });
   }
 
   public static SvnMergeInfoCache getInstance(final Project project) {
@@ -112,7 +101,7 @@ public class SvnMergeInfoCache {
       mergeChecker = rootMapping.getBranchInfo(branchPath);
     }
     if (mergeChecker == null) {
-      mergeChecker = new BranchInfo(SvnVcs.getInstance(myProject), info.getRepoUrl(), branchUrl, currentUrl, info.getTrunkRoot(), myClient);
+      mergeChecker = new BranchInfo(SvnVcs.getInstance(myProject), info.getRepoUrl(), branchUrl, currentUrl, info.getTrunkRoot());
       rootMapping.addBranchInfo(branchPath, mergeChecker);
     }
 

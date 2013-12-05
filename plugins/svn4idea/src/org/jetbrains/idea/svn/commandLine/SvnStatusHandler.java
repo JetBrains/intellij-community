@@ -15,12 +15,15 @@
  */
 package org.jetbrains.idea.svn.commandLine;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.MultiMap;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.portable.PortableStatus;
-import org.jetbrains.idea.svn.portable.StatusCallbackConvertor;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.wc.SVNInfo;
@@ -40,6 +43,40 @@ import java.util.*;
  * Time: 7:59 PM
  */
 public class SvnStatusHandler extends DefaultHandler {
+
+  private static final Logger LOG = Logger.getInstance(SvnStatusHandler.class);
+
+  public static final Map<String, SVNStatusType> ourStatusTypes = ContainerUtil.newHashMap();
+
+  static {
+    // TODO: Check STATUS_MERGED as it is marked deprecated
+    put(SVNStatusType.STATUS_ADDED, SVNStatusType.STATUS_CONFLICTED, SVNStatusType.STATUS_DELETED, SVNStatusType.STATUS_EXTERNAL,
+        SVNStatusType.STATUS_IGNORED, SVNStatusType.STATUS_INCOMPLETE, SVNStatusType.STATUS_MERGED, SVNStatusType.STATUS_MISSING,
+        SVNStatusType.STATUS_MODIFIED, SVNStatusType.STATUS_NONE, SVNStatusType.STATUS_NORMAL, SVNStatusType.STATUS_OBSTRUCTED,
+        SVNStatusType.STATUS_REPLACED, SVNStatusType.STATUS_UNVERSIONED);
+  }
+
+  private static void put(@NotNull SVNStatusType... statusTypes) {
+    for (SVNStatusType statusType : statusTypes) {
+      put(statusType);
+    }
+  }
+
+  private static void put(@NotNull SVNStatusType statusType) {
+    ourStatusTypes.put(statusType.toString(), statusType);
+  }
+
+  @Nullable
+  private static SVNStatusType getStatus(@NotNull String code) {
+    SVNStatusType result = ourStatusTypes.get(code);
+
+    if (result == null) {
+      LOG.info("Unknown status type " + code);
+    }
+
+    return result;
+  }
+
   private String myChangelistName;
   private List<PortableStatus> myDefaultListStatuses;
   private MultiMap<String, PortableStatus> myCurrentListChanges;
@@ -330,13 +367,13 @@ public class SvnStatusHandler extends DefaultHandler {
   private static SVNStatusType parseContentsStatus(Attributes attributes) throws SAXException {
     final String item = attributes.getValue("item");
     assertSAX(item != null);
-    return StatusCallbackConvertor.convert(org.apache.subversion.javahl.types.Status.Kind.valueOf(item));
+    return getStatus(item);
   }
 
   private static SVNStatusType parsePropertiesStatus(Attributes attributes) throws SAXException {
     final String props = attributes.getValue("props");
     assertSAX(props != null);
-    return StatusCallbackConvertor.convert(org.apache.subversion.javahl.types.Status.Kind.valueOf(props));
+    return getStatus(props);
   }
 
   private static class Fake extends ElementHandlerBase {

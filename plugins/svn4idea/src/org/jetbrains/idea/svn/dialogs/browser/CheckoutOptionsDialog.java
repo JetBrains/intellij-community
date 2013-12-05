@@ -62,7 +62,7 @@ public class CheckoutOptionsDialog extends DialogWrapper {
   public CheckoutOptionsDialog(final Project project, SVNURL url, File target, final VirtualFile root, final String relativePath) {
     super(project, true);
     myRelativePath = relativePath;
-    final String urlText = url.toString();
+    final String urlText = url.toDecodedString();
     myUrlLabel.setText(urlText);
 
     fillTargetList(target);

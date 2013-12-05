@@ -46,6 +46,7 @@ import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.wc.SVNInfo;
 import org.tmatesoft.svn.core.wc.SVNLogClient;
 import org.tmatesoft.svn.core.wc.SVNRevision;
+import org.tmatesoft.svn.core.wc2.SvnTarget;
 import org.tmatesoft.svn.util.SVNLogType;
 
 import javax.swing.*;
@@ -311,11 +312,12 @@ public class SvnHistoryProvider
         myPI.setText2(SvnBundle.message("progress.text2.changes.establishing.connection", myUrl));
       }
       final SVNRevision pegRevision = myInfo.getRevision();
+      final SvnTarget target = SvnTarget.fromFile(myFile.getIOFile(), myPeg);
       try {
-        myVcs.getFactory(myFile.getIOFile()).createHistoryClient().doLog(
-          myFile.getIOFile(),
+        myVcs.getFactory(target).createHistoryClient().doLog(
+          target,
           myFrom == null ? SVNRevision.HEAD : myFrom,
-          myTo == null ? SVNRevision.create(1) : myTo, myPeg,
+          myTo == null ? SVNRevision.create(1) : myTo,
           false, true, myShowMergeSources && mySupport15, myLimit + 1, null,
           new MyLogEntryHandler(myVcs, myUrl, pegRevision, relativeUrl,
                                 createConsumerAdapter(myConsumer),
@@ -387,12 +389,13 @@ public class SvnHistoryProvider
         if (myUrl.startsWith(root)) {
           relativeUrl = myUrl.substring(root.length());
         }
-        // TODO: Update this call to myVcs.getFactory.createHistoryClient
-        SVNLogClient client = myVcs.createLogClient();
-        // a bug noticed when testing: we should pass "limit + 1" to get "limit" rows
-        client.doLog(svnurl, new String[]{}, myPeg == null ? myFrom : myPeg,
-                     operationalFrom, myTo == null ? SVNRevision.create(1) : myTo, false, true, myShowMergeSources && mySupport15, myLimit + 1, null,
-                     new RepositoryLogEntryHandler(myVcs, myUrl, SVNRevision.UNDEFINED, relativeUrl, createConsumerAdapter(myConsumer), rootURL));
+        SvnTarget target = SvnTarget.fromURL(svnurl, myPeg == null ? myFrom : myPeg);
+        RepositoryLogEntryHandler handler =
+          new RepositoryLogEntryHandler(myVcs, myUrl, SVNRevision.UNDEFINED, relativeUrl, createConsumerAdapter(myConsumer), rootURL);
+
+        myVcs.getFactory(target).createHistoryClient()
+          .doLog(target, operationalFrom, myTo == null ? SVNRevision.create(1) : myTo, false, true, myShowMergeSources && mySupport15,
+                 myLimit + 1, null, handler);
       }
       catch (SVNCancelException e) {
         //
@@ -430,6 +433,9 @@ public class SvnHistoryProvider
         client.doLog(rootURL, new String[]{}, myFrom, myFrom, myTo == null ? SVNRevision.create(1) : myTo, false, true, myShowMergeSources && mySupport15, 0, null, repositoryLogEntryHandler);
     }
 
+    // TODO: try to rewrite without separately retrieving repository url by item url - as this command could require authentication
+    // TODO: and it is not "clear enough/easy to implement" with current design (for some cases) how to cache credentials (if in
+    // TODO: non-interactive mode)
     private SVNURL getRepositoryRoot(SVNURL svnurl, SVNRevision operationalFrom) throws SVNException {
       SVNInfo info = myVcs.getInfo(svnurl, SVNRevision.HEAD);
 
@@ -522,7 +528,10 @@ public class SvnHistoryProvider
               // mergeLevel >= 0 indicates that we are currently processing some "merge source" revision. This "merge source" revision
               // contains changes from some other branch - so checkForChildChanges() and checkForParentChanges() return "false".
               // Because of this case we apply these methods only for non-"merge source" revisions - this means mergeLevel < 0.
-              if (mergeLevel < 0 && !checkForChildChanges(logEntry) && !checkForParentChanges(logEntry)) return;
+              // TODO: Do not apply path filtering even for log entries on the first level => just output of 'svn log' should be returned.
+              // TODO: Looks like there is no cases when we issue 'svn log' for some parent paths or some other cases where we need such
+              // TODO: filtering. Check user feedback on this.
+//              if (mergeLevel < 0 && !checkForChildChanges(logEntry) && !checkForParentChanges(logEntry)) return;
             }
           }
 
@@ -548,6 +557,7 @@ public class SvnHistoryProvider
       while (path.length() > 0) {
         final SVNLogEntryPath entryPath = logEntry.getChangedPaths().get(path);
         // A & D are checked since we are not interested in parent folders property changes, only in structure changes
+        // TODO: seems that R (replaced) should also be checked here
         if (entryPath != null && (entryPath.getType() == 'A' || entryPath.getType() == 'D')) {
           if (entryPath.getCopyPath() != null) {
             return true;
@@ -559,6 +569,8 @@ public class SvnHistoryProvider
       return false;
     }
 
+    // TODO: this makes sense only for directories, but should always return true if something under the directory was changed in revision
+    // TODO: as svn will provide child changes in history for directory
     private boolean checkForChildChanges(SVNLogEntry logEntry) {
       final String lastPathBefore = myLastPathCorrector.getBefore();
       for (String key : logEntry.getChangedPaths().keySet()) {
