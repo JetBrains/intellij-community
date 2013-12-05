@@ -154,14 +154,6 @@ public class PyStringLiteralExpressionImpl extends PyElementImpl implements PySt
   }
 
   @Override
-  public void iterateCharacterRanges(PyStringLiteralExpression.TextRangeConsumer consumer) {
-    for (Pair<TextRange, String> fragment : getDecodedFragments()) {
-      final TextRange range = fragment.getFirst();
-      consumer.process(range.getStartOffset(), range.getEndOffset(), fragment.getSecond());
-    }
-  }
-
-  @Override
   @NotNull
   public List<Pair<TextRange, String>> getDecodedFragments() {
     final List<Pair<TextRange, String>> result = new ArrayList<Pair<TextRange, String>>();

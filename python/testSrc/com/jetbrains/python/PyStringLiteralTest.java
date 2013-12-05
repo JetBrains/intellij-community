@@ -15,6 +15,7 @@
  */
 package com.jetbrains.python;
 
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.LiteralTextEscaper;
 import com.intellij.psi.PsiFile;
@@ -123,13 +124,9 @@ public class PyStringLiteralTest extends PyTestCase {
     final PyStringLiteralExpression expr = createLiteralFromText(text);
     assertNotNull(expr);
     final List<String> characters = new ArrayList<String>();
-    expr.iterateCharacterRanges(new PyStringLiteralExpression.TextRangeConsumer() {
-      @Override
-      public boolean process(int startOffset, int endOffset, String value) {
-        characters.add(value);
-        return true;
-      }
-    });
+    for (Pair<TextRange, String> fragment : expr.getDecodedFragments()) {
+      characters.add(fragment.getSecond());
+    }
     return characters;
   }
 }
