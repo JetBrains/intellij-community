@@ -26,13 +26,16 @@ import com.intellij.psi.stubs.StubElement;
 import com.intellij.util.cls.ClsFormatException;
 import com.intellij.util.indexing.FileContent;
 
+import java.util.Arrays;
+import java.util.Comparator;
+
 /**
  * @author max
  */
 public class ClassFileStubBuilder implements BinaryFileStubBuilder {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.compiled.ClassFileStubBuilder");
 
-  public static final int STUB_VERSION = JavaFileElementType.STUB_VERSION + 7;
+  public static final int STUB_VERSION = 7;
 
   @Override
   public boolean acceptsFile(final VirtualFile file) {
@@ -64,6 +67,17 @@ public class ClassFileStubBuilder implements BinaryFileStubBuilder {
 
   @Override
   public int getStubVersion() {
-    return STUB_VERSION;
+    int version = STUB_VERSION;
+    final ClsStubBuilderFactory[] factories = Extensions.getExtensions(ClsStubBuilderFactory.EP_NAME);
+    Arrays.sort(factories, new Comparator<ClsStubBuilderFactory>() { // stable order
+      @Override
+      public int compare(ClsStubBuilderFactory o1, ClsStubBuilderFactory o2) {
+        return o1.getClass().getName().compareTo(o2.getClass().getName());
+      }
+    });
+    for(ClsStubBuilderFactory factory:factories) {
+      version = version * 31 + factory.getStubVersion() + factory.getClass().getName().hashCode();
+    }
+    return version;
   }
 }
