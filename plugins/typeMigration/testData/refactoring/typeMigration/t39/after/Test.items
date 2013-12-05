@@ -5,9 +5,6 @@ PsiReferenceExpression:i : byte
 PsiReferenceExpression:i : byte
 
 Conversions:
-i + 1 -> $
-i - 1 -> $
-i >> 1 -> $
 
 New expression type changes:
 Fails:

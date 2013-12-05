@@ -838,4 +838,10 @@ public class TypeMigrationTest extends TypeMigrationTestBase {
   public void testT137() throws Exception {
     doTestFirstParamType("foo", "Test", PsiType.INT, myJavaFacade.getElementFactory().createTypeFromText("java.lang.String", null));
   }
+
+  public void testT138() throws Exception {
+    doTestFirstParamType("foo", "Test", 
+                         myJavaFacade.getElementFactory().createTypeFromText("java.util.Set<java.lang.String>", null),
+                         myJavaFacade.getElementFactory().createTypeFromText("java.util.Collection<java.lang.String>", null));
+  }
 }
