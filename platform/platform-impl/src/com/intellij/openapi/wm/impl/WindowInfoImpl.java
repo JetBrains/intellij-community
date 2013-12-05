@@ -54,6 +54,7 @@ public final class WindowInfoImpl implements Cloneable,JDOMExternalizable, Windo
   private ToolWindowType myInternalType;
   private ToolWindowType myType;
   private boolean myVisible;
+  private Boolean myVisibleOnPanel;
   private float myWeight;
   private float mySideWeight;
   private boolean mySplitMode;
@@ -80,6 +81,7 @@ public final class WindowInfoImpl implements Cloneable,JDOMExternalizable, Windo
   @NonNls static final String HEIGHT_ATTR = "height";
   @NonNls static final String SIDE_TOOL_ATTR = "side_tool";
   @NonNls static final String CONTENT_UI_ATTR = "content_ui";
+  @NonNls static final String VISIBLE_ON_PANEL_ATTR = "visible_on_panel";
 
 
   private boolean myWasRead;
@@ -128,6 +130,7 @@ public final class WindowInfoImpl implements Cloneable,JDOMExternalizable, Windo
     myType = info.myType;
     myInternalType = info.myInternalType;
     myVisible = info.myVisible;
+    myVisibleOnPanel = info.myVisibleOnPanel;
     myWeight = info.myWeight;
     mySideWeight = info.mySideWeight;
     myOrder = info.myOrder;
@@ -236,6 +239,14 @@ public final class WindowInfoImpl implements Cloneable,JDOMExternalizable, Windo
     return myVisible;
   }
 
+  public boolean isVisibleOnPanel() {
+    return myVisibleOnPanel != null ? myVisibleOnPanel : true;
+  }
+
+  public void setVisibleOnPanel(boolean visibleOnPanel) {
+    myVisibleOnPanel = visibleOnPanel;
+  }
+
   @Override
   public boolean isSplit() {
     return mySplitMode;
@@ -301,6 +312,9 @@ public final class WindowInfoImpl implements Cloneable,JDOMExternalizable, Windo
     catch (IllegalArgumentException ignored) {
     }
     myVisible = Boolean.valueOf(element.getAttributeValue(VISIBLE_ATTR)).booleanValue();
+    if (element.getAttributeValue(VISIBLE_ON_PANEL_ATTR) != null) {
+      myVisibleOnPanel = Boolean.valueOf(element.getAttributeValue(VISIBLE_ON_PANEL_ATTR)).booleanValue();
+    }
     try {
       myWeight = Float.parseFloat(element.getAttributeValue(WEIGHT_ATTR));
     }
@@ -383,6 +397,9 @@ public final class WindowInfoImpl implements Cloneable,JDOMExternalizable, Windo
     element.setAttribute(INTERNAL_TYPE_ATTR,myInternalType.toString());
     element.setAttribute(TYPE_ATTR,myType.toString());
     element.setAttribute(VISIBLE_ATTR, Boolean.toString(myVisible));
+    if (myVisibleOnPanel != null && !myVisibleOnPanel) {
+      element.setAttribute(VISIBLE_ON_PANEL_ATTR, Boolean.toString(myVisibleOnPanel));
+    }
     element.setAttribute(WEIGHT_ATTR,Float.toString(myWeight));
     element.setAttribute(SIDE_WEIGHT_ATTR, Float.toString(mySideWeight));
     element.setAttribute(ORDER_ATTR,Integer.toString(myOrder));
@@ -409,6 +426,7 @@ public final class WindowInfoImpl implements Cloneable,JDOMExternalizable, Windo
            myInternalType == info.myInternalType &&
            myType == info.myType &&
            myVisible == info.myVisible &&
+           myVisibleOnPanel == info.myVisibleOnPanel &&
            myWeight == info.myWeight &&
            mySideWeight == info.mySideWeight &&
            myOrder == info.myOrder &&
@@ -426,6 +444,7 @@ public final class WindowInfoImpl implements Cloneable,JDOMExternalizable, Windo
     buffer.append(getClass().getName()).append('[');
     buffer.append("myId=").append(myId).append("; ");
     buffer.append("myVisible=").append(myVisible).append("; ");
+    buffer.append("myVisibleOnPanel=").append(myVisibleOnPanel).append("; ");
     buffer.append("myActive=").append(myActive).append("; ");
     buffer.append("myAnchor=").append(myAnchor).append("; ");
     buffer.append("myOrder=").append(myOrder).append("; ");

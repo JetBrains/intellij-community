@@ -32,13 +32,13 @@ public interface ToolWindow extends BusyObject {
   Key<Boolean> SHOW_CONTENT_ICON = new Key<Boolean>("ContentIcon");
 
   /**
-   * @exception IllegalStateException if tool window isn't installed.
+   * @throws IllegalStateException if tool window isn't installed.
    */
   boolean isActive();
 
   /**
    * @param runnable A command to execute right after the window gets activated.  The call is asynchronous since it may require animation.
-   * @exception IllegalStateException if tool window isn't installed.
+   * @throws IllegalStateException if tool window isn't installed.
    */
   void activate(@Nullable Runnable runnable);
 
@@ -48,61 +48,62 @@ public interface ToolWindow extends BusyObject {
 
   /**
    * @return whether the tool window is visible or not.
-   * @exception IllegalStateException if tool window isn't installed.
+   * @throws IllegalStateException if tool window isn't installed.
    */
   boolean isVisible();
 
   /**
    * @param runnable A command to execute right after the window shows up.  The call is asynchronous since it may require animation.
-   * @exception IllegalStateException if tool window isn't installed.
+   * @throws IllegalStateException if tool window isn't installed.
    */
   void show(@Nullable Runnable runnable);
 
   /**
    * Hides tool window. If the window is active then the method deactivates it.
    * Does nothing if tool window isn't visible.
+   *
    * @param runnable A command to execute right after the window hides.  The call is asynchronous since it may require animation.
-   * @exception IllegalStateException if tool window isn't installed.
+   * @throws IllegalStateException if tool window isn't installed.
    */
   void hide(@Nullable Runnable runnable);
 
   /**
-   * @exception IllegalStateException if tool window isn't installed.
+   * @throws IllegalStateException if tool window isn't installed.
    */
   ToolWindowAnchor getAnchor();
 
   /**
-   * @exception IllegalStateException if tool window isn't installed.
+   * @throws IllegalStateException if tool window isn't installed.
    */
   void setAnchor(ToolWindowAnchor anchor, @Nullable Runnable runnable);
 
   /**
-   * @exception IllegalStateException if tool window isn't installed.
+   * @throws IllegalStateException if tool window isn't installed.
    */
   boolean isSplitMode();
 
   /**
-   * @exception IllegalStateException if tool window isn't installed.
+   * @throws IllegalStateException if tool window isn't installed.
    */
   void setSplitMode(boolean split, @Nullable Runnable runnable);
 
   /**
-   * @exception IllegalStateException if tool window isn't installed.
+   * @throws IllegalStateException if tool window isn't installed.
    */
   boolean isAutoHide();
 
   /**
-   * @exception IllegalStateException if tool window isn't installed.
+   * @throws IllegalStateException if tool window isn't installed.
    */
   void setAutoHide(boolean state);
 
   /**
-   * @exception IllegalStateException if tool window isn't installed.
+   * @throws IllegalStateException if tool window isn't installed.
    */
   ToolWindowType getType();
 
   /**
-   * @exception IllegalStateException if tool window isn't installed.
+   * @throws IllegalStateException if tool window isn't installed.
    */
   void setType(ToolWindowType type, @Nullable Runnable runnable);
 
@@ -123,7 +124,8 @@ public interface ToolWindow extends BusyObject {
 
   /**
    * Sets new window title.
-   * @exception IllegalStateException if tool window isn't installed.
+   *
+   * @throws IllegalStateException if tool window isn't installed.
    */
   void setTitle(String title);
 
@@ -135,11 +137,13 @@ public interface ToolWindow extends BusyObject {
   /**
    * Sets whether the tool window available or not. Term "available" means that tool window
    * can be shown and it has button on tool window bar.
-   * @exception IllegalStateException if tool window isn't installed.
+   *
+   * @throws IllegalStateException if tool window isn't installed.
    */
   void setAvailable(boolean available, @Nullable Runnable runnable);
 
   void setContentUiType(ToolWindowContentUiType type, @Nullable Runnable runnable);
+
   void setDefaultContentUiType(@NotNull ToolWindowContentUiType type);
 
   ToolWindowContentUiType getContentUiType();
@@ -161,7 +165,11 @@ public interface ToolWindow extends BusyObject {
   void setToHideOnEmptyContent(boolean hideOnEmpty);
 
   boolean isToHideOnEmptyContent();
-  
+
+  void setVisibleOnPanel(boolean visibleOnPanel);
+
+  boolean isVisibleOnPanel();
+
   boolean isDisposed();
 
   void showContentPopup(InputEvent inputEvent);

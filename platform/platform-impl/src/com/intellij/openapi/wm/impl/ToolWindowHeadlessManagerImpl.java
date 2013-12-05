@@ -86,6 +86,15 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
     }
 
     @Override
+    public boolean isVisibleOnPanel() {
+      return false;
+    }
+
+    @Override
+    public void setVisibleOnPanel(boolean visibleOnPanel) {
+    }
+
+    @Override
     public ActionCallback getReady(@NotNull Object requestor) {
       return new ActionCallback.Done();
     }

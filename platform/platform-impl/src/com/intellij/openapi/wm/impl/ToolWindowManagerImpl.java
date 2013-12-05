@@ -2240,6 +2240,11 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     public void sideStatusChanged(final InternalDecorator source, final boolean isSideTool) {
       setSideTool(source.getToolWindow().getId(), isSideTool);
     }
+
+    @Override
+    public void visibleOnPanelChanged(InternalDecorator source, boolean visibleOnPanel) {
+      setToolWindowVisibleOnPanel(source.getToolWindow().getId(), visibleOnPanel);
+    }
   }
 
   private void updateComponentTreeUI() {
@@ -2371,5 +2376,23 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
 
   public Expirable getTimestamp(boolean trackOnlyForcedCommands) {
     return IdeFocusManager.getInstance(myProject).getTimestamp(trackOnlyForcedCommands);
+  }
+
+  public void setToolWindowVisibleOnPanel(String id, boolean visibleOnPanel) {
+    checkId(id);
+    WindowInfoImpl info = getInfo(id);
+    if (visibleOnPanel == info.isVisibleOnPanel()) {
+      return;
+    }
+    info.setVisibleOnPanel(visibleOnPanel);
+
+    final ArrayList<FinalizableCommand> commandList = new ArrayList<FinalizableCommand>();
+    appendApplyWindowInfoCmd(info, commandList);
+    execute(commandList);
+  }
+
+  public boolean isToolWindowVisibleOnPanel(String id) {
+    checkId(id);
+    return getInfo(id).isVisibleOnPanel();
   }
 }

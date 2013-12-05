@@ -72,6 +72,7 @@ public final class InternalDecorator extends JPanel implements Queryable, TypeSa
   private final ToggleFloatingModeAction myToggleFloatingModeAction;
   private final ToggleSideModeAction myToggleSideModeAction;
   private final ToggleContentUiTypeAction myToggleContentUiTypeAction;
+  private final ToggleGhostModeAction myToggleGhostModeAction;
 
   private ActionGroup myAdditionalGearActions;
   /**
@@ -85,6 +86,7 @@ public final class InternalDecorator extends JPanel implements Queryable, TypeSa
   @NonNls public static final String TOGGLE_FLOATING_MODE_ACTION_ID = "ToggleFloatingMode";
   @NonNls public static final String TOGGLE_SIDE_MODE_ACTION_ID = "ToggleSideMode";
   @NonNls private static final String TOGGLE_CONTENT_UI_TYPE_ACTION_ID = "ToggleContentUiTypeMode";
+  @NonNls private static final String TOGGLE_GHOST_MODE_ACTION_ID = "ToggleGhostMode";
 
   private ToolWindowHeader myHeader;
 
@@ -98,6 +100,7 @@ public final class InternalDecorator extends JPanel implements Queryable, TypeSa
     myToggleFloatingModeAction = new ToggleFloatingModeAction();
     myToggleSideModeAction = new ToggleSideModeAction();
     myToggleDockModeAction = new ToggleDockModeAction();
+    myToggleGhostModeAction = new ToggleGhostModeAction();
     myToggleAutoHideModeAction = new TogglePinnedModeAction();
     myToggleContentUiTypeAction = new ToggleContentUiTypeAction();
 
@@ -239,6 +242,13 @@ public final class InternalDecorator extends JPanel implements Queryable, TypeSa
     final InternalDecoratorListener[] listeners = myListenerList.getListeners(InternalDecoratorListener.class);
     for (InternalDecoratorListener listener : listeners) {
       listener.autoHideChanged(this, autoHide);
+    }
+  }
+
+  private void fireVisibleOnPanelChanged(final boolean visibleOnPanel) {
+    final InternalDecoratorListener[] listeners = myListenerList.getListeners(InternalDecoratorListener.class);
+    for (InternalDecoratorListener listener : listeners) {
+      listener.visibleOnPanelChanged(this, visibleOnPanel);
     }
   }
 
@@ -464,6 +474,7 @@ public final class InternalDecorator extends JPanel implements Queryable, TypeSa
       group.add(myToggleDockModeAction);
       group.add(myToggleFloatingModeAction);
     }
+    group.add(myToggleGhostModeAction);
     return group;
   }
 
@@ -585,6 +596,22 @@ public final class InternalDecorator extends JPanel implements Queryable, TypeSa
       else if (myInfo.isSliding()) {
         fireTypeChanged(ToolWindowType.DOCKED);
       }
+    }
+  }
+
+  private final class ToggleGhostModeAction extends ToggleAction implements DumbAware {
+    public ToggleGhostModeAction() {
+      copyFrom(ActionManager.getInstance().getAction(TOGGLE_GHOST_MODE_ACTION_ID));
+    }
+
+    @Override
+    public final boolean isSelected(final AnActionEvent event) {
+      return !myInfo.isVisibleOnPanel();
+    }
+
+    @Override
+    public final void setSelected(final AnActionEvent event, final boolean flag) {
+      fireVisibleOnPanelChanged(!flag);
     }
   }
 
