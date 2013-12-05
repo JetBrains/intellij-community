@@ -52,7 +52,7 @@ public class IdeaGateway {
     = Key.create("LocalHistory.SAVED_DOCUMENT_CONTENT_AND_STAMP_KEY");
 
   public boolean isVersioned(@NotNull VirtualFile f) {
-    if (!f.isInLocalFileSystem()) return false;
+    if (!isInLocalFS(f)) return false;
 
     String fileName = f.getName();
     if (!f.isDirectory() && fileName.endsWith(".class")) return false;
@@ -67,6 +67,19 @@ public class IdeaGateway {
 
     // optimisation: FileTypeManager.isFileIgnored(f) already checked inside ProjectFileIndex.isIgnored()
     return openProjects.length != 0 || !FileTypeManager.getInstance().isFileIgnored(f);
+  }
+
+  private static boolean isInLocalFS(VirtualFile file) {
+    if (!file.isInLocalFileSystem()) {
+      return false;
+    }
+
+    VirtualFileSystem fs = file.getFileSystem();
+    if (fs instanceof TempFileSystem) {
+      return false;
+    }
+
+    return true;
   }
 
   public boolean areContentChangesVersioned(@NotNull VirtualFile f) {
@@ -165,7 +178,7 @@ public class IdeaGateway {
     return ContainerUtil.filter(ManagingFS.getInstance().getLocalRoots(), new Condition<VirtualFile>() {
       @Override
       public boolean value(VirtualFile file) {
-        return !(file.getFileSystem() instanceof TempFileSystem);
+        return isInLocalFS(file);
       }
     });
   }
