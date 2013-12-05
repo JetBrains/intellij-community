@@ -1,1 +1,1 @@
-print "Hello! I'm %type your name%"
+print "Hello, world! I'm "

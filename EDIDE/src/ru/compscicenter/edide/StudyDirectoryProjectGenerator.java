@@ -9,11 +9,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.DirectoryProjectGenerator;
-import com.intellij.remotesdk.RemoteSdkData;
 import com.jetbrains.python.newProject.PyNewProjectSettings;
-import com.jetbrains.python.remote.PythonRemoteInterpreterManager;
-import com.jetbrains.python.remote.RemoteProjectSettings;
-import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -24,82 +20,93 @@ import java.io.*;
  * User: lia
  */
 public class StudyDirectoryProjectGenerator implements DirectoryProjectGenerator {
+
     @Nls
     @NotNull
     @Override
     public String getName() {
-        return "My Study project";
+        return "Study project";
     }
 
     @Nullable
     @Override
     public Object showGenerationSettings(VirtualFile baseDir) throws ProcessCanceledException {
-        PyNewProjectSettings settings = new PyNewProjectSettings();
-        if (PythonSdkType.isRemote(settings.getSdk())) {
-            PythonRemoteInterpreterManager manager = PythonRemoteInterpreterManager.getInstance();
-            assert manager != null;
-            return manager.showRemoteProjectSettingsDialog(baseDir, (RemoteSdkData) settings.getSdk().getSdkAdditionalData());
-        } else {
-            return null;
-        }
+        return null;
     }
 
+
+    public void createFile(String name, VirtualFile directory) throws IOException {
+        VirtualFile currentFile = directory.createChildData(this, name);
+        currentFile.setWritable(true);
+        InputStream ip = StudyDirectoryProjectGenerator.class.getResourceAsStream(name);
+        BufferedReader bf = new BufferedReader(new InputStreamReader(ip));
+        OutputStream os = currentFile.getOutputStream(this);
+        PrintWriter printWriter = new PrintWriter(os);
+        while (bf.ready()) {
+            printWriter.println(bf.readLine());
+        }
+        bf.close();
+        printWriter.close();
+    }
     @Override
     public void generateProject(@NotNull Project project, @NotNull final VirtualFile baseDir,
                                 @Nullable Object settings, @NotNull Module module) {
-        PyNewProjectSettings pySettings = new PyNewProjectSettings();
-        if (settings instanceof RemoteProjectSettings) {
-            PythonRemoteInterpreterManager manager = PythonRemoteInterpreterManager.getInstance();
-            assert manager != null;
-            manager.createDeployment(project, baseDir, (RemoteProjectSettings) settings,
-                    (RemoteSdkData) pySettings.getSdk().getSdkAdditionalData());
-        }
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    VirtualFile my_task = baseDir.createChildDirectory(this, "tasks").createChildData(this, "helloworld.py");
-                    my_task.setWritable(true);
-                    InputStream ip = StudyDirectoryProjectGenerator.class.getResourceAsStream("helloworld.py");
-                    BufferedReader bf = new BufferedReader(new InputStreamReader(ip));
-                    OutputStream os = my_task.getOutputStream(this);
-                    while (bf.ready()) {
-                        os.write(bf.readLine().getBytes());
-                    }
-                    ip.close();
-                    os.close();
-
-                    VirtualFile vf = baseDir.createChildDirectory(this, "resources").createChildData(this, "utrunner.py");
-                    vf.setWritable(true);
-                    ip = StudyDirectoryProjectGenerator.class.getResourceAsStream("utrunner.py");
-                    bf = new BufferedReader(new InputStreamReader(ip));
-                    os = vf.getOutputStream(this);
-                    while (bf.ready()) {
-                        os.write(bf.readLine().getBytes());
-                    }
-                    ip.close();
-                    os.close();
-
-                } catch (IOException e) {
-                    Log.print("Problems with creating files");
-                    Log.print(e.toString());
-                    Log.flush();
+        try {
+            InputStream metaIS = StudyDirectoryProjectGenerator.class.getResourceAsStream("tasks.meta");
+            BufferedReader reader = new BufferedReader(new InputStreamReader(metaIS));
+            final int tasksNumber = Integer.parseInt(reader.readLine());
+            final Task[] tasks = new Task[tasksNumber];
+            for (int task = 0; task < tasksNumber; task++) {
+                int n = Integer.parseInt(reader.readLine());
+                tasks[task] = new Task(n);
+                for (int h = 0; h < n; h++) {
+                    tasks[task].setFileName(reader.readLine());
                 }
-
             }
-        });
-        EditorFactory.getInstance().addEditorFactoryListener(new StudyEditorFactoryListener(), project);
+            reader.close();
+
+            ApplicationManager.getApplication().runWriteAction(new Runnable() {
+                @Override
+                public void run() {
+                    try {
+                        for (int task = 0; task < tasksNumber; task++) {
+                            VirtualFile taskDirectory = baseDir.createChildDirectory(this, "task" + (task + 1));
+                            for (int file = 0; file < tasks[task].getFileNum(); file++) {
+                                final String curFileName = tasks[task].fileNames.get(file);
+                                createFile(curFileName, taskDirectory);
+                            }
+
+                        }
+                        VirtualFile vf = baseDir.createChildDirectory(this, "resources").createChildData(this, "utrunner.py");
+                        vf.setWritable(true);
+                        InputStream ip_utrunner = StudyDirectoryProjectGenerator.class.getResourceAsStream("utrunner.py");
+                        BufferedReader bf_utrunner = new BufferedReader(new InputStreamReader(ip_utrunner));
+                        OutputStream os_utrunner = vf.getOutputStream(this);
+                        PrintWriter pw_utrunner = new PrintWriter(os_utrunner);
+                        while (bf_utrunner.ready()) {
+                            pw_utrunner.println(bf_utrunner.readLine());
+                        }
+                        bf_utrunner.close();
+                        pw_utrunner.close();
+                    } catch (IOException e) {
+                        Log.print("Problems with creating files");
+                        Log.print(e.toString());
+                        Log.flush();
+                    }
+
+                }
+            });
+            EditorFactory.getInstance().addEditorFactoryListener(new StudyEditorFactoryListener(), project);
+        } catch (IOException e) {
+            Log.print("Problems with matadata file");
+            Log.print(e.toString());
+            Log.flush();
+        }
     }
 
     @NotNull
     @Override
     public ValidationResult validate(@NotNull String s) {
-        PyNewProjectSettings pySettings = new PyNewProjectSettings();
-        if (PythonSdkType.isRemote(pySettings.getSdk())) {
-            if (PythonRemoteInterpreterManager.getInstance() == null) {
-                return new ValidationResult(PythonRemoteInterpreterManager.WEB_DEPLOYMENT_PLUGIN_IS_DISABLED);
-            }
-        }
         return ValidationResult.OK;
     }
 }

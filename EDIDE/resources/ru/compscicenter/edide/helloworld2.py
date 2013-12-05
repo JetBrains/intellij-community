@@ -1,0 +1,1 @@
+ "Hello, world! New python programmer just born!"
