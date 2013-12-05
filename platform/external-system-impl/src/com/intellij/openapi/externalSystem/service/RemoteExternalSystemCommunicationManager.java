@@ -232,6 +232,11 @@ public class RemoteExternalSystemCommunicationManager implements ExternalSystemC
   }
 
   @Override
+  public void release(@NotNull String id, @NotNull ProjectSystemId externalSystemId) throws Exception {
+    mySupport.release(this, id);
+  }
+
+  @Override
   public boolean isAlive(@NotNull RemoteExternalSystemFacade facade) {
     RemoteExternalSystemFacade toCheck = facade;
     if (facade instanceof ExternalSystemFacadeWrapper) {

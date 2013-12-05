@@ -220,12 +220,9 @@ public class GradleExecutionHelper {
                                      @NotNull GradleExecutionSettings settings,
                                      @NotNull ExternalSystemTaskNotificationListener listener) {
 
-    if (!settings.getDistributionType().isWrapped()) return;
+    // Do not run wrapper task when default wrapper used
+    if (settings.getDistributionType() != DistributionType.WRAPPED) return;
 
-    if (settings.getDistributionType() == DistributionType.DEFAULT_WRAPPED &&
-        GradleUtil.findDefaultWrapperPropertiesFile(projectPath) != null) {
-      return;
-    }
     ProjectConnection connection = getConnection(projectPath, settings);
     try {
       BuildLauncher launcher = getBuildLauncher(id, connection, settings, listener, null);

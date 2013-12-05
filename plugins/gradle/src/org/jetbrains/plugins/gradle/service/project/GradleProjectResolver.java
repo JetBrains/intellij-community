@@ -125,6 +125,12 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
     });
   }
 
+  @Override
+  public boolean cancelTask(@NotNull ExternalSystemTaskId id, @NotNull ExternalSystemTaskNotificationListener listener) {
+    // TODO implement cancellation using gradle API invocation when it will be ready, see http://issues.gradle.org/browse/GRADLE-1539
+    return false;
+  }
+
   @NotNull
   private DataNode<ProjectData> doResolveProjectInfo(@NotNull final ProjectResolverContext resolverCtx,
                                                      @NotNull final GradleProjectResolverExtension projectResolverChain)

@@ -41,7 +41,7 @@ public interface ExternalSystemTaskManager<S extends ExternalSystemExecutionSett
                     @NotNull ExternalSystemTaskNotificationListener listener)
     throws ExternalSystemException;
 
-  void cancelTask(@NotNull ExternalSystemTaskId id,
+  boolean cancelTask(@NotNull ExternalSystemTaskId id,
                   @NotNull ExternalSystemTaskNotificationListener listener)
     throws ExternalSystemException;
 }

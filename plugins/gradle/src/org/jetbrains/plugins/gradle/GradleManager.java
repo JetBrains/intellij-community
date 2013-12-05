@@ -263,9 +263,20 @@ public class GradleManager
     // We want to automatically refresh linked projects on gradle service directory change.
     MessageBusConnection connection = project.getMessageBus().connect(project);
     connection.subscribe(GradleSettings.getInstance(project).getChangesTopic(), new GradleSettingsListenerAdapter() {
+
       @Override
       public void onServiceDirectoryPathChange(@Nullable String oldPath, @Nullable String newPath) {
-        ExternalSystemUtil.refreshProjects(project, GradleConstants.SYSTEM_ID, true);
+        ensureProjectsRefresh();
+      }
+
+      @Override
+      public void onGradleHomeChange(@Nullable String oldPath, @Nullable String newPath, @NotNull String linkedProjectPath) {
+        ensureProjectsRefresh();
+      }
+
+      @Override
+      public void onGradleDistributionTypeChange(DistributionType currentValue, @NotNull String linkedProjectPath) {
+        ensureProjectsRefresh();
       }
 
       @Override
@@ -298,6 +309,10 @@ public class GradleManager
               }
             }, false, ProgressExecutionMode.MODAL_SYNC);
         }
+      }
+
+      private void ensureProjectsRefresh() {
+        ExternalSystemUtil.refreshProjects(project, GradleConstants.SYSTEM_ID, true);
       }
     });
 

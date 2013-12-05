@@ -3,10 +3,7 @@ package com.intellij.openapi.externalSystem.service.internal;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
-import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
-import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationEvent;
-import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener;
-import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskType;
+import com.intellij.openapi.externalSystem.model.task.*;
 import com.intellij.openapi.externalSystem.service.ExternalSystemFacadeManager;
 import com.intellij.openapi.externalSystem.service.notification.ExternalSystemProgressNotificationManager;
 import com.intellij.openapi.project.Project;
@@ -14,6 +11,7 @@ import com.intellij.util.Alarm;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ContainerUtilRt;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentMap;
@@ -45,6 +43,7 @@ public class ExternalSystemProcessingManager implements ExternalSystemTaskNotifi
   private static final long TOO_LONG_EXECUTION_MS = TimeUnit.SECONDS.toMillis(10);
 
   @NotNull private final ConcurrentMap<ExternalSystemTaskId, Long> myTasksInProgress = ContainerUtil.newConcurrentMap();
+  @NotNull private final ConcurrentMap<ExternalSystemTaskId, ExternalSystemTask> myTasksDetails = ContainerUtil.newConcurrentMap();
   @NotNull private final Alarm                                     myAlarm           = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
 
   @NotNull private final ExternalSystemFacadeManager               myFacadeManager;
@@ -83,6 +82,32 @@ public class ExternalSystemProcessingManager implements ExternalSystemTaskNotifi
       }
     }
     return false;
+  }
+
+  @Nullable
+  public ExternalSystemTask findTask(@NotNull ExternalSystemTaskType type,
+                                     @NotNull ProjectSystemId projectSystemId,
+                                     @NotNull final String externalProjectPath) {
+    for(ExternalSystemTask task : myTasksDetails.values()) {
+      if(task instanceof AbstractExternalSystemTask) {
+        AbstractExternalSystemTask externalSystemTask = (AbstractExternalSystemTask)task;
+        if(externalSystemTask.getId().getType() == type &&
+           externalSystemTask.getExternalSystemId().getId().equals(projectSystemId.getId()) &&
+           externalSystemTask.getExternalProjectPath().equals(externalProjectPath)){
+          return task;
+        }
+      }
+    }
+
+    return null;
+  }
+
+  public void add(@NotNull ExternalSystemTask task) {
+    myTasksDetails.put(task.getId(), task);
+  }
+
+  public void release(@NotNull ExternalSystemTaskId id) {
+    myTasksDetails.remove(id);
   }
 
   @Override

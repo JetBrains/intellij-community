@@ -59,8 +59,8 @@ public class RemoteExternalSystemTaskManagerImpl<S extends ExternalSystemExecuti
   }
 
   @Override
-  public void cancelTask(@NotNull final ExternalSystemTaskId id) throws RemoteException, ExternalSystemException
+  public boolean cancelTask(@NotNull final ExternalSystemTaskId id) throws RemoteException, ExternalSystemException
   {
-    myDelegate.cancelTask(id, getNotificationListener());
+    return myDelegate.cancelTask(id, getNotificationListener());
   }
 }
