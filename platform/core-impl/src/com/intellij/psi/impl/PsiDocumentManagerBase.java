@@ -589,7 +589,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
       }
       mySmartPointerManager.fastenBelts(file, event.getOffset(), null);
 
-      if (TextBlock.get(file).isLocked()) {
+      if (mySynchronizer.isInsideAtomicChange(file)) {
         psiCause = file;
       }
     }
@@ -617,13 +617,11 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
     for (PsiFile file : files) {
       mySmartPointerManager.unfastenBelts(file, event.getOffset());
 
-      final TextBlock textBlock = TextBlock.get(file);
-      if (textBlock.isLocked()) {
+      if (mySynchronizer.isInsideAtomicChange(file)) {
         commitNecessary = false;
         continue;
       }
 
-      textBlock.documentChanged(event);
       assert file instanceof PsiFileImpl || "mock.file".equals(file.getName()) && ApplicationManager.getApplication().isUnitTestMode() :
         event +
         "; file=" +

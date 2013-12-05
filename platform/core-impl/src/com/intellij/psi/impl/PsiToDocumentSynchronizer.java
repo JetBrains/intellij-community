@@ -22,6 +22,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -35,6 +36,7 @@ import java.util.*;
 
 public class PsiToDocumentSynchronizer extends PsiTreeChangeAdapter {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.PsiToDocumentSynchronizer");
+  private static final Key<Boolean> PSI_DOCUMENT_ATOMIC_ACTION = Key.create("PSI_DOCUMENT_ATOMIC_ACTION");
 
   private final PsiDocumentManagerBase myPsiDocumentManager;
   private final MessageBus myBus;
@@ -78,13 +80,11 @@ public class PsiToDocumentSynchronizer extends PsiTreeChangeAdapter {
       return;
     }
 
-    TextBlock textBlock = TextBlock.get(psiFile);
-
-    if (!textBlock.isEmpty()) {
+    if (myPsiDocumentManager.isUncommited(document)) {
       throw new IllegalStateException("Attempt to modify PSI for non-committed Document!");
     }
 
-    textBlock.performAtomically(new Runnable() {
+    performAtomically(psiFile, new Runnable() {
       @Override
       public void run() {
         syncAction.syncDocument(document, (PsiTreeChangeEventImpl)event);
@@ -100,6 +100,22 @@ public class PsiToDocumentSynchronizer extends PsiTreeChangeAdapter {
     }
 
     psiFile.getViewProvider().contentsSynchronized();
+  }
+
+  boolean isInsideAtomicChange(@NotNull PsiFile file) {
+    return file.getUserData(PSI_DOCUMENT_ATOMIC_ACTION) == Boolean.TRUE;
+  }
+
+  public void performAtomically(@NotNull PsiFile file, @NotNull Runnable runnable) {
+    assert !isInsideAtomicChange(file);
+    file.putUserData(PSI_DOCUMENT_ATOMIC_ACTION, Boolean.TRUE);
+    
+    try {
+      runnable.run();
+    }
+    finally {
+      file.putUserData(PSI_DOCUMENT_ATOMIC_ACTION, null);
+    }
   }
 
   @Override

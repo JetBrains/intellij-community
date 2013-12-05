@@ -617,7 +617,7 @@ interface TxANotAnno {}
   }
 
   public void testPreferString() {
-    checkPreferredItems 0, 'String', 'StringBuffer', 'StringBuilder', 'System', 'Set'
+    checkPreferredItems 0, 'String', 'System', 'Set'
   }
 
 }

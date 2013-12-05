@@ -72,7 +72,7 @@ public class MagicNumberInspectionBase extends BaseInspection {
       if (!ClassUtils.isPrimitiveNumericType(type) || PsiType.CHAR.equals(type)) {
         return;
       }
-      if (isSpecialCaseLiteral(expression) || ExpressionUtils.isDeclaredConstant(expression)) {
+      if (isSpecialCaseLiteral(expression) || isFinalVariableInitialization(expression)) {
         return;
       }
       if (ignoreInHashCode) {
@@ -87,18 +87,8 @@ public class MagicNumberInspectionBase extends BaseInspection {
           return;
         }
       }
-      if (ignoreInitialCapacity) {
-        final PsiExpressionList expressionList = PsiTreeUtil.getParentOfType(expression, PsiExpressionList.class, true, PsiMember.class);
-        if (expressionList != null) {
-          final PsiElement parent = expressionList.getParent();
-          if (parent instanceof PsiNewExpression) {
-            final PsiNewExpression newExpression = (PsiNewExpression)parent;
-            if (TypeUtils.expressionHasTypeOrSubtype(newExpression, CommonClassNames.JAVA_LANG_ABSTRACT_STRING_BUILDER,
-                                                     CommonClassNames.JAVA_UTIL_MAP, CommonClassNames.JAVA_UTIL_COLLECTION) != null) {
-              return;
-            }
-          }
-        }
+      if (ignoreInitialCapacity && isInitialCapacity(expression)) {
+        return;
       }
       final PsiElement parent = expression.getParent();
       if (parent instanceof PsiPrefixExpression) {
@@ -107,6 +97,21 @@ public class MagicNumberInspectionBase extends BaseInspection {
       else {
         registerError(expression, expression);
       }
+    }
+
+    private boolean isInitialCapacity(PsiLiteralExpression expression) {
+      final PsiElement element =
+        PsiTreeUtil.skipParentsOfType(expression, PsiTypeCastExpression.class, PsiParenthesizedExpression.class, PsiPrefixExpression.class);
+      if (!(element instanceof PsiExpressionList)) {
+        return false;
+      }
+      final PsiElement parent = element.getParent();
+      if (!(parent instanceof PsiNewExpression)) {
+        return false;
+      }
+      final PsiNewExpression newExpression = (PsiNewExpression)parent;
+      return TypeUtils.expressionHasTypeOrSubtype(newExpression, CommonClassNames.JAVA_LANG_ABSTRACT_STRING_BUILDER,
+                                                  CommonClassNames.JAVA_UTIL_MAP, CommonClassNames.JAVA_UTIL_COLLECTION) != null;
     }
 
     private boolean isSpecialCaseLiteral(PsiLiteralExpression expression) {
@@ -128,6 +133,32 @@ public class MagicNumberInspectionBase extends BaseInspection {
         return f == 1.0f || f == 0.0f;
       }
       return false;
+    }
+
+    public boolean isFinalVariableInitialization(PsiExpression expression) {
+      final PsiElement parent =
+        PsiTreeUtil.skipParentsOfType(expression, PsiTypeCastExpression.class, PsiParenthesizedExpression.class, PsiPrefixExpression.class);
+      final PsiVariable variable;
+      if (!(parent instanceof PsiVariable)) {
+        if (!(parent instanceof PsiAssignmentExpression)) {
+          return false;
+        }
+        final PsiAssignmentExpression assignmentExpression = (PsiAssignmentExpression)parent;
+        final PsiExpression lhs = assignmentExpression.getLExpression();
+        if (!(lhs instanceof PsiReferenceExpression)) {
+          return false;
+        }
+        final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)lhs;
+        final PsiElement target = referenceExpression.resolve();
+        if (!(target instanceof PsiVariable)) {
+          return false;
+        }
+        variable = (PsiVariable)target;
+      }
+      else {
+        variable = (PsiVariable)parent;
+      }
+      return variable.hasModifierProperty(PsiModifier.FINAL);
     }
   }
 }
