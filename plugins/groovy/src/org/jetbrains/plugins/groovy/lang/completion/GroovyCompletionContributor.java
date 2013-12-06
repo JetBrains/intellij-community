@@ -65,6 +65,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeParameterList;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.CompleteReferenceExpression;
+import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrBindingVariable;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.refactoring.DefaultGroovyVariableNameValidator;
@@ -448,6 +449,10 @@ public class GroovyCompletionContributor extends CompletionContributor {
         Object object = lookupElement.getObject();
         if (object instanceof GroovyResolveResult) {
           object = ((GroovyResolveResult)object).getElement();
+        }
+
+        if (object instanceof GrBindingVariable && ((GrBindingVariable)object).getName().contains(CompletionInitializationContext.DUMMY_IDENTIFIER_TRIMMED)) {
+          return;
         }
 
         if (!(lookupElement instanceof LookupElementBuilder) && inheritorsHolder.alreadyProcessed(lookupElement)) {

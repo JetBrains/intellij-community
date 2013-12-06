@@ -763,7 +763,7 @@ def foo() {
   }
 
   void testGDocAfterImports() { doTest() }
-  void testGDocAfterImports2() { doTest() }
+  void testGroovyDocAfterImports2() { doTest() }
 
   void testRegexExpressions() { doTest() }
 

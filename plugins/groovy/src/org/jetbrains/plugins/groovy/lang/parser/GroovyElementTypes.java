@@ -181,7 +181,7 @@ public interface GroovyElementTypes extends GroovyTokenTypes, GroovyDocElementTy
       return new GrEnumConstantListImpl(stub);
     }
   };
-  GroovyElementType IMPORT_STATEMENT = new GroovyElementType("Import statement");
+  GrImportStatementElementType IMPORT_STATEMENT = new GrImportStatementElementType("Import statement");
   //Branch statements
   GroovyElementType BREAK_STATEMENT = new GroovyElementType("Break statement");
   GroovyElementType CONTINUE_STATEMENT = new GroovyElementType("Continue statement");

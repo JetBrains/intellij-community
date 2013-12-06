@@ -52,7 +52,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrReturnStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrStringInjection;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 
 import java.util.LinkedList;
@@ -136,8 +135,8 @@ public class GrConcatenationAwareInjector implements ConcatenationAwareInjector 
           assert list != null;
 
           final String methodName;
-          if (methodCall instanceof GrMethodCallExpression) {
-            GrExpression invoked = ((GrMethodCallExpression)methodCall).getInvokedExpression();
+          if (methodCall instanceof GrMethodCall) {
+            GrExpression invoked = ((GrMethodCall)methodCall).getInvokedExpression();
             final String referenceName = invoked instanceof GrReferenceExpression? ((GrReferenceExpression)invoked).getReferenceName() : null;
             if ("super".equals(referenceName) || "this".equals(referenceName)) { // constructor call
               final PsiClass psiClass = PsiTreeUtil.getParentOfType(methodCall, PsiClass.class, true);
