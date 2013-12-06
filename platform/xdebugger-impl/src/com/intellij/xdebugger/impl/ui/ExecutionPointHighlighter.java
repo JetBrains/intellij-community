@@ -22,7 +22,6 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
@@ -30,6 +29,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.AppUIUtil;
 import com.intellij.xdebugger.XSourcePosition;
+import com.intellij.xdebugger.impl.XSourcePositionImpl;
 import com.intellij.xdebugger.ui.DebuggerColors;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -54,6 +54,7 @@ public class ExecutionPointHighlighter {
   public void show(final @NotNull XSourcePosition position, final boolean useSelection,
                    @Nullable final GutterIconRenderer gutterIconRenderer) {
     AppUIUtil.invokeLaterIfProjectAlive(myProject, new Runnable() {
+      @Override
       public void run() {
         doShow(position, useSelection, gutterIconRenderer);
       }
@@ -62,6 +63,7 @@ public class ExecutionPointHighlighter {
 
   public void hide() {
     AppUIUtil.invokeOnEdt(new Runnable() {
+      @Override
       public void run() {
         doHide();
       }
@@ -99,26 +101,13 @@ public class ExecutionPointHighlighter {
     removeHighlighter();
 
     mySourcePosition = position;
-    myEditor = openEditor();
+    myOpenFileDescriptor = XSourcePositionImpl.createOpenFileDescriptor(myProject, mySourcePosition);
+    myEditor = FileEditorManager.getInstance(myProject).openTextEditor(myOpenFileDescriptor, false);
     myUseSelection = useSelection;
     myGutterIconRenderer = renderer;
     if (myEditor != null) {
       addHighlighter();
     }
-  }
-
-  @Nullable
-  private Editor openEditor() {
-    VirtualFile file = mySourcePosition.getFile();
-    Document document = FileDocumentManager.getInstance().getDocument(file);
-    int offset = mySourcePosition.getOffset();
-    if (offset < 0 || offset >= document.getTextLength()) {
-      myOpenFileDescriptor = new OpenFileDescriptor(myProject, file, mySourcePosition.getLine(), 0);
-    }
-    else {
-      myOpenFileDescriptor = new OpenFileDescriptor(myProject, file, offset);
-    }
-    return FileEditorManager.getInstance(myProject).openTextEditor(myOpenFileDescriptor, false);
   }
 
   private void doHide() {
