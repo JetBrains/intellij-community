@@ -123,8 +123,6 @@ public abstract class UsefulTestCase extends TestCase {
   protected void setUp() throws Exception {
     super.setUp();
 
-    PathManager.ensureConfigFolderExists();
-
     if (shouldContainTempFiles()) {
       String testName = getTestName(true);
       if (StringUtil.isEmptyOrSpaces(testName)) testName = "";
