@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,7 +30,7 @@ import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.ui.CollectionComboBoxModel;
 import com.intellij.ui.DoubleClickListener;
 import com.intellij.ui.ListScrollingUtil;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.FunctionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -41,8 +41,7 @@ import javax.swing.event.ListSelectionListener;
 import java.awt.event.MouseEvent;
 import java.util.Arrays;
 import java.util.Comparator;
-import java.util.Deque;
-import java.util.LinkedList;
+import java.util.List;
 
 public class FileTypeChooser extends DialogWrapper {
   private JList myList;
@@ -53,7 +52,7 @@ public class FileTypeChooser extends DialogWrapper {
   private JRadioButton myOpenAsNative;
   private final String myFileName;
 
-  private FileTypeChooser(@NotNull String[] patterns, @NotNull String fileName) {
+  private FileTypeChooser(@NotNull List<String> patterns, @NotNull String fileName) {
     super(true);
     myFileName = fileName;
 
@@ -80,7 +79,7 @@ public class FileTypeChooser extends DialogWrapper {
       }
     }
     myList.setModel(model);
-    myPattern.setModel(new CollectionComboBoxModel(ContainerUtil.map(patterns, com.intellij.util.FunctionUtil.<String>id()), patterns[0]));
+    myPattern.setModel(new CollectionComboBoxModel(ContainerUtil.map(patterns, FunctionUtil.<String>id()), patterns.get(0)));
 
     setTitle(FileTypesBundle.message("filetype.chooser.title"));
     init();
@@ -91,7 +90,7 @@ public class FileTypeChooser extends DialogWrapper {
     myTitleLabel.setText(FileTypesBundle.message("filetype.chooser.prompt", myFileName));
 
     myList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-    myList.setCellRenderer(new FileTypeRenderer(myList.getCellRenderer()));
+    myList.setCellRenderer(new FileTypeRenderer());
 
     new DoubleClickListener() {
       @Override
@@ -179,17 +178,18 @@ public class FileTypeChooser extends DialogWrapper {
   }
 
   @NotNull
-  static String[] suggestPatterns(@NotNull final String fileName) {
-    final Deque<String> patterns = new LinkedList<String>();
-    patterns.addFirst(fileName);
+  static List<String> suggestPatterns(@NotNull String fileName) {
+    List<String> patterns = ContainerUtil.newLinkedList(fileName);
+
     int i = -1;
     while ((i = fileName.indexOf('.', i + 1)) > 0) {
-      final String extension = fileName.substring(i);
+      String extension = fileName.substring(i);
       if (!StringUtil.isEmpty(extension)) {
-        patterns.addFirst("*" + extension);
+        patterns.add(0, "*" + extension);
       }
     }
-    return ArrayUtil.toStringArray(patterns);
+
+    return patterns;
   }
 
   @Override

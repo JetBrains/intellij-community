@@ -371,7 +371,7 @@ public class FileTypeConfigurable extends BaseConfigurable implements Searchable
 
       myFileTypesList = new JBList(new DefaultListModel());
       myFileTypesList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-      myFileTypesList.setCellRenderer(new FileTypeRenderer(myFileTypesList.getCellRenderer(), new FileTypeRenderer.FileTypeListProvider() {
+      myFileTypesList.setCellRenderer(new FileTypeRenderer(new FileTypeRenderer.FileTypeListProvider() {
         @Override
         public Iterable<FileType> getCurrentFileTypeList() {
           ArrayList<FileType> result = new ArrayList<FileType>();
