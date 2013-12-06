@@ -313,22 +313,37 @@ public class RemoteFileInfoImpl implements RemoteContentProvider.DownloadingCall
     }
   }
 
-  private static AsyncResult<VirtualFile> createDownloadedCallback(@NotNull RemoteFileInfo remoteFileInfo) {
+  private static AsyncResult<VirtualFile> createDownloadedCallback(@NotNull final RemoteFileInfo remoteFileInfo) {
     final AsyncResult<VirtualFile> callback = new AsyncResult<VirtualFile>();
     remoteFileInfo.addDownloadingListener(new FileDownloadingAdapter() {
       @Override
       public void fileDownloaded(VirtualFile localFile) {
-        callback.setDone(localFile);
+        try {
+          remoteFileInfo.removeDownloadingListener(this);
+        }
+        finally {
+          callback.setDone(localFile);
+        }
       }
 
       @Override
       public void errorOccurred(@NotNull String errorMessage) {
-        callback.reject(errorMessage);
+        try {
+          remoteFileInfo.removeDownloadingListener(this);
+        }
+        finally {
+          callback.reject(errorMessage);
+        }
       }
 
       @Override
       public void downloadingCancelled() {
-        callback.setRejected();
+        try {
+          remoteFileInfo.removeDownloadingListener(this);
+        }
+        finally {
+          callback.setRejected();
+        }
       }
     });
     return callback;
