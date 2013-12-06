@@ -27,7 +27,6 @@ import com.intellij.lang.documentation.DocumentationProvider;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
@@ -451,7 +450,7 @@ public class EnterHandler extends BaseEnterHandler {
         }
 
         if ((commentContext.docAsterisk || commentContext.slashSlash) && !commentContext.docStart) {
-          myCaretAdvance += commentContext.slashSlash ? commentContext.commenter.getLineCommentPrefix().length() : 1;
+          myCaretAdvance += commentContext.slashSlash ? commentContext.commenter.getLineCommentPrefix().trim().length() : 1;
         }
       }
       catch (IncorrectOperationException e) {

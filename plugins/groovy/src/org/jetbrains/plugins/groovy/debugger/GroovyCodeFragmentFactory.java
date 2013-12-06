@@ -97,41 +97,32 @@ public class GroovyCodeFragmentFactory extends CodeFragmentFactory {
     if (!isStatic) {
       javaText.append("java.lang.Object |thiz0;\n");
 
-      String fileName;
+      PsiFile containingFile = context.getContainingFile();
 
-      PsiElement originalContext = context.getContainingFile().getContext();
-      if (originalContext == null) {
-        fileName = null; // The class is not reloaded by springloaded if context is in physical file.
-      }
-      else {
-        fileName = originalContext.getContainingFile().getOriginalFile().getName();
+      if (containingFile.getContext() != null) {
+        containingFile = containingFile.getContext().getContainingFile();
       }
 
-      if (fileName == null) {
-        // The class could not be reloaded by springloaded
-        javaText.append("|thiz0 = this;\n");
-      }
-      else {
-        // Class could be reloaded by springloaded
+      String fileName = containingFile.getOriginalFile().getName();
 
-        String s = StringUtil.escapeStringCharacters(Pattern.quote(fileName));
-        // We believe what class is reloaded if stacktrace matches one of two patterns:
-        // 1.) [com.package.Foo$$ENLbVXwm.methodName(FileName.groovy:12), com.package.Foo$$DNLbVXwm.methodName(Unknown Source), *
-        // 2.) [com.package.Foo$$ENLbVXwm.methodName(FileName.groovy:12), * com.springsource.loaded. *
-        // Pattern below test this.
+      String s = StringUtil.escapeStringCharacters(Pattern.quote(fileName));
+      // We believe what class is reloaded if stacktrace matches one of two patterns:
+      // 1.) [com.package.Foo$$ENLbVXwm.methodName(FileName.groovy:12), com.package.Foo$$DNLbVXwm.methodName(Unknown Source), *
+      // 2.) [com.package.Foo$$ENLbVXwm.methodName(FileName.groovy:12), * com.springsource.loaded. *
+      // Pattern below test this.
 
-        //javaText.append("System.out.println(java.util.Arrays.toString(new Exception().getStackTrace()));\n");
-        //javaText.append("System.out.println(\"\\\\[([^,()]+\\\\$\\\\$)[A-Za-z0-9]{8}(\\\\.[^,()]+)\\\\(" + s + ":\\\\d+\\\\), (\\\\1[A-Za-z0-9]{8}\\\\2\\\\(Unknown Source\\\\), |.+(?:com|org)\\\\.springsource\\\\.loaded\\\\.).+\")\n");
+      //javaText.append("System.out.println(java.util.Arrays.toString(new Exception().getStackTrace()));\n");
+      //javaText.append("System.out.println(\"\\\\[([^,()]+\\\\$\\\\$)[A-Za-z0-9]{8}(\\\\.[^,()]+)\\\\(" + s + ":\\\\d+\\\\), (\\\\1[A-Za-z0-9]{8}\\\\2\\\\(Unknown Source\\\\), |.+(?:com|org)\\\\.springsource\\\\.loaded\\\\.).+\")\n");
 
-        javaText.append(
-          "if (java.util.Arrays.toString(new Exception().getStackTrace()).matches(\"\\\\[([^,()]+\\\\$\\\\$)[A-Za-z0-9]{8}(\\\\.[^,()]+)\\\\(")
-          .append(s)
-          .append(":\\\\d+\\\\), (\\\\1[A-Za-z0-9]{8}\\\\2\\\\(Unknown Source\\\\), $OR$.+(?:com$OR$org)\\\\.springsource\\\\.loaded\\\\.).+\")) {\n");
-        javaText.append("  |thiz0 = thiz;\n");
-        javaText.append(" } else {\n");
-        javaText.append("  |thiz0 = this;\n");
-        javaText.append(" }\n");
-      }
+      javaText.append(
+        "if (java.util.Arrays.toString(new Exception().getStackTrace()).matches(\"\\\\[([^,()]+\\\\$\\\\$)[A-Za-z0-9]{8}(\\\\.[^,()]+)\\\\(")
+        .append(s)
+        .append(
+          ":\\\\d+\\\\), (\\\\1[A-Za-z0-9]{8}\\\\2\\\\(Unknown Source\\\\), $OR$.+(?:com$OR$org)\\\\.springsource\\\\.loaded\\\\.).+\")) {\n");
+      javaText.append("  |thiz0 = thiz;\n");
+      javaText.append(" } else {\n");
+      javaText.append("  |thiz0 = this;\n");
+      javaText.append(" }\n");
     }
 
     if (!isStatic) {

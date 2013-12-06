@@ -57,9 +57,10 @@ public class SpockUtils {
 
     PsiFile containingFile = method.getContainingFile();
     if (containingFile != containingFile.getOriginalFile()) {
-      PsiElement originalPlace = containingFile.getOriginalFile().findElementAt(method.getTextOffset());
+      int methodOffset = method.getTextOffset();
+      PsiElement originalPlace = containingFile.getOriginalFile().findElementAt(methodOffset);
       originalMethod = PsiTreeUtil.getParentOfType(originalPlace, GrMethod.class);
-      assert originalMethod != null;
+      assert originalMethod != null : containingFile.getOriginalFile().getText().substring(Math.max(0, methodOffset - 50), Math.min(methodOffset + 50, containingFile.getOriginalFile().getText().length()));
     }
     else {
       originalMethod = method;

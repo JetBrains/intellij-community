@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -169,6 +169,7 @@ public class JBTabsImpl extends JComponent
   private SelectionChangeHandler mySelectionChangeHandler;
 
   private Runnable myDeferredFocusRequest;
+  private boolean myAlwaysPaintSelectedTab;
 
   public JBTabsImpl(@NotNull Project project) {
     this(project, project);
@@ -562,6 +563,7 @@ public class JBTabsImpl extends JComponent
       if (!mySingleRowLayout.isTabHidden(each)) continue;
       final JBMenuItem item = new JBMenuItem(each.getText(), each.getIcon());
       item.setForeground(each.getDefaultForeground());
+      item.setBackground(each.getTabColor());
       mySingleRowLayout.myMorePopup.add(item);
       item.addActionListener(new ActionListener() {
         @Override
@@ -886,6 +888,15 @@ public class JBTabsImpl extends JComponent
     for (TabsListener eachListener : myTabListeners) {
       if (eachListener != null) {
         eachListener.tabsMoved();
+      }
+    }
+  }
+
+
+  void fireTabRemoved(TabInfo info) {
+    for (TabsListener eachListener : myTabListeners) {
+      if (eachListener != null) {
+        eachListener.tabRemoved(info);
       }
     }
   }
@@ -1664,7 +1675,7 @@ public class JBTabsImpl extends JComponent
     final int alpha;
     int paintTopY = shapeInfo.labelTopY;
     int paintBottomY = shapeInfo.labelBottomY;
-    final boolean paintFocused = myPaintFocus && (myFocused || myActivePopup != null);
+    final boolean paintFocused = myPaintFocus && (myFocused || myActivePopup != null || myAlwaysPaintSelectedTab);
     Color bgPreFill = null;
     if (paintFocused) {
       final Color bgColor = getActiveTabColor(getActiveTabFillIn());
@@ -2437,6 +2448,8 @@ public class JBTabsImpl extends JComponent
     }
 
     revalidateAndRepaint(true);
+    
+    fireTabRemoved(info);
 
     return result;
   }
@@ -2743,6 +2756,12 @@ public class JBTabsImpl extends JComponent
   @Override
   public JBTabsPresentation setPaintFocus(final boolean paintFocus) {
     myPaintFocus = paintFocus;
+    return this;
+  }
+
+  @Override
+  public JBTabsPresentation setAlwaysPaintSelectedTab(final boolean paintSelected) {
+    myAlwaysPaintSelectedTab = paintSelected;
     return this;
   }
 

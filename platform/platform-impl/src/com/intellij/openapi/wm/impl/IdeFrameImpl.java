@@ -52,7 +52,6 @@ import com.intellij.openapi.wm.impl.status.*;
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame;
 import com.intellij.ui.*;
 import com.intellij.util.ui.UIUtil;
-import org.java.ayatana.ApplicationMenu;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -74,6 +73,8 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, DataProvider {
   private static final String FULL_SCREEN = "FullScreen";
 
   private static boolean myUpdatingTitle;
+
+  private static String xdgCurrentDesktop = System.getenv("XDG_CURRENT_DESKTOP");
 
   private String myTitle;
   private String myFileTitle;
@@ -97,10 +98,10 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, DataProvider {
     setBackground(UIUtil.getPanelBackground());
     AppUIUtil.updateWindowIcon(this);
     final Dimension size = ScreenUtil.getMainScreenBounds().getSize();
-    
+
     size.width = Math.min(1400, size.width - 20);
     size.height= Math.min(1000, size.height - 40);
-    
+
     setSize(size);
     setLocationRelativeTo(null);
 
@@ -123,25 +124,23 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, DataProvider {
     MouseGestureManager.getInstance().add(this);
 
     myFrameDecorator = IdeFrameDecorator.decorate(this);
+
     addWindowStateListener(new WindowAdapter() {
       @Override
       public void windowStateChanged(WindowEvent e) {
         updateBorder();
       }
     });
+
     Toolkit.getDefaultToolkit().addPropertyChangeListener("win.xpstyle.themeActive", new PropertyChangeListener() {
       @Override
       public void propertyChange(PropertyChangeEvent evt) {
         updateBorder();
       }
     });
-    if (SystemInfo.isLinux && Registry.is("linux.native.menu")) {
-      SwingUtilities.invokeLater(new Runnable() {
-        public void run() {
-          ApplicationMenu.tryInstall(IdeFrameImpl.this);
-        }
-      });
-    }
+
+    IdeMenuBar.installAppMenuIfNeeded(this);
+    UIUtil.setAutoRequestFocus(this, false);
   }
 
   private void updateBorder() {

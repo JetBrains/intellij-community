@@ -113,6 +113,34 @@ class Foo {
 '''
   }
 
+  public void "test complete variable name in string literal"() {
+    myFixture.configureByText "a.java", '''
+class Xoo {
+  String foobar = "foo<caret>";
+}
+'''
+    complete()
+    myFixture.checkResult '''
+class Xoo {
+  String foobar = "foobar<caret>";
+}
+'''
+
+  }
+
+  public void "test file start"() {
+    myFixture.configureByText "a.java", '''<caret>
+class Xoo {
+}
+'''
+    complete()
+    myFixture.checkResult '''class<caret>
+class Xoo {
+}
+'''
+
+  }
+
   private void complete() {
     myFixture.performEditorAction(IdeActions.ACTION_HIPPIE_COMPLETION)
   }

@@ -146,13 +146,14 @@ public class PyBlock implements ASTBlock {
         childIndent = Indent.getNormalIndent();
       }
     }
-    else if (childType == PyElementTypes.IMPORT_ELEMENT && hasLineBreaksBefore(child, 1)) {
+    else if (childType == PyElementTypes.IMPORT_ELEMENT) {
+      wrap = Wrap.createWrap(WrapType.NORMAL, true);
       childIndent = Indent.getNormalIndent();
     }
     if (ourListElementTypes.contains(parentType)) {
       // wrapping in non-parenthesized tuple expression is not allowed (PY-1792)
       if ((parentType != PyElementTypes.TUPLE_EXPRESSION || grandparentType == PyElementTypes.PARENTHESIZED_EXPRESSION) &&
-          !ourBrackets.contains(childType) && childType != PyTokenTypes.COMMA && !isSliceOperand(child)) {
+          !ourBrackets.contains(childType) && childType != PyTokenTypes.COMMA && !isSliceOperand(child) /*&& !isSubscriptionOperand(child)*/) {
         wrap = Wrap.createWrap(WrapType.NORMAL, true);
       }
       if (needListAlignment(child) && !isEmptyList(_node.getPsi())) {
@@ -239,8 +240,14 @@ public class PyBlock implements ASTBlock {
         childIndent = Indent.getNormalIndent();
       }
     }
+    else if (parentType == PyElementTypes.REFERENCE_EXPRESSION) {
+      if (child != _node.getFirstChildNode()) {
+        childIndent = Indent.getNormalIndent();
+      }
+    }
 
-    if (isAfterStatementList(child) && !hasLineBreaksBefore(child, 2)) {  // maybe enter was pressed and cut us from a previous (nested) statement list
+    if (isAfterStatementList(child) && !hasLineBreaksBefore(child, 2) && child.getElementType() != PyTokenTypes.END_OF_LINE_COMMENT) {
+      // maybe enter was pressed and cut us from a previous (nested) statement list
       childIndent = Indent.getNormalIndent();
     }
 
@@ -255,6 +262,11 @@ public class PyBlock implements ASTBlock {
     }
 
     return new PyBlock(this, child, childAlignment, childIndent, wrap, myContext);
+  }
+
+  private static boolean isSubscriptionOperand(ASTNode child) {
+    return child.getTreeParent().getElementType() == PyElementTypes.SUBSCRIPTION_EXPRESSION &&
+           child.getPsi() == ((PySubscriptionExpression) child.getTreeParent().getPsi()).getOperand();
   }
 
   private boolean isInControlStatement() {

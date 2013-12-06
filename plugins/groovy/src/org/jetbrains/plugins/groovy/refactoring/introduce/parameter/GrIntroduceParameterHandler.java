@@ -220,9 +220,6 @@ public class GrIntroduceParameterHandler implements RefactoringActionHandler, Me
         for (PsiElement element : context.getOccurrences()) {
           occurrences.add(createRange(document, element));
         }
-        RangeMarker expressionRangeMarker = createRange(document, context.getExpression());
-        RangeMarker stringPartRangeMarker = createRange(document, context.getStringPart());
-        RangeMarker varRangeMarker = createRange(document, context.getVar());
 
         GrExpressionWrapper expr = new GrExpressionWrapper(GroovyIntroduceParameterUtil.findExpr(settings));
 
@@ -249,8 +246,7 @@ public class GrIntroduceParameterHandler implements RefactoringActionHandler, Me
         GrVariable parameter = pointer != null ? pointer.getElement() : null;
 
         if (parameter != null) {
-          GrInplaceIntroducer introducer = getIntroducer(parameter, context, settings, occurrences, varRangeMarker, expressionRangeMarker, stringPartRangeMarker,
-                                                         expr);
+          GrInplaceIntroducer introducer = getIntroducer(parameter, context, settings, occurrences, expr);
           PsiDocumentManager.getInstance(info.getProject()).doPostponedOperationsAndUnblockDocument(context.getEditor().getDocument());
           introducer.performInplaceRefactoring(introducer.suggestNames(context));
         }
@@ -263,11 +259,7 @@ public class GrIntroduceParameterHandler implements RefactoringActionHandler, Me
                                                    GrIntroduceContext context,
                                                    GrIntroduceParameterSettings settings,
                                                    List<RangeMarker> occurrences,
-                                                   RangeMarker varRangeMarker,
-                                                   RangeMarker expressionRangeMarker,
-                                                   RangeMarker stringPartRangeMarker,
                                                    GrExpressionWrapper expr) {
-    //return new GrInplaceVariableIntroducer(parameter, context.getEditor(), context.getProject(), REFACTORING_NAME, occurrences, parameter);
     return new GrInplaceParameterIntroducer(parameter, context.getEditor(), context.getProject(), REFACTORING_NAME, occurrences, context.getPlace(), settings, expr);
   }
 
@@ -298,11 +290,7 @@ public class GrIntroduceParameterHandler implements RefactoringActionHandler, Me
   }
 
   private static boolean isInplace(IntroduceParameterInfo info, Editor editor) {
-    GrExpression expr = GroovyIntroduceParameterUtil.findExpr(info);
-    GrVariable var = GroovyIntroduceParameterUtil.findVar(info);
-    StringPartInfo stringPart = info.getStringPartInfo();
-
-    return (expr != null || var != null || stringPart != null) && GrIntroduceHandlerBase.isInplace(editor, info.getContext());
+    return GroovyIntroduceParameterUtil.findExpr(info) != null && GrIntroduceHandlerBase.isInplace(editor, info.getContext());
   }
 
 

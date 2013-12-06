@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,7 +39,7 @@ public class UnresolvedMergeCheckFactory extends CheckinHandlerFactory {
         if (containsUnresolvedConflicts(panel)) {
           int answer = Messages.showYesNoDialog(panel.getComponent(), "Are you sure you want to commit changes with unresolved conflicts?",
                                                 "Unresolved Conflicts", Messages.getWarningIcon());
-          return answer == Messages.OK ? ReturnResult.COMMIT : ReturnResult.CANCEL;
+          return answer == Messages.YES ? ReturnResult.COMMIT : ReturnResult.CANCEL;
         }
         return ReturnResult.COMMIT;
       }

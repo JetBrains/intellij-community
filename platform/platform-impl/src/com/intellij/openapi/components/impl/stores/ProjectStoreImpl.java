@@ -86,7 +86,7 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
       String message = ProjectBundle.message("project.convert.old.prompt", projectFile.getName(),
                                              appNamesInfo.getProductName(),
                                              name + OLD_PROJECT_SUFFIX + projectFile.getExtension());
-      if (Messages.showYesNoDialog(message, CommonBundle.getWarningTitle(), Messages.getWarningIcon()) != 0) return false;
+      if (Messages.showYesNoDialog(message, CommonBundle.getWarningTitle(), Messages.getWarningIcon()) != Messages.YES) return false;
 
       final ArrayList<String> conversionProblems = getConversionProblemsStorage();
       if (conversionProblems != null && !conversionProblems.isEmpty()) {
@@ -100,7 +100,7 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
         final int result = Messages.showOkCancelDialog(myProject, buffer.toString(), ProjectBundle.message("project.convert.problems.title"),
                                                ProjectBundle.message("project.convert.problems.help.button"),
                                                  CommonBundle.getCloseButtonText(), Messages.getWarningIcon());
-        if (result == 0) {
+        if (result == Messages.OK) {
           HelpManager.getInstance().invokeHelp("project.migrationProblems");
         }
       }
@@ -137,7 +137,7 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
       String message =
         ProjectBundle.message("project.load.new.version.warning", myProject.getName(), appNamesInfo.getProductName());
 
-      if (Messages.showYesNoDialog(message, CommonBundle.getWarningTitle(), Messages.getWarningIcon()) != 0) return false;
+      if (Messages.showYesNoDialog(message, CommonBundle.getWarningTitle(), Messages.getWarningIcon()) != Messages.YES) return false;
     }
 
     return true;
@@ -272,21 +272,6 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
     return myScheme == StorageScheme.DEFAULT ? file.getParent() : file.getParentFile().getParent();
   }
 
-  @Override
-  public String getLocation() {
-    if (myCachedLocation == null) {
-      if (myScheme == StorageScheme.DEFAULT) {
-        myCachedLocation = getProjectFilePath();
-      }
-      else {
-        final VirtualFile baseDir = getProjectBaseDir();
-        myCachedLocation = baseDir == null ? null : baseDir.getPath();
-      }
-    }
-
-    return myCachedLocation;
-  }
-
   @NotNull
   @Override
   public String getProjectName() {
@@ -328,6 +313,13 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
       }
       return temp;
     }
+  }
+
+  @NotNull
+  private String getProjectFileName() {
+    final FileBasedStorage storage = (FileBasedStorage)getStateStorageManager().getFileStateStorage(StoragePathMacros.PROJECT_FILE);
+    assert storage != null;
+    return storage.getFileName();
   }
 
   @NotNull
@@ -386,14 +378,6 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
     if (element != null) {
       xmlElementStorage.setDefaultState(element);
     }
-  }
-
-  @NotNull
-  @Override
-  public String getProjectFileName() {
-    final FileBasedStorage storage = (FileBasedStorage)getStateStorageManager().getFileStateStorage(StoragePathMacros.PROJECT_FILE);
-    assert storage != null;
-    return storage.getFileName();
   }
 
   @NotNull

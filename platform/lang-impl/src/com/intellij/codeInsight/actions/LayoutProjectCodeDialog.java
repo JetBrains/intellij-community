@@ -32,7 +32,7 @@ import java.awt.*;
 /**
  * @author max
  */
-public class LayoutProjectCodeDialog extends DialogWrapper {
+public class LayoutProjectCodeDialog extends DialogWrapper implements ReformatFilesOptions {
   private static @NonNls final String HELP_ID = "editing.codeReformatting";
 
   private final String  myText;

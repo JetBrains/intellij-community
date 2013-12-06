@@ -97,6 +97,39 @@ public class JavaFormatterInEditorTest extends LightPlatformCodeInsightTestCase 
     doTest(before, after);
   }
 
+  public void testCaretLineAndPositionPreserved_WhenBracketOnNextLineWillBeFormatted() throws IOException {
+    String before = "public class Test {\n" +
+                    "        int a;\n" +
+                    "    \n" +
+                    "    public static void main(String[] args) {\n" +
+                    "                     <caret>\n" +
+                    "            }\n" +
+                    "\n" +
+                    "    static final long j = 2;\n" +
+                    "}";
+    String after = "public class Test {\n" +
+                   "    int a;\n" +
+                   "\n" +
+                   "    public static void main(String[] args) {\n" +
+                   "                     <caret>\n" +
+                   "    }\n" +
+                   "\n" +
+                   "    static final long j = 2;\n" +
+                   "}";
+    doTest(before, after);
+
+    before = "public class Test {\n" +
+             "        int a;\n" +
+             "    \n" +
+             "    public static void main(String[] args) {\n" +
+             "                     <caret>           \n" +
+             "                }\n" +
+             "\n" +
+             "    static final long j = 2;\n" +
+             "}";
+    doTest(before, after);
+  }
+
   public void doTest(@NotNull String before, @NotNull String after) throws IOException {
     configureFromFileText(getTestName(false) + ".java", before);
     CodeStyleManager.getInstance(getProject()).reformatText(getFile(), 0, getEditor().getDocument().getTextLength());

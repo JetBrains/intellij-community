@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,10 +17,14 @@ package org.jetbrains.plugins.groovy.dgm;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.ResolveState;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
 import org.jetbrains.plugins.groovy.lang.resolve.NonCodeMembersContributor;
 
 import java.util.List;
@@ -37,15 +41,15 @@ public class DGMMemberContributor extends NonCodeMembersContributor {
                                      ResolveState state) {
     Project project = place.getProject();
     GlobalSearchScope resolveScope = place.getResolveScope();
-    JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
+    GroovyPsiManager groovyPsiManager = GroovyPsiManager.getInstance(project);
 
     Pair<List<String>, List<String>> extensions = GroovyExtensionProvider.getInstance(project).collectExtensions(resolveScope);
 
     List<String> instanceCategories = extensions.getFirst();
     List<String> staticCategories = extensions.getSecond();
 
-    if (!processCategories(qualifierType, processor, state, project, resolveScope, facade, instanceCategories, false)) return;
-    if (!processCategories(qualifierType, processor, state, project, resolveScope, facade, staticCategories, true)) return;
+    if (!processCategories(qualifierType, processor, state, project, resolveScope, groovyPsiManager, instanceCategories, false)) return;
+    if (!processCategories(qualifierType, processor, state, project, resolveScope, groovyPsiManager, staticCategories, true)) return;
   }
 
   private static boolean processCategories(PsiType qualifierType,
@@ -53,11 +57,10 @@ public class DGMMemberContributor extends NonCodeMembersContributor {
                                            ResolveState state,
                                            Project project,
                                            GlobalSearchScope resolveScope,
-                                           JavaPsiFacade facade,
-                                           List<String> instanceCategories,
+                                           GroovyPsiManager groovyPsiManager, List<String> instanceCategories,
                                            boolean isStatic) {
     for (String category : instanceCategories) {
-      PsiClass clazz = facade.findClass(category, resolveScope);
+      PsiClass clazz = groovyPsiManager.findClassWithCache(category, resolveScope);
       if (clazz != null) {
         if (!GdkMethodHolder.getHolderForClass(clazz, isStatic, resolveScope).processMethods(processor, state, qualifierType, project)) {
           return false;

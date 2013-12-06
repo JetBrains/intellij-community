@@ -1,7 +1,7 @@
 package com.intellij.util;
 
 import com.intellij.openapi.util.Key;
-import com.intellij.util.containers.ConcurrentHashMap;
+import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -13,7 +13,7 @@ import java.util.Map;
  * @author peter
  */
 public class SharedProcessingContext {
-  private final Map<Object, Object> myMap = new ConcurrentHashMap<Object, Object>();
+  private final Map<Object, Object> myMap = ContainerUtil.newConcurrentMap();
 
   public Object get(@NotNull @NonNls final String key) {
     return myMap.get(key);

@@ -28,7 +28,6 @@ public class Patches {
 
   /**
    * Debugger hangs on any attempt to attach/listen Connector when attach hanged once.
-   * @deprecated to remove in IDEA 13 (IDEA support JRE only >= 1.6)
    */
   public static final boolean SUN_JDI_CONNECTOR_HANGUP_BUG = !SystemInfo.isJavaVersionAtLeast("1.5");
 
@@ -114,9 +113,9 @@ public class Patches {
 
   /**
    * Java 7 incorrectly calculates screen insets on multi-monitor X Window configurations.
-   * See http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=9000030.
+   * See http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=7172665.
    */
-  public static final boolean SUN_BUG_ID_9000030 = SystemInfo.isXWindow && SystemInfo.isJavaVersionAtLeast("1.7");
+  public static final boolean SUN_BUG_ID_7172665 = SystemInfo.isXWindow && SystemInfo.isJavaVersionAtLeast("1.7");
 
   /**
    * On some WMs modal dialogs may show behind full screen window.

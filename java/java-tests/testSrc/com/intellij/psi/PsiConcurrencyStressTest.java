@@ -20,7 +20,6 @@
 package com.intellij.psi;
 
 import com.intellij.codeInsight.daemon.impl.DaemonProgressIndicator;
-import com.intellij.codeInsight.daemon.impl.HighlightInfoFilter;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightVisitorImpl;
 import com.intellij.openapi.application.ApplicationManager;
@@ -148,7 +147,7 @@ public class PsiConcurrencyStressTest extends PsiTestCase {
         mark("-");
         final PsiMethod[] psiMethods = getPsiClass().getMethods();
         if (psiMethods.length > 0) {
-          ApplicationManager.getApplication().runWriteAction(new Runnable() {
+          WriteCommandAction.runWriteCommandAction(null, new Runnable() {
             @Override
             public void run() {
               psiMethods[random.nextInt(psiMethods.length)].delete();

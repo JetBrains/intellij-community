@@ -21,6 +21,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLock;
+import com.intellij.psi.TokenType;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.impl.ElementBase;
 import com.intellij.psi.impl.PsiManagerEx;
@@ -176,6 +177,9 @@ public abstract class TreeElement extends ElementBase implements ASTNode, Clonea
 
   final void setTreeParent(CompositeElement parent) {
     myParent = parent;
+    if (parent != null && parent.getElementType() != TokenType.DUMMY_HOLDER) {
+      DebugUtil.revalidateNode(this);
+    }
   }
 
   final void setTreePrev(TreeElement prev) {
@@ -316,11 +320,10 @@ public abstract class TreeElement extends ElementBase implements ASTNode, Clonea
       parent.subtreeChanged();
     }
 
-    // invalidate replaced element
+    onInvalidated();
     setTreeNext(null);
     setTreePrev(null);
     setTreeParent(null);
-    onInvalidated();
   }
 
   public void rawRemoveUpToLast() {

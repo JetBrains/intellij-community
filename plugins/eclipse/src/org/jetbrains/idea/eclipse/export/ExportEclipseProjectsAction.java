@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@ package org.jetbrains.idea.eclipse.export;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -29,7 +28,6 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ModuleRootModel;
 import com.intellij.openapi.roots.impl.storage.ClassPathStorageUtil;
 import com.intellij.openapi.roots.impl.storage.ClasspathStorage;
-import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.io.FileUtil;
@@ -43,7 +41,10 @@ import org.jetbrains.idea.eclipse.ConversionException;
 import org.jetbrains.idea.eclipse.EclipseBundle;
 import org.jetbrains.idea.eclipse.EclipseXml;
 import org.jetbrains.idea.eclipse.IdeaXml;
-import org.jetbrains.idea.eclipse.conversion.*;
+import org.jetbrains.idea.eclipse.conversion.DotProjectFileHelper;
+import org.jetbrains.idea.eclipse.conversion.EclipseClasspathWriter;
+import org.jetbrains.idea.eclipse.conversion.EclipseUserLibrariesHelper;
+import org.jetbrains.idea.eclipse.conversion.IdeaSpecificSettings;
 import org.jetbrains.jps.eclipse.model.JpsEclipseClasspathSerializer;
 
 import java.io.File;
@@ -87,7 +88,7 @@ public class ExportEclipseProjectsAction extends AnAction implements DumbAware {
                                                  }
                                                }, "<br><li>") +
                                                "</ul><br>Would you like to proceed and possibly lose your configurations?</body></html>",
-                                      "Eclipse Incompatible Modules Found", Messages.getWarningIcon()) != DialogWrapper.OK_EXIT_CODE) {
+                                      "Eclipse Incompatible Modules Found", Messages.getWarningIcon()) != Messages.OK) {
         return;
       }
     }

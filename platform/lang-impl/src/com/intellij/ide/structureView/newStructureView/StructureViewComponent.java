@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,8 +35,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileEditor.OpenFileDescriptor;
-import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
@@ -761,9 +759,6 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
     if (PlatformDataKeys.FILE_EDITOR.is(dataId)) {
       return myFileEditor;
     }
-    if (OpenFileDescriptor.NAVIGATE_IN_EDITOR.is(dataId) && myFileEditor instanceof TextEditor) {
-      return ((TextEditor)myFileEditor).getEditor();
-    }
     if (PlatformDataKeys.CUT_PROVIDER.is(dataId)) {
       return myCopyPasteDelegator.getCutProvider();
     }
@@ -783,7 +778,7 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
     if (PlatformDataKeys.HELP_ID.is(dataId)) {
       return getHelpID();
     }
-    if (PlatformDataKeys.PROJECT.is(dataId)) {
+    if (CommonDataKeys.PROJECT.is(dataId)) {
       return myProject;
     }
     return super.getData(dataId);

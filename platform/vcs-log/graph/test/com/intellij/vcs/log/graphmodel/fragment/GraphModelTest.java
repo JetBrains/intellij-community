@@ -18,9 +18,9 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
-import static junit.framework.Assert.assertEquals;
 import static com.intellij.vcs.log.graph.GraphStrUtils.toStr;
 import static com.intellij.vcs.log.graph.GraphTestUtils.getCommitNode;
+import static junit.framework.Assert.assertEquals;
 
 /**
  * @author erokhins
@@ -191,7 +191,7 @@ public class GraphModelTest {
             @NotNull
             @Override
             public Boolean fun(@NotNull Node key) {
-                return startedNodes.contains(key.getCommitHash().asString());
+                return startedNodes.contains(Integer.toHexString(key.getCommitIndex()));
             }
         });
     }

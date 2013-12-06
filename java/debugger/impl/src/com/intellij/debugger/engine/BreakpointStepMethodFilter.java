@@ -25,4 +25,9 @@ import org.jetbrains.annotations.Nullable;
 public interface BreakpointStepMethodFilter extends MethodFilter{
   @Nullable
   SourcePosition getBreakpointPosition();
+
+  /**
+   * @return a zero-based line number of the last lambda statement, or -1 if not available
+   */
+  int getLastStatementLine();
 }

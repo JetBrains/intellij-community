@@ -39,9 +39,9 @@ import java.util.concurrent.ConcurrentHashMap;
 class BuildMessageDispatcher extends SimpleChannelInboundHandler<CmdlineRemoteProto.Message> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.server.BuildMessageDispatcher");
 
-  private static final AttributeKey<SessionData> SESSION_DATA = new AttributeKey<SessionData>("BuildMessageDispatcher.sessionData");
+  private static final AttributeKey<SessionData> SESSION_DATA = AttributeKey.valueOf("BuildMessageDispatcher.sessionData");
 
-  private final Map<UUID, SessionData> myMessageHandlers = new ConcurrentHashMap<UUID, SessionData>();
+  private final Map<UUID, SessionData> myMessageHandlers = new ConcurrentHashMap<UUID, SessionData>(16, 0.75f, 1);
   private final Set<UUID> myCanceledSessions = new ConcurrentHashSet<UUID>();
 
   public void registerBuildMessageHandler(UUID sessionId,
@@ -80,7 +80,7 @@ class BuildMessageDispatcher extends SimpleChannelInboundHandler<CmdlineRemotePr
 
 
   @Override
-  protected void channelRead0(ChannelHandlerContext context, CmdlineRemoteProto.Message message) throws Exception {
+  protected void messageReceived(ChannelHandlerContext context, CmdlineRemoteProto.Message message) throws Exception {
     SessionData sessionData = context.attr(SESSION_DATA).get();
 
     UUID sessionId;

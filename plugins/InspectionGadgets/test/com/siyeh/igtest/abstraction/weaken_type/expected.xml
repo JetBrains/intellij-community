@@ -23,6 +23,13 @@
   </problem>
 
   <problem>
+    <file>TypeMayBeWeakened.java</file>
+    <line>133</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Type may be weakened</problem_class>
+    <description>Type of parameter &lt;code&gt;objectInput&lt;/code&gt; may be weakened to 'com.siyeh.igtest.abstraction.weaken_type.DataInput' #loc</description>
+  </problem>
+
+  <problem>
     <file>AutoClosableTest.java</file>
     <line>34</line>
     <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Type may be weakened</problem_class>

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -182,7 +182,7 @@ public class EditorSearchComponent extends EditorHeaderComponent implements Data
     if (SpeedSearchSupply.SPEED_SEARCH_CURRENT_QUERY.is(dataId)) {
       return mySearchField.getText();
     }
-    if (PlatformDataKeys.EDITOR_EVEN_IF_INACTIVE.is(dataId)) {
+    if (CommonDataKeys.EDITOR_EVEN_IF_INACTIVE.is(dataId)) {
       return myEditor;
     }
     return null;
@@ -208,7 +208,8 @@ public class EditorSearchComponent extends EditorHeaderComponent implements Data
         }
         else {
           setNotFoundBackground();
-          myMatchInfoLabel.setText("No matches");
+          myMatchInfoLabel.setText("No matches ");
+          boldMatchInfo();
         }
       }
       else {
@@ -356,7 +357,7 @@ public class EditorSearchComponent extends EditorHeaderComponent implements Data
   }
 
   private void setupHistoryToSearchField(SearchTextField field, String[] strings) {
-    field.setHistorySize(strings.length);
+    field.setHistorySize(20);
     field.setHistory(ContainerUtil.reverse(Arrays.asList(strings)));
   }
 
@@ -898,7 +899,10 @@ public class EditorSearchComponent extends EditorHeaderComponent implements Data
   }
 
   private void boldMatchInfo() {
-    myMatchInfoLabel.setFont(myMatchInfoLabel.getFont().deriveFont(Font.BOLD));
+    Font font = myMatchInfoLabel.getFont();
+    if (!font.isBold()) {
+      myMatchInfoLabel.setFont(font.deriveFont(Font.BOLD));
+    }
   }
 
   private void setRegularBackground() {

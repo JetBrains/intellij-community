@@ -243,7 +243,9 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
     }
     if (myUncommittedDocuments.isEmpty()) {
       action.run();
-      assert actionsWhenAllDocumentsAreCommitted.isEmpty() : actionsWhenAllDocumentsAreCommitted;
+      if (!hasUncommitedDocuments()) {
+        assert actionsWhenAllDocumentsAreCommitted.isEmpty() : actionsWhenAllDocumentsAreCommitted;
+      }
       return true;
     }
     actionsWhenAllDocumentsAreCommitted.put(key, action);
@@ -496,9 +498,14 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
     if (!hasUncommitedDocuments() && !actionsWhenAllDocumentsAreCommitted.isEmpty()) {
       List<Object> keys = new ArrayList<Object>(actionsWhenAllDocumentsAreCommitted.keySet());
       for (Object key : keys) {
-        Runnable action = actionsWhenAllDocumentsAreCommitted.remove(key);
-        myDocumentCommitProcessor.log("Running after commit runnable: ", null, false, key, action);
-        action.run();
+        try {
+          Runnable action = actionsWhenAllDocumentsAreCommitted.remove(key);
+          myDocumentCommitProcessor.log("Running after commit runnable: ", null, false, key, action);
+          action.run();
+        }
+        catch (Throwable e) {
+          LOG.error(e);
+        }
       }
     }
   }
@@ -582,7 +589,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
       }
       mySmartPointerManager.fastenBelts(file, event.getOffset(), null);
 
-      if (TextBlock.get(file).isLocked()) {
+      if (mySynchronizer.isInsideAtomicChange(file)) {
         psiCause = file;
       }
     }
@@ -610,13 +617,11 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
     for (PsiFile file : files) {
       mySmartPointerManager.unfastenBelts(file, event.getOffset());
 
-      final TextBlock textBlock = TextBlock.get(file);
-      if (textBlock.isLocked()) {
+      if (mySynchronizer.isInsideAtomicChange(file)) {
         commitNecessary = false;
         continue;
       }
 
-      textBlock.documentChanged(event);
       assert file instanceof PsiFileImpl || "mock.file".equals(file.getName()) && ApplicationManager.getApplication().isUnitTestMode() :
         event +
         "; file=" +

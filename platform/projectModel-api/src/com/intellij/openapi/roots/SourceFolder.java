@@ -16,6 +16,7 @@
 package com.intellij.openapi.roots;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.jps.model.module.JpsModuleSourceRoot;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
 /**
@@ -49,4 +50,7 @@ public interface SourceFolder extends ContentFolder {
 
   @NotNull
   JpsModuleSourceRootType<?> getRootType();
+
+  @NotNull
+  JpsModuleSourceRoot getJpsElement();
 }

@@ -16,6 +16,7 @@
 
 package com.intellij.formatting;
 
+import com.intellij.lang.ASTNode;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
@@ -378,7 +379,8 @@ public class FormatterImpl extends FormatterEx
       }
 
       WhiteSpace whiteSpace = blockAfterOffset != null ? blockAfterOffset.getWhiteSpace() : processor.getLastWhiteSpace();
-      return adjustLineIndent(offset, documentModel, processor, indentOptions, model, whiteSpace);
+      return adjustLineIndent(offset, documentModel, processor, indentOptions, model, whiteSpace,
+                              blockAfterOffset != null ? blockAfterOffset.getNode() : null);
     }
     finally {
       enableFormatting();
@@ -439,7 +441,8 @@ public class FormatterImpl extends FormatterEx
     final FormatProcessor processor,
     final CommonCodeStyleSettings.IndentOptions indentOptions,
     final FormattingModel model,
-    final WhiteSpace whiteSpace)
+    final WhiteSpace whiteSpace,
+    ASTNode nodeAfter)
   {
     boolean wsContainsCaret = whiteSpace.getStartOffset() <= offset && offset < whiteSpace.getEndOffset();
 
@@ -450,7 +453,12 @@ public class FormatterImpl extends FormatterEx
     final String newWS = whiteSpace.generateWhiteSpace(indentOptions, lineStartOffset, indent).toString();
     if (!whiteSpace.equalsToString(newWS)) {
       try {
-        model.replaceWhiteSpace(whiteSpace.getTextRange(), newWS);
+        if (model instanceof FormattingModelEx) {
+          ((FormattingModelEx) model).replaceWhiteSpace(whiteSpace.getTextRange(), nodeAfter, newWS);
+        }
+        else {
+          model.replaceWhiteSpace(whiteSpace.getTextRange(), newWS);
+        }
       }
       finally {
         model.commitChanges();

@@ -1,5 +1,5 @@
 /*
- * Copyright 2011 Bas Leijdekkers
+ * Copyright 2011-2013 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,57 +15,16 @@
  */
 package com.siyeh.ig.dataflow;
 
-import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.refactoring.invertBoolean.InvertBooleanDialog;
-import com.intellij.util.IncorrectOperationException;
+import com.intellij.psi.PsiVariable;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.InspectionGadgetsFix;
-import org.jetbrains.annotations.NotNull;
+import com.siyeh.ig.fixes.InvertBooleanFix;
 
 public class BooleanVariableAlwaysNegatedInspection extends BooleanVariableAlwaysNegatedInspectionBase {
 
   @Override
   protected InspectionGadgetsFix buildFix(Object... infos) {
     final PsiVariable variable = (PsiVariable)infos[0];
-    return new BooleanVariableIsAlwaysNegatedFix(variable.getName());
-  }
-
-  private static class BooleanVariableIsAlwaysNegatedFix
-    extends InspectionGadgetsFix {
-
-    private final String name;
-
-    public BooleanVariableIsAlwaysNegatedFix(String name) {
-      this.name = name;
-    }
-
-    @NotNull
-    @Override
-    public String getName() {
-      return InspectionGadgetsBundle.message(
-        "boolean.variable.always.inverted.quickfix", name);
-    }
-
-    @NotNull
-    @Override
-    public String getFamilyName() {
-      return "Invert";
-    }
-
-    @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor)
-      throws IncorrectOperationException {
-      final PsiElement element = descriptor.getPsiElement();
-      final PsiVariable variable =
-        PsiTreeUtil.getParentOfType(element, PsiVariable.class);
-      if (variable == null) {
-        return;
-      }
-      final InvertBooleanDialog dialog = new InvertBooleanDialog(variable);
-      dialog.show();
-    }
+    return new InvertBooleanFix(InspectionGadgetsBundle.message("invert.quickfix", variable.getName()));
   }
 }

@@ -31,7 +31,6 @@ import com.intellij.util.Processor;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.commandLine.SvnCommandLineStatusClient;
-import org.jetbrains.idea.svn.portable.JavaHLSvnStatusClient;
 import org.jetbrains.idea.svn.portable.SvnStatusClientI;
 import org.jetbrains.idea.svn.portable.SvnkitSvnStatusClient;
 import org.tmatesoft.svn.core.SVNDepth;
@@ -155,15 +154,7 @@ public class SvnRecursiveStatusWalker {
         return mySvnClient;
       }
 
-      // check format
-      if (CheckJavaHL.isPresent() && SvnConfiguration.UseAcceleration.javaHL.equals(myConfiguration17.myUseAcceleration) &&
-          Svn17Detector.is17(myProject, file)) {
-        return new JavaHLSvnStatusClient(myProject);
-      } else if (myConfiguration17.isCommandLine()) {
-        // apply command line disregarding working copy format
-        return myCommandLineClient;
-      }
-      return mySvnClient;
+      return myConfiguration17.isCommandLine() ? myCommandLineClient : mySvnClient;
     }
 
     public boolean isIsInnerCopyRoot() {

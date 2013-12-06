@@ -34,13 +34,13 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.refactoring.listeners.RefactoringEventData;
+import com.intellij.refactoring.listeners.RefactoringEventListener;
 import com.intellij.refactoring.safeDelete.usageInfo.SafeDeleteCustomUsageInfo;
 import com.intellij.refactoring.safeDelete.usageInfo.SafeDeleteReferenceSimpleDeleteUsageInfo;
 import com.intellij.refactoring.safeDelete.usageInfo.SafeDeleteReferenceUsageInfo;
 import com.intellij.refactoring.safeDelete.usageInfo.SafeDeleteUsageInfo;
-import com.intellij.refactoring.util.NonCodeSearchDescriptionLocation;
-import com.intellij.refactoring.util.RefactoringUIUtil;
-import com.intellij.refactoring.util.TextOccurrencesUtil;
+import com.intellij.refactoring.util.*;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.usageView.UsageViewUtil;
@@ -194,15 +194,15 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
     final HashMap<PsiElement,UsageHolder> elementsToUsageHolders = sortUsages(usages);
     final Collection<UsageHolder> usageHolders = elementsToUsageHolders.values();
     for (UsageHolder usageHolder : usageHolders) {
-      if (usageHolder.getNonCodeUsagesNumber() != usageHolder.getUnsafeUsagesNumber()) {
-        final String description = usageHolder.getDescription();
-        if (description != null) {
-          conflicts.add(description);
-        }
+      if (usageHolder.hasUnsafeUsagesInCode()) {
+        conflicts.add(usageHolder.getDescription());
       }
     }
 
     if (!conflicts.isEmpty()) {
+      final RefactoringEventData conflictData = new RefactoringEventData();
+      conflictData.putUserData(RefactoringEventData.CONFLICTS_KEY, conflicts);
+      myProject.getMessageBus().syncPublisher(RefactoringEventListener.REFACTORING_EVENT_TOPIC).conflictsDetected("refactoring.safeDelete", conflictData);
       if (ApplicationManager.getApplication().isUnitTestMode()) {
         if (!ConflictsInTestsException.isTestIgnore()) throw new ConflictsInTestsException(conflicts);
       }
@@ -244,6 +244,7 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
     presentation.setShowReadOnlyStatusAsRed(true);
     presentation.setShowCancelButton(true);
     presentation.setCodeUsagesString(RefactoringBundle.message("references.found.in.code"));
+    presentation.setUsagesInGeneratedCodeString(RefactoringBundle.message("references.found.in.generated.code"));
     presentation.setNonCodeUsagesString(RefactoringBundle.message("occurrences.found.in.comments.strings.and.non.java.files"));
     presentation.setUsagesString(RefactoringBundle.message("usageView.usagesText"));
 
@@ -351,9 +352,8 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
 
   @Override
   protected boolean isPreviewUsages(UsageInfo[] usages) {
-    if(myPreviewNonCodeUsages && UsageViewUtil.hasNonCodeUsages(usages)) {
-      WindowManager.getInstance().getStatusBar(myProject).setInfo(
-        RefactoringBundle.message("occurrences.found.in.comments.strings.and.non.java.files"));
+    if(myPreviewNonCodeUsages && (UsageViewUtil.hasNonCodeUsages(usages) || UsageViewUtil.hasUsagesInGeneratedCode(usages, myProject))) {
+      WindowManager.getInstance().getStatusBar(myProject).setInfo(RefactoringBundle.message("occurrences.found.in.comments.strings.non.java.files.and.generated.code"));
       return true;
     }
 
@@ -368,6 +368,20 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
       }
     }
     return list.toArray(new UsageInfo[list.size()]);
+  }
+
+  @Nullable
+  @Override
+  protected RefactoringEventData getBeforeData() {
+    final RefactoringEventData beforeData = new RefactoringEventData();
+    beforeData.addElements(myElements);
+    return beforeData;
+  }
+
+  @Nullable
+  @Override
+  protected String getRefactoringId() {
+    return "refactoring.safeDelete";
   }
 
   @Override

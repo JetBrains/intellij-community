@@ -22,6 +22,8 @@ import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
+import com.intellij.util.containers.FList;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Set;
@@ -63,36 +65,36 @@ public class ValuableDataFlowRunner extends DataFlowRunner {
 
   static class ValuableDfaVariableState extends DfaVariableState {
     final DfaValue myValue;
-    final PsiExpression myExpression;
+    @NotNull final FList<PsiExpression> myConcatenation;
 
     private ValuableDfaVariableState(final DfaVariableValue psiVariable) {
       super(psiVariable);
       myValue = null;
-      myExpression = null;
+      myConcatenation = FList.emptyList();
     }
 
     private ValuableDfaVariableState(Set<DfaPsiType> instanceofValues,
                              Set<DfaPsiType> notInstanceofValues,
-                             Nullness nullability, DfaValue value, PsiExpression expression) {
+                             Nullness nullability, DfaValue value, @NotNull FList<PsiExpression> concatenation) {
       super(instanceofValues, notInstanceofValues, nullability);
       myValue = value;
-      myExpression = expression;
+      myConcatenation = concatenation;
     }
 
     @Override
     protected DfaVariableState createCopy(Set<DfaPsiType> instanceofValues, Set<DfaPsiType> notInstanceofValues, Nullness nullability) {
-      return new ValuableDfaVariableState(instanceofValues, notInstanceofValues, nullability, myValue, myExpression);
+      return new ValuableDfaVariableState(instanceofValues, notInstanceofValues, nullability, myValue, myConcatenation);
     }
 
     @Override
     public DfaVariableState withValue(@Nullable final DfaValue value) {
       if (value == myValue) return this;
-      return new ValuableDfaVariableState(myInstanceofValues, myNotInstanceofValues, myNullability, value, myExpression);
+      return new ValuableDfaVariableState(myInstanceofValues, myNotInstanceofValues, myNullability, value, myConcatenation);
     }
 
-    public ValuableDfaVariableState withExpression(@Nullable final PsiExpression expression) {
-      if (expression == myExpression) return this;
-      return new ValuableDfaVariableState(myInstanceofValues, myNotInstanceofValues, myNullability, myValue, expression);
+    public ValuableDfaVariableState withExpression(@NotNull final FList<PsiExpression> concatenation) {
+      if (concatenation == myConcatenation) return this;
+      return new ValuableDfaVariableState(myInstanceofValues, myNotInstanceofValues, myNullability, myValue, concatenation);
     }
 
     @Override
@@ -108,7 +110,7 @@ public class ValuableDataFlowRunner extends DataFlowRunner {
 
       ValuableDfaVariableState state = (ValuableDfaVariableState)o;
 
-      if (myExpression != null ? !myExpression.equals(state.myExpression) : state.myExpression != null) return false;
+      if (!myConcatenation.equals(state.myConcatenation)) return false;
       if (myValue != null ? !myValue.equals(state.myValue) : state.myValue != null) return false;
 
       return true;
@@ -118,7 +120,7 @@ public class ValuableDataFlowRunner extends DataFlowRunner {
     public int hashCode() {
       int result = super.hashCode();
       result = 31 * result + (myValue != null ? myValue.hashCode() : 0);
-      result = 31 * result + (myExpression != null ? myExpression.hashCode() : 0);
+      result = 31 * result + myConcatenation.hashCode();
       return result;
     }
   }

@@ -26,6 +26,7 @@ import com.intellij.openapi.externalSystem.model.ProjectKeys;
 import com.intellij.openapi.externalSystem.model.project.*;
 import com.intellij.openapi.externalSystem.model.task.TaskData;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
+import com.intellij.openapi.externalSystem.util.ExternalSystemDebugEnvironment;
 import com.intellij.openapi.externalSystem.util.Order;
 import com.intellij.openapi.module.EmptyModuleType;
 import com.intellij.openapi.module.JavaModuleType;
@@ -49,6 +50,9 @@ import org.gradle.tooling.model.idea.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.gradle.model.ExtIdeaContentRoot;
+import org.jetbrains.plugins.gradle.model.ModuleExtendedModel;
+import org.jetbrains.plugins.gradle.model.ProjectDependenciesModel;
 import org.jetbrains.plugins.gradle.util.GradleBundle;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 import org.jetbrains.plugins.gradle.util.GradleUtil;
@@ -97,10 +101,7 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
   public ProjectData createProject() {
     final String projectDirPath = resolverCtx.getProjectPath();
     final IdeaProject ideaProject = resolverCtx.getModels().getIdeaProject();
-
-    ProjectData projectData = new ProjectData(GradleConstants.SYSTEM_ID, projectDirPath, projectDirPath);
-    projectData.setName(ideaProject.getName());
-    return projectData;
+    return new ProjectData(GradleConstants.SYSTEM_ID, ideaProject.getName(), projectDirPath, projectDirPath);
   }
 
   @NotNull
@@ -124,32 +125,64 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
       throw new IllegalStateException("Module with undefined name detected: " + gradleModule);
     }
     final String moduleConfigPath = GradleUtil.getConfigPath(gradleModule.getGradleProject(), projectData.getLinkedExternalProjectPath());
-    return new ModuleData(GradleConstants.SYSTEM_ID,
-                          StdModuleTypes.JAVA.getId(),
-                          moduleName,
-                          projectData.getIdeProjectFileDirectoryPath(),
-                          moduleConfigPath);
+
+    if (ExternalSystemDebugEnvironment.DEBUG_ORPHAN_MODULES_PROCESSING) {
+      LOG.info(String.format(
+        "Creating module data ('%s') with the external config path: '%s'", gradleModule.getGradleProject().getPath(), moduleConfigPath
+      ));
+    }
+    ModuleData moduleData = new ModuleData(gradleModule.getGradleProject().getPath(),
+                                           GradleConstants.SYSTEM_ID,
+                                           StdModuleTypes.JAVA.getId(),
+                                           moduleName,
+                                           moduleConfigPath,
+                                           moduleConfigPath);
+
+    ModuleExtendedModel moduleExtendedModel = resolverCtx.getExtraProject(gradleModule, ModuleExtendedModel.class);
+    if (moduleExtendedModel != null) {
+      moduleData.setGroup(moduleExtendedModel.getGroup());
+      moduleData.setVersion(moduleExtendedModel.getVersion());
+      moduleData.setArtifacts(moduleExtendedModel.getArtifacts());
+    }
+    return moduleData;
+  }
+
+  @Override
+  public void populateModuleExtraModels(@NotNull IdeaModule gradleModule, @NotNull DataNode<ModuleData> ideModule) {
   }
 
   @Override
   public void populateModuleContentRoots(@NotNull IdeaModule gradleModule,
                                          @NotNull DataNode<ModuleData> ideModule) {
-    DomainObjectSet<? extends IdeaContentRoot> contentRoots = gradleModule.getContentRoots();
+    DomainObjectSet<? extends IdeaContentRoot> contentRoots;
+    ModuleExtendedModel moduleExtendedModel = resolverCtx.getExtraProject(gradleModule, ModuleExtendedModel.class);
+    if (moduleExtendedModel != null) {
+      contentRoots = moduleExtendedModel.getContentRoots();
+    }
+    else {
+      contentRoots = gradleModule.getContentRoots();
+    }
+
     if (contentRoots == null) {
       return;
     }
     for (IdeaContentRoot gradleContentRoot : contentRoots) {
-      if (gradleContentRoot == null) {
-        continue;
-      }
+      if (gradleContentRoot == null) continue;
+
       File rootDirectory = gradleContentRoot.getRootDirectory();
-      if (rootDirectory == null) {
-        continue;
-      }
+      if (rootDirectory == null) continue;
+
       ContentRootData ideContentRoot = new ContentRootData(GradleConstants.SYSTEM_ID, rootDirectory.getAbsolutePath());
       ideModule.getData().setModuleFileDirectoryPath(ideContentRoot.getRootPath());
       populateContentRoot(ideContentRoot, ExternalSystemSourceType.SOURCE, gradleContentRoot.getSourceDirectories());
       populateContentRoot(ideContentRoot, ExternalSystemSourceType.TEST, gradleContentRoot.getTestDirectories());
+
+      if (gradleContentRoot instanceof ExtIdeaContentRoot) {
+        ExtIdeaContentRoot extIdeaContentRoot = (ExtIdeaContentRoot)gradleContentRoot;
+        populateContentRoot(ideContentRoot, ExternalSystemSourceType.RESOURCE, extIdeaContentRoot.getResourceDirectories());
+        populateContentRoot(ideContentRoot, ExternalSystemSourceType.TEST_RESOURCE, extIdeaContentRoot.getTestResourceDirectories());
+      }
+
       Set<File> excluded = gradleContentRoot.getExcludeDirectories();
       if (excluded != null) {
         for (File file : excluded) {
@@ -188,10 +221,14 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
   public void populateModuleDependencies(@NotNull IdeaModule gradleModule,
                                          @NotNull DataNode<ModuleData> ideModule,
                                          @NotNull DataNode<ProjectData> ideProject) {
-    DomainObjectSet<? extends IdeaDependency> dependencies = gradleModule.getDependencies();
-    if (dependencies == null) {
-      return;
-    }
+
+    ProjectDependenciesModel dependenciesModel = resolverCtx.getExtraProject(gradleModule, ProjectDependenciesModel.class);
+
+    final List<? extends IdeaDependency> dependencies =
+      dependenciesModel != null ? dependenciesModel.getDependencies() : gradleModule.getDependencies().getAll();
+
+    if (dependencies == null) return;
+
     for (IdeaDependency dependency : dependencies) {
       if (dependency == null) {
         continue;
@@ -251,13 +288,16 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
   @NotNull
   @Override
   public Set<Class> getExtraProjectModelClasses() {
-    return Collections.emptySet();
+    return ContainerUtil.<Class>set(ModuleExtendedModel.class, ProjectDependenciesModel.class);
   }
 
   @NotNull
   @Override
   public List<KeyValue<String, String>> getExtraJvmArgs() {
-    return HttpConfigurable.getJvmPropertiesList(false, null);
+    if (ExternalSystemApiUtil.isInProcessMode(GradleConstants.SYSTEM_ID)) {
+      return HttpConfigurable.getJvmPropertiesList(false, null);
+    }
+    return Collections.emptyList();
   }
 
   @NotNull
@@ -371,7 +411,7 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
     Set<String> registeredModuleNames = ContainerUtilRt.newHashSet();
     Collection<DataNode<ModuleData>> modulesDataNode = ExternalSystemApiUtil.getChildren(ideProject, ProjectKeys.MODULE);
     for (DataNode<ModuleData> moduleDataNode : modulesDataNode) {
-      String name = moduleDataNode.getData().getName();
+      String name = moduleDataNode.getData().getExternalName();
       registeredModuleNames.add(name);
       if (name.equals(moduleName)) {
         return new ModuleDependencyData(ownerModule.getData(), moduleDataNode.getData());
@@ -397,12 +437,12 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
 
     // Gradle API doesn't provide library name at the moment.
     String libraryName;
-    libraryName = FileUtil.getNameWithoutExtension(binaryPath);
-//    if(binaryPath.isFile()) {
-//      libraryName = FileUtil.getNameWithoutExtension(binaryPath);
-//    } else {
-//      libraryName = FileUtil.sanitizeFileName(binaryPath.getPath());
-//    }
+    if (binaryPath.isFile()) {
+      libraryName = FileUtil.getNameWithoutExtension(binaryPath);
+    }
+    else {
+      libraryName = FileUtil.sanitizeFileName(binaryPath.getPath());
+    }
 
     // Gradle API doesn't explicitly provide information about unresolved libraries (http://issues.gradle.org/browse/GRADLE-1995).
     // That's why we use this dirty hack here.

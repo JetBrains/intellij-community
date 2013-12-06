@@ -16,7 +16,6 @@
 package com.intellij.psi.impl.source.resolve.graphInference;
 
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import org.jetbrains.annotations.Nullable;
@@ -59,9 +58,7 @@ public class PsiPolyExpressionUtil {
         }
       }
     } else if (expression instanceof PsiMethodCallExpression) {
-      final PsiLambdaExpression lambdaExpression = PsiTreeUtil.getParentOfType(expression, PsiLambdaExpression.class);
-      final boolean isLambdaReturnStmt = lambdaExpression != null && LambdaUtil.getReturnExpressions(lambdaExpression).contains(expression);
-      return isMethodCallPolyExpression(expression, isLambdaReturnStmt ? null : ((PsiMethodCallExpression)expression).resolveMethod());
+      return isMethodCallPolyExpression(expression, ((PsiMethodCallExpression)expression).resolveMethod());
     }
     else if (expression instanceof PsiConditionalExpression) {
       final ConditionalKind conditionalKind = isBooleanOrNumeric(expression);
@@ -72,7 +69,7 @@ public class PsiPolyExpressionUtil {
     return false;
   }
 
-  public static boolean isMethodCallPolyExpression(PsiExpression expression, final PsiMethod method) {
+   public static boolean isMethodCallPolyExpression(PsiExpression expression, final PsiMethod method) {
     if (isInAssignmentOrInvocationContext(expression) && ((PsiCallExpression)expression).getTypeArguments().length == 0) {
       if (method != null) {
         final Set<PsiTypeParameter> typeParameters = new HashSet<PsiTypeParameter>(Arrays.asList(method.getTypeParameters()));
@@ -147,6 +144,7 @@ public class PsiPolyExpressionUtil {
     if (expr instanceof PsiParenthesizedExpression) {
       return isBooleanOrNumeric(((PsiParenthesizedExpression)expr).getExpression());
     }
+    if (expr == null) return null;
     PsiType type = null;
     if (expr instanceof PsiNewExpression || hasStandaloneForm(expr)) {
       type = expr.getType();
@@ -163,7 +161,8 @@ public class PsiPolyExpressionUtil {
       final PsiExpression elseExpression = ((PsiConditionalExpression)expr).getElseExpression();
       final ConditionalKind thenKind = isBooleanOrNumeric(thenExpression);
       final ConditionalKind elseKind = isBooleanOrNumeric(elseExpression);
-      if (thenKind == elseKind) return thenKind;
+      if (thenKind == elseKind || elseKind == null) return thenKind;
+      if (thenKind == null) return elseKind;
     }
     return null;
   }

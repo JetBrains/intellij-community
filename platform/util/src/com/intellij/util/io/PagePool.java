@@ -45,7 +45,7 @@ public class PagePool {
   private PoolPageKey lastFinalizedKey = null;
 
   public PagePool(final int protectedPagesLimit, final int probationalPagesLimit) {
-    myProbationalQueue = new LinkedHashMap<PoolPageKey,Page>(probationalPagesLimit * 2, 0.6f) {
+    myProbationalQueue = new LinkedHashMap<PoolPageKey,Page>(probationalPagesLimit * 2, 0.6f, true) {
       @Override
       protected boolean removeEldestEntry(final Map.Entry<PoolPageKey, Page> eldest) {
         if (size() > probationalPagesLimit) {
@@ -56,7 +56,7 @@ public class PagePool {
       }
     };
 
-    myProtectedQueue = new LinkedHashMap<PoolPageKey, Page>(protectedPagesLimit, 0.6f) {
+    myProtectedQueue = new LinkedHashMap<PoolPageKey, Page>(protectedPagesLimit, 0.6f, true) {
       @Override
       protected boolean removeEldestEntry(final Map.Entry<PoolPageKey, Page> eldest) {
         if (size() > protectedPagesLimit) {

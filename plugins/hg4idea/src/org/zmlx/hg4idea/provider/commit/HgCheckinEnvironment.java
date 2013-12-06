@@ -170,7 +170,7 @@ public class HgCheckinEnvironment implements CheckinEnvironment {
     } else {
       runnable.run();
     }
-    return choice[0] == 0;
+    return choice[0] == Messages.OK;
   }
 
   public List<VcsException> commit(List<Change> changes, String preparedComment) {

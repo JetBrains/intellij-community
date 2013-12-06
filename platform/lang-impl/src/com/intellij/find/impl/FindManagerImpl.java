@@ -454,7 +454,7 @@ public class FindManagerImpl extends FindManager implements PersistentStateCompo
       SyntaxHighlighter highlighter = getHighlighter(file, lang);
 
       if (highlighter == null) {
-        LOG.error("Syntax highlighter is null:"+file);
+        // no syntax highlighter -> no search
         return NOT_FOUND_RESULT;
       }
 
@@ -467,12 +467,9 @@ public class FindManagerImpl extends FindManager implements PersistentStateCompo
           public Set<Language> compute() {
             THashSet<Language> result = new THashSet<Language>();
 
-            for(Project project: ProjectManager.getInstance().getOpenProjects()) {
-              FileViewProvider viewProvider = PsiManager.getInstance(project).findViewProvider(file);
-              if (viewProvider != null) {
-                result.addAll(viewProvider.getLanguages());
-                break;
-              }
+            FileViewProvider viewProvider = PsiManager.getInstance(myProject).findViewProvider(file);
+            if (viewProvider != null) {
+              result.addAll(viewProvider.getLanguages());
             }
 
             if (result.isEmpty()) {
@@ -522,7 +519,7 @@ public class FindManagerImpl extends FindManager implements PersistentStateCompo
 
       try {
         if (editorHighlighter instanceof LayeredLexerEditorHighlighter) {
-          lexer = LexerEditorHighlighterLexer.getLexerBasedOnLexerHighlighter(text, file, myProject);
+          lexer = new LexerEditorHighlighterLexer(editorHighlighter, false);
         } else {
           lexer = highlighter.getHighlightingLexer();
         }

@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.groovy.refactoring.rename
 
+import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.*
 import com.intellij.psi.impl.source.PostprocessReformattingAspect
@@ -523,7 +524,9 @@ class Test {
   private def doInplaceRenameTest() {
     String prefix = "/${getTestName(false)}"
     myFixture.configureByFile prefix + ".groovy";
-    CodeInsightTestUtil.doInlineRename(new GrVariableInplaceRenameHandler(), "foo", myFixture);
+    WriteCommandAction.runWriteCommandAction project, {
+      CodeInsightTestUtil.doInlineRename(new GrVariableInplaceRenameHandler(), "foo", myFixture);
+    }
     myFixture.checkResultByFile prefix + "_after.groovy"
   }
 

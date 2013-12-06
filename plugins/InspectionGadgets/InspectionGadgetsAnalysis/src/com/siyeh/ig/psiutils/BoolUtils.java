@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2013 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.siyeh.ig.psiutils;
 
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -40,6 +41,7 @@ public class BoolUtils {
     return ParenthesesUtils.stripParentheses(operand);
   }
 
+  @NotNull
   public static String getNegatedExpressionText(@Nullable PsiExpression condition) {
     if (condition == null) {
       return "";
@@ -89,19 +91,21 @@ public class BoolUtils {
     }
   }
 
+  @Contract(value = "null -> false", pure = true)
   public static boolean isTrue(@Nullable PsiExpression expression) {
+    expression = ParenthesesUtils.stripParentheses(expression);
     if (expression == null) {
       return false;
     }
-    final String text = expression.getText();
-    return PsiKeyword.TRUE.equals(text);
+    return PsiKeyword.TRUE.equals(expression.getText());
   }
 
+  @Contract(value ="null -> false", pure = true)
   public static boolean isFalse(@Nullable PsiExpression expression) {
+    expression = ParenthesesUtils.stripParentheses(expression);
     if (expression == null) {
       return false;
     }
-    final String text = expression.getText();
-    return PsiKeyword.FALSE.equals(text);
+    return PsiKeyword.FALSE.equals(expression.getText());
   }
 }

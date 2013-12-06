@@ -25,6 +25,7 @@ import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 import org.jetbrains.jps.model.module.JpsTypedModuleSourceRoot;
 
 import java.io.File;
+import java.util.Set;
 
 /**
  * @author nik
@@ -51,6 +52,15 @@ public class JpsModuleSourceRootImpl<P extends JpsElement> extends JpsCompositeE
     if (myRootType.equals(type)) {
       //noinspection unchecked
       return (P)myContainer.getChild(myRootType.getPropertiesRole());
+    }
+    return null;
+  }
+
+  @Nullable
+  @Override
+  public <P extends JpsElement> P getProperties(@NotNull Set<? extends JpsModuleSourceRootType<P>> types) {
+    if (types.contains(myRootType)) {
+      return (P)getProperties();
     }
     return null;
   }

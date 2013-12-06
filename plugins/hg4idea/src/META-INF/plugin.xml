@@ -10,19 +10,19 @@
   <extensions defaultExtensionNs="com.intellij">
     <vcs name="hg4idea" vcsClass="org.zmlx.hg4idea.HgVcs" displayName="Mercurial" administrativeAreaName=".hg"/>
     <checkoutProvider implementation="org.zmlx.hg4idea.provider.HgCheckoutProvider"/>
+    <vcsRootChecker implementation="org.zmlx.hg4idea.roots.HgRootChecker"/>
     <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
     <vcsPopupProvider implementation="org.zmlx.hg4idea.provider.HgQuickListProvider"/>
     <logProvider implementation="org.zmlx.hg4idea.log.HgLogProvider"/>
 
     <applicationService serviceInterface="org.zmlx.hg4idea.HgGlobalSettings"
                         serviceImplementation="org.zmlx.hg4idea.HgGlobalSettings"/>
+    <applicationService serviceInterface="org.zmlx.hg4idea.HgRememberedInputs"
+                        serviceImplementation="org.zmlx.hg4idea.HgRememberedInputs"/>
     <projectService serviceInterface="org.zmlx.hg4idea.HgProjectSettings"
                     serviceImplementation="org.zmlx.hg4idea.HgProjectSettings"/>
     <projectService serviceInterface="org.zmlx.hg4idea.HgRootsHandler"
                     serviceImplementation="org.zmlx.hg4idea.HgRootsHandler" />
-    <projectService serviceInterface="org.zmlx.hg4idea.HgRememberedInputs"
-                            serviceImplementation="org.zmlx.hg4idea.HgRememberedInputs"/>
-
     <projectService serviceImplementation="org.zmlx.hg4idea.log.HgContentRevisionFactory"/>
   </extensions>
 
@@ -72,6 +72,20 @@
 
       <add-to-group group-id="VcsGroup" anchor="last"/>
       <add-to-group group-id="VcsGlobalGroup" anchor="after" relative-to-action="Vcs.Specific"/>
+    </group>
+
+    <group id="Hg.LogContextMenu">
+      <separator/>
+    </group>
+
+    <action class="org.zmlx.hg4idea.action.HgUpdateToFromLogAction" id="hg4idea.UpdateToRevision" text="Update to Revision"/>
+    <action class="org.zmlx.hg4idea.action.HgCreateTagFromLogAction" id="hg4idea.CreateNewTag" text="New Tag"
+            description="Create new tag pointing to this commit"/>
+
+    <group id="Hg.Log.ContextMenu">
+      <reference id="hg4idea.UpdateToRevision"/>
+      <reference id="hg4idea.CreateNewTag"/>
+      <add-to-group group-id="Vcs.Log.ContextMenu"/>
     </group>
 
   </actions>

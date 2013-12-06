@@ -31,6 +31,7 @@ import org.jetbrains.jps.model.java.JpsJavaSdkType;
 import org.jetbrains.jps.model.library.sdk.JpsSdk;
 import org.jetbrains.jps.model.library.sdk.JpsSdkType;
 import org.jetbrains.plugins.javaFX.packaging.AbstractJavaFxPackager;
+import org.jetbrains.plugins.javaFX.packaging.JavaFxManifestAttribute;
 import org.jetbrains.plugins.javaFX.packaging.JavaFxPackagerConstants;
 import org.jetbrains.plugins.javaFX.preloader.JpsJavaFxPreloaderArtifactProperties;
 import org.jetbrains.plugins.javaFX.preloader.JpsJavaFxPreloaderArtifactType;
@@ -235,6 +236,11 @@ public class JpsJavaFxArtifactBuildTaskProvider extends ArtifactBuildTaskProvide
     @Override
     public boolean convertCss2Bin() {
       return myProperties.myState.isConvertCss2Bin();
+    }
+
+    @Override
+    public List<JavaFxManifestAttribute> getCustomManifestAttributes() {
+      return myProperties.myState.getCustomManifestAttributes();
     }
 
     private JpsArtifact getPreloaderArtifact() {

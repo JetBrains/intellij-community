@@ -17,8 +17,6 @@ package com.jetbrains.python.refactoring.changeSignature;
 
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.LangDataKeys;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -171,9 +169,9 @@ public class PyChangeSignatureHandler implements ChangeSignatureHandler {
                                                 REFACTORING_NAME, Messages.getQuestionIcon());
       }
       switch (choice) {
-        case 0:
+        case Messages.YES:
           return deepestSuperMethod;
-        case 1:
+        case Messages.NO:
           return function;
         default:
           return null;

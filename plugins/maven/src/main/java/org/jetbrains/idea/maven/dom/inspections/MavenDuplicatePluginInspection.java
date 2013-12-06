@@ -22,8 +22,8 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.containers.MultiMapBasedOnSet;
 import com.intellij.util.xml.DomFileElement;
-import com.intellij.util.xml.highlighting.BasicDomElementsInspection;
 import com.intellij.util.xml.highlighting.DomElementAnnotationHolder;
+import com.intellij.util.xml.highlighting.DomElementsInspection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.dom.MavenDomBundle;
 import org.jetbrains.idea.maven.dom.model.MavenDomPlugin;
@@ -32,7 +32,7 @@ import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
 import java.util.Collection;
 import java.util.Map;
 
-public class MavenDuplicatePluginInspection extends BasicDomElementsInspection<MavenDomProjectModel> {
+public class MavenDuplicatePluginInspection extends DomElementsInspection<MavenDomProjectModel> {
   public MavenDuplicatePluginInspection() {
     super(MavenDomProjectModel.class);
   }

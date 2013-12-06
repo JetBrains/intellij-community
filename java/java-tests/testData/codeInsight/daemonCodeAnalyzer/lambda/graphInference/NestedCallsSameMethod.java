@@ -7,3 +7,13 @@ class Main {
         long l2 = foo(foo(i));
     }
 }
+
+class Main1 {
+  static <T> T foo(long t) { return null;}
+
+  static <B> B bar(B t) { return null;}
+
+  static {
+    long l = foo(bar(1));
+  }
+}

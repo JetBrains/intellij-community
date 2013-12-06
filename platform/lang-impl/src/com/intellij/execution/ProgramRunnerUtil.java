@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -101,7 +101,7 @@ public class ProgramRunnerUtil {
       }
 
       while (!RunManagerImpl.canRunConfiguration(configuration, executor)) {
-        if (0 == Messages
+        if (Messages.YES == Messages
           .showYesNoDialog(project, "Configuration is still incorrect. Do you want to edit it again?", "Change Configuration Settings",
                            "Edit", "Continue Anyway", Messages.getErrorIcon())) {
           if (!RunDialog.editConfiguration(project, configuration, "Edit configuration", executor)) {

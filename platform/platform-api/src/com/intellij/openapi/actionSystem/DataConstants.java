@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -236,7 +236,7 @@ public interface DataConstants {
    *
    * @deprecated use {@link com.intellij.openapi.actionSystem.PlatformDataKeys#EDITOR} instead
    */
-  String EDITOR_EVEN_IF_INACTIVE = PlatformDataKeys.EDITOR_EVEN_IF_INACTIVE.getName();
+  String EDITOR_EVEN_IF_INACTIVE = CommonDataKeys.EDITOR_EVEN_IF_INACTIVE.getName();
 
   /**
    * @deprecated use {@link com.intellij.openapi.actionSystem.PlatformDataKeys#SELECTED_ITEM} instead

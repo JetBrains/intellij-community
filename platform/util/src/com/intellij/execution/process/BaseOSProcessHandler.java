@@ -20,6 +20,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.Consumer;
+import com.intellij.util.io.BaseDataReader;
 import com.intellij.util.io.BaseOutputReader;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -28,7 +29,7 @@ import java.io.*;
 import java.nio.charset.Charset;
 import java.util.concurrent.*;
 
-import static com.intellij.util.io.BaseOutputReader.AdaptiveSleepingPolicy;
+import static com.intellij.util.io.BaseDataReader.AdaptiveSleepingPolicy;
 
 public class BaseOSProcessHandler extends ProcessHandler implements TaskExecutor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.execution.process.OSProcessHandlerBase");
@@ -82,13 +83,10 @@ public class BaseOSProcessHandler extends ProcessHandler implements TaskExecutor
       @Override
       public void startNotified(final ProcessEvent event) {
         try {
-          BaseOutputReader.SleepingPolicy sleepingPolicy =
-            useAdaptiveSleepingPolicyWhenReadingOutput() ? new AdaptiveSleepingPolicy() : BaseOutputReader.SleepingPolicy.SIMPLE;
-          final BaseOutputReader stdoutReader = new SimpleOutputReader(createProcessOutReader(), ProcessOutputTypes.STDOUT, sleepingPolicy);
-          final BaseOutputReader stderrReader = processHasSeparateErrorStream()
-                                                ? new SimpleOutputReader(createProcessErrReader(), ProcessOutputTypes.STDERR,
-                                                                         sleepingPolicy)
-                                                : null;
+          BaseDataReader.SleepingPolicy sleepingPolicy =
+            useAdaptiveSleepingPolicyWhenReadingOutput() ? new AdaptiveSleepingPolicy() : BaseDataReader.SleepingPolicy.SIMPLE;
+          final BaseDataReader stdoutReader = createOutputDataReader(sleepingPolicy);
+          final BaseDataReader stderrReader = processHasSeparateErrorStream() ? createErrorDataReader(sleepingPolicy) : null;
 
           myWaitFor.setTerminationCallback(new Consumer<Integer>() {
             @Override
@@ -118,6 +116,17 @@ public class BaseOSProcessHandler extends ProcessHandler implements TaskExecutor
     });
 
     super.startNotify();
+  }
+
+  @NotNull
+  protected BaseDataReader createErrorDataReader(BaseDataReader.SleepingPolicy sleepingPolicy) {
+    return new SimpleOutputReader(createProcessErrReader(), ProcessOutputTypes.STDERR,
+                             sleepingPolicy);
+  }
+
+  @NotNull
+  protected BaseDataReader createOutputDataReader(BaseDataReader.SleepingPolicy sleepingPolicy) {
+    return new SimpleOutputReader(createProcessOutReader(), ProcessOutputTypes.STDOUT, sleepingPolicy);
   }
 
   protected void onOSProcessTerminated(final int exitCode) {
@@ -189,9 +198,6 @@ public class BaseOSProcessHandler extends ProcessHandler implements TaskExecutor
     return myProcess.getOutputStream();
   }
 
-  /**
-   * @deprecated internal use only (to remove in IDEA 13)
-   */
   @Nullable
   public String getCommandLine() {
     return myCommandLine;
@@ -206,7 +212,8 @@ public class BaseOSProcessHandler extends ProcessHandler implements TaskExecutor
     private static final ExecutorService ourThreadExecutorsService = createServiceImpl();
 
     private static ThreadPoolExecutor createServiceImpl() {
-      return new ThreadPoolExecutor(10, Integer.MAX_VALUE, 60L, TimeUnit.SECONDS, new SynchronousQueue<Runnable>(), ConcurrencyUtil.newNamedThreadFactory("OSProcessHandler pooled thread"));
+      ThreadFactory factory = ConcurrencyUtil.newNamedThreadFactory("OSProcessHandler pooled thread");
+      return new ThreadPoolExecutor(10, Integer.MAX_VALUE, 60L, TimeUnit.SECONDS, new SynchronousQueue<Runnable>(), factory);
     }
 
     public static Future<?> submit(Runnable task) {
@@ -215,7 +222,6 @@ public class BaseOSProcessHandler extends ProcessHandler implements TaskExecutor
   }
 
   private class SimpleOutputReader extends BaseOutputReader {
-
     private final Key myProcessOutputType;
 
     private SimpleOutputReader(@NotNull Reader reader, @NotNull Key processOutputType, SleepingPolicy sleepingPolicy) {

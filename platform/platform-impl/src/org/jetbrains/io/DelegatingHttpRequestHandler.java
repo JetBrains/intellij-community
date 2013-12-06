@@ -37,7 +37,7 @@ import java.io.IOException;
 
 @ChannelHandler.Sharable
 final class DelegatingHttpRequestHandler extends DelegatingHttpRequestHandlerBase {
-  private static final AttributeKey<HttpRequestHandler> PREV_HANDLER = new AttributeKey<HttpRequestHandler>("DelegatingHttpRequestHandler.handler");
+  private static final AttributeKey<HttpRequestHandler> PREV_HANDLER = AttributeKey.valueOf("DelegatingHttpRequestHandler.handler");
 
   @Override
   protected boolean process(ChannelHandlerContext context, FullHttpRequest request, QueryStringDecoder urlDecoder) throws IOException, ImageWriteException {

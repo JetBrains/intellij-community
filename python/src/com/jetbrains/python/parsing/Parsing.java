@@ -61,6 +61,17 @@ public class Parsing {
     return false;
   }
 
+  protected boolean checkMatchesOrSkip(final IElementType token, final String message) {
+    if (myBuilder.getTokenType() == token) {
+      myBuilder.advanceLexer();
+      return true;
+    }
+    PsiBuilder.Marker mark = myBuilder.mark();
+    myBuilder.advanceLexer();
+    mark.error(message);
+    return false;
+  }
+
   protected void assertCurrentToken(final PyElementType tokenType) {
     LOG.assertTrue(myBuilder.getTokenType() == tokenType);
   }

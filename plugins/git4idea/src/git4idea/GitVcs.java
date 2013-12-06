@@ -46,6 +46,8 @@ import com.intellij.openapi.vcs.history.VcsHistoryProvider;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.merge.MergeProvider;
 import com.intellij.openapi.vcs.rollback.RollbackEnvironment;
+import com.intellij.openapi.vcs.roots.VcsRootDetectInfo;
+import com.intellij.openapi.vcs.roots.VcsRootDetector;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.openapi.vcs.update.UpdateEnvironment;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
@@ -77,9 +79,6 @@ import git4idea.i18n.GitBundle;
 import git4idea.merge.GitMergeProvider;
 import git4idea.rollback.GitRollbackEnvironment;
 import git4idea.roots.GitIntegrationEnabler;
-import git4idea.roots.GitRootChecker;
-import git4idea.roots.GitRootDetectInfo;
-import git4idea.roots.GitRootDetector;
 import git4idea.status.GitChangeProvider;
 import git4idea.ui.branch.GitBranchWidget;
 import git4idea.update.GitUpdateEnvironment;
@@ -318,11 +317,6 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
   @Override
   public boolean isVersionedDirectory(VirtualFile dir) {
     return dir.isDirectory() && GitUtil.gitRootOrNull(dir) != null;
-  }
-
-  @Override
-  public VcsRootChecker getRootChecker() {
-    return new GitRootChecker(myProject, myPlatformFacade);
   }
 
   @Override
@@ -592,7 +586,7 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
   public void enableIntegration() {
     ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
       public void run() {
-        GitRootDetectInfo detectInfo = new GitRootDetector(myProject, myPlatformFacade).detect();
+        VcsRootDetectInfo detectInfo = new VcsRootDetector(myProject).detect();
         new GitIntegrationEnabler(myProject, myGit, myPlatformFacade).enable(detectInfo);
       }
     });

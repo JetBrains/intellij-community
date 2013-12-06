@@ -48,9 +48,18 @@ public class WizardContext extends UserDataHolderBase {
   private ProjectBuilder myProjectBuilder;
   private final List<Listener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private StorageScheme myProjectStorageFormat = StorageScheme.DIRECTORY_BASED;
+  private boolean myNewWizard;
 
   public void setProjectStorageFormat(StorageScheme format) {
     myProjectStorageFormat = format;
+  }
+
+  public boolean isNewWizard() {
+    return myNewWizard;
+  }
+
+  public void setNewWizard(boolean newWizard) {
+    myNewWizard = newWizard;
   }
 
   public interface Listener {

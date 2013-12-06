@@ -20,10 +20,7 @@ import com.intellij.openapi.externalSystem.model.Key;
 import com.intellij.openapi.externalSystem.model.ProjectKeys;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.project.ProjectData;
-import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
-import com.intellij.openapi.externalSystem.util.ExternalSystemConstants;
-import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
-import com.intellij.openapi.externalSystem.util.Order;
+import com.intellij.openapi.externalSystem.util.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectEx;
 import org.jetbrains.annotations.NotNull;
@@ -55,8 +52,8 @@ public class ProjectDataServiceImpl implements ProjectDataService<ProjectData, P
       return;
     }
     
-    if (!project.getName().equals(projectData.getName())) {
-      renameProject(projectData.getName(), projectData.getOwner(), project, synchronous);
+    if (!project.getName().equals(projectData.getInternalName())) {
+      renameProject(projectData.getInternalName(), projectData.getOwner(), project, synchronous);
     }
   }
 
@@ -73,9 +70,9 @@ public class ProjectDataServiceImpl implements ProjectDataService<ProjectData, P
     if (!(project instanceof ProjectEx) || newName.equals(project.getName())) {
       return;
     }
-    ExternalSystemApiUtil.executeProjectChangeAction(synchronous, new Runnable() {
+    ExternalSystemApiUtil.executeProjectChangeAction(synchronous, new DisposeAwareProjectChange(project) {
       @Override
-      public void run() {
+      public void execute() {
         String oldName = project.getName();
         ((ProjectEx)project).setProjectName(newName);
         ExternalSystemApiUtil.getSettings(project, externalSystemId).getPublisher().onProjectRenamed(oldName, newName);

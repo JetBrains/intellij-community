@@ -33,11 +33,12 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.CharArrayUtil;
+import com.intellij.util.text.ImmutableText;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -59,7 +60,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
   private ReadonlyFragmentModificationHandler myReadonlyFragmentModificationHandler;
 
   private final LineSet myLineSet = new LineSet();
-  private final CharArray myText;
+  private volatile ImmutableText myText;
 
   private boolean myIsReadOnly = false;
   private boolean isStripTrailingSpacesEnabled = true;
@@ -76,6 +77,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
   private volatile boolean myDoingBulkUpdate = false;
   private volatile boolean myAcceptSlashR = false;
   private boolean myChangeInProgress;
+  private volatile int myBufferSize;
 
   public DocumentImpl(@NotNull String text) {
     this(text, false);
@@ -87,7 +89,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
 
   public DocumentImpl(@NotNull CharSequence chars, boolean forUseInNonAWTThread) {
     assertValidSeparators(chars);
-    myText = new MyCharArray(CharArrayUtil.fromSequence(chars), chars.length());
+    myText = ImmutableText.valueOf(CharArrayUtil.fromSequence(chars));
     myLineSet.documentCreated(this);
     setCyclicBufferSize(0);
     setModificationStamp(LocalTimeCounter.currentTime());
@@ -103,14 +105,10 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
     }
   }
 
-  public char[] getRawChars() {
-    return myText.getChars();
-  }
-
   @Override
   @NotNull
   public char[] getChars() {
-    return ArrayUtil.realloc(CharArrayUtil.fromSequence(getCharsSequence()), myText.length());
+    return CharArrayUtil.fromSequence(myText);
   }
 
   @Override
@@ -136,7 +134,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
     }
 
     boolean markAsNeedsStrippingLater = false;
-    CharSequence text = myText.getCharArray();
+    CharSequence text = myText;
     RangeMarker caretMarker = caretOffset < 0 || caretOffset > getTextLength() ? null : createRangeMarker(caretOffset, caretOffset);
     try {
       for (int line = 0; line < myLineSet.getLineCount(); line++) {
@@ -160,13 +158,13 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
         }
         else {
           final int finalStart = whiteSpaceStart;
-          if (project != null) {
-            PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(this);
-          }
-          ApplicationManager.getApplication().runWriteAction(new DocumentRunnable(this, project) {
+          CommandProcessor.getInstance().runUndoTransparentAction(new Runnable() {
             @Override
             public void run() {
-              CommandProcessor.getInstance().runUndoTransparentAction(new Runnable() {
+              if (project != null) {
+                PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(DocumentImpl.this);
+              }
+              ApplicationManager.getApplication().runWriteAction(new DocumentRunnable(DocumentImpl.this, project) {
                 @Override
                 public void run() {
                   deleteString(finalStart, lineEnd);
@@ -174,7 +172,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
               });
             }
           });
-          text = myText.getCharArray();
+          text = myText;
         }
       }
     }
@@ -356,7 +354,16 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
       throwGuardedFragment(marker, offset, null, s.toString());
     }
 
-    myText.insert(s, offset);
+    final DocumentEvent event = beforeChangedUpdate(offset, null, s, false);
+    myText = myText.insert(offset, ImmutableText.valueOf(s));
+    changedUpdate(event, LocalTimeCounter.currentTime());
+    trimToSize();
+  }
+
+  private void trimToSize() {
+    if (myBufferSize != 0 && getTextLength() > myBufferSize) {
+      deleteString(0, getTextLength() - myBufferSize);
+    }
   }
 
   @Override
@@ -368,14 +375,16 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
     if (startOffset == endOffset) return;
     assertNotNestedModification();
 
-    CharSequence sToDelete = myText.substring(startOffset, endOffset);
+    CharSequence sToDelete = myText.subSequence(startOffset, endOffset);
 
     RangeMarker marker = getRangeGuard(startOffset, endOffset);
     if (marker != null) {
       throwGuardedFragment(marker, startOffset, sToDelete.toString(), null);
     }
 
-    myText.remove(startOffset, endOffset, sToDelete);
+    final DocumentEvent event = beforeChangedUpdate(startOffset, sToDelete, null, false);
+    myText = myText.delete(startOffset, endOffset);
+    changedUpdate(event, LocalTimeCounter.currentTime());
   }
 
   @Override
@@ -441,13 +450,16 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
     }
 
     s = s.subSequence(newStartInString, newEndInString);
-    CharSequence sToDelete = myText.substring(startOffset, endOffset);
+    CharSequence sToDelete = myText.subSequence(startOffset, endOffset);
     RangeMarker guard = getRangeGuard(startOffset, endOffset);
     if (guard != null) {
       throwGuardedFragment(guard, startOffset, sToDelete.toString(), s.toString());
     }
 
-    myText.replace(startOffset, endOffset, sToDelete, s, newModificationStamp, wholeTextReplaced);
+    final DocumentEvent event = beforeChangedUpdate(startOffset, sToDelete, s, wholeTextReplaced);
+    myText = myText.delete(startOffset, endOffset).insert(startOffset, ImmutableText.valueOf(s));
+    changedUpdate(event, newModificationStamp);
+    trimToSize();
   }
 
   private void assertBounds(final int startOffset, final int endOffset) {
@@ -556,13 +568,17 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
 
   @NotNull
   private DocumentEvent doBeforeChangedUpdate(int offset, CharSequence oldString, CharSequence newString, boolean wholeTextReplaced) {
-    FileDocumentManager manager = FileDocumentManager.getInstance();
-    if (manager != null) {
-      VirtualFile file = manager.getFile(this);
-      if (file != null && !file.isValid()) {
-        LOG.error("File of this document has been deleted.");
+    Application app = ApplicationManager.getApplication();
+    if (app != null) {
+      FileDocumentManager manager = FileDocumentManager.getInstance();
+      if (manager != null) {
+        VirtualFile file = manager.getFile(this);
+        if (file != null && !file.isValid()) {
+          LOG.error("File of this document has been deleted.");
+        }
       }
     }
+    assertInsideCommand();
 
     DocumentEvent event = new DocumentEventImpl(this, offset, oldString, newString, myModificationStamp, wholeTextReplaced);
 
@@ -580,6 +596,15 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
 
     myEventsHandling = true;
     return event;
+  }
+
+  private void assertInsideCommand() {
+    CommandProcessor commandProcessor = CommandProcessor.getInstance();
+    if (!commandProcessor.isUndoTransparentActionInProgress() &&
+        commandProcessor.getCurrentCommand() == null &&
+      myAssertThreading) {
+      throw new IncorrectOperationException("Must not change document outside command or undo-transparent action. See com.intellij.openapi.command.WriteCommandAction or com.intellij.openapi.command.CommandProcessor");
+    }
   }
 
   private void changedUpdate(DocumentEvent event, long newModificationStamp) {
@@ -622,7 +647,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
     return ApplicationManager.getApplication().runReadAction(new Computable<String>() {
       @Override
       public String compute() {
-        return myText.substring(range.getStartOffset(), range.getEndOffset()).toString();
+        return myText.subSequence(range.getStartOffset(), range.getEndOffset()).toString();
       }
     });
   }
@@ -632,20 +657,31 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
     return myText.length();
   }
 
-  /**
-   * This method should be used very carefully - only to read the array, and to be sure, that nobody changes
-   * text, while this array is processed.
-   * Really it is used only to optimize paint in Editor.
-   * [Valentin] 25.04.2001: More really, it is used in 61 places in 29 files across the project :-)))
-   */
-  CharSequence getCharsNoThreadCheck() {
-    return getCharsSequence();
-  }
-
   @Override
   @NotNull
   public CharSequence getCharsSequence() {
-    return myText.getCharArray();
+    return new CharSequence() {
+      @Override
+      public int length() {
+        return myText.length();
+      }
+
+      @Override
+      public char charAt(int index) {
+        return myText.charAt(index);
+      }
+
+      @Override
+      public CharSequence subSequence(int start, int end) {
+        return myText.subSequence(start, end);
+      }
+
+      @NotNull
+      @Override
+      public String toString() {
+        return myText.toString();
+      }
+    };
   }
 
 
@@ -783,7 +819,8 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
 
   @Override
   public void setCyclicBufferSize(int bufferSize) {
-    myText.setBufferSize(bufferSize);
+    assert bufferSize >= 0 : bufferSize;
+    myBufferSize = bufferSize;
   }
 
   @Override
@@ -823,7 +860,6 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
       return;
     }
     myDoingBulkUpdate = value;
-    myText.setDeferredChangeMode(value);
     if (value) {
       getPublisher().updateStarted(this);
     }
@@ -854,7 +890,6 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
   @NotNull
   public String dumpState() {
     @NonNls StringBuilder result = new StringBuilder();
-    result.append("deferred mode: ").append(myText.isDeferredChangeMode() ? "on" : "off");
     result.append(", intervals:\n");
     for (int line = 0; line < getLineCount(); line++) {
       result.append(line).append(": ").append(getLineStartOffset(line)).append("-")
@@ -866,39 +901,5 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
     return result.toString();
   }
 
-  private class MyCharArray extends CharArray {
-    private MyCharArray(@NotNull char[] chars, int length) {
-      super(0, chars, length);
-    }
-
-    @Override
-    @NotNull
-    protected DocumentEvent beforeChangedUpdate(int offset,
-                                                CharSequence oldString,
-                                                CharSequence newString,
-                                                boolean wholeTextReplaced) {
-      return DocumentImpl.this.beforeChangedUpdate(offset, oldString, newString, wholeTextReplaced);
-    }
-
-    @Override
-    protected void afterChangedUpdate(@NotNull DocumentEvent event, long newModificationStamp) {
-      ((DocumentImpl)event.getDocument()).changedUpdate(event, newModificationStamp);
-    }
-
-    @Override
-    protected void assertWriteAccess() {
-      DocumentImpl.this.assertWriteAccess();
-    }
-
-    @Override
-    protected void assertReadAccess() {
-      if (myAssertThreading) {
-        final Application application = ApplicationManager.getApplication();
-        if (application != null) {
-          application.assertReadAccessAllowed();
-        }
-      }
-    }
-  }
 }
 

@@ -19,7 +19,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.AbstractExtensionPointBean;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
-import com.intellij.util.xml.DomElement;
+import com.intellij.util.xml.impl.DomInvocationHandler;
 import com.intellij.util.xmlb.annotations.Attribute;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -41,7 +41,7 @@ public class DomExtenderEP extends AbstractExtensionPointBean {
 
 
   @Nullable
-  public DomExtensionsRegistrarImpl extend(@NotNull final Project project, @NotNull final DomElement element, @Nullable DomExtensionsRegistrarImpl registrar) {
+  public DomExtensionsRegistrarImpl extend(@NotNull final Project project, @NotNull final DomInvocationHandler handler, @Nullable DomExtensionsRegistrarImpl registrar) {
     if (myExtender == null) {
       try {
         myDomClass = findClass(domClassName);
@@ -52,11 +52,12 @@ public class DomExtenderEP extends AbstractExtensionPointBean {
         return null;
       }
     }
-    if (myDomClass.isInstance(element)) {
+    if (myDomClass.isAssignableFrom(handler.getRawType())) {
       if (registrar == null) {
         registrar = new DomExtensionsRegistrarImpl();
       }
-      myExtender.registerExtensions(element, registrar);
+      //noinspection unchecked
+      myExtender.registerExtensions(handler.getProxy(), registrar);
     }
     return registrar;
   }

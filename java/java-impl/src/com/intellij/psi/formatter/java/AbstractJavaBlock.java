@@ -1178,7 +1178,6 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
   }
   
   private boolean shouldEnforceIndentToChildren(@NotNull ASTNode node) {
-    // Filter only anonymous class instances as method call arguments
     if (myNode.getElementType() != JavaElementType.EXPRESSION_LIST) {
       return false;
     }
@@ -1186,13 +1185,10 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
     if (parent == null || parent.getElementType() != JavaElementType.METHOD_CALL_EXPRESSION) {
       return false;
     }
-    if (!isAnonymousClass(node) || !JavaFormatterUtil.hasAnonymousClassesArguments((PsiExpressionList)myNode.getPsi(), 2)) {
-      return false;
-    }
-    
-    // Enforce indent only if anonymous class instance expression doesn't start new line and have anonymous class expression sibling.
-    ASTNode prev = node.getTreePrev();
-    return prev != null && !(StringUtil.containsLineBreak(prev.getChars()) && prev.getElementType() != TokenType.WHITE_SPACE);
+
+    PsiExpressionList methodParamsList = (PsiExpressionList)myNode.getPsi();
+    return JavaFormatterUtil.hasMultilineArguments(methodParamsList)
+           && JavaFormatterUtil.isMultilineExceptArguments(methodParamsList);
   }
 
   private static boolean isAnonymousClass(@Nullable ASTNode node) {

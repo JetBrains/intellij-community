@@ -47,4 +47,6 @@ public abstract class ClsStubBuilderFactory<T extends PsiFile> {
    * @return false in case if it's not inner class
    */
   public abstract boolean isInnerClass(final VirtualFile file);
+
+  public int getStubVersion() { return 1; }
 }

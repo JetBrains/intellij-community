@@ -190,6 +190,15 @@ public class PythonSdkType extends SdkType {
     return s;
   }
 
+  public static boolean hasValidSdk() {
+    for (Sdk sdk : ProjectJdkTable.getInstance().getAllJdks()) {
+      if (sdk.getSdkType() instanceof PythonSdkType) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   public boolean isValidSdkHome(@Nullable final String path) {
     return PythonSdkFlavor.getFlavor(path) != null;
   }

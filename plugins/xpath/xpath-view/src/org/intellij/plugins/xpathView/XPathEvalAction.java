@@ -255,7 +255,7 @@ public class XPathEvalAction extends XPathAction {
         } catch (XPathSyntaxException e) {
             LOG.debug(e);
             // TODO: Better layout of the error message with non-fixed size fonts
-            return Messages.showOkCancelDialog(project, e.getMultilineMessage(), "XPath syntax error", "Edit Expression", "Cancel", Messages.getErrorIcon()) == 0;
+            return Messages.showOkCancelDialog(project, e.getMultilineMessage(), "XPath syntax error", "Edit Expression", "Cancel", Messages.getErrorIcon()) == Messages.OK;
         } catch (SAXPathException e) {
             LOG.debug(e);
             Messages.showMessageDialog(project, e.getMessage(), "XPath error", Messages.getErrorIcon());

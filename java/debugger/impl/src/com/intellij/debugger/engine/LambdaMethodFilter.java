@@ -45,11 +45,11 @@ public class LambdaMethodFilter implements BreakpointStepMethodFilter{
     final PsiElement body = lambda.getBody();
     if (body instanceof PsiCodeBlock) {
       final PsiStatement[] statements = ((PsiCodeBlock)body).getStatements();
-      final int statementCount = statements.length;
-      if (statementCount > 0) {
+      if (statements.length > 0) {
         firstStatementPosition = SourcePosition.createFromElement(statements[0]);
-        if (statementCount > 1) {
-          lastStatementPosition = SourcePosition.createFromElement(statements[statementCount - 1]);
+        if (firstStatementPosition != null) {
+          final PsiStatement lastStatement = statements[statements.length - 1];
+          lastStatementPosition = SourcePosition.createFromOffset(firstStatementPosition.getFile(), lastStatement.getTextRange().getEndOffset());
         }
       }
     }
@@ -69,9 +69,6 @@ public class LambdaMethodFilter implements BreakpointStepMethodFilter{
     return myFirstStatementPosition;
   }
 
-  /**
-   * @return a zero-based line number of the last lambda statement, or -1 if not available
-   */
   public int getLastStatementLine() {
     return myLastStatementLine;
   }

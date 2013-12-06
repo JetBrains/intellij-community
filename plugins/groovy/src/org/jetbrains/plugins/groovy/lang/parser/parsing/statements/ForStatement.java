@@ -23,8 +23,8 @@ import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyParser;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.auxiliary.modifiers.Modifiers;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.auxiliary.parameters.ParameterDeclaration;
-import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.StrictContextExpression;
-import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.arithmetic.ShiftExpression;
+import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.ConditionalExpression;
+import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.ExpressionStatement;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.types.TypeSpec;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
 
@@ -44,15 +44,15 @@ public class ForStatement implements GroovyElementTypes {
     if (!ParameterDeclaration.parseTraditionalForParameter(builder, parser)) {
       marker.rollbackTo();
       marker = builder.mark();
-      StrictContextExpression.parse(builder, parser);
+      ExpressionStatement.argParse(builder, parser);
     }
 
     ParserUtils.getToken(builder, mSEMI, GroovyBundle.message("semi.expected"));
-    StrictContextExpression.parse(builder, parser);
+    ExpressionStatement.argParse(builder, parser);
     ParserUtils.getToken(builder, mSEMI, GroovyBundle.message("semi.expected"));
     ParserUtils.getToken(builder, mNLS);
     if (!mRPAREN.equals(builder.getTokenType())) {
-      StrictContextExpression.parse(builder, parser);
+      ExpressionStatement.argParse(builder, parser);
     }
     marker.done(FOR_TRADITIONAL_CLAUSE);
     return true;
@@ -99,7 +99,7 @@ public class ForStatement implements GroovyElementTypes {
       return false;
     }
 
-    if (!ShiftExpression.parse(builder, parser)) {
+    if (!ConditionalExpression.parse(builder, parser)) {
       builder.error(GroovyBundle.message("expression.expected"));
     }
     marker.done(FOR_IN_CLAUSE);

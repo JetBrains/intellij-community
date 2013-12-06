@@ -171,6 +171,7 @@ public final class DebuggerContextImpl implements DebuggerContext {
   }
 
   public boolean isEvaluationPossible() {
-    return getDebugProcess().getSuspendManager().getPausedContext() != null;
+    final DebugProcessImpl debugProcess = getDebugProcess();
+    return debugProcess != null && debugProcess.getSuspendManager().getPausedContext() != null;
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import com.intellij.openapi.util.Clock;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.mac.foundation.Foundation;
 import com.intellij.ui.mac.foundation.ID;
+import com.intellij.util.EnvironmentUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.text.DateFormat;
@@ -41,58 +42,18 @@ public class DateFormatUtil {
   public static final long YEAR = DAY * 365;
   public static final long DAY_FACTOR = 24L * 60 * 60 * 1000;
 
+  private enum Period {YEAR, MONTH, WEEK, DAY, HOUR, MINUTE}
+  private enum DateType {TIME, DATE, DATETIME}
+
   // do not expose this constants - they are very likely to be changed in future
   private static final SyncDateFormat DATE_FORMAT = getFormat(DateFormat.SHORT, DateType.DATE);
   private static final SyncDateFormat TIME_FORMAT = getFormat(DateFormat.SHORT, DateType.TIME);
   private static final SyncDateFormat TIME_WITH_SECONDS_FORMAT = getFormat(DateFormat.MEDIUM, DateType.TIME);
   private static final SyncDateFormat DATE_TIME_FORMAT = getFormat(DateFormat.SHORT, DateType.DATETIME);
-  // fixed formats - should be locale-independent
-  private static final DateFormat ABOUT_DATE_FORMAT = DateFormat.getDateInstance(DateFormat.LONG, Locale.US);
+  private static final SyncDateFormat ABOUT_DATE_FORMAT = new SyncDateFormat(DateFormat.getDateInstance(DateFormat.LONG, Locale.US));
 
-  private static final long[] DENOMINATORS = new long[]{YEAR, MONTH, WEEK, DAY, HOUR, MINUTE};
-
-  private enum Period {
-    YEAR, MONTH, WEEK, DAY, HOUR, MINUTE
-  }
-
-  private static final Period[] PERIODS = new Period[]{Period.YEAR, Period.MONTH, Period.WEEK, Period.DAY, Period.HOUR, Period.MINUTE};
-
-  private enum DateType {
-    TIME, DATE, DATETIME
-  }
-
-  private static final int MacFormatterNoStyle = 0;
-  private static final int MacFormatterShortStyle = 1;
-  private static final int MacFormatterMediumStyle = 2;
-  private static final int MacFormatterLongStyle = 3;
-  private static final int MacFormatterFullStyle = 4;
-  private static final int MacFormatterBehavior_10_4 = 1040;
-
-  private static SyncDateFormat getFormat(int format, DateType type) {
-    DateFormat result = null;
-    if (SystemInfo.isMac) {
-      try {
-        result = new SimpleDateFormat(getMacTimeFormat(format, type).trim());
-      }
-      catch (Throwable e) {
-        LOG.error(e);
-      }
-    }
-    if (result == null) {
-      switch (type) {
-        case TIME:
-          result = DateFormat.getTimeInstance(format);
-          break;
-        case DATE:
-          result = DateFormat.getDateInstance(format);
-          break;
-        case DATETIME:
-          result = DateFormat.getDateTimeInstance(format, format);
-          break;
-      }
-    }
-    return new SyncDateFormat(result);
-  }
+  private static final long[] DENOMINATORS = {YEAR, MONTH, WEEK, DAY, HOUR, MINUTE};
+  private static final Period[] PERIODS = {Period.YEAR, Period.MONTH, Period.WEEK, Period.DAY, Period.HOUR, Period.MINUTE};
 
   private DateFormatUtil() { }
 
@@ -296,6 +257,51 @@ public class DateFormatUtil {
     return "";
   }
 
+  @NotNull
+  public static String formatAboutDialogDate(@NotNull Date date) {
+    return ABOUT_DATE_FORMAT.format(date);
+  }
+
+  // helpers
+
+  private static SyncDateFormat getFormat(int format, DateType type) {
+    DateFormat result = null;
+
+    if (SystemInfo.isMac) {
+      try {
+        result = getMacTimeFormat(format, type);
+      }
+      catch (Throwable e) {
+        LOG.error(e);
+      }
+    }
+
+    if (SystemInfo.isUnix && !SystemInfo.isMac) {
+      try {
+        result = getUnixTimeFormat(format, type);
+      }
+      catch (Throwable t) {
+        LOG.error(t);
+      }
+    }
+
+    if (result == null) {
+      switch (type) {
+        case TIME:
+          result = DateFormat.getTimeInstance(format);
+          break;
+        case DATE:
+          result = DateFormat.getDateInstance(format);
+          break;
+        case DATETIME:
+          result = DateFormat.getDateTimeInstance(format, format);
+          break;
+      }
+    }
+
+    return new SyncDateFormat(result);
+  }
+
   private static String someTimeAgoMessage(final Period period, final int n) {
     switch (period) {
       case DAY:
@@ -330,8 +336,15 @@ public class DateFormatUtil {
     }
   }
 
+  private static final int MacFormatterNoStyle = 0;
+  private static final int MacFormatterShortStyle = 1;
+  private static final int MacFormatterMediumStyle = 2;
+  private static final int MacFormatterLongStyle = 3;
+  private static final int MacFormatterFullStyle = 4;
+  private static final int MacFormatterBehavior_10_4 = 1040;
+
   @NotNull
-  static String getMacTimeFormat(final int type, @NotNull final DateType dateType) {
+  private static SimpleDateFormat getMacTimeFormat(final int type, @NotNull final DateType dateType) {
     final ID autoReleasePool = Foundation.invoke("NSAutoreleasePool", "new");
     try {
       final ID dateFormatter = Foundation.invoke("NSDateFormatter", "new");
@@ -376,106 +389,41 @@ public class DateFormatUtil {
       Foundation.invoke(dateFormatter, Foundation.createSelector("setDateStyle:"), dateStyle);
       String format = Foundation.toStringViaUTF8(Foundation.invoke(dateFormatter, Foundation.createSelector("dateFormat")));
       assert format != null;
-      return format;
+      return new SimpleDateFormat(format.trim());
     }
     finally {
       Foundation.invoke(autoReleasePool, Foundation.createSelector("release"));
     }
   }
 
-  @NotNull
-  static String convertMacPattern(@NotNull String macPattern) {
-    StringBuilder b = new StringBuilder();
-    boolean isSpecial = false;
-    boolean isText = false;
+  private static DateFormat getUnixTimeFormat(int format, DateType type) {
+    String localeStr = EnvironmentUtil.getValue("LC_TIME");
+    if (localeStr == null) return null;
 
-    for (int i = 0; i < macPattern.length(); i++) {
-      char c = macPattern.charAt(i);
-      if (isSpecial) {
-        String replacement = null;
-        if (c == '%') replacement = "$";
+    localeStr = localeStr.trim();
+    int p = localeStr.indexOf('.');
+    if (p > 0) localeStr = localeStr.substring(0, p);
+    p = localeStr.indexOf('@');
+    if (p > 0) localeStr = localeStr.substring(0, p);
 
-        // year
-        if (c == 'y') replacement = "yy";
-        if (c == 'Y') replacement = "yyyy";
-
-        // month
-        if (c == 'm') replacement = "MM";
-        if (c == 'b') replacement = "MMM";
-        if (c == 'B') replacement = "MMMMM";
-
-        // day on month
-        if (c == 'e') replacement = "d";
-        if (c == 'd') replacement = "dd";
-
-        // day of year
-        if (c == 'j') replacement = "DDD";
-
-        // day of week
-        if (c == 'w') replacement = "E"; // SimpleDateFormat doesn't support formatting weekday as a number
-        if (c == 'a') replacement = "EEE";
-        if (c == 'A') replacement = "EEEEE";
-
-        // hours
-        if (c == 'H') replacement = "HH"; // 0-24
-        //if (c == 'H') replacement = "k"; // 1-24
-        //if (c == 'I') replacement = "K"; // 0-11
-        if (c == 'I') replacement = "hh"; // 1-12
-
-        //minute
-        if (c == 'M') replacement = "mm";
-        //second
-        if (c == 'S') replacement = "ss";
-        //millisecond
-        if (c == 'F') replacement = "SSS";
-
-        //millisecond
-        if (c == 'p') replacement = "a";
-
-        //millisecond
-        if (c == 'Z') replacement = "zzz";
-        //millisecond
-        if (c == 'z') replacement = "Z";
-
-
-        //todo if (c == 'c') replacement = "MMMMM";, x, X
-
-        if (replacement == null) replacement = "'?%" + c + "?'";
-
-        b.append(replacement);
-        isSpecial = false;
-      }
-      else {
-        isSpecial = c == '%';
-        if (isSpecial) {
-          isText = false;
-        }
-        else {
-          if (isText) {
-            if (c == '\'' || Character.isWhitespace(c)) b.append('\'');
-            isText = !Character.isWhitespace(c);
-          }
-          else {
-            if (c == '\'' || !Character.isWhitespace(c)) b.append('\'');
-            isText = !Character.isWhitespace(c) && c != '\'';
-          }
-          b.append(c);
-
-          if (isText && i == macPattern.length() - 1) b.append('\'');
-        }
-      }
+    Locale locale;
+    p = localeStr.indexOf('_');
+    if (p < 0) {
+      locale = new Locale(localeStr);
     }
-    return b.toString();
-  }
+    else {
+      locale = new Locale(localeStr.substring(0, p), localeStr.substring(p + 1));
+    }
 
-  /** @deprecated use {@linkplain DateFormatUtilRt#formatBuildDate(Calendar)} (to remove in IDEA 13) */
-  @SuppressWarnings("UnusedDeclaration")
-  public static String formatBuildDate(@NotNull Calendar cal) {
-    return DateFormatUtilRt.formatBuildDate(cal);
-  }
+    switch (type) {
+      case TIME:
+        return DateFormat.getTimeInstance(format, locale);
+      case DATE:
+        return DateFormat.getDateInstance(format, locale);
+      case DATETIME:
+        return DateFormat.getDateTimeInstance(format, format, locale);
+    }
 
-  @NotNull
-  public static String formatAboutDialogDate(@NotNull Date date) {
-    return ABOUT_DATE_FORMAT.format(date);
+    return null;
   }
 }

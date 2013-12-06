@@ -24,8 +24,7 @@ import javax.swing.*;
 import java.util.Set;
 
 /**
- * Created by IntelliJ IDEA.
- * User: michael.golubev
+ * @author michael.golubev
  */
 public abstract class SingleServerActionBase extends ServersTreeActionBase {
   protected SingleServerActionBase(String text, String description, Icon icon) {

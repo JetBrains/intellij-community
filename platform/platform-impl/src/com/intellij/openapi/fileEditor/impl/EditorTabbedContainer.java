@@ -182,7 +182,7 @@ public final class EditorTabbedContainer implements Disposable, CloseAction.Clos
 
 
   public static DockableEditor createDockableEditor(Project project, Image image, VirtualFile file, Presentation presentation, EditorWindow window) {
-    return new DockableEditor(project, image, file, presentation, window);
+    return new DockableEditor(project, image, file, presentation, window.getSize(), window.isFilePinned(file));
   }
 
   private void updateTabBorder() {
@@ -663,19 +663,17 @@ public final class EditorTabbedContainer implements Disposable, CloseAction.Clos
     final Image myImg;
     private DockableEditorTabbedContainer myContainer;
     private Presentation myPresentation;
-    private EditorWindow myEditorWindow;
     private Dimension myPreferredSize;
     private boolean myPinned;
     private VirtualFile myFile;
 
-    public DockableEditor(Project project, Image img, VirtualFile file, Presentation presentation, EditorWindow window) {
+    public DockableEditor(Project project, Image img, VirtualFile file, Presentation presentation, Dimension preferredSize, boolean isFilePinned) {
       myImg = img;
       myFile = file;
       myPresentation = presentation;
       myContainer = new DockableEditorTabbedContainer(project);
-      myEditorWindow = window;
-      myPreferredSize = myEditorWindow.getSize();
-      myPinned = window.isFilePinned(file);
+      myPreferredSize = preferredSize;
+      myPinned = isFilePinned;
     }
 
     @NotNull

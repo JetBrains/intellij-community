@@ -15,14 +15,15 @@
  */
 package com.intellij.openapi.externalSystem.model.project;
 
+import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 
 /**
-* @author Denis Zhdanov
-* @since 5/18/13 10:51 PM
-*/
+ * @author Denis Zhdanov
+ * @since 5/18/13 10:51 PM
+ */
 public class ExternalProjectPojo implements Comparable<ExternalProjectPojo> {
-  
+
   @NotNull private String myName;
   @NotNull private String myPath;
 
@@ -38,10 +39,11 @@ public class ExternalProjectPojo implements Comparable<ExternalProjectPojo> {
   }
 
   @NotNull
-  public static <T extends Named & ExternalConfigPathAware> ExternalProjectPojo from(@NotNull T data) {
-    return new ExternalProjectPojo(data.getName(), data.getLinkedExternalProjectPath());
+  public static <T extends Named & ExternalConfigPathAware & Identifiable> ExternalProjectPojo from(@NotNull T data) {
+    String projectUniqueName = StringUtil.isEmpty(data.getId()) ? data.getExternalName() : data.getId();
+    return new ExternalProjectPojo(projectUniqueName, data.getLinkedExternalProjectPath());
   }
-  
+
   @NotNull
   public String getName() {
     return myName;

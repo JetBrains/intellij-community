@@ -42,6 +42,7 @@ import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.classMembers.MemberInfoBase;
 import com.intellij.refactoring.listeners.JavaRefactoringListenerManager;
+import com.intellij.refactoring.listeners.RefactoringEventData;
 import com.intellij.refactoring.listeners.impl.JavaRefactoringListenerManagerImpl;
 import com.intellij.refactoring.util.DocCommentPolicy;
 import com.intellij.refactoring.util.RefactoringUIUtil;
@@ -49,10 +50,12 @@ import com.intellij.refactoring.util.classMembers.MemberInfo;
 import com.intellij.refactoring.util.duplicates.MethodDuplicatesHandler;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
+import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Query;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -92,6 +95,26 @@ public class PullUpProcessor extends BaseRefactoringProcessor implements PullUpD
       }
     }
     return result.isEmpty() ? UsageInfo.EMPTY_ARRAY : result.toArray(new UsageInfo[result.size()]);
+  }
+
+  @Nullable
+  @Override
+  protected String getRefactoringId() {
+    return "refactoring.pullUp";
+  }
+
+  @Nullable
+  @Override
+  protected RefactoringEventData getBeforeData() {
+    RefactoringEventData data = new RefactoringEventData();
+    data.addElement(mySourceClass);
+    data.addMembers(myMembersToMove, new Function<MemberInfo, PsiElement>() {
+      @Override
+      public PsiElement fun(MemberInfo info) {
+        return info.getMember();
+      }
+    });
+    return data;
   }
 
   protected void performRefactoring(UsageInfo[] usages) {

@@ -43,5 +43,6 @@ public class ExpandLiveTemplateByTabAction extends EditorAction {
                ((TemplateManagerImpl)TemplateManager.getInstance(project)).prepareTemplate(editor, TemplateSettings.TAB_CHAR, null) != null;
       }
     });
+    setInjectedContext(true);
   }
 }

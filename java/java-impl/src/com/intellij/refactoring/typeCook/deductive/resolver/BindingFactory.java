@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -431,10 +431,10 @@ public class BindingFactory {
               return direction;
             }
             else {
-              if (InheritanceUtil.isCorrectDescendant(xClass, yClass, true)) {
+              if (InheritanceUtil.isInheritorOrSelf(xClass, yClass, true)) {
                 return Binding.BETTER;
               }
-              else if (InheritanceUtil.isCorrectDescendant(yClass, xClass, true)) {
+              else if (InheritanceUtil.isInheritorOrSelf(yClass, xClass, true)) {
                 return Binding.WORSE;
               }
 

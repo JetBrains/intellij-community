@@ -16,31 +16,60 @@
 package com.intellij.openapi.vfs.local;
 
 import com.intellij.ide.GeneralSettings;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileAttributes;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.IoTestUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
-import com.intellij.openapi.vfs.newvfs.ManagingFS;
-import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
-import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
-import com.intellij.openapi.vfs.newvfs.RefreshQueue;
+import com.intellij.openapi.vfs.newvfs.*;
+import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent;
+import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.openapi.vfs.newvfs.impl.FakeVirtualFile;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualDirectoryImpl;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl;
+import com.intellij.openapi.vfs.newvfs.persistent.RefreshWorker;
 import com.intellij.testFramework.PlatformLangTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.util.Function;
+import com.intellij.util.messages.MessageBusConnection;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Locale;
 
 public class LocalFileSystemTest extends PlatformLangTestCase {
+  @Override
+  protected void setUp() throws Exception {
+    super.setUp();
+
+    MessageBusConnection connection = ApplicationManager.getApplication().getMessageBus().connect(myTestRootDisposable);
+    connection.subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
+      @Override public void before(@NotNull List<? extends VFileEvent> events) { checkFiles(events, true); }
+
+      @Override public void after(@NotNull List<? extends VFileEvent> events) { checkFiles(events, false); }
+
+      private void checkFiles(List<? extends VFileEvent> events, boolean before) {
+        for (VFileEvent event : events) {
+          VirtualFile file = event.getFile();
+          if (file != null) {
+            boolean shouldBeInvalid =
+              event instanceof VFileCreateEvent && before && !((VFileCreateEvent)event).isReCreation() ||
+              event instanceof VFileDeleteEvent && !before;
+            assertEquals(event.toString(), !shouldBeInvalid, file.isValid());
+          }
+        }
+      }
+    });
+  }
+
   public void testChildrenAccessedButNotCached() throws Exception {
     File dir = createTempDirectory(false);
     ManagingFS managingFS = ManagingFS.getInstance();
@@ -444,7 +473,7 @@ public class LocalFileSystemTest extends PlatformLangTestCase {
     doTestPartialRefresh(top);
   }
 
-  public static void doTestPartialRefresh(File top) throws IOException {
+  public static void doTestPartialRefresh(@NotNull File top) throws IOException {
     File sub = IoTestUtil.createTestDir(top, "sub");
     File file = IoTestUtil.createTestFile(top, "sub.txt");
     LocalFileSystem lfs = LocalFileSystem.getInstance();
@@ -473,5 +502,92 @@ public class LocalFileSystemTest extends PlatformLangTestCase {
     assertFalse(topDir.isDirty());
     assertFalse(subFile.isDirty());
     assertFalse(subDir.isDirty());
+  }
+
+  public void testSymlinkTargetBlink() throws Exception {
+    if (!SystemInfo.areSymLinksSupported) {
+      System.err.println("Ignored: symlinks not supported");
+      return;
+    }
+
+    File top = createTempDirectory(true);
+    File target = IoTestUtil.createTestDir(top, "target");
+    File link = IoTestUtil.createSymLink(target.getPath(), top.getPath() + "/link");
+
+    LocalFileSystem lfs = LocalFileSystem.getInstance();
+    VirtualFile vTop = lfs.refreshAndFindFileByIoFile(top);
+    assertNotNull(vTop);
+    assertTrue(vTop.isValid());
+    VirtualFile vTarget = lfs.refreshAndFindFileByIoFile(target);
+    assertNotNull(vTarget);
+    assertTrue(vTarget.isValid());
+    VirtualFile vLink = lfs.refreshAndFindFileByIoFile(link);
+    assertNotNull(vLink);
+    assertTrue(vLink.isValid());
+    assertTrue(vLink.isDirectory());
+
+    FileUtil.delete(target);
+    vTop.refresh(false, true);
+    assertFalse(vTarget.isValid());
+    assertFalse(vLink.isValid());
+    vLink = lfs.refreshAndFindFileByIoFile(link);
+    assertNotNull(vLink);
+    assertTrue(vLink.isValid());
+    assertFalse(vLink.isDirectory());
+
+    FileUtil.createDirectory(target);
+    vTop.refresh(false, true);
+    assertFalse(vLink.isValid());
+    vLink = lfs.refreshAndFindFileByIoFile(link);
+    assertNotNull(vLink);
+    assertTrue(vLink.isValid());
+    assertTrue(vLink.isDirectory());
+  }
+
+  public void testInterruptedRefresh() throws Exception {
+    File top = createTempDirectory(false);
+    doTestInterruptedRefresh(top);
+  }
+
+  public static void doTestInterruptedRefresh(@NotNull File top) throws Exception {
+    File sub = IoTestUtil.createTestDir(top, "sub");
+    File subSub = IoTestUtil.createTestDir(sub, "sub_sub");
+    File file1 = IoTestUtil.createTestFile(sub, "sub_file_to_stop_at");
+    File file2 = IoTestUtil.createTestFile(subSub, "sub_sub_file");
+    LocalFileSystem lfs = LocalFileSystem.getInstance();
+    NewVirtualFile topDir = (NewVirtualFile)lfs.refreshAndFindFileByIoFile(top);
+    assertNotNull(topDir);
+    NewVirtualFile subFile1 = (NewVirtualFile)lfs.refreshAndFindFileByIoFile(file1);
+    assertNotNull(subFile1);
+    NewVirtualFile subFile2 = (NewVirtualFile)lfs.refreshAndFindFileByIoFile(file2);
+    assertNotNull(subFile2);
+    topDir.refresh(false, true);
+    assertFalse(topDir.isDirty());
+    assertFalse(subFile1.isDirty());
+    assertFalse(subFile2.isDirty());
+
+    try {
+      subFile1.markDirty();
+      subFile2.markDirty();
+      RefreshWorker.setCancellingCondition(new Function<VirtualFile, Boolean>() {
+        @Override
+        public Boolean fun(VirtualFile file) {
+          return "sub_file_to_stop_at".equals(file.getName());
+        }
+      });
+      topDir.refresh(false, true);
+      // should remain dirty after aborted refresh
+      assertTrue(subFile1.isDirty());
+      assertTrue(subFile2.isDirty());
+
+      RefreshWorker.setCancellingCondition(null);
+      topDir.refresh(false, true);
+      assertFalse(topDir.isDirty());
+      assertFalse(subFile1.isDirty());
+      assertFalse(subFile2.isDirty());
+    }
+    finally {
+      RefreshWorker.setCancellingCondition(null);
+    }
   }
 }

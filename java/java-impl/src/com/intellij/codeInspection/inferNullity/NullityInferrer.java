@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package com.intellij.codeInspection.inferNullity;
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInsight.intention.AddAnnotationFix;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.psi.*;
@@ -30,6 +31,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.Query;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import java.util.ArrayList;
@@ -139,6 +141,7 @@ public class NullityInferrer {
     while (prevNumAnnotationsAdded < numAnnotationsAdded && pass < MAX_PASSES);
   }
 
+  @TestOnly
   public void apply(final Project project) {
     final NullableNotNullManager manager = NullableNotNullManager.getInstance(project);
     for (SmartPsiElementPointer<? extends PsiModifierListOwner> pointer : myNullableSet) {
@@ -175,8 +178,7 @@ public class NullityInferrer {
     if (element != null) {
       if (shouldIgnore(element)) return;
       if (element instanceof PsiField && ((PsiField)element).hasInitializer() && element.hasModifierProperty(PsiModifier.FINAL)) return;
-      new AddAnnotationFix(manager.getDefaultNotNull(), element, manager.getDefaultNullable()).invoke(project, null,
-                                                                                                      element.getContainingFile());
+      invoke(project, element, manager.getDefaultNotNull(), manager.getDefaultNullable());
     }
   }
 
@@ -186,8 +188,19 @@ public class NullityInferrer {
     final PsiModifierListOwner element = pointer.getElement();
     if (element != null) {
       if (shouldIgnore(element)) return;
-      new AddAnnotationFix(manager.getDefaultNullable(), element, manager.getDefaultNotNull()).invoke(project, null, element.getContainingFile());
+      invoke(project, element, manager.getDefaultNullable(), manager.getDefaultNotNull());
     }
+  }
+
+  private static void invoke(final Project project,
+                             final PsiModifierListOwner element,
+                             final String fqn, final String toRemove) {
+    WriteCommandAction.runWriteCommandAction(project, new Runnable() {
+      @Override
+      public void run() {
+        new AddAnnotationFix(fqn, element, toRemove).invoke(project, null, element.getContainingFile());
+      }
+    });
   }
 
   public int getCount() {

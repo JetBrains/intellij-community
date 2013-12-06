@@ -94,7 +94,7 @@ public class ConstructorReferencesSearchHelper {
 
     ReferencesSearch.searchOptimized(containingClass, searchScope, ignoreAccessScope, collector, true, processor1);
     if (isUnder18[0]) {
-      if (!process18MethodPointers(processor, constructor, containingClass)) return false;
+      if (!process18MethodPointers(processor, constructor, containingClass, searchScope)) return false;
     }
 
     // search usages like "this(..)"
@@ -147,8 +147,8 @@ public class ConstructorReferencesSearchHelper {
 
   private static boolean process18MethodPointers(@NotNull final Processor<PsiReference> processor,
                                                  @NotNull final PsiMethod constructor,
-                                                 @NotNull PsiClass aClass) {
-    return ReferencesSearch.search(aClass).forEach(new ReadActionProcessor<PsiReference>() {
+                                                 @NotNull PsiClass aClass, SearchScope searchScope) {
+    return ReferencesSearch.search(aClass, searchScope).forEach(new ReadActionProcessor<PsiReference>() {
       @Override
       public boolean processInReadAction(PsiReference reference) {
         final PsiElement element = reference.getElement();

@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.gradle.service.task;
 
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.externalSystem.model.ExternalSystemException;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationEvent;
@@ -31,11 +32,13 @@ import org.gradle.tooling.ProjectConnection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.service.project.GradleExecutionHelper;
+import org.jetbrains.plugins.gradle.service.project.GradleProjectResolverExtension;
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.util.List;
 
 /**
@@ -57,6 +60,13 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
 
     if(settings != null) {
       myHelper.ensureInstalledWrapper(id, projectPath, settings, listener);
+    }
+
+    // TODO add support for external process mode
+    if (ExternalSystemApiUtil.isInProcessMode(GradleConstants.SYSTEM_ID)) {
+      for (GradleTaskManagerExtension gradleTaskManagerExtension : GradleTaskManagerExtension.EP_NAME.getExtensions()) {
+        if(gradleTaskManagerExtension.executeTasks(id, taskNames, projectPath, settings, vmOptions, debuggerSetup, listener)) return;
+      }
     }
 
     Function<ProjectConnection, Void> f = new Function<ProjectConnection, Void>() {
@@ -89,13 +99,18 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
   }
 
   @Override
-  public void cancelTask(@NotNull ExternalSystemTaskId id, @NotNull ExternalSystemTaskNotificationListener listener)
+  public boolean cancelTask(@NotNull ExternalSystemTaskId id, @NotNull ExternalSystemTaskNotificationListener listener)
     throws ExternalSystemException {
+
+    for (GradleTaskManagerExtension gradleTaskManagerExtension : GradleTaskManagerExtension.EP_NAME.getExtensions()) {
+      if(gradleTaskManagerExtension.cancelTask(id, listener)) return true;
+    }
 
     // TODO replace with cancellation gradle API invocation when it will be ready, see http://issues.gradle.org/browse/GRADLE-1539
     if (!ExternalSystemApiUtil.isInProcessMode(GradleConstants.SYSTEM_ID)) {
       listener.onStatusChange(new ExternalSystemTaskNotificationEvent(id, "Cancelling the task...\n"));
-      System.exit(-1);
+      System.exit(0);
     }
+    return false;
   }
 }

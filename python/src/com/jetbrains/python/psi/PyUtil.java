@@ -54,6 +54,7 @@ import com.intellij.util.containers.HashSet;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
+import com.jetbrains.python.codeInsight.completion.OverwriteEqualsInsertHandler;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.codeInsight.stdlib.PyNamedTupleType;
@@ -888,6 +889,7 @@ public class PyUtil {
 
   public static LookupElement createNamedParameterLookup(String name) {
     LookupElementBuilder lookupElementBuilder = LookupElementBuilder.create(name + "=").withIcon(PlatformIcons.PARAMETER_ICON);
+    lookupElementBuilder = lookupElementBuilder.withInsertHandler(OverwriteEqualsInsertHandler.INSTANCE);
     return PrioritizedLookupElement.withGrouping(lookupElementBuilder, 1);
   }
 

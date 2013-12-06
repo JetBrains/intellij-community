@@ -44,6 +44,7 @@ public class StringUtil extends StringUtilRt {
   @NonNls private static final String VOWELS = "aeiouy";
   @NonNls private static final Pattern EOL_SPLIT_PATTERN = Pattern.compile(" *(\r|\n|\r\n)+ *");
   @NonNls private static final Pattern EOL_SPLIT_PATTERN_WITH_EMPTY = Pattern.compile(" *(\r|\n|\r\n) *");
+  @NonNls private static final Pattern EOL_SPLIT_DONT_TRIM_PATTERN = Pattern.compile("(\r|\n|\r\n)+");
 
   public static final NotNullFunction<String, String> QUOTER = new NotNullFunction<String, String>() {
     @Override
@@ -307,9 +308,14 @@ public class StringUtil extends StringUtilRt {
     for (int i = 0; i < text.length(); i++) {
       char c = text.charAt(i);
       switch (c) {
-        case '\n': buffer.append("\\n"); break;
-        case '\r': buffer.append("\\r"); break;
-        default: buffer.append(c);
+        case '\n':
+          buffer.append("\\n");
+          break;
+        case '\r':
+          buffer.append("\\r");
+          break;
+        default:
+          buffer.append(c);
       }
     }
     return buffer.toString();
@@ -558,6 +564,15 @@ public class StringUtil extends StringUtilRt {
   public static String unquoteString(@NotNull String s) {
     char c;
     if (s.length() <= 1 || (c = s.charAt(0)) != '"' && c != '\'' || s.charAt(s.length() - 1) != c) {
+      return s;
+    }
+    return s.substring(1, s.length() - 1);
+  }
+
+  @NotNull
+  public static String unquoteString(@NotNull String s, char quotationChar) {
+    char c;
+    if (s.length() <= 1 || (c = s.charAt(0)) != quotationChar || s.charAt(s.length() - 1) != c) {
       return s;
     }
     return s.substring(1, s.length() - 1);
@@ -814,13 +829,17 @@ public class StringUtil extends StringUtilRt {
     return true;
   }
 
-  /** @deprecated use {@link #startsWithConcatenation(String, String...)} (to remove in IDEA 14). */
+  /**
+   * @deprecated use {@link #startsWithConcatenation(String, String...)} (to remove in IDEA 14).
+   */
   @SuppressWarnings("UnusedDeclaration")
   public static boolean startsWithConcatenationOf(@NotNull String string, @NotNull String firstPrefix, @NotNull String secondPrefix) {
     return startsWithConcatenation(string, firstPrefix, secondPrefix);
   }
 
-  /** @deprecated use {@link #startsWithConcatenation(String, String...)} (to remove in IDEA 14). */
+  /**
+   * @deprecated use {@link #startsWithConcatenation(String, String...)} (to remove in IDEA 14).
+   */
   @SuppressWarnings("UnusedDeclaration")
   public static boolean startsWithConcatenationOf(@NotNull String string,
                                                   @NotNull String firstPrefix,
@@ -849,6 +868,13 @@ public class StringUtil extends StringUtilRt {
   public static String trimLeading(@NotNull String string) {
     int index = 0;
     while (index < string.length() && Character.isWhitespace(string.charAt(index))) index++;
+    return string.substring(index);
+  }
+
+  @NotNull
+  public static String trimLeading(@NotNull String string, char symbol) {
+    int index = 0;
+    while (index < string.length() && string.charAt(index) == symbol) index++;
     return string.substring(index);
   }
 
@@ -940,11 +966,11 @@ public class StringUtil extends StringUtilRt {
 
   @Contract("null -> true")
   public static boolean isEmptyOrSpaces(@Nullable final String s) {
-    if(s == null || s.isEmpty()) {
+    if (s == null || s.isEmpty()) {
       return true;
     }
-    for(int i = 0; i < s.length(); i++) {
-      if(s.charAt(i) > ' ') {
+    for (int i = 0; i < s.length(); i++) {
+      if (s.charAt(i) > ' ') {
         return false;
       }
     }
@@ -985,7 +1011,7 @@ public class StringUtil extends StringUtilRt {
 
   @NotNull
   public static String repeat(@NotNull String s, int count) {
-    assert count >=0 : count;
+    assert count >= 0 : count;
     StringBuilder sb = new StringBuilder(s.length() * count);
     for (int i = 0; i < count; i++) {
       sb.append(s);
@@ -1207,7 +1233,9 @@ public class StringUtil extends StringUtilRt {
   }
 
   @NotNull
-  public static <T> String join(@NotNull Collection<? extends T> items, @NotNull Function<? super T, String> f, @NotNull @NonNls String separator) {
+  public static <T> String join(@NotNull Collection<? extends T> items,
+                                @NotNull Function<? super T, String> f,
+                                @NotNull @NonNls String separator) {
     if (items.isEmpty()) return "";
     return join((Iterable<? extends T>)items, f, separator);
   }
@@ -1224,7 +1252,9 @@ public class StringUtil extends StringUtilRt {
   }
 
   @NotNull
-  public static <T> String join(@NotNull Iterable<? extends T> items, @NotNull Function<? super T, String> f, @NotNull @NonNls String separator) {
+  public static <T> String join(@NotNull Iterable<? extends T> items,
+                                @NotNull Function<? super T, String> f,
+                                @NotNull @NonNls String separator) {
     final StringBuilder result = new StringBuilder();
     for (T item : items) {
       String string = f.fun(item);
@@ -1580,7 +1610,7 @@ public class StringUtil extends StringUtilRt {
    * @param end   end offset to use within the given char sequence (exclusive)
    * @param c     target symbol to check
    * @return <code>true</code> if given symbol is contained at the target range of the given char sequence;
-   *         <code>false</code> otherwise
+   * <code>false</code> otherwise
    */
   public static boolean contains(@NotNull CharSequence s, int start, int end, char c) {
     return indexOf(s, c, start, end) >= 0;
@@ -1633,6 +1663,7 @@ public class StringUtil extends StringUtilRt {
   public static int indexOfAny(@NotNull final String s, @NotNull final String chars) {
     return indexOfAny(s, chars, 0, s.length());
   }
+
   public static int indexOfAny(@NotNull final CharSequence s, @NotNull final String chars) {
     return indexOfAny(s, chars, 0, s.length());
   }
@@ -1640,6 +1671,7 @@ public class StringUtil extends StringUtilRt {
   public static int indexOfAny(@NotNull final String s, @NotNull final String chars, final int start, final int end) {
     return indexOfAny((CharSequence)s, chars, start, end);
   }
+
   public static int indexOfAny(@NotNull final CharSequence s, @NotNull final String chars, final int start, final int end) {
     for (int i = start; i < end; i++) {
       if (containsChar(chars, s.charAt(i))) return i;
@@ -1662,7 +1694,7 @@ public class StringUtil extends StringUtilRt {
    * @param start start offset of the target text (inclusive)
    * @param end   end offset of the target text (exclusive)
    * @return index of the last occurrence of the given symbol at the target sub-sequence of the given text if any;
-   *         <code>-1</code> otherwise
+   * <code>-1</code> otherwise
    */
   public static int lastIndexOf(@NotNull CharSequence s, char c, int start, int end) {
     for (int i = end - 1; i >= start; i--) {
@@ -1772,6 +1804,12 @@ public class StringUtil extends StringUtilRt {
     if (text == null) return null;
     return replace(text, REPLACES_DISP, REPLACES_REFS);
   }
+
+  @NotNull
+  public static String htmlEmphasize(String text) {
+    return "<b><code>" + escapeXml(text) + "</code></b>";
+  }
+
 
   @NotNull
   public static String escapeToRegexp(@NotNull String text) {
@@ -2062,12 +2100,6 @@ public class StringUtil extends StringUtilRt {
     }
   }
 
-  @SuppressWarnings("UnusedDeclaration")
-  /** @deprecated use {@linkplain #getOccurrenceCount(String, char)} (to remove in IDEA 13) */
-  public static int getOccurenceCount(@NotNull String text, final char c) {
-    return getOccurrenceCount(text, c);
-  }
-
   public static int getOccurrenceCount(@NotNull String text, final char c) {
     int res = 0;
     int i = 0;
@@ -2185,6 +2217,11 @@ public class StringUtil extends StringUtilRt {
   }
 
   @NotNull
+  public static String[] splitByLinesDontTrim(@NotNull String string) {
+    return EOL_SPLIT_DONT_TRIM_PATTERN.split(string);
+  }
+
+  @NotNull
   public static List<Pair<String, Integer>> getWordsWithOffset(@NotNull String s) {
     List<Pair<String, Integer>> res = ContainerUtil.newArrayList();
     s += " ";
@@ -2212,11 +2249,22 @@ public class StringUtil extends StringUtilRt {
    * Implementation of "Sorting for Humans: Natural Sort Order":
    * http://www.codinghorror.com/blog/2007/12/sorting-for-humans-natural-sort-order.html
    */
-  public static int naturalCompare(@NotNull String string1, @NotNull String string2) {
+  public static int naturalCompare(@Nullable String string1, @Nullable String string2) {
     return naturalCompare(string1, string2, false);
   }
 
-  private static int naturalCompare(@NotNull String string1, @NotNull String string2, boolean caseSensitive) {
+  private static int naturalCompare(@Nullable String string1, @Nullable String string2, boolean caseSensitive) {
+    //noinspection StringEquality
+    if (string1 == string2) {
+      return 0;
+    }
+    if (string1 == null) {
+      return -1;
+    }
+    if (string2 == null) {
+      return 1;
+    }
+
     final int string1Length = string1.length();
     final int string2Length = string2.length();
     int i = 0, j = 0;
@@ -2344,7 +2392,7 @@ public class StringUtil extends StringUtilRt {
       return false;
     }
     for (int i = 0; i < s1.length(); i++) {
-      if (!charsMatch(s1.charAt(i),s2.charAt(i), true)) {
+      if (!charsMatch(s1.charAt(i), s2.charAt(i), true)) {
         return false;
       }
     }
@@ -2375,7 +2423,7 @@ public class StringUtil extends StringUtilRt {
   }
 
   public static boolean charsMatch(char c1, char c2, boolean ignoreCase) {
-    return compare(c1,c2,ignoreCase) == 0;
+    return compare(c1, c2, ignoreCase) == 0;
   }
 
   @NotNull
@@ -2409,7 +2457,10 @@ public class StringUtil extends StringUtilRt {
   }
 
   @NotNull
-  public static String shortenTextWithEllipsis(@NotNull final String text, final int maxLength, final int suffixLength, boolean useEllipsisSymbol) {
+  public static String shortenTextWithEllipsis(@NotNull final String text,
+                                               final int maxLength,
+                                               final int suffixLength,
+                                               boolean useEllipsisSymbol) {
     final int textLength = text.length();
     if (textLength > maxLength) {
       String symbol = useEllipsisSymbol ? "\u2026" : "...";
@@ -2435,6 +2486,7 @@ public class StringUtil extends StringUtilRt {
   public static boolean charsEqual(char a, char b, boolean ignoreCase) {
     return ignoreCase ? charsEqualIgnoreCase(a, b) : a == b;
   }
+
   public static boolean charsEqualIgnoreCase(char a, char b) {
     return StringUtilRt.charsEqualIgnoreCase(a, b);
   }

@@ -1,7 +1,3 @@
-/**
- * (c) 2013 Desert Island BV
- * created: 14 08 2013
- */
 package com.siyeh.ig.junit;
 
 import com.intellij.codeInspection.LocalInspectionTool;

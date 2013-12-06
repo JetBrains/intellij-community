@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -186,8 +186,8 @@ public abstract class ProjectOpenProcessorBase<T extends ProjectImportBuilder> e
                                                     IdeBundle.message("project.import.open.existing.reimport"),
                                                     CommonBundle.message("button.cancel"),
                                                     Messages.getQuestionIcon());
-        if (result == 2) return null;
-        shouldOpenExisting = result == 0;
+        if (result == Messages.CANCEL) return null;
+        shouldOpenExisting = result == Messages.YES;
       }
 
       final Project projectToOpen;

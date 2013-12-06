@@ -38,12 +38,12 @@ def build_output_name(dirname, qualified_name):
     return fname
 
 
-def redo_module(mod_name, outfile, module_file_name, doing_builtins):
+def redo_module(module_name, outfile, module_file_name, doing_builtins):
     # gobject does 'del _gobject' in its __init__.py, so the chained attribute lookup code
     # fails to find 'gobject._gobject'. thus we need to pull the module directly out of
     # sys.modules
-    mod = sys.modules.get(mod_name)
-    mod_path = mod_name.split('.')
+    mod = sys.modules.get(module_name)
+    mod_path = module_name.split('.')
     if not mod and sys.platform == 'cli':
         # "import System.Collections" in IronPython 2.7 doesn't actually put System.Collections in sys.modules
         # instead, sys.modules['System'] get set to a Microsoft.Scripting.Actions.NamespaceTracker and Collections can be
@@ -54,16 +54,16 @@ def redo_module(mod_name, outfile, module_file_name, doing_builtins):
                 mod = getattr(mod, component)
             except AttributeError:
                 mod = None
-                report("Failed to find CLR module " + mod_name)
+                report("Failed to find CLR module " + module_name)
                 break
     if mod:
         action("restoring")
         r = ModuleRedeclarator(mod, outfile, module_file_name, doing_builtins=doing_builtins)
-        r.redo(mod_name, ".".join(mod_path[:-1]) in MODULES_INSPECT_DIR)
+        r.redo(module_name, ".".join(mod_path[:-1]) in MODULES_INSPECT_DIR)
         action("flushing")
         r.flush()
     else:
-        report("Failed to find imported module in sys.modules " + mod_name)
+        report("Failed to find imported module in sys.modules " + module_name)
 
 # find_binaries functionality
 def cut_binary_lib_suffix(path, f):
@@ -122,6 +122,18 @@ def is_module(d, root):
             os.path.exists(os.path.join(root, d, "__init__.pyo")))
 
 
+def walk_python_path(path):
+    for root, dirs, files in os.walk(path):
+        if root.endswith('__pycache__'):
+            continue
+        dirs_copy = list(dirs)
+        for d in dirs_copy:
+            if d.endswith('__pycache__') or not is_module(d, root):
+                dirs.remove(d)
+        # some files show up but are actually non-existent symlinks
+        yield root, [f for f in files if os.path.exists(os.path.join(root, f))]
+
+
 def list_binaries(paths):
     """
     Finds binaries in the given list of paths.
@@ -139,13 +151,7 @@ def list_binaries(paths):
     paths = sorted_no_case(paths)
     for path in paths:
         if path == os.path.dirname(sys.argv[0]): continue
-        for root, dirs, files in os.walk(path):
-            if root.endswith('__pycache__'): continue
-            dirs_copy = list(dirs)
-            for d in dirs_copy:
-                if d.endswith("__pycache__") or not is_module(d, root):
-                    dirs.remove(d)
-
+        for root, files in walk_python_path(path):
             cutpoint = path.rfind(SEP)
             if cutpoint > 0:
                 preprefix = path[(cutpoint + len(SEP)):] + '.'
@@ -180,17 +186,10 @@ def list_sources(paths):
 
             path = os.path.normpath(path)
 
-            for root, dirs, files in os.walk(path):
-                if root.endswith('__pycache__'): continue
-                dirs_copy = list(dirs)
-                for d in dirs_copy:
-                    if d.endswith("__pycache__") or not is_module(d, root):
-                        dirs.remove(d)
+            for root, files in walk_python_path(path):
                 for name in files:
                     if name.endswith('.py'):
                         file_path = os.path.join(root, name)
-                        # some files show up but are actually non-existent symlinks
-                        if not os.path.exists(file_path): continue
                         say("%s\t%s\t%d", os.path.normpath(file_path), path, os.path.getsize(file_path))
         say('END')
         sys.stdout.flush()

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +16,8 @@
 package com.intellij.openapi.project;
 
 import com.intellij.ide.DataManager;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.fileEditor.UniqueVFilePathBuilder;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.InternalFileType;
@@ -25,7 +25,6 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFilePathWrapper;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -35,9 +34,6 @@ import javax.swing.*;
  * @author max
  */
 public class ProjectUtil {
-  /** @deprecated use {@linkplain Project#DIRECTORY_STORE_FOLDER} (to remove in IDEA 13) */
-  @SuppressWarnings("UnusedDeclaration") @NonNls public static final String DIRECTORY_BASED_PROJECT_DIR = Project.DIRECTORY_STORE_FOLDER;
-
   private ProjectUtil() { }
 
   @Nullable
@@ -119,7 +115,7 @@ public class ProjectUtil {
     if (openProjects.length > 0) project = openProjects[0];
     if (project == null) {
       DataContext dataContext = component == null ? DataManager.getInstance().getDataContext() : DataManager.getInstance().getDataContext(component);
-      project = PlatformDataKeys.PROJECT.getData(dataContext);
+      project = CommonDataKeys.PROJECT.getData(dataContext);
     }
     if (project == null) {
       project = ProjectManager.getInstance().getDefaultProject();

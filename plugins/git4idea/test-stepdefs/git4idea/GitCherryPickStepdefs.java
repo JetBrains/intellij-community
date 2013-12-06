@@ -43,7 +43,7 @@ import git4idea.log.GitContentRevisionFactory;
 
 import java.util.*;
 
-import static com.intellij.dvcs.test.Executor.echo;
+import static com.intellij.openapi.vcs.Executor.echo;
 import static git4idea.GitCucumberWorld.*;
 import static git4idea.test.GitExecutor.git;
 import static junit.framework.Assert.assertEquals;
@@ -262,7 +262,7 @@ public class GitCherryPickStepdefs {
   private static VcsFullCommitDetails mockCommit(String hash, String message) {
     List<Change> changes = new ArrayList<Change>();
     changes.add(new Change(null, new MockContentRevision(new FilePathImpl(new MockVirtualFile("name")), VcsRevisionNumber.NULL)));
-    return ServiceManager.getService(VcsLogObjectsFactory.class).createFullDetails(
+    return ServiceManager.getService(myProject, VcsLogObjectsFactory.class).createFullDetails(
       HashImpl.build(hash), Collections.<Hash>emptyList(), 0, NullVirtualFile.INSTANCE, message, "John Smith", "john@mail.com", message,
       "John Smith", "john@mail.com", 0, changes, GitContentRevisionFactory.getInstance(myProject));
   }

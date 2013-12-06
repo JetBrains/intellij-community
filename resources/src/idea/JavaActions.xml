@@ -315,6 +315,12 @@
       <reference ref="Debugger.CustomizeContextView"/>
     </group>
 
+    <group id="MarkGeneratedSourceRootGroup">
+      <action id="MarkGeneratedSourceRoot" class="com.intellij.ide.projectView.actions.MarkGeneratedSourceRootAction"/>
+      <action id="UnmarkGeneratedSourceRoot" class="com.intellij.ide.projectView.actions.UnmarkGeneratedSourceRootAction"/>
+      <add-to-group group-id="MarkRootGroup" anchor="after" relative-to-action="MarkSourceRootGroup"/>
+    </group>
+
     <action id="ShowPackageDeps" class="com.intellij.packageDependencies.actions.AnalyzeDependenciesAction">
       <add-to-group group-id="ShowPackageDepsGroup" anchor="first"/>
       <add-to-group group-id="AnalyzeActions" anchor="first"/>

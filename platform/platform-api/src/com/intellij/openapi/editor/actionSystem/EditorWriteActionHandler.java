@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,8 +15,8 @@
  */
 package com.intellij.openapi.editor.actionSystem;
 
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.event.DocumentEvent;
@@ -30,7 +30,7 @@ public abstract class EditorWriteActionHandler extends EditorActionHandler {
     if (editor.isViewer()) return;
 
     if (dataContext != null) {
-      Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+      Project project = CommonDataKeys.PROJECT.getData(dataContext);
       if (project != null && !FileDocumentManager.getInstance().requestWriting(editor.getDocument(), project)) return;
     }
 

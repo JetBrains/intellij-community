@@ -18,6 +18,7 @@ package com.intellij.vcs.log;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.awt.*;
 import java.util.Collection;
 import java.util.List;
 
@@ -33,6 +34,13 @@ public interface VcsLog {
   List<Hash> getSelectedCommits();
 
   /**
+   * Returns details of the selected commits if all of them have been loaded.
+   * To avoid data inconsistency, if at least one of the selected commits have no details loaded, empty list is returned.
+   */
+  @NotNull
+  List<VcsFullCommitDetails> getSelectedDetails();
+
+  /**
    * Returns details of the given commit, if they have been already loaded.
    * In most cases they are already in the cache, and will be returned.
    * Otherwise null is returned.
@@ -46,5 +54,28 @@ public interface VcsLog {
    */
   @Nullable
   Collection<String> getContainingBranches(@NotNull Hash commitHash);
+
+  /**
+   * Returns all {@link VcsRef commit references} available in the log.
+   */
+  @NotNull
+  Collection<VcsRef> getAllReferences();
+
+  /**
+   * Selects the commit node defined by the given reference (commit hash, branch or tag).
+   */
+  void jumpToReference(String reference);
+
+  /**
+   * Returns the VCS log toolbar component.
+   */
+  @NotNull
+  Component getToolbar();
+
+  /**
+   * Returns {@link VcsLogProvider VcsLogProviders} which are active in this log, i.e. which VCS roots are shown in the log.
+   */
+  @NotNull
+  Collection<VcsLogProvider> getLogProviders();
 
 }

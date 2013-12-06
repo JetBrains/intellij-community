@@ -616,4 +616,8 @@ interface TxANotAnno {}
     assertPreferredItems 0, 'setText', 'setOurText'
   }
 
+  public void testPreferString() {
+    checkPreferredItems 0, 'String', 'System', 'Set'
+  }
+
 }

@@ -38,7 +38,11 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
+import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.text.StringUtil;
@@ -139,6 +143,7 @@ public class XDebugSessionImpl implements XDebugSession {
   @NotNull
   public RunContentDescriptor getRunContentDescriptor() {
     assertSessionTabInitialized();
+    //noinspection ConstantConditions
     return mySessionTab.getRunContentDescriptor();
   }
 
@@ -489,6 +494,7 @@ public class XDebugSessionImpl implements XDebugSession {
   private void doResume() {
     if (!myPaused.getAndSet(false)) return;
 
+    final XSourcePosition oldPosition = myCurrentPosition;
     myDispatcher.getMulticaster().beforeSessionResume();
     myDebuggerManager.setActiveSession(this, null, false, null);
     mySuspendContext = null;
@@ -501,6 +507,9 @@ public class XDebugSessionImpl implements XDebugSession {
       public void run() {
         if (mySessionTab != null) {
           mySessionTab.getUi().clearAttractionBy(XDebuggerUIConstants.LAYOUT_VIEW_BREAKPOINT_CONDITION);
+        }
+        if (oldPosition != null) {
+          adjustMouseTrackingCounter(oldPosition, -1);
         }
       }
     });
@@ -730,9 +739,28 @@ public class XDebugSessionImpl implements XDebugSession {
         }
         mySessionTab.toFront();
         mySessionTab.getUi().attractBy(XDebuggerUIConstants.LAYOUT_VIEW_BREAKPOINT_CONDITION);
+        if (myCurrentPosition != null) {
+          adjustMouseTrackingCounter(myCurrentPosition, 1);
+        }
       }
     });
     myDispatcher.getMulticaster().sessionPaused();
+  }
+
+  @Nullable
+  private Editor getEditor(@NotNull XSourcePosition position) {
+    OpenFileDescriptor descriptor = XSourcePositionImpl.createOpenFileDescriptor(myProject, position);
+    return descriptor.canNavigate() ? FileEditorManager.getInstance(myProject).openTextEditor(descriptor, false) : null;
+  }
+
+  private void adjustMouseTrackingCounter(@NotNull XSourcePosition position, int increment) {
+    final Editor editor = getEditor(position);
+    if (editor != null) {
+      JComponent component = editor.getComponent();
+      Object o = component.getClientProperty(EditorImpl.IGNORE_MOUSE_TRACKING);
+      Integer value = ((o instanceof Integer) ? (Integer)o : 0) + increment;
+      component.putClientProperty(EditorImpl.IGNORE_MOUSE_TRACKING, value > 0 ? value : null);
+    }
   }
 
   @Override

@@ -7,5 +7,8 @@
   </extensions>
   <extensions defaultExtensionNs="com.intellij">
     <patterns.patternClass className="com.jetbrains.python.patterns.PythonPatterns" alias="py"/>
+    <multiHostInjector implementation="com.jetbrains.python.intelliLang.PyCommentInjector"/>
+    <multiHostInjector implementation="com.jetbrains.python.intelliLang.PyConfigurationInjector"/>
+    <multiHostInjector implementation="com.jetbrains.python.intelliLang.PyTemporaryInjector"/>
   </extensions>
 </idea-plugin>

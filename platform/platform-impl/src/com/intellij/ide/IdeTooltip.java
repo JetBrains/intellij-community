@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,7 @@ import javax.swing.*;
 import java.awt.*;
 
 public class IdeTooltip extends ComparableObject.Impl {
-
+  public static final Object TOOLTIP_DISMISS_DELAY_KEY = "TOOLTIP_DISMISS_DELAY_KEY";
   private Component myComponent;
   private Point myPoint;
 
@@ -134,6 +134,12 @@ public class IdeTooltip extends ComparableObject.Impl {
   }
 
   public int getDismissDelay() {
+    if (myComponent instanceof JComponent) {
+      final Object value = ((JComponent)myComponent).getClientProperty(TOOLTIP_DISMISS_DELAY_KEY);
+      if (value instanceof Integer) {
+        return ((Integer)value).intValue();
+      }
+    }
     return Registry.intValue("ide.tooltip.dismissDelay");
   }
 

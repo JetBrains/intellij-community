@@ -16,6 +16,7 @@
 package com.siyeh.ig.naming;
 
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiTypeParameter;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -78,18 +79,17 @@ public class ClassNamingConventionInspectionBase extends ConventionInspection {
 
     @Override
     public void visitClass(@NotNull PsiClass aClass) {
-      if (aClass.isInterface() || aClass.isAnnotationType() ||
-          aClass.isEnum()) {
+      if (aClass.isInterface() || aClass.isAnnotationType() || aClass.isEnum()) {
         return;
       }
       if (aClass instanceof PsiTypeParameter) {
         return;
       }
-      final String name = aClass.getName();
-      if (name == null) {
+      if (aClass.hasModifierProperty(PsiModifier.ABSTRACT) && isInspectionEnabled("AbstractClassNamingConvention", aClass)) {
         return;
       }
-      if (isValid(name)) {
+      final String name = aClass.getName();
+      if (name == null || isValid(name)) {
         return;
       }
       registerClassError(aClass, name);

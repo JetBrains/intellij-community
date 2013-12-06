@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,9 +17,12 @@ package com.intellij.refactoring.inline;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.ide.highlighter.JavaFileType;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiMethod;
 import com.intellij.refactoring.RefactoringTestCase;
 import com.intellij.refactoring.util.InlineUtil;
 import org.jetbrains.annotations.NonNls;
@@ -48,7 +51,7 @@ public class InlineLibraryMethodTest extends RefactoringTestCase {
     PsiClass fileClass = getJavaFacade().findClass("mycompany.File");
     assertNotNull(fileClass);
     final PsiFile file = fileClass.getContainingFile();
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+    WriteCommandAction.runWriteCommandAction(null, new Runnable() {
       public void run() {
         try {
           ((VirtualFileSystemEntry)file.getVirtualFile()).setWritable(false);

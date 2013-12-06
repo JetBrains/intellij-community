@@ -12,6 +12,8 @@
                 factoryClass="org.jetbrains.plugins.terminal.TerminalToolWindowFactory" secondary="false"/>
 
     <projectConfigurable instance="org.jetbrains.plugins.terminal.TerminalOptionsConfigurable"/>
+
+    <fileEditorProvider implementation="org.jetbrains.plugins.terminal.vfs.TerminalSessionEditorProvider"/>
   </extensions>
 
   <project-components>

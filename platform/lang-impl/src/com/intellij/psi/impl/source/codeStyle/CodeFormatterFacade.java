@@ -79,9 +79,11 @@ public class CodeFormatterFacade {
     = new Key<Boolean>("WRAP_LONG_LINE_DURING_FORMATTING_IN_PROGRESS_KEY");
 
   private final CodeStyleSettings mySettings;
+  private final FormatterTagHandler myTagHandler;
 
   public CodeFormatterFacade(CodeStyleSettings settings) {
     mySettings = settings;
+    myTagHandler = new FormatterTagHandler(settings);
   }
 
   public ASTNode processElement(ASTNode element) {
@@ -253,7 +255,7 @@ public class CodeFormatterFacade {
     }
   }
 
-  private static TextRange preprocess(@NotNull final ASTNode node, @NotNull TextRange range) {
+  private TextRange preprocess(@NotNull final ASTNode node, @NotNull TextRange range) {
     TextRange result = range;
     PsiElement psi = node.getPsi();
     if (!psi.isValid()) {      
@@ -324,10 +326,30 @@ public class CodeFormatterFacade {
       }
     }
 
-    for(PreFormatProcessor processor: Extensions.getExtensions(PreFormatProcessor.EP_NAME)) {
-      result = processor.process(node, result);
+    if (!mySettings.FORMATTER_TAGS_ENABLED) {
+      for(PreFormatProcessor processor: Extensions.getExtensions(PreFormatProcessor.EP_NAME)) {
+        result = processor.process(node, result);
+      }
+    }
+    else {
+      result = preprocessEnabledRanges(node, result);
     }
 
+    return result;
+  }
+
+  private TextRange preprocessEnabledRanges(@NotNull final ASTNode node, @NotNull TextRange range) {
+    TextRange result = TextRange.create(range.getStartOffset(), range.getEndOffset());
+    List<TextRange> enabledRanges = myTagHandler.getEnabledRanges(node, result);
+    int delta = 0;
+    for (TextRange enabledRange : enabledRanges) {
+      enabledRange = enabledRange.shiftRight(delta);
+      for (PreFormatProcessor processor : Extensions.getExtensions(PreFormatProcessor.EP_NAME)) {
+        TextRange processedRange = processor.process(node, enabledRange);
+        delta += processedRange.getLength() - enabledRange.getLength();
+      }
+    }
+    result = result.grown(delta);
     return result;
   }
 

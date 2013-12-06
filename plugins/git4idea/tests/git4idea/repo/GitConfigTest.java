@@ -17,9 +17,9 @@ package git4idea.repo;
 
 import com.google.common.base.Function;
 import com.google.common.collect.Collections2;
-import com.intellij.dvcs.test.TestRepositoryUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vcs.VcsTestUtil;
 import git4idea.GitBranch;
 import git4idea.GitLocalBranch;
 import git4idea.GitRemoteBranch;
@@ -40,23 +40,23 @@ public class GitConfigTest {
   
   @DataProvider(name = "remote")
   public Object[][] loadRemotes() throws IOException {
-    return TestRepositoryUtil.loadConfigData(getTestDataFolder("remote"));
+    return VcsTestUtil.loadConfigData(getTestDataFolder("remote"));
   }
   
   @DataProvider(name = "branch")
   public Object[][] loadBranches() throws IOException {
-    return TestRepositoryUtil.loadConfigData(getTestDataFolder("branch"));
+    return VcsTestUtil.loadConfigData(getTestDataFolder("branch"));
   }
 
   private static File getTestDataFolder(String subfolder) {
-    File testData = TestRepositoryUtil.getTestDataFolder();
+    File testData = VcsTestUtil.getTestDataFolder();
     return new File(new File(testData, "config"), subfolder);
   }
 
   @Test(dataProvider = "remote")
   public void testRemotes(String testName, File configFile, File resultFile) throws IOException {
     GitConfig config = GitConfig.read(new GitTestPlatformFacade(), configFile);
-    TestRepositoryUtil.assertEqualCollections(config.parseRemotes(), readRemoteResults(resultFile));
+    VcsTestUtil.assertEqualCollections(config.parseRemotes(), readRemoteResults(resultFile));
   }
   
   @Test(dataProvider = "branch")
@@ -77,7 +77,7 @@ public class GitConfigTest {
       }
     });
 
-    TestRepositoryUtil.assertEqualCollections(
+    VcsTestUtil.assertEqualCollections(
       GitConfig.read(new GitTestPlatformFacade(), configFile).parseTrackInfos(localBranches, remoteBranches),
       expectedInfos);
   }

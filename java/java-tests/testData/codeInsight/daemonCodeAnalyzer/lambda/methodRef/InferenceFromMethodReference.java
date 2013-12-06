@@ -5,7 +5,7 @@ class Test {
 
     static void test() {
         Integer next = map(String::length).iterator().next();
-        Integer next1 = map(Test::length).iterator().next();
+        <error descr="Incompatible types. Found: 'java.lang.Object', required: 'java.lang.Integer'">Integer next1 = map(Test::length).iterator().next();</error>
     }
 
     public static <T> T length(T s) {

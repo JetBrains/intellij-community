@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.vfs.newvfs.persistent;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
@@ -29,13 +30,20 @@ import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
 import com.intellij.openapi.vfs.newvfs.events.*;
 import com.intellij.openapi.vfs.newvfs.impl.FakeVirtualFile;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualDirectoryImpl;
+import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.OpenTHashSet;
 import com.intellij.util.containers.Queue;
+import com.intellij.util.text.FilePathHashingStrategy;
+import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Set;
 
 import static com.intellij.openapi.diagnostic.LogUtil.debug;
 import static com.intellij.util.containers.ContainerUtil.newTroveSet;
@@ -92,14 +100,16 @@ public class RefreshWorker {
   }
 
   private void processQueue(NewVirtualFileSystem fs, PersistentFS persistence) throws RefreshCancelledException {
-    while (!myRefreshQueue.isEmpty()) {
-      checkCancelled();
+    TObjectHashingStrategy<String> strategy = FilePathHashingStrategy.create(fs.isCaseSensitive());
 
+    while (!myRefreshQueue.isEmpty()) {
       Pair<NewVirtualFile, FileAttributes> pair = myRefreshQueue.pullFirst();
       NewVirtualFile file = pair.first;
       boolean fileDirty = file.isDirty();
       debug(LOG, "file=%s dirty=%b", file, fileDirty);
       if (!fileDirty) continue;
+
+      checkCancelled(file);
 
       FileAttributes attributes = pair.second != null ? pair.second : fs.getAttributes(file);
       if (attributes == null) {
@@ -120,13 +130,13 @@ public class RefreshWorker {
         if (fullSync) {
           String[] currentNames = persistence.list(file);
           String[] upToDateNames = VfsUtil.filterNames(fs.list(file));
-          Set<String> newNames = newTroveSet(FileUtil.PATH_HASHING_STRATEGY, upToDateNames);
+          Set<String> newNames = newTroveSet(strategy, upToDateNames);
           ContainerUtil.removeAll(newNames, currentNames);
-          Set<String> deletedNames = newTroveSet(FileUtil.PATH_HASHING_STRATEGY, currentNames);
+          Set<String> deletedNames = newTroveSet(strategy, currentNames);
           ContainerUtil.removeAll(deletedNames, upToDateNames);
           OpenTHashSet<String> actualNames = null;
-          if (!SystemInfo.isFileSystemCaseSensitive) {
-            actualNames = new OpenTHashSet<String>(FileUtil.PATH_HASHING_STRATEGY, upToDateNames);
+          if (!fs.isCaseSensitive()) {
+            actualNames = new OpenTHashSet<String>(strategy, upToDateNames);
           }
           debug(LOG, "current=%s +%s -%s", currentNames, newNames, deletedNames);
 
@@ -135,7 +145,7 @@ public class RefreshWorker {
           }
 
           for (String name : newNames) {
-            checkCancelled();
+            checkCancelled(file);
             FileAttributes childAttributes = fs.getAttributes(new FakeVirtualFile(file, name));
             if (childAttributes != null) {
               scheduleCreation(file, name, childAttributes.isDirectory(), false);
@@ -146,7 +156,7 @@ public class RefreshWorker {
           }
 
           for (VirtualFile child : file.getChildren()) {
-            checkCancelled();
+            checkCancelled(file);
             if (!deletedNames.contains(child.getName())) {
               FileAttributes childAttributes = fs.getAttributes(child);
               if (childAttributes != null) {
@@ -163,13 +173,13 @@ public class RefreshWorker {
         else {
           Collection<VirtualFile> cachedChildren = file.getCachedChildren();
           OpenTHashSet<String> actualNames = null;
-          if (!SystemInfo.isFileSystemCaseSensitive) {
-            actualNames = new OpenTHashSet<String>(FileUtil.PATH_HASHING_STRATEGY, VfsUtil.filterNames(fs.list(file)));
+          if (!fs.isCaseSensitive()) {
+            actualNames = new OpenTHashSet<String>(strategy, VfsUtil.filterNames(fs.list(file)));
           }
           debug(LOG, "cached=%s actual=%s", cachedChildren, actualNames);
 
           for (VirtualFile child : cachedChildren) {
-            checkCancelled();
+            checkCancelled(file);
             FileAttributes childAttributes = fs.getAttributes(child);
             if (childAttributes != null) {
               checkAndScheduleChildRefresh(file, child, childAttributes);
@@ -183,7 +193,7 @@ public class RefreshWorker {
           List<String> names = dir.getSuspiciousNames();
           debug(LOG, "suspicious=%s", names);
           for (String name : names) {
-            checkCancelled();
+            checkCancelled(file);
             if (name.isEmpty()) continue;
 
             VirtualFile fake = new FakeVirtualFile(file, name);
@@ -246,10 +256,20 @@ public class RefreshWorker {
 
   private static class RefreshCancelledException extends RuntimeException { }
 
-  private void checkCancelled() {
-    if (myCancelled) {
+  private void checkCancelled(@NotNull NewVirtualFile stopAt) {
+    if (myCancelled || ourCancellingCondition != null && ourCancellingCondition.fun(stopAt)) {
+      forceMarkDirty(stopAt);
+      while (!myRefreshQueue.isEmpty()) {
+        NewVirtualFile next = myRefreshQueue.pullFirst().first;
+        forceMarkDirty(next);
+      }
       throw new RefreshCancelledException();
     }
+  }
+
+  private static void forceMarkDirty(NewVirtualFile file) {
+    file.markClean();  // otherwise consequent markDirty() won't have any effect
+    file.markDirty();
   }
 
   private void checkAndScheduleChildRefresh(@NotNull VirtualFile parent,
@@ -302,5 +322,13 @@ public class RefreshWorker {
       debug(LOG, "delete file=%s", file);
       myEvents.add(new VFileDeleteEvent(null, file, true));
     }
+  }
+
+  private static Function<VirtualFile, Boolean> ourCancellingCondition = null;
+
+  @TestOnly
+  public static void setCancellingCondition(@Nullable Function<VirtualFile, Boolean> condition) {
+    assert ApplicationManager.getApplication().isUnitTestMode();
+    ourCancellingCondition = condition;
   }
 }

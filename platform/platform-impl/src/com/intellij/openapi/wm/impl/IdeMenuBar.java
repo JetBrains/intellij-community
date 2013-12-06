@@ -30,6 +30,8 @@ import com.intellij.openapi.actionSystem.impl.WeakTimerListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.ex.IdeFrameEx;
 import com.intellij.openapi.wm.impl.status.ClockPanel;
 import com.intellij.ui.Gray;
@@ -37,6 +39,7 @@ import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.util.ui.Animator;
 import com.intellij.util.ui.UIUtil;
+import org.java.ayatana.ApplicationMenu;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -44,7 +47,10 @@ import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.awt.geom.AffineTransform;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
@@ -126,7 +132,7 @@ public class IdeMenuBar extends JMenuBar implements IdeEventQueue.EventDispatche
       return new EmptyBorder(0, 0, 1, 0);
     }
 
-    return super.getBorder();
+    return UISettings.getInstance().SHOW_MAIN_TOOLBAR || UISettings.getInstance().SHOW_NAVIGATION_BAR ? super.getBorder() : null;
   }
 
   @Override
@@ -155,8 +161,13 @@ public class IdeMenuBar extends JMenuBar implements IdeEventQueue.EventDispatche
 
   @Override
   public void menuSelectionChanged(boolean isIncluded) {
-    if (!getSelectionModel().isSelected()) return;
-    if (myState == State.COLLAPSED) {
+    if (!isIncluded && myState == State.TEMPORARY_EXPANDED) {
+      myActivated = false;
+      setState(State.COLLAPSING);
+      restartAnimator();
+      return;
+    }
+    if (isIncluded && myState == State.COLLAPSED) {
       myActivated = true;
       setState(State.TEMPORARY_EXPANDED);
       revalidate();
@@ -368,7 +379,7 @@ public class IdeMenuBar extends JMenuBar implements IdeEventQueue.EventDispatche
   @Override
   protected void paintComponent(Graphics g) {
     super.paintComponent(g);
-    if (UIUtil.isUnderDarcula()) {
+    if (UIUtil.isUnderDarcula() || UIUtil.isUnderIntelliJLaF()) {
       g.setColor(UIManager.getColor("MenuItem.background"));
       g.fillRect(0, 0, getWidth(), getHeight());
     }
@@ -554,6 +565,17 @@ public class IdeMenuBar extends JMenuBar implements IdeEventQueue.EventDispatche
       }
 
       super.mouseClicked(e);
+    }
+  }
+
+  public static void installAppMenuIfNeeded(@NotNull final JFrame frame) {
+    if (SystemInfo.isLinux && Registry.is("linux.native.menu") && "Unity".equals(System.getenv("XDG_CURRENT_DESKTOP"))) {
+      //noinspection SSBasedInspection
+      SwingUtilities.invokeLater(new Runnable() {
+        public void run() {
+          ApplicationMenu.tryInstall(frame);
+        }
+      });
     }
   }
 }

@@ -36,6 +36,7 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.DocCommandGroupId;
+import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.editor.ex.*;
 import com.intellij.openapi.editor.markup.ErrorStripeRenderer;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
@@ -44,7 +45,6 @@ import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.ProperTextRange;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.Alarm;
@@ -213,7 +213,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
   }
 
   private int fitLineToEditor(int visualLine) {
-    return Math.min(myEditor.getVisibleLineCount() - 1, Math.max(0, visualLine));
+    return Math.max(0, Math.min(myEditor.getVisibleLineCount() - 1, visualLine));
   }
 
   private int getOffset(int visualLine, boolean startLine) {
@@ -1105,7 +1105,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
         needDelay = true;
         final JPanel editorFragmentPreviewPanel = new JPanel() {
           private static final int R = 6;
-          private static final int LEFT_INDENT = BalloonImpl.ARC;// + 5;
+          private static final int LEFT_INDENT = 0;//BalloonImpl.ARC;// + 5;
 
           @Override
           public Dimension getPreferredSize() {
@@ -1132,13 +1132,13 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
               UISettings.setupAntialiasing(cg);
               int lineShift = -myEditor.getLineHeight() * myCacheStartLine;
 
-              AffineTransform translateInstance = AffineTransform.getTranslateInstance(0, lineShift);
+              AffineTransform translateInstance = AffineTransform.getTranslateInstance(-4, lineShift);
               translateInstance.preConcatenate(t);
               cg.setTransform(translateInstance);
 
               cg.setClip(0, -lineShift, gutterWidth, myCacheLevel2.getHeight());
               gutterComponentEx.paint(cg);
-              translateInstance = AffineTransform.getTranslateInstance(gutterWidth, lineShift);
+              translateInstance = AffineTransform.getTranslateInstance(gutterWidth - 4, lineShift);
               translateInstance.preConcatenate(t);
               cg.setTransform(translateInstance);
               EditorComponentImpl contentComponent = myEditor.getContentComponent();
@@ -1177,10 +1177,11 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
                 Point placeToShow = myEditor.logicalPositionToXY(logicalPosition);
                 logicalPosition = myEditor.xyToLogicalPosition(placeToShow);//wraps&foldings workaround
                 placeToShow.x += R * 3 / 2;
-                placeToShow.y -= myCacheStartLine * myEditor.getLineHeight();
+                placeToShow.y -= myCacheStartLine * myEditor.getLineHeight() - 1;
 
+                Font font = myEditor.getColorsScheme().getFont(EditorFontType.PLAIN);
+                g2d.setFont(font.deriveFont(font.getSize() *.8F));
                 int w = g2d.getFontMetrics().stringWidth(s);
-                int a = g2d.getFontMetrics().getAscent();
 
                 int rightEdge = rightEdges.get(logicalPosition.line);
                 placeToShow.x = Math.max(placeToShow.x, rightEdge);
@@ -1192,7 +1193,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
                 g2d.setColor(new JBColor(JBColor.GRAY, Gray._200));
                 g2d.drawRoundRect(placeToShow.x, placeToShow.y, w + 2 * R, h, R, R);
                 g2d.setColor(JBColor.foreground());
-                g2d.drawString(s, placeToShow.x + R, placeToShow.y - g2d.getFontMetrics().getDescent() + R/2 + a);
+                g2d.drawString(s, placeToShow.x + R, placeToShow.y + h - g2d.getFontMetrics(g2d.getFont()).getDescent()/2 - 2);
               }
               isDirty = false;
             }
@@ -1259,7 +1260,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
             showEditorHint(hintManager, myPointHolder.get(), myHintHolder.get());
             myDelayed = false;
           }
-        }, Registry.intValue("ide.tooltip.initialDelay"));
+        }, /*Registry.intValue("ide.tooltip.initialDelay")*/300);
       }
       else if (!myDelayed) {
         showEditorHint(hintManager, point, hintInfo);

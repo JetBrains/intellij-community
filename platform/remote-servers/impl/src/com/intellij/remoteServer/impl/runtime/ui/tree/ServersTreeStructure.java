@@ -49,8 +49,7 @@ import java.awt.event.MouseEvent;
 import java.util.*;
 
 /**
- * Created by IntelliJ IDEA.
- * User: michael.golubev
+ * @author michael.golubev
  */
 public class ServersTreeStructure extends AbstractTreeStructureBase {
   // 1st level: servers (RunnerAndConfigurationSettings (has CommonStrategy (extends RunConfiguration)) or RemoteServer)

@@ -39,9 +39,9 @@ import java.net.ServerSocket;
 import java.util.Map;
 
 public class BuiltInServer implements Disposable {
-  private final ChannelRegistrar channelRegistrar = new ChannelRegistrar();
-
   static final Logger LOG = Logger.getInstance(BuiltInServer.class);
+
+  private final ChannelRegistrar channelRegistrar = new ChannelRegistrar();
 
   public boolean isRunning() {
     return !channelRegistrar.isEmpty();
@@ -94,7 +94,7 @@ public class BuiltInServer implements Disposable {
         int customPortServerManagerPort = customPortServerManager.getPort();
         SubServer subServer = new SubServer(customPortServerManager, eventLoopGroup);
         Disposer.register(this, subServer);
-        if (customPortServerManagerPort != firstPort && customPortServerManagerPort != port) {
+        if (customPortServerManager.isAvailableExternally() || (customPortServerManagerPort != firstPort && customPortServerManagerPort != port)) {
           subServer.bind(customPortServerManagerPort);
         }
       }

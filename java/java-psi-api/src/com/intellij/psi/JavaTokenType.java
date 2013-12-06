@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 package com.intellij.psi;
 
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.tree.java.IJavaElementType;
 import com.intellij.psi.tree.java.IKeywordElementType;
 
@@ -140,32 +139,4 @@ public interface JavaTokenType extends TokenType {
 
   IElementType DOUBLE_COLON = new IJavaElementType("DOUBLE_COLON");
   IElementType ARROW = new IJavaElementType("ARROW");
-
-  /** @deprecated use {@linkplain com.intellij.psi.impl.source.tree.ElementType#OPERATION_BIT_SET} (to remove in IDEA 13) */
-  @SuppressWarnings("UnusedDeclaration") TokenSet OPERATION_BIT_SET = TokenSet.create(
-    EQ, GT, LT, EXCL, TILDE, QUEST, COLON, PLUS, MINUS, ASTERISK, DIV, AND, OR, XOR,
-    PERC, EQEQ, LE, GE, NE, ANDAND, OROR, PLUSPLUS, MINUSMINUS, LTLT, GTGT, GTGTGT,
-    PLUSEQ, MINUSEQ, ASTERISKEQ, DIVEQ, ANDEQ, OREQ, XOREQ, PERCEQ, LTLTEQ, GTGTEQ, GTGTGTEQ
-  );
-
-  /** @deprecated use {@linkplain com.intellij.psi.impl.source.tree.ElementType#KEYWORD_BIT_SET} (to remove in IDEA 13) */
-  @SuppressWarnings("UnusedDeclaration") TokenSet KEYWORD_BIT_SET = TokenSet.create(
-    ABSTRACT_KEYWORD, ASSERT_KEYWORD, BOOLEAN_KEYWORD, BREAK_KEYWORD, BYTE_KEYWORD, CASE_KEYWORD,
-    CATCH_KEYWORD, CHAR_KEYWORD, CLASS_KEYWORD, CONST_KEYWORD, CONTINUE_KEYWORD,
-    DEFAULT_KEYWORD, DO_KEYWORD, DOUBLE_KEYWORD, ELSE_KEYWORD, ENUM_KEYWORD, EXTENDS_KEYWORD,
-    FINAL_KEYWORD, FINALLY_KEYWORD, FLOAT_KEYWORD, FOR_KEYWORD, GOTO_KEYWORD,
-    IF_KEYWORD, IMPLEMENTS_KEYWORD, IMPORT_KEYWORD, INSTANCEOF_KEYWORD, INT_KEYWORD,
-    INTERFACE_KEYWORD, LONG_KEYWORD, NATIVE_KEYWORD, NEW_KEYWORD, PACKAGE_KEYWORD,
-    PRIVATE_KEYWORD, PROTECTED_KEYWORD, PUBLIC_KEYWORD, RETURN_KEYWORD, SHORT_KEYWORD,
-    SUPER_KEYWORD, STATIC_KEYWORD, STRICTFP_KEYWORD, SWITCH_KEYWORD, SYNCHRONIZED_KEYWORD,
-    THIS_KEYWORD, THROW_KEYWORD, THROWS_KEYWORD, TRANSIENT_KEYWORD, TRY_KEYWORD,
-    VOID_KEYWORD, VOLATILE_KEYWORD, WHILE_KEYWORD, TRUE_KEYWORD, FALSE_KEYWORD, NULL_KEYWORD
-  );
-
-  /** @deprecated use {@linkplain com.intellij.psi.impl.source.tree.ElementType#MODIFIER_BIT_SET} (to remove in IDEA 13) */
-  @SuppressWarnings("UnusedDeclaration") TokenSet MODIFIER_BIT_SET = TokenSet.create(
-    PUBLIC_KEYWORD, PROTECTED_KEYWORD, PRIVATE_KEYWORD, STATIC_KEYWORD,
-    ABSTRACT_KEYWORD, FINAL_KEYWORD, NATIVE_KEYWORD, STRICTFP_KEYWORD,
-    SYNCHRONIZED_KEYWORD, TRANSIENT_KEYWORD, VOLATILE_KEYWORD
-  );
 }

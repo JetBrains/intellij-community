@@ -43,6 +43,7 @@ import junit.framework.Assert;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.model.JpsElement;
 import org.jetbrains.jps.model.java.JavaSourceRootType;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
@@ -148,14 +149,21 @@ public class PsiTestUtil {
     addSourceRoot(module, vDir, isTestSource ? JavaSourceRootType.TEST_SOURCE : JavaSourceRootType.SOURCE);
   }
 
-  public static void addSourceRoot(Module module, final VirtualFile vDir, @NotNull final JpsModuleSourceRootType rootType) {
+  public static <P extends JpsElement> void addSourceRoot(Module module,
+                                                          final VirtualFile vDir,
+                                                          @NotNull final JpsModuleSourceRootType<P> rootType) {
+    addSourceRoot(module, vDir, rootType, rootType.createDefaultProperties());
+  }
+
+  public static <P extends JpsElement> void addSourceRoot(Module module, final VirtualFile vDir,
+                                                          @NotNull final JpsModuleSourceRootType<P> rootType, final P properties) {
     updateModel(module, new Consumer<ModifiableRootModel>() {
       @SuppressWarnings("unchecked")
       @Override
       public void consume(ModifiableRootModel model) {
         ContentEntry entry = findContentEntry(model, vDir);
         if (entry == null) entry = model.addContentEntry(vDir);
-        entry.addSourceFolder(vDir, rootType);
+        entry.addSourceFolder(vDir, rootType, properties);
       }
     });
   }

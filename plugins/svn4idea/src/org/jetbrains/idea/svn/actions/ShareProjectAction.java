@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,13 +18,11 @@ package org.jetbrains.idea.svn.actions;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
@@ -118,7 +116,7 @@ public class ShareProjectAction extends BasicAction {
           final int promptAnswer =
             Messages.showYesNoDialog(project, "Remote folder \"" + parent + "\" is not empty.\nDo you want to continue sharing?",
                                      "Share directory", Messages.getWarningIcon());
-          if (DialogWrapper.OK_EXIT_CODE != promptAnswer) return false;
+          if (Messages.YES != promptAnswer) return false;
         }
       }
 
@@ -167,7 +165,7 @@ public class ShareProjectAction extends BasicAction {
                   indicator.setText(SvnBundle.message("share.directory.checkout.back.progress.text", checkoutUrl.toString()));
                 }
 
-                final ClientFactory factory = activeVcs.getFactoryFromSettings();
+                final ClientFactory factory = SvnCheckoutProvider.getFactory(activeVcs, format);
 
                 factory.createCheckoutClient()
                   .checkout(SvnTarget.fromURL(checkoutUrl), path, revision, SVNDepth.INFINITY, false, false, format, null);

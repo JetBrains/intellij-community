@@ -51,7 +51,7 @@ class GroovyDirectInheritorsSearcher implements QueryExecutor<PsiClass, DirectCl
     final String name = clazz.getName();
     if (name == null) return Collections.emptyList();
     final ArrayList<PsiClass> inheritors = new ArrayList<PsiClass>();
-    for (GrReferenceList list : StubIndex.getInstance().safeGet(GrDirectInheritorsIndex.KEY, name, clazz.getProject(), scope,
+    for (GrReferenceList list : StubIndex.getElements(GrDirectInheritorsIndex.KEY, name, clazz.getProject(), scope,
                                                       GrReferenceList.class)) {
       final PsiElement parent = list.getParent();
       if (parent instanceof GrTypeDefinition) {
@@ -59,7 +59,7 @@ class GroovyDirectInheritorsSearcher implements QueryExecutor<PsiClass, DirectCl
       }
     }
     final Collection<GrAnonymousClassDefinition> classes =
-      StubIndex.getInstance().get(GrAnonymousClassIndex.KEY, name, clazz.getProject(), scope);
+      StubIndex.getElements(GrAnonymousClassIndex.KEY, name, clazz.getProject(), scope, GrAnonymousClassDefinition.class);
     for (GrAnonymousClassDefinition aClass : classes) {
       inheritors.add(aClass);
     }

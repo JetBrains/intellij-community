@@ -15,8 +15,6 @@
  */
 package com.intellij.ide.browsers.impl;
 
-import com.intellij.ide.browsers.Url;
-import com.intellij.ide.browsers.Urls;
 import com.intellij.ide.browsers.WebBrowserService;
 import com.intellij.ide.browsers.WebBrowserUrlProvider;
 import com.intellij.openapi.project.DumbService;
@@ -27,9 +25,15 @@ import com.intellij.openapi.vfs.impl.http.HttpVirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.LightVirtualFile;
+import com.intellij.util.Url;
+import com.intellij.util.Urls;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.util.HtmlUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Collection;
+import java.util.Collections;
 
 public class WebBrowserServiceImpl extends WebBrowserService {
   @Override
@@ -40,32 +44,32 @@ public class WebBrowserServiceImpl extends WebBrowserService {
            ((HtmlUtil.isHtmlFile(psiFile) && !(virtualFile instanceof LightVirtualFile)) || getProvider(psiElement, psiFile) != null);
   }
 
+  @NotNull
   @Override
-  @Nullable
-  public Url getUrlToOpen(@NotNull PsiElement psiElement, boolean preferLocalUrl) throws WebBrowserUrlProvider.BrowserException {
+  public Collection<Url> getUrlToOpen(@NotNull PsiElement psiElement, boolean preferLocalUrl) throws WebBrowserUrlProvider.BrowserException {
     final PsiFile psiFile = psiElement instanceof PsiFile ? (PsiFile)psiElement : psiElement.getContainingFile();
     if (psiFile == null) {
-      return null;
+      return Collections.emptySet();
     }
     VirtualFile virtualFile = psiFile.getVirtualFile();
     if (virtualFile == null) {
-      return null;
+      return Collections.emptySet();
     }
     if (virtualFile instanceof HttpVirtualFile) {
-      return Urls.newFromVirtualFile(virtualFile);
+      return Collections.singleton(Urls.newFromVirtualFile(virtualFile));
     }
 
     if (!(preferLocalUrl && HtmlUtil.isHtmlFile(psiFile))) {
-      Pair<WebBrowserUrlProvider, Url> provider = getProvider(psiElement);
+      Pair<WebBrowserUrlProvider, Collection<Url>> provider = getProvider(psiElement);
       if (provider != null) {
         if (provider.second != null) {
           return provider.second;
         }
 
         try {
-          Url url = provider.first.getUrl(psiElement, psiFile, virtualFile);
-          if (url != null) {
-            return url;
+          Collection<Url> urls = provider.first.getUrls(psiElement, psiFile, virtualFile);
+          if (!urls.isEmpty()) {
+            return urls;
           }
         }
         catch (WebBrowserUrlProvider.BrowserException e) {
@@ -75,29 +79,18 @@ public class WebBrowserServiceImpl extends WebBrowserService {
         }
       }
     }
-    return virtualFile instanceof LightVirtualFile ? null : Urls.newFromVirtualFile(virtualFile);
-  }
-
-  @Override
-  @Nullable
-  public Url getUrlToOpen(@NotNull PsiElement psiElement) {
-    try {
-      return getUrlToOpen(psiElement, false);
-    }
-    catch (WebBrowserUrlProvider.BrowserException ignored) {
-      return null;
-    }
+    return virtualFile instanceof LightVirtualFile ? Collections.<Url>emptySet() : Collections.singleton(Urls.newFromVirtualFile(virtualFile));
   }
 
   @Nullable
-  public static Pair<WebBrowserUrlProvider, Url> getProvider(@Nullable PsiElement element) {
+  public static Pair<WebBrowserUrlProvider, Collection<Url>> getProvider(@Nullable PsiElement element) {
     PsiFile psiFile = element == null ? null : element.getContainingFile();
     return psiFile == null ? null : getProvider(element, psiFile);
   }
 
-  private static Pair<WebBrowserUrlProvider, Url> getProvider(PsiElement element, PsiFile psiFile) {
-    Ref<Url> result = Ref.create();
-    DumbService dumbService = DumbService.getInstance(element.getProject());
+  private static Pair<WebBrowserUrlProvider, Collection<Url>> getProvider(PsiElement element, PsiFile psiFile) {
+    Ref<Collection<Url>> result = Ref.create();
+    DumbService dumbService = DumbService.getInstance(psiFile.getProject());
     for (WebBrowserUrlProvider urlProvider : WebBrowserUrlProvider.EP_NAME.getExtensions()) {
       if ((!dumbService.isDumb() || DumbService.isDumbAware(urlProvider)) && urlProvider.canHandleElement(element, psiFile, result)) {
         return Pair.create(urlProvider, result.get());
@@ -113,8 +106,15 @@ public class WebBrowserServiceImpl extends WebBrowserService {
       return null;
     }
 
-    Url url = WebBrowserService.getInstance().getUrlToOpen(sourceElement);
-    if (url == null) {
+    Url url;
+    try {
+      Collection<Url> urls = WebBrowserService.getInstance().getUrlToOpen(sourceElement, false);
+      url = ContainerUtil.getFirstItem(urls);
+      if (url == null) {
+        return null;
+      }
+    }
+    catch (WebBrowserUrlProvider.BrowserException ignored) {
       return null;
     }
 
@@ -123,7 +123,6 @@ public class WebBrowserServiceImpl extends WebBrowserService {
       return null;
     }
 
-    boolean isRemote = !url.isInLocalFileSystem();
-    return isRemote || HtmlUtil.isHtmlFile(virtualFile) ? url : null;
+    return !url.isInLocalFileSystem() || HtmlUtil.isHtmlFile(virtualFile) ? url : null;
   }
 }

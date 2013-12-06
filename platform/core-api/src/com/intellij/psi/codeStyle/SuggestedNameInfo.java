@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -50,10 +50,6 @@ public abstract class SuggestedNameInfo {
    * @param name the accepted suggestion.
    */
   public void nameChosen(String name) { }
-
-  /** @deprecated override {@linkplain #nameChosen(String)} instead (to remove in IDEA 13) */
-  @SuppressWarnings("UnusedDeclaration")
-  public void nameChoosen(String name) { nameChosen(name); }
 
   public static class Delegate extends SuggestedNameInfo {
     SuggestedNameInfo myDelegate;

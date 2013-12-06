@@ -1,8 +1,16 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance permissions and
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
  * limitations under the License.
  */
 package git4idea.branch;
@@ -10,6 +18,7 @@ package git4idea.branch;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.MessageDialogBuilder;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
@@ -214,7 +223,7 @@ class GitDeleteRemoteBranchOperation extends GitBranchOperation {
     boolean delete;
     final boolean deleteTracking;
     if (trackingBranches.isEmpty()) {
-      delete = Messages.showYesNoDialog(myProject, message, title, "Delete", "Cancel", Messages.getQuestionIcon()) == Messages.OK;
+      delete = Messages.showYesNoDialog(myProject, message, title, "Delete", "Cancel", Messages.getQuestionIcon()) == Messages.YES;
       deleteTracking = false;
     }
     else {
@@ -230,7 +239,7 @@ class GitDeleteRemoteBranchOperation extends GitBranchOperation {
       }
 
       final AtomicBoolean deleteChoice = new AtomicBoolean();
-      delete = Messages.OK == Messages.showYesNoDialog(message, title, "Delete", "Cancel", Messages.getQuestionIcon(), new DialogWrapper.DoNotAskOption() {
+      delete = MessageDialogBuilder.yesNo(title, message).project(myProject).yesText("Delete").noText("Cancel").doNotAsk(new DialogWrapper.DoNotAskOption() {
         @Override
         public boolean isToBeShown() {
           return true;
@@ -255,7 +264,7 @@ class GitDeleteRemoteBranchOperation extends GitBranchOperation {
         public String getDoNotShowMessage() {
           return checkboxMessage;
         }
-      });
+      }).show() == Messages.YES;
       deleteTracking = deleteChoice.get();
     }
     return new DeleteRemoteBranchDecision(delete, deleteTracking);

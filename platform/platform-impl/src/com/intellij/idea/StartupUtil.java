@@ -33,15 +33,16 @@ import com.intellij.util.Consumer;
 import com.intellij.util.EnvironmentUtil;
 import com.intellij.util.SnappyInitializer;
 import com.intellij.util.lang.UrlClassLoader;
-import com.intellij.util.text.DateFormatUtilRt;
 import com.sun.jna.Native;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.io.File;
 import java.lang.management.ManagementFactory;
+import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Locale;
 
 /**
  * @author yole
@@ -276,8 +277,8 @@ public class StartupUtil {
 
     ApplicationInfo appInfo = ApplicationInfoImpl.getShadowInstance();
     ApplicationNamesInfo namesInfo = ApplicationNamesInfo.getInstance();
-    log.info("IDE: " + namesInfo.getFullProductName() + " (build #" + appInfo.getBuild() + ", " +
-                   DateFormatUtilRt.formatBuildDate(appInfo.getBuildDate()) + ")");
+    String buildDate = new SimpleDateFormat("dd MMM yyyy HH:ss", Locale.US).format(appInfo.getBuildDate().getTime());
+    log.info("IDE: " + namesInfo.getFullProductName() + " (build #" + appInfo.getBuild() + ", " + buildDate + ")");
     log.info("OS: " + SystemInfoRt.OS_NAME + " (" + SystemInfoRt.OS_VERSION + ", " + SystemInfo.OS_ARCH + ")");
     log.info("JRE: " + System.getProperty("java.runtime.version", "-") + " (" + System.getProperty("java.vendor", "-") + ")");
     log.info("JVM: " + System.getProperty("java.vm.version", "-") + " (" + System.getProperty("java.vm.name", "-") + ")");

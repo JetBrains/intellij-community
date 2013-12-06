@@ -160,14 +160,16 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
 
   @Override
   public Dimension getPreferredSize() {
-    if (UISettings.getInstance().PRESENTATION_MODE) {
+    int w = getLineNumberAreaWidth() + getLineMarkerAreaWidth() + getFoldingAreaWidth() + getAnnotationsAreaWidth();
+
+    if (w > 0 && UISettings.getInstance().PRESENTATION_MODE) {
       final Dimension dimension = new Dimension(myEditor.getFontMetrics(Font.PLAIN).getHeight(), myEditor.getPreferredHeight());
       if (isLineMarkersShown()) {
         dimension.width += getLineNumberAreaWidth() + getLineMarkerAreaWidth();
       }
       return dimension;
     }
-    int w = getLineNumberAreaWidth() + getLineMarkerAreaWidth() + getFoldingAreaWidth() + getAnnotationsAreaWidth();
+
     myLastPreferredHeight = myEditor.getPreferredHeight();
     return new Dimension(w, myLastPreferredHeight);
   }
@@ -1424,14 +1426,20 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
 
   @Override
   @Nullable
-  public Point getPoint(GutterIconRenderer renderer) {
+  public Point getPoint(final GutterIconRenderer renderer) {
+    final Ref<Point> result = Ref.create();
     for (int line : myLineToGutterRenderers.keys()) {
-      for (GutterMark gutterIconRenderer : myLineToGutterRenderers.get(line)) {
-        if (gutterIconRenderer.equals(renderer)) {
-          int x = getLineMarkerAreaOffset() + 1;
-          final int y = myEditor.logicalPositionToXY(new LogicalPosition(line, 0)).y;
-          return new Point(x, y);
+      processIconsRow(line, myLineToGutterRenderers.get(line), new LineGutterIconRendererProcessor() {
+        @Override
+        public void process(int x, int y, GutterMark r) {
+          if (result.isNull() && r.equals(renderer)) {
+            result.set(new Point(x, y));
+          }
         }
+      });
+
+      if (!result.isNull()) {
+        return result.get();
       }
     }
     return null;

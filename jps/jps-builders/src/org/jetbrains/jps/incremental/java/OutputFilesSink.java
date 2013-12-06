@@ -22,7 +22,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.asm4.ClassReader;
 import org.jetbrains.jps.builders.java.JavaSourceRootDescriptor;
 import org.jetbrains.jps.builders.java.dependencyView.Callbacks;
-import org.jetbrains.jps.incremental.*;
+import org.jetbrains.jps.incremental.BinaryContent;
+import org.jetbrains.jps.incremental.CompileContext;
+import org.jetbrains.jps.incremental.CompiledClass;
+import org.jetbrains.jps.incremental.ModuleLevelBuilder;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
 import org.jetbrains.jps.incremental.messages.CompilerMessage;
 import org.jetbrains.jps.incremental.messages.ProgressMessage;
@@ -84,7 +87,7 @@ class OutputFilesSink implements OutputFileConsumer {
         }
       }
 
-      if (!isTemp && outKind == JavaFileObject.Kind.CLASS && !Utils.errorsDetected(myContext)) {
+      if (!isTemp && outKind == JavaFileObject.Kind.CLASS) {
         // register in mappings any non-temp class file
         try {
           final ClassReader reader = new ClassReader(content.getBuffer(), content.getOffset(), content.getLength());

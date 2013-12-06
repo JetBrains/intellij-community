@@ -55,11 +55,10 @@ public class StepSequence {
 
   public void addStepsForBuilder(@NotNull AbstractModuleBuilder builder,
                                  @NotNull WizardContext wizardContext,
-                                 @NotNull ModulesProvider modulesProvider,
-                                 boolean forNewWizard) {
+                                 @NotNull ModulesProvider modulesProvider) {
     String id = builder.getBuilderId();
     if (!mySpecificSteps.containsKey(id)) {
-      mySpecificSteps.put(id, Arrays.asList(builder.createWizardSteps(wizardContext, modulesProvider, forNewWizard)));
+      mySpecificSteps.put(id, Arrays.asList(builder.createWizardSteps(wizardContext, modulesProvider)));
     }
   }
 

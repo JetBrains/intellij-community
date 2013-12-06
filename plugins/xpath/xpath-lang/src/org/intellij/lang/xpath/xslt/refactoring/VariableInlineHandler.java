@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -180,7 +180,7 @@ public class VariableInlineHandler extends InlineActionHandler {
               variable.getName(),
               String.valueOf(references.size()),
               references.size() > 1 ? "s" : ""),
-              TITLE, Messages.getQuestionIcon()) != 0) {
+              TITLE, Messages.getQuestionIcon()) != Messages.YES) {
         return;
       }
     } else {
@@ -191,7 +191,7 @@ public class VariableInlineHandler extends InlineActionHandler {
               variable.getName(),
               String.valueOf(references.size()),
               references.size() > 1 ? "s" : ""),
-              TITLE, Messages.getWarningIcon()) != 0) {
+              TITLE, Messages.getWarningIcon()) != Messages.YES) {
         return;
       }
     }

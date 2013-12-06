@@ -17,6 +17,7 @@ package com.intellij.designer.designSurface;
 
 import com.intellij.designer.*;
 import com.intellij.designer.actions.AbstractComboBoxAction;
+import com.intellij.designer.actions.CommonEditActionsProvider;
 import com.intellij.designer.actions.DesignerActionPanel;
 import com.intellij.designer.componentTree.TreeComponentDecorator;
 import com.intellij.designer.componentTree.TreeEditableArea;
@@ -33,6 +34,7 @@ import com.intellij.diagnostic.LogMessageEx;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
@@ -129,7 +131,7 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
   private FixableMessageAction myWarnAction;
 
   private JPanel myErrorPanel;
-  private JPanel myErrorMessages;
+  protected JPanel myErrorMessages;
   private JPanel myErrorStackPanel;
   private CardLayout myErrorStackLayout;
   private JTextArea myErrorStack;
@@ -164,8 +166,8 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
       @Override
       public void run() {
         DesignerEditorPanel designer = DesignerEditorPanel.this;
-        DesignerToolWindowManager.getInstance(myProject).bind(designer);
-        PaletteToolWindowManager.getInstance(myProject).bind(designer);
+        getDesignerWindowManager().bind(designer);
+        getPaletteWindowManager().bind(designer);
       }
     });
   }
@@ -344,8 +346,12 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
     if (info.myShowLog) {
       LOG.error(LogMessageEx.createEvent(info.myDisplayMessage,
                                          info.myMessage + "\n" + ExceptionUtil.getThrowableText(info.myThrowable),
-                                         AttachmentFactory.createAttachment(myFile)));
+                                         getErrorAttachments(info)));
     }
+  }
+
+  protected Attachment[] getErrorAttachments(ErrorInfo info) {
+    return new Attachment[]{AttachmentFactory.createAttachment(myFile)};
   }
 
   protected abstract void configureError(final @NotNull ErrorInfo info);
@@ -376,11 +382,11 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
     myErrorPanel.revalidate();
     myLayout.show(myPanel, ERROR_CARD);
 
-    DesignerToolWindowManager.getInstance(this).refresh(true);
+    getDesignerToolWindow().refresh(true);
     repaint();
   }
 
-  private void addErrorMessage(final FixableMessageInfo message, Icon icon) {
+  protected void addErrorMessage(final FixableMessageInfo message, Icon icon) {
     if (message.myLinkText.length() > 0 || message.myAfterLinkText.length() > 0) {
       HyperlinkLabel warnLabel = new HyperlinkLabel();
       warnLabel.setOpaque(false);
@@ -499,6 +505,10 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
     return myEditor;
   }
 
+  public VirtualFile getFile() {
+    return myFile;
+  }
+
   @Override
   public final Project getProject() {
     return myProject;
@@ -574,7 +584,9 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
   }
 
   private void storeSourceSelectionState() {
-    mySourceSelectionState.put(getEditorText(), getSelectionState());
+    if (!CommonEditActionsProvider.isDeleting) {
+      mySourceSelectionState.put(getEditorText(), getSelectionState());
+    }
   }
 
   private int[][] getSelectionState() {
@@ -603,7 +615,7 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
   }
 
   protected void restoreState() {
-    DesignerToolWindow toolManager = DesignerToolWindowManager.getInstance(this);
+    DesignerToolWindowContent toolManager = getDesignerToolWindow();
 
     if (myExpandedState != null) {
       List<RadComponent> expanded = new ArrayList<RadComponent>();
@@ -733,9 +745,25 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
 
   public void dispose() {
     Disposer.dispose(myProgressIcon);
-    DesignerToolWindowManager.getInstance(myProject).dispose(this);
-    PaletteToolWindowManager.getInstance(myProject).dispose(this);
+    getDesignerWindowManager().dispose(this);
+    getPaletteWindowManager().dispose(this);
     Disposer.dispose(myContentSplitter);
+  }
+
+  protected AbstractToolWindowManager getDesignerWindowManager() {
+    return DesignerToolWindowManager.getInstance(myProject);
+  }
+
+  protected AbstractToolWindowManager getPaletteWindowManager() {
+    return PaletteToolWindowManager.getInstance(myProject);
+  }
+
+  public DesignerToolWindowContent getDesignerToolWindow() {
+    return DesignerToolWindowManager.getInstance(this);
+  }
+
+  protected PaletteToolWindowContent getPaletteToolWindow() {
+    return PaletteToolWindowManager.getInstance(this);
   }
 
   @Nullable
@@ -1012,7 +1040,7 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
     @Override
     public void setActiveTool(InputTool tool) {
       if (getActiveTool() instanceof CreationTool && !(tool instanceof CreationTool)) {
-        PaletteToolWindowManager.getInstance(DesignerEditorPanel.this).clearActiveItem();
+        getPaletteToolWindow().clearActiveItem();
       }
       if (!(tool instanceof SelectionTool)) {
         hideInspections();

@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.javaFX.packaging;
 
+import com.intellij.openapi.util.Pair;
 import com.intellij.testFramework.UsefulTestCase;
 
 import java.io.File;
@@ -215,6 +216,7 @@ public class JavaFxAntTaskTest extends UsefulTestCase{
     private String myPreloaderJar;
     private boolean myConvertCss2Bin;
     private boolean mySigned;
+    private List<JavaFxManifestAttribute> myCustomManifestAttributes;
 
     private MockJavaFxPackager(String outputPath) {
       myOutputPath = outputPath;
@@ -364,6 +366,11 @@ public class JavaFxAntTaskTest extends UsefulTestCase{
     @Override
     public boolean convertCss2Bin() {
       return myConvertCss2Bin;
+    }
+
+    @Override
+    public List<JavaFxManifestAttribute> getCustomManifestAttributes() {
+      return myCustomManifestAttributes;
     }
   }
 }

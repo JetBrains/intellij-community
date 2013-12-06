@@ -23,7 +23,6 @@ import com.intellij.util.IntSLRUCache;
 import com.intellij.util.io.IOUtil;
 import com.intellij.util.io.PersistentStringEnumerator;
 import com.intellij.util.text.StringFactory;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -32,7 +31,6 @@ import org.jetbrains.annotations.Nullable;
  */
 public class FileNameCache {
   private static final PersistentStringEnumerator ourNames = FSRecords.getNames();
-  @NonNls private static final String EMPTY = "";
   @SuppressWarnings("unchecked") private static final IntSLRUCache<IntObjectLinkedMap.MapEntry<Object>>[] ourNameCache = new IntSLRUCache[16];
   static {
     final int protectedSize = 40000 / ourNameCache.length;
@@ -75,12 +73,13 @@ public class FileNameCache {
     return h % ourNameCache.length;
   }
 
+  @NotNull
   private static Object convertToBytesIfAsciiString(@NotNull String name) {
     int length = name.length();
-    if (length == 0) return EMPTY;
+    if (length == 0) return "";
 
     if (!IOUtil.isAscii(name)) {
-      return name;
+      return new String(name); // So we don't hold whole char[] buffer of a lengthy path on JDK 6
     }
 
     byte[] bytes = new byte[length];
@@ -125,7 +124,7 @@ public class FileNameCache {
     IntObjectLinkedMap.MapEntry<Object> entry = getEntry(nameId);
     Object rawName = entry.value;
     if (rawName instanceof String) {
-      String thisName = getVFileName(nameId);
+      String thisName = (String)rawName;
       return VirtualFileSystemEntry.compareNames(thisName, name, ignoreCase);
     }
 
@@ -135,20 +134,21 @@ public class FileNameCache {
     int d = bytesLength - name.length();
     if (d != 0) return d;
 
-    return compareBytes(bytes, 0, name, 0, bytesLength, ignoreCase);
+    return compareBytes(bytes, name, bytesLength, ignoreCase);
   }
 
-  private static int compareBytes(@NotNull byte[] name1, int offset1, @NotNull String name2, int offset2, int len, boolean ignoreCase) {
-    for (int i1 = offset1, i2=offset2; i1 < offset1 + len; i1++, i2++) {
-      char c1 = (char)name1[i1];
-      char c2 = name2.charAt(i2);
+  private static int compareBytes(@NotNull byte[] name1, @NotNull String name2, int len, boolean ignoreCase) {
+    for (int i = 0; i < len; i++) {
+      char c1 = (char)name1[i];
+      char c2 = name2.charAt(i);
       int d = StringUtil.compare(c1, c2, ignoreCase);
       if (d != 0) return d;
     }
     return 0;
   }
 
-  static char[] appendPathOnFileSystem(int nameId, @Nullable VirtualFileSystemEntry parent, int accumulatedPathLength, int[] positionRef) {
+  @NotNull
+  static char[] appendPathOnFileSystem(int nameId, @Nullable VirtualFileSystemEntry parent, int accumulatedPathLength, @NotNull int[] positionRef) {
     IntObjectLinkedMap.MapEntry<Object> entry = getEntry(nameId);
     Object o = entry.value;
     int nameLength = o instanceof String ? ((String)o).length() : ((byte[])o).length;

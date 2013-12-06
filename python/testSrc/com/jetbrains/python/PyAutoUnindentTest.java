@@ -17,7 +17,7 @@ package com.jetbrains.python;
 
 import com.intellij.codeInsight.completion.CompletionType;
 import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.util.Computable;
 import com.intellij.psi.PsiFile;
 import com.jetbrains.python.fixtures.PyTestCase;
@@ -78,7 +78,7 @@ public class PyAutoUnindentTest extends PyTestCase {
 
   private void doTyping(final char character) {
     final int offset = myFixture.getEditor().getCaretModel().getOffset();
-    final PsiFile file = ApplicationManager.getApplication().runWriteAction(new Computable<PsiFile>() {
+    final PsiFile file = WriteCommandAction.runWriteCommandAction(null, new Computable<PsiFile>() {
       @Override
       public PsiFile compute() {
         myFixture.getEditor().getCaretModel().moveToOffset(offset);

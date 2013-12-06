@@ -15,6 +15,7 @@
  */
 package git4idea.cherrypick;
 
+import com.intellij.dvcs.DvcsUtil;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
@@ -26,11 +27,7 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.vcs.log.Hash;
-import com.intellij.vcs.log.VcsFullCommitDetails;
-import com.intellij.vcs.log.VcsLog;
-import com.intellij.vcs.log.VcsLogObjectsFactory;
-import com.intellij.vcs.log.impl.VcsLogImpl;
+import com.intellij.vcs.log.*;
 import git4idea.GitLocalBranch;
 import git4idea.GitPlatformFacade;
 import git4idea.GitVcs;
@@ -135,7 +132,13 @@ public class GitCherryPickAction extends DumbAwareAction {
   @Override
   public void update(AnActionEvent e) {
     super.update(e);
-    e.getPresentation().setEnabled(enabled(e));
+    final VcsLog log = getVcsLog(e);
+    if (log != null && !DvcsUtil.logHasRootForVcs(log, GitVcs.getKey())) {
+      e.getPresentation().setEnabledAndVisible(false);
+    }
+    else {
+      e.getPresentation().setEnabled(enabled(e));
+    }
   }
 
   private boolean enabled(AnActionEvent e) {
@@ -175,7 +178,7 @@ public class GitCherryPickAction extends DumbAwareAction {
     if (commits != null) {
       return convertHeavyCommitToFullDetails(commits, project);
     }
-    final VcsLog log = getVcsLog(project);
+    final VcsLog log = getVcsLog(e);
     if (log == null) {
       return null;
     }
@@ -202,7 +205,7 @@ public class GitCherryPickAction extends DumbAwareAction {
     return ContainerUtil.map(commits, new Function<GitHeavyCommit, VcsFullCommitDetails>() {
       @Override
       public VcsFullCommitDetails fun(GitHeavyCommit commit) {
-        final VcsLogObjectsFactory factory = ServiceManager.getService(VcsLogObjectsFactory.class);
+        final VcsLogObjectsFactory factory = ServiceManager.getService(project, VcsLogObjectsFactory.class);
         List<Hash> parents = ContainerUtil.map(commit.getParentsHashes(), new Function<String, Hash>() {
           @Override
           public Hash fun(String hashValue) {
@@ -218,9 +221,8 @@ public class GitCherryPickAction extends DumbAwareAction {
     });
   }
 
-  private static VcsLog getVcsLog(@NotNull Project project) {
-    VcsLog logService = ServiceManager.getService(project, VcsLog.class);
-    return logService != null && ((VcsLogImpl)logService).isReady() ? logService : null;
+  private static VcsLog getVcsLog(@NotNull AnActionEvent event) {
+    return event.getData(VcsLogDataKeys.VSC_LOG);
   }
 
   // TODO remove after removing the old Vcs Log implementation
@@ -233,7 +235,7 @@ public class GitCherryPickAction extends DumbAwareAction {
     if (event.getProject() == null) {
       return null;
     }
-    VcsLog log = getVcsLog(event.getProject());
+    VcsLog log = getVcsLog(event);
     if (log == null) {
       return null;
     }

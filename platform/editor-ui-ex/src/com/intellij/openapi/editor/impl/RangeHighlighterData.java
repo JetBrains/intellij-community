@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -64,7 +64,8 @@ abstract class RangeHighlighterData {
   private static final int TARGET_AREA_IS_EXACT_FLAG = 2;
   private static final int IN_BATCH_CHANGE_FLAG = 3;
   private static final int CHANGED_FLAG = 4;
-  @MagicConstant(intValues = {AFTER_END_OF_LINE_FLAG, ERROR_STRIPE_IS_THIN_FLAG, TARGET_AREA_IS_EXACT_FLAG, IN_BATCH_CHANGE_FLAG, CHANGED_FLAG})
+  private static final int RENDERERS_CHANGED_FLAG = 5;
+  @MagicConstant(intValues = {AFTER_END_OF_LINE_FLAG, ERROR_STRIPE_IS_THIN_FLAG, TARGET_AREA_IS_EXACT_FLAG, IN_BATCH_CHANGE_FLAG, CHANGED_FLAG, RENDERERS_CHANGED_FLAG})
   @interface FlagConstant {}
 
   private boolean isFlagSet(@FlagConstant int flag) {
@@ -90,7 +91,7 @@ abstract class RangeHighlighterData {
     TextAttributes old = myTextAttributes;
     myTextAttributes = textAttributes;
     if (!Comparing.equal(old, textAttributes)) {
-      fireChanged();
+      fireChanged(false);
     }
   }
 
@@ -104,8 +105,11 @@ abstract class RangeHighlighterData {
   }
 
   public void setLineMarkerRenderer(LineMarkerRenderer renderer) {
+    LineMarkerRenderer old = myLineMarkerRenderer;
     myLineMarkerRenderer = renderer;
-    fireChanged();
+    if (!Comparing.equal(old, renderer)) {
+      fireChanged(true);
+    }
   }
 
   public CustomHighlighterRenderer getCustomRenderer() {
@@ -113,7 +117,11 @@ abstract class RangeHighlighterData {
   }
 
   public void setCustomRenderer(CustomHighlighterRenderer renderer) {
+    CustomHighlighterRenderer old = myCustomRenderer;
     myCustomRenderer = renderer;
+    if (!Comparing.equal(old, renderer)) {
+      fireChanged(true);
+    }
   }
 
   public GutterIconRenderer getGutterIconRenderer() {
@@ -124,7 +132,7 @@ abstract class RangeHighlighterData {
     GutterMark old = myGutterIconRenderer;
     myGutterIconRenderer = renderer;
     if (!Comparing.equal(old, renderer)) {
-      fireChanged();
+      fireChanged(true);
     }
   }
 
@@ -136,7 +144,7 @@ abstract class RangeHighlighterData {
     Color old = myErrorStripeColor;
     myErrorStripeColor = color;
     if (!Comparing.equal(old, color)) {
-      fireChanged();
+      fireChanged(false);
     }
   }
 
@@ -149,7 +157,7 @@ abstract class RangeHighlighterData {
     Object old = myErrorStripeTooltip;
     myErrorStripeTooltip = tooltipObject;
     if (!Comparing.equal(old, tooltipObject)) {
-      fireChanged();
+      fireChanged(false);
     }
   }
 
@@ -162,7 +170,7 @@ abstract class RangeHighlighterData {
     boolean old = isThinErrorStripeMark();
     setFlag(ERROR_STRIPE_IS_THIN_FLAG, value);
     if (old != value) {
-      fireChanged();
+      fireChanged(false);
     }
   }
 
@@ -174,7 +182,7 @@ abstract class RangeHighlighterData {
     Color old = myLineSeparatorColor;
     myLineSeparatorColor = color;
     if (!Comparing.equal(old, color)) {
-      fireChanged();
+      fireChanged(false);
     }
   }
 
@@ -186,13 +194,13 @@ abstract class RangeHighlighterData {
     SeparatorPlacement old = mySeparatorPlacement;
     mySeparatorPlacement = placement;
     if (!Comparing.equal(old, placement)) {
-      fireChanged();
+      fireChanged(false);
     }
   }
 
   public void setEditorFilter(@NotNull MarkupEditorFilter filter) {
     myFilter = filter;
-    fireChanged();
+    fireChanged(false);
   }
 
   @NotNull
@@ -208,17 +216,20 @@ abstract class RangeHighlighterData {
     boolean old = isAfterEndOfLine();
     setFlag(AFTER_END_OF_LINE_FLAG, afterEndOfLine);
     if (old != afterEndOfLine) {
-      fireChanged();
+      fireChanged(false);
     }
   }
 
-  private void fireChanged() {
+  private void fireChanged(boolean renderersChanged) {
     if (myModel instanceof MarkupModelEx) {
       if (isFlagSet(IN_BATCH_CHANGE_FLAG)) {
         setFlag(CHANGED_FLAG, true);
+        if (renderersChanged) {
+          setFlag(RENDERERS_CHANGED_FLAG, true);
+        }
       }
       else {
-        ((MarkupModelEx)myModel).fireAttributesChanged(getRangeHighlighter());
+        ((MarkupModelEx)myModel).fireAttributesChanged(getRangeHighlighter(), renderersChanged);
       }
     }
   }
@@ -241,19 +252,24 @@ abstract class RangeHighlighterData {
     return Math.min(textLength, document.getLineEndOffset(document.getLineNumber(endOffset)) + 1);
   }
 
-  // returns true if change was detected
-  boolean changeAttributesInBatch(@NotNull Consumer<RangeHighlighterEx> change) {
+  enum ChangeResult { NOT_CHANGED, MINOR_CHANGE, RENDERERS_CHANGED }
+  @NotNull
+  ChangeResult changeAttributesInBatch(@NotNull Consumer<RangeHighlighterEx> change) {
     assert !isFlagSet(IN_BATCH_CHANGE_FLAG);
     assert !isFlagSet(CHANGED_FLAG);
     setFlag(IN_BATCH_CHANGE_FLAG, true);
-    boolean result;
+    setFlag(RENDERERS_CHANGED_FLAG, false);
+    ChangeResult result;
     try {
       change.consume(getRangeHighlighter());
     }
     finally {
       setFlag(IN_BATCH_CHANGE_FLAG, false);
-      result = isFlagSet(CHANGED_FLAG);
+      boolean changed = isFlagSet(CHANGED_FLAG);
+      boolean renderersChanged = isFlagSet(RENDERERS_CHANGED_FLAG);
+      result = changed ? renderersChanged ? ChangeResult.RENDERERS_CHANGED : ChangeResult.MINOR_CHANGE : ChangeResult.NOT_CHANGED;
       setFlag(CHANGED_FLAG, false);
+      setFlag(RENDERERS_CHANGED_FLAG, false);
     }
     return result;
   }
@@ -263,7 +279,11 @@ abstract class RangeHighlighterData {
   }
 
   public void setLineSeparatorRenderer(LineSeparatorRenderer renderer) {
+    LineSeparatorRenderer old = myLineSeparatorRenderer;
     myLineSeparatorRenderer = renderer;
+    if (!Comparing.equal(old, renderer)) {
+      fireChanged(true);
+    }
   }
 
   public LineSeparatorRenderer getLineSeparatorRenderer() {

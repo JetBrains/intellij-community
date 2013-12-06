@@ -40,7 +40,8 @@ import org.jetbrains.jps.model.serialization.PathMacroUtil;
 import java.util.*;
 
 public class BasePathMacroManager extends PathMacroManager {
-  private static CompositePathMacroFilter ourFilter = new CompositePathMacroFilter(Extensions.getExtensions(PathMacrosCollector.MACRO_FILTER_EXTENSION_POINT_NAME));
+  private static final CompositePathMacroFilter ourFilter = new CompositePathMacroFilter(Extensions.getExtensions(PathMacrosCollector.MACRO_FILTER_EXTENSION_POINT_NAME));
+
   private PathMacrosImpl myPathMacros;
 
   public BasePathMacroManager(@Nullable PathMacros pathMacros) {

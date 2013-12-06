@@ -16,8 +16,7 @@
 package com.jetbrains.python;
 
 import com.intellij.codeInsight.editorActions.JoinRawLinesHandlerDelegate;
-import com.intellij.openapi.application.Result;
-import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.jetbrains.python.editor.PyJoinLinesHandler;
@@ -46,12 +45,12 @@ public class PyJoinLinesTest extends PyTestCase {
     while (" \n\t".indexOf(text.charAt(i)) >= 0) i += 1;
     final int end = i;
     final JoinRawLinesHandlerDelegate handler = new PyJoinLinesHandler();
-    new WriteAction() {
+    WriteCommandAction.runWriteCommandAction(myFixture.getProject(), new Runnable() {
       @Override
-      protected void run(Result result) throws Throwable {
+      public void run() {
         handler.tryJoinRawLines(doc, myFixture.getFile(), start, end);
       }
-    }.execute().throwException();
+    });
     myFixture.checkResultByFile(path + getTestName(false) + "-after.py");
   }
 

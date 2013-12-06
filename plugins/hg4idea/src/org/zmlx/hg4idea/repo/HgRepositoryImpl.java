@@ -51,7 +51,7 @@ public class HgRepositoryImpl extends RepositoryImpl implements HgRepository {
     super(project, rootDir, parentDisposable);
     myHgDir = rootDir.findChild(HgUtil.DOT_HG);
     assert myHgDir != null : ".hg directory wasn't found under " + rootDir.getPresentableUrl();
-    myReader = new HgRepositoryReader(VfsUtilCore.virtualToIoFile(myHgDir));
+    myReader = new HgRepositoryReader(project, VfsUtilCore.virtualToIoFile(myHgDir));
     myConfig = HgConfig.getInstance(project, rootDir);
     update();
   }
@@ -137,10 +137,10 @@ public class HgRepositoryImpl extends RepositoryImpl implements HgRepository {
 
   @Override
   public void update() {
-    HgRepoInfo currentInfo = readRepoInfo(myInfo);
+    HgRepoInfo currentInfo = readRepoInfo();
     // update only if something changed!!!   if update every time - new log will be refreshed every time, too.
     // Then blinking and do not work properly;
-    if (!Disposer.isDisposed(getProject()) && currentInfo != null && !currentInfo.equals(myInfo)) {
+    if (!Disposer.isDisposed(getProject()) && !currentInfo.equals(myInfo)) {
       myInfo = currentInfo;
       getProject().getMessageBus().syncPublisher(HgVcs.STATUS_TOPIC).update(getProject(), getRoot());
     }
@@ -152,12 +152,9 @@ public class HgRepositoryImpl extends RepositoryImpl implements HgRepository {
     return String.format("HgRepository " + getRoot() + " : " + myInfo);
   }
 
-  @Nullable
-  private HgRepoInfo readRepoInfo(@Nullable HgRepoInfo previousInfo) {
+  @NotNull
+  private HgRepoInfo readRepoInfo() {
     myIsFresh = myIsFresh && myReader.checkIsFresh();
-    if (isFresh()) {
-      return previousInfo;
-    }
     //in GitRepositoryImpl there are temporary state object for reader fields storing! Todo Check;
     return
       new HgRepoInfo(myReader.readCurrentBranch(), myReader.readCurrentRevision(), myReader.readState(), myReader.readBranches(),

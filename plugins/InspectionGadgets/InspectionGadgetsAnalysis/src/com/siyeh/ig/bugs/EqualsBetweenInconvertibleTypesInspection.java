@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2013 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,11 +16,13 @@
 package com.siyeh.ig.bugs;
 
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.MethodCallUtils;
+import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NotNull;
 
 public class EqualsBetweenInconvertibleTypesInspection
@@ -64,31 +66,34 @@ public class EqualsBetweenInconvertibleTypesInspection
       if (!MethodCallUtils.isEqualsCall(expression)) {
         return;
       }
-      final PsiReferenceExpression methodExpression =
-        expression.getMethodExpression();
+      final PsiReferenceExpression methodExpression = expression.getMethodExpression();
       final PsiExpressionList argumentList = expression.getArgumentList();
-      final PsiExpression[] args = argumentList.getExpressions();
-      if (args.length != 1) {
+      final PsiExpression[] arguments = argumentList.getExpressions();
+      if (arguments.length != 1) {
         return;
       }
-      final PsiExpression expression1 = args[0];
-      final PsiExpression expression2 =
-        methodExpression.getQualifierExpression();
+      final PsiExpression expression1 = arguments[0];
+      final PsiExpression expression2 = methodExpression.getQualifierExpression();
+      final PsiType comparisonType;
       if (expression2 == null) {
+        final PsiClass aClass = PsiTreeUtil.getParentOfType(expression, PsiClass.class);
+        if (aClass == null) {
+          return;
+        }
+        comparisonType = TypeUtils.getType(aClass);
+      } else {
+        comparisonType = expression2.getType();
+      }
+      if (comparisonType == null) {
         return;
       }
       final PsiType comparedType = expression1.getType();
       if (comparedType == null) {
         return;
       }
-      final PsiType comparisonType = expression2.getType();
-      if (comparisonType == null) {
-        return;
-      }
       final PsiType comparedTypeErasure = TypeConversionUtil.erasure(comparedType);
       final PsiType comparisonTypeErasure = TypeConversionUtil.erasure(comparisonType);
-      if (comparedTypeErasure == null ||
-          comparisonTypeErasure == null ||
+      if (comparedTypeErasure == null || comparisonTypeErasure == null ||
           TypeConversionUtil.areTypesConvertible(comparedTypeErasure, comparisonTypeErasure)) {
         return;
       }

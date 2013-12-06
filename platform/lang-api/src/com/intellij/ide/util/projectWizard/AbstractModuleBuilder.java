@@ -33,11 +33,6 @@ public abstract class AbstractModuleBuilder extends ProjectBuilder {
 
   public abstract ModuleWizardStep[] createWizardSteps(@NotNull WizardContext wizardContext, @NotNull ModulesProvider modulesProvider);
 
-  /** @deprecated Will be removed soon */
-  public ModuleWizardStep[] createWizardSteps(@NotNull WizardContext wizardContext, @NotNull ModulesProvider modulesProvider, boolean forNewWizard) {
-    return createWizardSteps(wizardContext, modulesProvider);
-  }
-
   @Nullable
   public ModuleWizardStep modifySettingsStep(@NotNull SettingsStep settingsStep) {
     return null;

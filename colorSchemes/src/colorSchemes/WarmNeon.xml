@@ -217,6 +217,13 @@
         <option name="FONT_TYPE" value="1" />
       </value>
     </option>
+    <option name="CTRL_CLICKABLE">
+      <value>
+        <option name="FOREGROUND" value="62ccb5" />
+        <option name="EFFECT_COLOR" value="83b9a3" />
+        <option name="EFFECT_TYPE" value="1" />
+      </value>
+    </option>
     <option name="CUSTOM_KEYWORD1_ATTRIBUTES">
       <value>
         <option name="FOREGROUND" value="e6e5a9" />

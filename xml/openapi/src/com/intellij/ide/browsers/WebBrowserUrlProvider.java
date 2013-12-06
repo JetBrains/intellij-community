@@ -20,14 +20,18 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.util.Url;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collection;
+
 public abstract class WebBrowserUrlProvider {
-  public static ExtensionPointName<WebBrowserUrlProvider> EP_NAME = ExtensionPointName.create("com.intellij.webBrowserUrlProvider");
+  public static final ExtensionPointName<WebBrowserUrlProvider> EP_NAME = ExtensionPointName.create("com.intellij.webBrowserUrlProvider");
 
   /**
-   * Browser exceptions are printed in Error Dialog when user presses any browser button.
+   * Browser exceptions are printed in Error Dialog when user presses any browser button
    */
   public static class BrowserException extends Exception {
     public BrowserException(final String message) {
@@ -35,16 +39,16 @@ public abstract class WebBrowserUrlProvider {
     }
   }
 
-  public boolean canHandleElement(@NotNull PsiElement element, @NotNull PsiFile psiFile, @NotNull Ref<Url> result) {
+  public boolean canHandleElement(@NotNull PsiElement element, @NotNull PsiFile psiFile, @NotNull Ref<Collection<Url>> result) {
     VirtualFile file = psiFile.getVirtualFile();
     if (file == null) {
       return false;
     }
 
     try {
-      Url url = getUrl(element, psiFile, file);
-      if (url != null) {
-        result.set(url);
+      Collection<Url> urls = getUrls(element, psiFile, file);
+      if (!urls.isEmpty()) {
+        result.set(urls);
         return true;
       }
     }
@@ -55,7 +59,13 @@ public abstract class WebBrowserUrlProvider {
   }
 
   @Nullable
-  public abstract Url getUrl(@NotNull PsiElement element, @NotNull PsiFile psiFile, @NotNull VirtualFile virtualFile) throws BrowserException;
+  protected Url getUrl(@NotNull PsiElement element, @NotNull PsiFile psiFile, @NotNull VirtualFile virtualFile) throws BrowserException {
+    return null;
+  }
+
+  public Collection<Url> getUrls(@NotNull PsiElement element, @NotNull PsiFile psiFile, @NotNull VirtualFile virtualFile) throws BrowserException {
+    return ContainerUtil.createMaybeSingletonSet(getUrl(element, psiFile, virtualFile));
+  }
 
   @Nullable
   public String getOpenInBrowserActionText(@NotNull PsiFile file) {

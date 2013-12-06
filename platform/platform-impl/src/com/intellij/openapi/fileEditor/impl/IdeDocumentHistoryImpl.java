@@ -22,7 +22,6 @@ import com.intellij.openapi.command.CommandListener;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.impl.CommandMerger;
 import com.intellij.openapi.components.*;
-import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.EditorFactory;
@@ -310,7 +309,7 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Projec
       }
     }
 
-    return VfsUtil.toVirtualFileArray(files);
+    return VfsUtilCore.toVirtualFileArray(files);
   }
 
   @Override
@@ -521,7 +520,7 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Projec
     private final VirtualFile myFile;
     private final FileEditorState myNavigationState;
     private final String myEditorTypeId;
-    private WeakReference<EditorWindow> myWindow;
+    private final WeakReference<EditorWindow> myWindow;
 
     public PlaceInfo(@NotNull VirtualFile file, FileEditorState navigationState, String editorTypeId, @Nullable EditorWindow window) {
       myNavigationState = navigationState;

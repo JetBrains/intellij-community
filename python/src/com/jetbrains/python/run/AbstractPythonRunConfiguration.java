@@ -16,6 +16,7 @@
 package com.jetbrains.python.run;
 
 import com.google.common.collect.Lists;
+import com.intellij.diagnostic.logging.LogConfigurationPanel;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.Location;
 import com.intellij.execution.configuration.AbstractRunConfiguration;
@@ -125,11 +126,9 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractRunConfig
     // tabs provided by extensions:
     //noinspection unchecked
     PythonRunConfigurationExtensionsManager.getInstance().appendEditors(this, (SettingsEditorGroup)group);
+    group.addEditor(ExecutionBundle.message("logs.tab.title"), new LogConfigurationPanel<T>());
 
-    if (group.getEditors().size() > 0) {
-      return group;
-    }
-    return runConfigurationEditor;
+    return group;
   }
 
   protected abstract SettingsEditor<T> createConfigurationEditor();

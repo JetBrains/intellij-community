@@ -88,7 +88,13 @@ public class VfsUtilCore {
   }
 
   public static boolean isEqualOrAncestor(@NotNull String ancestorUrl, @NotNull String fileUrl) {
-    return ancestorUrl.equals(fileUrl) || StringUtil.startsWithConcatenation(fileUrl, ancestorUrl, "/");
+    if (ancestorUrl.equals(fileUrl)) return true;
+    if (StringUtil.endsWithChar(ancestorUrl, '/')) {
+      return fileUrl.startsWith(ancestorUrl);
+    }
+    else {
+      return StringUtil.startsWithConcatenation(fileUrl, ancestorUrl, "/");
+    }
   }
 
   public static boolean isAncestor(@NotNull File ancestor, @NotNull File file, boolean strict) {
@@ -352,7 +358,7 @@ public class VfsUtilCore {
 
   @NotNull
   public static String pathToUrl(@NonNls @NotNull String path) {
-    return VirtualFileManager.constructUrl(StandardFileSystems.FILE_PROTOCOL, path);
+    return VirtualFileManager.constructUrl(URLUtil.FILE_PROTOCOL, path);
   }
 
   public static List<File> virtualToIoFiles(@NotNull Collection<VirtualFile> scope) {
@@ -362,6 +368,11 @@ public class VfsUtilCore {
         return virtualToIoFile(file);
       }
     });
+  }
+
+  @NotNull
+  public static String toIdeaUrl(@NotNull String url) {
+    return toIdeaUrl(url, true);
   }
 
   @NotNull
@@ -376,9 +387,9 @@ public class VfsUtilCore {
       String suffix = url.substring(index + 2);
 
       if (SystemInfoRt.isWindows) {
-        return prefix + "://" + suffix;
+        return prefix + URLUtil.SCHEME_SEPARATOR + suffix;
       }
-      else if (removeLocalhostPrefix && prefix.equals(StandardFileSystems.FILE_PROTOCOL) && suffix.startsWith(LOCALHOST_URI_PATH_PREFIX)) {
+      else if (removeLocalhostPrefix && prefix.equals(URLUtil.FILE_PROTOCOL) && suffix.startsWith(LOCALHOST_URI_PATH_PREFIX)) {
         // sometimes (e.g. in Google Chrome for Mac) local file url is prefixed with 'localhost' so we need to remove it
         return prefix + ":///" + suffix.substring(LOCALHOST_URI_PATH_PREFIX.length());
       }
@@ -412,8 +423,8 @@ public class VfsUtilCore {
   public static String convertFromUrl(@NotNull URL url) {
     String protocol = url.getProtocol();
     String path = url.getPath();
-    if (protocol.equals(StandardFileSystems.JAR_PROTOCOL)) {
-      if (StringUtil.startsWithConcatenation(path, StandardFileSystems.FILE_PROTOCOL, PROTOCOL_DELIMITER)) {
+    if (protocol.equals(URLUtil.JAR_PROTOCOL)) {
+      if (StringUtil.startsWithConcatenation(path, URLUtil.FILE_PROTOCOL, PROTOCOL_DELIMITER)) {
         try {
           URL subURL = new URL(path);
           path = subURL.getPath();
@@ -490,7 +501,7 @@ public class VfsUtilCore {
       }
     }
 
-    if (file == null && uri.contains(StandardFileSystems.JAR_SEPARATOR)) {
+    if (file == null && uri.contains(URLUtil.JAR_SEPARATOR)) {
       file = StandardFileSystems.jar().findFileByPath(uri);
       if (file == null && base == null) {
         file = VirtualFileManager.getInstance().findFileByUrl(uri);

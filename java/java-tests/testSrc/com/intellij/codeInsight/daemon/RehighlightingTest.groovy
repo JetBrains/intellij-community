@@ -15,7 +15,7 @@
  */
 package com.intellij.codeInsight.daemon
 
-import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase
 /**
  * @author peter
@@ -54,7 +54,7 @@ import java.lang.reflect.Modifier;
     myFixture.type(' ')
     assert myFixture.doHighlighting().size() > 0
 
-    ApplicationManager.application.runWriteAction {
+    WriteCommandAction.runWriteCommandAction project, {
       myFixture.editor.document.insertString(myFixture.editor.caretModel.offset, caption)
     }
 

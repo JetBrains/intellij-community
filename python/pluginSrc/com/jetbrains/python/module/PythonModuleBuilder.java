@@ -48,8 +48,7 @@ public class PythonModuleBuilder extends PythonModuleBuilderBase implements Sour
 
   @Override
   public ModuleWizardStep[] createWizardSteps(@NotNull WizardContext wizardContext,
-                                              @NotNull ModulesProvider modulesProvider,
-                                              boolean forNewWizard) {
-    return getModuleType().createWizardSteps(wizardContext, this, modulesProvider, forNewWizard);
+                                              @NotNull ModulesProvider modulesProvider) {
+    return getModuleType().createWizardSteps(wizardContext, this, modulesProvider);
   }
 }

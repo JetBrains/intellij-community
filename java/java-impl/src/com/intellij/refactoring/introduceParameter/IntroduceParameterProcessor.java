@@ -41,6 +41,7 @@ import com.intellij.refactoring.IntroduceParameterRefactoring;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.changeSignature.ChangeSignatureProcessor;
 import com.intellij.refactoring.introduceVariable.IntroduceVariableBase;
+import com.intellij.refactoring.listeners.RefactoringEventData;
 import com.intellij.refactoring.util.*;
 import com.intellij.refactoring.util.occurrences.ExpressionOccurrenceManager;
 import com.intellij.refactoring.util.occurrences.LocalVariableOccurrenceManager;
@@ -334,6 +335,20 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor implem
       if(conflict != null) return;
       super.visitElement(element);
     }
+  }
+
+  @Nullable
+  @Override
+  protected String getRefactoringId() {
+    return "refactoring.introduceParameter";
+  }
+
+  @Nullable
+  @Override
+  protected RefactoringEventData getBeforeData() {
+    RefactoringEventData data = new RefactoringEventData();
+    data.addElements(new PsiElement[] {myLocalVariable, myExpressionToSearch});
+    return data;
   }
 
   protected void performRefactoring(UsageInfo[] usages) {

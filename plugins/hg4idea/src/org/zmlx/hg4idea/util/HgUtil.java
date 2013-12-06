@@ -23,6 +23,7 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -38,8 +39,6 @@ import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.impl.status.StatusBarUtil;
 import com.intellij.ui.GuiUtils;
-import com.intellij.util.Function;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -600,7 +599,7 @@ public abstract class HgUtil {
         return false;
       }
       HgCommandResult result = getVersionOutput(executable);
-      return result.getRawError().isEmpty();
+      return result.getExitValue() == 0 && !result.getRawOutput().isEmpty();
     }
     catch (Throwable e) {
       LOG.info("Error during hg executable validation: ", e);
@@ -620,11 +619,43 @@ public abstract class HgUtil {
   }
 
   public static List<String> getNamesWithoutHashes(Collection<HgNameWithHashInfo> namesWithHashes) {
-    return ContainerUtil.map(namesWithHashes, new Function<HgNameWithHashInfo, String>() {
-      @Override
-      public String fun(HgNameWithHashInfo info) {
-        return info.getName();
+    //return names without duplication (actually for several heads in one branch)
+    List<String> names = new ArrayList<String>();
+    for (HgNameWithHashInfo hash : namesWithHashes) {
+      if (!names.contains(hash.getName())) {
+        names.add(hash.getName());
       }
-    });
+    }
+    return names;
+  }
+
+  @NotNull
+  public static Pair<String, String> parseUserNameAndEmail(@NotNull String authorString) {
+    // Vasya Pupkin <vasya.pupkin@jetbrains.com> -> Vasya Pupkin , vasya.pupkin@jetbrains.com
+    int startEmailIndex = authorString.indexOf('<');
+    int startDomainIndex = authorString.indexOf('@');
+    int endEmailIndex = authorString.indexOf('>');
+    String userName;
+    String email;
+    if (0 < startEmailIndex && startEmailIndex < startDomainIndex && startDomainIndex < endEmailIndex) {
+      email = authorString.substring(startEmailIndex + 1, endEmailIndex);
+      userName = convertUserName(authorString.substring(0, startEmailIndex));
+    }
+
+    // vasya.pupkin@email.com --> vasya pupkin, vasya.pupkin@email.com
+    else if (!authorString.contains(" ") && startDomainIndex > 0) { //simple e-mail check. john@localhost
+      userName = convertUserName(authorString.substring(0, startDomainIndex));
+      email = authorString;
+    }
+
+    else {
+      userName = convertUserName(authorString);
+      email = "";
+    }
+    return Pair.create(userName, email);
+  }
+
+  private static String convertUserName(@NotNull String userNameInfo) {
+    return userNameInfo.trim().replace('.', ' ').replace('_', ' ').replace('-', ' ');
   }
 }

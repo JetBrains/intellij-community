@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,11 +45,17 @@ public abstract class StubIndex {
     return StubIndexHolder.ourInstance;
   }
 
+  /**
+   * @deprecated use {@link #getElements(StubIndexKey, Object, com.intellij.openapi.project.Project, com.intellij.psi.search.GlobalSearchScope, Class)}
+   */
   public abstract <Key, Psi extends PsiElement> Collection<Psi> get(@NotNull StubIndexKey<Key, Psi> indexKey,
                                                                     @NotNull Key key,
                                                                     @NotNull Project project,
                                                                     final GlobalSearchScope scope);
 
+  /**
+   * @deprecated use {@link #getElements(StubIndexKey, Object, com.intellij.openapi.project.Project, com.intellij.psi.search.GlobalSearchScope, Class)}
+   */
   public <Key, Psi extends PsiElement> Collection<Psi> get(@NotNull StubIndexKey<Key, Psi> indexKey,
                                                                     @NotNull Key key,
                                                                     @NotNull Project project,
@@ -82,12 +88,33 @@ public abstract class StubIndex {
     return processAllKeys(indexKey, scope.getProject(), processor);
   }
 
+  /**
+   * @deprecated use {@link #getElements(StubIndexKey, Object, com.intellij.openapi.project.Project, com.intellij.psi.search.GlobalSearchScope, Class)}
+   */
   public <Key, Psi extends PsiElement> Collection<Psi> safeGet(@NotNull StubIndexKey<Key, Psi> indexKey,
                                                                @NotNull Key key,
                                                                @NotNull final Project project,
                                                                final GlobalSearchScope scope,
                                                                @NotNull Class<Psi> requiredClass) {
-    Collection<Psi> collection = getInstance().get(indexKey, key, project, scope);
+    return getElements(indexKey, key, project, scope, requiredClass);
+  }
+
+  public static <Key, Psi extends PsiElement> Collection<Psi> getElements(@NotNull StubIndexKey<Key, Psi> indexKey,
+                                                                          @NotNull Key key,
+                                                                          @NotNull final Project project,
+                                                                          final GlobalSearchScope scope,
+                                                                          @NotNull Class<Psi> requiredClass) {
+    return getElements(indexKey, key, project, scope, null, requiredClass);
+  }
+
+  public static <Key, Psi extends PsiElement> Collection<Psi> getElements(@NotNull StubIndexKey<Key, Psi> indexKey,
+                                                                          @NotNull Key key,
+                                                                          @NotNull final Project project,
+                                                                          final GlobalSearchScope scope,
+                                                                          @Nullable IdFilter idFilter,
+                                                                          @NotNull Class<Psi> requiredClass) {
+    //noinspection deprecation
+    Collection<Psi> collection = getInstance().get(indexKey, key, project, scope, idFilter);
     for (Iterator<Psi> iterator = collection.iterator(); iterator.hasNext(); ) {
       Psi psi = iterator.next();
       if (!requiredClass.isInstance(psi)) {
@@ -98,15 +125,15 @@ public abstract class StubIndex {
           FileBasedIndex.getInstance().requestReindex(faultyContainer);
         }
 
-        reportStubPsiMismatch(psi, faultyContainer);
+        getInstance().reportStubPsiMismatch(psi, faultyContainer, requiredClass);
       }
     }
 
     return collection;
   }
 
-  protected <Psi extends PsiElement> void reportStubPsiMismatch(Psi psi, VirtualFile file) {
-    LOG.error("Invalid stub element type in index: " + file + ". found: " + psi);
+  protected <Psi extends PsiElement> void reportStubPsiMismatch(Psi psi, VirtualFile file, Class<Psi> requiredClass) {
+    LOG.error("Invalid stub element type in index: " + file + ". found: " + psi + ". expected: " + requiredClass);
   }
 
 }

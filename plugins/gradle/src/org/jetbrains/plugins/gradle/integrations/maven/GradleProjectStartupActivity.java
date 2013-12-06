@@ -16,6 +16,7 @@
 package org.jetbrains.plugins.gradle.integrations.maven;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.startup.StartupManager;
@@ -30,6 +31,6 @@ public class GradleProjectStartupActivity implements StartupActivity {
   @Override
   public void runActivity(@NotNull final Project project) {
     if (ApplicationManager.getApplication().isUnitTestMode()) return;
-    StartupManager.getInstance(project).registerPostStartupActivity(new ImportMavenRepositoriesTask(project));
+    DumbService.getInstance(project).smartInvokeLater(new ImportMavenRepositoriesTask(project));
   }
 }

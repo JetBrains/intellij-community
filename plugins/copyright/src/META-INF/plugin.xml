@@ -33,7 +33,9 @@
       <updater filetype="HTML" implementationClass="com.maddyhome.idea.copyright.psi.UpdateXmlCopyrightsProvider"/>
     </extensions>
     <extensionPoints>
-      <extensionPoint name="updater" beanClass="com.intellij.openapi.fileTypes.FileTypeExtensionPoint"/>
+      <extensionPoint name="updater" beanClass="com.intellij.openapi.fileTypes.FileTypeExtensionPoint">
+        <with attribute="implementationClass" implements="com.maddyhome.idea.copyright.psi.UpdateCopyrightsProvider"/>
+      </extensionPoint>
     </extensionPoints>
 
 

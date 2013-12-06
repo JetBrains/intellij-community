@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.history.integration;
 
 import com.intellij.history.core.LocalHistoryFacade;
@@ -24,6 +23,7 @@ import com.intellij.history.core.tree.Entry;
 import com.intellij.history.core.tree.RootEntry;
 import com.intellij.history.utils.RunnableAdapter;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ContentEntry;
@@ -43,7 +43,7 @@ import java.io.IOException;
 import java.util.List;
 
 public abstract class IntegrationTestCase extends PlatformTestCase {
-  public static final int TIMESTAMP_INCREMENT = 3000;
+  protected static final int TIMESTAMP_INCREMENT = 3000;
   protected static final String FILTERED_DIR_NAME = "CVS";
 
   protected VirtualFile myRoot;
@@ -93,12 +93,16 @@ public abstract class IntegrationTestCase extends PlatformTestCase {
 
   @NotNull
   protected VirtualFile createFile(String name, String content) throws IOException {
-    return LocalFileSystem.getInstance().refreshAndFindFileByPath(createFileExternally(name, content));
+    VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByPath(createFileExternally(name, content));
+    assertNotNull(name, file);
+    return file;
   }
 
   @NotNull
   protected VirtualFile createDirectory(String name) throws IOException {
-    return LocalFileSystem.getInstance().refreshAndFindFileByPath(createDirectoryExternally(name));
+    VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByPath(createDirectoryExternally(name));
+    assertNotNull(name, file);
+    return file;
   }
 
   protected void setContent(VirtualFile f, String content) throws IOException {
@@ -106,7 +110,7 @@ public abstract class IntegrationTestCase extends PlatformTestCase {
   }
 
   protected void setContent(VirtualFile f, String content, long timestamp) throws IOException {
-    f.setBinaryContent(content.getBytes(), -1, timestamp);
+    f.setBinaryContent(content.getBytes("UTF-8"), -1, timestamp);
   }
 
   protected String createFileExternally(String name) throws IOException {
@@ -115,26 +119,28 @@ public abstract class IntegrationTestCase extends PlatformTestCase {
 
   protected String createFileExternally(String name, String content) throws IOException {
     File f = new File(myRoot.getPath(), name);
-    f.getParentFile().mkdirs();
-    f.createNewFile();
-    if (content != null) FileUtil.writeToFile(f, content.getBytes());
+    assertTrue(f.getPath(), f.getParentFile().mkdirs() || f.getParentFile().isDirectory());
+    assertTrue(f.getPath(), f.createNewFile() || f.exists());
+    if (content != null) FileUtil.writeToFile(f, content.getBytes("UTF-8"));
     return FileUtil.toSystemIndependentName(f.getPath());
   }
 
   protected String createDirectoryExternally(String name) throws IOException {
     File f = new File(myRoot.getPath(), name);
-    f.mkdirs();
+    assertTrue(f.getPath(), f.mkdirs() || f.isDirectory());
     return FileUtil.toSystemIndependentName(f.getPath());
   }
 
   protected void setContentExternally(String path, String content) throws IOException {
     File f = new File(path);
-    FileUtil.writeToFile(f, content.getBytes());
-    f.setLastModified(f.lastModified() + 2000);
+    FileUtil.writeToFile(f, content.getBytes("UTF-8"));
+    assertTrue(f.getPath(), f.setLastModified(f.lastModified() + 2000));
   }
 
   protected void setDocumentTextFor(VirtualFile f, String text) {
-    FileDocumentManager.getInstance().getDocument(f).setText(text);
+    Document document = FileDocumentManager.getInstance().getDocument(f);
+    assertNotNull(f.getPath(), document);
+    document.setText(text);
   }
 
   protected LocalHistoryFacade getVcs() {
@@ -195,7 +201,6 @@ public abstract class IntegrationTestCase extends PlatformTestCase {
       VirtualFileManager.getInstance().removeVirtualFileListener(l);
     }
   }
-
 
   protected static void assertContent(String expected, Entry e) {
     assertEquals(expected, new String(e.getContent().getBytes()));

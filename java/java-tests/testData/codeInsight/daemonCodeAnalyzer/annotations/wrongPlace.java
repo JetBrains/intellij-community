@@ -28,3 +28,9 @@ interface I {
 @interface Caller {
   Anno anno() default @Anno;
 }
+
+@interface AnnoArray {
+  @interface Part { }
+
+  Part[] arrayValue() default {@Part, @Part};
+}

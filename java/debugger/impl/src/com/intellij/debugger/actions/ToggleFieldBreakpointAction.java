@@ -19,8 +19,11 @@ import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.InstanceFilter;
 import com.intellij.debugger.SourcePosition;
+import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.DebuggerUtils;
+import com.intellij.debugger.engine.events.DebuggerContextCommandImpl;
 import com.intellij.debugger.engine.requests.RequestManagerImpl;
+import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.impl.DebuggerSession;
 import com.intellij.debugger.ui.breakpoints.Breakpoint;
 import com.intellij.debugger.ui.breakpoints.BreakpointManager;
@@ -29,12 +32,14 @@ import com.intellij.debugger.ui.impl.watch.DebuggerTree;
 import com.intellij.debugger.ui.impl.watch.DebuggerTreeNodeImpl;
 import com.intellij.debugger.ui.impl.watch.FieldDescriptorImpl;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -83,7 +88,10 @@ public class ToggleFieldBreakpointAction extends AnAction {
 
             RequestManagerImpl.createRequests(fieldBreakpoint);
 
-            manager.editBreakpoint(fieldBreakpoint, CommonDataKeys.EDITOR.getData(e.getDataContext()));
+            final Editor editor = CommonDataKeys.EDITOR.getData(e.getDataContext());
+            if (editor != null) {
+              manager.editBreakpoint(fieldBreakpoint, editor);
+            }
           }
         }
         else {
@@ -126,7 +134,7 @@ public class ToggleFieldBreakpointAction extends AnAction {
   @Nullable
   public static SourcePosition getPlace(AnActionEvent event) {
     final DataContext dataContext = event.getDataContext();
-    Project project = event.getData(CommonDataKeys.PROJECT);
+    final Project project = event.getData(CommonDataKeys.PROJECT);
     if(project == null) {
       return null;
     }
@@ -142,8 +150,28 @@ public class ToggleFieldBreakpointAction extends AnAction {
 
     final DebuggerTreeNodeImpl selectedNode = DebuggerAction.getSelectedNode(dataContext);
     if(selectedNode != null && selectedNode.getDescriptor() instanceof FieldDescriptorImpl) {
-      FieldDescriptorImpl descriptor = (FieldDescriptorImpl)selectedNode.getDescriptor();
-      return descriptor.getSourcePosition(project, DebuggerAction.getDebuggerContext(dataContext));
+      final DebuggerContextImpl debuggerContext = DebuggerAction.getDebuggerContext(dataContext);
+      final DebugProcessImpl debugProcess = debuggerContext.getDebugProcess();
+      if (debugProcess != null) { // if there is an active debugsession
+        final Ref<SourcePosition> positionRef = new Ref<SourcePosition>(null);
+        debugProcess.getManagerThread().invokeAndWait(new DebuggerContextCommandImpl(debuggerContext) {
+          public Priority getPriority() {
+            return Priority.HIGH;
+          }
+          public void threadAction() {
+            ApplicationManager.getApplication().runReadAction(new Runnable() {
+              public void run() {
+                final FieldDescriptorImpl descriptor = (FieldDescriptorImpl)selectedNode.getDescriptor();
+                positionRef.set(descriptor.getSourcePosition(project, debuggerContext));
+              }
+            });
+          }
+        });
+        final SourcePosition sourcePosition = positionRef.get();
+        if (sourcePosition != null) {
+          return sourcePosition;
+        }
+      }
     }
 
     if(DebuggerAction.isContextView(event)) {

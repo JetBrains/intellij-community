@@ -16,8 +16,7 @@
 package com.intellij.remoteServer.agent.util;
 
 /**
- * Created by IntelliJ IDEA.
- * User: michael.golubev
+ * @author michael.golubev
  */
 public interface CloudGitAgentDeployment {
 
@@ -26,8 +25,4 @@ public interface CloudGitAgentDeployment {
   CloudGitApplication findApplication();
 
   void deleteApplication();
-
-  void startOrContinueListeningLog();
-
-  void stopListeningLog();
 }

@@ -19,11 +19,11 @@ package com.intellij.application.options;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.ide.DataManager;
+import com.intellij.ide.PowerSaveMode;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.IdeActions;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
@@ -144,6 +144,8 @@ public class CodeCompletionPanel {
 
     myCbAutocompletion.setSelected(codeInsightSettings.AUTO_POPUP_COMPLETION_LOOKUP);
     myCbSorting.setSelected(UISettings.getInstance().SORT_LOOKUP_ELEMENTS_LEXICOGRAPHICALLY);
+    
+    myCbAutocompletion.setText("Autopopup code completion" + (PowerSaveMode.isEnabled() ? " (not available in Power Save mode)" : ""));
   }
 
   public void apply() {

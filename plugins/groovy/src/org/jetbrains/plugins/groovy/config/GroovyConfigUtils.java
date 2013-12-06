@@ -160,7 +160,7 @@ public abstract class GroovyConfigUtils extends AbstractConfigUtils {
       int result = Messages
         .showOkCancelDialog(GroovyBundle.message("groovy.like.library.found.text", module.getName(), library.getName(), getSDKLibVersion(library)),
                             GroovyBundle.message("groovy.like.library.found"), JetgroovyIcons.Groovy.Groovy_32x32);
-      if (result == 0) {
+      if (result == Messages.OK) {
         AccessToken accessToken = WriteAction.start();
 
         try {

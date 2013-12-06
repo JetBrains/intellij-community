@@ -35,10 +35,10 @@ import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
 
-import static com.intellij.dvcs.test.Executor.cd;
-import static com.intellij.dvcs.test.Executor.touch;
-import static com.intellij.dvcs.test.TestRepositoryUtil.createDir;
-import static com.intellij.dvcs.test.TestRepositoryUtil.createFile;
+import static com.intellij.openapi.vcs.Executor.cd;
+import static com.intellij.openapi.vcs.Executor.touch;
+import static com.intellij.openapi.vcs.VcsTestUtil.createDir;
+import static com.intellij.openapi.vcs.VcsTestUtil.createFile;
 import static git4idea.test.GitExecutor.git;
 import static junit.framework.Assert.assertNotNull;
 import static junit.framework.Assert.assertNull;

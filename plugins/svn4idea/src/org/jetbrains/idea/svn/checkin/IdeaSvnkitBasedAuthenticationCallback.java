@@ -19,19 +19,26 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.popup.util.PopupUtil;
+import com.intellij.openapi.util.Getter;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.util.ThrowableRunnable;
+import com.intellij.util.WaitForProgressToShow;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.net.HttpConfigurable;
 import com.intellij.util.proxy.CommonProxy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnAuthenticationManager;
+import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnConfiguration;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.commandLine.AuthenticationCallback;
+import org.jetbrains.idea.svn.dialogs.SimpleCredentialsDialog;
 import org.tmatesoft.svn.core.*;
 import org.tmatesoft.svn.core.auth.*;
 import org.tmatesoft.svn.core.internal.util.SVNBase64;
@@ -52,6 +59,7 @@ import java.security.cert.X509Certificate;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Created with IntelliJ IDEA.
@@ -65,10 +73,12 @@ public class IdeaSvnkitBasedAuthenticationCallback implements AuthenticationCall
   private File myTempDirectory;
   private boolean myProxyCredentialsWereReturned;
   private SvnConfiguration myConfiguration;
+  private final Set<String> myRequestedCredentials;
 
   public IdeaSvnkitBasedAuthenticationCallback(SvnVcs vcs) {
     myVcs = vcs;
     myConfiguration = SvnConfiguration.getInstance(myVcs.getProject());
+    myRequestedCredentials = ContainerUtil.newHashSet();
   }
 
   @Override
@@ -81,26 +91,21 @@ public class IdeaSvnkitBasedAuthenticationCallback implements AuthenticationCall
 
   @Nullable
   @Override
-  public SVNAuthentication requestCredentials(SVNURL repositoryUrl, String type) {
+  public SVNAuthentication requestCredentials(final SVNURL repositoryUrl, final String type) {
     SVNAuthentication authentication = null;
 
     if (repositoryUrl != null) {
-      String realm = repositoryUrl.toDecodedString();
-      Object data = SvnConfiguration.RUNTIME_AUTH_CACHE.getData(type, realm);
+      final String realm = repositoryUrl.toDecodedString();
 
-      if (data != null && data instanceof SVNAuthentication) {
-        // we already have credentials in memory cache
-        authentication = (SVNAuthentication)data;
-      } else {
-        // ask user for credentials
-        authentication = myVcs.getSvnConfiguration().getInteractiveManager(myVcs).getInnerProvider()
-          .requestClientAuthentication(type, repositoryUrl, realm, null, null, true);
+      authentication = requestCredentials(realm, type, new Getter<Pair<SVNAuthentication, Boolean>>() {
+        @Override
+        public Pair<SVNAuthentication, Boolean> get() {
+          SVNAuthentication result = myVcs.getSvnConfiguration().getInteractiveManager(myVcs).getInnerProvider()
+            .requestClientAuthentication(type, repositoryUrl, realm, null, null, true);
 
-        if (authentication != null) {
-          // save user credentials to memory cache
-          myVcs.getSvnConfiguration().acknowledge(type, realm, authentication);
+          return new Pair<SVNAuthentication, Boolean>(result, true);
         }
-      }
+      });
     }
 
     if (authentication == null) {
@@ -108,6 +113,69 @@ public class IdeaSvnkitBasedAuthenticationCallback implements AuthenticationCall
     }
 
     return authentication;
+  }
+
+  @Nullable
+  private <T> T requestCredentials(@NotNull String realm, @NotNull String type, @NotNull Getter<Pair<T, Boolean>> fromUserProvider) {
+    T result;
+    Object data = SvnConfiguration.RUNTIME_AUTH_CACHE.getData(type, realm);
+
+    // we return credentials from cache if they are asked for the first time during command execution, otherwise - user is asked
+    if (data != null && !myRequestedCredentials.contains(getKey(realm, type))) {
+      // we already have credentials in memory cache
+      result = (T) data;
+      myRequestedCredentials.add(getKey(realm, type));
+    }
+    else {
+      // ask user for credentials
+      Pair<T, Boolean> userData = fromUserProvider.get();
+      result = userData.first;
+
+      if (result != null && userData.second) {
+        // save user credentials to memory cache
+        myVcs.getSvnConfiguration().acknowledge(type, realm, result);
+        myRequestedCredentials.add(getKey(realm, type));
+      }
+    }
+
+    return result;
+  }
+
+  @NotNull
+  private static String getKey(@NotNull String realm, @NotNull String type) {
+    return type + "$" + realm;
+  }
+
+  @Override
+  @Nullable
+  public String requestSshCredentials(@NotNull final String realm,
+                                      @NotNull final SimpleCredentialsDialog.Mode mode,
+                                      @NotNull final String key) {
+    return requestCredentials(realm, ISVNAuthenticationManager.SSH, new Getter<Pair<String, Boolean>>() {
+      @Override
+      public Pair<String, Boolean> get() {
+        final Ref<String> answer = new Ref<String>();
+        final Ref<Boolean> save = new Ref<Boolean>();
+
+        Runnable command = new Runnable() {
+          public void run() {
+            SimpleCredentialsDialog dialog = new SimpleCredentialsDialog(myVcs.getProject());
+
+            dialog.setup(mode, realm, key, true);
+            dialog.setTitle(SvnBundle.message("dialog.title.authentication.required"));
+            dialog.show();
+            if (dialog.isOK()) {
+              answer.set(dialog.getPassword());
+              save.set(dialog.isSaveAllowed());
+            }
+          }
+        };
+
+        WaitForProgressToShow.runOrInvokeAndWaitAboveProgress(command);
+
+        return new Pair<String, Boolean>(answer.get(), !save.isNull() && save.get());
+      }
+    });
   }
 
   @Override
@@ -140,6 +208,7 @@ public class IdeaSvnkitBasedAuthenticationCallback implements AuthenticationCall
            (instance.USE_HTTP_PROXY || instance.USE_PROXY_PAC);
   }
 
+  // TODO: not used - should be removed.
   @Override
   public boolean persistDataToTmpConfig(final SVNURL repositoryUrl) throws IOException {
     // TODO: Make repositoryUrl @NotNull after SvnLineCommand.runWithAuthenticationAttempt refactored
@@ -159,6 +228,16 @@ public class IdeaSvnkitBasedAuthenticationCallback implements AuthenticationCall
 
   @Nullable
   public static Proxy getIdeaDefinedProxy(@NotNull final SVNURL url) {
+    // SVNKit authentication implementation sets repositories as noProxy() to provide custom proxy authentication logic - see for instance,
+    // SvnAuthenticationManager.getProxyManager(). But noProxy() setting is not cleared correctly in all cases - so if svn command
+    // (for command line) is executed on thread where repository url was added as noProxy() => proxies are not retrieved for such commands
+    // and execution logic is incorrect.
+
+    // To prevent such behavior repositoryUrl is manually removed from noProxy() list (for current thread).
+    // NOTE, that current method is only called from code flows for executing commands through command line client and should not be called
+    // from SVNKit code flows.
+    CommonProxy.getInstance().removeNoProxy(url.getProtocol(), url.getHost(), url.getPort());
+
     final List<Proxy> proxies = CommonProxy.getInstance().select(URI.create(url.toString()));
     if (proxies != null && ! proxies.isEmpty()) {
       for (Proxy proxy : proxies) {
@@ -204,6 +283,7 @@ public class IdeaSvnkitBasedAuthenticationCallback implements AuthenticationCall
     return authentication;
   }
 
+  // TODO: not used - should be removed.
   @Override
   public boolean askProxyCredentials(SVNURL repositoryUrl) {
     if (repositoryUrl == null) {

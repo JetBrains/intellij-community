@@ -125,6 +125,10 @@ public final class HgCommandExecutor {
   public HgCommandResult executeInCurrentThread(@Nullable final VirtualFile repo, @NotNull final String operation,
                                                 @Nullable final List<String> arguments, @Nullable HgPromptHandler handler) {
     HgCommandResult result = executeInCurrentThread(repo, operation, arguments, handler, false);
+    if (HgErrorUtil.isUnknownEncodingError(result)) {
+      setCharset(Charset.forName("utf8"));
+      result = executeInCurrentThread(repo, operation, arguments, handler, false);
+    }
     if (HgErrorUtil.isAuthorizationError(result)) {
       if (HgErrorUtil.hasAuthorizationInDestinationPath(myDestination)) {
         new HgCommandResultNotifier(myProject)
@@ -195,7 +199,7 @@ public final class HgCommandExecutor {
     }
     if (HgVcs.HGENCODING == null) {
       cmdLine.add("--encoding");
-      cmdLine.add(myCharset.name());
+      cmdLine.add(HgEncodingUtil.getNameFor(myCharset));
     }
 
     HgCommandResult result;

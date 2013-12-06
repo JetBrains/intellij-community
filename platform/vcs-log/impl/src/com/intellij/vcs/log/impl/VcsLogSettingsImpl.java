@@ -17,6 +17,7 @@ public class VcsLogSettingsImpl implements VcsLogSettings, PersistentStateCompon
 
   public static class State {
     public int RECENT_COMMITS_COUNT = 1000;
+    public boolean SHOW_BRANCHES_PANEL = false;
   }
 
   @Nullable
@@ -33,6 +34,16 @@ public class VcsLogSettingsImpl implements VcsLogSettings, PersistentStateCompon
   @Override
   public int getRecentCommitsCount() {
     return myState.RECENT_COMMITS_COUNT;
+  }
+
+  @Override
+  public boolean isShowBranchesPanel() {
+    return myState.SHOW_BRANCHES_PANEL;
+  }
+
+  @Override
+  public void setShowBranchesPanel(boolean show) {
+    myState.SHOW_BRANCHES_PANEL = show;
   }
 
   public void setRecentCommitsBlockSize(int commitCount) {

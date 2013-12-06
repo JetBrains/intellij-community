@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,16 +14,14 @@
  * limitations under the License.
  */
 package com.intellij.psi
-
-import com.intellij.openapi.application.ApplicationManager
+import com.intellij.codeInspection.defaultFileTemplateUsage.DefaultFileTemplateUsageInspection
+import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.psi.impl.source.PsiFileImpl
 import com.intellij.psi.impl.source.tree.java.JavaFileElement
 import com.intellij.psi.impl.source.tree.java.MethodElement
 import com.intellij.testFramework.LeakHunter
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 import com.intellij.util.Processor
-import com.intellij.codeInspection.defaultFileTemplateUsage.DefaultFileTemplateUsageInspection
-
 /**
  * @author peter
  */
@@ -34,7 +32,7 @@ class AstLeaksTest extends LightCodeInsightFixtureTestCase {
     assert file.findElementAt(0) instanceof PsiKeyword
     LeakHunter.checkLeak(file, JavaFileElement)
 
-    ApplicationManager.application.runWriteAction {
+    WriteCommandAction.runWriteCommandAction project, {
       file.viewProvider.document.insertString(0, ' ')
       PsiDocumentManager.getInstance(project).commitAllDocuments()
       assert file.findElementAt(0) instanceof PsiWhiteSpace

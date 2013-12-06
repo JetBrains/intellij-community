@@ -17,6 +17,7 @@ package com.intellij.ui.treeStructure.treetable;
 
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.tree.WideSelectionTreeUI;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -40,6 +41,7 @@ public class TreeTableTree extends Tree {
     super(model);
     myTreeTable = treeTable;
     setCellRenderer(getCellRenderer());
+    putClientProperty(WideSelectionTreeUI.TREE_TABLE_TREE_KEY, Boolean.TRUE);
   }
 
   public TreeTable getTreeTable() {
@@ -58,7 +60,7 @@ public class TreeTableTree extends Tree {
 
   @Override
   protected final boolean isWideSelection() {
-    return false;
+    return UIUtil.isUnderDarcula() || UIUtil.isUnderIntelliJLaF();
   }
 
   public void setRowHeight(int rowHeight) {

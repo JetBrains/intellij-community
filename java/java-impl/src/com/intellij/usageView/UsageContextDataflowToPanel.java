@@ -84,7 +84,7 @@ public class UsageContextDataflowToPanel extends UsageContextPanelBase {
   public void updateLayoutLater(@Nullable final List<UsageInfo> infos) {
     if (infos == null) {
       removeAll();
-      JComponent titleComp = new JLabel(UsageViewBundle.message("select.the.usage.to.preview"));
+      JComponent titleComp = new JLabel(UsageViewBundle.message("select.the.usage.to.preview"), SwingConstants.CENTER);
       add(titleComp, BorderLayout.CENTER);
       revalidate();
     }

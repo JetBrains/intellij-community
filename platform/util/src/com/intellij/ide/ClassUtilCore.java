@@ -33,9 +33,7 @@ public class ClassUtilCore {
       clearMap(jarFileFactory.getDeclaredField(FILE_CACHE));
       clearMap(jarFileFactory.getDeclaredField(URL_CACHE));
     }
-    catch (Exception e) {
-      System.out.println("Failed to clear URL cache");
-      e.printStackTrace();
+    catch (Exception ignore) {
       // Do nothing.
     }
   }

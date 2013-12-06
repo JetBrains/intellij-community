@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.intellij.refactoring;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileAdapter;
@@ -86,7 +87,7 @@ public class MovePackageAsDirectoryTest extends MultiFileTestCase {
       protected void preprocessSrcDir(PsiDirectory srcDirectory) {
         final PsiFile empty = srcDirectory.findFile(EMPTY_TXT);
         assert empty != null;
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
+        WriteCommandAction.runWriteCommandAction(null, new Runnable() {
           public void run() {
             empty.delete();
           }

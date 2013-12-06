@@ -253,7 +253,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
           "Darcula color scheme has been set for editors. Would you like to set Darcula as default Look and Feel?",
           "Darcula Look and Feel",
           Messages.getQuestionIcon());
-        if (ok == Messages.OK) {
+        if (ok == Messages.YES) {
           LafManager.getInstance().setCurrentLookAndFeel(new DarculaLookAndFeelInfo());
           DarculaInstaller.install();
         }

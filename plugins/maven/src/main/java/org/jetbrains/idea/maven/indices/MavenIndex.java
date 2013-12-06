@@ -15,6 +15,7 @@
  */
 package org.jetbrains.idea.maven.indices;
 
+import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.io.*;
 import gnu.trove.THashMap;
@@ -153,7 +154,9 @@ public class MavenIndex {
         doOpen();
       }
       catch (Exception e1) {
-        MavenLog.LOG.warn(e1);
+        final boolean versionUpdated = e1.getCause() instanceof PersistentEnumeratorBase.VersionUpdatedException;
+        if (!versionUpdated) MavenLog.LOG.warn(e1);
+
         try {
           doOpen();
         }
@@ -617,7 +620,7 @@ public class MavenIndex {
       }
     }
 
-    private PersistentHashMap<String, Set<String>> createPersistentMap(File f) throws IOException {
+    private PersistentHashMap<String, Set<String>> createPersistentMap(final File f) throws IOException {
       return new PersistentHashMap<String, Set<String>>(f, new EnumeratorStringDescriptor(), new SetDescriptor());
     }
 

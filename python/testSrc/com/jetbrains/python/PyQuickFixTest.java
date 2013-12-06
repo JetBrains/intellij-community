@@ -33,20 +33,20 @@ import org.jetbrains.annotations.NonNls;
 public class PyQuickFixTest extends PyTestCase {
 
   public void testAddImport() {
-    doInspectionTest(new String[] { "AddImport.py", "ImportTarget.py" }, PyUnresolvedReferencesInspection.class, PyBundle.message("ACT.NAME.use.import"), true, true);
+    doInspectionTest(new String[] { "AddImport.py", "ImportTarget.py" }, PyUnresolvedReferencesInspection.class, "Import 'ImportTarget'", true, true);
   }
 
   public void testAddImportDoc() {
-    doInspectionTest(new String[] { "AddImportDoc.py", "ImportTarget.py" }, PyUnresolvedReferencesInspection.class, PyBundle.message("ACT.NAME.use.import"), true, true);
+    doInspectionTest(new String[] { "AddImportDoc.py", "ImportTarget.py" }, PyUnresolvedReferencesInspection.class, "Import 'ImportTarget'", true, true);
   }
 
   public void testAddImportDocComment() {  // PY-728
-    doInspectionTest(new String[] { "AddImportDocComment.py", "ImportTarget.py" }, PyUnresolvedReferencesInspection.class, PyBundle.message("ACT.NAME.use.import"), true, true);
+    doInspectionTest(new String[] { "AddImportDocComment.py", "ImportTarget.py" }, PyUnresolvedReferencesInspection.class, "Import 'ImportTarget'", true, true);
   }
 
   public void testImportFromModule() {
     doInspectionTest(new String[] { "importFromModule/foo/bar.py", "importFromModule/foo/baz.py", "importFromModule/foo/__init__.py" },
-                     PyUnresolvedReferencesInspection.class, PyBundle.message("ACT.NAME.use.import"), true, true);
+                     PyUnresolvedReferencesInspection.class, "Import 'importFromModule.foo.baz'", true, true);
   }
 
   public void testImportFromModuleStar() {  // PY-6302
@@ -54,7 +54,7 @@ public class PyQuickFixTest extends PyTestCase {
     myFixture.copyDirectoryToProject("importFromModuleStar", "");
     myFixture.configureFromTempProjectFile("source.py");
     myFixture.checkHighlighting(true, false, false);
-    final IntentionAction intentionAction = myFixture.findSingleIntention(PyBundle.message("ACT.NAME.use.import"));
+    final IntentionAction intentionAction = myFixture.findSingleIntention("Import 'target.xyzzy()'");
     assertNotNull(intentionAction);
     myFixture.launchAction(intentionAction);
     myFixture.checkResultByFile("importFromModuleStar/source_after.py");
@@ -80,7 +80,7 @@ public class PyQuickFixTest extends PyTestCase {
     boolean oldHighlightUnused = settings.HIGHLIGHT_UNUSED_IMPORTS;
     settings.HIGHLIGHT_UNUSED_IMPORTS = false;
     try {
-      doInspectionTest(new String[]{"AddToImportFromList.py", "AddToImportFromFoo.py"}, PyUnresolvedReferencesInspection.class, PyBundle.message("ACT.NAME.use.import"), true, true);
+      doInspectionTest(new String[]{"AddToImportFromList.py", "AddToImportFromFoo.py"}, PyUnresolvedReferencesInspection.class, "Import 'foo(a) from AddToImportFromFoo'", true, true);
     }
     finally {
       settings.HIGHLIGHT_UNUSED_IMPORTS = oldHighlightUnused;

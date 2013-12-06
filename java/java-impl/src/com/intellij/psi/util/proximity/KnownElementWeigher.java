@@ -81,18 +81,29 @@ public class KnownElementWeigher extends ProximityWeigher {
     if (qname != null) {
       String pkg = StringUtil.getPackageName(qname);
       if (qname.equals(CommonClassNames.JAVA_LANG_OBJECT)) return 5;
-      if (pkg.equals("java.lang")) return 7;
-      if (pkg.equals("java.util")) return 6;
+      if (isPopularJdkClass(qname)) return 8;
+      if (pkg.equals("java.lang")) return 6;
+      if (pkg.equals("java.util")) return 7;
 
       if (qname.startsWith("java.lang")) return 5;
       if (qname.startsWith("java.util")) return 4;
 
-      if (pkg.equals("javax.swing")) return element instanceof PsiClass ? 3 : 2;
+      if (pkg.equals("javax.swing")) return 3;
       if (qname.startsWith("java.")) return 2;
       if (qname.startsWith("javax.")) return 1;
       if (qname.startsWith("com.")) return -1;
       if (qname.startsWith("net.")) return -1;
     }
     return 0;
+  }
+
+  private static boolean isPopularJdkClass(String qname) {
+    return qname.equals(CommonClassNames.JAVA_LANG_STRING) || 
+           qname.equals(System.class.getName()) || 
+           qname.equals(CommonClassNames.JAVA_LANG_EXCEPTION) || 
+           qname.equals(CommonClassNames.JAVA_LANG_THROWABLE) || 
+           qname.equals(CommonClassNames.JAVA_LANG_RUNTIME_EXCEPTION) || 
+           qname.equals(CommonClassNames.JAVA_LANG_RUNNABLE) || 
+           qname.equals(CommonClassNames.JAVA_LANG_CLASS);
   }
 }

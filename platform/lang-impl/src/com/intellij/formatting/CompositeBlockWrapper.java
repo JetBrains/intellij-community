@@ -30,15 +30,15 @@ public class CompositeBlockWrapper extends AbstractBlockWrapper{
    * {@link Block#getTextRange() text range associated with the given block}.
    *
    * @param block         block to wrap
-   * @param whiteSpace    white space before the block
+   * @param whiteSpaceBefore    white space before the block
    * @param parent        wrapped block parent
    */
-  public CompositeBlockWrapper(final Block block, final WhiteSpace whiteSpace, @Nullable final CompositeBlockWrapper parent) {
-    super(block, whiteSpace, parent, block.getTextRange());
+  public CompositeBlockWrapper(final Block block, final WhiteSpace whiteSpaceBefore, @Nullable final CompositeBlockWrapper parent) {
+    super(block, whiteSpaceBefore, parent, block.getTextRange());
   }
 
-  public CompositeBlockWrapper(final Block block, final WhiteSpace whiteSpace, final CompositeBlockWrapper parent, TextRange textRange) {
-    super(block, whiteSpace, parent, textRange);
+  public CompositeBlockWrapper(final Block block, final WhiteSpace whiteSpaceBefore, final CompositeBlockWrapper parent, TextRange textRange) {
+    super(block, whiteSpaceBefore, parent, textRange);
   }
 
   public List<AbstractBlockWrapper> getChildren() {

@@ -25,7 +25,7 @@ import java.util.Map;
 public class ConcurrentMultiMap<K,V> extends MultiMap<K,V> {
   @Override
   protected Map<K, Collection<V>> createMap() {
-    return new ConcurrentHashMap<K, Collection<V>>();
+    return ContainerUtil.newConcurrentMap();
   }
 
   @Override

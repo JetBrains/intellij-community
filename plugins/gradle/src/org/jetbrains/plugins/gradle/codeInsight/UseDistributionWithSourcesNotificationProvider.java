@@ -22,6 +22,7 @@ import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.project.ProjectData;
 import com.intellij.openapi.externalSystem.service.project.ExternalProjectRefreshCallback;
 import com.intellij.openapi.externalSystem.service.project.manage.ProjectDataManager;
+import com.intellij.openapi.externalSystem.util.DisposeAwareProjectChange;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemConstants;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
@@ -127,9 +128,9 @@ public class UseDistributionWithSourcesNotificationProvider extends EditorNotifi
                   if (externalProject == null) {
                     return;
                   }
-                  ExternalSystemApiUtil.executeProjectChangeAction(true, new Runnable() {
+                  ExternalSystemApiUtil.executeProjectChangeAction(true, new DisposeAwareProjectChange(module.getProject()) {
                     @Override
-                    public void run() {
+                    public void execute() {
                       ProjectRootManagerEx.getInstanceEx(module.getProject()).mergeRootsChangesDuring(new Runnable() {
                         @Override
                         public void run() {

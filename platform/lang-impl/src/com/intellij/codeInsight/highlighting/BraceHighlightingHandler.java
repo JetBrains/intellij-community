@@ -409,7 +409,7 @@ public class BraceHighlightingHandler {
       return;
     }
 
-    EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
+    EditorColorsScheme scheme = myEditor.getColorsScheme();
     final TextAttributes attributes =
       matched ? scheme.getAttributes(CodeInsightColors.MATCHED_BRACE_ATTRIBUTES)
               : scheme.getAttributes(CodeInsightColors.UNMATCHED_BRACE_ATTRIBUTES);
@@ -466,7 +466,7 @@ public class BraceHighlightingHandler {
   }
 
   private void highlightBrace(@NotNull TextRange braceRange, boolean matched) {
-    EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
+    EditorColorsScheme scheme = myEditor.getColorsScheme();
     final TextAttributes attributes =
         matched ? scheme.getAttributes(CodeInsightColors.MATCHED_BRACE_ATTRIBUTES)
         : scheme.getAttributes(CodeInsightColors.UNMATCHED_BRACE_ATTRIBUTES);

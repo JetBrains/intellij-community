@@ -5,7 +5,7 @@
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$PROJECT_DIR$/lib/src/asm4-src.zip!/"/>
+      <root url="jar://$PROJECT_DIR$/lib/src/asm4-src.zip!/" />
     </SOURCES>
   </library>
 </component>

@@ -15,27 +15,27 @@ public class PositionUtil {
     return (float)Math.sqrt((x1 - x2) * (x1 - x2) + (y1 - y2) * (y1 - y2));
   }
 
-  public static boolean overUpEdge(ShortEdge edge, int x, int y) {
+  public static boolean overUpEdge(ShortEdge edge, int x, int y, int offset) {
     float thick = THICK_LINE;
-    int x1 = WIDTH_NODE * edge.getDownPosition() + WIDTH_NODE / 2;
+    int x1 = WIDTH_NODE * edge.getDownPosition() + WIDTH_NODE / 2 + offset;
     int y1 = HEIGHT_CELL / 2;
-    int x2 = WIDTH_NODE * edge.getUpPosition() + WIDTH_NODE / 2;
+    int x2 = WIDTH_NODE * edge.getUpPosition() + WIDTH_NODE / 2 + offset;
     int y2 = -HEIGHT_CELL / 2;
     //return true;
     return (distance(x1, y1, x, y) + distance(x2, y2, x, y) < distance(x1, y1, x2, y2) + thick);
   }
 
-  public static boolean overDownEdge(ShortEdge edge, int x, int y) {
+  public static boolean overDownEdge(ShortEdge edge, int x, int y, int offset) {
     float thick = THICK_LINE;
-    int x1 = WIDTH_NODE * edge.getUpPosition() + WIDTH_NODE / 2;
+    int x1 = WIDTH_NODE * edge.getUpPosition() + WIDTH_NODE / 2 + offset;
     int y1 = HEIGHT_CELL / 2;
-    int x2 = WIDTH_NODE * edge.getDownPosition() + WIDTH_NODE / 2;
+    int x2 = WIDTH_NODE * edge.getDownPosition() + WIDTH_NODE / 2 + offset;
     int y2 = HEIGHT_CELL + HEIGHT_CELL / 2;
     return distance(x1, y1, x, y) + distance(x2, y2, x, y) < distance(x1, y1, x2, y2) + thick;
   }
 
-  public static boolean overNode(int position, int x, int y) {
-    int x0 = WIDTH_NODE * position + WIDTH_NODE / 2;
+  public static boolean overNode(int position, int x, int y, int xOffset) {
+    int x0 = WIDTH_NODE * position + WIDTH_NODE / 2 + xOffset;
     int y0 = HEIGHT_CELL / 2;
     int r = CIRCLE_RADIUS;
     return distance(x0, y0, x, y) <= r;

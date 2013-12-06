@@ -15,15 +15,15 @@
  */
 package com.siyeh.ig.migration;
 
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
-import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.fixes.ConvertToVarargsMethodFix;
 import com.siyeh.ig.psiutils.LibraryUtil;
 import com.siyeh.ig.psiutils.MethodUtils;
 import org.jetbrains.annotations.Nls;
@@ -57,56 +57,13 @@ public class MethodCanBeVariableArityMethodInspection extends BaseInspection {
     final MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
     panel.addCheckbox(InspectionGadgetsBundle.message("method.can.be.variable.arity.method.ignore.byte.short.option"),
                       "ignoreByteAndShortArrayParameters");
-    panel.addCheckbox(InspectionGadgetsBundle.message("ignore.methods.overriding.super.method"),
-                      "ignoreOverridingMethods");
+    panel.addCheckbox(InspectionGadgetsBundle.message("ignore.methods.overriding.super.method"), "ignoreOverridingMethods");
     return panel;
   }
 
   @Override
   protected InspectionGadgetsFix buildFix(Object... infos) {
-    return new MethodCanBeVariableArityMethodFix();
-  }
-
-  private static class MethodCanBeVariableArityMethodFix extends InspectionGadgetsFix {
-       @Override
-  @NotNull
-  public String getFamilyName() {
-    return getName();
-  }
-
-    @NotNull
-    @Override
-    public String getName() {
-      return InspectionGadgetsBundle.message("convert.to.variable.arity.method.quickfix");
-    }
-
-    @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor) {
-      final PsiElement element = descriptor.getPsiElement();
-      final PsiElement parent = element.getParent();
-      if (!(parent instanceof PsiMethod)) {
-        return;
-      }
-      final PsiMethod method = (PsiMethod)parent;
-      final PsiParameterList parameterList = method.getParameterList();
-      if (parameterList.getParametersCount() == 0) {
-        return;
-      }
-      final PsiParameter[] parameters = parameterList.getParameters();
-      final PsiParameter lastParameter = parameters[parameters.length - 1];
-      final PsiType type = lastParameter.getType();
-      if (!(type instanceof PsiArrayType)) {
-        return;
-      }
-      final PsiArrayType arrayType = (PsiArrayType)type;
-      final PsiType componentType = arrayType.getComponentType();
-      final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
-      final PsiTypeElement newTypeElement = factory.createTypeElementFromText(componentType.getCanonicalText() + "...", method);
-      final PsiTypeElement typeElement = lastParameter.getTypeElement();
-      if (typeElement != null) {
-        typeElement.replace(newTypeElement);
-      }
-    }
+    return new ConvertToVarargsMethodFix();
   }
 
   @Override
@@ -128,11 +85,11 @@ public class MethodCanBeVariableArityMethodInspection extends BaseInspection {
       }
       final PsiParameter[] parameters = parameterList.getParameters();
       final PsiParameter lastParameter = parameters[parameters.length - 1];
-      final PsiType type = lastParameter.getType();
-      if (!(type instanceof PsiArrayType)) {
+      if (NullableNotNullManager.isNullable(lastParameter)) {
         return;
       }
-      if (type instanceof PsiEllipsisType) {
+      final PsiType type = lastParameter.getType();
+      if (!(type instanceof PsiArrayType) || type instanceof PsiEllipsisType) {
         return;
       }
       final PsiArrayType arrayType = (PsiArrayType)type;

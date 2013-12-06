@@ -26,11 +26,12 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.StringBuilderSpinAllocator;
+import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.ui.MessageCategory;
-import com.intellij.util.ui.UIUtil;
 import com.sun.jdi.ReferenceType;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
 import java.util.Collections;
@@ -163,50 +164,41 @@ class ReloadClassesWorker {
       processException(e);
     }
 
+    final Semaphore waitSemaphore = new Semaphore();
+    waitSemaphore.down();
     //noinspection SSBasedInspection
-    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
+    SwingUtilities.invokeLater(new Runnable() {
       public void run() {
-        if (project.isDisposed()) {
-          return;
-        }
-        final BreakpointManager breakpointManager = (DebuggerManagerEx.getInstanceEx(project)).getBreakpointManager();
-        breakpointManager.reloadBreakpoints();
-        debugProcess.getRequestsManager().clearWarnings();
-        if (LOG.isDebugEnabled()) {
-          LOG.debug("requests updated");
-          LOG.debug("time stamp set");
-        }
-        myDebuggerSession.refresh(false);
-
-        /*
-        debugProcess.getManagerThread().schedule(new DebuggerCommandImpl() {
-          protected void action() throws Exception {
-            try {
-              breakpointManager.enableBreakpoints(debugProcess);
+        try {
+          if (!project.isDisposed()) {
+            final BreakpointManager breakpointManager = (DebuggerManagerEx.getInstanceEx(project)).getBreakpointManager();
+            breakpointManager.reloadBreakpoints();
+            debugProcess.getRequestsManager().clearWarnings();
+            if (LOG.isDebugEnabled()) {
+              LOG.debug("requests updated");
+              LOG.debug("time stamp set");
             }
-            catch (Exception e) {
-              processException(e);
-            }
-            //try {
-            //  virtualMachineProxy.resume();
-            //}
-            //catch (Exception e) {
-            //  processException(e);
-            //}
+            myDebuggerSession.refresh(false);
           }
-
-          public Priority getPriority() {
-            return Priority.HIGH;
-          }
-        });
-        */
+        }
+        catch (Throwable e) {
+          LOG.error(e);
+        }
+        finally {
+          waitSemaphore.up();
+        }
       }
     });
-    try {
-      breakpointManager.enableBreakpoints(debugProcess);
-    }
-    catch (Exception e) {
-      processException(e);
+
+    waitSemaphore.waitFor();
+
+    if (!project.isDisposed()) {
+      try {
+        breakpointManager.enableBreakpoints(debugProcess);
+      }
+      catch (Exception e) {
+        processException(e);
+      }
     }
   }
 

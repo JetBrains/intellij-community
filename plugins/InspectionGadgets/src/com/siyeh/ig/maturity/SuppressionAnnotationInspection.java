@@ -18,6 +18,7 @@ package com.siyeh.ig.maturity;
 import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.JavaSuppressionUtil;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.RemoveAnnotationQuickFix;
 import com.intellij.codeInspection.ui.ListEditForm;
 import com.intellij.openapi.project.Project;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
@@ -25,9 +26,9 @@ import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiModifierList;
+import com.siyeh.ig.DelegatingFix;
 import com.siyeh.ig.InspectionGadgetsFix;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.Collection;
@@ -43,47 +44,50 @@ public class SuppressionAnnotationInspection extends SuppressionAnnotationInspec
     return form.getContentPanel();
   }
 
-  @Nullable
+  @NotNull
   @Override
-  protected InspectionGadgetsFix buildFix(Object... infos) {
+  protected InspectionGadgetsFix[] buildFixes(Object... infos) { 
     if (infos.length == 1 && infos[0] instanceof PsiAnnotation) {
       final PsiAnnotation annotation = (PsiAnnotation)infos[0];
-      final Collection<String> ids = JavaSuppressionUtil.getInspectionIdsSuppressedInAnnotation((PsiModifierList)annotation.getParent());
+      PsiElement parent = annotation.getParent();
+      final Collection<String> ids = JavaSuppressionUtil.getInspectionIdsSuppressedInAnnotation((PsiModifierList)parent);
       if (!ids.isEmpty()) {
-        return new InspectionGadgetsFix() {
-          @Override
-          protected void doFix(Project project, ProblemDescriptor descriptor) {
-            final PsiElement psiElement = descriptor.getPsiElement();
-            if (psiElement instanceof PsiAnnotation) {
-              final Collection<String> ids = JavaSuppressionUtil.getInspectionIdsSuppressedInAnnotation((PsiModifierList)psiElement.getParent());
-              for (String id : ids) {
-                if (!myAllowedSuppressions.contains(id)) {
-                  myAllowedSuppressions.add(id);
-                }
-              }
-              saveProfile(project);
-            }
-          }
-
-          private void saveProfile(Project project) {
-            final InspectionProfile inspectionProfile = InspectionProjectProfileManager.getInstance(project).getInspectionProfile();
-            InspectionProfileManager.getInstance().fireProfileChanged(inspectionProfile);
-          }
-
-          @NotNull
-          @Override
-          public String getName() {
-            return getFamilyName();
-          }
-
-          @NotNull
-          @Override
-          public String getFamilyName() {
-            return "Allow suppressions";
-          }
-        };
+        return new InspectionGadgetsFix[]{new DelegatingFix(new RemoveAnnotationQuickFix(annotation, null)), new AllowSuppressionsFix()};
       }
     }
-    return null;
+    return InspectionGadgetsFix.EMPTY_ARRAY;
+  }
+
+  private class AllowSuppressionsFix extends InspectionGadgetsFix {
+    @Override
+    protected void doFix(Project project, ProblemDescriptor descriptor) {
+      final PsiElement psiElement = descriptor.getPsiElement();
+      if (psiElement instanceof PsiAnnotation) {
+        final Collection<String> ids = JavaSuppressionUtil.getInspectionIdsSuppressedInAnnotation((PsiModifierList)psiElement.getParent());
+        for (String id : ids) {
+          if (!myAllowedSuppressions.contains(id)) {
+            myAllowedSuppressions.add(id);
+          }
+        }
+        saveProfile(project);
+      }
+    }
+
+    private void saveProfile(Project project) {
+      final InspectionProfile inspectionProfile = InspectionProjectProfileManager.getInstance(project).getInspectionProfile();
+      InspectionProfileManager.getInstance().fireProfileChanged(inspectionProfile);
+    }
+
+    @NotNull
+    @Override
+    public String getName() {
+      return "Allow these suppressions";
+    }
+
+    @NotNull
+    @Override
+    public String getFamilyName() {
+      return "Allow suppressions";
+    }
   }
 }

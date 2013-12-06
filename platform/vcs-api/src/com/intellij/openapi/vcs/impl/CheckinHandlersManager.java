@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,29 +37,14 @@ public abstract class CheckinHandlersManager {
   public abstract List<BaseCheckinHandlerFactory> getRegisteredCheckinHandlerFactories(AbstractVcs<?>[] allActiveVcss);
 
   @SuppressWarnings("UnusedDeclaration")
-  @Deprecated
-  /**
-   * @deprecated to remove in IDEA 13
-   */
+  /** @deprecated use EP {@link #getRegisteredCheckinHandlerFactories(AbstractVcs[])} (to remove in IDEA 14) */
   public abstract List<VcsCheckinHandlerFactory> getMatchingVcsFactories(@NotNull final List<AbstractVcs> keys);
 
   @SuppressWarnings("UnusedDeclaration")
-  @Deprecated
-  /**
-   * @deprecated to remove in IDEA 13, use EP {@link com.intellij.openapi.vcs.checkin.CheckinHandlerFactory#EP_NAME}
-   * Registers a factory which provides callbacks to run before and after VCS checkin operations.
-   *
-   * @param factory the factory to register.
-   */
+  /** @deprecated use EP {@link com.intellij.openapi.vcs.checkin.CheckinHandlerFactory#EP_NAME} (to remove in IDEA 14) */
   public abstract void registerCheckinHandlerFactory(BaseCheckinHandlerFactory factory);
 
   @SuppressWarnings("UnusedDeclaration")
-  @Deprecated
-  /**
-   * @deprecated to remove in IDEA 13, use EP {@link com.intellij.openapi.vcs.checkin.CheckinHandlerFactory#EP_NAME}
-   * Unregister a factory which provides callbacks to run before and after VCS checkin operations.
-   *
-   * @param factory the factory to unregister.
-   */
+  /** @deprecated use EP {@link com.intellij.openapi.vcs.checkin.CheckinHandlerFactory#EP_NAME} (to remove in IDEA 14) */
   public abstract void unregisterCheckinHandlerFactory(BaseCheckinHandlerFactory factory);
 }

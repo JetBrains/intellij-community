@@ -227,7 +227,7 @@ public abstract class RecentProjectsManagerBase implements PersistentStateCompon
                                                      "Clear Recent Projects List",
                                                      Messages.getQuestionIcon());
 
-          if (rc == 0) {
+          if (rc == Messages.OK) {
             synchronized (myStateLock) {
               myState.recentPaths.clear();
             }
@@ -279,6 +279,7 @@ public abstract class RecentProjectsManagerBase implements PersistentStateCompon
     }
 
     public void projectClosed(final Project project) {
+      if (ApplicationManager.getApplication().isHeadlessEnvironment()) return;
       Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
       if (openProjects.length > 0) {
         String path = getProjectPath(openProjects[openProjects.length - 1]);

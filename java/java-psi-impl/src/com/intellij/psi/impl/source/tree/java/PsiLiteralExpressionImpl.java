@@ -382,8 +382,11 @@ public class PsiLiteralExpressionImpl
   @Override
   @NotNull
   public PsiReference[] getReferences() {
-    PsiReference[] references = PsiReferenceService.getService().getContributedReferences(this);
-    return references;
+    IElementType type = getLiteralElementType();
+    if (type != JavaTokenType.STRING_LITERAL && type != JavaTokenType.INTEGER_LITERAL) {
+      return PsiReference.EMPTY_ARRAY; // there are references in int literals in SQL API parameters
+    }
+    return PsiReferenceService.getService().getContributedReferences(this);
   }
 
   @Override

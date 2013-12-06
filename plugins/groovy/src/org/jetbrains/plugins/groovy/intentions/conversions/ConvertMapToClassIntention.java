@@ -95,7 +95,7 @@ public class ConvertMapToClassIntention extends Intention {
 
     final GrTypeDefinition typeDefinition = createClass(project, namedArguments, selectedPackageName, shortName);
     final PsiClass generatedClass = CreateClassActionBase.createClassByType(
-      dialog.getTargetDirectory(), typeDefinition.getName(), PsiManager.getInstance(project), map, GroovyTemplates.GROOVY_CLASS);
+      dialog.getTargetDirectory(), typeDefinition.getName(), PsiManager.getInstance(project), map, GroovyTemplates.GROOVY_CLASS, true);
     final PsiClass replaced = (PsiClass)generatedClass.replace(typeDefinition);
     replaceMapWithClass(project, map, replaced, replaceReturnType, variableDeclaration, methodParameter);
   }
@@ -154,7 +154,7 @@ public class ConvertMapToClassIntention extends Intention {
                                                                                                GroovyIntentionsBundle
                                                                                                  .message(
                                                                                                    "convert.map.to.class.intention.name"),
-                                                                                               Messages.getQuestionIcon()) != 0);
+                                                                                               Messages.getQuestionIcon()) != Messages.YES);
   }
 
   public static boolean checkForVariableDeclaration(GrExpression replacedNewExpression) {
@@ -171,7 +171,7 @@ public class ConvertMapToClassIntention extends Intention {
                                                                                             GroovyIntentionsBundle.message(
                                                                                               "convert.map.to.class.intention.name"),
                                                                                             Messages.getQuestionIcon()) ==
-                                                                   0) {
+                                                                  Messages.YES) {
         return true;
       }
     }
@@ -215,7 +215,7 @@ public class ConvertMapToClassIntention extends Intention {
     if (ApplicationManager.getApplication().isUnitTestMode() ||
            Messages.showYesNoDialog(map.getProject(), GroovyIntentionsBundle
              .message("do.you.want.to.change.type.of.parameter.in.method", parameter.getName(), method.getName()),
-                                    GroovyIntentionsBundle.message("convert.map.to.class.intention.name"), Messages.getQuestionIcon()) == 0) {
+                                    GroovyIntentionsBundle.message("convert.map.to.class.intention.name"), Messages.getQuestionIcon()) == Messages.YES) {
       return parameter;
     }
     return null;

@@ -31,11 +31,13 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.ui.IdeBorderFactory;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
+import javax.swing.*;
 import java.awt.*;
 import java.io.File;
 
@@ -54,6 +56,14 @@ public abstract class AbstractProjectWizard extends AbstractWizard<ModuleWizardS
   public AbstractProjectWizard(String title, Project project, Component dialogParent) {
     super(title, dialogParent);
     myWizardContext = initContext(project, null);
+  }
+
+  @Override
+  protected String addStepComponent(Component component) {
+    if (component instanceof JComponent) {
+      ((JComponent)component).setBorder(IdeBorderFactory.createEmptyBorder(0, 0, 0, 0));
+    }
+    return super.addStepComponent(component);
   }
 
   public abstract StepSequence getSequence();
@@ -156,15 +166,21 @@ public abstract class AbstractProjectWizard extends AbstractWizard<ModuleWizardS
           step._commit(true);
         }
         catch (CommitStepException e) {
-          String message = e.getMessage();
-          if (message != null) {
-            Messages.showErrorDialog(getCurrentStepComponent(), message);
-          }
+          handleCommitException(e);
           return;
         }
         if (!isLastStep(idx)) {
           idx = getNextStep(idx);
         } else {
+          for (ModuleWizardStep wizardStep : mySteps) {
+            try {
+              wizardStep.onWizardFinished();
+            }
+            catch (CommitStepException e) {
+              handleCommitException(e);
+              return;
+            }
+          }
           break;
         }
       } while (true);
@@ -174,6 +190,13 @@ public abstract class AbstractProjectWizard extends AbstractWizard<ModuleWizardS
       updateStep();
     }
     super.doOKAction();
+  }
+
+  private void handleCommitException(CommitStepException e) {
+    String message = e.getMessage();
+    if (message != null) {
+      Messages.showErrorDialog(getCurrentStepComponent(), message);
+    }
   }
 
   protected boolean commitStepData(final ModuleWizardStep step) {

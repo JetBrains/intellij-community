@@ -850,10 +850,6 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
       return false;
     }
 
-    if (isQualified()) {
-      return true;
-    }
-
     PsiElement superParent = getParent();
     while (superParent != null) {
       if (superParent instanceof PsiCodeBlock || superParent instanceof PsiLocalVariable) {

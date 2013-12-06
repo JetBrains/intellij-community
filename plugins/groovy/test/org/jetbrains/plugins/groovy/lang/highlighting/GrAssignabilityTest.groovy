@@ -690,7 +690,7 @@ interface I {}
 def <T extends PsiElement> T foo1(Class<T> <warning descr="Cannot assign 'Class<String>' to 'Class<? extends PsiElement>'">x</warning> = String ) {}
 def <T extends PsiElement> T foo2(Class<T> x = PsiElement ) {}
 def <T> T foo3(Class<T> x = PsiElement ) {}
-def <T extends PsiElement & I> T foo4(Class<T> <warning descr="Cannot assign 'Class<PsiElement>' to 'Class<? extends PsiElement>'">x</warning> = PsiElement ) {}
+def <T extends PsiElement & I> T foo4(Class<T> <warning descr="Cannot assign 'Class<PsiElement>' to 'Class<? extends PsiElement & I>'">x</warning> = PsiElement ) {}
 def <T extends PsiElement & I> T foo5(Class<T> x = Foo ) {}
 ''')
   }

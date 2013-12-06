@@ -15,9 +15,9 @@
  */
 package com.intellij.psi.impl.source.tree.java;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.impl.JavaPsiFacadeEx;
@@ -77,7 +77,7 @@ public class ShortenClassReferencesTest extends LightCodeInsightFixtureTestCase 
     CommandProcessor.getInstance().executeCommand(getProject(), new Runnable() {
       @Override
       public void run() {
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
+        WriteCommandAction.runWriteCommandAction(null, new Runnable() {
           @Override
           public void run() {
             JavaCodeStyleManager.getInstance(getProject()).shortenClassReferences(myFixture.getFile());

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -115,7 +115,7 @@ public abstract class ExtractIncludeFileBase<T extends PsiElement> implements Re
       final String message = RefactoringBundle.message("idea.has.found.fragments.that.can.be.replaced.with.include.directive",
                                                   ApplicationNamesInfo.getInstance().getProductName());
       final int exitCode = Messages.showYesNoDialog(project, message, getRefactoringName(), Messages.getInformationIcon());
-      if (exitCode == DialogWrapper.OK_EXIT_CODE) {
+      if (exitCode == Messages.YES) {
         CommandProcessor.getInstance().executeCommand(project, new Runnable() {
           @Override
           public void run() {

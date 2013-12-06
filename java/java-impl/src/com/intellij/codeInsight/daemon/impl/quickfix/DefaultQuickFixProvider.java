@@ -22,12 +22,14 @@ import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.codeInsight.intention.impl.PriorityIntentionActionWrapper;
 import com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixProvider;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.EnumMap;
 import java.util.Map;
@@ -100,7 +102,7 @@ public class DefaultQuickFixProvider extends UnresolvedReferenceQuickFixProvider
     }
   }
 
-  @NotNull
+  @Nullable
   private static VariableKind getKind(@NotNull JavaCodeStyleManager styleManager, @NotNull PsiReferenceExpression refExpr) {
     final String reference = refExpr.getText();
 
@@ -119,6 +121,10 @@ public class DefaultQuickFixProvider extends UnresolvedReferenceQuickFixProvider
       if (reference.startsWith(prefix) && reference.endsWith(suffix)) {
         return kind;
       }
+    }
+
+    if (StringUtil.isCapitalized(reference)) {
+      return null;
     }
 
     return VariableKind.LOCAL_VARIABLE;

@@ -33,6 +33,11 @@ public interface DockContainer extends Disposable, Activatable {
 
   RelativeRectangle getAcceptArea();
 
+  /**
+   * This area is used when nothing was found with getAcceptArea 
+   */
+  RelativeRectangle getAcceptAreaFallback();
+
   @NotNull
   ContentResponse getContentResponse(@NotNull DockableContent content, RelativePoint point);
 

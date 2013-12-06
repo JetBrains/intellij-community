@@ -20,8 +20,7 @@ import com.intellij.remoteServer.agent.annotation.ChildCall;
 import com.intellij.remoteServer.agent.annotation.FinalCall;
 
 /**
- * Created by IntelliJ IDEA.
- * User: michael.golubev
+ * @author michael.golubev
  */
 public interface CloudGitAgent<C extends CloudAgentConfigBase, D extends CloudGitAgentDeployment> extends RemoteAgent {
 
@@ -33,5 +32,5 @@ public interface CloudGitAgent<C extends CloudAgentConfigBase, D extends CloudGi
   DeploymentData[] getDeployments();
 
   @ChildCall
-  D createDeployment(String deploymentName, CloudGitLoggingHandler loggingHandler);
+  D createDeployment(String deploymentName, CloudLoggingHandler loggingHandler);
 }

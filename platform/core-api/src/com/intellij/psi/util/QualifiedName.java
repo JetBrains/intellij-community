@@ -44,6 +44,7 @@ public class QualifiedName {
     return qName;
   }
 
+  @NotNull
   public static QualifiedName fromComponents(String... components) {
     QualifiedName result = new QualifiedName(components.length);
     Collections.addAll(result.myComponents, components);
@@ -183,6 +184,7 @@ public class QualifiedName {
     return StringUtil.join(myComponents, separator);
   }
 
+  @NotNull
   public static QualifiedName fromDottedString(@NotNull String refName) {
     return fromComponents(refName.split("\\."));
   }

@@ -27,9 +27,11 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.stubs.BinaryFileStubBuilder;
 import com.intellij.psi.stubs.Stub;
 import com.intellij.psi.xml.XmlFile;
+import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.indexing.FileBasedIndexImpl;
 import com.intellij.util.indexing.FileContent;
 import com.intellij.util.xml.*;
+import com.intellij.util.xml.impl.DomManagerImpl;
 import com.intellij.util.xml.stubs.FileStub;
 import com.intellij.xml.util.XmlUtil;
 
@@ -67,8 +69,10 @@ public class DomStubBuilder implements BinaryFileStubBuilder {
         LOG.error("null root tag for " + fileElement + " for " + file);
       }
       FileStub fileStub = new FileStub(header);
-      DomStubBuilderVisitor visitor = new DomStubBuilderVisitor(fileStub);
-      visitor.visitDomElement(fileElement.getRootElement());
+      XmlTag rootTag = xmlFile.getRootTag();
+      if (rootTag != null) {
+        new DomStubBuilderVisitor(DomManagerImpl.getDomManager(project)).visitXmlElement(rootTag, fileStub, 0);
+      }
       return fileStub;
     }
     finally {
@@ -79,7 +83,7 @@ public class DomStubBuilder implements BinaryFileStubBuilder {
 
   @Override
   public int getStubVersion() {
-    int version = 9;
+    int version = 16;
     DomFileDescription[] descriptions = Extensions.getExtensions(DomFileDescription.EP_NAME);
     for (DomFileDescription description : descriptions) {
       version += description.getStubVersion();

@@ -16,11 +16,15 @@
 package com.intellij.usages.impl.rules;
 
 import com.intellij.injected.editor.VirtualFileWindow;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.DataKey;
+import com.intellij.openapi.actionSystem.DataSink;
+import com.intellij.openapi.actionSystem.TypeSafeDataProvider;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.FileStatusManager;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiManager;
@@ -34,6 +38,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.io.File;
 
 /**
  * @author yole
@@ -71,6 +76,10 @@ public class DirectoryGroupingRule implements UsageGroupingRule {
     return new DirectoryGroup(dir);
   }
 
+  public String getActionTitle() {
+    return "Group by directory";
+  }
+
   private class DirectoryGroup implements UsageGroup, TypeSafeDataProvider {
     private final VirtualFile myDir;
 
@@ -90,7 +99,12 @@ public class DirectoryGroupingRule implements UsageGroupingRule {
     @Override
     @NotNull
     public String getText(UsageView view) {
+      String relativePath = VfsUtilCore.getRelativePath(myDir, myProject.getBaseDir(), File.separatorChar);
+      if (relativePath != null) {
+        return relativePath;
+      }
       String url = myDir.getPresentableUrl();
+
       return url != null ? url : "<invalid>";
     }
 

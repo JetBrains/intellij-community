@@ -15,8 +15,8 @@
  */
 package git4idea.test;
 
-import com.intellij.dvcs.test.Executor;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vcs.Executor;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;

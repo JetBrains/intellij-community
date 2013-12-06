@@ -22,17 +22,15 @@ import com.intellij.lang.impl.PsiBuilderImpl;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiInvalidElementAccessException;
 import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.TokenType;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.CompositeElement;
-import com.intellij.psi.impl.source.tree.RecursiveTreeElementWalkingVisitor;
 import com.intellij.psi.impl.source.tree.SharedImplUtil;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.stubs.ObjectStubSerializer;
@@ -515,50 +513,69 @@ public class DebugUtil {
     }
   }
 
-  private static final Key<List<Pair<Object, Processor<PsiElement>>>> TRACK_INVALIDATION_KEY = Key.create("TRACK_INVALIDATION_KEY");
-  private static volatile boolean ourTrackInvalidationCalled = false;
+  private static final ThreadLocal<Object> ourPsiModificationTrace = new ThreadLocal<Object>();
+  private static final ThreadLocal<Integer> ourPsiModificationDepth = new ThreadLocal<Integer>();
 
-  public static void trackInvalidation(@NotNull PsiElement element, @NotNull Object requestor, @NotNull Processor<PsiElement> callback) {
-    ourTrackInvalidationCalled = true;
-    synchronized (element) {
-      final ASTNode node = element.getNode();
-      if (node == null) return;
-      List<Pair<Object, Processor<PsiElement>>> callbacks = node.getUserData(TRACK_INVALIDATION_KEY);
-      if (callbacks == null) {
-        callbacks = new SmartList<Pair<Object, Processor<PsiElement>>>();
-        node.putUserData(TRACK_INVALIDATION_KEY, callbacks);
-      }
-      for (int i = 0; i < callbacks.size(); i++) {
-        Pair<Object, Processor<PsiElement>> pair = callbacks.get(i);
-        Object callbackRequestor = pair.first;
-        if (callbackRequestor.equals(requestor)) {
-          callbacks.set(i, Pair.create(requestor, callback));
-          return;
-        }
-      }
-      callbacks.add(Pair.create(requestor, callback));
-    }
-  }
-
-  public static void onInvalidated(@NotNull TreeElement treeElement) {
-    if (!ourTrackInvalidationCalled) {
+  /**
+   * Marks a start of PSI modification action. Any PSI/AST elements invalidated inside such an action will contain a debug trace
+   * identifying this transaction, and so will {@link com.intellij.psi.PsiInvalidElementAccessException} thrown when accessing such invalid 
+   * elements. This should help finding out why a specific PSI element has become invalid.
+   * 
+   * @param trace The debug trace that the invalidated elements should be identified by. May be null, then current stack trace is used.
+   */
+  public static void startPsiModification(@Nullable String trace) {
+    if (!PsiInvalidElementAccessException.isTrackingInvalidation()) {
       return;
     }
 
-    treeElement.acceptTree(new RecursiveTreeElementWalkingVisitor(false) {
-      @Override
-      protected void visitNode(TreeElement element) {
-        List<Pair<Object, Processor<PsiElement>>> callbacks = element.getUserData(TRACK_INVALIDATION_KEY);
-        if (callbacks != null) {
-          for (Pair<Object, Processor<PsiElement>> pair : callbacks) {
-            Processor<PsiElement> callback = pair.second;
-            PsiElement psi = element.getPsi();
-            if (psi != null) callback.process(psi);
-          }
-        }
-        super.visitNode(element);
-      }
-    });
+    //noinspection ThrowableResultOfMethodCallIgnored
+    if (ourPsiModificationTrace.get() == null) {
+      ourPsiModificationTrace.set(trace != null ? trace : new Throwable());
+    }
+    Integer depth = ourPsiModificationDepth.get();
+    if (depth == null) depth = 0;
+    ourPsiModificationDepth.set(depth + 1);
+  }
+
+  /**
+   * Finished PSI modification action.
+   * @see #startPsiModification(String) 
+   */
+  public static void finishPsiModification() {
+    if (!PsiInvalidElementAccessException.isTrackingInvalidation()) {
+      return;
+    }
+    Integer depth = ourPsiModificationDepth.get();
+    if (depth == null) {
+      LOG.warn("Unmatched PSI modification end", new Throwable());
+      depth = 0;
+    } else {
+      depth--;
+      ourPsiModificationDepth.set(depth);
+    }
+    if (depth == 0) {
+      ourPsiModificationTrace.set(null);
+    }
+  }
+
+  public static void onInvalidated(@NotNull ASTNode treeElement) {
+    if (!PsiInvalidElementAccessException.isTrackingInvalidation()) {
+      return;
+    }
+    if (PsiInvalidElementAccessException.findInvalidationTrace(treeElement) != null) {
+      return;
+    }
+
+    Object trace = ourPsiModificationTrace.get();
+    if (trace == null) {
+      trace = new Throwable();
+      LOG.info("PSI invalidated outside transaction", (Throwable)trace);
+    }
+    PsiInvalidElementAccessException.setInvalidationTrace(treeElement, trace);
+  }
+
+  public static void revalidateNode(@NotNull ASTNode element) {
+    PsiInvalidElementAccessException.setInvalidationTrace(element, null);
   }
 
   public static void sleep(long millis) {

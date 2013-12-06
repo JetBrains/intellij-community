@@ -20,7 +20,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class AbstractBaseJavaLocalInspectionTool extends LocalInspectionTool {
+public abstract class AbstractBaseJavaLocalInspectionTool extends LocalInspectionTool {
   /**
    * Override this to report problems at method level.
    *

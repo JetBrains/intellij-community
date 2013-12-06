@@ -15,6 +15,7 @@
  */
 package com.jetbrains.python.inspections;
 
+import com.intellij.testFramework.TestDataPath;
 import com.jetbrains.python.PythonTestUtil;
 import com.jetbrains.python.fixtures.PyTestCase;
 
@@ -23,6 +24,7 @@ import java.util.Arrays;
 /**
  * User: ktisha
  */
+@TestDataPath("$CONTENT_ROOT/../testData/inspections/PyMethodMayBeStaticInspection/")
 public class PyMethodMayBeStaticInspectionTest extends PyTestCase {
 
   public void testTruePositive() {
@@ -62,6 +64,10 @@ public class PyMethodMayBeStaticInspectionTest extends PyTestCase {
   }
 
   public void testNotImplemented() {
+    doTest();
+  }
+
+  public void testDecorated() {
     doTest();
   }
 

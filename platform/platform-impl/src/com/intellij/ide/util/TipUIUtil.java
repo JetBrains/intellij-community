@@ -29,13 +29,16 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
+import javax.imageio.ImageIO;
 import javax.swing.*;
+import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.io.StringReader;
 import java.net.URL;
 
 /**
  * @author dsl
+ * @author Konstantin Bulenkov
  */
 public class TipUIUtil {
   @NonNls private static final String SHORTCUT_ENTITY = "&shortcut:";
@@ -62,6 +65,7 @@ public class TipUIUtil {
 
       StringBuffer text = new StringBuffer(ResourceUtil.loadText(url));
       updateShortcuts(text);
+      updateImages(text, providerClass);
       String replaced = text.toString().replace("&productName;", ApplicationNamesInfo.getInstance().getFullProductName());
       replaced = replaced.replace("&majorVersion;", ApplicationInfo.getInstance().getMajorVersion());
       replaced = replaced.replace("&minorVersion;", ApplicationInfo.getInstance().getMinorVersion());
@@ -81,6 +85,49 @@ public class TipUIUtil {
         IdeBundle.message("error.unable.to.read.tip.of.the.day", missingFile, ApplicationNamesInfo.getInstance().getFullProductName())), null);
     }
     catch (IOException ignored) {
+    }
+  }
+
+  private static void updateImages(StringBuffer text, Class providerClass) {
+    final boolean dark = UIUtil.isUnderDarcula();
+    final boolean retina = UIUtil.isRetina();
+//    if (!dark && !retina) {
+//      return;
+//    }
+
+    String suffix = "";
+    if (retina) suffix += "@2x";
+    if (dark) suffix += "_dark";
+    int index = text.indexOf("<img", 0);
+    while (index != -1) {
+      final int end = text.indexOf(">", index + 1);
+      if (end == -1) return;
+      final String img = text.substring(index, end + 1).replace('\r', ' ').replace('\n',' ');
+      final int srcIndex = img.indexOf("src=");
+      final int endIndex = img.indexOf(".png", srcIndex);
+      if (endIndex != -1) {
+        String path = img.substring(srcIndex + 5, endIndex);
+        if (!path.endsWith("_dark") && !path.endsWith("@2x")) {
+          path += suffix + ".png";
+          URL url = ResourceUtil.getResource(providerClass, "/tips/", path);
+          if (url != null) {
+            String newImgTag = "<img src=\"" + path + "\" ";
+            if (retina) {
+              try {
+                final BufferedImage image = ImageIO.read(url.openStream());
+                final int w = image.getWidth() / 2;
+                final int h = image.getHeight() / 2;
+                newImgTag += "width=\"" + w + "\" height=\"" + h + "\"";
+              } catch (Exception ignore) {
+                newImgTag += "width=\"400\" height=\"200\"";
+              }
+            }
+            newImgTag += "/>";
+            text.replace(index, end + 1, newImgTag);
+          }
+        }
+      }
+      index = text.indexOf("<img", index + 1);
     }
   }
 

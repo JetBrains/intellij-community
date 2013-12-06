@@ -19,8 +19,12 @@ import com.google.common.collect.Maps;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.util.PathMappingSettings;
 import com.intellij.util.containers.ComparatorUtil;
+import com.intellij.util.xmlb.annotations.*;
 import com.jetbrains.python.run.AbstractPyCommonOptionsForm;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
 
@@ -80,6 +84,7 @@ public class PyConsoleOptions implements PersistentStateComponent<PyConsoleOptio
     public boolean myShowSeparatorLine = true;
   }
 
+  @Tag("console-settings")
   public static class PyConsoleSettings {
     public String myCustomStartScript = "";
     public String mySdkHome = null;
@@ -90,14 +95,8 @@ public class PyConsoleOptions implements PersistentStateComponent<PyConsoleOptio
     public String myWorkingDirectory = "";
     public boolean myAddContentRoots = true;
     public boolean myAddSourceRoots;
-
-    public String getCustomStartScript() {
-      return myCustomStartScript;
-    }
-
-    public String getSdkHome() {
-      return mySdkHome;
-    }
+    @NotNull
+    private PathMappingSettings myMappings = new PathMappingSettings();
 
     public void apply(AbstractPyCommonOptionsForm form) {
       mySdkHome = form.getSdkHome();
@@ -109,6 +108,7 @@ public class PyConsoleOptions implements PersistentStateComponent<PyConsoleOptio
 
       myAddContentRoots = form.addContentRoots();
       myAddSourceRoots = form.addSourceRoots();
+      myMappings = form.getMappingSettings() == null ? new PathMappingSettings() : form.getMappingSettings();
     }
 
     public boolean isModified(AbstractPyCommonOptionsForm form) {
@@ -119,7 +119,8 @@ public class PyConsoleOptions implements PersistentStateComponent<PyConsoleOptio
              myAddContentRoots != form.addContentRoots() ||
              myAddSourceRoots != form.addSourceRoots()
              || !ComparatorUtil.equalsNullable(myModuleName, form.getModule() == null ? null : form.getModule().getName())
-             || !myWorkingDirectory.equals(form.getWorkingDirectory());
+             || !myWorkingDirectory.equals(form.getWorkingDirectory())
+             || !myMappings.equals(form.getMappingSettings());
     }
 
     public void reset(Project project, AbstractPyCommonOptionsForm form) {
@@ -143,33 +144,103 @@ public class PyConsoleOptions implements PersistentStateComponent<PyConsoleOptio
         myModuleName = form.getModule().getName();
       }
 
-      form.setWorkingDirectory(form.getWorkingDirectory());
+      form.setWorkingDirectory(myWorkingDirectory);
+
+      form.setMappingSettings(myMappings);
     }
 
+    @Attribute("custom-start-script")
+    public String getCustomStartScript() {
+      return myCustomStartScript;
+    }
+
+    @Attribute("sdk-home")
+    public String getSdkHome() {
+      return mySdkHome;
+    }
+
+    @Attribute("module-name")
     public String getModuleName() {
       return myModuleName;
     }
 
+    @Attribute("working-directory")
     public String getWorkingDirectory() {
       return myWorkingDirectory;
     }
 
+    @Attribute("is-module-sdk")
     public boolean isUseModuleSdk() {
       return myUseModuleSdk;
     }
 
+    @Tag("envs")
+    @Property(surroundWithTag = false)
+    @MapAnnotation(surroundWithTag = false, surroundKeyWithTag = false, keyAttributeName = "key",
+                   entryTagName = "env", valueAttributeName = "value", surroundValueWithTag = false)
     public Map<String, String> getEnvs() {
       return myEnvs;
     }
 
+    @Attribute("add-content-roots")
     public boolean addContentRoots() {
       return myAddContentRoots;
     }
 
+    @Attribute("add-source-roots")
     public boolean addSourceRoots() {
       return myAddSourceRoots;
     }
 
+    @Attribute("interpreter-options")
+    public String getInterpreterOptions() {
+      return myInterpreterOptions;
+    }
+
+    @AbstractCollection(surroundWithTag = false)
+    public PathMappingSettings getMappings() {
+      return myMappings;
+    }
+
+    public void setCustomStartScript(String customStartScript) {
+      myCustomStartScript = customStartScript;
+    }
+
+    public void setSdkHome(String sdkHome) {
+      mySdkHome = sdkHome;
+    }
+
+    public void setInterpreterOptions(String interpreterOptions) {
+      myInterpreterOptions = interpreterOptions;
+    }
+
+    public void setUseModuleSdk(boolean useModuleSdk) {
+      myUseModuleSdk = useModuleSdk;
+    }
+
+    public void setModuleName(String moduleName) {
+      myModuleName = moduleName;
+    }
+
+    public void setEnvs(Map<String, String> envs) {
+      myEnvs = envs;
+    }
+
+    public void setWorkingDirectory(String workingDirectory) {
+      myWorkingDirectory = workingDirectory;
+    }
+
+    public void setAddContentRoots(boolean addContentRoots) {
+      myAddContentRoots = addContentRoots;
+    }
+
+    public void setAddSourceRoots(boolean addSourceRoots) {
+      myAddSourceRoots = addSourceRoots;
+    }
+
+    public void setMappings(@Nullable PathMappingSettings mappings) {
+      myMappings = mappings != null ? mappings : new PathMappingSettings();
+    }
   }
 }
 

@@ -98,7 +98,12 @@ public class AutoImportQuickFix implements LocalQuickFix, HighPriorityAction {
   @NotNull
   public String getText() {
     if (myUseQualifiedImport) return PyBundle.message("ACT.qualify.with.module");
-    else return PyBundle.message("ACT.NAME.use.import");
+    else if (myImports.size() == 1) {
+      return "Import '" + myImports.get(0).getPresentableText(getNameToImport()) + "'";
+    }
+    else {
+      return PyBundle.message("ACT.NAME.use.import");
+    }
   }
 
   @NotNull

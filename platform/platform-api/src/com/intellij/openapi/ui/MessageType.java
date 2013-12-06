@@ -29,7 +29,7 @@ public class MessageType {
   public static final MessageType INFO = new MessageType(UIUtil.getBalloonInformationIcon(),
                                                          new JBColor(new Color(186, 238, 186, 230), new Color(73, 117, 73)));
   public static final MessageType WARNING = new MessageType(UIUtil.getBalloonWarningIcon(),
-                                                            new JBColor(new Color(249, 247, 142, 230), new Color(128, 125, 75)));
+                                                            new JBColor(new Color(249, 247, 142, 230), new Color(90, 82, 33)));
 
   private final Icon myDefaultIcon;
   private final Color myPopupBackground;

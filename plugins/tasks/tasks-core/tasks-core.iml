@@ -27,15 +27,6 @@
     </orderEntry>
     <orderEntry type="library" exported="" name="http-client-3.1" level="project" />
     <orderEntry type="library" name="XmlRPC" level="project" />
-    <orderEntry type="module-library" exported="">
-      <library name="markdownj">
-        <CLASSES>
-          <root url="jar://$MODULE_DIR$/lib/markdownj-core-0.4.2-SNAPSHOT.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES />
-      </library>
-    </orderEntry>
     <orderEntry type="library" name="gson" level="project" />
     <orderEntry type="module" module-name="xml" />
     <orderEntry type="module" module-name="core-api" />

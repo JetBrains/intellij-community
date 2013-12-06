@@ -5,6 +5,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.impl.NullVirtualFile;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.vcs.log.Hash;
+import com.intellij.vcs.log.VcsFullCommitDetails;
 import com.intellij.vcs.log.VcsShortCommitDetails;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -35,6 +36,9 @@ public abstract class AbstractVcsLogTableModel<T> extends AbstractTableModel {
   @Nullable
   protected abstract VcsShortCommitDetails getShortDetails(int rowIndex);
 
+  @Nullable
+  public abstract VcsFullCommitDetails getFullCommitDetails(int row);
+
   @NotNull
   @Override
   public final Object getValueAt(int rowIndex, int columnIndex) {
@@ -53,14 +57,14 @@ public abstract class AbstractVcsLogTableModel<T> extends AbstractTableModel {
           return "";
         }
         else {
-          return data.getAuthorName();
+          return data.getAuthor().getName();
         }
       case DATE_COLUMN:
-        if (data == null || data.getAuthorTime() < 0) {
+        if (data == null || data.getTime() < 0) {
           return "";
         }
         else {
-          return DateFormatUtil.formatDateTime(data.getAuthorTime());
+          return DateFormatUtil.formatDateTime(data.getTime());
         }
       default:
         throw new IllegalArgumentException("columnIndex is " + columnIndex + " > " + (COLUMN_COUNT - 1));

@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2013 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,14 +15,29 @@
  */
 package com.siyeh.ig.imports;
 
+import com.intellij.psi.PsiElement;
 import com.intellij.util.ui.CheckBox;
 import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.fixes.SuppressForTestsScopeFix;
 import com.siyeh.ig.ui.UiUtils;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
 
 public class StaticImportInspection extends StaticImportInspectionBase {
+
+  @NotNull
+  @Override
+  protected InspectionGadgetsFix[] buildFixes(Object... infos) {
+    final PsiElement context = (PsiElement)infos[0];
+    final SuppressForTestsScopeFix fix = SuppressForTestsScopeFix.build(this, context);
+    if (fix == null) {
+      return new InspectionGadgetsFix[] {buildFix(infos)};
+    }
+    return new InspectionGadgetsFix[] {buildFix(infos), fix};
+  }
 
   @Override
   public JComponent createOptionsPanel() {
@@ -48,9 +63,6 @@ public class StaticImportInspection extends StaticImportInspectionBase {
       new CheckBox(InspectionGadgetsBundle.message("ignore.single.method.static.imports.option"), this, "ignoreSingeMethodImports");
     panel.add(checkBox2, constraints);
 
-    constraints.gridy = 3;
-    final CheckBox checkBox3 = new CheckBox(InspectionGadgetsBundle.message("ignore.in.test.code"), this, "ignoreInTestCode");
-    panel.add(checkBox3, constraints);
     return panel;
   }
 }

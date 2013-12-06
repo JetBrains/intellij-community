@@ -44,6 +44,8 @@
 
     <applicationService serviceInterface="com.intellij.execution.filters.TextConsoleBuilderFactory"
                         serviceImplementation="com.intellij.execution.filters.TextConsoleBuilderFactoryImpl"/>
+    <applicationService serviceInterface="com.intellij.execution.filters.HyperlinkInfoFactory"
+                        serviceImplementation="com.intellij.execution.filters.impl.HyperlinkInfoFactoryImpl"/>
 
     <applicationService serviceInterface="com.intellij.lang.PsiBuilderFactory"
                         serviceImplementation="com.intellij.lang.impl.PsiBuilderFactoryImpl"/>
@@ -858,6 +860,8 @@
     <elementPreviewProvider implementation="com.intellij.codeInsight.preview.ElementPreviewHintProvider"/>
 
     <actionPromoter implementation="com.intellij.ui.EditorTextFieldActionPromoter"/>
+
+    <stepsBeforeRunProvider implementation="com.intellij.execution.impl.RunConfigurationBeforeRunProvider"/>
   </extensions>
 </idea-plugin>
 

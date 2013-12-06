@@ -17,7 +17,7 @@ package com.intellij.ide.fileTemplates.impl;
 
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl;
-import com.intellij.ide.plugins.PluginManager;
+import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.plugins.cl.PluginClassLoader;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginDescriptor;
@@ -129,7 +129,7 @@ public class FileTemplatesLoader {
 
   private void loadDefaultTemplates() {
     final Set<URL> processedUrls = new HashSet<URL>();
-    for (PluginDescriptor plugin : PluginManager.getPlugins()) {
+    for (PluginDescriptor plugin : PluginManagerCore.getPlugins()) {
       if (plugin instanceof IdeaPluginDescriptorImpl && ((IdeaPluginDescriptorImpl)plugin).isEnabled()) {
         final ClassLoader loader = plugin.getPluginClassLoader();
         if (loader instanceof PluginClassLoader && ((PluginClassLoader)loader).getUrls().isEmpty()) {

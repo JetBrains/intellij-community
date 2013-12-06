@@ -22,12 +22,14 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.*;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.SmartList;
 import com.intellij.util.cls.ClsUtil;
 import com.intellij.util.concurrency.SequentialTaskExecutor;
 import io.netty.channel.Channel;
@@ -100,16 +102,20 @@ public abstract class DefaultMessageHandler implements BuilderMessageHandler {
         LOG.debug("Constant search task: cannot search in dumb mode");
       }
       else {
-        ApplicationManager.getApplication().runReadAction(new Runnable() {
-          @Override
-          public void run() {
-            try {
-              String qualifiedName = ownerClassName.replace('$', '.');
-              final PsiClass[] classes = JavaPsiFacade.getInstance(myProject).findClasses(qualifiedName, GlobalSearchScope.allScope(myProject));
-              if (isRemoved) {
+        final String qualifiedName = ownerClassName.replace('$', '.');
+        final PsiClass[] classes = ApplicationManager.getApplication().runReadAction(new Computable<PsiClass[]>() {
+          public PsiClass[] compute() {
+            return JavaPsiFacade.getInstance(myProject).findClasses(qualifiedName, GlobalSearchScope.allScope(myProject));
+          }
+        });
+
+        try {
+          if (isRemoved) {
+            ApplicationManager.getApplication().runReadAction(new Runnable() {
+              public void run() {
                 if (classes.length > 0) {
                   for (PsiClass aClass : classes) {
-                    final boolean success = performRemovedConstantSearch(aClass, fieldName, accessFlags, affectedPaths);
+                    final boolean success = aClass.isValid() && performRemovedConstantSearch(aClass, fieldName, accessFlags, affectedPaths);
                     if (!success) {
                       isSuccess.set(Boolean.FALSE);
                       break;
@@ -122,44 +128,49 @@ public abstract class DefaultMessageHandler implements BuilderMessageHandler {
                   );
                 }
               }
-              else {
-                if (classes.length > 0) {
-                  boolean foundAtLeastOne = false;
+            });
+          }
+          else {
+            if (classes.length > 0) {
+              final Collection<PsiField> changedFields = ApplicationManager.getApplication().runReadAction(new Computable<Collection<PsiField>>() {
+                public Collection<PsiField> compute() {
+                  final List<PsiField> fields = new SmartList<PsiField>();
                   for (PsiClass aClass : classes) {
-                    PsiField changedField = null;
-                    for (PsiField psiField : aClass.getFields()) {
-                      if (fieldName.equals(psiField.getName())) {
-                        changedField = psiField;
-                        break;
-                      }
+                    if (!aClass.isValid()) {
+                      return Collections.emptyList();
                     }
-                    if (changedField == null) {
-                      continue;
-                    }
-                    foundAtLeastOne = true;
-                    final boolean success = performChangedConstantSearch(aClass, changedField, accessFlags, accessChanged, affectedPaths);
-                    if (!success) {
-                      isSuccess.set(Boolean.FALSE);
-                      break;
+                    final PsiField changedField = aClass.findFieldByName(fieldName, false);
+                    if (changedField != null) {
+                      fields.add(changedField);
                     }
                   }
-                  if (!foundAtLeastOne) {
-                    isSuccess.set(Boolean.FALSE);
-                    LOG.debug("Constant search task: field " + fieldName + " not found in classes " + qualifiedName);
-                  }
+                  return fields;
                 }
-                else {
-                  isSuccess.set(Boolean.FALSE);
-                  LOG.debug("Constant search task: class " + qualifiedName + " not found");
+              });
+              if (changedFields.isEmpty()) {
+                isSuccess.set(Boolean.FALSE);
+                LOG.debug("Constant search task: field " + fieldName + " not found in classes " + qualifiedName);
+              }
+              else {
+                for (final PsiField changedField : changedFields) {
+                  final boolean success = performChangedConstantSearch(changedField, accessFlags, accessChanged, affectedPaths);
+                  if (!success) {
+                    isSuccess.set(Boolean.FALSE);
+                    break;
+                  }
                 }
               }
             }
-            catch (Throwable e) {
+            else {
               isSuccess.set(Boolean.FALSE);
-              LOG.debug("Constant search task: failed with message " + e.getMessage());
+              LOG.debug("Constant search task: class " + qualifiedName + " not found");
             }
           }
-        });
+        }
+        catch (Throwable e) {
+          isSuccess.set(Boolean.FALSE);
+          LOG.debug("Constant search task: failed with message " + e.getMessage());
+        }
       }
     }
     finally {
@@ -201,23 +212,23 @@ public abstract class DefaultMessageHandler implements BuilderMessageHandler {
     return isDumb;
   }
 
-  private boolean performChangedConstantSearch(PsiClass aClass, PsiField field, int accessFlags, boolean isAccessibilityChange, Set<String> affectedPaths) {
+  private boolean performChangedConstantSearch(PsiField field, int accessFlags, boolean isAccessibilityChange, final Set<String> affectedPaths) {
     if (!isAccessibilityChange && ClsUtil.isPrivate(accessFlags)) {
       return true; // optimization: don't need to search, cause may be used only in this class
     }
     final Set<PsiElement> usages = new HashSet<PsiElement>();
     try {
-      addUsages(field, usages, isAccessibilityChange);
-      for (final PsiElement usage : usages) {
-        affect(usage, affectedPaths);
-        //final PsiClass ownerClass = getOwnerClass(usage);
-        //if (ownerClass != null && !ownerClass.equals(aClass)) {
-        //  affect(ownerClass, affectedPaths);
-        //}
-        //else if (ownerClass == null) {
-        //  affect(usage, affectedPaths);
-        //}
-      }
+      addUsages(field, usages, accessFlags, isAccessibilityChange);
+      ApplicationManager.getApplication().runReadAction(new Runnable() {
+        public void run() {
+          for (final PsiElement usage : usages) {
+            if (!usage.isValid()) {
+              // if usage is invalid the file should be changed anyway and thus compiled later
+              affect(usage, affectedPaths);
+            }
+          }
+        }
+      });
     }
     catch (PsiInvalidElementAccessException ignored) {
       LOG.debug("Constant search task: PIEAE thrown while searching of usages of changed constant");
@@ -231,19 +242,7 @@ public abstract class DefaultMessageHandler implements BuilderMessageHandler {
   }
 
 
-  private boolean performRemovedConstantSearch(@Nullable final PsiClass aClass, String fieldName, int accessFlags, final Set<String> affectedPaths) {
-    SearchScope searchScope = GlobalSearchScope.projectScope(myProject);
-    if (aClass != null && ClsUtil.isPackageLocal(accessFlags)) {
-      final PsiFile containingFile = aClass.getContainingFile();
-      if (containingFile instanceof PsiJavaFile) {
-        final String packageName = ((PsiJavaFile)containingFile).getPackageName();
-        final PsiPackage aPackage = JavaPsiFacade.getInstance(myProject).findPackage(packageName);
-        if (aPackage != null) {
-          searchScope = PackageScope.packageScope(aPackage, false);
-          searchScope = searchScope.intersectWith(aClass.getUseScope());
-        }
-      }
-    }
+  private boolean performRemovedConstantSearch(@Nullable final PsiClass aClass, String fieldName, int fieldAccessFlags, final Set<String> affectedPaths) {
     final PsiSearchHelper psiSearchHelper = PsiSearchHelper.SERVICE.getInstance(myProject);
 
     final Ref<Boolean> result = new Ref<Boolean>(Boolean.TRUE);
@@ -268,9 +267,25 @@ public abstract class DefaultMessageHandler implements BuilderMessageHandler {
           return false;
         }
       }
-    }, fieldName, searchScope, UsageSearchContext.IN_CODE);
+    }, fieldName, getSearchScope(aClass, fieldAccessFlags), UsageSearchContext.IN_CODE);
 
     return result.get();
+  }
+
+  private SearchScope getSearchScope(PsiClass aClass, int fieldAccessFlags) {
+    SearchScope searchScope = GlobalSearchScope.projectScope(myProject);
+    if (aClass != null && ClsUtil.isPackageLocal(fieldAccessFlags)) {
+      final PsiFile containingFile = aClass.getContainingFile();
+      if (containingFile instanceof PsiJavaFile) {
+        final String packageName = ((PsiJavaFile)containingFile).getPackageName();
+        final PsiPackage aPackage = JavaPsiFacade.getInstance(myProject).findPackage(packageName);
+        if (aPackage != null) {
+          searchScope = PackageScope.packageScope(aPackage, false);
+          searchScope = searchScope.intersectWith(aClass.getUseScope());
+        }
+      }
+    }
+    return searchScope;
   }
 
   private static void affect(PsiElement ownerClass, Set<String> affectedPaths) {
@@ -290,35 +305,66 @@ public abstract class DefaultMessageHandler implements BuilderMessageHandler {
         return !(element instanceof PsiIdentifier) || processor.execute((PsiIdentifier)element);
       }
     };
-    return helper.processElementsWithWord(processor1, searchScope, identifier, searchContext, true);
+    return helper.processElementsWithWord(processor1, searchScope, identifier, searchContext, true, false);
   }
 
-  private void addUsages(PsiField psiField, Collection<PsiElement> usages, final boolean ignoreAccessScope) throws ProcessCanceledException {
-    final int count = myConstantSearchesCount;
-    if (count > MAX_CONSTANT_SEARCHES) {
-      throw new ProcessCanceledException();
-    }
-    Collection<PsiReference> references = mySearcher.findReferences(psiField, ignoreAccessScope)/*doFindReferences(searchHelper, psiField)*/;
-
-    myConstantSearchesCount++;
-
-    for (final PsiReference ref : references) {
-      if (!(ref instanceof PsiReferenceExpression)) {
-        continue;
+  private void addUsages(final PsiField psiField, final Collection<PsiElement> usages, final int fieldAccessFlags, final boolean ignoreAccessScope) throws ProcessCanceledException {
+    final Queue<PsiField> fieldsToProcess = new ArrayDeque<PsiField>();
+    fieldsToProcess.add(psiField);
+    for (PsiField field = fieldsToProcess.poll(); field != null; field = fieldsToProcess.poll()) {
+      final int count = myConstantSearchesCount;
+      if (count > MAX_CONSTANT_SEARCHES) {
+        throw new ProcessCanceledException();
       }
-      PsiElement e = ref.getElement();
-      usages.add(e);
-      PsiField ownerField = getOwnerField(e);
-      if (ownerField != null) {
-        if (ownerField.hasModifierProperty(PsiModifier.FINAL)) {
-          PsiExpression initializer = ownerField.getInitializer();
-          if (initializer != null && PsiUtil.isConstantExpression(initializer)) {
-            // if the field depends on the compile-time-constant expression and is itself final
-            addUsages(ownerField, usages, ignoreAccessScope);
+      final PsiField fieldToCheck = field;
+      ApplicationManager.getApplication().runReadAction(new Runnable() {
+        public void run() {
+          if (!fieldToCheck.isValid()) {
+            // if field is invalid, the file might be changed, so next time it is compiled,
+            // the constant value change, if any, will be processed
+            return;
+          }
+          final Collection<PsiReferenceExpression> references = doFindReferences(fieldToCheck, fieldAccessFlags, ignoreAccessScope);
+
+          myConstantSearchesCount++;
+
+          for (final PsiReferenceExpression ref : references) {
+            PsiElement e = ref.getElement();
+            usages.add(e);
+            PsiField ownerField = getOwnerField(e);
+            if (ownerField != null && ownerField.hasModifierProperty(PsiModifier.FINAL)) {
+              final PsiExpression initializer = ownerField.getInitializer();
+              if (initializer != null && PsiUtil.isConstantExpression(initializer)) {
+                // if the field depends on the compile-time-constant expression and is itself final
+                fieldsToProcess.add(ownerField);
+              }
+            }
           }
         }
-      }
+      });
     }
+  }
+
+  private Collection<PsiReferenceExpression> doFindReferences(final PsiField psiField, int fieldAccessFlags, boolean ignoreAccessScope) {
+    final Collection<PsiReferenceExpression> result = Collections.synchronizedList(new SmartList<PsiReferenceExpression>());
+
+    final SearchScope searchScope = ignoreAccessScope? GlobalSearchScope.projectScope(myProject) : getSearchScope(psiField.getContainingClass(), fieldAccessFlags);
+
+    processIdentifiers(PsiSearchHelper.SERVICE.getInstance(myProject), new PsiElementProcessor<PsiIdentifier>() {
+      @Override
+      public boolean execute(@NotNull PsiIdentifier identifier) {
+        final PsiElement parent = identifier.getParent();
+        if (parent instanceof PsiReferenceExpression) {
+          final PsiReferenceExpression refExpression = (PsiReferenceExpression)parent;
+          if (refExpression.isReferenceTo(psiField)) {
+            result.add(refExpression);
+          }
+        }
+        return true;
+      }
+    }, psiField.getName(), searchScope, UsageSearchContext.IN_CODE);
+
+    return result;
   }
 
   @Nullable

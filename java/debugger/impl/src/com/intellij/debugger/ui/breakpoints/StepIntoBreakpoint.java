@@ -55,10 +55,10 @@ public class StepIntoBreakpoint extends RunToCursorBreakpoint {
       final SourcePosition startPosition = getSourcePosition();
       List<Location> locations = positionManager.locationsOfLine(classType, startPosition);
 
-      if (locations.isEmpty() && myFilter instanceof LambdaMethodFilter) {
-        // sometimes first statements are mapped to some weird line number,
-        // so if lambda spans for more than one lines, try get some locations from these lines
-        final int lastLine = ((LambdaMethodFilter)myFilter).getLastStatementLine();
+      if (locations.isEmpty()) {
+        // sometimes first statements are mapped to some weird line number, or there are no executable instructions at first statement's line
+        // so if lambda or method body spans for more than one lines, try get some locations from these lines
+        final int lastLine = myFilter.getLastStatementLine();
         if (lastLine >= 0) {
           int nextLine = startPosition.getLine() + 1;
           while (nextLine <= lastLine && locations.isEmpty()) {

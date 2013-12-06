@@ -159,34 +159,18 @@ public class LightStubBuilder implements StubBuilder {
 
   /**
    * Note to implementers: always keep in sync with {@linkplain #skipChildProcessingWhenBuildingStubs(LighterAST, LighterASTNode, LighterASTNode)}.
-   * todo[r.sh] move to interface (IDEA 13)
    */
-  @SuppressWarnings("deprecation")
+  @Override
   public boolean skipChildProcessingWhenBuildingStubs(@NotNull ASTNode parent, @NotNull ASTNode node) {
-    return skipChildProcessingWhenBuildingStubs(parent, node.getElementType());
+    return false;
   }
 
   /**
    * Note to implementers: always keep in sync with {@linkplain #skipChildProcessingWhenBuildingStubs(ASTNode, ASTNode)}.
    */
-  @SuppressWarnings("deprecation")
   protected boolean skipChildProcessingWhenBuildingStubs(@NotNull LighterAST tree, @NotNull LighterASTNode parent, @NotNull LighterASTNode node) {
-    return skipChildProcessingWhenBuildingStubs(parent.getTokenType(), node.getTokenType());
-  }
-
-  /** @deprecated override {@linkplain #skipChildProcessingWhenBuildingStubs(ASTNode, ASTNode)} (to remove in IDEA 13) */
-  @SuppressWarnings("deprecation")
-  @Override
-  public final boolean skipChildProcessingWhenBuildingStubs(@Nullable ASTNode parent, IElementType childType) {
-    return skipChildProcessingWhenBuildingStubs(parent != null ? parent.getElementType() : null, childType);
-  }
-
-  /** @deprecated override {@linkplain #skipChildProcessingWhenBuildingStubs(LighterAST, LighterASTNode, LighterASTNode)} (to remove in IDEA 13) */
-  @SuppressWarnings("unused")
-  public boolean skipChildProcessingWhenBuildingStubs(final IElementType parent, final IElementType childType) {
     return false;
   }
-
 
   private static class FCTSBackedLighterAST extends LighterAST {
     private final FlyweightCapableTreeStructure<LighterASTNode> myTreeStructure;

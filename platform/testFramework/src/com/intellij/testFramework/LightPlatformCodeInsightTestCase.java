@@ -19,10 +19,15 @@ import com.intellij.codeInsight.generation.CommentByLineCommentHandler;
 import com.intellij.ide.DataManager;
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.injected.editor.EditorWindow;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
@@ -36,7 +41,6 @@ import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileEditor.impl.TrailingSpacesStripper;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
@@ -149,9 +153,9 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
    */
   @NotNull
   protected static Document configureFromFileText(@NonNls @NotNull final String fileName, @NonNls @NotNull final String fileText) throws IOException {
-    return ApplicationManager.getApplication().runWriteAction(new Computable<Document>() {
+    return new WriteCommandAction<Document>(null) {
       @Override
-      public Document compute() {
+      protected void run(Result<Document> result) throws Throwable {
         if (myVFile != null) {
           // avoid messing with invalid files, in case someone calls configureXXX() several times
           PsiDocumentManager.getInstance(ourProject).commitAllDocuments();
@@ -197,9 +201,9 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
         setupCaret(caretMarker, newFileText);
         setupSelection(selStartMarker, selEndMarker);
         setupEditorForInjectedLanguage();
-        return document;
+        result.setResult(document);
       }
-    });
+    }.execute().getResultObject();
   }
 
   private static void setupSelection(final RangeMarker selStartMarker, final RangeMarker selEndMarker) {

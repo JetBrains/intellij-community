@@ -22,6 +22,9 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.stubs.StubIndex;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAnnotationMethod;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.index.GrAnnotationMethodNameIndex;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.index.GrFieldNameIndex;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.index.GrMethodNameIndex;
@@ -49,9 +52,9 @@ public class GroovyGoToSymbolContributor implements ChooseByNameContributor {
     GlobalSearchScope scope = includeNonProjectItems ? GlobalSearchScope.allScope(project) : GlobalSearchScope.projectScope(project);
 
     List<NavigationItem> symbols = new ArrayList<NavigationItem>();
-    symbols.addAll(StubIndex.getInstance().get(GrFieldNameIndex.KEY, name, project, scope));
-    symbols.addAll(StubIndex.getInstance().get(GrMethodNameIndex.KEY, name, project, scope));
-    symbols.addAll(StubIndex.getInstance().get(GrAnnotationMethodNameIndex.KEY, name, project, scope));
+    symbols.addAll(StubIndex.getElements(GrFieldNameIndex.KEY, name, project, scope, GrField.class));
+    symbols.addAll(StubIndex.getElements(GrMethodNameIndex.KEY, name, project, scope, GrMethod.class));
+    symbols.addAll(StubIndex.getElements(GrAnnotationMethodNameIndex.KEY, name, project, scope, GrAnnotationMethod.class));
 
     return symbols.toArray(new NavigationItem[symbols.size()]);
   }

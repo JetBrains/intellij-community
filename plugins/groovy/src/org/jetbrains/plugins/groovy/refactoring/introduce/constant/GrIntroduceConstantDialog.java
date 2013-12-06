@@ -368,7 +368,7 @@ public class GrIntroduceConstantDialog extends DialogWrapper
 
       if (newClass == null &&
           Messages.showOkCancelDialog(myContext.getProject(), GroovyRefactoringBundle.message("class.does.not.exist.in.the.module"),
-                                      IntroduceConstantHandler.REFACTORING_NAME, Messages.getErrorIcon()) != OK_EXIT_CODE) {
+                                      IntroduceConstantHandler.REFACTORING_NAME, Messages.getErrorIcon()) != Messages.OK) {
         return;
       }
       myTargetClassInfo = new TargetClassInfo(targetClassName, myContext.getPlace().getContainingFile().getContainingDirectory(), module, myContext.getProject());
@@ -436,7 +436,7 @@ public class GrIntroduceConstantDialog extends DialogWrapper
       final AccessToken lock = ApplicationManager.getApplication().acquireWriteActionLock(GrIntroduceConstantDialog.class);
       try {
         final GroovyFile file =
-          (GroovyFile)GroovyTemplatesFactory.createFromTemplate(psiDirectory, shortName, fileName, GroovyTemplates.GROOVY_CLASS);
+          (GroovyFile)GroovyTemplatesFactory.createFromTemplate(psiDirectory, shortName, fileName, GroovyTemplates.GROOVY_CLASS, true);
         return file.getTypeDefinitions()[0];
       }
       finally {

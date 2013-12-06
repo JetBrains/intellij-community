@@ -2,10 +2,12 @@ package git4idea.roots;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsDirectoryMapping;
+import com.intellij.openapi.vcs.VcsRoot;
 import com.intellij.openapi.vcs.VcsRootFinder;
+import com.intellij.openapi.vcs.roots.VcsRootDetectInfo;
+import com.intellij.openapi.vcs.roots.VcsRootDetector;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtilRt;
-import git4idea.GitPlatformFacade;
 import git4idea.GitVcs;
 import org.jetbrains.annotations.NotNull;
 
@@ -18,25 +20,26 @@ import java.util.Collections;
  */
 public class GitRootFinder implements VcsRootFinder {
 
-  @NotNull private final Project           myProject;
-  @NotNull private final GitPlatformFacade myPlatformFacade;
+  @NotNull private final Project myProject;
 
-  public GitRootFinder(@NotNull Project project, @NotNull GitPlatformFacade platformFacade) {
+  public GitRootFinder(@NotNull Project project) {
     myProject = project;
-    myPlatformFacade = platformFacade;
   }
 
   @NotNull
   @Override
   public Collection<VcsDirectoryMapping> findRoots(@NotNull VirtualFile root) {
-    GitRootDetectInfo info = new GitRootDetector(myProject, myPlatformFacade).detect(root);
-    Collection<VirtualFile> roots = info.getRoots();
+    VcsRootDetectInfo info = new VcsRootDetector(myProject).detect(root);
+    Collection<VcsRoot> roots = info.getRoots();
     if (roots.isEmpty()) {
       return Collections.emptyList();
     }
     Collection<VcsDirectoryMapping> result = ContainerUtilRt.newArrayList();
-    for (VirtualFile file : roots) {
-      result.add(new VcsDirectoryMapping(file.getPath(), GitVcs.getKey().getName()));
+    for (VcsRoot vcsRoot : roots) {
+      VirtualFile vFile = vcsRoot.getPath();
+      if (vFile != null) {
+        result.add(new VcsDirectoryMapping(vFile.getPath(), GitVcs.getKey().getName()));
+      }
     }
     return result;
   }

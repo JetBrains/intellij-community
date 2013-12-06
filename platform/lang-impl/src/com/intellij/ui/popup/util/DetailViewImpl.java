@@ -156,14 +156,16 @@ public class DetailViewImpl extends JPanel implements DetailView, UserDataHolder
         add(getEditor().getComponent(), BorderLayout.CENTER);
       }
 
-      getEditor().getCaretModel().moveToLogicalPosition(positionToNavigate);
-      validate();
-      getEditor().getScrollingModel().scrollToCaret(ScrollType.CENTER);
+      if (positionToNavigate != null) {
+        getEditor().getCaretModel().moveToLogicalPosition(positionToNavigate);
+        validate();
+        getEditor().getScrollingModel().scrollToCaret(ScrollType.CENTER);
+      }
 
       getEditor().setBorder(IdeBorderFactory.createBorder(SideBorder.TOP));
 
       clearHightlighting();
-      if (lineAttributes != null) {
+      if (lineAttributes != null && positionToNavigate != null) {
         myHighlighter = getEditor().getMarkupModel().addLineHighlighter(positionToNavigate.line, HighlighterLayer.SELECTION - 1,
                                                                         lineAttributes);
       }

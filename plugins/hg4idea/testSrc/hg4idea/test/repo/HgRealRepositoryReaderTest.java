@@ -16,16 +16,17 @@
 package hg4idea.test.repo;
 
 import com.intellij.dvcs.repo.Repository;
-import com.intellij.dvcs.test.TestRepositoryUtil;
+import com.intellij.openapi.vcs.VcsTestUtil;
 import hg4idea.test.HgPlatformTest;
 import org.jetbrains.annotations.NotNull;
+import org.zmlx.hg4idea.HgVcs;
 import org.zmlx.hg4idea.repo.HgRepositoryReader;
 import org.zmlx.hg4idea.util.HgUtil;
 
 import java.io.File;
 import java.util.Arrays;
 
-import static com.intellij.dvcs.test.Executor.*;
+import static com.intellij.openapi.vcs.Executor.*;
 import static hg4idea.test.HgExecutor.hg;
 
 /**
@@ -41,7 +42,7 @@ public class HgRealRepositoryReaderTest extends HgPlatformTest {
     File hgDir = new File(myRepository.getPath(), ".hg");
     assertTrue(hgDir.exists());
     createBranchesAndTags();
-    myRepositoryReader = new HgRepositoryReader(hgDir);
+    myRepositoryReader = new HgRepositoryReader(myProject, hgDir);
   }
 
   public void testMergeState() {
@@ -58,17 +59,17 @@ public class HgRealRepositoryReaderTest extends HgPlatformTest {
   }
 
   public void testBranches() {
-    TestRepositoryUtil.assertEqualCollections(HgUtil.getNamesWithoutHashes(myRepositoryReader.readBranches()),
+    VcsTestUtil.assertEqualCollections(HgUtil.getNamesWithoutHashes(myRepositoryReader.readBranches()),
                                               Arrays.asList("default", "branchA", "branchB"));
   }
 
   public void testTags() {
-    TestRepositoryUtil.assertEqualCollections(HgUtil.getNamesWithoutHashes(myRepositoryReader.readTags()),
+    VcsTestUtil.assertEqualCollections(HgUtil.getNamesWithoutHashes(myRepositoryReader.readTags()),
                                               Arrays.asList("tag1", "tag2"));
   }
 
   public void testLocalTags() {
-    TestRepositoryUtil.assertEqualCollections(HgUtil.getNamesWithoutHashes(myRepositoryReader.readLocalTags()),
+    VcsTestUtil.assertEqualCollections(HgUtil.getNamesWithoutHashes(myRepositoryReader.readLocalTags()),
                                               Arrays.asList("localTag"));
   }
 
@@ -78,7 +79,7 @@ public class HgRealRepositoryReaderTest extends HgPlatformTest {
   }
 
   public void testBookmarks() {
-    TestRepositoryUtil.assertEqualCollections(HgUtil.getNamesWithoutHashes(myRepositoryReader.readBookmarks()),
+    VcsTestUtil.assertEqualCollections(HgUtil.getNamesWithoutHashes(myRepositoryReader.readBookmarks()),
                                               Arrays.asList("A_BookMark", "B_BookMark", "C_BookMark"));
   }
 

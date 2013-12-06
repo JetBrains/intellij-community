@@ -84,12 +84,14 @@ class CacheUpdateRunner {
           synchronized (processed) {
             processed.add(virtualFile);
             indicator.setFraction(processed.size() / total);
-          }
-          if (virtualFile.isValid()) {
-            indicator.setText2(virtualFile.getPresentableUrl());
-          }
-          else {
-            indicator.setText2("");
+            if (ApplicationManager.getApplication().isInternal()) {
+              if (virtualFile.isValid()) {
+                indicator.setText2(virtualFile.getPresentableUrl());
+              }
+              else {
+                indicator.setText2("");
+              }
+            }
           }
         }
       };

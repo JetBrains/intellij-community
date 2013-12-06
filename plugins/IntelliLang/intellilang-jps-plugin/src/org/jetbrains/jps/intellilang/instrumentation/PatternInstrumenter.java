@@ -183,7 +183,7 @@ class PatternInstrumenter extends ClassVisitor implements Opcodes {
     if ((access & ACC_STATIC) != 0 && name.equals("<clinit>")) {
       myHasStaticInitializer = true;
 
-      return new MethodVisitor(Opcodes.ASM4, methodvisitor) {
+      return new ErrorPostponingMethodVisitor(this, name, methodvisitor) {
         public void visitCode() {
           super.visitCode();
           patchStaticInitializer(mv);
@@ -206,7 +206,7 @@ class PatternInstrumenter extends ClassVisitor implements Opcodes {
       }
     }
 
-    return methodvisitor;
+    return new ErrorPostponingMethodVisitor(this, name, methodvisitor);
   }
 
   private static boolean isStringType(Type type) {

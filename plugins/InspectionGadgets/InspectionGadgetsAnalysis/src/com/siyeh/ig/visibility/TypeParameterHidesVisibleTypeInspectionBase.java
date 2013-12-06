@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2013 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.siyeh.ig.visibility;
 
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -26,8 +27,7 @@ public class TypeParameterHidesVisibleTypeInspectionBase extends BaseInspection 
   @Override
   @NotNull
   public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "type.parameter.hides.visible.type.display.name");
+    return InspectionGadgetsBundle.message("type.parameter.hides.visible.type.display.name");
   }
 
   @Override
@@ -36,12 +36,24 @@ public class TypeParameterHidesVisibleTypeInspectionBase extends BaseInspection 
   }
 
   @Override
+  public boolean isEnabledByDefault() {
+    return true;
+  }
+
+  @Override
   @NotNull
   public String buildErrorString(Object... infos) {
     final PsiClass aClass = (PsiClass)infos[0];
-    return InspectionGadgetsBundle.message(
-      "type.parameter.hides.visible.type.problem.descriptor",
-      aClass.getQualifiedName());
+    if (aClass instanceof PsiTypeParameter) {
+      return InspectionGadgetsBundle.message("type.parameter.hides.type.parameter.problem.descriptor", aClass.getName());
+    }
+    else {
+      String name = aClass.getQualifiedName();
+      if (name == null) {
+        name = aClass.getName();
+      }
+      return InspectionGadgetsBundle.message("type.parameter.hides.visible.type.problem.descriptor", name);
+    }
   }
 
   @Override
@@ -49,28 +61,28 @@ public class TypeParameterHidesVisibleTypeInspectionBase extends BaseInspection 
     return new TypeParameterHidesVisibleTypeVisitor();
   }
 
-  private static class TypeParameterHidesVisibleTypeVisitor
-    extends BaseInspectionVisitor {
+  private static class TypeParameterHidesVisibleTypeVisitor extends BaseInspectionVisitor {
 
     @Override
     public void visitTypeParameter(PsiTypeParameter parameter) {
       super.visitTypeParameter(parameter);
       final String unqualifiedClassName = parameter.getName();
-
-      final JavaPsiFacade manager = JavaPsiFacade.getInstance(parameter.getProject());
-      final PsiFile containingFile = parameter.getContainingFile();
-      final PsiResolveHelper resolveHelper = manager.getResolveHelper();
-      final PsiClass aClass =
-        resolveHelper.resolveReferencedClass(unqualifiedClassName,
-                                             containingFile);
-      if (aClass == null) {
+      PsiElement context = parameter.getOwner();
+      if (context == null) {
         return;
       }
-      final PsiIdentifier identifier = parameter.getNameIdentifier();
-      if (identifier == null) {
-        return;
+      final PsiResolveHelper resolveHelper = JavaPsiFacade.getInstance(parameter.getProject()).getResolveHelper();
+      while (true) {
+        context = PsiTreeUtil.getParentOfType(context, PsiMember.class);
+        if (context == null) {
+          return;
+        }
+        final PsiClass aClass = resolveHelper.resolveReferencedClass(unqualifiedClassName, context);
+        if (aClass != null) {
+          registerClassError(parameter, aClass);
+          return;
+        }
       }
-      registerError(identifier, aClass);
     }
   }
 }

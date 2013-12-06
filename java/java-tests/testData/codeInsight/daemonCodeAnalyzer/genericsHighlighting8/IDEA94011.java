@@ -10,7 +10,7 @@ class Test {
 
     public void test(Set<MyConsumer> set) {
         @SuppressWarnings("unchecked")
-        <error descr="Incompatible types. Found: 'java.util.Map<Test.Parent,Test.MyConsumer>', required: 'java.util.Map<Test.Parent,Test.MyConsumer<Test.Parent>>'">Map<Parent, MyConsumer<Parent>> map = create(set);</error>
+        Map<Parent, MyConsumer<Parent>> map = <error descr="Inferred type 'T' for type parameter 'T' is not within its bound; should implement 'Test.Consumer<Test.Parent>'">create(set)</error>;
 
     }
 

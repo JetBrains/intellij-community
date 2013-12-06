@@ -67,16 +67,23 @@ public abstract class SuspendContextCommandImpl extends DebuggerCommandImpl {
       }
       finally{
         suspendContext.myInProgress = false;
-        SuspendContextCommandImpl postponed = suspendContext.pollPostponedCommand();
-        if (postponed != null) {
-          final Stack<SuspendContextCommandImpl> stack = new Stack<SuspendContextCommandImpl>();
-          while (postponed != null) {
-            stack.push(postponed);
-            postponed = suspendContext.pollPostponedCommand();
+        if (suspendContext.isResumed()) {
+          for (SuspendContextCommandImpl postponed = suspendContext.pollPostponedCommand(); postponed != null; postponed = suspendContext.pollPostponedCommand()) {
+            postponed.notifyCancelled();
           }
-          final DebuggerManagerThreadImpl managerThread = suspendContext.getDebugProcess().getManagerThread();
-          while (!stack.isEmpty()) {
-            managerThread.pushBack(stack.pop());
+        }
+        else {
+          SuspendContextCommandImpl postponed = suspendContext.pollPostponedCommand();
+          if (postponed != null) {
+            final Stack<SuspendContextCommandImpl> stack = new Stack<SuspendContextCommandImpl>();
+            while (postponed != null) {
+              stack.push(postponed);
+              postponed = suspendContext.pollPostponedCommand();
+            }
+            final DebuggerManagerThreadImpl managerThread = suspendContext.getDebugProcess().getManagerThread();
+            while (!stack.isEmpty()) {
+              managerThread.pushBack(stack.pop());
+            }
           }
         }
       }

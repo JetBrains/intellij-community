@@ -117,7 +117,8 @@ public class XmlAttributeReferenceCompletionProvider extends CompletionProvider<
             .withCaseSensitivity(caseSensitive)
             .withInsertHandler(insertHandler);
           result.addElement(
-            descriptor.isRequired() ? PrioritizedLookupElement.withPriority(element.appendTailText("(required)", true), 100) : element);
+            descriptor.isRequired() ? PrioritizedLookupElement.withPriority(element.appendTailText("(required)", true), 100) :
+            HtmlUtil.isOwnHtmlAttribute(descriptor) ? PrioritizedLookupElement.withPriority(element, 50) : element);
         }
       }
     }

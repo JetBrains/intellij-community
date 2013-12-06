@@ -1,4 +1,3 @@
-
 /*
  * Copyright 2000-2013 JetBrains s.r.o.
  *
@@ -27,6 +26,7 @@ import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.*;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.refactoring.listeners.RefactoringEventData;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.DocCommentPolicy;
 import com.intellij.refactoring.util.RefactoringUIUtil;
@@ -39,6 +39,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -70,6 +71,39 @@ public class EncapsulateFieldsProcessor extends BaseRefactoringProcessor {
     catch (IncorrectOperationException e) {
       LOG.error(e);
     }
+  }
+
+  @Nullable
+  @Override
+  protected String getRefactoringId() {
+    return "refactoring.encapsulateFields";
+  }
+
+  @Nullable
+  @Override
+  protected RefactoringEventData getBeforeData() {
+    RefactoringEventData data = new RefactoringEventData();
+    final List<PsiElement> fields = new ArrayList<PsiElement>();
+    for (FieldDescriptor fieldDescriptor : myFieldDescriptors) {
+      fields.add(fieldDescriptor.getField());
+    }
+    data.addElements(fields);
+    return data;
+  }
+
+  @Nullable
+  @Override
+  protected RefactoringEventData getAfterData(UsageInfo[] usages) {
+    RefactoringEventData data = new RefactoringEventData();
+    List<PsiElement> elements = new ArrayList<PsiElement>();
+    if (myNameToGetter != null) {
+      elements.addAll(myNameToGetter.values());
+    }
+    if (myNameToSetter != null) {
+      elements.addAll(myNameToSetter.values());
+    }
+    data.addElements(elements);
+    return data;
   }
 
   @NotNull

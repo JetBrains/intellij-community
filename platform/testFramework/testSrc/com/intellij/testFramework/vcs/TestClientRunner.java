@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,11 +17,11 @@ package com.intellij.testFramework.vcs;
 
 import com.intellij.execution.process.CapturingProcessHandler;
 import com.intellij.execution.process.ProcessOutput;
+import com.intellij.openapi.diagnostic.LogUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
-import com.intellij.util.EnvironmentUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -93,7 +93,7 @@ public class TestClientRunner {
     }
 
     final CapturingProcessHandler handler = new CapturingProcessHandler(clientProcess, CharsetToolkit.getDefaultSystemCharset());
-    final ProcessOutput result = handler.runProcess(100*1000);
+    final ProcessOutput result = handler.runProcess(100*1000, false);
     if (myTraceClient || result.isTimeout()) {
       LOG.debug("*** result: " + result.getExitCode());
       final String out = result.getStdout().trim();
@@ -107,8 +107,11 @@ public class TestClientRunner {
     }
 
     if (result.isTimeout()) {
-      throw new RuntimeException("Timeout waiting for VCS client to finish execution:\n" + EnvironmentUtil.getProcessList());
+      String processList = LogUtil.getProcessList();
+      handler.destroyProcess();
+      throw new RuntimeException("Timeout waiting for VCS client to finish execution:\n" + processList);
     }
+
     return result;
   }
 }

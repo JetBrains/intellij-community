@@ -939,4 +939,5 @@ public class GitUtil {
     final String output = diff.run();
     return !output.trim().isEmpty();
   }
+
 }

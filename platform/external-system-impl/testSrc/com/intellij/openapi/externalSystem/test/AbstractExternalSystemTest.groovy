@@ -23,6 +23,7 @@ import com.intellij.openapi.externalSystem.model.DataNode
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
 import com.intellij.openapi.externalSystem.model.project.ProjectData
 import com.intellij.openapi.externalSystem.service.project.manage.ProjectDataManager
+import com.intellij.openapi.externalSystem.util.DisposeAwareProjectChange
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx
@@ -151,10 +152,15 @@ abstract class AbstractExternalSystemTest extends UsefulTestCase {
         def settings = ExternalSystemApiUtil.getSettings(project, ExternalSystemTestUtil.TEST_EXTERNAL_SYSTEM_ID)
         settings.linkedProjectsSettings = [new TestExternalProjectSettings(externalProjectPath: node.data.linkedExternalProjectPath)]
       }
-      ExternalSystemApiUtil.executeProjectChangeAction(true, {
-        ProjectRootManagerEx.getInstanceEx(project).mergeRootsChangesDuring {
-          dataManager.importData(node.key, [node], project, true)
-      } })
+
+      final Project myProject = project
+      ExternalSystemApiUtil.executeProjectChangeAction(true, new DisposeAwareProjectChange(myProject) {
+        @Override
+        void execute() {
+          ProjectRootManagerEx.getInstanceEx(myProject).mergeRootsChangesDuring {
+            dataManager.importData(node.key, [node], myProject, true)
+          }
+        }})
     }
   }
 }

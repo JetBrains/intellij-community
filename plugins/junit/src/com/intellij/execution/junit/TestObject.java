@@ -62,10 +62,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.CharsetToolkit;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiPackage;
+import com.intellij.psi.*;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.rt.execution.junit.IDEAJUnitListener;
 import com.intellij.rt.execution.junit.JUnitStarter;
@@ -138,7 +135,8 @@ public abstract class TestObject implements JavaCommandLine {
   public abstract boolean isConfiguredByElement(JUnitConfiguration configuration,
                                                 PsiClass testClass,
                                                 PsiMethod testMethod,
-                                                PsiPackage testPackage);
+                                                PsiPackage testPackage, 
+                                                PsiDirectory testDir);
 
   protected void configureModule(final JavaParameters parameters, final RunConfigurationModule configurationModule, final String mainClassName)
     throws CantRunException {
@@ -162,7 +160,8 @@ public abstract class TestObject implements JavaCommandLine {
     public boolean isConfiguredByElement(final JUnitConfiguration configuration,
                                          PsiClass testClass,
                                          PsiMethod testMethod,
-                                         PsiPackage testPackage) {
+                                         PsiPackage testPackage,
+                                         PsiDirectory testDir) {
       return false;
     }
 

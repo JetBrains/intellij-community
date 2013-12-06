@@ -19,17 +19,19 @@ public class ConsoleHistoryModel implements ModificationTracker {
   private volatile long myModificationTracker;
 
 
-  public void addToHistory(final String statement) {
-    final int maxHistorySize = getMaxHistorySize();
+  public void addToHistory(String statement) {
+    if (StringUtil.isEmptyOrSpaces(statement)) return;
+
+    int maxHistorySize = getMaxHistorySize();
     synchronized (myHistory) {
+      myModificationTracker++;
       myHistoryCursor = -1;
-      if (!StringUtil.isEmptyOrSpaces(statement)) {
-        removeFromHistory(statement);
-        if (myHistory.size() >= maxHistorySize) {
-          myHistory.removeLast();
-        }
-        myHistory.addFirst(statement);
+
+      myHistory.remove(statement);
+      if (myHistory.size() >= maxHistorySize) {
+        myHistory.removeLast();
       }
+      myHistory.addFirst(statement);
     }
   }
 
@@ -40,6 +42,7 @@ public class ConsoleHistoryModel implements ModificationTracker {
   public void removeFromHistory(final String statement) {
     synchronized (myHistory) {
       myModificationTracker++;
+      myHistoryCursor = -1;
 
       myHistory.remove(statement);
     }

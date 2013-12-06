@@ -11,7 +11,7 @@ import java.util.List;
  * <p>These details will be displayed in the log table.</p>
  *
  * <p>An instance of this object can be obtained via
- *    {@link VcsLogObjectsFactory#createShortDetails(Hash, List, long, VirtualFile, String, String) VcsLogObjectsFactory#createShortDetails}
+ *    {@link VcsLogObjectsFactory#createShortDetails(Hash, List, long, VirtualFile, String, String, String) VcsLogObjectsFactory#createShortDetails}
  * </p>
  *
  * @see VcsFullCommitDetails
@@ -28,12 +28,15 @@ public interface VcsShortCommitDetails {
   @NotNull
   List<Hash> getParents();
 
-  long getAuthorTime();
+  /**
+   * @see {@link TimedVcsCommit#getTime()}.
+   */
+  long getTime();
 
   @NotNull
   String getSubject();
 
   @NotNull
-  String getAuthorName();
+  VcsUser getAuthor();
 
 }

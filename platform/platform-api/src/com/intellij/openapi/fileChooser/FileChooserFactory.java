@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,26 +27,6 @@ import java.awt.*;
 public abstract class FileChooserFactory {
   public static FileChooserFactory getInstance() {
     return ServiceManager.getService(FileChooserFactory.class);
-  }
-
-  /**
-   * @deprecated use {@linkplain #createFileChooser(FileChooserDescriptor, com.intellij.openapi.project.Project, java.awt.Component)}
-   * (to remove in IDEA 13)
-   */
-  @SuppressWarnings("UnusedDeclaration")
-  @NotNull
-  public FileChooserDialog createFileChooser(@NotNull FileChooserDescriptor descriptor, @Nullable Project project) {
-    return createFileChooser(descriptor, project, null);
-  }
-
-  /**
-   * @deprecated use {@linkplain #createFileChooser(FileChooserDescriptor, com.intellij.openapi.project.Project, java.awt.Component)}
-   * (to remove in IDEA 13)
-   */
-  @SuppressWarnings("UnusedDeclaration")
-  @NotNull
-  public FileChooserDialog createFileChooser(@NotNull FileChooserDescriptor descriptor, @NotNull Component parent) {
-    return createFileChooser(descriptor, null, parent);
   }
 
   @NotNull

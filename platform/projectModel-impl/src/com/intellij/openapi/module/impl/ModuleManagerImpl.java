@@ -47,6 +47,7 @@ import com.intellij.util.graph.CachingSemiGraph;
 import com.intellij.util.graph.DFSTBuilder;
 import com.intellij.util.graph.Graph;
 import com.intellij.util.graph.GraphGenerator;
+import com.intellij.util.io.URLUtil;
 import com.intellij.util.messages.MessageBus;
 import gnu.trove.THashMap;
 import gnu.trove.TObjectHashingStrategy;
@@ -253,9 +254,13 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
     final List<Module> modulesWithUnknownTypes = new ArrayList<Module>();
     List<ModuleLoadingErrorDescription> errors = new ArrayList<ModuleLoadingErrorDescription>();
 
-    for (final ModulePath modulePath : myModulePaths) {
+    for (int i = 0; i < myModulePaths.size(); i++) {
+      ModulePath modulePath = myModulePaths.get(i);
+      if (progressIndicator != null) {
+        progressIndicator.setFraction((double) i / myModulePaths.size());
+      }
       try {
-        final Module module = moduleModel.loadModuleInternal(modulePath.getPath(), progressIndicator);
+        final Module module = moduleModel.loadModuleInternal(modulePath.getPath());
         if (isUnknownModuleType(module)) {
           modulesWithUnknownTypes.add(module);
         }
@@ -283,6 +288,10 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
     fireErrors(errors);
 
     showUnknownModuleTypeNotification(modulesWithUnknownTypes);
+
+    if (progressIndicator != null) {
+      progressIndicator.setIndeterminate(true);
+    }
   }
 
   protected boolean isUnknownModuleType(Module module) {
@@ -359,7 +368,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
     public final void writeExternal(Element parentElement) {
       Element moduleElement = new Element(ELEMENT_MODULE);
       final String moduleFilePath = getModuleFilePath();
-      final String url = VirtualFileManager.constructUrl(StandardFileSystems.FILE_PROTOCOL, moduleFilePath);
+      final String url = VirtualFileManager.constructUrl(URLUtil.FILE_PROTOCOL, moduleFilePath);
       moduleElement.setAttribute(ATTRIBUTE_FILEURL, url);
       // [dsl] support for older builds
       moduleElement.setAttribute(ATTRIBUTE_FILEPATH, moduleFilePath);
@@ -732,14 +741,14 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
     public Module loadModule(@NotNull String filePath) throws InvalidDataException, IOException, ModuleWithNameAlreadyExists {
       assertWritable();
       try {
-        return loadModuleInternal(filePath, null);
+        return loadModuleInternal(filePath);
       }
       catch (StateStorageException e) {
         throw new IOException(ProjectBundle.message("module.corrupted.file.error", FileUtil.toSystemDependentName(filePath), e.getMessage()));
       }
     }
 
-    private Module loadModuleInternal(String filePath, @Nullable ProgressIndicator progressIndicator)
+    private Module loadModuleInternal(String filePath)
       throws ModuleWithNameAlreadyExists, IOException, StateStorageException {
 
       final VirtualFile moduleFile = StandardFileSystems.local().findFileByPath(resolveShortWindowsName(filePath));
@@ -748,9 +757,6 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
       }
 
       final String name = moduleFile.getName();
-      if (progressIndicator != null) {
-        progressIndicator.setText2(FileUtil.getNameWithoutExtension(name));
-      }
 
       if (name.endsWith(IML_EXTENSION)) {
         final String moduleName = name.substring(0, name.length() - 4);

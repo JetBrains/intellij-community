@@ -145,7 +145,9 @@ public class ToolsImpl implements Tools {
         scopeElement.setAttribute(LEVEL_ATTRIBUTE, state.getLevel().toString());
         scopeElement.setAttribute(ENABLED_ATTRIBUTE, Boolean.toString(state.isEnabled()));
         InspectionToolWrapper toolWrapper = state.getTool();
-        toolWrapper.getTool().writeSettings(scopeElement);
+        if (toolWrapper.isInitialized()) {
+          toolWrapper.getTool().writeSettings(scopeElement);
+        }
         inspectionElement.addContent(scopeElement);
       }
     }
@@ -153,7 +155,9 @@ public class ToolsImpl implements Tools {
     inspectionElement.setAttribute(LEVEL_ATTRIBUTE, getLevel().toString());
     inspectionElement.setAttribute(ENABLED_BY_DEFAULT_ATTRIBUTE, Boolean.toString(myDefaultState.isEnabled()));
     InspectionToolWrapper toolWrapper = myDefaultState.getTool();
-    toolWrapper.getTool().writeSettings(inspectionElement);
+    if (toolWrapper.isInitialized()) {
+      toolWrapper.getTool().writeSettings(inspectionElement);
+    }
   }
 
   void readExternal(@NotNull Element toolElement, @NotNull InspectionProfile profile) throws InvalidDataException {

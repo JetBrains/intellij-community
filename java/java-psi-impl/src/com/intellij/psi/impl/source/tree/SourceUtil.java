@@ -16,11 +16,13 @@
 package com.intellij.psi.impl.source.tree;
 
 import com.intellij.lang.ASTFactory;
-import com.intellij.lang.ASTNode;
 import com.intellij.lang.LighterAST;
 import com.intellij.lang.LighterASTNode;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaTokenType;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiJavaCodeReferenceElement;
+import com.intellij.psi.PsiManager;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.source.DummyHolder;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
@@ -74,18 +76,6 @@ public class SourceUtil {
     return LightTreeUtil.toFilteredString(tree, node, REF_FILTER);
   }
 
-  /** @deprecated use {@link AstBufferUtil#getTextSkippingWhitespaceComments(ASTNode)} (to remove in IDEA 13) */
-  @SuppressWarnings("UnusedDeclaration")
-  public static String getTextSkipWhiteSpaceAndComments(ASTNode element) {
-    return AstBufferUtil.getTextSkippingWhitespaceComments(element);
-  }
-
-  /** @deprecated use {@link LightTreeUtil#toFilteredString(LighterAST, LighterASTNode, TokenSet)} (to remove in IDEA 13) */
-  @SuppressWarnings("UnusedDeclaration")
-  public static String getTextSkipWhiteSpaceAndComments(LighterAST tree, LighterASTNode node) {
-    return LightTreeUtil.toFilteredString(tree, node, ElementType.JAVA_COMMENT_OR_WHITESPACE_BIT_SET);
-  }
-
   public static TreeElement addParenthToReplacedChild(@NotNull IElementType parenthType,
                                                       @NotNull TreeElement newChild,
                                                       @NotNull PsiManager manager) {
@@ -109,11 +99,10 @@ public class SourceUtil {
     }
 
     newChild.putUserData(CharTable.CHAR_TABLE_KEY, SharedImplUtil.findCharTableByTree(newChild));
-    dummyExpr.rawReplaceWithList(newChild);
+    dummyExpr.getTreeParent().replaceChild(dummyExpr, newChild);
 
-    newChild = parenthExpr;
     // TODO remove explicit caches drop since this should be ok if we will use ChangeUtil for the modification
-    TreeUtil.clearCaches(TreeUtil.getFileElement(newChild));
-    return newChild;
+    TreeUtil.clearCaches(TreeUtil.getFileElement(parenthExpr));
+    return parenthExpr;
   }
 }

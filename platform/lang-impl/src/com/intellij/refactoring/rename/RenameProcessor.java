@@ -36,13 +36,12 @@ import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.copy.CopyFilesOrDirectoriesHandler;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
+import com.intellij.refactoring.listeners.RefactoringEventData;
+import com.intellij.refactoring.listeners.RefactoringEventListener;
 import com.intellij.refactoring.rename.naming.AutomaticRenamer;
 import com.intellij.refactoring.rename.naming.AutomaticRenamerFactory;
 import com.intellij.refactoring.ui.ConflictsDialog;
-import com.intellij.refactoring.util.CommonRefactoringUtil;
-import com.intellij.refactoring.util.MoveRenameUsageInfo;
-import com.intellij.refactoring.util.NonCodeUsageInfo;
-import com.intellij.refactoring.util.RelatedUsageInfo;
+import com.intellij.refactoring.util.*;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.usageView.UsageViewUtil;
@@ -147,6 +146,11 @@ public class RenameProcessor extends BaseRefactoringProcessor {
     RenameUtil.addConflictDescriptions(usagesIn, conflicts);
     RenamePsiElementProcessor.forElement(myPrimaryElement).findExistingNameConflicts(myPrimaryElement, myNewName, conflicts, myAllRenames);
     if (!conflicts.isEmpty()) {
+
+      final RefactoringEventData conflictData = new RefactoringEventData();
+      conflictData.putUserData(RefactoringEventData.CONFLICTS_KEY, conflicts.values());
+      myProject.getMessageBus().syncPublisher(RefactoringEventListener.REFACTORING_EVENT_TOPIC).conflictsDetected("refactoring.rename", conflictData);
+
       if (ApplicationManager.getApplication().isUnitTestMode()) {
         throw new ConflictsInTestsException(conflicts.values());
       }
@@ -322,6 +326,28 @@ public class RenameProcessor extends BaseRefactoringProcessor {
       return true;
     }
     return false;
+  }
+
+  @Nullable
+  @Override
+  protected String getRefactoringId() {
+    return "refactoring.rename";
+  }
+
+  @Nullable
+  @Override
+  protected RefactoringEventData getBeforeData() {
+    final RefactoringEventData data = new RefactoringEventData();
+    data.addElement(myPrimaryElement);
+    return data;
+  }
+
+  @Nullable
+  @Override
+  protected RefactoringEventData getAfterData(UsageInfo[] usages) {
+    final RefactoringEventData data = new RefactoringEventData();
+    data.addElement(myPrimaryElement);
+    return data;
   }
 
   @Override

@@ -56,7 +56,7 @@ public final class DirectoryInfo {
     return new DirectoryInfo(null, null, null, null, (byte)0, null);
   }
 
-  private DirectoryInfo(Module module,
+  DirectoryInfo(Module module,
                         VirtualFile contentRoot,
                         VirtualFile sourceRoot,
                         VirtualFile libraryClassRoot,
@@ -105,6 +105,7 @@ public final class DirectoryInfo {
            ", libraryClassRoot=" + getLibraryClassRoot() +
            ", contentRoot=" + getContentRoot() +
            ", sourceRoot=" + getSourceRoot() +
+           ", orderEntries=" + Arrays.toString(orderEntries) +
            "}";
   }
 

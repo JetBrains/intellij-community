@@ -236,7 +236,7 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
 
     myComponent.setContent(wrappper);
 
-    myTabs.addListener(new TabsListener() {
+    myTabs.addListener(new TabsListener.Adapter() {
 
       @Override
       public void beforeSelectionChanged(TabInfo oldSelection, TabInfo newSelection) {
@@ -447,6 +447,11 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
   @Override
   public RelativeRectangle getAcceptArea() {
     return new RelativeRectangle(myTabs.getComponent());
+  }
+
+  @Override
+  public RelativeRectangle getAcceptAreaFallback() {
+    return getAcceptArea();
   }
 
   @NotNull

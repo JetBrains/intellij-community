@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,6 @@ import com.intellij.codeInsight.intention.impl.CreateSubclassAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
@@ -38,15 +37,18 @@ import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.listeners.JavaRefactoringListenerManager;
+import com.intellij.refactoring.listeners.RefactoringEventData;
 import com.intellij.refactoring.listeners.impl.JavaRefactoringListenerManagerImpl;
 import com.intellij.refactoring.util.DocCommentPolicy;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
+import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -77,6 +79,41 @@ public class PushDownProcessor extends BaseRefactoringProcessor {
     return new PushDownUsageViewDescriptor(myClass);
   }
 
+  @Nullable
+  @Override
+  protected String getRefactoringId() {
+    return "refactoring.psuDown";
+  }
+
+  @Nullable
+  @Override
+  protected RefactoringEventData getBeforeData() {
+    RefactoringEventData data = new RefactoringEventData();
+    data.addElement(myClass);
+    data.addMembers(myMemberInfos, new Function<MemberInfo, PsiElement>() {
+      @Override
+      public PsiElement fun(MemberInfo info) {
+        return info.getMember();
+      }
+    });
+    return data;
+  }
+
+  @Nullable
+  @Override
+  protected RefactoringEventData getAfterData(UsageInfo[] usages) {
+    final List<PsiElement> elements = new ArrayList<PsiElement>();
+    for (UsageInfo usage : usages) {
+      PsiElement element = usage.getElement();
+      if (element instanceof PsiClass) {
+        elements.add(element);
+      }
+    }
+    RefactoringEventData data = new RefactoringEventData();
+    data.addElements(elements);
+    return data;
+  }
+
   @NotNull
   protected UsageInfo[] findUsages() {
     final PsiClass[] inheritors = ClassInheritorsSearch.search(myClass, false).toArray(PsiClass.EMPTY_ARRAY);
@@ -96,7 +133,7 @@ public class PushDownProcessor extends BaseRefactoringProcessor {
       if (myClass.isEnum() || myClass.hasModifierProperty(PsiModifier.FINAL)) {
         if (Messages.showOkCancelDialog((myClass.isEnum() ? "Enum " + myClass.getQualifiedName() + " doesn't have constants to inline to. " : "Final class " + myClass.getQualifiedName() + "does not have inheritors. ") +
                                         "Pushing members down will result in them being deleted. " +
-                                        "Would you like to proceed?", JavaPushDownHandler.REFACTORING_NAME, Messages.getWarningIcon()) != DialogWrapper.OK_EXIT_CODE) {
+                                        "Would you like to proceed?", JavaPushDownHandler.REFACTORING_NAME, Messages.getWarningIcon()) != Messages.OK) {
           return false;
         }
       } else {
@@ -105,7 +142,7 @@ public class PushDownProcessor extends BaseRefactoringProcessor {
                               RefactoringBundle.message("class.0.does.not.have.inheritors", myClass.getQualifiedName());
         final String message = noInheritors + "\n" + RefactoringBundle.message("push.down.will.delete.members");
         final int answer = Messages.showYesNoCancelDialog(message, JavaPushDownHandler.REFACTORING_NAME, Messages.getWarningIcon());
-        if (answer == DialogWrapper.OK_EXIT_CODE) {
+        if (answer == Messages.YES) {
           myCreateClassDlg = CreateSubclassAction.chooseSubclassToCreate(myClass);
           if (myCreateClassDlg != null) {
             pushDownConflicts.checkTargetClassConflicts(null, false, myCreateClassDlg.getTargetDirectory());
@@ -113,7 +150,7 @@ public class PushDownProcessor extends BaseRefactoringProcessor {
           } else {
             return false;
           }
-        } else if (answer != 1) return false;
+        } else if (answer != Messages.NO) return false;
       }
     }
     Runnable runnable = new Runnable() {

@@ -22,7 +22,6 @@
  */
 package com.intellij.lang.ant.config.impl;
 
-import com.intellij.icons.AllIcons;
 import com.intellij.lang.ant.AntBundle;
 import com.intellij.lang.ant.config.AntBuildFile;
 import com.intellij.lang.ant.config.AntBuildTarget;
@@ -34,6 +33,7 @@ import com.intellij.ui.*;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.tree.TreeUtil;
+import icons.AntIcons;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -209,7 +209,7 @@ public class TargetChooserDialog extends DialogWrapper {
           final String antTargetName = antTarget.getName();
           append(antTargetName, SimpleTextAttributes.REGULAR_ATTRIBUTES);
           boolean isMeta = antTarget instanceof MetaTarget;
-          setIcon(isMeta ? AllIcons.Ant.MetaTarget : AllIcons.Ant.Target);
+          setIcon(isMeta ? AntIcons.MetaTarget : AntIcons.Target);
         }
       }
     }

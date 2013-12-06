@@ -16,6 +16,7 @@ import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings;
@@ -26,6 +27,7 @@ import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotifica
 import com.intellij.openapi.externalSystem.service.internal.ExternalSystemExecuteTaskTask;
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
@@ -33,6 +35,7 @@ import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.net.NetUtils;
+import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.xmlb.XmlSerializer;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -153,7 +156,10 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase {
       if (myDebugPort > 0) {
         debuggerSetup = "-agentlib:jdwp=transport=dt_socket,server=n,suspend=y,address=" + myDebugPort;
       }
-      
+
+      ApplicationManager.getApplication().assertIsDispatchThread();
+      FileDocumentManager.getInstance().saveAllDocuments();
+
       final ExternalSystemExecuteTaskTask task = new ExternalSystemExecuteTaskTask(mySettings.getExternalSystemId(),
                                                                                    myProject,
                                                                                    tasks,
@@ -166,12 +172,13 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase {
       ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
         @Override
         public void run() {
+          final String startDateTime = DateFormatUtil.formatTimeWithSeconds(System.currentTimeMillis());
           final String greeting;
           if (mySettings.getTaskNames().size() > 1) {
-            greeting = ExternalSystemBundle.message("run.text.starting.multiple.task", StringUtil.join(mySettings.getTaskNames(), " "));
+            greeting = ExternalSystemBundle.message("run.text.starting.multiple.task", startDateTime, StringUtil.join(mySettings.getTaskNames(), " "));
           }
           else {
-            greeting = ExternalSystemBundle.message("run.text.starting.single.task", StringUtil.join(mySettings.getTaskNames(), " "));
+            greeting = ExternalSystemBundle.message("run.text.starting.single.task", startDateTime, StringUtil.join(mySettings.getTaskNames(), " "));
           }
           processHandler.notifyTextAvailable(greeting, ProcessOutputTypes.SYSTEM);
           task.execute(new ExternalSystemTaskNotificationListenerAdapter() {
@@ -189,6 +196,15 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase {
 
             @Override
             public void onEnd(@NotNull ExternalSystemTaskId id) {
+              final String endDateTime = DateFormatUtil.formatTimeWithSeconds(System.currentTimeMillis());
+              final String farewell;
+              if (mySettings.getTaskNames().size() > 1) {
+                farewell = ExternalSystemBundle.message("run.text.ended.multiple.task", endDateTime, StringUtil.join(mySettings.getTaskNames(), " "));
+              }
+              else {
+                farewell = ExternalSystemBundle.message("run.text.ended.single.task", endDateTime, StringUtil.join(mySettings.getTaskNames(), " "));
+              }
+              processHandler.notifyTextAvailable(farewell, ProcessOutputTypes.SYSTEM);
               processHandler.notifyProcessTerminated(0);
             }
           });

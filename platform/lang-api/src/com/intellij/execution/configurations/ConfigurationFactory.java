@@ -53,6 +53,16 @@ public abstract class ConfigurationFactory {
   }
 
   /**
+   * Override this method and return {@code false} to hide the configuration from 'New' popup in 'Edit Configurations' dialog. It will be
+   * still possible to create this configuration by clicking on '42 more items' in the 'New' popup.
+   *
+   * @return {@code true} if it makes sense to create configurations of this type in {@code project}
+   */
+  public boolean isApplicable(@NotNull Project project) {
+    return true;
+  }
+
+  /**
    * Creates a new template run configuration within the context of the specified project.
    *
    * @param project the project in which the run configuration will be used

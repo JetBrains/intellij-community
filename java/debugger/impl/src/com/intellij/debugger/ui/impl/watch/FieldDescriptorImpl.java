@@ -18,6 +18,7 @@ package com.intellij.debugger.ui.impl.watch;
 import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.DebuggerContext;
 import com.intellij.debugger.SourcePosition;
+import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
 import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.debugger.engine.JVMNameUtil;
@@ -98,20 +99,23 @@ public class FieldDescriptorImpl extends ValueDescriptorImpl implements FieldDes
       PsiClass aClass = facade.findClass(type.name().replace('$', '.'), scope);
       if (aClass == null) {
         // trying to search, assuming declaring class is an anonymous class
-        try {
-          final List<Location> locations = type.allLineLocations();
-          if (!locations.isEmpty()) {
-            // important: use the last location to be sure the position will be within the anonymous class
-            final Location lastLocation = locations.get(locations.size() - 1);
-            final SourcePosition position = context.getDebugProcess().getPositionManager().getSourcePosition(lastLocation);
-            if (position != null) {
-              aClass = JVMNameUtil.getClassAt(position);
+        final DebugProcessImpl debugProcess = context.getDebugProcess();
+        if (debugProcess != null) {
+          try {
+            final List<Location> locations = type.allLineLocations();
+            if (!locations.isEmpty()) {
+              // important: use the last location to be sure the position will be within the anonymous class
+              final Location lastLocation = locations.get(locations.size() - 1);
+              final SourcePosition position = debugProcess.getPositionManager().getSourcePosition(lastLocation);
+              if (position != null) {
+                aClass = JVMNameUtil.getClassAt(position);
+              }
             }
           }
-        }
-        catch (AbsentInformationException ignored) {
-        }
-        catch (ClassNotPreparedException ignored) {
+          catch (AbsentInformationException ignored) {
+          }
+          catch (ClassNotPreparedException ignored) {
+          }
         }
       }
 

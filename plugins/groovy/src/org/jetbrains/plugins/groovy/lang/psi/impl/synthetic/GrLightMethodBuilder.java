@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -445,11 +445,6 @@ public class GrLightMethodBuilder  extends LightElement implements GrMethod, Ori
     return getContainingFile();
   }
 
-  @Override
-  public PsiType getReturnTypeNoResolve() {
-    return getReturnType();
-  }
-
   protected void copyData(GrLightMethodBuilder dst) {
     dst.setMethodKind(myMethodKind);
     dst.setData(myData);
@@ -460,7 +455,7 @@ public class GrLightMethodBuilder  extends LightElement implements GrMethod, Ori
     dst.setBaseIcon(myBaseIcon);
     dst.setReturnType(myReturnType);
     dst.setContainingClass(myContainingClass);
-    
+
     dst.getModifierList().copyModifiers(this);
 
     dst.getParameterList().clear();

@@ -24,7 +24,7 @@ import java.awt.*;
 /**
  * @author Vladimir Kondratyev
  */
-public abstract class ColoredListCellRenderer extends SimpleColoredComponent implements ListCellRenderer {
+public abstract class ColoredListCellRenderer<T> extends SimpleColoredComponent implements ListCellRenderer {
   private final ListCellRenderer myDefaultGtkRenderer = UIUtil.isUnderGTKLookAndFeel() ? new JComboBox().getRenderer() : null;
 
   protected boolean mySelected;
@@ -61,7 +61,7 @@ public abstract class ColoredListCellRenderer extends SimpleColoredComponent imp
 
     setPaintFocusBorder(hasFocus);
 
-    customizeCellRenderer(list, value, index, selected, hasFocus);
+    customizeCellRenderer(list, (T)value, index, selected, hasFocus);
 
     if (myDefaultGtkRenderer != null && list.getModel() instanceof ComboBoxModel) {
       final Component component = myDefaultGtkRenderer.getListCellRendererComponent(list, value, index, selected, hasFocus);
@@ -104,5 +104,5 @@ public abstract class ColoredListCellRenderer extends SimpleColoredComponent imp
     return result;
   }
 
-  protected abstract void customizeCellRenderer(JList list, Object value, int index, boolean selected, boolean hasFocus);
+  protected abstract void customizeCellRenderer(JList list, T value, int index, boolean selected, boolean hasFocus);
 }

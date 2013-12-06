@@ -34,7 +34,7 @@ public class DarculaTextBorder implements Border, UIResource {
   public Insets getBorderInsets(Component c) {
     int vOffset = c instanceof JPasswordField ? 3 : 4;
     if (DarculaTextFieldUI.isSearchField(c)) {
-      vOffset++;
+      vOffset += 2;
     }
     if (DarculaTextFieldUI.isSearchFieldWithHistoryPopup(c)) {
       return new InsetsUIResource(vOffset, 7 + 16 + 3, vOffset, 7 + 16);

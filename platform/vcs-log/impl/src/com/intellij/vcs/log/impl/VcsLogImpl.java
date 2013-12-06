@@ -15,15 +15,17 @@
  */
 package com.intellij.vcs.log.impl;
 
+import com.intellij.openapi.util.Condition;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.vcs.log.Hash;
-import com.intellij.vcs.log.VcsFullCommitDetails;
-import com.intellij.vcs.log.VcsLog;
+import com.intellij.vcs.log.*;
+import com.intellij.vcs.log.data.VcsLogDataHolder;
+import com.intellij.vcs.log.ui.VcsLogUI;
 import com.intellij.vcs.log.ui.tables.AbstractVcsLogTableModel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.awt.*;
 import java.util.Collection;
 import java.util.List;
 
@@ -32,25 +34,19 @@ import java.util.List;
  */
 public class VcsLogImpl implements VcsLog {
 
-  private final VcsLogManager myLogManager;
+  @NotNull private final VcsLogDataHolder myDataHolder;
+  @NotNull private final VcsLogUI myUi;
 
-  public VcsLogImpl(VcsLogManager vcsLogManager) {
-    myLogManager = vcsLogManager;
-  }
-
-  /**
-   * Checks if the log is initialized.
-   * TODO Temporary method until the old Git log is switched off and removed
-   */
-  public boolean isReady() {
-    return myLogManager.getDataHolder() != null && myLogManager.getLogUi() != null;
+  public VcsLogImpl(@NotNull VcsLogDataHolder holder, @NotNull VcsLogUI ui) {
+    myDataHolder = holder;
+    myUi = ui;
   }
 
   @Override
   @NotNull
   public List<Hash> getSelectedCommits() {
     List<Hash> hashes = ContainerUtil.newArrayList();
-    JBTable table = myLogManager.getLogUi().getTable();
+    JBTable table = myUi.getTable();
     for (int row : table.getSelectedRows()) {
       Hash hash = ((AbstractVcsLogTableModel)table.getModel()).getHashAtRow(row);
       if (hash != null) {
@@ -60,16 +56,67 @@ public class VcsLogImpl implements VcsLog {
     return hashes;
   }
 
+  @NotNull
+  @Override
+  public List<VcsFullCommitDetails> getSelectedDetails() {
+    List<VcsFullCommitDetails> details = ContainerUtil.newArrayList();
+    JBTable table = myUi.getTable();
+    for (int row : table.getSelectedRows()) {
+      AbstractVcsLogTableModel model = (AbstractVcsLogTableModel)table.getModel();
+      VcsFullCommitDetails commitDetails = model.getFullCommitDetails(row);
+      if (commitDetails == null) {
+        return ContainerUtil.emptyList();
+      }
+      details.add(commitDetails);
+    }
+    return details;
+  }
+
   @Override
   @Nullable
   public VcsFullCommitDetails getDetailsIfAvailable(@NotNull final Hash hash) {
-    return myLogManager.getDataHolder().getCommitDetailsGetter().getCommitDataIfAvailable(hash);
+    return myDataHolder.getCommitDetailsGetter().getCommitDataIfAvailable(hash);
   }
 
   @Nullable
   @Override
   public Collection<String> getContainingBranches(@NotNull Hash commitHash) {
     return null;
+  }
+
+  @NotNull
+  @Override
+  public Collection<VcsRef> getAllReferences() {
+    return myDataHolder.getDataPack().getRefsModel().getAllRefs();
+  }
+
+  @Override
+  public void jumpToReference(final String reference) {
+    Collection<VcsRef> references = getAllReferences();
+    VcsRef ref = ContainerUtil.find(references, new Condition<VcsRef>() {
+      @Override
+      public boolean value(VcsRef ref) {
+        return ref.getName().startsWith(reference);
+      }
+    });
+    if (ref != null) {
+      myUi.jumpToCommit(ref.getCommitHash());
+    }
+    else {
+      myUi.jumpToCommitByPartOfHash(reference);
+    }
+  }
+
+  @NotNull
+  @Override
+  public Component getToolbar() {
+    return myUi.getToolbar();
+  }
+
+  @NotNull
+  @Override
+  public Collection<VcsLogProvider> getLogProviders() {
+    return myDataHolder.getLogProviders();
   }
 
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,10 +34,8 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.lang.LangBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
@@ -415,7 +413,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     }
     requestResize();
     refreshUi(false, true);
-    ensureSelectionVisible();
+    ensureSelectionVisible(true);
   }
 
   public void setStartCompletionWhenNothingMatches(boolean startCompletionWhenNothingMatches) {
@@ -426,10 +424,28 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     return myStartCompletionWhenNothingMatches;
   }
 
-  public void ensureSelectionVisible() {
-    if (!isSelectionVisible()) {
-      ListScrollingUtil.ensureIndexIsVisible(myList, myList.getSelectedIndex(), 1);
+  public void ensureSelectionVisible(boolean forceTopSelection) {
+    if (isSelectionVisible() && !forceTopSelection) {
+      return;
     }
+
+    if (!forceTopSelection) {
+      ListScrollingUtil.ensureIndexIsVisible(myList, myList.getSelectedIndex(), 1);
+      return;
+    }
+
+    // selected item should be at the top of the visible list 
+    int top = myList.getSelectedIndex();
+    if (top > 0) {
+      top--; // show one element above the selected one to give the hint that there are more available via scrolling
+    }
+    
+    int firstVisibleIndex = myList.getFirstVisibleIndex();
+    if (firstVisibleIndex == top) {
+      return;
+    }
+    
+    ListScrollingUtil.ensureRangeIsVisible(myList, top, top + myList.getLastVisibleIndex() - firstVisibleIndex);
   }
 
   boolean truncatePrefix(boolean preserveSelection) {
@@ -449,7 +465,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     requestResize();
     if (shouldUpdate) {
       refreshUi(false, true);
-      ensureSelectionVisible();
+      ensureSelectionVisible(true);
     }
 
     return true;
@@ -636,13 +652,11 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     }
 
     myFinishing = true;
-    AccessToken token = WriteAction.start();
-    try {
-      insertLookupString(item, getPrefixLength(item));
-    }
-    finally {
-      token.finish();
-    }
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      public void run() {
+        insertLookupString(item, getPrefixLength(item));
+      }
+    });
 
     if (myDisposed) { // any document listeners could close us
       return;
@@ -737,6 +751,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     return lookupString;
   }
 
+  @Override
   public int getLookupStart() {
     return myOffsets.getLookupStart(disposeTrace);
   }
@@ -1299,7 +1314,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
       HintManagerImpl.updateLocation(this, myEditor, rectangle.getLocation());
 
       if (reused || selectionVisible || onExplicitAction) {
-        ensureSelectionVisible();
+        ensureSelectionVisible(false);
       }
     }
   }

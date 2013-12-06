@@ -15,14 +15,11 @@
  */
 package com.intellij.util.io;
 
-import com.google.common.base.Charsets;
-import com.google.common.base.Splitter;
-import com.google.common.collect.Lists;
-import com.google.common.io.BaseEncoding;
-import com.google.common.net.MediaType;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.CharsetToolkit;
+import com.intellij.util.Base64Converter;
 import gnu.trove.TIntArrayList;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -35,7 +32,6 @@ import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.charset.Charset;
-import java.util.ArrayList;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.zip.ZipEntry;
@@ -45,11 +41,12 @@ import static com.intellij.openapi.util.text.StringUtil.stripQuotesAroundValue;
 
 public class URLUtil {
   public static final String SCHEME_SEPARATOR = "://";
-  public static final String JAR_PROTOCOL = "jar";
   public static final String FILE_PROTOCOL = "file";
+  public static final String HTTP_PROTOCOL = "http";
+  public static final String JAR_PROTOCOL = "jar";
   public static final String JAR_SEPARATOR = "!/";
 
-  private static final Pattern DATA_URI_PATTERN = Pattern.compile("data:([^,;]+/[^,;]+)(;charset=[^,;]+)?(;base64)?,(.+)");
+  public static final Pattern DATA_URI_PATTERN = Pattern.compile("data:([^,;]+/[^,;]+)(;charset=[^,;]+)?(;base64)?,(.+)");
 
   private URLUtil() { }
 
@@ -179,38 +176,8 @@ public class URLUtil {
     return url.contains(SCHEME_SEPARATOR);
   }
 
-  /**
-   * Splits the url into 2 parts: the scheme ("http", for instance) and the rest of the URL. <br/>
-   * Scheme separator is not included neither to the scheme part, nor to the url part. <br/>
-   * The scheme can be absent, in which case empty string is written to the first item of the Pair.
-   */
-  @NotNull
-  public static Pair<String, String> splitScheme(@NotNull String url) {
-    ArrayList<String> list = Lists.newArrayList(Splitter.on(SCHEME_SEPARATOR).limit(2).split(url));
-    if (list.size() == 1) {
-      return Pair.create("", list.get(0));
-    }
-    return Pair.create(list.get(0), list.get(1));
-  }
-
-  /**
-   * Extracts mime-type of given data:URL string
-   *
-   * @param dataUrl data:URL-like string (may be quoted)
-   * @return mime-type extracted from image or {@code null} if string doesn't contain mime definition.
-   */
-  @Nullable
-  public static MediaType getMediaTypeFromDataUri(@NotNull String dataUrl) {
-    Matcher matcher = DATA_URI_PATTERN.matcher(stripQuotesAroundValue(dataUrl));
-    if (matcher.matches()) {
-      try {
-        return MediaType.parse(matcher.group(1));
-      }
-      catch (IllegalArgumentException e) {
-        return null;
-      }
-    }
-    return null;
+  public static boolean isDataUri(@NotNull String value) {
+    return !value.isEmpty() && value.startsWith("data:", value.charAt(0) == '"' || value.charAt(0) == '\'' ? 1 : 0);
   }
 
   /**
@@ -226,16 +193,12 @@ public class URLUtil {
     if (matcher.matches()) {
       try {
         String content = matcher.group(4);
-        return ";base64".equalsIgnoreCase(matcher.group(3)) ? BaseEncoding.base64().decode(content) : content.getBytes(Charsets.UTF_8);
+        return ";base64".equalsIgnoreCase(matcher.group(3)) ? Base64Converter.decode(content.getBytes(CharsetToolkit.UTF8_CHARSET)) : content.getBytes(CharsetToolkit.UTF8_CHARSET);
       }
       catch (IllegalArgumentException e) {
         return null;
       }
     }
     return null;
-  }
-
-  public static boolean isDataUri(@NotNull String value) {
-    return !value.isEmpty() && value.startsWith("data:", value.charAt(0) == '"' || value.charAt(0) == '\'' ? 1 : 0);
   }
 }

@@ -62,9 +62,12 @@ public class SuppressionAnnotationInspectionBase extends BaseInspection {
           && !tokenType.equals(JavaTokenType.C_STYLE_COMMENT)) {
         return;
       }
-      @NonNls final String strippedComment = commentText.substring(2).trim();
-      if (strippedComment.startsWith(SuppressionUtilCore.SUPPRESS_INSPECTIONS_TAG_NAME)) {
-        registerError(comment);
+
+      if (commentText.length() > 2) {
+        @NonNls final String strippedComment = commentText.substring(2).trim();
+        if (strippedComment.startsWith(SuppressionUtilCore.SUPPRESS_INSPECTIONS_TAG_NAME)) {
+          registerError(comment);
+        }
       }
     }
 

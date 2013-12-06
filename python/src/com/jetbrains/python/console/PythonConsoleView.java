@@ -29,10 +29,8 @@ import com.intellij.execution.ui.ObservableConsoleView;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
-import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
@@ -77,18 +75,17 @@ public class PythonConsoleView extends JPanel implements LanguageConsoleView, Ob
   private EditorColorsScheme myScheme;
   private boolean myHyperlink;
 
-  private final MyLanguageConsoleViewImpl myLanguageConsoleView;
+  private final LanguageConsoleViewImpl myLanguageConsoleView;
   
   private Disposable mySplittedDisposable;
 
   public PythonConsoleView(final Project project, final String title, Sdk sdk) {
     super(new BorderLayout());
 
-    myLanguageConsoleView = new MyLanguageConsoleViewImpl(project, title, sdk);
+    myLanguageConsoleView = new LanguageConsoleViewImpl(new PythonLanguageConsole(project, title, sdk));
 
     add(myLanguageConsoleView.getComponent(), BorderLayout.CENTER);
 
-    getPythonLanguageConsole().setPythonConsoleView(this);
     getPythonLanguageConsole().setPrompt(PyConsoleUtil.ORDINARY_PROMPT);
     myLanguageConsoleView.setUpdateFoldingsEnabled(false);
     myProject = project;
@@ -155,7 +152,9 @@ public class PythonConsoleView extends JPanel implements LanguageConsoleView, Ob
 
 
   private void doExecute(String code) {
-    executeInConsole(PyConsoleIndentUtil.normalize(code, myExecuteActionHandler.getCurrentIndentSize()));
+    String codeFragment = PyConsoleIndentUtil.normalize(code, myExecuteActionHandler.getCurrentIndentSize());
+    codeFragment += "\n";
+    executeInConsole(codeFragment);
   }
 
   public void executeInConsole(final String code) {
@@ -386,7 +385,7 @@ public class PythonConsoleView extends JPanel implements LanguageConsoleView, Ob
     final XStandaloneVariablesView view = new XStandaloneVariablesView(myProject, new PyDebuggerEditorsProvider(), stackFrame);
     consoleCommunication.addCommunicationListener(new ConsoleCommunicationListener() {
       @Override
-      public void commandExecuted() {
+      public void commandExecuted(boolean more) {
         view.rebuildView();
       }
 
@@ -421,12 +420,7 @@ public class PythonConsoleView extends JPanel implements LanguageConsoleView, Ob
     }
   }
 
-  public void beforeExternalAddContentToDocument(int length, ConsoleViewContentType contentType) {
-    myLanguageConsoleView.beforeExternalAddContentToDocument(length, contentType);
-  }
-
   private static class PythonLanguageConsole extends LanguageConsoleImpl {
-    private PythonConsoleView myPythonConsoleView;
 
     public PythonLanguageConsole(final Project project, final String title, final Sdk sdk) {
       super(project, title, PythonLanguage.getInstance(), false);
@@ -446,39 +440,12 @@ public class PythonConsoleView extends JPanel implements LanguageConsoleView, Ob
       }
     }
 
-    public void setPythonConsoleView(PythonConsoleView pythonConsoleView) {
-      myPythonConsoleView = pythonConsoleView;
-    }
-
     public void setConsoleCommunication(final ConsoleCommunication communication) {
       myFile.putCopyableUserData(PydevConsoleRunner.CONSOLE_KEY, communication);
     }
 
-    @Override
-    protected void appendToHistoryDocument(@NotNull Document history, @NotNull CharSequence text) {
-      myPythonConsoleView.beforeExternalAddContentToDocument(text.length(), ConsoleViewContentType.NORMAL_OUTPUT);
-      super.appendToHistoryDocument(history, text);
-    }
-
     public void setSdk(Sdk sdk) {
       myFile.putCopyableUserData(PydevConsoleRunner.CONSOLE_SDK, sdk);
-    }
-  }
-
-  private static class MyLanguageConsoleViewImpl extends LanguageConsoleViewImpl {
-    public MyLanguageConsoleViewImpl(Project project, String title, Sdk sdk) {
-      super(new PythonLanguageConsole(project, title, sdk));
-    }
-
-    @Override
-    protected EditorEx createRealEditor() {
-      EditorEx editor = myConsole.getHistoryViewer();
-      editor.setHighlighter(createHighlighter());
-      return editor;
-    }
-
-    public void beforeExternalAddContentToDocument(int length, ConsoleViewContentType contentType) {
-      super.beforeExternalAddContentToDocument(length, contentType);
     }
   }
 }

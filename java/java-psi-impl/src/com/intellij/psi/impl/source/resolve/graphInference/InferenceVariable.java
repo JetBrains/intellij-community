@@ -23,8 +23,6 @@ import java.util.*;
  * User: anna
  */
 public class InferenceVariable {
-  private boolean myCaptured;
-
   public PsiTypeParameter getParameter() {
     return myParameter;
   }
@@ -48,14 +46,6 @@ public class InferenceVariable {
     myInstantiation = PsiType.NULL;
   }
 
-  public boolean isCaptured() {
-    return myCaptured;
-  }
-
-  public void setCaptured(boolean captured) {
-    myCaptured = captured;
-  }
-
   public boolean addBound(PsiType classType, InferenceBound inferenceBound) {
     List<PsiType> list = myBounds.get(inferenceBound);
     if (list == null) {
@@ -76,10 +66,10 @@ public class InferenceVariable {
   }
 
   public Set<InferenceVariable> getDependencies(InferenceSession session) {
-    final HashSet<InferenceVariable> dependencies = new HashSet<InferenceVariable>();
+    final Set<InferenceVariable> dependencies = new LinkedHashSet<InferenceVariable>();
     for (InferenceBound inferenceBound : InferenceBound.values()) {
       for (PsiType bound : getBounds(inferenceBound)) {
-        session.collectDependencies(bound, dependencies, true);
+        session.collectDependencies(bound, dependencies);
       }
     }
     return dependencies;

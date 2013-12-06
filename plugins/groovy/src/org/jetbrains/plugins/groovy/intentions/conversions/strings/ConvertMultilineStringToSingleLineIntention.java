@@ -119,7 +119,12 @@ public class ConvertMultilineStringToSingleLineIntention extends Intention {
     return new PsiElementPredicate() {
       @Override
       public boolean satisfiedBy(PsiElement element) {
-        return element instanceof GrLiteral && GrStringUtil.isMultilineStringLiteral((GrLiteral)element);
+        if (!(element instanceof GrLiteral)) return false;
+
+        String text = element.getText();
+        String quote = GrStringUtil.getStartQuote(text);
+        return GrStringUtil.TRIPLE_QUOTES.equals(quote) ||
+               GrStringUtil.TRIPLE_DOUBLE_QUOTES.equals(quote);
       }
     };
   }

@@ -26,4 +26,14 @@ public class HgEncodingUtil {
     }
     return Charset.defaultCharset();
   }
+
+  @NotNull
+  public static String getNameFor(@NotNull Charset charset) {
+    //workaround for x_MacRoman encoding etc; todo: create map with encoding aliases because some encodings name are not supported by hg
+    String name = charset.name();
+    if (name.startsWith("x-M")) {
+      return name.substring(2); // without "x-" prefix;
+    }
+    return name;
+  }
 }

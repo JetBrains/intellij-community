@@ -27,8 +27,8 @@ import org.zmlx.hg4idea.provider.HgRepositoryLocation;
 import java.text.ParseException;
 import java.util.List;
 
-import static com.intellij.dvcs.test.Executor.cd;
-import static com.intellij.dvcs.test.Executor.touch;
+import static com.intellij.openapi.vcs.Executor.cd;
+import static com.intellij.openapi.vcs.Executor.touch;
 import static hg4idea.test.HgExecutor.hg;
 
 /**
@@ -52,8 +52,10 @@ public class HgBrowseChangesTest extends HgPlatformTest {
     hg("add");
     hg("commit -m add");
     java.util.Calendar now = java.util.Calendar.getInstance();
+    int year = java.util.Calendar.YEAR;
+    now.set(year, now.get(year) + 1);
     dateBefore = ChangeBrowserSettings.DATE_FORMAT.format(now.getTime());
-    now.set(java.util.Calendar.YEAR, 1970);
+    now.set(year, 1970);
     dateAfter = ChangeBrowserSettings.DATE_FORMAT.format(now.getTime());
   }
 

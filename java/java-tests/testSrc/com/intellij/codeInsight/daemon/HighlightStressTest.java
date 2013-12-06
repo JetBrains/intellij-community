@@ -30,7 +30,7 @@ import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.codeInspection.unusedImport.UnusedImportLocalInspection;
 import com.intellij.codeInspection.unusedSymbol.UnusedSymbolLocalInspection;
 import com.intellij.lang.annotation.HighlightSeverity;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiManagerEx;
@@ -225,7 +225,7 @@ public class HighlightStressTest extends LightDaemonAnalyzerTestCase {
       if (v>100) break;
     }
     final String text = imports + "\n class X {{\n" + usages + "}}";
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+    WriteCommandAction.runWriteCommandAction(null, new Runnable() {
       @Override
       public void run() {
         getEditor().getDocument().setText(text);

@@ -16,12 +16,13 @@
 package com.intellij.remoteServer.agent.util;
 
 /**
- * Created by IntelliJ IDEA.
- * User: michael.golubev
+ * @author michael.golubev
  */
 public interface CloudGitApplication {
 
   String getName();
 
   String getGitUrl();
+
+  String getWebUrl();
 }

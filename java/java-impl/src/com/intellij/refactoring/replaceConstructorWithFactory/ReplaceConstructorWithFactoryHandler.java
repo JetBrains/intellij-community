@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@ package com.intellij.refactoring.replaceConstructorWithFactory;
 
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.project.Project;
@@ -121,7 +120,7 @@ public class ReplaceConstructorWithFactoryHandler
                                                 RefactoringBundle.message("would.you.like.to.replace.default.constructor.of.0.with.factory.method", aClass.getQualifiedName()),
                                                 REFACTORING_NAME, Messages.getQuestionIcon()
     );
-    if (answer != 0) return;
+    if (answer != Messages.YES) return;
     if (!CommonRefactoringUtil.checkReadOnlyStatus(myProject, aClass)) return;
     new ReplaceConstructorWithFactoryDialog(myProject, null, aClass).show();
   }

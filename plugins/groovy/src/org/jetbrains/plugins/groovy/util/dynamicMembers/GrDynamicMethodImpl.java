@@ -222,10 +222,6 @@ public class GrDynamicMethodImpl extends LightElement implements GrMethod {
     return myMethod.getHierarchicalMethodSignature();
   }
 
-  public PsiType getReturnTypeNoResolve() {
-    return myMethod.getReturnType();
-  }
-
   @Override
   public boolean isEquivalentTo(PsiElement another) {
     return another instanceof GrDynamicMethodImpl && myMethod.isEquivalentTo(((GrDynamicMethodImpl)another).myMethod);

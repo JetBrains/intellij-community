@@ -1,7 +1,7 @@
 package hg4idea.test.config;
 
-import com.intellij.dvcs.test.TestRepositoryUtil;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vcs.VcsTestUtil;
 import hg4idea.test.HgPlatformTest;
 import org.zmlx.hg4idea.util.HgUtil;
 
@@ -10,7 +10,7 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collection;
 
-import static com.intellij.dvcs.test.Executor.cd;
+import static com.intellij.openapi.vcs.Executor.cd;
 
 /**
  * @author Nadya Zabrodina
@@ -63,7 +63,7 @@ public class HgConfigTest extends HgPlatformTest {
     updateRepoConfig(myProject, myChildRepo);
     final Collection<String> paths = HgUtil.getRepositoryPaths(myProject, myChildRepo);
     final Collection<String> expectedPaths = Arrays.asList(FileUtil.toSystemDependentName(myRepository.getPath()), path1, path2, path3);
-    TestRepositoryUtil.assertEqualCollections(paths,expectedPaths);
+    VcsTestUtil.assertEqualCollections(paths, expectedPaths);
   }
 
   public void testLargeExtensionInClonedRepo() throws IOException {

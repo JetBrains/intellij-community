@@ -34,7 +34,6 @@ import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl;
 import com.intellij.openapi.roots.*;
-import com.intellij.openapi.roots.impl.SourceFolderImpl;
 import com.intellij.openapi.roots.impl.libraries.ProjectLibraryTable;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.ui.Messages;
@@ -130,7 +129,9 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
     ContentEntry contentRoot = getContentRoot(moduleName);
     List<ContentFolder> folders = new ArrayList<ContentFolder>();
     for (SourceFolder folder : contentRoot.getSourceFolders(JavaSourceRootType.SOURCE)) {
-      if (((JavaSourceRootProperties)((SourceFolderImpl)folder).getJpsElement().getProperties()).isForGeneratedSources()) {
+      JavaSourceRootProperties properties = folder.getJpsElement().getProperties(JavaSourceRootType.SOURCE);
+      assertNotNull(properties);
+      if (properties.isForGeneratedSources()) {
         folders.add(folder);
       }
     }

@@ -147,6 +147,11 @@ public class PyFindUsagesTest extends PyTestCase {
     assertEquals(2, usages.size());
   }
 
+  public void testConditionalFunctions() {  // PY-1448
+    final Collection<UsageInfo> usages = myFixture.testFindUsages("findUsages/ConditionalFunctions.py");
+    assertEquals(3, usages.size());
+  }
+
   private Collection<UsageInfo> findMultiFileUsages(String filename) {
     final String testName = getTestName(false);
     myFixture.copyDirectoryToProject("findUsages/" + testName, "");

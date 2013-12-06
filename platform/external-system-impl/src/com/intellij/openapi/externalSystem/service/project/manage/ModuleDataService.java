@@ -10,6 +10,7 @@ import com.intellij.openapi.externalSystem.model.project.ExternalSystemSourceTyp
 import com.intellij.openapi.externalSystem.model.project.ModuleData;
 import com.intellij.openapi.externalSystem.model.project.ProjectData;
 import com.intellij.openapi.externalSystem.service.project.ProjectStructureHelper;
+import com.intellij.openapi.externalSystem.util.DisposeAwareProjectChange;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemConstants;
 import com.intellij.openapi.externalSystem.util.Order;
@@ -38,6 +39,8 @@ import java.util.concurrent.TimeUnit;
  */
 @Order(ExternalSystemConstants.BUILTIN_SERVICE_ORDER)
 public class ModuleDataService implements ProjectDataService<ModuleData, Module> {
+
+  public static final com.intellij.openapi.util.Key<ModuleData> MODULE_DATA_KEY = com.intellij.openapi.util.Key.create("MODULE_DATA_KEY");
 
   private static final Logger LOG = Logger.getInstance("#" + ModuleDataService.class.getName());
 
@@ -72,9 +75,9 @@ public class ModuleDataService implements ProjectDataService<ModuleData, Module>
       myAlarm.addRequest(new ImportModulesTask(project, toImport, synchronous), PROJECT_INITIALISATION_DELAY_MS);
       return;
     }
-    ExternalSystemApiUtil.executeProjectChangeAction(synchronous, new Runnable() {
+    ExternalSystemApiUtil.executeProjectChangeAction(synchronous, new DisposeAwareProjectChange(project) {
       @Override
-      public void run() {
+      public void execute() {
         final Collection<DataNode<ModuleData>> toCreate = filterExistingModules(toImport, project);
         if (!toCreate.isEmpty()) {
           createModules(toCreate, project);
@@ -90,7 +93,7 @@ public class ModuleDataService implements ProjectDataService<ModuleData, Module>
   }
 
   private void createModules(@NotNull final Collection<DataNode<ModuleData>> toCreate, @NotNull final Project project) {
-    removeExistingModulesConfigs(toCreate);
+    removeExistingModulesConfigs(toCreate, project);
     Application application = ApplicationManager.getApplication();
     final Map<DataNode<ModuleData>, Module> moduleMappings = ContainerUtilRt.newHashMap();
     application.runWriteAction(new Runnable() {
@@ -110,10 +113,7 @@ public class ModuleDataService implements ProjectDataService<ModuleData, Module>
         final ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(created);
         final ModifiableRootModel moduleRootModel = moduleRootManager.getModifiableModel();
         moduleRootModel.inheritSdk();
-        created.setOption(ExternalSystemConstants.EXTERNAL_SYSTEM_ID_KEY, data.getOwner().toString());
-        created.setOption(ExternalSystemConstants.LINKED_PROJECT_PATH_KEY, data.getLinkedExternalProjectPath());
-        final ProjectData projectData = module.getData(ProjectKeys.PROJECT);
-        created.setOption(ExternalSystemConstants.ROOT_PROJECT_PATH_KEY, projectData != null ? projectData.getLinkedExternalProjectPath() : "");
+        setModuleOptions(created, module);
 
         RootPolicy<Object> visitor = new RootPolicy<Object>() {
           @Override
@@ -140,7 +140,7 @@ public class ModuleDataService implements ProjectDataService<ModuleData, Module>
       }
     });
   }
-  
+
   @NotNull
   private Collection<DataNode<ModuleData>> filterExistingModules(@NotNull Collection<DataNode<ModuleData>> modules,
                                                                  @NotNull Project project)
@@ -153,22 +153,19 @@ public class ModuleDataService implements ProjectDataService<ModuleData, Module>
         result.add(node);
       }
       else {
-        module.setOption(ExternalSystemConstants.EXTERNAL_SYSTEM_ID_KEY, moduleData.getOwner().toString());
-        module.setOption(ExternalSystemConstants.LINKED_PROJECT_PATH_KEY, moduleData.getLinkedExternalProjectPath());
-        final ProjectData projectData = node.getData(ProjectKeys.PROJECT);
-        module.setOption(ExternalSystemConstants.ROOT_PROJECT_PATH_KEY, projectData != null ? projectData.getLinkedExternalProjectPath() : "");
+        setModuleOptions(module, node);
       }
     }
     return result;
   }
 
-  private void removeExistingModulesConfigs(@NotNull final Collection<DataNode<ModuleData>> nodes) {
+  private void removeExistingModulesConfigs(@NotNull final Collection<DataNode<ModuleData>> nodes, @NotNull final Project project) {
     if (nodes.isEmpty()) {
       return;
     }
-    ExternalSystemApiUtil.executeProjectChangeAction(true, new Runnable() {
+    ExternalSystemApiUtil.executeProjectChangeAction(true, new DisposeAwareProjectChange(project) {
       @Override
-      public void run() {
+      public void execute() {
         LocalFileSystem fileSystem = LocalFileSystem.getInstance();
         for (DataNode<ModuleData> node : nodes) {
           // Remove existing '*.iml' file if necessary.
@@ -218,10 +215,12 @@ public class ModuleDataService implements ProjectDataService<ModuleData, Module>
     if (modules.isEmpty()) {
       return;
     }
-    ExternalSystemApiUtil.executeProjectChangeAction(synchronous, new Runnable() {
+    ExternalSystemApiUtil.executeProjectChangeAction(synchronous, new DisposeAwareProjectChange(project) {
       @Override
-      public void run() {
+      public void execute() {
         for (Module module : modules) {
+          if(module.isDisposed()) continue;
+
           ModuleManager moduleManager = ModuleManager.getInstance(module.getProject());
           String path = module.getModuleFilePath();
           moduleManager.disposeModule(module);
@@ -267,6 +266,23 @@ public class ModuleDataService implements ProjectDataService<ModuleData, Module>
       }
 
       importData(myModules, myProject, mySynchronous);
+    }
+  }
+
+  private static void setModuleOptions(Module module, DataNode<ModuleData> moduleDataNode) {
+    ModuleData moduleData = moduleDataNode.getData();
+    module.putUserData(MODULE_DATA_KEY, moduleData);
+
+    module.setOption(ExternalSystemConstants.EXTERNAL_SYSTEM_ID_KEY, moduleData.getOwner().toString());
+    module.setOption(ExternalSystemConstants.LINKED_PROJECT_PATH_KEY, moduleData.getLinkedExternalProjectPath());
+    final ProjectData projectData = moduleDataNode.getData(ProjectKeys.PROJECT);
+    module.setOption(ExternalSystemConstants.ROOT_PROJECT_PATH_KEY, projectData != null ? projectData.getLinkedExternalProjectPath() : "");
+
+    if (moduleData.getGroup() != null) {
+      module.setOption(ExternalSystemConstants.EXTERNAL_SYSTEM_MODULE_GROUP_KEY, moduleData.getGroup());
+    }
+    if (moduleData.getVersion() != null) {
+      module.setOption(ExternalSystemConstants.EXTERNAL_SYSTEM_MODULE_VERSION_KEY, moduleData.getVersion());
     }
   }
 }

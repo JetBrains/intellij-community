@@ -71,14 +71,24 @@ public class PyClassNameCompletionContributor extends CompletionContributor {
       final PsiFile originalFile = parameters.getOriginalFile();
       addVariantsFromIndex(result, originalFile, PyClassNameIndex.KEY,
                            parent instanceof PyStringLiteralExpression ? STRING_LITERAL_INSERT_HANDLER : IMPORTING_INSERT_HANDLER,
-                           Conditions.<PyClass>alwaysTrue());
+                           Conditions.<PyClass>alwaysTrue(), PyClass.class);
       addVariantsFromIndex(result, originalFile, PyFunctionNameIndex.KEY,
-                           parent instanceof PyStringLiteralExpression ? STRING_LITERAL_INSERT_HANDLER : FUNCTION_INSERT_HANDLER, IS_TOPLEVEL);
+                           getFunctionInsertHandler(parent), IS_TOPLEVEL, PyFunction.class);
       addVariantsFromIndex(result, originalFile, PyVariableNameIndex.KEY,
                            parent instanceof PyStringLiteralExpression ? STRING_LITERAL_INSERT_HANDLER : IMPORTING_INSERT_HANDLER,
-                           IS_TOPLEVEL);
+                           IS_TOPLEVEL, PyTargetExpression.class);
       addVariantsFromModules(result, originalFile, parent instanceof PyStringLiteralExpression);
     }
+  }
+
+  private static InsertHandler<LookupElement> getFunctionInsertHandler(PsiElement parent) {
+    if (parent instanceof PyStringLiteralExpression) {
+      return STRING_LITERAL_INSERT_HANDLER;
+    }
+    if (parent.getParent() instanceof PyDecorator) {
+      return IMPORTING_INSERT_HANDLER;
+    }
+    return FUNCTION_INSERT_HANDLER;
   }
 
   private static void addVariantsFromModules(CompletionResultSet result, PsiFile targetFile, boolean inStringLiteral) {
@@ -107,13 +117,13 @@ public class PyClassNameCompletionContributor extends CompletionContributor {
                                                                        final PsiFile targetFile,
                                                                        final StubIndexKey<String, T> key,
                                                                        final InsertHandler<LookupElement> insertHandler,
-                                                                       final Condition<? super T> condition) {
+                                                                       final Condition<? super T> condition, Class<T> elementClass) {
     final Project project = targetFile.getProject();
     GlobalSearchScope scope = PyProjectScopeBuilder.excludeSdkTestsScope(targetFile);
 
     Collection<String> keys = StubIndex.getInstance().getAllKeys(key, project);
     for (final String elementName : CompletionUtil.sortMatching(resultSet.getPrefixMatcher(), keys)) {
-      for (T element : StubIndex.getInstance().get(key, elementName, project, scope)) {
+      for (T element : StubIndex.getElements(key, elementName, project, scope, elementClass)) {
         if (condition.value(element)) {
           resultSet.addElement(LookupElementBuilder.createWithIcon(element)
                                  .withTailText(" " + ((NavigationItem)element).getPresentation().getLocationString(), true)

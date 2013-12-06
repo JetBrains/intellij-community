@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import com.intellij.openapi.extensions.*;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.KeyedLazyInstance;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ConcurrentHashMap;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
@@ -129,9 +130,13 @@ public class KeyedExtensionCollector<T, KeyT> {
       for (Map.Entry<String, List<T>> entry : myExplicitExtensions.entrySet()) {
         String key = entry.getKey();
         if (keys.contains(key)) {
-          if (result == null) result = new ArrayList<T>();
           List<T> list = entry.getValue();
-          result.addAll(list);
+          if (result == null) {
+            result = new ArrayList<T>(list);
+          }
+          else {
+            result.addAll(list);
+          }
         }
       }
 
@@ -159,7 +164,7 @@ public class KeyedExtensionCollector<T, KeyT> {
               LOG.error(e);
               continue;
             }
-            if (result == null) result = new ArrayList<T>();
+            if (result == null) result = new SmartList<T>();
             result.add(instance);
           }
         }

@@ -599,16 +599,13 @@ public class FileUtil extends FileUtilRt {
     return findSequentNonexistentFile(aParentFolder, aFilePrefix, aExtension).getName();
   }
 
-  public static File findSequentNonexistentFile(@NotNull File aParentFolder,
-                                                @NotNull @NonNls final String aFilePrefix,
-                                                @NotNull String aExtension) {
+  public static File findSequentNonexistentFile(@NotNull File parentFolder, @NotNull  String filePrefix, @NotNull String extension) {
     int postfix = 0;
-    String ext = aExtension.isEmpty() ? "" : "." + aExtension;
-
-    File candidate = new File(aParentFolder, aFilePrefix + ext);
+    String ext = extension.isEmpty() ? "" : '.' + extension;
+    File candidate = new File(parentFolder, filePrefix + ext);
     while (candidate.exists()) {
       postfix++;
-      candidate = new File(aParentFolder, aFilePrefix + Integer.toString(postfix) + ext);
+      candidate = new File(parentFolder, filePrefix + Integer.toString(postfix) + ext);
     }
     return candidate;
   }
@@ -1176,20 +1173,11 @@ public class FileUtil extends FileUtilRt {
     return null;
   }
 
-  /**
-   * @deprecated use {@linkplain #isAbsolute(String)} (to remove in IDEA 13)
-   */
-  @SuppressWarnings("UnusedDeclaration")
-  public static boolean isAbsoluteFilePath(String path) {
-    return isAbsolute(path);
-  }
-
-  public static boolean isAbsolutePlatformIndependent(String path) {
+  public static boolean isAbsolutePlatformIndependent(@NotNull String path) {
     return isUnixAbsolutePath(path) || isWindowsAbsolutePath(path);
   }
 
-
-  public static boolean isUnixAbsolutePath(String path) {
+  public static boolean isUnixAbsolutePath(@NotNull String path) {
     return path.startsWith("/");
   }
 
@@ -1200,7 +1188,7 @@ public class FileUtil extends FileUtilRt {
     return false;
   }
 
-  @Nullable
+  @Contract("null -> null")
   public static String getLocationRelativeToUserHome(@Nullable final String path) {
     if (path == null) return null;
 
@@ -1215,7 +1203,8 @@ public class FileUtil extends FileUtilRt {
     return path;
   }
 
-  public static String expandUserHome(String path) {
+  @NotNull
+  public static String expandUserHome(@NotNull String path) {
     if (path.startsWith("~/") || path.startsWith("~\\")) {
       path = SystemProperties.getUserHome() + path.substring(1);
     }
@@ -1358,25 +1347,47 @@ public class FileUtil extends FileUtilRt {
   }
 
   @NotNull
-  public static List<String> loadLines(@NotNull InputStream stream) throws IOException {
-    //noinspection IOResourceOpenedButNotSafelyClosed
-    return loadLines(new InputStreamReader(stream));
+  public static List<String> loadLines(@NotNull File file) throws IOException {
+    return loadLines(file.getPath());
   }
 
   @NotNull
-  public static List<String> loadLines(@NotNull Reader reader) throws IOException {
+  public static List<String> loadLines(@NotNull String path) throws IOException {
+    BufferedReader reader = new BufferedReader(new FileReader(path));
+    try {
+      return loadLines(reader);
+    }
+    finally {
+      reader.close();
+    }
+  }
+
+  @NotNull
+  public static List<String> loadLines(@NotNull BufferedReader reader) throws IOException {
     List<String> lines = new ArrayList<String>();
+    String line;
+    while ((line = reader.readLine()) != null) {
+      lines.add(line);
+    }
+    return lines;
+  }
+
+  /** @deprecated unclear closing policy, do not use (to remove in IDEA 14) */
+  @SuppressWarnings({"UnusedDeclaration", "deprecation"})
+  public static List<String> loadLines(@NotNull InputStream stream) throws IOException {
+    return loadLines(new InputStreamReader(stream));
+  }
+
+  /** @deprecated unclear closing policy, do not use (to remove in IDEA 14) */
+  @SuppressWarnings("UnusedDeclaration")
+  public static List<String> loadLines(@NotNull Reader reader) throws IOException {
     BufferedReader bufferedReader = new BufferedReader(reader);
     try {
-      String line;
-      while ((line = bufferedReader.readLine()) != null) {
-        lines.add(line);
-      }
+      return loadLines(bufferedReader);
     }
     finally {
       bufferedReader.close();
     }
-    return lines;
   }
 
   @NotNull
@@ -1409,5 +1420,22 @@ public class FileUtil extends FileUtilRt {
     }
     final String name = file.getName();
     return StringUtil.endsWithIgnoreCase(name, ".jar") || StringUtil.endsWithIgnoreCase(name, ".zip");
+  }
+
+  public static boolean visitFiles(@NotNull File root, @NotNull Processor<File> processor) {
+    if (!processor.process(root)) {
+      return false;
+    }
+
+    File[] children = root.listFiles();
+    if (children != null) {
+      for (File child : children) {
+        if (!visitFiles(child, processor)) {
+          return false;
+        }
+      }
+    }
+
+    return true;
   }
 }

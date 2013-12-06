@@ -19,14 +19,17 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.impl.ModalityHelper;
+import com.intellij.ui.mac.foundation.Foundation;
 import com.intellij.ui.mac.foundation.ID;
 import com.intellij.ui.mac.foundation.MacUtil;
 import com.intellij.util.ui.UIUtil;
 import com.sun.jna.Callback;
+import com.sun.jna.Pointer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -68,6 +71,7 @@ public class MacMessagesImpl extends MacMessages {
         resultsFromDocumentRoot.put(documentRoot, new MessageResult(returnCode.intValue(), suppressState.intValue() == 1));
         queuesFromDocumentRoot.get(windowFromId.get(contextInfo.longValue())).runFromQueue();
       }
+      JDK7WindowReorderingWorkaround.enableReordering();
       cfRelease(self);
     }
   };
@@ -198,6 +202,20 @@ public class MacMessagesImpl extends MacMessages {
 
   private MacMessagesImpl() {}
 
+  private static final Callback windowDidBecomeMainCallback = new Callback() {
+    @SuppressWarnings("UnusedDeclaration") // this is a native up-call
+    public void callback(ID self,
+                         ID nsNotification)
+    {
+      synchronized (lock) {
+        if (!windowFromId.keySet().contains(self.longValue())) {
+          return;
+        }
+      }
+      invoke(self, "oldWindowDidBecomeMain:", nsNotification);
+    }
+  };
+
   static {
     if (SystemInfo.isMac) {
       final ID delegateClass = allocateObjcClassPair(getObjcClass("NSObject"), "NSAlertDelegate_");
@@ -211,6 +229,19 @@ public class MacMessagesImpl extends MacMessages {
         throw new RuntimeException("Unable to add method to objective-c delegate class!");
       }
       registerObjcClassPair(delegateClass);
+
+      if (SystemInfo.isJavaVersionAtLeast("1.7")) {
+
+        ID awtWindow = Foundation.getObjcClass("AWTWindow");
+
+        Pointer windowWillEnterFullScreenMethod = Foundation.createSelector("windowDidBecomeMain:");
+        ID originalWindowWillEnterFullScreen = Foundation.class_replaceMethod(awtWindow, windowWillEnterFullScreenMethod,
+                                                                              windowDidBecomeMainCallback, "v@::@");
+
+        Foundation.addMethodByID(awtWindow, Foundation.createSelector("oldWindowDidBecomeMain:"),
+                                 originalWindowWillEnterFullScreen, "v@::@");
+
+      }
     }
   }
 
@@ -325,8 +356,10 @@ public class MacMessagesImpl extends MacMessages {
   }
 
   private static void startModal(final Window w, ID windowId) {
+    long windowPtr = windowId.longValue();
     synchronized (lock) {
-      windowFromId.put(windowId.longValue(), w);
+      JDK7WindowReorderingWorkaround.disableReordering();
+      windowFromId.put(windowPtr, w);
       if (blockedDocumentRoots.keySet().contains(w)) {
         blockedDocumentRoots.put(w, blockedDocumentRoots.get(w) + 1);
       } else {
@@ -335,6 +368,9 @@ public class MacMessagesImpl extends MacMessages {
     }
 
     pumpEventsDocumentExclusively(w);
+    synchronized (lock) {
+      windowFromId.remove(windowPtr);
+    }
   }
 
   private enum COMMON_DIALOG_PARAM_TYPE {
@@ -453,8 +489,8 @@ public class MacMessagesImpl extends MacMessages {
                                                                           : doNotAskDialogOption.getDoNotShowMessage()));
       params.put(COMMON_DIALOG_PARAM_TYPE.doNotAskDialogOption2, nsString(doNotAskDialogOption != null
                                                                           && !doNotAskDialogOption.isToBeShown() ? "checked" : "-1"));
-      MessageResult result = resultsFromDocumentRoot.remove(showDialog(window, "showSheet:",
-                                                                       new DialogParamsWrapper(DialogParamsWrapper.DialogType.alert, params)));
+      MessageResult result = resultsFromDocumentRoot.remove(
+        showDialog(window, "showSheet:", new DialogParamsWrapper(DialogParamsWrapper.DialogType.alert, params)));
 
       int convertedResult = convertReturnCodeFromNativeAlertDialog(result.myReturnCode, alternateText);
 
@@ -528,13 +564,11 @@ public class MacMessagesImpl extends MacMessages {
   //title, message, errorStyle, window, paramsArray, doNotAskDialogOption, "showVariableButtonsSheet:"
   private static Window showDialog(@Nullable Window window, final String methodName, DialogParamsWrapper paramsWrapper) {
 
-    Window foremostWindow = getForemostWindow(window);
+    final Window foremostWindow = getForemostWindow(window);
 
-    String foremostWindowTitle = getWindowTitle(foremostWindow);
+    final Window documentRoot = getDocumentRootFromWindow(foremostWindow);
 
-    Window documentRoot = getDocumentRootFromWindow(foremostWindow);
-
-    final ID nativeFocusedWindow = MacUtil.findWindowForTitle(foremostWindowTitle);
+    final ID nativeFocusedWindow = MacUtil.findWindowFromJavaWindow(foremostWindow);
 
     paramsWrapper.setNativeWindow(nativeFocusedWindow);
 
@@ -561,18 +595,6 @@ public class MacMessagesImpl extends MacMessages {
 
   private static int convertReturnCodeFromNativeMessageDialog(int result) {
     return result - 1000;
-  }
-
-  private static String getWindowTitle(Window documentRoot) {
-    String windowTitle;
-    if (documentRoot instanceof Frame) {
-      windowTitle = ((Frame)documentRoot).getTitle();
-    } else if (documentRoot instanceof Dialog) {
-      windowTitle = ((Dialog)documentRoot).getTitle();
-    } else {
-      throw new RuntimeException("The window is not a frame and not a dialog!");
-    }
-    return windowTitle;
   }
 
   @Messages.YesNoCancelResult
@@ -680,10 +702,14 @@ public class MacMessagesImpl extends MacMessages {
     }
 
     //Actually can, but not in this implementation. If you know a reasonable scenario, please ask Denis Fokin for the improvement.
-    LOG.assertTrue(getWindowTitle(_window) != null, "A window without a title should not be used for showing MacMessages");
-    while (_window != null && getWindowTitle(_window) == null) {
+    LOG.assertTrue(MacUtil.getWindowTitle(_window) != null, "A window without a title should not be used for showing MacMessages");
+    while (_window != null && MacUtil.getWindowTitle(_window) == null) {
       _window = _window.getOwner();
       //At least our frame should have a title
+    }
+
+    while (Registry.is("skip.untitled.windows.for.mac.messages") && _window != null && _window instanceof JDialog && !((JDialog)_window).isModal()) {
+      _window = _window.getOwner();
     }
 
     return _window;

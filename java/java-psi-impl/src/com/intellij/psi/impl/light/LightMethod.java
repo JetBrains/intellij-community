@@ -258,9 +258,4 @@ public class LightMethod extends LightElement implements PsiMethod {
   public PsiElement getContext() {
     return getContainingClass();
   }
-
-  @Override
-  public PsiType getReturnTypeNoResolve() {
-    return getReturnType();
-  }
 }

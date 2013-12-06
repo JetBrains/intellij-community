@@ -17,10 +17,7 @@ package com.jetbrains.rest;
 
 import com.intellij.lang.Language;
 import com.intellij.psi.templateLanguages.TemplateLanguage;
-import com.jetbrains.rest.validation.RestAnnotator;
-import com.jetbrains.rest.validation.RestHyperlinksAnnotator;
-import com.jetbrains.rest.validation.RestInlineBlockAnnotator;
-import com.jetbrains.rest.validation.RestReferenceTargetAnnotator;
+import com.jetbrains.rest.validation.*;
 
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
@@ -48,6 +45,7 @@ public class RestLanguage extends Language implements TemplateLanguage  {
     _annotators.add(RestHyperlinksAnnotator.class);
     _annotators.add(RestReferenceTargetAnnotator.class);
     _annotators.add(RestInlineBlockAnnotator.class);
+    _annotators.add(RestTitleAnnotator.class);
   }
 
   public Set<Class<? extends RestAnnotator>> getAnnotators() {

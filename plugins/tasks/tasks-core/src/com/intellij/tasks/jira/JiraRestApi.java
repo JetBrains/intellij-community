@@ -91,26 +91,23 @@ public abstract class JiraRestApi {
   public abstract String getVersionName();
 
   public void setTaskState(Task task, TaskState state) throws Exception {
-    String requestBody;
-    switch (state) {
-      case IN_PROGRESS:
-        requestBody = "{\"transition\": \"4\"}";
-        break;
-      case RESOLVED:
-        // 5 for "Resolved", 2 for "Close"
-        requestBody = "{\"transition\": \"5\", \"resolution\": \"Fixed\"}";
-        break;
-      case REOPENED:
-        requestBody = "{\"transition\": \"3\"}";
-        break;
-      default:
-        return;
+    String requestBody = getRequestForStateTransition(state);
+    if (requestBody == null) {
+      return;
     }
-    // REST API 2.0 require double quotes both around field names and values (even numbers)
-    // REST API 2.0alpha1 permits to omit them, but handles both variants
     final String transitionsUrl = myRepository.getUrl() + REST_API_PATH_SUFFIX + "/issue/" + task.getId() + "/transitions";
+    LOG.debug(String.format("Transition destination: %s, request: %s", state, requestBody));
     final PostMethod method = new PostMethod(transitionsUrl);
     method.setRequestEntity(new StringRequestEntity(requestBody, "application/json", "utf-8"));
-    myRepository.executeMethod(method);
+    try {
+      myRepository.executeMethod(method);
+    }
+    catch (Exception e) {
+      LOG.warn(String.format("Transition destination: %s, server URL: %s", state, myRepository.getUrl()), e);
+      throw e;
+    }
   }
+
+  @Nullable
+  protected abstract String getRequestForStateTransition(@NotNull TaskState state);
 }

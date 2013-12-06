@@ -40,6 +40,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.impl.DocumentCommitThread;
 import com.intellij.psi.impl.PsiDocumentManagerImpl;
 import com.intellij.psi.impl.source.PsiFileImpl;
@@ -391,10 +392,16 @@ public class MultiHostRegistrarImpl implements MultiHostRegistrar, ModificationT
                                                   "\nLanguage: "+parsedNode.getPsi().getLanguage()+
                                                   "\nHost file: "+ shreds.get(0).getHost().getContainingFile().getVirtualFile()
         ;
-    for (Map.Entry<LeafElement, String> entry : patcher.newTexts.entrySet()) {
-      LeafElement leaf = entry.getKey();
-      String newText = entry.getValue();
-      leaf.rawReplaceWithText(newText);
+    DebugUtil.startPsiModification("injection leaf patching");
+    try {
+      for (Map.Entry<LeafElement, String> entry : patcher.newTexts.entrySet()) {
+        LeafElement leaf = entry.getKey();
+        String newText = entry.getValue();
+        leaf.rawReplaceWithText(newText);
+      }
+    }
+    finally {
+      DebugUtil.finishPsiModification();
     }
 
     TreeUtil.clearCaches((TreeElement)parsedNode);

@@ -15,9 +15,9 @@
  */
 package hg4idea.test.repo;
 
-import com.intellij.dvcs.test.TestRepositoryUtil;
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vcs.VcsTestUtil;
 import hg4idea.test.HgPlatformTest;
 import org.jetbrains.annotations.NotNull;
 import org.zmlx.hg4idea.repo.HgRepositoryReader;
@@ -63,7 +63,7 @@ public class HgRepositoryReaderTest extends HgPlatformTest {
     FileUtil.copy(testTagFile, new File(myHgDir.getParentFile(), ".hgtags"));
     FileUtil.copy(testLocalTagFile, new File(myHgDir, "localtags"));
 
-    myRepositoryReader = new HgRepositoryReader(myHgDir);
+    myRepositoryReader = new HgRepositoryReader(myProject, myHgDir);
     myBranches = readBranches();
     myBookmarks = readRefs(testBookmarkFile);
     myTags = readRefs(testTagFile);
@@ -81,22 +81,22 @@ public class HgRepositoryReaderTest extends HgPlatformTest {
 
   public void testBranches() {
     Collection<String> branches = HgUtil.getNamesWithoutHashes(myRepositoryReader.readBranches());
-    TestRepositoryUtil.assertEqualCollections(branches, myBranches);
+    VcsTestUtil.assertEqualCollections(branches, myBranches);
   }
 
   public void testBookmarks() {
     Collection<String> bookmarks = HgUtil.getNamesWithoutHashes(myRepositoryReader.readBookmarks());
-    TestRepositoryUtil.assertEqualCollections(bookmarks, myBookmarks);
+    VcsTestUtil.assertEqualCollections(bookmarks, myBookmarks);
   }
 
   public void testTags() {
     Collection<String> tags = HgUtil.getNamesWithoutHashes(myRepositoryReader.readTags());
-    TestRepositoryUtil.assertEqualCollections(tags, myTags);
+    VcsTestUtil.assertEqualCollections(tags, myTags);
   }
 
   public void testLocalTags() {
     Collection<String> localTags = HgUtil.getNamesWithoutHashes(myRepositoryReader.readLocalTags());
-    TestRepositoryUtil.assertEqualCollections(localTags, myLocalTags);
+    VcsTestUtil.assertEqualCollections(localTags, myLocalTags);
   }
 
   @NotNull

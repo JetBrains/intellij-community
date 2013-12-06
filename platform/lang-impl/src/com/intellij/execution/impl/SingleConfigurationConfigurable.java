@@ -129,6 +129,10 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
     return myComponent.getWholePanel();
   }
 
+  final JComponent getValidationComponent() {
+    return myComponent.myValidationPanel;
+  }
+
   public boolean isStoreProjectConfiguration() {
     return myStoreProjectConfiguration;
   }
@@ -276,6 +280,7 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
     private JSeparator mySeparator;
     private JCheckBox myCbStoreProjectConfiguration;
     private JBCheckBox myCbSingleton;
+    private JPanel myValidationPanel;
 
     private Runnable myQuickFix = null;
 
@@ -375,6 +380,7 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
         mySeparator.setVisible(false);
         myWarningLabel.setVisible(false);
         myFixButton.setVisible(false);
+        myValidationPanel.setVisible(false);
       }
     }
 

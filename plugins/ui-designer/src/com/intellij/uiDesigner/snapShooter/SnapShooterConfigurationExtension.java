@@ -45,7 +45,6 @@ import com.jgoodies.forms.layout.FormLayout;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.IOException;
 import java.util.Set;
 import java.util.TreeSet;
 
@@ -65,12 +64,7 @@ public class SnapShooterConfigurationExtension extends RunConfigurationExtension
       appConfiguration.putUserData(SnapShooterConfigurationSettings.SNAP_SHOOTER_KEY, settings);
     }
     if (appConfiguration.ENABLE_SWING_INSPECTOR) {
-      try {
-        settings.setLastPort(NetUtils.findAvailableSocketPort());
-      }
-      catch(IOException ex) {
-        settings.setLastPort(-1);
-      }
+      settings.setLastPort(NetUtils.tryToFindAvailableSocketPort());
     }
 
     if (appConfiguration.ENABLE_SWING_INSPECTOR && settings.getLastPort() != -1) {

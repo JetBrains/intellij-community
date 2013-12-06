@@ -3,11 +3,13 @@ package com.intellij.platform.templates.github;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.io.TestFileSystemBuilder;
+import junit.framework.Assert;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.IOException;
 import java.util.zip.ZipInputStream;
 
 import static com.intellij.util.io.TestFileSystemBuilder.fs;
@@ -48,6 +50,41 @@ public class ZipUtilTest {
     }
     finally {
       stream.close();
+    }
+  }
+
+  @Test
+  public void testSimpleUnzipUsingFile() throws Exception {
+    File tempDir = FileUtil.createTempDirectory("unzip-test-", null);
+    File simpleZipFile = new File(getZipParentDir(), "simple.zip");
+    ZipUtil.unzip(null, tempDir, simpleZipFile, null, null, true);
+    checkFileStructure(tempDir,
+                       fs()
+                         .file("a.txt")
+                         .dir("dir").file("b.txt"));
+  }
+
+  @Test
+  public void testSingleRootDirUnzipUsingFile() throws Exception {
+    File tempDir = FileUtil.createTempDirectory("unzip-test-", null);
+    File simpleZipFile = new File(getZipParentDir(), "single-root-dir-archive.zip");
+    ZipUtil.unzip(null, tempDir, simpleZipFile, null, null, true);
+    checkFileStructure(tempDir,
+                       fs()
+                         .file("a.txt")
+                         .dir("dir").file("b.txt"));
+  }
+
+  @Test
+  public void testExpectedFailureOnBrokenZipArchive() throws Exception {
+    File tempDir = FileUtil.createTempDirectory("unzip-test-", null);
+    File file = new File(getZipParentDir(), "invalid-archive.zip");
+    try {
+      ZipUtil.unzip(null, tempDir, file, null, null, true);
+      Assert.fail("Zip archive is broken, but it was unzipped without exceptions.");
+    }
+    catch (IOException e) {
+      // expected exception
     }
   }
 

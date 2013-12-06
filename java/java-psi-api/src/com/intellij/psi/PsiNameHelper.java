@@ -141,11 +141,6 @@ public abstract class PsiNameHelper {
     return buffer.toString();
   }
 
-  /** deprecated use {@link #getPresentableText(String, PsiAnnotation[], PsiType[])} (to remove in IDEA 13) */
-  public static String getPresentableText(@Nullable String referenceName, @NotNull PsiType[] typeParameters) {
-    return getPresentableText(referenceName, PsiAnnotation.EMPTY_ARRAY, typeParameters);
-  }
-
   @NotNull
   public static String getQualifiedClassName(String referenceText, boolean removeWhitespace) {
     if (removeWhitespace) {

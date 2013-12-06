@@ -1,4 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<!--
+  How to make changes in Darcula.xml
+  Open Settings -> Editor -> Colors & Fonts and make a copy of Darcula scheme. Say 'Darcula_copy'
+  In 'Colors & Fonts' settings panel make changes in 'Darcula_copy' scheme and save it
+  Open <IDEA_SETTINGS>/config/colors/Darcula_copy.icls and copy it's content into clipboard
+  Open Darcula.xml in editor and call 'Compare with Clipboard'
+  Apply necessary changes and commit
+-->
 <scheme name="Darcula" version="1" parent_scheme="Default">
   <option name="LINE_SPACING" value="1.0" />
   <option name="EDITOR_FONT_SIZE" value="12" linux="14"/>
@@ -8,7 +16,7 @@
     <option name="ANNOTATIONS_COLOR" value="8b999f" />
     <option name="CARET_COLOR" value="bbbbbb" />
     <option name="CARET_ROW_COLOR" value="323232" />
-    <option name="CONSOLE_BACKGROUND_KEY" value="333333" />
+    <option name="CONSOLE_BACKGROUND_KEY" value="2B2B2B" />
     <option name="FILESTATUS_ADDED" value="629755" />
     <option name="FILESTATUS_DELETED" value="6c6c6c" />
     <option name="FILESTATUS_IDEA_FILESTATUS_DELETED_FROM_FILE_SYSTEM" value="6c6c6c" />

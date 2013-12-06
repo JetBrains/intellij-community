@@ -4,6 +4,7 @@ import com.intellij.ui.JBColor;
 import com.intellij.vcs.log.VcsRef;
 import com.intellij.vcs.log.ui.VcsLogColorManager;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.awt.font.FontRenderContext;
@@ -21,6 +22,7 @@ public class RefPainter {
   private static final int RECTANGLE_X_PADDING = 4;
   private static final int RECTANGLE_Y_PADDING = 3;
   private static final int REF_PADDING = 13;
+  private static final int LABEL_PADDING = 3;
 
   private static final int FLAG_WIDTH = 8;
   private static final int FLAG_PADDING = 8;
@@ -40,7 +42,11 @@ public class RefPainter {
   }
 
   private double paddingStr(@NotNull String str, @NotNull FontRenderContext renderContext) {
-    return DEFAULT_FONT.getStringBounds(str, renderContext).getWidth() + REF_PADDING + flagWidth();
+    return getStringWidth(str, renderContext) + REF_PADDING + flagWidth();
+  }
+
+  private static double getStringWidth(@NotNull String str, @NotNull FontRenderContext renderContext) {
+    return DEFAULT_FONT.getStringBounds(str, renderContext).getWidth();
   }
 
   private int flagWidth() {
@@ -79,12 +85,16 @@ public class RefPainter {
     g2.drawPolygon(polygon);
   }
 
-  public int padding(@NotNull Collection<VcsRef> refs, @NotNull FontRenderContext renderContext) {
-    float p = 0;
-    for (VcsRef ref : refs) {
-      p += paddingStr(ref.getName(), renderContext);
+  public int padding(@NotNull Collection<String> refs, @NotNull Graphics2D g2) {
+    int p = 0;
+    for (String ref : refs) {
+      XAndWidth xAndWidth = getXAndWidth(ref, 0, g2.getFontMetrics(DEFAULT_FONT));
+      p += xAndWidth.x + xAndWidth.width + LABEL_PADDING;
     }
-    return Math.round(p);
+    if (p > 0) { // additional padding after all references looks better
+      p += LABEL_PADDING;
+    }
+    return p;
   }
 
   public Map<Integer, VcsRef> draw(@NotNull Graphics2D g2, @NotNull Collection<VcsRef> refs, int startPadding, int maxWidth) {
@@ -109,12 +119,28 @@ public class RefPainter {
     g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
   }
 
-  public Rectangle drawLabel(@NotNull Graphics2D g2, @NotNull String label, int paddingX, @NotNull Color bgColor, Color rootIndicatorColor) {
+  public void drawLabels(@NotNull Graphics2D g2, @NotNull Map<String, Color> labels, int startPadding) {
+    int padding = startPadding;
+    for (Map.Entry<String, Color> entry : labels.entrySet()) {
+      Rectangle rectangle = drawLabel(g2, entry.getKey(), padding, entry.getValue(), null);
+      padding += rectangle.width + LABEL_PADDING;
+    }
+  }
+
+  private XAndWidth getXAndWidth(String label, int paddingX, FontMetrics metrics) {
+    int x = paddingX + REF_PADDING / 2 - RECTANGLE_X_PADDING;
+    int width = metrics.stringWidth(label) + 2 * RECTANGLE_X_PADDING + flagWidth();
+    return new XAndWidth(x, width);
+  }
+
+  public Rectangle drawLabel(@NotNull Graphics2D g2, @NotNull String label, int paddingX, @NotNull Color bgColor,
+                             @Nullable Color rootIndicatorColor) {
     setupGraphics(g2);
     FontMetrics metrics = g2.getFontMetrics();
-    int x = paddingX + REF_PADDING / 2 - RECTANGLE_X_PADDING;
+    XAndWidth xAndWidth = getXAndWidth(label, paddingX, metrics);
+    int x = xAndWidth.x;
+    int width = xAndWidth.width;
     int y = RECTANGLE_Y_PADDING;
-    int width = metrics.stringWidth(label) + 2 * RECTANGLE_X_PADDING + flagWidth();
     int height = HEIGHT_CELL - 2 * RECTANGLE_Y_PADDING;
     RoundRectangle2D rectangle2D = new RoundRectangle2D.Double(x, y, width, height, ROUND_RADIUS, ROUND_RADIUS);
 
@@ -127,11 +153,21 @@ public class RefPainter {
     g2.setColor(JBColor.BLACK);
     drawText(g2, label, paddingX + flagWidth());
 
-    if (myColorManager.isMultipleRoots() && myDrawMultiRepoIndicator) {
+    if (rootIndicatorColor != null && myColorManager.isMultipleRoots() && myDrawMultiRepoIndicator) {
       drawRootIndicator(g2, paddingX, y, height, rootIndicatorColor);
     }
 
     return new Rectangle(x, y, width, height);
+  }
+
+  private static class XAndWidth {
+    private final int x;
+    private final int width;
+
+    private XAndWidth(int x, int width) {
+      this.x = x;
+      this.width = width;
+    }
   }
 
 }

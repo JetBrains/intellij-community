@@ -17,8 +17,10 @@ package com.intellij.ide.browsers;
 
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.psi.PsiElement;
+import com.intellij.util.Url;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+
+import java.util.Collection;
 
 public abstract class WebBrowserService {
   public static WebBrowserService getInstance() {
@@ -27,9 +29,6 @@ public abstract class WebBrowserService {
 
   public abstract boolean canOpenInBrowser(@NotNull PsiElement psiElement);
 
-  @Nullable
-  public abstract Url getUrlToOpen(@NotNull PsiElement psiElement);
-
-  @Nullable
-  public abstract Url getUrlToOpen(@NotNull PsiElement psiElement, boolean preferLocalUrl) throws WebBrowserUrlProvider.BrowserException;
+  @NotNull
+  public abstract Collection<Url> getUrlToOpen(@NotNull PsiElement psiElement, boolean preferLocalUrl) throws WebBrowserUrlProvider.BrowserException;
 }

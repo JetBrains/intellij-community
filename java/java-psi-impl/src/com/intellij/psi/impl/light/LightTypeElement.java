@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -70,16 +70,6 @@ public class LightTypeElement extends LightElement implements PsiTypeElement {
   }
 
   @Override
-  public PsiAnnotationOwner getOwner(PsiAnnotation annotation) {
-    return this;
-  }
-
-  @Override
-  public PsiType getTypeNoResolve(@NotNull PsiElement context) {
-    return getType();
-  }
-
-  @Override
   public boolean isValid() {
     return myType.isValid();
   }
@@ -100,7 +90,7 @@ public class LightTypeElement extends LightElement implements PsiTypeElement {
   public PsiAnnotation addAnnotation(@NotNull @NonNls String qualifiedName) {
     throw new IncorrectOperationException();
   }
-  
+
   @Override
   @NotNull
   public PsiAnnotation[] getApplicableAnnotations() {

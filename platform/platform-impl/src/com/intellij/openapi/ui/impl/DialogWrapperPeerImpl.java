@@ -357,12 +357,6 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
   }
 
   @Override
-  @SuppressWarnings("UnusedDeclaration")
-  public void setIconImages(final List<Image> images) {
-    myDialog.getWindow().setIconImages(images);
-  }
-
-  @Override
   public void setAppIcons() {
     AppUIUtil.updateWindowIcon(getWindow());
   }
@@ -768,12 +762,12 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
           queue.getKeyEventDispatcher().resetState();
         }
 
-        if (myProject != null) {
-          Project project = myProject.get();
-          if (project != null && !project.isDisposed() && project.isInitialized()) {
-            IdeFocusManager.findInstanceByComponent(this).requestFocus(new MyFocusCommand(dialogWrapper), true);
-          }
-        }
+       // if (myProject != null) {
+       //   Project project = myProject.get();
+          //if (project != null && !project.isDisposed() && project.isInitialized()) {
+          // // IdeFocusManager.findInstanceByComponent(this).requestFocus(new MyFocusCommand(dialogWrapper), true);
+          //}
+       // }
       }
 
       if (SystemInfo.isMac && myProject != null && Registry.is("ide.mac.fix.dialog.showing") && !dialogWrapper.isModalProgress()) {
@@ -1202,5 +1196,9 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
   @Override
   public void centerInParent() {
     myDialog.centerInParent();
+  }
+
+  public void setAutoRequestFocus(boolean b) {
+    UIUtil.setAutoRequestFocus((JDialog)myDialog, b);
   }
 }

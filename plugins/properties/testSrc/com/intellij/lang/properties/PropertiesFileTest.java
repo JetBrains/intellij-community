@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import com.intellij.lang.properties.psi.PropertiesElementFactory;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.psi.Property;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.util.IncorrectOperationException;
@@ -63,7 +64,7 @@ public class PropertiesFileTest extends LightPlatformTestCase {
 
   public void testAddPropertyAfterProperty() throws Exception {
     final PropertiesFile propertiesFile = PropertiesElementFactory.createPropertiesFile(getProject(), "xxx=yyy");
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+    WriteCommandAction.runWriteCommandAction(null, new Runnable() {
       public void run() {
         propertiesFile.addProperty(myPropertyToAdd);
       }
@@ -83,7 +84,7 @@ public class PropertiesFileTest extends LightPlatformTestCase {
     assertPropertyEquals(properties.get(0), "xxx", "yyy");
     assertPropertyEquals(properties.get(1), "zzz", "ttt");
 
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+    WriteCommandAction.runWriteCommandAction(null, new Runnable() {
       public void run() {
         properties.get(1).getPsiElement().delete();
       }
@@ -98,9 +99,8 @@ public class PropertiesFileTest extends LightPlatformTestCase {
     PropertiesFile propertiesFile = PropertiesElementFactory.createPropertiesFile(getProject(), "xxx=yyy\nxxx2=tyrt\nxxx3=ttt\n\n");
 
     final Property property = (Property)propertiesFile.findPropertyByKey("xxx2");
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      public void run() {
-        property.delete();
+    WriteCommandAction.runWriteCommandAction(null, new Runnable(){public void run() {
+      property.delete();
       }
     });
 
@@ -111,8 +111,7 @@ public class PropertiesFileTest extends LightPlatformTestCase {
     PropertiesFile propertiesFile = PropertiesElementFactory.createPropertiesFile(getProject(), "xxx=yyy\nxxx2=tyrt\nxxx3=ttt\n\n");
 
     final Property property = (Property)propertiesFile.findPropertyByKey("xxx");
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      public void run() {
+    WriteCommandAction.runWriteCommandAction(null, new Runnable(){public void run() {
         property.delete();
       }
     });
@@ -124,8 +123,7 @@ public class PropertiesFileTest extends LightPlatformTestCase {
   public void testAddToEnd() throws IncorrectOperationException {
     final PropertiesFile propertiesFile = PropertiesElementFactory.createPropertiesFile(getProject(), "a=b\\nccc");
     assertEquals(1,propertiesFile.getProperties().size());
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      public void run() {
+    WriteCommandAction.runWriteCommandAction(null, new Runnable(){public void run() {
         propertiesFile.addProperty(myPropertyToAdd);
       }
     });
@@ -146,8 +144,7 @@ public class PropertiesFileTest extends LightPlatformTestCase {
   public void testAddPropertyAfter() throws IncorrectOperationException {
     final PropertiesFile propertiesFile = PropertiesElementFactory.createPropertiesFile(getProject(), "a=b\nc=d\ne=f");
     final Property c = (Property)propertiesFile.findPropertyByKey("c");
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      public void run() {
+    WriteCommandAction.runWriteCommandAction(null, new Runnable(){public void run() {
         propertiesFile.addPropertyAfter(myPropertyToAdd, c);
       }
     });
@@ -157,8 +154,7 @@ public class PropertiesFileTest extends LightPlatformTestCase {
   public void testAddPropertyAfterLast() throws IncorrectOperationException {
     final PropertiesFile propertiesFile = PropertiesElementFactory.createPropertiesFile(getProject(), "a=b\nc=d\ne=f");
     final Property p = (Property)propertiesFile.findPropertyByKey("e");
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      public void run() {
+    WriteCommandAction.runWriteCommandAction(null, new Runnable(){public void run() {
         propertiesFile.addPropertyAfter(myPropertyToAdd, p);
       }
     });

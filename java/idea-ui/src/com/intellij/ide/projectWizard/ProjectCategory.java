@@ -69,6 +69,10 @@ public abstract class ProjectCategory {
     return ArrayUtil.EMPTY_STRING_ARRAY;
   }
 
+  public String[] getPreselectedFrameworkIds() {
+    return ArrayUtil.EMPTY_STRING_ARRAY;
+  }
+
   @Override
   public String toString() {
     return getDisplayName();

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,10 +21,10 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.VirtualFileSystem;
-import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.UriUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -56,7 +56,7 @@ class VirtualFileImpl extends HttpVirtualFile {
               FileDocumentManager.getInstance().reloadFiles(file);
               if (!localFile.getFileType().equals(myInitialFileType)) {
                 VFilePropertyChangeEvent event = new VFilePropertyChangeEvent(this, file, PROP_NAME, file.getName(), file.getName(), false);
-                BulkFileListener publisher = ApplicationManager.getApplication().getMessageBus().asyncPublisher(VirtualFileManager.VFS_CHANGES);
+                BulkFileListener publisher = ApplicationManager.getApplication().getMessageBus().syncPublisher(VirtualFileManager.VFS_CHANGES);
                 publisher.after(Collections.singletonList(event));
               }
             }
@@ -64,11 +64,7 @@ class VirtualFileImpl extends HttpVirtualFile {
         }
       });
 
-      int end = path.indexOf("?");
-      if (end != -1) {
-        path = path.substring(0, end);
-      }
-      path = StringUtil.trimEnd(path, "/");
+      path = UriUtil.trimTrailingSlashes(UriUtil.trimParameters(path));
       int lastSlash = path.lastIndexOf('/');
       if (lastSlash == -1) {
         myParentPath = null;

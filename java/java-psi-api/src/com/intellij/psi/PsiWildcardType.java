@@ -79,21 +79,6 @@ public class PsiWildcardType extends PsiType {
     return annotations.length == 0 ? this : new PsiWildcardType(this, annotations);
   }
 
-  /**
-   * @deprecated implementation details (to remove in IDEA 13)
-   */
-  @SuppressWarnings("UnusedDeclaration")
-  public static PsiWildcardType changeBound(@NotNull PsiWildcardType type, @NotNull PsiType newBound) {
-    LOG.assertTrue(type.getBound() != null);
-    LOG.assertTrue(newBound.isValid());
-    if (type.myIsExtending) {
-      if (newBound.equalsToText(CommonClassNames.JAVA_LANG_OBJECT)) {
-        return createUnbounded(type.myManager);
-      }
-    }
-    return new PsiWildcardType(type.myManager, type.myIsExtending, newBound);
-  }
-
   @Override
   public String getPresentableText() {
     return getAnnotationsTextPrefix(false, false, true) +

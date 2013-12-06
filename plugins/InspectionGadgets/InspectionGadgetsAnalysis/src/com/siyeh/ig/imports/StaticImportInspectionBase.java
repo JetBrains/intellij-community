@@ -29,7 +29,6 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.StringUtils;
-import com.siyeh.ig.psiutils.TestUtils;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -40,7 +39,8 @@ import java.util.Map;
 public class StaticImportInspectionBase extends BaseInspection {
   @SuppressWarnings({"PublicField"}) public boolean ignoreSingleFieldImports = false;
   @SuppressWarnings({"PublicField"}) public boolean ignoreSingeMethodImports = false;
-  @SuppressWarnings("PublicField") public boolean ignoreInTestCode = false;
+  @SuppressWarnings({"PublicField", "UnusedDeclaration"})
+  public boolean ignoreInTestCode = false; // keep for compatibility
   @SuppressWarnings("PublicField") public OrderedSet<String> allowedClasses = new OrderedSet<String>();
 
   @Override
@@ -255,13 +255,10 @@ public class StaticImportInspectionBase extends BaseInspection {
       if (importList == null) {
         return;
       }
-      if (ignoreInTestCode && TestUtils.isTest(aClass)) {
-        return;
-      }
       final PsiImportStaticStatement[] importStatements = importList.getImportStaticStatements();
       for (PsiImportStaticStatement importStatement : importStatements) {
         if (shouldReportImportStatement(importStatement)) {
-          registerError(importStatement);
+          registerError(importStatement, importStatement);
         }
       }
     }

@@ -33,18 +33,16 @@ import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExe
 import com.intellij.openapi.externalSystem.model.execution.ExternalTaskExecutionInfo;
 import com.intellij.openapi.externalSystem.model.project.ModuleData;
 import com.intellij.openapi.externalSystem.model.project.ProjectData;
-import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener;
-import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListenerAdapter;
 import com.intellij.openapi.externalSystem.service.ImportCanceledException;
 import com.intellij.openapi.externalSystem.service.execution.AbstractExternalSystemTaskConfigurationType;
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfiguration;
 import com.intellij.openapi.externalSystem.service.execution.ProgressExecutionMode;
 import com.intellij.openapi.externalSystem.service.internal.ExternalSystemResolveProjectTask;
 import com.intellij.openapi.externalSystem.service.notification.ExternalSystemIdeNotificationManager;
-import com.intellij.openapi.externalSystem.service.notification.ExternalSystemNotificationExtension;
 import com.intellij.openapi.externalSystem.service.project.ExternalProjectRefreshCallback;
 import com.intellij.openapi.externalSystem.service.project.PlatformFacade;
+import com.intellij.openapi.externalSystem.service.project.ProjectStructureHelper;
 import com.intellij.openapi.externalSystem.service.project.manage.ModuleDataService;
 import com.intellij.openapi.externalSystem.service.project.manage.ProjectDataManager;
 import com.intellij.openapi.externalSystem.service.settings.ExternalSystemConfigLocator;
@@ -58,6 +56,8 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
+import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -76,7 +76,6 @@ import com.intellij.util.Consumer;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -211,15 +210,17 @@ public class ExternalSystemUtil {
         for (DataNode<ModuleData> node : moduleNodes) {
           myExternalModulePaths.add(node.getData().getLinkedExternalProjectPath());
         }
-        ExternalSystemApiUtil.executeProjectChangeAction(true, new Runnable() {
+        ExternalSystemApiUtil.executeProjectChangeAction(true, new DisposeAwareProjectChange(project) {
           @Override
-          public void run() {
+          public void execute() {
             ProjectRootManagerEx.getInstanceEx(project).mergeRootsChangesDuring(new Runnable() {
               @Override
               public void run() {
                 projectDataManager.importData(externalProject.getKey(), Collections.singleton(externalProject), project, true);
               }
             });
+
+            processOrphanProjectLibraries();
           }
         });
         if (--counter[0] <= 0) {
@@ -262,6 +263,22 @@ public class ExternalSystemUtil {
 
         if (!orphanIdeModules.isEmpty()) {
           ruleOrphanModules(orphanIdeModules, project, externalSystemId);
+        }
+      }
+
+      private void processOrphanProjectLibraries() {
+        PlatformFacade platformFacade = ServiceManager.getService(PlatformFacade.class);
+        List<Library> orphanIdeLibraries = ContainerUtilRt.newArrayList();
+
+        LibraryTable projectLibraryTable = platformFacade.getProjectLibraryTable(project);
+        for (Library library : projectLibraryTable.getLibraries()) {
+          if (!ExternalSystemApiUtil.isExternalSystemLibrary(library, externalSystemId)) continue;
+          if (ProjectStructureHelper.isOrphanProjectLibrary(library, platformFacade.getModules(project))) {
+            orphanIdeLibraries.add(library);
+          }
+        }
+        for (Library orphanIdeLibrary : orphanIdeLibraries) {
+          projectLibraryTable.removeLibrary(orphanIdeLibrary);
         }
       }
     };
@@ -449,6 +466,7 @@ public class ExternalSystemUtil {
           if (stamp > 0) {
             ExternalSystemManager<?, ?, ?, ?, ?> manager = ExternalSystemApiUtil.getManager(externalSystemId);
             assert manager != null;
+            if(project.isDisposed()) return;
             manager.getLocalSettingsProvider().fun(project).getExternalConfigModificationStamps().put(externalProjectPath, stamp);
           }
           DataNode<ProjectData> externalProject = task.getExternalProject();
@@ -697,9 +715,9 @@ public class ExternalSystemUtil {
         projects.add(projectSettings);
         systemSettings.setLinkedProjectsSettings(projects);
         ensureToolWindowInitialized(project, externalSystemId);
-        ExternalSystemApiUtil.executeProjectChangeAction(new Runnable() {
+        ExternalSystemApiUtil.executeProjectChangeAction(new DisposeAwareProjectChange(project) {
           @Override
-          public void run() {
+          public void execute() {
             ProjectRootManagerEx.getInstanceEx(project).mergeRootsChangesDuring(new Runnable() {
               @Override
               public void run() {

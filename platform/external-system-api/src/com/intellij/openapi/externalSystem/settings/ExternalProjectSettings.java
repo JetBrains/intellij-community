@@ -28,6 +28,7 @@ public abstract class ExternalProjectSettings implements Comparable<ExternalProj
 
   private String  myExternalProjectPath;
   private boolean myUseAutoImport;
+  private boolean myCreateEmptyContentRootDirectories;
 
   public String getExternalProjectPath() {
     return myExternalProjectPath;
@@ -43,6 +44,14 @@ public abstract class ExternalProjectSettings implements Comparable<ExternalProj
 
   public void setUseAutoImport(boolean useAutoImport) {
     myUseAutoImport = useAutoImport;
+  }
+
+  public boolean isCreateEmptyContentRootDirectories() {
+    return myCreateEmptyContentRootDirectories;
+  }
+
+  public void setCreateEmptyContentRootDirectories(boolean createEmptyContentRootDirectories) {
+    myCreateEmptyContentRootDirectories = createEmptyContentRootDirectories;
   }
 
   @Override
@@ -76,5 +85,6 @@ public abstract class ExternalProjectSettings implements Comparable<ExternalProj
   protected void copyTo(@NotNull ExternalProjectSettings receiver) {
     receiver.myExternalProjectPath = myExternalProjectPath;
     receiver.myUseAutoImport = myUseAutoImport;
+    receiver.myCreateEmptyContentRootDirectories = myCreateEmptyContentRootDirectories;
   }
 }

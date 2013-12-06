@@ -92,7 +92,7 @@ public class UpdateHighlightersUtil {
                                                   final int group,
                                                   @NotNull Map<TextRange, RangeMarker> ranges2markersCache) {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    if (info.isFileLevelAnnotation() || info.getGutterIconRenderer() != null) return;
+    if (isFileLevelOrGutterAnnotation(info)) return;
     if (info.getStartOffset() < startOffset || info.getEndOffset() > endOffset) return;
 
     MarkupModel markup = DocumentMarkupModel.forDocument(document, project, true);
@@ -117,6 +117,10 @@ public class UpdateHighlightersUtil {
       clearWhiteSpaceOptimizationFlag(document);
       assertMarkupConsistent(markup, project);
     }
+  }
+
+  public static boolean isFileLevelOrGutterAnnotation(HighlightInfo info) {
+    return info.isFileLevelAnnotation() || info.getGutterIconRenderer() != null;
   }
 
   public static void setHighlightersToEditor(@NotNull Project project,

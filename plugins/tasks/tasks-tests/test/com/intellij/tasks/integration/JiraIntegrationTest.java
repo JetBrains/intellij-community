@@ -52,6 +52,7 @@ public class JiraIntegrationTest extends TaskManagerTestCase {
   public void testLogin() throws Exception {
     myRepository.setUsername("german");
     myRepository.setUsername("wrong password");
+    //noinspection ConstantConditions
     Exception exception = myRepository.createCancellableConnection().call();
     assertNotNull(exception);
     assertEquals(JiraRepository.LOGIN_FAILED_CHECK_YOUR_PERMISSIONS, exception.getMessage());
@@ -88,6 +89,7 @@ public class JiraIntegrationTest extends TaskManagerTestCase {
     changeStateAndCheck(JIRA_5_TEST_SERVER_URL, "UT-8");
   }
 
+  @SuppressWarnings("ConstantConditions")
   private void changeStateAndCheck(String url, String key) throws Exception {
     myRepository.setUrl(url);
     Task task = myRepository.findTask(key);

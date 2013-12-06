@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,6 +47,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.FutureTask;
 
@@ -66,8 +67,28 @@ public abstract class AbstractLayoutCodeProcessor {
   private final Runnable myPostRunnable;
   private final boolean myProcessChangedTextOnly;
 
+  protected AbstractLayoutCodeProcessor myPreviousCodeProcessor;
+
   protected AbstractLayoutCodeProcessor(Project project, String commandName, String progressText, boolean processChangedTextOnly) {
     this(project, (Module)null, commandName, progressText, processChangedTextOnly);
+  }
+
+  protected AbstractLayoutCodeProcessor(@NotNull AbstractLayoutCodeProcessor previous,
+                                        @NotNull String commandName,
+                                        @NotNull String progressText)
+  {
+    myProject = previous.myProject;
+    myModule = previous.myModule;
+    myDirectory = previous.myDirectory;
+    myFile = previous.myFile;
+    myFiles = previous.myFiles;
+    myIncludeSubdirs = previous.myIncludeSubdirs;
+    myProcessChangedTextOnly = previous.myProcessChangedTextOnly;
+
+    myPostRunnable = null;
+    myProgressText = progressText;
+    myCommandName = commandName;
+    myPreviousCodeProcessor = previous;
   }
 
   protected AbstractLayoutCodeProcessor(Project project,
@@ -144,6 +165,12 @@ public abstract class AbstractLayoutCodeProcessor {
     return PsiUtilCore.toPsiFileArray(list);
   }
 
+  @Nullable
+  private FutureTask<Boolean> getPreviousProcessorTask(@NotNull PsiFile file, boolean processChangedTextOnly) {
+    return myPreviousCodeProcessor != null ? myPreviousCodeProcessor.preprocessFile(file, processChangedTextOnly)
+                                           : null;
+  }
+
   /**
    * Ensures that given file is ready to reformatting and prepares it if necessary.
    *
@@ -154,8 +181,25 @@ public abstract class AbstractLayoutCodeProcessor {
    * @throws IncorrectOperationException    if unexpected exception occurred during formatting
    */
   @NotNull
-  protected abstract FutureTask<Boolean> preprocessFile(@NotNull PsiFile file, boolean processChangedTextOnly)
-    throws IncorrectOperationException;
+  protected abstract FutureTask<Boolean> prepareTask(@NotNull PsiFile file, boolean processChangedTextOnly) throws IncorrectOperationException;
+
+  public FutureTask<Boolean> preprocessFile(@NotNull PsiFile file, boolean processChangedTextOnly) throws IncorrectOperationException {
+    final FutureTask<Boolean> previousTask = getPreviousProcessorTask(file, processChangedTextOnly);
+    final FutureTask<Boolean> currentTask = prepareTask(file, processChangedTextOnly);
+
+    return new FutureTask<Boolean>(new Callable<Boolean>() {
+      @Override
+      public Boolean call() throws Exception {
+        if (previousTask != null) {
+          previousTask.run();
+          if (!previousTask.get() || previousTask.isCancelled()) return false;
+        }
+
+        currentTask.run();
+        return currentTask.get() && !currentTask.isCancelled();
+      }
+    });
+  }
 
   public void run() {
     if (myDirectory != null){
@@ -345,7 +389,7 @@ public abstract class AbstractLayoutCodeProcessor {
       if (writeables.isEmpty()) return;
       int res = Messages.showOkCancelDialog(myProject, CodeInsightBundle.message("error.dialog.readonly.files.message", where),
                                             CodeInsightBundle.message("error.dialog.readonly.files.title"), Messages.getQuestionIcon());
-      if (res != 0) {
+      if (res != Messages.OK) {
         return;
       }
 

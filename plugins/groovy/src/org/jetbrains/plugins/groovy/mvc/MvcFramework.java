@@ -131,7 +131,7 @@ public abstract class MvcFramework {
         if (Messages.showYesNoDialog(module.getProject(), "Cannot generate " + getDisplayName() + " project structure because JDK is not specified for module \"" +
                                                           module.getName() + "\".\n" +
                                                           getDisplayName() + " project will not be created if you don't specify JDK.\nDo you want to specify JDK?",
-                                     "Error", Messages.getErrorIcon()) == 1) {
+                                     "Error", Messages.getErrorIcon()) == Messages.NO) {
           return;
         }
         ProjectSettingsService.getInstance(module.getProject()).showModuleConfigurationDialog(module.getName(), ClasspathEditor.NAME);
@@ -226,18 +226,25 @@ public abstract class MvcFramework {
 
   public abstract String getUserLibraryName();
 
+  protected abstract boolean isCoreJar(@NotNull VirtualFile localFile);
+
   @Nullable
   protected VirtualFile findCoreJar(@Nullable Module module) {
     if (module == null) return null;
 
     JavaPsiFacade javaFacade = JavaPsiFacade.getInstance(module.getProject());
-    PsiClass aClass = javaFacade.findClass(getSomeFrameworkClass(), GlobalSearchScope.moduleWithLibrariesScope(module));
-    if (aClass == null) return null;
 
-    VirtualFile virtualFile = aClass.getContainingFile().getVirtualFile();
-    if (virtualFile == null || !(virtualFile.getFileSystem() instanceof JarFileSystem)) return null;
+    for (PsiClass aClass : javaFacade.findClasses(getSomeFrameworkClass(), GlobalSearchScope.moduleWithLibrariesScope(module))) {
+      VirtualFile virtualFile = aClass.getContainingFile().getVirtualFile();
+      if (virtualFile != null && virtualFile.getFileSystem() instanceof JarFileSystem) {
+        VirtualFile localFile = PathUtil.getLocalFile(virtualFile);
+        if (isCoreJar(localFile)) {
+          return localFile;
+        }
+      }
+    }
 
-    return PathUtil.getLocalFile(virtualFile);
+    return null;
   }
 
   protected List<File> getImplicitClasspathRoots(@NotNull Module module) {

@@ -24,7 +24,7 @@ import org.junit.Before
 import org.junit.Ignore
 import org.junit.Test
 
-import static com.intellij.dvcs.test.Executor.cd
+import static com.intellij.openapi.vcs.Executor.cd
 import static git4idea.test.GitExecutor.git
 import static org.junit.Assert.assertFalse
 import static org.junit.Assert.assertTrue

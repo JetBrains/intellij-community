@@ -270,13 +270,19 @@ public class BreakpointsDialog extends DialogWrapper {
           }
           return enabled;
         }
-      });
+      }).
+      setToolbarPosition(ActionToolbarPosition.TOP).
+      setToolbarBorder(IdeBorderFactory.createEmptyBorder());
+
+    tree.setBorder(IdeBorderFactory.createBorder());
 
     for (ToggleActionButton action : myToggleRuleActions) {
       decorator.addExtraAction(action);
     }
 
     JPanel decoratedTree = decorator.createPanel();
+    decoratedTree.setBorder(IdeBorderFactory.createEmptyBorder());
+
     myTreeController.setTreeView(tree);
 
     myTreeController.buildTree(myBreakpointItems);

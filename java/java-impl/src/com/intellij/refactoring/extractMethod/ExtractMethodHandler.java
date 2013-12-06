@@ -45,6 +45,8 @@ import com.intellij.refactoring.IntroduceTargetChooser;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.introduceVariable.IntroduceVariableBase;
+import com.intellij.refactoring.listeners.RefactoringEventData;
+import com.intellij.refactoring.listeners.RefactoringEventListener;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.refactoring.util.duplicates.DuplicatesImpl;
@@ -151,7 +153,14 @@ public class ExtractMethodHandler implements RefactoringActionHandler {
         PostprocessReformattingAspect.getInstance(project).postponeFormattingInside(new Runnable() {
           public void run() {
             try {
+              project.getMessageBus().syncPublisher(RefactoringEventListener.REFACTORING_EVENT_TOPIC)
+                .refactoringStarted("refactoring.extract.method", new RefactoringEventData());
+              
               processor.doRefactoring();
+
+              final RefactoringEventData data = new RefactoringEventData();
+              data.addElement(processor.getExtractedMethod());
+              project.getMessageBus().syncPublisher(RefactoringEventListener.REFACTORING_EVENT_TOPIC).refactoringDone("refactoring.extract.method", data);
             }
             catch (IncorrectOperationException e) {
               LOG.error(e);

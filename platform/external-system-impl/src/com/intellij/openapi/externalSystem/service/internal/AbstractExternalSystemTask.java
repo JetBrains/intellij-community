@@ -29,19 +29,18 @@ public abstract class AbstractExternalSystemTask implements ExternalSystemTask {
 
   private final AtomicReference<ExternalSystemTaskState> myState =
     new AtomicReference<ExternalSystemTaskState>(ExternalSystemTaskState.NOT_STARTED);
-  private final AtomicReference<Throwable>               myError = new AtomicReference<Throwable>();
+  private final AtomicReference<Throwable> myError = new AtomicReference<Throwable>();
 
   @NotNull private final transient Project myIdeProject;
 
   @NotNull private final ExternalSystemTaskId myId;
-  @NotNull private final ProjectSystemId      myExternalSystemId;
-  @NotNull private final String               myExternalProjectPath;
+  @NotNull private final ProjectSystemId myExternalSystemId;
+  @NotNull private final String myExternalProjectPath;
 
   protected AbstractExternalSystemTask(@NotNull ProjectSystemId id,
                                        @NotNull ExternalSystemTaskType type,
                                        @NotNull Project project,
-                                       @NotNull String externalProjectPath)
-  {
+                                       @NotNull String externalProjectPath) {
     myExternalSystemId = id;
     myIdeProject = project;
     myId = ExternalSystemTaskId.create(id, type, myIdeProject);
@@ -65,6 +64,10 @@ public abstract class AbstractExternalSystemTask implements ExternalSystemTask {
 
   protected void setState(@NotNull ExternalSystemTaskState state) {
     myState.set(state);
+  }
+
+  protected boolean compareAndSetState(@NotNull ExternalSystemTaskState expect, @NotNull ExternalSystemTaskState update) {
+    return myState.compareAndSet(expect, update);
   }
 
   @Override
@@ -114,7 +117,7 @@ public abstract class AbstractExternalSystemTask implements ExternalSystemTask {
       ls = ArrayUtil.append(listeners, adapter);
     }
     else {
-      ls = new ExternalSystemTaskNotificationListener[] { adapter };
+      ls = new ExternalSystemTaskNotificationListener[]{adapter};
     }
 
     execute(ls);
@@ -122,30 +125,35 @@ public abstract class AbstractExternalSystemTask implements ExternalSystemTask {
 
   @Override
   public void execute(@NotNull ExternalSystemTaskNotificationListener... listeners) {
+    if (!compareAndSetState(ExternalSystemTaskState.NOT_STARTED, ExternalSystemTaskState.IN_PROGRESS)) return;
+
     ExternalSystemProgressNotificationManager progressManager = ServiceManager.getService(ExternalSystemProgressNotificationManager.class);
     for (ExternalSystemTaskNotificationListener listener : listeners) {
       progressManager.addNotificationListener(getId(), listener);
     }
+    ExternalSystemProcessingManager processingManager = ServiceManager.getService(ExternalSystemProcessingManager.class);
     try {
+      processingManager.add(this);
       doExecute();
+      setState(ExternalSystemTaskState.FINISHED);
     }
     catch (Throwable e) {
       setState(ExternalSystemTaskState.FAILED);
       myError.set(e);
       LOG.warn(e);
-
     }
     finally {
       for (ExternalSystemTaskNotificationListener listener : listeners) {
         progressManager.removeNotificationListener(listener);
       }
+      processingManager.release(getId());
     }
   }
 
   protected abstract void doExecute() throws Exception;
 
   @Override
-  public void cancel(@NotNull final ProgressIndicator indicator, @NotNull ExternalSystemTaskNotificationListener... listeners) {
+  public boolean cancel(@NotNull final ProgressIndicator indicator, @NotNull ExternalSystemTaskNotificationListener... listeners) {
     indicator.setIndeterminate(true);
     ExternalSystemTaskNotificationListenerAdapter adapter = new ExternalSystemTaskNotificationListenerAdapter() {
       @Override
@@ -158,23 +166,32 @@ public abstract class AbstractExternalSystemTask implements ExternalSystemTask {
       ls = ArrayUtil.append(listeners, adapter);
     }
     else {
-      ls = new ExternalSystemTaskNotificationListener[] { adapter };
+      ls = new ExternalSystemTaskNotificationListener[]{adapter};
     }
 
-    cancel(ls);
+    return cancel(ls);
   }
 
   @Override
-  public void cancel(@NotNull ExternalSystemTaskNotificationListener... listeners) {
+  public boolean cancel(@NotNull ExternalSystemTaskNotificationListener... listeners) {
+    ExternalSystemTaskState currentTaskState = getState();
+    if (currentTaskState.isStopped()) return true;
+
     ExternalSystemProgressNotificationManager progressManager = ServiceManager.getService(ExternalSystemProgressNotificationManager.class);
     for (ExternalSystemTaskNotificationListener listener : listeners) {
       progressManager.addNotificationListener(getId(), listener);
     }
+
+    if (!compareAndSetState(currentTaskState, ExternalSystemTaskState.CANCELING)) return false;
+
+    boolean result = false;
     try {
-      doCancel();
+      result = doCancel();
+      setState(result ? ExternalSystemTaskState.CANCELED : ExternalSystemTaskState.CANCELLATION_FAILED);
+      return result;
     }
     catch (Throwable e) {
-      setState(ExternalSystemTaskState.FAILED);
+      setState(ExternalSystemTaskState.CANCELLATION_FAILED);
       myError.set(e);
       LOG.warn(e);
     }
@@ -183,9 +200,10 @@ public abstract class AbstractExternalSystemTask implements ExternalSystemTask {
         progressManager.removeNotificationListener(listener);
       }
     }
+    return result;
   }
 
-  protected abstract void doCancel() throws Exception;
+  protected abstract boolean doCancel() throws Exception;
 
 
   @NotNull

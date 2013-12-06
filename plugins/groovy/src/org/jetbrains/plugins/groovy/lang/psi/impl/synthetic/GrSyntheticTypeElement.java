@@ -48,16 +48,6 @@ public class GrSyntheticTypeElement extends LightElement implements PsiTypeEleme
     return null;
   }
 
-  @Override
-  public PsiAnnotationOwner getOwner(PsiAnnotation annotation) {
-    return this;
-  }
-
-  @Override
-  public PsiType getTypeNoResolve(@NotNull PsiElement context) {
-    return myElement.getType();
-  }
-
   @NotNull
   @Override
   public PsiAnnotation[] getAnnotations() {

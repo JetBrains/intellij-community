@@ -16,6 +16,7 @@
 package com.intellij.ide.util.projectWizard;
 
 import com.intellij.ide.util.BrowseFilesListener;
+import com.intellij.ide.wizard.CommitStepException;
 import com.intellij.ide.wizard.StepAdapter;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.util.IconLoader;
@@ -51,7 +52,9 @@ public abstract class ModuleWizardStep extends StepAdapter {
   }
 
   public void onStepLeaving() {
-    // empty by default
+  }
+
+  public void onWizardFinished() throws CommitStepException {
   }
 
   @Override

@@ -48,10 +48,10 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotationNameValuePair;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrReturnStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrStringInjection;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 
 import java.util.LinkedList;
@@ -124,7 +124,7 @@ public class GrConcatenationAwareInjector implements ConcatenationAwareInjector 
     void processInjections() {
       final PsiElement firstOperand = myOperands[0];
       final PsiElement topBlock = ControlFlowUtils.findControlFlowOwner(firstOperand);
-      final LocalSearchScope searchScope = new LocalSearchScope(new PsiElement[]{topBlock instanceof PsiCodeBlock
+      final LocalSearchScope searchScope = new LocalSearchScope(new PsiElement[]{topBlock instanceof GrCodeBlock
                                                                                  ? topBlock : firstOperand.getContainingFile()}, "", true);
       final THashSet<PsiModifierListOwner> visitedVars = new THashSet<PsiModifierListOwner>();
       final LinkedList<PsiElement> places = new LinkedList<PsiElement>();
@@ -135,8 +135,8 @@ public class GrConcatenationAwareInjector implements ConcatenationAwareInjector 
           assert list != null;
 
           final String methodName;
-          if (methodCall instanceof GrMethodCallExpression) {
-            GrExpression invoked = ((GrMethodCallExpression)methodCall).getInvokedExpression();
+          if (methodCall instanceof GrMethodCall) {
+            GrExpression invoked = ((GrMethodCall)methodCall).getInvokedExpression();
             final String referenceName = invoked instanceof GrReferenceExpression? ((GrReferenceExpression)invoked).getReferenceName() : null;
             if ("super".equals(referenceName) || "this".equals(referenceName)) { // constructor call
               final PsiClass psiClass = PsiTreeUtil.getParentOfType(methodCall, PsiClass.class, true);

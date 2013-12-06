@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package com.intellij.roots;
 import com.intellij.ProjectTopics;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.PathManagerEx;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -191,10 +192,11 @@ public class MultiModuleEditingTest extends ModuleTestCase {
   }
 
   private VirtualFile getVirtualFileInTestData(final String relativeVfsPath) {
-    return ApplicationManager.getApplication().runWriteAction(new Computable<VirtualFile>() {
+    return WriteCommandAction.runWriteCommandAction(null, new Computable<VirtualFile>() {
       @Override
       public VirtualFile compute() {
-        final String path = TEST_PATH + File.separatorChar + getTestName(true) + File.separatorChar + relativeVfsPath.replace('/', File.separatorChar);
+        final String path =
+          TEST_PATH + File.separatorChar + getTestName(true) + File.separatorChar + relativeVfsPath.replace('/', File.separatorChar);
         final VirtualFile result = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(new File(path));
         assertNotNull("File " + path + " doen\'t exist", result);
         return result;

@@ -120,7 +120,7 @@ public class PyPushDownProcessor extends BaseRefactoringProcessor {
     if (usages.length == 0) {
       final String message = RefactoringBundle.message("class.0.does.not.have.inheritors", myClass.getName()) + "\nPushing members down will result in them being deleted";
       final int answer = Messages.showYesNoDialog(message, PyPushDownHandler.REFACTORING_NAME, Messages.getWarningIcon());
-      if (answer != 0) {
+      if (answer != Messages.YES) {
         return false;
       }
     }

@@ -128,14 +128,18 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
       lafList.add(new UIManager.LookAndFeelInfo("Default", UIManager.getSystemLookAndFeelClassName()));
     }
     else {
-      if (Registry.is("idea.4.5.laf.enabled")) {
-        lafList.add(new IdeaLookAndFeelInfo());
-      } else {
+      if (isIntelliJLafEnabled()) {
         lafList.add(new IntelliJLookAndFeelInfo());
+      } else {
+        lafList.add(new IdeaLookAndFeelInfo());
       }
       for (UIManager.LookAndFeelInfo laf : UIManager.getInstalledLookAndFeels()) {
         String name = laf.getName();
-        if (!"Metal".equalsIgnoreCase(name) && !"CDE/Motif".equalsIgnoreCase(name)) {
+        if ( !"Metal".equalsIgnoreCase(name)
+          && !"CDE/Motif".equalsIgnoreCase(name)
+          && !"Nimbus".equalsIgnoreCase(name)
+          && !"Windows Classic".equalsIgnoreCase(name)
+          && !name.startsWith("JGoodies")) {
           lafList.add(laf);
         }
       }
@@ -162,6 +166,10 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
     }
 
     myCurrentLaf = getDefaultLaf();
+  }
+
+  private static boolean isIntelliJLafEnabled() {
+    return !Registry.is("idea.4.5.laf.enabled");
   }
 
   /**
@@ -309,7 +317,7 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
         return defaultLaf;
       }
     }
-    UIManager.LookAndFeelInfo ideaLaf = findLaf(IdeaLookAndFeelInfo.CLASS_NAME);
+    UIManager.LookAndFeelInfo ideaLaf = findLaf(isIntelliJLafEnabled() ? IntelliJLaf.class.getName() : IdeaLookAndFeelInfo.CLASS_NAME);
     if (ideaLaf != null) {
       return ideaLaf;
     }
@@ -452,7 +460,7 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
       if (confirm) {
         final String[] options = {IdeBundle.message("confirm.set.look.and.feel"), CommonBundle.getCancelButtonText()};
         final int result = Messages.showOkCancelDialog(message, CommonBundle.getWarningTitle(), options[0], options[1], Messages.getWarningIcon());
-        if (result == 0) {
+        if (result == Messages.OK) {
           myLastWarning = message;
           return true;
         }

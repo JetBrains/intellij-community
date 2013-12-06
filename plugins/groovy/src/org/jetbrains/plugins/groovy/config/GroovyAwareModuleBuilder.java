@@ -49,15 +49,15 @@ public class GroovyAwareModuleBuilder extends JavaModuleBuilder {
     myBigIcon = bigIcon;
   }
 
-  @Override
-  public ModuleWizardStep[] createWizardSteps(@NotNull WizardContext wizardContext, @NotNull ModulesProvider modulesProvider) {
-    return new ModuleWizardStep[]{new GroovySdkForNewModuleWizardStep(this, wizardContext, getFramework(), null)};
-  }
-
   @Nullable
   @Override
   public ModuleWizardStep modifySettingsStep(@NotNull SettingsStep settingsStep) {
     return new GroovySdkForNewModuleWizardStep(this, settingsStep.getContext(), getFramework(), settingsStep);
+  }
+
+  @Override
+  public ModuleWizardStep[] createWizardSteps(@NotNull WizardContext wizardContext, @NotNull ModulesProvider modulesProvider) {
+    return ModuleWizardStep.EMPTY_ARRAY;
   }
 
   @Override
@@ -90,6 +90,7 @@ public class GroovyAwareModuleBuilder extends JavaModuleBuilder {
     return "Groovy";
   }
 
+  @Nullable
   protected MvcFramework getFramework() {
     return null;
   }

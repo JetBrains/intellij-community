@@ -37,14 +37,13 @@ import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.stubs.IStubElementType;
-import com.intellij.psi.util.MethodSignature;
-import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
-import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.*;
 import com.intellij.reference.SoftReference;
 import com.intellij.ui.RowIcon;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.List;
@@ -188,11 +187,6 @@ public class PsiMethodImpl extends JavaStubPsiElement<PsiMethodStub> implements 
   }
 
   @Override
-  public PsiType getReturnTypeNoResolve() {
-    return getReturnType();
-  }
-
-  @Override
   public PsiType getReturnType() {
     if (isConstructor()) return null;
 
@@ -316,7 +310,17 @@ public class PsiMethodImpl extends JavaStubPsiElement<PsiMethodStub> implements 
 
   @Override
   @NotNull
-  public MethodSignature getSignature(@NotNull PsiSubstitutor substitutor){
+  public MethodSignature getSignature(@NotNull PsiSubstitutor substitutor) {
+    if (substitutor == PsiSubstitutor.EMPTY) {
+      return CachedValuesManager.getCachedValue(this, new CachedValueProvider<MethodSignature>() {
+        @Nullable
+        @Override
+        public Result<MethodSignature> compute() {
+          MethodSignature signature = MethodSignatureBackedByPsiMethod.create(PsiMethodImpl.this, PsiSubstitutor.EMPTY);
+          return Result.create(signature, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
+        }
+      });
+    }
     return MethodSignatureBackedByPsiMethod.create(this, substitutor);
   }
 

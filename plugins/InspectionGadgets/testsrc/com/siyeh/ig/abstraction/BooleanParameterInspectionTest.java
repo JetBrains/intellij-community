@@ -25,7 +25,7 @@ public class BooleanParameterInspectionTest extends LightInspectionTestCase {
 
   public void testSimple() {
     doTest("class X {" +
-           "  public void /*'public' method 'm' with 'boolean' parameter*/m/**/(boolean b) {}" +
+           "  public void /*'public' method 'm()' with 'boolean' parameter*/m/**/(boolean b) {}" +
            "  public void n() {}" +
            "  public void o(int i) {}" +
            "  void p(boolean b) {}" +
@@ -34,7 +34,7 @@ public class BooleanParameterInspectionTest extends LightInspectionTestCase {
 
   public void testConstructor() {
     doTest("class X {" +
-           "  public /*'public' constructor 'X' with 'boolean' parameter*/X/**/(boolean x) {}" +
+           "  public /*'public' constructor 'X()' with 'boolean' parameter*/X/**/(boolean x) {}" +
            "}");
   }
 

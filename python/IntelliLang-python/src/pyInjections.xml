@@ -9,6 +9,6 @@
   </injection>
   <injection language="SQL" injector-id="python">
     <display-name>"SQL select/delete/insert/update/create"</display-name>
-    <place><![CDATA[pyLiteralExpression().withText(string().matchesBrics(" *(((SELECT|DELETE) .*FROM)|((INSERT|REPLACE) .*INTO)|(UPDATE .* SET)|((CREATE|DROP|ALTER) +(TABLE|INDEX))) .*"))]]></place>
+    <place><![CDATA[pyLiteralExpression().withText(string().matchesBrics("[UuRrBb\\\"\\' \t]*(((SELECT|DELETE) .*FROM)|((INSERT|REPLACE) .*INTO)|(UPDATE .* SET)|((CREATE|DROP|ALTER) +(TABLE|INDEX))) .*"))]]></place>
   </injection>
 </component>

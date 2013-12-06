@@ -9,6 +9,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.ContentRevisionFactory;
 import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.VcsFullCommitDetails;
+import com.intellij.vcs.log.VcsUser;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -21,22 +22,18 @@ public class VcsFullCommitDetailsImpl extends VcsShortCommitDetailsImpl implemen
 
   @NotNull private final String myFullMessage;
 
-  @NotNull private final String myAuthorEmail;
-  @NotNull private final String myCommitterName;
-  @NotNull private final String myCommitterEmail;
-  private final long myCommitTime;
+  @NotNull private final VcsUser myCommitter;
+  private final long myAuthorTime;
 
   @NotNull private final Collection<LightChange> myChanges;
 
-  public VcsFullCommitDetailsImpl(@NotNull Hash hash, @NotNull List<Hash> parents, long authorTime, @NotNull VirtualFile root,
-                                  @NotNull String subject, @NotNull String authorName, @NotNull String authorEmail, @NotNull String message,
-                                  @NotNull String committerName, @NotNull String committerEmail, long commitTime,
+  public VcsFullCommitDetailsImpl(@NotNull Hash hash, @NotNull List<Hash> parents, long time, @NotNull VirtualFile root,
+                                  @NotNull String subject, @NotNull VcsUser author, @NotNull String message,
+                                  @NotNull VcsUser committer, long authorTime,
                                   @NotNull List<Change> changes, @NotNull final ContentRevisionFactory contentRevisionFactory) {
-    super(hash, parents, authorTime, root, subject, authorName);
-    myAuthorEmail = authorEmail;
-    myCommitterName = committerName;
-    myCommitterEmail = committerEmail;
-    myCommitTime = commitTime;
+    super(hash, parents, time, root, subject, author);
+    myCommitter = committer;
+    myAuthorTime = authorTime;
     myFullMessage = message;
     myChanges = ContainerUtil.map(changes, new Function<Change, LightChange>() {
       @Override
@@ -63,27 +60,15 @@ public class VcsFullCommitDetailsImpl extends VcsShortCommitDetailsImpl implemen
     });
   }
 
-  @Override
   @NotNull
-  public String getAuthorEmail() {
-    return myAuthorEmail;
+  @Override
+  public VcsUser getCommitter() {
+    return myCommitter;
   }
 
   @Override
-  @NotNull
-  public String getCommitterName() {
-    return myCommitterName;
-  }
-
-  @Override
-  @NotNull
-  public String getCommitterEmail() {
-    return myCommitterEmail;
-  }
-
-  @Override
-  public long getCommitTime() {
-    return myCommitTime;
+  public long getAuthorTime() {
+    return myAuthorTime;
   }
 
   private static class LightChange {

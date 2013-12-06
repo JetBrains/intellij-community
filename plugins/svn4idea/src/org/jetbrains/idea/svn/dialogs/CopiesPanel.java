@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,6 +36,7 @@ import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.ui.components.labels.LinkListener;
 import com.intellij.util.Consumer;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.io.EqualityPolicy;
 import com.intellij.util.messages.MessageBusConnection;
@@ -45,6 +46,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.*;
 import org.jetbrains.idea.svn.actions.CleanupWorker;
 import org.jetbrains.idea.svn.actions.SelectBranchPopup;
+import org.jetbrains.idea.svn.api.ClientFactory;
 import org.jetbrains.idea.svn.branchConfig.SvnBranchConfigurationNew;
 import org.jetbrains.idea.svn.checkout.SvnCheckoutProvider;
 import org.jetbrains.idea.svn.integrate.QuickMergeInteractionImpl;
@@ -223,7 +225,7 @@ public class CopiesPanel {
                                                         "This will update your working copy to HEAD revision as well.",
                                     "Set Working Copy Infinity Depth",
                                     Messages.getWarningIcon());
-              if (result == 0) {
+              if (result == Messages.OK) {
                 // update of view will be triggered by roots changed event
                 SvnCheckoutProvider.checkout(myVcs.getProject(), new File(wcInfo.getPath()), wcInfo.getRootUrl(), SVNRevision.HEAD,
                                              SVNDepth.INFINITY, false, null, wcInfo.getFormat());
@@ -323,10 +325,13 @@ public class CopiesPanel {
 
   @NotNull
   private List<WorkingCopyFormat> getSupportedFormats() {
-    List<WorkingCopyFormat> result = Collections.emptyList();
+    List<WorkingCopyFormat> result = ContainerUtil.newArrayList();
+    ClientFactory factory = myVcs.getFactory();
+    ClientFactory otherFactory = myVcs.getOtherFactory(factory);
 
     try {
-      result = myVcs.getFactory().createUpgradeClient().getSupportedFormats();
+      result.addAll(factory.createUpgradeClient().getSupportedFormats());
+      result.addAll(SvnFormatWorker.getOtherFactoryFormats(otherFactory));
     }
     catch (VcsException e) {
       LOG.info(e);

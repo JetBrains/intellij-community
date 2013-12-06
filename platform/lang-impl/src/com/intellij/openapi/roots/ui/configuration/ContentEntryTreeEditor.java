@@ -45,7 +45,6 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.TreeSpeedSearch;
-import com.intellij.ui.roots.ToolbarPanel;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NonNls;
@@ -58,9 +57,7 @@ import java.awt.*;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 /**
  * @author Eugene Zhuravlev
@@ -68,7 +65,6 @@ import java.util.Map;
  * Time: 1:19:47 PM
  */
 public class ContentEntryTreeEditor {
-  public static final String TOOLBAR_PLACE = "ContentEntryTreeToolbar";
   private final Project myProject;
   private final List<ModuleSourceRootEditHandler<?>> myEditHandlers;
   protected final Tree myTree;
@@ -94,7 +90,7 @@ public class ContentEntryTreeEditor {
 
     myTreePanel = new MyPanel(new BorderLayout());
     final JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myTree);
-    myTreePanel.add(new ToolbarPanel(scrollPane, myEditingActionsGroup, TOOLBAR_PLACE), BorderLayout.CENTER);
+    myTreePanel.add(scrollPane, BorderLayout.CENTER);
 
     myTreePanel.setVisible(false);
     myDescriptor = FileChooserDescriptorFactory.createMultipleFoldersDescriptor();
@@ -102,26 +98,13 @@ public class ContentEntryTreeEditor {
   }
 
   protected void createEditingActions() {
-    Map<String, DefaultActionGroup> groups = new HashMap<String, DefaultActionGroup>();
     for (final ModuleSourceRootEditHandler<?> editor : myEditHandlers) {
       ToggleSourcesStateAction action = new ToggleSourcesStateAction(myTree, this, editor);
       CustomShortcutSet shortcutSet = editor.getMarkRootShortcutSet();
       if (shortcutSet != null) {
         action.registerCustomShortcutSet(shortcutSet, myTree);
       }
-      String groupName = editor.getMarkRootGroupName();
-      if (groupName != null) {
-        DefaultActionGroup group = groups.get(groupName);
-        if (group == null) {
-          group = new MarkSourceToggleActionsGroup(groupName, editor.getRootIcon());
-          groups.put(groupName, group);
-          myEditingActionsGroup.add(group);
-        }
-        group.add(action);
-      }
-      else {
-        myEditingActionsGroup.add(action);
-      }
+      myEditingActionsGroup.add(action);
     }
 
     setupExcludedAction();
@@ -316,6 +299,10 @@ public class ContentEntryTreeEditor {
       }
       return null;
     }
+  }
+
+  public DefaultActionGroup getEditingActionsGroup() {
+    return myEditingActionsGroup;
   }
 
   protected void setupExcludedAction() {

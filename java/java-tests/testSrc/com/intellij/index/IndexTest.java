@@ -1,6 +1,21 @@
+/*
+ * Copyright 2000-2013 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.index;
 
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.util.Factory;
@@ -182,7 +197,7 @@ public class IndexTest extends IdeaTestCase {
     assertTrue(new HashSet<T>(Arrays.asList(expected)).equals(new HashSet<T>(actual)));
   }
 
-  public void _testCollectedPsiWithChangedDocument() throws IOException {
+  public void testCollectedPsiWithChangedDocument() throws IOException {
     VirtualFile dir = getVirtualFile(createTempDirectory());
     PsiTestUtil.addSourceContentToRoots(myModule, dir);
     
@@ -192,23 +207,51 @@ public class IndexTest extends IdeaTestCase {
     final GlobalSearchScope scope = GlobalSearchScope.allScope(getProject());
     final JavaPsiFacade facade = JavaPsiFacade.getInstance(getProject());
     assertNotNull(facade.findClass("Foo", scope));
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+    WriteCommandAction.runWriteCommandAction(null, new Runnable() {
       @Override
       public void run() {
         PsiFile psiFile = PsiManager.getInstance(getProject()).findFile(vFile);
         assertNotNull(psiFile);
-        
+
         Document document = FileDocumentManager.getInstance().getDocument(vFile);
         document.deleteString(0, document.getTextLength());
         assertNotNull(facade.findClass("Foo", scope));
-        
+
         psiFile = null;
         PlatformTestUtil.tryGcSoftlyReachableObjects();
         assertNull(((PsiManagerEx)PsiManager.getInstance(getProject())).getFileManager().getCachedPsiFile(vFile));
 
-        // should be assertNull(facade.findClass("Foo", scope));
-        // or the file should not be allowed to be gc'ed
-        facade.findClass("Foo", scope).getText();
+        assertNull(facade.findClass("Foo", scope));
+      }
+    });
+  }
+  
+  public void _testSavedUncommittedDocument() throws IOException {
+    VirtualFile dir = getVirtualFile(createTempDirectory());
+    PsiTestUtil.addSourceContentToRoots(myModule, dir);
+    
+    final VirtualFile vFile = createChildData(dir, "Foo.java");
+    VfsUtil.saveText(vFile, "");
+
+    final GlobalSearchScope scope = GlobalSearchScope.allScope(getProject());
+    final JavaPsiFacade facade = JavaPsiFacade.getInstance(getProject());
+    assertNull(facade.findClass("Foo", scope));
+    WriteCommandAction.runWriteCommandAction(null, new Runnable() {
+      @Override
+      public void run() {
+        PsiFile psiFile = PsiManager.getInstance(getProject()).findFile(vFile);
+        assertNotNull(psiFile);
+
+        long count = PsiManager.getInstance(myProject).getModificationTracker().getModificationCount();
+
+        Document document = FileDocumentManager.getInstance().getDocument(vFile);
+        document.insertString(0, "class Foo {}");
+        FileDocumentManager.getInstance().saveDocument(document);
+        // if Foo exists now, mod count should be different
+        //assertTrue(count != PsiManager.getInstance(myProject).getModificationTracker().getModificationCount());
+
+        assertNotNull(facade.findClass("Foo", scope));
+        assertNotNull(facade.findClass("Foo", scope).getText());
       }
     });
   }

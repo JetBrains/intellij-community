@@ -23,6 +23,7 @@ import com.intellij.openapi.externalSystem.model.project.ModuleData;
 import com.intellij.openapi.externalSystem.model.project.ModuleDependencyData;
 import com.intellij.openapi.externalSystem.model.project.ProjectData;
 import com.intellij.openapi.externalSystem.service.project.ProjectStructureHelper;
+import com.intellij.openapi.externalSystem.util.DisposeAwareProjectChange;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemConstants;
 import com.intellij.openapi.externalSystem.util.Order;
@@ -88,11 +89,11 @@ public class ModuleDependencyDataService extends AbstractDependencyDataService<M
                          @NotNull final Module module,
                          final boolean synchronous)
   {
-    ExternalSystemApiUtil.executeProjectChangeAction(synchronous, new Runnable() {
+    ExternalSystemApiUtil.executeProjectChangeAction(synchronous, new DisposeAwareProjectChange(module) {
       @Override
-      public void run() {
+      public void execute() {
         ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
-        Map<Pair<String /* dependency module name */, /* dependency module scope */DependencyScope> , ModuleOrderEntry> toRemove = ContainerUtilRt.newHashMap();
+        Map<Pair<String /* dependency module internal name */, /* dependency module scope */DependencyScope> , ModuleOrderEntry> toRemove = ContainerUtilRt.newHashMap();
         for (OrderEntry entry : moduleRootManager.getOrderEntries()) {
           if (entry instanceof ModuleOrderEntry) {
             ModuleOrderEntry e = (ModuleOrderEntry)entry;
@@ -104,8 +105,8 @@ public class ModuleDependencyDataService extends AbstractDependencyDataService<M
         try {
           for (DataNode<ModuleDependencyData> dependencyNode : toImport) {
             final ModuleDependencyData dependencyData = dependencyNode.getData();
-            toRemove.remove(Pair.create(dependencyData.getName(), dependencyData.getScope()));
-            final String moduleName = dependencyData.getName();
+            toRemove.remove(Pair.create(dependencyData.getInternalName(), dependencyData.getScope()));
+            final String moduleName = dependencyData.getInternalName();
             Module ideDependencyModule = myProjectStructureHelper.findIdeModule(moduleName, module.getProject());
             if (ideDependencyModule == null) {
               DataNode<ProjectData> projectNode = dependencyNode.getDataNode(ProjectKeys.PROJECT);

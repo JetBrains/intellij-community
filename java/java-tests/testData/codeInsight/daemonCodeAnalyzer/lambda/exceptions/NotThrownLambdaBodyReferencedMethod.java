@@ -1,11 +1,13 @@
-class Test {
+import java.io.IOException;
 
+class Test {
     interface F<T extends Throwable> {
         void _() throws T;
     }
     
     void m1() { }
     void m2() throws NullPointerException{ }
+    void m3() throws IOException { }
     <K extends Throwable> void foo(F<K> f) throws K { }
     
     {
@@ -14,6 +16,7 @@ class Test {
 
         foo(this::m1);
         foo(this::m2);
+        <error descr="Unhandled exception: java.io.IOException">foo(this::m3);</error>
     }
     
 }

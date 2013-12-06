@@ -37,6 +37,7 @@ public class TasksIcons {
   public static final Icon Feature = load("/icons/feature.png"); // 16x16
   public static final Icon Fogbugz = load("/icons/fogbugz.png"); // 16x16
   public static final Icon Github = load("/icons/github.png"); // 16x16
+  public static final Icon Gitlab = load("/icons/gitlab.png"); // 16x16
   public static final Icon Jira = load("/icons/jira.png"); // 16x16
   public static final Icon Lighthouse = load("/icons/lighthouse.gif"); // 16x16
   public static final Icon Mantis = load("/icons/mantis.png"); // 16x16

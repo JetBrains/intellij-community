@@ -44,7 +44,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.List;
 
 //todo listen & notifyListeners readonly events?
 public class PsiDocumentManagerImpl extends PsiDocumentManagerBase implements SettingsSavingComponent {

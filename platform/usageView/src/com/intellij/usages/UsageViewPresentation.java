@@ -32,6 +32,7 @@ public class UsageViewPresentation {
   private String myTargetsNodeText = UsageViewBundle.message("node.targets"); // Default value. to be overwritten in most cases.
   private String myNonCodeUsagesString = UsageViewBundle.message("node.non.code.usages");
   private String myCodeUsagesString = UsageViewBundle.message("node.found.usages");
+  private String myUsagesInGeneratedCodeString = UsageViewBundle.message("node.usages.in.generated.code");
   private boolean myShowReadOnlyStatusAsRed = false;
   private boolean myShowCancelButton = false;
   private boolean myOpenInNewTab = true;
@@ -174,6 +175,14 @@ public class UsageViewPresentation {
 
   public String getDynamicCodeUsagesString() {
     return myDynamicCodeUsagesString;
+  }
+
+  public String getUsagesInGeneratedCodeString() {
+    return myUsagesInGeneratedCodeString;
+  }
+
+  public void setUsagesInGeneratedCodeString(String usagesInGeneratedCodeString) {
+    myUsagesInGeneratedCodeString = usagesInGeneratedCodeString;
   }
 
   public boolean isMergeDupLinesAvailable() {

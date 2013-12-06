@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import com.intellij.codeInsight.FileModificationService;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Computable;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -150,11 +151,10 @@ public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
   /**
    * WriteCommandAction without result
    */
-  public abstract static class Simple extends WriteCommandAction {
+  public abstract static class Simple<T> extends WriteCommandAction<T> {
     protected Simple(final Project project, PsiFile... files) {
       super(project, files);
     }
-
     protected Simple(final Project project, final String commandName, final PsiFile... files) {
       super(project, commandName, files);
     }
@@ -164,11 +164,29 @@ public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
     }
 
     @Override
-    protected void run(final Result result) throws Throwable {
+    protected void run(@NotNull final Result<T> result) throws Throwable {
       run();
     }
 
     protected abstract void run() throws Throwable;
+  }
+
+  public static void runWriteCommandAction(Project project, @NotNull final Runnable runnable) {
+    new Simple(project) {
+      @Override
+      protected void run() throws Throwable {
+        runnable.run();
+      }
+    }.execute();
+  }
+
+  public static <T> T runWriteCommandAction(Project project, @NotNull final Computable<T> computable) {
+    return new WriteCommandAction<T>(project) {
+      @Override
+      protected void run(@NotNull Result<T> result) throws Throwable {
+        result.setResult(computable.compute());
+      }
+    }.execute().getResultObject();
   }
 }
 

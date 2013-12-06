@@ -199,8 +199,8 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
     if (file == null) {
       return null;
     }
-    PsiElement elementAt = file.findElementAt(TargetElementUtilBase.adjustOffset(file, document, offset));
 
+    PsiElement elementAt = file.findElementAt(TargetElementUtilBase.adjustOffset(file, document, offset));
     for (GotoDeclarationHandler handler : Extensions.getExtensions(GotoDeclarationHandler.EP_NAME)) {
       try {
         PsiElement[] result = handler.getGotoDeclarationTargets(elementAt, offset, editor);

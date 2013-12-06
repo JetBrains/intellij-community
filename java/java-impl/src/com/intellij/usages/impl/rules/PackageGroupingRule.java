@@ -27,6 +27,7 @@ import com.intellij.psi.JavaDirectoryService;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiPackage;
+import com.intellij.usageView.UsageViewBundle;
 import com.intellij.usages.UsageGroup;
 import com.intellij.usages.UsageView;
 import org.jetbrains.annotations.NotNull;
@@ -49,6 +50,11 @@ public class PackageGroupingRule extends DirectoryGroupingRule {
       if (aPackage != null) return new PackageGroup(aPackage);
     }
     return super.getGroupForFile(dir);
+  }
+
+  @Override
+  public String getActionTitle() {
+    return UsageViewBundle.message("action.group.by.package");
   }
 
   private class PackageGroup implements UsageGroup, TypeSafeDataProvider {

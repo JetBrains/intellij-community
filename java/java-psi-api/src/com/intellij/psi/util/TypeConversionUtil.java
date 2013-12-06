@@ -993,16 +993,8 @@ public class TypeConversionUtil {
     }
   }
 
-  private static boolean containsWildcards(@NotNull PsiType leftBound) {
-    final WildcardDetector wildcardDetector = new WildcardDetector();
-    if (leftBound instanceof PsiIntersectionType) {
-      for (PsiType conjunctType :((PsiIntersectionType)leftBound).getConjuncts()) {
-        if (!conjunctType.accept(wildcardDetector)) return false;
-      }
-      return true;
-    }
-
-    return leftBound.accept(wildcardDetector);
+  public static boolean containsWildcards(@NotNull PsiType leftBound) {
+    return leftBound.accept(new WildcardDetector());
   }
 
   @Nullable
@@ -1031,7 +1023,7 @@ public class TypeConversionUtil {
    * <code>InheritanceUtil.isInheritor(derivedClass, superClass, true)</code>
    *
    * @return substitutor (never returns <code>null</code>)
-   * @see InheritanceUtil#isInheritor(PsiClass, PsiClass, boolean)
+   * @see PsiClass#isInheritor(PsiClass, PsiClass, boolean)
    */
   @NotNull
   public static PsiSubstitutor getSuperClassSubstitutor(@NotNull PsiClass superClass,
@@ -1846,9 +1838,17 @@ public class TypeConversionUtil {
       return arrayType.getComponentType().accept(this);
     }
 
+    @Nullable
+    @Override
+    public Boolean visitIntersectionType(PsiIntersectionType intersectionType) {
+      for (PsiType psiType : intersectionType.getConjuncts()) {
+        if (psiType.accept(this)) return true;
+      }
+      return false;
+    }
+
     @Override
     public Boolean visitType(PsiType type) {
-      //todo intersection types
       return false;
     }
   }

@@ -15,24 +15,25 @@
  */
 package org.jetbrains.plugins.groovy.refactoring.introduce.field;
 
+import com.intellij.codeInsight.TestFrameworks;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
-import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.introduce.inplace.KeyboardComboSwitcher;
 import com.intellij.refactoring.introduce.inplace.OccurrencesChooser;
 import com.intellij.refactoring.introduceField.IntroduceFieldHandler;
 import com.intellij.ui.NonFocusableCheckBox;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
+import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.refactoring.GroovyNameSuggestionUtil;
-import org.jetbrains.plugins.groovy.refactoring.introduce.GrAbstractInplaceIntroducer;
-import org.jetbrains.plugins.groovy.refactoring.introduce.GrFinalListener;
-import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceContext;
-import org.jetbrains.plugins.groovy.refactoring.introduce.StringPartInfo;
+import org.jetbrains.plugins.groovy.refactoring.introduce.*;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -43,6 +44,7 @@ import java.util.EnumSet;
  * @author Max Medvedev
  */
 public class GrInplaceFieldIntroducer extends GrAbstractInplaceIntroducer<GrIntroduceFieldSettings> {
+  private final EnumSet<GrIntroduceFieldSettings.Init> myApplicablePlaces;
   private GrInplaceIntroduceFieldPanel myPanel;
   private final GrFinalListener finalListener;
   private String[] mySuggestedNames;
@@ -60,6 +62,7 @@ public class GrInplaceFieldIntroducer extends GrAbstractInplaceIntroducer<GrIntr
     finalListener = new GrFinalListener(myEditor);
 
     mySuggestedNames = GroovyNameSuggestionUtil.suggestVariableNames(context.getExpression(), new GroovyInplaceFieldValidator(getContext()), false);
+    myApplicablePlaces = getApplicableInitPlaces();
   }
 
   @Override
@@ -214,23 +217,50 @@ public class GrInplaceFieldIntroducer extends GrAbstractInplaceIntroducer<GrIntr
   @Nullable
   @Override
   protected JComponent getComponent() {
-    myPanel = new GrInplaceIntroduceFieldPanel(myProject, GrIntroduceFieldHandler.getApplicableInitPlaces(getContext(), isReplaceAllOccurrences()));
+    myPanel = new GrInplaceIntroduceFieldPanel();
     return myPanel.getRootPane();
   }
 
+  private EnumSet<GrIntroduceFieldSettings.Init> getApplicableInitPlaces() {
+    GrIntroduceContext context = getContext();
+    PsiElement[] occurrences = getOccurrences();
+    EnumSet<GrIntroduceFieldSettings.Init> result = EnumSet.of(GrIntroduceFieldSettings.Init.FIELD_DECLARATION);
+
+    if (!(context.getScope() instanceof GroovyScriptClass || context.getScope() instanceof GroovyFileBase)) {
+      result.add(GrIntroduceFieldSettings.Init.CONSTRUCTOR);
+    }
+
+    PsiElement scope = context.getScope();
+
+    if (isReplaceAllOccurrences()) {
+      PsiElement parent = PsiTreeUtil.findCommonParent(occurrences);
+      PsiElement container = GrIntroduceHandlerBase.getEnclosingContainer(parent);
+      if (container != null) {
+        PsiElement anchor = GrIntroduceHandlerBase.findAnchor(occurrences, container);
+        if (anchor != null) {
+          result.add(GrIntroduceFieldSettings.Init.CUR_METHOD);
+        }
+      }
+    }
+
+    if (scope instanceof GrTypeDefinition && TestFrameworks.getInstance().isTestClass((PsiClass)scope)) {
+      result.add(GrIntroduceFieldSettings.Init.SETUP_METHOD);
+    }
+
+    return result;
+  }
+
   public class GrInplaceIntroduceFieldPanel {
-    private final Project myProject;
     private JPanel myRootPane;
     private JComboBox myInitCB;
     private NonFocusableCheckBox myDeclareFinalCB;
     private JComponent myPreview;
 
-    public GrInplaceIntroduceFieldPanel(Project project, EnumSet<GrIntroduceFieldSettings.Init> initPlaces) {
-      myProject = project;
+    public GrInplaceIntroduceFieldPanel() {
 
-      KeyboardComboSwitcher.setupActions(myInitCB, project);
+      KeyboardComboSwitcher.setupActions(myInitCB, myProject);
 
-      for (GrIntroduceFieldSettings.Init place : initPlaces) {
+      for (GrIntroduceFieldSettings.Init place : myApplicablePlaces) {
         myInitCB.addItem(place);
       }
 

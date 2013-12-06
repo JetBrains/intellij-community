@@ -129,6 +129,18 @@ public interface Action extends DomElement {
 	 */
 	Shortcut addShortcut();
 
+        /**
+ 	 * Returns the list of abbreviation children.
+ 	 * @return the list of abbreviation children.
+ 	 */
+ 	@NotNull
+ 	List<Abbreviation> getAbbreviations();
+
+ 	/**
+ 	 * Adds new child to the list of abbreviation children.
+ 	 * @return created child
+ 	 */
+        Abbreviation addAbbreviation();
 
 	/**
 	 * Returns the list of add-to-group children.

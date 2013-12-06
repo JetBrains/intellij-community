@@ -24,7 +24,6 @@ import com.intellij.notification.LogModel;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
@@ -65,7 +64,7 @@ public class IdeNotificationArea extends JLabel implements CustomStatusBarWidget
     new ClickListener() {
       @Override
       public boolean onClick(MouseEvent e, int clickCount) {
-        EventLog.toggleLog(getProject());
+        EventLog.toggleLog(getProject(), null);
         return true;
       }
     }.installOn(this);

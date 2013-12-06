@@ -40,12 +40,6 @@ public class DataFlowInspectionTest extends LightCodeInsightFixtureTestCase {
   }
 
   @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-    myFixture.addClass("package org.jetbrains.annotations; public @interface Contract { String value(); }");
-  }
-
-  @Override
   protected String getTestDataPath() {
     return JavaTestUtil.getJavaTestDataPath() + "/inspection/dataFlow/fixture/";
   }
@@ -128,6 +122,7 @@ public class DataFlowInspectionTest extends LightCodeInsightFixtureTestCase {
   }
 
   public void testPreserveNullableOnUncheckedCast() throws Throwable { doTest(); }
+  public void testPrimitiveCastMayChangeValue() throws Throwable { doTest(); }
 
   public void testPassingNullableIntoVararg() throws Throwable { doTest(); }
   public void testEqualsImpliesNotNull() throws Throwable { doTest(); }

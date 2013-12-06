@@ -253,11 +253,6 @@ public class ShowFilePathAction extends AnAction {
     return fileManagerName.getValue();
   }
 
-  /** @deprecated use {@linkplain #openFile(java.io.File)} (to remove in IDEA 13) */
-  public static void open(@NotNull final File ioFile, @Nullable final File toSelect) {
-    openFile(toSelect != null && toSelect.exists() ? toSelect : ioFile);
-  }
-
   /**
    * Shows system file manager with given file's parent directory open and the file highlighted in it<br/>
    * (note that not all platforms support highlighting).
@@ -388,7 +383,7 @@ public class ShowFilePathAction extends AnAction {
 
   public static void showDialog(Project project, String message, String title, File file, DialogWrapper.DoNotAskOption option) {
     if (Messages.showOkCancelDialog(project, message, title, RevealFileAction.getActionName(),
-                                    IdeBundle.message("action.close"), Messages.getInformationIcon(), option) == 0) {
+                                    IdeBundle.message("action.close"), Messages.getInformationIcon(), option) == Messages.OK) {
       openFile(file);
     }
   }

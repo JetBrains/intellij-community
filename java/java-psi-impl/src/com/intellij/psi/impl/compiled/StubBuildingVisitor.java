@@ -17,7 +17,8 @@ package com.intellij.psi.impl.compiled;
 
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiNameHelper;
+import com.intellij.psi.PsiReferenceList;
 import com.intellij.psi.impl.cache.ModifierFlags;
 import com.intellij.psi.impl.cache.TypeInfo;
 import com.intellij.psi.impl.java.stubs.*;
@@ -82,8 +83,16 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
 
   @Override
   public void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
-    String fqn = getClassName(name);
-    String shortName = myShortName != null ? myShortName : PsiNameHelper.getShortClassName(fqn);
+    String fqn, shortName;
+    if (myShortName != null && name.endsWith(myShortName)) {
+      shortName = myShortName;
+      fqn = name.length() == shortName.length()
+            ? shortName : getClassName(name.substring(0, name.length() - shortName.length() - 1)) + "." + shortName;
+    }
+    else {
+      fqn = getClassName(name);
+      shortName = PsiNameHelper.getShortClassName(fqn);
+    }
 
     int flags = myAccess == 0 ? access : myAccess;
     boolean isDeprecated = (flags & Opcodes.ACC_DEPRECATED) != 0;
@@ -306,8 +315,9 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
         throw new OutOfOrderInnerClassException();
       }
     }
-
-    if (!getClassName(outerName).equals(myResult.getQualifiedName())) return;
+    if (!namesEqual(outerName, myResult.getQualifiedName())) {
+      return;
+    }
 
     final T innerSource = myInnersStrategy.findInnerClass(innerName, mySource);
     if (innerSource == null) return;
@@ -321,6 +331,24 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
 
   private static boolean isCorrectName(String name) {
     return name != null;
+  }
+
+  private static boolean namesEqual(String signature, String fqn) {
+    if (fqn == null) return true;  // impossible case, just ignore
+    if (fqn.length() != signature.length()) return false;
+
+    int p = 0, dot;
+    while ((dot = fqn.indexOf('.', p)) >= 0) {
+      if (!signature.regionMatches(p, fqn, p, dot - p)) {
+        return false;
+      }
+      char ch = signature.charAt(dot);
+      if (ch != '/' && ch != '$') {
+        return false;
+      }
+      p = dot + 1;
+    }
+    return fqn.regionMatches(p, signature, p, fqn.length() - p);
   }
 
   @Override

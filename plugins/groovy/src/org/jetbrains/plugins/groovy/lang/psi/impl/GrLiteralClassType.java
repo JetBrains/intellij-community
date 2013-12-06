@@ -46,20 +46,7 @@ public abstract class GrLiteralClassType extends PsiClassType {
   @NotNull
   public ClassResolveResult resolveGenerics() {
     final PsiClass myBaseClass = resolve();
-    final PsiSubstitutor substitutor;
-    if (myBaseClass != null) {
-      final PsiType[] typeArgs = getParameters();
-      final PsiTypeParameter[] typeParams = myBaseClass.getTypeParameters();
-      if (typeParams.length == typeArgs.length) {
-        substitutor = PsiSubstitutor.EMPTY.putAll(myBaseClass, typeArgs);
-      }
-      else {
-        substitutor = PsiSubstitutor.EMPTY;
-      }
-    }
-    else {
-      substitutor = PsiSubstitutor.EMPTY;
-    }
+    final PsiSubstitutor substitutor = inferSubstitutor(myBaseClass);
 
     return new ClassResolveResult() {
 
@@ -92,6 +79,23 @@ public abstract class GrLiteralClassType extends PsiClassType {
         return isStaticsScopeCorrect() && isAccessible();
       }
     };
+  }
+
+  @NotNull
+  private PsiSubstitutor inferSubstitutor(@Nullable PsiClass myBaseClass) {
+    if (myBaseClass != null) {
+      final PsiType[] typeArgs = getParameters();
+      final PsiTypeParameter[] typeParams = myBaseClass.getTypeParameters();
+      if (typeParams.length == typeArgs.length) {
+        return PsiSubstitutor.EMPTY.putAll(myBaseClass, typeArgs);
+      }
+      else {
+        return PsiSubstitutor.EMPTY.putAll(myBaseClass, new PsiType[typeParams.length]);
+      }
+    }
+    else {
+      return PsiSubstitutor.EMPTY;
+    }
   }
 
   @Override
@@ -161,7 +165,7 @@ public abstract class GrLiteralClassType extends PsiClassType {
   }
 
   @NotNull
-  protected PsiType getLeastUpperBound(PsiType[] psiTypes) {
+  protected PsiType getLeastUpperBound(PsiType... psiTypes) {
     PsiType result = null;
     final PsiManager manager = getPsiManager();
     for (final PsiType other : psiTypes) {

@@ -6,19 +6,16 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.api.SvnClient;
 import org.tmatesoft.svn.core.ISVNLogEntryHandler;
 import org.tmatesoft.svn.core.wc.SVNRevision;
-
-import java.io.File;
+import org.tmatesoft.svn.core.wc2.SvnTarget;
 
 /**
  * @author Konstantin Kolosovsky.
  */
 public interface HistoryClient extends SvnClient {
 
-  // TODO: Url is also supported as parameter in cmd - use Target class
-  void doLog(@NotNull File path,
+  void doLog(@NotNull SvnTarget target,
              @NotNull SVNRevision startRevision,
              @NotNull SVNRevision endRevision,
-             @Nullable SVNRevision pegRevision,
              boolean stopOnCopy,
              boolean discoverChangedPaths,
              boolean includeMergedRevisions,

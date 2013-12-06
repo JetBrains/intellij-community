@@ -147,11 +147,6 @@ public class PsiParameterImpl extends JavaStubPsiElement<PsiParameterStub> imple
     }
   }
 
-  @Override
-  public PsiType getTypeNoResolve() {
-    return getType();
-  }
-
   private boolean isLambdaParameter() {
     final PsiElement parent = getParent();
     return parent instanceof PsiParameterList && parent.getParent() instanceof PsiLambdaExpression;

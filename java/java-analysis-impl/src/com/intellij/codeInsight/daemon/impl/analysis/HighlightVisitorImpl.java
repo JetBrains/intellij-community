@@ -29,7 +29,6 @@ import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.JavaVersionService;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.pom.java.LanguageLevel;
@@ -202,7 +201,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   public void visitAnnotation(PsiAnnotation annotation) {
     super.visitAnnotation(annotation);
     if (!myHolder.hasErrorResults()) myHolder.add(HighlightUtil.checkAnnotationFeature(annotation, myLanguageLevel, myFile));
-    if (!myHolder.hasErrorResults()) myHolder.add(AnnotationsHighlightUtil.checkApplicability(annotation, myLanguageLevel,myFile));
+    if (!myHolder.hasErrorResults()) myHolder.add(AnnotationsHighlightUtil.checkApplicability(annotation, myLanguageLevel, myFile));
     if (!myHolder.hasErrorResults()) myHolder.add(AnnotationsHighlightUtil.checkAnnotationType(annotation));
     if (!myHolder.hasErrorResults()) myHolder.add(AnnotationsHighlightUtil.checkMissingAttributes(annotation));
     if (!myHolder.hasErrorResults()) myHolder.add(AnnotationsHighlightUtil.checkTargetAnnotationDuplicates(annotation));
@@ -314,7 +313,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
                     final PsiSubstitutor substitutor = LambdaUtil.getSubstitutor(interfaceMethod, resolveResult);
                     if (expression.hasFormalParameterTypes()) {
                       for (int i = 0; i < lambdaParameters.length; i++) {
-                        if (!Comparing.equal(lambdaParameters[i].getType(), substitutor.substitute(parameters[i].getType()))) {
+                        if (!PsiTypesUtil.compareTypes(lambdaParameters[i].getType(), substitutor.substitute(parameters[i].getType()), true)) {
                           HighlightInfo result = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
                             .range(lambdaParameters[i])
                             .descriptionAndTooltip(incompatibleTypesMessage)
@@ -347,6 +346,8 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
               }
             }
           }
+        } else if (LambdaUtil.getFunctionalInterfaceType(expression, true) != null) {
+          myHolder.add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip("Cannot infer functional interface type").create());
         }
       }
       else {
@@ -1222,8 +1223,33 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
         }
       }
     }
+
+    if (!myHolder.hasErrorResults()) {
+      PsiElement qualifier = expression.getQualifier();
+      if (qualifier instanceof PsiTypeElement) {
+        final PsiType psiType = ((PsiTypeElement)qualifier).getType();
+        final HighlightInfo genericArrayCreationInfo = GenericsHighlightUtil.checkGenericArrayCreation(qualifier, psiType);
+        if (genericArrayCreationInfo != null) {
+          myHolder.add(genericArrayCreationInfo);
+        } else {
+          final String wildcardMessage = PsiMethodReferenceUtil.checkTypeArguments((PsiTypeElement)qualifier, psiType);
+          if (wildcardMessage != null) {
+            myHolder.add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(qualifier).descriptionAndTooltip(wildcardMessage).create());
+          }
+        }
+      }
+    }
+
+    if (!myHolder.hasErrorResults()) {
+      myHolder.add(PsiMethodReferenceHighlightingUtil.checkRawConstructorReference(expression));
+    }
+
     if (!myHolder.hasErrorResults()) {
       myHolder.add(HighlightUtil.checkUnhandledExceptions(expression, expression.getTextRange()));
+    }
+
+    if (!myHolder.hasErrorResults() && method instanceof PsiTypeParameterListOwner) {
+      myHolder.add(GenericsHighlightUtil.checkInferredTypeArguments((PsiTypeParameterListOwner)method, expression, result.getSubstitutor()));
     }
   }
 

@@ -677,6 +677,10 @@ public class XmlCompletionTest extends LightCodeInsightFixtureTestCase {
     myFixture.testCompletionVariants("Substitute/test.xml", "b:instance", "instance");
   }
 
+  public void testAfterPrefix() throws Exception {
+    myFixture.testCompletion("Substitute/testAfterPrefix.xml", "Substitute/testAfterPrefix_after.xml", "Substitute/schema-a.xsd", "Substitute/schema-b.xsd");
+  }
+
   public void testEnumeratedTagValue() throws Exception {
     myFixture.configureByFile("tagValue/enumerated.xsd");
     myFixture.testCompletionVariants("tagValue/completeEnum.xml", "none", "standard");

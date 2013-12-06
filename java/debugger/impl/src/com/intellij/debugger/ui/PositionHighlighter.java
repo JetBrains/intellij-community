@@ -15,7 +15,6 @@
  */
 package com.intellij.debugger.ui;
 
-import com.intellij.codeInsight.daemon.impl.DaemonListeners;
 import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.DebuggerInvocationUtil;
 import com.intellij.debugger.SourcePosition;
@@ -37,6 +36,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.ex.DocumentEx;
+import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.project.Project;
@@ -131,9 +131,9 @@ public class PositionHighlighter {
 
     private static void adjustCounter(@NotNull Editor editor, int increment) {
       JComponent component = editor.getComponent();
-      Object o = component.getClientProperty(DaemonListeners.IGNORE_MOUSE_TRACKING);
+      Object o = component.getClientProperty(EditorImpl.IGNORE_MOUSE_TRACKING);
       Integer value = ((o instanceof Integer) ? (Integer)o : 0) + increment;
-      component.putClientProperty(DaemonListeners.IGNORE_MOUSE_TRACKING, value > 0 ? value : null);
+      component.putClientProperty(EditorImpl.IGNORE_MOUSE_TRACKING, value > 0 ? value : null);
     }
 
     public void remove() {

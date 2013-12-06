@@ -78,8 +78,8 @@ public class DarculaLaf extends BasicLookAndFeel {
 
   @SuppressWarnings("UnusedParameters")
   private static void log(Exception e) {
-    //everything is gonna be alright
-    //e.printStackTrace();
+//    everything is gonna be alright
+    e.printStackTrace();
   }
 
   @Override
@@ -110,7 +110,7 @@ public class DarculaLaf extends BasicLookAndFeel {
       if (SystemInfo.isWindows) {
         //JFrame.setDefaultLookAndFeelDecorated(true);
       }
-
+      defaults.put("EditorPane.font", defaults.getFont("TextField.font"));
       return defaults;
     }
     catch (Exception e) {

@@ -13,7 +13,7 @@ import java.util.List;
  */
 public class LayoutTestUtils {
   public static String toShortStr(Node node) {
-    return node.getCommitHash().asString();
+    return Integer.toHexString(node.getCommitIndex());
   }
 
   public static String toShortStr(GraphElement element) {

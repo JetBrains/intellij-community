@@ -15,6 +15,7 @@
  */
 package com.jetbrains.python;
 
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.LiteralTextEscaper;
 import com.intellij.psi.PsiFile;
@@ -64,19 +65,54 @@ public class PyStringLiteralTest extends PyTestCase {
     assertEquals(-1, escaper.getOffsetInHost(4, fooOnly));
   }
 
-  public void testIterateCharacterRanges() {
-    final PyStringLiteralExpression expr = createLiteralFromText("'\\nfoo'  'bar'");
+  public void testEscaperOffsetInSingleCharString() {
+    final PyStringLiteralExpression expr = createLiteralFromText("'c'");
     assertNotNull(expr);
-    final List<String> characters = new ArrayList<String>();
-    expr.iterateCharacterRanges(new PyStringLiteralExpression.TextRangeConsumer() {
-      @Override
-      public boolean process(int startOffset, int endOffset, String value) {
-        characters.add(value);
-        return true;
-      }
-    });
-    final List<String> expected = Arrays.asList("\n", "f", "o", "o", "b", "a", "r");
-    assertSameElements(characters, expected);
+    final LiteralTextEscaper<? extends PsiLanguageInjectionHost> escaper = expr.createLiteralTextEscaper();
+    final TextRange range = TextRange.create(1, 2);
+    assertEquals(1, escaper.getOffsetInHost(0, range));
+    assertEquals(2, escaper.getOffsetInHost(1, range));
+    assertEquals(-1, escaper.getOffsetInHost(2, range));
+  }
+
+  public void testEscaperOffsetInSingleEscapedCharString() {
+    final PyStringLiteralExpression expr = createLiteralFromText("'\\n'");
+    assertNotNull(expr);
+    final LiteralTextEscaper<? extends PsiLanguageInjectionHost> escaper = expr.createLiteralTextEscaper();
+    final TextRange range = TextRange.create(1, 3);
+    assertEquals(1, escaper.getOffsetInHost(0, range));
+    assertEquals(3, escaper.getOffsetInHost(1, range));
+    assertEquals(-1, escaper.getOffsetInHost(2, range));
+  }
+
+  public void testIterateCharacterRanges() {
+    assertSameElements(getCharacterRanges("'\\nfoo'  'bar'"),
+                       Arrays.asList("\n", "foo", "bar"));
+  }
+
+  public void testIterateEscapedBackslash() {
+    assertSameElements(getCharacterRanges("'''\n" +
+                                          "foo.\\\\\n" +
+                                          "bar\n" +
+                                          "'''\n"),
+                       Arrays.asList("\nfoo.", "\\", "\nbar\n"));
+  }
+
+  public void testEscaperOffsetInEscapedBackslash() {
+    final PyStringLiteralExpression expr = createLiteralFromText("'XXX foo.\\\\bar YYY'");
+    assertNotNull(expr);
+    final LiteralTextEscaper<? extends PsiLanguageInjectionHost> escaper = expr.createLiteralTextEscaper();
+    final TextRange range = TextRange.create(5, 14);
+    assertEquals(5, escaper.getOffsetInHost(0, range));
+    assertEquals(6, escaper.getOffsetInHost(1, range));
+    assertEquals(7, escaper.getOffsetInHost(2, range));
+    assertEquals(8, escaper.getOffsetInHost(3, range));
+    assertEquals(9, escaper.getOffsetInHost(4, range));
+    assertEquals(11, escaper.getOffsetInHost(5, range));
+    assertEquals(12, escaper.getOffsetInHost(6, range));
+    assertEquals(13, escaper.getOffsetInHost(7, range));
+    assertEquals(14, escaper.getOffsetInHost(8, range));
+    assertEquals(-1, escaper.getOffsetInHost(9, range));
   }
 
   private static String decodeRange(PyStringLiteralExpression expr, TextRange range) {
@@ -99,5 +135,15 @@ public class PyStringLiteralTest extends PyTestCase {
     assertEquals("\\b", createLiteralFromText("r'\\b'").getStringValue());
     assertEquals("b\\n", createLiteralFromText("ur'\\u0062\\n'").getStringValue());
     assertEquals("\\8", createLiteralFromText("'\\8'").getStringValue());
+  }
+
+  private List<String> getCharacterRanges(String text) {
+    final PyStringLiteralExpression expr = createLiteralFromText(text);
+    assertNotNull(expr);
+    final List<String> characters = new ArrayList<String>();
+    for (Pair<TextRange, String> fragment : expr.getDecodedFragments()) {
+      characters.add(fragment.getSecond());
+    }
+    return characters;
   }
 }

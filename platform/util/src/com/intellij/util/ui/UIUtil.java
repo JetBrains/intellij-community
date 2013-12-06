@@ -55,6 +55,7 @@ import java.awt.image.PixelGrabber;
 import java.beans.PropertyChangeListener;
 import java.lang.ref.WeakReference;
 import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.URL;
 import java.util.*;
@@ -626,14 +627,6 @@ public class UIUtil {
     LookAndFeel.installBorder(contentPane, "PopupMenu.border");
   }
 
-  /**
-   * @deprecated Motif is gone (to remove in IDEA 13)
-   */
-  @SuppressWarnings("UnusedDeclaration")
-  public static boolean isMotifLookAndFeel() {
-    return false;
-  }
-
   public static Color getTreeSelectionBorderColor() {
     return UIManager.getColor("Tree.selectionBorderColor");
   }
@@ -715,6 +708,11 @@ public class UIUtil {
   }
 
   public static Color getListBackground() {
+    if (isUnderNimbusLookAndFeel()) {
+      final Color color = UIManager.getColor("List.background");
+      //noinspection UseJBColor
+      return new Color(color.getRed(), color.getGreen(), color.getBlue(), color.getAlpha());
+    }
     // Under GTK+ L&F "Table.background" often has main panel color, which looks ugly
     return isUnderGTKLookAndFeel() ? getTreeTextBackground() : UIManager.getColor("List.background");
   }
@@ -957,14 +955,6 @@ public class UIUtil {
     return UIManager.getColor("OptionPane.background");
   }
 
-  /**
-   * @deprecated Quaqua is gone (to remove in IDEA 13)
-   */
-  @SuppressWarnings("UnusedDeclaration")
-  public static boolean isUnderQuaquaLookAndFeel() {
-    return false;
-  }
-
   @SuppressWarnings({"HardCodedStringLiteral"})
   public static boolean isUnderAlloyLookAndFeel() {
     return UIManager.getLookAndFeel().getName().contains("Alloy");
@@ -985,14 +975,6 @@ public class UIUtil {
     return UIManager.getLookAndFeel().getName().equals("Windows Classic");
   }
 
-  /**
-   * @deprecated Metal is gone (to remove in IDEA 13)
-   */
-  @SuppressWarnings("UnusedDeclaration")
-  public static boolean isUnderMetalLookAndFeel() {
-    return false;
-  }
-
   @SuppressWarnings({"HardCodedStringLiteral"})
   public static boolean isUnderNimbusLookAndFeel() {
     return UIManager.getLookAndFeel().getName().contains("Nimbus");
@@ -1011,14 +993,6 @@ public class UIUtil {
   @SuppressWarnings({"HardCodedStringLiteral"})
   public static boolean isUnderAquaBasedLookAndFeel() {
     return SystemInfo.isMac && (isUnderAquaLookAndFeel() || isUnderDarcula());
-  }
-
-  /**
-   * @deprecated Motif is gone (to remove in IDEA 13)
-   */
-  @SuppressWarnings("UnusedDeclaration")
-  public static boolean isUnderMotif() {
-    return false;
   }
 
   @SuppressWarnings({"HardCodedStringLiteral"})
@@ -1113,13 +1087,6 @@ public class UIUtil {
 
   public static boolean isToUseDottedCellBorder() {
     return !isUnderNativeMacLookAndFeel();
-  }
-
-  /**
-   * @deprecated Quaqua is gone (to remove in IDEA 13)
-   */
-  @SuppressWarnings("UnusedDeclaration")
-  public static void removeQuaquaVisualMarginsIn(Component component) {
   }
 
   public static boolean isControlKeyDown(MouseEvent mouseEvent) {
@@ -1280,6 +1247,13 @@ public class UIUtil {
     final Composite oldComposite = g.getComposite();
     g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.7f));
     g.setPaint(getGradientPaint(startX, 2, c1, startX, height - 5, c2));
+
+    if (isRetina()) {
+      g.fillRoundRect(startX - 1, 2, endX - startX + 1, height - 4, 5, 5);
+      g.setComposite(oldComposite);
+      return;
+    }
+
     g.fillRect(startX, 3, endX - startX, height - 5);
 
     if (drawRound) {
@@ -1863,24 +1837,6 @@ public class UIUtil {
     }
   }
 
-  /** @deprecated use {@linkplain Dialog#setModalityType(Dialog.ModalityType)} (to remove in IDEA 13) */
-  @SuppressWarnings("UnusedDeclaration")
-  public static void setToolkitModal(final JDialog dialog) {
-    dialog.setModalityType(Dialog.ModalityType.TOOLKIT_MODAL);
-  }
-
-  /** @deprecated use {@linkplain Window#setIconImages(List)} (to remove in IDEA 13) */
-  @SuppressWarnings("UnusedDeclaration")
-  public static void updateDialogIcon(final JDialog dialog, final List<Image> images) {
-    dialog.setIconImages(images);
-  }
-
-  /** @deprecated outdated (to remove in IDEA 13) */
-  @SuppressWarnings("UnusedDeclaration")
-  public static boolean hasJdk6Dialogs() {
-    return true;
-  }
-
   public static Color getHeaderActiveColor() {
     return ACTIVE_HEADER_COLOR;
   }
@@ -2413,7 +2369,7 @@ public class UIUtil {
           final int bulletWidth = info.withBullet ? fm.stringWidth(" " + info.bulletChar) : 0;
           maxBulletWidth[0] = Math.max(maxBulletWidth[0], bulletWidth);
 
-          maxWidth[0] = Math.max(fm.stringWidth(pair.getFirst() + bulletWidth), maxWidth[0]);
+          maxWidth[0] = Math.max(fm.stringWidth(pair.getFirst().replace("<shortcut>", "").replace("</shortcut>", "") + bulletWidth), maxWidth[0]);
           height[0] += (fm.getHeight() + fm.getLeading()) * myLineSpacing;
 
           if (old != null) {
@@ -2432,6 +2388,12 @@ public class UIUtil {
         @Override
         public boolean process(final Pair<String, LineInfo> pair) {
           final LineInfo info = pair.getSecond();
+          String text = pair.first;
+          String shortcut = "";
+          if (pair.first.contains("<shortcut>")) {
+            shortcut = text.substring(text.indexOf("<shortcut>") + "<shortcut>".length(), text.indexOf("</shortcut>"));
+            text = text.substring(0, text.indexOf("<shortcut>"));
+          }
 
           Font old = null;
           if (info.smaller) {
@@ -2444,20 +2406,20 @@ public class UIUtil {
           final FontMetrics fm = g.getFontMetrics();
           int xOffset = x;
           if (info.center) {
-            xOffset = x + (maxWidth[0] - fm.stringWidth(pair.getFirst())) / 2;
+            xOffset = x + (maxWidth[0] - fm.stringWidth(text)) / 2;
           }
 
           if (myDrawShadow) {
             int xOff = isUnderDarcula() ? 1 : 0;
             int yOff = 1;
-            final Color oldColor = g.getColor();
+            Color oldColor = g.getColor();
             g.setColor(myShadowColor);
 
             if (info.withBullet) {
               g.drawString(info.bulletChar + " ", x - fm.stringWidth(" " + info.bulletChar) + xOff, yOffset[0] + yOff);
             }
 
-            g.drawString(pair.getFirst(), xOffset + xOff, yOffset[0] + yOff);
+            g.drawString(text, xOffset + xOff, yOffset[0] + yOff);
             g.setColor(oldColor);
           }
 
@@ -2465,7 +2427,15 @@ public class UIUtil {
             g.drawString(info.bulletChar + " ", x - fm.stringWidth(" " + info.bulletChar), yOffset[0]);
           }
 
-          g.drawString(pair.getFirst(), xOffset, yOffset[0]);
+          g.drawString(text, xOffset, yOffset[0]);
+          if (!StringUtil.isEmpty(shortcut)) {
+            Color oldColor = g.getColor();
+            if (isUnderDarcula()) {
+              g.setColor(new Color(60, 118, 249));
+            }
+            g.drawString(shortcut, xOffset + fm.stringWidth(text + (isUnderDarcula() ? " " : "")), yOffset[0]);
+            g.setColor(oldColor);
+          }
 
           if (info.underlined) {
             Color c = null;
@@ -2477,6 +2447,7 @@ public class UIUtil {
             g.drawLine(x - maxBulletWidth[0] - 10, yOffset[0] + fm.getDescent(), x + maxWidth[0] + 10, yOffset[0] + fm.getDescent());
             if (c != null) {
               g.setColor(c);
+
             }
 
             if (myDrawShadow) {
@@ -2700,5 +2671,18 @@ public class UIUtil {
       if (each.isVisible() && each.isActive()) return each;
     }
     return JOptionPane.getRootFrame();
+  }
+
+  public static void setAutoRequestFocus (final Window onWindow, final boolean set){
+    if (SystemInfo.isMac) return;
+    if (SystemInfo.isJavaVersionAtLeast("1.7")) {
+      try {
+        Method setAutoRequestFocusMethod  = onWindow.getClass().getMethod("setAutoRequestFocus",new Class [] {boolean.class});
+        setAutoRequestFocusMethod.invoke(onWindow, set);
+      }
+      catch (NoSuchMethodException e) { LOG.debug(e); }
+      catch (InvocationTargetException e) { LOG.debug(e); }
+      catch (IllegalAccessException e) { LOG.debug(e); }
+    }
   }
 }

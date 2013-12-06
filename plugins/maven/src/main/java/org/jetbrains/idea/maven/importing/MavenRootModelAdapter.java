@@ -169,6 +169,19 @@ public class MavenRootModelAdapter {
     return false;
   }
 
+  @Nullable
+  public SourceFolder getSourceFolder(File folder) {
+    String url = toUrl(folder.getPath()).getUrl();
+    for (ContentEntry entry : myRootModel.getContentEntries()) {
+      for (SourceFolder sourceFolder : entry.getSourceFolders()) {
+        if (sourceFolder.getUrl().equals(url)) {
+          return sourceFolder;
+        }
+      }
+    }
+    return null;
+  }
+
   public boolean isAlreadyExcluded(File f) {
     String url = toUrl(f.getPath()).getUrl();
     for (String excludedUrl : myRootModel.getExcludeRootUrls()) {

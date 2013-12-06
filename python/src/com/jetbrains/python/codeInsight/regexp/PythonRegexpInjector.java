@@ -23,6 +23,7 @@ import com.intellij.psi.PsiPolyVariantReference;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
 import com.jetbrains.python.codeInsight.PyInjectionUtil;
+import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import org.jetbrains.annotations.NotNull;
@@ -66,7 +67,7 @@ public class PythonRegexpInjector implements MultiHostInjector {
   @Override
   public void getLanguagesToInject(@NotNull MultiHostRegistrar registrar, @NotNull PsiElement context) {
     final PsiElement contextParent = context.getParent();
-    if (PyInjectionUtil.isLargestStringLiteral(context) && contextParent instanceof PyArgumentList) {
+    if (PyInjectionUtil.getLargestStringLiteral(context) == context && contextParent instanceof PyArgumentList) {
       final PyExpression[] args = ((PyArgumentList)contextParent).getArguments();
       int index = ArrayUtil.indexOf(args, context);
       PyCallExpression call = PsiTreeUtil.getParentOfType(context, PyCallExpression.class);
@@ -76,7 +77,8 @@ public class PythonRegexpInjector implements MultiHostInjector {
           final PsiPolyVariantReference ref = ((PyReferenceExpression)callee).getReference(PyResolveContext.noImplicits());
           if (ref != null) {
             final PsiElement element = ref.resolve();
-            if (element != null && element.getContainingFile().getName().equals("re.py") && isRegexpMethod(element, index)) {
+            if (element != null && PsiTreeUtil.getParentOfType(element, ScopeOwner.class) instanceof PyFile &&
+                element.getContainingFile().getName().equals("re.py") && isRegexpMethod(element, index)) {
               final Language language = isVerbose(call) ? PythonVerboseRegexpLanguage.INSTANCE : PythonRegexpLanguage.INSTANCE;
               registrar.startInjecting(language);
               PyInjectionUtil.registerStringLiteralInjection(context, registrar);

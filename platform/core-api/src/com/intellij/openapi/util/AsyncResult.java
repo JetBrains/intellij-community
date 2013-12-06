@@ -25,6 +25,8 @@ import org.jetbrains.annotations.Nullable;
 public class AsyncResult<T> extends ActionCallback {
   private static final Logger LOG = Logger.getInstance(AsyncResult.class);
 
+  private static final AsyncResult REJECTED = new Rejected();
+
   protected T myResult;
 
   @NotNull
@@ -151,6 +153,11 @@ public class AsyncResult<T> extends ActionCallback {
     public Rejected(T value) {
       setRejected(value);
     }
+  }
+
+  public static <R> AsyncResult<R> rejected() {
+    //noinspection unchecked
+    return REJECTED;
   }
 
   // we don't use inner class, avoid memory leak, we don't want to hold this result while dependent is computing

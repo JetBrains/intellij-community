@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,15 +22,10 @@ import com.intellij.openapi.roots.DependencyScope;
 import com.intellij.openapi.roots.LibraryOrSdkOrderEntry;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.RootProvider;
-import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.NullableFunction;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.List;
 
 /**
  *  @author dsl
@@ -67,18 +62,6 @@ abstract class LibraryOrderEntryBaseImpl extends OrderEntryBaseImpl implements L
   public VirtualFile[] getRootFiles(@NotNull OrderRootType type) {
     RootProvider rootProvider = getRootProvider();
     return rootProvider != null ? rootProvider.getFiles(type) : VirtualFile.EMPTY_ARRAY;
-  }
-
-  /** @deprecated has no sense (to remove in IDEA 13) */
-  @SuppressWarnings({"MethodMayBeStatic", "UnusedDeclaration"})
-  protected VirtualFile[] filterDirectories(@NotNull VirtualFile[] files) {
-    List<VirtualFile> filtered = ContainerUtil.mapNotNull(files, new NullableFunction<VirtualFile, VirtualFile>() {
-      @Override
-      public VirtualFile fun(@NotNull VirtualFile file) {
-        return file.isDirectory() ? file : null;
-      }
-    });
-    return VfsUtilCore.toVirtualFileArray(filtered);
   }
 
   @Nullable

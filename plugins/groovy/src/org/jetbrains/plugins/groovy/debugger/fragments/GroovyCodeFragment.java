@@ -151,7 +151,7 @@ public class GroovyCodeFragment extends GroovyFileImpl implements JavaCodeFragme
     return myExceptionChecker;
   }
 
-  public void setIntentionActionsFilter(IntentionActionsFilter filter) {
+  public void setIntentionActionsFilter(@NotNull IntentionActionsFilter filter) {
     myFilter = filter;
   }
 

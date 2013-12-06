@@ -16,19 +16,26 @@
 
 package com.intellij.tasks.actions;
 
+import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.binding.BindControl;
 import com.intellij.openapi.options.binding.ControlBinder;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.ValidationInfo;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vcs.AbstractVcs;
+import com.intellij.openapi.vcs.VcsTaskHandler;
 import com.intellij.openapi.vcs.VcsType;
 import com.intellij.tasks.*;
 import com.intellij.tasks.impl.TaskManagerImpl;
 import com.intellij.tasks.impl.TaskUtil;
+import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.components.JBCheckBox;
+import com.intellij.ui.components.JBLabel;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -42,6 +49,7 @@ import java.awt.event.ActionListener;
  */
 public class OpenTaskDialog extends DialogWrapper {
   private final static Logger LOG = Logger.getInstance("#com.intellij.tasks.actions.SimpleOpenTaskDialog");
+  public static final String START_FROM_BRANCH = "start.from.branch";
 
   private JPanel myPanel;
   @BindControl(value = "clearContext", instant = true)
@@ -53,9 +61,12 @@ public class OpenTaskDialog extends DialogWrapper {
   private JTextField myChangelistName;
   private JBCheckBox myCreateBranch;
   private JBCheckBox myCreateChangelist;
+  private JBLabel myFromLabel;
+  private ComboBox myBranchFrom;
 
   private final Project myProject;
   private final Task myTask;
+  private VcsTaskHandler myVcsTaskHandler;
 
   public OpenTaskDialog(@NotNull final Project project, @NotNull final Task task) {
     super(project, false);
@@ -100,6 +111,48 @@ public class OpenTaskDialog extends DialogWrapper {
         myCreateBranch.setSelected(false);
         myCreateBranch.setVisible(false);
         myBranchName.setVisible(false);
+        myFromLabel.setVisible(false);
+        myBranchFrom.setVisible(false);
+      }
+      else {
+        VcsTaskHandler[] handlers = VcsTaskHandler.getAllHandlers(project);
+        for (VcsTaskHandler handler : handlers) {
+          VcsTaskHandler.TaskInfo[] tasks = handler.getCurrentTasks();
+          if (tasks.length > 0) {
+            myVcsTaskHandler = handler;
+            myBranchFrom.setModel(new DefaultComboBoxModel(tasks));
+            final String startFrom = PropertiesComponent.getInstance(project).getValue(START_FROM_BRANCH);
+            VcsTaskHandler.TaskInfo info = null;
+            if (startFrom != null) {
+              info = ContainerUtil.find(tasks, new Condition<VcsTaskHandler.TaskInfo>() {
+                @Override
+                public boolean value(VcsTaskHandler.TaskInfo taskInfo) {
+                  return startFrom.equals(taskInfo.getName());
+                }
+              });
+            }
+            if (info == null) {
+              info = handler.getActiveTask();
+            }
+            myBranchFrom.setSelectedItem(info);
+            myBranchFrom.addActionListener(new ActionListener() {
+              @Override
+              public void actionPerformed(ActionEvent e) {
+                VcsTaskHandler.TaskInfo item = (VcsTaskHandler.TaskInfo)myBranchFrom.getSelectedItem();
+                if (item != null) {
+                  PropertiesComponent.getInstance(project).setValue(START_FROM_BRANCH, item.getName());
+                }
+              }
+            });
+            break;
+          }
+        }
+        myBranchFrom.setRenderer(new ColoredListCellRenderer<VcsTaskHandler.TaskInfo>() {
+          @Override
+          protected void customizeCellRenderer(JList list, VcsTaskHandler.TaskInfo value, int index, boolean selected, boolean hasFocus) {
+            append(value.getName());
+          }
+        });
       }
 
       myBranchName.setText(taskManager.suggestBranchName(task));
@@ -122,7 +175,7 @@ public class OpenTaskDialog extends DialogWrapper {
   }
 
   public void createTask() {
-    TaskManagerImpl taskManager = (TaskManagerImpl)TaskManager.getManager(myProject);
+    final TaskManagerImpl taskManager = (TaskManagerImpl)TaskManager.getManager(myProject);
 
     taskManager.getState().markAsInProgress = isMarkAsInProgress();
     taskManager.getState().createChangelist = myCreateChangelist.isSelected();
@@ -138,13 +191,25 @@ public class OpenTaskDialog extends DialogWrapper {
         LOG.warn(ex);
       }
     }
-    LocalTask activeTask = taskManager.getActiveTask();
-    LocalTask localTask = taskManager.activateTask(myTask, isClearContext());
+    final LocalTask activeTask = taskManager.getActiveTask();
+    final LocalTask localTask = taskManager.activateTask(myTask, isClearContext());
     if (myCreateChangelist.isSelected()) {
       taskManager.createChangeList(localTask, myChangelistName.getText());
     }
     if (myCreateBranch.isSelected()) {
-      taskManager.createBranch(localTask, activeTask, myBranchName.getText());
+      VcsTaskHandler.TaskInfo item = (VcsTaskHandler.TaskInfo)myBranchFrom.getSelectedItem();
+      Runnable createBranch = new Runnable() {
+        @Override
+        public void run() {
+          taskManager.createBranch(localTask, activeTask, myBranchName.getText());
+        }
+      };
+      if (item != null && !item.equals(myVcsTaskHandler.getActiveTask())) {
+        myVcsTaskHandler.switchToTask(item, createBranch);
+      }
+      else {
+        createBranch.run();
+      }
     }
     if (myTask.getType() == TaskType.EXCEPTION && AnalyzeTaskStacktraceAction.hasTexts(myTask)) {
       AnalyzeTaskStacktraceAction.analyzeStacktrace(myTask, myProject);

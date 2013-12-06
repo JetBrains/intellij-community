@@ -315,7 +315,7 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
 
     final MyIndex<K> index = (MyIndex<K>)myIndices.get(indexKey);
     try {
-      return index.processAllKeys(processor, idFilter);
+      return index.processAllKeys(processor, scope, idFilter);
     }
     catch (StorageException e) {
       forceRebuild(e);
@@ -429,7 +429,7 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
         public Collection<K> call() throws Exception {
           return oldValues.keySet();
         }
-      });
+      }, null);
     }
     catch (StorageException e) {
       LOG.info(e);
@@ -443,20 +443,24 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
     }
 
     @Override
-    public void updateWithMap(final int inputId, @NotNull final Map<K, StubIdList> newData, @NotNull Callable<Collection<K>> oldKeysGetter) throws StorageException {
-      super.updateWithMap(inputId, newData, oldKeysGetter);
+    public void updateWithMap(final int inputId,
+                              @NotNull final Map<K, StubIdList> newData,
+                              @NotNull Callable<Collection<K>> oldKeysGetter,
+                              Void input) throws StorageException {
+      super.updateWithMap(inputId, newData, oldKeysGetter, input);
     }
   }
 
   @Override
-  protected <Psi extends PsiElement> void reportStubPsiMismatch(Psi psi, VirtualFile file) {
+  protected <Psi extends PsiElement> void reportStubPsiMismatch(Psi psi, VirtualFile file, Class<Psi> requiredClass) {
     if (file == null) {
-      super.reportStubPsiMismatch(psi, file);
+      super.reportStubPsiMismatch(psi, file, requiredClass);
       return;
     }
 
     String msg = "Invalid stub element type in index: " + file;
     msg += "; found: " + psi;
+    msg += "; expected: " + requiredClass;
     msg += "\nfile stamp: " + file.getModificationStamp();
     msg += "; file size: " + file.getLength();
     msg += "; file modCount: " + file.getModificationCount();

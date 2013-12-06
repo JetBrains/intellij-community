@@ -44,17 +44,13 @@ public abstract class PyMultiFileResolveTestCase extends PyResolveTestCase {
         FileType fileType = file.getFileType();
         return fileType == PythonFileType.INSTANCE;
       }
-    });
-    try {
-      final ResolveResult[] resolveResults = ref.multiResolve(false);
-      if (resolveResults.length == 0) {
-        return null;
-      }
-      return resolveResults[0].isValidResult() ? resolveResults[0].getElement() : null;
+    }, myTestRootDisposable);
+    final ResolveResult[] resolveResults = ref.multiResolve(false);
+    psiManager.setAssertOnFileLoadingFilter(VirtualFileFilter.NONE, myTestRootDisposable);
+    if (resolveResults.length == 0) {
+      return null;
     }
-    finally {
-      psiManager.setAssertOnFileLoadingFilter(VirtualFileFilter.NONE);
-    }
+    return resolveResults[0].isValidResult() ? resolveResults[0].getElement() : null;
   }
 
 

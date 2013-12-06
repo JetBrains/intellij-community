@@ -56,7 +56,6 @@ public class RequestHint {
 
   private boolean myIgnoreFilters = false;
   private boolean myRestoreBreakpoints = false;
-  private final boolean mySkipThisMethod = false;
 
   public RequestHint(final ThreadReferenceProxyImpl stepThread, final SuspendContextImpl suspendContext, @NotNull MethodFilter methodFilter) {
     this(stepThread, suspendContext, StepRequest.STEP_INTO, methodFilter);
@@ -125,7 +124,7 @@ public class RequestHint {
   }
 
   public int getDepth() {
-    return mySkipThisMethod ? StepRequest.STEP_OUT : myDepth;
+    return myDepth;
   }
 
   @Nullable

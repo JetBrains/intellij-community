@@ -21,7 +21,7 @@ import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.Consumer;
 import com.intellij.util.Function;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
@@ -56,7 +56,7 @@ public class HgHistoryUtil {
   @NotNull
   public static List<VcsFullCommitDetails> history(@NotNull final Project project,
                                                    @NotNull final VirtualFile root, int limit,
-                                                   String... parameters)
+                                                   List<String> parameters)
     throws VcsException {
     List<HgCommittedChangeList> result = getCommittedChangeList(project, root, limit, true, parameters);
     return ContainerUtil.mapNotNull(result, new Function<HgCommittedChangeList, VcsFullCommitDetails>() {
@@ -70,9 +70,8 @@ public class HgHistoryUtil {
   @NotNull
   private static List<HgCommittedChangeList> getCommittedChangeList(@NotNull final Project project,
                                                                     @NotNull final VirtualFile root, int limit, boolean withFiles,
-                                                                    String... parameters) {
+                                                                    List<String> parameters) {
     HgFile hgFile = new HgFile(root, VcsUtil.getFilePath(root.getPath()));
-    List<String> args = Arrays.asList(parameters);
     List<HgCommittedChangeList> result = new LinkedList<HgCommittedChangeList>();
     final List<HgFileRevision> localRevisions;
     HgLogCommand hgLogCommand = new HgLogCommand(project);
@@ -81,7 +80,10 @@ public class HgHistoryUtil {
     HgVcs hgvcs = HgVcs.getInstance(project);
     assert hgvcs != null;
     try {
-      localRevisions = hgLogCommand.getFullHistory(hgFile, limit, withFiles, args);
+      if (!hgvcs.getVersion().isParentRevisionTemplateSupported()) {
+        parameters.add("--debug");
+      }
+      localRevisions = hgLogCommand.execute(hgFile, limit, withFiles, parameters);
     }
     catch (HgCommandException e) {
       new HgCommandResultNotifier(project).notifyError(null, HgVcsMessages.message("hg4idea.error.log.command.execution"), e.getMessage());
@@ -119,7 +121,7 @@ public class HgHistoryUtil {
   @NotNull
   public static List<? extends VcsShortCommitDetails> readMiniDetails(Project project, final VirtualFile root, List<String> hashes)
     throws VcsException {
-    final VcsLogObjectsFactory factory = ServiceManager.getService(VcsLogObjectsFactory.class);
+    final VcsLogObjectsFactory factory = ServiceManager.getService(project, VcsLogObjectsFactory.class);
     return ContainerUtil.map(getCommittedChangeList(project, root, -1, false, prepareHashes(hashes)),
                              new Function<HgCommittedChangeList, VcsShortCommitDetails>() {
                                @Override
@@ -131,16 +133,17 @@ public class HgHistoryUtil {
                                  }
                                  return factory.createShortDetails(factory.createHash(revNumber.getChangeset()), parents,
                                                                    record.getCommitDate().getTime(), root,
-                                                                   revNumber.getSubject(), revNumber.getAuthor());
+                                                                   revNumber.getSubject(), revNumber.getAuthor(), revNumber.getEmail());
                                }
                              });
   }
 
   @NotNull
-  public static List<TimedVcsCommit> readAllHashes(@NotNull Project project, @NotNull VirtualFile root) throws VcsException {
+  public static List<TimedVcsCommit> readAllHashes(@NotNull Project project, @NotNull VirtualFile root,
+                                                   @NotNull final Consumer<VcsUser> userRegistry) throws VcsException {
 
-    final VcsLogObjectsFactory factory = ServiceManager.getService(VcsLogObjectsFactory.class);
-    return ContainerUtil.map(getCommittedChangeList(project, root, -1, false, ""), new Function<HgCommittedChangeList, TimedVcsCommit>() {
+    final VcsLogObjectsFactory factory = ServiceManager.getService(project, VcsLogObjectsFactory.class);
+    return ContainerUtil.map(getCommittedChangeList(project, root, -1, false, Collections.<String>emptyList()), new Function<HgCommittedChangeList, TimedVcsCommit>() {
       @Override
       public TimedVcsCommit fun(HgCommittedChangeList record) {
         HgRevisionNumber revNumber = (HgRevisionNumber)record.getRevisionNumber();
@@ -148,6 +151,7 @@ public class HgHistoryUtil {
         for (HgRevisionNumber parent : revNumber.getParents()) {
           parents.add(factory.createHash(parent.getChangeset()));
         }
+        userRegistry.consume(factory.createUser(record.getRevision().getAuthor(), revNumber.getEmail()));
         return factory.createTimedCommit(factory.createHash(revNumber.getChangeset()),
                                          parents, record.getCommitDate().getTime());
       }
@@ -173,7 +177,7 @@ public class HgHistoryUtil {
   private static VcsFullCommitDetails createCommit(@NotNull Project project, @NotNull VirtualFile root,
                                                    @NotNull HgCommittedChangeList record) {
 
-    final VcsLogObjectsFactory factory = ServiceManager.getService(VcsLogObjectsFactory.class);
+    final VcsLogObjectsFactory factory = ServiceManager.getService(project, VcsLogObjectsFactory.class);
     HgRevisionNumber revNumber = (HgRevisionNumber)record.getRevisionNumber();
 
     List<Hash> parents = ContainerUtil.map(revNumber.getParents(), new Function<HgRevisionNumber, Hash>() {
@@ -184,22 +188,21 @@ public class HgHistoryUtil {
     });
     return factory.createFullDetails(factory.createHash(revNumber.getChangeset()), parents, record.getCommitDate().getTime(), root,
                                      revNumber.getSubject(),
-                                     revNumber.getAuthor(), "", revNumber.getCommitMessage(), record.getCommitterName(),
+                                     revNumber.getAuthor(), revNumber.getEmail(), revNumber.getCommitMessage(), record.getCommitterName(),
                                      "", record.getCommitDate().getTime(),
                                      ContainerUtil.newArrayList(record.getChanges()), HgContentRevisionFactory.getInstance(project));
   }
 
   @Nullable
-  public static String[] prepareHashes(@NotNull List<String> hashes) {
+  public static List<String> prepareHashes(@NotNull List<String> hashes) {
     if (hashes.isEmpty()) {
-      return ArrayUtil.EMPTY_STRING_ARRAY;
+      return Collections.emptyList();
     }
-    StringBuilder builder = new StringBuilder();
+    List<String> hashArgs = new ArrayList<String>();
     for (String hash : hashes) {
-      builder.append(hash).append('+');
+      hashArgs.add("-r");
+      hashArgs.add(hash);
     }
-    builder.deleteCharAt(builder.length() - 1);
-    //todo change ugly style
-    return new String[]{"--rev", builder.toString()};
+    return hashArgs;
   }
 }

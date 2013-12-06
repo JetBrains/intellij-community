@@ -5,8 +5,7 @@ import com.intellij.remoteServer.impl.runtime.ui.tree.ServerNode;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Created by IntelliJ IDEA.
- * User: michael.golubev
+ * @author michael.golubev
  */
 public class DeployAllAction extends ServerActionBase {
 

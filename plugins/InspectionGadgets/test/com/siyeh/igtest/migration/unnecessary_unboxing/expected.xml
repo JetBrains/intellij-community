@@ -8,16 +8,12 @@
     <description>Unnecessary unboxing &lt;code&gt;intValue.intValue()&lt;/code&gt; #loc</description>
   </problem>
 
-
-
   <problem>
     <file>UnnecessaryUnboxing.java</file>
     <line>14</line>
     <problem_class>Unnecessary unboxing</problem_class>
     <description>Unnecessary unboxing &lt;code&gt;longValue.longValue()&lt;/code&gt; #loc</description>
   </problem>
-
-
 
   <problem>
     <file>UnnecessaryUnboxing.java</file>
@@ -26,16 +22,12 @@
     <description>Unnecessary unboxing &lt;code&gt;doubleValue.doubleValue()&lt;/code&gt; #loc</description>
   </problem>
 
-
-
   <problem>
     <file>UnnecessaryUnboxing.java</file>
     <line>17</line>
     <problem_class>Unnecessary unboxing</problem_class>
     <description>Unnecessary unboxing &lt;code&gt;floatValue.floatValue()&lt;/code&gt; #loc</description>
   </problem>
-
-
 
   <problem>
     <file>UnnecessaryUnboxing.java</file>
@@ -44,15 +36,12 @@
     <description>Unnecessary unboxing &lt;code&gt;booleanValue.booleanValue()&lt;/code&gt; #loc</description>
   </problem>
 
-
-
   <problem>
     <file>UnnecessaryUnboxing.java</file>
     <line>20</line>
     <problem_class>Unnecessary unboxing</problem_class>
     <description>Unnecessary unboxing &lt;code&gt;character.charValue()&lt;/code&gt; #loc</description>
   </problem>
-
   <problem>
     <file>UnnecessaryUnboxing.java</file>
     <line>28</line>
@@ -60,5 +49,11 @@
     <description>Unnecessary unboxing &lt;code&gt;bar.intValue()&lt;/code&gt; #loc</description>
   </problem>
 
+  <problem>
+    <file>UnnecessaryUnboxing.java</file>
+    <line>39</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unnecessary unboxing</problem_class>
+    <description>Unnecessary unboxing &lt;code&gt;b.byteValue()&lt;/code&gt; #loc</description>
+  </problem>
 
 </problems>

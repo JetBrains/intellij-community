@@ -44,7 +44,7 @@
     </component>
 
     <component>
-      <implementation-class>com.intellij.compilerOutputIndex.api.indexer.CompilerOutputIndexer</implementation-class>
+      <implementation-class>com.intellij.compiler.classFilesIndex.api.index.ClassFilesIndexFeaturesHolder</implementation-class>
     </component>
   </project-components>
 
@@ -233,10 +233,13 @@
     <extensionPoint name="psi.clsDecompiledFileProvider"
                     interface="com.intellij.psi.ClsFileDecompiledPsiFileProvider"/>
 
-    <extensionPoint name="java.compilerOutputIndex" area="IDEA_PROJECT"
-                    interface="com.intellij.compilerOutputIndex.api.indexer.CompilerOutputBaseIndex"/>
     <extensionPoint name="vetoSPICondition" interface="com.intellij.openapi.util.Condition"/>
+
     <extensionPoint name="testStatusListener" interface="com.intellij.execution.testframework.TestStatusListener"/>
+
+    <extensionPoint name="hierarchy.referenceProcessor" interface="com.intellij.ide.hierarchy.call.CallReferenceProcessor"/>
+
+    <extensionPoint name="lang.psiAugmentProvider" interface="com.intellij.psi.augment.PsiAugmentProvider"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -977,16 +980,14 @@
     <langCodeStyleSettingsProvider implementation="com.intellij.ide.JavaLanguageCodeStyleSettingsProvider"/>
 
 
-    <stacktrace.fold substring="at java.awt.EventDispatchThread.pumpEventsForFilter("/>
-    <stacktrace.fold substring="at java.awt.EventDispatchThread.pumpEventsForHierarchy("/>
-    <stacktrace.fold substring="at java.awt.EventDispatchThread.pumpEvents("/>
+    <stacktrace.fold substring="at java.awt.EventDispatchThread"/>
     <stacktrace.fold substring="at java.awt.Window.dispatchEventImpl("/>
     <stacktrace.fold substring="at java.awt.Container.dispatchEventImpl("/>
     <stacktrace.fold substring="at java.awt.LightweightDispatcher."/>
     <stacktrace.fold substring="at java.awt.Component.dispatchEvent("/>
-    <stacktrace.fold substring="at java.awt.EventQueue.dispatchEvent("/>
+    <stacktrace.fold substring="at java.awt.event.InvocationEvent.dispatch("/>
+    <stacktrace.fold substring="at java.awt.EventQueue"/>
     <stacktrace.fold substring="at java.awt.Component.dispatchEventImpl("/>
-    <stacktrace.fold substring="at java.awt.EventDispatchThread.pumpOneEventForFilters("/>
     <stacktrace.fold substring="at java.awt.Container.processEvent("/>
     <stacktrace.fold substring="at javax.swing.JComponent.processMouseEvent("/>
     <stacktrace.fold substring="at javax.swing.plaf.basic.BasicMenuItemUI"/>
@@ -998,12 +999,10 @@
     <stacktrace.fold substring="at javax.swing.DefaultButtonModel.setPressed("/>
     <stacktrace.fold substring="at javax.swing.AbstractButton.fireActionPerformed("/>
     <stacktrace.fold substring="at javax.swing.AbstractButton$Handler.actionPerformed("/>
-    <stacktrace.fold substring="at java.awt.EventQueue$1.run("/>
     <stacktrace.fold substring="at java.security.AccessControlContext$1.doIntersectionPrivilege("/>
     <stacktrace.fold substring="at java.awt.EventQueue.dispatchEventImpl("/>
     <stacktrace.fold substring="at java.security.AccessController.doPrivileged(Native Method)"/>
-    <stacktrace.fold substring="at java.awt.EventQueue$2.run("/>
-    <stacktrace.fold substring="at java.awt.EventQueue.access$000("/>
+    <stacktrace.fold substring="at java.security.ProtectionDomain$1.doIntersectionPrivilege("/>
     <stacktrace.fold substring="at com.jgoodies.binding.beans.ExtendedPropertyChangeSupport.firePropertyChange0("/>
     <stacktrace.fold substring="at javax.swing.plaf.basic.BasicComboPopup$Handler.mouseReleased("/>
 
@@ -1460,11 +1459,10 @@
 
     <gotoDeclarationHandler implementation="com.intellij.codeInsight.navigation.actions.GotoLambdaParameterHandler"/>
 
-    <java.compilerOutputIndex implementation="com.intellij.compilerOutputIndex.impl.MethodsUsageIndex"/>
     <completion.contributor language="JAVA" id="methodsChainsCompletionContributor" order="first"
-                            implementationClass="com.intellij.codeInsight.completion.methodChains.completion.MethodsChainsCompletionContributor"/>
+                            implementationClass="com.intellij.compiler.classFilesIndex.chainsSearch.completion.MethodsChainsCompletionContributor"/>
     <weigher order="first" key="completion" id="methodsChains"
-             implementationClass="com.intellij.codeInsight.completion.methodChains.completion.MethodsChainsWeigher"/>
+             implementationClass="com.intellij.compiler.classFilesIndex.chainsSearch.completion.MethodsChainsWeigher"/>
 
     <applicationService serviceInterface="org.jetbrains.generate.tostring.template.TemplatesManager"
                         serviceImplementation="org.jetbrains.generate.tostring.template.TemplatesManager"/>
@@ -1483,6 +1481,9 @@
     <xdebugger.breakpointType implementation="org.jetbrains.java.debugger.breakpoints.JavaBreakpointType"/>
 
     <refactoring.pullUpHelperFactory language="JAVA" implementationClass="com.intellij.refactoring.memberPullUp.JavaPullUpHelperFactory"/>
+    <hierarchy.referenceProcessor implementation="com.intellij.ide.hierarchy.call.JavaCallReferenceProcessor"/>
+    <projectTemplate projectType="Java" templatePath="resources/projectTemplates/Java/Command_Line_App.zip"/>
+    <generatedSourcesFilter implementation="com.intellij.openapi.roots.JavaGeneratedSourcesFilter"/>
   </extensions>
 
   <actions>
@@ -1490,6 +1491,7 @@
             icon="AllIcons.General.ProjectStructure">
       <add-to-group group-id="FileMainSettingsGroup" anchor="after" relative-to-action="ShowSettings"/>
       <add-to-group group-id="MainToolBarSettings" anchor="after" relative-to-action="ShowSettings"/>
+      <add-to-group group-id="NavBarToolBar" anchor="last"/>
     </action>
     <action id="TemplateProjectStructure" class="com.intellij.ide.actions.TemplateProjectStructureAction">
       <add-to-group group-id="FileSettingsGroup" anchor="last"/>

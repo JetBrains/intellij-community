@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,12 +30,6 @@ public class DataInputOutputUtil {
 
   private DataInputOutputUtil() {}
 
-  @SuppressWarnings("UnusedDeclaration")
-  /** @deprecated obsolete (use {@link IOUtil} methods) (to remove in IDEA 13) */
-  public static void skipUTF(@NotNull DataInput record) throws IOException {
-    record.skipBytes(record.readUnsignedShort());
-  }
-
   public static StringRef readNAME(@NotNull DataInput record, @NotNull AbstractStringEnumerator nameStore) throws IOException {
     return StringRef.fromStream(record, nameStore);
   }
@@ -43,18 +37,6 @@ public class DataInputOutputUtil {
   public static void writeNAME(@NotNull DataOutput record, @Nullable String name, @NotNull AbstractStringEnumerator nameStore) throws IOException {
     final int nameId = name != null ? nameStore.enumerate(name) : 0;
     writeINT(record, nameId);
-  }
-
-  @SuppressWarnings("UnusedDeclaration")
-  /** @deprecated use {@linkplain #readNAME(java.io.DataInput, AbstractStringEnumerator)} (to remove in IDEA 13) */
-  public static void skipNAME(@NotNull DataInput record) throws IOException {
-    readINT(record);
-  }
-
-  /** @deprecated use {@linkplain #readINT(java.io.DataInput)} (to remove in IDEA 13) */
-  @SuppressWarnings("UnusedDeclaration")
-  public static void skipINT(@NotNull DataInput record) throws IOException {
-    readINT(record);
   }
 
   public static int readINT(@NotNull DataInput record) throws IOException {
@@ -86,12 +68,6 @@ public class DataInputOutputUtil {
       }
       record.writeByte(val);
     }
-  }
-
-  /** @deprecated use {@linkplain #readSINT(java.io.DataInput)} (to remove in IDEA 13) */
-  @SuppressWarnings("UnusedDeclaration")
-  public static void skipSINT(@NotNull DataInput record) throws IOException {
-    readSINT(record);
   }
 
   public static int readSINT(@NotNull DataInput record) throws IOException {

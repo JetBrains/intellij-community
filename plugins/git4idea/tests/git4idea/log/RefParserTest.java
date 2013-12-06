@@ -1,7 +1,12 @@
 package git4idea.log;
 
+import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.impl.NullVirtualFile;
-import com.intellij.vcs.log.VcsRef;
+import com.intellij.util.NotNullFunction;
+import com.intellij.vcs.log.*;
+import com.intellij.vcs.log.impl.VcsRefImpl;
+import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
 
 import java.util.List;
@@ -18,7 +23,7 @@ public class RefParserTest {
   }
 
   public void runTest(String inputStr, String outStr) {
-    List<VcsRef> refs = RefParser.parseCommitRefs(inputStr, NullVirtualFile.INSTANCE);
+    List<VcsRef> refs = new RefParser(new TestLogObjectsFactory()).parseCommitRefs(inputStr, NullVirtualFile.INSTANCE);
     StringBuilder s = new StringBuilder();
     for (VcsRef ref : refs) {
       if (s.length() > 0) {
@@ -60,5 +65,63 @@ public class RefParserTest {
     );
   }
 
+  @Test
+  public void noTagName() {
+    runTest("787ec72f340d740433ba068d4d58a6e58f6226bf", "");
+  }
+  
+  private class TestLogObjectsFactory implements VcsLogObjectsFactory {
+    @NotNull
+    @Override
+    public Hash createHash(@NotNull String stringHash) {
+      throw new UnsupportedOperationException();
+    }
 
+    @NotNull
+    @Override
+    public VcsCommit createCommit(@NotNull Hash hash, @NotNull List<Hash> parents) {
+      throw new UnsupportedOperationException();
+    }
+
+    @NotNull
+    @Override
+    public TimedVcsCommit createTimedCommit(@NotNull Hash hash, @NotNull List<Hash> parents, long timeStamp) {
+      throw new UnsupportedOperationException();
+    }
+
+    @NotNull
+    @Override
+    public VcsShortCommitDetails createShortDetails(@NotNull Hash hash, @NotNull List<Hash> parents, long timeStamp, VirtualFile root,
+                                                    @NotNull String subject, @NotNull String authorName, String authorEmail) {
+      throw new UnsupportedOperationException();
+    }
+
+    @NotNull
+    @Override
+    public VcsFullCommitDetails createFullDetails(@NotNull Hash hash, @NotNull List<Hash> parents, long time, VirtualFile root,
+                                                  @NotNull String subject, @NotNull String authorName, @NotNull String authorEmail,
+                                                  @NotNull String message, @NotNull String committerName, @NotNull String committerEmail,
+                                                  long authorTime, @NotNull List<Change> changes,
+                                                  @NotNull ContentRevisionFactory contentRevisionFactory) {
+      throw new UnsupportedOperationException();
+    }
+
+    @NotNull
+    @Override
+    public VcsUser createUser(@NotNull String name, @NotNull String email) {
+      throw new UnsupportedOperationException();
+    }
+
+    @NotNull
+    @Override
+    public VcsRef createRef(@NotNull Hash commitHash, @NotNull String name, @NotNull VcsRefType type, @NotNull VirtualFile root) {
+      return new VcsRefImpl(new NotNullFunction<Hash, Integer>() {
+        @NotNull
+        @Override
+        public Integer fun(Hash dom) {
+          return Integer.parseInt(dom.asString().substring(0, Math.min(4, dom.asString().length())), 16);
+        }
+      }, commitHash, name, type, root);
+    }
+  }
 }

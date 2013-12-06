@@ -21,8 +21,9 @@ import java.util.Map;
  * @author peter
  */
 public abstract class ConcurrentFactoryMap<T,V> extends FactoryMap<T,V> {
+
   @Override
   protected Map<T, V> createMap() {
-    return new ConcurrentHashMap<T,V>();
+    return ContainerUtil.newConcurrentMap();
   }
 }

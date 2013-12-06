@@ -16,6 +16,7 @@
 package com.intellij.codeInsight.hint;
 
 import com.intellij.codeInsight.lookup.LookupManager;
+import com.intellij.injected.editor.EditorWindow;
 import com.intellij.lang.parameterInfo.CreateParameterInfoContext;
 import com.intellij.lang.parameterInfo.ParameterInfoHandler;
 import com.intellij.openapi.application.ApplicationManager;
@@ -109,11 +110,13 @@ public class ShowParameterInfoContext implements CreateParameterInfoContext {
     showMethodInfo(getProject(), getEditor(), element, getHighlightedElement(), itemsToShow, offset, handler);
   }
 
-  private static void showParameterHint(final PsiElement element, final Editor editor, final Object[] descriptors,
-                                        final Project project, final ShowParameterInfoHandler.BestLocationPointProvider provider,
+  private static void showParameterHint(final PsiElement element,
+                                        final Editor editor,
+                                        final Object[] descriptors,
+                                        final Project project,
                                         @Nullable PsiElement highlighted,
-                                        final int elementStart, final ParameterInfoHandler handler
-                                        ) {
+                                        final int elementStart,
+                                        final ParameterInfoHandler handler) {
     if (ParameterInfoController.isAlreadyShown(editor, elementStart)) return;
 
     if (editor.isDisposed() || !editor.getComponent().isVisible()) return;
@@ -128,6 +131,7 @@ public class ShowParameterInfoContext implements CreateParameterInfoContext {
     final LightweightHint hint = new LightweightHint(component);
     hint.setSelectingHint(true);
     final HintManagerImpl hintManager = HintManagerImpl.getInstanceImpl();
+    final ShowParameterInfoHandler.BestLocationPointProvider provider = new MyBestLocationPointProvider(editor);
     final Pair<Point, Short> pos = provider.getBestPointPosition(hint, element, elementStart, true, HintManager.UNDER);
 
     ApplicationManager.getApplication().invokeLater(new Runnable() {
@@ -141,7 +145,10 @@ public class ShowParameterInfoContext implements CreateParameterInfoContext {
         HintHint hintHint = HintManagerImpl.createHintHint(editor, pos.getFirst(), hint, pos.getSecond());
         hintHint.setExplicitClose(true);
 
-        hintManager.showEditorHint(hint, editor, pos.getFirst(), HintManager.HIDE_BY_ESCAPE | HintManager.UPDATE_BY_SCROLLING, 0, false, hintHint);
+        Editor editorToShow = editor instanceof EditorWindow ? ((EditorWindow)editor).getDelegate() : editor;
+        // is case of injection we need to calculate position for EditorWindow
+        // also we need to show the hint in the main editor because of intention bulb
+        hintManager.showEditorHint(hint, editorToShow, pos.getFirst(), HintManager.HIDE_BY_ESCAPE | HintManager.UPDATE_BY_SCROLLING, 0, false, hintHint);
         new ParameterInfoController(project, editor, elementStart, hint, handler, provider);
       }
     });
@@ -154,8 +161,7 @@ public class ShowParameterInfoContext implements CreateParameterInfoContext {
                                      int offset,
                                      ParameterInfoHandler handler
                                      ) {
-    showParameterHint(list, editor, candidates, project, new MyBestLocationPointProvider(editor),
-                      candidates.length > 1 ? highlighted: null,offset, handler);
+    showParameterHint(list, editor, candidates, project, candidates.length > 1 ? highlighted : null, offset, handler);
   }
 
   /**

@@ -41,6 +41,12 @@ public class NoGraphTableModel extends AbstractVcsLogTableModel<CommitCell> {
   @Nullable
   @Override
   protected VcsShortCommitDetails getShortDetails(int rowIndex) {
+    return getFullCommitDetails(rowIndex);
+  }
+
+  @Nullable
+  @Override
+  public VcsFullCommitDetails getFullCommitDetails(int rowIndex) {
     VcsFullCommitDetails commits = myCommits.get(rowIndex);
     if (commits == null) {
       LOG.error("Couldn't identify details for commit at " + rowIndex, new Attachment("loaded_commits", myCommits.toString()));

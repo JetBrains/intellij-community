@@ -23,6 +23,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.LogUtil;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.ILazyParseableElementType;
 import com.intellij.util.text.CharArrayUtil;
@@ -48,6 +49,7 @@ public class LazyParseableElement extends CompositeElement {
   // Under no circumstances should you grab the PSI_LOCK while holding this lock.
   private final ChameleonLock lock = new ChameleonLock();
   private CharSequence myText; /** guarded by {@link #lock} */
+  private static final ThreadLocal<Boolean> ourSuppressEagerPsiCreation = new ThreadLocal<Boolean>();
 
   public LazyParseableElement(@NotNull IElementType type, CharSequence text) {
     super(type);
@@ -161,29 +163,37 @@ public class LazyParseableElement extends CompositeElement {
 
     ApplicationManager.getApplication().assertReadAccessAllowed();
 
-    ILazyParseableElementType type = (ILazyParseableElementType)getElementType();
-    ASTNode parsedNode = type.parseContents(this);
+    DebugUtil.startPsiModification("lazy-parsing");
+    try {
+      ILazyParseableElementType type = (ILazyParseableElementType)getElementType();
+      ASTNode parsedNode = type.parseContents(this);
 
-    if (parsedNode == null && text.length() > 0) {
-      CharSequence diagText = ApplicationManager.getApplication().isInternal() ? text : "";
-      LOG.error("No parse for a non-empty string: " + diagText + "; type=" + LogUtil.objectAndClass(type));
-    }
-
-    synchronized (lock) {
-      if (myText == null) return;
-      if (rawFirstChild() != null) {
-        LOG.error("Reentrant parsing?");
+      if (parsedNode == null && text.length() > 0) {
+        CharSequence diagText = ApplicationManager.getApplication().isInternal() ? text : "";
+        LOG.error("No parse for a non-empty string: " + diagText + "; type=" + LogUtil.objectAndClass(type));
       }
 
-      myText = null;
-
-      if (parsedNode == null) return;
-      super.rawAddChildrenWithoutNotifications((TreeElement)parsedNode);
+      synchronized (lock) {
+        if (myText == null) return;
+        if (rawFirstChild() != null) {
+          LOG.error("Reentrant parsing?");
+        }
+  
+        myText = null;
+  
+        if (parsedNode == null) return;
+        super.rawAddChildrenWithoutNotifications((TreeElement)parsedNode);
+      }
+    }
+    finally {
+      DebugUtil.finishPsiModification();
     }
 
-    // create PSI all at once, to reduce contention of PsiLock in CompositeElement.getPsi()
-    // create PSI outside the 'lock' since this method grabs PSI_LOCK and deadlock is possible when someone else locks in the other order.
-    createAllChildrenPsiIfNecessary();
+    if (!Boolean.TRUE.equals(ourSuppressEagerPsiCreation.get())) {
+      // create PSI all at once, to reduce contention of PsiLock in CompositeElement.getPsi()
+      // create PSI outside the 'lock' since this method grabs PSI_LOCK and deadlock is possible when someone else locks in the other order.
+      createAllChildrenPsiIfNecessary();
+    }
   }
 
   @Override
@@ -221,5 +231,9 @@ public class LazyParseableElement extends CompositeElement {
   @TestOnly
   public static void setParsingAllowed(boolean allowed) {
     ourParsingAllowed = allowed;
+  }
+  
+  public static void setSuppressEagerPsiCreation(boolean suppress) {
+    ourSuppressEagerPsiCreation.set(suppress);
   }
 }

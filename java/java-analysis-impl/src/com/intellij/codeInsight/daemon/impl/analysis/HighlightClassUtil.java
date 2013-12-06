@@ -539,6 +539,7 @@ public class HighlightClassUtil {
                                                                       @NotNull PsiResolveHelper resolveHelper,
                                                                       @NotNull TextRange range,
                                                                       @NotNull PsiClassType[] handledExceptions) {
+    if (aClass instanceof PsiAnonymousClass) return null;
     PsiClass baseClass = aClass.getSuperClass();
     if (baseClass == null) return null;
     PsiMethod[] constructors = baseClass.getConstructors();

@@ -15,11 +15,14 @@
  */
 package hg4idea.test.history;
 
+import com.intellij.openapi.util.Pair;
 import org.junit.Test;
 import org.zmlx.hg4idea.command.HgLogCommand;
+import org.zmlx.hg4idea.util.HgUtil;
 
 import java.util.Map;
 
+import static junit.framework.Assert.assertEquals;
 import static junit.framework.Assert.assertTrue;
 
 /**
@@ -44,5 +47,14 @@ public class HgLogParseTest {
     assertTrue(filesMap.containsKey("/a/b c/(f).txt"));
     assertTrue(filesMap.containsValue("/a/b c/d.txt"));
     assertTrue(filesMap.containsValue("/a/b c/(d).txt"));
+  }
+
+  @Test
+  public void testParseUserNameAndEmail() {
+    assertEquals(HgUtil.parseUserNameAndEmail("Vasya Pavlovich Pupkin <asdasd@localhost>"),
+                 new Pair<String, String>("Vasya Pavlovich Pupkin", "asdasd@localhost"));
+    assertEquals(HgUtil.parseUserNameAndEmail("Vasya Pavlovich Pupkin"), new Pair<String, String>("Vasya Pavlovich Pupkin", ""));
+    assertEquals(HgUtil.parseUserNameAndEmail("vasya.pupkin@localhost.com"),
+                 new Pair<String, String>("vasya pupkin", "vasya.pupkin@localhost.com"));
   }
 }

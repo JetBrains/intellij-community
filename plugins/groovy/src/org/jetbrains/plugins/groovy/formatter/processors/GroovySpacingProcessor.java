@@ -181,10 +181,11 @@ public class GroovySpacingProcessor extends GroovyElementVisitor {
 
   private boolean manageComments() {
     if (mySettings.KEEP_FIRST_COLUMN_COMMENT && COMMENT_SET.contains(myType2)) {
-      if (myType1 != IMPORT_STATEMENT) {
+      if (!isAfterElementOrSemi(IMPORT_STATEMENT)) {
         myResult = Spacing.createKeepingFirstColumnSpacing(0, Integer.MAX_VALUE, true, 1);
+        return true;
       }
-      return true;
+      return false;
     }
 
     ASTNode prev = FormatterUtil.getPreviousNonWhitespaceLeaf(myChild2);
@@ -211,7 +212,7 @@ public class GroovySpacingProcessor extends GroovyElementVisitor {
   @Override
   public void visitLabeledStatement(GrLabeledStatement labeledStatement) {
     if (myType1 == mCOLON) {
-      if (myGroovySettings.INDENT_LABEL_BLOCKS) {
+      if (myGroovySettings.INDENT_LABEL_BLOCKS && !(myType2 == LITERAL)) {
         createLF(true);
       }
       else {
@@ -387,7 +388,7 @@ public class GroovySpacingProcessor extends GroovyElementVisitor {
   }
 
   private boolean isAfterElementOrSemi(final IElementType elementType) {
-    return myType1 == elementType && myType2 != mSEMI || isSemiAfter(PACKAGE_DEFINITION);
+    return myType1 == elementType && myType2 != mSEMI || isSemiAfter(elementType);
   }
 
   private boolean isSemiAfter(@NotNull IElementType statement) {
@@ -775,6 +776,7 @@ public class GroovySpacingProcessor extends GroovyElementVisitor {
                           isLeftOrRight(ADDITIVE_OPERATORS)       ? mySettings.SPACE_AROUND_ADDITIVE_OPERATORS :
                           isLeftOrRight(MULTIPLICATIVE_OPERATORS) ? mySettings.SPACE_AROUND_MULTIPLICATIVE_OPERATORS :
                           isLeftOrRight(SHIFT_OPERATORS)          ? mySettings.SPACE_AROUND_SHIFT_OPERATORS :
+                          isLeftOrRight(REGEX_OPERATORS)          ? myGroovySettings.SPACE_AROUND_REGEX_OPERATORS :
                           isLeftOrRight(kIN);
     if (TokenSets.BINARY_OP_SET.contains(myType2)) {
       createDependentLFSpacing(mySettings.BINARY_OPERATION_SIGN_ON_NEXT_LINE, spaceAround, expression.getTextRange());

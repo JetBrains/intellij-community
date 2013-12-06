@@ -102,14 +102,14 @@ public class JavaMoveFilesOrDirectoriesHandler extends MoveFilesOrDirectoriesHan
 
   @Nullable
   private static PsiFile obtainContainingFile(@NotNull PsiElement element, PsiElement[] elements) {
-    final PsiClass[] classes = ((PsiClassOwner)element.getParent()).getClasses();
+    final PsiFile containingFile = element.getContainingFile();
+    final PsiClass[] classes = ((PsiClassOwner)containingFile).getClasses();
     final Set<PsiClass> nonMovedClasses = new HashSet<PsiClass>();
     for (PsiClass aClass : classes) {
       if (ArrayUtilRt.find(elements, aClass) < 0) {
         nonMovedClasses.add(aClass);
       }
     }
-    final PsiFile containingFile = element.getContainingFile();
     if (nonMovedClasses.isEmpty()) {
       return containingFile;
     }

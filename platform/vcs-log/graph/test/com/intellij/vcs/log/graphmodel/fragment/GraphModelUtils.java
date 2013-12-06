@@ -17,7 +17,7 @@ import static com.intellij.vcs.log.graph.GraphTestUtils.parseIntegers;
  */
 public class GraphModelUtils {
     public static String toShortStr(@NotNull Node node) {
-        return node.getCommitHash().asString() + ":" + node.getRowIndex();
+        return Integer.toHexString(node.getCommitIndex()) + ":" + node.getRowIndex();
     }
 
 

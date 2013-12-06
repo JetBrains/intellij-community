@@ -42,6 +42,10 @@ public class PsiImportStatementImpl extends PsiImportStatementBaseImpl implement
 
   @Override
   public String getQualifiedName() {
+    PsiImportStatementStub stub = getStub();
+    if (stub != null) {
+      return stub.getImportReferenceText();
+    }
     final PsiJavaCodeReferenceElement reference = getImportReference();
     return reference == null ? null : reference.getCanonicalText();
   }

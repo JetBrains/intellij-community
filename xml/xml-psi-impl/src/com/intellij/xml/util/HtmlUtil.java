@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.intellij.xml.util;
 
 import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.htmlInspections.XmlEntitiesInspection;
+import com.intellij.html.RelaxedHtmlNSDescriptor;
 import com.intellij.ide.highlighter.HtmlFileType;
 import com.intellij.ide.highlighter.XHtmlFileType;
 import com.intellij.javaee.ExternalResourceManagerEx;
@@ -397,6 +398,12 @@ public class HtmlUtil {
     return isHtml5Document(doc);
   }
 
+  public static boolean isHtmlTag(@NotNull XmlTag tag) {
+    final XmlElementDescriptor descriptor = tag.getDescriptor();
+    return descriptor != null && descriptor.getNSDescriptor() instanceof RelaxedHtmlNSDescriptor &&
+           tag.getLanguage() != XHTMLLanguage.INSTANCE;
+  }
+
   public static boolean hasNonHtml5Doctype(XmlElement context) {
     XmlDocument doc = PsiTreeUtil.getParentOfType(context, XmlDocument.class);
     if (doc == null) {
@@ -421,6 +428,15 @@ public class HtmlUtil {
     final XmlTag head = root != null ? root.findFirstSubTag("head") : null;
     final XmlTag base = head != null ? head.findFirstSubTag("base") : null;
     return base != null ? base.getAttributeValue("href") : null;
+  }
+
+  public static boolean isOwnHtmlAttribute(XmlAttributeDescriptor descriptor) {
+    // common html attributes are defined mostly in common.rnc, core-scripting.rnc, etc
+    // while own tag attributes are defined in meta.rnc
+    final PsiElement declaration = descriptor.getDeclaration();
+    final PsiFile file = declaration != null ? declaration.getContainingFile() : null;
+    final String name = file != null ? file.getName() : null;
+    return "meta.rnc".equals(name);
   }
 
   private static class TerminateException extends RuntimeException {

@@ -49,7 +49,6 @@ public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements Ps
   private PsiClass myArrayClass15;
   private final ConcurrentHashMap<GlobalSearchScope, PsiClassType> myCachedObjectType = new ConcurrentHashMap<GlobalSearchScope, PsiClassType>();
 
-
   public PsiElementFactoryImpl(final PsiManagerEx manager) {
     super(manager);
     manager.registerRunnableToRunOnChange(new Runnable() {
@@ -66,14 +65,14 @@ public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements Ps
     if (!languageLevel.isAtLeast(LanguageLevel.JDK_1_5)) {
       if (myArrayClass == null) {
         @NonNls final String body = "public class __Array__{\n public final int length;\n public Object clone() {}\n}";
-        myArrayClass = createClassFromText(body, null).getInnerClasses()[0];
+        myArrayClass = ((PsiExtensibleClass)createClassFromText(body, null)).getOwnInnerClasses().get(0);
       }
       return myArrayClass;
     }
     else {
       if (myArrayClass15 == null) {
         @NonNls final String body = "public class __Array__<T>{\n public final int length;\n public T[] clone() {}\n}";
-        myArrayClass15 = createClassFromText(body, null).getInnerClasses()[0];
+        myArrayClass15 = ((PsiExtensibleClass)createClassFromText(body, null)).getOwnInnerClasses().get(0);
       }
       return myArrayClass15;
     }

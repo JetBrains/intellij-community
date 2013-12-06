@@ -63,6 +63,10 @@ public class PyOptimizeImportsTest extends PyTestCase {
     doTest();
   }
 
+  public void testInsertBlankLines() {  // PY-8355
+    doTest();
+  }
+
   private void doTest() {
     myFixture.configureByFile("optimizeImports/" + getTestName(true) + ".py");
     OptimizeImportsAction.actionPerformedImpl(DataManager.getInstance().getDataContext(myFixture.getEditor().getContentComponent()));

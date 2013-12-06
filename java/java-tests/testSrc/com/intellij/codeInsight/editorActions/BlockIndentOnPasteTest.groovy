@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,14 +14,11 @@
  * limitations under the License.
  */
 package com.intellij.codeInsight.editorActions
-
 import com.intellij.codeInsight.CodeInsightSettings
 import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.fileTypes.StdFileTypes
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
-import com.intellij.openapi.application.ApplicationManager
-
-/** 
+/**
  * @author Denis Zhdanov
  * @since 7/6/11 6:52 PM 
  */
@@ -760,7 +757,7 @@ class Test {
     try {
       def offset = myFixture.editor.caretModel.offset
       def column = myFixture.editor.caretModel.logicalPosition.column
-      ApplicationManager.application.runWriteAction {
+      com.intellij.openapi.command.WriteCommandAction.runWriteCommandAction project, {
         myFixture.editor.document.insertString(offset, toPaste)
         PasteHandler.indentBlock(project, myFixture.editor, offset, offset + toPaste.length(), column)
       }

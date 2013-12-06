@@ -24,8 +24,8 @@ import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.Nullable;
-import org.zmlx.hg4idea.util.HgUtil;
 import org.zmlx.hg4idea.HgVcsMessages;
+import org.zmlx.hg4idea.util.HgUtil;
 
 import javax.swing.*;
 import javax.swing.event.CaretEvent;
@@ -111,7 +111,8 @@ public class HgInitDialog extends DialogWrapper {
   public void show() {
     if (myShowDialog) {
       super.show();
-    } else {
+    }
+    else {
       mySelectedDir = FileChooser.chooseFile(myFileDescriptor, myProject, null);
     }
   }

@@ -502,45 +502,26 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl<GrCodeRef
 
         case CLASS:
         case CLASS_OR_PACKAGE: {
+          EnumSet<ClassHint.ResolveKind> kinds = kind == CLASS ? ResolverProcessor.RESOLVE_KINDS_CLASS :
+                                                 ResolverProcessor.RESOLVE_KINDS_CLASS_PACKAGE;
+          ResolverProcessor processor = new ClassResolverProcessor(refName, ref, kinds);
           GrCodeReferenceElement qualifier = ref.getQualifier();
           if (qualifier != null) {
             PsiElement qualifierResolved = qualifier.resolve();
-            if (qualifierResolved instanceof PsiPackage) {
-              for (final PsiClass aClass : ((PsiPackage)qualifierResolved).getClasses(ref.getResolveScope())) {
-                if (refName.equals(aClass.getName())) {
-                  boolean isAccessible = PsiUtil.isAccessible(ref, aClass);
-                  return new GroovyResolveResult[]{new GroovyResolveResultImpl(aClass, isAccessible)};
-                }
-              }
-
-              if (kind == CLASS_OR_PACKAGE) {
-                final String fqName = ((PsiPackage)qualifierResolved).getQualifiedName() + "." + refName;
-                final PsiPackage aPackage = JavaPsiFacade.getInstance(ref.getProject()).findPackage(fqName);
-                if (aPackage != null) return new GroovyResolveResult[]{new GroovyResolveResultImpl(aPackage, true)};
-              }
-            }
-            else if ((kind == CLASS || kind == CLASS_OR_PACKAGE) && qualifierResolved instanceof PsiClass) {
-              final ClassResolverProcessor processor = new ClassResolverProcessor(refName, ref);
+            if (qualifierResolved instanceof PsiPackage || qualifierResolved instanceof PsiClass) {
               qualifierResolved.processDeclarations(processor, ResolveState.initial(), null, ref);
               return processor.getCandidates();
             }
           }
           else {
-            EnumSet<ClassHint.ResolveKind> kinds = kind == CLASS ? ResolverProcessor.RESOLVE_KINDS_CLASS :
-                                                   ResolverProcessor.RESOLVE_KINDS_CLASS_PACKAGE;
-            ResolverProcessor processor = new ClassResolverProcessor(refName, ref, kinds);
             ResolveUtil.treeWalkUp(ref, processor, false);
             GroovyResolveResult[] candidates = processor.getCandidates();
             if (candidates.length > 0) return candidates;
 
             if (kind == CLASS_OR_PACKAGE) {
-              PsiPackage defaultPackage = JavaPsiFacade.getInstance(ref.getProject()).findPackage("");
-              if (defaultPackage != null) {
-                for (final PsiPackage subpackage : defaultPackage.getSubPackages(ref.getResolveScope())) {
-                  if (refName.equals(subpackage.getName())) {
-                    return new GroovyResolveResult[]{new GroovyResolveResultImpl(subpackage, true)};
-                  }
-                }
+              PsiPackage pkg = JavaPsiFacade.getInstance(ref.getProject()).findPackage(refName);
+              if (pkg != null) {
+                return new GroovyResolveResult[]{new GroovyResolveResultImpl(pkg, true)};
               }
             }
           }

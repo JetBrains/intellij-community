@@ -5,14 +5,12 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.IntObjectCache;
-import com.intellij.util.io.storage.Storage;
+import com.intellij.util.io.storage.AbstractStorage;
 import gnu.trove.THashSet;
 import junit.framework.TestCase;
 
 import java.io.*;
 import java.util.*;
-
-import static com.intellij.util.io.StringEnumeratorTest.createRandomString;
 
 /**
  * @author Eugene Zhuravlev
@@ -300,7 +298,7 @@ public class PersistentMapTest extends TestCase {
     myMap.close();
     System.out.printf("File size = %d bytes\n", myFile.length());
     System.out
-      .printf("Data file size = %d bytes\n", new File(myDataFile.getParentFile(), myDataFile.getName() + Storage.DATA_EXTENSION).length());
+      .printf("Data file size = %d bytes\n", new File(myDataFile.getParentFile(), myDataFile.getName() + AbstractStorage.DATA_EXTENSION).length());
   }
 
   public void testPerformance1() throws IOException {
@@ -335,7 +333,7 @@ public class PersistentMapTest extends TestCase {
     myMap.close();
     System.out.printf("File size = %d bytes\n", myFile.length());
     System.out
-      .printf("Data file size = %d bytes\n", new File(myDataFile.getParentFile(), myDataFile.getName() + Storage.DATA_EXTENSION).length());
+      .printf("Data file size = %d bytes\n", new File(myDataFile.getParentFile(), myDataFile.getName() + AbstractStorage.DATA_EXTENSION).length());
   }
 
   private static final boolean DO_SLOW_TEST = false;

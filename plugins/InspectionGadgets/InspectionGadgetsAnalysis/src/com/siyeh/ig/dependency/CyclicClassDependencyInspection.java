@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2011 Dave Griffith, Bas Leijdekkers
+ * Copyright 2006-2013 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -51,7 +51,7 @@ public class CyclicClassDependencyInspection extends BaseGlobalInspection {
     }
     final RefClass refClass = (RefClass)refEntity;
     final PsiClass aClass = refClass.getElement();
-    if (aClass.getContainingClass() != null) {
+    if (aClass == null || aClass.getContainingClass() != null) {
       return null;
     }
     final Set<RefClass> dependencies =
@@ -67,7 +67,7 @@ public class CyclicClassDependencyInspection extends BaseGlobalInspection {
     }
     final String errorString = InspectionGadgetsBundle.message(
       "cyclic.class.dependency.problem.descriptor",
-      refEntity.getName(), numMutualDependents - 1);
+      refEntity.getName(), Integer.valueOf(numMutualDependents - 1));
     return new CommonProblemDescriptor[]{
       inspectionManager.createProblemDescriptor(errorString)
     };

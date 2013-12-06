@@ -366,7 +366,7 @@ public class ContentEntryImpl extends RootModelComponentBase implements ContentE
     element.setAttribute(URL_ATTRIBUTE, myRoot.getUrl());
     for (final SourceFolder sourceFolder : mySourceFolders) {
       if (sourceFolder instanceof SourceFolderImpl) {
-        JpsModuleRootModelSerializer.saveSourceRoot(element, sourceFolder.getUrl(), ((SourceFolderImpl)sourceFolder).getJpsElement().asTyped());
+        JpsModuleRootModelSerializer.saveSourceRoot(element, sourceFolder.getUrl(), sourceFolder.getJpsElement().asTyped());
       }
     }
 

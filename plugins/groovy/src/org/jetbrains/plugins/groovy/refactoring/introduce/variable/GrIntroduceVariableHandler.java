@@ -18,6 +18,7 @@ package org.jetbrains.plugins.groovy.refactoring.introduce.variable;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.util.Pass;
+import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiModifier;
 import com.intellij.refactoring.HelpID;
@@ -27,12 +28,15 @@ import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils;
 import org.jetbrains.plugins.groovy.lang.psi.GrControlFlowOwner;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
+import org.jetbrains.plugins.groovy.lang.psi.api.formatter.GrControlStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
+import org.jetbrains.plugins.groovy.lang.psi.api.util.GrStatementOwner;
 import org.jetbrains.plugins.groovy.refactoring.GrRefactoringError;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
@@ -119,7 +123,7 @@ public class GrIntroduceVariableHandler extends GrIntroduceHandlerBase<GroovyInt
   public GrVariable runRefactoring(@NotNull final GrIntroduceContext context, @NotNull final GroovyIntroduceVariableSettings settings) {
     // Generating variable declaration
 
-    GrVariable insertedVar = processExpression(context, settings, true);
+    GrVariable insertedVar = processExpression(context, settings);
 
     if (context.getEditor() != null && getPositionMarker() != null) {
       context.getEditor().getCaretModel().moveToOffset(getPositionMarker().getEndOffset());
@@ -130,12 +134,41 @@ public class GrIntroduceVariableHandler extends GrIntroduceHandlerBase<GroovyInt
 
   @Override
   protected GrInplaceVariableIntroducer getIntroducer(@NotNull GrIntroduceContext context, OccurrencesChooser.ReplaceChoice choice) {
-    return new GrInplaceVariableIntroducer(getRefactoringName(), choice, context) {
+
+    final Ref<GrIntroduceContext> contextRef = Ref.create(context);
+
+    if (context.getStringPart() != null) {
+      extractStringPart(contextRef);
+    }
+
+    context = contextRef.get();
+
+    final GrStatement anchor = findAnchor(context, choice == OccurrencesChooser.ReplaceChoice.ALL);
+
+    if (anchor.getParent() instanceof GrControlStatement) {
+      addBraces(anchor, contextRef);
+    }
+
+    return new GrInplaceVariableIntroducer(getRefactoringName(), choice, contextRef.get()) {
       @Override
       protected GrVariable runRefactoring(GrIntroduceContext context, GroovyIntroduceVariableSettings settings, boolean processUsages) {
-        return processExpression(context, settings, processUsages);
+        if (processUsages) {
+          return processExpression(context, settings);
+        }
+        else {
+          return addVariable(context, settings);
+        }
       }
     };
+  }
+
+  private static GrVariable addVariable(@NotNull GrIntroduceContext context, @NotNull GroovyIntroduceVariableSettings settings) {
+    GrStatement anchor = findAnchor(context, settings.replaceAllOccurrences());
+    PsiElement parent = anchor.getParent();
+    assert parent instanceof GrStatementOwner;
+    GrStatement declaration = ((GrStatementOwner)parent).addStatementBefore(generateDeclaration(context, settings), anchor);
+
+    return ((GrVariableDeclaration)declaration).getVariables()[0];
   }
 
   @Override
@@ -158,18 +191,17 @@ public class GrIntroduceVariableHandler extends GrIntroduceHandlerBase<GroovyInt
 
   @NotNull
   private GrVariable processExpression(@NotNull GrIntroduceContext context,
-                                       @NotNull GroovyIntroduceVariableSettings settings,
-                                       boolean processUsages) {
+                                       @NotNull GroovyIntroduceVariableSettings settings) {
     GrVariableDeclaration varDecl = generateDeclaration(context, settings);
 
     if (context.getStringPart() != null) {
       final GrExpression ref = processLiteral(DUMMY_NAME, context.getStringPart(), context.getProject());
-      return doProcessExpression(context, settings, varDecl, new PsiElement[]{ref}, ref, processUsages);
+      return doProcessExpression(context, settings, varDecl, new PsiElement[]{ref}, ref, true);
     }
     else {
       final GrExpression expression = context.getExpression();
       assert expression != null;
-      return doProcessExpression(context, settings, varDecl, context.getOccurrences(), expression, processUsages);
+      return doProcessExpression(context, settings, varDecl, context.getOccurrences(), expression, true);
     }
   }
 

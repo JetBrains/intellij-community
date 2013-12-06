@@ -18,6 +18,7 @@ package com.intellij.execution.impl;
 import com.intellij.execution.filters.Filter;
 import com.intellij.execution.filters.FilterMixin;
 import com.intellij.execution.filters.HyperlinkInfo;
+import com.intellij.execution.filters.HyperlinkInfoBase;
 import com.intellij.ide.OccurenceNavigator;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -36,6 +37,7 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.pom.NavigatableAdapter;
+import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.BeforeAfter;
 import com.intellij.util.Consumer;
 import com.intellij.util.SmartList;
@@ -87,7 +89,12 @@ public class EditorHyperlinkSupport {
           if (range != null) {
             final HyperlinkInfo info = myHighlighterToMessageInfoMap.get(range);
             if (info != null) {
-              info.navigate(project);
+              if (info instanceof HyperlinkInfoBase) {
+                ((HyperlinkInfoBase)info).navigate(project, new RelativePoint(mouseEvent));
+              }
+              else {
+                info.navigate(project);
+              }
               linkFollowed(editor, getHyperlinks().keySet(), range);
             }
           }
@@ -323,12 +330,6 @@ public class EditorHyperlinkSupport {
                                                                    final int delta,
                                                                    final Consumer<RangeHighlighter> action) {
     final List<RangeHighlighter> ranges = new ArrayList<RangeHighlighter>(sortedHighlighters);
-    for (Iterator<RangeHighlighter> iterator = ranges.iterator(); iterator.hasNext();) {
-      RangeHighlighter highlighter = iterator.next();
-      if (editor.getFoldingModel().getCollapsedRegionAtOffset(highlighter.getStartOffset()) != null) {
-        iterator.remove();
-      }
-    }
     int i;
     for (i = 0; i < ranges.size(); i++) {
       RangeHighlighter range = ranges.get(i);
@@ -336,15 +337,23 @@ public class EditorHyperlinkSupport {
         break;
       }
     }
-    int newIndex = ranges.isEmpty() ? -1 : i == ranges.size() ? 0 : (i + delta + ranges.size()) % ranges.size();
-    final RangeHighlighter next = newIndex < ranges.size() && newIndex >= 0 ? ranges.get(newIndex) : null;
-    if (next == null) return null;
-    return new OccurenceNavigator.OccurenceInfo(new NavigatableAdapter() {
-      public void navigate(final boolean requestFocus) {
-        action.consume(next);
-        linkFollowed(editor, ranges, next);
+    int newIndex = i;
+    while (newIndex < ranges.size() && newIndex >= 0) {
+      newIndex = (newIndex + delta + ranges.size()) % ranges.size();
+      final RangeHighlighter next = ranges.get(newIndex);
+      if (editor.getFoldingModel().getCollapsedRegionAtOffset(next.getStartOffset()) == null) {
+        return new OccurenceNavigator.OccurenceInfo(new NavigatableAdapter() {
+          public void navigate(final boolean requestFocus) {
+            action.consume(next);
+            linkFollowed(editor, ranges, next);
+          }
+        }, newIndex == -1 ? -1 : newIndex + 1, ranges.size());
       }
-    }, newIndex == -1 ? -1 : newIndex + 1, ranges.size());
+      if (newIndex == i) {
+        break; // cycled through everything, found no next/prev hyperlink
+      }
+    }
+    return null;
   }
 
   // todo fix link followed here!

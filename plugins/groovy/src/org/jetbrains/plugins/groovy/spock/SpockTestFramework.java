@@ -24,6 +24,7 @@ import com.intellij.util.PathUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyFileType;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
 import org.jetbrains.plugins.groovy.testIntegration.GroovyTestFramework;
 
@@ -65,9 +66,9 @@ public class SpockTestFramework extends GroovyTestFramework {
 
   @Override
   public boolean isTestMethod(PsiElement element) {
-    if (!(element instanceof PsiMethod)) return false;
+    if (!(element instanceof GrMethod)) return false;
 
-    return GroovyPsiManager.isInheritorCached(((PsiMethod)element).getContainingClass(), SpockUtils.SPEC_CLASS_NAME)
+    return GroovyPsiManager.isInheritorCached(((GrMethod)element).getContainingClass(), SpockUtils.SPEC_CLASS_NAME)
            && JUnitUtil.getTestMethod(element) != null;
   }
 

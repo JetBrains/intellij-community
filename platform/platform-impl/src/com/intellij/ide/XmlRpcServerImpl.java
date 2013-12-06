@@ -85,7 +85,7 @@ public class XmlRpcServerImpl implements XmlRpcServer {
 
   @Override
   public boolean process(@NotNull String path, @NotNull FullHttpRequest request, @NotNull ChannelHandlerContext context, @Nullable Map<String, Object> handlers) throws IOException {
-    if (!(path.isEmpty() || (path.length() == 1 && path.charAt(0) == '/') || path.equalsIgnoreCase("/RPC2"))) {
+    if (!(path.isEmpty() || (path.length() == 1 && path.charAt(0) == '/') || path.equalsIgnoreCase("/rpc2"))) {
       return false;
     }
 
@@ -136,16 +136,12 @@ public class XmlRpcServerImpl implements XmlRpcServer {
       return handler;
     }
 
-    IllegalStateException exception;
     if (dot > -1) {
-      exception = new IllegalStateException("RPC handler object \"" + handlerName + "\" not found");
+      throw new IllegalStateException("RPC handler object \"" + handlerName + "\" not found");
     }
     else {
-      exception = new IllegalStateException("RPC handler object not found for \"" + methodName);
+      throw new IllegalStateException("RPC handler object not found for \"" + methodName);
     }
-
-    LOG.error(exception);
-    throw exception;
   }
 
   private static Object invokeHandler(@NotNull Object handler, XmlRpcServerRequest request) throws Throwable {

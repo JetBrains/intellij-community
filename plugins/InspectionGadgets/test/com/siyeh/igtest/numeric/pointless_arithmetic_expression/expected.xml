@@ -120,4 +120,24 @@
     <description>&lt;code&gt;i &lt; Integer.MIN_VALUE&lt;/code&gt; can be replaced with 'false' #loc</description>
   </problem>
 
+  <problem>
+    <file>PointlessArithmeticExpression.java</file>
+    <line>93</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Pointless arithmetic expression</problem_class>
+    <description>&lt;code&gt;i / i&lt;/code&gt; can be replaced with '1' #loc</description>
+  </problem>
+
+  <problem>
+    <file>PointlessArithmeticExpression.java</file>
+    <line>94</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Pointless arithmetic expression</problem_class>
+    <description>&lt;code&gt;i - i&lt;/code&gt; can be replaced with '0' #loc</description>
+  </problem>
+
+  <problem>
+    <file>PointlessArithmeticExpression.java</file>
+    <line>95</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Pointless arithmetic expression</problem_class>
+    <description>&lt;code&gt;i % i&lt;/code&gt; can be replaced with '0' #loc</description>
+  </problem>
 </problems>

@@ -56,7 +56,7 @@ public class JavaCompletionStatistician extends CompletionStatistician{
 
       PsiClass containingClass = ((PsiMember)o).getContainingClass();
       if (containingClass != null) {
-        String expectedName = firstInfo instanceof ExpectedTypeInfoImpl ? ((ExpectedTypeInfoImpl)firstInfo).getExpectedName().compute() : null;
+        String expectedName = firstInfo instanceof ExpectedTypeInfoImpl ? ((ExpectedTypeInfoImpl)firstInfo).getExpectedName() : null;
         String contextPrefix = expectedName == null ? "" : "expectedName=" + expectedName + "###";
         String context = contextPrefix + JavaStatisticsManager.getMemberUseKey2(containingClass);
 

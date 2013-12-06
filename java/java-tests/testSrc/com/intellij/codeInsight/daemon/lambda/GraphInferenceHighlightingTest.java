@@ -17,6 +17,7 @@ package com.intellij.codeInsight.daemon.lambda;
 
 import com.intellij.codeInsight.daemon.LightDaemonAnalyzerTestCase;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.testFramework.IdeaTestUtil;
 import org.jetbrains.annotations.NonNls;
 
@@ -83,6 +84,30 @@ public class GraphInferenceHighlightingTest extends LightDaemonAnalyzerTestCase 
     doTest();
   }
 
+  public void testAfterAbstractPipeline() throws Exception {
+    doTest();
+  }
+
+  public void testCapturedReturnTypes() throws Exception {
+    doTest();
+  }
+
+  public void testOverloadChooserOfReturnType() throws Exception {
+    doTest();
+  }
+
+  public void testIDEA98866() throws Exception {
+    doTest();
+  }
+
+  public void testIncompleteSubstitution() throws Exception {
+    doTest();
+  }
+
+  public void testJDK8028774() throws Exception {
+    doTest();
+  }
+
   private void doTest() throws Exception {
     doTest(false);
   }
@@ -90,5 +115,10 @@ public class GraphInferenceHighlightingTest extends LightDaemonAnalyzerTestCase 
   private void doTest(final boolean checkWarnings) throws Exception {
     IdeaTestUtil.setTestVersion(JavaSdkVersion.JDK_1_8, getModule(), getTestRootDisposable());
     doTestNewInference(BASE_PATH + "/" + getTestName(false) + ".java", checkWarnings, false);
+  }
+
+  @Override
+  protected Sdk getProjectJDK() {
+    return IdeaTestUtil.getMockJdk18();
   }
 }

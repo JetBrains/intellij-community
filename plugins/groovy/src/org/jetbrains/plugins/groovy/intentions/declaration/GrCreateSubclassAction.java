@@ -82,7 +82,7 @@ public class GrCreateSubclassAction extends CreateSubclassAction {
 
         try {
           targetClass.set(CreateClassActionBase.createClassByType(targetDirectory, className, PsiManager.getInstance(project), psiClass,
-                                                                  GroovyTemplates.GROOVY_CLASS));
+                                                                  GroovyTemplates.GROOVY_CLASS, true));
         }
         catch (final IncorrectOperationException e) {
           ApplicationManager.getApplication().invokeLater(new Runnable() {

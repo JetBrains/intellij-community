@@ -15,9 +15,11 @@
  */
 package com.siyeh.ig.performance;
 
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.util.Query;
@@ -27,7 +29,9 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 
 public class InnerClassMayBeStaticInspection extends BaseInspection {
 
@@ -54,7 +58,8 @@ public class InnerClassMayBeStaticInspection extends BaseInspection {
   }
 
   private static class InnerClassMayBeStaticFix extends InspectionGadgetsFix {
-        @Override
+
+    @Override
     @NotNull
     public String getFamilyName() {
       return getName();
@@ -67,13 +72,30 @@ public class InnerClassMayBeStaticInspection extends BaseInspection {
     }
 
     @Override
+    protected boolean prepareForWriting() {
+      return false;
+    }
+
+    @Override
     public void doFix(Project project, ProblemDescriptor descriptor) {
       final PsiJavaToken classNameToken = (PsiJavaToken)descriptor.getPsiElement();
       final PsiClass innerClass = (PsiClass)classNameToken.getParent();
-      assert innerClass != null;
+      if (innerClass == null) {
+        return;
+      }
       final SearchScope useScope = innerClass.getUseScope();
       final Query<PsiReference> query = ReferencesSearch.search(innerClass, useScope);
       final Collection<PsiReference> references = query.findAll();
+      final List<PsiElement> elements = new ArrayList(references);
+      for (PsiReference reference : references) {
+        elements.add(reference.getElement());
+      }
+      elements.add(innerClass);
+      if (!FileModificationService.getInstance().preparePsiElementsForWrite(elements)) {
+        return;
+      }
+      final JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(project);
+      final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
       for (final PsiReference reference : references) {
         final PsiElement element = reference.getElement();
         final PsiElement parent = element.getParent();
@@ -81,11 +103,17 @@ public class InnerClassMayBeStaticInspection extends BaseInspection {
           continue;
         }
         final PsiNewExpression newExpression = (PsiNewExpression)parent;
-        final PsiExpression qualifier = newExpression.getQualifier();
-        if (qualifier == null) {
+        final PsiJavaCodeReferenceElement classReference = newExpression.getClassReference();
+        if (classReference == null) {
           continue;
         }
-        qualifier.delete();
+        final PsiExpressionList argumentList = newExpression.getArgumentList();
+        if (argumentList == null) {
+          continue;
+        }
+        final PsiExpression expression =
+          factory.createExpressionFromText("new " + classReference.getQualifiedName() + argumentList.getText(), innerClass);
+        codeStyleManager.shortenClassReferences(newExpression.replace(expression));
       }
       final PsiModifierList modifiers = innerClass.getModifierList();
       if (modifiers == null) {

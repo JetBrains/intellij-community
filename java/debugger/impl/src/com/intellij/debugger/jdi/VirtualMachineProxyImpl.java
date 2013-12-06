@@ -68,6 +68,19 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
     canWatchFieldModification();
     canPopFrames();
 
+    try {
+      // this will cache classes inside JDI and enable faster search of classes later
+      virtualMachine.allClasses();
+    }
+    catch (Throwable e) {
+      // catch all exceptions in order not to break vm attach process
+      // Example:
+      // java.lang.IllegalArgumentException: Invalid JNI signature character ';'
+      //  caused by some bytecode "optimizers" which break type signatures as a side effect.
+      //  solution if you are using JAX-WS: add -Dcom.sun.xml.bind.v2.bytecode.ClassTailor.noOptimize=true to JVM args
+      LOG.info(e);
+    }
+
     List<ThreadGroupReference> groups = virtualMachine.topLevelThreadGroups();
     for (ThreadGroupReference threadGroupReference : groups) {
       threadGroupCreated(threadGroupReference);
@@ -85,9 +98,21 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
   public List<ReferenceType> nestedTypes(ReferenceType refType) {
     List<ReferenceType> nestedTypes = myNestedClassesCache.get(refType);
     if (nestedTypes == null) {
-      final List<ReferenceType> list = refType.nestedTypes();
-      final int size = list.size();
-      if (size > 0) {
+      List<ReferenceType> list = Collections.emptyList();
+      try {
+        list = refType.nestedTypes();
+      }
+      catch (Throwable e) {
+        // sometimes some strange errors are thrown from JDI. Do not crash debugger because of this.
+        // Example:
+        //java.lang.StringIndexOutOfBoundsException: String index out of range: 487700285
+        //	at java.lang.String.checkBounds(String.java:375)
+        //	at java.lang.String.<init>(String.java:415)
+        //	at com.sun.tools.jdi.PacketStream.readString(PacketStream.java:392)
+        //	at com.sun.tools.jdi.JDWP$VirtualMachine$AllClassesWithGeneric$ClassInfo.<init>(JDWP.java:1644)
+        LOG.info(e);
+      }
+      if (!list.isEmpty()) {
         final Set<ReferenceType> candidates = new HashSet<ReferenceType>();
         final ClassLoaderReference outerLoader = refType.classLoader();
         for (ReferenceType nested : list) {
@@ -120,10 +145,11 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
   }
 
   public List<ReferenceType> allClasses() {
-    if (myAllClasses == null) {
-      myAllClasses = myVirtualMachine.allClasses();
+    List<ReferenceType> allClasses = myAllClasses;
+    if (allClasses == null) {
+      myAllClasses = allClasses = myVirtualMachine.allClasses();
     }
-    return myAllClasses;
+    return allClasses;
   }
 
   public String toString() {

@@ -19,6 +19,7 @@
  */
 package org.jetbrains.generate.tostring;
 
+import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
@@ -159,8 +160,18 @@ public class GenerateToStringWorker {
 
     // create psi newMethod named toString()
     final JVMElementFactory topLevelFactory = JVMElementFactories.getFactory(clazz.getLanguage(), clazz.getProject());
-    PsiMethod newMethod = topLevelFactory.createMethodFromText(template.getMethodSignature() + " { " + body + " }", clazz);
-    CodeStyleManager.getInstance(clazz.getProject()).reformat(newMethod);
+    if (topLevelFactory == null) {
+      return null;
+    }
+    PsiMethod newMethod;
+    try {
+      newMethod = topLevelFactory.createMethodFromText(template.getMethodSignature() + " { " + body + " }", clazz);
+      CodeStyleManager.getInstance(clazz.getProject()).reformat(newMethod);
+    } catch (IncorrectOperationException ignore) {
+      HintManager.getInstance().showErrorHint(editor, "'toString()' method could not be created from template '" +
+                                                      template.getFileName() + '\'');
+      return null;
+    }
 
     // insertNewMethod conflict resolution policy (add/replace, duplicate, cancel)
     PsiMethod existingMethod = clazz.findMethodBySignature(newMethod, false);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,9 @@ package com.intellij.refactoring;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.CodeInsightTestCase;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -25,6 +27,7 @@ import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.search.ProjectScope;
 import com.intellij.refactoring.copy.CopyClassesHandler;
 import com.intellij.testFramework.IdeaTestUtil;
+import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -36,6 +39,7 @@ import java.util.HashMap;
 /**
  * @author yole
  */
+@PlatformTestCase.WrapInCommand
 public class CopyClassTest extends CodeInsightTestCase {
   private VirtualFile myRootDir;
 
@@ -65,9 +69,18 @@ public class CopyClassTest extends CodeInsightTestCase {
   }
 
   private PsiElement performAction(final String oldName, final String copyName) throws IncorrectOperationException {
-    PsiClass oldClass = JavaPsiFacade.getInstance(myProject).findClass(oldName, ProjectScope.getAllScope(myProject));
-    return CopyClassesHandler.doCopyClasses(Collections.singletonMap(oldClass.getNavigationElement().getContainingFile(), new PsiClass[]{oldClass}), copyName, myPsiManager.findDirectory(myRootDir),
-                                     myProject);
+    final PsiClass oldClass = JavaPsiFacade.getInstance(myProject).findClass(oldName, ProjectScope.getAllScope(myProject));
+
+    return WriteCommandAction.runWriteCommandAction(null, new Computable<PsiElement>(){
+      @Override
+      public PsiElement compute() {
+        return     CopyClassesHandler.doCopyClasses(
+              Collections.singletonMap(oldClass.getNavigationElement().getContainingFile(), new PsiClass[]{oldClass}), copyName,
+              myPsiManager.findDirectory(myRootDir),
+              myProject);
+
+      }
+    });
   }
 
   public void testPackageLocalClasses() throws Exception {

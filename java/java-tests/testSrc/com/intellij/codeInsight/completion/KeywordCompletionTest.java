@@ -90,6 +90,8 @@ public class KeywordCompletionTest extends LightCompletionTestCase {
   public void testCatchFinally() throws Exception { doTest(2, "catch", "finally"); }
   public void testSuper1() throws Exception { doTest(1, "super"); }
   public void testSuper2() throws Exception { doTest(0, "super"); }
+  public void testSuper3() throws Exception { doTest(true); }
+  public void testSuper4() throws Exception { doTest(0, "class"); }
   public void testContinue() throws Exception { doTest(false); }
   public void testThrowsOnSeparateLine() throws Exception { doTest(false); }
   public void testDefaultInAnno() throws Exception { doTest(false); }

@@ -34,7 +34,7 @@ import java.util.concurrent.Executor;
 */
 @ChannelHandler.Sharable
 final class ProtobufClientMessageHandler<T extends ProtobufResponseHandler> extends SimpleChannelInboundHandler<MessageLite> {
-  private final ConcurrentHashMap<UUID, RequestFuture<T>> myHandlers = new ConcurrentHashMap<UUID, RequestFuture<T>>();
+  private final ConcurrentHashMap<UUID, RequestFuture<T>> myHandlers = new ConcurrentHashMap<UUID, RequestFuture<T>>(16, 0.75f, 1);
   @NotNull
   private final UUIDGetter myUuidGetter;
   private final SimpleProtobufClient myClient;
@@ -47,7 +47,7 @@ final class ProtobufClientMessageHandler<T extends ProtobufResponseHandler> exte
   }
 
   @Override
-  public final void channelRead0(ChannelHandlerContext context, MessageLite message) throws Exception {
+  public final void messageReceived(ChannelHandlerContext context, MessageLite message) throws Exception {
     final UUID messageUUID = myUuidGetter.getSessionUUID((JavacRemoteProto.Message)message);
     final RequestFuture<T> future = myHandlers.get(messageUUID);
     final T handler = future != null ? future.getMessageHandler() : null;

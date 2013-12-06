@@ -32,6 +32,6 @@ class ReturnTypeCompatibility {
     call((String i)->{ return i;});
     call(i->{ return i;});
     call(i->"");
-    call((<error descr="Incompatible parameter types in lambda expression">int i</error>)->{ return i;});
+    call<error descr="'call(ReturnTypeCompatibility.I1<int>)' in 'ReturnTypeCompatibility' cannot be applied to '(<lambda expression>)'">((int i)->{ return i;})</error>;
   }
 }

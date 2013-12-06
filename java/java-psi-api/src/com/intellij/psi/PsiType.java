@@ -264,12 +264,6 @@ public abstract class PsiType implements PsiAnnotationOwner {
     return getAnnotations();
   }
 
-  /** @deprecated use {@link #getAnnotationsTextPrefix(boolean, boolean, boolean)} (to remove in IDEA 13) */
-  @SuppressWarnings("UnusedDeclaration")
-  protected String getAnnotationsTextPrefix() {
-    return getAnnotationsTextPrefix(false, false, true);
-  }
-
   @NotNull
   protected String getAnnotationsTextPrefix(boolean qualified, boolean leadingSpace, boolean trailingSpace) {
     PsiAnnotation[] annotations = getAnnotations();

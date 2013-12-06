@@ -17,10 +17,13 @@
 package com.intellij.codeInsight;
 
 import com.intellij.openapi.util.NullableComputable;
+import com.intellij.openapi.util.NullableLazyValue;
+import com.intellij.openapi.util.VolatileNullableLazyValue;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class ExpectedTypeInfoImpl implements ExpectedTypeInfo {
   public static final NullableComputable<String> NULL = new NullableComputable<String>() {
@@ -37,7 +40,8 @@ public class ExpectedTypeInfoImpl implements ExpectedTypeInfo {
   @NotNull
   private final TailType myTailType;
   private final PsiMethod myCalledMethod;
-  @NotNull private final NullableComputable<String> expectedName;
+  @NotNull private final NullableComputable<String> expectedNameComputable;
+  @NotNull private final NullableLazyValue<String> expectedNameLazyValue;
 
   @Override
   public int getKind() {
@@ -62,15 +66,22 @@ public class ExpectedTypeInfoImpl implements ExpectedTypeInfo {
     this.myTailType = myTailType;
     this.defaultType = defaultType;
     myCalledMethod = calledMethod;
-    this.expectedName = expectedName;
+    this.expectedNameComputable = expectedName;
+    expectedNameLazyValue = new VolatileNullableLazyValue<String>() {
+      @Nullable
+      @Override
+      protected String compute() {
+        return expectedNameComputable.compute();
+      }
+    };
 
     PsiUtil.ensureValidType(type);
     PsiUtil.ensureValidType(defaultType);
   }
 
-  @NotNull
-  public NullableComputable<String> getExpectedName() {
-    return expectedName;
+  @Nullable
+  public String getExpectedName() {
+    return expectedNameLazyValue.getValue();
   }
 
   @Override

@@ -1,7 +1,6 @@
 package com.intellij.vcs.log.graph.mutable.elements;
 
 import com.intellij.util.SmartList;
-import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.graph.elements.Branch;
 import com.intellij.vcs.log.graph.elements.Edge;
 import com.intellij.vcs.log.graph.elements.Node;
@@ -14,14 +13,14 @@ import java.util.List;
  */
 public class MutableNode implements Node {
   private final Branch branch;
-  private final Hash hash;
+  private final int hash;
   private MutableNodeRow nodeRow = null;
   private NodeType type;
 
   private final List<Edge> upEdges = new SmartList<Edge>();
   private final List<Edge> downEdges = new SmartList<Edge>();
 
-  public MutableNode(Branch branch, Hash hash) {
+  public MutableNode(Branch branch, int hash) {
     this.branch = branch;
     this.hash = hash;
   }
@@ -100,9 +99,8 @@ public class MutableNode implements Node {
         */
   }
 
-  @NotNull
   @Override
-  public Hash getCommitHash() {
+  public int getCommitIndex() {
     return hash;
   }
 
@@ -124,6 +122,6 @@ public class MutableNode implements Node {
 
   @Override
   public String toString() {
-    return getType() + " " + getCommitHash();
+    return getType() + " " + getCommitIndex();
   }
 }

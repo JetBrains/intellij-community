@@ -18,13 +18,13 @@ package com.intellij.util.xml.ui;
 
 import com.intellij.codeHighlighting.BackgroundEditorHighlighter;
 import com.intellij.ide.structureView.StructureViewBuilder;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -46,7 +46,7 @@ import java.beans.PropertyChangeSupport;
  * @author Sergey.Vasiliev
  */
 abstract public class PerspectiveFileEditor extends UserDataHolderBase implements DocumentsEditor, Committable {
-  private final Wrapper myWrapprer = new Wrapper();
+  private final Wrapper myWrapper = new Wrapper();
   private boolean myInitialised = false;
 
   private final PropertyChangeSupport myPropertyChangeSupport = new PropertyChangeSupport(this);
@@ -55,22 +55,18 @@ abstract public class PerspectiveFileEditor extends UserDataHolderBase implement
   private final UndoHelper myUndoHelper;
   private boolean myInvalidated;
 
-  private static final FileEditorState FILE_EDITOR_STATE = new FileEditorState() {
-    public boolean canBeMergedWith(FileEditorState otherState, FileEditorStateLevel level) {
-      return true;
-    }
-  };
-
   protected PerspectiveFileEditor(final Project project, final VirtualFile file) {
     myProject = project;
     myUndoHelper = new UndoHelper(project, this);
     myFile = file;
 
     FileEditorManager.getInstance(myProject).addFileEditorManagerListener(new FileEditorManagerAdapter() {
+      @Override
       public void selectionChanged(@NotNull FileEditorManagerEvent event) {
         if (!isValid()) return;
 
         ApplicationManager.getApplication().invokeLater(new Runnable() {
+          @Override
           public void run() {
             if (myUndoHelper.isShowing() && !getComponent().isShowing()) {
               deselectNotify();
@@ -183,6 +179,7 @@ abstract public class PerspectiveFileEditor extends UserDataHolderBase implement
     return PsiManager.getInstance(myProject).findFile(myFile);
   }
 
+  @Override
   public final Document[] getDocuments() {
     return myUndoHelper.getDocuments();
   }
@@ -195,20 +192,24 @@ abstract public class PerspectiveFileEditor extends UserDataHolderBase implement
     return myFile;
   }
 
+  @Override
   public void dispose() {
     if (myInvalidated) return;
     myInvalidated = true;
     myUndoHelper.stopListeningDocuments();
   }
 
+  @Override
   public final boolean isModified() {
     return FileDocumentManager.getInstance().isFileModified(getVirtualFile());
   }
 
+  @Override
   public boolean isValid() {
     return getVirtualFile().isValid();
   }
 
+  @Override
   public void selectNotify() {
     if (!checkIsValid() || myInvalidated) return;
     ensureInitialized();
@@ -222,50 +223,60 @@ abstract public class PerspectiveFileEditor extends UserDataHolderBase implement
 
   protected final synchronized void ensureInitialized() {
     if (!isInitialised()) {
-      myWrapprer.setContent(createCustomComponent());
+      myWrapper.setContent(createCustomComponent());
       myInitialised = true;
     }
   }
 
+  @Override
   public void deselectNotify() {
     if (!checkIsValid() || myInvalidated) return;
     setShowing(false);
     commit();
   }
 
+  @Override
   public BackgroundEditorHighlighter getBackgroundHighlighter() {
     return null;
   }
 
+  @Override
   public FileEditorLocation getCurrentLocation() {
     return new FileEditorLocation() {
+      @Override
       @NotNull
       public FileEditor getEditor() {
         return PerspectiveFileEditor.this;
       }
 
-      public int compareTo(final FileEditorLocation fileEditorLocation) {
+      @Override
+      public int compareTo(@NotNull final FileEditorLocation fileEditorLocation) {
         return 0;
       }
     };
   }
 
+  @Override
   public StructureViewBuilder getStructureViewBuilder() {
     return null;
   }
 
+  @Override
   @NotNull
   public FileEditorState getState(@NotNull FileEditorStateLevel level) {
-    return FILE_EDITOR_STATE;
+    return FileEditorState.INSTANCE;
   }
 
+  @Override
   public void setState(@NotNull FileEditorState state) {
   }
 
+  @Override
   public void addPropertyChangeListener(@NotNull PropertyChangeListener listener) {
     myPropertyChangeSupport.addPropertyChangeListener(listener);
   }
 
+  @Override
   public void removePropertyChangeListener(@NotNull PropertyChangeListener listener) {
     myPropertyChangeSupport.removePropertyChangeListener(listener);
   }
@@ -278,6 +289,7 @@ abstract public class PerspectiveFileEditor extends UserDataHolderBase implement
     return !myInvalidated;
   }
 
+  @Override
   @NotNull
   public JComponent getComponent() {
     return getWrapper();
@@ -287,7 +299,7 @@ abstract public class PerspectiveFileEditor extends UserDataHolderBase implement
   protected abstract JComponent createCustomComponent();
 
   public Wrapper getWrapper() {
-    return myWrapprer;
+    return myWrapper;
   }
 
   protected final synchronized boolean isInitialised() {

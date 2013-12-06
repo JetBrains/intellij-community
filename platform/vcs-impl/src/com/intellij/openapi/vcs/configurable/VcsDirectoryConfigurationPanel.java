@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
 package com.intellij.openapi.vcs.configurable;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
@@ -25,6 +26,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.impl.DefaultVcsRootPolicy;
 import com.intellij.openapi.vcs.impl.VcsDescriptor;
+import com.intellij.openapi.vcs.roots.VcsRootErrorsFinder;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBLabel;
@@ -32,6 +34,7 @@ import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.ui.components.labels.LinkListener;
 import com.intellij.ui.table.TableView;
+import com.intellij.util.UriUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.*;
 import com.intellij.xml.util.XmlStringUtil;
@@ -104,7 +107,7 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
         String directory = mapping.getDirectory();
         VirtualFile baseDir = myProject.getBaseDir();
         if (baseDir != null) {
-          final File directoryFile = new File(StringUtil.trimEnd(StringUtil.trimEnd(directory, "/"), "\\") + "/");
+          final File directoryFile = new File(StringUtil.trimEnd(UriUtil.trimTrailingSlashes(directory), "\\") + "/");
           File ioBase = new File(baseDir.getPath());
           if (directoryFile.isAbsolute() && !FileUtil.isAncestor(ioBase, directoryFile, false)) {
             append(new File(directory).getPath());
@@ -125,7 +128,8 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
     private boolean mappingIsError(VcsDirectoryMapping mapping) {
       String vcs = mapping.getVcs();
       VcsRootChecker checker = myCheckers.get(vcs);
-      return checker != null && checker.isInvalidMapping(mapping);
+      return checker != null &&
+             (mapping.isDefaultMapping() ? !checker.isRoot(myProject.getBasePath()) : !checker.isRoot(mapping.getDirectory()));
     }
   }
 
@@ -263,16 +267,14 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
 
   private void updateRootCheckers() {
     myCheckers.clear();
-    for (VcsDescriptor descriptor : myVcsManager.getAllVcss()) {
-      String name = descriptor.getName();
-      AbstractVcs vcs = myVcsManager.findVcsByName(name);
+    VcsRootChecker[] checkers = Extensions.getExtensions(VcsRootChecker.EXTENSION_POINT_NAME);
+    for (VcsRootChecker checker : checkers) {
+      VcsKey key = checker.getSupportedVcs();
+      AbstractVcs vcs = myVcsManager.findVcsByName(key.getName());
       if (vcs == null) {
         continue;
       }
-      VcsRootChecker checker = vcs.getRootChecker();
-      if (checker != null) {
-        myCheckers.put(name, checker);
-      }
+      myCheckers.put(key.getName(), checker);
     }
   }
 
@@ -416,27 +418,31 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
     final JComponent errorPanel = Box.createVerticalBox();
     final JBScrollPane pane = new JBScrollPane(errorPanel);
 
-    for (Map.Entry<String, VcsRootChecker> entry : myCheckers.entrySet()) {
-      VcsRootChecker checker = entry.getValue();
-      for (final String root : checker.getUnregisteredRoots()) {
-        final String vcs = entry.getKey();
-        String title = "Unregistered " + vcs + " root: " + FileUtil.toSystemDependentName(root);
-        final VcsRootErrorLabel vcsRootErrorLabel = new VcsRootErrorLabel(title);
-        vcsRootErrorLabel.setAddRootLinkHandler(new Runnable() {
-          @Override
-          public void run() {
-            addMapping(new VcsDirectoryMapping(root, vcs));
-            errorPanel.remove(vcsRootErrorLabel);
-            if (errorPanel.getComponentCount() == 0) {
-              pane.setVisible(false);
-            }
-            pane.setMinimumSize(new Dimension(-1, calcMinHeight(errorPanel, DEFAULT_HEIGHT)));
-            validate();
-          }
-        });
-        errorPanel.add(vcsRootErrorLabel);
+    Collection<VcsRootError> myErrors = VcsRootErrorsFinder.getInstance(myProject).find();
+    for (final VcsRootError root : myErrors) {
+      if (!VcsRootError.Type.UNREGISTERED_ROOT.equals(root.getType())) {
+        continue;
       }
+      final VcsKey vcsKey = root.getVcsKey();
+      final VcsDescriptor vcsDescriptor = myAllVcss.get(vcsKey.getName());
+      String displayVcsName = vcsDescriptor.getDisplayName();
+      String title = "Unregistered " + displayVcsName + " root: " + FileUtil.toSystemDependentName(root.getMapping());
+      final VcsRootErrorLabel vcsRootErrorLabel = new VcsRootErrorLabel(title);
+      vcsRootErrorLabel.setAddRootLinkHandler(new Runnable() {
+        @Override
+        public void run() {
+          addMapping(new VcsDirectoryMapping(root.getMapping(), vcsKey.getName()));
+          errorPanel.remove(vcsRootErrorLabel);
+          if (errorPanel.getComponentCount() == 0) {
+            pane.setVisible(false);
+          }
+          pane.setMinimumSize(new Dimension(-1, calcMinHeight(errorPanel, DEFAULT_HEIGHT)));
+          validate();
+        }
+      });
+      errorPanel.add(vcsRootErrorLabel);
     }
+
     if (errorPanel.getComponentCount() == 0) {
       pane.setVisible(false);
     }
