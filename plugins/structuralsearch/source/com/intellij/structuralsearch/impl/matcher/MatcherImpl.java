@@ -53,10 +53,10 @@ import java.util.List;
 public class MatcherImpl {
   private static final Logger LOG = Logger.getInstance("#com.intellij.structuralsearch.impl.matcher.MatcherImpl");
   // project being worked on
-  private Project project;
+  private final Project project;
 
   // context of matching
-  private MatchContext matchContext;
+  private final MatchContext matchContext;
   private boolean isTesting;
 
   // visitor to delegate the real work
@@ -118,7 +118,7 @@ public class MatcherImpl {
               checkModifier(name);
             }
 
-          } else {
+          } else if (value != null) {
             final String name = StringUtil.stripQuotesAroundValue(value.getText());
             checkModifier(name);
           }
