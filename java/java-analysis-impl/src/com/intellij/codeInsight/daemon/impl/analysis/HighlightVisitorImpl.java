@@ -1079,7 +1079,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
         final PsiTypeParameterListOwner owner = ((PsiTypeParameter)resolved).getOwner();
         if (owner instanceof PsiClass) {
           final PsiClass outerClass = (PsiClass)owner;
-          if (!InheritanceUtil.hasEnclosingInstanceInScope(outerClass, ref, true, false)) {
+          if (!InheritanceUtil.hasEnclosingInstanceInScope(outerClass, ref, false, false)) {
             myHolder.add(HighlightClassUtil.reportIllegalEnclosingUsage(ref, aClass, (PsiClass)owner, ref));
           }
         }
