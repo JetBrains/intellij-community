@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,6 +47,7 @@ class RepositoryContentHandler extends DefaultHandler {
   @NonNls public static final String CHNAGE_NOTES = "change-notes";
   @NonNls private static final String DEPENDS = "depends";
   @NonNls private static final String DOWNLOADS = "downloads";
+  @NonNls public static final String DOWNLOAD_URL = "downloadUrl";
   @NonNls private static final String SIZE = "size";
   @NonNls private static final String RATING = "rating";
 
@@ -115,6 +116,9 @@ class RepositoryContentHandler extends DefaultHandler {
     }
     else if (qName.equals(RATING)) {
       currentPlugin.setRating(currentValue);
+    }
+    else if (qName.equals(DOWNLOAD_URL)) {
+      currentPlugin.setDownloadUrl(currentValue);
     }
     currentValue = "";
   }
