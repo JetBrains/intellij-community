@@ -2005,6 +2005,7 @@ public class UIUtil {
    * is event queue thread.
    *
    * @param runnable a runnable to invoke
+   * @see #invokeAndWaitIfNeeded(com.intellij.util.ThrowableRunnable)
    */
   public static void invokeAndWaitIfNeeded(@NotNull Runnable runnable) {
     if (SwingUtilities.isEventDispatchThread()) {
@@ -2017,6 +2018,27 @@ public class UIUtil {
       catch (Exception e) {
         LOG.error(e);
       }
+    }
+  }
+
+  public static void invokeAndWaitIfNeeded(@NotNull final ThrowableRunnable runnable) throws Throwable {
+    if (SwingUtilities.isEventDispatchThread()) {
+      runnable.run();
+    }
+    else {
+      final Ref<Throwable> ref = new Ref<Throwable>();
+      SwingUtilities.invokeAndWait(new Runnable() {
+        @Override
+        public void run() {
+          try {
+            runnable.run();
+          }
+          catch (Throwable throwable) {
+            ref.set(throwable);
+          }
+        }
+      });
+      if (!ref.isNull()) throw ref.get();
     }
   }
 
