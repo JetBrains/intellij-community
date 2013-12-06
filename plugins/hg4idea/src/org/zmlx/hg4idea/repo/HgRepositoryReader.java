@@ -75,7 +75,7 @@ public class HgRepositoryReader {
    */
   @Nullable
   public String readCurrentRevision() {
-    if (checkIsFresh() || !myBranchHeadsFile.exists()) return null;
+    if (isFresh() || !myBranchHeadsFile.exists()) return null;
     String[] branchesWithHeads = RepositoryUtil.tryLoadFile(myBranchHeadsFile).split("\n");
     String head = branchesWithHeads[0];
     Matcher matcher = HASH_NAME.matcher(head);
@@ -97,7 +97,7 @@ public class HgRepositoryReader {
   public Collection<HgNameWithHashInfo> readBranches() {
     List<HgNameWithHashInfo> branches = new ArrayList<HgNameWithHashInfo>();
     // Set<String> branchNames = new HashSet<String>();
-    if (!checkIsFresh() && myBranchHeadsFile.exists()) {
+    if (!isFresh() && myBranchHeadsFile.exists()) {
       String[] branchesWithHeads = RepositoryUtil.tryLoadFile(myBranchHeadsFile).split("\n");
       // first one - is a head revision: head hash + head number;
       for (int i = 1; i < branchesWithHeads.length; ++i) {
@@ -122,7 +122,7 @@ public class HgRepositoryReader {
     return isMergeInProgress() ? Repository.State.MERGING : Repository.State.NORMAL;
   }
 
-  public boolean checkIsFresh() {
+  public boolean isFresh() {
     return !myCacheDir.exists();
   }
 
