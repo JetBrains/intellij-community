@@ -1,4 +1,4 @@
-package com.intellij.tasks.impl.ssl;
+package com.intellij.util.net;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.diagnostic.Logger;
