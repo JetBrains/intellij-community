@@ -88,7 +88,7 @@ public abstract class DumbService {
 
   @Nullable
   public <T> T tryRunReadActionInSmartMode(@NotNull Computable<T> task, @NotNull String notification) {
-    if (ApplicationManager.getApplication().isDispatchThread()) {
+    if (ApplicationManager.getApplication().isReadAccessAllowed()) {
       try {
         return task.compute();
       }
