@@ -152,7 +152,7 @@ public class EnvironmentUtil {
 
     File envFile = FileUtil.createTempFile("intellij-shell-env", null, false);
     try {
-      String[] command = {shell, "-l", "-c", "'" + reader.getAbsolutePath() + "' '" + envFile.getAbsolutePath() + "'"};
+      String[] command = {shell, "-l", "-i", "-c", ("'" + reader.getAbsolutePath() + "' '" + envFile.getAbsolutePath() + "'")};
       LOG.info("loading shell env: " + StringUtil.join(command, " "));
 
       Process process = Runtime.getRuntime().exec(command);
