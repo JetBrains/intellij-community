@@ -74,13 +74,15 @@ public class XSourcePositionImpl implements XSourcePosition {
    */
   @Nullable
   public static XSourcePositionImpl create(@Nullable VirtualFile file, int line) {
-    if (file == null) return null;
+    if (file == null) {
+      return null;
+    }
 
     Document document = FileDocumentManager.getInstance().getDocument(file);
     if (document == null) {
       return null;
     }
-    if (line < 0){
+    if (line < 0) {
       line = 0;
     }
     int offset = line < document.getLineCount() ? document.getLineStartOffset(line) : -1;
