@@ -562,7 +562,7 @@ public class GitBranchUtil {
         commonBranches = names;
       }
       else {
-        commonBranches.retainAll(names);
+        commonBranches = ContainerUtil.intersection(commonBranches, names);
       }
     }
 
