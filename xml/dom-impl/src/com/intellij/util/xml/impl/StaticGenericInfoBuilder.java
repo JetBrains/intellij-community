@@ -66,7 +66,7 @@ public class StaticGenericInfoBuilder {
   public StaticGenericInfoBuilder(final Class aClass) {
     myClass = aClass;
 
-    final Set<JavaMethod> methods = new THashSet<JavaMethod>();
+    final Set<JavaMethod> methods = new LinkedHashSet<JavaMethod>();
     InvocationCache invocationCache = DomApplicationComponent.getInstance().getInvocationCache(myClass);
     for (final Method method : ReflectionCache.getMethods(myClass)) {
       methods.add(invocationCache.getInternedMethod(method));
