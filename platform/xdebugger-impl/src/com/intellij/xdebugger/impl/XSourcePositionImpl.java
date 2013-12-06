@@ -20,7 +20,9 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.impl.http.HttpVirtualFile;
 import com.intellij.pom.Navigatable;
+import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.xdebugger.XSourcePosition;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -78,14 +80,21 @@ public class XSourcePositionImpl implements XSourcePosition {
       return null;
     }
 
-    Document document = FileDocumentManager.getInstance().getDocument(file);
-    if (document == null) {
-      return null;
+    int offset;
+    if (file instanceof LightVirtualFile || file instanceof HttpVirtualFile) {
+      offset = -1;
     }
-    if (line < 0) {
-      line = 0;
+    else {
+      Document document = FileDocumentManager.getInstance().getDocument(file);
+      if (document == null) {
+        return null;
+      }
+      if (line < 0) {
+        line = 0;
+      }
+
+      offset = line < document.getLineCount() ? document.getLineStartOffset(line) : -1;
     }
-    int offset = line < document.getLineCount() ? document.getLineStartOffset(line) : -1;
     return new XSourcePositionImpl(file, line, offset);
   }
 
