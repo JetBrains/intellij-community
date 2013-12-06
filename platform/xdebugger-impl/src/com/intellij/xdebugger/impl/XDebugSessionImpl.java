@@ -66,6 +66,7 @@ import com.intellij.xdebugger.impl.ui.XDebugSessionTab;
 import com.intellij.xdebugger.impl.ui.XDebuggerUIConstants;
 import com.intellij.xdebugger.stepping.XSmartStepIntoHandler;
 import com.intellij.xdebugger.stepping.XSmartStepIntoVariant;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -295,7 +296,11 @@ public class XDebugSessionImpl implements XDebugSession {
 
   private void disableSlaveBreakpoints(final XDependentBreakpointManager dependentBreakpointManager) {
     Set<XBreakpoint<?>> slaveBreakpoints = dependentBreakpointManager.getAllSlaveBreakpoints();
-    Set<XBreakpointType<?, ?>> breakpointTypes = new HashSet<XBreakpointType<?, ?>>();
+    if (slaveBreakpoints.isEmpty()) {
+      return;
+    }
+
+    Set<XBreakpointType<?, ?>> breakpointTypes = new THashSet<XBreakpointType<?, ?>>();
     for (XBreakpointHandler<?> handler : myDebugProcess.getBreakpointHandlers()) {
       breakpointTypes.add(getBreakpointTypeClass(handler));
     }
