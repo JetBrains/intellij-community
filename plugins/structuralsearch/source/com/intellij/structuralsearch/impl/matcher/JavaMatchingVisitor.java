@@ -110,8 +110,8 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
   public final void visitModifierList(final PsiModifierList list) {
     final PsiModifierList list2 = (PsiModifierList)myMatchingVisitor.getElement();
 
-    for (@PsiModifier.ModifierConstant String aMODIFIERS : MODIFIERS) {
-      if (list.hasModifierProperty(aMODIFIERS) && !list2.hasModifierProperty(aMODIFIERS)) {
+    for (@PsiModifier.ModifierConstant String modifier : MODIFIERS) {
+      if (list.hasModifierProperty(modifier) && !list2.hasModifierProperty(modifier)) {
         myMatchingVisitor.setResult(false);
         return;
       }
@@ -1249,25 +1249,37 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
 
     if (!myMatchingVisitor.getResult()) return;
 
+    final PsiResourceList resourceList1 = try1.getResourceList();
     final PsiCatchSection[] catches1 = try1.getCatchSections();
     final PsiCodeBlock finally1 = try1.getFinallyBlock();
 
+    final PsiResourceList resourceList2 = try2.getResourceList();
     final PsiCatchSection[] catches2 = try2.getCatchSections();
     final PsiCodeBlock finally2 = try2.getFinallyBlock();
 
-    if (!myMatchingVisitor.getMatchContext().getOptions().isLooseMatching() &&
-        ((catches1.length == 0 &&
-          catches2.length != 0
-        ) ||
-         (finally1 == null &&
-          finally2 != null
-         )
-        )
+    final boolean looseMatching = myMatchingVisitor.getMatchContext().getOptions().isLooseMatching();
+    if (!looseMatching &&
+        ((catches1.length == 0 && catches2.length != 0) ||
+         (finally1 == null && finally2 != null) ||
+         (resourceList1 == null && resourceList2 != null))
       ) {
       myMatchingVisitor.setResult(false);
     }
     else {
-      List<PsiCatchSection> unmatchedCatchSections = new ArrayList<PsiCatchSection>();
+      if (resourceList1 != null) {
+        if (resourceList2 == null) {
+          myMatchingVisitor.setResult(false);
+          return;
+        }
+        final List<PsiResourceVariable> resourceVariables1 = resourceList1.getResourceVariables();
+        final List<PsiResourceVariable> resourceVariables2 = resourceList2.getResourceVariables();
+        myMatchingVisitor.setResult(myMatchingVisitor.matchInAnyOrder(
+          resourceVariables1.toArray(new PsiResourceVariable[resourceVariables1.size()]),
+          resourceVariables2.toArray(new PsiResourceVariable[resourceVariables2.size()])));
+        if (!myMatchingVisitor.getResult()) return;
+      }
+
+      final List<PsiCatchSection> unmatchedCatchSections = new ArrayList<PsiCatchSection>();
 
       ContainerUtil.addAll(unmatchedCatchSections, catches2);
 
@@ -1298,8 +1310,7 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
         myMatchingVisitor.setResult(myMatchingVisitor.matchSons(finally1, finally2));
       }
 
-      if (myMatchingVisitor.getResult() &&
-          unmatchedCatchSections.size() > 0 && !myMatchingVisitor.getMatchContext().getOptions().isLooseMatching()) {
+      if (myMatchingVisitor.getResult() && unmatchedCatchSections.size() > 0 && !looseMatching) {
         try2.putUserData(MatcherImplUtil.UNMATCHED_CATCH_SECTION_CONTENT_VAR_KEY, unmatchedCatchSections);
       }
     }
