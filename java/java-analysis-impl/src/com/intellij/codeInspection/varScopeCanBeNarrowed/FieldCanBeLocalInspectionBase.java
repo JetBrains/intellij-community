@@ -18,10 +18,7 @@ package com.intellij.codeInspection.varScopeCanBeNarrowed;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInsight.daemon.ImplicitUsageProvider;
-import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
-import com.intellij.codeInspection.InspectionsBundle;
-import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.codeInspection.*;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.JDOMExternalizableStringList;
@@ -41,7 +38,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
-public class FieldCanBeLocalInspectionBase extends AbstractBaseJavaLocalInspectionTool {
+public class FieldCanBeLocalInspectionBase extends BaseJavaBatchLocalInspectionTool {
   @NonNls public static final String SHORT_NAME = "FieldCanBeLocal";
   public final JDOMExternalizableStringList EXCLUDE_ANNOS = new JDOMExternalizableStringList();
   public boolean IGNORE_FIELDS_USED_IN_MULTIPLE_METHODS = true;
