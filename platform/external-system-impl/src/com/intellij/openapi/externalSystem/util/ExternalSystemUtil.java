@@ -74,6 +74,7 @@ import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.util.Consumer;
 import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -462,14 +463,29 @@ public class ExternalSystemUtil {
         task.execute(indicator, ExternalSystemTaskNotificationListener.EP_NAME.getExtensions());
         final Throwable error = task.getError();
         if (error == null) {
+          ExternalSystemManager<?, ?, ?, ?, ?> manager = ExternalSystemApiUtil.getManager(externalSystemId);
+          assert manager != null;
           long stamp = getTimeStamp(externalProjectPath, externalSystemId);
           if (stamp > 0) {
-            ExternalSystemManager<?, ?, ?, ?, ?> manager = ExternalSystemApiUtil.getManager(externalSystemId);
-            assert manager != null;
             if(project.isDisposed()) return;
             manager.getLocalSettingsProvider().fun(project).getExternalConfigModificationStamps().put(externalProjectPath, stamp);
           }
           DataNode<ProjectData> externalProject = task.getExternalProject();
+
+          if(externalProject != null) {
+            Set<String> myExternalModulePaths = ContainerUtil.newHashSet();
+            Collection<DataNode<ModuleData>> moduleNodes = ExternalSystemApiUtil.findAll(externalProject, ProjectKeys.MODULE);
+            for (DataNode<ModuleData> node : moduleNodes) {
+              myExternalModulePaths.add(node.getData().getLinkedExternalProjectPath());
+            }
+
+            String projectPath = externalProject.getData().getLinkedExternalProjectPath();
+            ExternalProjectSettings linkedProjectSettings = manager.getSettingsProvider().fun(project).getLinkedProjectSettings(projectPath);
+            if (linkedProjectSettings != null) {
+              linkedProjectSettings.setModules(myExternalModulePaths);
+            }
+          }
+
           callback.onSuccess(externalProject);
           return;
         }

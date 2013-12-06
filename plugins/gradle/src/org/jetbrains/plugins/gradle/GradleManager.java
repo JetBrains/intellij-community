@@ -269,6 +269,16 @@ public class GradleManager
       }
 
       @Override
+      public void onGradleHomeChange(@Nullable String oldPath, @Nullable String newPath, @NotNull String linkedProjectPath) {
+        ExternalSystemUtil.refreshProjects(project, GradleConstants.SYSTEM_ID, true);
+      }
+
+      @Override
+      public void onGradleDistributionTypeChange(DistributionType currentValue, @NotNull String linkedProjectPath) {
+        ExternalSystemUtil.refreshProjects(project, GradleConstants.SYSTEM_ID, true);
+      }
+
+      @Override
       public void onProjectsLinked(@NotNull Collection<GradleProjectSettings> settings) {
         final ProjectDataManager projectDataManager = ServiceManager.getService(ProjectDataManager.class);
         for (GradleProjectSettings gradleProjectSettings : settings) {
