@@ -380,9 +380,28 @@ public class TypesUtil {
       if (result != null && result.booleanValue()) return true;
     }
 
+    if (rType instanceof GrClosureType) {
+      if (canMakeClosureRaw(lType)) {
+        rType = ((GrClosureType)rType).rawType();
+      }
+    }
+
     if (TypeConversionUtil.isAssignable(lType, rType)) {
       return true;
     }
+
+    return false;
+  }
+
+  private static boolean canMakeClosureRaw(PsiType type) {
+    if (!(type instanceof PsiClassType)) return true;
+
+    final PsiType[] parameters = ((PsiClassType)type).getParameters();
+
+    if (parameters.length != 1) return true;
+
+    final PsiType parameter = parameters[0];
+    if (parameter instanceof PsiWildcardType) return true;
 
     return false;
   }
