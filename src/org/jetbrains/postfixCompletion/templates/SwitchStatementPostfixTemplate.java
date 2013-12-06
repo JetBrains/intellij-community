@@ -8,7 +8,7 @@ import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class SwitchStatementPostfixTemplate extends StatementPostfixTemplate {
+public class SwitchStatementPostfixTemplate extends StatementPostfixTemplateBase {
   public SwitchStatementPostfixTemplate() {
     super("switch", "Produces switch over integral/enum/string values", "switch (expr)");
   }
