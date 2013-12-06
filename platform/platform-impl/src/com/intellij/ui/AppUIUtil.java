@@ -34,6 +34,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.awt.*;
 import java.io.IOException;
 import java.io.InputStream;
@@ -162,5 +163,11 @@ public class AppUIUtil {
         }
       }
     });
+  }
+
+  public static JTextField createUndoableTextField() {
+    JTextField field = new JTextField();
+    new TextComponentUndoProvider(field);
+    return field;
   }
 }
