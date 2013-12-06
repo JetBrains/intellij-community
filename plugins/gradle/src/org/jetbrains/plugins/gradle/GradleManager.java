@@ -267,8 +267,6 @@ public class GradleManager
     MessageBusConnection connection = project.getMessageBus().connect(project);
     connection.subscribe(GradleSettings.getInstance(project).getChangesTopic(), new GradleSettingsListenerAdapter() {
 
-      @NotNull private final ReentrantLock lock = new ReentrantLock();
-
       @Override
       public void onServiceDirectoryPathChange(@Nullable String oldPath, @Nullable String newPath) {
         ensureProjectsRefresh();
@@ -317,16 +315,7 @@ public class GradleManager
       }
 
       private void ensureProjectsRefresh() {
-        if (!lock.tryLock()) return;
-        try {
-          ExternalSystemProcessingManager processingManager = ServiceManager.getService(ExternalSystemProcessingManager.class);
-          if (!processingManager.hasTaskOfTypeInProgress(ExternalSystemTaskType.RESOLVE_PROJECT, project)) {
-            ExternalSystemUtil.refreshProjects(project, GradleConstants.SYSTEM_ID, true);
-          }
-        }
-        finally {
-          lock.unlock();
-        }
+        ExternalSystemUtil.refreshProjects(project, GradleConstants.SYSTEM_ID, true);
       }
     });
 
