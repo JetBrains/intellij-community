@@ -154,7 +154,7 @@ public class HgRepositoryImpl extends RepositoryImpl implements HgRepository {
 
   @NotNull
   private HgRepoInfo readRepoInfo() {
-    myIsFresh = myIsFresh && myReader.checkIsFresh();
+    myIsFresh = myIsFresh && myReader.isFresh();
     //in GitRepositoryImpl there are temporary state object for reader fields storing! Todo Check;
     return
       new HgRepoInfo(myReader.readCurrentBranch(), myReader.readCurrentRevision(), myReader.readState(), myReader.readBranches(),
