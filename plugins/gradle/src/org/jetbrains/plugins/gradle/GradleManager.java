@@ -78,6 +78,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * @author Denis Zhdanov
@@ -265,6 +266,9 @@ public class GradleManager
     // We want to automatically refresh linked projects on gradle service directory change.
     MessageBusConnection connection = project.getMessageBus().connect(project);
     connection.subscribe(GradleSettings.getInstance(project).getChangesTopic(), new GradleSettingsListenerAdapter() {
+
+      @NotNull private final ReentrantLock lock = new ReentrantLock();
+
       @Override
       public void onServiceDirectoryPathChange(@Nullable String oldPath, @Nullable String newPath) {
         ensureProjectsRefresh();
@@ -313,12 +317,17 @@ public class GradleManager
       }
 
       private void ensureProjectsRefresh() {
-        ExternalSystemProcessingManager processingManager = ServiceManager.getService(ExternalSystemProcessingManager.class);
-        if(!processingManager.hasTaskOfTypeInProgress(ExternalSystemTaskType.RESOLVE_PROJECT, project)) {
-          ExternalSystemUtil.refreshProjects(project, GradleConstants.SYSTEM_ID, true);
+        if (!lock.tryLock()) return;
+        try {
+          ExternalSystemProcessingManager processingManager = ServiceManager.getService(ExternalSystemProcessingManager.class);
+          if (!processingManager.hasTaskOfTypeInProgress(ExternalSystemTaskType.RESOLVE_PROJECT, project)) {
+            ExternalSystemUtil.refreshProjects(project, GradleConstants.SYSTEM_ID, true);
+          }
+        }
+        finally {
+          lock.unlock();
         }
       }
-
     });
 
     // We used to assume that gradle scripts are always named 'build.gradle' and kept path to that build.gradle file at ide settings.
