@@ -467,9 +467,7 @@ public abstract class TestObject implements JavaCommandLine {
                                                 boolean junit4) {
     try {
       if (createTempFile) {
-        myTempFile = FileUtil.createTempFile("idea_junit", ".tmp");
-        myTempFile.deleteOnExit();
-        myJavaParameters.getProgramParametersList().add("@" + myTempFile.getAbsolutePath());
+        createTempFiles();
       }
 
       final Map<String, List<String>> perModule = forkPerModule() ? new TreeMap<String, List<String>>() : null;
@@ -535,6 +533,15 @@ public abstract class TestObject implements JavaCommandLine {
     catch (IOException e) {
       LOG.error(e);
     }
+  }
+
+  protected void createTempFiles() throws IOException {
+    myTempFile = FileUtil.createTempFile("idea_junit", ".tmp");
+    myTempFile.deleteOnExit();
+    myJavaParameters.getProgramParametersList().add("@" + myTempFile.getAbsolutePath());
+    myWorkingDirsFile = FileUtil.createTempFile("idea_working_dirs_junit", ".tmp");
+    myWorkingDirsFile.deleteOnExit();
+    myJavaParameters.getProgramParametersList().add("@w@" + myWorkingDirsFile.getAbsolutePath());
   }
 
   public void clear() {

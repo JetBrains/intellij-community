@@ -193,7 +193,7 @@ public class JUnitStarter {
       System.setOut(new PrintStream(out));
       System.setErr(new PrintStream(err));
       if (ourCommandFileName != null) {
-        if (!"none".equals(ourForkMode) || new File(ourWorkingDirs).length() > 0) {
+        if (!"none".equals(ourForkMode) || ourWorkingDirs != null && new File(ourWorkingDirs).length() > 0) {
           return JUnitForkedStarter.startForkedVMs(ourWorkingDirs, args, isJUnit4, listeners, out, err, ourForkMode, ourCommandFileName);
         }
       }
