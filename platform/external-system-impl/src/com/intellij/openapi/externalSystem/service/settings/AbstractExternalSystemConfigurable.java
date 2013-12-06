@@ -233,6 +233,11 @@ public abstract class AbstractExternalSystemConfigurable<
         projectSettings.add(s);
       }
       systemSettings.setLinkedProjectsSettings(projectSettings);
+      for (ExternalSystemSettingsControl<ProjectSettings> control : myProjectSettingsControls) {
+        if(control instanceof AbstractExternalProjectSettingsControl){
+          AbstractExternalProjectSettingsControl.class.cast(control).updateInitialSettings();
+        }
+      }
       if (mySystemSettingsControl != null) {
         mySystemSettingsControl.apply(systemSettings);
       }

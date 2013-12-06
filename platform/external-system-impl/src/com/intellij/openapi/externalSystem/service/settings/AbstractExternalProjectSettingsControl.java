@@ -89,9 +89,7 @@ public abstract class AbstractExternalProjectSettingsControl<S extends ExternalP
   @Override
   public void apply(@NotNull S settings) {
     settings.setUseAutoImport(myUseAutoImportBox.isSelected());
-    myInitialSettings.setUseAutoImport(myUseAutoImportBox.isSelected());
     settings.setCreateEmptyContentRootDirectories(myCreateEmptyContentRootDirectoriesBox.isSelected());
-    myInitialSettings.setCreateEmptyContentRootDirectories(myCreateEmptyContentRootDirectoriesBox.isSelected());
     if (myInitialSettings.getExternalProjectPath() != null) {
       settings.setExternalProjectPath(myInitialSettings.getExternalProjectPath());
     }
@@ -108,4 +106,12 @@ public abstract class AbstractExternalProjectSettingsControl<S extends ExternalP
   public void showUi(boolean show) {
     ExternalSystemUiUtil.showUi(this, show);
   }
+
+  public void updateInitialSettings() {
+    myInitialSettings.setUseAutoImport(myUseAutoImportBox.isSelected());
+    myInitialSettings.setCreateEmptyContentRootDirectories(myCreateEmptyContentRootDirectoriesBox.isSelected());
+    updateInitialExtraSettings();
+  }
+
+  protected void updateInitialExtraSettings(){}
 }
