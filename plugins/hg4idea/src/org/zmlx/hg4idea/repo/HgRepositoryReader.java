@@ -56,10 +56,7 @@ public class HgRepositoryReader {
     myHgDir = hgDir;
     RepositoryUtil.assertFileExists(myHgDir, ".hg directory not found in " + myHgDir);
     myCacheDir = new File(myHgDir, "cache");
-    File branchesFile = new File(myCacheDir, "branchheads-served");  //branchheads-served exist after mercurial 2.5,
-    //before 2.5 only branchheads exist
-    HgVcs vcs = HgVcs.getInstance(project);
-    myBranchHeadsFile = vcs != null && vcs.getVersion().hasBranchHeadsServed() ? branchesFile : new File(myCacheDir, "branchheads");
+    myBranchHeadsFile = identifyBranchHeadFile(project, myCacheDir);
     myCurrentBranch = new File(myHgDir, "branch");
     myBookmarksFile = new File(myHgDir, "bookmarks");
     myCurrentBookmark = new File(myHgDir, "bookmarks.current");
@@ -69,13 +66,28 @@ public class HgRepositoryReader {
   }
 
   /**
+   * Identify file with branches and heads information depends on hg version;
+   *
+   * @param project
+   * @param parentCacheFile
+   * @return
+   */
+  @NotNull
+  private static File identifyBranchHeadFile(@NotNull Project project, @NotNull File parentCacheFile) {
+    File branchesFile = new File(parentCacheFile, "branchheads-served");  //branchheads-served exist after mercurial 2.5,
+    //before 2.5 only branchheads exist
+    HgVcs vcs = HgVcs.getInstance(project);
+    return vcs != null && vcs.getVersion().hasBranchHeadsServed() ? branchesFile : new File(parentCacheFile, "branchheads");
+  }
+
+  /**
    * Finds current revision value.
    *
    * @return The current revision hash, or <b>{@code null}</b> if current revision is unknown - it is the initial repository state.
    */
   @Nullable
   public String readCurrentRevision() {
-    if (isFresh() || !myBranchHeadsFile.exists()) return null;
+    if (!isBranchInfoAvailable()) return null;
     String[] branchesWithHeads = RepositoryUtil.tryLoadFile(myBranchHeadsFile).split("\n");
     String head = branchesWithHeads[0];
     Matcher matcher = HASH_NAME.matcher(head);
@@ -83,6 +95,10 @@ public class HgRepositoryReader {
       return (matcher.group(1));
     }
     return null;
+  }
+
+  private boolean isBranchInfoAvailable() {
+    return !isFresh() && myBranchHeadsFile.exists();
   }
 
   /**
@@ -97,7 +113,7 @@ public class HgRepositoryReader {
   public Collection<HgNameWithHashInfo> readBranches() {
     List<HgNameWithHashInfo> branches = new ArrayList<HgNameWithHashInfo>();
     // Set<String> branchNames = new HashSet<String>();
-    if (!isFresh() && myBranchHeadsFile.exists()) {
+    if (isBranchInfoAvailable()) {
       String[] branchesWithHeads = RepositoryUtil.tryLoadFile(myBranchHeadsFile).split("\n");
       // first one - is a head revision: head hash + head number;
       for (int i = 1; i < branchesWithHeads.length; ++i) {
