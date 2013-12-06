@@ -241,7 +241,7 @@ public class HgLogProvider implements VcsLogProvider {
   @NotNull
   @Override
   public Collection<String> getContainingBranches(@NotNull VirtualFile root, @NotNull Hash commitHash) throws VcsException {
-    return ContainerUtil.emptyList(); // TODO
+    return HgHistoryUtil.getDescendingHeadsOfBranches(myProject, root, commitHash);
   }
 
   private static String prepareParameter(String paramName, String value) {
