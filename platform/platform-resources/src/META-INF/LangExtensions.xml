@@ -723,6 +723,8 @@
     <projectService serviceInterface="com.intellij.compiler.ProblemsView"
                     serviceImplementation="com.intellij.compiler.impl.ProblemsViewImpl"/>
 
+    <scrollFromSourceProvider implementation="com.intellij.ide.projectView.impl.ProjectViewScrollFromSourceImpl"/>
+
     <http.fileEditorActionProvider implementation="com.intellij.openapi.fileEditor.impl.http.LangRemoteFileEditorActionProvider"/>
 
     <toolWindow id="Project" anchor="left" icon="AllIcons.Toolwindows.ToolWindowProject"

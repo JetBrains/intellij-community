@@ -243,6 +243,7 @@
                     interface="com.intellij.navigation.AnonymousElementProvider"/>
 
     <extensionPoint name="gotoRelatedProvider" interface="com.intellij.navigation.GotoRelatedProvider"/>
+    <extensionPoint name="scrollFromSourceProvider" interface="com.intellij.navigation.ScrollFromSourceProvider"/>
 
     <extensionPoint name="projectExtension" interface="com.intellij.openapi.roots.ProjectExtension" area="IDEA_PROJECT"/>
     <extensionPoint name="roots.watchedRootsProvider" interface="com.intellij.openapi.roots.WatchedRootsProvider" area="IDEA_PROJECT"/>

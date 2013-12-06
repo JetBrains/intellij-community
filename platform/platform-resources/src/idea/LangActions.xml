@@ -121,6 +121,7 @@
       <action id="GotoSuperMethod" class="com.intellij.codeInsight.navigation.actions.GotoSuperAction"/>
       <action id="GotoTest" class="com.intellij.testIntegration.GotoTestOrCodeAction"/>
       <action id="GotoRelated" class="com.intellij.ide.actions.GotoRelatedFileAction"/>
+      <action id="ScrollFromSource" class="com.intellij.ide.actions.ScrollFromSourceAction"/>
       <separator/>
       <action id="FileStructurePopup" class="com.intellij.ide.actions.ViewStructureAction"/>
       <action id="ShowFilePath" class="com.intellij.ide.actions.ShowFilePathAction"/>
