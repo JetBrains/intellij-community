@@ -98,7 +98,7 @@ public class IdeaApplication {
         }
       }
 
-      ApplicationManagerEx.createApplication(isInternal, false, false, false, "idea", splash);
+      ApplicationManagerEx.createApplication(isInternal, false, false, false, ApplicationManagerEx.IDEA_APPLICATION, splash);
     }
 
     if (myStarter == null) {

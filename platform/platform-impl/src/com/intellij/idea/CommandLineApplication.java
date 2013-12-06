@@ -49,7 +49,7 @@ public class CommandLineApplication {
   protected CommandLineApplication() {}
 
   protected CommandLineApplication(boolean isInternal, boolean isUnitTestMode, boolean isHeadless) {
-    this(isInternal, isUnitTestMode, isHeadless, "idea");
+    this(isInternal, isUnitTestMode, isHeadless, ApplicationManagerEx.IDEA_APPLICATION);
   }
 
   protected CommandLineApplication(boolean isInternal, boolean isUnitTestMode, boolean isHeadless, @NotNull @NonNls String appName) {
