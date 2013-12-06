@@ -22,6 +22,7 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -68,6 +69,10 @@ public class ClassInitializerInspection extends BaseInspection {
   @NotNull
   @Override
   protected InspectionGadgetsFix[] buildFixes(Object... infos) {
+    final PsiClass aClass = (PsiClass)infos[0];
+    if (PsiUtil.isInnerClass(aClass)) {
+      return new InspectionGadgetsFix[] {new MoveToConstructorFix()};
+    }
     return new InspectionGadgetsFix[] {
       new ChangeModifierFix(PsiModifier.STATIC),
       new MoveToConstructorFix()
@@ -161,13 +166,14 @@ public class ClassInitializerInspection extends BaseInspection {
       if (initializer.hasModifierProperty(PsiModifier.STATIC)) {
         return;
       }
-      if (onlyWarnWhenConstructor) {
-        final PsiClass aClass = initializer.getContainingClass();
-        if (aClass == null || aClass.getConstructors().length == 0) {
-          return;
-        }
+      final PsiClass aClass =  initializer.getContainingClass();
+      if (aClass == null || aClass instanceof PsiAnonymousClass) {
+        return;
       }
-      registerClassInitializerError(initializer);
+      if (onlyWarnWhenConstructor && aClass.getConstructors().length == 0) {
+        return;
+      }
+      registerClassInitializerError(initializer, aClass);
     }
   }
 }

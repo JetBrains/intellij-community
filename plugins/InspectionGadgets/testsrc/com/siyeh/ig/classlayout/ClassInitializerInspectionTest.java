@@ -24,12 +24,17 @@ import com.siyeh.ig.LightInspectionTestCase;
 public class ClassInitializerInspectionTest extends LightInspectionTestCase {
 
   public void testSimple() { doTest(); }
-  public void testNoConstructor() { doTest(); }
+  public void testAnonymous() { doTest(); }
+
+  public void testNoConstructor() {
+    final ClassInitializerInspection inspection = new ClassInitializerInspection();
+    inspection.onlyWarnWhenConstructor = true;
+    myFixture.enableInspections(inspection);
+    doTest();
+  }
 
   @Override
   protected InspectionProfileEntry getInspection() {
-    final ClassInitializerInspection inspection = new ClassInitializerInspection();
-    inspection.onlyWarnWhenConstructor = true;
-    return inspection;
+    return new ClassInitializerInspection();
   }
 }
