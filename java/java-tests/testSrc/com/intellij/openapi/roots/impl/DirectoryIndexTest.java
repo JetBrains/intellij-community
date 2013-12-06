@@ -225,8 +225,8 @@ public class DirectoryIndexTest extends IdeaTestCase {
   }
 
   public void testDirsByPackageName() throws IOException {
-    checkPackage("", true, myFileLibSrc, myFileLibCls, mySrcDir1, myTestSrc1, myResDir, myTestResDir, myLibSrcDir, myLibClsDir, mySrcDir2);
-    checkPackage("", false, myFileLibCls, mySrcDir1, myTestSrc1, myResDir, myTestResDir, myLibClsDir, mySrcDir2);
+    checkPackage("", true, mySrcDir1, myTestSrc1, myResDir, myTestResDir, myFileLibSrc, myFileLibCls, mySrcDir2, myLibSrcDir, myLibClsDir);
+    checkPackage("", false, mySrcDir1, myTestSrc1, myResDir, myTestResDir, myFileLibCls, mySrcDir2, myLibClsDir);
     
     checkPackage("pack1", true, myPack1Dir);
     checkPackage("pack1", false, myPack1Dir);
@@ -239,7 +239,8 @@ public class DirectoryIndexTest extends IdeaTestCase {
 
     VirtualFile libClsPack = myLibClsDir.createChildDirectory(this, "pack1");
     VirtualFile libSrcPack = myLibSrcDir.createChildDirectory(this, "pack1");
-    checkPackage("pack1", true, myPack1Dir, libClsPack, libSrcPack);
+    fireRootsChanged();
+    checkPackage("pack1", true, myPack1Dir, libSrcPack, libClsPack);
     checkPackage("pack1", false, myPack1Dir, libClsPack);
   }
 
@@ -722,7 +723,7 @@ public class DirectoryIndexTest extends IdeaTestCase {
   private void checkPackage(String packageName, boolean includeLibrarySources, VirtualFile... expectedDirs) {
     VirtualFile[] actualDirs = myIndex.getDirectoriesByPackageName(packageName, includeLibrarySources).toArray(VirtualFile.EMPTY_ARRAY);
     assertNotNull(actualDirs);
-    assertSameElements(actualDirs, expectedDirs);
+    assertOrderedEquals(actualDirs, expectedDirs);
   }
 
   public void testFileLibraryInsideFolderLibrary() throws IOException {

@@ -32,7 +32,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
-import com.intellij.util.containers.MultiMapBasedOnSet;
 import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -46,8 +45,13 @@ class RootIndex {
   private static final DirectoryInfo NULL_INFO = DirectoryInfo.createNew();
 
   private final Set<VirtualFile> myProjectExcludedRoots = ContainerUtil.newHashSet();
-  private final Map<VirtualFile, RootInfo> myRoots = ContainerUtil.newTroveMap();
-  private final MultiMap<String, VirtualFile> myPackagePrefixRoots = new MultiMapBasedOnSet<String, VirtualFile>();
+  private final Map<VirtualFile, RootInfo> myRoots = ContainerUtil.newLinkedHashMap();
+  private final MultiMap<String, VirtualFile> myPackagePrefixRoots = new MultiMap<String, VirtualFile>() {
+    @Override
+    protected Collection<VirtualFile> createCollection() {
+      return ContainerUtil.newLinkedHashSet();
+    }
+  };
 
   private final Map<String, List<VirtualFile>> myDirectoriesByPackageNameCache = ContainerUtil.newConcurrentMap();
   private final Map<String, List<VirtualFile>> myDirectoriesByPackageNameCacheWithLibSrc = ContainerUtil.newConcurrentMap();
@@ -107,17 +111,17 @@ class RootIndex {
           final VirtualFile[] sourceRoots = entry.getRootFiles(OrderRootType.SOURCES);
           final VirtualFile[] classRoots = entry.getRootFiles(OrderRootType.CLASSES);
 
-          // init library classes
-          for (final VirtualFile classRoot : classRoots) {
-            final RootInfo info = getOrCreateRootInfo(classRoot);
-            info.libClassRootEntries.add(orderEntry);
-            info.packagePrefix = "";
-          }
-
           // Init library sources
           for (final VirtualFile sourceRoot : sourceRoots) {
             final RootInfo info = getOrCreateRootInfo(sourceRoot);
             info.libSourceRootEntries.add(orderEntry);
+            info.packagePrefix = "";
+          }
+
+          // init library classes
+          for (final VirtualFile classRoot : classRoots) {
+            final RootInfo info = getOrCreateRootInfo(classRoot);
+            info.libClassRootEntries.add(orderEntry);
             info.packagePrefix = "";
           }
 
@@ -263,14 +267,6 @@ class RootIndex {
     }
 
     final ArrayList<VirtualFile> result = ContainerUtil.newArrayList();
-    Collection<VirtualFile> packagePrefixRoots = myPackagePrefixRoots.get(packageName);
-    if (!packagePrefixRoots.isEmpty()) {
-      for (VirtualFile file : packagePrefixRoots) {
-        if (isValidPackageDirectory(includeLibrarySources, file)) {
-          result.add(file);
-        }
-      }
-    }
 
     if (StringUtil.isNotEmpty(packageName) && !packageName.startsWith(".")) {
       String parentPackage = StringUtil.getPackageName(packageName);
@@ -279,6 +275,15 @@ class RootIndex {
         VirtualFile child = parentDir.findChild(shortName);
         if (isValidPackageDirectory(includeLibrarySources, child) && child.isDirectory() && packageName.equals(getPackageName(child))) {
           result.add(child);
+        }
+      }
+    }
+
+    Collection<VirtualFile> packagePrefixRoots = myPackagePrefixRoots.get(packageName);
+    if (!packagePrefixRoots.isEmpty()) {
+      for (VirtualFile file : packagePrefixRoots) {
+        if (isValidPackageDirectory(includeLibrarySources, file)) {
+          result.add(file);
         }
       }
     }
