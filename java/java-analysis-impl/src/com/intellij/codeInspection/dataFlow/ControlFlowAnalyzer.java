@@ -1516,8 +1516,8 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
           }
         }
         else if ("junit.framework.Assert".equals(className) || "org.junit.Assert".equals(className) ||
-                 "junit.framework.TestCase".equals(className) || "org.testng.Assert".equals(className)) {
-          boolean testng = "org.testng.Assert".equals(className);
+                 "junit.framework.TestCase".equals(className) || "org.testng.Assert".equals(className) || "org.testng.AssertJUnit".equals(className)) {
+          boolean testng = className.startsWith("org.testng.");
           if ("fail".equals(methodName)) {
             return Collections.singletonList(new MethodContract(getAnyArgConstraints(params), ValueConstraint.THROW_EXCEPTION));
           }
