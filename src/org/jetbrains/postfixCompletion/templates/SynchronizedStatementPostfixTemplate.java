@@ -14,13 +14,8 @@ public class SynchronizedStatementPostfixTemplate extends StatementPostfixTempla
   public boolean isApplicable(@NotNull PsiElement context, @NotNull Document copyDocument, int newOffset) {
     PsiExpression expression = getTopmostExpression(context);
     PsiElement parent = expression != null ? expression.getParent() : null;
-    return parent instanceof PsiExpressionStatement && goodEnoughType(expression);
-  }
-
-  private static boolean goodEnoughType(@NotNull PsiExpression expression) {
-    PsiType expressionType = expression.getType();
-    return !(expressionType instanceof PsiPrimitiveType) && expressionType != null;
-    // if (!expressionType.equalsToText(CommonClassNames.JAVA_LANG_OBJECT)) return null;  // todo: what does it mean?
+    PsiType type = expression != null ? expression.getType() : null;
+    return parent instanceof PsiExpressionStatement && type != null && !(type instanceof PsiPrimitiveType);
   }
 
   @Override
