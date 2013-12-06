@@ -202,25 +202,28 @@ public class UIUtil {
     final MatchOptions options = config.getMatchOptions();
 
 
-    MatchVariableConstraint constraint = options == null ? null : options.getVariableConstraint(varname);
+    final MatchVariableConstraint constraint = options == null ? null : options.getVariableConstraint(varname);
     NamedScriptableDefinition namedScriptableDefinition = constraint;
 
-    ReplacementVariableDefinition replacementVariableDefinition = config instanceof ReplaceConfiguration ?
-                                               ((ReplaceConfiguration)config).getOptions().getVariableDefinition(varname) : null;
+    final ReplacementVariableDefinition replacementVariableDefinition =
+      config instanceof ReplaceConfiguration ? ((ReplaceConfiguration)config).getOptions().getVariableDefinition(varname) : null;
     if (replacementVariableDefinition != null) namedScriptableDefinition = replacementVariableDefinition;
 
     if (constraint == null && replacementVariableDefinition == null) {
       return SSRBundle.message("no.constraints.specified.tooltip.message");
     }
 
-    StringBuffer buf = new StringBuffer();
+    final StringBuilder buf = new StringBuilder();
 
     if (constraint != null) {
+      if (constraint.isPartOfSearchResults()) {
+        append(buf, SSRBundle.message("target.tooltip.message"));
+      }
       if (constraint.getRegExp() != null && constraint.getRegExp().length() > 0) {
         append(buf, SSRBundle.message("text.tooltip.message", constraint.isInvertRegExp() ? SSRBundle.message("not.tooltip.message") : "",
                                      constraint.getRegExp(),
-                                     constraint.isWithinHierarchy() || constraint.isStrictlyWithinHierarchy() ? SSRBundle
-                                         .message("within.hierarchy.tooltip.message") : ""));
+                                     constraint.isWithinHierarchy() || constraint.isStrictlyWithinHierarchy() ?
+                                     SSRBundle.message("within.hierarchy.tooltip.message") : ""));
       }
 
       if (constraint.getNameOfExprType() != null && constraint.getNameOfExprType().length() > 0) {
@@ -235,8 +238,9 @@ public class UIUtil {
       }
       else {
         append(buf, SSRBundle.message("min.occurs.tooltip.message", constraint.getMinCount(),
-                                     constraint.getMaxCount() == Integer.MAX_VALUE ? StringUtil
-                                         .decapitalize(SSRBundle.message("editvarcontraints.unlimited")) : constraint.getMaxCount()));
+                                     constraint.getMaxCount() == Integer.MAX_VALUE ?
+                                     StringUtil.decapitalize(SSRBundle.message("editvarcontraints.unlimited")) :
+                                     constraint.getMaxCount()));
       }
     }
 
@@ -249,7 +253,7 @@ public class UIUtil {
     return buf.toString();
   }
 
-  private static void append(final StringBuffer buf, final String str) {
+  private static void append(final StringBuilder buf, final String str) {
     if (buf.length() > 0) buf.append(", ");
     buf.append(str);
   }
