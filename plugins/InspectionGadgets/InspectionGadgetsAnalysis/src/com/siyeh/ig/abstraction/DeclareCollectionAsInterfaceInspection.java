@@ -23,6 +23,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiSearchHelper;
+import com.intellij.psi.search.SearchScope;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -304,11 +305,11 @@ public class DeclareCollectionAsInterfaceInspection extends BaseInspection {
       final ProgressManager progressManager =
         ProgressManager.getInstance();
       final PsiSearchHelper searchHelper = PsiSearchHelper.SERVICE.getInstance(element.getProject());
-      final GlobalSearchScope scope =
-        GlobalSearchScope.projectScope(element.getProject());
-      return searchHelper.isCheapEnoughToSearch(name, scope, null,
-                                                progressManager.getProgressIndicator()) !=
-             PsiSearchHelper.SearchCostResult.TOO_MANY_OCCURRENCES;
+      SearchScope useScope = element.getUseScope();
+      if (useScope instanceof GlobalSearchScope) {
+        return searchHelper.isCheapEnoughToSearch(name, (GlobalSearchScope)useScope, null, progressManager.getProgressIndicator()) != PsiSearchHelper.SearchCostResult.TOO_MANY_OCCURRENCES;
+      }
+      return true;
     }
   }
 }
