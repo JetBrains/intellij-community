@@ -1,4 +1,5 @@
 package org.jetbrains.postfixCompletion.completion
+
 import com.intellij.codeInsight.completion.CompletionAutoPopupTestCase
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.util.containers.ContainerUtil
@@ -10,87 +11,67 @@ import org.jetbrains.postfixCompletion.templates.PostfixTemplate
 import org.jetbrains.postfixCompletion.templates.SwitchStatementPostfixTemplate
 
 public class TemplatesCompletionTest extends CompletionAutoPopupTestCase {
-  public void testDoNotShowTemplateInInappropriateContext() throws Exception {
-    doAutoPopupTest("instanceof", null)
+  public void testDoNotShowTemplateInInappropriateContext() { doAutoPopupTest 'instanceof', null }
+  public void testShowTemplateInAutoPopup() { doAutoPopupTest 'instanceof', InstanceofExpressionPostfixTemplate.class }
+  public void testShowTemplateOnDoubleLiteral() { doAutoPopupTest 'switch', SwitchStatementPostfixTemplate.class }
+  public void testSelectTemplateByTab() { doCompleteTest 'par', '\t' as char }
+  public void testSelectTemplateByEnter() { doCompleteTest 'par', '\n' as char }
+  public void testQuickTypingWithTab() { doQuickTypingTest 'par', '\t' as char }
+  public void testQuickTypingWithEnter() { doQuickTypingTest 'par', '\n' as char }
+
+  public void testDoNotShowDisabledTemplate() {
+    PostfixCompletionSettings.instance.disableTemplate new InstanceofExpressionPostfixTemplate()
+    doAutoPopupTest 'instanceof', null
   }
 
-  public void testShowTemplateInAutoPopup() throws Exception {
-    doAutoPopupTest("instanceof", InstanceofExpressionPostfixTemplate.class)
-  }
-
-  public void testShowTemplateOnDoubleLiteral() throws Exception {
-    doAutoPopupTest("switch", SwitchStatementPostfixTemplate.class)
-  }
-
-  public void testSelectTemplateByTab() throws Exception {
-    doCompleteTest("par", '\t' as char)
-  }
-
-  public void testSelectTemplateByEnter() throws Exception {
-    doCompleteTest("par", '\n' as char)
-  }
-
-  public void testQuickTypingWithTab() throws Exception {
-    doQuickTypingTest("par", '\t' as char)
-  }
-
-  public void testQuickTypingWithEnter() throws Exception {
-    doQuickTypingTest("par", '\n' as char)
-  }
-
-  public void testDoNotShowDisabledTemplate() throws Exception {
-    PostfixCompletionSettings.instance.disableTemplate(new InstanceofExpressionPostfixTemplate())
-    doAutoPopupTest("instanceof", null)
-  }
-
-  public void testDoNotShowTemplateOnCompletion() throws Exception {
-    edt { myFixture.configureByFile(getTestName(true) + ".java") }
+  public void testDoNotShowTemplateOnCompletion() {
+    edt { myFixture.configureByFile(getTestName(true) + '.java') }
     myFixture.completeBasic()
     LookupElement[] elements = myFixture.lookupElements
     assert elements
     assert !ContainerUtil.findInstance(elements, PostfixTemplateLookupElement.class)
   }
 
-  public void testRecalculatePrefix() throws Exception {
-    edt { myFixture.configureByFile(getTestName(true) + ".java") }
+  public void testRecalculatePrefix() {
+    edt { myFixture.configureByFile(getTestName(true) + '.java') }
     type 'par'
     myFixture.assertPreferredCompletionItems 1, '.par', 'parents'
-    
+
     type '\b'
     assert lookup
     myFixture.assertPreferredCompletionItems 0, 'parents'
-    
+
     type 'r'
     myFixture.assertPreferredCompletionItems 1, '.par', 'parents'
   }
 
   @Override
-  public void tearDown() throws Exception {
-    PostfixCompletionSettings.instance.templatesState = ContainerUtil.<String, Boolean>newHashMap()
+  public void tearDown() {
+    PostfixCompletionSettings.instance.templatesState = ContainerUtil.<String, Boolean> newHashMap()
     super.tearDown()
   }
 
   @Override
   protected String getTestDataPath() {
-    return "testData/completion"
+    return 'testData/completion'
   }
 
   private void doQuickTypingTest(String textToType, char c) {
-    edt { myFixture.configureByFile(getTestName(true) + ".java") }
+    edt { myFixture.configureByFile(getTestName(true) + '.java') }
     myFixture.type(textToType + c)
-    myFixture.checkResultByFile(getTestName(true) + "_after.java")
+    myFixture.checkResultByFile(getTestName(true) + '_after.java')
   }
 
   private void doCompleteTest(String textToType, char c) {
-    edt { myFixture.configureByFile(getTestName(true) + ".java") }
-    type textToType 
+    edt { myFixture.configureByFile(getTestName(true) + '.java') }
+    type textToType
     assert lookup
-    myFixture.type c 
-    myFixture.checkResultByFile(getTestName(true) + "_after.java")
+    myFixture.type c
+    myFixture.checkResultByFile(getTestName(true) + '_after.java')
   }
 
   private void doAutoPopupTest(@NotNull String textToType, @Nullable Class<? extends PostfixTemplate> expectedClass) {
-    edt { myFixture.configureByFile(getTestName(true) + ".java") }
+    edt { myFixture.configureByFile(getTestName(true) + '.java') }
     type textToType
     if (expectedClass != null) {
       assert lookup
