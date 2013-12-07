@@ -9,5 +9,6 @@ public class NotExpressionPostfixTemplateTest extends PostfixTemplateTestCase {
 
   public void testSimple()            { doTest(); }
   public void testComplexCondition()  { doTest(); }
+//  public void testBoxedBoolean()  { doTest(); } // todo: jdk mock required                              
 //  public void testNegation()          { doTest(); } // todo: test for chooser 
 }
