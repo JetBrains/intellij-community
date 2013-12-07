@@ -1,5 +1,6 @@
 package org.jetbrains.postfixCompletion.settings;
 
+import com.intellij.codeInsight.template.impl.TemplateSettings;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.*;
 import com.intellij.util.containers.ContainerUtil;
@@ -31,6 +32,10 @@ public class PostfixCompletionSettings implements PersistentStateComponent<Postf
 
   public void setTemplatesState(@NotNull Map<String, Boolean> templatesState) {
     myTemplatesState = templatesState;
+  }
+
+  public char getShortcut() {
+    return TemplateSettings.TAB_CHAR;
   }
 
   @Nullable

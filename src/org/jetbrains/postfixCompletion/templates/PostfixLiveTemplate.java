@@ -25,6 +25,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.postfixCompletion.settings.PostfixCompletionSettings;
 
 import java.util.HashMap;
 
@@ -108,7 +109,8 @@ public class PostfixLiveTemplate extends CustomLiveTemplateBase {
 
   @Override
   public char getShortcut() {
-    return TemplateSettings.TAB_CHAR; //todo: make it configurable
+    PostfixCompletionSettings settings = PostfixCompletionSettings.getInstance();
+    return settings != null ? settings.getShortcut() : TemplateSettings.TAB_CHAR;
   }
 
   @Override
