@@ -30,7 +30,7 @@ public class PostfixCompletionConfigurable implements SearchableConfigurable, Ed
   @Nullable
   @Override
   public String getHelpTopic() {
-    return getId();
+    return null;
   }
 
   @Nls
