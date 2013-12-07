@@ -14,6 +14,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.postfixCompletion.templates.PostfixLiveTemplate;
 
 import static com.intellij.patterns.PsiJavaPatterns.psiElement;
+import static com.intellij.patterns.StandardPatterns.string;
 
 public class PostfixTemplateCompletionContributor extends CompletionContributor {
 
@@ -32,6 +33,6 @@ public class PostfixTemplateCompletionContributor extends CompletionContributor 
   }
 
   private static ElementPattern<? extends PsiElement> identifierAfterDot() {
-    return psiElement().withElementType(SUITABLE_ELEMENTS).afterLeaf(psiElement(JavaTokenType.DOT));
+    return psiElement().withElementType(SUITABLE_ELEMENTS).afterLeaf(psiElement().withText(string().endsWith(".")));
   }
 }
