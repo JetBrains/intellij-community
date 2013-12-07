@@ -104,6 +104,7 @@
       implementationClass="org.jetbrains.postfixCompletion.PostfixCompletionContributor" />
 
     <completion.contributor language="JAVA" implementationClass="org.jetbrains.postfixCompletion.completion.PostfixTemplateCompletionContributor"/>
+    <lookup.actionProvider implementation="org.jetbrains.postfixCompletion.completion.PostfixTemplateLookupActionProvider"/>
     <editorOptionsProvider id="editing.postfixCompletion" instance="org.jetbrains.postfixCompletion.settings.PostfixCompletionConfigurable"/>
   </extensions>
 </idea-plugin>

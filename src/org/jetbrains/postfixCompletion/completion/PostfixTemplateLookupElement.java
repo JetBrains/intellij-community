@@ -21,6 +21,11 @@ class PostfixTemplateLookupElement extends LiveTemplateLookupElement {
     myTemplate = template;
   }
 
+  @NotNull
+  public PostfixTemplate getPostfixTemplate() {
+    return myTemplate;
+  }
+
   @Override
   public void handleInsert(InsertionContext context) {
     context.setAddCompletionChar(false);

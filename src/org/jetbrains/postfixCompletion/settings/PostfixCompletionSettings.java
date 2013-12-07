@@ -25,6 +25,10 @@ public class PostfixCompletionSettings implements PersistentStateComponent<Postf
     return ContainerUtil.getOrElse(myTemplatesState, template.getKey(), true);
   }
 
+  public void disableTemplate(@NotNull PostfixTemplate template) {
+    myTemplatesState.put(template.getKey(), Boolean.FALSE);
+  }
+
   @NotNull
   public Map<String, Boolean> getTemplatesState() {
     return myTemplatesState;

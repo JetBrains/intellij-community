@@ -19,6 +19,7 @@ import org.jetbrains.postfixCompletion.templates.PostfixTemplate;
 import javax.swing.*;
 import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableCellRenderer;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -52,24 +53,25 @@ public class PostfixTemplatesListPanel {
 
   @NotNull private final Map<String, Boolean> myTemplatesState = ContainerUtil.newHashMap();
   @NotNull private final JPanel myPanelWithTableView;
+  private final TableView<PostfixTemplate> myTemplatesTableView;
 
   public PostfixTemplatesListPanel(@NotNull List<PostfixTemplate> templates) {
     ColumnInfo[] columns = generateColumns(templates);
     ListTableModel<PostfixTemplate> templatesTableModel = new ListTableModel<PostfixTemplate>(columns, templates, 0);
-    TableView<PostfixTemplate> templatesTableView = new TableView<PostfixTemplate>();
-    templatesTableView.setModelAndUpdateColumns(templatesTableModel);
-    templatesTableView.setShowGrid(false);
-    templatesTableView.setStriped(true);
-    templatesTableView.setBorder(null);
+    myTemplatesTableView = new TableView<PostfixTemplate>();
+    myTemplatesTableView.setModelAndUpdateColumns(templatesTableModel);
+    myTemplatesTableView.setShowGrid(false);
+    myTemplatesTableView.setStriped(true);
+    myTemplatesTableView.setBorder(null);
 
-    new TableViewSpeedSearch<PostfixTemplate>(templatesTableView) {
+    new TableViewSpeedSearch<PostfixTemplate>(myTemplatesTableView) {
       @Override
       protected String getItemText(@NotNull PostfixTemplate template) {
         return template.getPresentableName();
       }
     };
 
-    myPanelWithTableView = ToolbarDecorator.createDecorator(templatesTableView)
+    myPanelWithTableView = ToolbarDecorator.createDecorator(myTemplatesTableView)
       .disableAddAction()
       .disableRemoveAction()
       .disableUpDownActions().createPanel();
@@ -91,6 +93,10 @@ public class PostfixTemplatesListPanel {
       new StringColumnInfo("Description", GET_DESCRIPTION_FUNCTION, longestDescription),
       new StringColumnInfo("Example", GET_EXAMPLE_FUNCTION, longestExample),
     };
+  }
+
+  public void selectTemplate(@NotNull PostfixTemplate template) {
+    myTemplatesTableView.setSelection(Arrays.asList(template));
   }
 
   @NotNull

@@ -17,7 +17,9 @@ import java.util.Map;
 
 public class PostfixCompletionConfigurable implements SearchableConfigurable, EditorOptionsProvider, Configurable.NoScroll {
   private static final Logger LOG = Logger.getInstance(PostfixCompletionConfigurable.class);
-  @Nullable private PostfixTemplatesListPanel myPanel;
+
+  @Nullable 
+  private PostfixTemplatesListPanel myPanel;
 
   @NotNull
   @Override
@@ -35,6 +37,14 @@ public class PostfixCompletionConfigurable implements SearchableConfigurable, Ed
   @Override
   public String getDisplayName() {
     return "Postfix Completion";
+  }
+
+  @Nullable
+  public PostfixTemplatesListPanel getTemplatesListPanel() {
+    if (myPanel == null) {
+      createComponent();
+    }
+    return myPanel;
   }
 
   @Nullable
