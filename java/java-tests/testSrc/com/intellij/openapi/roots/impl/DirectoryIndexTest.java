@@ -489,8 +489,8 @@ public class DirectoryIndexTest extends IdeaTestCase {
     checkInfoNull(module2TestOutput);
     
     assertFalse(myIndex.isProjectExcludeRoot(excluded));
-    assertTrue(myIndex.isProjectExcludeRoot(projectOutput));
-    assertTrue(myIndex.isProjectExcludeRoot(module2Output));
+    assertFalse(myIndex.isProjectExcludeRoot(projectOutput));
+    assertFalse(myIndex.isProjectExcludeRoot(module2Output));
     assertFalse(myIndex.isProjectExcludeRoot(module2TestOutput));
 
     excluded.delete(this);
@@ -508,12 +508,10 @@ public class DirectoryIndexTest extends IdeaTestCase {
         
         String fileName = e.getFileName();
         if (fileName.equals("projectOutput")) {
-          //todo fix and uncomment
-//          assertTrue(myIndex.isProjectExcludeRoot(file));
+          assertFalse(myIndex.isProjectExcludeRoot(file));
         }
         if (fileName.equals("module2Output")) {
-          //todo fix and uncomment
-//          assertTrue(myIndex.isProjectExcludeRoot(file));
+          assertFalse(myIndex.isProjectExcludeRoot(file));
         }
         if (fileName.equals("module2TestOutput")) {
           assertFalse(myIndex.isProjectExcludeRoot(file));
@@ -526,10 +524,10 @@ public class DirectoryIndexTest extends IdeaTestCase {
     assertFalse(myIndex.isProjectExcludeRoot(excluded));
     
     projectOutput = myModule1Dir.createChildDirectory(this, projectOutput.getName());
-    assertTrue(myIndex.isProjectExcludeRoot(projectOutput));
+    assertFalse(myIndex.isProjectExcludeRoot(projectOutput));
     
     module2Output = myModule1Dir.createChildDirectory(this, module2Output.getName());
-    assertTrue(myIndex.isProjectExcludeRoot(module2Output));
+    assertFalse(myIndex.isProjectExcludeRoot(module2Output));
     
     module2TestOutput = myModule2Dir.createChildDirectory(this, module2TestOutput.getName());
     assertFalse(myIndex.isProjectExcludeRoot(module2TestOutput));
@@ -542,8 +540,8 @@ public class DirectoryIndexTest extends IdeaTestCase {
     assertEquals(created.toString(), 4, created.size());
 
     assertFalse(myIndex.isProjectExcludeRoot(excluded));
-    assertTrue(myIndex.isProjectExcludeRoot(projectOutput));
-    assertTrue(myIndex.isProjectExcludeRoot(module2Output));
+    assertFalse(myIndex.isProjectExcludeRoot(projectOutput));
+    assertFalse(myIndex.isProjectExcludeRoot(module2Output));
     assertFalse(myIndex.isProjectExcludeRoot(module2TestOutput));
   }
 
