@@ -104,33 +104,18 @@ class EditVarConstraintsDialog extends DialogWrapper {
     model = _model;
 
     setTitle(SSRBundle.message("editvarcontraints.edit.variables"));
-    
-    regexprForExprType.getDocument().addDocumentListener(
-      new DocumentAdapter() {
-        public void documentChanged(DocumentEvent event) {
-          doProcessing(exprTypeWithinHierarchy, regexprForExprType);
-        }
-      }
-    );
-    
-    formalArgType.getDocument().addDocumentListener(
-      new DocumentAdapter() {
-        public void documentChanged(DocumentEvent event) {
-          doProcessing(formalArgTypeWithinHierarchy, formalArgType);
-        }
-      }
-    );
 
-    partOfSearchResults.setEnabled(!replaceContext);
+    regexp.getDocument().addDocumentListener(new MyDocumentListener(notRegexp, applyWithinTypeHierarchy, wholeWordsOnly));
+    read.addChangeListener(new MyChangeListener(notRead, false));
+    write.addChangeListener(new MyChangeListener(notWrite, false));
+    regexprForExprType.getDocument().addDocumentListener(new MyDocumentListener(exprTypeWithinHierarchy, notExprType));
+    formalArgType.getDocument().addDocumentListener(new MyDocumentListener(formalArgTypeWithinHierarchy, invertFormalArgType));
+
+    partOfSearchResults.setEnabled(!replaceContext); // todo: this doesn't do anything
     containedInConstraints.setVisible(false);
     withinCombo.getComboBox().setEditable(true);
 
     customScriptCode.getTextField().getDocument().putProperty("filterNewlines", null); // do not let newlines to be removed
-    customScriptCode.getButton().addActionListener(new ActionListener() {
-      public void actionPerformed(final ActionEvent e) {
-
-      }
-    });
 
     withinCombo.getButton().addActionListener(new ActionListener() {
       public void actionPerformed(final ActionEvent e) {
@@ -167,9 +152,9 @@ class EditVarConstraintsDialog extends DialogWrapper {
       regexprForExprType.setEnabled(true);
 
       read.setEnabled(true);
-      notRead.setEnabled(true);
+      notRead.setEnabled(false);
       write.setEnabled(true);
-      notWrite.setEnabled(true);
+      notWrite.setEnabled(false);
 
       applyWithinTypeHierarchy.setEnabled(true);
     } else {
@@ -239,9 +224,7 @@ class EditVarConstraintsDialog extends DialogWrapper {
       }
     );
 
-    maxoccursUnlimited.addChangeListener(
-      new MyChangeListener(maxoccurs)
-    );
+    maxoccursUnlimited.addChangeListener(new MyChangeListener(maxoccurs, true));
 
     customScriptCode.getButton().addActionListener(new ActionListener() {
       public void actionPerformed(final ActionEvent e) {
@@ -264,11 +247,6 @@ class EditVarConstraintsDialog extends DialogWrapper {
 
   private static boolean isReplacementVariable(String name) {
     return name.endsWith(ReplaceConfiguration.REPLACEMENT_VARIABLE_SUFFIX);
-  }
-
-  private static void doProcessing(JCheckBox checkBox, EditorTextField editor) {
-    checkBox.setEnabled( editor.getDocument().getText().length() > 0);
-    if (!checkBox.isEnabled()) checkBox.setSelected(false);
   }
 
   private boolean validateParameters() {
@@ -429,17 +407,15 @@ class EditVarConstraintsDialog extends DialogWrapper {
 
       partOfSearchResults.setSelected( partOfSearchResults.isEnabled() && varInfo.isPartOfSearchResults() );
 
-      exprTypeWithinHierarchy.setSelected( varInfo.isExprTypeWithinHierarchy() );
-      regexprForExprType.getDocument().setText( varInfo.getNameOfExprType() );
-      doProcessing(exprTypeWithinHierarchy, regexprForExprType);
-      
+      exprTypeWithinHierarchy.setSelected(varInfo.isExprTypeWithinHierarchy());
+      regexprForExprType.getDocument().setText(varInfo.getNameOfExprType());
+
       notExprType.setSelected( varInfo.isInvertExprType() );
       wholeWordsOnly.setSelected( varInfo.isWholeWordsOnly() );
 
       invertFormalArgType.setSelected( varInfo.isInvertFormalType() );
-      formalArgTypeWithinHierarchy.setSelected( varInfo.isFormalArgTypeWithinHierarchy() );
-      formalArgType.getDocument().setText( varInfo.getNameOfFormalArgType() );
-      doProcessing(formalArgTypeWithinHierarchy,formalArgType);
+      formalArgTypeWithinHierarchy.setSelected(varInfo.isFormalArgTypeWithinHierarchy());
+      formalArgType.getDocument().setText(varInfo.getNameOfFormalArgType());
       restoreScriptCode(varInfo);
 
       withinCombo.getComboBox().getEditor().setItem(StringUtil.stripQuotesAroundValue(varInfo.getWithinConstraint()));
@@ -566,21 +542,33 @@ class EditVarConstraintsDialog extends DialogWrapper {
     myProject = project;
   }
 
-  private class MyChangeListener implements ChangeListener {
-    JTextField textField;
+  private static class MyChangeListener implements ChangeListener {
+    private final JComponent component;
+    private final boolean inverted;
 
-    MyChangeListener(JTextField _minoccurs) {
-      textField = _minoccurs;
+    MyChangeListener(JComponent _component, boolean _inverted) {
+      component = _component;
+      inverted = _inverted;
     }
 
     public void stateChanged(ChangeEvent e) {
       final JCheckBox jCheckBox = (JCheckBox)e.getSource();
+      component.setEnabled(inverted ^ jCheckBox.isSelected());
+    }
+  }
 
-      if (jCheckBox.isSelected()) {
-        textField.setEnabled(false);
-      }
-      else {
-        textField.setEnabled(true);
+  private static class MyDocumentListener extends DocumentAdapter {
+    private final JComponent[] components;
+
+    private MyDocumentListener(JComponent... _components) {
+      components = _components;
+    }
+
+    @Override
+    public void documentChanged(DocumentEvent e) {
+      final boolean enable = e.getNewLength() > 0;
+      for (JComponent component : components) {
+        component.setEnabled(enable);
       }
     }
   }
