@@ -15,6 +15,10 @@ abstract public class BooleanPostfixTemplate extends PostfixTemplate {
     PsiExpression topmostExpression = getTopmostExpression(context);
     return topmostExpression != null &&
            topmostExpression.getParent() instanceof PsiExpressionStatement &&
-           PsiType.BOOLEAN == topmostExpression.getType();
+           isBooleanType(topmostExpression.getType());
+  }
+
+  public static boolean isBooleanType(@Nullable PsiType type) {
+    return type != null && (PsiType.BOOLEAN.equals(type) || PsiType.BOOLEAN.equals(PsiPrimitiveType.getUnboxedType(type)));
   }
 }
