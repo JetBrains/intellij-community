@@ -1377,6 +1377,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
         @Override
         protected Navigatable createDescriptorForNode(DefaultMutableTreeNode node) {
           if (node.getChildCount() > 0) return null;
+          if (node instanceof Node && ((Node)node).isExcluded()) return null;
           return getNavigatableForNode(node);
         }
 

@@ -218,6 +218,9 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
       @Override
       @Nullable
       protected Navigatable createDescriptorForNode(DefaultMutableTreeNode node) {
+        if (node instanceof InspectionTreeNode && ((InspectionTreeNode)node).isResolved()) {
+          return null;
+        }
         if (node instanceof RefElementNode) {
           final RefElementNode refNode = (RefElementNode)node;
           if (refNode.hasDescriptorsUnder()) return null;
