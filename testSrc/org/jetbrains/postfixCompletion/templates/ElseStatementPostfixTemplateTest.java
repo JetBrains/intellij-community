@@ -5,6 +5,7 @@ import com.intellij.testFramework.TestDataPath;
 @TestDataPath("$CONTENT_ROOT/testData/templates/if")
 public class ElseStatementPostfixTemplateTest extends PostfixTemplateTestCase {
   public void testBooleanVariable() { doTest(); }
+  public void testBoxedBooleanVariable() { doTest(); }
   public void testBitOperations() { doTest(); }
   public void testBitOperationsWithMethod() { doTest(); }
   public void testUnresolvedVariable() { doTest(); }

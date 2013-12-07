@@ -2,6 +2,7 @@ package org.jetbrains.postfixCompletion.templates;
 
 public class AssertStatementPostfixTemplateTest extends PostfixTemplateTestCase {
   public void testBooleanVariableBeforeAssignment() { doTest(); }
+  public void testBoxedBooleanVariable() { doTest(); }
   public void testNotBooleanExpression() { doTest(); }
   public void testUnresolvedVariable() { doTest(); }
   public void testSeveralConditions() { doTest(); }
