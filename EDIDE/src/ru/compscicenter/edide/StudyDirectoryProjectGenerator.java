@@ -1,5 +1,9 @@
 package ru.compscicenter.edide;
 
+import com.intellij.execution.RunManager;
+import com.intellij.execution.RunnerAndConfigurationSettings;
+import com.intellij.execution.configurations.ConfigurationFactory;
+import com.intellij.execution.configurations.ConfigurationTypeUtil;
 import com.intellij.facet.ui.ValidationResult;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Log;
@@ -20,6 +24,8 @@ import java.io.*;
  */
 public class StudyDirectoryProjectGenerator implements DirectoryProjectGenerator {
 
+    RunManager runManager;
+    RunnerAndConfigurationSettings  runConfiguration;
     @Nls
     @NotNull
     @Override
@@ -76,17 +82,6 @@ public class StudyDirectoryProjectGenerator implements DirectoryProjectGenerator
                             }
 
                         }
-                        VirtualFile vf = baseDir.createChildDirectory(this, "resources").createChildData(this, "utrunner.py");
-                        vf.setWritable(true);
-                        InputStream ip_utrunner = StudyDirectoryProjectGenerator.class.getResourceAsStream("utrunner.py");
-                        BufferedReader bf_utrunner = new BufferedReader(new InputStreamReader(ip_utrunner));
-                        OutputStream os_utrunner = vf.getOutputStream(this);
-                        PrintWriter pw_utrunner = new PrintWriter(os_utrunner);
-                        while (bf_utrunner.ready()) {
-                            pw_utrunner.println(bf_utrunner.readLine());
-                        }
-                        bf_utrunner.close();
-                        pw_utrunner.close();
                     } catch (IOException e) {
                         Log.print("Problems with creating files");
                         Log.print(e.toString());
@@ -96,8 +91,17 @@ public class StudyDirectoryProjectGenerator implements DirectoryProjectGenerator
                 }
             });
             EditorFactory.getInstance().addEditorFactoryListener(new StudyEditorFactoryListener(), project);
+
+            runManager = RunManager.getInstance(project);
+            StudyConfigurationType configurationType = ConfigurationTypeUtil.findConfigurationType(StudyConfigurationType.class);
+            ConfigurationFactory[] factories = configurationType.getConfigurationFactories();
+            runConfiguration = runManager.createRunConfiguration("Study test configuration", factories[0]);
+
+            runManager.addConfiguration(runConfiguration, true);
+            runManager.setSelectedConfiguration(runConfiguration);
+
         } catch (IOException e) {
-            Log.print("Problems with matadata file");
+            Log.print("Problems with metadata file");
             Log.print(e.toString());
             Log.flush();
         }

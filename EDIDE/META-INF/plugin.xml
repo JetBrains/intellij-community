@@ -40,6 +40,6 @@
   <extensions defaultExtensionNs="com.intellij">
     <!-- Add your extensions here -->
     <directoryProjectGenerator implementation="ru.compscicenter.edide.StudyDirectoryProjectGenerator"/>
-    <configurationType implementation="ru.compscicenter.edide.EDIDEConfigurationType"/>
+    <configurationType implementation="ru.compscicenter.edide.StudyConfigurationType"/>
   </extensions>
 </idea-plugin>

@@ -9,14 +9,14 @@ import com.intellij.openapi.project.Project;
 import com.jetbrains.python.testing.unittest.PythonUnitTestRunConfiguration;
 import org.jetbrains.annotations.NotNull;
 
-public class EDIDEUnitTestRunConfiguration extends PythonUnitTestRunConfiguration {
-    public EDIDEUnitTestRunConfiguration(Project project,
+public class StudyUnitTestRunConfiguration extends PythonUnitTestRunConfiguration {
+    public StudyUnitTestRunConfiguration(Project project,
                                          ConfigurationFactory configurationFactory) {
         super(project, configurationFactory);
     }
 
     @Override
     public RunProfileState getState(@NotNull final Executor executor, @NotNull final ExecutionEnvironment env) throws ExecutionException {
-        return new EDIDEPythonUnitTestCommandLineState(this, env);
+        return new StudyPythonUnitTestCommandLineState(this, env);
     }
 }

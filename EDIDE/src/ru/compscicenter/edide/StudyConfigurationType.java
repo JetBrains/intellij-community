@@ -10,13 +10,13 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-public class EDIDEConfigurationType implements ConfigurationType {
-    public static final String ID = "edidetests";
+public class StudyConfigurationType implements ConfigurationType {
+    public static final String ID = "studytests";
 
-    private final EDIDEConfigurationFactory myFactory = new EDIDEConfigurationFactory(this);
+    private final StudyConfigurationFactory myFactory = new StudyConfigurationFactory(this);
 
     public String getDisplayName(){
-        return "EDIDE Unit Test configuration";
+        return "Study unittest configuration";
     }
 
     public String getConfigurationTypeDescription() {
@@ -33,19 +33,19 @@ public class EDIDEConfigurationType implements ConfigurationType {
         return ID;
     }
 
-    private static class EDIDEConfigurationFactory extends ConfigurationFactory {
-        protected EDIDEConfigurationFactory(ConfigurationType configurationType) {
+    private static class StudyConfigurationFactory extends ConfigurationFactory {
+        protected StudyConfigurationFactory(ConfigurationType configurationType) {
             super(configurationType);
         }
 
         @Override
         public RunConfiguration createTemplateConfiguration(Project project) {
-            return new EDIDEUnitTestRunConfiguration(project, this);
+            return new StudyUnitTestRunConfiguration(project, this);
         }
 
         @Override
         public String getName() {
-            return "EDIDE test";
+            return "Study test";
         }
     }
 
