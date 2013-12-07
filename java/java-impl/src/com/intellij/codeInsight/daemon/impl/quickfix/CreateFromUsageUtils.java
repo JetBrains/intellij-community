@@ -578,7 +578,7 @@ public class CreateFromUsageUtils {
       PsiElement parent = expr.getParent();
 
       if (!(parent instanceof PsiReferenceExpression)) {
-        ExpectedTypeInfo[] someExpectedTypes = ExpectedTypesProvider.getExpectedTypes(expr, false);
+        ExpectedTypeInfo[] someExpectedTypes = ExpectedTypesProvider.getExpectedTypes(expr, PsiUtil.skipParenthesizedExprUp(parent) instanceof PsiExpressionList);
         if (someExpectedTypes.length > 0) {
           Arrays.sort(someExpectedTypes, new Comparator<ExpectedTypeInfo>() {
             @Override
