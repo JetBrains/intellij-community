@@ -48,8 +48,16 @@ public class PostfixLiveTemplate extends CustomLiveTemplateBase {
   @Override
   public String computeTemplateKey(@NotNull CustomTemplateCallback callback) {
     Editor editor = callback.getEditor();
-    CharSequence documentContent = editor.getDocument().getCharsSequence();
+    String key = computeTemplateKeyWithoutContextChecking(editor);
+
+    PostfixTemplate template = key != null ? getTemplateByKey(key) : null;
+    return isApplicableTemplate(template, callback.getContext().getContainingFile(), editor) ? key : null;
+  }
+  
+  @Nullable
+  public String computeTemplateKeyWithoutContextChecking(@NotNull Editor editor) {
     int currentOffset = editor.getCaretModel().getOffset();
+    CharSequence documentContent = editor.getDocument().getCharsSequence();
     int startOffset = currentOffset;
     while (startOffset > 0) {
       char currentChar = documentContent.charAt(startOffset - 1);
@@ -62,10 +70,7 @@ public class PostfixLiveTemplate extends CustomLiveTemplateBase {
       }
       startOffset--;
     }
-    String key = String.valueOf(documentContent.subSequence(startOffset, currentOffset));
-
-    PostfixTemplate template = getTemplateByKey(key);
-    return isApplicableTemplate(template, callback.getContext().getContainingFile(), editor) ? key : null;
+    return String.valueOf(documentContent.subSequence(startOffset, currentOffset));
   }
 
   @Override

@@ -4,6 +4,7 @@ import com.intellij.codeInsight.completion.CompletionParameters;
 import com.intellij.codeInsight.completion.CompletionProvider;
 import com.intellij.codeInsight.completion.CompletionResultSet;
 import com.intellij.codeInsight.template.CustomTemplateCallback;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.patterns.StandardPatterns;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.ProcessingContext;
@@ -29,9 +30,14 @@ class PostfixTemplatesCompletionProvider extends CompletionProvider<CompletionPa
         PostfixTemplate template = postfixLiveTemplate.getTemplateByKey(computedKey);
         if (template != null) {
           result = result.withPrefixMatcher(computedKey);
-          result.restartCompletionOnPrefixChange(StandardPatterns.string().startsWith(computedKey));
           result.addElement(new PostfixTemplateLookupElement(template, postfixLiveTemplate.getShortcut()));
         }
+      }
+
+      String possibleKey = postfixLiveTemplate.computeTemplateKeyWithoutContextChecking(parameters.getEditor());
+      if (StringUtil.isNotEmpty(possibleKey)) {
+        result = result.withPrefixMatcher(possibleKey);
+        result.restartCompletionOnPrefixChange(StandardPatterns.string().startsWith(possibleKey));
       }
     }
   }
