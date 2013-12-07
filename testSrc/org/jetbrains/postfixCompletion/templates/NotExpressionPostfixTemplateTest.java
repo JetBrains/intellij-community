@@ -3,7 +3,7 @@ package org.jetbrains.postfixCompletion.templates;
 /**
  * @author ignatov
  */
-public class NotPostfixTemplateTest extends PostfixTemplateTestCase {
+public class NotExpressionPostfixTemplateTest extends PostfixTemplateTestCase {
   @Override
   protected String getTestDataPath() { return "testData/templates/not"; }
 
