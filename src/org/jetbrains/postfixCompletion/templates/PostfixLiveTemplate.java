@@ -22,6 +22,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -62,7 +63,7 @@ public class PostfixLiveTemplate extends CustomLiveTemplateBase {
     }
     String key = String.valueOf(documentContent.subSequence(startOffset, currentOffset));
 
-    PostfixTemplate template = myTemplates.get(key);
+    PostfixTemplate template = getTemplateByKey(key);
     return isApplicableTemplate(template, callback.getContext().getContainingFile(), editor) ? key : null;
   }
 
@@ -70,7 +71,7 @@ public class PostfixLiveTemplate extends CustomLiveTemplateBase {
   public void expand(@NotNull final String key, @NotNull final CustomTemplateCallback callback) {
     ApplicationManager.getApplication().assertIsDispatchThread();
 
-    final PostfixTemplate template = myTemplates.get(key);
+    final PostfixTemplate template = getTemplateByKey(key);
     final Editor editor = callback.getEditor();
     final PsiFile file = callback.getContext().getContainingFile();
     if (isApplicableTemplate(template, file, editor)) {
@@ -115,6 +116,11 @@ public class PostfixLiveTemplate extends CustomLiveTemplateBase {
     return true;
   }
 
+  @Nullable
+  public PostfixTemplate getTemplateByKey(@NotNull String key) {
+    return myTemplates.get(key);
+  }
+
   private static void expandTemplate(@NotNull final PostfixTemplate template,
                                      @NotNull final Editor editor,
                                      @NotNull final PsiElement context) {
@@ -130,6 +136,7 @@ public class PostfixLiveTemplate extends CustomLiveTemplateBase {
     });
   }
 
+  @Contract("null, _, _ -> false")
   private static boolean isApplicableTemplate(@Nullable PostfixTemplate template, @NotNull PsiFile file, @NotNull Editor editor) {
     if (template == null || !template.isEnabled()) {
       return false;

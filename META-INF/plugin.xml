@@ -103,6 +103,7 @@
     <completion.contributor language="JAVA" order="FIRST"
       implementationClass="org.jetbrains.postfixCompletion.PostfixCompletionContributor" />
 
+    <completion.contributor language="JAVA" implementationClass="org.jetbrains.postfixCompletion.completion.PostfixTemplateCompletionContributor"/>
     <editorOptionsProvider id="editing.postfixCompletion" instance="org.jetbrains.postfixCompletion.settings.PostfixCompletionConfigurable"/>
   </extensions>
 </idea-plugin>
