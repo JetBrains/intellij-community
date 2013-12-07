@@ -17,7 +17,7 @@ import static org.jetbrains.postfixCompletion.completion.PostfixTemplateCompleti
 class PostfixTemplatesCompletionProvider extends CompletionProvider<CompletionParameters> {
   @Override
   protected void addCompletions(@NotNull CompletionParameters parameters, ProcessingContext context, @NotNull CompletionResultSet result) {
-    if (parameters.getInvocationCount() != 0) {
+    if (!parameters.isAutoPopup()) {
       return;
     }
 
