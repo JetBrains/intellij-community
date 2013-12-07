@@ -51,6 +51,19 @@ public class TemplatesCompletionTest extends CompletionAutoPopupTestCase {
     assert !ContainerUtil.findInstance(elements, PostfixTemplateLookupElement.class)
   }
 
+  public void testRecalculatePrefix() throws Exception {
+    edt { myFixture.configureByFile(getTestName(true) + ".java") }
+    type 'par'
+    myFixture.assertPreferredCompletionItems 1, '.par', 'parents'
+    
+    type '\b'
+    assert lookup
+    myFixture.assertPreferredCompletionItems 0, 'parents'
+    
+    type 'r'
+    myFixture.assertPreferredCompletionItems 1, '.par', 'parents'
+  }
+
   @Override
   public void tearDown() throws Exception {
     PostfixCompletionSettings.instance.templatesState = ContainerUtil.<String, Boolean>newHashMap()
