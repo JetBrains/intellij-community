@@ -57,7 +57,7 @@ public class HgUpdateToAction extends HgAbstractGlobalAction {
       String updateToValue = dialog.isBranchSelected()
                              ? dialog.getBranch().getName()
                              : dialog.isTagSelected() ? dialog.getTag().getName() : dialog.getRevision();
-      new Task.Backgroundable(project, HgVcsMessages.message("action.hg4idea.updateTo.description", updateToValue)) {
+      new Task.Backgroundable(project, HgVcsMessages.message("hg4idea.progress.updatingTo", updateToValue)) {
 
         @Override
         public void run(@NotNull ProgressIndicator indicator) {
