@@ -15,6 +15,7 @@
  */
 package com.intellij.lang.properties.xml;
 
+import com.intellij.ide.highlighter.XmlFileType;
 import com.intellij.lang.properties.IProperty;
 import com.intellij.lang.properties.PropertiesUtil;
 import com.intellij.lang.properties.ResourceBundle;
@@ -71,7 +72,7 @@ public class XmlPropertiesFile implements PropertiesFile {
 
   @Nullable
   public static PropertiesFile getPropertiesFile(final PsiFile file) {
-    return file instanceof XmlFile ? getPropertiesFile((XmlFile)file) : null;
+    return file instanceof XmlFile && file.getFileType() == XmlFileType.INSTANCE ? getPropertiesFile((XmlFile)file) : null;
   }
 
   public static PropertiesFile getPropertiesFile(final XmlFile file) {
