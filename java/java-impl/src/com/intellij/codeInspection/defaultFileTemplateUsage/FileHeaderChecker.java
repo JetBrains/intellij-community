@@ -49,13 +49,14 @@ import java.util.regex.Pattern;
 public class FileHeaderChecker {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.defaultFileTemplateUsage.FileHeaderChecker");
 
+  // abcdfghdjsjd kfkdjekr dfhakdjfk dkfkjgk dfjgjfkg ekfk fkgkvv ggkk eefkgjkdd jfkkkssl dfghgk gkhller hhksl lfflgl
   static ProblemDescriptor checkFileHeader(@NotNull final PsiFile file, final InspectionManager manager, boolean onTheFly) {
     TIntObjectHashMap<String> offsetToProperty = new TIntObjectHashMap<String>();
     Pattern pattern = getTemplatePattern(FileTemplateManager.getInstance()
       .getDefaultTemplate(FileTemplateManager.FILE_HEADER_TEMPLATE_NAME),
                                          file.getProject(), offsetToProperty
     );
-    Matcher matcher = pattern.matcher(file.getText());
+    Matcher matcher = pattern.matcher(file.getViewProvider().getContents());
     if (matcher.matches()) {
       final int startOffset = matcher.start(1);
       final int endOffset = matcher.end(1);

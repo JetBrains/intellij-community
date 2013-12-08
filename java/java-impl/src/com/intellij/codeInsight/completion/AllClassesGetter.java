@@ -193,14 +193,14 @@ public class AllClassesGetter {
 
 
   private static String getPackagePrefix(final PsiElement context, final int offset) {
-    final String fileText = context.getContainingFile().getText();
+    final CharSequence fileText = context.getContainingFile().getViewProvider().getContents();
     int i = offset - 1;
     while (i >= 0) {
       final char c = fileText.charAt(i);
       if (!Character.isJavaIdentifierPart(c) && c != '.') break;
       i--;
     }
-    String prefix = fileText.substring(i + 1, offset);
+    String prefix = fileText.subSequence(i + 1, offset).toString();
     final int j = prefix.lastIndexOf('.');
     return j > 0 ? prefix.substring(0, j) : "";
   }
