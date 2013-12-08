@@ -17,7 +17,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.postfixCompletion.infrastructure.PostfixTemplateContext;
 import org.jetbrains.postfixCompletion.infrastructure.PrefixExpressionContext;
-import org.jetbrains.postfixCompletion.infrastructure.TemplateInfo;
 import org.jetbrains.postfixCompletion.lookupItems.ExpressionPostfixLookupElementBase;
 import org.jetbrains.postfixCompletion.lookupItems.StatementPostfixLookupElement;
 import org.jetbrains.postfixCompletion.util.CommonUtils;
@@ -26,12 +25,11 @@ import static org.jetbrains.postfixCompletion.util.CommonUtils.CtorAccessibility
 
 // todo: support for int[].var (parses as .class access!)
 
-@TemplateInfo(
-  templateName = "var",
-  description = "Introduces variable for expression",
-  example = "T name = expr;",
-  worksOnTypes = true)
-public class IntroduceVariablePostfixTemplate extends PostfixTemplate {
+public class IntroduceVariablePostfixTemplate extends ExpressionPostfixTemplateWithExpressionChooser {
+  public IntroduceVariablePostfixTemplate() {
+    super("var", "Introduces variable for expression", "T name = expr;");
+  }
+
   @Override
   public LookupElement createLookupElement(@NotNull PostfixTemplateContext context) {
     PrefixExpressionContext forcedTarget = null;
@@ -103,10 +101,11 @@ public class IntroduceVariablePostfixTemplate extends PostfixTemplate {
   }
 
   @Override
-  public void expand(@NotNull PsiElement context, @NotNull Editor editor) {
-    throw new UnsupportedOperationException("Implement me please");
+  protected void doIt(@NotNull Editor editor, @NotNull PsiExpression expression) {
+    IntroduceVariableHandler handler = ApplicationManager.getApplication().isUnitTestMode() ? getMockHandler() : new IntroduceVariableHandler();
+    handler.invoke(expression.getProject(), editor, expression);
   }
-  
+
   private static class IntroduceVarStatementLookupElement extends StatementPostfixLookupElement<PsiExpressionStatement> {
     private final boolean myInvokedOnType;
     private final boolean myIsAbstractType;
