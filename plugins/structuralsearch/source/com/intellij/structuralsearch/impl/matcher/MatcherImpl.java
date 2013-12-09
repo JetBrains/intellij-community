@@ -390,7 +390,7 @@ public class MatcherImpl {
     if (compiledPattern == null) {
 
       synchronized(getClass()) {
-        final LastMatchData data = lastMatchData != null ? lastMatchData.get():null;
+        final LastMatchData data = com.intellij.reference.SoftReference.dereference(lastMatchData);
         if (data != null && options == data.lastOptions) {
           compiledPattern = data.lastPattern;
         }
