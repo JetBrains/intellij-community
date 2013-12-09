@@ -42,6 +42,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinitionBody;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMember;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
@@ -85,7 +86,7 @@ public class GrVariableDeclarationImpl extends GrStubElementBase<EmptyStub> impl
 
   @NotNull
   public GrModifierList getModifierList() {
-    return (GrModifierList)findNotNullChildByType(GroovyElementTypes.MODIFIERS);
+    return getRequiredStubOrPsiChild(GroovyElementTypes.MODIFIERS);
   }
 
   @Override
@@ -192,7 +193,7 @@ public class GrVariableDeclarationImpl extends GrStubElementBase<EmptyStub> impl
                                      @NotNull ResolveState state,
                                      PsiElement lastParent,
                                      @NotNull PsiElement place) {
-    if (lastParent != null && lastParent == getTupleInitializer()) {
+    if (lastParent != null && !(getParent() instanceof GrTypeDefinitionBody) && lastParent == getTupleInitializer()) {
       return true;
     }
 
