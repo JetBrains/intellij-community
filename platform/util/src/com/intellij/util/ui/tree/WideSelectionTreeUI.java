@@ -71,12 +71,11 @@ public class WideSelectionTreeUI extends BasicTreeUI {
 
   @Override
   public int getRightChildIndent() {
-    return 8;
+    return isSkinny() ? 8 : super.getRightChildIndent();
   }
 
-  @Override
-  public int getLeftChildIndent() {
-    return super.getLeftChildIndent();
+  private static boolean isSkinny() {
+    return UIUtil.isUnderDarcula() || UIUtil.isUnderIntelliJLaF() || UIUtil.isUnderAquaLookAndFeel();
   }
 
   private final MouseListener mySelectionListener = new MouseAdapter() {
@@ -255,7 +254,7 @@ public class WideSelectionTreeUI extends BasicTreeUI {
 
   @Override
   protected int getRowX(int row, int depth) {
-    return 8 * depth + 8;
+    return isSkinny() ? 8 * depth + 8 : super.getRowX(row, depth);
   }
 
   @Override
