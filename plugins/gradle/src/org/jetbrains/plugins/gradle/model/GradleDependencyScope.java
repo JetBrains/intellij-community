@@ -121,6 +121,14 @@ public enum GradleDependencyScope {
     return null;
   }
 
+  @Nullable
+  public static GradleDependencyScope fromIdeaMappingName(final String ideaMappingName) {
+    for (GradleDependencyScope scope : values()) {
+      if (scope.myIdeaMappingName.equals(ideaMappingName.toLowerCase())) return scope;
+    }
+    return null;
+  }
+
   public String getIdeaMappingName() {
     return myIdeaMappingName;
   }

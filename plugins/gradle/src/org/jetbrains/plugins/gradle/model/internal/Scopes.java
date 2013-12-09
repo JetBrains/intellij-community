@@ -33,7 +33,9 @@ public class Scopes {
     myForProductionRuntime = scope.isForProductionRuntime();
     myForTestCompile = scope.isForTestCompile();
     myForTestRuntime = scope.isForTestRuntime();
-    myIsProvided = scope == GradleDependencyScope.PROVIDED_COMPILE || scope == GradleDependencyScope.PROVIDED_RUNTIME;
+    myIsProvided = scope == GradleDependencyScope.PROVIDED_COMPILE ||
+                   scope == GradleDependencyScope.PROVIDED_RUNTIME ||
+                   scope == GradleDependencyScope.PROVIDED;
   }
 
   public GradleDependencyScope[] getScopes() {
@@ -74,6 +76,9 @@ public class Scopes {
     myForProductionRuntime = myForProductionRuntime || scope.isForProductionRuntime();
     myForTestCompile = myForTestCompile || scope.isForTestCompile();
     myForTestRuntime = myForTestRuntime || scope.isForTestRuntime();
-    myIsProvided = myIsProvided || scope == GradleDependencyScope.PROVIDED_COMPILE || scope == GradleDependencyScope.PROVIDED_RUNTIME;
+    myIsProvided = myIsProvided ||
+                   scope == GradleDependencyScope.PROVIDED_COMPILE ||
+                   scope == GradleDependencyScope.PROVIDED_RUNTIME ||
+                   scope == GradleDependencyScope.PROVIDED;
   }
 }
