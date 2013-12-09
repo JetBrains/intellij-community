@@ -450,7 +450,7 @@ class Browser extends JPanel {
       if (description == null) {
         description = underConstruction;
       }
-      page.append(UIUtil.getHtmlBody(description));
+      page.append(DefaultInspectionToolPresentation.stripUIRefsFromInspectionDescription(UIUtil.getHtmlBody(description)));
 
       page.append("</td></tr></table>");
       myHTMLViewer.setText(XmlStringUtil.wrapInHtml(page));
