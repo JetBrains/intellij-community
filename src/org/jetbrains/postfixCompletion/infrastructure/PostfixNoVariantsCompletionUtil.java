@@ -50,7 +50,7 @@ public abstract class PostfixNoVariantsCompletionUtil {
     }
     for (LookupElement qualifierElement : suggestQualifierItems(parameters, qualifierReference)) {
       PsiType type = JavaCompletionUtil.getLookupElementType(qualifierElement);
-      if (type == null || PsiType.VOID.equals(type)) continue;
+      if (type == null || PsiType.VOID == type) continue;
 
       final PsiReferenceExpression mockReference =
         ReferenceExpressionCompletionContributor.createMockReference(position, type, qualifierElement);

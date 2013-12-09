@@ -15,7 +15,7 @@ public class ReturnStatementPostfixTemplate extends PostfixTemplate {
     PsiExpression expr = getTopmostExpression(context);
     if (expr == null || !(expr.getParent() instanceof PsiExpressionStatement)) return false;
     PsiType type = expr.getType();
-    return type != null && !PsiType.VOID.equals(type);
+    return type != null && PsiType.VOID != type;
   }
 
   @Override

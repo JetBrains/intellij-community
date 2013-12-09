@@ -19,7 +19,7 @@ public abstract class CommonUtils {
 
     if (expression instanceof PsiMethodCallExpression) {
       PsiType expressionType = ((PsiMethodCallExpression)expression).getType();
-      if (expressionType != null && expressionType.equals(PsiType.VOID)) return false;
+      if (expressionType != null && expressionType == PsiType.VOID) return false;
     }
 
     return true;
