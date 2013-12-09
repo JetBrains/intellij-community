@@ -16,6 +16,7 @@
 
 package com.intellij.patterns;
 
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFile;
@@ -59,6 +60,15 @@ public class PsiFilePattern<T extends PsiFile, Self extends PsiFilePattern<T, Se
       @Override
       public boolean accepts(@NotNull T file, ProcessingContext context) {
         return vFilePattern.accepts(file.getVirtualFile(), context);
+      }
+    });
+  }
+
+  public Self withFileType(final ElementPattern<? extends FileType> fileTypePattern) {
+    return with(new PatternCondition<T>("withFileType") {
+      @Override
+      public boolean accepts(@NotNull T file, ProcessingContext context) {
+        return fileTypePattern.accepts(file.getFileType(), context);
       }
     });
   }
