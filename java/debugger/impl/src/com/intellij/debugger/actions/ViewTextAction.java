@@ -36,6 +36,7 @@ import java.awt.*;
  * @author Jeka
  */
 public class ViewTextAction extends BaseValueAction {
+  @Override
   protected void processText(final Project project, final String text, DebuggerTreeNodeImpl node, DebuggerContextImpl debuggerContext) {
     final NodeDescriptorImpl descriptor = node.getDescriptor();
     final String labelText = descriptor instanceof ValueDescriptorImpl? ((ValueDescriptorImpl)descriptor).getValueLabel() : null;
@@ -46,8 +47,7 @@ public class ViewTextAction extends BaseValueAction {
   }
 
   private static class MyDialog extends DialogWrapper {
-
-    private EditorTextField myTextViewer;
+    private final EditorTextField myTextViewer;
 
     private MyDialog(Project project) {
       super(project, false);
@@ -63,15 +63,18 @@ public class ViewTextAction extends BaseValueAction {
       myTextViewer.setText(text);
     }
 
+    @Override
     @NotNull
     protected Action[] createActions() {
       return new Action[] {getCancelAction()};
     }
 
+    @Override
     protected String getDimensionServiceKey() {
       return "#com.intellij.debugger.actions.ViewTextAction";
     }
 
+    @Override
     protected JComponent createCenterPanel() {
       final JPanel panel = new JPanel(new BorderLayout());
       panel.add(myTextViewer, BorderLayout.CENTER);
@@ -96,6 +99,7 @@ public class ViewTextAction extends BaseValueAction {
       return document;
     }
 
+    @Override
     protected EditorEx createEditor() {
       final EditorEx editor = super.createEditor();
       editor.setHorizontalScrollbarVisible(true);
