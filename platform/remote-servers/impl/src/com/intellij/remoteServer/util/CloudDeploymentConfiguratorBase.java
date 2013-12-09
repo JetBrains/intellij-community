@@ -15,20 +15,20 @@ import java.util.List;
 /**
  * @author michael.golubev
  */
-public abstract class CloudGitDeploymentConfiguratorBase<D extends DeploymentConfiguration, S extends ServerConfiguration>
+public abstract class CloudDeploymentConfiguratorBase<D extends DeploymentConfiguration, S extends ServerConfiguration>
   extends DeploymentConfigurator<D, S> {
 
   private final Project myProject;
   private ServerType<S> myServerType;
 
-  public CloudGitDeploymentConfiguratorBase(Project project, ServerType<S> serverType) {
+  public CloudDeploymentConfiguratorBase(Project project, ServerType<S> serverType) {
     myProject = project;
     myServerType = serverType;
   }
 
-  public static List<CloudGitDeploymentSourceHandlerProvider> getDeploymentSourceHandlerProviders(ServerType<?> serverType) {
-    List<CloudGitDeploymentSourceHandlerProvider> result = new ArrayList<CloudGitDeploymentSourceHandlerProvider>();
-    for (CloudGitDeploymentSourceHandlerProvider provider : CloudGitDeploymentSourceHandlerProvider.EP_NAME.getExtensions()) {
+  public static List<CloudDeploymentRuntimeProvider> getDeploymentRuntimeProviders(ServerType<?> serverType) {
+    List<CloudDeploymentRuntimeProvider> result = new ArrayList<CloudDeploymentRuntimeProvider>();
+    for (CloudDeploymentRuntimeProvider provider : CloudDeploymentRuntimeProvider.EP_NAME.getExtensions()) {
       ServerType<?> providerServerType = provider.getServerType();
       if (providerServerType == null || providerServerType == serverType) {
         result.add(provider);
@@ -42,7 +42,7 @@ public abstract class CloudGitDeploymentConfiguratorBase<D extends DeploymentCon
   public List<DeploymentSource> getAvailableDeploymentSources() {
     if (myProject.isDefault()) return Collections.emptyList();
     List<DeploymentSource> result = new ArrayList<DeploymentSource>();
-    for (CloudGitDeploymentSourceHandlerProvider provider : getDeploymentSourceHandlerProviders(myServerType)) {
+    for (CloudDeploymentRuntimeProvider provider : getDeploymentRuntimeProviders(myServerType)) {
       result.addAll(provider.getDeploymentSources(myProject));
     }
     return result;

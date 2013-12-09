@@ -3,6 +3,9 @@
     <extensionPoint name="remoteServer.type" interface="com.intellij.remoteServer.ServerType"/>
     <extensionPoint name="remoteServer.deploymentSource.type" interface="com.intellij.remoteServer.configuration.deployment.DeploymentSourceType"/>
     <extensionPoint name="remoteServer.viewContributor" interface="com.intellij.remoteServer.impl.runtime.ui.RemoteServersViewContributor"/>
+
+    <extensionPoint name="remoteServer.util.CloudDeploymentRuntimeProvider"
+                    interface="com.intellij.remoteServer.util.CloudDeploymentRuntimeProvider"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">

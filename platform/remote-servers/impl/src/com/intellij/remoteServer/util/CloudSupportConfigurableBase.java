@@ -46,7 +46,7 @@ public abstract class CloudSupportConfigurableBase<
   SC extends CloudConfigurationBase,
   DC extends CloudDeploymentNameConfiguration,
   ST extends ServerType<SC>,
-  SR extends CloudGitServerRuntimeInstanceBase<DC, ?, ?, ?, ?>>
+  SR extends CloudMultiSourceServerRuntimeInstance<DC, ?, ?, ?>>
   extends FrameworkSupportConfigurable {
 
   private final String myNotificationDisplayId;
