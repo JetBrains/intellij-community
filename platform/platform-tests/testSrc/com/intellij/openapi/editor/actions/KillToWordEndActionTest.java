@@ -108,4 +108,17 @@ public class KillToWordEndActionTest extends LightPlatformCodeInsightTestCase {
     Object string = contents.getTransferData(DataFlavor.stringFlavor);
     assertEquals(" second", string);
   }
+
+  public void testSubsequentKills() throws Exception {
+    String text = "<caret>first second third";
+    configureFromFileText(getTestName(false) + ".txt", text);
+    killToWordEnd();
+    killToWordEnd();
+    checkResultByText(" third");
+
+    Transferable contents = CopyPasteManager.getInstance().getContents();
+    assertTrue(contents instanceof KillRingTransferable);
+    Object string = contents.getTransferData(DataFlavor.stringFlavor);
+    assertEquals("first second", string);
+  }
 }
