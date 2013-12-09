@@ -13,6 +13,7 @@ import com.intellij.openapi.fileEditor.impl.text.TextEditorState;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolderBase;
+import com.intellij.pom.Navigatable;
 import com.intellij.util.EventDispatcher;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -22,6 +23,7 @@ import java.beans.PropertyChangeListener;
 
 public abstract class BaseRemoteFileEditor implements TextEditor, PropertyChangeListener {
   protected Editor myMockTextEditor;
+  protected volatile Navigatable myPendingNavigatable;
 
   protected final Project myProject;
   private final UserDataHolderBase myUserDataHolder = new UserDataHolderBase();
@@ -128,5 +130,32 @@ public abstract class BaseRemoteFileEditor implements TextEditor, PropertyChange
   @Override
   public void propertyChange(PropertyChangeEvent evt) {
     myDispatcher.getMulticaster().propertyChange(evt);
+  }
+
+  @Override
+  public boolean canNavigateTo(@NotNull Navigatable navigatable) {
+    TextEditor editor = getTextEditor();
+    return editor == null ? isValid() : editor.canNavigateTo(navigatable);
+  }
+
+  @Override
+  public void navigateTo(@NotNull Navigatable navigatable) {
+    TextEditor editor = getTextEditor();
+    if (editor != null) {
+      editor.navigateTo(navigatable);
+    }
+    else if (isValid()) {
+      myPendingNavigatable = navigatable;
+    }
+  }
+
+  protected void checkPendingNavigable() {
+    Navigatable navigatable = myPendingNavigatable;
+    if (navigatable != null) {
+      myPendingNavigatable = null;
+      TextEditor editor = getTextEditor();
+      assert editor != null;
+      editor.navigateTo(navigatable);
+    }
   }
 }
