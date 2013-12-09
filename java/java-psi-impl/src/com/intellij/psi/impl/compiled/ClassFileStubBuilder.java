@@ -19,6 +19,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.ClassFileViewProvider;
 import com.intellij.psi.impl.source.JavaFileElementType;
 import com.intellij.psi.stubs.BinaryFileStubBuilder;
 import com.intellij.psi.stubs.PsiFileStub;
@@ -39,7 +40,7 @@ public class ClassFileStubBuilder implements BinaryFileStubBuilder {
 
   @Override
   public boolean acceptsFile(final VirtualFile file) {
-    return true;
+    return !ClassFileViewProvider.isInnerClass(file);
   }
 
   @Override

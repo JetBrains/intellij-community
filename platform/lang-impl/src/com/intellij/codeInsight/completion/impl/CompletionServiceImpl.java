@@ -84,7 +84,7 @@ public class CompletionServiceImpl extends CompletionService{
                                              @NotNull final CompletionContributor contributor) {
     final PsiElement position = parameters.getPosition();
     final String prefix = CompletionData.findPrefixStatic(position, parameters.getOffset());
-    final String textBeforePosition = parameters.getPosition().getContainingFile().getText().substring(0, parameters.getOffset());
+    final int lengthOfTextBeforePosition = parameters.getOffset();
     ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
     if (!(indicator instanceof CompletionProgressIndicator)) {
       throw new AssertionError("createResultSet may be invoked only from completion thread: " + indicator + "!=" + getCurrentCompletion() + "; phase set at " + ourPhaseTrace);
@@ -92,7 +92,7 @@ public class CompletionServiceImpl extends CompletionService{
     CompletionProgressIndicator process = (CompletionProgressIndicator)indicator;
     CamelHumpMatcher matcher = new CamelHumpMatcher(prefix);
     CompletionSorterImpl sorter = defaultSorter(parameters, matcher);
-    return new CompletionResultSetImpl(consumer, textBeforePosition, matcher, contributor,parameters, sorter, process, null);
+    return new CompletionResultSetImpl(consumer, lengthOfTextBeforePosition, matcher, contributor,parameters, sorter, process, null);
   }
 
   @Override
@@ -105,13 +105,13 @@ public class CompletionServiceImpl extends CompletionService{
   }
 
   private static class CompletionResultSetImpl extends CompletionResultSet {
-    private final String myTextBeforePosition;
+    private final int myLengthOfTextBeforePosition;
     private final CompletionParameters myParameters;
     private final CompletionSorterImpl mySorter;
     private final CompletionProgressIndicator myProcess;
     @Nullable private final CompletionResultSetImpl myOriginal;
 
-    public CompletionResultSetImpl(final Consumer<CompletionResult> consumer, final String textBeforePosition,
+    public CompletionResultSetImpl(final Consumer<CompletionResult> consumer, final int lengthOfTextBeforePosition,
                                    final PrefixMatcher prefixMatcher,
                                    CompletionContributor contributor,
                                    CompletionParameters parameters,
@@ -119,7 +119,7 @@ public class CompletionServiceImpl extends CompletionService{
                                    @NotNull CompletionProgressIndicator process,
                                    @Nullable CompletionResultSetImpl original) {
       super(prefixMatcher, consumer, contributor);
-      myTextBeforePosition = textBeforePosition;
+      myLengthOfTextBeforePosition = lengthOfTextBeforePosition;
       myParameters = parameters;
       mySorter = sorter;
       myProcess = process;
@@ -142,7 +142,7 @@ public class CompletionServiceImpl extends CompletionService{
     @Override
     @NotNull
     public CompletionResultSet withPrefixMatcher(@NotNull final PrefixMatcher matcher) {
-      return new CompletionResultSetImpl(getConsumer(), myTextBeforePosition, matcher, myContributor, myParameters, mySorter, myProcess, this);
+      return new CompletionResultSetImpl(getConsumer(), myLengthOfTextBeforePosition, matcher, myContributor, myParameters, mySorter, myProcess, this);
     }
 
     @Override
@@ -165,7 +165,7 @@ public class CompletionServiceImpl extends CompletionService{
     @NotNull
     @Override
     public CompletionResultSet withRelevanceSorter(@NotNull CompletionSorter sorter) {
-      return new CompletionResultSetImpl(getConsumer(), myTextBeforePosition, getPrefixMatcher(), myContributor, myParameters, (CompletionSorterImpl)sorter, myProcess, this);
+      return new CompletionResultSetImpl(getConsumer(), myLengthOfTextBeforePosition, getPrefixMatcher(), myContributor, myParameters, (CompletionSorterImpl)sorter, myProcess, this);
     }
 
     @Override
@@ -183,7 +183,7 @@ public class CompletionServiceImpl extends CompletionService{
     public void restartCompletionOnPrefixChange(ElementPattern<String> prefixCondition) {
       final CompletionProgressIndicator indicator = getCompletionService().getCurrentCompletion();
       if (indicator != null) {
-        indicator.addWatchedPrefix(myTextBeforePosition.length() - getPrefixMatcher().getPrefix().length(), prefixCondition);
+        indicator.addWatchedPrefix(myLengthOfTextBeforePosition - getPrefixMatcher().getPrefix().length(), prefixCondition);
       }
     }
 

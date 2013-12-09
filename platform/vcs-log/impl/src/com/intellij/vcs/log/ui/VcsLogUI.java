@@ -92,7 +92,6 @@ public class VcsLogUI {
       public void run() {
         myMainFrame.getGraphTable().setPreferredColumnWidths();
         myMainFrame.getGraphTable().repaint();
-        myMainFrame.refresh();
       }
     });
   }

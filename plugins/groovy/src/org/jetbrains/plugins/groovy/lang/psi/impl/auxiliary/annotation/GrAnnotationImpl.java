@@ -82,20 +82,34 @@ public class GrAnnotationImpl extends GrStubElementBase<GrAnnotationStub> implem
 
   @NotNull
   public GrAnnotationArgumentList getParameterList() {
+    final GrAnnotationStub stub = getStub();
+    if (stub != null) {
+      return stub.getPsiElement().getParameterList();
+    }
     return findNotNullChildByClass(GrAnnotationArgumentList.class);
   }
 
   @Nullable
   @NonNls
   public String getQualifiedName() {
+    final GrAnnotationStub stub = getStub();
+    if (stub != null) {
+      return stub.getPsiElement().getQualifiedName();
+    }
+
     final GrCodeReferenceElement nameRef = getClassReference();
     final PsiElement resolved = nameRef.resolve();
-    if (resolved instanceof PsiClass) return ((PsiClass) resolved).getQualifiedName();
+    if (resolved instanceof PsiClass) return ((PsiClass)resolved).getQualifiedName();
     return null;
   }
 
   @Nullable
   public PsiJavaCodeReferenceElement getNameReferenceElement() {
+    final GrAnnotationStub stub = getStub();
+    if (stub != null) {
+      return stub.getPsiElement().getNameReferenceElement();
+    }
+
     final GroovyResolveResult resolveResult = getClassReference().advancedResolve();
     final PsiElement resolved = resolveResult.getElement();
 
@@ -107,6 +121,7 @@ public class GrAnnotationImpl extends GrStubElementBase<GrAnnotationStub> implem
     }
   }
 
+  @Nullable
   public PsiAnnotationMemberValue findAttributeValue(@Nullable String attributeName) {
     return PsiImplUtil.findAttributeValue(this, attributeName);
   }
@@ -116,7 +131,7 @@ public class GrAnnotationImpl extends GrStubElementBase<GrAnnotationStub> implem
     return PsiImplUtil.findDeclaredAttributeValue(this, attributeName);
   }
 
-  public <T extends PsiAnnotationMemberValue>  T setDeclaredAttributeValue(@Nullable @NonNls String attributeName, T value) {
+  public <T extends PsiAnnotationMemberValue> T setDeclaredAttributeValue(@Nullable @NonNls String attributeName, T value) {
     return (T)PsiImplUtil.setDeclaredAttributeValue(this, attributeName, value, ANNOTATION_CREATOR);
   }
 
@@ -127,6 +142,11 @@ public class GrAnnotationImpl extends GrStubElementBase<GrAnnotationStub> implem
 
   @NotNull
   public GrCodeReferenceElement getClassReference() {
+    final GrAnnotationStub stub = getStub();
+    if (stub != null) {
+      return stub.getPsiElement().getClassReference();
+    }
+
     return findNotNullChildByClass(GrCodeReferenceElement.class);
   }
 
@@ -134,13 +154,15 @@ public class GrAnnotationImpl extends GrStubElementBase<GrAnnotationStub> implem
   public String getShortName() {
     final GrAnnotationStub stub = getStub();
     if (stub != null) {
-      return stub.getAnnotationName();
+      return stub.getPsiElement().getShortName();
     }
-    else {
-      return getClassReference().getReferenceName();
-    }
+
+    final String referenceName = getClassReference().getReferenceName();
+    assert referenceName != null;
+    return referenceName;
   }
 
+  @Nullable
   public PsiAnnotationOwner getOwner() {
     return (PsiAnnotationOwner)getParent();
   }

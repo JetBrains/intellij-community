@@ -199,10 +199,6 @@ public class MainFrame extends JPanel implements TypeSafeDataProvider {
     return this;
   }
 
-  public void refresh() {
-    myBranchesPanel.rebuild();
-  }
-
   public void setBranchesPanelVisible(boolean visible) {
     myBranchesPanel.setVisible(visible);
   }

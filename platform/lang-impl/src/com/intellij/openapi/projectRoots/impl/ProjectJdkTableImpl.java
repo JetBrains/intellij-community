@@ -109,7 +109,9 @@ public class ProjectJdkTableImpl extends ProjectJdkTable implements PersistentSt
   @Override
   @Nullable
   public Sdk findJdk(String name) {
-    for (Sdk jdk : mySdks) {
+    //noinspection ForLoopReplaceableByForEach
+    for (int i = 0, len = mySdks.size(); i < len; ++i) { // avoid foreach,  it instantiates ArrayList$Itr, this traversal happens very often
+      final Sdk jdk = mySdks.get(i);
       if (Comparing.strEqual(name, jdk.getName())) {
         return jdk;
       }
