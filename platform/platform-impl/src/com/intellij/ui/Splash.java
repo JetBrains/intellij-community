@@ -60,6 +60,7 @@ public class Splash extends JDialog implements StartupProgress {
     setUndecorated(true);
     setResizable(false);
     setFocusableWindowState(false);
+    UIUtil.setAutoRequestFocus(this, false);
 
     Icon originalImage = IconLoader.getIcon(imageName);
     myImage = new SplashImage(originalImage, textColor);
@@ -79,7 +80,6 @@ public class Splash extends JDialog implements StartupProgress {
     setSize(size);
     pack();
     setLocationRelativeTo(null);
-    UIUtil.setAutoRequestFocus(this, false);
   }
 
   public Splash(ApplicationInfoEx info) {
