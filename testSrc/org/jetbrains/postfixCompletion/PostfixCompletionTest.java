@@ -57,24 +57,6 @@ public class PostfixCompletionTest extends LightCodeInsightFixtureTestCase {
   public void testForr07() { doTest("forr\n"); }
   public void testForr08() { doTest("orr\n"); }
 
-  public void testVar01() { doTest("var\n"); }
-  public void testVar02() { doTest(""); }
-  public void testVar03() { doTest("var\n"); }
-  public void testVar04() { doTest("var\n"); }
-  public void testVar05() { doTest("var\n"); }
-  public void testVar06() { doTest("var\n"); }
-  public void testVar07() { doTestForce("var\n"); }
-  public void testVar08() { doTest("var\n"); }
-  public void testVar09() { doTestForce("var\n"); }
-  public void testVar10() { doTest("var\n"); }
-  public void testVar11() { doTestForce("var\n"); }
-  public void testVar12() { doTestForce("var\n"); }
-  public void testVar13() { doTestForce("ar\n"); }
-  public void testVar14() { doTest("var\n"); }
-  public void testVar15() { doTestForce("var\n"); }
-  public void testVar16() { doTestForce("var\n"); }
-  public void testVar17() { doTestForce("var\n"); }
-
   public void testNew01() { doTest("new\n"); }
   public void testNew02() { doTest("new\n"); }
   public void testNew03() { doTest("new\n"); }
@@ -93,8 +75,5 @@ public class PostfixCompletionTest extends LightCodeInsightFixtureTestCase {
   public void testField02() { doTestForce("field\n"); }
 
   public void testNoVariants01() { doTest(""); }
-  public void testNoVariants03() { doTest("v\n"); }
-  public void testNoVariants05() { doTest("var\n"); }
-  public void testNoVariants06() { doTest("var\n"); }
 }
 
