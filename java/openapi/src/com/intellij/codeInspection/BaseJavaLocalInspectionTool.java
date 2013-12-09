@@ -34,7 +34,12 @@ import org.jetbrains.annotations.NotNull;
 public abstract class BaseJavaLocalInspectionTool extends AbstractBaseJavaLocalInspectionTool implements CustomSuppressableInspectionTool {
   @Override
   public SuppressIntentionAction[] getSuppressActions(final PsiElement element) {
-    return SuppressManager.getInstance().createSuppressActions(HighlightDisplayKey.find(getShortName()));
+    String shortName = getShortName();
+    HighlightDisplayKey key = HighlightDisplayKey.find(shortName);
+    if (key == null) {
+      throw new AssertionError("HighlightDisplayKey.find(" + shortName + ") is null. Inspection: "+getClass());
+    }
+    return SuppressManager.getInstance().createSuppressActions(key);
   }
 
   @Override
