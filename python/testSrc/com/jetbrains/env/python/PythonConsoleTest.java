@@ -34,7 +34,7 @@ public class PythonConsoleTest extends PyEnvTestCase {
              "        x=1\n" +
              "y=x+100\n" +
              "for i in range(1):\n" +
-             "  print(y)");
+             "  print(y)\n");
         waitForOutput("101");
       }
     });
