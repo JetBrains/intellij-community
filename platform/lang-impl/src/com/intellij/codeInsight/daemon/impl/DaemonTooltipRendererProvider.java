@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import com.intellij.codeInsight.daemon.impl.actions.ShowErrorDescriptionAction;
 import com.intellij.codeInsight.hint.LineTooltipRenderer;
 import com.intellij.codeInsight.hint.TooltipLinkHandlerEP;
 import com.intellij.codeInsight.hint.TooltipRenderer;
+import com.intellij.codeInspection.ui.DefaultInspectionToolPresentation;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.ErrorStripTooltipRendererProvider;
 import com.intellij.openapi.editor.impl.TrafficTooltipRenderer;
@@ -42,8 +43,6 @@ import javax.swing.*;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 public class DaemonTooltipRendererProvider implements ErrorStripTooltipRendererProvider {
   @NonNls private static final String END_MARKER = "<!-- end marker -->";
@@ -143,20 +142,7 @@ public class DaemonTooltipRendererProvider implements ErrorStripTooltipRendererP
         if (ref != null) {
           String description = TooltipLinkHandlerEP.getDescription(ref, editor);
           if (description != null) {
-            description = UIUtil.getHtmlBody(description);
-            final int descriptionEnd = description.indexOf("<!-- tooltip end -->");
-            if (descriptionEnd < 0) {
-              final Pattern pattern = Pattern.compile(".*Use.*(the (panel|checkbox|checkboxes|field|button|controls).*below).*", Pattern.DOTALL);
-              final Matcher matcher = pattern.matcher(description);
-              int startFindIdx = 0;
-              while (matcher.find(startFindIdx)) {
-                final int end = matcher.end(1);
-                startFindIdx = end;
-                description = description.substring(0, matcher.start(1)) + " inspection settings " + description.substring(end);
-              }
-            } else {
-              description = description.substring(0, descriptionEnd);
-            }
+            description = DefaultInspectionToolPresentation.stripUIRefsFromInspectionDescription(UIUtil.getHtmlBody(description));
             text += UIUtil.getHtmlBody(problem).replace(DaemonBundle.message("inspection.extended.description"),
                                                         DaemonBundle.message("inspection.collapse.description")) +
                     END_MARKER + "<p>" + description + BORDER_LINE;
