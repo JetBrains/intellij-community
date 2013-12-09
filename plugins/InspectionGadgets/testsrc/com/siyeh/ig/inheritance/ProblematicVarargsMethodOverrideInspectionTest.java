@@ -34,6 +34,17 @@ public class ProblematicVarargsMethodOverrideInspectionTest extends LightInspect
            "}");
   }
 
+  public void testVarargsOverriding() {
+    doTest("class One {" +
+           "  void m(String... ss) {" +
+           "  }" +
+           "}" +
+           "class Two extends One {" +
+           "  void m(String... ss) {" +
+           "  }" +
+           "}");
+  }
+
   @Override
   protected InspectionProfileEntry getInspection() {
     return new ProblematicVarargsMethodOverrideInspection();
