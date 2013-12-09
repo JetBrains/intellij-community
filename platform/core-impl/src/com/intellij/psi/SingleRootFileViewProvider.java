@@ -438,7 +438,7 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
   }
 
   @Nullable
-  protected static PsiElement findElementAt(@Nullable final PsiElement psiFile, final int offset) {
+  public static PsiElement findElementAt(@Nullable final PsiElement psiFile, final int offset) {
     if (psiFile == null) return null;
     int offsetInElement = offset;
     PsiElement child = psiFile.getFirstChild();

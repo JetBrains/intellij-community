@@ -7,7 +7,7 @@ import io.netty.util.concurrent.ImmediateEventExecutor;
 import org.jetbrains.annotations.NotNull;
 
 @ChannelHandler.Sharable
-public final class ChannelRegistrar extends ChannelInboundHandlerAdapter {
+public final class ChannelRegistrar extends ChannelHandlerAdapter {
   private final ChannelGroup openChannels = new DefaultChannelGroup(ImmediateEventExecutor.INSTANCE);
 
   public boolean isEmpty() {

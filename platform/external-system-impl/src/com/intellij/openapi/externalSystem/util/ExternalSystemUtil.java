@@ -481,16 +481,16 @@ public class ExternalSystemUtil {
           DataNode<ProjectData> externalProject = task.getExternalProject();
 
           if(externalProject != null) {
-            Set<String> myExternalModulePaths = ContainerUtil.newHashSet();
+            Set<String> externalModulePaths = ContainerUtil.newHashSet();
             Collection<DataNode<ModuleData>> moduleNodes = ExternalSystemApiUtil.findAll(externalProject, ProjectKeys.MODULE);
             for (DataNode<ModuleData> node : moduleNodes) {
-              myExternalModulePaths.add(node.getData().getLinkedExternalProjectPath());
+              externalModulePaths.add(node.getData().getLinkedExternalProjectPath());
             }
 
             String projectPath = externalProject.getData().getLinkedExternalProjectPath();
             ExternalProjectSettings linkedProjectSettings = manager.getSettingsProvider().fun(project).getLinkedProjectSettings(projectPath);
             if (linkedProjectSettings != null) {
-              linkedProjectSettings.setModules(myExternalModulePaths);
+              linkedProjectSettings.setModules(externalModulePaths);
             }
           }
 

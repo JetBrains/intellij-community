@@ -19,6 +19,8 @@ import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.ActiveRunnable;
 import com.intellij.openapi.util.Expirable;
+import com.intellij.openapi.util.registry.Registry;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -149,8 +151,26 @@ public abstract class FocusCommand extends ActiveRunnable implements Expirable {
     @NotNull
     public final ActionCallback run() {
       if (myToFocus != null) {
-        if (!myToFocus.requestFocusInWindow()) {
-          myToFocus.requestFocus();
+        if (Registry.is("actionSystem.doNotStealFocus")) {
+          Window topWindow = SwingUtilities.windowForComponent(myToFocus);
+          UIUtil.setAutoRequestFocus(topWindow, topWindow.isActive());
+          while (topWindow.getOwner() != null) {
+            topWindow = SwingUtilities.windowForComponent(topWindow);
+            UIUtil.setAutoRequestFocus(topWindow, topWindow.isActive());
+          }
+
+          if (topWindow.isActive()) {
+            if (!myToFocus.requestFocusInWindow()) {
+              myToFocus.requestFocus();
+            }
+          } else {
+            myToFocus.requestFocusInWindow();
+          }
+
+        } else {
+          if (!myToFocus.requestFocusInWindow()) {
+            myToFocus.requestFocus();
+          }
         }
       }
       clear();

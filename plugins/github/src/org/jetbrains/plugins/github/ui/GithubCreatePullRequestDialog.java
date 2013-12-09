@@ -106,7 +106,7 @@ public class GithubCreatePullRequestDialog extends DialogWrapper {
       setTarget(defaultForkPath);
     }
     else {
-      if (!showTargetDialog()) {
+      if (!showTargetDialog(true)) {
         close(CANCEL_EXIT_CODE);
         return;
       }
@@ -115,7 +115,11 @@ public class GithubCreatePullRequestDialog extends DialogWrapper {
   }
 
   private boolean showTargetDialog() {
-    GithubFullPath forkPath = myWorker.showTargetDialog();
+    return showTargetDialog(false);
+  }
+
+  private boolean showTargetDialog(boolean firstTime) {
+    GithubFullPath forkPath = myWorker.showTargetDialog(firstTime);
     if (forkPath == null) {
       return false;
     }

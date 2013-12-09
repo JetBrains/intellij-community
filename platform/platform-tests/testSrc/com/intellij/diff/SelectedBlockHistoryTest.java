@@ -194,13 +194,13 @@ public class SelectedBlockHistoryTest extends TestCase {
 
   }
 
-  private void doTest(
-      String[] beforePrevBlock,
-      String[] prevBlock,
-      String[] afterPrevBlock,
-      String[] beforeBlock,
-      String[] block,
-      String[] afterBlock) throws FilesTooBigForDiffException {
+  private static void doTest(
+    String[] beforePrevBlock,
+    String[] prevBlock,
+    String[] afterPrevBlock,
+    String[] beforeBlock,
+    String[] block,
+    String[] afterBlock) throws FilesTooBigForDiffException {
 
     String[] prevVersion = composeVersion(beforePrevBlock, prevBlock, afterPrevBlock);
     String[] currentVersion = composeVersion(beforeBlock, block, afterBlock);
@@ -214,12 +214,11 @@ public class SelectedBlockHistoryTest extends TestCase {
 
   }
 
-  private String[] composeVersion(String[] beforeBlock, String[] block, String[] afterBlock) {
-    List beforeList = new ArrayList();
+  private static String[] composeVersion(String[] beforeBlock, String[] block, String[] afterBlock) {
+    List<String> beforeList = new ArrayList<String>();
     ContainerUtil.addAll(beforeList, beforeBlock);
     ContainerUtil.addAll(beforeList, block);
     ContainerUtil.addAll(beforeList, afterBlock);
-    return (String[])ArrayUtil.toStringArray(beforeList);
-
+    return ArrayUtil.toStringArray(beforeList);
   }
 }

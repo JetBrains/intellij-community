@@ -44,8 +44,8 @@ public class ContainingBranchesGetter {
   @NotNull private volatile SLRUMap<Hash, List<String>> myCache = createCache();
   @Nullable private Runnable myLoadingFinishedListener; // access only from EDT
 
-  ContainingBranchesGetter(@NotNull VcsLogDataHolder disposable, @NotNull Disposable parentDisposable) {
-    myDataHolder = disposable;
+  ContainingBranchesGetter(@NotNull VcsLogDataHolder dataHolder, @NotNull Disposable parentDisposable) {
+    myDataHolder = dataHolder;
     myTaskExecutor = new SequentialLimitedLifoExecutor<Task>(parentDisposable, 10, new ThrowableConsumer<Task, Throwable>() {
       @Override
       public void consume(final Task task) throws Throwable {

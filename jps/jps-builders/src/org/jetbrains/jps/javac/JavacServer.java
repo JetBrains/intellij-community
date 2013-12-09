@@ -31,8 +31,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.api.CanceledStatus;
 import org.jetbrains.jps.service.SharedThreadPool;
 
-import javax.tools.Diagnostic;
-import javax.tools.JavaFileObject;
+import javax.tools.*;
 import java.io.File;
 import java.util.*;
 
@@ -262,7 +261,7 @@ public class JavacServer {
   }
 
   @ChannelHandler.Sharable
-  private static final class ChannelRegistrar extends ChannelInboundHandlerAdapter {
+  private static final class ChannelRegistrar extends ChannelHandlerAdapter {
     private final ChannelGroup openChannels = new DefaultChannelGroup(ImmediateEventExecutor.INSTANCE);
 
     public boolean isEmpty() {

@@ -8,8 +8,8 @@ import io.netty.bootstrap.Bootstrap;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.Channel;
+import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
-import io.netty.channel.ChannelInboundHandler;
 import io.netty.channel.ChannelInitializer;
 import io.netty.util.CharsetUtil;
 import org.jetbrains.annotations.NotNull;
@@ -87,7 +87,7 @@ public class BinaryRequestHandlerTest extends LightPlatformTestCase {
     }
 
     @Override
-    public ChannelInboundHandler getInboundHandler() {
+    public ChannelHandler getInboundHandler() {
       return new MyDecoder();
     }
 

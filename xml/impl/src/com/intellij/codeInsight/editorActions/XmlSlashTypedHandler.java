@@ -23,10 +23,7 @@ import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.FileViewProvider;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
+import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import com.intellij.psi.tree.IElementType;
@@ -86,6 +83,14 @@ public class XmlSlashTypedHandler extends TypedHandlerDelegate implements XmlTok
       if ("</".equals(prevLeafText) && prevLeaf.getElementType() == XML_END_TAG_START) {
         XmlTag tag = PsiTreeUtil.getParentOfType(element, XmlTag.class);
         if (tag != null && StringUtil.isNotEmpty(tag.getName()) && TreeUtil.findSibling(prevLeaf, XmlTokenType.XML_NAME) == null) {
+          // check for template language like JSP
+          if (provider instanceof MultiplePsiFilesPerDocumentFileViewProvider) {
+            PsiElement element1 = SingleRootFileViewProvider.findElementAt(file, offset - 1);
+            XmlTag tag1 = PsiTreeUtil.getParentOfType(element1, XmlTag.class);
+            if (tag1 != null && tag1 != tag && tag1.getTextOffset() > tag.getTextOffset() && element1.getText().startsWith("</")) {
+              tag = tag1;
+            }
+          }
           EditorModificationUtil.insertStringAtCaret(editor, tag.getName() + ">");
           return Result.STOP;
         }

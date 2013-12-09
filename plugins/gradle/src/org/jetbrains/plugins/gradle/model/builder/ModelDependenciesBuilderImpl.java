@@ -62,12 +62,14 @@ public class ModelDependenciesBuilderImpl implements ModelBuilderService {
     boolean downloadSources = true;
 
     final IdeaPlugin ideaPlugin = project.getPlugins().getPlugin(IdeaPlugin.class);
+    Map<String, Map<String, Collection<Configuration>>> userScopes = Collections.emptyMap();
     if (ideaPlugin != null) {
       IdeaModel ideaModel = ideaPlugin.getModel();
-      if (ideaModel != null && ideaModel.getModule() == null) {
+      if (ideaModel != null && ideaModel.getModule() != null) {
         offline = ideaModel.getModule().isOffline();
         downloadJavadoc = ideaModel.getModule().isDownloadJavadoc();
         downloadSources = ideaModel.getModule().isDownloadSources();
+        userScopes = ideaModel.getModule().getScopes();
       }
     }
 
@@ -79,7 +81,7 @@ public class ModelDependenciesBuilderImpl implements ModelBuilderService {
         dependenciesExtractor.extractProjectDependencies(plusConfigurations, new ArrayList<Configuration>());
 
       for (IdeDependenciesExtractor.IdeProjectDependency ideProjectDependency : ideProjectDependencies) {
-        merge(scopesMap, ideProjectDependency);
+        merge(scopesMap, ideProjectDependency, userScopes);
       }
 
       if (!offline) {
@@ -87,14 +89,14 @@ public class ModelDependenciesBuilderImpl implements ModelBuilderService {
           dependenciesExtractor.extractRepoFileDependencies(
             project.getConfigurations(), plusConfigurations, new ArrayList<Configuration>(), downloadSources, downloadJavadoc);
         for (IdeDependenciesExtractor.IdeRepoFileDependency repoFileDependency : ideRepoFileDependencies) {
-          merge(scopesMap, repoFileDependency);
+          merge(scopesMap, repoFileDependency, userScopes);
         }
       }
 
       final List<IdeDependenciesExtractor.IdeLocalFileDependency> ideLocalFileDependencies =
         dependenciesExtractor.extractLocalFileDependencies(plusConfigurations, new ArrayList<Configuration>());
       for (IdeDependenciesExtractor.IdeLocalFileDependency fileDependency : ideLocalFileDependencies) {
-        merge(scopesMap, fileDependency);
+        merge(scopesMap, fileDependency, userScopes);
       }
     }
 
@@ -166,9 +168,11 @@ public class ModelDependenciesBuilderImpl implements ModelBuilderService {
     return null;
   }
 
-  private static void merge(Map<DependencyVersionId, Scopes> map, IdeDependenciesExtractor.IdeProjectDependency dependency) {
+  private static void merge(Map<DependencyVersionId, Scopes> map,
+                            IdeDependenciesExtractor.IdeProjectDependency dependency,
+                            Map<String, Map<String, Collection<Configuration>>> userScopes) {
     final String configurationName = dependency.getDeclaredConfiguration().getName();
-    final GradleDependencyScope scope = GradleDependencyScope.fromName(configurationName);
+    final GradleDependencyScope scope = deduceScope(configurationName, userScopes);
     if (scope == null) return;
 
     final Project project = dependency.getProject();
@@ -190,9 +194,11 @@ public class ModelDependenciesBuilderImpl implements ModelBuilderService {
     return String.valueOf(o == null ? "" : o);
   }
 
-  private static void merge(Map<DependencyVersionId, Scopes> map, IdeDependenciesExtractor.IdeRepoFileDependency dependency) {
+  private static void merge(Map<DependencyVersionId, Scopes> map,
+                            IdeDependenciesExtractor.IdeRepoFileDependency dependency,
+                            Map<String, Map<String, Collection<Configuration>>> userScopes) {
     final String configurationName = dependency.getDeclaredConfiguration().getName();
-    final GradleDependencyScope scope = GradleDependencyScope.fromName(configurationName);
+    final GradleDependencyScope scope = deduceScope(configurationName, userScopes);
     if (scope == null) return;
 
     final ModuleVersionIdentifier dependencyId;
@@ -218,16 +224,18 @@ public class ModelDependenciesBuilderImpl implements ModelBuilderService {
   }
 
   private static String parseClassifier(ModuleVersionIdentifier dependencyId, File dependencyFile) {
-    if(dependencyFile == null) return null;
+    if (dependencyFile == null) return null;
     String dependencyFileName = dependencyFile.getName();
     int i = dependencyFileName.indexOf(dependencyId.getName() + '-' + dependencyId.getVersion() + '-');
     return i != -1 ? dependencyFileName.substring(i, dependencyFileName.length()) : null;
   }
 
-  private static void merge(Map<DependencyVersionId, Scopes> map, IdeDependenciesExtractor.IdeLocalFileDependency dependency) {
+  private static void merge(Map<DependencyVersionId, Scopes> map,
+                            IdeDependenciesExtractor.IdeLocalFileDependency dependency,
+                            Map<String, Map<String, Collection<Configuration>>> userScopes) {
 
     final String configurationName = dependency.getDeclaredConfiguration().getName();
-    final GradleDependencyScope scope = GradleDependencyScope.fromName(configurationName);
+    final GradleDependencyScope scope = deduceScope(configurationName, userScopes);
     if (scope == null) return;
 
     String path = dependency.getFile().getPath();
@@ -240,6 +248,33 @@ public class ModelDependenciesBuilderImpl implements ModelBuilderService {
     else {
       scopes.add(scope);
     }
+  }
+
+  /**
+   * Deduce configuration scope based on configuration name using gradle conventions.
+   * IDEA gradle plugin only 'plus' configuration used to support configuration based on a custom configuration (not conventional)
+   *
+   * @param configurationName gradle configuration name
+   * @param userScopes        gradle IDEA plugin scopes map
+   * @return deduced scope
+   */
+  private static GradleDependencyScope deduceScope(String configurationName,
+                                                   Map<String, Map<String, Collection<Configuration>>> userScopes) {
+    GradleDependencyScope scope = GradleDependencyScope.fromName(configurationName);
+    if (scope == null) {
+      for (Map.Entry<String, Map<String, Collection<Configuration>>> entry : userScopes.entrySet()) {
+        Collection<Configuration> plusConfigurations = entry.getValue().get("plus");
+        if (plusConfigurations == null) continue;
+
+        for (Configuration plus : plusConfigurations) {
+          if (plus.getName().equals(configurationName)) {
+            return GradleDependencyScope.fromIdeaMappingName(entry.getKey());
+          }
+        }
+      }
+    }
+
+    return scope;
   }
 
   private static class MyModuleVersionIdentifier implements ModuleVersionIdentifier, Serializable {
