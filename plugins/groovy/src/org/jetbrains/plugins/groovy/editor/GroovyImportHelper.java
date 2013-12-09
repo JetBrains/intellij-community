@@ -23,6 +23,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
 import org.jetbrains.plugins.groovy.lang.resolve.DefaultImportContributor;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
@@ -106,8 +107,9 @@ public class GroovyImportHelper {
       }
     }
 
+    GroovyPsiManager groovyPsiManager = GroovyPsiManager.getInstance(file.getProject());
     for (String implicitlyImportedClass : GroovyFileBase.IMPLICITLY_IMPORTED_CLASSES) {
-      PsiClass clazz = facade.findClass(implicitlyImportedClass, file.getResolveScope());
+      PsiClass clazz = groovyPsiManager.findClassWithCache(implicitlyImportedClass, file.getResolveScope());
       if (clazz != null && !ResolveUtil.processElement(processor, clazz, state)) return false;
     }
     return true;
