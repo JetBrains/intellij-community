@@ -15,7 +15,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.Function;
 import com.intellij.util.ThrowableConvertor;
-import com.intellij.util.containers.*;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.HashMap;
 import git4idea.DialogManager;
 import git4idea.GitCommit;
@@ -43,8 +44,6 @@ import org.jetbrains.plugins.github.util.GithubUtil;
 
 import java.io.IOException;
 import java.util.*;
-import java.util.HashSet;
-import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.FutureTask;
@@ -244,9 +243,32 @@ public class GithubCreatePullRequestWorker {
 
   @Nullable
   public GithubFullPath showTargetDialog() {
+    return showTargetDialog(false);
+  }
+
+  @Nullable
+  public GithubFullPath showTargetDialog(boolean firstTime) {
     final GithubInfo2 info = getAvailableForksInModal(myProject, myGitRepository, myAuth, myPath);
     if (info == null) {
       return null;
+    }
+
+    if (firstTime) {
+      if (info.getForks().size() == 1) {
+        return info.getForks().iterator().next();
+      }
+      if (info.getForks().size() == 2) {
+        Iterator<GithubFullPath> it = info.getForks().iterator();
+        GithubFullPath path1 = it.next();
+        GithubFullPath path2 = it.next();
+
+        if (myPath.equals(path1)) {
+          return path2;
+        }
+        if (myPath.equals(path2)) {
+          return path1;
+        }
+      }
     }
 
     Convertor<String, GithubFullPath> getForkPath = new Convertor<String, GithubFullPath>() {
