@@ -18,8 +18,6 @@ package com.intellij.psi.impl.source.resolve.graphInference;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.ParameterTypeInferencePolicy;
-import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.util.TypeConversionUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -41,7 +39,7 @@ public class PsiGraphInferenceHelper implements PsiInferenceHelper {
                                                  @Nullable PsiElement parent,
                                                  @NotNull ParameterTypeInferencePolicy policy) {
     final InferenceSession inferenceSession = new InferenceSession(new PsiTypeParameter[]{typeParameter}, partialSubstitutor, myManager);
-    inferenceSession.initExpressionConstraints(parameters, arguments, parent);
+    inferenceSession.initExpressionConstraints(parameters, arguments, parent, null);
     return inferenceSession.infer(parameters, arguments, parent, policy).substitute(typeParameter);
   }
 
@@ -56,7 +54,7 @@ public class PsiGraphInferenceHelper implements PsiInferenceHelper {
                                            @NotNull LanguageLevel languageLevel) {
     if (typeParameters.length == 0) return partialSubstitutor;
     final InferenceSession inferenceSession = new InferenceSession(typeParameters, partialSubstitutor, myManager);
-    inferenceSession.initExpressionConstraints(parameters, arguments, parent);
+    inferenceSession.initExpressionConstraints(parameters, arguments, parent, null);
     return inferenceSession.infer(parameters, arguments, parent, policy);
   }
 
