@@ -143,7 +143,7 @@ public class LibrariesUtil {
   private static String getGroovySdkHome(VirtualFile[] classRoots) {
     for (VirtualFile file : classRoots) {
       final String name = file.getName();
-      if (name.matches(GroovyConfigUtils.GROOVY_JAR_PATTERN_NOVERSION) || name.matches(GroovyConfigUtils.GROOVY_JAR_PATTERN)) {
+      if (GroovyConfigUtils.GROOVY_JAR_PATTERN.matcher(name).matches()) {
         String jarPath = file.getPresentableUrl();
         File realFile = new File(jarPath);
         if (realFile.exists()) {
