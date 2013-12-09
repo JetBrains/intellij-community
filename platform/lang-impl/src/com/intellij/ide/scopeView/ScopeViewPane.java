@@ -42,14 +42,11 @@ import com.intellij.psi.search.scope.packageSet.*;
 import com.intellij.ui.PopupHandler;
 import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * @author cdr
