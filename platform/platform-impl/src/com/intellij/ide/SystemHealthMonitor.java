@@ -28,9 +28,7 @@ import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.ui.HyperlinkAdapter;
@@ -50,7 +48,13 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class SystemHealthMonitor extends ApplicationComponent.Adapter {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.SystemHealthMonitor");
 
-  private static final NotificationGroup LOG_GROUP = NotificationGroup.logOnlyGroup("System Health Log Messages");
+  private static final NotNullLazyValue<NotificationGroup> LOG_GROUP = new AtomicNotNullLazyValue<NotificationGroup>() {
+    @NotNull
+    @Override
+    protected NotificationGroup compute() {
+      return NotificationGroup.logOnlyGroup("System Health Log Messages");
+    }
+  };
 
   @NotNull private final PropertiesComponent myProperties;
 
@@ -105,7 +109,7 @@ public class SystemHealthMonitor extends ApplicationComponent.Adapter {
                 .show(new RelativePoint(component, new Point(rect.x + 30, rect.y + rect.height - 10)), Balloon.Position.above);
             }
 
-            Notification notification = LOG_GROUP.createNotification(message, NotificationType.WARNING);
+            Notification notification = LOG_GROUP.getValue().createNotification(message, NotificationType.WARNING);
             notification.setImportant(true);
             Notifications.Bus.notify(notification);
           }
