@@ -207,8 +207,13 @@ public class TaskUtil {
    */
   public static void prettyFormatJsonToLog(@NotNull Logger logger, @NotNull String json) {
     if (logger.isDebugEnabled()) {
-      Gson gson = new GsonBuilder().setPrettyPrinting().create();
-      logger.debug("\n" + gson.toJson(gson.fromJson(json, JsonElement.class)));
+      try {
+        Gson gson = new GsonBuilder().setPrettyPrinting().create();
+        logger.debug("\n" + gson.toJson(gson.fromJson(json, JsonElement.class)));
+      }
+      catch (JsonSyntaxException e) {
+        logger.debug("Malformed JSON\n" + json);
+      }
     }
   }
 
