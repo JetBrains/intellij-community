@@ -16,6 +16,8 @@
 package com.intellij.psi.impl.source.tree.injected;
 
 /**
+ * Marker interface that suppresses injection background.
+ *
  * @author ignatov
  */
 public interface InjectionBackgroundSuppressor {

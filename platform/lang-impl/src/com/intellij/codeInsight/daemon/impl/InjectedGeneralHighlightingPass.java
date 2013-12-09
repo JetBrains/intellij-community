@@ -221,7 +221,7 @@ public class InjectedGeneralHighlightingPass extends GeneralHighlightingPass imp
       if (textRange.isEmpty()) continue;
       String desc = injectedPsi.getLanguage().getDisplayName() + ": " + injectedPsi.getText();
       HighlightInfo.Builder builder = HighlightInfo.newHighlightInfo(HighlightInfoType.INJECTED_LANGUAGE_BACKGROUND).range(textRange);
-      if (injectedAttributes != null && !InjectedLanguageUtil.suppressInjectionBackground(host)) {
+      if (injectedAttributes != null && InjectedLanguageUtil.isHighlightInjectionBackground(host)) {
         builder.textAttributes(injectedAttributes);
       }
       builder.unescapedToolTip(desc);

@@ -497,7 +497,7 @@ public class InjectedLanguageUtil {
     return LanguageUtil.isInjectableLanguage(language);
   }
 
-  public static boolean suppressInjectionBackground(@Nullable PsiLanguageInjectionHost host) {
-    return host instanceof InjectionBackgroundSuppressor;
+  public static boolean isHighlightInjectionBackground(@Nullable PsiLanguageInjectionHost host) {
+    return !(host instanceof InjectionBackgroundSuppressor);
   }
 }
