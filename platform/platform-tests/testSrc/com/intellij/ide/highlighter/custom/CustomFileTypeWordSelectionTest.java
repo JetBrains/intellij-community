@@ -36,6 +36,11 @@ public class CustomFileTypeWordSelectionTest extends LightPlatformCodeInsightFix
   }
 
   @Override
+  protected boolean isCommunity() {
+    return true;
+  }
+
+  @Override
   protected String getBasePath() {
     return "/platform/platform-tests/testData/selectWord/";
   }
