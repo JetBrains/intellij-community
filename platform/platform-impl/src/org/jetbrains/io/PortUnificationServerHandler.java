@@ -136,7 +136,7 @@ class PortUnificationServerHandler extends Decoder {
   }
 
   private static void ensureThatExceptionHandlerIsLast(ChannelPipeline pipeline) {
-    ChannelInboundHandler exceptionHandler = ChannelExceptionHandler.getInstance();
+    ChannelHandler exceptionHandler = ChannelExceptionHandler.getInstance();
     if (pipeline.last() != exceptionHandler || pipeline.context(exceptionHandler) == null) {
       return;
     }
