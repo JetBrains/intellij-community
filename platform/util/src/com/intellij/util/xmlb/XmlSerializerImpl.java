@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -88,8 +88,7 @@ class XmlSerializerImpl {
   }
 
   private static Map<Pair<Type, Accessor>, Binding> getBindingCacheMap() {
-    SoftReference<Map<Pair<Type, Accessor>, Binding>> ref = ourBindings;
-    Map<Pair<Type, Accessor>, Binding> map = ref == null ? null : ref.get();
+    Map<Pair<Type, Accessor>, Binding> map = com.intellij.reference.SoftReference.dereference(ourBindings);
     if (map == null) {
       map = new ConcurrentHashMap<Pair<Type, Accessor>, Binding>();
       ourBindings = new SoftReference<Map<Pair<Type, Accessor>, Binding>>(map);

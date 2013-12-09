@@ -203,11 +203,9 @@ public abstract class FunctionalParserBase<R, T> implements FunctionalParser<R, 
         myCache.clear();
       }
       final SoftReference<Pair<R, State>> ref = myCache.get(state.getPos());
-      if (ref != null) {
-        final Pair<R, State> cached = ref.get();
-        if (cached != null) {
-          return cached;
-        }
+      final Pair<R, State> cached = SoftReference.dereference(ref);
+      if (cached != null) {
+        return cached;
       }
       final Pair<R, State> result = myParser.parse(tokens, state);
       myCache.put(state.getPos(), new SoftReference<Pair<R, State>>(result));

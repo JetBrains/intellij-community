@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@
 package com.intellij.ide;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.reference.SoftReference;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
@@ -160,7 +161,7 @@ public class IdeRepaintManager extends RepaintManager {
         return;
       }
       //ignore the last processed component
-      if (myLastComponent != null && c == myLastComponent.get()) {
+      if (SoftReference.dereference(myLastComponent) == c) {
         return;
       }
       myLastComponent = new WeakReference<JComponent>(c);

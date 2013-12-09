@@ -343,8 +343,7 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
 
   @Nullable
   private static List<Pair<File, GroovyDslExecutor>> derefStandardScripts() {
-    SoftReference<List<Pair<File, GroovyDslExecutor>>> ref = ourStandardScripts;
-    return ref == null ? null : ref.get();
+    return SoftReference.dereference(ourStandardScripts);
   }
 
   private static List<Pair<File, GroovyDslExecutor>> getStandardScripts() {

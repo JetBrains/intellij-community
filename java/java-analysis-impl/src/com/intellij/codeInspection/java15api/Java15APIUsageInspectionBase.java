@@ -85,8 +85,8 @@ public class Java15APIUsageInspectionBase extends BaseJavaBatchLocalInspectionTo
   private static Set<String> getForbiddenApi(@NotNull LanguageLevel languageLevel) {
     if (!ourPresentableShortMessage.containsKey(languageLevel)) return null;
     Reference<Set<String>> ref = ourForbiddenAPI.get(languageLevel);
-    Set<String> result;
-    if (ref == null || (result = ref.get()) == null) {
+    Set<String> result = SoftReference.dereference(ref);
+    if (result == null) {
       result = new THashSet<String>(1000);
       loadForbiddenApi("api" + getShortName(languageLevel) + ".txt", result);
       ourForbiddenAPI.put(languageLevel, new SoftReference<Set<String>>(result));

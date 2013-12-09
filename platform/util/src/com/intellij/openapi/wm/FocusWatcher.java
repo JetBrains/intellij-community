@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.wm;
 
+import com.intellij.reference.SoftReference;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -111,11 +112,11 @@ public class FocusWatcher implements ContainerListener,FocusListener{
    * @return last focused component or <code>null</code>.
    */
   public final Component getFocusedComponent(){
-    return myFocusedComponent != null ? myFocusedComponent.get() : null;
+    return SoftReference.dereference(myFocusedComponent);
   }
 
   public final Component getNearestFocusableComponent() {
-    return myNearestFocusableComponent != null ? myNearestFocusableComponent.get() : null;
+    return SoftReference.dereference(myNearestFocusableComponent);
   }
 
   public final void install(@NotNull Component component){

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.intellij.openapi.keymap.impl;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.reference.SoftReference;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -44,7 +45,7 @@ public class KeyProcessorContext {
 
   @Nullable
   public JComponent getFoundComponent() {
-    return myFoundComponent != null ? myFoundComponent.get() : null;
+    return SoftReference.dereference(myFoundComponent);
   }
 
   public void setFoundComponent(final JComponent foundComponent) {
@@ -77,7 +78,7 @@ public class KeyProcessorContext {
 
   @Nullable
   public Component getFocusOwner() {
-    return myFocusOwner != null ? myFocusOwner.get() : null;
+    return SoftReference.dereference(myFocusOwner);
   }
 
   public void setFocusOwner(final Component focusOwner) {

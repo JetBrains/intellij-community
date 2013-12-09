@@ -1095,13 +1095,13 @@ public class FileBasedIndexImpl extends FileBasedIndex {
     if (myProjectsBeingUpdated.contains(project)) return null;
 
     SoftReference<ProjectIndexableFilesFilter> reference = project.getUserData(ourProjectFilesSetKey);
-    ProjectIndexableFilesFilter data = reference != null ? reference.get() : null;
+    ProjectIndexableFilesFilter data = com.intellij.reference.SoftReference.dereference(reference);
     if (data != null && data.myModificationCount == myFilesModCount) return data;
 
     if (myCalcIndexableFilesLock.tryLock()) { // make best effort for calculating filter
       try {
         reference = project.getUserData(ourProjectFilesSetKey);
-        data = reference != null ? reference.get() : null;
+        data = com.intellij.reference.SoftReference.dereference(reference);
         if (data != null && data.myModificationCount == myFilesModCount) {
           return data;
         }
@@ -1557,7 +1557,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
           getInputFilter(requestedIndexId).acceptInput(vFile)) {
         // Reasonably attempt to use same file content when calculating indices as we can evaluate them several at once and store in file content
         WeakReference<FileContentImpl> previousContentRef = document.getUserData(ourFileContentKey);
-        FileContentImpl previousContent = previousContentRef != null ? previousContentRef.get() : null;
+        FileContentImpl previousContent = com.intellij.reference.SoftReference.dereference(previousContentRef);
         final FileContentImpl newFc;
         if (previousContent != null && previousContent.getStamp() == currentDocStamp) {
           newFc = previousContent;

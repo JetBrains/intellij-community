@@ -33,6 +33,7 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
+import com.intellij.reference.SoftReference;
 import com.intellij.util.Alarm;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -160,15 +161,17 @@ public class ImageOrColorPreviewManager implements Disposable, EditorMouseMotion
     if (elementRef == null && event.getMouseEvent().isShiftDown()) {
       alarm.addRequest(new PreviewRequest(point, editor, false), 100);
     }
-    else if (elementRef != null && elementRef.get() != getPsiElementAt(point, editor)) {
-      PsiElement element = elementRef.get();
-      elementRef = null;
-      for (ElementPreviewProvider provider : Extensions.getExtensions(ElementPreviewProvider.EP_NAME)) {
-        try {
-          provider.hide(element, editor);
-        }
-        catch (Exception e) {
-          LOG.error(e);
+    else {
+      PsiElement element = SoftReference.dereference(elementRef);
+      if (element != getPsiElementAt(point, editor)) {
+        elementRef = null;
+        for (ElementPreviewProvider provider : Extensions.getExtensions(ElementPreviewProvider.EP_NAME)) {
+          try {
+            provider.hide(element, editor);
+          }
+          catch (Exception e) {
+            LOG.error(e);
+          }
         }
       }
     }
@@ -193,7 +196,7 @@ public class ImageOrColorPreviewManager implements Disposable, EditorMouseMotion
     @Override
     public void run() {
       PsiElement element = getPsiElementAt(point, editor);
-      if (element == null || !element.isValid() || (elementRef != null && elementRef.get() == element)) {
+      if (element == null || !element.isValid() || SoftReference.dereference(elementRef) == element) {
         return;
       }
       if (PsiDocumentManager.getInstance(element.getProject()).isUncommited(editor.getDocument()) || DumbService.getInstance(element.getProject()).isDumb()) {

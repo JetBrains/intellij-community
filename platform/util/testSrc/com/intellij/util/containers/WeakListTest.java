@@ -40,9 +40,12 @@ public class WeakListTest extends TestCase {
     }
     assertEquals(20, myWeakList.listSize());
     addElement(HARD_REFERENCED);
+    assertEquals(21, myWeakList.listSize());
     myHolder.clear();
-    synchronized (myWeakList) {
-      gc();
+    while (myWeakList.toStrongList().size() == 21) {
+      synchronized (myWeakList) {
+        gc();
+      }
     }
     synchronized (myWeakList) {
       boolean processed = myWeakList.processQueue();
@@ -194,7 +197,11 @@ public class WeakListTest extends TestCase {
     gc();
     assertEquals(N + 1 + N, myWeakList.listSize());
     myHolder.clear();
-    gc();
+    while (myWeakList.toStrongList().size() == N + 1 + N) {
+      synchronized (myWeakList) {
+        gc();
+      }
+    }
     boolean removed = myWeakList.remove("zzz");
     assertFalse(removed);
     assertEquals(1, myWeakList.listSize());

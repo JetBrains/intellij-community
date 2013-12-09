@@ -31,7 +31,7 @@ public class GradleDocumentationBundle extends AbstractBundle {
 
   public static final String PATH_TO_BUNDLE = "i18n.GradleDocumentationBundle";
   private static final GradleDocumentationBundle BUNDLE = new GradleDocumentationBundle();
-  private static Reference<ResourceBundle> myBundle;
+  private static Reference<ResourceBundle> ourBundle;
 
   public GradleDocumentationBundle() {
     super(PATH_TO_BUNDLE);
@@ -46,13 +46,10 @@ public class GradleDocumentationBundle extends AbstractBundle {
   }
 
   private static ResourceBundle getBundle() {
-    ResourceBundle bundle = null;
-    if (myBundle != null) {
-      bundle = myBundle.get();
-    }
+    ResourceBundle bundle = SoftReference.dereference(ourBundle);
     if (bundle == null) {
       bundle = ResourceBundle.getBundle(PATH_TO_BUNDLE);
-      myBundle = new SoftReference<ResourceBundle>(bundle);
+      ourBundle = new SoftReference<ResourceBundle>(bundle);
     }
     return bundle;
   }

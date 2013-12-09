@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,6 +39,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.lang.ref.Reference;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -49,7 +50,7 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
   private volatile CachedValue<PsiModifierList> myAnnotationList;
   private volatile CachedValue<Collection<PsiDirectory>> myDirectories;
   private volatile CachedValue<Collection<PsiDirectory>> myDirectoriesWithLibSources;
-  private volatile SoftReference<Set<String>> myPublicClassNamesCache;
+  private volatile Reference<Set<String>> myPublicClassNamesCache;
 
   public PsiPackageImpl(PsiManager manager, String qualifiedName) {
     super(manager, qualifiedName);
@@ -176,8 +177,7 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
   }
 
   private Set<String> getClassNamesCache() {
-    SoftReference<Set<String>> ref = myPublicClassNamesCache;
-    Set<String> cache = ref == null ? null : ref.get();
+    Set<String> cache = SoftReference.dereference(myPublicClassNamesCache);
     if (cache == null) {
       GlobalSearchScope scope = allScope();
 

@@ -44,14 +44,12 @@ public class GrAnnotationStub extends StubBase<GrAnnotation> {
   }
 
   public GrAnnotation getPsiElement() {
-    if (myPsiRef != null) {
-      final GrAnnotation annotation = myPsiRef.get();
-      if (annotation != null) {
-        return annotation;
-      }
+    GrAnnotation annotation = SoftReference.dereference(myPsiRef);
+    if (annotation != null) {
+      return annotation;
     }
     try {
-      GrAnnotation annotation = GroovyPsiElementFactory.getInstance(getProject()).createAnnotationFromText(myText, getPsi());
+      annotation = GroovyPsiElementFactory.getInstance(getProject()).createAnnotationFromText(myText, getPsi());
       myPsiRef = new SoftReference<GrAnnotation>(annotation);
       return annotation;
     }

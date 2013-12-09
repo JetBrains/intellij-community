@@ -139,7 +139,7 @@ public class SmartPointerManagerImpl extends SmartPointerManager {
 
   private static <E extends PsiElement> SmartPointerEx<E> getCachedPointer(@NotNull E element) {
     Reference<SmartPointerEx> data = element.getUserData(CACHED_SMART_POINTER_KEY);
-    SmartPointerEx cachedPointer = data == null ? null : data.get();
+    SmartPointerEx cachedPointer = SoftReference.dereference(data);
     if (cachedPointer != null) {
       PsiElement cachedElement = cachedPointer.getCachedElement();
       if (cachedElement != null && cachedElement != element) {
