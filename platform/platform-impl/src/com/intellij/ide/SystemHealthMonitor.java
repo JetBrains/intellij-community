@@ -17,10 +17,7 @@ package com.intellij.ide;
 
 import com.intellij.concurrency.JobScheduler;
 import com.intellij.ide.util.PropertiesComponent;
-import com.intellij.notification.NotificationDisplayType;
-import com.intellij.notification.NotificationGroup;
-import com.intellij.notification.NotificationType;
-import com.intellij.notification.NotificationsConfiguration;
+import com.intellij.notification.*;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
@@ -52,6 +49,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 public class SystemHealthMonitor extends ApplicationComponent.Adapter {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.SystemHealthMonitor");
+
+  private static final NotificationGroup LOG_GROUP = NotificationGroup.logOnlyGroup("System Health Log Messages");
 
   @NotNull private final PropertiesComponent myProperties;
 
@@ -86,9 +85,10 @@ public class SystemHealthMonitor extends ApplicationComponent.Adapter {
       public void appFrameCreated(String[] commandLineArgs, @NotNull Ref<Boolean> willOpenProject) {
         app.invokeLater(new Runnable() {
           public void run() {
+            String message = IdeBundle.message(key) + IdeBundle.message("unsupported.jvm.link");
+
             JComponent component = WindowManager.getInstance().findVisibleFrame().getRootPane();
             if (component != null) {
-              String message = IdeBundle.message(key) + IdeBundle.message("unsupported.jvm.link");
               Rectangle rect = component.getVisibleRect();
               JBPopupFactory.getInstance()
                 .createHtmlTextBalloonBuilder(message, MessageType.WARNING, new HyperlinkAdapter() {
@@ -104,6 +104,10 @@ public class SystemHealthMonitor extends ApplicationComponent.Adapter {
                 .createBalloon()
                 .show(new RelativePoint(component, new Point(rect.x + 30, rect.y + rect.height - 10)), Balloon.Position.above);
             }
+
+            Notification notification = LOG_GROUP.createNotification(message, NotificationType.WARNING);
+            notification.setImportant(true);
+            Notifications.Bus.notify(notification);
           }
         });
       }
