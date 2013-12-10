@@ -15,6 +15,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.xdebugger.*;
 import com.jetbrains.env.RemoteSdkTestable;
+import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.debugger.PyDebugProcess;
 import com.jetbrains.python.debugger.PyDebugRunner;
 import com.jetbrains.python.run.PythonCommandLineState;
@@ -23,6 +24,8 @@ import com.jetbrains.python.run.PythonRunConfiguration;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
 
+import java.io.File;
+import java.io.FilenameFilter;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.util.concurrent.Semaphore;
@@ -85,6 +88,9 @@ public class PyDebuggerTask extends PyBaseDebuggerTask implements RemoteSdkTesta
 
     final Executor executor = DefaultDebugExecutor.getDebugExecutorInstance();
     final ExecutionEnvironment env = new ExecutionEnvironment(executor, runner, settings, project);
+
+
+    deletePycFiles();
 
 
     final PythonCommandLineState pyState = (PythonCommandLineState)myRunConfiguration.getState(executor, env);
@@ -167,6 +173,17 @@ public class PyDebuggerTask extends PyBaseDebuggerTask implements RemoteSdkTesta
     });
 
     doTest(myOutputPrinter);
+  }
+
+  private static void deletePycFiles() {
+    for (File f: PythonHelpersLocator.getHelpersRoot().listFiles(new FilenameFilter() {
+      @Override
+      public boolean accept(File dir, String name) {
+        return name.endsWith(".pyc");
+      }
+    })) {
+      f.delete();
+    }
   }
 
   public PythonRunConfiguration getRunConfiguration() {
