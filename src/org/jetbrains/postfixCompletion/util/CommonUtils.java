@@ -13,19 +13,6 @@ public abstract class CommonUtils {
   private CommonUtils() {
   }
 
-  public static boolean isNiceExpression(@NotNull PsiElement expression) {
-    if (expression instanceof PsiAssignmentExpression) return false;
-    if (expression instanceof PsiPrefixExpression) return false;
-    if (expression instanceof PsiPostfixExpression) return false;
-
-    if (expression instanceof PsiMethodCallExpression) {
-      PsiType expressionType = ((PsiMethodCallExpression)expression).getType();
-      if (expressionType != null && expressionType == PsiType.VOID) return false;
-    }
-
-    return true;
-  }
-
   @NotNull
   public static CtorAccessibility isTypeCanBeInstantiatedWithNew(
     @Nullable PsiClass psiClass, @NotNull PsiElement accessContext) {
@@ -79,11 +66,7 @@ public abstract class CommonUtils {
 
   public static boolean isTypeRequiresRefinement(@Nullable PsiClass psiClass) {
     if (psiClass == null) return false;
-
-    if (psiClass.isInterface()) return true;
-    if (psiClass.hasModifierProperty(PsiModifier.ABSTRACT)) return true;
-
-    return false;
+    return psiClass.isInterface() || psiClass.hasModifierProperty(PsiModifier.ABSTRACT);
   }
 }
 
