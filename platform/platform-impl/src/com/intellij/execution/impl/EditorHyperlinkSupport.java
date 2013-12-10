@@ -330,7 +330,7 @@ public class EditorHyperlinkSupport {
         break;
       }
     }
-    int newIndex = i;
+    int newIndex = i > 0 ? i % ranges.size() : 0;
     while (newIndex < ranges.size() && newIndex >= 0) {
       newIndex = (newIndex + delta + ranges.size()) % ranges.size();
       final RangeHighlighter next = ranges.get(newIndex);
