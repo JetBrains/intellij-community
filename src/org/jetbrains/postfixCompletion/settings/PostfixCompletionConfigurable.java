@@ -19,7 +19,7 @@ public class PostfixCompletionConfigurable implements SearchableConfigurable, Ed
   private static final Logger LOG = Logger.getInstance(PostfixCompletionConfigurable.class);
 
   @Nullable 
-  private PostfixTemplatesListPanel myPanel;
+  private PostfixTemplatesListPanel myTemplatesListPanel;
 
   @NotNull
   @Override
@@ -41,16 +41,16 @@ public class PostfixCompletionConfigurable implements SearchableConfigurable, Ed
 
   @Nullable
   public PostfixTemplatesListPanel getTemplatesListPanel() {
-    if (myPanel == null) {
+    if (myTemplatesListPanel == null) {
       createComponent();
     }
-    return myPanel;
+    return myTemplatesListPanel;
   }
 
   @Nullable
   @Override
   public JComponent createComponent() {
-    if (myPanel == null) {
+    if (myTemplatesListPanel == null) {
       final PostfixTemplate[] templates = PostfixTemplate.EP_NAME.getExtensions();
 
       PostfixCompletionSettings templatesSettings = PostfixCompletionSettings.getInstance();
@@ -59,19 +59,19 @@ public class PostfixCompletionConfigurable implements SearchableConfigurable, Ed
         return null;
       }
 
-      myPanel = new PostfixTemplatesListPanel(Arrays.asList(templates));
+      myTemplatesListPanel = new PostfixTemplatesListPanel(Arrays.asList(templates));
     }
 
-    return myPanel.getComponent();
+    return myTemplatesListPanel.getComponent();
   }
 
   @Override
   public void apply() throws ConfigurationException {
-    if (myPanel != null) {
+    if (myTemplatesListPanel != null) {
       PostfixCompletionSettings templatesSettings = PostfixCompletionSettings.getInstance();
       if (templatesSettings != null) {
         Map<String, Boolean> newTemplatesState = ContainerUtil.newHashMap();
-        for (Map.Entry<String, Boolean> entry : myPanel.getState().entrySet()) {
+        for (Map.Entry<String, Boolean> entry : myTemplatesListPanel.getState().entrySet()) {
           Boolean value = entry.getValue();
           if (value != null && !value) {
             newTemplatesState.put(entry.getKey(), entry.getValue());
@@ -85,17 +85,17 @@ public class PostfixCompletionConfigurable implements SearchableConfigurable, Ed
 
   @Override
   public void reset() {
-    if (myPanel != null) {
+    if (myTemplatesListPanel != null) {
       PostfixCompletionSettings templatesSettings = PostfixCompletionSettings.getInstance();
       if (templatesSettings != null) {
-        myPanel.setState(templatesSettings.getTemplatesState());
+        myTemplatesListPanel.setState(templatesSettings.getTemplatesState());
       }
     }
   }
 
   @Override
   public void disposeUIResources() {
-    myPanel = null;
+    myTemplatesListPanel = null;
   }
 
   @Override
@@ -103,7 +103,7 @@ public class PostfixCompletionConfigurable implements SearchableConfigurable, Ed
     PostfixCompletionSettings templatesSettings = PostfixCompletionSettings.getInstance();
     if (templatesSettings == null) return false;
 
-    return myPanel != null && !myPanel.getState().equals(templatesSettings.getTemplatesState());
+    return myTemplatesListPanel != null && !myTemplatesListPanel.getState().equals(templatesSettings.getTemplatesState());
   }
 
   @Nullable
