@@ -781,7 +781,7 @@ public class CodeCompletionHandlerBase {
         final Document document = cached.second;
         assert document != null;
         file.putUserData(FILE_COPY_KEY, new SoftReference<Trinity<PsiFile,Document, Long>>(Trinity.create(copy, document, combinedOffsets)));
-        document.setText(file.getText());
+        document.setText(file.getViewProvider().getContents());
         return copy;
       }
     }
