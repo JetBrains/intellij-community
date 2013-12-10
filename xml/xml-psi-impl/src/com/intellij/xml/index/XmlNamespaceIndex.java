@@ -142,11 +142,9 @@ public class XmlNamespaceIndex extends XmlIndex<XsdNamespaceBuilder> {
   public static IndexedRelevantResource<String, XsdNamespaceBuilder> guessSchema(String namespace,
                                                                                  @Nullable final String tagName,
                                                                                  @Nullable final String version,
-                                                                                 @Nullable Module module) {
+                                                                                 @Nullable Module module,
+                                                                                 @NotNull Project project) {
 
-    if (module == null) return null;
-
-    Project project = module.getProject();
     final List<IndexedRelevantResource<String, XsdNamespaceBuilder>>
       resources = getResourcesByNamespace(namespace, project, module);
 
@@ -173,7 +171,7 @@ public class XmlNamespaceIndex extends XmlIndex<XsdNamespaceBuilder> {
     if (DumbService.isDumb(file.getProject()) || XmlUtil.isStubBuilding()) return null;
 
     IndexedRelevantResource<String,XsdNamespaceBuilder> resource =
-      guessSchema(namespace, tagName, version, ModuleUtilCore.findModuleForPsiElement(file));
+      guessSchema(namespace, tagName, version, ModuleUtilCore.findModuleForPsiElement(file), file.getProject());
     if (resource == null) return null;
     return findSchemaFile(resource.getFile(), file);
   }
