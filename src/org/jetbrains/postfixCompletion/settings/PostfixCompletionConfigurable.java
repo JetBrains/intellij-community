@@ -42,10 +42,7 @@ public class PostfixCompletionConfigurable implements SearchableConfigurable, Ed
     myPluginEnabledCheckbox.addChangeListener(new ChangeListener() {
       @Override
       public void stateChanged(ChangeEvent e) {
-        myCompletionEnabledCheckbox.setEnabled(myPluginEnabledCheckbox.isSelected());
-        if (myTemplatesListPanel != null) {
-          myTemplatesListPanel.setEnabled(myPluginEnabledCheckbox.isSelected());
-        }
+        updateComponents();
       }
     });
   }
@@ -101,6 +98,8 @@ public class PostfixCompletionConfigurable implements SearchableConfigurable, Ed
       myTemplatesListPanel.setState(myTemplatesSettings.getTemplatesState());
       myPluginEnabledCheckbox.setSelected(myTemplatesSettings.isPostfixPluginEnabled());
       myCompletionEnabledCheckbox.setSelected(myTemplatesSettings.isTemplatesCompletionEnabled());
+      
+      updateComponents();
     }
   }
 
@@ -123,5 +122,12 @@ public class PostfixCompletionConfigurable implements SearchableConfigurable, Ed
   @Override
   public Runnable enableSearch(String s) {
     return null;
+  }
+
+  private void updateComponents() {
+    myCompletionEnabledCheckbox.setEnabled(myPluginEnabledCheckbox.isSelected());
+    if (myTemplatesListPanel != null) {
+      myTemplatesListPanel.setEnabled(myPluginEnabledCheckbox.isSelected());
+    }
   }
 }
