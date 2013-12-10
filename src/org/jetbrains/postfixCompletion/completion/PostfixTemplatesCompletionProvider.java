@@ -9,6 +9,7 @@ import com.intellij.patterns.StandardPatterns;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.postfixCompletion.settings.PostfixCompletionSettings;
 import org.jetbrains.postfixCompletion.templates.PostfixLiveTemplate;
 import org.jetbrains.postfixCompletion.templates.PostfixTemplate;
 
@@ -17,7 +18,7 @@ import static org.jetbrains.postfixCompletion.completion.PostfixTemplateCompleti
 class PostfixTemplatesCompletionProvider extends CompletionProvider<CompletionParameters> {
   @Override
   protected void addCompletions(@NotNull CompletionParameters parameters, ProcessingContext context, @NotNull CompletionResultSet result) {
-    if (!parameters.isAutoPopup()) {
+    if (!isCompletionEnabled(parameters)) {
       return;
     }
 
@@ -40,5 +41,18 @@ class PostfixTemplatesCompletionProvider extends CompletionProvider<CompletionPa
         result.restartCompletionOnPrefixChange(StandardPatterns.string().startsWith(possibleKey));
       }
     }
+  }
+
+  private static boolean isCompletionEnabled(@NotNull CompletionParameters parameters) {
+    if (!parameters.isAutoPopup()) {
+      return false;
+    }
+
+    PostfixCompletionSettings settings = PostfixCompletionSettings.getInstance();
+    if (settings == null || !settings.isPostfixPluginEnabled() || !settings.isTemplatesCompletionEnabled()) {
+      return false;
+    }
+
+    return true;
   }
 }

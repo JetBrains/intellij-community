@@ -20,6 +20,20 @@ public class TemplatesCompletionTest extends CompletionAutoPopupTestCase {
     doAutoPopupTest("instanceof", InstanceofExpressionPostfixTemplate.class);
   }
 
+  public void testDoNotShowTemplateIfPluginIsDisabled() {
+    PostfixCompletionSettings settings = PostfixCompletionSettings.getInstance();
+    assertNotNull(settings);
+    settings.setPostfixPluginEnabled(false);
+    doAutoPopupTest("instanceof", null);
+  }
+  
+  public void testDoNotShowTemplateIfTemplateCompletionIsDisabled() {
+    PostfixCompletionSettings settings = PostfixCompletionSettings.getInstance();
+    assertNotNull(settings);
+    settings.setTemplatesCompletionEnabled(false);
+    doAutoPopupTest("instanceof", null);
+  }
+
   public void testShowTemplateOnDoubleLiteral() {
     doAutoPopupTest("switch", SwitchStatementPostfixTemplate.class);
   }
@@ -73,6 +87,8 @@ public class TemplatesCompletionTest extends CompletionAutoPopupTestCase {
     PostfixCompletionSettings settings = PostfixCompletionSettings.getInstance();
     assertNotNull(settings);
     settings.setTemplatesState(ContainerUtil.<String, Boolean>newHashMap());
+    settings.setPostfixPluginEnabled(true);
+    settings.setTemplatesCompletionEnabled(true);
     super.tearDown();
   }
 
