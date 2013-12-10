@@ -172,7 +172,7 @@ public class TemplateSettings implements PersistentStateComponent<Element>, Expo
     SchemeProcessor<TemplateGroup> processor = new BaseSchemeProcessor<TemplateGroup>() {
       @Override
       @Nullable
-      public TemplateGroup readScheme(final Document schemeContent)
+      public TemplateGroup readScheme(@NotNull final Document schemeContent)
         throws InvalidDataException, IOException, JDOMException {
         return readTemplateFile(schemeContent, schemeContent.getRootElement().getAttributeValue("group"), false, false,
                                 getClass().getClassLoader());
@@ -180,7 +180,7 @@ public class TemplateSettings implements PersistentStateComponent<Element>, Expo
 
 
       @Override
-      public boolean shouldBeSaved(final TemplateGroup template) {
+      public boolean shouldBeSaved(@NotNull final TemplateGroup template) {
         for (TemplateImpl t : template.getElements()) {
           if (differsFromDefault(t)) {
             return true;
@@ -190,7 +190,7 @@ public class TemplateSettings implements PersistentStateComponent<Element>, Expo
       }
 
       @Override
-      public Document writeScheme(final TemplateGroup template) throws WriteExternalException {
+      public Document writeScheme(@NotNull final TemplateGroup template) throws WriteExternalException {
         Element templateSetElement = new Element(TEMPLATE_SET);
         templateSetElement.setAttribute(GROUP, template.getName());
 
@@ -204,7 +204,7 @@ public class TemplateSettings implements PersistentStateComponent<Element>, Expo
       }
 
       @Override
-      public void initScheme(final TemplateGroup scheme) {
+      public void initScheme(@NotNull final TemplateGroup scheme) {
         Collection<TemplateImpl> templates = scheme.getElements();
 
         for (TemplateImpl template : templates) {
@@ -213,14 +213,14 @@ public class TemplateSettings implements PersistentStateComponent<Element>, Expo
       }
 
       @Override
-      public void onSchemeAdded(final TemplateGroup scheme) {
+      public void onSchemeAdded(@NotNull final TemplateGroup scheme) {
         for (TemplateImpl template : scheme.getElements()) {
           addTemplateImpl(template);
         }
       }
 
       @Override
-      public void onSchemeDeleted(final TemplateGroup scheme) {
+      public void onSchemeDeleted(@NotNull final TemplateGroup scheme) {
         for (TemplateImpl template : scheme.getElements()) {
           removeTemplate(template);
         }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
@@ -56,7 +57,7 @@ abstract public class ToolsProcessor<T extends Tool> extends BaseSchemeProcessor
   @NonNls private static final String APPLICATION_HOME_MACRO = "$APPLICATION_HOME_DIR$";
 
   @Override
-  public ToolsGroup<T> readScheme(final Document document) throws InvalidDataException, IOException, JDOMException {
+  public ToolsGroup<T> readScheme(@NotNull final Document document) throws InvalidDataException, IOException, JDOMException {
     Element root = document.getRootElement();
     if (root == null || !TOOL_SET.equals(root.getName())) {
       throw new InvalidDataException();
@@ -131,7 +132,7 @@ abstract public class ToolsProcessor<T extends Tool> extends BaseSchemeProcessor
   protected abstract T createTool();
 
   @Override
-  public Document writeScheme(final ToolsGroup<T> scheme) throws WriteExternalException {
+  public Document writeScheme(@NotNull final ToolsGroup<T> scheme) throws WriteExternalException {
     Element groupElement = new Element(TOOL_SET);
     if (scheme.getName() != null) {
       groupElement.setAttribute(ATTRIBUTE_NAME, scheme.getName());
@@ -145,7 +146,7 @@ abstract public class ToolsProcessor<T extends Tool> extends BaseSchemeProcessor
   }
 
   @Override
-  public boolean shouldBeSaved(final ToolsGroup scheme) {
+  public boolean shouldBeSaved(@NotNull final ToolsGroup scheme) {
     return true;
   }
 

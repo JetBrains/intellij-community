@@ -110,10 +110,7 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
     if (myVFSBaseDir != null) {
       return doLoad();
     }
-    else {
-      return Collections.emptyList();
-    }
-
+    return Collections.emptyList();
   }
 
   private Collection<E> doLoad() {
@@ -164,7 +161,7 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
         VirtualFile file = event.getFile();
 
         if (event.getRequestor() == null && isFileUnder(file, myVFSBaseDir) && !myInsideSave) {
-          ArrayList<E> read = new ArrayList<E>();
+          List<E> read = new ArrayList<E>();
           readSchemeFromFile(read, file, true);
           if (!read.isEmpty()) {
             E readScheme = read.get(0);
@@ -288,7 +285,7 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
     return result;
   }
 
-  private void initLoadedSchemes(final Collection<E> read) {
+  private void initLoadedSchemes(@NotNull Collection<E> read) {
     for (E scheme : read) {
       myProcessor.initScheme(scheme);
       checkCurrentScheme(scheme);
@@ -323,10 +320,8 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
               deleteServerFiles(subPath);
             }
 
-            if (scheme != null) {
-              loadScheme(scheme, false, fileName);
-              result.add(scheme);
-            }
+            loadScheme(scheme, false, fileName);
+            result.add(scheme);
           }
         }
         catch (Exception e) {
@@ -339,7 +334,7 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
   }
 
   private VirtualFile ensureFileText(final String fileName, final byte[] text) throws IOException {
-    final IOException[] ex = new IOException[] {null};
+    final IOException[] ex = {null};
     final VirtualFile _file = ApplicationManager.getApplication().runWriteAction(new Computable<VirtualFile>() {
       @Override
       public VirtualFile compute() {
@@ -603,12 +598,18 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
 
   }
 
-  class SharedSchemeData {
-    Document original;
-    String name;
-    String user;
-    String description;
-    E scheme;
+  private static class SharedSchemeData {
+    @NotNull private final Document original;
+    private final String name;
+    private final String user;
+    private final String description;
+
+    private SharedSchemeData(@NotNull Document original, String name, String user, String description) {
+      this.original = original;
+      this.name = name;
+      this.user = user;
+      this.description = description;
+    }
   }
 
   @Override
@@ -650,18 +651,20 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
     return result.values();
   }
 
-  private SharedSchemeData unwrap(final Document subDocument) {
-    SharedSchemeData result = new SharedSchemeData();
+  @NotNull
+  private static SharedSchemeData unwrap(@NotNull Document subDocument) {
     Element rootElement = subDocument.getRootElement();
+    SharedSchemeData result;
+    String name = rootElement.getAttributeValue(NAME);
     if (rootElement.getName().equals(SHARED_SCHEME_ORIGINAL)) {
-      result.name = rootElement.getAttributeValue(NAME);
-      result.description = rootElement.getAttributeValue(DESCRIPTION);
-      result.user = rootElement.getAttributeValue(USER);
-      result.original = new Document(rootElement.getChildren().iterator().next().clone());
+      String description = rootElement.getAttributeValue(DESCRIPTION);
+      String user = rootElement.getAttributeValue(USER);
+      Document original = new Document(rootElement.getChildren().iterator().next().clone());
+      result = new SharedSchemeData(original, name, user, description);
     }
     else {
-      result.name = rootElement.getAttributeValue(NAME);
-      result.original = subDocument;
+      Document original = subDocument;
+      result = new SharedSchemeData(original, name, null, null);
     }
     return result;
   }
@@ -685,7 +688,7 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
   }
 
   @Override
-  public void exportScheme(final E scheme, final String name, final String description) throws WriteExternalException, IOException {
+  public void exportScheme(@NotNull final E scheme, final String name, final String description) throws WriteExternalException, IOException {
     StreamProvider provider = getProvider();
     if (provider == null) {
       return;
@@ -710,7 +713,7 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
     }
   }
 
-  private static Document wrap(final Document original, final String name, final String description) {
+  private static Document wrap(@NotNull Document original, @NotNull String name, @NotNull String description) {
     Element sharedElement = new Element(SHARED_SCHEME_ORIGINAL);
     sharedElement.setAttribute(NAME, name);
     sharedElement.setAttribute(DESCRIPTION, description);

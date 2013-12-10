@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -66,7 +66,7 @@ public class SchemesManagerFactoryImpl extends SchemesManagerFactory implements 
         }
 
         @Override
-        public void exportScheme(final E scheme, final String name, final String description) {
+        public void exportScheme(@NotNull final E scheme, final String name, final String description) {
         }
 
         @Override
