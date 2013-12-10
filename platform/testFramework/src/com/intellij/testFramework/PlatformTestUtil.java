@@ -462,6 +462,7 @@ public class PlatformTestUtil {
     public void assertTiming() {
       assert expectedMs != 0 : "Must call .expect() before run test";
       if (COVERAGE_ENABLED_BUILD) return;
+      Timings.getStatistics(); // warmup, measure
 
       while (true) {
         attempts--;

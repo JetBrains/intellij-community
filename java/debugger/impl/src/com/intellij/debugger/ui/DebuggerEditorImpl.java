@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,6 +41,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiDocumentManagerBase;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.reference.SoftReference;
 import com.intellij.ui.ClickListener;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -112,7 +113,7 @@ public abstract class DebuggerEditorImpl extends CompletionEditor{
     new ClickListener() {
       @Override
       public boolean onClick(MouseEvent e, int clickCount) {
-        ListPopup oldPopup = myPopup != null ? myPopup.get() : null;
+        ListPopup oldPopup = SoftReference.dereference(myPopup);
         if (oldPopup != null && !oldPopup.isDisposed()) {
           oldPopup.cancel();
           myPopup = null;

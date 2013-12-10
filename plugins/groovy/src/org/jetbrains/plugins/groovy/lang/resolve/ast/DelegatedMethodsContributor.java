@@ -31,11 +31,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrExtendsClause;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrImplementsClause;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinitionBody;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GrAnnotationUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GrClassImplUtil;
@@ -272,21 +272,8 @@ public class DelegatedMethodsContributor extends AstTransformContributor {
   }
 
   private static boolean shouldDelegateDeprecated(PsiAnnotation delegate) {
-    final PsiAnnotationParameterList parameterList = delegate.getParameterList();
-    final PsiNameValuePair[] attributes = parameterList.getAttributes();
-    for (PsiNameValuePair attribute : attributes) {
-      final String name = attribute.getName();
-      if ("deprecated".equals(name)) {
-        final PsiAnnotationMemberValue value = attribute.getValue();
-        if (value instanceof GrLiteral) {
-          final Object innerValue = ((GrLiteral)value).getValue();
-          if (innerValue instanceof Boolean) {
-            return (Boolean)innerValue;
-          }
-        }
-      }
-    }
-    return false;
+    final Boolean result = GrAnnotationUtil.inferBooleanAttribute(delegate, "deprecated");
+    return result != null ? result.booleanValue() : false;
   }
 
   private static PsiMethod generateDelegateMethod(PsiMethod method, PsiClass superClass, PsiSubstitutor substitutor) {

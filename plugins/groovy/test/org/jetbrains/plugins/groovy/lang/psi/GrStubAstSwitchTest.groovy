@@ -132,4 +132,92 @@ class B {
     assert clazzB.methods.find {it.name =='foo'}
     assert !file.contentsLoaded
   }
+
+  void testDefaultValueForAnnotation() {
+    myFixture.addFileToProject('pack/Ann.groovy', '''\
+package pack
+
+@interface Ann {
+    String foo() default 'def'
+}
+''')
+
+    GroovyFileImpl file = myFixture.addFileToProject('usage.groovy', '''\
+import pack.Ann
+
+class X {
+  @Ann()
+  String bar() {}
+}
+''') as GroovyFileImpl
+
+    assert !file.contentsLoaded
+    PsiClass clazz = file.classes[0]
+    assert !file.contentsLoaded
+    PsiMethod method = clazz.methods[0]
+    assert !file.contentsLoaded
+    PsiAnnotation annotation = method.modifierList.findAnnotation('pack.Ann')
+    assert !file.contentsLoaded
+    assert annotation.findAttributeValue('foo') != null
+    assert !file.contentsLoaded
+  }
+
+  void testDefaultValueForAnnotationWithAliases() {
+    myFixture.addFileToProject('pack/Ann.groovy', '''\
+package pack
+
+@interface Ann {
+    String foo() default 'def'
+}
+''')
+
+    GroovyFileImpl file = myFixture.addFileToProject('usage.groovy', '''\
+import pack.Ann as A
+
+class X {
+  @A()
+  String bar() {}
+}
+''') as GroovyFileImpl
+
+    assert !file.contentsLoaded
+    PsiClass clazz = file.classes[0]
+    assert !file.contentsLoaded
+    PsiMethod method = clazz.methods[0]
+    assert !file.contentsLoaded
+    PsiAnnotation annotation = method.modifierList.findAnnotation('pack.Ann')
+    assert !file.contentsLoaded
+    assert annotation.findAttributeValue('foo') != null
+    assert !file.contentsLoaded
+  }
+
+  void testValueForAnnotationWithAliases() {
+    myFixture.addFileToProject('pack/Ann.groovy', '''\
+package pack
+
+@interface Ann {
+    String foo() default 'def'
+}
+''')
+
+    GroovyFileImpl file = myFixture.addFileToProject('usage.groovy', '''\
+import pack.Ann as A
+
+class X {
+  @A(foo='non_def')
+  String bar() {}
+}
+''') as GroovyFileImpl
+
+    assert !file.contentsLoaded
+    PsiClass clazz = file.classes[0]
+    assert !file.contentsLoaded
+    PsiMethod method = clazz.methods[0]
+    assert !file.contentsLoaded
+    PsiAnnotation annotation = method.modifierList.findAnnotation('pack.Ann')
+    assert !file.contentsLoaded
+    assert annotation.findAttributeValue('foo') != null
+    assert file.contentsLoaded
+  }
+
 }

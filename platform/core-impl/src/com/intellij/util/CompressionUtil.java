@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -52,7 +52,7 @@ public class CompressionUtil {
   public static int writeCompressed(DataOutput out, byte[] bytes, int length) throws IOException {
     if (length > COMPRESSION_THRESHOLD && ourCanUseSnappy) {
       SoftReference<byte[]> reference = spareBufferLocal.get();
-      byte[] compressedOutputBuffer = reference != null ? reference.get():null;
+      byte[] compressedOutputBuffer = com.intellij.reference.SoftReference.dereference(reference);
       int maxCompressedSize = 32 + length + length / 6; // snappy.cc#MaxCompressedLength
       if (compressedOutputBuffer == null || compressedOutputBuffer.length < maxCompressedSize) {
         compressedOutputBuffer = new byte[maxCompressedSize];

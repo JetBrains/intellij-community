@@ -46,8 +46,8 @@
       <module fileurl="file://$PROJECT_DIR$/platform/dvcs/dvcs.iml" filepath="$PROJECT_DIR$/platform/dvcs/dvcs.iml" group="platform" />
       <module fileurl="file://$PROJECT_DIR$/plugins/eclipse/eclipse.iml" filepath="$PROJECT_DIR$/plugins/eclipse/eclipse.iml" group="plugins" />
       <module fileurl="file://$PROJECT_DIR$/plugins/eclipse/jps-plugin/eclipse-jps-plugin.iml" filepath="$PROJECT_DIR$/plugins/eclipse/jps-plugin/eclipse-jps-plugin.iml" group="plugins" />
-      <module fileurl="file://$PROJECT_DIR$/platform/editor-ui-api/editor-ui-api.iml" filepath="$PROJECT_DIR$/platform/editor-ui-api/editor-ui-api.iml" />
-      <module fileurl="file://$PROJECT_DIR$/platform/editor-ui-ex/editor-ui-ex.iml" filepath="$PROJECT_DIR$/platform/editor-ui-ex/editor-ui-ex.iml" />
+      <module fileurl="file://$PROJECT_DIR$/platform/editor-ui-api/editor-ui-api.iml" filepath="$PROJECT_DIR$/platform/editor-ui-api/editor-ui-api.iml" group="platform" />
+      <module fileurl="file://$PROJECT_DIR$/platform/editor-ui-ex/editor-ui-ex.iml" filepath="$PROJECT_DIR$/platform/editor-ui-ex/editor-ui-ex.iml" group="platform" />
       <module fileurl="file://$PROJECT_DIR$/java/execution/impl/execution-impl.iml" filepath="$PROJECT_DIR$/java/execution/impl/execution-impl.iml" group="java" />
       <module fileurl="file://$PROJECT_DIR$/java/execution/openapi/execution-openapi.iml" filepath="$PROJECT_DIR$/java/execution/openapi/execution-openapi.iml" group="java" />
       <module fileurl="file://$PROJECT_DIR$/platform/extensions/extensions.iml" filepath="$PROJECT_DIR$/platform/extensions/extensions.iml" group="platform" />
@@ -106,10 +106,10 @@
       <module fileurl="file://$PROJECT_DIR$/python/main_idea_python_plugin.iml" filepath="$PROJECT_DIR$/python/main_idea_python_plugin.iml" group="python" />
       <module fileurl="file://$PROJECT_DIR$/python/main_pycharm_ce.iml" filepath="$PROJECT_DIR$/python/main_pycharm_ce.iml" group="python" />
       <module fileurl="file://$PROJECT_DIR$/java/manifest/manifest.iml" filepath="$PROJECT_DIR$/java/manifest/manifest.iml" group="java" />
-      <module fileurl="file://$PROJECT_DIR$/plugins/maven/artifact-resolver-m31/maven-artifact-resolver-m31.iml" filepath="$PROJECT_DIR$/plugins/maven/artifact-resolver-m31/maven-artifact-resolver-m31.iml" group="plugins/maven" />
       <module fileurl="file://$PROJECT_DIR$/plugins/maven/maven.iml" filepath="$PROJECT_DIR$/plugins/maven/maven.iml" group="plugins/maven" />
       <module fileurl="file://$PROJECT_DIR$/plugins/maven/artifact-resolver-m2/maven-artifact-resolver-m2.iml" filepath="$PROJECT_DIR$/plugins/maven/artifact-resolver-m2/maven-artifact-resolver-m2.iml" group="plugins/maven" />
       <module fileurl="file://$PROJECT_DIR$/plugins/maven/artifact-resolver-m3/maven-artifact-resolver-m3.iml" filepath="$PROJECT_DIR$/plugins/maven/artifact-resolver-m3/maven-artifact-resolver-m3.iml" group="plugins/maven" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/maven/artifact-resolver-m31/maven-artifact-resolver-m31.iml" filepath="$PROJECT_DIR$/plugins/maven/artifact-resolver-m31/maven-artifact-resolver-m31.iml" group="plugins/maven" />
       <module fileurl="file://$PROJECT_DIR$/plugins/maven/jps-plugin/maven-jps-plugin.iml" filepath="$PROJECT_DIR$/plugins/maven/jps-plugin/maven-jps-plugin.iml" group="plugins/maven" />
       <module fileurl="file://$PROJECT_DIR$/plugins/maven/maven-server-api/maven-server-api.iml" filepath="$PROJECT_DIR$/plugins/maven/maven-server-api/maven-server-api.iml" group="plugins/maven" />
       <module fileurl="file://$PROJECT_DIR$/plugins/maven/maven2-server-impl/maven2-server-impl.iml" filepath="$PROJECT_DIR$/plugins/maven/maven2-server-impl/maven2-server-impl.iml" group="plugins/maven" />
@@ -136,9 +136,9 @@
       <module fileurl="file://$PROJECT_DIR$/python/python-pydev.iml" filepath="$PROJECT_DIR$/python/python-pydev.iml" group="python" />
       <module fileurl="file://$PROJECT_DIR$/python/python-rest/python-rest.iml" filepath="$PROJECT_DIR$/python/python-rest/python-rest.iml" group="python" />
       <module fileurl="file://$PROJECT_DIR$/xml/relaxng/relaxng.iml" filepath="$PROJECT_DIR$/xml/relaxng/relaxng.iml" group="plugins" />
-      <module fileurl="file://$PROJECT_DIR$/platform/remote-servers/agent-rt/remote-servers-agent-rt.iml" filepath="$PROJECT_DIR$/platform/remote-servers/agent-rt/remote-servers-agent-rt.iml" />
+      <module fileurl="file://$PROJECT_DIR$/platform/remote-servers/agent-rt/remote-servers-agent-rt.iml" filepath="$PROJECT_DIR$/platform/remote-servers/agent-rt/remote-servers-agent-rt.iml" group="platform" />
       <module fileurl="file://$PROJECT_DIR$/platform/remote-servers/api/remote-servers-api.iml" filepath="$PROJECT_DIR$/platform/remote-servers/api/remote-servers-api.iml" group="platform" />
-      <module fileurl="file://$PROJECT_DIR$/plugins/git4idea/remote-servers-git/remote-servers-git.iml" filepath="$PROJECT_DIR$/plugins/git4idea/remote-servers-git/remote-servers-git.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/git4idea/remote-servers-git/remote-servers-git.iml" filepath="$PROJECT_DIR$/plugins/git4idea/remote-servers-git/remote-servers-git.iml" group="platform" />
       <module fileurl="file://$PROJECT_DIR$/platform/remote-servers/impl/remote-servers-impl.iml" filepath="$PROJECT_DIR$/platform/remote-servers/impl/remote-servers-impl.iml" group="platform" />
       <module fileurl="file://$PROJECT_DIR$/java/remote-servers/api/remote-servers-java-api.iml" filepath="$PROJECT_DIR$/java/remote-servers/api/remote-servers-java-api.iml" group="java" />
       <module fileurl="file://$PROJECT_DIR$/java/remote-servers/impl/remote-servers-java-impl.iml" filepath="$PROJECT_DIR$/java/remote-servers/impl/remote-servers-java-impl.iml" group="java" />

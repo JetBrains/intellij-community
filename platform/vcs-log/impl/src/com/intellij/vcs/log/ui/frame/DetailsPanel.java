@@ -149,6 +149,7 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
       setEditable(false);
       myProject = project;
       addHyperlinkListener(new BrowserHyperlinkListener());
+      setOpaque(false);
     }
 
     void setData(@Nullable VcsFullCommitDetails commit) {

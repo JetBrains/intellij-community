@@ -169,8 +169,8 @@ public class XsltDocumentationProvider implements DocumentationProvider {
     }
 
     private Document getDocumentationDocument() throws IOException, JDOMException {
-        Document d;
-        if (myDocument == null || ((d = myDocument.get()) == null)) {
+        Document d = com.intellij.reference.SoftReference.dereference(myDocument);
+        if (d == null) {
             d = new SAXBuilder().build(XsltSupport.class.getResource("resources/documentation.xml"));
             myDocument = new SoftReference<Document>(d);
         }
@@ -178,8 +178,8 @@ public class XsltDocumentationProvider implements DocumentationProvider {
     }
 
     private Templates getTemplate() throws TransformerConfigurationException, IOException {
-        Templates t;
-        if (myTemplates == null || (t = myTemplates.get()) == null) {
+        Templates t = com.intellij.reference.SoftReference.dereference(myTemplates);
+        if (t == null) {
             t = TransformerFactory.newInstance().newTemplates(makeSource("resources/documentation.xsl"));
             myTemplates = new SoftReference<Templates>(t);
         }

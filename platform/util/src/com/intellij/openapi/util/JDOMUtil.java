@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -315,7 +315,7 @@ public class JDOMUtil {
 
   private static SAXBuilder getSaxBuilder() {
     SoftReference<SAXBuilder> reference = ourSaxBuilder.get();
-    SAXBuilder saxBuilder = reference != null ? reference.get() : null;
+    SAXBuilder saxBuilder = com.intellij.reference.SoftReference.dereference(reference);
     if (saxBuilder == null) {
       saxBuilder = new SAXBuilder();
       saxBuilder.setEntityResolver(new EntityResolver() {

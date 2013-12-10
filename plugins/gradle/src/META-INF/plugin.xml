@@ -25,6 +25,13 @@
   <depends optional="true" config-file="gradle-javaee-plugin.xml">com.intellij.javaee</depends>
   <depends optional="true" config-file="gradle-maven-integration.xml">org.jetbrains.idea.maven</depends>
 
+  <project-components>
+    <component>
+      <implementation-class>org.jetbrains.plugins.gradle.service.project.GradleProjectComponent</implementation-class>
+      <skipForDefaultProject/>
+    </component>
+  </project-components>
+
   <extensionPoints>
     <extensionPoint name="projectResolve" interface="org.jetbrains.plugins.gradle.service.project.GradleProjectResolverExtension"/>
     <extensionPoint name="taskManager" interface="org.jetbrains.plugins.gradle.service.task.GradleTaskManagerExtension"/>
@@ -46,7 +53,7 @@
     <resolve.contributor implementation="org.jetbrains.plugins.gradle.service.resolve.GradleImplicitContributor"/>
     <projectResolve implementation="org.jetbrains.plugins.gradle.service.project.BaseGradleProjectResolverExtension"/>
   </extensions>
-  
+
   <extensions defaultExtensionNs="com.intellij">
     <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
     <projectImportProvider implementation="org.jetbrains.plugins.gradle.service.project.wizard.GradleProjectImportProvider"/>
@@ -69,6 +76,7 @@
 
     <projectService serviceImplementation="org.jetbrains.plugins.gradle.settings.GradleSettings"/>
     <projectService serviceImplementation="org.jetbrains.plugins.gradle.settings.GradleLocalSettings"/>
+    <projectService serviceImplementation="org.jetbrains.plugins.gradle.service.project.GradleNotification"/>
 
     <configurationProducer implementation="org.jetbrains.plugins.gradle.service.execution.GradleRuntimeConfigurationProducer"/>
 

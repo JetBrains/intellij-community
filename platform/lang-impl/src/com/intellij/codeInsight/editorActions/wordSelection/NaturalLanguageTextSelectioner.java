@@ -18,6 +18,7 @@ package com.intellij.codeInsight.editorActions.wordSelection;
 
 import com.intellij.codeInsight.editorActions.ExtendWordSelectionHandlerBase;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.fileTypes.impl.CustomSyntaxTableFileType;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
@@ -38,7 +39,8 @@ public class NaturalLanguageTextSelectioner extends ExtendWordSelectionHandlerBa
 
   @Override
   public boolean canSelect(PsiElement e) {
-    return e instanceof PsiPlainText || e instanceof PsiComment;
+    return (e instanceof PsiPlainText || e instanceof PsiComment) &&
+           !(e.getContainingFile().getFileType() instanceof CustomSyntaxTableFileType);
   }
 
   private static TextRange findParagraphRange(String text, int start, int end) {

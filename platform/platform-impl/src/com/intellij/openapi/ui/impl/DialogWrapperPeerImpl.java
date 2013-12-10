@@ -43,6 +43,7 @@ import com.intellij.openapi.wm.ex.LayoutFocusTraversalPolicyExt;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.openapi.wm.impl.IdeGlassPaneImpl;
+import com.intellij.reference.SoftReference;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBLayeredPane;
 import com.intellij.ui.mac.foundation.Foundation;
@@ -788,7 +789,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
 
     @Nullable
     private Project getProject() {
-      return myProject != null ? myProject.get() : null;
+      return SoftReference.dereference(myProject);
     }
 
     @Override

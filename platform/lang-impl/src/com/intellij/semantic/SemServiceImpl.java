@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -282,7 +282,7 @@ public class SemServiceImpl extends SemService{
   @Nullable
   private SemCacheChunk obtainChunk(@Nullable PsiElement root) {
     final SoftReference<SemCacheChunk> ref = myCache.get(root);
-    return ref == null ? null : ref.get();
+    return com.intellij.reference.SoftReference.dereference(ref);
   }
 
   @Override

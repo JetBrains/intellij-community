@@ -3,6 +3,7 @@ package com.intellij.remoteServer.util;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
+import com.intellij.remoteServer.ServerType;
 import com.intellij.remoteServer.agent.RemoteAgentManager;
 import com.intellij.remoteServer.agent.util.CloudAgentConfigBase;
 import com.intellij.remoteServer.agent.util.CloudAgentLogger;
@@ -25,32 +26,32 @@ import java.util.List;
 /**
  * @author michael.golubev
  */
-
-public abstract class CloudGitServerRuntimeInstanceBase<
+public abstract class CloudMultiSourceServerRuntimeInstance<
   DC extends CloudDeploymentNameConfiguration,
   AC extends CloudAgentConfigBase,
   A extends CloudGitAgent<AC, ?>,
-  SC extends AC,
-  DR extends CloudGitDeploymentRuntime>
-  extends CloudServerRuntimeInstance<DC>
-  implements CloudDeploymentNameProvider {
+  SC extends AC>
+  extends CloudServerRuntimeInstance<DC> {
 
-  private static final Logger LOG = Logger.getInstance("#" + CloudGitServerRuntimeInstanceBase.class.getName());
+  private static final Logger LOG = Logger.getInstance("#" + CloudMultiSourceServerRuntimeInstance.class.getName());
 
   private final A myAgent;
   private final AgentTaskExecutor myAgentTaskExecutor;
 
+  private final ServerType<?> myServerType;
   private final SC myConfiguration;
   private final ServerTaskExecutor myTasksExecutor;
 
-  public CloudGitServerRuntimeInstanceBase(SC configuration,
-                                           ServerTaskExecutor tasksExecutor,
-                                           List<File> libraries,
-                                           List<Class<?>> commonJarClasses,
-                                           String specificsModuleName,
-                                           String specificJarPath,
-                                           Class<A> agentInterface,
-                                           String agentClassName) throws Exception {
+  public CloudMultiSourceServerRuntimeInstance(ServerType<?> serverType,
+                                               SC configuration,
+                                               ServerTaskExecutor tasksExecutor,
+                                               List<File> libraries,
+                                               List<Class<?>> commonJarClasses,
+                                               String specificsModuleName,
+                                               String specificJarPath,
+                                               Class<A> agentInterface,
+                                               String agentClassName) throws Exception {
+    myServerType = serverType;
     myConfiguration = configuration;
     myTasksExecutor = tasksExecutor;
 
@@ -96,7 +97,7 @@ public abstract class CloudGitServerRuntimeInstanceBase<
 
                                   @Override
                                   public void onSuccess(Object result) {
-                                    callback.connected(CloudGitServerRuntimeInstanceBase.this);
+                                    callback.connected(CloudMultiSourceServerRuntimeInstance.this);
                                   }
 
                                   @Override
@@ -115,7 +116,7 @@ public abstract class CloudGitServerRuntimeInstanceBase<
 
       @Override
       public void run() throws Exception {
-        createDeploymentRuntime(myConfiguration, myTasksExecutor, task, logManager).deploy(callback);
+        createDeploymentRuntime(task, logManager).deploy(callback);
       }
     }, callback);
   }
@@ -176,43 +177,50 @@ public abstract class CloudGitServerRuntimeInstanceBase<
     return myAgentTaskExecutor;
   }
 
-  public DR createDeploymentRuntime(final DeployToServerRunConfiguration<?, DC> runConfiguration)
+  public CloudDeploymentRuntime createDeploymentRuntime(final DeployToServerRunConfiguration<?, DC> runConfiguration)
     throws ServerRuntimeException {
-    return createDeploymentRuntime(myConfiguration,
-                                   myTasksExecutor,
-                                   new DeploymentTask<DC>() {
+    return createDeploymentRuntime(new DeploymentTask<DC>() {
 
-                                     @NotNull
-                                     @Override
-                                     public DeploymentSource getSource() {
-                                       return runConfiguration.getDeploymentSource();
-                                     }
+      @NotNull
+      @Override
+      public DeploymentSource getSource() {
+        return runConfiguration.getDeploymentSource();
+      }
 
-                                     @NotNull
-                                     @Override
-                                     public DC getConfiguration() {
-                                       return runConfiguration.getDeploymentConfiguration();
-                                     }
+      @NotNull
+      @Override
+      public DC getConfiguration() {
+        return runConfiguration.getDeploymentConfiguration();
+      }
 
-                                     @NotNull
-                                     @Override
-                                     public Project getProject() {
-                                       return runConfiguration.getProject();
-                                     }
+      @NotNull
+      @Override
+      public Project getProject() {
+        return runConfiguration.getProject();
+      }
 
-                                     @Override
-                                     public boolean isDebugMode() {
-                                       return false;
-                                     }
-                                   },
-                                   null
-    );
+      @Override
+      public boolean isDebugMode() {
+        return false;
+      }
+    }, null);
   }
 
-  protected abstract DR createDeploymentRuntime(SC configuration,
-                                                ServerTaskExecutor serverTaskExecutor,
-                                                DeploymentTask<DC> deploymentTask,
-                                                @Nullable DeploymentLogManager logManager) throws ServerRuntimeException;
+  private CloudDeploymentRuntime createDeploymentRuntime(DeploymentTask<DC> deploymentTask,
+                                                         @Nullable DeploymentLogManager logManager) throws ServerRuntimeException {
+    DeploymentSource source = deploymentTask.getSource();
+    for (CloudDeploymentRuntimeProvider provider : CloudDeploymentConfiguratorBase.getDeploymentRuntimeProviders(myServerType)) {
+      CloudDeploymentRuntime result = provider.createDeploymentRuntime(source, this, deploymentTask, logManager);
+      if (result != null) {
+        return result;
+      }
+    }
+    throw new ServerRuntimeException("Unknown deployment source");
+  }
+
+  public CloudConfigurationBase getConfiguration() {
+    return (CloudConfigurationBase)myConfiguration;
+  }
 
   protected abstract void doConnect(SC configuration, CloudAgentLogger logger);
 }

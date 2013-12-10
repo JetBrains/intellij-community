@@ -99,14 +99,13 @@ public class GrImportStatementImpl extends GrStubElementBase<GrImportStatementSt
 
     NameHint nameHint = processor.getHint(NameHint.KEY);
 
-    GrCodeReferenceElement ref = getImportReference();
-    if (ref == null) return true;
-
     if (isStatic()) {
-      return processSingleStaticImport(processor, state, name, nameHint, ref);
+      GrCodeReferenceElement ref = getImportReference();
+      return ref == null || processSingleStaticImport(processor, state, name, nameHint, ref);
     }
     if (nameHint == null || name.equals(nameHint.getName(state))) {
-      return processSingleClassImport(processor, state, ref);
+      GrCodeReferenceElement ref = getImportReference();
+      return ref == null || processSingleClassImport(processor, state, ref);
     }
     return true;
   }

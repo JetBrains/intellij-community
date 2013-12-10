@@ -24,7 +24,7 @@ echo "Updating $WORK_IDEA_HOME from compiled classes in $DEV_IDEA_HOME"
 ANT_HOME="$DEV_IDEA_HOME/lib/ant"
 ANT_CLASSPATH="$DEV_IDEA_HOME/build/lib/gant/lib/jps.jar"
 java -Xms64m -Xmx512m -Dant.home="$ANT_HOME" -classpath "$ANT_HOME/lib/ant-launcher.jar" org.apache.tools.ant.launch.Launcher \
- -lib "$ANT_CLASSPATH" -f $DEV_IDEA_HOME/build/update.xml $TARGET
+ -lib "$ANT_CLASSPATH" -f "$DEV_IDEA_HOME/build/update.xml" $TARGET
 
 if [ "$?" != "0" ]; then
   echo "Update failed; work IDEA build not modified."
@@ -32,17 +32,17 @@ if [ "$?" != "0" ]; then
   exit 2
 fi
 
-rm -rf $WORK_IDEA_HOME/lib
-rm -rf $WORK_IDEA_HOME/plugins
+rm -rf "$WORK_IDEA_HOME/lib"
+rm -rf "$WORK_IDEA_HOME/plugins"
 
-cp -R $DEV_IDEA_HOME/out/deploy/* $WORK_IDEA_HOME
+cp -R "$DEV_IDEA_HOME/out/deploy/"* "$WORK_IDEA_HOME"
 
 OS_TYPE=`uname -s`
 if [ "$OS_TYPE" = "Linux" ]; then
   cp -a $DEV_IDEA_HOME/bin/linux/*.so $WORK_IDEA_HOME/bin
   cp -a $DEV_IDEA_HOME/bin/linux/fsnotifier* $WORK_IDEA_HOME/bin
 elif [ "$OS_TYPE" = "Darwin" ]; then
-  cp -a $DEV_IDEA_HOME/bin/mac/*.jnilib $WORK_IDEA_HOME/bin
-  cp -a $DEV_IDEA_HOME/bin/mac/fsnotifier $WORK_IDEA_HOME/bin
-  cp -a $DEV_IDEA_HOME/bin/mac/restarter $WORK_IDEA_HOME/bin
+  cp -a "$DEV_IDEA_HOME/bin/mac/"*.jnilib "$WORK_IDEA_HOME/bin"
+  cp -a "$DEV_IDEA_HOME/bin/mac/fsnotifier" "$WORK_IDEA_HOME/bin"
+  cp -a "$DEV_IDEA_HOME/bin/mac/restarter" "$WORK_IDEA_HOME/bin"
 fi

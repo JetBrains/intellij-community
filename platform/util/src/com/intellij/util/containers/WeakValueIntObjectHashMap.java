@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.intellij.util.containers;
 
+import com.intellij.reference.SoftReference;
 import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.annotations.NotNull;
 
@@ -56,8 +57,7 @@ public class WeakValueIntObjectHashMap<V> {
 
   public final V get(int key) {
     MyReference<V> ref = myMap.get(key);
-    if (ref == null) return null;
-    return ref.get();
+    return SoftReference.dereference(ref);
   }
 
   public final V put(int key, @NotNull V value) {
@@ -65,13 +65,13 @@ public class WeakValueIntObjectHashMap<V> {
     MyReference<V> ref = new MyReference<V>(key, value, myQueue);
     ref.name = value.toString();
     MyReference<V> oldRef = myMap.put(key, ref);
-    return oldRef != null ? oldRef.get() : null;
+    return SoftReference.dereference(oldRef);
   }
 
   public final V remove(int key) {
     processQueue();
     MyReference<V> ref = myMap.remove(key);
-    return ref != null ? ref.get() : null;
+    return SoftReference.dereference(ref);
   }
 
   public final void clear() {

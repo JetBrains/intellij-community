@@ -355,14 +355,14 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
 
   @Nullable
   private Document getCachedDocument() {
-    final Document document = myDocument != null ? myDocument.get() : null;
+    final Document document = com.intellij.reference.SoftReference.dereference(myDocument);
     if (document != null) return document;
     return FileDocumentManager.getInstance().getCachedDocument(getVirtualFile());
   }
 
   @Override
   public Document getDocument() {
-    Document document = myDocument != null ? myDocument.get() : null;
+    Document document = com.intellij.reference.SoftReference.dereference(myDocument);
     if (document == null/* TODO[ik] make this change && isEventSystemEnabled()*/) {
       document = FileDocumentManager.getInstance().getDocument(getVirtualFile());
       myDocument = new SoftReference<Document>(document);
@@ -535,7 +535,7 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
 
     @Override
     public long getModificationStamp() {
-      Document document = myDocument == null ? null : myDocument.get();
+      Document document = com.intellij.reference.SoftReference.dereference(myDocument);
       if (document != null) return document.getModificationStamp();
       return myVirtualFile.getModificationStamp();
     }
