@@ -85,7 +85,7 @@ public abstract class PostfixTemplate {
   }
 
   @Nullable
-  public PsiExpression getTopmostExpression(PsiElement context) {
+  public static PsiExpression getTopmostExpression(PsiElement context) {
     return PsiTreeUtil.getTopmostParentOfType(context, PsiExpression.class);
   }
 
