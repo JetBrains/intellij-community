@@ -66,11 +66,6 @@ public class PostfixCompletionTest extends LightCodeInsightFixtureTestCase {
   public void testNew07() { doTest("new\n"); }
   public void testNew08() { doTestForce("new\n"); }
 
-  public void testThrow01() { doTestForce("throw\n"); }
-  public void testThrow02() { doTestForce("throw\n"); }
-  public void testThrow03() { doTestForce("throw\n"); }
-  public void testThrow04() { doTestForce("throw\n"); }
-
   public void testNoVariants01() { doTest(""); }
 }
 
