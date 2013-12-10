@@ -81,7 +81,7 @@ public class FilePatternPackageSet extends PatternBasedPackageSet {
 
   private boolean fileMatcher(VirtualFile virtualFile, ProjectFileIndex fileIndex, VirtualFile projectBaseDir){
     final String relativePath = getRelativePath(virtualFile, fileIndex, true, projectBaseDir);
-    if (relativePath != null) {
+    if (relativePath == null) {
       LOG.error("vFile: " + virtualFile + "; projectBaseDir: " + projectBaseDir + "; content File: "+fileIndex.getContentRootForFile(virtualFile));
     }
     return myFilePattern.matcher(relativePath).matches();
