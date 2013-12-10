@@ -246,7 +246,10 @@ public class OverrideImplementUtil extends OverrideImplementExploreUtil {
 
   public static void annotateOnOverrideImplement(PsiMethod method, PsiClass targetClass, PsiMethod overridden, boolean insertOverride) {
     if (insertOverride && canInsertOverride(overridden, targetClass)) {
-      AddAnnotationPsiFix.addPhysicalAnnotation(Override.class.getName(), PsiNameValuePair.EMPTY_ARRAY, method.getModifierList());
+      final String overrideAnnotationName = Override.class.getName();
+      if (!AnnotationUtil.isAnnotated(method, overrideAnnotationName, false, true)) {
+        AddAnnotationPsiFix.addPhysicalAnnotation(overrideAnnotationName, PsiNameValuePair.EMPTY_ARRAY, method.getModifierList());
+      }
     }
     final Module module = ModuleUtilCore.findModuleForPsiElement(targetClass);
     final GlobalSearchScope moduleScope = module != null ? GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module) : null;
