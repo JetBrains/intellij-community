@@ -72,6 +72,7 @@ public class PostfixTemplatesListPanel {
     };
 
     myPanelWithTableView = ToolbarDecorator.createDecorator(myTemplatesTableView)
+      .setAsUsualTopToolbar()
       .disableAddAction()
       .disableRemoveAction()
       .disableUpDownActions().createPanel();
