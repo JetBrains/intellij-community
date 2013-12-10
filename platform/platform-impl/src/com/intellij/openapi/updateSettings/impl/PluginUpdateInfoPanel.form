@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<form xmlns="http://www.intellij.com/uidesigner/form/" version="1" bind-to-class="com.intellij.openapi.updateSettings.impl.PluginUpdateInfoDialog.PluginUpdateInfoPanel">
+  <grid id="18751" binding="myPanel" layout-manager="GridBagLayout">
+    <constraints>
+      <xy x="63" y="44" width="604" height="510"/>
+    </constraints>
+    <properties/>
+    <border type="none"/>
+    <children>
+      <component id="6b492" class="javax.swing.JLabel" binding="myPluginsToUpdateLabel">
+        <constraints>
+          <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="1" fill="1" indent="0" use-parent-layout="false"/>
+          <gridbag weightx="1.0" weighty="0.0"/>
+        </constraints>
+        <properties>
+          <preferredSize width="268" height="30"/>
+          <text resource-bundle="messages/IdeBundle" key="updates.plugins.ready.header"/>
+        </properties>
+      </component>
+      <grid id="3559e" binding="myPluginsPanel" layout-manager="BorderLayout" hgap="0" vgap="0">
+        <constraints>
+          <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
+          <gridbag top="3" left="0" bottom="3" right="0" weightx="1.0" weighty="0.0"/>
+        </constraints>
+        <properties>
+          <autoscrolls value="false"/>
+          <minimumSize width="600" height="400"/>
+          <preferredSize width="600" height="400"/>
+        </properties>
+        <border type="none"/>
+        <children/>
+      </grid>
+      <component id="bc72e" class="javax.swing.JEditorPane" binding="myMessageArea">
+        <constraints>
+          <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="2" anchor="0" fill="3" indent="0" use-parent-layout="false">
+            <preferred-size width="250" height="70"/>
+          </grid>
+          <gridbag weightx="0.0" weighty="0.0"/>
+        </constraints>
+        <properties>
+          <contentType value="text/html"/>
+        </properties>
+      </component>
+      <vspacer id="bf1d9">
+        <constraints>
+          <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2" indent="0" use-parent-layout="false"/>
+          <gridbag weightx="0.0" weighty="1.0"/>
+        </constraints>
+      </vspacer>
+    </children>
+  </grid>
+</form>
