@@ -46,8 +46,11 @@
     <resolve.contributor implementation="org.jetbrains.plugins.gradle.service.resolve.GradleImplicitContributor"/>
     <projectResolve implementation="org.jetbrains.plugins.gradle.service.project.BaseGradleProjectResolverExtension"/>
   </extensions>
-  
+
   <extensions defaultExtensionNs="com.intellij">
+
+    <postStartupActivity implementation="org.jetbrains.plugins.gradle.service.project.GradleStartupActivity"/>
+
     <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
     <projectImportProvider implementation="org.jetbrains.plugins.gradle.service.project.wizard.GradleProjectImportProvider"/>
     <projectImportBuilder implementation="org.jetbrains.plugins.gradle.service.project.wizard.GradleProjectImportBuilder"/>
@@ -69,6 +72,7 @@
 
     <projectService serviceImplementation="org.jetbrains.plugins.gradle.settings.GradleSettings"/>
     <projectService serviceImplementation="org.jetbrains.plugins.gradle.settings.GradleLocalSettings"/>
+    <projectService serviceImplementation="org.jetbrains.plugins.gradle.service.project.GradleNotification"/>
 
     <configurationProducer implementation="org.jetbrains.plugins.gradle.service.execution.GradleRuntimeConfigurationProducer"/>
 
