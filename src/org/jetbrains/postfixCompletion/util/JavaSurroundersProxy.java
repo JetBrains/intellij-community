@@ -19,7 +19,7 @@ import java.util.Arrays;
  * @author ignatov
  */
 public class JavaSurroundersProxy {
-  public static final Surrounder[] SURROUNDERS = new JavaExpressionSurroundDescriptor().getSurrounders();
+  private static final Surrounder[] SURROUNDERS = new JavaExpressionSurroundDescriptor().getSurrounders();
 
   public static void cast(@NotNull Project project, @NotNull Editor editor, @NotNull PsiExpression expr)
     throws IncorrectOperationException {

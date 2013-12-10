@@ -35,7 +35,7 @@ public class InstanceofExpressionPostfixTemplate extends PostfixTemplate {
     surroundExpression(context.getProject(), editor, expression);
   }
 
-  public static TextRange surroundExpression(Project project, Editor editor, PsiExpression expr) throws IncorrectOperationException {
+  private static TextRange surroundExpression(Project project, Editor editor, PsiExpression expr) throws IncorrectOperationException {
     assert expr.isValid();
     PsiType[] types = GuessManager.getInstance(project).guessTypeToCast(expr);
     final boolean parenthesesNeeded = expr instanceof PsiPolyadicExpression ||

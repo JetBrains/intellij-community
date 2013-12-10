@@ -1,10 +1,7 @@
 package org.jetbrains.postfixCompletion;
 
-import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.application.PathManager;
-import com.intellij.util.SystemProperties;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 
@@ -18,29 +15,5 @@ public class PostfixTestUtils {
     }
 
     return PathManager.getHomePath() + "/testData";
-  }
-
-  @NotNull
-  static String dumpItems(@Nullable LookupElement[] elements) {
-    StringBuilder builder = new StringBuilder("// Items: ");
-
-    if (elements != null && elements.length > 0) {
-      boolean first = true;
-      for (LookupElement item : elements) {
-        if (first) {
-          first = false;
-        }
-        else {
-          builder.append(", ");
-        }
-        builder.append(item.getLookupString());
-      }
-    }
-    else {
-      builder.append("<no items>");
-    }
-
-    builder.append(SystemProperties.getLineSeparator());
-    return builder.toString();
   }
 }

@@ -55,11 +55,6 @@ public class PostfixTemplatesService {
     return ServiceManager.getService(PostfixTemplatesService.class);
   }
 
-  @NotNull
-  public List<TemplateProviderInfo> getAllTemplates() {
-    return myProviders;
-  }
-
   @Nullable
   public PostfixTemplateContext isAvailable(@NotNull PsiElement positionElement,
                                             @NotNull PostfixExecutionContext executionContext) {

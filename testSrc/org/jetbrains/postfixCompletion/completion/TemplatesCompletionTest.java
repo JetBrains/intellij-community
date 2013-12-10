@@ -127,7 +127,7 @@ public class TemplatesCompletionTest extends CompletionAutoPopupTestCase {
     }
   }
 
-  public void configureByFile() {
+  private void configureByFile() {
     edt(new Runnable() {
       @Override
       public void run() {
