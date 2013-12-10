@@ -63,7 +63,7 @@ public class PythonConsoleTest extends PyEnvTestCase {
 
       @Override
       public Set<String> getTags() {
-        return new ImmutableSet.Builder<String>().addAll(super.getTags()).add("-iron").build();
+        return Sets.newHashSet("-iron", "-jython");
       }
     });
   }
