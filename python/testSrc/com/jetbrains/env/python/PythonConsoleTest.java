@@ -41,7 +41,7 @@ public class PythonConsoleTest extends PyEnvTestCase {
 
       @Override
       public Set<String> getTags() {
-        return Sets.newHashSet("jython"); //jython doesn't support multiline execution: http://bugs.jython.org/issue2106
+        return Sets.newHashSet("-jython"); //jython doesn't support multiline execution: http://bugs.jython.org/issue2106
       }
     });
   }
