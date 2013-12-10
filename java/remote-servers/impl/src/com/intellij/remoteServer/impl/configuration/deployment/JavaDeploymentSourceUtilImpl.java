@@ -16,17 +16,14 @@
 package com.intellij.remoteServer.impl.configuration.deployment;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.packaging.artifacts.Artifact;
-import com.intellij.packaging.artifacts.ArtifactPointer;
-import com.intellij.packaging.artifacts.ArtifactPointerManager;
+import com.intellij.packaging.artifacts.*;
 import com.intellij.remoteServer.configuration.deployment.ArtifactDeploymentSource;
 import com.intellij.remoteServer.configuration.deployment.DeploymentSource;
 import com.intellij.remoteServer.configuration.deployment.JavaDeploymentSourceUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author nik
@@ -48,5 +45,20 @@ public class JavaDeploymentSourceUtilImpl extends JavaDeploymentSourceUtil {
       sources.add(createArtifactDeploymentSource(pointerManager.createPointer(artifact)));
     }
     return sources;
+  }
+
+  @NotNull
+  @Override
+  public List<DeploymentSource> createArtifactDeploymentSources(Project project, ArtifactType... artifactTypes) {
+    if (project.isDefault()) return Collections.emptyList();
+    Artifact[] artifacts = ArtifactManager.getInstance(project).getArtifacts();
+    List<Artifact> supportedArtifacts = new ArrayList<Artifact>();
+    Set<ArtifactType> typeSet = ContainerUtil.set(artifactTypes);
+    for (Artifact artifact : artifacts) {
+      if (typeSet.contains(artifact.getArtifactType())) {
+        supportedArtifacts.add(artifact);
+      }
+    }
+    return createArtifactDeploymentSources(project, supportedArtifacts);
   }
 }
