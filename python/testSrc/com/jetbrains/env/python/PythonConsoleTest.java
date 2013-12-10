@@ -75,7 +75,6 @@ public class PythonConsoleTest extends PyEnvTestCase {
         exec("x = 96");
         exec("x +=1");
         exec("if True:");
-        exec("");
         exec("  print(x)");
         exec("");
         exec("");
