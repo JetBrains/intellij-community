@@ -78,7 +78,6 @@
     <postfixTemplate implementation="org.jetbrains.postfixCompletion.templates.NotExpressionPostfixTemplate"/>
     <postfixTemplate implementation="org.jetbrains.postfixCompletion.templates.ForeachIterationPostfixTemplate"/>
     <postfixTemplate implementation="org.jetbrains.postfixCompletion.templates.WhileStatementPostfixTemplate"/>
-    <postfixTemplate implementation="org.jetbrains.postfixCompletion.templates.ArgumentExpressionPostfixTemplate"/>
     <postfixTemplate implementation="org.jetbrains.postfixCompletion.templates.CastExpressionPostfixTemplate"/>
     <postfixTemplate implementation="org.jetbrains.postfixCompletion.templates.NewExpressionPostfixTemplate"/>
     <postfixTemplate implementation="org.jetbrains.postfixCompletion.templates.IfStatementPostfixTemplate"/>

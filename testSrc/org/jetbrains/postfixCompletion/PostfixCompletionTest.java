@@ -37,8 +37,6 @@ public class PostfixCompletionTest extends LightCodeInsightFixtureTestCase {
     myFixture.checkResultByFile(name + "-out.java");
   }
 
-  public void testArg01() { doTest("arg\n"); }
-
   public void testFori01() { doTest("fori\n"); }
   public void testFori02() { doTest("fori\n"); }
   public void testFori03() { doTest("fori\n"); }
