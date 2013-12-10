@@ -14,6 +14,7 @@ import com.intellij.psi.*;
 import com.intellij.refactoring.introduceField.ElementToWorkOn;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.postfixCompletion.util.CommonUtils;
 
 import java.util.LinkedHashSet;
 import java.util.Set;
@@ -35,7 +36,7 @@ public class InstanceofExpressionPostfixTemplate extends PostfixTemplate {
     surroundExpression(context.getProject(), editor, expression);
   }
 
-  private static TextRange surroundExpression(Project project, Editor editor, PsiExpression expr) throws IncorrectOperationException {
+  private static void surroundExpression(Project project, Editor editor, PsiExpression expr) throws IncorrectOperationException {
     assert expr.isValid();
     PsiType[] types = GuessManager.getInstance(project).guessTypeToCast(expr);
     final boolean parenthesesNeeded = expr instanceof PsiPolyadicExpression ||
@@ -49,14 +50,16 @@ public class InstanceofExpressionPostfixTemplate extends PostfixTemplate {
     }
     else {
       RangeMarker rangeMarker = expr.getUserData(ElementToWorkOn.TEXT_RANGE);
-      if (rangeMarker == null) return null;
+      if (rangeMarker == null) {
+        CommonUtils.showErrorHint(project, editor);
+        return;
+      }
       range = new TextRange(rangeMarker.getStartOffset(), rangeMarker.getEndOffset());
     }
     editor.getDocument().deleteString(range.getStartOffset(), range.getEndOffset());
     editor.getCaretModel().moveToOffset(range.getStartOffset());
     editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
     TemplateManager.getInstance(project).startTemplate(editor, template);
-    return null;
   }
 
   private static Template generateTemplate(Project project, String exprText, PsiType[] suggestedTypes) {
