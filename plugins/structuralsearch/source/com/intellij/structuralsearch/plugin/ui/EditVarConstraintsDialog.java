@@ -566,7 +566,7 @@ class EditVarConstraintsDialog extends DialogWrapper {
 
     @Override
     public void documentChanged(DocumentEvent e) {
-      final boolean enable = e.getNewLength() > 0;
+      final boolean enable = e.getDocument().getTextLength() > 0;
       for (JComponent component : components) {
         component.setEnabled(enable);
       }
