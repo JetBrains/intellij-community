@@ -23,6 +23,7 @@ public class PostfixCompletionSettings implements PersistentStateComponent<Postf
   private Map<String, Boolean> myTemplatesState = ContainerUtil.newHashMap();
   private boolean postfixPluginEnabled = true;
   private boolean templatesCompletionEnabled = true;
+  private int myShortcut = TemplateSettings.TAB_CHAR;
 
   public boolean isTemplateEnabled(@NotNull PostfixTemplate template) {
     return ContainerUtil.getOrElse(myTemplatesState, template.getKey(), true);
@@ -57,8 +58,12 @@ public class PostfixCompletionSettings implements PersistentStateComponent<Postf
     myTemplatesState = templatesState;
   }
 
-  public char getShortcut() {
-    return TemplateSettings.TAB_CHAR;
+  public int getShortcut() {
+    return myShortcut;
+  }
+
+  public void setShortcut(int shortcut) {
+    myShortcut = shortcut;
   }
 
   @Nullable

@@ -120,7 +120,7 @@ public class PostfixLiveTemplate extends CustomLiveTemplateBase {
   @Override
   public char getShortcut() {
     PostfixCompletionSettings settings = PostfixCompletionSettings.getInstance();
-    return settings != null ? settings.getShortcut() : TemplateSettings.TAB_CHAR;
+    return settings != null ? (char)settings.getShortcut() : TemplateSettings.TAB_CHAR;
   }
 
   @Override

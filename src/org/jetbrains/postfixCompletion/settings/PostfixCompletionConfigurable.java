@@ -1,9 +1,12 @@
 package org.jetbrains.postfixCompletion.settings;
 
 import com.intellij.application.options.editor.EditorOptionsProvider;
+import com.intellij.codeInsight.CodeInsightBundle;
+import com.intellij.codeInsight.template.impl.TemplateSettings;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
+import com.intellij.openapi.ui.ComboBox;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nls;
@@ -28,6 +31,11 @@ public class PostfixCompletionConfigurable implements SearchableConfigurable, Ed
   private JBCheckBox myCompletionEnabledCheckbox;
   private JBCheckBox myPluginEnabledCheckbox;
   private JPanel myTemplatesListPanelContainer;
+  private ComboBox myShortcutComboBox;
+
+  private static final String SPACE = CodeInsightBundle.message("template.shortcut.space");
+  private static final String TAB = CodeInsightBundle.message("template.shortcut.tab");
+  private static final String ENTER = CodeInsightBundle.message("template.shortcut.enter");
 
   public PostfixCompletionConfigurable() {
     PostfixCompletionSettings settings = PostfixCompletionSettings.getInstance();
@@ -45,6 +53,9 @@ public class PostfixCompletionConfigurable implements SearchableConfigurable, Ed
         updateComponents();
       }
     });
+    myShortcutComboBox.addItem(TAB);
+    myShortcutComboBox.addItem(SPACE);
+    myShortcutComboBox.addItem(ENTER);
   }
 
   @NotNull
@@ -89,6 +100,7 @@ public class PostfixCompletionConfigurable implements SearchableConfigurable, Ed
       myTemplatesSettings.setTemplatesState(newTemplatesState);
       myTemplatesSettings.setPostfixPluginEnabled(myPluginEnabledCheckbox.isSelected());
       myTemplatesSettings.setTemplatesCompletionEnabled(myCompletionEnabledCheckbox.isSelected());
+      myTemplatesSettings.setShortcut(stringToShortcut((String)myShortcutComboBox.getSelectedItem()));
     }
   }
 
@@ -98,7 +110,7 @@ public class PostfixCompletionConfigurable implements SearchableConfigurable, Ed
       myTemplatesListPanel.setState(myTemplatesSettings.getTemplatesState());
       myPluginEnabledCheckbox.setSelected(myTemplatesSettings.isPostfixPluginEnabled());
       myCompletionEnabledCheckbox.setSelected(myTemplatesSettings.isTemplatesCompletionEnabled());
-      
+      myShortcutComboBox.setSelectedItem(shortcutToString((char)myTemplatesSettings.getShortcut()));
       updateComponents();
     }
   }
@@ -110,6 +122,7 @@ public class PostfixCompletionConfigurable implements SearchableConfigurable, Ed
     }
     return myPluginEnabledCheckbox.isSelected() != myTemplatesSettings.isPostfixPluginEnabled() ||
            myCompletionEnabledCheckbox.isSelected() != myTemplatesSettings.isTemplatesCompletionEnabled() ||
+           stringToShortcut((String)myShortcutComboBox.getSelectedItem()) != myTemplatesSettings.getShortcut() ||
            !myTemplatesListPanel.getState().equals(myTemplatesSettings.getTemplatesState());
   }
 
@@ -125,9 +138,31 @@ public class PostfixCompletionConfigurable implements SearchableConfigurable, Ed
   }
 
   private void updateComponents() {
-    myCompletionEnabledCheckbox.setEnabled(myPluginEnabledCheckbox.isSelected());
+    boolean pluginEnabled = myPluginEnabledCheckbox.isSelected();
+    myCompletionEnabledCheckbox.setEnabled(pluginEnabled);
+    myShortcutComboBox.setEnabled(pluginEnabled);
     if (myTemplatesListPanel != null) {
-      myTemplatesListPanel.setEnabled(myPluginEnabledCheckbox.isSelected());
+      myTemplatesListPanel.setEnabled(pluginEnabled);
     }
+  }
+
+  private static char stringToShortcut(@NotNull String string) {
+    if (SPACE.equals(string)) {
+      return TemplateSettings.SPACE_CHAR;
+    }
+    else if (ENTER.equals(string)) {
+      return TemplateSettings.ENTER_CHAR;
+    }
+    return TemplateSettings.TAB_CHAR;
+  }
+
+  private static String shortcutToString(char shortcut) {
+    if (shortcut == TemplateSettings.SPACE_CHAR) {
+      return SPACE;
+    } 
+    if (shortcut == TemplateSettings.ENTER_CHAR) {
+      return ENTER;
+    }
+    return TAB;
   }
 }
