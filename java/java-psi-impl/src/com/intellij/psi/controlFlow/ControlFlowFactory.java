@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -159,7 +159,7 @@ public class ControlFlowFactory {
   @NotNull
   private CopyOnWriteArrayList<ControlFlowContext> getOrCreateCachedFlowsForElement(@NotNull PsiElement element) {
     Reference<CopyOnWriteArrayList<ControlFlowContext>> cachedRef = cachedFlows.get(element);
-    CopyOnWriteArrayList<ControlFlowContext> cached = cachedRef == null ? null : cachedRef.get();
+    CopyOnWriteArrayList<ControlFlowContext> cached = com.intellij.reference.SoftReference.dereference(cachedRef);
     if (cached == null) {
       cached = ContainerUtil.createEmptyCOWList();
       cachedFlows.put(element, new SoftReference<CopyOnWriteArrayList<ControlFlowContext>>(cached));

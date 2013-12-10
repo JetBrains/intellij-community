@@ -147,12 +147,10 @@ class JarLoader extends Loader {
   @Nullable
   Resource getResource(String name, boolean flag) {
     final long started = myDebugTime ? System.nanoTime():0;
-    if (myMemoryLoader != null) {
-      JarMemoryLoader loader = myMemoryLoader.get();
-      if (loader != null) {
-        Resource resource = loader.getResource(name);
-        if (resource != null) return resource;
-      }
+    JarMemoryLoader loader = com.intellij.reference.SoftReference.dereference(myMemoryLoader);
+    if (loader != null) {
+      Resource resource = loader.getResource(name);
+      if (resource != null) return resource;
     }
     ZipFile file = null;
     try {

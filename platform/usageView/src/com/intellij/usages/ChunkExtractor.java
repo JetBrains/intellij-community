@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,6 +36,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.reference.SoftReference;
 import com.intellij.usageView.UsageTreeColors;
 import com.intellij.usageView.UsageTreeColorsScheme;
 import com.intellij.util.Processor;
@@ -75,7 +76,7 @@ public class ChunkExtractor {
 
     @NotNull
     public T getValue() {
-      final T cur = myRef == null ? null : myRef.get();
+      final T cur = SoftReference.dereference(myRef);
       if (cur != null) return cur;
       final T result = create();
       myRef = new WeakReference<T>(result);

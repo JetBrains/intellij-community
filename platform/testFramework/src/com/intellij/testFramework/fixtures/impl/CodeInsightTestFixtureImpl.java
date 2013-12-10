@@ -667,13 +667,17 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   @NotNull
   public PsiElement getElementAtCaret() {
     assertInitialized();
-    final PsiElement element = TargetElementUtilBase.findTargetElement(getCompletionEditor(),
-                                                                       TargetElementUtilBase.REFERENCED_ELEMENT_ACCEPTED |
-                                                                       TargetElementUtilBase.ELEMENT_NAME_ACCEPTED);
-    assert element != null : "element not found in file " +
-                             myFile.getName() +
-                             " at caret position, offset " +
-                             myEditor.getCaretModel().getOffset() + "\"" +
+    Editor editor = getCompletionEditor();
+    int findTargetFlags = TargetElementUtilBase.REFERENCED_ELEMENT_ACCEPTED | TargetElementUtilBase.ELEMENT_NAME_ACCEPTED;
+    PsiElement element = TargetElementUtilBase.findTargetElement(editor, findTargetFlags);
+    
+    // if no references found in injected fragment, try outer document
+    if (element == null && editor instanceof EditorWindow) {
+      element = TargetElementUtilBase.findTargetElement(((EditorWindow)editor).getDelegate(), findTargetFlags);
+    }
+    
+    assert element != null : "element not found in file " + myFile.getName() +
+                             " at caret position, offset " + myEditor.getCaretModel().getOffset() + "\"" +
                              " psi structure: " + DebugUtil.psiToString(myFile, true, true);
     return element;
   }

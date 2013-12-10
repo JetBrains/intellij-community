@@ -53,7 +53,7 @@ class RepositoryContentHandler extends DefaultHandler {
 
   @NonNls private static final String DATE = "date";
   private PluginNode currentPlugin;
-  private String currentValue;
+  private final StringBuilder currentValue = new StringBuilder();
   private ArrayList<IdeaPluginDescriptor> plugins;
   private Stack<String> categoriesStack;
 
@@ -86,45 +86,47 @@ class RepositoryContentHandler extends DefaultHandler {
       currentPlugin.setVendorEmail(atts.getValue(EMAIL));
       currentPlugin.setVendorUrl(atts.getValue(URL));
     }
-    currentValue = "";
+    currentValue.setLength(0);
   }
 
   public void endElement(String namespaceURI, String localName, String qName) throws SAXException {
+    String currentValueString = currentValue.toString();
+    currentValue.setLength(0);
+
     if (qName.equals(ID)) {
-      currentPlugin.setId(currentValue);
+      currentPlugin.setId(currentValueString);
     }
     else if (qName.equals(NAME)) {
-      currentPlugin.setName(currentValue);
+      currentPlugin.setName(currentValueString);
     }
     else if (qName.equals(DESCRIPTION)) {
-      currentPlugin.setDescription(currentValue);
+      currentPlugin.setDescription(currentValueString);
     }
     else if (qName.equals(VERSION)) {
-      currentPlugin.setVersion(currentValue);
+      currentPlugin.setVersion(currentValueString);
     }
     else if (qName.equals(VENDOR)) {
-      currentPlugin.setVendor(currentValue);
+      currentPlugin.setVendor(currentValueString);
     }
     else if (qName.equals(DEPENDS)) {
-      currentPlugin.addDepends(PluginId.getId(currentValue));
+      currentPlugin.addDepends(PluginId.getId(currentValueString));
     }
     else if (qName.equals(CHNAGE_NOTES)) {
-      currentPlugin.setChangeNotes(currentValue);
+      currentPlugin.setChangeNotes(currentValueString);
     }
     else if (qName.equals(CATEGORY)) {
       categoriesStack.pop();
     }
     else if (qName.equals(RATING)) {
-      currentPlugin.setRating(currentValue);
+      currentPlugin.setRating(currentValueString);
     }
     else if (qName.equals(DOWNLOAD_URL)) {
-      currentPlugin.setDownloadUrl(currentValue);
+      currentPlugin.setDownloadUrl(currentValueString);
     }
-    currentValue = "";
   }
 
   public void characters(char[] ch, int start, int length) throws SAXException {
-    currentValue += new String(ch, start, length);
+    currentValue.append(ch, start, length);
   }
 
   public ArrayList<IdeaPluginDescriptor> getPluginsList() {

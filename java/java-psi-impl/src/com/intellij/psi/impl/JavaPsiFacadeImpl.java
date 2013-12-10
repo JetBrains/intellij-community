@@ -179,8 +179,7 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
 
   @Override
   public PsiPackage findPackage(@NotNull String qualifiedName) {
-    SoftReference<ConcurrentMap<String, PsiPackage>> ref = myPackageCache;
-    ConcurrentMap<String, PsiPackage> cache = ref == null ? null : ref.get();
+    ConcurrentMap<String, PsiPackage> cache = SoftReference.dereference(myPackageCache);
     if (cache == null) {
       myPackageCache = new SoftReference<ConcurrentMap<String, PsiPackage>>(cache = new ConcurrentHashMap<String, PsiPackage>());
     }

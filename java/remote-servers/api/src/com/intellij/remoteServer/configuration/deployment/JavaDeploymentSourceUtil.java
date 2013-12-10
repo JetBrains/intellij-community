@@ -19,6 +19,7 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.artifacts.ArtifactPointer;
+import com.intellij.packaging.artifacts.ArtifactType;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -38,4 +39,7 @@ public abstract class JavaDeploymentSourceUtil {
   @NotNull
   public abstract List<DeploymentSource> createArtifactDeploymentSources(@NotNull Project project,
                                                                          @NotNull Collection<? extends Artifact> artifacts);
+
+  @NotNull
+  public abstract List<DeploymentSource> createArtifactDeploymentSources(Project project, ArtifactType... artifactTypes);
 }

@@ -106,8 +106,7 @@ public class GrAnonymousClassDefinitionImpl extends GrTypeDefinitionImpl impleme
       return createClassType();
     }
 
-    PsiClassType type = null;
-    if (myCachedBaseType != null) type = myCachedBaseType.get();
+    PsiClassType type = SoftReference.dereference(myCachedBaseType);
     if (type != null && type.isValid()) return type;
 
     type = createClassType();

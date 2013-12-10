@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package com.intellij.ui.tabs;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.ui.Queryable;
+import com.intellij.reference.SoftReference;
 import com.intellij.ui.PlaceProvider;
 import com.intellij.ui.SimpleColoredText;
 import com.intellij.ui.SimpleTextAttributes;
@@ -237,7 +238,7 @@ public final class TabInfo implements Queryable, PlaceProvider<String> {
 
   @Nullable
   public JComponent getLastFocusOwner() {
-    return myLastFocusOwner != null ? myLastFocusOwner.get() : null;
+    return SoftReference.dereference(myLastFocusOwner);
   }
 
   public TabInfo setAlertIcon(final AlertIcon alertIcon) {

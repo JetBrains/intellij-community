@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -77,7 +77,7 @@ public class RefCountHolder {
 
   private static RefCountHolder getInstance(@NotNull PsiFile file, @NotNull ProgressIndicator indicator, boolean acquire) {
     HolderReference ref = file.getUserData(REF_COUNT_HOLDER_IN_FILE_KEY);
-    RefCountHolder holder = ref == null ? null : ref.get();
+    RefCountHolder holder = com.intellij.reference.SoftReference.dereference(ref);
     if (holder == null && acquire) {
       holder = new RefCountHolder(file);
       HolderReference newRef = new HolderReference(holder);
@@ -88,7 +88,7 @@ public class RefCountHolder {
           break;
         }
         ref = file.getUserData(REF_COUNT_HOLDER_IN_FILE_KEY);
-        RefCountHolder newHolder = ref == null ? null : ref.get();
+        RefCountHolder newHolder = com.intellij.reference.SoftReference.dereference(ref);
         if (newHolder != null) {
           holder = newHolder;
           break;
