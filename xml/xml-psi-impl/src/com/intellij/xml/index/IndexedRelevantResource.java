@@ -50,9 +50,7 @@ public class IndexedRelevantResource<K, V extends Comparable> implements Compara
     FileBasedIndex.getInstance().processValues(indexId, key, null, new FileBasedIndex.ValueProcessor<V>() {
       public boolean process(VirtualFile file, V value) {
         ResourceRelevance relevance = ResourceRelevance.getRelevance(file, module, fileIndex, additionalScope);
-        if (relevance != ResourceRelevance.NONE) {
-          resources.add(new IndexedRelevantResource<K, V>(file, key, value, relevance));
-        }
+        resources.add(new IndexedRelevantResource<K, V>(file, key, value, relevance));
         return true;
       }
     }, new AdditionalIndexedRootsScope(GlobalSearchScope.allScope(project)));
