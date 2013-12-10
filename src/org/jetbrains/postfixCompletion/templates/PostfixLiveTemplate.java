@@ -93,7 +93,12 @@ public class PostfixLiveTemplate extends CustomLiveTemplateBase {
 
   @Override
   public boolean isApplicable(PsiFile file, int offset, boolean wrapping) {
-    return !wrapping && file != null && PsiUtilCore.getLanguageAtOffset(file, offset) == JavaLanguage.INSTANCE;
+    PostfixCompletionSettings settings = PostfixCompletionSettings.getInstance();
+    return !wrapping 
+           && file != null
+           && settings != null
+           && settings.isPostfixPluginEnabled()
+           && PsiUtilCore.getLanguageAtOffset(file, offset) == JavaLanguage.INSTANCE;
   }
 
   @Override

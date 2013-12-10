@@ -81,7 +81,7 @@ public abstract class PostfixTemplate {
 
   public boolean isEnabled() {
     final PostfixCompletionSettings settings = PostfixCompletionSettings.getInstance();
-    return settings != null && settings.isTemplateEnabled(this);
+    return settings != null && settings.isPostfixPluginEnabled() && settings.isTemplateEnabled(this);
   }
 
   @Nullable
