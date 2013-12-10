@@ -5,16 +5,14 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.editor.CaretModel;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.postfixCompletion.infrastructure.PostfixTemplateContext;
 import org.jetbrains.postfixCompletion.infrastructure.PrefixExpressionContext;
 import org.jetbrains.postfixCompletion.infrastructure.TemplateInfo;
 import org.jetbrains.postfixCompletion.lookupItems.ExpressionPostfixLookupElementBase;
 import org.jetbrains.postfixCompletion.util.CommonUtils;
-
-import static org.jetbrains.postfixCompletion.util.CommonUtils.CtorAccessibility;
-
-// todo: force mode!
 
 @TemplateInfo(
   templateName = "new",
@@ -30,8 +28,8 @@ public class NewExpressionPostfixTemplate extends PostfixTemplate {
     if (referencedElement instanceof PsiClass) {
       PsiClass psiClass = (PsiClass)referencedElement;
       CtorAccessibility accessibility =
-        CommonUtils.isTypeCanBeInstantiatedWithNew(psiClass, expression.expression);
-      if (accessibility == CtorAccessibility.NotAccessible &&
+        isTypeCanBeInstantiatedWithNew(psiClass, expression.expression);
+      if (accessibility == CtorAccessibility.NOT_ACCESSIBLE &&
           !context.executionContext.isForceMode) {
         return null;
       }
@@ -80,8 +78,8 @@ public class NewExpressionPostfixTemplate extends PostfixTemplate {
       PsiExpressionList argumentList = expression.getArgumentList();
       assert argumentList != null;
 
-      if (myAccessibility == CtorAccessibility.WithParametricCtor ||
-          myAccessibility == CtorAccessibility.NotAccessible) { // new T(<caret>)
+      if (myAccessibility == CtorAccessibility.WITH_PARAMETRIC_CTOR ||
+          myAccessibility == CtorAccessibility.NOT_ACCESSIBLE) { // new T(<caret>)
         caretModel.moveToOffset(argumentList.getFirstChild().getTextRange().getEndOffset());
       }
       else if (myTypeRequiresRefinement) {
@@ -97,5 +95,40 @@ public class NewExpressionPostfixTemplate extends PostfixTemplate {
         caretModel.moveToOffset(argumentList.getTextRange().getEndOffset());
       }
     }
+  }
+
+  public enum CtorAccessibility {
+    NOT_ACCESSIBLE,
+    WITH_DEFAULT_CTOR,
+    WITH_PARAMETRIC_CTOR
+  }
+
+  private static CtorAccessibility isTypeCanBeInstantiatedWithNew(
+    @Nullable PsiClass psiClass, @NotNull PsiElement accessContext) {
+    if (psiClass == null) return CtorAccessibility.NOT_ACCESSIBLE;
+
+    if (psiClass.isEnum()) return CtorAccessibility.NOT_ACCESSIBLE;
+    if (psiClass.isInterface()) return CtorAccessibility.WITH_DEFAULT_CTOR;
+
+    PsiClass containingType = PsiTreeUtil.getParentOfType(accessContext, PsiClass.class);
+    JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(accessContext.getProject());
+    PsiResolveHelper resolveHelper = psiFacade.getResolveHelper();
+
+    PsiMethod[] constructors = psiClass.getConstructors();
+    if (constructors.length == 0) return CtorAccessibility.WITH_DEFAULT_CTOR;
+
+    boolean hasAccessibleCtors = false, hasParametricCtors = false;
+
+    for (PsiMethod constructor : constructors) {
+      if (resolveHelper.isAccessible(constructor, accessContext, containingType)) {
+        hasAccessibleCtors = true;
+        int parametersCount = constructor.getParameterList().getParametersCount();
+        if (parametersCount != 0) hasParametricCtors = true;
+      }
+    }
+
+    if (!hasAccessibleCtors) return CtorAccessibility.NOT_ACCESSIBLE;
+
+    return hasParametricCtors ? CtorAccessibility.WITH_PARAMETRIC_CTOR : CtorAccessibility.WITH_DEFAULT_CTOR;
   }
 }
