@@ -105,7 +105,7 @@ public class PostfixTemplatesListPanel {
   }
 
   @NotNull
-  public JComponent getComponent() {
+  public JPanel getComponent() {
     return myPanelWithTableView;
   }
 
@@ -119,6 +119,10 @@ public class PostfixTemplatesListPanel {
   @NotNull
   public Map<String, Boolean> getState() {
     return myTemplatesState;
+  }
+
+  public void setEnabled(boolean enabled) {
+    myTemplatesTableView.setEnabled(enabled);
   }
 
   private class BooleanColumnInfo extends ColumnInfo<PostfixTemplate, Boolean> {
@@ -154,8 +158,8 @@ public class PostfixTemplatesListPanel {
     }
 
     @Override
-    public boolean isCellEditable(PostfixTemplate bean) {
-      return true;
+    public boolean isCellEditable(PostfixTemplate template) {
+      return myTemplatesTableView.isEnabled();
     }
 
     @Nullable

@@ -19,7 +19,10 @@ import java.util.Map;
   }
 )
 public class PostfixCompletionSettings implements PersistentStateComponent<PostfixCompletionSettings>, ExportableComponent {
-  @NotNull private Map<String, Boolean> myTemplatesState = ContainerUtil.newHashMap();
+  @NotNull
+  private Map<String, Boolean> myTemplatesState = ContainerUtil.newHashMap();
+  private boolean postfixPluginEnabled = true;
+  private boolean templatesCompletionEnabled = true;
 
   public boolean isTemplateEnabled(@NotNull PostfixTemplate template) {
     return ContainerUtil.getOrElse(myTemplatesState, template.getKey(), true);
@@ -27,6 +30,22 @@ public class PostfixCompletionSettings implements PersistentStateComponent<Postf
 
   public void disableTemplate(@NotNull PostfixTemplate template) {
     myTemplatesState.put(template.getKey(), Boolean.FALSE);
+  }
+
+  public boolean isPostfixPluginEnabled() {
+    return postfixPluginEnabled;
+  }
+
+  public void setPostfixPluginEnabled(boolean postfixPluginEnabled) {
+    this.postfixPluginEnabled = postfixPluginEnabled;
+  }
+
+  public boolean isTemplatesCompletionEnabled() {
+    return templatesCompletionEnabled;
+  }
+
+  public void setTemplatesCompletionEnabled(boolean templatesCompletionEnabled) {
+    this.templatesCompletionEnabled = templatesCompletionEnabled;
   }
 
   @NotNull
