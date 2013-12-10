@@ -69,6 +69,7 @@ public class PyDebuggerTask extends PyBaseDebuggerTask implements RemoteSdkTesta
     myRunConfiguration.setScriptName(getScriptPath());
     myRunConfiguration.setWorkingDirectory(getWorkingFolder());
     myRunConfiguration.setScriptParameters(getScriptParameters());
+    myRunConfiguration.getEnvs().put("PYTHONDONTWRITEBYTECODE", "1"); //Don't write 'pyc' files as they can't be loaded by other versions
 
     new WriteAction() {
       @Override
