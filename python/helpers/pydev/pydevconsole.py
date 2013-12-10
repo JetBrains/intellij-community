@@ -75,7 +75,7 @@ except ImportError:
 
 
 class Command:
-    def __init__(self, interpreter, code_fragment, buffer):
+    def __init__(self, interpreter, code_fragment):
         """
         :type code_fragment: CodeFragment
         :type interpreter: InteractiveConsole
@@ -83,24 +83,19 @@ class Command:
         self.interpreter = interpreter
         self.code_fragment = code_fragment
         self.more = None
-        self.buffer = buffer
 
     @staticmethod
     def symbol_for_fragment(code_fragment):
-        if IS_JYTHON or code_fragment.is_single_line: 
+        if code_fragment.is_single_line:
             symbol = 'single'
         else:
             symbol = 'exec' # Jython doesn't support this
         return symbol
 
     def run(self):
-        if self.buffer is None:
-            text = self.code_fragment.text
-            symbol = self.symbol_for_fragment(self.code_fragment)
-        else:
-            text = self.buffer.text
-            symbol = self.symbol_for_fragment(self.buffer)
-            
+        text = self.code_fragment.text
+        symbol = self.symbol_for_fragment(self.code_fragment)
+
         self.more = self.interpreter.runsource(text, '<input>', symbol)
 
 try:
@@ -133,7 +128,7 @@ class InterpreterInterface(BaseInterpreterInterface):
 
 
     def doAddExec(self, codeFragment):
-        command = Command(self.interpreter, codeFragment, self.buffer)
+        command = Command(self.interpreter, codeFragment)
         command.run()
         return command.more
 
@@ -170,9 +165,6 @@ def process_exec_queue(interpreter):
                 continue
 
             more = interpreter.addExec(codeFragment)
-            
-            if not more:     
-                interpreter.buffer = None
         except KeyboardInterrupt:
             interpreter.buffer = None
             continue
