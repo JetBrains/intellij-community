@@ -1,6 +1,7 @@
 package com.jetbrains.env.python;
 
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Sets;
 import com.jetbrains.env.python.console.PyConsoleTask;
 import com.jetbrains.env.python.debug.PyEnvTestCase;
 import org.junit.Assert;
@@ -36,6 +37,11 @@ public class PythonConsoleTest extends PyEnvTestCase {
              "for i in range(1):\n" +
              "  print(y)\n");
         waitForOutput("101");
+      }
+
+      @Override
+      public Set<String> getTags() {
+        return Sets.newHashSet("jython"); //jython doesn't support multiline execution: http://bugs.jython.org/issue2106
       }
     });
   }
