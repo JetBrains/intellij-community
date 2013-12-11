@@ -26,7 +26,7 @@ public abstract class AbstractVcsLogTableModel<T> extends AbstractTableModel {
   public static final int DATE_COLUMN = 3;
   private static final int COLUMN_COUNT = DATE_COLUMN + 1;
 
-  private static final String[] COLUMN_NAMES = {"Root", "Subject", "Author", "Date"};
+  private static final String[] COLUMN_NAMES = {"", "Subject", "Author", "Date"};
 
   @Override
   public final int getColumnCount() {
