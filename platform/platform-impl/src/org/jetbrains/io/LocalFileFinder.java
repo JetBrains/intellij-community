@@ -34,7 +34,7 @@ public final class LocalFileFinder {
     return null;
   }
 
-  private static boolean windowsDriveExists(@NotNull String path) {
+  public static boolean windowsDriveExists(@NotNull String path) {
     if (path.length() > 2 && Character.isLetter(path.charAt(0)) && path.charAt(1) == ':') {
       final char driveLetter = Character.toUpperCase(path.charAt(0));
       final Boolean driveExists = myWindowsDrivesMap.getIfPresent(driveLetter);
