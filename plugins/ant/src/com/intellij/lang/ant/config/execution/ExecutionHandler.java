@@ -34,7 +34,6 @@ import com.intellij.lang.ant.config.AntBuildListener;
 import com.intellij.lang.ant.config.impl.BuildFileProperty;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -43,7 +42,8 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
-import com.intellij.openapi.wm.*;
+import com.intellij.openapi.wm.StatusBar;
+import com.intellij.openapi.wm.WindowManager;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -168,8 +168,6 @@ public final class ExecutionHandler {
 
     final OutputParser parser = OutputParser2.attachParser(project, handler, errorView, progress, buildFile);
 
-    final boolean isBackground = buildFile.isRunInBackground();
-
     handler.addProcessListener(new ProcessAdapter() {
       public void processTerminated(ProcessEvent event) {
         final long buildTime = System.currentTimeMillis() - startTime;
@@ -177,21 +175,6 @@ public final class ExecutionHandler {
         parser.setStopped(true);
         final OutputPacketProcessor dispatcher = handler.getErr().getEventsDispatcher();
         errorView.buildFinished(progress != null && progress.isCanceled(), buildTime, antBuildListener, dispatcher);
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          public void run() {
-            if (project.isDisposed()) {
-              return;
-            }
-            errorView.removeProgressPanel();
-            final boolean shouldActivate = !isBackground || errorView.hasMessagesOfType(AntBuildMessageView.MessageType.ERROR);
-            if (shouldActivate) {
-              ToolWindow toolWindow = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.MESSAGES_WINDOW);
-              if (toolWindow != null) { // can be null if project is closed
-                toolWindow.activate(null, false);
-              }
-            }
-          }
-        }, ModalityState.NON_MODAL);
       }
     });
     handler.startNotify();
