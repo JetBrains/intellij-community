@@ -19,25 +19,26 @@ import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.ComponentWithBrowseButton;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.structuralsearch.MatchVariableConstraint;
-import com.intellij.structuralsearch.SSRBundle;
-import com.intellij.structuralsearch.ReplacementVariableDefinition;
 import com.intellij.structuralsearch.NamedScriptableDefinition;
-import com.intellij.structuralsearch.plugin.replace.ui.ReplaceConfiguration;
-import com.intellij.structuralsearch.plugin.replace.ReplaceOptions;
+import com.intellij.structuralsearch.ReplacementVariableDefinition;
+import com.intellij.structuralsearch.SSRBundle;
 import com.intellij.structuralsearch.impl.matcher.predicates.ScriptSupport;
+import com.intellij.structuralsearch.plugin.replace.ReplaceOptions;
+import com.intellij.structuralsearch.plugin.replace.ui.ReplaceConfiguration;
 import com.intellij.ui.ComboboxWithBrowseButton;
 import com.intellij.ui.EditorTextField;
 import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.ui.components.labels.LinkListener;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -84,7 +85,7 @@ class EditVarConstraintsDialog extends DialogWrapper {
   private JCheckBox formalArgTypeWithinHierarchy;
   private JCheckBox invertFormalArgType;
   private EditorTextField formalArgType;
-  private TextFieldWithBrowseButton customScriptCode;
+  private ComponentWithBrowseButton<EditorTextField> customScriptCode;
   private JCheckBox maxoccursUnlimited;
 
   private ComboboxWithBrowseButton withinCombo;
@@ -98,7 +99,7 @@ class EditVarConstraintsDialog extends DialogWrapper {
   private static Project myProject;
 
   EditVarConstraintsDialog(final Project project,SearchModel _model,List<Variable> _variables, boolean replaceContext, FileType fileType) {
-    super(project,false);
+    super(project, false);
 
     variables = _variables;
     model = _model;
@@ -114,8 +115,6 @@ class EditVarConstraintsDialog extends DialogWrapper {
     partOfSearchResults.setEnabled(!replaceContext); // todo: this doesn't do anything
     containedInConstraints.setVisible(false);
     withinCombo.getComboBox().setEditable(true);
-
-    customScriptCode.getTextField().getDocument().putProperty("filterNewlines", null); // do not let newlines to be removed
 
     withinCombo.getButton().addActionListener(new ActionListener() {
       public void actionPerformed(final ActionEvent e) {
@@ -228,10 +227,10 @@ class EditVarConstraintsDialog extends DialogWrapper {
 
     customScriptCode.getButton().addActionListener(new ActionListener() {
       public void actionPerformed(final ActionEvent e) {
-        final EditScriptDialog wrapper = new EditScriptDialog(project, customScriptCode.getText());
-        wrapper.show();
-        if (wrapper.getExitCode() == OK_EXIT_CODE) {
-          customScriptCode.setText(wrapper.getScriptText());
+        final EditScriptDialog dialog = new EditScriptDialog(project, customScriptCode.getChildComponent().getText());
+        dialog.show();
+        if (dialog.getExitCode() == OK_EXIT_CODE) {
+          customScriptCode.getChildComponent().setText(dialog.getScriptText());
         }
       }
     });
@@ -252,7 +251,7 @@ class EditVarConstraintsDialog extends DialogWrapper {
   private boolean validateParameters() {
     return validateRegExp(regexp) && validateRegExp(regexprForExprType) &&
            validateIntOccurence(minoccurs) &&
-           validateScript(customScriptCode.getTextField()) &&
+           validateScript(customScriptCode.getChildComponent()) &&
            (maxoccursUnlimited.isSelected() || validateIntOccurence(maxoccurs));
   }
 
@@ -337,7 +336,7 @@ class EditVarConstraintsDialog extends DialogWrapper {
   }
 
   private void saveScriptInfo(NamedScriptableDefinition varInfo) {
-    varInfo.setScriptCodeConstraint("\"" + customScriptCode.getTextField().getText() + "\"");
+    varInfo.setScriptCodeConstraint("\"" + customScriptCode.getChildComponent().getText() + "\"");
   }
 
   private void copyValuesToUI(Variable var) {
@@ -380,7 +379,7 @@ class EditVarConstraintsDialog extends DialogWrapper {
       invertFormalArgType.setSelected(false);
       formalArgTypeWithinHierarchy.setSelected(false);
       formalArgType.getDocument().setText("");
-      customScriptCode.setText("");
+      customScriptCode.getChildComponent().setText("");
 
       withinCombo.getComboBox().getEditor().setItem("");
       invertWithinIn.setSelected(false);
@@ -442,7 +441,8 @@ class EditVarConstraintsDialog extends DialogWrapper {
   }
 
   private void restoreScriptCode(NamedScriptableDefinition varInfo) {
-    customScriptCode.setText( varInfo != null ? StringUtil.stripQuotesAroundValue(varInfo.getScriptCodeConstraint()) : "" );
+    customScriptCode.getChildComponent().setText(
+      varInfo != null ? StringUtil.stripQuotesAroundValue(varInfo.getScriptCodeConstraint()) : "");
   }
 
   protected String getDimensionServiceKey() {
@@ -463,7 +463,7 @@ class EditVarConstraintsDialog extends DialogWrapper {
     return true;
   }
 
-  private static boolean validateScript(JTextField field) {
+  private static boolean validateScript(EditorTextField field) {
     final String text = field.getText();
 
     if (text.length() > 0) {
@@ -500,11 +500,12 @@ class EditVarConstraintsDialog extends DialogWrapper {
   }
 
   private void createUIComponents() {
-    regexp = createComponent();
-    regexprForExprType = createComponent();
-    formalArgType = createComponent();
-    
-    myRegExHelpLabel = new LinkLabel("[Help]", null, new LinkListener() {
+    regexp = createRegexComponent();
+    regexprForExprType = createRegexComponent();
+    formalArgType = createRegexComponent();
+    customScriptCode = new ComponentWithBrowseButton<EditorTextField>(createScriptComponent(), null);
+
+    myRegExHelpLabel = new LinkLabel(SSRBundle.message("regular.expression.help.label"), null, new LinkListener() {
       public void linkSelected(LinkLabel aSource, Object aLinkData) {
         try {
           final JBPopup helpPopup = RegExHelpPopup.createRegExHelpPopup();
@@ -519,11 +520,18 @@ class EditVarConstraintsDialog extends DialogWrapper {
     myRegExHelpLabel.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 5));
   }
 
-  private static EditorTextField createComponent() {
-    final String fileName = "1.regexp";
-    FileType fileType = getFileType(fileName);
-    Document doc = createDocument(fileName, fileType, "");
+  private static EditorTextField createRegexComponent() {
+    @NonNls final String fileName = "1.regexp";
+    final FileType fileType = getFileType(fileName);
+    final Document doc = createDocument(fileName, fileType, "");
     return new EditorTextField(doc, myProject, fileType);
+  }
+
+  private static EditorTextField createScriptComponent() {
+    @NonNls final String fileName = "1.groovy";
+    final FileType fileType = getFileType(fileName);
+    final Document doc = createDocument(fileName, fileType, "");
+    return new EditorTextField(doc, myProject, fileType, false, false);
   }
 
   private static Document createDocument(final String fileName, final FileType fileType, String text) {
@@ -595,7 +603,7 @@ class EditVarConstraintsDialog extends DialogWrapper {
 
     public EditScriptDialog(final Project project, String text) {
       super(project, true);
-      setTitle("Edit Groovy Script Constraint");
+      setTitle(SSRBundle.message("edit.groovy.script.constraint.title"));
       editor = createEditor(project, text, "1.groovy");
       init();
     }
