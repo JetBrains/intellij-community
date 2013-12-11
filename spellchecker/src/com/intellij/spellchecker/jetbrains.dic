@@ -89,6 +89,7 @@ cyclomatic
 datafile
 datafiles
 datetime
+dbcp
 dealloc
 deallocate
 decompile
@@ -116,6 +117,7 @@ draggable
 dtrace
 dumpfile
 dylib
+easymock
 ehcache
 elseif
 elsif
@@ -167,6 +169,7 @@ holdability
 hostname
 hprof
 href
+hsql
 hsqldb
 html
 http
@@ -199,7 +202,10 @@ javaee
 javafx
 javascript
 javax
+jaxb
+jaxen
 jetbrains
+jibx
 jndi
 jnilib
 jpeg
@@ -327,7 +333,9 @@ openssl
 outfile
 overrider
 overriders
+pageable
 param
+parameterizable
 params
 patcher
 patchers
@@ -369,6 +377,7 @@ processlist
 profiler
 progressbar
 proven
+proxool
 pycharm
 readme
 readonly
@@ -465,6 +474,7 @@ superclass
 superclasses
 superview
 superviews
+sybase
 symlink
 symlinks
 sysdate
@@ -504,6 +514,7 @@ unpivot
 unprotect
 unwatch
 uploader
+urlencoded
 urowid
 username
 utf
@@ -537,6 +548,7 @@ wsdl
 xcode
 xcodeproj
 xhtml
+xmlbeans
 xmlschema
 xmlschemas
 xmltype
