@@ -3004,6 +3004,7 @@ public void testSCR260() throws Exception {
 
   public void testFormatterOnOffTags() throws Exception {
     getSettings().getRootSettings().FORMATTER_TAGS_ENABLED = true;
+    getSettings().IF_BRACE_FORCE = CommonCodeStyleSettings.FORCE_BRACES_ALWAYS;
     doTest();
   }
 
