@@ -33,6 +33,7 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
+import com.intellij.reference.SoftReference;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.Processor;
@@ -62,6 +63,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
 
   private final LineSet myLineSet = new LineSet();
   private volatile ImmutableText myText;
+  private volatile SoftReference<String> myTextString;
 
   private boolean myIsReadOnly = false;
   private boolean isStripTrailingSpacesEnabled = true;
@@ -356,6 +358,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
     }
 
     final DocumentEvent event = beforeChangedUpdate(offset, null, s, false);
+    myTextString = null;
     myText = myText.insert(offset, ImmutableText.valueOf(s));
     changedUpdate(event, LocalTimeCounter.currentTime());
     trimToSize();
@@ -384,6 +387,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
     }
 
     final DocumentEvent event = beforeChangedUpdate(startOffset, sToDelete, null, false);
+    myTextString = null;
     myText = myText.delete(startOffset, endOffset);
     changedUpdate(event, LocalTimeCounter.currentTime());
   }
@@ -458,6 +462,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
     }
 
     final DocumentEvent event = beforeChangedUpdate(startOffset, sToDelete, changedPart, wholeTextReplaced);
+    myTextString = null;
     if (wholeTextReplaced && s instanceof ImmutableText) {
       myText = (ImmutableText)s;
     } else {
@@ -641,7 +646,11 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
     return ApplicationManager.getApplication().runReadAction(new Computable<String>() {
       @Override
       public String compute() {
-        return myText.toString();
+        String s = SoftReference.dereference(myTextString);
+        if (s == null) {
+          myTextString = new SoftReference<String>(s = myText.toString());
+        }
+        return s;
       }
     });
   }
