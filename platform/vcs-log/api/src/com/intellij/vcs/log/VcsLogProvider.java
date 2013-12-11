@@ -87,4 +87,10 @@ public interface VcsLogProvider {
   @Nullable
   VcsUser getCurrentUser(@NotNull VirtualFile root) throws VcsException;
 
+  /**
+   * Returns the list of names of branches/references which contain the given commit.
+   */
+  @NotNull
+  Collection<String> getContainingBranches(@NotNull VirtualFile root, @NotNull Hash commitHash) throws VcsException;
+
 }

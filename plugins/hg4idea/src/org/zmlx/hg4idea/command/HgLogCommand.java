@@ -240,8 +240,8 @@ public class HgLogCommand {
   }
 
   @Nullable
-  private HgCommandResult execute(@NotNull VirtualFile repo, @NotNull String template, int limit, HgFile hgFile,
-                                  @Nullable List<String> argsForCmd) {
+  public HgCommandResult execute(@NotNull VirtualFile repo, @NotNull String template, int limit, HgFile hgFile,
+                                 @Nullable List<String> argsForCmd) {
     List<String> arguments = new LinkedList<String>();
     if (myIncludeRemoved) {
       // There is a bug in mercurial that causes --follow --removed <file> to cause

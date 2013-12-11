@@ -38,6 +38,7 @@ import com.intellij.vcs.log.ui.filter.VcsLogTextFilter;
 import git4idea.GitLocalBranch;
 import git4idea.GitRemoteBranch;
 import git4idea.GitVcs;
+import git4idea.branch.GitBranchUtil;
 import git4idea.commands.GitCommand;
 import git4idea.commands.GitSimpleHandler;
 import git4idea.config.GitConfigUtil;
@@ -253,6 +254,12 @@ public class GitLogProvider implements VcsLogProvider {
     String userName = GitConfigUtil.getValue(myProject, root, GitConfigUtil.USER_NAME);
     String userEmail = StringUtil.notNullize(GitConfigUtil.getValue(myProject, root, GitConfigUtil.USER_EMAIL));
     return userName == null ? null : myVcsObjectsFactory.createUser(userName, userEmail);
+  }
+
+  @NotNull
+  @Override
+  public Collection<String> getContainingBranches(@NotNull VirtualFile root, @NotNull Hash commitHash) throws VcsException {
+    return GitBranchUtil.getBranches(myProject, root, true, true, commitHash.asString());
   }
 
   private static String prepareParameter(String paramName, String value) {

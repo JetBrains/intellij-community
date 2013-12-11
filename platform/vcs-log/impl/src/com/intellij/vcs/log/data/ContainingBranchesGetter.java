@@ -18,19 +18,18 @@ package com.intellij.vcs.log.data;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ThrowableConsumer;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.SLRUMap;
-import com.intellij.vcs.log.VcsRef;
-import com.intellij.vcs.log.graph.elements.Edge;
-import com.intellij.vcs.log.graph.elements.Node;
+import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.util.SequentialLimitedLifoExecutor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -41,20 +40,22 @@ public class ContainingBranchesGetter {
   private static final Logger LOG = Logger.getInstance(ContainingBranchesGetter.class);
 
   @NotNull private final SequentialLimitedLifoExecutor<Task> myTaskExecutor;
-  @NotNull private volatile SLRUMap<Node, List<VcsRef>> myCache = createCache();
+  @NotNull private final VcsLogDataHolder myDataHolder;
+  @NotNull private volatile SLRUMap<Hash, List<String>> myCache = createCache();
   @Nullable private Runnable myLoadingFinishedListener; // access only from EDT
 
-  ContainingBranchesGetter(@NotNull Disposable parentDisposable) {
+  ContainingBranchesGetter(@NotNull VcsLogDataHolder dataHolder, @NotNull Disposable parentDisposable) {
+    myDataHolder = dataHolder;
     myTaskExecutor = new SequentialLimitedLifoExecutor<Task>(parentDisposable, 10, new ThrowableConsumer<Task, Throwable>() {
       @Override
       public void consume(final Task task) throws Throwable {
-        final List<VcsRef> branches = getContainingBranches(task.pack, task.node);
+        final List<String> branches = getContainingBranches(task.root, task.hash);
         ApplicationManager.getApplication().invokeLater(new Runnable() {
           @Override
           public void run() {
             // if cache is cleared (because of log refresh) during this task execution,
             // this will put obsolete value into the old instance we don't care anymore
-            task.cache.put(task.node, branches);
+            task.cache.put(task.hash, branches);
             notifyListener();
           }
         });
@@ -94,83 +95,40 @@ public class ContainingBranchesGetter {
    * if it is not available, starts calculating in the background and returns null.
    */
   @Nullable
-  public List<VcsRef> requestContainingBranches(@NotNull DataPack dataPack, @NotNull Node node) {
-    List<VcsRef> refs = myCache.get(node);
+  public List<String> requestContainingBranches(@NotNull VirtualFile root, @NotNull Hash hash) {
+    List<String> refs = myCache.get(hash);
     if (refs == null) {
-      myTaskExecutor.queue(new Task(dataPack, node, myCache));
+      myTaskExecutor.queue(new Task(root, hash, myCache));
     }
     return refs;
   }
 
   @NotNull
-  private static SLRUMap<Node, List<VcsRef>> createCache() {
-    return new SLRUMap<Node, List<VcsRef>>(1000, 1000);
+  private static SLRUMap<Hash, List<String>> createCache() {
+    return new SLRUMap<Hash, List<String>>(1000, 1000);
   }
 
   @NotNull
-  private List<VcsRef> getContainingBranches(@NotNull DataPack dataPack, @NotNull Node node) {
-    RefsModel refsModel = dataPack.getRefsModel();
-    Set<VcsRef> containingBranches = ContainerUtil.newHashSet();
-
-    Set<Node> visitedNodes = ContainerUtil.newHashSet();
-    Set<Node> nodesToCheck = ContainerUtil.newHashSet();
-    nodesToCheck.add(node);
-    while (!nodesToCheck.isEmpty()) {
-      Iterator<Node> nodeIterator = nodesToCheck.iterator();
-      Node nextNode = nodeIterator.next();
-      nodeIterator.remove();
-
-      if (!visitedNodes.add(nextNode)) {
-        continue;
-      }
-
-      for (Edge edge : nextNode.getUpEdges()) {
-        Node upNode = edge.getUpNode();
-        // optimization: the node is contained in all branches which contain its child => no need to walk over this graph branch
-        List<VcsRef> upRefs = myCache.get(upNode);
-        if (upRefs != null) {
-          containingBranches.addAll(upRefs);
-        }
-        else {
-          nodesToCheck.add(upNode);
-        }
-      }
-
-      containingBranches.addAll(getBranchesPointingToThisNode(refsModel, nextNode));
+  private List<String> getContainingBranches(@NotNull VirtualFile root, @NotNull Hash hash) {
+    try {
+      List<String> branches = new ArrayList<String>(myDataHolder.getLogProvider(root).getContainingBranches(root, hash));
+      Collections.sort(branches);
+      return branches;
     }
-
-    return sortByName(containingBranches);
-  }
-
-  @NotNull
-  private static Collection<VcsRef> getBranchesPointingToThisNode(@NotNull RefsModel refsModel, @NotNull Node node) {
-    return ContainerUtil.filter(refsModel.refsToCommit(node.getCommitIndex()), new Condition<VcsRef>() {
-      @Override
-      public boolean value(VcsRef ref) {
-        return ref.getType().isBranch();
-      }
-    });
-  }
-
-  private static List<VcsRef> sortByName(Collection<VcsRef> branches) {
-    List<VcsRef> branchesList = new ArrayList<VcsRef>(branches);
-    ContainerUtil.sort(branchesList, new Comparator<VcsRef>() {
-      @Override
-      public int compare(VcsRef o1, VcsRef o2) {
-        return o1.getName().compareTo(o2.getName());
-      }
-    });
-    return branchesList;
+    catch (VcsException e) {
+      LOG.warn(e);
+      return Collections.emptyList();
+    }
   }
 
   private static class Task {
-    private final DataPack pack;
-    private final Node node;
-    private final SLRUMap<Node, List<VcsRef>> cache;
+    private final VirtualFile root;
+    private final Hash hash;
+    private final SLRUMap<Hash, List<String>> cache;
 
-    public Task(DataPack pack, Node node, SLRUMap<Node, List<VcsRef>> cache) {
-      this.pack = pack;
-      this.node = node;
+    public Task(VirtualFile root, Hash hash, SLRUMap<Hash, List<String>> cache) {
+      this.root = root;
+      this.hash = hash;
       this.cache = cache;
     }
   }

@@ -12,6 +12,7 @@ import com.intellij.ui.JBColor;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.data.VcsLogDataHolder;
@@ -30,14 +31,12 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.*;
-import javax.swing.table.DefaultTableCellRenderer;
-import javax.swing.table.TableCellRenderer;
-import javax.swing.table.TableColumn;
-import javax.swing.table.TableModel;
+import javax.swing.table.*;
 import java.awt.*;
 import java.awt.datatransfer.StringSelection;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.util.Date;
 import java.util.List;
 
 import static com.intellij.vcs.log.graph.render.PrintParameters.HEIGHT_CELL;
@@ -49,11 +48,13 @@ public class VcsLogGraphTable extends JBTable implements TypeSafeDataProvider, C
 
   private static final Logger LOG = Logger.getInstance(VcsLogGraphTable.class);
   private static final int ROOT_INDICATOR_WIDTH = 5;
+  private static final int MAX_DEFAULT_AUTHOR_COLUMN_WIDTH = 200;
 
   @NotNull private final VcsLogUI myUI;
   @NotNull private final GraphCellPainter myGraphPainter;
 
-  private  volatile boolean myRepaintFreezed;
+  private boolean myColumnsSizeInitialized = false;
+  private volatile boolean myRepaintFreezed;
 
   public VcsLogGraphTable(@NotNull VcsLogUI UI, final VcsLogDataHolder logDataHolder) {
     super();
@@ -113,6 +114,53 @@ public class VcsLogGraphTable extends JBTable implements TypeSafeDataProvider, C
   }
 
   @Override
+  public void setModel(TableModel model) {
+    super.setModel(model);
+    // initialize sizes once, when the real model is set (not from the constructor).
+    if (!myColumnsSizeInitialized && !(model instanceof DefaultTableModel)) {
+      myColumnsSizeInitialized = true;
+      setColumnPreferredSize();
+      setAutoCreateColumnsFromModel(false); // otherwise sizes are recalculated after each TableColumn re-initialization
+    }
+  }
+
+  private void setColumnPreferredSize() {
+    for (int i = 0; i < getColumnCount(); i++) {
+      TableColumn column = getColumnModel().getColumn(i);
+      if (i == AbstractVcsLogTableModel.ROOT_COLUMN) { // thin stripe or nothing
+        int rootWidth = myUI.getColorManager().isMultipleRoots() ? ROOT_INDICATOR_WIDTH : 0;
+        // NB: all further instructions and their order are important, otherwise the minimum size which is less than 15 won't be applied
+        column.setMinWidth(rootWidth);
+        column.setMaxWidth(rootWidth);
+        column.setPreferredWidth(rootWidth);
+      }
+      else if (i == AbstractVcsLogTableModel.COMMIT_COLUMN) { // let commit message occupy as much as possible
+        column.setPreferredWidth(Short.MAX_VALUE);
+      }
+      else if (i == AbstractVcsLogTableModel.AUTHOR_COLUMN) { // detect author with the longest name
+        int contentWidth = calcMaxContentColumnWidth(i, 1000);
+        column.setMinWidth(Math.min(contentWidth, MAX_DEFAULT_AUTHOR_COLUMN_WIDTH));
+        column.setWidth(column.getMinWidth());
+      }
+      else if (i == AbstractVcsLogTableModel.DATE_COLUMN) { // all dates have nearly equal sizes
+        Font tableFont = UIManager.getFont("Table.font");
+        column.setMinWidth(getFontMetrics(tableFont).stringWidth("mm" + DateFormatUtil.formatDateTime(new Date())));
+        column.setWidth(column.getMinWidth());
+      }
+    }
+  }
+
+  private int calcMaxContentColumnWidth(int columnIndex, int maxRowsToCheck) {
+    int maxWidth = 0;
+    for (int row = 0; row < maxRowsToCheck && row < getRowCount(); row++) {
+      TableCellRenderer renderer = getCellRenderer(row, columnIndex);
+      Component comp = prepareRenderer(renderer, row, columnIndex);
+      maxWidth = Math.max(comp.getPreferredSize().width, maxWidth);
+    }
+    return maxWidth + UIUtil.DEFAULT_HGAP;
+  }
+
+  @Override
   public String getToolTipText(@NotNull MouseEvent event) {
     int row = rowAtPoint(event.getPoint());
     int column = columnAtPoint(event.getPoint());
@@ -126,19 +174,6 @@ public class VcsLogGraphTable extends JBTable implements TypeSafeDataProvider, C
       }
     }
     return null;
-  }
-
-  public void setPreferredColumnWidths() {
-    TableColumn rootColumn = getColumnModel().getColumn(AbstractVcsLogTableModel.ROOT_COLUMN);
-    int rootWidth = myUI.getColorManager().isMultipleRoots() ? ROOT_INDICATOR_WIDTH : 0;
-    // NB: all further instructions and their order are important, otherwise the minimum size which is less than 15 won't be applied
-    rootColumn.setMinWidth(rootWidth);
-    rootColumn.setMaxWidth(rootWidth);
-    rootColumn.setPreferredWidth(rootWidth);
-
-    getColumnModel().getColumn(AbstractVcsLogTableModel.COMMIT_COLUMN).setPreferredWidth(700);
-    getColumnModel().getColumn(AbstractVcsLogTableModel.AUTHOR_COLUMN).setMinWidth(90);
-    getColumnModel().getColumn(AbstractVcsLogTableModel.DATE_COLUMN).setMinWidth(90);
   }
 
   public void jumpToRow(int rowIndex) {

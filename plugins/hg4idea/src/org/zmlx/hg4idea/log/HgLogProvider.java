@@ -239,6 +239,12 @@ public class HgLogProvider implements VcsLogProvider {
     return userName == null ? null : myVcsObjectsFactory.createUser(userArgs.get(0), userArgs.get(1));
   }
 
+  @NotNull
+  @Override
+  public Collection<String> getContainingBranches(@NotNull VirtualFile root, @NotNull Hash commitHash) throws VcsException {
+    return HgHistoryUtil.getDescendingHeadsOfBranches(myProject, root, commitHash);
+  }
+
   private static String prepareParameter(String paramName, String value) {
     return "--" + paramName + "=" + value; // no value escaping needed, because the parameter itself will be quoted by GeneralCommandLine
   }

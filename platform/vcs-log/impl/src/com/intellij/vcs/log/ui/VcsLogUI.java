@@ -90,9 +90,7 @@ public class VcsLogUI {
     UIUtil.invokeLaterIfNeeded(new Runnable() {
       @Override
       public void run() {
-        myMainFrame.getGraphTable().setPreferredColumnWidths();
         myMainFrame.getGraphTable().repaint();
-        myMainFrame.refresh();
       }
     });
   }

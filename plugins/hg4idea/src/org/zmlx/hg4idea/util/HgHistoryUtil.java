@@ -34,6 +34,7 @@ import org.zmlx.hg4idea.*;
 import org.zmlx.hg4idea.action.HgCommandResultNotifier;
 import org.zmlx.hg4idea.command.HgLogCommand;
 import org.zmlx.hg4idea.execution.HgCommandException;
+import org.zmlx.hg4idea.execution.HgCommandResult;
 import org.zmlx.hg4idea.log.HgContentRevisionFactory;
 import org.zmlx.hg4idea.provider.HgCommittedChangeList;
 
@@ -205,5 +206,30 @@ public class HgHistoryUtil {
     builder.deleteCharAt(builder.length() - 1);
     //todo change ugly style
     return new String[]{"--rev", builder.toString()};
+  }
+
+  @NotNull
+  public static Collection<String> getDescendingHeadsOfBranches(@NotNull Project project, @NotNull VirtualFile root, @NotNull Hash hash)
+    throws VcsException {
+    //hg log -r "descendants(659db54c1b6865c97c4497fa867194bcd759ca76) and head() " --template "{branch} {bookmarks}\n"
+    Set<String> branchHeads = new HashSet<String>();
+    List<String> params = new ArrayList<String>();
+    params.add("-r");
+    params.add("descendants(" + hash.asString() + ") and head()");
+    HgFile hgFile = new HgFile(root, VcsUtil.getFilePath(root.getPath()));
+    HgLogCommand hgLogCommand = new HgLogCommand(project);
+    hgLogCommand.setLogFile(false);
+    String template = HgChangesetUtil.makeTemplate("{branch}", "{bookmarks}");
+    HgCommandResult logResult = hgLogCommand.execute(root, template, -1, hgFile, params);
+    if (logResult == null || logResult.getExitValue() != 0) {
+      throw new VcsException("Couldn't get commit details: log command execution error.");
+    }
+    String output = logResult.getRawOutput();
+    String[] changeSets = output.split(HgChangesetUtil.CHANGESET_SEPARATOR);
+    for (String line : changeSets) {
+      String[] attributes = line.split(HgChangesetUtil.ITEM_SEPARATOR);
+      branchHeads.addAll(Arrays.asList(attributes));
+    }
+    return branchHeads;
   }
 }
