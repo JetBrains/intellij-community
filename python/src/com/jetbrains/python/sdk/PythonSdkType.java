@@ -52,6 +52,7 @@ import com.intellij.openapi.util.text.CharFilter;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.psi.PsiElement;
+import com.intellij.reference.SoftReference;
 import com.intellij.remotesdk.RemoteSdkData;
 import com.intellij.remotesdk.RemoteSdkDataHolder;
 import com.intellij.ui.awt.RelativePoint;
@@ -495,11 +496,8 @@ public class PythonSdkType extends SdkType {
 
   public void setupSdkPaths(@NotNull final Sdk sdk) {
     final Project project;
-    Component ownerComponent = null;
     final WeakReference<Component> ownerComponentRef = sdk.getUserData(SDK_CREATOR_COMPONENT_KEY);
-    if (ownerComponentRef != null) {
-      ownerComponent = ownerComponentRef.get();
-    }
+    Component ownerComponent = SoftReference.dereference(ownerComponentRef);
     if (ownerComponent != null) {
       project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(ownerComponent));
     }

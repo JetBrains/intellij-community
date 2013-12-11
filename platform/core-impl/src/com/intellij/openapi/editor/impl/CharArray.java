@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -188,7 +188,7 @@ abstract class CharArray implements CharSequenceBackedByArray, Dumpable {
     }
     CharSequence originalSequence = myOriginalSequence;
     int origLen = originalSequence == null ? -1 : originalSequence.length();
-    String string = myStringRef == null ? null : myStringRef.get();
+    String string = com.intellij.reference.SoftReference.dereference(myStringRef);
     int stringLen = string == null ? -1 : string.length();
     assert origLen == stringLen || origLen==-1 || stringLen==-1;
 
@@ -219,7 +219,7 @@ abstract class CharArray implements CharSequenceBackedByArray, Dumpable {
 
     myDebugArray.assertConsistency();
 
-    CharSequence str = myStringRef == null ? null : myStringRef.get();
+    CharSequence str = com.intellij.reference.SoftReference.dereference(myStringRef);
     if (str == null) {
       if (myHasDeferredChanges) {
         str = doSubString(0, myCount + myDeferredShift).toString();
@@ -388,7 +388,7 @@ abstract class CharArray implements CharSequenceBackedByArray, Dumpable {
   @NotNull
   public String toString() {
     assertConsistency();
-    String str = myStringRef == null ? null : myStringRef.get();
+    String str = com.intellij.reference.SoftReference.dereference(myStringRef);
     if (str == null) {
       if (myHasDeferredChanges) {
         str = substring(0, length()).toString();

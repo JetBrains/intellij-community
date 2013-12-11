@@ -393,8 +393,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
   }
 
   private void clearStub(@NotNull String reason) {
-    SoftReference<StubTree> stubRef = myStub;
-    StubTree stubHolder = stubRef == null ? null : stubRef.get();
+    StubTree stubHolder = SoftReference.dereference(myStub);
     if (stubHolder != null) {
       ((PsiFileStubImpl<?>)stubHolder.getRoot()).clearPsi(reason);
     }
@@ -730,7 +729,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     if (myStub == null) return  null;
 
     synchronized (PsiLock.LOCK) {
-      return myStub != null ? myStub.get() : null;
+      return SoftReference.dereference(myStub);
     }
   }
 
@@ -993,7 +992,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     FileElement fileElement = calcTreeElement();
     synchronized (myStubFromTreeLock) {
       SoftReference<StubTree> ref = fileElement.getUserData(STUB_TREE_IN_PARSED_TREE);
-      StubTree tree = ref == null ? null : ref.get();
+      StubTree tree = SoftReference.dereference(ref);
 
       if (tree == null) {
         ApplicationManager.getApplication().assertReadAccessAllowed();

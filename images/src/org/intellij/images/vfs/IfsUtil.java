@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -66,7 +66,7 @@ public final class IfsUtil {
   private static boolean refresh(@NotNull VirtualFile file) throws IOException {
     Long loadedTimeStamp = file.getUserData(TIMESTAMP_KEY);
     SoftReference<BufferedImage> imageRef = file.getUserData(BUFFERED_IMAGE_REF_KEY);
-    if (loadedTimeStamp == null || loadedTimeStamp.longValue() != file.getTimeStamp() || imageRef == null || imageRef.get() == null) {
+    if (loadedTimeStamp == null || loadedTimeStamp.longValue() != file.getTimeStamp() || SoftReference.dereference(imageRef) == null) {
       try {
         final byte[] content = file.contentsToByteArray();
 
@@ -113,7 +113,7 @@ public final class IfsUtil {
   public static BufferedImage getImage(@NotNull VirtualFile file) throws IOException {
     refresh(file);
     SoftReference<BufferedImage> imageRef = file.getUserData(BUFFERED_IMAGE_REF_KEY);
-    return imageRef != null ? imageRef.get() : null;
+    return SoftReference.dereference(imageRef);
   }
 
   @Nullable

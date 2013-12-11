@@ -6299,13 +6299,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         int documentLength = myDocument.getTextLength();
         int x = 0;
         boolean lastLineLengthCalculated = false;
-        final int fontSize = myScheme.getEditorFontSize();
-        final String fontName = myScheme.getEditorFontName();
 
         List<? extends SoftWrap> softWraps = getSoftWrapModel().getRegisteredSoftWraps();
         int softWrapsIndex = -1;
 
-        FontInfo lastFontInfo = null;
         for (int line = 0; line < lineCount; line++) {
           if (myLineWidths.getQuick(line) != -1) continue;
           if (line == lineCount - 1) {
@@ -6404,10 +6401,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
                 }
               }
               else {
-                if (lastFontInfo == null || !lastFontInfo.canDisplay(c)) {
-                  lastFontInfo = ComplementaryFontsRegistry.getFontAbleToDisplay(c, fontSize, fontType, fontName);
-                }
-                x += lastFontInfo.charWidth(c);
+                x += EditorUtil.charWidth(c, fontType, EditorImpl.this);
                 offset++;
               }
             }

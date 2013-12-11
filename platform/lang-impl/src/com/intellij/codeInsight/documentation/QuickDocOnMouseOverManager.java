@@ -32,6 +32,7 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiWhiteSpace;
+import com.intellij.reference.SoftReference;
 import com.intellij.ui.popup.PopupFactoryImpl;
 import com.intellij.util.Alarm;
 import com.intellij.util.containers.WeakHashMap;
@@ -169,11 +170,7 @@ public class QuickDocOnMouseOverManager {
     if (hint != null) {
 
       // Skip the event if the control is shown because of explicit 'show quick doc' action call.
-      WeakReference<DocumentationManager> ref = myDocumentationManager;
-      if (ref == null) {
-        return;
-      }
-      DocumentationManager manager = ref.get();
+      DocumentationManager manager = SoftReference.dereference(myDocumentationManager);
       if (manager == null || !manager.isCloseOnSneeze()) {
         return;
       }
@@ -257,16 +254,7 @@ public class QuickDocOnMouseOverManager {
 
   @Nullable
   private DocumentationManager getDocManager() {
-    WeakReference<DocumentationManager> ref = myDocumentationManager;
-    if (ref == null) {
-      return null;
-    }
-
-    DocumentationManager docManager = ref.get();
-    if (docManager == null) {
-      return null;
-    }
-    return docManager;
+    return SoftReference.dereference(myDocumentationManager);
   }
   
   private static class DelayedQuickDocInfo {

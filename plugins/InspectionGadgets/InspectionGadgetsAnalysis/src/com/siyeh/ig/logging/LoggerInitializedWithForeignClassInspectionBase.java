@@ -73,7 +73,7 @@ public class LoggerInitializedWithForeignClassInspectionBase extends BaseInspect
     super.readSettings(element);
     parseString(loggerClassName, loggerFactoryClassNames);
     parseString(loggerFactoryMethodName, loggerFactoryMethodNames);
-    if (loggerFactoryClassNames.size() != loggerFactoryMethodNames.size()) {
+    if (loggerFactoryClassNames.size() != loggerFactoryMethodNames.size() || loggerFactoryClassNames.isEmpty()) {
       parseString(DEFAULT_LOGGER_CLASS_NAMES, loggerFactoryClassNames);
       parseString(DEFAULT_FACTORY_METHOD_NAMES, loggerFactoryMethodNames);
     }

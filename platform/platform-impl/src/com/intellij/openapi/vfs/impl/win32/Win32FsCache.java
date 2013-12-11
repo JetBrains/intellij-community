@@ -44,8 +44,7 @@ class Win32FsCache {
 
   @NotNull
   private Map<String, FileAttributes> getMap() {
-    Reference<Map<String, FileAttributes>> cache = myCache;
-    Map<String, FileAttributes> map = cache == null ? null : cache.get();
+    Map<String, FileAttributes> map = com.intellij.reference.SoftReference.dereference(myCache);
     if (map == null) {
       map = new THashMap<String, FileAttributes>(FileUtil.PATH_HASHING_STRATEGY);
       myCache = new SoftReference<Map<String, FileAttributes>>(map);

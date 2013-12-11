@@ -399,7 +399,9 @@ public class GroovyAnnotator extends GroovyElementVisitor {
   private static void checkSameNameMethodsWithDifferentAccessModifiers(AnnotationHolder holder, GrMethod[] methods) {
     MultiMap<String, GrMethod> map = MultiMap.create();
     for (GrMethod method : methods) {
-      map.putValue(method.getName(), method);
+      if (!method.isConstructor()) {
+        map.putValue(method.getName(), method);
+      }
     }
 
     for (Map.Entry<String, Collection<GrMethod>> entry : map.entrySet()) {

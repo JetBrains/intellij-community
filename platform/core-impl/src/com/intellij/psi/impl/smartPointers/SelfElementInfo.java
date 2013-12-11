@@ -193,8 +193,7 @@ public class SelfElementInfo implements SmartPointerElementInfo {
   }
 
   private RangeMarker getMarker() {
-    Reference<RangeMarker> ref = myMarkerRef;
-    return ref == null ? null : ref.get();
+    return com.intellij.reference.SoftReference.dereference(myMarkerRef);
   }
 
   @Override

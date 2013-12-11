@@ -41,4 +41,12 @@
     <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Reference checked for 'null' is not used inside 'if'</problem_class>
     <description>&lt;code&gt;x&lt;/code&gt; checked for 'null' is not used inside conditional #loc</description>
   </problem>
+
+  <problem>
+    <file>VariableNotUsedInsideIf.java</file>
+    <line>67</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Reference checked for 'null' is not used inside 'if'</problem_class>
+    <description>&lt;code&gt;args&lt;/code&gt; checked for 'null' is not used inside conditional #loc</description>
+  </problem>
+
 </problems>

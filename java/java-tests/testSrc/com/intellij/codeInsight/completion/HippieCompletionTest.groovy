@@ -36,16 +36,29 @@ $some_long_variable_name<caret>
 
   public void testFromAnotherFile() {
     myFixture.configureByText "b.txt", '''
-$some_long_variable_name = Obj::instance();
+$some_local = 1;
 '''
     myFixture.configureByText "a.txt", '''
-$some_lon<caret>
+$some_long_variable_name = Obj::instance();
+$some_lo<caret>
 '''
 
     complete()
     myFixture.checkResult '''
+$some_long_variable_name = Obj::instance();
 $some_long_variable_name<caret>
 '''
+    complete()
+    myFixture.checkResult '''
+$some_long_variable_name = Obj::instance();
+$some_local<caret>
+'''
+    backComplete()
+    myFixture.checkResult '''
+$some_long_variable_name = Obj::instance();
+$some_long_variable_name<caret>
+'''
+
   }
 
   public void "test no middle matching"() {
@@ -143,5 +156,9 @@ class Xoo {
 
   private void complete() {
     myFixture.performEditorAction(IdeActions.ACTION_HIPPIE_COMPLETION)
+  }
+
+  private void backComplete() {
+    myFixture.performEditorAction(IdeActions.ACTION_HIPPIE_BACKWARD_COMPLETION)
   }
 }

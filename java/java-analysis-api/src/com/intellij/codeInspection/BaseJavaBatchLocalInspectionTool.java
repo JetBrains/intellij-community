@@ -20,6 +20,12 @@ import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+/**
+ * Base java local inspection which provides batch suppress actions, i.e. actions which don't need UI components to run (e.g. Editor).
+ * Please use this class if your inspection and its fixes
+ *  - work with PSI or document only and
+ *  - don't provide {@link com.intellij.codeInsight.intention.IntentionAction} for quick fixes/suppression, making do with {@link LocalQuickFix} only.
+ */
 public abstract class BaseJavaBatchLocalInspectionTool extends AbstractBaseJavaLocalInspectionTool implements BatchSuppressableTool {
   @NotNull
   @Override

@@ -15,6 +15,7 @@
  */
 package com.intellij.util.containers;
 
+import com.intellij.reference.SoftReference;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.ref.ReferenceQueue;
@@ -50,8 +51,7 @@ public final class WeakKeyWeakValueHashMap<K,V> implements Map<K,V>{
   @Override
   public V get(Object key) {
     MyValueReference<K,V> ref = myWeakKeyMap.get(key);
-    if (ref == null) return null;
-    return ref.get();
+    return SoftReference.dereference(ref);
   }
 
   @Override
@@ -60,14 +60,14 @@ public final class WeakKeyWeakValueHashMap<K,V> implements Map<K,V>{
     WeakHashMap.Key<K> weakKey = myWeakKeyMap.createKey(key);
     MyValueReference<K, V> reference = new MyValueReference<K, V>(weakKey, value, myQueue);
     MyValueReference<K,V> oldRef = myWeakKeyMap.putKey(weakKey, reference);
-    return oldRef == null ? null : oldRef.get();
+    return SoftReference.dereference(oldRef);
   }
 
   @Override
   public V remove(Object key) {
     processQueue();
     MyValueReference<K,V> ref = myWeakKeyMap.remove(key);
-    return ref != null ? ref.get() : null;
+    return SoftReference.dereference(ref);
   }
 
   @Override

@@ -35,6 +35,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.openapi.wm.ex.LayoutFocusTraversalPolicyExt;
+import com.intellij.reference.SoftReference;
 import com.intellij.ui.FocusTrackback;
 import com.intellij.util.containers.WeakValueHashMap;
 import com.intellij.util.ui.UIUtil;
@@ -417,8 +418,7 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
 
   @Nullable
   private FocusCommand getLastEffectiveForcedRequest() {
-    if (myLastForcedRequest == null) return null;
-    final FocusCommand request = myLastForcedRequest.get();
+    final FocusCommand request = SoftReference.dereference(myLastForcedRequest);
     return request != null && !request.isExpired() ? request : null;
   }
 

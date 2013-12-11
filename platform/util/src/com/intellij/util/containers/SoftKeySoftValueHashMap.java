@@ -50,8 +50,7 @@ public final class SoftKeySoftValueHashMap<K,V> implements Map<K,V>{
   @Override
   public V get(Object key) {
     MyValueReference<K,V> ref = mySoftKeyMap.get(key);
-    if (ref == null) return null;
-    return ref.get();
+    return com.intellij.reference.SoftReference.dereference(ref);
   }
 
   @Override
@@ -60,14 +59,14 @@ public final class SoftKeySoftValueHashMap<K,V> implements Map<K,V>{
     SoftHashMap.Key<K> softKey = mySoftKeyMap.createKey(key);
     MyValueReference<K, V> reference = new MyValueReference<K, V>(softKey, value, myQueue);
     MyValueReference<K,V> oldRef = mySoftKeyMap.putKey(softKey, reference);
-    return oldRef == null ? null : oldRef.get();
+    return com.intellij.reference.SoftReference.dereference(oldRef);
   }
 
   @Override
   public V remove(Object key) {
     processQueue();
     MyValueReference<K,V> ref = mySoftKeyMap.remove(key);
-    return ref != null ? ref.get() : null;
+    return com.intellij.reference.SoftReference.dereference(ref);
   }
 
   @Override

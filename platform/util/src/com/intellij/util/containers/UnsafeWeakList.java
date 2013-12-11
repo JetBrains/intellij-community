@@ -16,6 +16,7 @@
 package com.intellij.util.containers;
 
 import com.intellij.openapi.util.Condition;
+import com.intellij.reference.SoftReference;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
@@ -159,8 +160,7 @@ public class UnsafeWeakList<T> extends AbstractList<T> {
       nextElement = null;
       nextIndex = -1;
       for (int i= curIndex +1; i<myList.size();i++) {
-        MyReference<T> reference = myList.get(i);
-        T t = reference == null ? null : reference.get();
+        T t = SoftReference.dereference(myList.get(i));
         if (t != null) {
           nextElement = t;
           nextIndex = i;
@@ -194,8 +194,7 @@ public class UnsafeWeakList<T> extends AbstractList<T> {
   public boolean remove(@NotNull Object o) {
     processQueue();
     for (int i = 0; i < myList.size(); i++) {
-      MyReference<T> reference = myList.get(i);
-      T t = reference == null ? null : reference.get();
+      T t = SoftReference.dereference(myList.get(i));
       if (t != null && t.equals(o)) {
         nullizeAt(i);
         return true;
@@ -219,10 +218,10 @@ public class UnsafeWeakList<T> extends AbstractList<T> {
   private static final Function<MyReference<Object>, Object> DEREF = new Function<MyReference<Object>, Object>() {
     @Override
     public Object fun(MyReference<Object> reference) {
-      return reference == null ? null : reference.get();
+      return SoftReference.dereference(reference);
     }
   };
-  private static <T> Function<MyReference<T>, T> deref() {
+  private static <X> Function<MyReference<X>, X> deref() {
     return (Function)DEREF;
   }
   @NotNull
@@ -250,7 +249,7 @@ public class UnsafeWeakList<T> extends AbstractList<T> {
   private static final Condition<MyReference<Object>> NOT_NULL = new Condition<MyReference<Object>>() {
     @Override
     public boolean value(MyReference<Object> reference) {
-      return reference != null && reference.get() != null;
+      return SoftReference.dereference(reference) != null;
     }
   };
 

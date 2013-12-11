@@ -42,6 +42,7 @@ import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.reference.SoftReference;
 import com.intellij.semantic.SemKey;
 import com.intellij.semantic.SemService;
 import com.intellij.util.EventDispatcher;
@@ -372,7 +373,7 @@ public final class DomManagerImpl extends DomManager {
   @Nullable
   static <T extends DomElement> DomFileElementImpl<T> getCachedFileElement(@NotNull XmlFile file) {
     WeakReference<DomFileElementImpl> ref = file.getUserData(CACHED_FILE_ELEMENT);
-    return ref == null ? null : ref.get();
+    return SoftReference.dereference(ref);
   }
 
   @Nullable

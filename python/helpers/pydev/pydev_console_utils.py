@@ -4,6 +4,7 @@ import sys
 import traceback
 
 from pydevd_constants import USE_LIB_COPY
+from pydevd_constants import IS_JYTHON
 
 try:
     if USE_LIB_COPY:
@@ -156,7 +157,7 @@ class BaseInterpreterInterface:
         if hasattr(self.interpreter, 'is_complete'):
             return not self.interpreter.is_complete(source)
         try:
-            code = self.interpreter.compile(source, "<input>", "exec")
+            code = self.interpreter.compile(source, '<input>', 'exec')
         except (OverflowError, SyntaxError, ValueError):
             # Case 1
             return False
@@ -173,7 +174,7 @@ class BaseInterpreterInterface:
         else:
             self.buffer.append(code_fragment)
         
-        return self.needMoreForCode(code_fragment.text)
+        return self.needMoreForCode(self.buffer.text)
 
     def addExec(self, code_fragment):
         original_in = sys.stdin
@@ -208,7 +209,7 @@ class BaseInterpreterInterface:
                             self._input_error_printed = True
                             sys.stderr.write('\nError when trying to update pydoc.help.input\n')
                             sys.stderr.write('(help() may not work -- please report this as a bug in the pydev bugtracker).\n\n')
-                            import traceback;
+                            import traceback
 
                             traceback.print_exc()
 
@@ -320,7 +321,11 @@ class BaseInterpreterInterface:
         try:
             code_fragment = CodeFragment(code, is_single_line)
             more = self.needMore(code_fragment)
-            self.exec_queue.put(code_fragment)
+            if not more:
+                code_fragment = self.buffer
+                self.buffer = None
+                self.exec_queue.put(code_fragment)
+
             return more
         except:
             traceback.print_exc()
@@ -331,7 +336,11 @@ class BaseInterpreterInterface:
 
 
     def execMultipleLines(self, lines):
-        return self.doExecCode(lines, False)
+        if IS_JYTHON:
+            for line in lines.split('\n'):
+                self.doExecCode(line, True)
+        else:
+            return self.doExecCode(lines, False)
 
 
     def interrupt(self):

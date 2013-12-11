@@ -39,12 +39,13 @@ import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.lang.ref.Reference;
 import java.util.Arrays;
 
 public class PsiParameterImpl extends JavaStubPsiElement<PsiParameterStub> implements PsiParameter {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.PsiParameterImpl");
 
-  private volatile SoftReference<PsiType> myCachedType = null;
+  private volatile Reference<PsiType> myCachedType = null;
 
   public PsiParameterImpl(@NotNull PsiParameterStub stub) {
     this(stub, JavaStubElementTypes.PARAMETER);
@@ -116,16 +117,13 @@ public class PsiParameterImpl extends JavaStubPsiElement<PsiParameterStub> imple
   public PsiType getType() {
     PsiParameterStub stub = getStub();
     if (stub != null) {
-      SoftReference<PsiType> cachedType = myCachedType;
-      if (cachedType != null) {
-        PsiType type = cachedType.get();
-        if (type != null) return type;
-      }
+      PsiType type = SoftReference.dereference(myCachedType);
+      if (type != null) return type;
 
       String typeText = TypeInfo.createTypeText(stub.getType(true));
       assert typeText != null : stub;
       try {
-        PsiType type = JavaPsiFacade.getInstance(getProject()).getParserFacade().createTypeFromText(typeText, this);
+        type = JavaPsiFacade.getInstance(getProject()).getParserFacade().createTypeFromText(typeText, this);
         myCachedType = new SoftReference<PsiType>(type);
         return type;
       }

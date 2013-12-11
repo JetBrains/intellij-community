@@ -118,12 +118,12 @@ public class OpenFileDescriptor implements Navigatable {
       throw new IllegalStateException("Navigation is not possible with null project");
     }
 
-    if (!myFile.isDirectory() && navigateInEditor(myProject, requestFocus)) return;
+    if (!myFile.isDirectory() && navigateInEditorOrNativeApp(myProject, requestFocus)) return;
 
     navigateInProjectView(requestFocus);
   }
 
-  private boolean navigateInEditor(@NotNull Project project, boolean requestFocus) {
+  private boolean navigateInEditorOrNativeApp(@NotNull Project project, boolean requestFocus) {
     FileType type = FileTypeManager.getInstance().getKnownFileTypeOrAssociate(myFile,project);
     if (type == null || !myFile.isValid()) return false;
 
@@ -131,6 +131,10 @@ public class OpenFileDescriptor implements Navigatable {
       return ((INativeFileType) type).openFileInAssociatedApplication(project, myFile);
     }
 
+    return navigateInEditor(project, requestFocus);
+  }
+
+  public boolean navigateInEditor(@NotNull Project project, boolean requestFocus) {
     return navigateInRequestedEditor() || navigateInAnyFileEditor(project, requestFocus);
   }
 

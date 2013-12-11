@@ -142,7 +142,7 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl<GrCodeRef
         return CLASS_OR_PACKAGE;
       }
       else if (parentKind == STATIC_MEMBER_FQ) {
-        return CLASS;
+        return isQualified() ? CLASS_FQ : CLASS;
       }
       else if (parentKind == CLASS_FQ) return CLASS_OR_PACKAGE_FQ;
       return parentKind;
@@ -500,10 +500,8 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl<GrCodeRef
 
           break;
 
-        case CLASS:
-        case CLASS_OR_PACKAGE: {
-          EnumSet<ClassHint.ResolveKind> kinds = kind == CLASS ? ResolverProcessor.RESOLVE_KINDS_CLASS :
-                                                 ResolverProcessor.RESOLVE_KINDS_CLASS_PACKAGE;
+        case CLASS: {
+          EnumSet<ClassHint.ResolveKind> kinds = kind == CLASS ? ResolverProcessor.RESOLVE_KINDS_CLASS : ResolverProcessor.RESOLVE_KINDS_CLASS_PACKAGE;
           ResolverProcessor processor = new ClassResolverProcessor(refName, ref, kinds);
           GrCodeReferenceElement qualifier = ref.getQualifier();
           if (qualifier != null) {
@@ -529,6 +527,21 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl<GrCodeRef
           break;
         }
 
+        case CLASS_OR_PACKAGE: {
+          GroovyResolveResult[] classResult = _resolve(ref, manager, CLASS);
+
+          if (classResult.length == 1 && !classResult[0].isAccessible()) {
+            GroovyResolveResult[] packageResult = _resolve(ref, manager, PACKAGE_FQ);
+            if (packageResult.length != 0) {
+              return packageResult;
+            }
+          }
+          else if (classResult.length == 0) {
+            return _resolve(ref, manager, PACKAGE_FQ);
+          }
+          
+          return classResult;
+        }
         case STATIC_MEMBER_FQ: {
           final GrCodeReferenceElement qualifier = ref.getQualifier();
           if (qualifier != null) {

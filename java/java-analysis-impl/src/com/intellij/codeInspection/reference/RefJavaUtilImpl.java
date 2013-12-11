@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,6 +38,17 @@ public class RefJavaUtilImpl extends RefJavaUtil{
       findIn.accept(
         new JavaRecursiveElementWalkingVisitor() {
           @Override public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
+            final PsiElement target = reference.resolve();
+
+            if (target instanceof PsiClass) {
+              final PsiClass aClass = (PsiClass)target;
+              final RefClassImpl refClass = (RefClassImpl)refFrom.getRefManager().getReference(aClass);
+              refFrom.addReference(refClass, aClass, psiFrom, false, true, null);
+            }
+
+            if (target instanceof PsiModifierListOwner && isDeprecated(target)) {
+              refFrom.setUsesDeprecatedApi(true);
+            }
           }
 
           @Override public void visitReferenceExpression(PsiReferenceExpression expression) {

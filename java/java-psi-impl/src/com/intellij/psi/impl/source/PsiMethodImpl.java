@@ -195,14 +195,11 @@ public class PsiMethodImpl extends JavaStubPsiElement<PsiMethodStub> implements 
       final String typeText = TypeInfo.createTypeText(stub.getReturnTypeText(true));
       if (typeText == null) return null;
 
-      SoftReference<PsiType> cachedType = myCachedType;
-      if (cachedType != null) {
-        PsiType type = cachedType.get();
-        if (type != null) return type;
-      }
+      PsiType type = SoftReference.dereference(myCachedType);
+      if (type != null) return type;
 
       try {
-        final PsiType type = JavaPsiFacade.getInstance(getProject()).getElementFactory().createTypeFromText(typeText, this);
+        type = JavaPsiFacade.getInstance(getProject()).getElementFactory().createTypeFromText(typeText, this);
         myCachedType = new SoftReference<PsiType>(type);
         return type;
       }

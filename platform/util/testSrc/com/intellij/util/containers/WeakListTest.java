@@ -33,17 +33,25 @@ public class WeakListTest extends TestCase {
     myHolder.add(element);
   }
 
+  private static final String HARD_REFERENCED = "xxx";
   public void testCompresses() {
     for (int i = 0; i < 20; i++) {
       addElement(new Object());
     }
     assertEquals(20, myWeakList.listSize());
-    String obj = "xxx";
-    addElement(obj);
+    addElement(HARD_REFERENCED);
+    assertEquals(21, myWeakList.listSize());
     myHolder.clear();
-    gc();
-    myWeakList.remove(new Object()); // invoke processQueue()
-    //obj is held here in the codeblock
+    while (myWeakList.toStrongList().size() == 21) {
+      synchronized (myWeakList) {
+        gc();
+      }
+    }
+    synchronized (myWeakList) {
+      boolean processed = myWeakList.processQueue();
+      assertTrue(processed); // some refs must be in the queue
+    }
+    //HARD_REFERENCED is held there
     assertEquals(1, myWeakList.listSize());
   }
 
@@ -166,13 +174,13 @@ public class WeakListTest extends TestCase {
       iterator.next();
       fail("must not allow to next");
     }
-    catch (NoSuchElementException e) {
+    catch (NoSuchElementException ignored) {
     }
     try {
       iterator.remove();
       fail("must not allow to remove");
     }
-    catch (NoSuchElementException e) {
+    catch (NoSuchElementException ignored) {
     }
   }
 
@@ -189,7 +197,11 @@ public class WeakListTest extends TestCase {
     gc();
     assertEquals(N + 1 + N, myWeakList.listSize());
     myHolder.clear();
-    gc();
+    while (myWeakList.toStrongList().size() == N + 1 + N) {
+      synchronized (myWeakList) {
+        gc();
+      }
+    }
     boolean removed = myWeakList.remove("zzz");
     assertFalse(removed);
     assertEquals(1, myWeakList.listSize());
