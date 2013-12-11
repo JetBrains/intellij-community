@@ -37,4 +37,8 @@ public class RedundantTypeArgsInspectionTest extends JavaCodeInsightFixtureTestC
   public void testBoundInference() throws Throwable {
     doTest();
   }
+
+  public void testNestedCalls() throws Throwable {
+    doTest();
+  }
 }
