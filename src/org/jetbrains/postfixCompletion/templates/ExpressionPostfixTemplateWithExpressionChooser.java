@@ -90,7 +90,7 @@ public abstract class ExpressionPostfixTemplateWithExpressionChooser extends Pos
   private static List<PsiExpression> maybeTopmostExpression(@NotNull PsiElement context) {
     PsiExpression expression = getTopmostExpression(context);
     PsiType type = expression != null ? expression.getType() : null;
-    if (type == null || PsiType.VOID == type) return ContainerUtil.emptyList();
+    if (type == null || PsiType.VOID.equals(type)) return ContainerUtil.emptyList();
     return ContainerUtil.createMaybeSingletonList(expression);
   }
 

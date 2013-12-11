@@ -19,6 +19,6 @@ abstract public class BooleanPostfixTemplate extends PostfixTemplate {
   }
 
   public static boolean isBooleanType(@Nullable PsiType type) {
-    return type != null && (PsiType.BOOLEAN == type || PsiType.BOOLEAN == PsiPrimitiveType.getUnboxedType(type));
+    return type != null && (PsiType.BOOLEAN.equals(type) || PsiType.BOOLEAN.equals(PsiPrimitiveType.getUnboxedType(type)));
   }
 }
