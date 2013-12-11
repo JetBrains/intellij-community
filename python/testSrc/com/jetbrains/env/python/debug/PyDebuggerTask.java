@@ -13,6 +13,7 @@ import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.xdebugger.*;
 import com.jetbrains.env.RemoteSdkTestable;
 import com.jetbrains.python.PythonHelpersLocator;
@@ -179,10 +180,10 @@ public class PyDebuggerTask extends PyBaseDebuggerTask implements RemoteSdkTesta
     for (File f: PythonHelpersLocator.getHelpersRoot().listFiles(new FilenameFilter() {
       @Override
       public boolean accept(File dir, String name) {
-        return name.endsWith(".pyc");
+        return name.endsWith(".pyc") || name.equals("__pycache__");
       }
     })) {
-      f.delete();
+      FileUtil.delete(f);
     }
   }
 
