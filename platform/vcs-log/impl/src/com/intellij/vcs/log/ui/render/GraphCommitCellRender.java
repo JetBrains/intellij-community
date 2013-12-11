@@ -85,7 +85,6 @@ public class GraphCommitCellRender extends AbstractPaddingCellRender {
     int width = calcPaddingBeforeText(cell, (Graphics2D)g);
     BufferedImage image = UIUtil.createImage(width, HEIGHT_CELL, BufferedImage.TYPE_INT_ARGB);
     Graphics2D g2 = image.createGraphics();
-    g2.setBackground(new Color(0, 0, 0, 0));
 
     graphPainter.draw(g2, cell.getPrintCell());
 
