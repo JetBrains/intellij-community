@@ -21,10 +21,11 @@ import com.intellij.ide.util.newProjectWizard.AddModuleWizard;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
-import com.intellij.openapi.components.AbstractProjectComponent;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.externalSystem.service.project.manage.ProjectDataManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.startup.StartupActivity;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -42,32 +43,28 @@ import java.io.FilenameFilter;
  * @author Vladislav.Soroka
  * @since 12/10/13
  */
-public class GradleProjectComponent extends AbstractProjectComponent {
+public class GradleStartupActivity implements StartupActivity {
 
   @NonNls private static final String SHOW_UNLINKED_GRADLE_POPUP = "show.inlinked.gradle.project.popup";
   private static final String IMPORT_EVENT_DESCRIPTION = "import";
   private static final String DO_NOT_SHOW_EVENT_DESCRIPTION = "do.not.show";
 
-  protected GradleProjectComponent(Project project) {
-    super(project);
-  }
-
   @Override
-  public void projectOpened() {
-    showNotificationForUnlinkedGradleProject();
+  public void runActivity(@NotNull Project project) {
+    showNotificationForUnlinkedGradleProject(project);
   }
 
-  private void showNotificationForUnlinkedGradleProject() {
-    if (!PropertiesComponent.getInstance(myProject).getBoolean(SHOW_UNLINKED_GRADLE_POPUP, true)
-        || !GradleSettings.getInstance(myProject).getLinkedProjectsSettings().isEmpty()) {
+  private static void showNotificationForUnlinkedGradleProject(@NotNull final Project project) {
+    if (!PropertiesComponent.getInstance(project).getBoolean(SHOW_UNLINKED_GRADLE_POPUP, true)
+        || !GradleSettings.getInstance(project).getLinkedProjectsSettings().isEmpty()) {
       return;
     }
 
-    File baseDir = VfsUtilCore.virtualToIoFile(myProject.getBaseDir());
+    File baseDir = VfsUtilCore.virtualToIoFile(project.getBaseDir());
     final File[] files = baseDir.listFiles(new FilenameFilter() {
       @Override
       public boolean accept(File dir, String name) {
-        return GradleConstants.DEFAULT_SCRIPT_NAME.equals(name);
+        return FileUtil.namesEqual(GradleConstants.DEFAULT_SCRIPT_NAME, name);
       }
     });
 
@@ -76,7 +73,7 @@ public class GradleProjectComponent extends AbstractProjectComponent {
                                      GradleBundle.message("gradle.notifications.unlinked.project.found.msg", IMPORT_EVENT_DESCRIPTION),
                                      GradleBundle.message("gradle.notifications.do.not.show", DO_NOT_SHOW_EVENT_DESCRIPTION));
 
-      GradleNotification.getInstance(myProject).showBalloon(
+      GradleNotification.getInstance(project).showBalloon(
         GradleBundle.message("gradle.notifications.unlinked.project.found.title"),
         message, NotificationType.INFORMATION, new NotificationListener.Adapter() {
           @Override
@@ -87,11 +84,11 @@ public class GradleProjectComponent extends AbstractProjectComponent {
               final GradleProjectImportProvider gradleProjectImportProvider = new GradleProjectImportProvider(gradleProjectImportBuilder);
               AddModuleWizard wizard = new AddModuleWizard(null, files[0].getPath(), gradleProjectImportProvider);
               if ((wizard.getStepCount() <= 0 || wizard.showAndGet())) {
-                ImportModuleAction.createFromWizard(myProject, wizard);
+                ImportModuleAction.createFromWizard(project, wizard);
               }
             }
             else if (DO_NOT_SHOW_EVENT_DESCRIPTION.equals(e.getDescription())) {
-              PropertiesComponent.getInstance(myProject).setValue(SHOW_UNLINKED_GRADLE_POPUP, Boolean.FALSE.toString());
+              PropertiesComponent.getInstance(project).setValue(SHOW_UNLINKED_GRADLE_POPUP, Boolean.FALSE.toString());
             }
           }
         }
