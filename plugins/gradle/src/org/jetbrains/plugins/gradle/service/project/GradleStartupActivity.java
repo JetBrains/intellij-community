@@ -22,6 +22,7 @@ import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys;
 import com.intellij.openapi.externalSystem.service.project.manage.ProjectDataManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupActivity;
@@ -56,7 +57,8 @@ public class GradleStartupActivity implements StartupActivity {
 
   private static void showNotificationForUnlinkedGradleProject(@NotNull final Project project) {
     if (!PropertiesComponent.getInstance(project).getBoolean(SHOW_UNLINKED_GRADLE_POPUP, true)
-        || !GradleSettings.getInstance(project).getLinkedProjectsSettings().isEmpty()) {
+        || !GradleSettings.getInstance(project).getLinkedProjectsSettings().isEmpty()
+        || project.getUserData(ExternalSystemDataKeys.NEWLY_IMPORTED_PROJECT) == Boolean.TRUE) {
       return;
     }
 
