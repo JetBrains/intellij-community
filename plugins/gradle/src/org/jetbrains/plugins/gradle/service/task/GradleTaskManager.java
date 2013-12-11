@@ -15,7 +15,6 @@
  */
 package org.jetbrains.plugins.gradle.service.task;
 
-import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.externalSystem.model.ExternalSystemException;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationEvent;
@@ -27,18 +26,17 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.SystemProperties;
+import com.intellij.util.containers.ContainerUtil;
 import org.gradle.tooling.BuildLauncher;
 import org.gradle.tooling.ProjectConnection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.service.project.GradleExecutionHelper;
-import org.jetbrains.plugins.gradle.service.project.GradleProjectResolverExtension;
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.OutputStream;
 import java.util.List;
 
 /**
@@ -55,17 +53,34 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
                            @NotNull String projectPath,
                            @Nullable final GradleExecutionSettings settings,
                            @Nullable final String vmOptions,
+                           @Nullable final String scriptParameters,
                            @Nullable final String debuggerSetup,
                            @NotNull final ExternalSystemTaskNotificationListener listener) throws ExternalSystemException {
 
-    if(settings != null) {
+    if (settings != null) {
       myHelper.ensureInstalledWrapper(id, projectPath, settings, listener);
+    }
+
+    final List<String> scriptParametersList;
+    if (scriptParameters == null) {
+      scriptParametersList = ContainerUtil.newArrayList();
+    }
+    else {
+      // filter nulls and empty strings
+      scriptParametersList = ContainerUtil.mapNotNull(
+        StringUtil.split(scriptParameters.trim(), " "), new Function<String, String>() {
+          @Override
+          public String fun(String s) {
+            return StringUtil.isEmpty(s) ? null : s.trim();
+          }
+        }
+      );
     }
 
     // TODO add support for external process mode
     if (ExternalSystemApiUtil.isInProcessMode(GradleConstants.SYSTEM_ID)) {
       for (GradleTaskManagerExtension gradleTaskManagerExtension : GradleTaskManagerExtension.EP_NAME.getExtensions()) {
-        if(gradleTaskManagerExtension.executeTasks(id, taskNames, projectPath, settings, vmOptions, debuggerSetup, listener)) return;
+        if (gradleTaskManagerExtension.executeTasks(id, taskNames, projectPath, settings, vmOptions, debuggerSetup, listener)) return;
       }
     }
 
@@ -84,11 +99,17 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
               "}}",
             };
             FileUtil.writeToFile(tempFile, StringUtil.join(lines, SystemProperties.getLineSeparator()));
-            launcher.withArguments("--init-script", tempFile.getAbsolutePath());
+
+            scriptParametersList.add("--init-script");
+            scriptParametersList.add(tempFile.getAbsolutePath());
           }
           catch (IOException e) {
             throw new ExternalSystemException(e);
           }
+        }
+
+        if(!scriptParametersList.isEmpty()) {
+          launcher.withArguments(ArrayUtil.toStringArray(scriptParametersList));
         }
         launcher.forTasks(ArrayUtil.toStringArray(taskNames));
         launcher.run();
@@ -103,7 +124,7 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
     throws ExternalSystemException {
 
     for (GradleTaskManagerExtension gradleTaskManagerExtension : GradleTaskManagerExtension.EP_NAME.getExtensions()) {
-      if(gradleTaskManagerExtension.cancelTask(id, listener)) return true;
+      if (gradleTaskManagerExtension.cancelTask(id, listener)) return true;
     }
 
     // TODO replace with cancellation gradle API invocation when it will be ready, see http://issues.gradle.org/browse/GRADLE-1539

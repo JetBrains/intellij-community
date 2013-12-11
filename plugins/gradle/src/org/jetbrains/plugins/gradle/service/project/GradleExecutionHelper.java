@@ -79,7 +79,9 @@ public class GradleExecutionHelper {
                                         @NotNull ExternalSystemTaskNotificationListener listener,
                                         @Nullable final String vmOptions) {
     BuildLauncher result = connection.newBuild();
-    List<String> extraJvmArgs = vmOptions == null ? Collections.<String>emptyList() : ContainerUtil.newArrayList(vmOptions.trim());
+    List<String> extraJvmArgs =
+      vmOptions == null ? ContainerUtil.<String>emptyList() :
+      ContainerUtil.newArrayList(StringUtil.split(vmOptions.trim(), " "));
     prepare(result, id, settings, listener, extraJvmArgs, connection);
     return result;
   }
@@ -94,7 +96,9 @@ public class GradleExecutionHelper {
                                         @NotNull final OutputStream standardOutput,
                                         @NotNull final OutputStream standardError) {
     BuildLauncher result = connection.newBuild();
-    List<String> extraJvmArgs = vmOptions == null ? ContainerUtil.<String>emptyList() : ContainerUtil.newArrayList(vmOptions.trim());
+    List<String> extraJvmArgs =
+      vmOptions == null ? ContainerUtil.<String>emptyList() :
+      ContainerUtil.newArrayList(StringUtil.split(vmOptions.trim(), " "));
     prepare(result, id, settings, listener, extraJvmArgs, connection, standardOutput, standardError);
     return result;
   }
@@ -199,7 +203,7 @@ public class GradleExecutionHelper {
       return f.fun(connection);
     }
     catch (Throwable e) {
-      throw new ExternalSystemException(e);
+      throw new ExternalSystemException(ExceptionUtil.getMessage(e));
     }
     finally {
       try {
