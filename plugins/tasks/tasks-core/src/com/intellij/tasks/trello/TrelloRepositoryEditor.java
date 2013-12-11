@@ -73,7 +73,7 @@ public class TrelloRepositoryEditor extends BaseRepositoryEditor<TrelloRepositor
     myURLText.setVisible(false);
     myUsernameLabel.setVisible(false);
     myUserNameText.setVisible(false);
-    myPasswordLabel.setText("Token");
+    myPasswordLabel.setText("Token:");
     //setAnchor(myPasswordText);
 
     myPasswordText.getDocument().addDocumentListener(new DocumentAdapter() {

@@ -1,5 +1,7 @@
 package com.intellij.tasks.jira;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
@@ -8,6 +10,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.tasks.Task;
 import com.intellij.tasks.TaskState;
 import com.intellij.tasks.impl.BaseRepositoryImpl;
+import com.intellij.tasks.impl.TaskUtil;
 import com.intellij.tasks.jira.model.JiraIssue;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
@@ -28,6 +31,7 @@ import java.util.List;
 @Tag("JIRA")
 public class JiraRepository extends BaseRepositoryImpl {
 
+  public static final Gson GSON = TaskUtil.installDateDeserializer(new GsonBuilder()).create();
   private final static Logger LOG = Logger.getInstance("#com.intellij.tasks.jira.JiraRepository");
   public static final String LOGIN_FAILED_CHECK_YOUR_PERMISSIONS = "Login failed. Check your permissions.";
   public static final String REST_API_PATH_SUFFIX = "/rest/api/latest";
@@ -141,7 +145,7 @@ public class JiraRepository extends BaseRepositoryImpl {
       LOG.warn("Can't find out JIRA REST API version");
       throw e;
     }
-    JsonObject object = JiraUtil.GSON.fromJson(responseBody, JsonObject.class);
+    JsonObject object = GSON.fromJson(responseBody, JsonObject.class);
     // when JIRA 4.x support will be dropped 'versionNumber' array in response
     // may be used instead version string parsing
     return JiraRestApi.fromJiraVersion(object.get("version").getAsString(), this);
@@ -177,7 +181,7 @@ public class JiraRepository extends BaseRepositoryImpl {
     else if (method.getResponseHeader("Content-Type") != null) {
       Header header = method.getResponseHeader("Content-Type");
       if (header.getValue().startsWith("application/json")) {
-        JsonObject object = JiraUtil.GSON.fromJson(entityContent, JsonObject.class);
+        JsonObject object = GSON.fromJson(entityContent, JsonObject.class);
         if (object.has("errorMessages")) {
           String reason = StringUtil.join(object.getAsJsonArray("errorMessages"), " ");
           // something meaningful to user, e.g. invalid field name in JQL query

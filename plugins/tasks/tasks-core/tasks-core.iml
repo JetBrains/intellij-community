@@ -61,6 +61,7 @@
     <orderEntry type="module" module-name="xdebugger-api" />
     <orderEntry type="module" module-name="xdebugger-impl" />
     <orderEntry type="library" exported="" name="markdownj" level="project" />
+    <orderEntry type="library" name="http-client" level="project" />
   </component>
 </module>
 
