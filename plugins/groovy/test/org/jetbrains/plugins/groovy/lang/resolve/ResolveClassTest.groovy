@@ -306,5 +306,93 @@ public interface OuterInterface {
 ''', PsiClass)
   }
 
+  void testCollisionOfClassAndPackage() {
+    myFixture.addFileToProject('foo/Bar.groovy', '''\
+package foo
+
+class Bar {
+  static void xyz(){}
+}
+''')
+    def ref = configureByText('foo.groovy', '''\
+import foo.B<caret>ar
+
+print new Bar()
+''')
+
+    assertNotNull(ref.resolve())
+  }
+
+  void testCollisionOfClassAndPackage2() {
+    myFixture.addFileToProject('foo/Bar.groovy', '''\
+package foo
+
+class Bar {
+  static void xyz(){}
+}
+''')
+    def ref = configureByText('foo.groovy', '''\
+import static foo.Bar.xyz
+
+class foo {
+  public static void main(args) {
+    x<caret>yz()      //should resolve to inner class
+  }
+
+  static class Bar {
+    static void xyz() {}
+  }
+}
+''')
+
+    PsiElement resolved = ref.resolve()
+    assertInstanceOf(resolved, PsiMethod)
+
+    PsiClass clazz = resolved.containingClass
+    assertNotNull(clazz.containingClass)
+  }
+
+
+  void testCollisionOfClassAndPackage3() {
+    myFixture.addFileToProject('foo/Bar.groovy', '''\
+package foo
+
+class Bar {
+  static void xyz(){}
+}
+''')
+    def ref = configureByText('foo.groovy', '''\
+import static foo.Bar.xyz
+
+x<caret>yz()
+''')
+
+    assertNotNull(ref.resolve())
+  }
+
+  void testCollisionOfClassAndPackage4() {
+    myFixture.addFileToProject('foo/Bar.groovy', '''\
+package foo
+
+class Bar {
+  static void xyz(){}
+}
+''')
+
+    def ref = configureByText('foo.groovy', '''\
+import static foo.Bar.xyz
+
+class foo {
+  public static void main(String[] args) {
+    x<caret>yz()
+  }
+}
+''')
+
+    PsiElement resolved = ref.resolve()
+    assertInstanceOf(resolved, PsiMethod)
+  }
+
+
   private void doTest(String fileName = getTestName(false) + ".groovy") { resolve(fileName, PsiClass) }
 }
