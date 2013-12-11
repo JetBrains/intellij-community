@@ -37,6 +37,7 @@ public class PostfixCompletionConfigurable implements SearchableConfigurable, Ed
   private static final String TAB = CodeInsightBundle.message("template.shortcut.tab");
   private static final String ENTER = CodeInsightBundle.message("template.shortcut.enter");
 
+  @SuppressWarnings("unchecked")
   public PostfixCompletionConfigurable() {
     PostfixCompletionSettings settings = PostfixCompletionSettings.getInstance();
     if (settings == null) {
