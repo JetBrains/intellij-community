@@ -76,15 +76,15 @@ public class HgHistoryUtil {
     List<HgCommittedChangeList> result = new LinkedList<HgCommittedChangeList>();
     final List<HgFileRevision> localRevisions;
     HgLogCommand hgLogCommand = new HgLogCommand(project);
-
+    List<String> args = new ArrayList<String>(parameters);
     hgLogCommand.setLogFile(false);
     HgVcs hgvcs = HgVcs.getInstance(project);
     assert hgvcs != null;
     try {
       if (!hgvcs.getVersion().isParentRevisionTemplateSupported()) {
-        parameters.add("--debug");
+        args.add("--debug");
       }
-      localRevisions = hgLogCommand.execute(hgFile, limit, withFiles, parameters);
+      localRevisions = hgLogCommand.execute(hgFile, limit, withFiles, args);
     }
     catch (HgCommandException e) {
       new HgCommandResultNotifier(project).notifyError(null, HgVcsMessages.message("hg4idea.error.log.command.execution"), e.getMessage());
