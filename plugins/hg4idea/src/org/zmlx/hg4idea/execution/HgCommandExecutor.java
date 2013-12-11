@@ -61,6 +61,7 @@ public final class HgCommandExecutor {
   private final Project myProject;
   private final HgVcs myVcs;
   private final String myDestination;
+  private final List<String> operationsWithTextIndicator = Arrays.asList("clone", "push", "pull", "update", "merge");
 
   @NotNull private Charset myCharset;
   private boolean myIsSilent = false;
@@ -206,7 +207,7 @@ public final class HgCommandExecutor {
     try {
       String workingDir = repo != null ? repo.getPath() : null;
       ShellCommand shellCommand = new ShellCommand(cmdLine, workingDir, myCharset);
-      result = shellCommand.execute();
+      result = shellCommand.execute(operationsWithTextIndicator.contains(operation));
       if (!HgErrorUtil.isAuthorizationError(result)) {
         passReceiver.saveCredentials();
       }
