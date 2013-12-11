@@ -1,16 +1,20 @@
-class Test {
+class SuperClass {
   boolean foo(){
     return false;
   }
-  
+
   void bar(){
     if (!foo()){
       return;
     }
-    System.out.println(!foo());
   }
 
   int bah() {
     return bah();
+  }
+}
+class Test extends SuperClass{
+  boolean foo(){
+    return super.foo();
   }
 }
