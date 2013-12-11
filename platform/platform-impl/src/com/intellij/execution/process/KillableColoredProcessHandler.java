@@ -106,7 +106,7 @@ public class KillableColoredProcessHandler extends ColoredProcessHandler impleme
   protected void doDestroyProcess() {
     boolean gracefulTerminationAttempted = false;
     if (canKillProcessSoftly() && shouldKillProcessSoftly()) {
-      gracefulTerminationAttempted = gracefulProcessTermination();
+      gracefulTerminationAttempted = destroyProcessGracefully();
     }
     if (!gracefulTerminationAttempted) {
       // execute default process destroy
@@ -114,7 +114,7 @@ public class KillableColoredProcessHandler extends ColoredProcessHandler impleme
     }
   }
 
-  protected boolean gracefulProcessTermination() {
+  protected boolean destroyProcessGracefully() {
     if (SystemInfo.isWindows) {
       if (myProcess instanceof RunnerWinProcess) {
         RunnerWinProcess runnerWinProcess = (RunnerWinProcess) myProcess;
