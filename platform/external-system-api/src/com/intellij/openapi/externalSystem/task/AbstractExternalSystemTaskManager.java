@@ -25,28 +25,17 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 /**
- * Abstraction layer for executing gradle tasks.
- * 
- * @author Denis Zhdanov
- * @since 3/14/13 5:04 PM
+ * @author Vladislav.Soroka
+ * @since 12/19/13
  */
-public interface ExternalSystemTaskManager<S extends ExternalSystemExecutionSettings> {
+public abstract class AbstractExternalSystemTaskManager<S extends ExternalSystemExecutionSettings> implements ExternalSystemTaskManager<S> {
 
-  /**
-   *
-   * @deprecated will be removed in 13.1
-   */
-  @Deprecated
-  void executeTasks(@NotNull ExternalSystemTaskId id,
-                    @NotNull List<String> taskNames,
-                    @NotNull String projectPath,
-                    @Nullable S settings,
-                    @Nullable String vmOptions,
-                    @Nullable String debuggerSetup,
-                    @NotNull ExternalSystemTaskNotificationListener listener)
-    throws ExternalSystemException;
-
-  boolean cancelTask(@NotNull ExternalSystemTaskId id,
-                  @NotNull ExternalSystemTaskNotificationListener listener)
-    throws ExternalSystemException;
+  public abstract void executeTasks(@NotNull ExternalSystemTaskId id,
+                                    @NotNull List<String> taskNames,
+                                    @NotNull String projectPath,
+                                    @Nullable S settings,
+                                    @NotNull final List<String> vmOptions,
+                                    @NotNull List<String> scriptParameters,
+                                    @Nullable String debuggerSetup,
+                                    @NotNull ExternalSystemTaskNotificationListener listener) throws ExternalSystemException;
 }

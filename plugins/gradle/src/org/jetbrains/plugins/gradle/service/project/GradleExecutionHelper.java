@@ -77,25 +77,9 @@ public class GradleExecutionHelper {
                                         @NotNull ProjectConnection connection,
                                         @Nullable GradleExecutionSettings settings,
                                         @NotNull ExternalSystemTaskNotificationListener listener,
-                                        @Nullable final String vmOptions) {
+                                        @NotNull final List<String> vmOptions) {
     BuildLauncher result = connection.newBuild();
-    List<String> extraJvmArgs = vmOptions == null ? Collections.<String>emptyList() : ContainerUtil.newArrayList(vmOptions.trim());
-    prepare(result, id, settings, listener, extraJvmArgs, connection);
-    return result;
-  }
-
-  @SuppressWarnings({"MethodMayBeStatic", "UnusedDeclaration"})
-  @NotNull
-  public BuildLauncher getBuildLauncher(@NotNull final ExternalSystemTaskId id,
-                                        @NotNull ProjectConnection connection,
-                                        @Nullable GradleExecutionSettings settings,
-                                        @NotNull ExternalSystemTaskNotificationListener listener,
-                                        @Nullable final String vmOptions,
-                                        @NotNull final OutputStream standardOutput,
-                                        @NotNull final OutputStream standardError) {
-    BuildLauncher result = connection.newBuild();
-    List<String> extraJvmArgs = vmOptions == null ? ContainerUtil.<String>emptyList() : ContainerUtil.newArrayList(vmOptions.trim());
-    prepare(result, id, settings, listener, extraJvmArgs, connection, standardOutput, standardError);
+    prepare(result, id, settings, listener, vmOptions, connection);
     return result;
   }
 
@@ -199,7 +183,7 @@ public class GradleExecutionHelper {
       return f.fun(connection);
     }
     catch (Throwable e) {
-      throw new ExternalSystemException(e);
+      throw new ExternalSystemException(ExceptionUtil.getMessage(e));
     }
     finally {
       try {
@@ -220,12 +204,13 @@ public class GradleExecutionHelper {
                                      @NotNull GradleExecutionSettings settings,
                                      @NotNull ExternalSystemTaskNotificationListener listener) {
 
-    // Do not run wrapper task when default wrapper used
+    // use it only for customized wrapper
+    // TODO works correctly only or root project
     if (settings.getDistributionType() != DistributionType.WRAPPED) return;
 
     ProjectConnection connection = getConnection(projectPath, settings);
     try {
-      BuildLauncher launcher = getBuildLauncher(id, connection, settings, listener, null);
+      BuildLauncher launcher = getBuildLauncher(id, connection, settings, listener, ContainerUtil.<String>newArrayList());
       try {
         final File tempFile = FileUtil.createTempFile("wrap", ".gradle");
         tempFile.deleteOnExit();
