@@ -188,8 +188,12 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
     private final JTextField myBranchesList;
 
     ContainingBranchesPanel() {
-      JLabel label = new JBLabel("Contained in branches: ");
-      label.setFont(label.getFont().deriveFont(Font.ITALIC));
+      JLabel label = new JBLabel("Contained in branches: ") {
+        @Override
+        public Font getFont() {
+          return UIUtil.getLabelFont().deriveFont(Font.ITALIC);
+        }
+      };
       myLoadingIcon = new AsyncProcessIcon("Loading...");
       myBranchesList = new JBTextField("");
       myBranchesList.setEditable(false);
