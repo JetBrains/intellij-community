@@ -38,6 +38,7 @@ public class PythonParsingTest extends ParsingTestCase {
     PyTestCase.initPlatformPrefix();
     registerExtensionPoint(PythonDialectsTokenSetContributor.EP_NAME, PythonDialectsTokenSetContributor.class);
     registerExtension(PythonDialectsTokenSetContributor.EP_NAME, new PythonTokenSetContributor());
+    PythonDialectsTokenSetProvider.reset();
   }
 
   @Override
