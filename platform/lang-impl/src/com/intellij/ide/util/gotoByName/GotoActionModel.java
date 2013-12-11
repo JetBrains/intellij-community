@@ -211,14 +211,22 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
         .setIcon(icon, 1, (-icon.getIconWidth() + EMPTY_ICON.getIconWidth()) / 2, (EMPTY_ICON.getIconHeight() - icon.getIconHeight()) / 2);
     }
 
-    final Shortcut[] shortcutSet = KeymapManager.getInstance().getActiveKeymap().getShortcuts(getActionId(anAction));
-    final String actionName = anActionName + (shortcutSet != null && shortcutSet.length > 0
-                                              ? " (" + KeymapUtil.getShortcutText(shortcutSet[0]) + ")"
-                                              : "");
+    final Shortcut shortcut = preferKeyboardShortcut(KeymapManager.getInstance().getActiveKeymap().getShortcuts(getActionId(anAction)));
+    final String actionName = anActionName + (shortcut != null ? " (" + KeymapUtil.getShortcutText(shortcut) + ")" : "");
     final JLabel actionLabel = new JLabel(actionName, layeredIcon, SwingConstants.LEFT);
     actionLabel.setBackground(bg);
     actionLabel.setForeground(fg);
     return actionLabel;
+  }
+
+  private static Shortcut preferKeyboardShortcut(Shortcut[] shortcuts) {
+    if (shortcuts != null) {
+      for (Shortcut shortcut : shortcuts) {
+        if (shortcut.isKeyboard()) return shortcut;
+      }
+      return shortcuts.length > 0 ? shortcuts[0] : null;
+    }
+    return null;
   }
 
   @Override
