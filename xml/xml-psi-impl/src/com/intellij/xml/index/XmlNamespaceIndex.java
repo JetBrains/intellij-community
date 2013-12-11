@@ -155,9 +155,8 @@ public class XmlNamespaceIndex extends XmlIndex<XsdNamespaceBuilder> {
         @Override
         public int compare(IndexedRelevantResource<String, XsdNamespaceBuilder> o1,
                            IndexedRelevantResource<String, XsdNamespaceBuilder> o2) {
-
-          int i = o1.getValue().getRating(tagName, version) - o2.getValue().getRating(tagName, version);
-          return i == 0 ? o1.compareTo(o2) : i;
+          int i = o1.compareTo(o2);
+          return i == 0 ? o1.getValue().getRating(tagName, version) - o2.getValue().getRating(tagName, version) : i;
         }
       });
   }
