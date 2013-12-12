@@ -1,100 +1,70 @@
 package org.jetbrains.postfixCompletion.templates;
 
-import com.intellij.codeInsight.completion.InsertionContext;
-import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.openapi.editor.CaretModel;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.postfixCompletion.infrastructure.PostfixTemplateContext;
-import org.jetbrains.postfixCompletion.infrastructure.PrefixExpressionContext;
-import org.jetbrains.postfixCompletion.infrastructure.TemplateInfo;
-import org.jetbrains.postfixCompletion.lookupItems.ExpressionPostfixLookupElementBase;
-import org.jetbrains.postfixCompletion.util.CommonUtils;
 
-@TemplateInfo(
-  templateName = "new",
-  description = "Produces instantiation expression for type",
-  example = "new SomeType()",
-  worksOnTypes = true)
 public class NewExpressionPostfixTemplate extends PostfixTemplate {
+  public NewExpressionPostfixTemplate() {
+    super("new", "Produces instantiation expression for type", "new SomeType()");
+  }
+
   @Override
-  public LookupElement createLookupElement(@NotNull PostfixTemplateContext context) {
-    PrefixExpressionContext expression = context.outerExpression();
-
-    PsiElement referencedElement = context.innerExpression().referencedElement;
-    if (referencedElement instanceof PsiClass) {
-      PsiClass psiClass = (PsiClass)referencedElement;
-      CtorAccessibility accessibility =
-        isTypeCanBeInstantiatedWithNew(psiClass, expression.expression);
-      if (accessibility == CtorAccessibility.NOT_ACCESSIBLE &&
-          !context.executionContext.isForceMode) {
-        return null;
+  public boolean isApplicable(@NotNull PsiElement context, @NotNull Document copyDocument, int newOffset) {
+    // todo: copy paste?
+    PsiElement ref = PsiTreeUtil.getParentOfType(context, PsiJavaCodeReferenceElement.class);
+    if (ref instanceof PsiJavaReference) {
+      PsiElement element = ((PsiJavaReference)ref).advancedResolve(true).getElement();
+      if (element instanceof PsiClass) {
+        PsiClass psiClass = (PsiClass)element;
+        CtorAccessibility accessibility = calcAccessibility(psiClass, context);
+        if (accessibility != CtorAccessibility.NOT_ACCESSIBLE) return true;
       }
-
-      return new NewObjectLookupElement(expression, psiClass, accessibility);
     }
-
-    return null;
+    return false;
   }
 
   @Override
   public void expand(@NotNull PsiElement context, @NotNull Editor editor) {
-    throw new UnsupportedOperationException("Implement me please");
+    PsiElement ref = PsiTreeUtil.getParentOfType(context, PsiJavaCodeReferenceElement.class);
+
+    if (ref instanceof PsiJavaReference) {
+      PsiElement element = ((PsiJavaReference)ref).advancedResolve(true).getElement();
+      if (element instanceof PsiClass) {
+        PsiClass psiClass = (PsiClass)element;
+        CtorAccessibility accessibility = calcAccessibility(psiClass, context);
+        if (accessibility != CtorAccessibility.NOT_ACCESSIBLE) {
+          boolean typeRequiresRefinement = psiClass.isInterface() || psiClass.hasModifierProperty(PsiModifier.ABSTRACT);
+
+          String template = "new " + ref.getText() + "()";
+          if (typeRequiresRefinement) template += "{}";
+
+          PsiElementFactory factory = JavaPsiFacade.getInstance(context.getProject()).getElementFactory();
+          PsiNewExpression newExpression = (PsiNewExpression)factory.createExpressionFromText(template, context);
+          PsiElement replace = ref.getParent().replace(newExpression);
+          replace.getNode().addLeaf(JavaTokenType.SEMICOLON, ";", null);
+          int offset = calculateOffset((PsiNewExpression)replace, accessibility, typeRequiresRefinement);
+          editor.getCaretModel().moveToOffset(offset);
+        }
+      }
+    }
   }
 
-  static class NewObjectLookupElement extends ExpressionPostfixLookupElementBase<PsiNewExpression> {
-    @NotNull private final CtorAccessibility myAccessibility;
-    private final boolean myTypeRequiresRefinement;
-
-    public NewObjectLookupElement(@NotNull PrefixExpressionContext context, @NotNull PsiClass referencedElement,
-      @NotNull CtorAccessibility accessibility) {
-      super("new", context);
-      myAccessibility = accessibility;
-      myTypeRequiresRefinement = CommonUtils.isTypeRequiresRefinement(referencedElement);
+  private static int calculateOffset(PsiNewExpression expression, CtorAccessibility accessibility, boolean typeRequiresRefinement) {
+    PsiExpressionList argumentList = expression.getArgumentList();
+    assert argumentList != null;
+    if (accessibility == CtorAccessibility.WITH_PARAMETRIC_CTOR || accessibility == CtorAccessibility.NOT_ACCESSIBLE) { // new T(<caret>)
+      return argumentList.getFirstChild().getTextRange().getEndOffset();
     }
-
-    @NotNull
-    @Override
-    protected PsiNewExpression createNewExpression(
-      @NotNull PsiElementFactory factory, @NotNull PsiElement expression, @NotNull PsiElement context) {
-      String template = "new T()";
-      if (myTypeRequiresRefinement) template += "{}";
-
-      PsiNewExpression newExpression = (PsiNewExpression)factory.createExpressionFromText(template, context);
-      PsiJavaCodeReferenceElement typeReference = newExpression.getClassOrAnonymousClassReference();
-      assert typeReference != null;
-
-      typeReference.replace(expression);
-
-      return newExpression;
+    else if (typeRequiresRefinement) {
+      PsiAnonymousClass anonymousClass = expression.getAnonymousClass();
+      PsiElement lBrace = anonymousClass != null ? anonymousClass.getLBrace() : null;
+      if (lBrace != null) return lBrace.getTextRange().getEndOffset();
     }
-
-    @Override
-    protected void postProcess(@NotNull final InsertionContext context, @NotNull PsiNewExpression expression) {
-      CaretModel caretModel = context.getEditor().getCaretModel();
-      PsiExpressionList argumentList = expression.getArgumentList();
-      assert argumentList != null;
-
-      if (myAccessibility == CtorAccessibility.WITH_PARAMETRIC_CTOR ||
-          myAccessibility == CtorAccessibility.NOT_ACCESSIBLE) { // new T(<caret>)
-        caretModel.moveToOffset(argumentList.getFirstChild().getTextRange().getEndOffset());
-      }
-      else if (myTypeRequiresRefinement) {
-        PsiAnonymousClass anonymousClass = expression.getAnonymousClass();
-        assert anonymousClass != null;
-
-        PsiElement lBrace = anonymousClass.getLBrace();
-        assert lBrace != null;
-
-        caretModel.moveToOffset(lBrace.getTextRange().getEndOffset());
-      }
-      else { // new T()<caret>
-        caretModel.moveToOffset(argumentList.getTextRange().getEndOffset());
-      }
-    }
+    return expression.getTextRange().getEndOffset();
   }
 
   public enum CtorAccessibility {
@@ -103,10 +73,8 @@ public class NewExpressionPostfixTemplate extends PostfixTemplate {
     WITH_PARAMETRIC_CTOR
   }
 
-  private static CtorAccessibility isTypeCanBeInstantiatedWithNew(
-    @Nullable PsiClass psiClass, @NotNull PsiElement accessContext) {
+  private static CtorAccessibility calcAccessibility(@Nullable PsiClass psiClass, @NotNull PsiElement accessContext) {
     if (psiClass == null) return CtorAccessibility.NOT_ACCESSIBLE;
-
     if (psiClass.isEnum()) return CtorAccessibility.NOT_ACCESSIBLE;
     if (psiClass.isInterface()) return CtorAccessibility.WITH_DEFAULT_CTOR;
 

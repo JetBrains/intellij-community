@@ -1,5 +1,5 @@
 public class Foo<T> {
     void m() {
-        new Foo<Integer>()<caret>
+        new Foo<Integer>();<caret>
     }
 }

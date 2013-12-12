@@ -1,7 +1,7 @@
 public class Foo {
     public Foo(int x) { }
     void m() {
-        Foo.<caret>
+        Foo.new<caret>
         Bar a = new Bar();
     }
 }

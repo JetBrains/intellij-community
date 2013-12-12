@@ -1,5 +1,5 @@
 public class Foo {
     void m() {
-        Foo.<caret>
+        new Foo();<caret>
     }
 }

@@ -1,7 +1,7 @@
 public class Foo {
     public Foo() { }
     void m() {
-        new Foo()<caret>;
+        Foo.new<caret>
         _a = new Bar();
     }
 }

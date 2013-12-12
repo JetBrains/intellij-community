@@ -25,10 +25,5 @@ public abstract class CommonUtils {
     PsiElement replace = parent.replace(assertStatement);
     editor.getCaretModel().moveToOffset(replace.getTextRange().getEndOffset());
   }
-
-  public static boolean isTypeRequiresRefinement(@Nullable PsiClass psiClass) {
-    if (psiClass == null) return false;
-    return psiClass.isInterface() || psiClass.hasModifierProperty(PsiModifier.ABSTRACT);
-  }
 }
 

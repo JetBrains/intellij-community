@@ -1,6 +1,6 @@
 public class Foo {
     void m() {
-        IFoo.<caret>
+        IFoo.new<caret>
         f();
     }
 }
