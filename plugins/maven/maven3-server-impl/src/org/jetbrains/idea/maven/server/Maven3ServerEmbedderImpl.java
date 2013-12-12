@@ -95,6 +95,8 @@ public class Maven3ServerEmbedderImpl extends MavenRemoteObject implements Maven
 
   private MavenWorkspaceMap myWorkspaceMap;
 
+  private Date myBuildStartTime;
+
   public Maven3ServerEmbedderImpl(MavenServerSettings settings) throws RemoteException {
     File mavenHome = settings.getMavenHome();
     if (mavenHome != null) {
@@ -263,6 +265,8 @@ public class Maven3ServerEmbedderImpl extends MavenRemoteObject implements Maven
 
       myWorkspaceMap = workspaceMap;
 
+      myBuildStartTime = new Date();
+
       setConsoleAndIndicator(console, new MavenServerProgressIndicatorWrapper(indicator));
     }
     catch (Exception e) {
@@ -405,6 +409,8 @@ public class Maven3ServerEmbedderImpl extends MavenRemoteObject implements Maven
 
       result.setActiveProfiles(activeProfiles);
       result.setInactiveProfiles(inactiveProfiles);
+
+      result.setStartTime(myBuildStartTime);
 
       return result;
     }
@@ -822,6 +828,8 @@ public class Maven3ServerEmbedderImpl extends MavenRemoteObject implements Maven
 
       Properties props = MavenServerUtil.collectSystemProperties();
       ProjectBuilderConfiguration config = new DefaultProjectBuilderConfiguration().setExecutionProperties(props);
+      config.setBuildStartTime(new Date());
+
       result = interpolator.interpolate(result, basedir, config, false);
     }
     catch (ModelInterpolationException e) {
