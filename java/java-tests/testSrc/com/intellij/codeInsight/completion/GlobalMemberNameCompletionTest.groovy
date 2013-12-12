@@ -246,4 +246,20 @@ public class Demo {
     myFixture.checkResult output
   }
 
+  public void "test no results in incomplete static import"() {
+    def text = """
+package p;
+
+import static Foo.ba<caret>
+
+class Foo {
+  static void bar() {}
+}
+"""
+    def file = myFixture.addFileToProject("p/Foo.java", text)
+    myFixture.configureFromExistingVirtualFile(file.virtualFile)
+    myFixture.completeBasic()
+    myFixture.checkResult text
+  }
+
 }
