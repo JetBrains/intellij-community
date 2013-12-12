@@ -600,7 +600,7 @@ public class GroovyInlineMethodUtil {
           final boolean isFinal = ((GrVariable)resolved).hasModifierProperty(PsiModifier.FINAL);
           if (!isFinal) {
             final PsiReference lastRef =
-              Collections.max(ReferencesSearch.search(resolved, resolved.getResolveScope()).findAll(), new Comparator<PsiReference>() {
+              Collections.max(ReferencesSearch.search(resolved).findAll(), new Comparator<PsiReference>() {
                 public int compare(PsiReference o1, PsiReference o2) {
                   return o1.getElement().getTextRange().getStartOffset() - o2.getElement().getTextRange().getStartOffset();
                 }

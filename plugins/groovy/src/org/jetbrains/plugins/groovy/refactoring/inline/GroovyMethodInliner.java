@@ -28,7 +28,6 @@ import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
@@ -373,7 +372,7 @@ public class GroovyMethodInliner implements InlineHandler.Inliner {
                          InlineMethodConflictSolver.suggestNewName(name, method, call, ((GrReferenceExpression)qualifier).getReferenceName()) :
                          InlineMethodConflictSolver.suggestNewName(name, method, call);
         if (!newName.equals(namedElement.getName())) {
-          final Collection<PsiReference> refs = ReferencesSearch.search(namedElement, GlobalSearchScope.projectScope(namedElement.getProject()), false).findAll();
+          final Collection<PsiReference> refs = ReferencesSearch.search(namedElement).findAll();
           for (PsiReference ref : refs) {
             PsiElement element = ref.getElement();
             if (element instanceof GrReferenceExpression) {
