@@ -15,6 +15,7 @@
  */
 package com.intellij.execution.testframework.sm.runner.events;
 
+import com.intellij.openapi.util.text.StringUtil;
 import jetbrains.buildServer.messages.serviceMessages.MessageWithAttributes;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -28,28 +29,21 @@ public abstract class BaseStartedNodeEvent extends TreeNodeEvent {
   private final String myLocationUrl;
   private final String myNodeType;
   private final String myNodeArgs;
+  private final boolean myRunning;
 
-  protected BaseStartedNodeEvent(@NotNull String name,
+  protected BaseStartedNodeEvent(@Nullable String name,
                                  int id,
                                  int parentId,
                                  @Nullable final String locationUrl,
                                  @Nullable String nodeType,
-                                 @Nullable String nodeArgs) {
+                                 @Nullable String nodeArgs,
+                                 boolean running) {
     super(name, id);
     myParentId = parentId;
     myLocationUrl = locationUrl;
     myNodeType = nodeType;
     myNodeArgs = nodeArgs;
-    validate();
-  }
-
-  private void validate() {
-    if (myParentId < -1) {
-      fail("parentId should be greater than -2");
-    }
-    if (getId() == -1 ^ myParentId == -1) {
-      fail("id and parentId should be -1 or non-negative");
-    }
+    myRunning = running;
   }
 
   /**
@@ -74,10 +68,15 @@ public abstract class BaseStartedNodeEvent extends TreeNodeEvent {
     return myNodeArgs;
   }
 
+  public boolean isRunning() {
+    return myRunning;
+  }
+
   @Override
   protected void appendToStringInfo(@NotNull StringBuilder buf) {
     append(buf, "parentId", myParentId);
     append(buf, "locationUrl", myLocationUrl);
+    append(buf, "running", myRunning);
   }
 
   public static int getParentNodeId(@NotNull MessageWithAttributes message) {
@@ -92,6 +91,15 @@ public abstract class BaseStartedNodeEvent extends TreeNodeEvent {
   @Nullable
   public static String getNodeArgs(@NotNull MessageWithAttributes message) {
     return message.getAttributes().get("nodeArgs");
+  }
+
+  public static boolean isRunning(@NotNull MessageWithAttributes message) {
+    String runningStr = message.getAttributes().get("running");
+    if (StringUtil.isEmpty(runningStr)) {
+      // old behavior preserved
+      return true;
+    }
+    return Boolean.parseBoolean(runningStr);
   }
 
 }
