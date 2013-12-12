@@ -165,10 +165,6 @@ public class TemplateListPanel extends JPanel implements Disposable {
       Set<String> names = ContainerUtil.newHashSet();
 
       List<TemplateImpl> templates = templateGroup.getElements();
-      if (templates.isEmpty()) {
-        throw new ConfigurationException("An empty template group found: " + templateGroup.getName() + ", a group should contain at least one template");
-      }
-
       for (TemplateImpl template : templates) {
         if (StringUtil.isEmptyOrSpaces(template.getKey())) {
           throw new ConfigurationException("A live template with an empty key has been found in " + templateGroup.getName() + " group, such live templates cannot be invoked");
