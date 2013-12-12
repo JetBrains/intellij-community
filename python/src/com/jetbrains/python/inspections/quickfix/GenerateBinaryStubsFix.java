@@ -19,7 +19,7 @@ import com.google.common.collect.Lists;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.execution.process.ProcessOutput;
-import com.intellij.notification.Notification;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -34,10 +34,10 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.Consumer;
 import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.psi.*;
-import com.intellij.psi.util.QualifiedName;
 import com.jetbrains.python.psi.impl.references.PyImportReference;
 import com.jetbrains.python.sdk.InvalidSdkException;
 import com.jetbrains.python.sdk.PySdkUtil;
@@ -58,6 +58,8 @@ import java.util.List;
  * @author yole
  */
 public class GenerateBinaryStubsFix implements LocalQuickFix {
+  private static final Logger LOG = Logger.getInstance("#" + GenerateBinaryStubsFix.class.getName());
+
   private String myQualifiedName;
   private Sdk mySdk;
 
@@ -119,8 +121,7 @@ public class GenerateBinaryStubsFix implements LocalQuickFix {
           }
         }
         catch (InvalidSdkException e) {
-          final Notification notification = PythonSdkType.createInvalidSdkNotification(project);
-          notification.notify(project);
+          LOG.error(e);
         }
       }
     };
