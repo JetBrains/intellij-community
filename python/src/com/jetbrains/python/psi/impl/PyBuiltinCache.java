@@ -199,7 +199,6 @@ public class PyBuiltinCache {
    * Stores the most often used types, returned by getNNNType().
    */
   private final Map<String, PyClassTypeImpl> myTypeCache = new HashMap<String, PyClassTypeImpl>();
-  private final Map<String, Ref<PyType>> myStdlibTypeCache = new HashMap<String, Ref<PyType>>();
   private long myModStamp = -1;
 
   @Nullable
@@ -342,20 +341,6 @@ public class PyBuiltinCache {
     return getObjectType("staticmethod");
   }
 
-  @Nullable
-  public Ref<PyType> getStdlibType(@NotNull String key, @NotNull TypeEvalContext context) {
-    synchronized (myStdlibTypeCache) {
-      final Ref<PyType> ref = myStdlibTypeCache.get(key);
-      if (ref != null) {
-        if (!isValid(ref.get(), context)) {
-          myStdlibTypeCache.clear();
-          return null;
-        }
-      }
-      return ref;
-    }
-  }
-
   private static boolean isValid(@Nullable PyType type, @NotNull TypeEvalContext context) {
     if (type instanceof PyCollectionType) {
       final PyType elementType = ((PyCollectionType)type).getElementType(context);
@@ -379,12 +364,6 @@ public class PyBuiltinCache {
       return ((PyFunctionType)type).getCallable().isValid();
     }
     return true;
-  }
-
-  public void storeStdlibType(@NotNull String key, @Nullable PyType result) {
-    synchronized (myStdlibTypeCache) {
-      myStdlibTypeCache.put(key, new Ref<PyType>(result));
-    }
   }
 
   /**
