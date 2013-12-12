@@ -10,6 +10,9 @@ import com.intellij.psi.*;
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.testFramework.LightCodeInsightTestCase;
 import com.intellij.testFramework.utils.parameterInfo.MockCreateParameterInfoContext;
+import com.intellij.testFramework.utils.parameterInfo.MockUpdateParameterInfoContext;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.Function;
 import junit.framework.Assert;
 
@@ -52,6 +55,35 @@ public class ParameterInfoTest extends LightCodeInsightTestCase {
 
   public void testGenericsInsideCall() throws Exception {
     doTestPresentation("<html>List&lt;String&gt; param</html>");
+  }
+
+  public void testSelectionWithGenerics() throws Exception {
+    configureByFile(BASE_PATH + getTestName(false) + ".java");
+
+    final MethodParameterInfoHandler handler = new MethodParameterInfoHandler();
+    final CreateParameterInfoContext context = new MockCreateParameterInfoContext(myEditor, myFile);
+    final PsiExpressionList list = handler.findElementForParameterInfo(context);
+    assertNotNull(list);
+    final Object[] itemsToShow = context.getItemsToShow();
+    assertNotNull(itemsToShow);
+    assertTrue(itemsToShow.length == 2);
+    assertTrue(itemsToShow[0] instanceof MethodCandidateInfo);
+    final ParameterInfoUIContextEx parameterContext = ParameterInfoComponent.createContext(itemsToShow, myEditor, handler, -1);
+    final Boolean [] enabled = new Boolean[itemsToShow.length];
+    final MockUpdateParameterInfoContext updateParameterInfoContext = new MockUpdateParameterInfoContext(myEditor, myFile){
+      @Override
+      public Object[] getObjectsToView() {
+        return itemsToShow;
+      }
+
+      @Override
+      public void setUIComponentEnabled(int index, boolean b) {
+        enabled[index] = b;
+      }
+    };
+    updateParameterInfoContext.setParameterOwner(list);
+    handler.updateParameterInfo(list, updateParameterInfoContext);
+    assertTrue(ArrayUtilRt.find(enabled, Boolean.TRUE) > -1);
   }
 
   public void testAfterGenericsInsideCall() throws Exception {
