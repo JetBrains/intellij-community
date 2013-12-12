@@ -748,7 +748,7 @@ public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements Ps
 
     final Project project = myManager.getProject();
     final JavaPsiImplementationHelper helper = JavaPsiImplementationHelper.getInstance(project);
-    helper.setupCatchBlock(exceptionName, context, (PsiCatchSection)element);
+    helper.setupCatchBlock(exceptionName, exceptionType, context, (PsiCatchSection)element);
     final CodeStyleManager styleManager = CodeStyleManager.getInstance(project);
     final PsiCatchSection catchSection = (PsiCatchSection)styleManager.reformat(element);
 

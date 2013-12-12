@@ -52,7 +52,7 @@ public class CoreJavaPsiImplementationHelper extends JavaPsiImplementationHelper
   }
 
   @Override
-  public void setupCatchBlock(String exceptionName, PsiElement context, PsiCatchSection element) {
+  public void setupCatchBlock(@NotNull String exceptionName, @NotNull PsiType exceptionType, PsiElement context, @NotNull PsiCatchSection element) {
     throw new UnsupportedOperationException("TODO");
   }
 }

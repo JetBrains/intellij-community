@@ -33,6 +33,7 @@ public interface FileTemplate extends Cloneable {
   FileTemplate[] EMPTY_ARRAY = new FileTemplate[0];
   
   String ATTRIBUTE_EXCEPTION = "EXCEPTION";
+  String ATTRIBUTE_EXCEPTION_TYPE = "EXCEPTION_TYPE";
   String ATTRIBUTE_DESCRIPTION = "DESCRIPTION";
   String ATTRIBUTE_DISPLAY_NAME = "DISPLAY_NAME";
 
