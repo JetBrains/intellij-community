@@ -268,6 +268,10 @@ public final class ImmutableText extends ImmutableCharSequence {
    * @return <code>this + that</code>
    */
   public ImmutableText concat(ImmutableText that) {
+    if (that.length() == 0) {
+      return this;
+    }
+
     // All Text instances are maintained balanced:
     //   (head < tail * 2) & (tail < head * 2)
 
