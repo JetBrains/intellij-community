@@ -138,7 +138,7 @@ public class OpenFileInDefaultBrowserAction extends DumbAwareAction {
   }
 
   @NotNull
-  private static AsyncResult<Url> chooseUrl(Collection<Url> urls) {
+  private static AsyncResult<Url> chooseUrl(@NotNull Collection<Url> urls) {
     if (urls.size() == 1) {
       return new AsyncResult.Done<Url>(ContainerUtil.getFirstItem(urls));
     }
