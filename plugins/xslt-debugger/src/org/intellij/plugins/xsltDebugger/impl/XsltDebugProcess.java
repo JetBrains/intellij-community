@@ -21,7 +21,10 @@ import org.intellij.lang.xpath.xslt.impl.XsltChecker;
 import org.intellij.plugins.xsltDebugger.VMPausedException;
 import org.intellij.plugins.xsltDebugger.XsltBreakpointType;
 import org.intellij.plugins.xsltDebugger.XsltDebuggerSession;
-import org.intellij.plugins.xsltDebugger.rt.engine.*;
+import org.intellij.plugins.xsltDebugger.rt.engine.Breakpoint;
+import org.intellij.plugins.xsltDebugger.rt.engine.BreakpointManager;
+import org.intellij.plugins.xsltDebugger.rt.engine.BreakpointManagerImpl;
+import org.intellij.plugins.xsltDebugger.rt.engine.Debugger;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -50,6 +53,7 @@ public class XsltDebugProcess extends XDebugProcess implements Disposable {
     Disposer.register(myExecutionConsole, this);
   }
 
+  @NotNull
   @Override
   public XBreakpointHandler<?>[] getBreakpointHandlers() {
     return myXBreakpointHandlers;
@@ -65,9 +69,8 @@ public class XsltDebugProcess extends XDebugProcess implements Disposable {
     myDebuggerSession.addListener(new XsltDebuggerSession.Listener() {
       @Override
       public void debuggerSuspended() {
-        final XDebugSession session = XsltDebugProcess.this.getSession();
         final Debugger c = myDebuggerSession.getClient();
-        session.positionReached(new MySuspendContext(myDebuggerSession, c.getCurrentFrame(), c.getSourceFrame()));
+        getSession().positionReached(new MySuspendContext(myDebuggerSession, c.getCurrentFrame(), c.getSourceFrame()));
       }
 
       @Override
