@@ -32,6 +32,7 @@ import com.intellij.ide.util.DefaultPsiElementCellRenderer;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.ide.util.gotoByName.*;
 import com.intellij.navigation.ItemPresentation;
+import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
@@ -979,12 +980,24 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
           if (name != null) {
             setLocationString(name);
           }
-        } else if (value instanceof ItemPresentation) {
-          final String text = ((ItemPresentation)value).getPresentableText();
-          append(text == null ? value.toString() : text);
-          final String location = ((ItemPresentation)value).getLocationString();
-          if (!StringUtil.isEmpty(location)) {
-            setLocationString(location);
+        }
+        else {
+          ItemPresentation presentation = null;
+          if (value instanceof ItemPresentation) {
+            presentation = (ItemPresentation)value;
+          }
+          else if (value instanceof NavigationItem) {
+            presentation = ((NavigationItem)value).getPresentation();
+          }
+          if (presentation != null) {
+            final String text = presentation.getPresentableText();
+            append(text == null ? value.toString() : text);
+            final String location = presentation.getLocationString();
+            if (!StringUtil.isEmpty(location)) {
+              setLocationString(location);
+            }
+            Icon icon = presentation.getIcon(false);
+            if (icon != null) setIcon(icon);
           }
         }
       }
