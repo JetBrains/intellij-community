@@ -281,6 +281,9 @@ public class RefJavaUtilImpl extends RefJavaUtil{
          if (ownerClass.isInterface()) {
            result = PsiModifier.PUBLIC;
          }
+         if (ownerClass.isEnum() && result.equals(PsiModifier.PACKAGE_LOCAL)) {
+           result = PsiModifier.PRIVATE;
+         }
        }
      }
 
