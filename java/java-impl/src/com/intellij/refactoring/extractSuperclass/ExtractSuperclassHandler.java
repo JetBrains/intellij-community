@@ -70,7 +70,7 @@ public class ExtractSuperclassHandler implements RefactoringActionHandler, Extra
         CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, HelpID.EXTRACT_SUPERCLASS);
         return;
       }
-      if (element instanceof PsiClass && !(element instanceof PsiAnonymousClass)) {
+      if (element instanceof PsiClass) {
         invoke(project, new PsiElement[]{element}, dataContext);
         return;
       }
@@ -138,7 +138,7 @@ public class ExtractSuperclassHandler implements RefactoringActionHandler, Extra
     final MultiMap<PsiElement,String> conflicts = new MultiMap<PsiElement, String>();
     if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
       public void run() {
-        final PsiClass superClass = mySubclass.getExtendsListTypes().length > 0 ? mySubclass.getSuperClass() : null;
+        final PsiClass superClass = mySubclass.getExtendsListTypes().length > 0 || mySubclass instanceof PsiAnonymousClass ? mySubclass.getSuperClass() : null;
         conflicts.putAllValues(PullUpConflictsUtil.checkConflicts(infos, mySubclass, superClass, targetPackage, targetDirectory, dialog.getContainmentVerifier(), false));
       }
     }, RefactoringBundle.message("detecting.possible.conflicts"), true, myProject)) return false;

@@ -66,8 +66,11 @@ public class ExtractSuperClassUtil {
     assert superClassModifierList != null;
     superClassModifierList.setModifierProperty(PsiModifier.FINAL, false);
     final PsiReferenceList subClassExtends = subclass.getExtendsList();
-    assert subClassExtends != null: subclass;
-    copyPsiReferenceList(subClassExtends, superclass.getExtendsList());
+    if (subClassExtends != null) {
+      copyPsiReferenceList(subClassExtends, superclass.getExtendsList());
+    } else if (subclass instanceof PsiAnonymousClass) {
+      superclass.getExtendsList().add(((PsiAnonymousClass)subclass).getBaseClassReference());
+    }
 
     // create constructors if neccesary
     PsiMethod[] constructors = getCalledBaseConstructors(subclass);
@@ -76,11 +79,17 @@ public class ExtractSuperClassUtil {
     }
 
     // clear original class' "extends" list
-    clearPsiReferenceList(subclass.getExtendsList());
+    if (subClassExtends != null) {
+      clearPsiReferenceList(subclass.getExtendsList());
+    }
 
     // make original class extend extracted superclass
     PsiJavaCodeReferenceElement ref = createExtendingReference(superclass, subclass, selectedMemberInfos);
-    subclass.getExtendsList().add(ref);
+    if (subClassExtends != null) {
+      subclass.getExtendsList().add(ref);
+    } else if (subclass instanceof PsiAnonymousClass) {
+      ((PsiAnonymousClass)subclass).getBaseClassReference().replace(ref);
+    }
 
     PullUpProcessor pullUpHelper = new PullUpProcessor(subclass, superclass, selectedMemberInfos,
                                                  javaDocPolicy
