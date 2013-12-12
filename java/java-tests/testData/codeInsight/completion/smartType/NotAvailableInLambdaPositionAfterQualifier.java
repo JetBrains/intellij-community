@@ -4,6 +4,6 @@ class Test {
   }
 
   {
-    I i = Test::<caret>
+    I i = Unknown::<caret>
   }
 }

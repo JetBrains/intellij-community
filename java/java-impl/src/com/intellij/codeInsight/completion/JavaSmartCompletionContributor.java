@@ -100,6 +100,16 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
              LambdaUtil.isValidLambdaContext(rulezzRef.getParent());
     }});
 
+  static final PsiElementPattern.Capture<PsiElement> METHOD_REFERENCE = psiElement().with(new PatternCondition<PsiElement>("METHOD_REFERENCE_CONTEXT") {
+    @Override
+    public boolean accepts(@NotNull PsiElement element, ProcessingContext context) {
+      final PsiElement rulezzRef = element.getParent();
+      return rulezzRef != null &&
+             rulezzRef instanceof PsiMethodReferenceExpression &&
+             ((PsiReferenceExpression)rulezzRef).getQualifier() != element &&
+             LambdaUtil.isValidLambdaContext(rulezzRef.getParent());
+    }});
+
   @Nullable
   private static ElementFilter getReferenceFilter(PsiElement element) {
     //throw new foo
@@ -322,6 +332,7 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
     });
 
     extend(CompletionType.SMART, LAMBDA, new LambdaCompletionProvider());
+    extend(CompletionType.SMART, METHOD_REFERENCE, new MethodReferenceCompletionProvider());
   }
 
   private static void addExpectedTypeMembers(CompletionParameters params,
