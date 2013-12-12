@@ -73,6 +73,10 @@ public class SmartType18CompletionTest extends LightFixtureCompletionTestCase {
     doTest();
   }
 
+  public void testFilteredMethodReference() throws Exception {
+    doTest();
+  }
+
   public void testNotAvailableInLambdaPositionAfterQualifier() throws Exception {
     configureByFile("/" + getTestName(false) + ".java");
     assertNotNull(myItems);
