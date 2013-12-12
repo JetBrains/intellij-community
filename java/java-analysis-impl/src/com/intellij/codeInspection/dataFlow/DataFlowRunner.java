@@ -232,12 +232,8 @@ public class DataFlowRunner {
     }
     else if (instruction instanceof EmptyInstruction) {
       PsiElement anchor = ((EmptyInstruction)instruction).getAnchor();
-      if (anchor instanceof PsiDeclarationStatement) {
-        for (PsiElement element : ((PsiDeclarationStatement)anchor).getDeclaredElements()) {
-          if (element instanceof PsiClass) {
-            registerNestedClosures(instructionState, (PsiClass)element);
-          }
-        }
+      if (anchor instanceof PsiClass) {
+        registerNestedClosures(instructionState, (PsiClass)anchor);
       }
     }
 
