@@ -52,11 +52,29 @@ import java.util.Map;
  * Provides access to Python builtins via skeletons.
  */
 public class PyBuiltinCache {
-  public static final @NonNls String BUILTIN_FILE = "__builtin__.py";
-  @NonNls public static final String BUILTIN_FILE_3K = "builtins.py";
+  public static final String BUILTIN_FILE = "__builtin__.py";
+  public static final String BUILTIN_FILE_3K = "builtins.py";
   public static final String EXCEPTIONS_FILE = "exceptions.py";
 
-  private PyType STRING_TYPE_PY2 = null;
+  private static final PyBuiltinCache DUD_INSTANCE = new PyBuiltinCache(null, null);
+
+  /**
+   * Stores the most often used types, returned by getNNNType().
+   */
+  @NotNull private final Map<String, PyClassTypeImpl> myTypeCache = new HashMap<String, PyClassTypeImpl>();
+  @Nullable private PyType STRING_TYPE_PY2 = null;
+
+  @Nullable private PyFile myBuiltinsFile;
+  @Nullable private PyFile myExceptionsFile;
+  private long myModStamp = -1;
+
+  public PyBuiltinCache() {
+  }
+
+  public PyBuiltinCache(@Nullable final PyFile builtins, @Nullable PyFile exceptions) {
+    myBuiltinsFile = builtins;
+    myExceptionsFile = exceptions;
+  }
 
   /**
    * Returns an instance of builtin cache. Instances differ per module and are cached.
@@ -139,8 +157,6 @@ public class PyBuiltinCache {
     return null;
   }
 
-  private static final PyBuiltinCache DUD_INSTANCE = new PyBuiltinCache(null, null);
-
   @Nullable
   static PyType createLiteralCollectionType(final PySequenceExpression sequence, final String name) {
     final PyBuiltinCache builtinCache = getInstance(sequence);
@@ -149,19 +165,6 @@ public class PyBuiltinCache {
       return new PyLiteralCollectionType(setClass, false, sequence);
     }
     return null;
-  }
-
-
-  @Nullable private PyFile myBuiltinsFile;
-  @Nullable private PyFile myExceptionsFile;
-
-
-  public PyBuiltinCache() {
-  }
-
-  public PyBuiltinCache(@Nullable final PyFile builtins, @Nullable PyFile exceptions) {
-    myBuiltinsFile = builtins;
-    myExceptionsFile = exceptions;
   }
 
   @Nullable
@@ -193,12 +196,6 @@ public class PyBuiltinCache {
     }
     return null;
   }
-
-  /**
-   * Stores the most often used types, returned by getNNNType().
-   */
-  private final Map<String, PyClassTypeImpl> myTypeCache = new HashMap<String, PyClassTypeImpl>();
-  private long myModStamp = -1;
 
   @Nullable
   public PyClassTypeImpl getObjectType(@NonNls String name) {
