@@ -140,7 +140,6 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, DataProvider {
     });
 
     IdeMenuBar.installAppMenuIfNeeded(this);
-    UIUtil.setAutoRequestFocus(this, false);
   }
 
   private void updateBorder() {
