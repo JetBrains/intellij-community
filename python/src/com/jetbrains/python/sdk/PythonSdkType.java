@@ -21,9 +21,6 @@ import com.intellij.facet.Facet;
 import com.intellij.facet.FacetConfiguration;
 import com.intellij.facet.FacetManager;
 import com.intellij.ide.DataManager;
-import com.intellij.notification.Notification;
-import com.intellij.notification.NotificationListener;
-import com.intellij.notification.NotificationType;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -33,7 +30,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
-import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
@@ -79,7 +75,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.event.HyperlinkEvent;
 import java.awt.*;
 import java.io.File;
 import java.io.FilenameFilter;
@@ -530,8 +525,7 @@ public class PythonSdkType extends SdkType {
       LOG.error("For refreshing skeletons of remote SDK, either project or owner component must be specified");
     }
     final ProgressManager progressManager = ProgressManager.getInstance();
-    final Ref<Boolean> success = new Ref<Boolean>();
-    success.set(true);
+    final Ref<Boolean> success = new Ref<Boolean>(true);
     final Task.Modal setupTask = new Task.Modal(project, "Setting up library files for " + sdk.getName(), false) {
       // TODO: make this a backgroundable task. see #setupSdkPaths(final Sdk sdk) and its modificator handling
       public void run(@NotNull final ProgressIndicator indicator) {
@@ -549,38 +543,13 @@ public class PythonSdkType extends SdkType {
         }
         catch (InvalidSdkException e) {
           if (!isInvalid(sdk)) {
-            LOG.warn(e);
-            final Notification notification = createInvalidSdkNotification(project);
-            notification.notify(project);
+            LOG.error(e);
           }
         }
       }
     };
     progressManager.run(setupTask);
     return success.get();
-  }
-
-  @NotNull
-  public static Notification createInvalidSdkNotification(@Nullable final Project project) {
-    String message = "Cannot run the project interpreter.";
-    if (project != null && !project.isDisposed()) {
-      message += " <a href=\"xxx\">Configure...</a>";
-    }
-    return new Notification("xxx",
-                            "Invalid Project Interpreter",
-                            message,
-                            NotificationType.ERROR,
-                            new NotificationListener() {
-                              @Override
-                              public void hyperlinkUpdate(@NotNull Notification notification,
-                                                          @NotNull HyperlinkEvent event) {
-                                if (project != null && !project.isDisposed()) {
-                                  final ShowSettingsUtil settings = ShowSettingsUtil.getInstance();
-                                  settings.showSettingsDialog(project, "Project Interpreter");
-                                }
-                                notification.expire();
-                              }
-                            });
   }
 
   /**

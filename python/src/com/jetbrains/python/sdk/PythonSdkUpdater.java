@@ -15,7 +15,6 @@
  */
 package com.jetbrains.python.sdk;
 
-import com.intellij.notification.Notification;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -115,9 +114,7 @@ public class PythonSdkUpdater implements StartupActivity {
                     }
                     catch (InvalidSdkException e) {
                       if (!PythonSdkType.isInvalid(sdk)) {
-                        LOG.warn(e);
-                        final Notification notification = PythonSdkType.createInvalidSdkNotification(myProject);
-                        notification.notify(myProject);
+                        LOG.error(e);
                       }
                     }
                     myAlreadyUpdated.add(sdk.getHomePath());
