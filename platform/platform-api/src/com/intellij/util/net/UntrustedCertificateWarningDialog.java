@@ -11,14 +11,13 @@ import com.intellij.ui.TitledSeparator;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.FormBuilder;
+import org.apache.commons.codec.digest.DigestUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.security.auth.x500.X500Principal;
 import javax.swing.*;
 import java.awt.*;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.security.cert.CertificateEncodingException;
 import java.security.cert.X509Certificate;
 import java.text.DateFormat;
@@ -32,8 +31,6 @@ import static com.intellij.openapi.util.Pair.create;
 public class UntrustedCertificateWarningDialog extends DialogWrapper {
   private static final Logger LOG = Logger.getInstance(UntrustedCertificateWarningDialog.class);
   private static DateFormat DATE_FORMAT = DateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.SHORT);
-  private static final MessageDigest ourSHA1Digest = getMessageDigest("SHA-1");
-  private static final MessageDigest ourSHA256Digest = getMessageDigest("SHA-256");
 
   private static final Map<String, String> FIELD_ABBREVIATIONS = ContainerUtil.newHashMap(
     create("CN", "Common Name"),
@@ -74,12 +71,8 @@ public class UntrustedCertificateWarningDialog extends DialogWrapper {
     builder = builder.setIndent(0);
     builder = updateBuilderWithTitle(builder, "Fingerprints");
     builder = builder.setIndent(IdeBorderFactory.TITLED_BORDER_INDENT);
-    if (ourSHA256Digest != null) {
-      builder = builder.addLabeledComponent("SHA-256:",getTextPane(formatFingerprint(certificate, ourSHA256Digest)));
-    }
-    if (ourSHA1Digest != null) {
-      builder = builder.addLabeledComponent("SHA-1:", getTextPane(formatFingerprint(certificate, ourSHA1Digest)));
-    }
+    builder = builder.addLabeledComponent("SHA-256:", getTextPane(getSHA256FingerPrint(certificate)));
+    builder = builder.addLabeledComponent("SHA-1:", getTextPane(getSHA1FingerPrint(certificate)));
     myCertificateInfoPanel.add(builder.getPanel(), BorderLayout.CENTER);
 
     setTitle("Untrusted Server's Certificate");
@@ -99,43 +92,35 @@ public class UntrustedCertificateWarningDialog extends DialogWrapper {
     LOG.debug("Preferred size: " + getPreferredSize());
   }
 
-  @NotNull
-  private static String formatFingerprint(@NotNull X509Certificate certificate, @NotNull MessageDigest digest) {
-    byte[] bytes;
+  private static String getSHA1FingerPrint(X509Certificate certificate) {
     try {
-      bytes = certificate.getEncoded();
+      return formatHex(DigestUtils.sha1Hex(certificate.getEncoded()));
     }
-    catch (CertificateEncodingException e) {
-      return "";
+    catch (Exception e) {
+      return "N/A";
     }
-    digest.update(bytes);
-    bytes = digest.digest();
-    digest.reset();
-    int length = bytes.length;
-    StringBuilder builder = new StringBuilder(bytes.length * 3);
-    if (length > 0) {
-      for (byte b : bytes) {
-        builder
-          .append(Character.forDigit((b >> 4) & 0x0F, 16))
-          .append(Character.forDigit(b & 0x0F, 16))
-          .append(' ');
-        if (builder.length() % 60 == 0) {
-          builder.append('\n');
-        }
-      }
-      builder.deleteCharAt(builder.length() - 1);
-    }
-    return builder.toString().toUpperCase();
   }
 
-  @Nullable
-  private static MessageDigest getMessageDigest(@NotNull String algorithm) {
+  private static String getSHA256FingerPrint(X509Certificate certificate) {
     try {
-      return MessageDigest.getInstance(algorithm);
+      return formatHex(DigestUtils.sha256Hex(certificate.getEncoded()));
     }
-    catch (NoSuchAlgorithmException e) {
-      return null;
+    catch (CertificateEncodingException e) {
+      return "N/A";
     }
+  }
+
+  @NotNull
+  private static String formatHex(@NotNull String hex) {
+    StringBuilder builder = new StringBuilder((int)(hex.length() * 1.5));
+    for (int i = 0; i < hex.length(); i += 2) {
+      builder.append(hex.substring(i, i + 2));
+      builder.append(' ');
+      if (builder.length() % 60 == 0) {
+        builder.append('\n');
+      }
+    }
+    return builder.toString().toUpperCase();
   }
 
   private static JComponent getTextPane(String text) {
