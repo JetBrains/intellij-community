@@ -16,7 +16,7 @@
 package com.jetbrains.python.psi.impl;
 
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkTypeId;
@@ -26,7 +26,7 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.impl.ModuleLibraryOrderEntryImpl;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -80,7 +80,7 @@ public class PyBuiltinCache {
     if (psifile == null) {
       return null;
     }
-    Module module = ModuleUtil.findModuleForPsiElement(psifile);
+    Module module = ModuleUtilCore.findModuleForPsiElement(psifile);
     if (module != null) {
       return PythonSdkType.findPythonSdk(module);
     }
@@ -124,7 +124,7 @@ public class PyBuiltinCache {
       for (String url : urls) {
         if (url.contains(PythonSdkType.SKELETON_DIR_NAME)) {
           final String builtins_url = url + "/" + name;
-          File builtins = new File(VfsUtil.urlToPath(builtins_url));
+          File builtins = new File(VfsUtilCore.urlToPath(builtins_url));
           if (builtins.isFile() && builtins.canRead()) {
             VirtualFile builtins_vfile = LocalFileSystem.getInstance().findFileByIoFile(builtins);
             if (builtins_vfile != null) {
