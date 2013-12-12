@@ -120,7 +120,7 @@ class EditVarConstraintsDialog extends DialogWrapper {
       public void actionPerformed(final ActionEvent e) {
         final SelectTemplateDialog dialog = new SelectTemplateDialog(project, false, false);
         dialog.show();
-        if (dialog.getExitCode() == SelectTemplateDialog.OK_EXIT_CODE) {
+        if (dialog.getExitCode() == DialogWrapper.OK_EXIT_CODE) {
           final Configuration[] selectedConfigurations = dialog.getSelectedConfigurations();
           if (selectedConfigurations.length == 1) {
             withinCombo.getComboBox().getEditor().setItem(selectedConfigurations[0].getMatchOptions().getSearchPattern()); // TODO:
@@ -531,7 +531,7 @@ class EditVarConstraintsDialog extends DialogWrapper {
     @NonNls final String fileName = "1.groovy";
     final FileType fileType = getFileType(fileName);
     final Document doc = createDocument(fileName, fileType, "");
-    return new EditorTextField(doc, myProject, fileType, false, false);
+    return new EditorTextField(doc, myProject, fileType);
   }
 
   private static Document createDocument(final String fileName, final FileType fileType, String text) {
@@ -542,7 +542,7 @@ class EditVarConstraintsDialog extends DialogWrapper {
 
   private static FileType getFileType(final String fileName) {
     FileType fileType = FileTypeManager.getInstance().getFileTypeByFileName(fileName);
-    if (fileType == FileTypes.UNKNOWN) fileType = StdFileTypes.PLAIN_TEXT;
+    if (fileType == FileTypes.UNKNOWN) fileType = FileTypes.PLAIN_TEXT;
     return fileType;
   }
 
