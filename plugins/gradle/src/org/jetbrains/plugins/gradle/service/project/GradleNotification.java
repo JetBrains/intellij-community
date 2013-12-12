@@ -15,7 +15,6 @@
  */
 package org.jetbrains.plugins.gradle.service.project;
 
-import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationGroup;
 import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
@@ -32,7 +31,6 @@ import org.jetbrains.annotations.Nullable;
 public class GradleNotification {
   private static final NotificationGroup NOTIFICATION_GROUP = NotificationGroup.balloonGroup("Gradle Notification Group");
 
-  @Nullable private Notification myNotification;
   @NotNull private final Project myProject;
 
   @NotNull
@@ -48,22 +46,12 @@ public class GradleNotification {
                           @NotNull final String message,
                           @NotNull final NotificationType type,
                           @Nullable final NotificationListener listener) {
-    Runnable notificationTask = new Runnable() {
+    AppUIUtil.invokeLaterIfProjectAlive(myProject, new Runnable() {
       @Override
       public void run() {
-        if (!myProject.isDisposed() && myProject.isOpen()) {
-          Notification notification = NOTIFICATION_GROUP.createNotification(title, message, type, listener);
-          Notification old = myNotification;
-          if (old != null && old.getContent().equals(notification.getContent())) {
-            old.expire();
-          }
-          myNotification = notification;
-          notification.notify(myProject);
-        }
+        NOTIFICATION_GROUP.createNotification(title, message, type, listener).notify(myProject);
       }
-    };
-
-    AppUIUtil.invokeLaterIfProjectAlive(myProject, notificationTask);
+    });
   }
 }
 
