@@ -58,7 +58,8 @@ public class GradleStartupActivity implements StartupActivity {
   private static void showNotificationForUnlinkedGradleProject(@NotNull final Project project) {
     if (!PropertiesComponent.getInstance(project).getBoolean(SHOW_UNLINKED_GRADLE_POPUP, true)
         || !GradleSettings.getInstance(project).getLinkedProjectsSettings().isEmpty()
-        || project.getUserData(ExternalSystemDataKeys.NEWLY_IMPORTED_PROJECT) == Boolean.TRUE) {
+        || project.getUserData(ExternalSystemDataKeys.NEWLY_IMPORTED_PROJECT) == Boolean.TRUE
+        || project.getBaseDir() == null) {
       return;
     }
 
