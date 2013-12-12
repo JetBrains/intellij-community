@@ -46,6 +46,9 @@ public class NaturalLanguageTextSelectioner extends ExtendWordSelectionHandlerBa
   private static TextRange findParagraphRange(String text, int start, int end) {
     int paragraphStart = text.lastIndexOf("\n\n", start);
     int paragraphEnd = text.indexOf("\n\n", end);
+    if (paragraphStart >= paragraphEnd) {
+      return new TextRange(0, text.length());
+    }
     return new TextRange(paragraphStart >= 0 ? paragraphStart + 2 : 0, paragraphEnd < 0 ? text.length() : paragraphEnd);
   }
 
