@@ -54,9 +54,10 @@
       </action>
     </group>
 
-    <!-- <group id="tasks.util" text="_Tasks utility actions">
-      <action id="show.certificate" class="com.intellij.tasks.actions.ShowCertificateInfoAction" text="_Show certificate..."/>
-    </group> -->
+    <group id="tasks.internal" text="_Tasks" internal="true" popup="true">
+      <action id="show.certificate" class="com.intellij.tasks.actions.ShowCertificateInfoAction" text="_Show certificate dialog"/>
+      <add-to-group group-id="Internal"/>
+    </group>
 
     <group id="tasks.and.contexts" text="_Tasks &amp; Contexts" popup="true">
       <reference ref="task.actions"/>
