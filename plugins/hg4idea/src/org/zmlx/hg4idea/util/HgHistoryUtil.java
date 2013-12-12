@@ -17,6 +17,7 @@ package org.zmlx.hg4idea.util;
 
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
@@ -210,24 +211,23 @@ public class HgHistoryUtil {
   @NotNull
   public static Collection<String> getDescendingHeadsOfBranches(@NotNull Project project, @NotNull VirtualFile root, @NotNull Hash hash)
     throws VcsException {
-    //hg log -r "descendants(659db54c1b6865c97c4497fa867194bcd759ca76) and head() " --template "{branch} {bookmarks}\n"
+    //hg log -r "descendants(659db54c1b6865c97c4497fa867194bcd759ca76) and head()" --template "{branch}{bookmarks}"
     Set<String> branchHeads = new HashSet<String>();
     List<String> params = new ArrayList<String>();
     params.add("-r");
     params.add("descendants(" + hash.asString() + ") and head()");
-    HgFile hgFile = new HgFile(root, VcsUtil.getFilePath(root.getPath()));
     HgLogCommand hgLogCommand = new HgLogCommand(project);
     hgLogCommand.setLogFile(false);
     String template = HgChangesetUtil.makeTemplate("{branch}", "{bookmarks}");
-    HgCommandResult logResult = hgLogCommand.execute(root, template, -1, hgFile, params);
+    HgCommandResult logResult = hgLogCommand.execute(root, template, -1, null, params);
     if (logResult == null || logResult.getExitValue() != 0) {
       throw new VcsException("Couldn't get commit details: log command execution error.");
     }
     String output = logResult.getRawOutput();
-    String[] changeSets = output.split(HgChangesetUtil.CHANGESET_SEPARATOR);
+    List<String> changeSets = StringUtil.split(output, HgChangesetUtil.CHANGESET_SEPARATOR);
     for (String line : changeSets) {
-      String[] attributes = line.split(HgChangesetUtil.ITEM_SEPARATOR);
-      branchHeads.addAll(Arrays.asList(attributes));
+      List<String> attributes = StringUtil.split(line, HgChangesetUtil.ITEM_SEPARATOR);
+      branchHeads.addAll(attributes);
     }
     return branchHeads;
   }
