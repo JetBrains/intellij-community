@@ -228,10 +228,15 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
       PsiExpression arg = args[j];
       assert parm.isValid();
       assert arg.isValid();
-      PsiType parmType = substitutor.substitute(parm.getType());
+      PsiType parmType = parm.getType();
       PsiType argType = arg.getType();
+      if (argType == null) continue;
+      if (parmType instanceof PsiEllipsisType && parmType.getArrayDimensions() == argType.getArrayDimensions() + 1) {
+        parmType = ((PsiEllipsisType)parmType).getComponentType();
+      }
+      parmType = substitutor.substitute(parmType);
 
-      if (argType != null && !parmType.isAssignableFrom(argType)) {
+      if (!parmType.isAssignableFrom(argType)) {
         return false;
       }
     }
