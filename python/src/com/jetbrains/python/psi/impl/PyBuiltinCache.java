@@ -24,7 +24,6 @@ import com.intellij.openapi.roots.JdkOrderEntry;
 import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.impl.ModuleLibraryOrderEntryImpl;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -339,31 +338,6 @@ public class PyBuiltinCache {
   @Nullable
   public PyClassType getStaticMethodType() {
     return getObjectType("staticmethod");
-  }
-
-  private static boolean isValid(@Nullable PyType type, @NotNull TypeEvalContext context) {
-    if (type instanceof PyCollectionType) {
-      final PyType elementType = ((PyCollectionType)type).getElementType(context);
-      if (!isValid(elementType, context)) {
-        return false;
-      }
-    }
-
-    if (type instanceof PyClassType) {
-      return ((PyClassType)type).isValid();
-    }
-    else if (type instanceof PyUnionType) {
-      for (PyType member : ((PyUnionType)type).getMembers()) {
-        if (!isValid(member, context)) {
-          return false;
-        }
-      }
-      return true;
-    }
-    else if (type instanceof PyFunctionType) {
-      return ((PyFunctionType)type).getCallable().isValid();
-    }
-    return true;
   }
 
   /**
