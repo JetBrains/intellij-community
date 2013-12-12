@@ -94,7 +94,10 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
     @Override
     public boolean accepts(@NotNull PsiElement element, ProcessingContext context) {
       final PsiElement rulezzRef = element.getParent();
-      return rulezzRef != null && LambdaUtil.isValidLambdaContext(rulezzRef.getParent());
+      return rulezzRef != null &&
+             rulezzRef instanceof PsiReferenceExpression &&
+             ((PsiReferenceExpression)rulezzRef).getQualifier() == null &&
+             LambdaUtil.isValidLambdaContext(rulezzRef.getParent());
     }});
 
   @Nullable
