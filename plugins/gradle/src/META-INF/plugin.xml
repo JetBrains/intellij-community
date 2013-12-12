@@ -25,13 +25,6 @@
   <depends optional="true" config-file="gradle-javaee-plugin.xml">com.intellij.javaee</depends>
   <depends optional="true" config-file="gradle-maven-integration.xml">org.jetbrains.idea.maven</depends>
 
-  <project-components>
-    <component>
-      <implementation-class>org.jetbrains.plugins.gradle.service.project.GradleProjectComponent</implementation-class>
-      <skipForDefaultProject/>
-    </component>
-  </project-components>
-
   <extensionPoints>
     <extensionPoint name="projectResolve" interface="org.jetbrains.plugins.gradle.service.project.GradleProjectResolverExtension"/>
     <extensionPoint name="taskManager" interface="org.jetbrains.plugins.gradle.service.task.GradleTaskManagerExtension"/>
@@ -55,6 +48,9 @@
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">
+
+    <postStartupActivity implementation="org.jetbrains.plugins.gradle.service.project.GradleStartupActivity"/>
+
     <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
     <projectImportProvider implementation="org.jetbrains.plugins.gradle.service.project.wizard.GradleProjectImportProvider"/>
     <projectImportBuilder implementation="org.jetbrains.plugins.gradle.service.project.wizard.GradleProjectImportBuilder"/>

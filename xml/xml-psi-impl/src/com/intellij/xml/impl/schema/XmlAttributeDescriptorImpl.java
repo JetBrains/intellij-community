@@ -161,4 +161,9 @@ public class XmlAttributeDescriptorImpl extends XsdEnumerationDescriptor impleme
   public void setName(String name) throws IncorrectOperationException {
     NamedObjectDescriptor.setName(myTag, name);
   }
+
+  @Override
+  public String toString() {
+    return getName();
+  }
 }

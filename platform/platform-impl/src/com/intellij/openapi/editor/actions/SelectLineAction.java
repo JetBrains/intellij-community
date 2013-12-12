@@ -37,6 +37,7 @@ public class SelectLineAction extends TextComponentEditorAction {
     @Override
     public void execute(Editor editor, DataContext dataContext) {
       editor.getSelectionModel().selectLineAtCaret();
+      EditorActionUtil.moveCaretToLineStartIgnoringSoftWraps(editor);
     }
   }
 }

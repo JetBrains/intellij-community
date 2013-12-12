@@ -56,6 +56,7 @@ public final class IdeMouseEventDispatcher {
   private final ArrayList<AnAction> myActions = new ArrayList<AnAction>(1);
   private final Map<Container, Integer> myRootPane2BlockedId = new HashMap<Container, Integer>();
   private int myLastHorScrolledComponentHash = 0;
+  private MouseEvent myPreviousMouseEvent;
 
   // Don't compare MouseEvent ids. Swing has wrong sequence of events: first is mouse_clicked(500)
   // then mouse_pressed(501), mouse_released(502) etc. Here, mouse events sorted so we can compare
@@ -125,6 +126,9 @@ public final class IdeMouseEventDispatcher {
    *         to normal event dispatching.
    */
   public boolean dispatchMouseEvent(MouseEvent e) {
+    MouseEvent previousEvent = myPreviousMouseEvent;
+    myPreviousMouseEvent = e;
+
     Component c = e.getComponent();
 
     //frame activation by mouse click
@@ -158,6 +162,10 @@ public final class IdeMouseEventDispatcher {
         || e.getClickCount() < 1
         || e.getButton() == MouseEvent.NOBUTTON) { // See #16995. It did happen
       ignore = true;
+    }
+
+    if (e.getID() == MOUSE_RELEASED && previousEvent != null && previousEvent.getID() == MOUSE_DRAGGED) {
+      ignore = true; // we don't want to process action bindings on mouse release at the end of drag operation
     }
 
    final JRootPane root = findRoot(e);

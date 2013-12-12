@@ -19,6 +19,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.Processor;
+import com.intellij.util.text.ImmutableCharSequence;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -189,6 +190,7 @@ public abstract class EditorTextFieldCellRenderer implements TableCellRenderer, 
     @Override public String getText() { return myString; }
     @NotNull @Override public String getText(@NotNull TextRange range) { return range.substring(getText()); }
     @NotNull @Override public CharSequence getCharsSequence() { return myString; }
+    @NotNull @Override public ImmutableCharSequence getImmutableCharSequence() { return ImmutableCharSequence.asImmutable(getText()); }
     @NotNull @Override public char[] getChars() { return myChars; }
     @Override public int getTextLength() { return myChars.length; }
     @Override public int getLineCount() { return myLineSet.findLineIndex(myChars.length) + 1; }

@@ -17,7 +17,6 @@ package com.intellij.openapi.editor.impl;
 
 import com.intellij.Patches;
 import com.intellij.application.options.OptionsConstants;
-import com.intellij.codeInsight.daemon.GutterMark;
 import com.intellij.codeInsight.hint.DocumentFragmentTooltipRenderer;
 import com.intellij.codeInsight.hint.EditorFragmentComponent;
 import com.intellij.codeInsight.hint.TooltipController;
@@ -4143,7 +4142,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         if (isColumnMode() || e.isAltDown()) {
           final LogicalPosition blockStart = selectionModel.hasBlockSelection() ? selectionModel.getBlockStart() : oldLogicalCaret;
           selectionModel.setBlockSelection(blockStart, getCaretModel().getLogicalPosition());
-          IdeEventQueue.getInstance().blockNextEvents(e);   // don't process action on mouse released (IDEA-53663)
         }
         else {
           if (getMouseSelectionState() != MOUSE_SELECTION_STATE_NONE) {
@@ -6299,13 +6297,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         int documentLength = myDocument.getTextLength();
         int x = 0;
         boolean lastLineLengthCalculated = false;
-        final int fontSize = myScheme.getEditorFontSize();
-        final String fontName = myScheme.getEditorFontName();
 
         List<? extends SoftWrap> softWraps = getSoftWrapModel().getRegisteredSoftWraps();
         int softWrapsIndex = -1;
 
-        FontInfo lastFontInfo = null;
         for (int line = 0; line < lineCount; line++) {
           if (myLineWidths.getQuick(line) != -1) continue;
           if (line == lineCount - 1) {
@@ -6404,10 +6399,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
                 }
               }
               else {
-                if (lastFontInfo == null || !lastFontInfo.canDisplay(c)) {
-                  lastFontInfo = ComplementaryFontsRegistry.getFontAbleToDisplay(c, fontSize, fontType, fontName);
-                }
-                x += lastFontInfo.charWidth(c);
+                x += EditorUtil.charWidth(c, fontType, EditorImpl.this);
                 offset++;
               }
             }

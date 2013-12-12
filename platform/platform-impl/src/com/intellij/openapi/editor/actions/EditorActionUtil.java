@@ -261,6 +261,14 @@ public class EditorActionUtil {
            (Character.isWhitespace(current) || secondIsIdentifierPart);
   }
 
+  /**
+   * Depending on the current caret position and 'smart Home' editor settings, moves caret to the start of current visual line
+   * or to the first non-whitespace character on it.
+   *
+   * @param isWithSelection if true - sets selection from old caret position to the new one, if false - clears selection
+   *
+   * @see com.intellij.openapi.editor.actions.EditorActionUtil#moveCaretToLineStartIgnoringSoftWraps(com.intellij.openapi.editor.Editor)
+   */
   public static void moveCaretToLineStart(Editor editor, boolean isWithSelection) {
     Document document = editor.getDocument();
     SelectionModel selectionModel = editor.getSelectionModel();
@@ -769,5 +777,15 @@ public class EditorActionUtil {
         start && prevChar == '$' && Character.isLetterOrDigit(curChar) ||
         !start && Character.isLetterOrDigit(prevChar) && curChar == '$' ||
         Character.isUpperCase(prevChar) && Character.isUpperCase(curChar) && Character.isLowerCase(nextChar);
+  }
+
+  /**
+   * This method moves caret to the nearest preceding visual line start, which is not a soft line wrap
+   *
+   * @see com.intellij.openapi.editor.ex.util.EditorUtil#calcCaretLineRange(com.intellij.openapi.editor.Editor)
+   * @see com.intellij.openapi.editor.actions.EditorActionUtil#moveCaretToLineStart(com.intellij.openapi.editor.Editor, boolean)
+   */
+  public static void moveCaretToLineStartIgnoringSoftWraps(Editor editor) {
+    editor.getCaretModel().moveToLogicalPosition(EditorUtil.calcCaretLineRange(editor).first);
   }
 }

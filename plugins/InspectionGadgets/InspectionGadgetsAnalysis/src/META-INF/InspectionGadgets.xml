@@ -764,10 +764,6 @@
                      key="negatively.named.boolean.variable.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.data.flow.issues" enabledByDefault="false" level="WARNING"
                      implementationClass="com.siyeh.ig.dataflow.NegativelyNamedBooleanVariableInspection"/>
-    <localInspection language="JAVA" shortName="OrredNotEqualExpression" bundle="com.siyeh.InspectionGadgetsBundle"
-                     key="orred.not.equal.expression.display.name" groupBundle="messages.InspectionsBundle"
-                     groupKey="group.names.data.flow.issues" enabledByDefault="true" level="WARNING"
-                     implementationClass="com.siyeh.ig.dataflow.OrredNotEqualExpressionInspection"/>
     <localInspection language="JAVA" shortName="ReuseOfLocalVariable" bundle="com.siyeh.InspectionGadgetsBundle" key="reuse.of.local.variable.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.data.flow.issues" enabledByDefault="false"
                      level="WARNING" implementationClass="com.siyeh.ig.dataflow.ReuseOfLocalVariableInspection"/>

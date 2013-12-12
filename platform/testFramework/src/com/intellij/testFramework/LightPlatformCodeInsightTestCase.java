@@ -600,7 +600,11 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
   protected static void unindent() {
     executeAction("EditorUnindentSelection");
   }
-  
+
+  protected static void selectLine() {
+    executeAction("EditorSelectLine");
+  }
+
   protected static void lineComment() {
     new CommentByLineCommentHandler().invoke(getProject(), getEditor(), getFile());
   }

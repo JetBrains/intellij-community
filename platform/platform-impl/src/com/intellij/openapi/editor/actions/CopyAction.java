@@ -46,6 +46,7 @@ public class CopyAction extends EditorAction {
           return;
         }
         editor.getSelectionModel().selectLineAtCaret();
+        EditorActionUtil.moveCaretToLineStartIgnoringSoftWraps(editor);
       }
       editor.getSelectionModel().copySelectionToClipboard();
     }

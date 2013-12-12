@@ -27,6 +27,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.HashMap;
+import com.intellij.util.text.ImmutableCharSequence;
 import org.jetbrains.annotations.NotNull;
 
 import java.beans.PropertyChangeListener;
@@ -83,6 +84,12 @@ public class MockDocument implements DocumentEx {
   @NotNull
   public CharSequence getCharsSequence() {
     return getText();
+  }
+
+  @NotNull
+  @Override
+  public ImmutableCharSequence getImmutableCharSequence() {
+    return ImmutableCharSequence.asImmutable(getText());
   }
 
   @Override

@@ -111,7 +111,7 @@ public class ComboboxEditorTextField extends EditorTextField {
   @Override
   public Dimension getPreferredSize() {
     final Dimension preferredSize = super.getPreferredSize();
-    return new Dimension(preferredSize.width, (SystemInfo.isMac && UIUtil.isUnderAquaLookAndFeel() ? 28 : preferredSize.height));
+    return new Dimension(preferredSize.width, UIUtil.fixComboBoxHeight(preferredSize.height));
   }
 
   @Override

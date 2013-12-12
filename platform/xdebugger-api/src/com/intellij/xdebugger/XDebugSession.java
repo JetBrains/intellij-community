@@ -155,8 +155,6 @@ public interface XDebugSession extends AbstractDebuggerSession {
 
   void setPauseActionSupported(boolean isSupported);
 
-  void setAutoInitBreakpoints(boolean value);
-
   void rebuildViews();
 
   <V extends XSmartStepIntoVariant> void smartStepInto(XSmartStepIntoHandler<V> handler, V variant);

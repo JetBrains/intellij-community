@@ -1,5 +1,35 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <root>
+  <item name='org.jdom.Attribute Attribute(java.lang.String, java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.jdom.Attribute Attribute(java.lang.String, java.lang.String) 1'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.jdom.Attribute Attribute(java.lang.String, java.lang.String, int) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.jdom.Attribute Attribute(java.lang.String, java.lang.String, int) 1'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.jdom.Attribute Attribute(java.lang.String, java.lang.String, int, org.jdom.Namespace) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.jdom.Attribute Attribute(java.lang.String, java.lang.String, int, org.jdom.Namespace) 1'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.jdom.Attribute Attribute(java.lang.String, java.lang.String, org.jdom.Namespace) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.jdom.Attribute Attribute(java.lang.String, java.lang.String, org.jdom.Namespace) 1'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.jdom.Attribute org.jdom.Attribute setName(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.jdom.Attribute org.jdom.Attribute setValue(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
   <item name="org.jdom.Element Element(java.lang.String) 0">
     <annotation name="org.jetbrains.annotations.NonNls" />
   </item>
@@ -11,6 +41,21 @@
   </item>
   <item name="org.jdom.Element java.util.List getChildren(java.lang.String, org.jdom.Namespace)">
     <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
+  <item name='org.jdom.Element org.jdom.Element setAttribute(java.lang.String, java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.jdom.Element org.jdom.Element setAttribute(java.lang.String, java.lang.String) 1'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.jdom.Element org.jdom.Element setAttribute(java.lang.String, java.lang.String, org.jdom.Namespace) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.jdom.Element org.jdom.Element setAttribute(java.lang.String, java.lang.String, org.jdom.Namespace) 1'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.jdom.Element org.jdom.Element setAttribute(org.jdom.Attribute) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
 </root>
 

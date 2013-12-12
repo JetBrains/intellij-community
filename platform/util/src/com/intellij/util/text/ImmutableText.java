@@ -64,7 +64,7 @@ import java.io.Writer;
  * @version 5.3, January 10, 2007
  */
 @SuppressWarnings("AssignmentToForLoopParameter")
-public final class ImmutableText implements CharSequence {
+public final class ImmutableText extends ImmutableCharSequence {
 
   /**
    * Holds the default size for primitive blocks of characters.
@@ -268,6 +268,10 @@ public final class ImmutableText implements CharSequence {
    * @return <code>this + that</code>
    */
   public ImmutableText concat(ImmutableText that) {
+    if (that.length() == 0) {
+      return this;
+    }
+
     // All Text instances are maintained balanced:
     //   (head < tail * 2) & (tail < head * 2)
 
@@ -352,6 +356,10 @@ public final class ImmutableText implements CharSequence {
     return subtext(0, index).concat(txt).concat(subtext(index));
   }
 
+  public ImmutableText insert(int index, CharSequence seq) {
+    return insert(index, seq instanceof ImmutableText ? (ImmutableText)seq : valueOf(seq));
+  }
+
   /**
    * Returns the text without the characters between the specified indexes.
    *
@@ -383,8 +391,9 @@ public final class ImmutableText implements CharSequence {
                                                   replacement));
   }
 
-  public CharSequence subSequence(final int start, final int end) {
-    return new CharSequenceSubSequence(this, start, end) {
+  public ImmutableCharSequence subSequence(final int start, final int end) {
+    if (start == 0 && end == length()) return this;
+    return new ImmutableSubSequence(this, start, end) {
       @NotNull
       @Override
       public String toString() {

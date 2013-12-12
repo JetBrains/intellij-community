@@ -315,9 +315,7 @@ public class XmlAttributeImpl extends XmlElementImpl implements XmlAttribute {
 
   @NotNull
   public PsiReference[] getReferences() {
-    final PsiElement parentElement = getParent();
-    if (!(parentElement instanceof XmlTag)) return PsiReference.EMPTY_ARRAY;
-    final PsiReference[] referencesFromProviders = ReferenceProvidersRegistry.getReferencesFromProviders(this, XmlAttribute.class);
+    final PsiReference[] referencesFromProviders = ReferenceProvidersRegistry.getReferencesFromProviders(this);
     if (referencesFromProviders == null) return new PsiReference[]{new XmlAttributeReference(this)};
     PsiReference[] refs;
     if (isNamespaceDeclaration()) {

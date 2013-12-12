@@ -19,6 +19,8 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.FileTypeRegistry;
+import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsBundle;
@@ -80,6 +82,13 @@ public class DefaultRemoteContentProvider extends RemoteContentProvider {
       }
 
       FileType fileType = RemoteFileUtil.getFileType(connection.getContentType());
+      if (fileType == FileTypes.PLAIN_TEXT) {
+        FileType fileTypeByFileName = FileTypeRegistry.getInstance().getFileTypeByFileName(url.getPath());
+        if (fileTypeByFileName != FileTypes.UNKNOWN) {
+          fileType = fileTypeByFileName;
+        }
+      }
+
       int len;
       final byte[] buf = new byte[1024];
       int count = 0;

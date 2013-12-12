@@ -30,6 +30,7 @@
     <orderEntry type="module" module-name="java-indexing-api" scope="TEST" />
     <orderEntry type="module" module-name="external-system-impl" scope="RUNTIME" />
     <orderEntry type="module" module-name="junit_rt" scope="TEST" />
+    <orderEntry type="module" module-name="xml-psi-impl" scope="TEST" />
   </component>
 </module>
 

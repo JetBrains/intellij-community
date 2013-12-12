@@ -59,6 +59,7 @@ public abstract class XDebugProcess {
   /**
    * @return breakpoint handlers which will be used to set/clear breakpoints in the underlying debugging process
    */
+  @NotNull
   public XBreakpointHandler<?>[] getBreakpointHandlers() {
     return XBreakpointHandler.EMPTY_ARRAY;
   }
@@ -139,6 +140,13 @@ public abstract class XDebugProcess {
    * @return {@code true} if process can actually perform user requests at this moment
    */
   public boolean checkCanPerformCommands() {
+    return true;
+  }
+
+  /**
+   * Check is it is possible to init breakpoints. Otherwise you should call {@link XDebugSession#initBreakpoints()} at the appropriate time
+   */
+  public boolean checkCanInitBreakpoints() {
     return true;
   }
 

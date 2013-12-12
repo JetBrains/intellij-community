@@ -412,25 +412,21 @@ public class InjectedLanguageUtil {
     return combinedEdiablesLength != elementRange.getLength();
   }
 
-  public static boolean isSelectionIsAboutToOverflowInjectedFragment(@NotNull EditorWindow injectedEditor) {
-    int selStart = injectedEditor.getSelectionModel().getSelectionStart();
-    int selEnd = injectedEditor.getSelectionModel().getSelectionEnd();
-
+  public static boolean isSelectionIsAboutToOverflowInjectedFragment(@NotNull EditorWindow injectedEditor, @NotNull TextRange selRange) {
+    int selStart = selRange.getStartOffset();
+    int selEnd = selRange.getEndOffset();
     DocumentWindow document = injectedEditor.getDocument();
 
-    boolean isStartOverflows = selStart == 0;
-    if (!isStartOverflows) {
-      int hostPrev = document.injectedToHost(selStart - 1);
-      isStartOverflows = document.hostToInjected(hostPrev) == selStart;
-    }
+    TextRange hostRange = document.injectedToHost(selRange.grown(2).shiftRight(-1));
+    boolean isStartOverflows = document.hostToInjected(hostRange.getStartOffset()) == selStart;
 
-    boolean isEndOverflows = selEnd == document.getTextLength();
-    if (!isEndOverflows) {
-      int hostNext = document.injectedToHost(selEnd + 1);
-      isEndOverflows = document.hostToInjected(hostNext) == selEnd;
-    }
+    boolean isEndOverflows = document.hostToInjected(hostRange.getEndOffset()) == selEnd;
+    //if (!isEndOverflows) {
+    //  int hostNext = document.injectedToHost(selEnd + 1);
+    //  isEndOverflows = document.hostToInjected(hostNext) == selEnd;
+    //}
 
-    return isStartOverflows && isEndOverflows;
+    return isStartOverflows || isEndOverflows;
   }
 
   public static boolean hasInjections(@NotNull PsiLanguageInjectionHost host) {

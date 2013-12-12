@@ -69,9 +69,9 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptorEx,Validator<XmlDocum
   @NonNls static final String ATTRIBUTE_TAG_NAME = "attribute";
   @NonNls static final String COMPLEX_TYPE_TAG_NAME = "complexType";
   @NonNls static final String SEQUENCE_TAG_NAME = "sequence";
-  @NonNls static final String SCHEMA_TAG_NAME = "schema";
+  @NonNls public static final String SCHEMA_TAG_NAME = "schema";
   @NonNls private static final String INCLUDE_TAG_NAME = "include";
-  @NonNls private static final String IMPORT_TAG_NAME = "import";
+  @NonNls public static final String IMPORT_TAG_NAME = "import";
   @NonNls private static final String REDEFINE_TAG_NAME = "redefine";
 
   public XmlNSDescriptorImpl(XmlFile file) {
@@ -758,7 +758,7 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptorEx,Validator<XmlDocum
     return true;
   }
 
-  protected static boolean equalsToSchemaName(@NotNull XmlTag tag, @NonNls String schemaName) {
+  public static boolean equalsToSchemaName(@NotNull XmlTag tag, @NonNls String schemaName) {
     return schemaName.equals(tag.getLocalName()) && checkSchemaNamespace(tag);
   }
 

@@ -376,7 +376,7 @@ public class ExceptionUtil {
   }
 
   @NotNull
-  public static List<PsiClassType> getUnhandledExceptions(PsiElement element) {
+  public static List<PsiClassType> getUnhandledExceptions(@NotNull PsiElement element) {
     if (element instanceof PsiCallExpression) {
       PsiCallExpression expression = (PsiCallExpression)element;
       return getUnhandledExceptions(expression, null);

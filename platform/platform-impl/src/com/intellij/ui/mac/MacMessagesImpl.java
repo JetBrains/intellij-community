@@ -702,7 +702,9 @@ public class MacMessagesImpl extends MacMessages {
     }
 
     //Actually can, but not in this implementation. If you know a reasonable scenario, please ask Denis Fokin for the improvement.
-    LOG.assertTrue(MacUtil.getWindowTitle(_window) != null, "A window without a title should not be used for showing MacMessages");
+    if (SystemInfo.isAppleJvm) {
+      LOG.assertTrue(MacUtil.getWindowTitle(_window) != null, "A window without a title should not be used for showing MacMessages");
+    }
     while (_window != null && MacUtil.getWindowTitle(_window) == null) {
       _window = _window.getOwner();
       //At least our frame should have a title

@@ -33,11 +33,13 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
+import com.intellij.reference.SoftReference;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.CharArrayUtil;
+import com.intellij.util.text.ImmutableCharSequence;
 import com.intellij.util.text.ImmutableText;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -61,6 +63,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
 
   private final LineSet myLineSet = new LineSet();
   private volatile ImmutableText myText;
+  private volatile SoftReference<String> myTextString;
 
   private boolean myIsReadOnly = false;
   private boolean isStripTrailingSpacesEnabled = true;
@@ -355,6 +358,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
     }
 
     final DocumentEvent event = beforeChangedUpdate(offset, null, s, false);
+    myTextString = null;
     myText = myText.insert(offset, ImmutableText.valueOf(s));
     changedUpdate(event, LocalTimeCounter.currentTime());
     trimToSize();
@@ -383,6 +387,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
     }
 
     final DocumentEvent event = beforeChangedUpdate(startOffset, sToDelete, null, false);
+    myTextString = null;
     myText = myText.delete(startOffset, endOffset);
     changedUpdate(event, LocalTimeCounter.currentTime());
   }
@@ -420,7 +425,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
     replaceString(startOffset, endOffset, s, LocalTimeCounter.currentTime(), startOffset == 0 && endOffset == getTextLength());
   }
 
-  private void replaceString(int startOffset, int endOffset, CharSequence s, final long newModificationStamp, boolean wholeTextReplaced) {
+  private void replaceString(int startOffset, int endOffset, final CharSequence s, final long newModificationStamp, boolean wholeTextReplaced) {
     assertBounds(startOffset, endOffset);
 
     assertWriteAccess();
@@ -449,15 +454,20 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
       endOffset--;
     }
 
-    s = s.subSequence(newStartInString, newEndInString);
+    CharSequence changedPart = s.subSequence(newStartInString, newEndInString);
     CharSequence sToDelete = myText.subSequence(startOffset, endOffset);
     RangeMarker guard = getRangeGuard(startOffset, endOffset);
     if (guard != null) {
-      throwGuardedFragment(guard, startOffset, sToDelete.toString(), s.toString());
+      throwGuardedFragment(guard, startOffset, sToDelete.toString(), changedPart.toString());
     }
 
-    final DocumentEvent event = beforeChangedUpdate(startOffset, sToDelete, s, wholeTextReplaced);
-    myText = myText.delete(startOffset, endOffset).insert(startOffset, ImmutableText.valueOf(s));
+    final DocumentEvent event = beforeChangedUpdate(startOffset, sToDelete, changedPart, wholeTextReplaced);
+    myTextString = null;
+    if (wholeTextReplaced && s instanceof ImmutableText) {
+      myText = (ImmutableText)s;
+    } else {
+      myText = myText.delete(startOffset, endOffset).insert(startOffset, changedPart);
+    }
     changedUpdate(event, newModificationStamp);
     trimToSize();
   }
@@ -636,7 +646,11 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
     return ApplicationManager.getApplication().runReadAction(new Computable<String>() {
       @Override
       public String compute() {
-        return myText.toString();
+        String s = SoftReference.dereference(myTextString);
+        if (s == null) {
+          myTextString = new SoftReference<String>(s = myText.toString());
+        }
+        return s;
       }
     });
   }
@@ -682,6 +696,12 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
         return myText.toString();
       }
     };
+  }
+
+  @NotNull
+  @Override
+  public ImmutableCharSequence getImmutableCharSequence() {
+    return myText;
   }
 
 

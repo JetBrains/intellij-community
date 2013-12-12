@@ -48,16 +48,19 @@ public class ExternalSystemExecuteTaskTask extends AbstractExternalSystemTask {
 
   @NotNull private final List<ExternalTaskPojo> myTasksToExecute;
   @Nullable private final String myVmOptions;
+  @Nullable private String myScriptParameters;
   @Nullable private final String myDebuggerSetup;
 
   public ExternalSystemExecuteTaskTask(@NotNull ProjectSystemId externalSystemId,
                                        @NotNull Project project,
                                        @NotNull List<ExternalTaskPojo> tasksToExecute,
                                        @Nullable String vmOptions,
+                                       @Nullable String scriptParameters,
                                        @Nullable String debuggerSetup) throws IllegalArgumentException {
     super(externalSystemId, ExternalSystemTaskType.EXECUTE_TASK, project, getLinkedExternalProjectPath(tasksToExecute));
     myTasksToExecute = tasksToExecute;
     myVmOptions = vmOptions;
+    myScriptParameters = scriptParameters;
     myDebuggerSetup = debuggerSetup;
   }
 
@@ -97,7 +100,7 @@ public class ExternalSystemExecuteTaskTask extends AbstractExternalSystemTask {
     RemoteExternalSystemTaskManager taskManager = facade.getTaskManager();
     List<String> taskNames = ContainerUtilRt.map2List(myTasksToExecute, MAPPER);
 
-    taskManager.executeTasks(getId(), taskNames, getExternalProjectPath(), settings, myVmOptions, myDebuggerSetup);
+    taskManager.executeTasks(getId(), taskNames, getExternalProjectPath(), settings, myVmOptions, myScriptParameters, myDebuggerSetup);
   }
 
   @Override
