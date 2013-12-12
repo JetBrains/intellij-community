@@ -32,10 +32,6 @@ public abstract class ImmutableCharSequence implements CharSequence {
     private final int myStart;
     private final int myEnd;
 
-    public ImmutableSubSequence(@NotNull ImmutableCharSequence chars) {
-      this(chars, 0, chars.length());
-    }
-
     public ImmutableSubSequence(@NotNull ImmutableCharSequence chars, int start, int end) {
       if (start < 0 || end > chars.length() || start > end) {
         throw new IndexOutOfBoundsException("chars sequence.length:" + chars.length() +
@@ -92,6 +88,7 @@ public abstract class ImmutableCharSequence implements CharSequence {
       return new ImmutableSubSequence(this, start, end);
     }
 
+    @NotNull
     @Override
     public String toString() {
       return myString;
