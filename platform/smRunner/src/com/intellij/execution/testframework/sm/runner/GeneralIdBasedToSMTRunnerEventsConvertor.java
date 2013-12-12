@@ -51,7 +51,7 @@ public class GeneralIdBasedToSMTRunnerEventsConvertor extends GeneralTestEventsP
   public GeneralIdBasedToSMTRunnerEventsConvertor(@NotNull SMTestProxy.SMRootTestProxy testsRootProxy,
                                                   @NotNull String testFrameworkName) {
     myTestsRootProxy = testsRootProxy;
-    myTestsRootNode = new Node(0, null, testsRootProxy);
+    myTestsRootNode = new Node(0, null, testsRootProxy, State.RUNNING);
     myTestFrameworkName = testFrameworkName;
     myNodeByIdMap.put(myTestsRootNode.getId(), myTestsRootNode);
     myRunningNodes.add(myTestsRootNode);
@@ -133,18 +133,29 @@ public class GeneralIdBasedToSMTRunnerEventsConvertor extends GeneralTestEventsP
   }
 
   private void doStartNode(@NotNull BaseStartedNodeEvent startedNodeEvent, boolean suite) {
+    Node node = findNode(startedNodeEvent);
+    if (node != null) {
+      if (node.getState() == State.REGISTERED && startedNodeEvent.isRunning()) {
+        node.setState(State.RUNNING);
+        node.getProxy().setStarted();
+        if (suite) {
+          fireOnSuiteStarted(node.getProxy());
+        } else {
+          fireOnTestStarted(node.getProxy());
+        }
+      }
+      else {
+        logProblem(startedNodeEvent + " has been already started: " + node + "!");
+      }
+      return;
+    }
+
     Node parentNode = findValidParentNode(startedNodeEvent);
     if (parentNode == null) {
       return;
     }
 
     if (!validateNodeId(startedNodeEvent)) {
-      return;
-    }
-    int nodeId = startedNodeEvent.getId();
-    Node childNode = myNodeByIdMap.get(nodeId);
-    if (childNode != null) {
-      logProblem(startedNodeEvent + " has been already started: " + childNode + "!");
       return;
     }
 
@@ -158,20 +169,23 @@ public class GeneralIdBasedToSMTRunnerEventsConvertor extends GeneralTestEventsP
         childProxy.setPreferredPrinter(printer);
       }
     }
-    childNode = new Node(startedNodeEvent.getId(), parentNode, childProxy);
-    myNodeByIdMap.put(nodeId, childNode);
-    myRunningNodes.add(childNode);
+    State initialState = startedNodeEvent.isRunning() ? State.RUNNING : State.REGISTERED;
+    node = new Node(startedNodeEvent.getId(), parentNode, childProxy, initialState);
+    myNodeByIdMap.put(startedNodeEvent.getId(), node);
+    myRunningNodes.add(node);
     if (myLocator != null) {
       childProxy.setLocator(myLocator);
     }
     parentNode.getProxy().addChild(childProxy);
 
-    // progress started
-    childProxy.setStarted();
-    if (suite) {
-      fireOnSuiteStarted(childProxy);
-    } else {
-      fireOnTestStarted(childProxy);
+    if (node.getState() == State.RUNNING) {
+      // progress started
+      childProxy.setStarted();
+      if (suite) {
+        fireOnSuiteStarted(childProxy);
+      } else {
+        fireOnTestStarted(childProxy);
+      }
     }
   }
 
@@ -179,16 +193,16 @@ public class GeneralIdBasedToSMTRunnerEventsConvertor extends GeneralTestEventsP
   private Node findValidParentNode(@NotNull BaseStartedNodeEvent startedNodeEvent) {
     int parentId = startedNodeEvent.getParentId();
     if (parentId < 0) {
-      logProblem("Parent node id should be non-negative: " + startedNodeEvent + ".");
+      logProblem("Parent node id should be non-negative: " + startedNodeEvent + ".", true);
       return null;
     }
     Node parentNode = myNodeByIdMap.get(startedNodeEvent.getParentId());
     if (parentNode == null) {
-      logProblem("Parent node is undefined for " + startedNodeEvent + ".");
+      logProblem("Parent node is undefined for " + startedNodeEvent + ".", true);
       return null;
     }
-    if (parentNode.getState() != State.RUNNING) {
-      logProblem("Parent node should be running: " + parentNode + ", " + startedNodeEvent);
+    if (parentNode.getState() != State.REGISTERED && parentNode.getState() != State.RUNNING) {
+      logProblem("Parent node should be registered or running: " + parentNode + ", " + startedNodeEvent);
       return null;
     }
     return parentNode;
@@ -367,7 +381,7 @@ public class GeneralIdBasedToSMTRunnerEventsConvertor extends GeneralTestEventsP
   private boolean validateNodeId(@NotNull TreeNodeEvent treeNodeEvent) {
     int nodeId = treeNodeEvent.getId();
     if (nodeId <= 0) {
-      logProblem("Node id should be positive: " + treeNodeEvent + ".");
+      logProblem("Node id should be positive: " + treeNodeEvent + ".", true);
       return false;
     }
     return true;
@@ -535,43 +549,36 @@ public class GeneralIdBasedToSMTRunnerEventsConvertor extends GeneralTestEventsP
     return pathToRoot1.subList(pathToRoot1.size() - commonSize, pathToRoot1.size());
   }
 
-  private static String getTestFrameworkPrefix(@NotNull String testFrameworkName) {
-    return "[" + testFrameworkName + "] ";
-  }
-
   private void logProblem(@NotNull String msg) {
-    logProblem(LOG, msg, myTestFrameworkName);
+    logProblem(msg, SMTestRunnerConnectionUtil.isInDebugMode());
   }
 
-  private static void logProblem(@NotNull Logger log, @NotNull String msg, @NotNull String testFrameworkName) {
-    logProblem(log, msg, SMTestRunnerConnectionUtil.isInDebugMode(), testFrameworkName);
-  }
-
-  private static void logProblem(@NotNull Logger log, @NotNull String msg, boolean throwError, @NotNull String testFrameworkName) {
-    final String text = getTestFrameworkPrefix(testFrameworkName) + msg;
+  private void logProblem(@NotNull String msg, boolean throwError) {
+    final String text = "[" + myTestFrameworkName + "] " + msg;
     if (throwError) {
-      log.error(text);
+      LOG.error(text);
     }
     else {
-      log.warn(text);
+      LOG.warn(text);
     }
   }
 
   private enum State {
-    RUNNING, FINISHED, FAILED, IGNORED
+    REGISTERED, RUNNING, FINISHED, FAILED, IGNORED
   }
 
   private static class Node {
     private final int myId;
     private final Node myParentNode;
     private final SMTestProxy myProxy;
-    private State myState = State.RUNNING;
+    private State myState;
     private int myRunningChildCount = 0;
 
-    Node(int id, @Nullable Node parentNode, @NotNull SMTestProxy proxy) {
+    Node(int id, @Nullable Node parentNode, @NotNull SMTestProxy proxy, @NotNull State initialState) {
       myId = id;
       myParentNode = parentNode;
       myProxy = proxy;
+      myState = initialState;
       if (myParentNode != null) {
         myParentNode.myRunningChildCount++;
       }
@@ -596,15 +603,21 @@ public class GeneralIdBasedToSMTRunnerEventsConvertor extends GeneralTestEventsP
       return myState;
     }
 
-    public void setState(@NotNull State state) {
-      if (myState == State.RUNNING && state != State.RUNNING) {
-        if (myParentNode != null) {
-          myParentNode.myRunningChildCount--;
-        }
-      } else {
-        throw new RuntimeException("Attempt to change state from " + myState + " to " + state + ":" + toString());
+    public void setState(@NotNull State newState) {
+      boolean accepted = false;
+      if (myState == State.REGISTERED) {
+        accepted = newState != State.REGISTERED;
       }
-      myState = state;
+      else if (myState == State.RUNNING) {
+        accepted = newState != State.REGISTERED && newState != State.RUNNING;
+      }
+      if (myParentNode != null && newState != State.REGISTERED && newState != State.RUNNING) {
+        myParentNode.myRunningChildCount--;
+      }
+      if (!accepted) {
+        throw new RuntimeException("Attempt to change state from " + myState + " to " + newState + ":" + toString());
+      }
+      myState = newState;
     }
 
     @Override
