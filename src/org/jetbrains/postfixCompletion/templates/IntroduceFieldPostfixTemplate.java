@@ -8,7 +8,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.introduceField.IntroduceFieldHandler;
 import org.jetbrains.annotations.NotNull;
 
-public class IntroduceFieldPostfixTemplate extends ExpressionPostfixTemplateWithExpressionChooser {
+public class IntroduceFieldPostfixTemplate extends ExpressionPostfixTemplateWithChooser {
   public IntroduceFieldPostfixTemplate() {
     super("field", "Introduces field for expression", "myField = expr;");
   }

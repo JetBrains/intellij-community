@@ -7,7 +7,7 @@ import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiParenthesizedExpression;
 import org.jetbrains.annotations.NotNull;
 
-public class ParenthesizedExpressionPostfixTemplate extends ExpressionPostfixTemplateWithExpressionChooser {
+public class ParenthesizedExpressionPostfixTemplate extends ExpressionPostfixTemplateWithChooser {
   public ParenthesizedExpressionPostfixTemplate() {
     super("par", "Parenthesizes expression", "(expression)");
   }

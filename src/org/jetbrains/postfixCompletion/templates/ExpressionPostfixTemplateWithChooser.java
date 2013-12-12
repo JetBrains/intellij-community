@@ -24,8 +24,8 @@ import java.util.List;
 /**
  * @author ignatov
  */
-public abstract class ExpressionPostfixTemplateWithExpressionChooser extends PostfixTemplate {
-  public ExpressionPostfixTemplateWithExpressionChooser(@Nullable String name, @Nullable String description, @Nullable String example) {
+public abstract class ExpressionPostfixTemplateWithChooser extends PostfixTemplate {
+  public ExpressionPostfixTemplateWithChooser(@Nullable String name, @Nullable String description, @Nullable String example) {
     super(name, description, example);
   }
 
