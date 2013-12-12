@@ -709,14 +709,15 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
 
     String message;
     if (causes.size() == 1) {
-      message = ProjectBundle.message("project.reload.external.change.single", causes.iterator().next().first.getPresentableUrl());
+      message = ProjectBundle.message("project.reload.external.change.single", getPresentablePath(causes.iterator().next().first));
     }
     else {
       StringBuilder filesBuilder = new StringBuilder();
       boolean first = true;
       Set<String> alreadyShown = new HashSet<String>();
       for (Pair<VirtualFile, StateStorage> cause : causes) {
-        String url = cause.first.getPresentableUrl();
+        VirtualFile file = cause.first;
+        String url = getPresentablePath(file);
         if (!alreadyShown.contains(url)) {
           if (alreadyShown.size() > 10) {
             filesBuilder.append("\n" + "and ").append(causes.size() - alreadyShown.size()).append(" more");
@@ -733,6 +734,11 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
 
     return Messages.showTwoStepConfirmationDialog(message, ProjectBundle.message("project.reload.external.change.title"), "Reload project",
                                                   Messages.getQuestionIcon()) == 0;
+  }
+
+  private static String getPresentablePath(@NotNull VirtualFile file) {
+    String url = file.getPresentableUrl(); // might be null for invalid file
+    return url == null ? file.getPath() : url;
   }
 
   @Override
@@ -860,7 +866,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
           file.setBinaryContent(bytes, -1, mySavedTimestamps.get(file));
         }
         catch (IOException e) {
-          Messages.showWarningDialog(ProjectBundle.message("project.reload.write.failed", file.getPresentableUrl()),
+          Messages.showWarningDialog(ProjectBundle.message("project.reload.write.failed", getPresentablePath(file)),
                                      ProjectBundle.message("project.reload.write.failed.title"));
         }
       }
