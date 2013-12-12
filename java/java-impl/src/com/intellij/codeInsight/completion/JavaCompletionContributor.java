@@ -462,18 +462,30 @@ public class JavaCompletionContributor extends CompletionContributor {
       final PsiNameValuePair[] existingPairs = parameterList.getAttributes();
 
       methods: for (PsiMethod method : annoClass.getMethods()) {
+        if (!(method instanceof PsiAnnotationMethod)) continue;
+        
         final String attrName = method.getName();
         for (PsiNameValuePair apair : existingPairs) {
           if (Comparing.equal(apair.getName(), attrName)) continue methods;
         }
-        result.addElement(new LookupItem<PsiMethod>(method, attrName).setInsertHandler(new InsertHandler<LookupElement>() {
+        LookupElementBuilder element = LookupElementBuilder.createWithIcon(method).withInsertHandler(new InsertHandler<LookupElement>() {
           @Override
           public void handleInsert(InsertionContext context, LookupElement item) {
             final Editor editor = context.getEditor();
             TailType.EQ.processTail(editor, editor.getCaretModel().getOffset());
             context.setAddCompletionChar(false);
           }
-        }));
+        });
+
+        PsiAnnotationMemberValue defaultValue = ((PsiAnnotationMethod)method).getDefaultValue();
+        if (defaultValue != null) {
+          Object constant = JavaPsiFacade.getInstance(method.getProject()).getConstantEvaluationHelper().computeConstantExpression(defaultValue);
+          if (constant != null) {
+            element = element.withTailText(" default " + (constant instanceof String ? "\"" + constant + "\"" : constant), true);
+          }
+        }
+
+        result.addElement(element);
       }
     }
   }
