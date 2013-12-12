@@ -84,6 +84,8 @@ class CacheUpdateRunner {
           synchronized (processed) {
             processed.add(virtualFile);
             indicator.setFraction(processed.size() / total);
+            int percent = (int)(processed.size() * 100 / total);
+            indicator.setText("Indexing... " + percent + "%");
             if (ApplicationManager.getApplication().isInternal()) {
               if (virtualFile.isValid()) {
                 indicator.setText2(virtualFile.getPresentableUrl());
