@@ -25,6 +25,9 @@ import com.intellij.execution.junit2.segments.OutputPacketProcessor;
 import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
+import com.intellij.execution.process.ProcessOutputTypes;
+import com.intellij.execution.testframework.Printable;
+import com.intellij.execution.testframework.Printer;
 import com.intellij.execution.util.ExecutionErrorDialog;
 import com.intellij.history.LocalHistory;
 import com.intellij.ide.macro.Macro;
@@ -40,6 +43,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
 import com.intellij.openapi.wm.StatusBar;
@@ -169,11 +173,45 @@ public final class ExecutionHandler {
     final OutputParser parser = OutputParser2.attachParser(project, handler, errorView, progress, buildFile);
 
     handler.addProcessListener(new ProcessAdapter() {
+      private final StringBuilder myUnprocessedStdErr = new StringBuilder();
+
+      public void onTextAvailable(ProcessEvent event, Key outputType) {
+        if (outputType == ProcessOutputTypes.STDERR) {
+          final String text = event.getText();
+          synchronized (myUnprocessedStdErr) {
+            myUnprocessedStdErr.append(text);
+          }
+        }
+      }
+
       public void processTerminated(ProcessEvent event) {
         final long buildTime = System.currentTimeMillis() - startTime;
         checkCancelTask.cancel();
         parser.setStopped(true);
+
         final OutputPacketProcessor dispatcher = handler.getErr().getEventsDispatcher();
+
+        if (event.getExitCode() != 0) {
+          // in case process exits abnormally, provide all unprocessed stderr content
+          final String unprocessed;
+          synchronized (myUnprocessedStdErr) {
+            unprocessed = myUnprocessedStdErr.toString();
+            myUnprocessedStdErr.setLength(0);
+          }
+          if (!unprocessed.isEmpty()) {
+            dispatcher.processOutput(new Printable() {
+              public void printOn(Printer printer) {
+                errorView.outputError(unprocessed, AntBuildMessageView.PRIORITY_ERR);
+              }
+            });
+          }
+        }
+        else {
+          synchronized (myUnprocessedStdErr) {
+            myUnprocessedStdErr.setLength(0);
+          }
+        }
+
         errorView.buildFinished(progress != null && progress.isCanceled(), buildTime, antBuildListener, dispatcher);
       }
     });
