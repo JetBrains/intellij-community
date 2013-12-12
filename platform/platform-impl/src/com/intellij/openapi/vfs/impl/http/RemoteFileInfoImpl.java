@@ -123,7 +123,7 @@ public class RemoteFileInfoImpl implements RemoteContentProvider.DownloadingCall
         String fileName = myLocalFile.getName();
         int dot = fileName.lastIndexOf('.');
         String extension = fileType.getDefaultExtension();
-        if (dot == -1 || !extension.equals(fileName.substring(dot + 1))) {
+        if (dot == -1 || !extension.regionMatches(true, 0, fileName, dot + 1, extension.length())) {
           File newFile = FileUtil.findSequentNonexistentFile(myLocalFile.getParentFile(), fileName, extension);
           try {
             FileUtil.rename(myLocalFile, newFile);
