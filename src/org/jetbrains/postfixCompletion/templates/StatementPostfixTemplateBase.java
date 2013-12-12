@@ -16,7 +16,7 @@ public abstract class StatementPostfixTemplateBase extends PostfixTemplate {
     super(name, description, example);
   }
 
-  protected void surroundWith(PsiElement context, Editor editor, String statement) {
+  protected void surroundWith(PsiElement context, Editor editor, String text) {
     PsiExpression expr = getTopmostExpression(context);
     PsiElement parent = expr != null ? expr.getParent() : null;
     if (!(parent instanceof PsiExpressionStatement)) return;
@@ -24,13 +24,11 @@ public abstract class StatementPostfixTemplateBase extends PostfixTemplate {
     Project project = context.getProject();
     PsiElementFactory factory = JavaPsiFacade.getInstance(project).getElementFactory();
     CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(project);
-    PsiElement switchStatement = codeStyleManager.reformat(factory.createStatementFromText(
-      statement + " (" + expr.getText() + ") {\nst;\n}", context));
-    switchStatement = parent.replace(switchStatement);
+    PsiElement statement = codeStyleManager.reformat(factory.createStatementFromText(text + " (" + expr.getText() + ") {\nst;\n}", context));
+    statement = parent.replace(statement);
 
     //noinspection ConstantConditions
-    PsiCodeBlock block = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(
-      PsiTreeUtil.getChildOfType(switchStatement, PsiCodeBlock.class));
+    PsiCodeBlock block = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(PsiTreeUtil.getChildOfType(statement, PsiCodeBlock.class));
     TextRange range = block.getStatements()[0].getTextRange();
     editor.getDocument().deleteString(range.getStartOffset(), range.getEndOffset());
 
