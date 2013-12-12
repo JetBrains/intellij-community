@@ -20,12 +20,12 @@ import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RawText;
 import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.actions.CopyAction;
+import com.intellij.openapi.editor.actions.EditorActionUtil;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.ide.CopyPasteManager;
@@ -72,6 +72,7 @@ public class CopyHandler extends EditorActionHandler {
       }
       selectionModel.selectLineAtCaret();
       if (!selectionModel.hasSelection()) return;
+      EditorActionUtil.moveCaretToLineStartIgnoringSoftWraps(editor);
     }
 
     PsiDocumentManager.getInstance(project).commitAllDocuments();
