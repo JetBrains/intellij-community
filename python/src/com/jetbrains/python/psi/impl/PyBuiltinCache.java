@@ -62,7 +62,6 @@ public class PyBuiltinCache {
    * Stores the most often used types, returned by getNNNType().
    */
   @NotNull private final Map<String, PyClassTypeImpl> myTypeCache = new HashMap<String, PyClassTypeImpl>();
-  @Nullable private PyType STRING_TYPE_PY2 = null;
 
   @Nullable private PyFile myBuiltinsFile;
   @Nullable private PyFile myExceptionsFile;
@@ -311,10 +310,7 @@ public class PyBuiltinCache {
   }
 
   private PyType getStrOrUnicodeType() {
-    if (STRING_TYPE_PY2 == null) {
-      STRING_TYPE_PY2 = PyUnionType.union(getObjectType("str"), getObjectType("unicode"));
-    }
-    return STRING_TYPE_PY2;
+    return PyUnionType.union(getObjectType("str"), getObjectType("unicode"));
   }
 
   @Nullable
