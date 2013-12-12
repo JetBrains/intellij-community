@@ -17,6 +17,9 @@ import org.jetbrains.annotations.Nullable;
 import javax.security.auth.x500.X500Principal;
 import javax.swing.*;
 import java.awt.*;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.security.cert.CertificateEncodingException;
 import java.security.cert.X509Certificate;
 import java.text.DateFormat;
 import java.util.Map;
@@ -29,6 +32,8 @@ import static com.intellij.openapi.util.Pair.create;
 public class UntrustedCertificateWarningDialog extends DialogWrapper {
   private static final Logger LOG = Logger.getInstance(UntrustedCertificateWarningDialog.class);
   private static DateFormat DATE_FORMAT = DateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.SHORT);
+  private static final MessageDigest ourSHA1Digest = getMessageDigest("SHA-1");
+  private static final MessageDigest ourSHA256Digest = getMessageDigest("SHA-256");
 
   private static final Map<String, String> FIELD_ABBREVIATIONS = ContainerUtil.newHashMap(
     create("CN", "Common Name"),
@@ -64,8 +69,17 @@ public class UntrustedCertificateWarningDialog extends DialogWrapper {
     builder = updateBuilderWithTitle(builder, "Validity Period");
     builder = builder
       .setIndent(IdeBorderFactory.TITLED_BORDER_INDENT)
-      .addLabeledComponent("Valid from", new JBLabel(DATE_FORMAT.format(myCertificate.getNotBefore())))
-      .addLabeledComponent("Valid until", new JBLabel(DATE_FORMAT.format(myCertificate.getNotAfter())));
+      .addLabeledComponent("Valid from:", new JBLabel(DATE_FORMAT.format(myCertificate.getNotBefore())))
+      .addLabeledComponent("Valid until:", new JBLabel(DATE_FORMAT.format(myCertificate.getNotAfter())));
+    builder = builder.setIndent(0);
+    builder = updateBuilderWithTitle(builder, "Fingerprints");
+    builder = builder.setIndent(IdeBorderFactory.TITLED_BORDER_INDENT);
+    if (ourSHA256Digest != null) {
+      builder = builder.addLabeledComponent("SHA-256:",getTextPane(formatFingerprint(certificate, ourSHA256Digest)));
+    }
+    if (ourSHA1Digest != null) {
+      builder = builder.addLabeledComponent("SHA-1:", getTextPane(formatFingerprint(certificate, ourSHA1Digest)));
+    }
     myCertificateInfoPanel.add(builder.getPanel(), BorderLayout.CENTER);
 
     setTitle("Untrusted Server's Certificate");
@@ -74,7 +88,7 @@ public class UntrustedCertificateWarningDialog extends DialogWrapper {
     myWarningSign.setIcon(AllIcons.General.WarningDialog);
 
     Messages.installHyperlinkSupport(myNoticePane);
-//    myNoticePane.setFont(myNoticePane.getFont().deriveFont((float)FontSize.SMALL.getSize()));
+    //    myNoticePane.setFont(myNoticePane.getFont().deriveFont((float)FontSize.SMALL.getSize()));
     myNoticePane.setText(
       String.format("<html><p><small>" +
                     "Accepted certificate will be saved in truststore <code>%s</code> with password <code>%s</code>" +
@@ -83,6 +97,55 @@ public class UntrustedCertificateWarningDialog extends DialogWrapper {
 
     init();
     LOG.debug("Preferred size: " + getPreferredSize());
+  }
+
+  @NotNull
+  private static String formatFingerprint(@NotNull X509Certificate certificate, @NotNull MessageDigest digest) {
+    byte[] bytes;
+    try {
+      bytes = certificate.getEncoded();
+    }
+    catch (CertificateEncodingException e) {
+      return "";
+    }
+    digest.update(bytes);
+    bytes = digest.digest();
+    digest.reset();
+    int length = bytes.length;
+    StringBuilder builder = new StringBuilder(bytes.length * 3);
+    if (length > 0) {
+      for (byte b : bytes) {
+        builder
+          .append(Character.forDigit((b >> 4) & 0x0F, 16))
+          .append(Character.forDigit(b & 0x0F, 16))
+          .append(' ');
+        if (builder.length() % 60 == 0) {
+          builder.append('\n');
+        }
+      }
+      builder.deleteCharAt(builder.length() - 1);
+    }
+    return builder.toString().toUpperCase();
+  }
+
+  @Nullable
+  private static MessageDigest getMessageDigest(@NotNull String algorithm) {
+    try {
+      return MessageDigest.getInstance(algorithm);
+    }
+    catch (NoSuchAlgorithmException e) {
+      return null;
+    }
+  }
+
+  private static JComponent getTextPane(String text) {
+    JTextPane pane = new JTextPane();
+    pane.setOpaque(false);
+    pane.setEditable(false);
+    pane.setContentType("text/plain");
+    pane.setText(text);
+    //Messages.installHyperlinkSupport(pane);
+    return pane;
   }
 
   @SuppressWarnings("MethodMayBeStatic")
