@@ -84,7 +84,7 @@ public class HippieWordCompletionHandler implements CodeInsightActionHandler {
     editor.getCaretModel().moveToOffset(data.startOffset + nextVariant.variant.length());
     completionState.lastProposedVariant = nextVariant;
     completionState.fromOtherFiles = nextVariant.editor != editor;
-    highlightWord(nextVariant, project, data);
+    if (nextVariant.editor == editor) highlightWord(nextVariant, project, data);
   }
 
   private static void highlightWord(final CompletionVariant variant, final Project project, CompletionData data) {
