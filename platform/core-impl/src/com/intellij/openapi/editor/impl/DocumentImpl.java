@@ -357,10 +357,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
       throwGuardedFragment(marker, offset, null, s.toString());
     }
 
-    final DocumentEvent event = beforeChangedUpdate(offset, null, s, false);
-    myTextString = null;
-    myText = myText.insert(offset, ImmutableText.valueOf(s));
-    changedUpdate(event, LocalTimeCounter.currentTime());
+    updateText(myText.insert(offset, ImmutableText.valueOf(s)), offset, null, s, false, LocalTimeCounter.currentTime());
     trimToSize();
   }
 
@@ -386,10 +383,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
       throwGuardedFragment(marker, startOffset, sToDelete.toString(), null);
     }
 
-    final DocumentEvent event = beforeChangedUpdate(startOffset, sToDelete, null, false);
-    myTextString = null;
-    myText = myText.delete(startOffset, endOffset);
-    changedUpdate(event, LocalTimeCounter.currentTime());
+    updateText(myText.delete(startOffset, endOffset), startOffset, sToDelete, null, false, LocalTimeCounter.currentTime());
   }
 
   @Override
@@ -461,14 +455,13 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
       throwGuardedFragment(guard, startOffset, sToDelete.toString(), changedPart.toString());
     }
 
-    final DocumentEvent event = beforeChangedUpdate(startOffset, sToDelete, changedPart, wholeTextReplaced);
-    myTextString = null;
+    ImmutableText newText;
     if (wholeTextReplaced && s instanceof ImmutableText) {
-      myText = (ImmutableText)s;
+      newText = (ImmutableText)s;
     } else {
-      myText = myText.delete(startOffset, endOffset).insert(startOffset, changedPart);
+      newText = myText.delete(startOffset, endOffset).insert(startOffset, changedPart);
     }
-    changedUpdate(event, newModificationStamp);
+    updateText(newText, startOffset, sToDelete, changedPart, wholeTextReplaced, newModificationStamp);
     trimToSize();
   }
 
@@ -565,15 +558,23 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
     }
   }
 
-  @NotNull
-  private DocumentEvent beforeChangedUpdate(int offset, CharSequence oldString, CharSequence newString, boolean wholeTextReplaced) {
+  private void updateText(ImmutableText newText,
+                          int offset,
+                          @Nullable CharSequence oldString,
+                          @Nullable CharSequence newString,
+                          boolean wholeTextReplaced,
+                          long newModificationStamp) {
+    final DocumentEvent event;
     myChangeInProgress = true;
     try {
-      return doBeforeChangedUpdate(offset, oldString, newString, wholeTextReplaced);
+      event = doBeforeChangedUpdate(offset, oldString, newString, wholeTextReplaced);
     }
     finally {
       myChangeInProgress = false;
     }
+    myTextString = null;
+    myText = newText;
+    changedUpdate(event, newModificationStamp);
   }
 
   @NotNull
@@ -646,13 +647,17 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
     return ApplicationManager.getApplication().runReadAction(new Computable<String>() {
       @Override
       public String compute() {
-        String s = SoftReference.dereference(myTextString);
-        if (s == null) {
-          myTextString = new SoftReference<String>(s = myText.toString());
-        }
-        return s;
+        return doGetText();
       }
     });
+  }
+
+  private String doGetText() {
+    String s = SoftReference.dereference(myTextString);
+    if (s == null) {
+      myTextString = new SoftReference<String>(s = myText.toString());
+    }
+    return s;
   }
 
   @NotNull
@@ -693,7 +698,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
       @NotNull
       @Override
       public String toString() {
-        return myText.toString();
+        return doGetText();
       }
     };
   }
