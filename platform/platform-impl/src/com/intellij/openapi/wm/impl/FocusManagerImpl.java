@@ -74,7 +74,7 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
   private FocusCommand myFocusCommandOnAppActivation;
   private ActionCallback myCallbackOnActivation;
   private final boolean isInternalMode = ApplicationManagerEx.getApplicationEx().isInternal();
-  private final List<FocusRequestInfo> myRequests = new ArrayList<FocusRequestInfo>();
+  private final LinkedList<FocusRequestInfo> myRequests = new LinkedList<FocusRequestInfo>();
 
   private final IdeEventQueue myQueue;
   private final KeyProcessorContext myKeyProcessorContext = new KeyProcessorContext();
@@ -241,9 +241,16 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
     return myRequests;
   }
 
+  public void recordFocusRequest(Component c, boolean forced) {
+    myRequests.add(new FocusRequestInfo(c, new Throwable(), forced));
+    if (myRequests.size() > 200) {
+      myRequests.removeFirst();
+    }
+  }
+
   private void recordCommand(@NotNull FocusCommand command, @NotNull Throwable trace, boolean forced) {
     if (FocusTracesAction.isActive()) {
-      myRequests.add(new FocusRequestInfo(command.getDominationComponent(), trace, forced));
+      recordFocusRequest(command.getDominationComponent(), forced);
     }
   }
 
