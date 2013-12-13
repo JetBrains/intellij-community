@@ -120,22 +120,8 @@ public final class ImmutableText extends ImmutableCharSequence {
    * @return the textual representation of the specified object.
    */
   public static ImmutableText valueOf(@NotNull Object obj) {
-    if (obj instanceof Number) // Use faster primitive formatting.
-      return valueOfNumber(obj);
+    if (obj instanceof ImmutableText) return (ImmutableText)obj;
     return valueOf(String.valueOf(obj));
-  }
-
-  // For Integer, Long, Float and Double use direct formatting.
-  private static ImmutableText valueOfNumber(Object num) {
-    if (num instanceof Integer)
-      return valueOf(((Integer)num).intValue());
-    if (num instanceof Long)
-      return valueOf(((Long)num).longValue());
-    if (num instanceof Float)
-      return valueOf(((Float)num).floatValue());
-    if (num instanceof Double)
-      return valueOf(((Double)num).doubleValue());
-    return valueOf(String.valueOf(num));
   }
 
   private static ImmutableText valueOf(@NotNull String str) {
@@ -357,7 +343,7 @@ public final class ImmutableText extends ImmutableCharSequence {
   }
 
   public ImmutableText insert(int index, CharSequence seq) {
-    return insert(index, seq instanceof ImmutableText ? (ImmutableText)seq : valueOf(seq));
+    return insert(index, valueOf(seq));
   }
 
   /**
@@ -370,6 +356,7 @@ public final class ImmutableText extends ImmutableCharSequence {
    *         (start > end) || (end > this.length()</code>
    */
   public ImmutableText delete(int start, int end) {
+    if (start == end) return this;
     if (start > end)
       throw new IndexOutOfBoundsException();
     return subtext(0, start).concat(subtext(end));
