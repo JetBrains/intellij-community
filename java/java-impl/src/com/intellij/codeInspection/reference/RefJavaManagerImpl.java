@@ -379,6 +379,16 @@ public class RefJavaManagerImpl extends RefJavaManager {
     public void visitReferenceParameterList(final PsiReferenceParameterList list) {
       super.visitReferenceParameterList(list);
       final PsiMember member = PsiTreeUtil.getParentOfType(list, PsiMember.class);
+
+      if (member instanceof PsiTypeParameter) {
+        final PsiMember owner = ((PsiTypeParameter)member).getOwner();
+        if (owner != null) {
+          for (PsiClassType type : ((PsiTypeParameter)member).getExtendsListTypes()) {
+            myRefUtil.addTypeReference(owner, type, myRefManager);
+          }
+        }
+      }
+
       final PsiType[] typeArguments = list.getTypeArguments();
       for (PsiType type : typeArguments) {
         myRefUtil.addTypeReference(member, type, myRefManager);

@@ -6,3 +6,6 @@ public class Ferrari implements Car {
 interface Car {
   void start();
 }
+class Factory<T extends Car> {
+  T create();
+}
