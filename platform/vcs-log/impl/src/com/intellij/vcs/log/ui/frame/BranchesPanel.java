@@ -61,6 +61,10 @@ public class BranchesPanel extends JPanel {
     addMouseListener(new MouseAdapter() {
       @Override
       public void mouseClicked(MouseEvent e) {
+        if (!myUI.getMainFrame().areGraphActionsEnabled()) {
+          return;
+        }
+
         final RefGroup group = findRef(e);
         if (group == null) {
           return;
