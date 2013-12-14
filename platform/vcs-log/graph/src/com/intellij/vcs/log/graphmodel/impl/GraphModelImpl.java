@@ -1,5 +1,6 @@
 package com.intellij.vcs.log.graphmodel.impl;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.Consumer;
 import com.intellij.util.Function;
 import com.intellij.vcs.log.GraphCommit;
@@ -29,6 +30,8 @@ public class GraphModelImpl implements GraphModel {
   private final BranchVisibleNodes visibleNodes;
   private final List<Consumer<UpdateRequest>> listeners = new ArrayList<Consumer<UpdateRequest>>();
   private final GraphBranchShowFixer branchShowFixer;
+
+  private static final Logger LOG = Logger.getInstance(GraphModelImpl.class);
 
   private Function<Node, Boolean> isStartedBranchVisibilityNode = new Function<Node, Boolean>() {
     @NotNull
@@ -81,8 +84,15 @@ public class GraphModelImpl implements GraphModel {
     graph.updateVisibleRows();
 
     int newSize = graph.getNodeRows().size();
-    int newTo = newSize == 0 ? 0 : newSize - 1;
-    int oldTo = oldSize == 0 ? 0 : oldSize - 1;
+    if (newSize == 0) { // empty log. Possible only right after git init
+      return;
+    }
+    if (oldSize == 0) { // this shouldn't happen unless the log is empty
+      LOG.error("Old size can't be 0 if newSize is not 0. newSize: " + newSize);
+      return;
+    }
+    int newTo = newSize - 1;
+    int oldTo = oldSize - 1;
     UpdateRequest updateRequest = UpdateRequest.buildFromToInterval(0, oldTo, 0, newTo);
     callUpdateListener(updateRequest);
   }

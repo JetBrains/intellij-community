@@ -194,9 +194,6 @@ public class GraphBuilder {
   // local package
   @NotNull
   public MutableGraph runBuild(@NotNull List<? extends GraphCommit> commitParentses) {
-    if (commitParentses.size() == 0) {
-      throw new IllegalArgumentException("Empty list commitParentses");
-    }
     for (GraphCommit vcsCommit : commitParentses) {
       append(vcsCommit);
     }
