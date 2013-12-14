@@ -776,7 +776,7 @@ public class VcsLogDataHolder implements Disposable {
     }
 
     public boolean isFullLogReady() {
-      return myFullLog;
+      return myFullLog && getTopCommitsCount() > 0;
     }
 
     @NotNull

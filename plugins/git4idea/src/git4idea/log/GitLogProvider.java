@@ -78,8 +78,12 @@ public class GitLogProvider implements VcsLogProvider {
   @Override
   public List<? extends VcsFullCommitDetails> readFirstBlock(@NotNull VirtualFile root,
                                                              boolean ordered, int commitCount) throws VcsException {
-    String[] params = { "HEAD", "--branches", "--remotes", "--tags", "--encoding=UTF-8", "--full-history", "--sparse",
-                        "--max-count=" + commitCount};
+    if (!isRepositoryReady(root)) {
+      return Collections.emptyList();
+    }
+
+    String[] params = {"HEAD", "--branches", "--remotes", "--tags", "--encoding=UTF-8", "--full-history", "--sparse",
+      "--max-count=" + commitCount};
     if (ordered) {
       params = ArrayUtil.append(params, "--date-order");
     }
@@ -89,6 +93,10 @@ public class GitLogProvider implements VcsLogProvider {
   @NotNull
   @Override
   public List<TimedVcsCommit> readAllHashes(@NotNull VirtualFile root, @NotNull Consumer<VcsUser> userRegistry) throws VcsException {
+    if (!isRepositoryReady(root)) {
+      return Collections.emptyList();
+    }
+
     return GitHistoryUtils.readAllHashes(myProject, root, userRegistry);
   }
 
@@ -107,13 +115,11 @@ public class GitLogProvider implements VcsLogProvider {
   @NotNull
   @Override
   public Collection<VcsRef> readAllRefs(@NotNull VirtualFile root) throws VcsException {
-    myRepositoryManager.waitUntilInitialized();
-    GitRepository repository = myRepositoryManager.getRepositoryForRoot(root);
-    if (repository == null) {
-      LOG.error("Repository not found for root " + root);
+    if (!isRepositoryReady(root)) {
       return Collections.emptyList();
     }
 
+    GitRepository repository = getRepository(root);
     repository.update();
     Collection<GitLocalBranch> localBranches = repository.getBranches().getLocalBranches();
     Collection<GitRemoteBranch> remoteBranches = repository.getBranches().getRemoteBranches();
@@ -184,6 +190,10 @@ public class GitLogProvider implements VcsLogProvider {
   @Override
   public List<? extends VcsFullCommitDetails> getFilteredDetails(@NotNull final VirtualFile root,
                                                                  @NotNull Collection<VcsLogFilter> filters) throws VcsException {
+    if (!isRepositoryReady(root)) {
+      return Collections.emptyList();
+    }
+
     List<String> filterParameters = ContainerUtil.newArrayList();
 
     List<VcsLogBranchFilter> branchFilters = ContainerUtil.findAll(filters, VcsLogBranchFilter.class);
@@ -269,4 +279,24 @@ public class GitLogProvider implements VcsLogProvider {
   private static <T> String joinFilters(List<T> filters, Function<T, String> toString) {
     return StringUtil.join(filters, toString, "\\|");
   }
+
+  @Nullable
+  private GitRepository getRepository(@NotNull VirtualFile root) {
+    myRepositoryManager.waitUntilInitialized();
+    return myRepositoryManager.getRepositoryForRoot(root);
+  }
+
+  private boolean isRepositoryReady(@NotNull VirtualFile root) {
+    GitRepository repository = getRepository(root);
+    if (repository == null) {
+      LOG.error("Repository not found for root " + root);
+      return false;
+    }
+    else if (repository.isFresh()) {
+      LOG.info("Fresh repository: " + root);
+      return false;
+    }
+    return true;
+  }
+
 }
