@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2013 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -59,35 +59,21 @@ public class NumberEqualityInspection extends BaseInspection {
   private static class NumberEqualityVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitBinaryExpression(
-      @NotNull PsiBinaryExpression expression) {
+    public void visitBinaryExpression(@NotNull PsiBinaryExpression expression) {
       super.visitBinaryExpression(expression);
       final PsiExpression rhs = expression.getROperand();
-      if (rhs == null) {
-        return;
-      }
-      if (!ComparisonUtils.isEqualityComparison(expression)) {
+      if (rhs == null || !ComparisonUtils.isEqualityComparison(expression)) {
         return;
       }
       final PsiExpression lhs = expression.getLOperand();
       if (!hasNumberType(lhs) || !hasNumberType(rhs)) {
         return;
       }
-      final String lhsText = lhs.getText();
-      if (PsiKeyword.NULL.equals(lhsText)) {
-        return;
-      }
-      final String rhsText = rhs.getText();
-      if (PsiKeyword.NULL.equals(rhsText)) {
-        return;
-      }
-      final PsiJavaToken sign = expression.getOperationSign();
-      registerError(sign);
+      registerError(expression.getOperationSign());
     }
 
     private static boolean hasNumberType(PsiExpression expression) {
-      return TypeUtils.expressionHasTypeOrSubtype(expression,
-                                                  CommonClassNames.JAVA_LANG_NUMBER);
+      return TypeUtils.expressionHasTypeOrSubtype(expression, CommonClassNames.JAVA_LANG_NUMBER);
     }
   }
 }
