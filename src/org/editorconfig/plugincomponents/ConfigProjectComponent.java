@@ -9,7 +9,6 @@ import com.intellij.openapi.wm.WindowManager;
 import com.intellij.util.messages.MessageBus;
 import org.editorconfig.configmanagement.CodeStyleManager;
 import org.editorconfig.configmanagement.EncodingManager;
-import org.editorconfig.configmanagement.EndOfLineManager;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
@@ -25,12 +24,8 @@ public class ConfigProjectComponent implements ProjectComponent {
         MessageBus bus = project.getMessageBus();
         codeStyleManager = new CodeStyleManager(project);
         EncodingManager encodingManager = new EncodingManager(project);
-        EndOfLineManager endOfLineManager = new EndOfLineManager(project);
         bus.connect().subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, codeStyleManager);
         bus.connect().subscribe(AppTopics.FILE_DOCUMENT_SYNC, encodingManager);
-        bus.connect().subscribe(AppTopics.FILE_DOCUMENT_SYNC, endOfLineManager);
-        bus.connect().subscribe(DoneSavingTopic.DONE_SAVING, endOfLineManager);
-
     }
 
     public void initComponent() {
