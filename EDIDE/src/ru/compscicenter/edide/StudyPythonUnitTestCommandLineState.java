@@ -11,7 +11,7 @@ public class StudyPythonUnitTestCommandLineState extends PythonUnitTestCommandLi
         super(runConfiguration, env);
     }
 
-    private static final String UTRUNNER_PY = "utrunner.py";
+    private static final String UTRUNNER_PY = "study_utrunner.py";
 
     @Override
     protected String getRunner() {
@@ -22,7 +22,9 @@ public class StudyPythonUnitTestCommandLineState extends PythonUnitTestCommandLi
     protected void addTestRunnerParameters(GeneralCommandLine cmd) throws ExecutionException {
         ParamsGroup script_params = cmd.getParametersList().getParamsGroup(GROUP_SCRIPT);
         assert script_params != null;
-        script_params.addParameter(StudyPythonUnitTestCommandLineState.class.getResource(UTRUNNER_PY).getPath());
+        String resourcePath = StudyPythonUnitTestCommandLineState.class.getResource(UTRUNNER_PY).getPath();
+        resourcePath = resourcePath.substring(1);
+        script_params.addParameter(resourcePath);
         addBeforeParameters(cmd);
         script_params.addParameters(getTestSpecs());
         addAfterParameters(cmd);

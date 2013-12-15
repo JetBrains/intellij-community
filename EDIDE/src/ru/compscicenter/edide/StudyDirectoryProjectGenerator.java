@@ -39,6 +39,23 @@ public class StudyDirectoryProjectGenerator implements DirectoryProjectGenerator
         return null;
     }
 
+    private void makeRunConfiguration(@NotNull Project project, @NotNull final VirtualFile baseDir) {
+        runManager = RunManager.getInstance(project);
+        StudyConfigurationType configurationType = ConfigurationTypeUtil.findConfigurationType(StudyConfigurationType.class);
+        ConfigurationFactory[] factories = configurationType.getConfigurationFactories();
+        runConfiguration = runManager.createRunConfiguration("Study test configuration", factories[0]);
+
+        StudyUnitTestRunConfiguration configuration = (StudyUnitTestRunConfiguration) runConfiguration.getConfiguration();
+
+        try {
+            configuration.setScriptName(baseDir.findChild("task1").findChild("task1_tests.py").getCanonicalPath()); //TODO: get current task name
+        } catch (Exception e) {
+            Log.print("Can not find test script for run configuration");
+        }
+
+        runManager.addConfiguration(runConfiguration, true);
+        runManager.setSelectedConfiguration(runConfiguration);
+    }
 
     public void createFile(String name, VirtualFile directory) throws IOException {
         VirtualFile currentFile = directory.createChildData(this, name);
@@ -92,13 +109,8 @@ public class StudyDirectoryProjectGenerator implements DirectoryProjectGenerator
             });
             EditorFactory.getInstance().addEditorFactoryListener(new StudyEditorFactoryListener(), project);
 
-            runManager = RunManager.getInstance(project);
-            StudyConfigurationType configurationType = ConfigurationTypeUtil.findConfigurationType(StudyConfigurationType.class);
-            ConfigurationFactory[] factories = configurationType.getConfigurationFactories();
-            runConfiguration = runManager.createRunConfiguration("Study test configuration", factories[0]);
-
-            runManager.addConfiguration(runConfiguration, true);
-            runManager.setSelectedConfiguration(runConfiguration);
+            createFile("task1_tests.py", baseDir.findChild("task1"));   //TODO: tests must copy with tasks
+            makeRunConfiguration(project, baseDir);
 
         } catch (IOException e) {
             Log.print("Problems with metadata file");

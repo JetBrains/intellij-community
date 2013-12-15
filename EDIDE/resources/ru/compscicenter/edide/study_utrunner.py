@@ -6,7 +6,7 @@ helpers_dir = os.getenv("PYCHARM_HELPERS_DIR", sys.path[0])
 if sys.path[0] != helpers_dir:
     sys.path.insert(0, helpers_dir)
 
-from edidetcunittest import TeamcityTestRunner
+from study_tcunittest import StudyTestRunner
 from nose_helper import TestLoader, ContextSuite
 from pycharm_run_utils import import_system_module
 from pycharm_run_utils import adjust_sys_path
@@ -81,7 +81,6 @@ def setLoader(module):
 
 if __name__ == "__main__":
   arg = sys.argv[-1]
-  print("everything is ok!")
   if arg == "true":
     import unittest
 
@@ -149,4 +148,4 @@ if __name__ == "__main__":
             testLoader.makeTest(getattr(testCaseClass, a[2]), testCaseClass))
 
   debug("/ Loaded " + str(all.countTestCases()) + " tests")
-  TeamcityTestRunner().run(all, **options)
+  StudyTestRunner().run(all, **options)
