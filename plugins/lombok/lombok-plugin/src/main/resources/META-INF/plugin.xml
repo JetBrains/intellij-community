@@ -196,5 +196,10 @@
             description="Action to refactor getter method to lombok annotation">
       <add-to-group group-id="RefactoringMenu" anchor="last"/>
     </action>
+    <action id="LOMBOK_REFACTOR_SETTER" class="de.plushnikov.intellij.plugin.action.RefactorSetterAction"
+            text="SetterAction"
+            description="Action to refactor setter method to lombok annotation">
+      <add-to-group group-id="RefactoringMenu" anchor="last"/>
+    </action>
   </actions>
 </idea-plugin>

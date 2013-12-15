@@ -15,31 +15,31 @@ import com.intellij.psi.util.PropertyUtil;
 import java.util.ArrayList;
 import java.util.List;
 
-public class RefactorGetterHandler extends LombokRefactorHandler {
+public class RefactorSetterHandler extends LombokRefactorHandler {
 
-  public RefactorGetterHandler(Project project, DataContext dataContext) {
+  public RefactorSetterHandler(Project project, DataContext dataContext) {
     super(dataContext, project);
   }
 
   protected String getChooserTitle() {
-    return "Select Fields to Replace Getter-Method With @Getter";
+    return "Select Fields to Replace Setter-Method With @Getter";
   }
 
   @Override
   protected String getNothingFoundMessage() {
-    return "No field getter have been found to generate @Getters for";
+    return "No field getter have been found to generate @Setter for";
   }
 
   @Override
   protected String getNothingAcceptedMessage() {
-    return "No fields with getter method were found";
+    return "No fields with setter method were found";
   }
 
   @Override
   protected List<EncapsulatableClassMember> getEncapsulatableClassMembers(PsiClass psiClass) {
     final List<EncapsulatableClassMember> result = new ArrayList<EncapsulatableClassMember>();
     for (PsiField field : psiClass.getFields()) {
-      if (null != PropertyUtil.findGetterForField(field)) {
+      if (null != PropertyUtil.findSetterForField(field)) {
         result.add(new PsiFieldMember(field));
       }
     }
@@ -52,11 +52,11 @@ public class RefactorGetterHandler extends LombokRefactorHandler {
       final PsiElementClassMember elementClassMember = (PsiElementClassMember) classMember;
 
       PsiField psiField = (PsiField) elementClassMember.getPsiElement();
-      PsiMethod psiMethod = PropertyUtil.findGetterForField(psiField);
+      PsiMethod psiMethod = PropertyUtil.findSetterForField(psiField);
       if (null != psiMethod) {
         PsiModifierList modifierList = psiField.getModifierList();
         if (null != modifierList) {
-          modifierList.addAnnotation("lombok.Getter");
+          modifierList.addAnnotation("lombok.Setter");
           psiMethod.delete();
         }
       }
