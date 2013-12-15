@@ -16,7 +16,7 @@ import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import org.editorconfig.core.EditorConfig.OutPair;
 import org.editorconfig.plugincomponents.SettingsProviderComponent;
-import org.editorconfig.utils.ConfigConverter;
+import org.editorconfig.Utils;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.event.WindowEvent;
@@ -110,9 +110,9 @@ public class CodeStyleManager implements FileEditorManagerListener, WindowFocusL
 
     private void applyIndentOptions (List<OutPair> outPairs, CommonCodeStyleSettings.IndentOptions indentOptions,
                                      String filePath) {
-        String indentSize = ConfigConverter.valueForKey(outPairs, indentSizeKey);
-        String tabWidth = ConfigConverter.valueForKey(outPairs, tabWidthKey);
-        String indentStyle = ConfigConverter.valueForKey(outPairs, indentStyleKey);
+        String indentSize = Utils.configValueForKey(outPairs, indentSizeKey);
+        String tabWidth = Utils.configValueForKey(outPairs, tabWidthKey);
+        String indentStyle = Utils.configValueForKey(outPairs, indentStyleKey);
         try {
             applyIndentSize(indentOptions, indentSize, filePath);
         }

@@ -9,7 +9,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
 import org.editorconfig.plugincomponents.SettingsProviderComponent;
 import org.editorconfig.core.EditorConfig.OutPair;
-import org.editorconfig.utils.ConfigConverter;
+import org.editorconfig.Utils;
 import org.jetbrains.annotations.NotNull;
 
 import java.nio.charset.Charset;
@@ -107,7 +107,7 @@ public class EncodingManager implements FileDocumentManagerListener {
         String filePath = file.getCanonicalPath();
         List<OutPair> outPairs = SettingsProviderComponent.getInstance().getOutPairs(filePath);
         EncodingProjectManager encodingProjectManager = EncodingProjectManager.getInstance(project);
-        String charset = ConfigConverter.valueForKey(outPairs, charsetKey);
+        String charset = Utils.configValueForKey(outPairs, charsetKey);
         if (!charset.isEmpty()) {
             if (encodingMap.containsKey(charset)) {
                 encodingProjectManager.setEncoding(file, encodingMap.get(charset));

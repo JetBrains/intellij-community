@@ -22,18 +22,11 @@ public class ConfigAppComponent implements ApplicationComponent {
         container.unregisterComponent(fileDocumentManagerKey);
         componentManager.registerComponentImplementation(FileDocumentManager.class, ReplacementFileDocumentManager.class);
 
-        // Register replacement EditorSettingsExternalizable
-        String editorSettingsExternalizableKey = EditorSettingsExternalizable.class.getName();
-        container.unregisterComponent(editorSettingsExternalizableKey);
-        componentManager.registerComponentImplementation(EditorSettingsExternalizable.class, ReplacementEditorSettingsExternalizable.class);
-
         // Create EditorSettingsManager and register event listeners
         MessageBus bus = ApplicationManager.getApplication().getMessageBus();
         EditorSettingsManager editorSettingsManager = new EditorSettingsManager();
         bus.connect().subscribe(AppTopics.FILE_DOCUMENT_SYNC, editorSettingsManager);
-        bus.connect().subscribe(DoneSavingTopic.DONE_SAVING, editorSettingsManager);
         EditorSettingsExternalizable editorSettings = EditorSettingsExternalizable.getInstance();
-        editorSettings.addPropertyChangeListener(editorSettingsManager);
     }
 
     public void initComponent() {
