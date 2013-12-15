@@ -163,7 +163,7 @@ class RootIndex {
 
   private static boolean shouldMarkAsProjectExcluded(RootInfo info, List<RootInfo> hierarchy) {
     if (hierarchy == null) return false;
-    if (!(info.excludedFromProject || info.excludedFromModule != null)) return false;
+    if (!info.excludedFromProject && info.excludedFromModule == null) return false;
     return ContainerUtil.find(hierarchy, new Condition<RootInfo>() {
       @Override
       public boolean value(RootInfo info) {
@@ -516,14 +516,14 @@ class RootIndex {
   private static class RootInfo {
     final VirtualFile root;
     Module contentRootOf;
-    Set<Module> sourceRootOf = ContainerUtil.newLinkedHashSet();
+    Set<Module> sourceRootOf = new LinkedHashSet<Module>(1);
     int rootTypeId;
-    Set<OrderEntry> libClassRootEntries = ContainerUtil.newLinkedHashSet();
-    Set<OrderEntry> libSourceRootEntries = ContainerUtil.newLinkedHashSet();
-    Set<OrderEntry> depEntries = ContainerUtil.newLinkedHashSet();
-    Set<Library> excludedFromLibraries = ContainerUtil.newHashSet();
-    Set<Library> classOfLibraries = ContainerUtil.newHashSet();
-    Set<Library> sourceOfLibraries = ContainerUtil.newHashSet();
+    Set<OrderEntry> libClassRootEntries = new LinkedHashSet<OrderEntry>(1);
+    Set<OrderEntry> libSourceRootEntries = new LinkedHashSet<OrderEntry>(1);
+    Set<OrderEntry> depEntries = new LinkedHashSet<OrderEntry>();
+    Set<Library> excludedFromLibraries = new HashSet<Library>(1);
+    Set<Library> classOfLibraries = new HashSet<Library>(1);
+    Set<Library> sourceOfLibraries = new HashSet<Library>(1);
     boolean excludedFromProject;
     Module excludedFromModule;
     String packagePrefix;
