@@ -13,20 +13,10 @@ import org.picocontainer.MutablePicoContainer;
 
 public class ConfigAppComponent implements ApplicationComponent {
     public ConfigAppComponent() {
-        // Load a couple replacement classes to provide extra events
-        ComponentManagerImpl componentManager = (ComponentManagerImpl) ApplicationManager.getApplication();
-        MutablePicoContainer container = (MutablePicoContainer) ApplicationManager.getApplication().getPicoContainer();
-
-        // Register replacement FileDocumentManager
-        String fileDocumentManagerKey = FileDocumentManager.class.getName();
-        container.unregisterComponent(fileDocumentManagerKey);
-        componentManager.registerComponentImplementation(FileDocumentManager.class, ReplacementFileDocumentManager.class);
-
         // Create EditorSettingsManager and register event listeners
         MessageBus bus = ApplicationManager.getApplication().getMessageBus();
         EditorSettingsManager editorSettingsManager = new EditorSettingsManager();
         bus.connect().subscribe(AppTopics.FILE_DOCUMENT_SYNC, editorSettingsManager);
-        EditorSettingsExternalizable editorSettings = EditorSettingsExternalizable.getInstance();
     }
 
     public void initComponent() {
