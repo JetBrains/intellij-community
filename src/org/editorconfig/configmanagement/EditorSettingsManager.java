@@ -6,18 +6,36 @@ import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileDocumentManagerListener;
 import com.intellij.openapi.fileEditor.impl.TrailingSpacesStripper;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.editorconfig.plugincomponents.SettingsProviderComponent;
 import org.editorconfig.core.EditorConfig;
 import org.editorconfig.Utils;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class EditorSettingsManager implements FileDocumentManagerListener {
     // Handles the following EditorConfig settings:
     private static final String trimTrailingWhitespaceKey = "trim_trailing_whitespace";
     private static final String insertFinalNewlineKey = "insert_final_newline";
+    private static final Map<String, String> trimMap;
+    static {
+        Map<String, String> map = new HashMap<String, String>();
+        map.put("true", EditorSettingsExternalizable.STRIP_TRAILING_SPACES_WHOLE);
+        map.put("false", EditorSettingsExternalizable.STRIP_TRAILING_SPACES_NONE);
+        trimMap = Collections.unmodifiableMap(map);
+    }
+    private static final Map<String, String> newlineMap;
+    static {
+        Map<String, String> map = new HashMap<String, String>();
+        map.put("true", TrailingSpacesStripper.ENSURE_NEWLINE);
+        map.put("false", TrailingSpacesStripper.DONT_ENSURE_NEWLINE);
+        newlineMap = Collections.unmodifiableMap(map);
+    }
 
     private static final Logger LOG = Logger.getInstance("#org.editorconfig.configmanagement.EditorSettingsManager");
 
@@ -30,8 +48,7 @@ public class EditorSettingsManager implements FileDocumentManagerListener {
     public void beforeDocumentSaving(@NotNull Document document) {
         // This is fired when any document is saved, regardless of whether it is part of a save-all or
         // a save-one operation
-        LOG.debug("Saving one document");
-        VirtualFile file = FileDocumentManager.getInstance().getFile(document);
+        final VirtualFile file = FileDocumentManager.getInstance().getFile(document);
         applySettings(file);
     }
 
@@ -62,38 +79,31 @@ public class EditorSettingsManager implements FileDocumentManagerListener {
 
     private void applySettings(VirtualFile file) {
         // Get editorconfig settings
-        String filePath = file.getCanonicalPath();
-        SettingsProviderComponent settingsProvider = SettingsProviderComponent.getInstance();
-        List<EditorConfig.OutPair> outPairs = settingsProvider.getOutPairs(filePath);
-        String trimTrailingWhitespace = Utils.configValueForKey(outPairs, trimTrailingWhitespaceKey);
-        String insertFinalNewline = Utils.configValueForKey(outPairs, insertFinalNewlineKey);
+        final String filePath = file.getCanonicalPath();
+        final SettingsProviderComponent settingsProvider = SettingsProviderComponent.getInstance();
+        final List<EditorConfig.OutPair> outPairs = settingsProvider.getOutPairs(filePath);
         // Apply trailing spaces setting
-        if (trimTrailingWhitespace.equals("true")) {
-            file.putUserData(TrailingSpacesStripper.OVERRIDE_STRIP_TRAILING_SPACES_KEY,
-                             EditorSettingsExternalizable.STRIP_TRAILING_SPACES_WHOLE);
-        } else if (trimTrailingWhitespace.equals("false")) {
-            file.putUserData(TrailingSpacesStripper.OVERRIDE_STRIP_TRAILING_SPACES_KEY,
-                             EditorSettingsExternalizable.STRIP_TRAILING_SPACES_NONE);
-        } else {
-            if (!trimTrailingWhitespace.isEmpty()) {
-                LOG.warn(Utils.invalidConfigMessage(trimTrailingWhitespace, trimTrailingWhitespaceKey, filePath));
-            }
-            file.putUserData(TrailingSpacesStripper.OVERRIDE_STRIP_TRAILING_SPACES_KEY, null);
-        }
+        final String trimTrailingWhitespace = Utils.configValueForKey(outPairs, trimTrailingWhitespaceKey);
+        applyConfigValueToUserData(file, TrailingSpacesStripper.OVERRIDE_STRIP_TRAILING_SPACES_KEY,
+                                   trimTrailingWhitespaceKey, trimTrailingWhitespace, trimMap);
         // Apply final newline setting
-        if (insertFinalNewline.equals("true")) {
-            file.putUserData(TrailingSpacesStripper.OVERRIDE_ENSURE_NEWLINE_KEY,
-                             TrailingSpacesStripper.ENSURE_NEWLINE);
-        } else if (insertFinalNewline.equals("false")) {
-            file.putUserData(TrailingSpacesStripper.OVERRIDE_ENSURE_NEWLINE_KEY,
-                             TrailingSpacesStripper.DONT_ENSURE_NEWLINE);
+        final String insertFinalNewline = Utils.configValueForKey(outPairs, insertFinalNewlineKey);
+        applyConfigValueToUserData(file, TrailingSpacesStripper.OVERRIDE_ENSURE_NEWLINE_KEY,
+                                   insertFinalNewlineKey, insertFinalNewline, newlineMap);
+    }
+
+    private void applyConfigValueToUserData(VirtualFile file, Key userDataKey, String editorConfigKey,
+                                            String configValue, Map<String, String> configMap) {
+        if (configValue.isEmpty()) {
+            file.putUserData(userDataKey, null);
         } else {
-            if (!insertFinalNewline.isEmpty()) {
-                LOG.warn(Utils.invalidConfigMessage(insertFinalNewline, insertFinalNewlineKey, filePath));
+            final String data = configMap.get(configValue);
+            if (data == null) {
+                LOG.warn(Utils.invalidConfigMessage(configValue, editorConfigKey, file.getCanonicalPath()));
+            } else {
+                file.putUserData(userDataKey, data);
+                LOG.debug("Applied " + editorConfigKey + " settings for: " + file.getCanonicalPath());
             }
-            file.putUserData(TrailingSpacesStripper.OVERRIDE_ENSURE_NEWLINE_KEY, null);
         }
-        LOG.debug("Applied editor settings for: " + filePath);
-        
     }
 }
