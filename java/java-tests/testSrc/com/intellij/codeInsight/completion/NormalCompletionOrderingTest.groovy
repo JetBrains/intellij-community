@@ -620,4 +620,8 @@ interface TxANotAnno {}
     checkPreferredItems 0, 'String', 'System', 'Set'
   }
 
+  public void testAnnotationEnum() {
+    checkPreferredItems 0, 'MyEnum.BAR', 'MyEnum', 'MyEnum.FOO'
+  }
+
 }
