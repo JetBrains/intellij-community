@@ -338,10 +338,11 @@ public class FindInProjectUtil {
 
       if (fastWords.getFirst() && canOptimizeForFastWordSearch(findModel)) return filesForFastWordSearch;
 
-      final GlobalSearchScope customScope = toGlobal(project, findModel.getCustomScope());
+      SearchScope customScope = findModel.getCustomScope();
+      final GlobalSearchScope globalCustomScope = toGlobal(project, customScope);
 
       class EnumContentIterator implements ContentIterator {
-        final List<PsiFile> myFiles = new ArrayList<PsiFile>(filesForFastWordSearch);
+        final Set<PsiFile> myFiles = new LinkedHashSet<PsiFile>(filesForFastWordSearch);
         final PsiManager psiManager = PsiManager.getInstance(project);
 
         @Override
@@ -349,7 +350,7 @@ public class FindInProjectUtil {
           ProgressManager.checkCanceled();
           if (!virtualFile.isDirectory() &&
               (fileMaskRegExp == null || fileMaskRegExp.matcher(virtualFile.getName()).matches()) &&
-              (customScope == null || customScope.contains(virtualFile))) {
+              (globalCustomScope == null || globalCustomScope.contains(virtualFile))) {
             final PsiFile psiFile = psiManager.findFile(virtualFile);
             if (psiFile != null && !filesForFastWordSearch.contains(psiFile)) {
               myFiles.add(psiFile);
@@ -363,14 +364,19 @@ public class FindInProjectUtil {
           return myFiles;
         }
       }
+
       EnumContentIterator iterator = new EnumContentIterator();
 
+      for (VirtualFile file : getLocalScopeFiles((LocalSearchScope)customScope)) {
+        iterator.processFile(file);
+      }
+      
       if (psiDirectory == null) {
         boolean success = fileIndex.iterateContent(iterator);
-        if (success && customScope != null && customScope.isSearchInLibraries()) {
+        if (success && globalCustomScope != null && globalCustomScope.isSearchInLibraries()) {
           OrderEnumerator enumerator = module == null ? OrderEnumerator.orderEntries(project) : OrderEnumerator.orderEntries(module);
           final VirtualFile[] librarySources = enumerator.withoutModuleSourceEntries().withoutDepModules().getSourceRoots();
-          iterateAll(librarySources, customScope, iterator);
+          iterateAll(librarySources, globalCustomScope, iterator);
         }
       }
       else {
@@ -406,6 +412,10 @@ public class FindInProjectUtil {
     if (scope instanceof GlobalSearchScope || scope == null) {
       return (GlobalSearchScope)scope;
     }
+    return GlobalSearchScope.filesScope(project, getLocalScopeFiles((LocalSearchScope)scope));
+  }
+
+  private static Set<VirtualFile> getLocalScopeFiles(LocalSearchScope scope) {
     Set<VirtualFile> files = new HashSet<VirtualFile>();
     for (PsiElement element : ((LocalSearchScope)scope).getScope()) {
       PsiFile file = element.getContainingFile();
@@ -413,7 +423,7 @@ public class FindInProjectUtil {
         ContainerUtil.addIfNotNull(files, file.getVirtualFile());
       }
     }
-    return GlobalSearchScope.filesScope(project, files);
+    return files;
   }
 
   @NotNull
