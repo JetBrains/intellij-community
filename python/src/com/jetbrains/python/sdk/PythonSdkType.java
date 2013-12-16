@@ -527,31 +527,46 @@ public class PythonSdkType extends SdkType {
       LOG.error("For refreshing skeletons of remote SDK, either project or owner component must be specified");
     }
     final ProgressManager progressManager = ProgressManager.getInstance();
-    final Ref<Boolean> success = new Ref<Boolean>(true);
+    final Ref<Boolean> sdkPathsUpdatedRef = new Ref<Boolean>(false);
     final Task.Modal setupTask = new Task.Modal(project, "Setting up library files for " + sdk.getName(), false) {
-      // TODO: make this a backgroundable task. see #setupSdkPaths(final Sdk sdk) and its modificator handling
       public void run(@NotNull final ProgressIndicator indicator) {
         sdkModificator.removeAllRoots();
         try {
           updateSdkRootsFromSysPath(sdk, sdkModificator, indicator);
           updateUserAddedPaths(sdk, sdkModificator, indicator);
-          if (!ApplicationManager.getApplication().isUnitTestMode()) {
-            PySkeletonRefresher.refreshSkeletonsOfSdk(project, ownerComponent,
-                                                      getSkeletonsPath(PathManager.getSystemPath(), sdk.getHomePath()),
-                                                      null, sdk
-            );
-            PythonSdkUpdater.getInstance().markAlreadyUpdated(sdk.getHomePath());
-          }
+          PythonSdkUpdater.getInstance().markAlreadyUpdated(sdk.getHomePath());
+          sdkPathsUpdatedRef.set(true);
         }
-        catch (InvalidSdkException e) {
-          if (!isInvalid(sdk)) {
-            LOG.error(e);
-          }
+        catch (InvalidSdkException ignored) {
         }
       }
     };
     progressManager.run(setupTask);
-    return success.get();
+    final Boolean sdkPathsUpdated = sdkPathsUpdatedRef.get();
+    final Application application = ApplicationManager.getApplication();
+    if (sdkPathsUpdated && !application.isUnitTestMode()) {
+      application.invokeLater(new Runnable() {
+        @Override
+        public void run() {
+          progressManager.run(new Task.Backgroundable(project, PyBundle.message("sdk.gen.updating.skels"), false) {
+            @Override
+            public void run(@NotNull ProgressIndicator indicator) {
+              try {
+                final String skeletonsPath = getSkeletonsPath(PathManager.getSystemPath(), sdk.getHomePath());
+                PySkeletonRefresher.refreshSkeletonsOfSdk(project, ownerComponent, skeletonsPath, null, sdk);
+              }
+              catch (InvalidSdkException e) {
+                // If the SDK is invalid, the user should worry about the SDK itself, not about skeletons generation errors
+                if (!isInvalid(sdk)) {
+                  LOG.error(e);
+                }
+              }
+            }
+          });
+        }
+      });
+    }
+    return sdkPathsUpdated;
   }
 
   /**
