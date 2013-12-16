@@ -548,6 +548,34 @@ public class GitBranchUtil {
     return rootCandidate;
   }
 
+  @NotNull
+  public static Collection<String> getCommonBranches(Collection<GitRepository> repositories,
+                                                     boolean local) {
+    Collection<String> commonBranches = null;
+    for (GitRepository repository : repositories) {
+      GitBranchesCollection branchesCollection = repository.getBranches();
+
+      Collection<String> names = local
+                                 ? convertBranchesToNames(branchesCollection.getLocalBranches())
+                                 : getBranchNamesWithoutRemoteHead(branchesCollection.getRemoteBranches());
+      if (commonBranches == null) {
+        commonBranches = names;
+      }
+      else {
+        commonBranches = ContainerUtil.intersection(commonBranches, names);
+      }
+    }
+
+    if (commonBranches != null) {
+      ArrayList<String> common = new ArrayList<String>(commonBranches);
+      Collections.sort(common);
+      return common;
+    }
+    else {
+      return Collections.emptyList();
+    }
+  }
+
   /**
    * List branches containing a commit. Specify null if no commit filtering is needed.
    */
