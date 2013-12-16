@@ -55,7 +55,8 @@ public class ResizeableMappedFile implements Forceable {
     if (myLogicalSize == 0) {
       try {
         getPagedFileStorage().lock();
-        resize(initialSize);
+        // use direct call to storage.resize() so that IOException is not masked with RuntimeException
+        myStorage.resize(initialSize);
       }
       finally {
         getPagedFileStorage().unlock();
