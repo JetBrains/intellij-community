@@ -37,6 +37,9 @@ public class StudyEditorFactoryListener implements EditorFactoryListener {
                     if (vfOpenedFile != null) {
                         String fileName = vfOpenedFile.getNameWithoutExtension() + ".meta";
                         InputStream metaIS = StudyEditorFactoryListener.class.getResourceAsStream(fileName);
+                        if (metaIS == null) {
+                            return;
+                        }
                         BufferedReader metaReader = new BufferedReader(new InputStreamReader(metaIS));
                         int replaceNum = Integer.parseInt(metaReader.readLine());
 

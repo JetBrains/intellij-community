@@ -23,7 +23,7 @@ public class StudyPythonUnitTestCommandLineState extends PythonUnitTestCommandLi
         ParamsGroup script_params = cmd.getParametersList().getParamsGroup(GROUP_SCRIPT);
         assert script_params != null;
         String resourcePath = StudyPythonUnitTestCommandLineState.class.getResource(UTRUNNER_PY).getPath();
-        resourcePath = resourcePath.substring(1);
+        //resourcePath = resourcePath.substring(1);
         script_params.addParameter(resourcePath);
         addBeforeParameters(cmd);
         script_params.addParameters(getTestSpecs());

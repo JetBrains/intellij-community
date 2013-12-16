@@ -97,6 +97,7 @@ public class StudyDirectoryProjectGenerator implements DirectoryProjectGenerator
                                 final String curFileName = tasks[task].fileNames.get(file);
                                 createFile(curFileName, taskDirectory);
                             }
+                            createFile("task1_tests.py", baseDir.findChild("task1"));   //TODO: tests must copy with tasks
 
                         }
                     } catch (IOException e) {
@@ -109,7 +110,7 @@ public class StudyDirectoryProjectGenerator implements DirectoryProjectGenerator
             });
             EditorFactory.getInstance().addEditorFactoryListener(new StudyEditorFactoryListener(), project);
 
-            createFile("task1_tests.py", baseDir.findChild("task1"));   //TODO: tests must copy with tasks
+
             makeRunConfiguration(project, baseDir);
 
         } catch (IOException e) {
