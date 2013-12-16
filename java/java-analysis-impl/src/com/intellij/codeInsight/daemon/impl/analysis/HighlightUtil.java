@@ -2421,6 +2421,11 @@ public class HighlightUtil extends HighlightUtilBase {
           QuickFixAction.registerQuickFixAction(highlightInfo, QUICK_FIX_FACTORY.createAddTypeCastFix(throwable, (PsiExpression)context));
         }
       }
+
+      final PsiClass aClass = PsiUtil.resolveClassInClassTypeOnly(type);
+      if (aClass != null) {
+        QuickFixAction.registerQuickFixAction(highlightInfo, QUICK_FIX_FACTORY.createExtendsListFix(aClass, throwable, true));
+      }
       return highlightInfo;
     }
     return null;
