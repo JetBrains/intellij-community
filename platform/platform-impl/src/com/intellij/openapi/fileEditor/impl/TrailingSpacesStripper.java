@@ -51,16 +51,6 @@ public final class TrailingSpacesStripper extends FileDocumentManagerAdapter {
   @NonNls public static final String ENSURE_NEWLINE = "Ensure";
   @NonNls public static final String DONT_ENSURE_NEWLINE = "Dont";
 
-  //private static final Set<String> trailingSpacesOptions;
-  //static {
-  //  trailingSpacesOptions = new HashSet<String>();
-  //  trailingSpacesOptions.add(EditorSettingsExternalizable.STRIP_TRAILING_SPACES_NONE);
-  //  trailingSpacesOptions.add(EditorSettingsExternalizable.STRIP_TRAILING_SPACES_CHANGED);
-  //  trailingSpacesOptions.add(EditorSettingsExternalizable.STRIP_TRAILING_SPACES_WHOLE);
-  //}
-  //
-  //private static final Set<String> trailingSpacesOptions;
-
   private final Set<Document> myDocumentsToStripLater = new THashSet<Document>();
 
   @Override
