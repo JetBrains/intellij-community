@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,6 +36,7 @@ import com.intellij.openapi.editor.event.VisibleAreaEvent;
 import com.intellij.openapi.editor.event.VisibleAreaListener;
 import com.intellij.openapi.editor.ex.ScrollingModelEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.Animator;
 import org.jetbrains.annotations.NotNull;
@@ -124,19 +125,18 @@ public class ScrollingModelImpl implements ScrollingModelEx {
     return myEditor.getScrollPane().getViewport().getViewRect();
   }
 
+  @NotNull
   @Override
   public Rectangle getVisibleAreaOnScrollingFinished() {
     assertIsDispatchThread();
     if (myCurrentAnimationRequest != null) {
       return myCurrentAnimationRequest.getTargetVisibleArea();
     }
-    else {
-      return getVisibleArea();
-    }
+    return getVisibleArea();
   }
 
   @Override
-  public void scrollToCaret(ScrollType scrollType) {
+  public void scrollToCaret(@NotNull ScrollType scrollType) {
     assertIsDispatchThread();
     LogicalPosition caretPosition = myEditor.getCaretModel().getLogicalPosition();
     myEditor.validateSize();
@@ -144,7 +144,7 @@ public class ScrollingModelImpl implements ScrollingModelEx {
   }
 
   @Override
-  public void scrollTo(LogicalPosition pos, ScrollType scrollType) {
+  public void scrollTo(@NotNull LogicalPosition pos, @NotNull ScrollType scrollType) {
     assertIsDispatchThread();
     if (myEditor.getScrollPane() == null) return;
 
@@ -160,7 +160,7 @@ public class ScrollingModelImpl implements ScrollingModelEx {
   }
 
   @Override
-  public void runActionOnScrollingFinished(Runnable action) {
+  public void runActionOnScrollingFinished(@NotNull Runnable action) {
     assertIsDispatchThread();
 
     if (myCurrentAnimationRequest != null) {
@@ -372,12 +372,12 @@ public class ScrollingModelImpl implements ScrollingModelEx {
   }
 
   @Override
-  public void addVisibleAreaListener(VisibleAreaListener listener) {
+  public void addVisibleAreaListener(@NotNull VisibleAreaListener listener) {
     myVisibleAreaListeners.add(listener);
   }
 
   @Override
-  public void removeVisibleAreaListener(VisibleAreaListener listener) {
+  public void removeVisibleAreaListener(@NotNull VisibleAreaListener listener) {
     boolean success = myVisibleAreaListeners.remove(listener);
     LOG.assertTrue(success);
   }
@@ -435,7 +435,6 @@ public class ScrollingModelImpl implements ScrollingModelEx {
 
     private final ArrayList<Runnable> myPostRunnables = new ArrayList<Runnable>();
 
-    private final Runnable myStartCommand;
     private final int myHDist;
     private final int myVDist;
     private final int myMaxDistToScroll;
@@ -474,8 +473,6 @@ public class ScrollingModelImpl implements ScrollingModelEx {
       }
       myPow = myScrollDist > 0 ? setupPow(firstStepTime, firstScrollDist / myScrollDist) : 1;
 
-      myStartCommand = CommandProcessor.getInstance().getCurrentCommand();
-
       myAnimator = new Animator("Animated scroller", myStepCount, SCROLL_DURATION, false, true) {
         @Override
         public void paintNow(int frame, int totalFrames, int cycle) {
@@ -498,15 +495,11 @@ public class ScrollingModelImpl implements ScrollingModelEx {
       myAnimator.resume();
     }
 
+    @NotNull
     public Rectangle getTargetVisibleArea() {
       Rectangle viewRect = getVisibleArea();
       return new Rectangle(myEndHOffset, myEndVOffset, viewRect.width, viewRect.height);
     }
-
-    // Commented as the method is not used
-    //public Runnable getStartCommand() {
-    //  return myStartCommand;
-    //}
 
     public void cancel(boolean scrollToTarget) {
       assertIsDispatchThread();
@@ -524,7 +517,7 @@ public class ScrollingModelImpl implements ScrollingModelEx {
         executePostRunnables();
       }
 
-      myAnimator.dispose();
+      Disposer.dispose(myAnimator);
       if (myCurrentAnimationRequest == this) {
         myCurrentAnimationRequest = null;
       }

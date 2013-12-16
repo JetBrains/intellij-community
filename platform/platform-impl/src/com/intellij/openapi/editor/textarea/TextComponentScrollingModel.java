@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,13 +41,14 @@ public class TextComponentScrollingModel implements ScrollingModel {
     throw new UnsupportedOperationException("Not implemented");
   }
 
+  @NotNull
   @Override
   public Rectangle getVisibleAreaOnScrollingFinished() {
     throw new UnsupportedOperationException("Not implemented");
   }
 
   @Override
-  public void scrollToCaret(final ScrollType scrollType) {
+  public void scrollToCaret(@NotNull final ScrollType scrollType) {
     final int position = myTextComponent.getCaretPosition();
     try {
       final Rectangle rectangle = myTextComponent.modelToView(position);
@@ -59,12 +60,12 @@ public class TextComponentScrollingModel implements ScrollingModel {
   }
 
   @Override
-  public void scrollTo(final LogicalPosition pos, final ScrollType scrollType) {
+  public void scrollTo(@NotNull final LogicalPosition pos, @NotNull final ScrollType scrollType) {
     throw new UnsupportedOperationException("Not implemented");
   }
 
   @Override
-  public void runActionOnScrollingFinished(final Runnable action) {
+  public void runActionOnScrollingFinished(@NotNull final Runnable action) {
     throw new UnsupportedOperationException("Not implemented");
   }
 
@@ -97,12 +98,12 @@ public class TextComponentScrollingModel implements ScrollingModel {
   }
 
   @Override
-  public void addVisibleAreaListener(final VisibleAreaListener listener) {
+  public void addVisibleAreaListener(@NotNull final VisibleAreaListener listener) {
     throw new UnsupportedOperationException("Not implemented");
   }
 
   @Override
-  public void removeVisibleAreaListener(final VisibleAreaListener listener) {
+  public void removeVisibleAreaListener(@NotNull final VisibleAreaListener listener) {
     throw new UnsupportedOperationException("Not implemented");
   }
 }
