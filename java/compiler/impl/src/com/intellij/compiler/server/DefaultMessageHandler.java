@@ -222,7 +222,7 @@ public abstract class DefaultMessageHandler implements BuilderMessageHandler {
       ApplicationManager.getApplication().runReadAction(new Runnable() {
         public void run() {
           for (final PsiElement usage : usages) {
-            if (!usage.isValid()) {
+            if (usage.isValid()) {
               // if usage is invalid the file should be changed anyway and thus compiled later
               affect(usage, affectedPaths);
             }
