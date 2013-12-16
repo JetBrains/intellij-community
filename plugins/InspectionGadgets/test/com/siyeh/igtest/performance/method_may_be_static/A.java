@@ -37,3 +37,9 @@ class D extends C implements Surprise {
 interface Surprise {
   int getInt();
 }
+
+interface FromJava8 {
+  default void foo() {
+    System.out.println();
+  }
+}
