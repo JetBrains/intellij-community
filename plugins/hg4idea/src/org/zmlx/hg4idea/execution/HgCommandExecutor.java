@@ -207,7 +207,10 @@ public final class HgCommandExecutor {
     try {
       String workingDir = repo != null ? repo.getPath() : null;
       ShellCommand shellCommand = new ShellCommand(cmdLine, workingDir, myCharset);
+      long startTime = System.currentTimeMillis();
+      LOG.debug(String.format("hg %s.started", operation));
       result = shellCommand.execute(operationsWithTextIndicator.contains(operation));
+      LOG.debug(String.format("hg %s finished. Took %s ms", operation, System.currentTimeMillis() - startTime));
       if (!HgErrorUtil.isAuthorizationError(result)) {
         passReceiver.saveCredentials();
       }
@@ -228,8 +231,7 @@ public final class HgCommandExecutor {
     }
     String warnings = warningReceiver.getWarnings();
     result.setWarnings(warnings);
-
-    logResult(result);
+    logResult(result, operation);
     return result;
   }
 
@@ -262,7 +264,7 @@ public final class HgCommandExecutor {
   }
 
   @SuppressWarnings("UseOfSystemOutOrSystemErr")
-  private void logResult(@NotNull HgCommandResult result) {
+  private void logResult(@NotNull HgCommandResult result, @NotNull String operationName) {
     final boolean unitTestMode = ApplicationManager.getApplication().isUnitTestMode();
 
     // log output if needed
@@ -270,11 +272,12 @@ public final class HgCommandExecutor {
       if (unitTestMode) {
         System.out.print(result.getRawOutput() + "\n");
       }
-      if (!myIsSilent && myShowOutput) {
+      else if (!myIsSilent && myShowOutput) {
         LOG.info(result.getRawOutput());
         myVcs.showMessageInConsole(result.getRawOutput(), ConsoleViewContentType.SYSTEM_OUTPUT.getAttributes());
       }
-      else {
+      else if (!StringUtil.equalsIgnoreCase(operationName, "log")) {
+        //too big output for log command!
         LOG.debug(result.getRawOutput());
       }
     }
