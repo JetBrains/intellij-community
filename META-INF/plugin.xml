@@ -96,20 +96,12 @@
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">
-    <applicationService id="postfixCompletionService"
-                        serviceImplementation="org.jetbrains.postfixCompletion.infrastructure.PostfixTemplatesService"/>
-    <applicationService id="postfixCompletionSettings"
-                        serviceImplementation="org.jetbrains.postfixCompletion.settings.PostfixCompletionSettings"/>
-
+    <applicationService id="postfixCompletionSettings" serviceImplementation="org.jetbrains.postfixCompletion.settings.PostfixCompletionSettings"/>
     <customLiveTemplate implementation="org.jetbrains.postfixCompletion.templates.PostfixLiveTemplate"/>
-
-    <completion.contributor language="JAVA" order="FIRST"
-                            implementationClass="org.jetbrains.postfixCompletion.PostfixCompletionContributor"/>
-
-    <completion.contributor language="JAVA"
-                            implementationClass="org.jetbrains.postfixCompletion.completion.PostfixTemplateCompletionContributor"/>
+    
+    <completion.contributor language="JAVA" implementationClass="org.jetbrains.postfixCompletion.completion.PostfixTemplateCompletionContributor"/>
     <lookup.actionProvider implementation="org.jetbrains.postfixCompletion.completion.PostfixTemplateLookupActionProvider"/>
-    <editorOptionsProvider id="editing.postfixCompletion"
-                           instance="org.jetbrains.postfixCompletion.settings.PostfixCompletionConfigurable"/>
+    
+    <editorOptionsProvider id="editing.postfixCompletion" instance="org.jetbrains.postfixCompletion.settings.PostfixCompletionConfigurable"/>
   </extensions>
 </idea-plugin>
