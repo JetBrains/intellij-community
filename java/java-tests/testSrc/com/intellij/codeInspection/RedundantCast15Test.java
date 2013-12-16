@@ -50,6 +50,7 @@ public class RedundantCast15Test extends InspectionTestCase {
   public void testInstanceOfChecks() throws Exception { doTest();}
   public void testForEachValue() throws Exception { doTest();}
   public void testCaseThrowable() throws Exception { doTest();}
+  public void testSafeTempVarName() throws Exception { doTest();}
 
   public void testTypeParameterAccessChecksJava7() throws Exception {
     IdeaTestUtil.setTestVersion(JavaSdkVersion.JDK_1_7, getModule(), getTestRootDisposable());
