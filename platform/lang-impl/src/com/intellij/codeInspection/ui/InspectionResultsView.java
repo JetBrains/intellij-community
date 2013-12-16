@@ -173,6 +173,7 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
     });
 
     createActionsToolbar();
+    TreeUtil.selectFirstNode(myTree);
   }
 
   private void initTreeListeners() {
