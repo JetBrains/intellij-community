@@ -78,7 +78,7 @@
     <postfixTemplate implementation="org.jetbrains.postfixCompletion.templates.NotNullCheckPostfixTemplate"/>
     <postfixTemplate implementation="org.jetbrains.postfixCompletion.templates.IsNullCheckPostfixTemplate"/>
     <postfixTemplate implementation="org.jetbrains.postfixCompletion.templates.NotExpressionPostfixTemplate"/>
-    <postfixTemplate implementation="org.jetbrains.postfixCompletion.templates.ForeachIterationPostfixTemplate"/>
+    <postfixTemplate implementation="org.jetbrains.postfixCompletion.templates.ForeachPostfixTemplate"/>
     <postfixTemplate implementation="org.jetbrains.postfixCompletion.templates.WhileStatementPostfixTemplate"/>
     <postfixTemplate implementation="org.jetbrains.postfixCompletion.templates.CastExpressionPostfixTemplate"/>
     <postfixTemplate implementation="org.jetbrains.postfixCompletion.templates.NewExpressionPostfixTemplate"/>

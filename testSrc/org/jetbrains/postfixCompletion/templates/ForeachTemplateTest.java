@@ -1,9 +1,6 @@
 package org.jetbrains.postfixCompletion.templates;
 
-/**
- * @author ignatov
- */
-public class ForPostfixTemplateTest extends PostfixTemplateTestCase {
+public class ForeachTemplateTest extends PostfixTemplateTestCase {
   @Override
   protected String getTestDataPath() { return "testData/templates/for"; }
 

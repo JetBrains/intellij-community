@@ -16,8 +16,8 @@ import com.intellij.psi.PsiExpressionStatement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.postfixCompletion.util.CommonUtils;
 
-public class ForeachIterationPostfixTemplate extends PostfixTemplate {
-  public ForeachIterationPostfixTemplate() {
+public class ForeachPostfixTemplate extends PostfixTemplate {
+  public ForeachPostfixTemplate() {
     super("for", "Iterates over enumerable collection", "for (T item : collection)");
   }
 
