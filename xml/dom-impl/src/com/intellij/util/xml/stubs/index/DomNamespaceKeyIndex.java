@@ -62,11 +62,6 @@ public class DomNamespaceKeyIndex extends StringStubIndexExtension<PsiFile> {
     return processor.isFound();
   }
 
-  @Override
-  public boolean traceKeyHashToVirtualFileMapping() {
-    return true;
-  }
-
   @NotNull
   @Override
   public StubIndexKey<String, PsiFile> getKey() {
@@ -75,6 +70,6 @@ public class DomNamespaceKeyIndex extends StringStubIndexExtension<PsiFile> {
 
   @Override
   public int getVersion() {
-    return 0;
+    return 1;
   }
 }

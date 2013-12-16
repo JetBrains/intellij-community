@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,11 +34,13 @@ public class ElementStub extends DomStub {
   private final int myIndex;
   private final boolean myCustom;
 
+  @Nullable
+  private Class myElementClass;
+
   public ElementStub(@Nullable ElementStub parent, @NotNull StringRef name, @Nullable StringRef namespace, int index, boolean custom) {
     super(parent, name, namespace);
     myIndex = index;
     myCustom = custom;
-
   }
 
   void addChild(DomStub child) {
@@ -68,5 +70,14 @@ public class ElementStub extends DomStub {
   @Override
   public int getIndex() {
     return myIndex;
+  }
+
+  public void setElementClass(@Nullable Class elementClass) {
+    myElementClass = elementClass;
+  }
+
+  @Nullable
+  Class getElementClass() {
+    return myElementClass;
   }
 }

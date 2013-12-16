@@ -20,6 +20,7 @@ import com.intellij.psi.stubs.IndexSink;
 import com.intellij.psi.stubs.ObjectStubSerializer;
 import com.intellij.psi.stubs.StubInputStream;
 import com.intellij.psi.stubs.StubOutputStream;
+import com.intellij.util.xml.stubs.index.DomElementClassIndex;
 import com.intellij.util.xml.stubs.index.DomNamespaceKeyIndex;
 import org.jetbrains.annotations.NotNull;
 
@@ -52,6 +53,11 @@ public class ElementStubSerializer implements ObjectStubSerializer<ElementStub, 
     final String namespaceKey = stub.getNamespaceKey();
     if (StringUtil.isNotEmpty(namespaceKey)) {
       sink.occurrence(DomNamespaceKeyIndex.KEY, namespaceKey);
+    }
+
+    final Class elementClass = stub.getElementClass();
+    if (elementClass != null) {
+      sink.occurrence(DomElementClassIndex.KEY, elementClass.getName());
     }
   }
 
