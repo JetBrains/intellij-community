@@ -328,7 +328,7 @@ public class MacMainFrameDecorator extends IdeFrameDecorator implements UISettin
 
   @Override
   public void toggleFullScreen(final boolean state) {
-    if (!SystemInfo.isMacOSLion || myFrame == null) return;
+    if (!SystemInfo.isMacOSLion || myFrame == null || myInFullScreen == state) return;
 
     myFullscreenQueue.runOrEnqueue( new Runnable() {
       @Override
@@ -343,7 +343,7 @@ public class MacMainFrameDecorator extends IdeFrameDecorator implements UISettin
           catch (InvocationTargetException e) {
             LOG.error(e);
           }
-        } else if (myInFullScreen != state) {
+        } else {
           final ID window = MacUtil.findWindowForTitle(myFrame.getTitle());
           if (window == null) return;
           Foundation.executeOnMainThread(new Runnable() {

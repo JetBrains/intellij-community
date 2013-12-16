@@ -1,2 +1,2 @@
 def foo():
-    <selection>print "hello"</selection>    
+    pr<caret>int "hello"

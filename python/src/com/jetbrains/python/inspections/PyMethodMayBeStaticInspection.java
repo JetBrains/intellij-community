@@ -70,7 +70,9 @@ public class PyMethodMayBeStaticInspection extends PyInspection {
       if (!supers.isEmpty()) return;
       final Collection<PyFunction> overrides = PyOverridingMethodsSearch.search(node, true).findAll();
       if (!overrides.isEmpty()) return;
-      if (PyUtil.isDecoratedAsAbstract(node) || node.getModifier() != null) return;
+      final PyDecoratorList decoratorList = node.getDecoratorList();
+      if (decoratorList != null) return;
+      if (node.getModifier() != null) return;
       final Property property = containingClass.findPropertyByCallable(node);
       if (property != null) return;
 

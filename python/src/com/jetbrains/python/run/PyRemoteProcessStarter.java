@@ -23,7 +23,6 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.util.PathMappingSettings;
 import com.jetbrains.python.remote.PyRemoteSdkData;
 import com.jetbrains.python.remote.PythonRemoteInterpreterManager;
@@ -43,21 +42,15 @@ public class PyRemoteProcessStarter {
     if (manager != null) {
       ProcessHandler processHandler;
 
-      while (true) {
-        try {
-          processHandler = doStartRemoteProcess(sdk, commandLine, manager, project, mappingSettings);
-          break;
+      try {
+        processHandler = doStartRemoteProcess(sdk, commandLine, manager, project, mappingSettings);
+      }
+      catch (ExecutionException e) {
+        final Application application = ApplicationManager.getApplication();
+        if (application != null && (application.isUnitTestMode() || application.isHeadlessEnvironment())) {
+          throw new RuntimeException(e);
         }
-        catch (ExecutionException e) {
-          final Application application = ApplicationManager.getApplication();
-          if (application != null && (application.isUnitTestMode() || application.isHeadlessEnvironment())) {
-            throw new RuntimeException(e);
-          }
-          if (Messages.showYesNoDialog(e.getMessage() + "\nTry again?", "Can't Run Remote Interpreter", Messages.getErrorIcon()) ==
-              Messages.NO) {
-            throw new ExecutionException("Can't run remote python interpreter: " + e.getMessage(), e);
-          }
-        }
+        throw new ExecutionException("Can't run remote python interpreter: " + e.getMessage(), e);
       }
       ProcessTerminatedListener.attach(processHandler);
       return processHandler;

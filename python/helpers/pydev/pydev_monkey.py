@@ -37,8 +37,9 @@ def patch_args(args):
                 host, port = pydevd.dispatch()
 
                 if port is not None:
-                    args[indC + 1] = "import sys; sys.path.append('%s'); import pydevd; pydevd.settrace(host='%s', port=%s, suspend=False); %s"%(helpers, host, port, args[indC + 1])
-                    return args
+                    new_args.extend(args)
+                    new_args[indC + 1] = "import sys; sys.path.append('%s'); import pydevd; pydevd.settrace(host='%s', port=%s, suspend=False); %s"%(helpers, host, port, args[indC + 1])
+                    return new_args
             else:
                 new_args.append(args[0])
         else:
@@ -99,8 +100,9 @@ def patch_arg_str_win(arg_str):
     args = str_to_args(new_arg_str)
     if not is_python(args[0]):
         return arg_str
-    art = args_to_str(patch_args(args))
-    return art
+    arg_str = args_to_str(patch_args(args))
+    pydev_log.debug("New args: %s"% arg_str)
+    return arg_str
 
 def monkey_patch_module(module, funcname, create_func):
     if hasattr(module, funcname):

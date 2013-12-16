@@ -18,13 +18,30 @@ public interface ConsoleCommunication {
 
   boolean isExecuting();
 
-  void execInterpreter(String s, Function<InterpreterResponse, Object> callback);
+  void execInterpreter(ConsoleCodeFragment code, Function<InterpreterResponse, Object> callback);
 
   void interrupt();
 
   void addCommunicationListener(ConsoleCommunicationListener listener);
 
-  void notifyCommandExecuted();
+  void notifyCommandExecuted(boolean more);
   void notifyInputRequested();
 
+  class ConsoleCodeFragment {
+    private final String myText;
+    private final boolean myIsSingleLine;
+
+    public ConsoleCodeFragment(String text, boolean isSingleLine) {
+      myText = text;
+      myIsSingleLine = isSingleLine;
+    }
+
+    public String getText() {
+      return myText;
+    }
+
+    public boolean isSingleLine() {
+      return myIsSingleLine;
+    }
+  }
 }

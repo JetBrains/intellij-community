@@ -21,7 +21,6 @@ package com.intellij.util.indexing;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -117,26 +116,6 @@ public class IndexInfrastructure {
     ourIndexIdToCreationStamp.putIfAbsent(indexName, stamp);
 
     return stamp;
-  }
-
-  public static long getIndexCreationStamp(ID<?, ?> indexName, FileType fileType) {
-    return getIndexCreationStamp(getStubId(indexName, fileType));
-  }
-
-  public static ID getStubId(ID<?, ?> indexName, FileType fileType) {
-    if (StubUpdatingIndex.INDEX_ID.equals(indexName)) {
-      String name = fileType.getName();
-      ID id = ID.findByName(name);
-      if (id != null) {
-        return id;
-      }
-      else {
-        return StubIndexKey.createIndexKey(name);
-      }
-    }
-    else {
-      return indexName;
-    }
   }
 
   public static boolean versionDiffers(final File versionFile, final int currentIndexVersion) {

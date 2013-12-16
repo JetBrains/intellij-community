@@ -15,6 +15,7 @@
  */
 package com.intellij.execution.configurations;
 
+import com.google.common.collect.Maps;
 import com.intellij.execution.CommandLineUtil;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Platform;
@@ -26,10 +27,12 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.EnvironmentUtil;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.CaseInsensitiveStringHashingStrategy;
+import com.pty4j.PtyProcess;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -62,8 +65,10 @@ public class GeneralCommandLine implements UserDataHolder {
   private Charset myCharset = CharsetToolkit.getDefaultSystemCharset();
   private boolean myRedirectErrorStream = false;
   private Map<Object, Object> myUserData = null;
+  private boolean myStartProcessWithPty = false;
 
-  public GeneralCommandLine() { }
+  public GeneralCommandLine() {
+  }
 
   public GeneralCommandLine(@NotNull String... command) {
     this(Arrays.asList(command));
@@ -107,13 +112,17 @@ public class GeneralCommandLine implements UserDataHolder {
     return myEnvParams;
   }
 
-  /** @deprecated use {@link #getEnvironment()} (to remove in IDEA 14) */
+  /**
+   * @deprecated use {@link #getEnvironment()} (to remove in IDEA 14)
+   */
   @SuppressWarnings("unused")
   public Map<String, String> getEnvParams() {
     return getEnvironment();
   }
 
-  /** @deprecated use {@link #getEnvironment()} (to remove in IDEA 14) */
+  /**
+   * @deprecated use {@link #getEnvironment()} (to remove in IDEA 14)
+   */
   @SuppressWarnings("unused")
   public void setEnvParams(@Nullable Map<String, String> envParams) {
     myEnvParams.clear();
@@ -126,7 +135,9 @@ public class GeneralCommandLine implements UserDataHolder {
     myPassParentEnvironment = passParentEnvironment;
   }
 
-  /** @deprecated use {@link #setPassParentEnvironment(boolean)} (to remove in IDEA 14) */
+  /**
+   * @deprecated use {@link #setPassParentEnvironment(boolean)} (to remove in IDEA 14)
+   */
   @SuppressWarnings({"unused", "SpellCheckingInspection"})
   public void setPassParentEnvs(boolean passParentEnvironment) {
     setPassParentEnvironment(passParentEnvironment);
@@ -134,6 +145,15 @@ public class GeneralCommandLine implements UserDataHolder {
 
   public boolean isPassParentEnvironment() {
     return myPassParentEnvironment;
+  }
+
+  /**
+   * If argument is true the process created with Pseudo-Terminal (PTY). 
+   * This works only on Unix. On Windows the option is ignored.   
+   */
+  public GeneralCommandLine withPty(boolean startProcessWithPty) {
+    myStartProcessWithPty = startProcessWithPty;
+    return this;
   }
 
   public void addParameters(final String... parameters) {
@@ -235,16 +255,38 @@ public class GeneralCommandLine implements UserDataHolder {
     }
 
     try {
-      ProcessBuilder builder = new ProcessBuilder(commands);
-      setupEnvironment(builder.environment());
-      builder.directory(myWorkDirectory);
-      builder.redirectErrorStream(myRedirectErrorStream);
-      return builder.start();
+      if (myStartProcessWithPty && SystemInfo.isUnix) {
+        try {
+          return startProcessWithPty(commands);
+        }
+        catch (Exception e) {
+          LOG.error("Couldn't run process with PTY", e);
+        }
+      }
+
+      return startProcess(commands);
     }
     catch (IOException e) {
       LOG.warn(e);
       throw new ProcessNotCreatedException(e.getMessage(), e, this);
     }
+  }
+
+  private Process startProcessWithPty(List<String> commands) throws IOException {
+    Map<String, String> env = Maps.newHashMap();
+    setupEnvironment(env);
+    if (myRedirectErrorStream) {
+      LOG.error("Launching process with PTY and redirected error stream is unsupported yet");
+    }
+    return PtyProcess.exec(ArrayUtil.toStringArray(commands), env, myWorkDirectory != null? myWorkDirectory.getPath() : null, true);
+  }
+
+  private Process startProcess(List<String> commands) throws IOException {
+    ProcessBuilder builder = new ProcessBuilder(commands);
+    setupEnvironment(builder.environment());
+    builder.directory(myWorkDirectory);
+    builder.redirectErrorStream(myRedirectErrorStream);
+    return builder.start();
   }
 
   private void checkWorkingDirectory() throws ExecutionException {

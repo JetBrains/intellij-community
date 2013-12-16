@@ -19,14 +19,10 @@ import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.ui.impl.watch.DebuggerTreeNodeImpl;
 import com.intellij.debugger.ui.impl.watch.NodeDescriptorImpl;
 import com.intellij.debugger.ui.impl.watch.ValueDescriptorImpl;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.EditorFactory;
-import com.intellij.openapi.editor.ex.EditorEx;
-import com.intellij.openapi.editor.impl.DocumentImpl;
-import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.ui.EditorTextField;
+import com.intellij.xdebugger.impl.ui.TextViewer;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -55,7 +51,7 @@ public class ViewTextAction extends BaseValueAction {
       setCancelButtonText("Close");
       setCrossClosesWindow(true);
 
-      myTextViewer = new TextViewer(project);
+      myTextViewer = new TextViewer(project, true, true);
       init();
     }
 
@@ -78,33 +74,5 @@ public class ViewTextAction extends BaseValueAction {
       panel.setPreferredSize(new Dimension(300, 200));
       return panel;
     }
-
   }
-
-
-  private static class TextViewer extends EditorTextField {
-
-    private TextViewer(Project project) {
-      super(createDocument(), project, FileTypes.PLAIN_TEXT, true, false);
-    }
-
-    private static Document createDocument() {
-      final Document document = EditorFactory.getInstance().createDocument("");
-      if (document instanceof DocumentImpl) {
-        ((DocumentImpl)document).setAcceptSlashR(true);
-      }
-      return document;
-    }
-
-    protected EditorEx createEditor() {
-      final EditorEx editor = super.createEditor();
-      editor.setHorizontalScrollbarVisible(true);
-      editor.setVerticalScrollbarVisible(true);
-      editor.setEmbeddedIntoDialogWrapper(true);
-      editor.getComponent().setPreferredSize(null);
-      editor.getSettings().setUseSoftWraps(true);
-      return editor;
-    }
-  }
-
 }

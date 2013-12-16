@@ -51,15 +51,11 @@ public class RunnerMediator {
    */
   private static void sendCtrlEventThroughStream(@NotNull final Process process, final char event) {
     OutputStream os = process.getOutputStream();
+    @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
     PrintWriter pw = new PrintWriter(os);
-    try {
-      pw.print(IAC);
-      pw.print(event);
-      pw.flush();
-    }
-    finally {
-      pw.close();
-    }
+    pw.print(IAC);
+    pw.print(event);
+    pw.flush();
   }
 
   /**
@@ -101,7 +97,7 @@ public class RunnerMediator {
     }
   }
 
-  private static void injectRunnerCommand(@NotNull GeneralCommandLine commandLine) {
+  static void injectRunnerCommand(@NotNull GeneralCommandLine commandLine) {
     final String path = getRunnerPath();
     if (path != null) {
       commandLine.getParametersList().addAt(0, commandLine.getExePath());
@@ -121,7 +117,7 @@ public class RunnerMediator {
    * Destroys process tree: in case of windows via imitating ctrl+c, in case of unix via sending sig_int to every process in tree.
    * @param process to kill with all sub-processes.
    */
-  private static boolean destroyProcess(@NotNull final Process process, final boolean softKill) {
+  static boolean destroyProcess(@NotNull final Process process, final boolean softKill) {
     try {
       if (SystemInfo.isWindows) {
         sendCtrlEventThroughStream(process, softKill ? C : BRK);

@@ -29,12 +29,7 @@ import java.util.Map;
  * @see com.intellij.psi.JavaResolveResult#getSubstitutor()
  */
 public interface PsiSubstitutor {
-  Key<PsiSubstitutor> KEY = new KeyWithDefaultValue<PsiSubstitutor>("SUBSTITUTOR") {
-    @Override
-    public PsiSubstitutor getDefaultValue() {
-      return EMPTY;
-    }
-  };
+  Key<PsiSubstitutor> KEY = KeyWithDefaultValue.<PsiSubstitutor>create("SUBSTITUTOR", EmptySubstitutor.getInstance());
 
   /**
    * Empty, or natural, substitutor. For any type parameter <code>T</code>,
