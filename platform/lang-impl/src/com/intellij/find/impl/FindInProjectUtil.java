@@ -367,10 +367,12 @@ public class FindInProjectUtil {
 
       EnumContentIterator iterator = new EnumContentIterator();
 
-      for (VirtualFile file : getLocalScopeFiles((LocalSearchScope)customScope)) {
-        iterator.processFile(file);
+      if (customScope instanceof LocalSearchScope) {
+        for (VirtualFile file : getLocalScopeFiles((LocalSearchScope)customScope)) {
+          iterator.processFile(file);
+        }
       }
-      
+
       if (psiDirectory == null) {
         boolean success = fileIndex.iterateContent(iterator);
         if (success && globalCustomScope != null && globalCustomScope.isSearchInLibraries()) {
@@ -417,7 +419,7 @@ public class FindInProjectUtil {
 
   private static Set<VirtualFile> getLocalScopeFiles(LocalSearchScope scope) {
     Set<VirtualFile> files = new HashSet<VirtualFile>();
-    for (PsiElement element : ((LocalSearchScope)scope).getScope()) {
+    for (PsiElement element : scope.getScope()) {
       PsiFile file = element.getContainingFile();
       if (file != null) {
         ContainerUtil.addIfNotNull(files, file.getVirtualFile());
