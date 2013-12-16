@@ -35,7 +35,7 @@ public class ValueLookupManager implements EditorMouseMotionListener {
   private final Project myProject;
   private final Alarm myAlarm;
   private AbstractValueHint myRequest = null;
-  private DebuggerSupport[] mySupports;
+  private final DebuggerSupport[] mySupports;
   private boolean myListening;
 
   public ValueLookupManager(Project project) {
@@ -47,13 +47,15 @@ public class ValueLookupManager implements EditorMouseMotionListener {
   public void startListening() {
     if (!myListening) {
       myListening = true;
-      EditorFactory.getInstance().getEventMulticaster().addEditorMouseMotionListener(this,myProject);
+      EditorFactory.getInstance().getEventMulticaster().addEditorMouseMotionListener(this, myProject);
     }
   }
 
+  @Override
   public void mouseDragged(EditorMouseEvent e) {
   }
 
+  @Override
   public void mouseMoved(EditorMouseEvent e) {
     if (e.isConsumed()) return;
 
@@ -76,13 +78,15 @@ public class ValueLookupManager implements EditorMouseMotionListener {
 
   private void requestHint(final QuickEvaluateHandler handler, final Editor editor, final Point point, final ValueHintType type) {
     myAlarm.cancelAllRequests();
-    if(type == ValueHintType.MOUSE_OVER_HINT) {
+    if (type == ValueHintType.MOUSE_OVER_HINT) {
       myAlarm.addRequest(new Runnable() {
+        @Override
         public void run() {
           showHint(handler, editor, point, type);
         }
       }, handler.getValueLookupDelay(myProject));
-    } else {
+    }
+    else {
       showHint(handler, editor, point, type);
     }
   }
