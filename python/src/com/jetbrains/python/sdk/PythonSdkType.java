@@ -424,7 +424,7 @@ public class PythonSdkType extends SdkType {
     final String[] urls = sdk.getRootProvider().getUrls(BUILTIN_ROOT_TYPE);
     for (String url : urls) {
       if (url.contains(SKELETON_DIR_NAME)) {
-        return VfsUtil.urlToPath(url);
+        return VfsUtilCore.urlToPath(url);
       }
     }
     return null;
