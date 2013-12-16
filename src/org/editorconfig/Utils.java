@@ -17,4 +17,8 @@ public class Utils {
     public static String invalidConfigMessage(String configValue, String configKey, String filePath) {
         return "\"" + configValue + "\" is not a valid value for " + configKey + " for file " + filePath;
     }
+
+    public static String appliedConfigMessage(String configValue, String configKey, String filePath) {
+        return "Applied \"" + configValue + "\" as " + configKey + " for file " + filePath;
+    }
 }

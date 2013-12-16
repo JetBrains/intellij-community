@@ -9,6 +9,8 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
 import com.intellij.openapi.fileEditor.FileEditorManagerListener;
+import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
@@ -21,7 +23,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowFocusListener;
-import java.util.Collection;
 import java.util.List;
 
 public class CodeStyleManager implements FileEditorManagerListener, WindowFocusListener {
@@ -71,106 +72,114 @@ public class CodeStyleManager implements FileEditorManagerListener, WindowFocusL
         // Not used
     }
     
-    private void applySettings(VirtualFile file) {
+    private void applySettings(final VirtualFile file) {
         if (file != null) {
             // Always drop any current temporary settings so that the defaults will be applied if
             // this is a non-editorconfig-managed file
             codeStyleSettingsManager.dropTemporarySettings();
             // Prepare a new settings object, which will maintain the standard settings if no
             // editorconfig settings apply
-            CodeStyleSettings currentSettings = codeStyleSettingsManager.getCurrentSettings();
-            CodeStyleSettings newSettings = new CodeStyleSettings();
+            final CodeStyleSettings currentSettings = codeStyleSettingsManager.getCurrentSettings();
+            final CodeStyleSettings newSettings = new CodeStyleSettings();
             newSettings.copyFrom(currentSettings);
             // Get editorconfig settings
-            String filePath = file.getCanonicalPath();
-            SettingsProviderComponent settingsProvider = SettingsProviderComponent.getInstance();
-            List<OutPair> outPairs = settingsProvider.getOutPairs(filePath);
+            final String filePath = file.getCanonicalPath();
+            final SettingsProviderComponent settingsProvider = SettingsProviderComponent.getInstance();
+            final List<OutPair> outPairs = settingsProvider.getOutPairs(filePath);
             // Apply editorconfig settings for the current editor
-            applyCodeStyleSettings(outPairs, newSettings, filePath);
+            applyCodeStyleSettings(outPairs, newSettings, file);
             codeStyleSettingsManager.setTemporarySettings(newSettings);
-            LOG.debug("Applied code style settings for: " + filePath);
-            EditorEx currentEditor = (EditorEx) FileEditorManager.getInstance(project).getSelectedTextEditor();
+            final EditorEx currentEditor = (EditorEx) FileEditorManager.getInstance(project).getSelectedTextEditor();
             if (currentEditor != null){
                 currentEditor.reinitSettings();
             }
         }
     }
 
-    private void applyCodeStyleSettings(List<OutPair> outPairs,
-                                              CodeStyleSettings codeStyleSettings, String filePath) {
+    private void applyCodeStyleSettings(final List<OutPair> outPairs, final CodeStyleSettings codeStyleSettings,
+                                        final VirtualFile file) {
         // Apply indent options
-        // TODO: Find a good way to reliably get the language of the current editor
-        Collection<Language> registeredLanguages = Language.getRegisteredLanguages();
-        for (Language language: registeredLanguages) {
-            CommonCodeStyleSettings commonSettings = codeStyleSettings.getCommonSettings(language);
-            CommonCodeStyleSettings.IndentOptions indentOptions = commonSettings.getIndentOptions();
-            applyIndentOptions(outPairs, indentOptions, filePath);
+        final String indentSize = Utils.configValueForKey(outPairs, indentSizeKey);
+        final String tabWidth = Utils.configValueForKey(outPairs, tabWidthKey);
+        final String indentStyle = Utils.configValueForKey(outPairs, indentStyleKey);
+        final FileType fileType = file.getFileType();
+        if (fileType instanceof LanguageFileType) {
+            final Language language = ((LanguageFileType)fileType).getLanguage();
+            final CommonCodeStyleSettings commonSettings = codeStyleSettings.getCommonSettings(language);
+            final CommonCodeStyleSettings.IndentOptions indentOptions = commonSettings.getIndentOptions();
+            applyIndentOptions(indentOptions, indentSize, tabWidth, indentStyle, file.getCanonicalPath());
+        } else if (!indentSize.isEmpty() || !tabWidth.isEmpty() || !indentStyle.isEmpty()){
+            LOG.warn("Unable to apply indent options for " + file.getCanonicalPath()
+                     + " because it is not associated with an intellij language");
         }
     }
 
-    private void applyIndentOptions (List<OutPair> outPairs, CommonCodeStyleSettings.IndentOptions indentOptions,
-                                     String filePath) {
-        String indentSize = Utils.configValueForKey(outPairs, indentSizeKey);
-        String tabWidth = Utils.configValueForKey(outPairs, tabWidthKey);
-        String indentStyle = Utils.configValueForKey(outPairs, indentStyleKey);
-        try {
-            applyIndentSize(indentOptions, indentSize, filePath);
-        }
-        catch(InvalidConfigException e) {
-            LOG.warn(e.getMessage());
-        }
-        // Set indent_size to tab_width if indent_size == "tab"
-        if (indentSize.equals("tab")) {
-            indentSize = tabWidth;
-        }
-        // Apply tab_width if set, or fall back to indent_size
-        if (tabWidth.isEmpty()) {
-            tabWidth = indentSize;
-        }
-        try {
-            applyTabWidth(indentOptions, tabWidth, filePath);
-        }
-        catch(InvalidConfigException e) {
-            LOG.warn(e.getMessage());
-        }
-        try {
-            applyIndentStyle(indentOptions, indentStyle, filePath);
-        }
-        catch(InvalidConfigException e) {
-            LOG.warn(e.getMessage());
-        }
-    }
-
-    private void applyIndentSize(CommonCodeStyleSettings.IndentOptions indentOptions, String indentSize,
-                                 String filePath) throws InvalidConfigException {
-        if (!indentSize.isEmpty()) {
-            try {
-                indentOptions.INDENT_SIZE = Integer.parseInt(indentSize);
-            } catch (NumberFormatException e){
-                throw new InvalidConfigException(indentSizeKey, indentSize, filePath);
-            }
-        }
-    }
-
-    private void applyTabWidth(CommonCodeStyleSettings.IndentOptions indentOptions, String tabWidth,
-                               String filePath) throws InvalidConfigException {
-        if (!tabWidth.isEmpty()) {
-            try {
-                indentOptions.TAB_SIZE = Integer.parseInt(tabWidth);
-            } catch (Exception error) {
-                throw new InvalidConfigException(tabWidthKey, tabWidth, filePath);
-            }
-        }
-    }
-
-    private void applyIndentStyle(CommonCodeStyleSettings.IndentOptions indentOptions, String indentStyle,
-                                  String filePath) throws InvalidConfigException {
-        if (!indentStyle.isEmpty()) {
-            if (indentStyle.equals("tab") || indentStyle.equals("space")) {
-                indentOptions.USE_TAB_CHARACTER = indentStyle.equals("tab");
+    private void applyIndentOptions(CommonCodeStyleSettings.IndentOptions indentOptions,
+                                    String indentSize, String tabWidth, String indentStyle, String filePath) {
+        final String calculatedIndentSize = calculateIndentSize(tabWidth, indentSize);
+        final String calculatedTabWidth = calculateTabWidth(tabWidth, indentSize);
+        if (!calculatedIndentSize.isEmpty()) {
+            if (applyIndentSize(indentOptions, calculatedIndentSize)) {
+                LOG.debug(Utils.appliedConfigMessage(calculatedIndentSize, indentSizeKey, filePath));
             } else {
-                throw new InvalidConfigException(indentStyleKey, indentStyle, filePath);
+                LOG.warn(Utils.invalidConfigMessage(calculatedIndentSize, indentSizeKey, filePath));
             }
+        }
+        if (!calculatedTabWidth.isEmpty()) {
+            if (applyTabWidth(indentOptions, calculatedTabWidth)) {
+                LOG.debug(Utils.appliedConfigMessage(calculatedTabWidth, tabWidthKey, filePath));
+            } else {
+                LOG.warn(Utils.invalidConfigMessage(calculatedTabWidth, tabWidthKey, filePath));
+            }
+        }
+        if (!indentStyle.isEmpty()) {
+            if (applyIndentStyle(indentOptions, indentStyle)) {
+                LOG.debug(Utils.appliedConfigMessage(indentStyle, indentStyleKey, filePath));
+
+            } else {
+                LOG.warn(Utils.invalidConfigMessage(indentStyle, indentStyleKey, filePath));
+            }
+        }
+    }
+
+    private String calculateIndentSize(final String tabWidth, final String indentSize) {
+        return indentSize.equals("tab") ? tabWidth : indentSize;
+    }
+
+    private String calculateTabWidth(final String tabWidth, final String indentSize) {
+        if (tabWidth.isEmpty() && indentSize.equals("tab")) {
+            return "";
+        } else if (tabWidth.isEmpty()) {
+            return indentSize;
+        } else {
+            return tabWidth;
+        }
+    }
+
+    private boolean applyIndentSize(final CommonCodeStyleSettings.IndentOptions indentOptions, final String indentSize) {
+        try {
+            indentOptions.INDENT_SIZE = Integer.parseInt(indentSize);
+            return true;
+        } catch (NumberFormatException e) {
+            return false;
+        }
+    }
+
+    private boolean applyTabWidth(final CommonCodeStyleSettings.IndentOptions indentOptions, final String tabWidth) {
+        try {
+            indentOptions.TAB_SIZE = Integer.parseInt(tabWidth);
+            return true;
+        } catch (NumberFormatException e) {
+            return false;
+        }
+    }
+
+    private boolean applyIndentStyle(CommonCodeStyleSettings.IndentOptions indentOptions, String indentStyle) {
+        if (indentStyle.equals("tab") || indentStyle.equals("space")) {
+            indentOptions.USE_TAB_CHARACTER = indentStyle.equals("tab");
+            return true;
+        } else {
+            return false;
         }
     }
 }

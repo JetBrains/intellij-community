@@ -114,8 +114,8 @@ public class EncodingManager implements FileDocumentManagerListener {
             } else {
                 LOG.warn(new InvalidConfigException(charsetKey, charset, filePath));
             }
+            LOG.debug("Applied encoding settings for: " + filePath);
         }
         isApplyingSettings = false;
-        LOG.debug("Applied encoding settings for: " + filePath);
     }
 }
