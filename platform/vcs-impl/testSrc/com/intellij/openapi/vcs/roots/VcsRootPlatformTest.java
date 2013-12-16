@@ -141,12 +141,10 @@ public abstract class VcsRootPlatformTest extends UsefulTestCase {
    *
    * @param mockRoots path to actual .mock roots, relative to the project dir.
    */
-  public void initProject(@NotNull Collection<String> mockRoots,
-                          @NotNull Collection<String> projectStructure,
-                          @NotNull Collection<String> contentRoots)
+  public void initProject(@NotNull VcsRootConfiguration vcsRootConfiguration)
     throws IOException {
-    createDirs(mockRoots);
-    createProjectStructure(myProject, projectStructure);
+    createDirs(vcsRootConfiguration.getMockRoots());
+    Collection<String> contentRoots = vcsRootConfiguration.getContentRoots();
     createProjectStructure(myProject, contentRoots);
     if (!contentRoots.isEmpty()) {
       for (String root : contentRoots) {

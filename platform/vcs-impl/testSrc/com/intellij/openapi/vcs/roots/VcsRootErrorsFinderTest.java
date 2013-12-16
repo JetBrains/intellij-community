@@ -24,7 +24,9 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
 
 
 /**
@@ -40,187 +42,143 @@ public class VcsRootErrorsFinderTest extends VcsRootPlatformTest {
   }
 
   public void testNoRootsThenNoErrors() throws IOException {
-    Map<String, Collection<String>> map = new HashMap<String, Collection<String>>();
-    map.put("mock", Collections.<String>emptyList());
-    map.put("roots", Collections.<String>emptyList());
-    map.put("content_roots", Collections.<String>emptyList());
-    doTest(map, Collections.<String, Collection<String>>emptyMap());
+    doTest(new VcsRootConfiguration());
   }
 
   public void testSameOneRootInBothThenNoErrors() throws IOException {
-    Map<String, Collection<String>> map = new HashMap<String, Collection<String>>();
-    map.put("mock", Arrays.asList("."));
-    map.put("roots", Arrays.asList("."));
-    map.put("content_roots", Collections.<String>emptyList());
-    doTest(map, Collections.<String, Collection<String>>emptyMap());
+    VcsRootConfiguration vcsRootConfiguration =
+      new VcsRootConfiguration().mock(Arrays.asList("."))
+        .roots(Arrays.asList("."));
+    doTest(vcsRootConfiguration);
   }
 
   public void testSameTwoRootsInBothThenNoErrors() throws IOException {
-    Map<String, Collection<String>> map = new HashMap<String, Collection<String>>();
-    map.put("mock", Arrays.asList(".", "community"));
-    map.put("roots", Arrays.asList(".", "community"));
-    map.put("content_roots", Collections.<String>emptyList());
-    doTest(map, Collections.<String, Collection<String>>emptyMap());
+    VcsRootConfiguration vcsRootConfiguration =
+      new VcsRootConfiguration().mock(Arrays.asList(".", "community"))
+        .roots(Arrays.asList(".", "community"));
+    doTest(vcsRootConfiguration);
   }
 
   public void testOneMockRootNoVCSRootsThenError() throws IOException {
-    Map<String, Collection<String>> map = new HashMap<String, Collection<String>>();
-    map.put("mock", Arrays.asList("."));
-    map.put("roots", Collections.<String>emptyList());
-    map.put("content_roots", Collections.<String>emptyList());
-    Map<String, Collection<String>> errorsMap = new HashMap<String, Collection<String>>();
-    errorsMap.put("unreg", Arrays.asList("."));
-    doTest(map, errorsMap);
+    VcsRootConfiguration vcsRootConfiguration =
+      new VcsRootConfiguration().mock(Arrays.asList("."))
+        .unregErrors(Arrays.asList("."));
+    doTest(vcsRootConfiguration);
   }
 
   public void testOneVCSRootNoMockRootsThenError() throws IOException {
-    Map<String, Collection<String>> map = new HashMap<String, Collection<String>>();
-    map.put("roots", Arrays.asList("."));
-    map.put("mock", Collections.<String>emptyList());
-    map.put("content_roots", Collections.<String>emptyList());
-    Map<String, Collection<String>> errorsMap = new HashMap<String, Collection<String>>();
-    errorsMap.put("extra", Arrays.asList("."));
-    doTest(map, errorsMap);
+
+    VcsRootConfiguration vcsRootConfiguration =
+      new VcsRootConfiguration().roots(Arrays.asList("."))
+        .extraErrors(Arrays.asList("."));
+    doTest(vcsRootConfiguration);
   }
 
+
   public void testOneRootButDifferentThenTwoErrors() throws IOException {
-    Map<String, Collection<String>> map = new HashMap<String, Collection<String>>();
-    map.put("mock", Arrays.asList("."));
-    map.put("roots", Arrays.asList("community"));
-    map.put("content_roots", Collections.<String>emptyList());
-    Map<String, Collection<String>> errorsMap = new HashMap<String, Collection<String>>();
-    errorsMap.put("extra", Arrays.asList("community"));
-    errorsMap.put("unreg", Arrays.asList("."));
-    doTest(map, errorsMap);
+    VcsRootConfiguration vcsRootConfiguration =
+      new VcsRootConfiguration().mock(Arrays.asList("."))
+        .roots(Arrays.asList("community"))
+        .unregErrors(Arrays.asList(".")).extraErrors(Arrays.asList("community"));
+    doTest(vcsRootConfiguration);
   }
 
   public void testTwoRootsOneMatchingOneDifferentThenTwoErrors() throws IOException {
-    Map<String, Collection<String>> map = new HashMap<String, Collection<String>>();
-    map.put("mock", Arrays.asList(".", "community"));
-    map.put("roots", Arrays.asList(".", "contrib"));
-    map.put("content_roots", Collections.<String>emptyList());
-    Map<String, Collection<String>> errorsMap = new HashMap<String, Collection<String>>();
-    errorsMap.put("extra", Arrays.asList("contrib"));
-    errorsMap.put("unreg", Arrays.asList("community"));
-    doTest(map, errorsMap);
+    VcsRootConfiguration vcsRootConfiguration =
+      new VcsRootConfiguration().mock(Arrays.asList(".", "community"))
+        .roots(Arrays.asList(".", "contrib"))
+        .unregErrors(Arrays.asList("community")).extraErrors(Arrays.asList("contrib"));
+    doTest(vcsRootConfiguration);
   }
 
   public void testTwoRootsInMockRootOneMatchingInVCSThenError() throws IOException {
-    Map<String, Collection<String>> map = new HashMap<String, Collection<String>>();
-    map.put("mock", Arrays.asList(".", "community"));
-    map.put("roots", Arrays.asList("."));
-    map.put("content_roots", Collections.<String>emptyList());
-    Map<String, Collection<String>> errorsMap = new HashMap<String, Collection<String>>();
-    errorsMap.put("unreg", Arrays.asList("community"));
-    doTest(map, errorsMap);
+    VcsRootConfiguration vcsRootConfiguration =
+      new VcsRootConfiguration().mock(Arrays.asList(".", "community"))
+        .roots(Arrays.asList("."))
+        .unregErrors(Arrays.asList("community"));
+    doTest(vcsRootConfiguration);
   }
 
   public void testTwoRootsBothNotMatchingThenFourErrors() throws IOException {
-    Map<String, Collection<String>> map = new HashMap<String, Collection<String>>();
-    map.put("mock", Arrays.asList(".", "community"));
-    map.put("roots", Arrays.asList("another", "contrib"));
-    map.put("content_roots", Collections.<String>emptyList());
-    Map<String, Collection<String>> errorsMap = new HashMap<String, Collection<String>>();
-    errorsMap.put("extra", Arrays.asList("contrib", "another"));
-    errorsMap.put("unreg", Arrays.asList("community", "."));
-    doTest(map, errorsMap);
+    VcsRootConfiguration vcsRootConfiguration =
+      new VcsRootConfiguration().mock(Arrays.asList(".", "community"))
+        .roots(Arrays.asList("another", "contrib"))
+        .unregErrors(Arrays.asList("community", ".")).extraErrors(Arrays.asList("contrib", "another"));
+    doTest(vcsRootConfiguration);
   }
 
   public void testProjectRootNoMockRootsThenErrorAboutExtraRoot() throws IOException {
-    Map<String, Collection<String>> map = new HashMap<String, Collection<String>>();
-    map.put("mock", Collections.<String>emptyList());
-    map.put("roots", Arrays.asList(PROJECT));
-    map.put("content_roots", Collections.<String>emptyList());
-    Map<String, Collection<String>> errorsMap = new HashMap<String, Collection<String>>();
-    errorsMap.put("extra", Arrays.asList(PROJECT));
-    doTest(map, errorsMap);
+    VcsRootConfiguration vcsRootConfiguration =
+      new VcsRootConfiguration()
+        .roots(Arrays.asList(PROJECT))
+        .extraErrors(Arrays.asList(PROJECT));
+    doTest(vcsRootConfiguration);
   }
 
   public void testProjectRootFullUnderMockRootThenCorrect() throws IOException {
-    Map<String, Collection<String>> map = new HashMap<String, Collection<String>>();
-    map.put("mock", Arrays.asList("."));
-    map.put("roots", Arrays.asList(".", PROJECT));
-    map.put("content_roots", Collections.<String>emptyList());
-    doTest(map, Collections.<String, Collection<String>>emptyMap());
+    VcsRootConfiguration vcsRootConfiguration =
+      new VcsRootConfiguration().mock(Arrays.asList("."))
+        .roots(Arrays.asList(PROJECT));
+    doTest(vcsRootConfiguration);
   }
 
   public void testProjectRootMockRootForAContentRootBelowProjectThenError() throws IOException {
-    Map<String, Collection<String>> map = new HashMap<String, Collection<String>>();
-    map.put("mock", Arrays.asList("content_root"));
-    map.put("roots", Arrays.asList(PROJECT));
-    map.put("content_roots", Arrays.asList("content_root"));
-    Map<String, Collection<String>> errorsMap = new HashMap<String, Collection<String>>();
-    errorsMap.put("unreg", Arrays.asList("content_root"));
-    errorsMap.put("extra", Arrays.asList(PROJECT));
-    doTest(map, errorsMap);
+    VcsRootConfiguration vcsRootConfiguration =
+      new VcsRootConfiguration().mock(Arrays.asList("content_root"))
+        .contentRoots(Arrays.asList("content_root")).roots(Arrays.asList(PROJECT))
+        .unregErrors(Arrays.asList("content_root")).extraErrors(Arrays.asList(PROJECT));
+    doTest(vcsRootConfiguration);
   }
 
   public void testProjectRootMockRootBelowProjectFolderNotInAContentRootThenUnregisteredRootError() throws IOException {
     // this is to be fixed: auto-detection of MockRoot repositories in subfolders for the <Project> mapping
-    Map<String, Collection<String>> map = new HashMap<String, Collection<String>>();
-    map.put("mock", Arrays.asList("community"));
-    map.put("roots", Arrays.asList(PROJECT));
-    map.put("content_roots", Arrays.asList("."));
-    Map<String, Collection<String>> errorsMap = new HashMap<String, Collection<String>>();
-    errorsMap.put("unreg", Arrays.asList("community"));
-    errorsMap.put("extra", Arrays.asList(PROJECT));
-    doTest(map, errorsMap);
+    VcsRootConfiguration vcsRootConfiguration =
+      new VcsRootConfiguration().mock(Arrays.asList("community"))
+        .contentRoots(Arrays.asList(".")).roots(Arrays.asList(PROJECT))
+        .unregErrors(Arrays.asList("community")).extraErrors(Arrays.asList(PROJECT));
+    doTest(vcsRootConfiguration);
   }
 
   public void testProjectRootMockRootForFullProjectContentRootLinkedSourceFolderBelowProjectThenErrors() throws IOException {
-    Map<String, Collection<String>> map = new HashMap<String, Collection<String>>();
-    map.put("mock", Arrays.asList(".", "content_root", "../linked_source_root", "folder"));
-    map.put("roots", Arrays.asList(PROJECT));
-    map.put("content_roots", Arrays.asList(".", "content_root", "../linked_source_root"));
-    Map<String, Collection<String>> errorsMap = new HashMap<String, Collection<String>>();
-    errorsMap.put("unreg", Arrays.asList("content_root", "../linked_source_root", "folder"));
-    doTest(map, errorsMap);
+    VcsRootConfiguration vcsRootConfiguration =
+      new VcsRootConfiguration().mock(Arrays.asList(".", "content_root", "../linked_source_root", "folder"))
+        .roots(Arrays.asList(PROJECT))
+        .contentRoots(Arrays.asList(".", "content_root", "../linked_source_root"))
+        .unregErrors(Arrays.asList("content_root", "../linked_source_root", "folder"));
+    doTest(vcsRootConfiguration);
   }
 
   public void testProjectRootForFolderMockRootForFullProjectContentRootLinkedSourceFolderBelowProjectThenErrors() throws IOException {
-    Map<String, Collection<String>> map = new HashMap<String, Collection<String>>();
-    map.put("mock", Arrays.asList(".", "content_root", "../linked_source_root", "folder"));
-    map.put("roots", Arrays.asList(PROJECT, "folder"));
-    map.put("content_roots", Arrays.asList(".", "content_root", "../linked_source_root"));
-    Map<String, Collection<String>> errorsMap = new HashMap<String, Collection<String>>();
-    errorsMap.put("unreg", Arrays.asList("content_root", "../linked_source_root"));
-    doTest(map, errorsMap);
+    VcsRootConfiguration vcsRootConfiguration =
+      new VcsRootConfiguration().mock(Arrays.asList(".", "content_root", "../linked_source_root", "folder"))
+        .roots(Arrays.asList(PROJECT, "folder"))
+        .contentRoots(Arrays.asList(".", "content_root", "../linked_source_root"))
+        .unregErrors(Arrays.asList("content_root", "../linked_source_root"));
+    doTest(vcsRootConfiguration);
   }
 
   public void testProjectRootMockRootLikeInIDEAProjectThenError() throws IOException {
-    Map<String, Collection<String>> map = new HashMap<String, Collection<String>>();
-    map.put("mock", Arrays.asList(".", "community", "contrib"));
-    map.put("roots", Arrays.asList(PROJECT));
-    map.put("content_roots", Arrays.asList(".", "community", "contrib"));
-    Map<String, Collection<String>> errorsMap = new HashMap<String, Collection<String>>();
-    errorsMap.put("unreg", Arrays.asList("community", "contrib"));
-    doTest(map, errorsMap);
+    VcsRootConfiguration vcsRootConfiguration =
+      new VcsRootConfiguration().mock(Arrays.asList(".", "community", "contrib")).roots(Arrays.asList(PROJECT))
+        .contentRoots(Arrays.asList(".", "community", "contrib")).unregErrors(Arrays.asList("community", "contrib"));
+    doTest(vcsRootConfiguration);
   }
 
   public void testRealMockRootRootDeeperThanThreeLevelsShouldBeDetected() throws IOException {
-
-    Map<String, Collection<String>> map = new HashMap<String, Collection<String>>();
-    map.put("mock", Arrays.asList(".", "community", "contrib", "community/level1/level2/level3"));
-    map.put("roots", Arrays.asList(PROJECT, "community/level1/level2/level3"));
-    map.put("content_roots", Arrays.asList(".", "community", "contrib"));
-    Map<String, Collection<String>> errorsMap = new HashMap<String, Collection<String>>();
-    errorsMap.put("unreg", Arrays.asList("community", "contrib"));
-    doTest(map, errorsMap);
+    VcsRootConfiguration vcsRootConfiguration =
+      new VcsRootConfiguration().mock(Arrays.asList(".", "community", "contrib", "community/level1/level2/level3"))
+        .contentRoots(Arrays.asList(".", "community", "contrib")).roots(Arrays.asList(PROJECT, "community/level1/level2/level3"))
+        .unregErrors(Arrays.asList("community", "contrib"));
+    doTest(vcsRootConfiguration);
   }
 
-  private void doTest(@NotNull Map<String, Collection<String>> map, @NotNull Map<String, Collection<String>> errors) throws IOException {
-    initProject(map.get("mock"), Collections.<String>emptyList(), map.get("content_roots"));
-    addVcsRoots(map.get("roots"));
+  private void doTest(@NotNull VcsRootConfiguration vcsRootConfiguration) throws IOException {
+    initProject(vcsRootConfiguration);
+    addVcsRoots(vcsRootConfiguration.getRoots());
 
     Collection<VcsRootError> expected = new ArrayList<VcsRootError>();
-    Collection<String> unregPaths = errors.get("unreg");
-    Collection<String> extraPaths = errors.get("extra");
-    if (unregPaths != null) {
-      expected.addAll(unregAll(unregPaths));
-    }
-    if (extraPaths != null) {
-      expected.addAll(extraAll(extraPaths));
-    }
+    expected.addAll(unregAll(vcsRootConfiguration.getUnregErrors()));
+    expected.addAll(extraAll(vcsRootConfiguration.getExtraErrors()));
     Collection<VcsRootError> actual = ContainerUtil.filter(new VcsRootErrorsFinder(myProject).find(), new Condition<VcsRootError>() {
       @Override
       public boolean value(VcsRootError error) {
@@ -268,6 +226,6 @@ public class VcsRootErrorsFinderTest extends VcsRootPlatformTest {
   @NotNull
   VcsRootError extra(@NotNull String path) {
     return new VcsRootErrorImpl(VcsRootError.Type.EXTRA_MAPPING, PROJECT.equals(path) ? PROJECT : VcsTestUtil.toAbsolute(path, myProject),
-                            myVcsName);
+                                myVcsName);
   }
 }
