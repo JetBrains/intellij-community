@@ -43,9 +43,9 @@ public class PlaceholderCountMatchesArgumentCountInspection extends BaseInspecti
   @NotNull
   @Override
   protected String buildErrorString(Object... infos) {
-    final int argumentCount = ((Integer)infos[0]).intValue();
-    final int placeholderCount = ((Integer)infos[1]).intValue();
-    if (argumentCount > placeholderCount) {
+    final Integer argumentCount = (Integer)infos[0];
+    final Integer placeholderCount = (Integer)infos[1];
+    if (argumentCount.intValue() > placeholderCount.intValue()) {
       return InspectionGadgetsBundle.message("placeholder.count.matches.argument.count.more.problem.descriptor",
                                              argumentCount, placeholderCount);
     }
@@ -106,11 +106,21 @@ public class PlaceholderCountMatchesArgumentCountInspection extends BaseInspecti
       if (placeholderCount == argumentCount) {
         return;
       }
-      registerMethodCallError(expression, argumentCount, placeholderCount);
+      registerMethodCallError(expression, Integer.valueOf(argumentCount), Integer.valueOf(placeholderCount));
     }
 
     private static boolean hasThrowableType(PsiExpression lastArgument) {
-      return InheritanceUtil.isInheritor(lastArgument.getType(), "java.lang.Throwable");
+      final PsiType type = lastArgument.getType();
+      if (type instanceof PsiDisjunctionType) {
+        final PsiDisjunctionType disjunctionType = (PsiDisjunctionType)type;
+        for (PsiType disjunction : disjunctionType.getDisjunctions()) {
+          if (!InheritanceUtil.isInheritor(disjunction, CommonClassNames.JAVA_LANG_THROWABLE)) {
+            return false;
+          }
+        }
+        return true;
+      }
+      return InheritanceUtil.isInheritor(type, CommonClassNames.JAVA_LANG_THROWABLE);
     }
 
     public static int countPlaceholders(String value) {
