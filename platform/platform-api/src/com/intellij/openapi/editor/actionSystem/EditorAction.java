@@ -51,8 +51,9 @@ public abstract class EditorAction extends AnAction implements DumbAware {
     if (!myHandlersLoaded) {
       myHandlersLoaded = true;
       final String id = ActionManager.getInstance().getId(this);
-      for (int i = Extensions.getExtensions(EditorActionHandlerBean.EP_NAME).length - 1; i >= 0; i--) {
-        final EditorActionHandlerBean handlerBean = Extensions.getExtensions(EditorActionHandlerBean.EP_NAME)[i];
+      EditorActionHandlerBean[] extensions = Extensions.getExtensions(EditorActionHandlerBean.EP_NAME);
+      for (int i = extensions.length - 1; i >= 0; i--) {
+        final EditorActionHandlerBean handlerBean = extensions[i];
         if (handlerBean.action.equals(id)) {
           myHandler = handlerBean.getHandler(myHandler);
         }
@@ -68,7 +69,7 @@ public abstract class EditorAction extends AnAction implements DumbAware {
   }
 
   @Nullable
-  protected Editor getEditor(final DataContext dataContext) {
+  protected Editor getEditor(@NotNull DataContext dataContext) {
     return CommonDataKeys.EDITOR.getData(dataContext);
   }
 
