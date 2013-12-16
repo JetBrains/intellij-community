@@ -18,6 +18,7 @@ package org.jetbrains.idea.maven.execution;
 import com.intellij.execution.JUnitPatcher;
 import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.util.text.StringUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.dom.MavenDomUtil;
@@ -77,6 +78,14 @@ public class MavenJUnitPatcher extends JUnitPatcher {
         if (javaParameters.getEnv() == null || !javaParameters.getEnv().containsKey(variableName)) {
           javaParameters.addEnv(variableName, element.getValue());
         }
+      }
+    }
+
+    Element argLine = config.getChild("argLine");
+    if (argLine != null) {
+      String value = argLine.getTextTrim();
+      if (StringUtil.isNotEmpty(value)) {
+        javaParameters.getVMParametersList().add(value);
       }
     }
   }
