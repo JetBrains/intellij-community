@@ -24,34 +24,55 @@ import com.intellij.psi.stubs.StubIndex;
 import com.intellij.psi.stubs.StubIndexKey;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.indexing.IdFilter;
+import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomFileElement;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * @since 13.0
+ * @see com.intellij.util.xml.StubbedOccurrence
+ * @since 13
  */
-public class DomNamespaceKeyIndex extends StringStubIndexExtension<PsiFile> {
+public class DomElementClassIndex extends StringStubIndexExtension<PsiFile> {
 
-  public static final StubIndexKey<String, PsiFile> KEY = StubIndexKey.createIndexKey("dom.namespaceKey");
+  public static final StubIndexKey<String, PsiFile> KEY = StubIndexKey.createIndexKey("dom.elementClass");
 
-  private static final DomNamespaceKeyIndex ourInstance = new DomNamespaceKeyIndex();
+  private static final DomElementClassIndex ourInstance = new DomElementClassIndex();
 
-  public static DomNamespaceKeyIndex getInstance() {
+  public static DomElementClassIndex getInstance() {
     return ourInstance;
   }
 
-  public boolean hasStubElementsWithNamespaceKey(final DomFileElement domFileElement, final String namespaceKey) {
+  public boolean hasStubElementsOfType(final DomFileElement domFileElement,
+                                       final Class<? extends DomElement> clazz) {
     final VirtualFile file = domFileElement.getFile().getVirtualFile();
     if (!(file instanceof VirtualFileWithId)) return false;
 
+    final String clazzName = clazz.getName();
     final int virtualFileId = ((VirtualFileWithId)file).getId();
     CommonProcessors.FindFirstProcessor<String> processor =
       new CommonProcessors.FindFirstProcessor<String>() {
         @Override
         protected boolean accept(String s) {
-          return namespaceKey.equals(s);
+          return clazzName.equals(s);
         }
       };
+
+
+    /*
+    CommonProcessors.FindFirstProcessor<? super PsiFile> processor =
+      new CommonProcessors.FindFirstProcessor<PsiFile>();
+    StubIndex.getInstance().process(KEY, clazzName,
+                                    domFileElement.getFile().getProject(),
+                                    GlobalSearchScope.fileScope(domFileElement.getFile()),
+                                    new IdFilter() {
+                                      @Override
+                                      public boolean containsFileId(int id) {
+                                        return id == virtualFileId;
+                                      }
+                                    },
+                                    processor
+    );
+    */
     StubIndex.getInstance().processAllKeys(KEY, processor,
                                            GlobalSearchScope.fileScope(domFileElement.getFile()),
                                            new IdFilter() {
@@ -59,7 +80,8 @@ public class DomNamespaceKeyIndex extends StringStubIndexExtension<PsiFile> {
                                              public boolean containsFileId(int id) {
                                                return id == virtualFileId;
                                              }
-                                           });
+                                           }
+    );
     return processor.isFound();
   }
 
@@ -71,6 +93,6 @@ public class DomNamespaceKeyIndex extends StringStubIndexExtension<PsiFile> {
 
   @Override
   public int getVersion() {
-    return 1;
+    return 0;
   }
 }

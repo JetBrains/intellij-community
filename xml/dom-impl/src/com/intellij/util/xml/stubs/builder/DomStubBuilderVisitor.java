@@ -20,6 +20,7 @@ import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.io.StringRef;
 import com.intellij.util.xml.Stubbed;
+import com.intellij.util.xml.StubbedOccurrence;
 import com.intellij.util.xml.impl.DomInvocationHandler;
 import com.intellij.util.xml.impl.DomManagerImpl;
 import com.intellij.util.xml.reflect.AbstractDomChildrenDescription;
@@ -28,6 +29,7 @@ import com.intellij.util.xml.reflect.DomChildrenDescription;
 import com.intellij.util.xml.stubs.AttributeStub;
 import com.intellij.util.xml.stubs.ElementStub;
 
+import java.lang.reflect.Type;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -55,6 +57,11 @@ class DomStubBuilderVisitor {
                                          StringRef.fromNullableString(nsKey),
                                          index,
                                          description instanceof CustomDomChildrenDescription);
+      if (handler.getAnnotation(StubbedOccurrence.class) != null) {
+        final Type type = description.getType();
+        stub.setElementClass((Class)type);
+      }
+
       for (XmlAttribute attribute : tag.getAttributes()) {
         visitXmlElement(attribute, stub, 0);
       }
