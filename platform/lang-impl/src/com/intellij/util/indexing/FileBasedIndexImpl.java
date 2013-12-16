@@ -391,6 +391,17 @@ public class FileBasedIndexImpl extends FileBasedIndex {
 
     initIndexStorage(extension, version, versionFile);
 
+    // save versions at last, they must be saved after initIndexVersion as it also can rewrite version
+    Map<FileType, Integer> versionMap = extension.getVersionMap();
+    for (Map.Entry<FileType, Integer> entry : versionMap.entrySet()) {
+      ID stubId = IndexInfrastructure.getStubId(name, entry.getKey());
+      File file = IndexInfrastructure.getVersionFile(stubId);
+      Integer stubVersion = entry.getValue();
+      if (!file.exists() || IndexInfrastructure.versionDiffers(file, stubVersion)) {
+        LOG.info("Version has changed for index " + stubId + ". The index will be rebuilt.");
+        IndexInfrastructure.rewriteVersion(file, stubVersion);
+      }
+    }
     return versionChanged;
   }
 
@@ -1779,23 +1790,25 @@ public class FileBasedIndexImpl extends FileBasedIndex {
 
     scheduleUpdate(indexId,
                    createUpdateComputableWithBufferingDisabled(update),
-                   createIndexedStampUpdateRunnable(indexId, file, currentFC != null)
+                   createIndexedStampUpdateRunnable(indexId, file, fileType, currentFC != null)
     );
   }
 
   private Runnable createIndexedStampUpdateRunnable(final ID<?, ?> indexId,
                                                     final VirtualFile file,
+                                                    final FileType fileType,
                                                     final boolean hasContent) {
     return new Runnable() {
       @Override
       public void run() {
         if (file.isValid()) {
+          ID stubId = IndexInfrastructure.getStubId(indexId, fileType);
           if (hasContent) {
-            IndexingStamp.update(file, indexId, IndexInfrastructure.getIndexCreationStamp(indexId));
+            IndexingStamp.update(file, stubId, getIndexCreationStamp(stubId, fileType));
           }
           else {
             // mark the file as unindexed
-            IndexingStamp.update(file, indexId, IndexInfrastructure.INVALID_STAMP);
+            IndexingStamp.update(file, stubId, IndexInfrastructure.INVALID_STAMP);
           }
           if (myNotRequiringContentIndices.contains(indexId)) IndexingStamp.flushCache(file);
         }
@@ -1980,8 +1993,9 @@ public class FileBasedIndexImpl extends FileBasedIndex {
             for (int i = 0, size = candidates.size(); i < size; ++i) {
               final ID<?, ?> indexId = candidates.get(i);
               if (needsFileContentLoading(indexId) && getInputFilter(indexId).acceptInput(file)) {
-                if (IndexingStamp.isFileIndexed(file, indexId, IndexInfrastructure.getIndexCreationStamp(indexId))) {
-                  IndexingStamp.update(file, indexId, IndexInfrastructure.INVALID_STAMP2);
+                ID id = IndexInfrastructure.getStubId(indexId, fileType);
+                if (IndexingStamp.isFileIndexed(file, id, IndexInfrastructure.getIndexCreationStamp(id))) {
+                  IndexingStamp.update(file, id, IndexInfrastructure.INVALID_STAMP2);
                   resetStamp = true;
                 }
                 scheduleForUpdate = true;
@@ -2071,7 +2085,8 @@ public class FileBasedIndexImpl extends FileBasedIndex {
             public void run() {
               FileType fileType = file.getFileType();
               for (ID<?, ?> indexId : affectedIndices) {
-                IndexingStamp.update(file, indexId, IndexInfrastructure.INVALID_STAMP2);
+                ID id = IndexInfrastructure.getStubId(indexId, fileType);
+                IndexingStamp.update(file, id, IndexInfrastructure.INVALID_STAMP2);
               }
             }
           });
@@ -2419,7 +2434,12 @@ public class FileBasedIndexImpl extends FileBasedIndex {
   }
 
   private static boolean isFileIndexed(VirtualFile file, ID<?, ?> indexId) {
-    return IndexingStamp.isFileIndexed(file, indexId, IndexInfrastructure.getIndexCreationStamp(indexId));
+    ID id = IndexInfrastructure.getStubId(indexId, file.getFileType());
+    return IndexingStamp.isFileIndexed(file, id, IndexInfrastructure.getIndexCreationStamp(id));
+  }
+
+  private static long getIndexCreationStamp(ID<?, ?> indexId, FileType fileType) {
+    return IndexInfrastructure.getIndexCreationStamp(indexId, fileType);
   }
 
   private boolean isUnderConfigOrSystem(@NotNull VirtualFile file) {

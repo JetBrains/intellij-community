@@ -50,7 +50,7 @@ public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtensi
 
   public static final ID<Integer, SerializedStubTree> INDEX_ID = ID.create("Stubs");
 
-  private static final int VERSION = 27;
+  private static final int VERSION = 26;
 
   private static final DataExternalizer<SerializedStubTree> KEY_EXTERNALIZER = new DataExternalizer<SerializedStubTree>() {
     @Override
@@ -72,6 +72,8 @@ public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtensi
     }
   };
 
+  private final Map<FileType,Integer> myVersionMap = computeVersionMap();
+
   public static boolean canHaveStub(@NotNull VirtualFile file) {
     final FileType fileType = file.getFileType();
     if (fileType instanceof LanguageFileType) {
@@ -86,7 +88,8 @@ public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtensi
         if (((IStubFileElementType)elementType).shouldBuildStubFor(file)) {
           return true;
         }
-        if (IndexingStamp.isFileIndexed(file, INDEX_ID, IndexInfrastructure.getIndexCreationStamp(INDEX_ID))) {
+        final ID indexId = IndexInfrastructure.getStubId(INDEX_ID, fileType);
+        if (IndexingStamp.isFileIndexed(file, indexId, IndexInfrastructure.getIndexCreationStamp(indexId))) {
           return true;
         }
       }
@@ -199,11 +202,15 @@ public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtensi
 
   @Override
   public int getVersion() {
-    return getCumulativeVersion();
+    return VERSION;
   }
 
-  private static int getCumulativeVersion() {
-    int version = VERSION;
+  public Map<FileType, Integer> getVersionMap() {
+    return myVersionMap;
+  }
+
+  private static Map<FileType, Integer> computeVersionMap() {
+    Map<FileType, Integer> map = new HashMap<FileType, Integer>();
     for (final FileType fileType : FileTypeManager.getInstance().getRegisteredFileTypes()) {
       if (fileType instanceof LanguageFileType) {
         Language l = ((LanguageFileType)fileType).getLanguage();
@@ -211,16 +218,16 @@ public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtensi
         if (parserDefinition != null) {
           final IFileElementType type = parserDefinition.getFileNodeType();
           if (type instanceof IStubFileElementType) {
-            version += ((IStubFileElementType)type).getStubVersion();
+            map.put(fileType, ((IStubFileElementType)type).getStubVersion());
           }
         }
       }
       final BinaryFileStubBuilder builder = BinaryFileStubBuilders.INSTANCE.forFileType(fileType);
       if (builder != null) {
-        version += builder.getStubVersion();
+        map.put(fileType, builder.getStubVersion());
       }
     }
-    return version;
+    return map;
   }
 
   @NotNull
@@ -427,6 +434,20 @@ public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtensi
         if (stubIndex != null) {
           stubIndex.clearAllIndices();
         }
+
+        Map<FileType, Integer> versionMap = getVersionMap();
+        for (Map.Entry<FileType, Integer> entry : versionMap.entrySet()) {
+          ID stubId = IndexInfrastructure.getStubId(INDEX_ID, entry.getKey());
+          try {
+            IndexInfrastructure.rewriteVersion(IndexInfrastructure.getVersionFile(stubId), entry.getValue());
+          }
+          catch (IOException e) {
+            LOG.error(e);
+          }
+        }
+
+        //File dir= IndexInfrastructure.getStubVersionsDirectory();
+        //if (dir.exists()) dir.delete();
         super.clear();
       }
       finally {
