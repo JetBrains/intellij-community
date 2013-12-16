@@ -24,10 +24,13 @@ import com.intellij.psi.PsiReference;
 import com.intellij.psi.PsiReferenceProvider;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ProcessingContext;
+import com.intellij.util.xml.DomElement;
+import com.intellij.util.xml.DomUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.dom.MavenDomUtil;
 import org.jetbrains.idea.maven.dom.MavenPropertyResolver;
+import org.jetbrains.idea.maven.dom.model.MavenDomProperties;
 import org.jetbrains.idea.maven.plugins.api.MavenPluginParamInfo;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
@@ -77,6 +80,7 @@ public class MavenPropertyPsiReferenceProvider extends PsiReferenceProvider {
     if (!isElementCanContainReference(element)) return PsiReference.EMPTY_ARRAY;
 
     MavenProject mavenProject = null;
+    XmlTag propertiesTag = null;
     List<PsiReference> result = null;
 
     Matcher matcher = MavenPropertyResolver.PATTERN.matcher(textRange.substring(text));
@@ -98,13 +102,29 @@ public class MavenPropertyPsiReferenceProvider extends PsiReferenceProvider {
 
         mavenProject = findMavenProject(element);
         if (mavenProject == null) {
-          return PsiReference.EMPTY_ARRAY;
+          propertiesTag = findPropertiesParentTag(element);
+          if (propertiesTag == null) {
+            return PsiReference.EMPTY_ARRAY;
+          }
         }
       }
 
-      result.add(new MavenPropertyPsiReference(mavenProject, element, propertyName, range, isSoft));
+      PsiReference ref;
+      if (mavenProject != null) {
+        ref = new MavenPropertyPsiReference(mavenProject, element, propertyName, range, isSoft);
+      }
+      else {
+        ref = new MavenContextlessPropertyReference(propertiesTag, element, range, isSoft);
+      }
+
+      result.add(ref);
     }
 
     return result == null ? PsiReference.EMPTY_ARRAY : result.toArray(new PsiReference[result.size()]);
+  }
+
+  private static XmlTag findPropertiesParentTag(@NotNull PsiElement element) {
+    DomElement domElement = DomUtil.getDomElement(element);
+    return domElement instanceof MavenDomProperties ? domElement.getXmlTag() : null;
   }
 }
