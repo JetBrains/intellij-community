@@ -516,7 +516,11 @@ public class RefactoringUtil {
         continue;
       }
       PsiElement anchor1 = getParentExpressionAnchorElement(occurrence);
-      if (anchor1 == null) return null;
+
+      if (anchor1 == null) {
+        if (occurrence.isPhysical()) return null;
+        continue;
+      }
 
       if (anchor == null) {
         anchor = anchor1;
@@ -549,6 +553,7 @@ public class RefactoringUtil {
       }
     }
 
+    if (anchor == null) return null;
     if (occurrences.length > 1 && anchor.getParent().getParent() instanceof PsiSwitchStatement) {
       PsiSwitchStatement switchStatement = (PsiSwitchStatement)anchor.getParent().getParent();
       if (switchStatement.getBody().equals(anchor.getParent())) {
