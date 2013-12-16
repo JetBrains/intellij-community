@@ -29,7 +29,9 @@ import com.intellij.openapi.util.*;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.Consumer;
+import com.intellij.util.PlatformUtils;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
@@ -51,7 +53,6 @@ import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyImportStatementNavigator;
 import com.jetbrains.python.psi.impl.PyImportedModule;
-import com.intellij.psi.util.QualifiedName;
 import com.jetbrains.python.psi.impl.references.PyImportReference;
 import com.jetbrains.python.psi.impl.references.PyOperatorReference;
 import com.jetbrains.python.psi.resolve.ImportedResolveResult;
@@ -125,10 +126,18 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
     private Set<PsiElement> myUsedImports = Collections.synchronizedSet(new HashSet<PsiElement>());
     private Set<NameDefiner> myAllImports = Collections.synchronizedSet(new HashSet<NameDefiner>());
     private final ImmutableSet<String> myIgnoredIdentifiers;
+    private volatile Boolean myHasSdk = null;
 
     public Visitor(@Nullable ProblemsHolder holder, @NotNull LocalInspectionToolSession session, List<String> ignoredIdentifiers) {
       super(holder, session);
       myIgnoredIdentifiers = ImmutableSet.copyOf(ignoredIdentifiers);
+    }
+
+    public boolean hasSdk(@NotNull PsiElement anchor) {
+      if (myHasSdk == null) {
+        myHasSdk = PlatformUtils.isPyCharm() && PythonSdkType.getSdk(anchor) != null;
+      }
+      return myHasSdk;
     }
 
     @Override
@@ -174,7 +183,7 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
     public void visitPyImportElement(PyImportElement node) {
       super.visitPyImportElement(node);
       final PyFromImportStatement fromImport = PsiTreeUtil.getParentOfType(node, PyFromImportStatement.class);
-      if (fromImport == null || !fromImport.isFromFuture()) {
+      if (hasSdk(node) && (fromImport == null || !fromImport.isFromFuture())) {
         myAllImports.add(node);
       }
     }
@@ -182,7 +191,9 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
     @Override
     public void visitPyStarImportElement(PyStarImportElement node) {
       super.visitPyStarImportElement(node);
-      myAllImports.add(node);
+      if (hasSdk(node)) {
+        myAllImports.add(node);
+      }
     }
 
     @Nullable
@@ -298,7 +309,9 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
     }
 
     private void processReference(PyElement node, @Nullable PsiReference reference) {
-      if (reference == null || reference.isSoft()) return;
+      if (!hasSdk(node) || reference == null || reference.isSoft()) {
+        return;
+      }
       HighlightSeverity severity = HighlightSeverity.ERROR;
       if (reference instanceof PsiReferenceEx) {
         severity = ((PsiReferenceEx)reference).getUnresolvedHighlightSeverity(myTypeEvalContext);
