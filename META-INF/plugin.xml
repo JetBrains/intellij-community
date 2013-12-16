@@ -25,9 +25,6 @@
       <component>
           <implementation-class>org.editorconfig.plugincomponents.SettingsProviderComponent</implementation-class>
       </component>
-      <component>
-          <implementation-class>org.editorconfig.plugincomponents.ConfigAppComponent</implementation-class>
-      </component>
   </application-components>
 
   <project-components>
