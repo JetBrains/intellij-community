@@ -25,6 +25,7 @@ Available templates:
 
 * `.if` – checks boolean expression to be true `if (expr)`
 * `.else` – checks boolean expression to be false `if (!expr)`
+* `.var` – initialize new variable with expression `T name = expr;`
 * `.null` – checks nullable expression to be null `if (expr == null)`
 * `.notnull` – checks expression to be non-null `if (expr != null)`
 * `.not` – negates value of inner boolean expression `!expr`
