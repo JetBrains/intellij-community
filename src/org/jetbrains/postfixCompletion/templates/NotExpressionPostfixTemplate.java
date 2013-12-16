@@ -5,6 +5,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.Condition;
 import com.intellij.psi.PsiExpression;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.postfixCompletion.util.CommonUtils;
 
 public class NotExpressionPostfixTemplate extends ExpressionPostfixTemplateWithChooser {
   public NotExpressionPostfixTemplate() {
@@ -22,7 +23,7 @@ public class NotExpressionPostfixTemplate extends ExpressionPostfixTemplateWithC
     return new Condition<PsiExpression>() {
       @Override
       public boolean value(PsiExpression expression) {
-        return BooleanPostfixTemplate.isBooleanType(expression.getType());
+        return CommonUtils.isBoolean(expression.getType());
       }
     };
   }

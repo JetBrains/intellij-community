@@ -1,9 +1,12 @@
 package org.jetbrains.postfixCompletion.templates;
 
 import com.intellij.openapi.editor.Document;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiExpressionStatement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.postfixCompletion.util.CommonUtils;
 
 abstract public class BooleanPostfixTemplate extends PostfixTemplate {
   protected BooleanPostfixTemplate(@Nullable String name, @NotNull String description, @NotNull String example) {
@@ -15,10 +18,6 @@ abstract public class BooleanPostfixTemplate extends PostfixTemplate {
     PsiExpression topmostExpression = getTopmostExpression(context);
     return topmostExpression != null &&
            topmostExpression.getParent() instanceof PsiExpressionStatement &&
-           isBooleanType(topmostExpression.getType());
-  }
-
-  public static boolean isBooleanType(@Nullable PsiType type) {
-    return type != null && (PsiType.BOOLEAN.equals(type) || PsiType.BOOLEAN.equals(PsiPrimitiveType.getUnboxedType(type)));
+           CommonUtils.isBoolean(topmostExpression.getType());
   }
 }

@@ -2,7 +2,9 @@
   <id>org.jetbrains.postfixCompletion</id>
   <name>Postfix Completion</name>
   <version>0.7.6-beta</version>
-  <vendor email="alexander.shvedov@jetbrains.com" url="https://github.com/controlflow">Alexander Shvedov, Alexander Zolotov, Sergey Ignatov</vendor>
+  <vendor email="alexander.shvedov@jetbrains.com" url="https://github.com/controlflow">Alexander Shvedov, Alexander Zolotov, Sergey
+    Ignatov
+  </vendor>
   <depends>com.intellij.modules.lang</depends>
   <depends>com.intellij.modules.java</depends>
 
@@ -81,8 +83,8 @@
     <postfixTemplate implementation="org.jetbrains.postfixCompletion.templates.CastExpressionPostfixTemplate"/>
     <postfixTemplate implementation="org.jetbrains.postfixCompletion.templates.NewExpressionPostfixTemplate"/>
     <postfixTemplate implementation="org.jetbrains.postfixCompletion.templates.IfStatementPostfixTemplate"/>
-    <postfixTemplate implementation="org.jetbrains.postfixCompletion.templates.ForIndexedIterationPostfixTemplate"/>
-    <postfixTemplate implementation="org.jetbrains.postfixCompletion.templates.ForReverseIterationPostfixTemplate"/>
+    <postfixTemplate implementation="org.jetbrains.postfixCompletion.templates.ForAscendingPostfixTemplate"/>
+    <postfixTemplate implementation="org.jetbrains.postfixCompletion.templates.ForDescendingPostfixTemplate"/>
     <postfixTemplate implementation="org.jetbrains.postfixCompletion.templates.IntroduceFieldPostfixTemplate"/>
     <postfixTemplate implementation="org.jetbrains.postfixCompletion.templates.ParenthesizedExpressionPostfixTemplate"/>
     <postfixTemplate implementation="org.jetbrains.postfixCompletion.templates.ReturnStatementPostfixTemplate"/>
@@ -92,18 +94,22 @@
     <postfixTemplate implementation="org.jetbrains.postfixCompletion.templates.SynchronizedStatementPostfixTemplate"/>
     <postfixTemplate implementation="org.jetbrains.postfixCompletion.templates.InstanceofExpressionPostfixTemplate"/>
   </extensions>
-  
-  <extensions defaultExtensionNs="com.intellij">
-    <applicationService id="postfixCompletionService" serviceImplementation="org.jetbrains.postfixCompletion.infrastructure.PostfixTemplatesService"/>
-    <applicationService id="postfixCompletionSettings" serviceImplementation="org.jetbrains.postfixCompletion.settings.PostfixCompletionSettings"/>
-    
-    <customLiveTemplate implementation="org.jetbrains.postfixCompletion.templates.PostfixLiveTemplate"/>
-    
-    <completion.contributor language="JAVA" order="FIRST"
-      implementationClass="org.jetbrains.postfixCompletion.PostfixCompletionContributor" />
 
-    <completion.contributor language="JAVA" implementationClass="org.jetbrains.postfixCompletion.completion.PostfixTemplateCompletionContributor"/>
+  <extensions defaultExtensionNs="com.intellij">
+    <applicationService id="postfixCompletionService"
+                        serviceImplementation="org.jetbrains.postfixCompletion.infrastructure.PostfixTemplatesService"/>
+    <applicationService id="postfixCompletionSettings"
+                        serviceImplementation="org.jetbrains.postfixCompletion.settings.PostfixCompletionSettings"/>
+
+    <customLiveTemplate implementation="org.jetbrains.postfixCompletion.templates.PostfixLiveTemplate"/>
+
+    <completion.contributor language="JAVA" order="FIRST"
+                            implementationClass="org.jetbrains.postfixCompletion.PostfixCompletionContributor"/>
+
+    <completion.contributor language="JAVA"
+                            implementationClass="org.jetbrains.postfixCompletion.completion.PostfixTemplateCompletionContributor"/>
     <lookup.actionProvider implementation="org.jetbrains.postfixCompletion.completion.PostfixTemplateLookupActionProvider"/>
-    <editorOptionsProvider id="editing.postfixCompletion" instance="org.jetbrains.postfixCompletion.settings.PostfixCompletionConfigurable"/>
+    <editorOptionsProvider id="editing.postfixCompletion"
+                           instance="org.jetbrains.postfixCompletion.settings.PostfixCompletionConfigurable"/>
   </extensions>
 </idea-plugin>

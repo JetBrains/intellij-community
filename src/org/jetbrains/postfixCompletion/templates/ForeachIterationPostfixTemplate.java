@@ -10,9 +10,11 @@ import com.intellij.codeInsight.template.macro.SuggestVariableNameMacro;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
-import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiExpressionStatement;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.postfixCompletion.util.CommonUtils;
 
 public class ForeachIterationPostfixTemplate extends PostfixTemplate {
   public ForeachIterationPostfixTemplate() {
@@ -23,8 +25,7 @@ public class ForeachIterationPostfixTemplate extends PostfixTemplate {
   public boolean isApplicable(@NotNull PsiElement context, @NotNull Document copyDocument, int newOffset) {
     PsiExpression expr = getTopmostExpression(context);
     if (expr == null || !(expr.getParent() instanceof PsiExpressionStatement)) return false;
-    PsiType type = expr.getType();
-    return type instanceof PsiArrayType || InheritanceUtil.isInheritor(type, CommonClassNames.JAVA_LANG_ITERABLE);
+    return CommonUtils.isArray(expr.getType()) || CommonUtils.isIterable(expr.getType());
   }
 
   @Override
@@ -46,7 +47,7 @@ public class ForeachIterationPostfixTemplate extends PostfixTemplate {
     type.addParameter(new VariableNode(variable, null));
     MacroCallNode name = new MacroCallNode(new SuggestVariableNameMacro());
 
-    template.addVariable("type", type, type , false);
+    template.addVariable("type", type, type, false);
     template.addTextSegment(" ");
     template.addVariable("name", name, name, true);
 
