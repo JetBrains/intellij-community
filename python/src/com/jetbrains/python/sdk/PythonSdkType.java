@@ -401,14 +401,15 @@ public class PythonSdkType extends SdkType {
     return null;
   }
 
-  public void saveAdditionalData(final SdkAdditionalData additionalData, final Element additional) {
+  @Override
+  public void saveAdditionalData(@NotNull final SdkAdditionalData additionalData, @NotNull final Element additional) {
     if (additionalData instanceof PythonSdkAdditionalData) {
       ((PythonSdkAdditionalData)additionalData).save(additional);
     }
   }
 
   @Override
-  public SdkAdditionalData loadAdditionalData(final Sdk currentSdk, final Element additional) {
+  public SdkAdditionalData loadAdditionalData(@NotNull final Sdk currentSdk, final Element additional) {
     if (RemoteSdkDataHolder.isRemoteSdk(currentSdk.getHomePath())) {
       PythonRemoteInterpreterManager manager = PythonRemoteInterpreterManager.getInstance();
       if (manager != null) {
