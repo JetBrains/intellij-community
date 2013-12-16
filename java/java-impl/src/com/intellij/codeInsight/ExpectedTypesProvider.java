@@ -307,7 +307,8 @@ public class ExpectedTypesProvider {
       if (type == null) return;
       final ExpectedTypeInfoImpl info = createInfoImpl(type, ExpectedTypeInfo.TYPE_OR_SUBTYPE, type, TailType.UNKNOWN);
       if (type instanceof PsiArrayType) {
-        myResult = new ExpectedTypeInfo[]{info, createInfoImpl(((PsiArrayType)type).getComponentType(), ExpectedTypeInfo.TYPE_OR_SUBTYPE, type, TailType.UNKNOWN)};
+        PsiType componentType = ((PsiArrayType)type).getComponentType();
+        myResult = new ExpectedTypeInfo[]{info, createInfoImpl(componentType, ExpectedTypeInfo.TYPE_OR_SUBTYPE, componentType, TailType.UNKNOWN)};
       }
       else {
         myResult = new ExpectedTypeInfo[] {info};

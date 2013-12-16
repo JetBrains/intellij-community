@@ -13,27 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.siyeh.ipp.asserttoif;
+package com.siyeh.ig.bugs;
 
-import com.siyeh.IntentionPowerPackBundle;
-import com.siyeh.ipp.IPPTestCase;
+import com.intellij.codeInspection.InspectionProfileEntry;
+import com.siyeh.ig.LightInspectionTestCase;
 
 /**
- * @see IfToAssertionIntention
  * @author Bas Leijdekkers
  */
-public class IfToAssertionIntentionTest extends IPPTestCase {
+public class NumberEqualityInspectionTest extends LightInspectionTestCase {
 
-  public void testRandomThrowable() { doTest(); }
-  public void testParentheses() { doTest(); }
-
-  @Override
-  protected String getRelativePath() {
-    return "asserttoif/if_to_assert";
+  public void testNumberEquality() {
+    doTest();
   }
 
   @Override
-  protected String getIntentionName() {
-    return IntentionPowerPackBundle.message("if.to.assertion.intention.name");
+  protected InspectionProfileEntry getInspection() {
+    return new NumberEqualityInspection();
   }
 }

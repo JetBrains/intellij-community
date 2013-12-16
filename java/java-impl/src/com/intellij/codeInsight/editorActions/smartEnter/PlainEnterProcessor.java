@@ -123,7 +123,7 @@ public class PlainEnterProcessor implements EnterProcessor {
   private static boolean processExistingBlankLine(@NotNull Editor editor, @Nullable PsiCodeBlock codeBlock, @Nullable PsiElement element) {
     PsiWhiteSpace whiteSpace = null;
     if (codeBlock == null) {
-      if (element != null) {
+      if (element != null && !(element instanceof PsiMember)) {
         final PsiElement next = PsiTreeUtil.nextLeaf(element);
         if (next instanceof PsiWhiteSpace) {
           whiteSpace = (PsiWhiteSpace)next;

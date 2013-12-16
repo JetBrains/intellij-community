@@ -107,6 +107,8 @@ public class CompleteStatementTest extends EditorActionTestCase {
   public void testMethod() throws Exception { doTest(); }
 
   public void testClass() throws Exception { doTest(); }
+  
+  public void testInnerEnumBeforeMethod() { doTest(); }
 
   public void testCompleteElseIf() throws Exception { doTest(); }
 
@@ -269,11 +271,11 @@ public class CompleteStatementTest extends EditorActionTestCase {
     }
   }
 
-  private void doTest() throws Exception {
+  private void doTest() {
     doTest("java");
   }
 
-  private void doTest(String ext) throws Exception {
+  private void doTest(String ext) {
     String path = "/codeInsight/completeStatement/";
     doFileTest(path + getTestName(false) + "." + ext, path + getTestName(false) + "_after." + ext, true);
   }
