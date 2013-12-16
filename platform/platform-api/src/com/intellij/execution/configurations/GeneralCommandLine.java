@@ -257,9 +257,14 @@ public class GeneralCommandLine implements UserDataHolder {
     try {
       if (myStartProcessWithPty && SystemInfo.isUnix) {
         try {
-          return startProcessWithPty(commands);
+          Map<String, String> env = Maps.newHashMap();
+          setupEnvironment(env);
+          if (myRedirectErrorStream) {
+            LOG.error("Launching process with PTY and redirected error stream is unsupported yet");
+          }
+          return PtyProcessHolder.doExec(myWorkDirectory, commands, env);
         }
-        catch (Exception e) {
+        catch (Throwable e) {
           LOG.error("Couldn't run process with PTY", e);
         }
       }
@@ -272,13 +277,10 @@ public class GeneralCommandLine implements UserDataHolder {
     }
   }
 
-  private Process startProcessWithPty(List<String> commands) throws IOException {
-    Map<String, String> env = Maps.newHashMap();
-    setupEnvironment(env);
-    if (myRedirectErrorStream) {
-      LOG.error("Launching process with PTY and redirected error stream is unsupported yet");
+  private static class PtyProcessHolder { // holder for lazy PtyProcess class loading
+    private static PtyProcess doExec(File workDirectory, List<String> commands, Map<String, String> env) throws IOException {
+      return PtyProcess.exec(ArrayUtil.toStringArray(commands), env, workDirectory != null ? workDirectory.getPath() : null, true);
     }
-    return PtyProcess.exec(ArrayUtil.toStringArray(commands), env, myWorkDirectory != null? myWorkDirectory.getPath() : null, true);
   }
 
   private Process startProcess(List<String> commands) throws IOException {
