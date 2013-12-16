@@ -41,7 +41,8 @@ public class CloudGitDeploymentRuntime extends CloudDeploymentRuntime {
   private final VirtualFile myContentRoot;
   private final File myRepositoryRootFile;
 
-  private final String myRemoteName;
+  private final String myDefaultRemoteName;
+  private String myRemoteName;
   private final String myCloudName;
 
   private GitRepository myRepository;
@@ -51,11 +52,11 @@ public class CloudGitDeploymentRuntime extends CloudDeploymentRuntime {
                                    File repositoryRoot,
                                    DeploymentTask<? extends CloudDeploymentNameConfiguration> task,
                                    DeploymentLogManager logManager,
-                                   String remoteName,
+                                   String defaultRemoteName,
                                    String cloudName) throws ServerRuntimeException {
     super(serverRuntime, source, task, logManager);
 
-    myRemoteName = remoteName;
+    myDefaultRemoteName = defaultRemoteName;
     myCloudName = cloudName;
 
     myRepositoryRootFile = repositoryRoot;
@@ -107,11 +108,20 @@ public class CloudGitDeploymentRuntime extends CloudDeploymentRuntime {
   }
 
   public void addOrResetGitRemote(CloudGitApplication application, GitRepository repository) throws ServerRuntimeException {
+    String gitUrl = application.getGitUrl();
+    if (myRemoteName == null) {
+      for (GitRemote gitRemote : repository.getRemotes()) {
+        if (gitRemote.getUrls().contains(gitUrl)) {
+          myRemoteName = gitRemote.getName();
+          return;
+        }
+      }
+    }
     GitRemote gitRemote = GitUtil.findRemoteByName(repository, getRemoteName());
     if (gitRemote == null) {
       addGitRemote(application);
     }
-    else if (!gitRemote.getUrls().contains(application.getGitUrl())) {
+    else if (!gitRemote.getUrls().contains(gitUrl)) {
       resetGitRemote(application);
     }
   }
@@ -320,6 +330,9 @@ public class CloudGitDeploymentRuntime extends CloudDeploymentRuntime {
   }
 
   private String getRemoteName() {
+    if (myRemoteName == null) {
+      myRemoteName = myDefaultRemoteName;
+    }
     return myRemoteName;
   }
 
