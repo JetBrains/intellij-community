@@ -24,7 +24,6 @@ import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
@@ -418,36 +417,6 @@ public class PythonSdkType extends SdkType {
       }
     }
     return PythonSdkAdditionalData.load(currentSdk, additional);
-  }
-
-  private boolean switchPathToInterpreter(Sdk currentSdk, String... variants) {
-    File sdk_file = new File(currentSdk.getHomePath());
-    final String sdk_name = currentSdk.getName();
-    boolean success = false;
-    for (String interpreter : variants) {
-      File binary = interpreter.startsWith("/") ? new File(interpreter) : new File(sdk_file, interpreter);
-      if (binary.exists()) {
-        if (currentSdk instanceof SdkModificator) {
-          final SdkModificator sdk_as_modificator = (SdkModificator)currentSdk;
-          sdk_as_modificator.setHomePath(binary.getPath());
-          sdk_as_modificator.setName(suggestSdkName(currentSdk.getName(), binary.getAbsolutePath()));
-          //setupSdkPaths(currentSdk);
-          success = true;
-          break;
-        }
-      }
-    }
-    if (!success) {
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
-        public void run() {
-          Messages.showWarningDialog(
-            "Failed to convert Python SDK '" + sdk_name + "'\nplease delete and re-create it",
-            "Converting Python SDK"
-          );
-        }
-      }, ModalityState.NON_MODAL);
-    }
-    return success;
   }
 
   @Nullable
