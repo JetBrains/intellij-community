@@ -53,16 +53,16 @@ public class CodeStyleManager implements FileEditorManagerListener, WindowFocusL
 
     @Override
     public void selectionChanged(@NotNull FileEditorManagerEvent event) {
-        VirtualFile file = event.getNewFile();
+        final VirtualFile file = event.getNewFile();
         applySettings(file);
     }
 
     @Override
     public void windowGainedFocus(WindowEvent e) {
-        Editor currentEditor = FileEditorManager.getInstance(project).getSelectedTextEditor();
+        final Editor currentEditor = FileEditorManager.getInstance(project).getSelectedTextEditor();
         if (currentEditor != null) {
-            Document currentDocument = currentEditor.getDocument();
-            VirtualFile currentFile = FileDocumentManager.getInstance().getFile(currentDocument);
+            final Document currentDocument = currentEditor.getDocument();
+            final VirtualFile currentFile = FileDocumentManager.getInstance().getFile(currentDocument);
             applySettings(currentFile);
         }
     }

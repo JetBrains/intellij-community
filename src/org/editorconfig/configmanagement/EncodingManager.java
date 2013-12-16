@@ -70,7 +70,7 @@ public class EncodingManager implements FileDocumentManagerListener {
 
     @Override
     public void beforeDocumentSaving(@NotNull Document document) {
-        VirtualFile file = FileDocumentManager.getInstance().getFile(document);
+        final VirtualFile file = FileDocumentManager.getInstance().getFile(document);
         if(!isApplyingSettings) {
             applySettings(file);
         }
@@ -104,17 +104,17 @@ public class EncodingManager implements FileDocumentManagerListener {
     private void applySettings(VirtualFile file) {
         // Prevent "setEncoding" calling "saveAll" from causing an endless loop
         isApplyingSettings = true;
-        String filePath = file.getCanonicalPath();
-        List<OutPair> outPairs = SettingsProviderComponent.getInstance().getOutPairs(filePath);
-        EncodingProjectManager encodingProjectManager = EncodingProjectManager.getInstance(project);
-        String charset = Utils.configValueForKey(outPairs, charsetKey);
+        final String filePath = file.getCanonicalPath();
+        final List<OutPair> outPairs = SettingsProviderComponent.getInstance().getOutPairs(filePath);
+        final EncodingProjectManager encodingProjectManager = EncodingProjectManager.getInstance(project);
+        final String charset = Utils.configValueForKey(outPairs, charsetKey);
         if (!charset.isEmpty()) {
             if (encodingMap.containsKey(charset)) {
                 encodingProjectManager.setEncoding(file, encodingMap.get(charset));
+                LOG.debug(Utils.appliedConfigMessage(charset, charsetKey, filePath));
             } else {
-                LOG.warn(new InvalidConfigException(charsetKey, charset, filePath));
+                LOG.warn(Utils.invalidConfigMessage(charset, charsetKey, filePath));
             }
-            LOG.debug("Applied encoding settings for: " + filePath);
         }
         isApplyingSettings = false;
     }

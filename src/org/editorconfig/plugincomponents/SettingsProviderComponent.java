@@ -32,7 +32,7 @@ public class SettingsProviderComponent implements ApplicationComponent {
     }
     
     public List<OutPair> getOutPairs (String filePath) {
-        List<OutPair> outPairs;
+        final List<OutPair> outPairs;
         try {
             outPairs = editorConfig.getProperties(filePath);
             return outPairs;
