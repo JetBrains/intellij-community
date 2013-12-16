@@ -13,14 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.plugins.groovy.lang.resolve;
-
+package org.jetbrains.plugins.groovy.lang.resolve
 
 import com.intellij.psi.PsiIntersectionType
 import com.intellij.psi.PsiReference
 import com.intellij.psi.PsiType
+import org.intellij.lang.annotations.Language
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression
@@ -605,33 +606,34 @@ class Any {
 ''', 'java.lang.Object')
   }
 
-  private void doTest(String text, String type) {
+  void testUnary() {
+    doExprTest('~/abc/', 'java.util.regex.Pattern')
+  }
+
+  void testUnary2() {
+    doExprTest('-/abc/', null)
+  }
+
+  void testUnary3() {
+    doExprTest('''
+      class A {
+        def bitwiseNegate() {'abc'}
+      }
+      ~new A()
+''', 'java.lang.String')
+  }
+
+  private void doTest(@Language("Groovy") String text, String type) {
     def file = myFixture.configureByText('_.groovy', text)
     def ref = file.findReferenceAt(myFixture.editor.caretModel.offset) as GrReferenceExpression
     def actual = ref.type
-    if (type == null) {
-      assertNull(actual)
-      return
-    }
-
-    assertNotNull(actual)
-    if (actual instanceof PsiIntersectionType) {
-      assertEquals(type, genIntersectionTypeText(actual))
-    }
-    else {
-      assertEquals(type, actual.canonicalText)
-    }
+    assertType(type, actual)
   }
 
-  private static String genIntersectionTypeText(PsiIntersectionType t) {
-    StringBuilder b = new StringBuilder('[')
-    for (PsiType c : t.conjuncts) {
-      b.append(c.canonicalText).append(',')
-    }
-    if (t.conjuncts) {
-      b.replace(b.length() - 1, b.length(), ']')
-    }
-    return b.toString()
+  private void doExprTest(@Language("Groovy") String text, String expectedType) {
+    GroovyFile file = myFixture.configureByText('_.groovy', text) as GroovyFile
+    GrStatement lastStatement = file.statements.last()
+    assertInstanceOf lastStatement, GrExpression
+    assertType(expectedType, (lastStatement as GrExpression).type)
   }
-
 }
