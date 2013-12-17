@@ -14,7 +14,7 @@ Examples
 ![for](/content/fori_forr.gif)
 
 ### notnull
-![notnull](/content/notnull.gif)
+![notnull](/content/not_null.gif)
 
 ### while
 ![foreach](/content/foreach.gif)
