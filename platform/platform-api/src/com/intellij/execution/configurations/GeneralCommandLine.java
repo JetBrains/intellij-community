@@ -278,7 +278,7 @@ public class GeneralCommandLine implements UserDataHolder {
   }
 
   private static class PtyProcessHolder { // holder for lazy PtyProcess class loading
-    private static PtyProcess doExec(File workDirectory, List<String> commands, Map<String, String> env) throws IOException {
+    private static Process doExec(File workDirectory, List<String> commands, Map<String, String> env) throws IOException {
       return PtyProcess.exec(ArrayUtil.toStringArray(commands), env, workDirectory != null ? workDirectory.getPath() : null, true);
     }
   }
