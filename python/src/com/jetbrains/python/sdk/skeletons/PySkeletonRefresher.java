@@ -29,6 +29,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.OrderRootType;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
@@ -91,6 +92,8 @@ public class PySkeletonRefresher {
   private static final Pattern FROM_LINE_V2 = Pattern.compile("# from (.*)$");
   private static final Pattern BY_LINE_V2 = Pattern.compile("# by generator (.*)$");
 
+  private static final Key<Boolean> GENERATING_SKELETONS = Key.create("PySkeletonRefresher.generatingSkeletons");
+
   private String myExtraSyspath;
   private VirtualFile myPregeneratedSkeletons;
   private int myGeneratorVersion;
@@ -101,6 +104,15 @@ public class PySkeletonRefresher {
 
   public static void refreshSkeletonsOfSdk(@NotNull Project project, @NotNull Sdk sdk) throws InvalidSdkException {
     refreshSkeletonsOfSdk(project, null, PythonSdkType.findSkeletonsPath(sdk), new Ref<Boolean>(false), sdk);
+  }
+
+  public static boolean isGeneratingSkeletons(@NotNull Project project) {
+    final Boolean value = project.getUserData(GENERATING_SKELETONS);
+    return value != null && value;
+  }
+
+  private static void setGeneratingSkeletons(@NotNull Project project, boolean value) {
+    project.putUserData(GENERATING_SKELETONS, value);
   }
 
   public static void refreshSkeletonsOfSdk(@Nullable Project project,
@@ -120,15 +132,26 @@ public class PySkeletonRefresher {
       LOG.info("Refreshing skeletons for " + homePath);
       SkeletonVersionChecker checker = new SkeletonVersionChecker(0); // this default version won't be used
       final PySkeletonRefresher refresher = new PySkeletonRefresher(project, ownerComponent, sdk, skeletonsPath, indicator);
-      List<String> sdkErrors = refresher.regenerateSkeletons(checker, migrationFlag);
-      if (sdkErrors.size() > 0) {
-        String sdkName = sdk.getName();
-        List<String> knownErrors = errors.get(sdkName);
-        if (knownErrors == null) {
-          errors.put(sdkName, sdkErrors);
+
+      if (project != null) {
+        setGeneratingSkeletons(project, true);
+      }
+      try {
+        List<String> sdkErrors = refresher.regenerateSkeletons(checker, migrationFlag);
+        if (sdkErrors.size() > 0) {
+          String sdkName = sdk.getName();
+          List<String> knownErrors = errors.get(sdkName);
+          if (knownErrors == null) {
+            errors.put(sdkName, sdkErrors);
+          }
+          else {
+            knownErrors.addAll(sdkErrors);
+          }
         }
-        else {
-          knownErrors.addAll(sdkErrors);
+      }
+      finally {
+        if (project != null) {
+          setGeneratingSkeletons(project, false);
         }
       }
     }
