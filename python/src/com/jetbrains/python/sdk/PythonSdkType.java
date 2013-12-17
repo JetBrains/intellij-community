@@ -77,6 +77,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.io.File;
 import java.io.FilenameFilter;
+import java.io.IOException;
 import java.lang.ref.WeakReference;
 import java.util.*;
 import java.util.List;
@@ -144,6 +145,10 @@ public class PythonSdkType extends SdkType {
   @NonNls
   @Nullable
   public String suggestHomePath() {
+    final String pythonFromPath = findPythonInPath();
+    if (pythonFromPath != null) {
+      return pythonFromPath;
+    }
     for (PythonSdkFlavor flavor : PythonSdkFlavor.getApplicableFlavors()) {
       TreeSet<String> candidates = createVersionSet();
       candidates.addAll(flavor.suggestHomePaths());
@@ -151,6 +156,23 @@ public class PythonSdkType extends SdkType {
         // return latest version
         String[] candidateArray = ArrayUtil.toStringArray(candidates);
         return candidateArray[candidateArray.length - 1];
+      }
+    }
+    return null;
+  }
+
+  @Nullable
+  private static String findPythonInPath() {
+    final String defaultCommand = SystemInfo.isWindows ? "python.exe" : "python";
+    final String path = System.getenv("PATH");
+    for (String root : path.split(File.pathSeparator)) {
+      final File file = new File(root, defaultCommand);
+      if (file.exists()) {
+        try {
+          return file.getCanonicalPath();
+        }
+        catch (IOException ignored) {
+        }
       }
     }
     return null;
