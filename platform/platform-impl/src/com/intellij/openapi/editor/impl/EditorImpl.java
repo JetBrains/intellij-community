@@ -1641,6 +1641,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     stopOptimizedScrolling();
     mySelectionModel.removeBlockSelection();
+    setMouseSelectionState(MOUSE_SELECTION_STATE_NONE);
 
     mySizeContainer.reset();
     validateSize();
@@ -1675,6 +1676,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     clearTextWidthCache();
     stopOptimizedScrolling();
     mySelectionModel.removeBlockSelection();
+    setMouseSelectionState(MOUSE_SELECTION_STATE_NONE);
 
     // We assume that size container is already notified with the visual line widths during soft wraps processing
     if (!mySoftWrapModel.isSoftWrappingEnabled()) {
