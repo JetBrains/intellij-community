@@ -109,6 +109,8 @@ public class CompleteStatementTest extends EditorActionTestCase {
   public void testClass() throws Exception { doTest(); }
   
   public void testInnerEnumBeforeMethod() { doTest(); }
+  
+  public void testInnerEnumBeforeMethodWithSpace() { doTest(); }
 
   public void testCompleteElseIf() throws Exception { doTest(); }
 
