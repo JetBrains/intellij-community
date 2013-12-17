@@ -19,7 +19,8 @@ import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.MouseShortcut;
-import com.intellij.openapi.keymap.KeymapManager;
+import com.intellij.openapi.keymap.Keymap;
+import com.intellij.openapi.keymap.ex.KeymapManagerEx;
 import com.intellij.testFramework.LightPlatformTestCase;
 
 import javax.swing.*;
@@ -27,8 +28,12 @@ import java.awt.*;
 import java.awt.event.MouseEvent;
 
 public class IdeMouseEventDispatcherTest extends LightPlatformTestCase {
+  private static final String OUR_KEYMAP_NAME = "IdeMouseEventDispatcherTestKeymap";
   private static final String OUR_TEST_ACTION = "IdeMouseEventDispatcherTestAction";
+  private static final MouseShortcut OUR_SHORTCUT = new MouseShortcut(MouseEvent.BUTTON2, 0, 1);
 
+  private KeymapImpl keymap;
+  private Keymap mySavedKeymap;
   private Component myEventSource;
   private int myActionExecutionCount;
 
@@ -36,7 +41,13 @@ public class IdeMouseEventDispatcherTest extends LightPlatformTestCase {
     super.setUp();
 
     ActionManager.getInstance().registerAction(OUR_TEST_ACTION, new EmptyAction());
-    KeymapManager.getInstance().getActiveKeymap().addShortcut(OUR_TEST_ACTION, new MouseShortcut(MouseEvent.BUTTON2, 0, 1));
+
+    keymap = new KeymapImpl();
+    keymap.setName(OUR_KEYMAP_NAME);
+    keymap.addShortcut(OUR_TEST_ACTION, OUR_SHORTCUT);
+    KeymapManagerEx.getInstanceEx().getSchemesManager().addNewScheme(keymap, false);
+    mySavedKeymap = KeymapManagerEx.getInstanceEx().getActiveKeymap();
+    KeymapManagerEx.getInstanceEx().setActiveKeymap(keymap);
 
     myEventSource = new JPanel();
     myEventSource.setSize(1,1);
@@ -44,7 +55,8 @@ public class IdeMouseEventDispatcherTest extends LightPlatformTestCase {
 
   @Override
   public void tearDown() throws Exception {
-    KeymapManager.getInstance().getActiveKeymap().removeShortcut(OUR_TEST_ACTION, new MouseShortcut(MouseEvent.BUTTON2, 0, 1));
+    KeymapManagerEx.getInstanceEx().getSchemesManager().removeScheme(keymap);
+    KeymapManagerEx.getInstanceEx().setActiveKeymap(mySavedKeymap);
     ActionManager.getInstance().unregisterAction(OUR_TEST_ACTION);
     super.tearDown();
   }
