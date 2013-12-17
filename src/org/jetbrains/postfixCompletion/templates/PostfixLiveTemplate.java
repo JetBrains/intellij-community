@@ -60,9 +60,11 @@ public class PostfixLiveTemplate extends CustomLiveTemplateBase {
   public String computeTemplateKey(@NotNull CustomTemplateCallback callback) {
     Editor editor = callback.getEditor();
     String key = computeTemplateKeyWithoutContextChecking(editor);
-
-    PostfixTemplate template = key != null ? getTemplateByKey(key) : null;
-    return isApplicableTemplate(template, key, callback.getContext().getContainingFile(), editor) ? key : null;
+    
+    if (key == null) {
+      return null;
+    }
+    return isApplicableTemplate(getTemplateByKey(key), key, callback.getContext().getContainingFile(), editor) ? key : null;
   }
   
   @Nullable
