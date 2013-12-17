@@ -17,7 +17,6 @@ import static com.intellij.patterns.PsiJavaPatterns.psiElement;
 import static com.intellij.patterns.StandardPatterns.string;
 
 public class PostfixTemplateCompletionContributor extends CompletionContributor {
-
   private static final TokenSet SUITABLE_ELEMENTS = TokenSet.orSet(ElementType.KEYWORD_BIT_SET,
                                                                    ElementType.LITERAL_BIT_SET,
                                                                    TokenSet.create(JavaTokenType.IDENTIFIER));
