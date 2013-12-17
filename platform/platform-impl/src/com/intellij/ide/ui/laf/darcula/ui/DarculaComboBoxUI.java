@@ -79,8 +79,10 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border {
 
         final int w = getWidth();
         final int h = getHeight();
-        g.setColor(getArrowButtonFillColor(UIUtil.getControlColor()));
-        g.fillRect(0, 0, w, h);
+        if (!isTableCellEditor(myComboBox)) {
+          g.setColor(getArrowButtonFillColor(UIUtil.getControlColor()));
+          g.fillRect(0, 0, w, h);
+        }
         g.setColor(comboBox.isEnabled() ? new JBColor(Gray._255, getForeground()) : new JBColor(Gray._255, getForeground().darker()));
         g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         g.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_NORMALIZE);
@@ -96,8 +98,10 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border {
         path.closePath();
         g.fill(path);
         g.translate(-2, 0);
-        g.setColor(getArrowButtonFillColor(getBorderColor()));
-        g.drawLine(0, -1, 0, h);
+        if (!isTableCellEditor(myComboBox)) {
+          g.setColor(getArrowButtonFillColor(getBorderColor()));
+          g.drawLine(0, -1, 0, h);
+        }
         config.restore();
       }
 
@@ -198,18 +202,24 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border {
       g.setColor(parent.getBackground());
       g.fillRect(0, 0, c.getWidth(), c.getHeight());
     }
-    paintBorder(c, g, 0, 0, c.getWidth(), c.getHeight());
-    hasFocus = comboBox.hasFocus();
     Rectangle r = rectangleForCurrentValue();
-    paintCurrentValueBackground(g, r, hasFocus);
+    if (!isTableCellEditor(c)) {
+      paintBorder(c, g, 0, 0, c.getWidth(), c.getHeight());
+      hasFocus = comboBox.hasFocus();
+      paintCurrentValueBackground(g, r, hasFocus);
+    }
     paintCurrentValue(g, r, hasFocus);
+  }
+
+  private static boolean isTableCellEditor(JComponent c) {
+    return Boolean.TRUE.equals(c.getClientProperty("JComboBox.isTableCellEditor"));
   }
 
   @Override
   protected Rectangle rectangleForCurrentValue() {
     final Rectangle r = super.rectangleForCurrentValue();
     r.x-=2;
-    r.y-=1;
+    r.y-= isTableCellEditor(myComboBox) ? 0 : 1;
     return r;
   }
 
@@ -241,6 +251,11 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border {
           comboBox, this, "ComboBox.disabledBackground", null));
       }
     }
+    // paint selection in table-cell-editor mode correctly
+    boolean changeOpaque = c instanceof JComponent && isTableCellEditor(comboBox) && c.isOpaque();
+    if (changeOpaque) {
+      ((JComponent)c).setOpaque(false);
+    }
 
     boolean shouldValidate = false;
     if (c instanceof JPanel) {
@@ -256,6 +271,10 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border {
     }
 
     currentValuePane.paintComponent(g, c, comboBox, r.x, r.y, r.width, r.height, shouldValidate);
+    // return opaque for combobox popup items painting
+    if (changeOpaque) {
+      ((JComponent)c).setOpaque(true);
+    }
   }
 
 
