@@ -17,7 +17,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.postfixCompletion.util.CommonUtils;
 
 public abstract class ForIndexedPostfixTemplate extends PostfixTemplate {
-  protected ForIndexedPostfixTemplate(@Nullable String key, @Nullable String description, @Nullable String example) {
+  protected ForIndexedPostfixTemplate(@NotNull String key, @NotNull String description, @NotNull String example) {
     super(key, description, example);
   }
 

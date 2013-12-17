@@ -5,11 +5,10 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiExpressionStatement;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.postfixCompletion.util.CommonUtils;
 
 abstract public class BooleanPostfixTemplate extends PostfixTemplate {
-  protected BooleanPostfixTemplate(@Nullable String name, @NotNull String description, @NotNull String example) {
+  protected BooleanPostfixTemplate(@NotNull String name, @NotNull String description, @NotNull String example) {
     super(name, description, example);
   }
 

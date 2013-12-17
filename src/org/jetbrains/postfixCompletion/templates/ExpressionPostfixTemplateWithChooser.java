@@ -16,7 +16,6 @@ import com.intellij.refactoring.IntroduceTargetChooser;
 import com.intellij.refactoring.introduceVariable.IntroduceVariableBase;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.postfixCompletion.util.CommonUtils;
 
 import java.util.List;
@@ -25,7 +24,7 @@ import java.util.List;
  * @author ignatov
  */
 public abstract class ExpressionPostfixTemplateWithChooser extends PostfixTemplate {
-  public ExpressionPostfixTemplateWithChooser(@Nullable String name, @Nullable String description, @Nullable String example) {
+  public ExpressionPostfixTemplateWithChooser(@NotNull String name, @NotNull String description, @NotNull String example) {
     super(name, description, example);
   }
 

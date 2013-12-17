@@ -14,7 +14,6 @@ import com.intellij.refactoring.ui.TypeSelectorManagerImpl;
 import org.jetbrains.annotations.NotNull;
 
 // todo: support for int[].var (parses as .class access!)
-
 public class IntroduceVariablePostfixTemplate extends ExpressionPostfixTemplateWithChooser {
   public IntroduceVariablePostfixTemplate() {
     super("var", "Introduces variable for expression", "T name = expr;");
