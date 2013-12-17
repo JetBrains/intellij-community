@@ -12,7 +12,7 @@ import com.intellij.psi.util.PsiTreeUtil;
  * @author ignatov
  */
 public abstract class StatementPostfixTemplateBase extends PostfixTemplate {
-  public StatementPostfixTemplateBase(String name, String description, String example) {
+  protected StatementPostfixTemplateBase(String name, String description, String example) {
     super(name, description, example);
   }
 

@@ -12,7 +12,7 @@ import org.jetbrains.postfixCompletion.util.JavaSurroundersProxy;
  * @author ignatov
  */
 public abstract class NullCheckPostfixTemplate extends PostfixTemplate {
-  public NullCheckPostfixTemplate(@NotNull String name, @NotNull String description, @NotNull String example) {
+  protected NullCheckPostfixTemplate(@NotNull String name, @NotNull String description, @NotNull String example) {
     super(name, description, example);
   }
 

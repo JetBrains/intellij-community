@@ -24,7 +24,7 @@ import java.util.List;
  * @author ignatov
  */
 public abstract class ExpressionPostfixTemplateWithChooser extends PostfixTemplate {
-  public ExpressionPostfixTemplateWithChooser(@NotNull String name, @NotNull String description, @NotNull String example) {
+  protected ExpressionPostfixTemplateWithChooser(@NotNull String name, @NotNull String description, @NotNull String example) {
     super(name, description, example);
   }
 
@@ -74,7 +74,7 @@ public abstract class ExpressionPostfixTemplateWithChooser extends PostfixTempla
   }
 
   @NotNull
-  public List<PsiExpression> getExpressions(@NotNull PsiElement context, @NotNull Editor editor, int offset) {
+  protected List<PsiExpression> getExpressions(@NotNull PsiElement context, @NotNull Editor editor, int offset) {
     List<PsiExpression> expressions = IntroduceVariableBase.collectExpressions(context.getContainingFile(), editor, offset);
     return ContainerUtil.filter(expressions.isEmpty() ? maybeTopmostExpression(context) : expressions, getTypeCondition());
   }
