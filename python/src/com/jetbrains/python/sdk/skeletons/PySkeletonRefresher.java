@@ -29,7 +29,6 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.OrderRootType;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
@@ -93,7 +92,7 @@ public class PySkeletonRefresher {
   private static final Pattern FROM_LINE_V2 = Pattern.compile("# from (.*)$");
   private static final Pattern BY_LINE_V2 = Pattern.compile("# by generator (.*)$");
 
-  private static final Key<Boolean> GENERATING_SKELETONS = Key.create("PySkeletonRefresher.generatingSkeletons");
+  private static int ourGeneratingCount = 0;
 
   private String myExtraSyspath;
   private VirtualFile myPregeneratedSkeletons;
@@ -107,13 +106,12 @@ public class PySkeletonRefresher {
     refreshSkeletonsOfSdk(project, null, PythonSdkType.findSkeletonsPath(sdk), new Ref<Boolean>(false), sdk);
   }
 
-  public static boolean isGeneratingSkeletons(@NotNull Project project) {
-    final Boolean value = project.getUserData(GENERATING_SKELETONS);
-    return value != null && value;
+  public static synchronized boolean isGeneratingSkeletons() {
+    return ourGeneratingCount > 0;
   }
 
-  private static void setGeneratingSkeletons(@NotNull Project project, boolean value) {
-    project.putUserData(GENERATING_SKELETONS, value);
+  private static synchronized void changeGeneratingSkeletons(int increment) {
+    ourGeneratingCount += increment;
   }
 
   public static void refreshSkeletonsOfSdk(@Nullable Project project,
@@ -134,9 +132,7 @@ public class PySkeletonRefresher {
       SkeletonVersionChecker checker = new SkeletonVersionChecker(0); // this default version won't be used
       final PySkeletonRefresher refresher = new PySkeletonRefresher(project, ownerComponent, sdk, skeletonsPath, indicator);
 
-      if (project != null) {
-        setGeneratingSkeletons(project, true);
-      }
+      changeGeneratingSkeletons(1);
       try {
         List<String> sdkErrors = refresher.regenerateSkeletons(checker, migrationFlag);
         if (sdkErrors.size() > 0) {
@@ -151,9 +147,7 @@ public class PySkeletonRefresher {
         }
       }
       finally {
-        if (project != null) {
-          setGeneratingSkeletons(project, false);
-        }
+        changeGeneratingSkeletons(-1);
       }
     }
     if (failedSdks.size() > 0 || errors.size() > 0) {
