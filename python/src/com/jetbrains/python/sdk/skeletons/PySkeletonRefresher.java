@@ -42,6 +42,7 @@ import com.intellij.util.SmartList;
 import com.intellij.util.io.ZipUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
+import com.jetbrains.python.codeInsight.userSkeletons.PyUserSkeletonsUtil;
 import com.jetbrains.python.packaging.PyExternalProcessException;
 import com.jetbrains.python.packaging.PyPackageManager;
 import com.jetbrains.python.packaging.PyPackageManagerImpl;
@@ -230,13 +231,14 @@ public class PySkeletonRefresher {
     final VirtualFile[] classDirs = sdk.getRootProvider().getFiles(OrderRootType.CLASSES);
     final StringBuilder builder = new StringBuilder("");
     int countAddedPaths = 0;
+    final VirtualFile userSkeletonsDir = PyUserSkeletonsUtil.getUserSkeletonsDirectory();
     for (VirtualFile file : classDirs) {
       if (countAddedPaths > 0) {
         builder.append(File.pathSeparator);
       }
       if (file.isInLocalFileSystem()) {
         final String pathname = file.getPath();
-        if (pathname != null && !pathname.equals(skeletonsPath)) {
+        if (pathname != null && !pathname.equals(skeletonsPath) && !file.equals(userSkeletonsDir)) {
           builder.append(pathname);
           countAddedPaths += 1;
         }
