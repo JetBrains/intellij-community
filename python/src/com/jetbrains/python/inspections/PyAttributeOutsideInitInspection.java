@@ -70,6 +70,9 @@ public class PyAttributeOutsideInitInspection extends PyInspection {
       if (!isApplicable(containingClass)) {
         return;
       }
+
+      final PyFunction.Modifier modifier = node.getModifier();
+      if (modifier != null) return;
       final List<PyTargetExpression> classAttributes = containingClass.getClassAttributes();
 
       Map<String, PyTargetExpression> attributesInInit = new HashMap<String, PyTargetExpression>();
