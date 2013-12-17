@@ -114,7 +114,7 @@ public class MavenPropertyPsiReferenceProvider extends PsiReferenceProvider {
         ref = new MavenPropertyPsiReference(mavenProject, element, propertyName, range, isSoft);
       }
       else {
-        ref = new MavenContextlessPropertyReference(propertiesTag, element, range, isSoft);
+        ref = new MavenContextlessPropertyReference(propertiesTag, element, range, true);
       }
 
       result.add(ref);
