@@ -20,7 +20,7 @@ import org.jetbrains.postfixCompletion.util.CommonUtils;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
-@Aliases({"inst"})
+@Aliases("inst")
 public class InstanceofExpressionPostfixTemplate extends PostfixTemplate {
   public InstanceofExpressionPostfixTemplate() {
     super("instanceof", "Surrounds expression with instanceof", "expr instanceof SomeType ? ((SomeType) expr). : null");
