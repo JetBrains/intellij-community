@@ -14,11 +14,13 @@ import com.intellij.psi.*;
 import com.intellij.refactoring.introduceField.ElementToWorkOn;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.postfixCompletion.util.Aliases;
 import org.jetbrains.postfixCompletion.util.CommonUtils;
 
 import java.util.LinkedHashSet;
 import java.util.Set;
 
+@Aliases({"inst"})
 public class InstanceofExpressionPostfixTemplate extends PostfixTemplate {
   public InstanceofExpressionPostfixTemplate() {
     super("instanceof", "Surrounds expression with instanceof", "expr instanceof SomeType ? ((SomeType) expr). : null");
