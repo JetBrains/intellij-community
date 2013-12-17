@@ -5,7 +5,10 @@ The basic idea is to prevent caret jumps backward while typing code,
 let you start with the some expression, explore some APIs, think about
 what you are going to do and after finish with statement of some type.
 
+#### Examples
 ![options](/content/example.png)
+
+See [more examples](examples.md).
 
 #### Download
 
