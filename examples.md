@@ -17,5 +17,5 @@ Examples
 ![notnull](/content/not_null.gif)
 
 ### while
-![foreach](/content/foreach.gif)
+![foreach](/content/while.gif)
 
