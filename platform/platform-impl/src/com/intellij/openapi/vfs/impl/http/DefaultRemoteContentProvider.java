@@ -25,6 +25,7 @@ import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsBundle;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.PathUtilRt;
 import com.intellij.util.Url;
 import com.intellij.util.io.UrlConnectionUtil;
 import org.jetbrains.annotations.NotNull;
@@ -83,7 +84,7 @@ public class DefaultRemoteContentProvider extends RemoteContentProvider {
 
       FileType fileType = RemoteFileUtil.getFileType(connection.getContentType());
       if (fileType == FileTypes.PLAIN_TEXT) {
-        FileType fileTypeByFileName = FileTypeRegistry.getInstance().getFileTypeByFileName(url.getPath());
+        FileType fileTypeByFileName = FileTypeRegistry.getInstance().getFileTypeByFileName(PathUtilRt.getFileName(url.getPath()));
         if (fileTypeByFileName != FileTypes.UNKNOWN) {
           fileType = fileTypeByFileName;
         }
