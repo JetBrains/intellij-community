@@ -31,6 +31,7 @@ Available templates:
 * `.var` – initialize new variable with expression `T name = expr;`
 * `.null` – checks nullable expression to be null `if (expr == null)`
 * `.notnull` – checks expression to be non-null `if (expr != null)`
+* `.instanceof` – checks type `expr instanceof T ? ((T) expr).m : null`
 * `.not` – negates value of inner boolean expression `!expr`
 * `.for` – iterates over collection `for (T item : collection)`
 * `.while` – uses expression as loop condition `while (expr)`
@@ -46,11 +47,10 @@ Available templates:
 * `.throw` – throws exception of 'Throwable' type `throw new Exception();`
 * `.assert` - creates assertion from boolean expression `assert expr;`
 * `.synchronized` – produces synchronized block `synchronized (expr)`
-* `.instanceof` – surrounds expression with instanceof – `expr instanceof SomeType ? ((SomeType) expr). : null`
 
 Other features:
 
-* Template expansion by `Tab` key in editor (just like live templates)
+* Template expansion by `Tab` key in editor (like live templates)
 * Settings page to disable/enable particular postfix templates
 
 Future work:
