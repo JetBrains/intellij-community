@@ -41,8 +41,6 @@
 
       <ul>
         <li>Template expansion by <b>[Tab]</b> key in editor (like live templates)</li>
-        <li>Support for IDEA chained code completion (<b>st.new</b> => <b>new SomeType()</b>)</li>
-        <li>Works inside code fragments, like evaluate expression debugger window</li>
         <li>Settings page to disable/enable particular postfix templates</li>
       </ul>
 ]]></description>

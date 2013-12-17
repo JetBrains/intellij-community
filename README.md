@@ -51,8 +51,6 @@ Available templates:
 Other features:
 
 * Template expansion by `Tab` key in editor (just like live templates)
-* Support for IDEA chained code completion (`st.new` => `new SomeType()`)
-* Works inside code fragments, like *evaluate expression* debugger window
 * Settings page to disable/enable particular postfix templates
 
 Future work:
