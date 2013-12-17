@@ -18,6 +18,7 @@ package com.intellij.ide.util.gotoByName;
 
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.actions.ApplyIntentionAction;
 import com.intellij.ide.ui.search.OptionDescription;
 import com.intellij.ide.ui.search.SearchableOptionsRegistrar;
 import com.intellij.ide.ui.search.SearchableOptionsRegistrarImpl;
@@ -25,11 +26,13 @@ import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.impl.ActionManagerImpl;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.PsiFile;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.LightColors;
@@ -48,6 +51,7 @@ import java.util.*;
 
 public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, Comparator<Object> {
   @NonNls public static final String SETTINGS_KEY = "$$$SETTINGS$$$";
+  @NonNls public static final String INTENTIONS_KEY = "$$$INTENTIONS_KEY$$$";
   @Nullable private final Project myProject;
   private final Component myContextComponent;
 
@@ -69,11 +73,25 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
     }
   });
 
+  protected final Map<String, ApplyIntentionAction> myIntentions = new TreeMap<String, ApplyIntentionAction>();
+
   public GotoActionModel(@Nullable Project project, final Component component) {
+    this(project, component, null, null);
+  }
+
+  public GotoActionModel(@Nullable Project project, final Component component, @Nullable Editor editor, @Nullable PsiFile file) {
     myProject = project;
     myContextComponent = component;
     final ActionGroup mainMenu = (ActionGroup)myActionManager.getActionOrStub(IdeActions.GROUP_MAIN_MENU);
     collectActions(myActionsMap, mainMenu, mainMenu.getTemplatePresentation().getText());
+    if (project != null && editor != null && file != null) {
+      final ApplyIntentionAction[] children = ApplyIntentionAction.getAvailableIntentions(editor, file);
+      if (children != null) {
+        for (ApplyIntentionAction action : children) {
+          myIntentions.put(action.getName(), action);
+        }
+      }
+    }
     myIndex = SearchableOptionsRegistrar.getInstance();
   }
 
@@ -266,6 +284,7 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
   @NotNull
   public String[] getNames(boolean checkBoxState) {
     final ArrayList<String> result = new ArrayList<String>();
+    result.add(INTENTIONS_KEY);
     for (AnAction action : myActionsMap.keySet()) {
       result.add(getActionId(action));
     }
@@ -294,6 +313,13 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
         if (ids.contains(id)) {
           final AnAction anAction = myActionManager.getAction(id);
           map.put(anAction, null);
+        }
+      }
+    } else if (Comparing.strEqual(id, INTENTIONS_KEY)) {
+      for (String intentionText : myIntentions.keySet()) {
+        final ApplyIntentionAction intentionAction = myIntentions.get(intentionText);
+        if (actionMatches(pattern, intentionAction)) {
+          map.put(intentionAction, intentionText);
         }
       }
     }
@@ -409,6 +435,10 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
   public boolean matches(@NotNull final String name, @NotNull final String pattern) {
     final AnAction anAction = myActionManager.getAction(name);
     if (anAction == null) return true;
+    return actionMatches(pattern, anAction);
+  }
+
+  protected boolean actionMatches(String pattern, @NotNull AnAction anAction) {
     final Pattern compiledPattern = getPattern(pattern);
     final Presentation presentation = anAction.getTemplatePresentation();
     final String text = presentation.getText();
