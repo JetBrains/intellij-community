@@ -36,6 +36,7 @@ import com.intellij.ui.ListUtil;
 import com.intellij.ui.ToolbarDecorator;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.ArrayUtil;
+import com.jetbrains.python.codeInsight.userSkeletons.PyUserSkeletonsUtil;
 import com.jetbrains.python.sdk.PythonSdkAdditionalData;
 import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.NotNull;
@@ -282,8 +283,11 @@ public class PythonPathEditor extends SdkPathEditor {
     private static boolean isStubPath(@NotNull VirtualFile file) {
       final String path = PythonSdkType.getSkeletonsRootPath(PathManager.getSystemPath());
       final VirtualFile skeletonRoot = LocalFileSystem.getInstance().findFileByPath(path);
-      if (skeletonRoot != null) {
-        return file.getPath().startsWith(skeletonRoot.getPath());
+      if (skeletonRoot != null && file.getPath().startsWith(skeletonRoot.getPath())) {
+        return true;
+      }
+      else if (file.equals(PyUserSkeletonsUtil.getUserSkeletonsDirectory())) {
+        return true;
       }
       else {
         return false;
