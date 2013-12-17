@@ -322,6 +322,8 @@ public class MavenModuleImporter {
   }
 
   private void configLanguageLevel() {
+    if ("false".equalsIgnoreCase(System.getProperty("idea.maven.configure.language.level"))) return;
+
     LanguageLevel level = null;
 
     Element cfg = myMavenProject.getPluginConfiguration("com.googlecode", "maven-idea-plugin");
