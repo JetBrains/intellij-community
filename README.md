@@ -46,6 +46,7 @@ Available templates:
 * `.throw` – throws exception of 'Throwable' type `throw new Exception();`
 * `.assert` - creates assertion from boolean expression `assert expr;`
 * `.synchronized` – produces synchronized block `synchronized (expr)`
+* `.instanceof` – surrounds expression with instanceof – `expr instanceof SomeType ? ((SomeType) expr). : null`
 
 Other features:
 

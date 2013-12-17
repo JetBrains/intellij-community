@@ -1,10 +1,8 @@
 <idea-plugin version="2">
   <id>org.jetbrains.postfixCompletion</id>
   <name>Postfix Completion</name>
-  <version>0.7.6-beta</version>
-  <vendor email="alexander.shvedov@jetbrains.com" url="https://github.com/controlflow">Alexander Shvedov, Alexander Zolotov, Sergey
-    Ignatov
-  </vendor>
+  <version>0.8-beta</version>
+  <vendor email="alexander.shvedov@jetbrains.com" url="https://github.com/controlflow">Alexander Shvedov, Alexander Zolotov, Sergey Ignatov</vendor>
   <depends>com.intellij.modules.lang</depends>
   <depends>com.intellij.modules.java</depends>
 
@@ -36,6 +34,7 @@
         <li> <b>.throw</b> – throws exception of 'Throwable' type – <b>throw new Exception();</b></li>
         <li> <b>.assert</b> – creates assertion from boolean expression – <b>assert expr;</b></li>
         <li> <b>.synchronized</b> – produces synchronized block – <b>synchronized (expr)</b></li>
+        <li> <b>.instanceof</b> – surrounds expression with instanceof – <b>expr instanceof SomeType ? ((SomeType) expr). : null</b></li>
       </ul>
 
       <br/><b>Other features:</b><br/><br/>
@@ -49,6 +48,11 @@
 ]]></description>
 
   <change-notes><![CDATA[
+      <b>Version 0.8-beta</b><br/>
+      API redesigned. Templates work like native live-templates now, that is more consistently.<br/>
+      New <b>instanceof</b> template.<br/>
+      Added abilities to configure expanding key and to disable particular templates directly from completion list (Alt+Enter).<br/><br/>
+      
       <b>Version 0.7.6-beta</b><br/>
       Braces insertion in <b>.if</b>, <b>.else</b>, <b>.null</b> and <b>.notnull</b>.<br/><br/>
 
