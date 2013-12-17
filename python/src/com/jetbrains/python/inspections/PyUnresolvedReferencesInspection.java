@@ -61,6 +61,7 @@ import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
 import com.jetbrains.python.psi.resolve.RatedResolveResult;
 import com.jetbrains.python.psi.types.*;
 import com.jetbrains.python.sdk.PythonSdkType;
+import com.jetbrains.python.sdk.skeletons.PySkeletonRefresher;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -126,18 +127,20 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
     private Set<PsiElement> myUsedImports = Collections.synchronizedSet(new HashSet<PsiElement>());
     private Set<NameDefiner> myAllImports = Collections.synchronizedSet(new HashSet<NameDefiner>());
     private final ImmutableSet<String> myIgnoredIdentifiers;
-    private volatile Boolean myHasSdk = null;
+    private volatile Boolean myIsEnabled = null;
 
     public Visitor(@Nullable ProblemsHolder holder, @NotNull LocalInspectionToolSession session, List<String> ignoredIdentifiers) {
       super(holder, session);
       myIgnoredIdentifiers = ImmutableSet.copyOf(ignoredIdentifiers);
     }
 
-    public boolean hasSdk(@NotNull PsiElement anchor) {
-      if (myHasSdk == null) {
-        myHasSdk = PlatformUtils.isPyCharm() && PythonSdkType.getSdk(anchor) != null;
+    public boolean isEnabled(@NotNull PsiElement anchor) {
+      if (myIsEnabled == null) {
+        final boolean isPyCharm = PlatformUtils.isPyCharm();
+        myIsEnabled = (isPyCharm && PythonSdkType.getSdk(anchor) != null || !isPyCharm) &&
+                      !PySkeletonRefresher.isGeneratingSkeletons(anchor.getProject());
       }
-      return myHasSdk;
+      return myIsEnabled;
     }
 
     @Override
@@ -183,7 +186,7 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
     public void visitPyImportElement(PyImportElement node) {
       super.visitPyImportElement(node);
       final PyFromImportStatement fromImport = PsiTreeUtil.getParentOfType(node, PyFromImportStatement.class);
-      if (hasSdk(node) && (fromImport == null || !fromImport.isFromFuture())) {
+      if (isEnabled(node) && (fromImport == null || !fromImport.isFromFuture())) {
         myAllImports.add(node);
       }
     }
@@ -191,7 +194,7 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
     @Override
     public void visitPyStarImportElement(PyStarImportElement node) {
       super.visitPyStarImportElement(node);
-      if (hasSdk(node)) {
+      if (isEnabled(node)) {
         myAllImports.add(node);
       }
     }
@@ -309,7 +312,7 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
     }
 
     private void processReference(PyElement node, @Nullable PsiReference reference) {
-      if (!hasSdk(node) || reference == null || reference.isSoft()) {
+      if (!isEnabled(node) || reference == null || reference.isSoft()) {
         return;
       }
       HighlightSeverity severity = HighlightSeverity.ERROR;
