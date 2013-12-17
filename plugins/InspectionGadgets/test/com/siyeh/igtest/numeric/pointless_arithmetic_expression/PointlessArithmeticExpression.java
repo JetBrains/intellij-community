@@ -95,3 +95,19 @@ public class PointlessArithmeticExpression
         System.out.println(i % i);
     }
 }
+class Main {
+  private static final int CONST = 9;
+  int i;
+  Main(int i) {
+    this.i = i;
+  }
+
+  static int doo() {
+    return new Main(1).i - new Main(0).i;
+  }
+
+  int fly(int i) {
+    final Main main = new Main(12);
+    return (CONST + (new Main(5).i) * 8) - (Main.CONST + new Main(5).i * (8));
+  }
+}
