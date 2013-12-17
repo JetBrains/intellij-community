@@ -7,7 +7,8 @@ public class InstanceofPostfixTemplateTest extends PostfixTemplateTestCase {
   @Override
   protected String getTestDataPath() { return "testData/templates/instanceof"; }
 
-  public void testSingleExpression() { doTest(); }
+  public void testSingleExpression()  { doTest(); }
+  public void testAlias()             { doTest(); }
 
   public void testSingleExpressionTemplate() {
     TemplateManagerImpl.setTemplateTesting(getProject(), getTestRootDisposable());

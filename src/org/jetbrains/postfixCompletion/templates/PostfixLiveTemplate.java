@@ -26,6 +26,7 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.postfixCompletion.settings.PostfixCompletionSettings;
+import org.jetbrains.postfixCompletion.util.Aliases;
 
 import java.util.HashMap;
 
@@ -37,10 +38,20 @@ public class PostfixLiveTemplate extends CustomLiveTemplateBase {
 
   public PostfixLiveTemplate() {
     for (PostfixTemplate template : PostfixTemplate.EP_NAME.getExtensions()) {
-      PostfixTemplate previousValue = myTemplates.put(template.getKey(), template);
-      if (previousValue != null) {
-        LOG.error("Can't register postfix template. Duplicated key: " + template.getKey());
+      register(template.getKey(), template);
+      Aliases aliases = template.getClass().getAnnotation(Aliases.class);
+      if (aliases != null) {
+        for (String key : aliases.value()) {
+          register("." + key, template);
+        }
       }
+    }
+  }
+
+  private void register(@NotNull String key, @NotNull PostfixTemplate template) {
+    PostfixTemplate registered = myTemplates.put(key, template);
+    if (registered != null) {
+      LOG.error("Can't register postfix template. Duplicated key: " + template.getKey());
     }
   }
 
@@ -51,7 +62,7 @@ public class PostfixLiveTemplate extends CustomLiveTemplateBase {
     String key = computeTemplateKeyWithoutContextChecking(editor);
 
     PostfixTemplate template = key != null ? getTemplateByKey(key) : null;
-    return isApplicableTemplate(template, callback.getContext().getContainingFile(), editor) ? key : null;
+    return isApplicableTemplate(template, key, callback.getContext().getContainingFile(), editor) ? key : null;
   }
   
   @Nullable
@@ -80,7 +91,7 @@ public class PostfixLiveTemplate extends CustomLiveTemplateBase {
     final PostfixTemplate template = getTemplateByKey(key);
     final Editor editor = callback.getEditor();
     final PsiFile file = callback.getContext().getContainingFile();
-    if (isApplicableTemplate(template, file, editor)) {
+    if (isApplicableTemplate(template, key, file, editor)) {
       int currentOffset = editor.getCaretModel().getOffset();
       PsiElement newContext = deleteTemplateKey(file, editor.getDocument(), currentOffset, key);
       newContext = addSemicolonIfNeeded(editor, editor.getDocument(), newContext, currentOffset - key.length());
@@ -148,14 +159,14 @@ public class PostfixLiveTemplate extends CustomLiveTemplateBase {
     });
   }
 
-  @Contract("null, _, _ -> false")
-  private static boolean isApplicableTemplate(@Nullable PostfixTemplate template, @NotNull PsiFile file, @NotNull Editor editor) {
+  @Contract("null, _, _, _ -> false")
+  private static boolean isApplicableTemplate(@Nullable PostfixTemplate template, @NotNull String key, @NotNull PsiFile file, @NotNull Editor editor) {
     if (template == null || !template.isEnabled()) {
       return false;
     }
 
     int currentOffset = editor.getCaretModel().getOffset();
-    int newOffset = currentOffset - template.getKey().length();
+    int newOffset = currentOffset - key.length();
     CharSequence fileContent = editor.getDocument().getCharsSequence();
 
     StringBuilder fileContentWithoutKey = new StringBuilder();
