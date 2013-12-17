@@ -606,5 +606,10 @@
       <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
       <categoryKey>intention.category.other</categoryKey>
     </intentionAction>
+    <intentionAction>
+      <className>com.siyeh.ipp.asserttoif.ObjectsRequireNonNullIntention</className>
+      <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
+      <categoryKey>intention.category.other</categoryKey>
+    </intentionAction>
   </extensions>
 </idea-plugin>
