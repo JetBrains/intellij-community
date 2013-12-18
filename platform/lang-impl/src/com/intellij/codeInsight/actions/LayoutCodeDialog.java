@@ -55,7 +55,6 @@ public class LayoutCodeDialog extends DialogWrapper {
   private JCheckBox    myDoNotAskMeCheckBox;
 
   private final String myHelpId;
-  @NotNull private String myRearrangeEntriesKeyForLanguage;
   @Nullable private CommonCodeStyleSettings myCommonSettings;
   private boolean myForceArrangeModeEnabled;
 
@@ -77,7 +76,6 @@ public class LayoutCodeDialog extends DialogWrapper {
                                 && myCommonSettings.isForceArrangeMenuAvailable()
                                 && myCommonSettings.FORCE_REARRANGE_MODE != CommonCodeStyleSettings.REARRANGE_ACCORDIND_TO_DIALOG;
 
-    myRearrangeEntriesKeyForLanguage = LayoutCodeConstants.REARRANGE_ENTRIES_KEY + (myFile == null ? "" : myFile.getLanguage().getDisplayName());
     setOKButtonText(CodeInsightBundle.message("reformat.code.accept.button.text"));
     setTitle(title);
     init();
@@ -104,7 +102,7 @@ public class LayoutCodeDialog extends DialogWrapper {
     //Loading previous state
     myCbOptimizeImports.setSelected(PropertiesComponent.getInstance().getBoolean(LayoutCodeConstants.OPTIMIZE_IMPORTS_KEY, false));
     myCbArrangeEntries.setSelected(myForceArrangeModeEnabled ? myCommonSettings.FORCE_REARRANGE_MODE == CommonCodeStyleSettings.REARRANGE_ALWAYS
-                                                             : PropertiesComponent.getInstance(myProject).getBoolean(myRearrangeEntriesKeyForLanguage, false));
+                                                             : ReformatCodeAction.getLastSavedRearrangeCbState(myProject, myFile));
 
     myCbOnlyVcsChangedRegions.setSelected(PropertiesComponent.getInstance().getBoolean(LayoutCodeConstants.PROCESS_CHANGED_TEXT_KEY, false));
 
@@ -274,8 +272,15 @@ public class LayoutCodeDialog extends DialogWrapper {
     super.doOKAction();
     //Saving checkboxes state
     PropertiesComponent.getInstance().setValue(LayoutCodeConstants.OPTIMIZE_IMPORTS_KEY, Boolean.toString(myCbOptimizeImports.isSelected()));
-    PropertiesComponent.getInstance(myProject).setValue(myRearrangeEntriesKeyForLanguage, Boolean.toString(myCbArrangeEntries.isSelected()));
     PropertiesComponent.getInstance().setValue(LayoutCodeConstants.PROCESS_CHANGED_TEXT_KEY, Boolean.toString(myCbOnlyVcsChangedRegions.isSelected()));
+    saveRearrangeCbState(myCbArrangeEntries.isSelected());
+  }
+
+  private void saveRearrangeCbState(boolean isSelected) {
+    if (myFile != null)
+      LayoutCodeSettingsStorage.saveRearrangeEntriesOptionFor(myProject, myFile.getLanguage(), isSelected);
+    else
+      LayoutCodeSettingsStorage.saveRearrangeEntriesOptionFor(myProject, isSelected);
   }
 
   private boolean canTargetVcsRegions() {
