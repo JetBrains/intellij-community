@@ -19,12 +19,16 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.PairProcessor;
 import com.intellij.util.ThreeState;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
 import org.junit.Test;
 
+import java.io.IOException;
+import java.io.StringReader;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
 import static org.junit.Assert.*;
 
@@ -144,5 +148,12 @@ public class FileUtilLightTest {
     assertFalse(FileUtil.startsWith("/usr/local/jeka", "/aaa"));
     assertFalse(FileUtil.startsWith("c:/idea2", "c:/idea"));
     assertFalse(FileUtil.startsWith("c:/idea_branches/i18n", "c:/idea"));
+  }
+
+  @Test
+  public void testLoadProperties() throws IOException {
+    String data = "key2=value2\nkey1=value1\nkey3=value3";
+    Map<String, String> map = FileUtil.loadProperties(new StringReader(data));
+    assertEquals(ContainerUtil.newArrayList("key2", "key1", "key3"), ContainerUtil.newArrayList(map.keySet()));
   }
 }

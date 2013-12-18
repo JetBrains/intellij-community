@@ -1438,4 +1438,23 @@ public class FileUtil extends FileUtilRt {
 
     return true;
   }
+
+  /**
+   * Like {@link Properties#load(java.io.Reader)}, but preserves the order of key/value pairs.
+   */
+  @NotNull
+  public static Map<String, String> loadProperties(@NotNull Reader reader) throws IOException {
+    final Map<String, String> map = ContainerUtil.newLinkedHashMap();
+
+    new Properties() {
+      @Override
+      public synchronized Object put(Object key, Object value) {
+        map.put(String.valueOf(key), String.valueOf(value));
+        //noinspection UseOfPropertiesAsHashtable
+        return super.put(key, value);
+      }
+    }.load(reader);
+
+    return map;
+  }
 }
