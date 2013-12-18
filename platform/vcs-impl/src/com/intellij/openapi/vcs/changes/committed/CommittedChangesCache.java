@@ -688,14 +688,13 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
       if (lists.size() == 1) {
         return lists.get(0);
       }
-      final CommittedChangeList victim = lists.get(0) instanceof ReceivedChangeList ? (((ReceivedChangeList) lists.get(0)).getBaseList()) :
-                                         lists.get(0);
+      final CommittedChangeList victim = ReceivedChangeList.unwrap(lists.get(0));
       final ReceivedChangeList result = new ReceivedChangeList(victim);
       result.setForcePartial(false);
       final Set<Change> baseChanges = new HashSet<Change>();
 
       for (CommittedChangeList list : lists) {
-        baseChanges.addAll(list instanceof ReceivedChangeList ? ((ReceivedChangeList) list).getBaseList().getChanges() : list.getChanges());
+        baseChanges.addAll(ReceivedChangeList.unwrap(list).getChanges());
 
         final Collection<Change> changes = list.getChanges();
         for (Change change : changes) {
