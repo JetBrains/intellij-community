@@ -76,7 +76,7 @@ public class NormalCompletionOrderingTest extends CompletionSortingTestCase {
     final LookupImpl lookup = invokeCompletion(getTestName(false) + ".html");
     assertPreferredItems(0, "p", "param", "pre");
     incUseCount(lookup, 2);
-    assertPreferredItems(1, "p", "pre", "param");
+    assertPreferredItems(0, "p", "pre", "param");
   }
 
   public void testUppercaseMatters2() throws Throwable {
