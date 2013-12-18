@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,10 +46,10 @@ import java.util.List;
  * Date: 24-Feb-2006
  */
 public class SeverityRegistrar implements JDOMExternalizable, Comparator<HighlightSeverity> {
-  @NonNls private static final String INFO = "info";
+  @NonNls private static final String INFO_TAG = "info";
+  @NonNls private static final String COLOR_ATTRIBUTE = "color";
   private final Map<String, SeverityBasedTextAttributes> myMap = new THashMap<String, SeverityBasedTextAttributes>();
   private final Map<String, Color> myRendererColors = new THashMap<String, Color>();
-  @NonNls private static final String COLOR = "color";
 
   private final OrderMap myOrder = new OrderMap();
   private JDOMExternalizableStringList myReadOrder;
@@ -120,15 +120,14 @@ public class SeverityRegistrar implements JDOMExternalizable, Comparator<Highlig
   public void readExternal(Element element) throws InvalidDataException {
     myMap.clear();
     myRendererColors.clear();
-    final List children = element.getChildren(INFO);
+    final List children = element.getChildren(INFO_TAG);
     for (Object child : children) {
       final Element infoElement = (Element)child;
 
-      final SeverityBasedTextAttributes highlightInfo = new SeverityBasedTextAttributes();
-      highlightInfo.readExternal(infoElement);
+      final SeverityBasedTextAttributes highlightInfo = new SeverityBasedTextAttributes(infoElement);
 
       Color color = null;
-      final String colorStr = infoElement.getAttributeValue(COLOR);
+      final String colorStr = infoElement.getAttributeValue(COLOR_ATTRIBUTE);
       if (colorStr != null){
         color = new Color(Integer.parseInt(colorStr, 16));
       }
@@ -178,14 +177,14 @@ public class SeverityRegistrar implements JDOMExternalizable, Comparator<Highlig
   public void writeExternal(Element element) throws WriteExternalException {
     List<HighlightSeverity> list = getOrderAsList();
     for (HighlightSeverity s : list) {
-      Element info = new Element(INFO);
+      Element info = new Element(INFO_TAG);
       String severity = s.toString();
       final SeverityBasedTextAttributes infoType = myMap.get(severity);
       if (infoType != null) {
         infoType.writeExternal(info);
         final Color color = myRendererColors.get(severity);
         if (color != null) {
-          info.setAttribute(COLOR, Integer.toString(color.getRGB() & 0xFFFFFF, 16));
+          info.setAttribute(COLOR_ATTRIBUTE, Integer.toString(color.getRGB() & 0xFFFFFF, 16));
         }
         element.addContent(info);
       }
@@ -343,14 +342,14 @@ public class SeverityRegistrar implements JDOMExternalizable, Comparator<Highlig
     }
   }
 
-  public static class SeverityBasedTextAttributes implements JDOMExternalizable {
+  public static class SeverityBasedTextAttributes {
     private final TextAttributes myAttributes;
     private final HighlightInfoType.HighlightInfoTypeImpl myType;
 
     //read external
-    public SeverityBasedTextAttributes() {
-      myAttributes = new TextAttributes();
-      myType = new HighlightInfoType.HighlightInfoTypeImpl();
+    public SeverityBasedTextAttributes(@NotNull Element element) throws InvalidDataException {
+      myAttributes = new TextAttributes(element);
+      myType = new HighlightInfoType.HighlightInfoTypeImpl(element);
     }
 
     public SeverityBasedTextAttributes(final TextAttributes attributes, final HighlightInfoType.HighlightInfoTypeImpl type) {
@@ -366,14 +365,7 @@ public class SeverityRegistrar implements JDOMExternalizable, Comparator<Highlig
       return myType;
     }
 
-    @Override
-    public void readExternal(Element element) throws InvalidDataException {
-      myAttributes.readExternal(element);
-      myType.readExternal(element);
-    }
-
-    @Override
-    public void writeExternal(Element element) throws WriteExternalException {
+    private void writeExternal(Element element) throws WriteExternalException {
       myAttributes.writeExternal(element);
       myType.writeExternal(element);
     }

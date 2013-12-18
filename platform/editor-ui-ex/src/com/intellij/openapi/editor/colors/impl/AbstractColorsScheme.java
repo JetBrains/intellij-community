@@ -331,9 +331,8 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme {
       Element e = (Element)o;
       String key = e.getAttributeValue(NAME_ATTR);
       TextAttributesKey name = TextAttributesKey.find(key);
-      TextAttributes attr = new TextAttributes();
       Element value = e.getChild(VALUE_ELEMENT);
-      attr.readExternal(value);
+      TextAttributes attr = new TextAttributes(value);
       myAttributesMap.put(name, attr);
       migrateErrorStripeColorFrom45(name, attr);
     }

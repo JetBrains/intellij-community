@@ -29,6 +29,7 @@ import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.HighlighterColors;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.EffectType;
@@ -345,7 +346,8 @@ public class ExpectedHighlightingData {
     return toContinueFrom;
   }
 
-  private static final HighlightInfoType WHATEVER = new HighlightInfoType.HighlightInfoTypeImpl();
+  private static final HighlightInfoType WHATEVER = new HighlightInfoType.HighlightInfoTypeImpl(HighlightSeverity.INFORMATION,
+                                                                                                HighlighterColors.TEXT);
 
   public void checkLineMarkers(Collection<LineMarkerInfo> markerInfos, String text) {
     String fileName = myFile == null ? "" : myFile.getName() + ": ";

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -202,12 +202,8 @@ public class DefaultJDOMExternalizer {
               }
             }
             else if (type.equals(int.class)) {
-              try {
-                field.setInt(data, Integer.parseInt(value));
-              }
-              catch (NumberFormatException ex) {
-                throw new InvalidDataException();
-              }
+              int i = toInt(value);
+              field.setInt(data, i);
             }
             else if (type.equals(long.class)) {
               try {
@@ -259,19 +255,8 @@ public class DefaultJDOMExternalizer {
           field.set(data, value);
         }
         else if (type.equals(Color.class)) {
-          if (value != null) {
-            try {
-              int rgb = Integer.parseInt(value, 16);
-              field.set(data, new Color(rgb));
-            }
-            catch (NumberFormatException ex) {
-              LOG.debug("Wrong color value: " + value, ex);
-              throw new InvalidDataException();
-            }
-          }
-          else {
-            field.set(data, null);
-          }
+          Color color = toColor(value);
+          field.set(data, color);
         }
         else if (ReflectionCache.isAssignable(JDOMExternalizable.class, type)) {
           final List children = e.getChildren("value");
@@ -304,5 +289,34 @@ public class DefaultJDOMExternalizer {
         throw new InvalidDataException();
       }
     }
+  }
+
+  public static int toInt(@NotNull String value) throws InvalidDataException {
+    int i;
+    try {
+      i = Integer.parseInt(value);
+    }
+    catch (NumberFormatException ex) {
+      throw new InvalidDataException(value, ex);
+    }
+    return i;
+  }
+
+  public static Color toColor(@Nullable String value) throws InvalidDataException {
+    Color color;
+    if (value == null) {
+      color = null;
+    }
+    else {
+      try {
+        int rgb = Integer.parseInt(value, 16);
+        color = new Color(rgb);
+      }
+      catch (NumberFormatException ex) {
+        LOG.debug("Wrong color value: " + value, ex);
+        throw new InvalidDataException("Wrong color value: " + value, ex);
+      }
+    }
+    return color;
   }
 }
