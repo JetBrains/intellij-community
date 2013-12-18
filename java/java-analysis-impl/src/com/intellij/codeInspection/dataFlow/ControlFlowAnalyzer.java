@@ -1414,14 +1414,14 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     if (contracts.size() > 1) {
       addInstruction(new DupInstruction(args.length, contracts.size() - 1));
     }
-    for (MethodContract contract : contracts) {
-      handleContract(expression, contract);
+    for (int i = 0; i < contracts.size(); i++) {
+      handleContract(expression, contracts.get(i), contracts.size() - 1 - i);
     }
     pushUnknownReturnValue(expression); // goto here if all contracts are false
     return true;
   }
   
-  private void handleContract(PsiMethodCallExpression expression, MethodContract contract) {
+  private void handleContract(PsiMethodCallExpression expression, MethodContract contract, int remainingContracts) {
     PsiExpression[] args = expression.getArgumentList().getExpressions();
 
     final ControlFlow.ControlFlowOffset exitPoint = getEndOffset(expression);
@@ -1446,6 +1446,10 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       }
       gotoContractFalse.add(addInstruction(new GotoInstruction(null)));
       continueCheckingContract.setOffset(myCurrentFlow.getInstructionCount());
+    }
+
+    for (int j = 0; j < remainingContracts * args.length; j++) {
+      addInstruction(new PopInstruction());
     }
 
     // if contract is true
