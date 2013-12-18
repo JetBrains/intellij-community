@@ -25,6 +25,17 @@ import java.util.List;
  */
 public class CommandUtil {
 
+  @NotNull
+  public static File resolvePath(@NotNull File base, @NotNull String path) {
+    File result = new File(path);
+
+    if (!result.isAbsolute()) {
+      result = ".".equals(path) ? base : new File(base, path);
+    }
+
+    return result;
+  }
+
   /**
    * Puts given value to parameters if condition is satisfied
    *
