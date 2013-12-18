@@ -196,6 +196,7 @@ libraryLicense(name: "JavaHelp", version: "2.0_02", license: "included as licens
 libraryLicense(name: "JCIP Annotations", libraryName: "jcip", license: "Creative Commons Attribution License", url: "http://www.jcip.net", licenseUrl: "http://creativecommons.org/licenses/by/2.5")
 libraryLicense(name: "JDOM", version: "1.1 (with patches by JetBrains)", license: "modified Apache", url: "http://www.jdom.org/", licenseUrl: "http://www.jdom.org/docs/faq.html#a0030")
 libraryLicense(name: "jgit-2.1.0", version: "2.1.0.201209190230", license: "EDL/BSD", url: "http://www.eclipse.org/jgit/", licenseUrl: "http://www.eclipse.org/org/documents/edl-v10.php", attachedTo: "git4idea")
+libraryLicense(name: "javawriter", libraryName: "javawriter", license: "Apache 2.0", url: "https://github.com/square/javawriter")
 libraryLicense(name: "JGoodies Forms", libraryName: "jgoodies-forms", version: "1.1-preview 2006-05-04 11:55:37", license: "BSD ", url: "http://www.jgoodies.com/freeware/forms/", licenseUrl: "http://www.jgoodies.com/downloads/libraries.html")
 libraryLicense(name: "JGoodies Looks", libraryName: "jgoodies-looks", version: "2.4.2", license: "BSD ", url: "http://www.jgoodies.com/freeware/looks/", licenseUrl: "http://www.jgoodies.com/downloads/libraries.html")
 libraryLicense(name: "JGoodies Common", libraryName: "jgoodies-common", version: "1.2.1", license: "BSD ", url: "http://www.jgoodies.com/freeware/looks/", licenseUrl: "http://www.jgoodies.com/downloads/libraries.html")
