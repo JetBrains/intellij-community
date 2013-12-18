@@ -16,7 +16,11 @@
 package com.intellij.codeInsight.actions;
 
 public interface ReformatFilesOptions {
+
   boolean isOptimizeImports();
 
   boolean isProcessOnlyChangedText();
+
+  boolean isRearrangeEntries();
+
 }

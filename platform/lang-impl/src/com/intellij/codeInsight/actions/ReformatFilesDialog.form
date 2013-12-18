@@ -3,12 +3,12 @@
   <grid id="59847" binding="myPanel" layout-manager="GridLayoutManager" row-count="1" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
     <margin top="0" left="4" bottom="0" right="0"/>
     <constraints>
-      <xy x="30" y="17" width="196" height="104"/>
+      <xy x="30" y="17" width="218" height="135"/>
     </constraints>
     <properties/>
     <border type="none"/>
     <children>
-      <grid id="e83d0" layout-manager="GridLayoutManager" row-count="4" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+      <grid id="e83d0" layout-manager="GridLayoutManager" row-count="5" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
         <margin top="0" left="0" bottom="0" right="0"/>
         <constraints>
           <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
@@ -32,17 +32,25 @@
               <text resource-bundle="messages/CodeInsightBundle" key="dialog.reformat.files.optimize.imports.checkbox"/>
             </properties>
           </component>
-          <vspacer id="8d758">
-            <constraints>
-              <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2" indent="0" use-parent-layout="false"/>
-            </constraints>
-          </vspacer>
           <component id="a0a79" class="javax.swing.JCheckBox" binding="myOnlyChangedText">
             <constraints>
               <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
               <text resource-bundle="messages/CodeInsightBundle" key="reformat.option.vcs.changed.region"/>
+            </properties>
+          </component>
+          <vspacer id="8d758">
+            <constraints>
+              <grid row="4" column="0" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2" indent="0" use-parent-layout="false"/>
+            </constraints>
+          </vspacer>
+          <component id="cf942" class="javax.swing.JCheckBox" binding="myRearrangeEntriesCb">
+            <constraints>
+              <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+            </constraints>
+            <properties>
+              <text value="&amp;Rearrange entries"/>
             </properties>
           </component>
         </children>
