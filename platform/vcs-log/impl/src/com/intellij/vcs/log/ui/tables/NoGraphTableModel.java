@@ -124,6 +124,12 @@ public class NoGraphTableModel extends AbstractVcsLogTableModel<CommitCell, Hash
     return myCommits.get(row).getHash();
   }
 
+  @Nullable
+  @Override
+  public Hash getCommit(int row) {
+    return getHashAtRow(row);
+  }
+
   @NotNull
   @Override
   public AroundProvider<Hash> getAroundProvider() {
