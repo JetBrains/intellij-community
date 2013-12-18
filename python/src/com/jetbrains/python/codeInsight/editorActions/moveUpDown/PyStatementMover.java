@@ -103,7 +103,7 @@ public class PyStatementMover extends LineMover {
 
     final int offset = down ? elementToMove.getTextRange().getEndOffset() : elementToMove.getTextRange().getStartOffset();
     int lineNumber = down ? document.getLineNumber(offset) + 1 : document.getLineNumber(offset) - 1;
-    if (moveOutsideFile(elementToMove, document, lineNumber)) return null;
+    if (moveOutsideFile(document, lineNumber)) return null;
     int lineEndOffset = document.getLineEndOffset(lineNumber);
     final int startOffset = document.getLineStartOffset(lineNumber);
     lineEndOffset = startOffset != lineEndOffset ? lineEndOffset - 1 : lineEndOffset;
@@ -141,24 +141,8 @@ public class PyStatementMover extends LineMover {
     return new LineRange(startLine, endLine + 1);
   }
 
-  private static boolean moveOutsideFile(@NotNull final PsiElement elementToMove, @NotNull final Document document, int lineNumber) {
-    if (lineNumber < 0) return true;
-    if (lineNumber >= document.getLineCount()) {
-      final int elementOffset = elementToMove.getTextRange().getStartOffset();
-      final int lineStartOffset = document.getLineStartOffset(document.getLineNumber(elementOffset));
-      final int insertIndex = lineNumber < 0 ? 0 : document.getTextLength();
-      if (elementOffset != lineStartOffset) {
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          @Override
-          public void run() {
-            document.insertString(insertIndex, "\n");
-            PsiDocumentManager.getInstance(elementToMove.getProject()).commitAllDocuments();
-          }
-        });
-      }
-      else return true;
-    }
-    return false;
+  private static boolean moveOutsideFile(@NotNull final Document document, int lineNumber) {
+    return lineNumber < 0 || lineNumber >= document.getLineCount();
   }
 
   private static boolean moveToEmptyLine(@NotNull final PsiElement elementToMove, boolean down) {
