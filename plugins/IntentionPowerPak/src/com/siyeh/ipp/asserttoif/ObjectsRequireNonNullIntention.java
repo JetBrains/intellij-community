@@ -105,7 +105,7 @@ public class ObjectsRequireNonNullIntention extends Intention {
         return true;
       }
       final PsiStatement referenceStatement = PsiTreeUtil.getParentOfType(referenceExpression, PsiStatement.class);
-      final PsiElement parent = referenceStatement.getParent();
+      final PsiElement parent = referenceStatement != null ? referenceStatement.getParent() : null;
       if (!(parent instanceof PsiCodeBlock)) {
         return false;
       }
