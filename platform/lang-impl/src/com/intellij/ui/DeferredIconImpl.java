@@ -21,6 +21,7 @@ package com.intellij.ui;
 
 import com.intellij.concurrency.Job;
 import com.intellij.concurrency.JobLauncher;
+import com.intellij.ide.PowerSaveMode;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.IndexNotReadyException;
@@ -82,7 +83,7 @@ public class DeferredIconImpl<T> implements DeferredIcon {
       myDelegateIcon.paintIcon(c, g, x, y); //SOE protection
     }
 
-    if (myIsScheduled || isDone()) {
+    if (myIsScheduled || isDone() || PowerSaveMode.isEnabled()) {
       return;
     }
     myIsScheduled = true;
