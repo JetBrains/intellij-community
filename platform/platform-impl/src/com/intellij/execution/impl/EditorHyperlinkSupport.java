@@ -329,6 +329,10 @@ public class EditorHyperlinkSupport {
                                                                    Collection<RangeHighlighter> sortedHighlighters,
                                                                    final int delta,
                                                                    final Consumer<RangeHighlighter> action) {
+    if (sortedHighlighters.isEmpty()) {
+      return null;
+    }
+
     final List<RangeHighlighter> ranges = new ArrayList<RangeHighlighter>(sortedHighlighters);
     int i;
     for (i = 0; i < ranges.size(); i++) {
