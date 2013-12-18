@@ -4,12 +4,12 @@ from tcunittest import TeamcityTestRunner
 from tcmessages import TeamcityServiceMessages
 
 from pycharm_run_utils import adjust_django_sys_path
+adjust_django_sys_path()
+
 from django.conf import settings
 
 if hasattr(settings, "TEST_RUNNER") and "NoseTestSuiteRunner" in settings.TEST_RUNNER:
     from nose_utils import TeamcityNoseRunner
-
-adjust_django_sys_path()
 
 from django.test.testcases import TestCase
 from django import VERSION
