@@ -633,7 +633,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     newPane.setSubId(subId);
     showPane(newPane);
     if (isAutoscrollFromSource(id)) {
-      myAutoScrollFromSourceHandler.scrollFromSource();
+      scrollFromSource();
     }
     return true;
   }
@@ -1788,6 +1788,10 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     pane.installComparator();
   }
 
+  public void scrollFromSource() {
+      myAutoScrollFromSourceHandler.scrollFromSource();
+  }
+
   private class SortByTypeAction extends ToggleAction {
     private SortByTypeAction() {
       super(IdeBundle.message("action.sort.by.type"), IdeBundle.message("action.sort.by.type"),
@@ -1843,7 +1847,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
 
     @Override
     public void actionPerformed(AnActionEvent e) {
-      myAutoScrollFromSourceHandler.scrollFromSource();
+      scrollFromSource();
     }
   }
 

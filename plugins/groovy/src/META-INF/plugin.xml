@@ -1433,6 +1433,7 @@
     <toolWindow id="Griffon View" anchor="left" secondary="false" icon="JetgroovyIcons.Griffon.GriffonToolWindow"
                 factoryClass="org.jetbrains.plugins.groovy.griffon.GriffonToolWindowFactory"
                 conditionClass="org.jetbrains.plugins.groovy.griffon.GriffonToolWindowFactory"/>
+    <scrollFromSourceProvider implementation="org.jetbrains.plugins.groovy.mvc.projectView.MvcProjectViewScrollFromSource"/>
 
     <roots.watchedRootsProvider implementation="org.jetbrains.plugins.groovy.mvc.MvcWatchedRootProvider"/>
     <projectService serviceInterface="org.jetbrains.plugins.groovy.mvc.MvcConsole"
