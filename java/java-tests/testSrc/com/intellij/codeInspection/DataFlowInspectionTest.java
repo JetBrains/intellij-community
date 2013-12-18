@@ -298,6 +298,7 @@ public class DataFlowInspectionTest extends LightCodeInsightFixtureTestCase {
   public void testDontForgetEqInfoWhenMergingByType() { doTest(); }
   public void testDontMakeNullableAfterInstanceof() { doTest(); }
   public void testDontMakeUnrelatedVariableNotNullWhenMerging() { doTest(); }
+  public void testDontMakeUnrelatedVariableFalseWhenMerging() { doTest(); }
   public void testDontLoseInequalityInformation() { doTest(); }
   
   public void _testNullCheckBeforeInstanceof() { doTest(); } // http://youtrack.jetbrains.com/issue/IDEA-113220

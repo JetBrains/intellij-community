@@ -36,7 +36,7 @@ class StateMerger {
 
   @Nullable
   List<DfaMemoryStateImpl> mergeByFacts(List<DfaMemoryStateImpl> states) {
-    MultiMap<Fact, DfaMemoryStateImpl> statesByFact = MultiMap.create();
+    MultiMap<Fact, DfaMemoryStateImpl> statesByFact = MultiMap.createLinked();
     for (DfaMemoryStateImpl state : states) {
       ProgressManager.checkCanceled();
       for (Fact fact : getFacts(state)) {
@@ -52,7 +52,7 @@ class StateMerger {
 
       ProgressManager.checkCanceled();
       
-      MultiMap<Set<Fact>, DfaMemoryStateImpl> statesByUnrelatedFacts = MultiMap.create();
+      MultiMap<Set<Fact>, DfaMemoryStateImpl> statesByUnrelatedFacts = MultiMap.createLinked();
       for (DfaMemoryStateImpl state : ContainerUtil.concat(statesByFact.get(fact), statesWithNegations)) {
         statesByUnrelatedFacts.putValue(getUnrelatedFacts(fact, state), state);
       }
@@ -100,7 +100,7 @@ class StateMerger {
     for (DfaMemoryStateImpl member : mergedGroup) {
       LinkedHashSet<Fact> memberFacts = getFacts(member);
       if (memberFacts.contains(removedFact)) {
-        Set<DfaConstValue> otherInequalities = getOtherInequalities(removedFact, memberFacts);
+        Set<DfaConstValue> otherInequalities = getOtherInequalities(removedFact, memberFacts, member);
         if (inequalitiesToRestore == null) {
           inequalitiesToRestore = otherInequalities;
         } else {
@@ -116,11 +116,12 @@ class StateMerger {
     }
   }
 
-  private static Set<DfaConstValue> getOtherInequalities(Fact removedFact, LinkedHashSet<Fact> memberFacts) {
+  private static Set<DfaConstValue> getOtherInequalities(Fact removedFact, LinkedHashSet<Fact> memberFacts, DfaMemoryStateImpl state) {
     Set<DfaConstValue> otherInequalities = ContainerUtil.newLinkedHashSet();
     for (Fact candidate : memberFacts) {
       if (candidate.myType == FactType.equality && !candidate.myPositive && candidate.myVar == removedFact.myVar &&
-          candidate.myArg != removedFact.myArg && candidate.myArg instanceof DfaConstValue) {
+          !state.areEquivalent((DfaValue)candidate.myArg, (DfaValue)removedFact.myArg) && 
+          candidate.myArg instanceof DfaConstValue) {
         otherInequalities.add((DfaConstValue)candidate.myArg);
       }
     }

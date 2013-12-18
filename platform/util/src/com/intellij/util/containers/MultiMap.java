@@ -17,6 +17,7 @@
 package com.intellij.util.containers;
 
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.hash.LinkedHashMap;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -240,6 +241,16 @@ public class MultiMap<K, V> implements Serializable {
   @NotNull
   public static <K, V> MultiMap<K, V> create() {
     return new MultiMap<K, V>();
+  }
+
+  @NotNull
+  public static <K, V> MultiMap<K, V> createLinked() {
+    return new MultiMap<K, V>() {
+      @Override
+      protected Map<K, Collection<V>> createMap() {
+        return new LinkedHashMap<K, Collection<V>>();
+      }
+    };
   }
 
   @NotNull
