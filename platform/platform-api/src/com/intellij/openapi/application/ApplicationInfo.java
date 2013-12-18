@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,18 +22,8 @@ import java.util.Calendar;
 
 public abstract class ApplicationInfo {
   public abstract Calendar getBuildDate();
-
-  @Deprecated()
-  /**
-   * Use {@link #getBuild()} instead
-   */
-  public String getBuildNumber() {
-    return getBuild().asString();
-  }
-
   public abstract BuildNumber getBuild();
   public abstract String getApiVersion();
-
   public abstract String getMajorVersion();
   public abstract String getMinorVersion();
   public abstract String getVersionName();
@@ -65,12 +55,17 @@ public abstract class ApplicationInfo {
     return ApplicationManager.getApplication().getComponent(ApplicationInfo.class);
   }
 
-
   public static boolean helpAvailable() {
     return ApplicationManager.getApplication() != null && getInstance() != null && getInstance().hasHelp();
   }
 
   public static boolean contextHelpAvailable() {
     return ApplicationManager.getApplication() != null && getInstance() != null && getInstance().hasContextHelp();
+  }
+
+  /** @deprecated use {@link #getBuild()} instead (to remove in IDEA 14) */
+  @SuppressWarnings("UnusedDeclaration")
+  public String getBuildNumber() {
+    return getBuild().asString();
   }
 }

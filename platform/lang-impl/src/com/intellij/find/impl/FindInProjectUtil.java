@@ -418,7 +418,7 @@ public class FindInProjectUtil {
   }
 
   private static Set<VirtualFile> getLocalScopeFiles(LocalSearchScope scope) {
-    Set<VirtualFile> files = new HashSet<VirtualFile>();
+    Set<VirtualFile> files = new LinkedHashSet<VirtualFile>();
     for (PsiElement element : scope.getScope()) {
       PsiFile file = element.getContainingFile();
       if (file != null) {

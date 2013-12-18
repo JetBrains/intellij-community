@@ -245,6 +245,7 @@ public class PluginsAdvertiser implements StartupActivity {
           public void run(@NotNull ProgressIndicator indicator) {
             try {
               myAllPlugins = RepositoryHelper.loadPluginsFromRepository(indicator);
+              if (project.isDisposed()) return;
               if (extensions == null) {
                 loadSupportedExtensions(myAllPlugins);
                 EditorNotifications.getInstance(project).updateAllNotifications();
@@ -253,6 +254,7 @@ public class PluginsAdvertiser implements StartupActivity {
               final Map<String, Plugin> ids = new HashMap<String, Plugin>();
               for (UnknownFeature feature : unknownFeatures) {
                 indicator.setText("Searching for plugin supporting \'" + feature.getImplementationName() + "\'");
+                ProgressManager.checkCanceled();
                 final List<Plugin> pluginId = retrieve(feature);
                 if (pluginId != null) {
                   for (Plugin plugin : pluginId) {

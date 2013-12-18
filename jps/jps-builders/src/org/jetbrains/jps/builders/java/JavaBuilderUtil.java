@@ -114,7 +114,6 @@ public class JavaBuilderUtil {
           if (incremental) {
             final Set<File> newlyAffectedFiles = new HashSet<File>(allAffectedFiles);
             newlyAffectedFiles.removeAll(affectedBeforeDif);
-            newlyAffectedFiles.removeAll(allCompiledFiles); // the diff operation may have affected the class already compiled in thic compilation round
 
             final String infoMessage = "Dependency analysis found " + newlyAffectedFiles.size() + " affected files";
             LOG.info(infoMessage);

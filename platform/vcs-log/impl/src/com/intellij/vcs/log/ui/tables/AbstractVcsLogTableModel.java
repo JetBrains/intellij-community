@@ -7,6 +7,8 @@ import com.intellij.util.text.DateFormatUtil;
 import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.VcsFullCommitDetails;
 import com.intellij.vcs.log.VcsShortCommitDetails;
+import com.intellij.vcs.log.data.AroundProvider;
+import com.intellij.vcs.log.graph.elements.Node;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -15,8 +17,10 @@ import java.util.List;
 
 /**
  * @param <CommitColumnClass> commit column class
+ * @param <CommitId>          Commit identifier, which can be different depending on the model nature,
+ *                            for example, a {@link Hash} or an {@link Integer} or a {@link Node}.
  */
-public abstract class AbstractVcsLogTableModel<CommitColumnClass> extends AbstractTableModel {
+public abstract class AbstractVcsLogTableModel<CommitColumnClass, CommitId> extends AbstractTableModel {
 
   public static final VirtualFile FAKE_ROOT = NullVirtualFile.INSTANCE;
 
@@ -84,6 +88,9 @@ public abstract class AbstractVcsLogTableModel<CommitColumnClass> extends Abstra
 
   @NotNull
   protected abstract Class<CommitColumnClass> getCommitColumnClass();
+
+  @NotNull
+  public abstract AroundProvider<CommitId> getAroundProvider();
 
   /**
    * Returns the Hash of the commit displayed in the given row.

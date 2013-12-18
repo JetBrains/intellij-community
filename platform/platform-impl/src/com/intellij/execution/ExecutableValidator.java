@@ -46,7 +46,7 @@ public abstract class ExecutableValidator {
 
   private static final Logger LOG = Logger.getInstance(ExecutableValidator.class);
 
-  private final NotificationGroup myNotificationGroup = new NotificationGroup("External Executable Critical Failures",
+  private static final NotificationGroup ourNotificationGroup = new NotificationGroup("External Executable Critical Failures",
                                                                               STICKY_BALLOON, true);
   @NotNull protected final Project myProject;
   @NotNull private final NotificationsManager myNotificationManager;
@@ -200,7 +200,7 @@ public abstract class ExecutableValidator {
 
   private class ExecutableNotValidNotification extends Notification {
     private ExecutableNotValidNotification() {
-      super(myNotificationGroup.getDisplayId(), "", prepareDescription(), NotificationType.ERROR, new NotificationListener.Adapter() {
+      super(ourNotificationGroup.getDisplayId(), "", prepareDescription(), NotificationType.ERROR, new NotificationListener.Adapter() {
         @Override
         protected void hyperlinkActivated(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
           showSettingsAndExpireIfFixed(notification);

@@ -71,7 +71,12 @@ public class SelectWordHandler extends EditorActionHandler {
         range = selectWord(editor, project);
       }
     }
-    if (range != null) {
+    if (range == null) {
+      if (myOriginalHandler != null) {
+        myOriginalHandler.execute(editor, dataContext);
+      }
+    }
+    else {
       editor.getSelectionModel().setSelection(range.getStartOffset(), range.getEndOffset());
     }
   }
@@ -90,8 +95,8 @@ public class SelectWordHandler extends EditorActionHandler {
     PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(document);
     if (file instanceof PsiCompiledFile) {
       file = ((PsiCompiledFile)file).getDecompiledPsiFile();
-      if (file == null) return null;
     }
+    if (file == null) return null;
 
     FeatureUsageTracker.getInstance().triggerFeatureUsed("editing.select.word");
 

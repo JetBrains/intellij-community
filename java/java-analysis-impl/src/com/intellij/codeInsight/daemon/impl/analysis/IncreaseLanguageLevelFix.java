@@ -70,6 +70,7 @@ public class IncreaseLanguageLevelFix implements IntentionAction {
     final VirtualFile virtualFile = file.getVirtualFile();
     if (virtualFile == null) return false;
     final Module module = ModuleUtilCore.findModuleForFile(virtualFile, project);
+    if (module == null) return false;
     return isLanguageLevelAcceptable(project, module, myLevel);
   }
 

@@ -496,4 +496,23 @@ public class InjectedLanguageUtil {
   public static boolean isHighlightInjectionBackground(@Nullable PsiLanguageInjectionHost host) {
     return !(host instanceof InjectionBackgroundSuppressor);
   }
+
+  public static int getInjectedStart(@NotNull List<PsiLanguageInjectionHost.Shred> places) {
+    PsiLanguageInjectionHost.Shred shred = places.get(0);
+    PsiLanguageInjectionHost host = shred.getHost();
+    assert host != null;
+    return shred.getRangeInsideHost().getStartOffset() + host.getTextOffset();
+  }
+
+  @Nullable
+  public static PsiElement findElementInInjected(@NotNull PsiLanguageInjectionHost injectionHost, final int offset) {
+    final Ref<PsiElement> ref = Ref.create();
+    enumerate(injectionHost, new PsiLanguageInjectionHost.InjectedPsiVisitor() {
+      @Override
+      public void visit(@NotNull final PsiFile injectedPsi, @NotNull final List<PsiLanguageInjectionHost.Shred> places) {
+        ref.set(injectedPsi.findElementAt(offset - getInjectedStart(places)));
+      }
+    });
+    return ref.get();
+  }
 }

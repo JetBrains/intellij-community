@@ -13,26 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-/*
- * Created by IntelliJ IDEA.
- * User: mike
- * Date: Sep 16, 2002
- * Time: 5:17:44 PM
- * To change template for new class use 
- * Code Style | Class Templates options (Tools | IDE Options).
- */
 package com.intellij.openapi.application.ex;
 
 import com.intellij.openapi.application.ApplicationInfo;
-import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.util.Calendar;
 import java.util.List;
 
+/**
+ * @author mike
+ * @since Sep 16, 2002
+ */
 public abstract class ApplicationInfoEx extends ApplicationInfo {
-
   public static ApplicationInfoEx getInstanceEx() {
     return (ApplicationInfoEx) getInstance();
   }
@@ -49,18 +42,9 @@ public abstract class ApplicationInfoEx extends ApplicationInfo {
 
   public abstract String getSmallIconUrl();
 
-  @Nullable
-  public String getBigIconUrl() {
-    return null;
-  }
-
-  public abstract String getOpaqueIconUrl();
+  public abstract String getBigIconUrl();
 
   public abstract String getToolWindowIconUrl();
-
-  public abstract String getWelcomeScreenCaptionUrl();
-
-  public abstract String getWelcomeScreenDeveloperSloganUrl();
 
   public abstract String getWelcomeScreenLogoUrl();
 
@@ -72,9 +56,7 @@ public abstract class ApplicationInfoEx extends ApplicationInfo {
 
   public abstract boolean showLicenseeInfo();
 
-
   public abstract boolean isEAP();
-
 
   public abstract UpdateUrls getUpdateUrls();
 
@@ -117,4 +99,15 @@ public abstract class ApplicationInfoEx extends ApplicationInfo {
 
   public abstract boolean isEssentialPlugin(String pluginId);
 
+  /** @deprecated to remove in IDEA 14 */
+  @SuppressWarnings("UnusedDeclaration")
+  public abstract String getOpaqueIconUrl();
+
+  /** @deprecated to remove in IDEA 14 */
+  @SuppressWarnings("UnusedDeclaration")
+  public abstract String getWelcomeScreenCaptionUrl();
+
+  /** @deprecated to remove in IDEA 14 */
+  @SuppressWarnings("UnusedDeclaration")
+  public abstract String getWelcomeScreenDeveloperSloganUrl();
 }

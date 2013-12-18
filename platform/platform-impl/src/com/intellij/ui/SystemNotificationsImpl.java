@@ -44,6 +44,11 @@ public class SystemNotificationsImpl extends SystemNotifications implements Pers
   public void notify(@NotNull String notificationName, @NotNull String title, @NotNull String text) {
     if (!areNotificationsEnabled() || ApplicationManager.getApplication().isActive()) return;
 
+    if (SystemInfo.isLinux && Registry.is("ide.linux.gtk.notifications.enabled") ) {
+      LibNotifyWrapper.showNotification(title, text);
+      return;
+    }
+
     final MacNotifications notifications;
     try {
       notifications = getMacNotifications();
@@ -63,14 +68,18 @@ public class SystemNotificationsImpl extends SystemNotifications implements Pers
   }
 
   private boolean areNotificationsEnabled() {
-    if (myGrowlDisabled || !SystemInfo.isMac) return false;
-    if (SystemInfo.isMacOSMountainLion && Registry.is("ide.mac.mountain.lion.notifications.enabled")) return true;
+    boolean enabled = false;
 
-    if ("true".equalsIgnoreCase(System.getProperty("growl.disable"))) {
-      myGrowlDisabled = true;
+    if (SystemInfo.isMac) {
+      enabled = !(myGrowlDisabled || "true".equalsIgnoreCase(System.getProperty("growl.disable")));
+      if (!enabled) {
+        enabled = SystemInfo.isMacOSMountainLion && Registry.is("ide.mac.mountain.lion.notifications.enabled");
+      }
+    } else {
+        enabled = SystemInfo.isLinux && Registry.is("ide.linux.gtk.notifications.enabled");
     }
 
-    return !myGrowlDisabled;
+    return enabled;
   }
 
   public State getState() {

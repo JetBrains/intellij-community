@@ -251,9 +251,9 @@ public class PyFunctionImpl extends PyPresentableElementImpl<PyFunctionStub> imp
       return docStringType;
     }
     if (typeEvalContext.allowReturnTypes(this)) {
-      final PyType yieldType = getYieldStatementType(typeEvalContext);
-      if (yieldType != null) {
-        return yieldType;
+      final Ref<? extends PyType> yieldTypeRef = getYieldStatementType(typeEvalContext);
+      if (yieldTypeRef != null) {
+        return yieldTypeRef.get();
       }
       return getReturnStatementType(typeEvalContext);
     }
@@ -261,13 +261,12 @@ public class PyFunctionImpl extends PyPresentableElementImpl<PyFunctionStub> imp
   }
 
   @Nullable
-  private PyType getYieldStatementType(@NotNull final TypeEvalContext context) {
+  private Ref<? extends PyType> getYieldStatementType(@NotNull final TypeEvalContext context) {
     Ref<PyType> elementType = null;
     final PyBuiltinCache cache = PyBuiltinCache.getInstance(this);
-    final PyClass listClass = cache.getClass("list");
     final PyStatementList statements = getStatementList();
     final Set<PyType> types = new LinkedHashSet<PyType>();
-    if (statements != null && listClass != null) {
+    if (statements != null) {
       statements.accept(new PyRecursiveElementVisitor() {
         @Override
         public void visitPyYieldExpression(PyYieldExpression node) {
@@ -297,8 +296,11 @@ public class PyFunctionImpl extends PyPresentableElementImpl<PyFunctionStub> imp
     if (elementType != null) {
       final PyClass generator = cache.getClass(PyNames.FAKE_GENERATOR);
       if (generator != null) {
-        return new PyCollectionTypeImpl(generator, false, elementType.get());
+        return Ref.create(new PyCollectionTypeImpl(generator, false, elementType.get()));
       }
+    }
+    if (!types.isEmpty()) {
+      return Ref.create(null);
     }
     return null;
   }

@@ -196,8 +196,7 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
     myOffset = myEditor.logicalPositionToOffset(myLogicalCaret);
     LOG.assertTrue(myOffset >= 0 && myOffset <= myEditor.getDocument().getTextLength());
 
-    myVisualLineStart = myEditor.logicalPositionToOffset(myEditor.visualToLogicalPosition(new VisualPosition(myVisibleCaret.line, 0)));
-    myVisualLineEnd = myEditor.logicalPositionToOffset(myEditor.visualToLogicalPosition(new VisualPosition(myVisibleCaret.line + 1, 0)));
+    updateVisualLineInfo();
 
     myEditor.getFoldingModel().flushCaretPosition();
 
@@ -580,8 +579,7 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
     }
     LOG.assertTrue(myOffset >= 0 && myOffset <= myEditor.getDocument().getTextLength());
 
-    myVisualLineStart = myEditor.logicalPositionToOffset(myEditor.visualToLogicalPosition(new VisualPosition(myVisibleCaret.line, 0)));
-    myVisualLineEnd = myEditor.logicalPositionToOffset(myEditor.visualToLogicalPosition(new VisualPosition(myVisibleCaret.line + 1, 0)));
+    updateVisualLineInfo();
 
     myEditor.updateCaretCursor();
     requestRepaint(oldInfo);
@@ -762,8 +760,7 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
       //}
     }
 
-    myVisualLineStart = myEditor.logicalPositionToOffset(myEditor.visualToLogicalPosition(new VisualPosition(myVisibleCaret.line, 0)));
-    myVisualLineEnd = myEditor.logicalPositionToOffset(myEditor.visualToLogicalPosition(new VisualPosition(myVisibleCaret.line + 1, 0)));
+    updateVisualLineInfo();
   }
 
   private void finishUpdate() {
@@ -822,6 +819,25 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
   @Override
   public void dispose() {
     releaseBulkCaretMarker();
+  }
+
+  /**
+   * Recalculates caret visual position without changing its logical position (called when soft wraps are changing)
+   */
+  public void updateVisualPosition() {
+    VerticalInfo oldInfo = myCaretInfo;
+    LogicalPosition visUnawarePos = new LogicalPosition(myLogicalCaret.line, myLogicalCaret.column);
+    setCurrentLogicalCaret(visUnawarePos);
+    myVisibleCaret = myEditor.logicalToVisualPosition(myLogicalCaret);
+    updateVisualLineInfo();
+
+    myEditor.updateCaretCursor();
+    requestRepaint(oldInfo);
+  }
+
+  private void updateVisualLineInfo() {
+    myVisualLineStart = myEditor.logicalPositionToOffset(myEditor.visualToLogicalPosition(new VisualPosition(myVisibleCaret.line, 0)));
+    myVisualLineEnd = myEditor.logicalPositionToOffset(myEditor.visualToLogicalPosition(new VisualPosition(myVisibleCaret.line + 1, 0)));
   }
 
   /**

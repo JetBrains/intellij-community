@@ -270,6 +270,11 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     return myEqClasses.size() - 1;
   }
 
+  boolean areEquivalent(DfaValue val1, DfaValue val2) {
+    int index = getEqClassIndex(val1);
+    return index >= 0 && index == getEqClassIndex(val2);
+  }
+
   @NotNull
   private List<DfaValue> getEqClassesFor(@NotNull DfaValue dfaValue) {
     int index = getEqClassIndex(dfaValue);

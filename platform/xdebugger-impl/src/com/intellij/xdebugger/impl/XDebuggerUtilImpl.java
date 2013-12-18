@@ -23,11 +23,12 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
+import com.intellij.psi.*;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.Processor;
 import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.XDebuggerUtil;
@@ -100,7 +101,7 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
                                                                      final boolean temporary) {
     new WriteAction() {
       @Override
-      protected void run(final Result result) {
+      protected void run(@NotNull final Result result) {
         XBreakpointManager breakpointManager = XDebuggerManager.getInstance(project).getBreakpointManager();
         XLineBreakpoint<P> breakpoint = breakpointManager.findBreakpointAtLine(type, file, line);
         if (breakpoint != null) {
@@ -118,7 +119,7 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
   public void removeBreakpoint(final Project project, final XBreakpoint<?> breakpoint) {
     new WriteAction() {
       @Override
-      protected void run(final Result result) {
+      protected void run(@NotNull final Result result) {
         XDebuggerManager.getInstance(project).getBreakpointManager().removeBreakpoint(breakpoint);
       }
     }.execute();
@@ -256,5 +257,48 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
   @Override
   public <B extends XLineBreakpoint<?>> List<XBreakpointGroupingRule<B, ?>> getGroupingByFileRuleAsList() {
     return Collections.<XBreakpointGroupingRule<B, ?>>singletonList(this.<B>getGroupingByFileRule());
+  }
+
+  @Override
+  @Nullable
+  public PsiElement findContextElement(@NotNull VirtualFile virtualFile, int offset, @NotNull Project project, boolean checkXml) {
+    Document document = FileDocumentManager.getInstance().getDocument(virtualFile);
+    PsiFile file = PsiManager.getInstance(project).findFile(virtualFile);
+    if (file == null || document == null) {
+      return null;
+    }
+
+    if (offset < 0) {
+      offset = 0;
+    }
+    if (offset > document.getTextLength()) {
+      offset = document.getTextLength();
+    }
+    int startOffset = offset;
+
+    int lineEndOffset = document.getLineEndOffset(document.getLineNumber(offset));
+    PsiElement result = null;
+    do {
+      PsiElement element = file.findElementAt(offset);
+      if (!(element instanceof PsiWhiteSpace) && !(element instanceof PsiComment)) {
+        result = element;
+        break;
+      }
+
+      offset = element.getTextRange().getEndOffset() + 1;
+    }
+    while (offset < lineEndOffset);
+
+    if (result == null) {
+      result = file.findElementAt(startOffset);
+    }
+
+    if (checkXml && result != null && StdFileTypes.XML.getLanguage().equals(result.getLanguage())) {
+      PsiLanguageInjectionHost parent = PsiTreeUtil.getParentOfType(result, PsiLanguageInjectionHost.class);
+      if (parent != null) {
+        result = InjectedLanguageUtil.findElementInInjected(parent, offset);
+      }
+    }
+    return result;
   }
 }

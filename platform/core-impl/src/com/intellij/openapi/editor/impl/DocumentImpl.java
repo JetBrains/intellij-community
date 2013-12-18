@@ -81,6 +81,28 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
   private volatile boolean myAcceptSlashR = false;
   private boolean myChangeInProgress;
   private volatile int myBufferSize;
+  private final CharSequence myMutableCharSequence = new CharSequence() {
+    @Override
+    public int length() {
+      return myText.length();
+    }
+
+    @Override
+    public char charAt(int index) {
+      return myText.charAt(index);
+    }
+
+    @Override
+    public CharSequence subSequence(int start, int end) {
+      return myText.subSequence(start, end);
+    }
+
+    @NotNull
+    @Override
+    public String toString() {
+      return doGetText();
+    }
+  };
 
   public DocumentImpl(@NotNull String text) {
     this(text, false);
@@ -92,7 +114,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
 
   public DocumentImpl(@NotNull CharSequence chars, boolean forUseInNonAWTThread) {
     assertValidSeparators(chars);
-    myText = ImmutableText.valueOf(CharArrayUtil.fromSequence(chars));
+    myText = ImmutableText.valueOf(chars);
     myLineSet.documentCreated(this);
     setCyclicBufferSize(0);
     setModificationStamp(LocalTimeCounter.currentTime());
@@ -679,28 +701,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
   @Override
   @NotNull
   public CharSequence getCharsSequence() {
-    return new CharSequence() {
-      @Override
-      public int length() {
-        return myText.length();
-      }
-
-      @Override
-      public char charAt(int index) {
-        return myText.charAt(index);
-      }
-
-      @Override
-      public CharSequence subSequence(int start, int end) {
-        return myText.subSequence(start, end);
-      }
-
-      @NotNull
-      @Override
-      public String toString() {
-        return doGetText();
-      }
-    };
+    return myMutableCharSequence;
   }
 
   @NotNull

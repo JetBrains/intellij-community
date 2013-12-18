@@ -106,9 +106,9 @@ public class DebuggerUIUtil {
     final FullValueEvaluationCallbackImpl callback = new FullValueEvaluationCallbackImpl(textArea);
     text.startEvaluation(callback);
 
-    final Dimension frameSize = WindowManager.getInstance().getFrame(project).getSize();
     Dimension size = DimensionService.getInstance().getSize(FULL_VALUE_POPUP_DIMENSION_KEY, project);
     if (size == null) {
+      Dimension frameSize = WindowManager.getInstance().getFrame(project).getSize();
       size = new Dimension(frameSize.width / 2, frameSize.height / 2);
     }
 

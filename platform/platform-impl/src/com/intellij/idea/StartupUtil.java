@@ -131,6 +131,12 @@ public class StartupUtil {
         Main.showMessage("JDK Required", message, true);
         return false;
       }
+
+      if (StringUtil.containsIgnoreCase(System.getProperty("java.vm.name", ""), "OpenJDK") && !SystemInfo.isJavaVersionAtLeast("1.7")) {
+        String message = "OpenJDK 6 is not supported. Please use Oracle Java or newer OpenJDK.";
+        Main.showMessage("Unsupported JVM", message, true);
+        return false;
+      }
     }
 
     return true;

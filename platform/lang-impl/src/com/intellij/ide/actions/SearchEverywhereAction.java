@@ -27,7 +27,6 @@ import com.intellij.ide.ui.laf.darcula.ui.DarculaTextBorder;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaTextFieldUI;
 import com.intellij.ide.ui.search.BooleanOptionDescription;
 import com.intellij.ide.ui.search.OptionDescription;
-import com.intellij.ide.ui.search.SearchableOptionsRegistrarImpl;
 import com.intellij.ide.util.DefaultPsiElementCellRenderer;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.ide.util.gotoByName.*;
@@ -37,10 +36,10 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
-import com.intellij.openapi.actionSystem.impl.ActionManagerImpl;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actions.TextComponentEditorAction;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileEditor.impl.EditorHistoryManager;
@@ -255,6 +254,9 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
   private int myPopupActualWidth;
   private Component myFocusOwner;
   private ChooseByNamePopup myFileChooseByName;
+
+  private Editor myEditor;
+  private PsiFile myFile;
 
   @Override
   public JComponent createCustomComponent(Presentation presentation) {
@@ -623,6 +625,10 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
 //      myPopupField.getTextEditor().setBackground(showAll.get() ? new JBColor(new Color(0xffffe4), new Color(0x494539)) : UIUtil.getTextFieldBackground());
       rebuildList(myPopupField.getText());
       return;
+    }
+    if (e != null) {
+      myEditor = e.getData(CommonDataKeys.EDITOR);
+      myFile = e.getData(CommonDataKeys.PSI_FILE);
     }
     if (e == null && myFocusOwner != null) {
       e = new AnActionEvent(me, DataManager.getInstance().getDataContext(myFocusOwner), ActionPlaces.UNKNOWN, getTemplatePresentation(), ActionManager.getInstance(), 0);
@@ -1474,76 +1480,11 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
     }
 
     private GotoActionModel createActionModel() {
-      return new GotoActionModel(project, myFocusComponent) {
+      return new GotoActionModel(project, myFocusComponent, myEditor, myFile) {
         @Override
-        public boolean matches(@NotNull String name, @NotNull String pattern) {
-          final AnAction anAction = ActionManager.getInstance().getAction(name);
-          if (anAction == null) return true;
-          return NameUtil.buildMatcher("*" + pattern, NameUtil.MatchingCaseSensitivity.NONE).matches(
-            anAction.getTemplatePresentation().getText());
-        }
-
-        @NotNull
-        @Override
-        public Object[] getElementsByName(String id, boolean checkBoxState, String pattern) {
-          final HashMap<AnAction, String> map = new HashMap<AnAction, String>();
-          final AnAction act = myActionManager.getAction(id);
-          if (act != null) {
-            map.put(act, myActionsMap.get(act));
-            if (checkBoxState) {
-              final Set<String> ids = ((ActionManagerImpl)myActionManager).getActionIds();
-              for (AnAction action : map.keySet()) { //do not add already included actions
-                ids.remove(getActionId(action));
-              }
-              if (ids.contains(id)) {
-                final AnAction anAction = myActionManager.getAction(id);
-                map.put(anAction, null);
-              }
-            }
-          }
-          Object[] objects = map.entrySet().toArray(new Map.Entry[map.size()]);
-          if (Comparing.strEqual(id, SETTINGS_KEY)) {
-            final Set<String> words = myIndex.getProcessedWords(pattern);
-            Set<OptionDescription> optionDescriptions = null;
-            final String actionManagerName = myActionManager.getComponentName();
-            for (String word : words) {
-              final Set<OptionDescription> descriptions = ((SearchableOptionsRegistrarImpl)myIndex).getAcceptableDescriptions(word);
-              if (descriptions != null) {
-                for (Iterator<OptionDescription> iterator = descriptions.iterator(); iterator.hasNext(); ) {
-                  OptionDescription description = iterator.next();
-                  if (actionManagerName.equals(description.getPath())) {
-                    iterator.remove();
-                  }
-                }
-                if (!descriptions.isEmpty()) {
-                  if (optionDescriptions == null) {
-                    optionDescriptions = descriptions;
-                  }
-                  else {
-                    optionDescriptions.retainAll(descriptions);
-                  }
-                }
-              }
-              else {
-                optionDescriptions = null;
-                break;
-              }
-            }
-            if (optionDescriptions != null && !optionDescriptions.isEmpty()) {
-              Set<String> currentHits = new HashSet<String>();
-              for (Iterator<OptionDescription> iterator = optionDescriptions.iterator(); iterator.hasNext(); ) {
-                OptionDescription description = iterator.next();
-                final String hit = description.getHit();
-                if (hit == null || !currentHits.add(hit.trim())) {
-                  iterator.remove();
-                }
-              }
-              final Object[] descriptions = optionDescriptions.toArray();
-              Arrays.sort(descriptions);
-              objects = ArrayUtil.mergeArrays(objects, descriptions);
-            }
-          }
-          return objects;
+        protected boolean actionMatches(String pattern, @NotNull AnAction anAction) {
+          return NameUtil.buildMatcher("*" + pattern, NameUtil.MatchingCaseSensitivity.NONE)
+            .matches(anAction.getTemplatePresentation().getText());
         }
       };
     }

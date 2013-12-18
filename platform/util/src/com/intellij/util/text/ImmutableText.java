@@ -121,6 +121,7 @@ public final class ImmutableText extends ImmutableCharSequence {
    */
   public static ImmutableText valueOf(@NotNull Object obj) {
     if (obj instanceof ImmutableText) return (ImmutableText)obj;
+    if (obj instanceof CharSequence && ((CharSequence)obj).length() == 0) return EMPTY;
     return valueOf(String.valueOf(obj));
   }
 

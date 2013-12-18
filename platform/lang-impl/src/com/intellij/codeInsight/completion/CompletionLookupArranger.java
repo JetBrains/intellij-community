@@ -344,7 +344,7 @@ public class CompletionLookupArranger extends LookupArranger {
     for (int i = 0; i < items.size(); i++) {
       LookupElement item = items.get(i);
       boolean isTemplate = isLiveTemplate(item);
-      if (isAlphaSorted() && isPrefixItem(lookup, item, true) && !isTemplate ||
+      if (isPrefixItem(lookup, item, true) && !isTemplate ||
           item.getLookupString().equals(selectedText)) {
         return i;
       }

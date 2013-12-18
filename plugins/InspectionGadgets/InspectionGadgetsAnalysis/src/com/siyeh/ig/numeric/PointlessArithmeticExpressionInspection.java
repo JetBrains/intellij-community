@@ -26,19 +26,20 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.psiutils.EquivalenceChecker;
 import com.siyeh.ig.psiutils.ExpressionUtils;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.util.HashSet;
 import java.util.Set;
 
 public class PointlessArithmeticExpressionInspection
   extends BaseInspection {
 
   private static final Set<IElementType> arithmeticTokens =
-    new HashSet<IElementType>(5);
+    new THashSet<IElementType>(9);
 
   static {
     arithmeticTokens.add(JavaTokenType.PLUS);
@@ -86,8 +87,7 @@ public class PointlessArithmeticExpressionInspection
   }
 
   @NonNls
-  String calculateReplacementExpression(
-    PsiExpression expression) {
+  String calculateReplacementExpression(PsiExpression expression) {
     final PsiBinaryExpression exp = (PsiBinaryExpression)expression;
     final PsiExpression lhs = exp.getLOperand();
     final PsiExpression rhs = exp.getROperand();
@@ -102,10 +102,10 @@ public class PointlessArithmeticExpressionInspection
       }
     }
     else if (tokenType.equals(JavaTokenType.MINUS)) {
-      if (rhs instanceof PsiReferenceExpression) {
-        return "0";
+      if (isZero(rhs)) {
+        return lhs.getText();
       }
-      return lhs.getText();
+      return "0";
     }
     else if (tokenType.equals(JavaTokenType.ASTERISK)) {
       if (isOne(lhs)) {
@@ -119,10 +119,10 @@ public class PointlessArithmeticExpressionInspection
       }
     }
     else if (tokenType.equals(JavaTokenType.DIV)) {
-      if (rhs instanceof PsiReferenceExpression) {
-        return "1";
+      if (ExpressionUtils.isOne(expression)) {
+        return lhs.getText();
       }
-      return lhs.getText();
+      return "1";
     }
     else if (tokenType.equals(JavaTokenType.PERC)) {
       return "0";
@@ -240,44 +240,30 @@ public class PointlessArithmeticExpressionInspection
     }
 
     private boolean subtractionExpressionIsPointless(PsiExpression lhs, PsiExpression rhs) {
-      if (PsiType.INT.equals(lhs.getType()) && lhs instanceof PsiReferenceExpression && rhs instanceof PsiReferenceExpression) {
-        final PsiReferenceExpression lhsReference = (PsiReferenceExpression)lhs;
-        final PsiReferenceExpression rhsReference = (PsiReferenceExpression)rhs;
-        if (lhsReference.resolve() == rhsReference.resolve()) {
-          return true;
-        }
+      if (PsiType.INT.equals(lhs.getType()) && EquivalenceChecker.expressionsAreEquivalent(lhs, rhs)) {
+        return true;
       }
       return isZero(rhs);
     }
 
-    private boolean additionExpressionIsPointless(PsiExpression lhs,
-                                                  PsiExpression rhs) {
+    private boolean additionExpressionIsPointless(PsiExpression lhs, PsiExpression rhs) {
       return isZero(lhs) || isZero(rhs);
     }
 
-    private boolean multiplyExpressionIsPointless(PsiExpression lhs,
-                                                  PsiExpression rhs) {
+    private boolean multiplyExpressionIsPointless(PsiExpression lhs, PsiExpression rhs) {
       return isZero(lhs) || isZero(rhs) || isOne(lhs) || isOne(rhs);
     }
 
     private boolean divideExpressionIsPointless(PsiExpression lhs, PsiExpression rhs) {
-      if (PsiType.INT.equals(lhs.getType()) && lhs instanceof PsiReferenceExpression && rhs instanceof PsiReferenceExpression) {
-        final PsiReferenceExpression lhsReference = (PsiReferenceExpression)lhs;
-        final PsiReferenceExpression rhsReference = (PsiReferenceExpression)rhs;
-        if (lhsReference.resolve() == rhsReference.resolve()) {
-          return true;
-        }
+      if (PsiType.INT.equals(lhs.getType()) && EquivalenceChecker.expressionsAreEquivalent(lhs, rhs)) {
+        return true;
       }
       return isOne(rhs);
     }
 
     private boolean modExpressionIsPointless(PsiExpression lhs, PsiExpression rhs) {
-      if (PsiType.INT.equals(lhs.getType()) && lhs instanceof PsiReferenceExpression && rhs instanceof PsiReferenceExpression) {
-        final PsiReferenceExpression lhsReference = (PsiReferenceExpression)lhs;
-        final PsiReferenceExpression rhsReference = (PsiReferenceExpression)rhs;
-        if (lhsReference.resolve() == rhsReference.resolve()) {
-          return true;
-        }
+      if (PsiType.INT.equals(lhs.getType()) && EquivalenceChecker.expressionsAreEquivalent(lhs, rhs)) {
+        return true;
       }
       return PsiType.INT.equals(rhs.getType()) && isOne(rhs);
     }

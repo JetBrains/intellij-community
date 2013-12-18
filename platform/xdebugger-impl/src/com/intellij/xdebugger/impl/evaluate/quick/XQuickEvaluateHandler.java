@@ -41,6 +41,7 @@ import java.awt.*;
 public class XQuickEvaluateHandler extends QuickEvaluateHandler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.xdebugger.impl.evaluate.quick.XQuickEvaluateHandler");
 
+  @Override
   public boolean isEnabled(@NotNull final Project project) {
     XDebugSession session = XDebuggerManager.getInstance(project).getCurrentSession();
     if (session == null || !session.isSuspended()) {
@@ -50,6 +51,7 @@ public class XQuickEvaluateHandler extends QuickEvaluateHandler {
     return stackFrame != null && stackFrame.getEvaluator() != null;
   }
 
+  @Override
   public AbstractValueHint createValueHint(@NotNull final Project project, @NotNull final Editor editor, @NotNull final Point point, final ValueHintType type) {
     final XDebugSession session = XDebuggerManager.getInstance(project).getCurrentSession();
     if (session == null) return null;
@@ -60,6 +62,7 @@ public class XQuickEvaluateHandler extends QuickEvaluateHandler {
     if (evaluator == null) return null;
 
     return PsiDocumentManager.getInstance(project).commitAndRunReadAction(new Computable<XValueHint>() {
+      @Override
       public XValueHint compute() {
         int offset = AbstractValueHint.calculateOffset(editor, point);
         Pair<TextRange, String> expressionData = getExpressionRange(evaluator, project, type, editor, offset);
@@ -93,10 +96,12 @@ public class XQuickEvaluateHandler extends QuickEvaluateHandler {
     return evaluator.getExpressionAtOffset(project, editor.getDocument(), offset, false);
   }
 
+  @Override
   public boolean canShowHint(@NotNull final Project project) {
     return isEnabled(project);
   }
 
+  @Override
   public int getValueLookupDelay(final Project project) {
     XDebugSession session = XDebuggerManager.getInstance(project).getCurrentSession();
     if (session != null) {
