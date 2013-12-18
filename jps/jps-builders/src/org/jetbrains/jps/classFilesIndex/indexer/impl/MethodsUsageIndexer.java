@@ -82,10 +82,10 @@ public class MethodsUsageIndexer extends ClassFileIndexer<String, TObjectIntHash
     return new TObjectIntHashMapExternalizer<MethodIncompleteSignature>(MethodIncompleteSignature.createDataExternalizer());
   }
 
-  private void addToIndex(final Map<String, TObjectIntHashMap<MethodIncompleteSignature>> map,
-                          final String internalClassName,
-                          final MethodIncompleteSignature mi) {
-    final String className = myQualifiedClassNameResolver.get(internalClassName);
+  private static void addToIndex(final Map<String, TObjectIntHashMap<MethodIncompleteSignature>> map,
+                                 final String internalClassName,
+                                 final MethodIncompleteSignature mi) {
+    final String className = AsmUtil.getQualifiedClassName(internalClassName);
     TObjectIntHashMap<MethodIncompleteSignature> occurrences = map.get(className);
     if (occurrences == null) {
       occurrences = new TObjectIntHashMap<MethodIncompleteSignature>();
@@ -95,13 +95,4 @@ public class MethodsUsageIndexer extends ClassFileIndexer<String, TObjectIntHash
       occurrences.put(mi, 1);
     }
   }
-
-  @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
-  private final FactoryMap<String, String> myQualifiedClassNameResolver = new FactoryMap<String, String>() {
-    @Nullable
-    @Override
-    protected String create(final String internalClassName) {
-      return AsmUtil.getQualifiedClassName(internalClassName);
-    }
-  };
 }
