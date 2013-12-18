@@ -1,5 +1,8 @@
 class Some {
   void getName(int i1, int i2, int i3, int i4, int i5, int i6, int i7, int i8, int i9, int i10) {
+    if (i1 == 0 || i2 == 0 || i3 == 0 || i4 == 0 || i5 == 0 || i6 == 0 || i7 == 0 || i8 == 0 || i9 == 0 || i10 == 0) {
+      return;
+    }
     if (i1 == 1 ||
         i1 == 2 ||
         i1 == 3 ||
