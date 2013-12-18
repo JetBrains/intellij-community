@@ -1417,7 +1417,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     for (MethodContract contract : contracts) {
       handleContract(expression, contract);
     }
-    pushUnknown(); // goto here if all contracts are false
+    pushUnknownReturnValue(expression); // goto here if all contracts are false
     return true;
   }
   
@@ -1451,7 +1451,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     // if contract is true
     switch (contract.returnValue) {
       case ANY_VALUE:
-        pushUnknown();
+        pushUnknownReturnValue(expression);
         addInstruction(new GotoInstruction(exitPoint));
         break;
       case NULL_VALUE:
@@ -1479,6 +1479,17 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     // if contract is false
     for (GotoInstruction instruction : gotoContractFalse) {
       instruction.setOffset(myCurrentFlow.getInstructionCount());
+    }
+  }
+
+  private void pushUnknownReturnValue(PsiMethodCallExpression expression) {
+    PsiMethod method = expression.resolveMethod();
+    if (method != null) {
+      PsiType type = expression.getType();
+      addInstruction(new PushInstruction(myFactory.createTypeValue(type, DfaPsiUtil.getElementNullability(type, method)), null));
+    }
+    else {
+      pushUnknown();
     }
   }
 
