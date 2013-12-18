@@ -24,6 +24,14 @@ import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.Mo
  */
 public class JavaRearrangerBlankLinesTest extends AbstractJavaRearrangerTest {
 
+  def classic = [rule(INTERFACE),
+                 rule(CLASS),
+                 rule(FIELD, STATIC),
+                 rule(FIELD, PUBLIC),
+                 rule(FIELD),
+                 rule(METHOD, PUBLIC),
+                 rule(METHOD)]
+
   void testPreserveRelativeBlankLines() {
     commonSettings.BLANK_LINES_AROUND_CLASS = 2
     commonSettings.BLANK_LINES_AROUND_FIELD = 1
@@ -78,13 +86,7 @@ class Test {
 
   private void method1() {}
 }''',
-      rules: [rule(INTERFACE),
-              rule(CLASS),
-              rule(FIELD, STATIC),
-              rule(FIELD, PUBLIC),
-              rule(FIELD),
-              rule(METHOD, PUBLIC),
-              rule(METHOD)]
+      rules: classic
     )
   }
 
@@ -142,5 +144,65 @@ public enum Sender {a, b; private String value;
 '''
     doTest(initial: before, expected: before)
   }
+
+
+
+  void "test keep blank lines between fields"() {
+    def text = '''\
+public class Test {
+  private static final Logger LOGGER = LoggerFactory.getLogger(AddCurrentUser.class);
+
+
+  private GlobalQueryService globalQueryService;
+  private EventCoordinationService eventCoordinationService;
+}
+'''
+    doTest(
+      initial: text,
+      expected: text,
+      rules: classic
+    )
+  }
+
+  void "test keep blank lines between fields more fair test"() {
+    doTest(
+      initial: '''\
+public class Test {
+    private static final int t = 12;
+
+
+    public int q = 2;
+    private int e = 3;
+    public int t11 = 23;
+
+    private void test() {
+    }
+
+    public void main() {
+    }
+
+}
+''',
+      expected: '''\
+public class Test {
+    private static final int t = 12;
+
+
+    public int q = 2;
+    public int t11 = 23;
+    private int e = 3;
+
+    public void main() {
+    }
+
+    private void test() {
+    }
+
+}
+''',
+      rules: classic
+    )
+  }
+
 
 }
