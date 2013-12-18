@@ -5,7 +5,7 @@ package org.jetbrains.postfixCompletion.templates;
  */
 public class FieldPostfixTemplateTest extends PostfixTemplateTestCase {
   @Override
-  protected String getTestDataPath() { return "testData/templates/field"; }
+  protected String getTestDataPath() { return "plugins/postfix/testData/templates/field"; }
 
   public void testSimple() { doTest(); }
   public void testFoo()    { doTest(); }

@@ -72,14 +72,15 @@ public class TemplatesCompletionTest extends CompletionAutoPopupTestCase {
   public void testRecalculatePrefix() {
     configureByFile();
     type("par");
-    myFixture.assertPreferredCompletionItems(1, ".par", "parents");
+    int selectedIndex = 0;
+    myFixture.assertPreferredCompletionItems(selectedIndex, ".par", "parents");
 
     type("\b");
     assertNotNull(getLookup());
-    myFixture.assertPreferredCompletionItems(0, "parents");
+    myFixture.assertPreferredCompletionItems(selectedIndex, "parents");
 
     type("r");
-    myFixture.assertPreferredCompletionItems(1, ".par", "parents");
+    myFixture.assertPreferredCompletionItems(selectedIndex, ".par", "parents");
   }
 
   @Override
@@ -94,7 +95,7 @@ public class TemplatesCompletionTest extends CompletionAutoPopupTestCase {
 
   @Override
   protected String getTestDataPath() {
-    return "testData/completion";
+    return "plugins/postfix/testData/completion";
   }
 
   private void doQuickTypingTest(String textToType, char c) {

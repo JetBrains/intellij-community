@@ -2,7 +2,7 @@ package org.jetbrains.postfixCompletion.templates;
 
 import com.intellij.testFramework.TestDataPath;
 
-@TestDataPath("$CONTENT_ROOT/testData/templates/if")
+@TestDataPath("$CONTENT_ROOT/plugins/postfix/testData/templates/if")
 public class ElseStatementPostfixTemplateTest extends PostfixTemplateTestCase {
   public void testBooleanVariable() { doTest(); }
   public void testBoxedBooleanVariable() { doTest(); }
@@ -15,5 +15,5 @@ public class ElseStatementPostfixTemplateTest extends PostfixTemplateTestCase {
   public void testNotNull() { doTest(); }
 
   @Override
-  protected String getTestDataPath() { return "testData/templates/else"; }
+  protected String getTestDataPath() { return "plugins/postfix/testData/templates/else"; }
 }

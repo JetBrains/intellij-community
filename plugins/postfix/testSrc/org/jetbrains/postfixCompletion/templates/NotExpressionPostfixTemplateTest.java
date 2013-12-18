@@ -5,7 +5,7 @@ package org.jetbrains.postfixCompletion.templates;
  */
 public class NotExpressionPostfixTemplateTest extends PostfixTemplateTestCase {
   @Override
-  protected String getTestDataPath() { return "testData/templates/not"; }
+  protected String getTestDataPath() { return "plugins/postfix/testData/templates/not"; }
 
   public void testSimple()            { doTest(); }
   public void testComplexCondition()  { doTest(); }

@@ -1,0 +1,38 @@
+<idea-plugin version="2">
+  <extensionPoints>
+    <extensionPoint name="postfixTemplate" interface="org.jetbrains.postfixCompletion.templates.PostfixTemplate"/>
+  </extensionPoints>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <postfixTemplate implementation="org.jetbrains.postfixCompletion.templates.ElseStatementPostfixTemplate"/>
+    <postfixTemplate implementation="org.jetbrains.postfixCompletion.templates.IntroduceVariablePostfixTemplate"/>
+    <postfixTemplate implementation="org.jetbrains.postfixCompletion.templates.NotNullCheckPostfixTemplate"/>
+    <postfixTemplate implementation="org.jetbrains.postfixCompletion.templates.IsNullCheckPostfixTemplate"/>
+    <postfixTemplate implementation="org.jetbrains.postfixCompletion.templates.NotExpressionPostfixTemplate"/>
+    <postfixTemplate implementation="org.jetbrains.postfixCompletion.templates.ForeachPostfixTemplate"/>
+    <postfixTemplate implementation="org.jetbrains.postfixCompletion.templates.WhileStatementPostfixTemplate"/>
+    <postfixTemplate implementation="org.jetbrains.postfixCompletion.templates.CastExpressionPostfixTemplate"/>
+    <postfixTemplate implementation="org.jetbrains.postfixCompletion.templates.NewExpressionPostfixTemplate"/>
+    <postfixTemplate implementation="org.jetbrains.postfixCompletion.templates.IfStatementPostfixTemplate"/>
+    <postfixTemplate implementation="org.jetbrains.postfixCompletion.templates.ForAscendingPostfixTemplate"/>
+    <postfixTemplate implementation="org.jetbrains.postfixCompletion.templates.ForDescendingPostfixTemplate"/>
+    <postfixTemplate implementation="org.jetbrains.postfixCompletion.templates.IntroduceFieldPostfixTemplate"/>
+    <postfixTemplate implementation="org.jetbrains.postfixCompletion.templates.ParenthesizedExpressionPostfixTemplate"/>
+    <postfixTemplate implementation="org.jetbrains.postfixCompletion.templates.ReturnStatementPostfixTemplate"/>
+    <postfixTemplate implementation="org.jetbrains.postfixCompletion.templates.SwitchStatementPostfixTemplate"/>
+    <postfixTemplate implementation="org.jetbrains.postfixCompletion.templates.ThrowExceptionPostfixTemplate"/>
+    <postfixTemplate implementation="org.jetbrains.postfixCompletion.templates.AssertStatementPostfixTemplate"/>
+    <postfixTemplate implementation="org.jetbrains.postfixCompletion.templates.SynchronizedStatementPostfixTemplate"/>
+    <postfixTemplate implementation="org.jetbrains.postfixCompletion.templates.InstanceofExpressionPostfixTemplate"/>
+  </extensions>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <applicationService id="postfixCompletionSettings" serviceImplementation="org.jetbrains.postfixCompletion.settings.PostfixCompletionSettings"/>
+    <customLiveTemplate implementation="org.jetbrains.postfixCompletion.templates.PostfixLiveTemplate"/>
+    
+    <completion.contributor language="JAVA" implementationClass="org.jetbrains.postfixCompletion.completion.PostfixTemplateCompletionContributor"/>
+    <lookup.actionProvider implementation="org.jetbrains.postfixCompletion.completion.PostfixTemplateLookupActionProvider"/>
+    
+    <editorOptionsProvider id="editing.postfixCompletion" instance="org.jetbrains.postfixCompletion.settings.PostfixCompletionConfigurable"/>
+  </extensions>
+</idea-plugin>

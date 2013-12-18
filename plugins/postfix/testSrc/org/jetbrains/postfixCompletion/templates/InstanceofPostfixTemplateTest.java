@@ -5,7 +5,7 @@ import com.intellij.codeInsight.template.impl.TemplateState;
 
 public class InstanceofPostfixTemplateTest extends PostfixTemplateTestCase {
   @Override
-  protected String getTestDataPath() { return "testData/templates/instanceof"; }
+  protected String getTestDataPath() { return "plugins/postfix/testData/templates/instanceof"; }
 
   public void testSingleExpression()  { doTest(); }
   public void testAlias()             { doTest(); }

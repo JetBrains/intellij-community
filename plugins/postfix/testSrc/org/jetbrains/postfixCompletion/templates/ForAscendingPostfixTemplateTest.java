@@ -11,6 +11,6 @@ public class ForAscendingPostfixTemplateTest extends PostfixTemplateTestCase {
 
   @Override
   protected String getTestDataPath() {
-    return "testData/templates/fori";
+    return "plugins/postfix/testData/templates/fori";
   }
 }

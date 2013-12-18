@@ -1,7 +1,7 @@
 package org.jetbrains.postfixCompletion.templates;
 
 import com.intellij.openapi.editor.Editor;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.postfixCompletion.util.CommonUtils;
 

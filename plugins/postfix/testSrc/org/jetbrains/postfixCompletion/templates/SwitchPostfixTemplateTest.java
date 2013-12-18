@@ -5,7 +5,7 @@ package org.jetbrains.postfixCompletion.templates;
  */
 public class SwitchPostfixTemplateTest extends PostfixTemplateTestCase {
   @Override
-  protected String getTestDataPath() { return "testData/templates/switch"; }
+  protected String getTestDataPath() { return "plugins/postfix/testData/templates/switch"; }
 
   public void testInt()       { doTest(); }
   public void testByte()      { doTest(); }

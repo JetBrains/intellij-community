@@ -7,6 +7,6 @@ public class ForDescendingPostfixTemplateTest extends PostfixTemplateTestCase {
   public void testBoxedLongArray() { doTest(); }
   @Override
   protected String getTestDataPath() {
-    return "testData/templates/forr";
+    return "plugins/postfix/testData/templates/forr";
   }
 }

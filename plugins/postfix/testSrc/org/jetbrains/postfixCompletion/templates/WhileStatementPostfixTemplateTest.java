@@ -7,5 +7,5 @@ public class WhileStatementPostfixTemplateTest extends PostfixTemplateTestCase {
   public void testUnresolvedVariable() { doTest(); }
 
   @Override
-  protected String getTestDataPath() { return "testData/templates/while"; }
+  protected String getTestDataPath() { return "plugins/postfix/testData/templates/while"; }
 }

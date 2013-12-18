@@ -17,7 +17,7 @@ public abstract class PostfixTemplate {
   @NotNull private final String myExample;
 
   @NotNull
-  public static final ExtensionPointName<PostfixTemplate> EP_NAME = ExtensionPointName.create("org.jetbrains.postfixCompletion.postfixTemplate");
+  public static final ExtensionPointName<PostfixTemplate> EP_NAME = ExtensionPointName.create("com.intellij.postfixTemplate");
 
   protected PostfixTemplate(@NotNull String name, @NotNull String description, @NotNull String example) {
     this(name, "." + name, description, example);

@@ -13,5 +13,6 @@ public class AssertStatementPostfixTemplateTest extends PostfixTemplateTestCase 
   public void testNotNull() { doTest(); }
 
   @Override
-  protected String getTestDataPath() { return "testData/templates/assert"; }
+  protected String getTestDataPath() { return "plugins/postfix/testData/templates/assert"; }
 }
+
