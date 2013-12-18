@@ -8,5 +8,6 @@ public class NotNullPostfixTemplateTest extends PostfixTemplateTestCase {
   protected String getTestDataPath() { return "testData/templates/notnull"; }
 
   public void testSimple()            { doTest(); }
+  public void testNn()                { doTest(); }
   public void testSecondStatement()   { doTest(); }
 }
