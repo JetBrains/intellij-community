@@ -36,6 +36,7 @@ import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.LightHighlighterClient;
 import com.intellij.openapi.editor.impl.EditorImpl;
+import com.intellij.openapi.editor.impl.SoftWrapModelImpl;
 import com.intellij.openapi.editor.impl.TextDrawingCallback;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapAppliancePlaces;
 import com.intellij.openapi.editor.markup.MarkupModel;
@@ -73,6 +74,7 @@ public class EditorWindow extends UserDataHolderBase implements EditorEx {
   private boolean myDisposed;
   private final MarkupModelWindow myMarkupModelDelegate;
   private final FoldingModelWindow myFoldingModelWindow;
+  private final SoftWrapModelImpl mySoftWrapModel;
 
   public static Editor create(@NotNull final DocumentWindowImpl documentRange, @NotNull final EditorImpl editor, @NotNull final PsiFile injectedFile) {
     assert documentRange.isValid();
@@ -106,6 +108,8 @@ public class EditorWindow extends UserDataHolderBase implements EditorEx {
     mySelectionModelDelegate = new SelectionModelWindow(myDelegate, myDocumentWindow,this);
     myMarkupModelDelegate = new MarkupModelWindow((MarkupModelEx)myDelegate.getMarkupModel(), myDocumentWindow);
     myFoldingModelWindow = new FoldingModelWindow(delegate.getFoldingModel(), documentWindow, this);
+    mySoftWrapModel = new SoftWrapModelImpl(this);
+    Disposer.register(myDocumentWindow, mySoftWrapModel);
   }
 
   public static void disposeInvalidEditors() {
@@ -266,7 +270,7 @@ public class EditorWindow extends UserDataHolderBase implements EditorEx {
   @Override
   @NotNull
   public SoftWrapModelEx getSoftWrapModel() {
-    return myDelegate.getSoftWrapModel();
+    return mySoftWrapModel;
   }
 
   @Override

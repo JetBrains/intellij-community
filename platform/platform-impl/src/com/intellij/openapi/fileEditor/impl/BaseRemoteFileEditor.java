@@ -78,7 +78,7 @@ public abstract class BaseRemoteFileEditor implements TextEditor, PropertyChange
   @Override
   public void setState(@NotNull FileEditorState state) {
     TextEditor textEditor = getTextEditor();
-    if (textEditor != null) {
+    if (textEditor != null && state instanceof TextEditorState) {
       textEditor.setState(state);
     }
   }

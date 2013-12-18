@@ -49,7 +49,7 @@ public class CharTableImpl implements CharTable {
 
   @NotNull
   public CharSequence doIntern(@NotNull CharSequence text) {
-    CharSequence interned = getStaticInterned(text.toString());
+    CharSequence interned = getStaticInterned(text);
     if (interned != null) {
       return interned;
     }
@@ -85,7 +85,7 @@ public class CharTableImpl implements CharTable {
   }
 
   @Nullable
-  public static CharSequence getStaticInterned(@NotNull String text) {
+  public static CharSequence getStaticInterned(@NotNull CharSequence text) {
     return STATIC_ENTRIES.get(text);
   }
 

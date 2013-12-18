@@ -16,6 +16,7 @@
 
 package com.intellij.util.indexing;
 
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
@@ -101,12 +102,12 @@ public class MemoryIndexStorage<Key, Value> implements IndexStorage<Key, Value> 
   @Override
   public Collection<Key> getKeys() throws StorageException {
     final Set<Key> keys = new HashSet<Key>();
-    processKeys(new CommonProcessors.CollectProcessor<Key>(keys), null);
+    processKeys(new CommonProcessors.CollectProcessor<Key>(keys), null, null);
     return keys;
   }
 
   @Override
-  public boolean processKeys(final Processor<Key> processor, IdFilter idFilter) throws StorageException {
+  public boolean processKeys(final Processor<Key> processor, GlobalSearchScope scope, IdFilter idFilter) throws StorageException {
     final Set<Key> stopList = new HashSet<Key>();
 
     Processor<Key> decoratingProcessor = new Processor<Key>() {
@@ -128,7 +129,7 @@ public class MemoryIndexStorage<Key, Value> implements IndexStorage<Key, Value> 
       }
       stopList.add(key);
     }
-    return myBackendStorage.processKeys(stopList.size() == 0 && myMap.size() == 0 ? processor : decoratingProcessor, idFilter);
+    return myBackendStorage.processKeys(stopList.size() == 0 && myMap.size() == 0 ? processor : decoratingProcessor, scope, idFilter);
   }
 
   @Override

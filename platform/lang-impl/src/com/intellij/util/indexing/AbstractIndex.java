@@ -16,6 +16,7 @@
 
 package com.intellij.util.indexing;
 
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -28,5 +29,5 @@ public interface AbstractIndex<Key, Value> {
   @NotNull
   ValueContainer<Value> getData(Key key) throws StorageException;
 
-  boolean processAllKeys(Processor<Key> processor, @Nullable IdFilter idFilter) throws StorageException;
+  boolean processAllKeys(Processor<Key> processor, GlobalSearchScope scope, @Nullable IdFilter idFilter) throws StorageException;
 }

@@ -29,18 +29,24 @@ public class MainImpl {
    * Called from PluginManager via reflection.
    */
   protected static void start(final String[] args) {
-    System.setProperty(PlatformUtilsCore.PLATFORM_PREFIX_KEY, PlatformUtils.getPlatformPrefix(PlatformUtils.COMMUNITY_PREFIX));
+    System.setProperty(PlatformUtilsCore.PLATFORM_PREFIX_KEY, PlatformUtils.getPlatformPrefix(PlatformUtilsCore.COMMUNITY_PREFIX));
 
     StartupUtil.prepareAndStart(args, new StartupUtil.AppStarter() {
       @Override
       public void start(boolean newConfigFolder) {
-        final IdeaApplication app = new IdeaApplication(args);
         //noinspection SSBasedInspection
         SwingUtilities.invokeLater(new Runnable() {
           @Override
           public void run() {
             PluginManager.installExceptionHandler();
-            app.run();
+            final IdeaApplication app = new IdeaApplication(args);
+            //noinspection SSBasedInspection
+            SwingUtilities.invokeLater(new Runnable() {
+              @Override
+              public void run() {
+                app.run();
+              }
+            });
           }
         });
       }

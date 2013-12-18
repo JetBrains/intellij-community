@@ -16,6 +16,7 @@
 
 package com.intellij.util.indexing;
 
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -39,7 +40,7 @@ public interface IndexStorage<Key, Value> extends Flushable {
   @NotNull
   ValueContainer<Value> read(Key key) throws StorageException;
 
-  boolean processKeys(Processor<Key> processor, @Nullable IdFilter idFilter) throws StorageException;
+  boolean processKeys(Processor<Key> processor, GlobalSearchScope scope, @Nullable IdFilter idFilter) throws StorageException;
 
   Collection<Key> getKeys() throws StorageException;
 
