@@ -44,7 +44,7 @@ public class JavaFormatterAlignmentTest extends AbstractJavaFormatterTest {
       "Holder.INSTANCE\n" +
       "                .foo();",
       "Holder.INSTANCE\n" +
-      "      .foo();"
+      "        .foo();"
     );
   }
 
@@ -300,5 +300,94 @@ public class JavaFormatterAlignmentTest extends AbstractJavaFormatterTest {
                  "MyResource r2 = null) { }",
                  "try (MyResource r1 = null;\n" +
                  "        MyResource r2 = null) { }");
+  }
+
+
+  public void testChainedMethodCallsAfterFieldsChain_WithAlignment() throws Exception {
+    getSettings().ALIGN_MULTILINE_CHAINED_METHODS = true;
+    getSettings().METHOD_CALL_CHAIN_WRAP = CommonCodeStyleSettings.WRAP_ALWAYS;
+
+    doMethodTest(
+      "a.current.current.current.getThis().getThis().getThis();",
+
+      "a.current.current.current.getThis()\n" +
+      "                         .getThis()\n" +
+      "                         .getThis();"
+    );
+
+    doMethodTest(
+      "a.current.current.current.getThis().getThis().getThis().current.getThis().getThis().getThis().getThis();",
+
+      "a.current.current.current.getThis()\n" +
+      "                         .getThis()\n" +
+      "                         .getThis().current.getThis()\n" +
+      "                                           .getThis()\n" +
+      "                                           .getThis()\n" +
+      "                                           .getThis();"
+    );
+
+
+    String onlyMethodCalls = "getThis().getThis().getThis();";
+    String formatedMethodCalls = "getThis().getThis()\n" +
+                                 "         .getThis();";
+
+    doMethodTest(onlyMethodCalls, formatedMethodCalls);
+  }
+
+  public void testChainedMethodCallsAfterFieldsChain_WithoutAlignment() throws Exception {
+    getSettings().ALIGN_MULTILINE_CHAINED_METHODS = false;
+    getSettings().METHOD_CALL_CHAIN_WRAP = CommonCodeStyleSettings.WRAP_ALWAYS;
+
+    doMethodTest(
+      "a.current.current.current.getThis().getThis().getThis();",
+
+      "a.current.current.current.getThis()\n" +
+      "        .getThis()\n" +
+      "        .getThis();"
+    );
+  }
+
+  public void testChainedMethodCalls_WithChopDownIfLongOption() throws Exception {
+    getSettings().ALIGN_MULTILINE_CHAINED_METHODS = true;
+    getSettings().METHOD_CALL_CHAIN_WRAP = CommonCodeStyleSettings.WRAP_ON_EVERY_ITEM; // it's equal to "Chop down if long"
+    getSettings().getRootSettings().RIGHT_MARGIN = 50;
+
+    String before = "a.current.current.getThis().getThis().getThis().getThis().getThis();";
+    doMethodTest(
+      before,
+      "a.current.current.getThis()\n" +
+      "                 .getThis()\n" +
+      "                 .getThis()\n" +
+      "                 .getThis()\n" +
+      "                 .getThis();"
+    );
+
+    getSettings().getRootSettings().RIGHT_MARGIN = 80;
+    doMethodTest(before, before);
+  }
+
+  public void testChainedMethodCalls_WithWrapIfNeededOption() throws Exception {
+    getSettings().ALIGN_MULTILINE_CHAINED_METHODS = false;
+    getSettings().METHOD_CALL_CHAIN_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED;
+    getSettings().getRootSettings().RIGHT_MARGIN = 50;
+
+    String before = "a.current.current.getThis().getThis().getThis().getThis();";
+
+    doMethodTest(
+      before,
+      "a.current.current.getThis().getThis()\n" +
+      "        .getThis().getThis();"
+    );
+
+    getSettings().ALIGN_MULTILINE_CHAINED_METHODS = true;
+
+    doMethodTest(
+      before,
+      "a.current.current.getThis().getThis()\n" +
+      "                 .getThis().getThis();"
+    );
+
+    getSettings().getRootSettings().RIGHT_MARGIN = 75;
+    doMethodTest(before, before);
   }
 }
