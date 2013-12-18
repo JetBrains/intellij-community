@@ -604,6 +604,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
   private void activateEditorComponent(final boolean forced) {
     activateEditorComponent(forced, false); //TODO[kirillk]: runnable in activateEditorComponent(boolean, boolean) never runs
   }
+
   private void activateEditorComponent(final boolean forced, boolean now) {
     if (LOG.isDebugEnabled()) {
       LOG.debug("enter: activateEditorComponent()");
@@ -622,7 +623,8 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
       if (!runnable.isExpired()) {
         runnable.run();
       }
-    } else {
+    }
+    else {
       final FocusRequestor requestor = getFocusManager().getFurtherRequestor();
       getFocusManager().doWhenFocusSettlesDown(new ExpirableRunnable.ForProject(myProject) {
         @Override
@@ -644,7 +646,9 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     return FileEditorManagerEx.getInstanceEx(myProject).getSplitters();
   }
 
-  private void activateEditorComponentImpl(EditorsSplitters splitters, final ArrayList<FinalizableCommand> commandList, final boolean forced) {
+  private void activateEditorComponentImpl(EditorsSplitters splitters,
+                                           final ArrayList<FinalizableCommand> commandList,
+                                           final boolean forced) {
     final String active = getActiveToolWindowId();
     // Now we have to request focus into most recent focused editor
     appendRequestFocusInEditorComponentCmd(splitters, commandList, forced).doWhenDone(new Runnable() {
@@ -1009,7 +1013,8 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     if (SystemInfo.isJavaVersionAtLeast("1.7")) {
       if (hasOpenEditorFiles()) {
         activateEditorComponentImpl(getSplittersFromFocus(), commandList, false);
-      } else {
+      }
+      else {
         focusToolWinowByDefault(id);
       }
     }
@@ -1364,7 +1369,6 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     }
     final Stripe stripe = myToolWindowsPane.getStripeFor(toolWindowId);
     return stripe.getButtonFor(toolWindowId) != null;
-
   }
 
   @Override
@@ -1412,7 +1416,8 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
 
     final BalloonHyperlinkListener listenerWrapper = new BalloonHyperlinkListener(listener);
     final Balloon balloon =
-      JBPopupFactory.getInstance().createHtmlTextBalloonBuilder(text.replace("\n", "<br>"), icon, type.getPopupBackground(), listenerWrapper)
+      JBPopupFactory.getInstance()
+        .createHtmlTextBalloonBuilder(text.replace("\n", "<br>"), icon, type.getPopupBackground(), listenerWrapper)
         .setHideOnClickOutside(false).setHideOnFrameResize(false).createBalloon();
     FrameStateManager.getInstance().getApplicationActive().doWhenDone(new Runnable() {
       @Override
@@ -1790,7 +1795,9 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     commandsList.add(command);
   }
 
-  private ActionCallback appendRequestFocusInEditorComponentCmd(EditorsSplitters splitters, final ArrayList<FinalizableCommand> commandList, boolean forced) {
+  private ActionCallback appendRequestFocusInEditorComponentCmd(EditorsSplitters splitters,
+                                                                final ArrayList<FinalizableCommand> commandList,
+                                                                boolean forced) {
     if (myProject.isDisposed()) return new ActionCallback.Done();
     final CommandProcessor commandProcessor = myWindowManager.getCommandProcessor();
     final RequestFocusInEditorComponentCmd command =
@@ -1823,8 +1830,8 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
 
   /**
    * @return <code>true</code> if tool window with the specified <code>id</code>
-   *         is floating and has modal showing child dialog. Such windows should not be closed
-   *         when auto-hide windows are gone.
+   * is floating and has modal showing child dialog. Such windows should not be closed
+   * when auto-hide windows are gone.
    */
   private boolean hasModalChild(final WindowInfoImpl info) {
     if (!info.isVisible() || !info.isFloating()) {
@@ -1954,7 +1961,6 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     if (type != null) {
       toolWindow.setType(type, null);
     }
-
   }
 
   public void setDefaultContentUiType(ToolWindowImpl toolWindow, ToolWindowContentUiType type) {
@@ -2184,7 +2190,9 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
      */
     @Override
     public void resized(final InternalDecorator source) {
-      if (!source.isShowing()) return; // do not recalculate the tool window size if it is not yet shown (and, therefore, has 0,0,0,0 bounds)
+      if (!source.isShowing()) {
+        return; // do not recalculate the tool window size if it is not yet shown (and, therefore, has 0,0,0,0 bounds)
+      }
 
       final WindowInfoImpl info = getInfo(source.getToolWindow().getId());
       InternalDecorator another = null;
@@ -2202,7 +2210,8 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
           if (splitter.getSecondComponent() == source) {
             sizeInSplit += splitter.getDividerWidth();
             another = (InternalDecorator)splitter.getFirstComponent();
-          } else {
+          }
+          else {
             another = (InternalDecorator)splitter.getSecondComponent();
           }
           if (anchor.isSplitVertically()) {
@@ -2214,8 +2223,8 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
         }
 
         float paneWeight = anchor.isHorizontal()
-                   ? (float)source.getHeight() / (float)myToolWindowsPane.getMyLayeredPane().getHeight()
-                   : (float)source.getWidth() / (float)myToolWindowsPane.getMyLayeredPane().getWidth();
+                           ? (float)source.getHeight() / (float)myToolWindowsPane.getMyLayeredPane().getHeight()
+                           : (float)source.getWidth() / (float)myToolWindowsPane.getMyLayeredPane().getWidth();
         info.setWeight(paneWeight);
         if (another != null && anchor.isSplitVertically()) {
           paneWeight = anchor.isHorizontal()
@@ -2330,7 +2339,8 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
       JRootPane root = null;
       if (activeWindow instanceof JDialog) {
         root = ((JDialog)activeWindow).getRootPane();
-      } else if (activeWindow instanceof JFrame) {
+      }
+      else if (activeWindow instanceof JFrame) {
         root = ((JFrame)activeWindow).getRootPane();
       }
 
