@@ -203,6 +203,7 @@
     <highlightVisitor implementation="com.intellij.codeInsight.daemon.impl.analysis.XmlHighlightVisitor"/>
 
     <customLiveTemplate implementation="com.intellij.codeInsight.template.emmet.ZenCodingTemplate"/>
+    <lookup.actionProvider implementation="com.intellij.codeInsight.template.emmet.completion.EmmetLookupActionProvider"/>
 
     <externalAnnotator language="XML" implementationClass="com.intellij.lang.xml.XMLExternalAnnotator"/>
     <externalAnnotator language="HTML" implementationClass="com.intellij.lang.xml.XMLExternalAnnotator"/>
