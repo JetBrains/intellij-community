@@ -14,11 +14,11 @@ public abstract class OpenInBrowserRequest {
   private Collection<Url> result;
   protected PsiFile file;
 
-  OpenInBrowserRequest(@NotNull PsiFile file) {
+  public OpenInBrowserRequest(@NotNull PsiFile file) {
     this.file = file;
   }
 
-  OpenInBrowserRequest() {
+  public OpenInBrowserRequest() {
   }
 
   @Nullable
