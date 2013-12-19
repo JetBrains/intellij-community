@@ -215,6 +215,9 @@ public class StartupUtil {
   }
 
   private static void fixProcessEnvironment(Logger log) {
+    if (!Main.isCommandLine()) {
+      System.setProperty("__idea.mac.env.lock", "unlocked");
+    }
     boolean envReady = EnvironmentUtil.isEnvironmentReady();  // trigger environment loading
     if (!envReady) {
       log.info("initializing environment");

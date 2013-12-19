@@ -45,7 +45,7 @@ public class EnvironmentUtil {
 
   private static final Future<Map<String, String>> ourEnvGetter;
   static {
-    if (SystemInfo.isMac && Registry.is("idea.fix.mac.env")) {
+    if (SystemInfo.isMac && "unlocked".equals(System.getProperty("__idea.mac.env.lock")) && Registry.is("idea.fix.mac.env")) {
       ExecutorService executor = Executors.newSingleThreadExecutor();
       ourEnvGetter = executor.submit(new Callable<Map<String, String>>() {
         @Override
