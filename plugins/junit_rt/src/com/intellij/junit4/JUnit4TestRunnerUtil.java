@@ -15,6 +15,7 @@
  */
 package com.intellij.junit4;
 
+import com.intellij.junit3.TestRunnerUtil;
 import org.junit.Ignore;
 import org.junit.internal.AssumptionViolatedException;
 import org.junit.internal.requests.ClassRequest;
@@ -76,6 +77,10 @@ public class JUnit4TestRunnerUtil {
             }
             String suiteName = packageName.length() == 0 ? "<default package>": packageName;
             Class[] classes = getArrayOfClasses(result);
+            if (classes.length == 0) {
+              System.out.println(TestRunnerUtil.testsFoundInPackageMesage(0, suiteName));
+              return null;
+            }
             Request allClasses;
             try {
               Class.forName("org.junit.runner.Computer");
