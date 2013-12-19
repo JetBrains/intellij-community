@@ -18,10 +18,6 @@
       <sourceFolder url="file://$MODULE_DIR$/../../plugins/generate-tostring/testSrc" isTestSource="true" />
       <sourceFolder url="file://$MODULE_DIR$/../../plugins/generate-tostring/resources" isTestSource="false" />
     </content>
-    <content url="file://$MODULE_DIR$/../../plugins/postfix">
-      <sourceFolder url="file://$MODULE_DIR$/../../plugins/postfix/src" isTestSource="false" />
-      <sourceFolder url="file://$MODULE_DIR$/../../plugins/postfix/testSrc" isTestSource="true" />
-    </content>
     <orderEntry type="module" module-name="boot" />
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
