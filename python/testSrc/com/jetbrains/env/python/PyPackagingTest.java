@@ -8,6 +8,7 @@ import com.jetbrains.env.python.debug.PyEnvTestCase;
 import com.jetbrains.env.python.debug.PyExecutionFixtureTestTask;
 import com.jetbrains.env.python.debug.PyTestTask;
 import com.jetbrains.python.packaging.*;
+import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.sdk.PythonSdkType;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
 import com.jetbrains.python.sdk.flavors.VirtualEnvSdkFlavor;
@@ -64,6 +65,11 @@ public class PyPackagingTest extends PyEnvTestCase {
       public void runTestOn(String sdkHome) throws Exception {
         final Sdk sdk = PythonSkeletonsTest.createTempSdk(sdkHome);
         try {
+          final LanguageLevel languageLevel = PythonSdkType.getLanguageLevelForSdk(sdk);
+          // virtualenv >= 0.10 supports Python >= 2.6
+          if (languageLevel.isOlderThan(LanguageLevel.PYTHON26)) {
+            return;
+          }
           final File tempDir = FileUtil.createTempDirectory(getTestName(false), null);
           final File venvDir = new File(tempDir, "venv");
           final String venvSdkHome = ((PyPackageManagerImpl)PyPackageManagerImpl.getInstance(sdk)).createVirtualEnv(venvDir.toString(),
