@@ -168,7 +168,8 @@ public class UsageInfo2UsageAdapter implements UsageInModule,
 
   @Override
   public boolean isReadOnly() {
-    return isValid() && !getElement().isWritable();
+    PsiFile psiFile = getPsiFile();
+    return psiFile == null || psiFile.isValid() && !psiFile.isWritable();
   }
 
   @Override

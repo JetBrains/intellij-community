@@ -870,6 +870,10 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
         myTransferToEDTQueue.offer(runnable);
       }
     });
+    if (node != null) {
+      // update and cache flags while the node is still hot
+      node.update(this);
+    }
     myUsageNodes.put(usage, node == null ? NULL_NODE : node);
     return node;
   }
