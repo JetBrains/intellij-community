@@ -312,11 +312,10 @@ public class ExecUtil {
       return Arrays.asList(getWindowsShellName(), "/c", "start", GeneralCommandLine.inescapableQuote(title), command);
     }
     else if (SystemInfo.isMac) {
-      return Arrays.asList(getOpenCommandPath(), "-a", "Terminal", command); // todo: title?
+      return Arrays.asList(getOpenCommandPath(), "-a", "Terminal", command);  // todo[r.sh] title?
     }
     else if (hasKdeTerminal.getValue()) {
-      return title != null ? Arrays.asList("/usr/bin/konsole", "-p", "tabtitle=\"" + title.replace("\"", "'") + "\"", "-e", command)
-                           : Arrays.asList("/usr/bin/konsole", "-e", command);
+      return Arrays.asList("/usr/bin/konsole", "-e", command);  // todo[r.sh] title?
     }
     else if (hasGnomeTerminal.getValue()) {
       return title != null ? Arrays.asList("/usr/bin/gnome-terminal", "-t", title, "-x", command)
