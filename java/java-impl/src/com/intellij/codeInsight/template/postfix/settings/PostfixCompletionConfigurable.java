@@ -74,7 +74,7 @@ public class PostfixCompletionConfigurable implements SearchableConfigurable, Ed
   @Nls
   @Override
   public String getDisplayName() {
-    return "Postfix Completion";
+    return "Postfix Templates";
   }
 
   @Nullable
