@@ -53,6 +53,10 @@ public class AddAssertStatementFix implements LocalQuickFix {
     PsiElement element = descriptor.getPsiElement();
     PsiElement anchorElement = PsiTreeUtil.getParentOfType(element, PsiStatement.class);
     LOG.assertTrue(anchorElement != null);
+    final PsiElement tempParent = anchorElement.getParent();
+    if (tempParent instanceof PsiForStatement && !PsiTreeUtil.isAncestor(((PsiForStatement)tempParent).getBody(), anchorElement, false)) {
+      anchorElement = tempParent;
+    }
     PsiElement prev = PsiTreeUtil.skipSiblingsBackward(anchorElement, PsiWhiteSpace.class);
     if (prev instanceof PsiComment && JavaSuppressionUtil.getSuppressedInspectionIdsIn(prev) != null) {
       anchorElement = prev;
