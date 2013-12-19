@@ -15,6 +15,7 @@
  */
 package com.intellij.ide.browsers.impl;
 
+import com.intellij.ide.browsers.OpenInBrowserRequest;
 import com.intellij.ide.browsers.WebBrowserService;
 import com.intellij.ide.browsers.WebBrowserUrlProvider;
 import com.intellij.openapi.project.DumbService;
@@ -35,7 +36,7 @@ import java.util.Collections;
 public class WebBrowserServiceImpl extends WebBrowserService {
   @NotNull
   @Override
-  public Collection<Url> getUrlsToOpen(@NotNull CanHandleElementRequest request, boolean preferLocalUrl) throws WebBrowserUrlProvider.BrowserException {
+  public Collection<Url> getUrlsToOpen(@NotNull OpenInBrowserRequest request, boolean preferLocalUrl) throws WebBrowserUrlProvider.BrowserException {
     VirtualFile virtualFile = request.getVirtualFile();
     if (virtualFile instanceof HttpVirtualFile) {
       return Collections.singleton(Urls.newFromVirtualFile(virtualFile));
@@ -65,7 +66,7 @@ public class WebBrowserServiceImpl extends WebBrowserService {
   }
 
   @Nullable
-  public static WebBrowserUrlProvider getProvider(@NotNull CanHandleElementRequest request) {
+  public static WebBrowserUrlProvider getProvider(@NotNull OpenInBrowserRequest request) {
     DumbService dumbService = DumbService.getInstance(request.getProject());
     for (WebBrowserUrlProvider urlProvider : WebBrowserUrlProvider.EP_NAME.getExtensions()) {
       if ((!dumbService.isDumb() || DumbService.isDumbAware(urlProvider)) && urlProvider.canHandleElement(request)) {

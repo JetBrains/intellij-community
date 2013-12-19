@@ -16,13 +16,9 @@
 package com.intellij.ide.browsers;
 
 import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
 import com.intellij.util.Url;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -33,66 +29,11 @@ public abstract class WebBrowserService {
   }
 
   @NotNull
-  public abstract Collection<Url> getUrlsToOpen(@NotNull CanHandleElementRequest request, boolean preferLocalUrl) throws WebBrowserUrlProvider.BrowserException;
+  public abstract Collection<Url> getUrlsToOpen(@NotNull OpenInBrowserRequest request, boolean preferLocalUrl) throws WebBrowserUrlProvider.BrowserException;
 
   @NotNull
   public Collection<Url> getUrlsToOpen(@NotNull final PsiElement element, boolean preferLocalUrl) throws WebBrowserUrlProvider.BrowserException {
-    CanHandleElementRequest request = CanHandleElementRequest.createRequest(element);
+    OpenInBrowserRequest request = OpenInBrowserRequest.createRequest(element);
     return request == null ? Collections.<Url>emptyList() : getUrlsToOpen(request, preferLocalUrl);
-  }
-
-  public abstract static class CanHandleElementRequest {
-    private Collection<Url> result;
-    protected PsiFile file;
-
-    protected CanHandleElementRequest(@NotNull PsiFile file) {
-      this.file = file;
-    }
-
-    protected CanHandleElementRequest() {
-    }
-
-    @Nullable
-    public static CanHandleElementRequest createRequest(@NotNull final PsiElement element) {
-      PsiFile psiFile = element.getContainingFile();
-      if (psiFile == null) {
-        return null;
-      }
-
-      return new CanHandleElementRequest(psiFile) {
-        @NotNull
-        @Override
-        public PsiElement getElement() {
-          return element;
-        }
-      };
-    }
-
-    @NotNull
-    public PsiFile getFile() {
-      return file;
-    }
-
-    @NotNull
-    public VirtualFile getVirtualFile() {
-      return file.getVirtualFile();
-    }
-
-    @NotNull
-    public Project getProject() {
-      return file.getProject();
-    }
-
-    @NotNull
-    public abstract PsiElement getElement();
-
-    public void setResult(@NotNull Collection<Url> result) {
-      this.result = result;
-    }
-
-    @Nullable
-    public Collection<Url> getResult() {
-      return result;
-    }
   }
 }

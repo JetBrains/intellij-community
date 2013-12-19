@@ -27,8 +27,6 @@ import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.xml.XmlBundle;
 import com.intellij.xml.util.HtmlUtil;
 
-import static com.intellij.ide.browsers.WebBrowserService.CanHandleElementRequest;
-
 class SelectInDefaultBrowserTarget extends SelectInTargetBase {
   private static final Logger LOG = Logger.getInstance(SelectInDefaultBrowserTarget.class);
 
@@ -37,7 +35,8 @@ class SelectInDefaultBrowserTarget extends SelectInTargetBase {
   @Override
   public boolean canSelect(SelectInContext context) {
     Object selectorInFile = context.getSelectorInFile();
-    CanHandleElementRequest request = selectorInFile instanceof PsiElement ? CanHandleElementRequest.createRequest((PsiElement)selectorInFile) : null;
+    OpenInBrowserRequest
+      request = selectorInFile instanceof PsiElement ? OpenInBrowserRequest.createRequest((PsiElement)selectorInFile) : null;
     if (request == null) {
       return false;
     }
@@ -66,7 +65,7 @@ class SelectInDefaultBrowserTarget extends SelectInTargetBase {
   public void selectIn(SelectInContext context, boolean requestFocus) {
     PsiElement element = (PsiElement)context.getSelectorInFile();
     LOG.assertTrue(element != null);
-    OpenFileInDefaultBrowserAction.open(CanHandleElementRequest.createRequest(element), false, null);
+    OpenFileInDefaultBrowserAction.open(OpenInBrowserRequest.createRequest(element), false, null);
   }
 
   @Override

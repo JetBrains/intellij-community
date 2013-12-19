@@ -49,14 +49,12 @@ import javax.swing.*;
 import java.awt.event.InputEvent;
 import java.util.Collection;
 
-import static com.intellij.ide.browsers.WebBrowserService.CanHandleElementRequest;
-
 public class OpenFileInDefaultBrowserAction extends DumbAwareAction {
   private static final Logger LOG = Logger.getInstance(OpenFileInDefaultBrowserAction.class);
 
   @Nullable
-  public static Pair<CanHandleElementRequest, WebBrowserUrlProvider> doUpdate(AnActionEvent event) {
-    CanHandleElementRequest request = createRequest(event.getDataContext());
+  public static Pair<OpenInBrowserRequest, WebBrowserUrlProvider> doUpdate(AnActionEvent event) {
+    OpenInBrowserRequest request = createRequest(event.getDataContext());
     boolean applicable = false;
     WebBrowserUrlProvider provider = null;
     if (request != null) {
@@ -77,7 +75,7 @@ public class OpenFileInDefaultBrowserAction extends DumbAwareAction {
   public void update(AnActionEvent e) {
     Presentation presentation = e.getPresentation();
 
-    Pair<CanHandleElementRequest, WebBrowserUrlProvider> result = doUpdate(e);
+    Pair<OpenInBrowserRequest, WebBrowserUrlProvider> result = doUpdate(e);
     if (result == null) {
       return;
     }
@@ -121,7 +119,7 @@ public class OpenFileInDefaultBrowserAction extends DumbAwareAction {
   }
 
   @Nullable
-  public static CanHandleElementRequest createRequest(@NotNull DataContext context) {
+  public static OpenInBrowserRequest createRequest(@NotNull DataContext context) {
     final Editor editor = CommonDataKeys.EDITOR.getData(context);
     if (editor != null) {
       Project project = editor.getProject();
@@ -131,7 +129,7 @@ public class OpenFileInDefaultBrowserAction extends DumbAwareAction {
           psiFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
         }
         if (psiFile != null) {
-          return new CanHandleElementRequest(psiFile) {
+          return new OpenInBrowserRequest(psiFile) {
             private PsiElement element;
 
             @NotNull
@@ -149,13 +147,13 @@ public class OpenFileInDefaultBrowserAction extends DumbAwareAction {
     else {
       final PsiFile psiFile = CommonDataKeys.PSI_FILE.getData(context);
       if (psiFile != null) {
-        return CanHandleElementRequest.createRequest(psiFile);
+        return OpenInBrowserRequest.createRequest(psiFile);
       }
 
       final VirtualFile virtualFile = CommonDataKeys.VIRTUAL_FILE.getData(context);
       final Project project = CommonDataKeys.PROJECT.getData(context);
       if (virtualFile != null && !virtualFile.isDirectory() && virtualFile.isValid() && project != null && project.isInitialized()) {
-        return new CanHandleElementRequest() {
+        return new OpenInBrowserRequest() {
           @NotNull
           @Override
           public VirtualFile getVirtualFile() {
@@ -193,7 +191,7 @@ public class OpenFileInDefaultBrowserAction extends DumbAwareAction {
     open(createRequest(event.getDataContext()), (event.getModifiers() & InputEvent.SHIFT_MASK) != 0, browser);
   }
 
-  public static void open(@Nullable CanHandleElementRequest request, boolean preferLocalUrl, @Nullable final WebBrowser browser) {
+  public static void open(@Nullable OpenInBrowserRequest request, boolean preferLocalUrl, @Nullable final WebBrowser browser) {
     if (request == null) {
       return;
     }

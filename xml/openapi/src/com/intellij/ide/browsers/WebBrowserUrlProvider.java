@@ -37,7 +37,7 @@ public abstract class WebBrowserUrlProvider {
     }
   }
 
-  public boolean canHandleElement(@NotNull WebBrowserService.CanHandleElementRequest request) {
+  public boolean canHandleElement(@NotNull OpenInBrowserRequest request) {
     VirtualFile file = request.getVirtualFile();
     try {
       Collection<Url> urls = getUrls(request, file);
@@ -53,12 +53,12 @@ public abstract class WebBrowserUrlProvider {
   }
 
   @Nullable
-  protected Url getUrl(@NotNull WebBrowserService.CanHandleElementRequest request, @NotNull VirtualFile virtualFile) throws BrowserException {
+  protected Url getUrl(@NotNull OpenInBrowserRequest request, @NotNull VirtualFile virtualFile) throws BrowserException {
     return null;
   }
 
   @NotNull
-  public Collection<Url> getUrls(@NotNull WebBrowserService.CanHandleElementRequest request, @NotNull VirtualFile virtualFile) throws BrowserException {
+  public Collection<Url> getUrls(@NotNull OpenInBrowserRequest request, @NotNull VirtualFile virtualFile) throws BrowserException {
     return ContainerUtil.createMaybeSingletonList(getUrl(request, virtualFile));
   }
 
