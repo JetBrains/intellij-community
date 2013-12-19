@@ -1,3 +1,18 @@
+/*
+ * Copyright 2000-2013 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.codeInsight.template.postfix.settings;
 
 import com.intellij.codeInsight.template.impl.TemplateSettings;
@@ -13,15 +28,15 @@ import java.io.File;
 import java.util.Map;
 
 @State(
-  name = "PostfixCompletionSettings",
+  name = "PostfixTemplatesSettings",
   storages = {
-    @Storage(file = StoragePathMacros.APP_CONFIG + "/postfixCompletion.xml")
+    @Storage(file = StoragePathMacros.APP_CONFIG + "/postfixTemplates.xml")
   }
 )
-public class PostfixCompletionSettings implements PersistentStateComponent<PostfixCompletionSettings>, ExportableComponent {
+public class PostfixTemplatesSettings implements PersistentStateComponent<PostfixTemplatesSettings>, ExportableComponent {
   @NotNull
   private Map<String, Boolean> myTemplatesState = ContainerUtil.newHashMap();
-  private boolean postfixPluginEnabled = true;
+  private boolean postfixTemplatesEnabled = true;
   private boolean templatesCompletionEnabled = true;
   private int myShortcut = TemplateSettings.TAB_CHAR;
 
@@ -33,12 +48,12 @@ public class PostfixCompletionSettings implements PersistentStateComponent<Postf
     myTemplatesState.put(template.getKey(), Boolean.FALSE);
   }
 
-  public boolean isPostfixPluginEnabled() {
-    return postfixPluginEnabled;
+  public boolean isPostfixTemplatesEnabled() {
+    return postfixTemplatesEnabled;
   }
 
-  public void setPostfixPluginEnabled(boolean postfixPluginEnabled) {
-    this.postfixPluginEnabled = postfixPluginEnabled;
+  public void setPostfixTemplatesEnabled(boolean postfixTemplatesEnabled) {
+    this.postfixTemplatesEnabled = postfixTemplatesEnabled;
   }
 
   public boolean isTemplatesCompletionEnabled() {
@@ -67,18 +82,18 @@ public class PostfixCompletionSettings implements PersistentStateComponent<Postf
   }
 
   @Nullable
-  public static PostfixCompletionSettings getInstance() {
-    return ServiceManager.getService(PostfixCompletionSettings.class);
+  public static PostfixTemplatesSettings getInstance() {
+    return ServiceManager.getService(PostfixTemplatesSettings.class);
   }
 
   @Nullable
   @Override
-  public PostfixCompletionSettings getState() {
+  public PostfixTemplatesSettings getState() {
     return this;
   }
 
   @Override
-  public void loadState(PostfixCompletionSettings settings) {
+  public void loadState(PostfixTemplatesSettings settings) {
     XmlSerializerUtil.copyBean(settings, this);
   }
 

@@ -1,12 +1,27 @@
+/*
+ * Copyright 2000-2013 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.codeInsight.template.postfix.completion;
 
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupActionProvider;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementAction;
-import com.intellij.codeInsight.template.postfix.settings.PostfixCompletionConfigurable;
-import com.intellij.codeInsight.template.postfix.settings.PostfixCompletionSettings;
+import com.intellij.codeInsight.template.postfix.settings.PostfixTemplatesConfigurable;
 import com.intellij.codeInsight.template.postfix.settings.PostfixTemplatesListPanel;
+import com.intellij.codeInsight.template.postfix.settings.PostfixTemplatesSettings;
 import com.intellij.codeInsight.template.postfix.templates.PostfixTemplate;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.application.ApplicationManager;
@@ -31,7 +46,7 @@ public class PostfixTemplateLookupActionProvider implements LookupActionProvider
             public void run() {
               if (project.isDisposed()) return;
 
-              final PostfixCompletionConfigurable configurable = new PostfixCompletionConfigurable();
+              final PostfixTemplatesConfigurable configurable = new PostfixTemplatesConfigurable();
               ShowSettingsUtil.getInstance().editConfigurable(project, configurable, new Runnable() {
                 @Override
                 public void run() {
@@ -47,7 +62,7 @@ public class PostfixTemplateLookupActionProvider implements LookupActionProvider
         }
       });
 
-      final PostfixCompletionSettings settings = PostfixCompletionSettings.getInstance();
+      final PostfixTemplatesSettings settings = PostfixTemplatesSettings.getInstance();
       if (settings != null && settings.isTemplateEnabled(template)) {
         consumer.consume(new LookupElementAction(AllIcons.Actions.Delete, String.format("Disable '%s' template", template.getKey())) {
           @Override

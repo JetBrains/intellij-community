@@ -1,3 +1,18 @@
+/*
+ * Copyright 2000-2013 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.codeInsight.template.postfix.settings;
 
 import com.intellij.application.options.editor.EditorOptionsProvider;
@@ -21,15 +36,15 @@ import java.awt.*;
 import java.util.Arrays;
 import java.util.Map;
 
-public class PostfixCompletionConfigurable implements SearchableConfigurable, EditorOptionsProvider, Configurable.NoScroll {
+public class PostfixTemplatesConfigurable implements SearchableConfigurable, EditorOptionsProvider, Configurable.NoScroll {
   @Nullable
   private PostfixTemplatesListPanel myTemplatesListPanel;
   @NotNull
-  private final PostfixCompletionSettings myTemplatesSettings;
+  private final PostfixTemplatesSettings myTemplatesSettings;
 
   private JComponent myPanel;
   private JBCheckBox myCompletionEnabledCheckbox;
-  private JBCheckBox myPluginEnabledCheckbox;
+  private JBCheckBox myPostfixTemplatesEnabled;
   private JPanel myTemplatesListPanelContainer;
   private ComboBox myShortcutComboBox;
 
@@ -38,8 +53,8 @@ public class PostfixCompletionConfigurable implements SearchableConfigurable, Ed
   private static final String ENTER = CodeInsightBundle.message("template.shortcut.enter");
 
   @SuppressWarnings("unchecked")
-  public PostfixCompletionConfigurable() {
-    PostfixCompletionSettings settings = PostfixCompletionSettings.getInstance();
+  public PostfixTemplatesConfigurable() {
+    PostfixTemplatesSettings settings = PostfixTemplatesSettings.getInstance();
     if (settings == null) {
       throw new RuntimeException("Can't retrieve postfix template settings");
     }
@@ -48,7 +63,7 @@ public class PostfixCompletionConfigurable implements SearchableConfigurable, Ed
     myTemplatesListPanel = new PostfixTemplatesListPanel(Arrays.asList(PostfixTemplate.EP_NAME.getExtensions()));
     myTemplatesListPanelContainer.setLayout(new BorderLayout());
     myTemplatesListPanelContainer.add(myTemplatesListPanel.getComponent(), BorderLayout.CENTER);
-    myPluginEnabledCheckbox.addChangeListener(new ChangeListener() {
+    myPostfixTemplatesEnabled.addChangeListener(new ChangeListener() {
       @Override
       public void stateChanged(ChangeEvent e) {
         updateComponents();
@@ -62,7 +77,7 @@ public class PostfixCompletionConfigurable implements SearchableConfigurable, Ed
   @NotNull
   @Override
   public String getId() {
-    return "reference.settingsdialog.IDE.editor.postfix.completion";
+    return "reference.settingsdialog.IDE.editor.postfix.templates";
   }
 
   @Nullable
@@ -99,7 +114,7 @@ public class PostfixCompletionConfigurable implements SearchableConfigurable, Ed
         }
       }
       myTemplatesSettings.setTemplatesState(newTemplatesState);
-      myTemplatesSettings.setPostfixPluginEnabled(myPluginEnabledCheckbox.isSelected());
+      myTemplatesSettings.setPostfixTemplatesEnabled(myPostfixTemplatesEnabled.isSelected());
       myTemplatesSettings.setTemplatesCompletionEnabled(myCompletionEnabledCheckbox.isSelected());
       myTemplatesSettings.setShortcut(stringToShortcut((String)myShortcutComboBox.getSelectedItem()));
     }
@@ -109,7 +124,7 @@ public class PostfixCompletionConfigurable implements SearchableConfigurable, Ed
   public void reset() {
     if (myTemplatesListPanel != null) {
       myTemplatesListPanel.setState(myTemplatesSettings.getTemplatesState());
-      myPluginEnabledCheckbox.setSelected(myTemplatesSettings.isPostfixPluginEnabled());
+      myPostfixTemplatesEnabled.setSelected(myTemplatesSettings.isPostfixTemplatesEnabled());
       myCompletionEnabledCheckbox.setSelected(myTemplatesSettings.isTemplatesCompletionEnabled());
       myShortcutComboBox.setSelectedItem(shortcutToString((char)myTemplatesSettings.getShortcut()));
       updateComponents();
@@ -121,7 +136,7 @@ public class PostfixCompletionConfigurable implements SearchableConfigurable, Ed
     if (myTemplatesListPanel == null) {
       return false;
     }
-    return myPluginEnabledCheckbox.isSelected() != myTemplatesSettings.isPostfixPluginEnabled() ||
+    return myPostfixTemplatesEnabled.isSelected() != myTemplatesSettings.isPostfixTemplatesEnabled() ||
            myCompletionEnabledCheckbox.isSelected() != myTemplatesSettings.isTemplatesCompletionEnabled() ||
            stringToShortcut((String)myShortcutComboBox.getSelectedItem()) != myTemplatesSettings.getShortcut() ||
            !myTemplatesListPanel.getState().equals(myTemplatesSettings.getTemplatesState());
@@ -139,7 +154,7 @@ public class PostfixCompletionConfigurable implements SearchableConfigurable, Ed
   }
 
   private void updateComponents() {
-    boolean pluginEnabled = myPluginEnabledCheckbox.isSelected();
+    boolean pluginEnabled = myPostfixTemplatesEnabled.isSelected();
     myCompletionEnabledCheckbox.setEnabled(pluginEnabled);
     myShortcutComboBox.setEnabled(pluginEnabled);
     if (myTemplatesListPanel != null) {

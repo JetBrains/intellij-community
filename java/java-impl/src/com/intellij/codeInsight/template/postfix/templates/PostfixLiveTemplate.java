@@ -1,3 +1,18 @@
+/*
+ * Copyright 2000-2013 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.codeInsight.template.postfix.templates;
 
 import com.intellij.codeInsight.completion.CompletionInitializationContext;
@@ -6,7 +21,7 @@ import com.intellij.codeInsight.completion.JavaCompletionContributor;
 import com.intellij.codeInsight.template.CustomLiveTemplateBase;
 import com.intellij.codeInsight.template.CustomTemplateCallback;
 import com.intellij.codeInsight.template.impl.TemplateSettings;
-import com.intellij.codeInsight.template.postfix.settings.PostfixCompletionSettings;
+import com.intellij.codeInsight.template.postfix.settings.PostfixTemplatesSettings;
 import com.intellij.codeInsight.template.postfix.util.Aliases;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ApplicationManager;
@@ -103,11 +118,11 @@ public class PostfixLiveTemplate extends CustomLiveTemplateBase {
 
   @Override
   public boolean isApplicable(PsiFile file, int offset, boolean wrapping) {
-    PostfixCompletionSettings settings = PostfixCompletionSettings.getInstance();
+    PostfixTemplatesSettings settings = PostfixTemplatesSettings.getInstance();
     return !wrapping 
            && file != null
            && settings != null
-           && settings.isPostfixPluginEnabled()
+           && settings.isPostfixTemplatesEnabled()
            && PsiUtilCore.getLanguageAtOffset(file, offset) == JavaLanguage.INSTANCE;
   }
 
@@ -129,7 +144,7 @@ public class PostfixLiveTemplate extends CustomLiveTemplateBase {
 
   @Override
   public char getShortcut() {
-    PostfixCompletionSettings settings = PostfixCompletionSettings.getInstance();
+    PostfixTemplatesSettings settings = PostfixTemplatesSettings.getInstance();
     return settings != null ? (char)settings.getShortcut() : TemplateSettings.TAB_CHAR;
   }
 

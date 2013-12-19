@@ -27,12 +27,12 @@
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">
-    <applicationService id="postfixCompletionSettings" serviceImplementation="com.intellij.codeInsight.template.postfix.settings.PostfixCompletionSettings"/>
+    <applicationService id="postfixCompletionSettings" serviceImplementation="com.intellij.codeInsight.template.postfix.settings.PostfixTemplatesSettings"/>
     <customLiveTemplate implementation="com.intellij.codeInsight.template.postfix.templates.PostfixLiveTemplate"/>
     
     <completion.contributor language="JAVA" implementationClass="com.intellij.codeInsight.template.postfix.completion.PostfixTemplateCompletionContributor"/>
     <lookup.actionProvider implementation="com.intellij.codeInsight.template.postfix.completion.PostfixTemplateLookupActionProvider"/>
     
-    <editorOptionsProvider id="editing.postfixCompletion" instance="com.intellij.codeInsight.template.postfix.settings.PostfixCompletionConfigurable"/>
+    <editorOptionsProvider id="editing.postfixCompletion" instance="com.intellij.codeInsight.template.postfix.settings.PostfixTemplatesConfigurable"/>
   </extensions>
 </idea-plugin>
