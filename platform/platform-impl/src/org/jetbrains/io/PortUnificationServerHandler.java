@@ -107,7 +107,7 @@ class PortUnificationServerHandler extends Decoder {
         NettyUtil.initHttpHandlers(pipeline);
         pipeline.addLast(delegatingHttpRequestHandler);
         if (BuiltInServer.LOG.isDebugEnabled()) {
-          pipeline.addLast(new ChannelOutboundHandlerAdapter() {
+          pipeline.addLast(new ChannelHandlerAdapter() {
             @Override
             public void write(ChannelHandlerContext context, Object message, ChannelPromise promise) throws Exception {
               if (message instanceof HttpResponse) {
