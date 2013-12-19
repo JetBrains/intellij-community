@@ -17,6 +17,8 @@ package com.intellij.vcs.log.data;
 
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.ThrowableComputable;
+import com.intellij.util.io.IOUtil;
 import com.intellij.util.io.KeyDescriptor;
 import com.intellij.util.io.Page;
 import com.intellij.util.io.PersistentEnumerator;
@@ -40,8 +42,13 @@ class VcsLogHashMap {
   private final PersistentEnumerator<Hash> myPersistentEnumerator;
 
   VcsLogHashMap(@NotNull Project project) throws IOException {
-    File myMapFile = new File(LOG_CACHE_APP_DIR, project.getName() + "." + project.getLocationHash());
-    myPersistentEnumerator = new PersistentEnumerator<Hash>(myMapFile, new MyHashKeyDescriptor(), Page.PAGE_SIZE);
+    final File myMapFile = new File(LOG_CACHE_APP_DIR, project.getName() + "." + project.getLocationHash());
+    myPersistentEnumerator = IOUtil.openCleanOrResetBroken(new ThrowableComputable<PersistentEnumerator<Hash>, IOException>() {
+      @Override
+      public PersistentEnumerator<Hash> compute() throws IOException {
+        return new PersistentEnumerator<Hash>(myMapFile, new MyHashKeyDescriptor(), Page.PAGE_SIZE);
+      }
+    }, myMapFile);
   }
 
   @Nullable
