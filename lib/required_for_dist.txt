@@ -6,7 +6,7 @@ cglib-2.2.2.jar
 cli-parser-1.1.jar
 commons-codec-1.8.jar
 commons-httpclient-3.1-patched.jar
-commons-logging-1.1.1.jar
+commons-logging-1.1.3.jar
 commons-net-3.1.jar
 ecj-4.2.1.jar
 groovy-all-2.0.6.jar
