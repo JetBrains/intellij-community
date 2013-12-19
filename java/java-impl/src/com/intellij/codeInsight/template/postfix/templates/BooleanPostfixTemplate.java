@@ -1,6 +1,6 @@
 package com.intellij.codeInsight.template.postfix.templates;
 
-import com.intellij.codeInsight.template.postfix.util.CommonUtils;
+import com.intellij.codeInsight.template.postfix.util.PostfixTemplatesUtils;
 import com.intellij.openapi.editor.Document;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
@@ -17,6 +17,6 @@ abstract public class BooleanPostfixTemplate extends PostfixTemplate {
     PsiExpression topmostExpression = getTopmostExpression(context);
     return topmostExpression != null &&
            topmostExpression.getParent() instanceof PsiExpressionStatement &&
-           CommonUtils.isBoolean(topmostExpression.getType());
+           PostfixTemplatesUtils.isBoolean(topmostExpression.getType());
   }
 }

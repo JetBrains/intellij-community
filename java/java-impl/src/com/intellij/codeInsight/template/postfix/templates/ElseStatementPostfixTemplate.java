@@ -1,7 +1,7 @@
 package com.intellij.codeInsight.template.postfix.templates;
 
 import com.intellij.codeInsight.CodeInsightServicesUtil;
-import com.intellij.codeInsight.template.postfix.util.JavaSurroundersProxy;
+import com.intellij.codeInsight.template.postfix.util.PostfixTemplatesUtils;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
@@ -18,7 +18,7 @@ public class ElseStatementPostfixTemplate extends BooleanPostfixTemplate {
     PsiExpression expression = getTopmostExpression(context);
     assert expression != null;
     PsiExpression invertedExpression = (PsiExpression)expression.replace(CodeInsightServicesUtil.invertCondition(expression));
-    TextRange range = JavaSurroundersProxy.ifStatement(invertedExpression.getProject(), editor, invertedExpression);
+    TextRange range = PostfixTemplatesUtils.ifStatement(invertedExpression.getProject(), editor, invertedExpression);
     if (range != null) {
       editor.getCaretModel().moveToOffset(range.getStartOffset());
     }

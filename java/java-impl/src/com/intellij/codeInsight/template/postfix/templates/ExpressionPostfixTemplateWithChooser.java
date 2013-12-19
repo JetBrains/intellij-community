@@ -1,6 +1,6 @@
 package com.intellij.codeInsight.template.postfix.templates;
 
-import com.intellij.codeInsight.template.postfix.util.CommonUtils;
+import com.intellij.codeInsight.template.postfix.util.PostfixTemplatesUtils;
 import com.intellij.codeInsight.unwrap.ScopeHighlighter;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
@@ -46,7 +46,7 @@ public abstract class ExpressionPostfixTemplateWithChooser extends PostfixTempla
     List<PsiExpression> expressions = getExpressions(context, editor, editor.getCaretModel().getOffset());
 
     if (expressions.isEmpty()) {
-      CommonUtils.showErrorHint(context.getProject(), editor);
+      PostfixTemplatesUtils.showErrorHint(context.getProject(), editor);
     }
     else if (expressions.size() == 1) {
       doIt(editor, expressions.get(0));

@@ -7,7 +7,7 @@ import com.intellij.codeInsight.template.impl.TextExpression;
 import com.intellij.codeInsight.template.impl.VariableNode;
 import com.intellij.codeInsight.template.macro.IterableComponentTypeMacro;
 import com.intellij.codeInsight.template.macro.SuggestVariableNameMacro;
-import com.intellij.codeInsight.template.postfix.util.CommonUtils;
+import com.intellij.codeInsight.template.postfix.util.PostfixTemplatesUtils;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -25,7 +25,7 @@ public class ForeachPostfixTemplate extends PostfixTemplate {
   public boolean isApplicable(@NotNull PsiElement context, @NotNull Document copyDocument, int newOffset) {
     PsiExpression expr = getTopmostExpression(context);
     if (expr == null || !(expr.getParent() instanceof PsiExpressionStatement)) return false;
-    return CommonUtils.isArray(expr.getType()) || CommonUtils.isIterable(expr.getType());
+    return PostfixTemplatesUtils.isArray(expr.getType()) || PostfixTemplatesUtils.isIterable(expr.getType());
   }
 
   @Override

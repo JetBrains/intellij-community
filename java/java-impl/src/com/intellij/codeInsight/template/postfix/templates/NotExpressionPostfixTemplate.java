@@ -1,7 +1,7 @@
 package com.intellij.codeInsight.template.postfix.templates;
 
 import com.intellij.codeInsight.CodeInsightServicesUtil;
-import com.intellij.codeInsight.template.postfix.util.CommonUtils;
+import com.intellij.codeInsight.template.postfix.util.PostfixTemplatesUtils;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.Condition;
 import com.intellij.psi.PsiExpression;
@@ -23,7 +23,7 @@ public class NotExpressionPostfixTemplate extends ExpressionPostfixTemplateWithC
     return new Condition<PsiExpression>() {
       @Override
       public boolean value(PsiExpression expression) {
-        return CommonUtils.isBoolean(expression.getType());
+        return PostfixTemplatesUtils.isBoolean(expression.getType());
       }
     };
   }

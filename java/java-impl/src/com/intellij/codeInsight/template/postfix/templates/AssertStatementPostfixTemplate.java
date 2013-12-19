@@ -1,6 +1,6 @@
 package com.intellij.codeInsight.template.postfix.templates;
 
-import com.intellij.codeInsight.template.postfix.util.CommonUtils;
+import com.intellij.codeInsight.template.postfix.util.PostfixTemplatesUtils;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
@@ -12,6 +12,6 @@ public class AssertStatementPostfixTemplate extends BooleanPostfixTemplate {
 
   @Override
   public void expand(@NotNull PsiElement context, @NotNull Editor editor) {
-    CommonUtils.createSimpleStatement(context, editor, "assert");
+    PostfixTemplatesUtils.createSimpleStatement(context, editor, "assert");
   }
 }

@@ -1,6 +1,6 @@
 package com.intellij.codeInsight.template.postfix.templates;
 
-import com.intellij.codeInsight.template.postfix.util.CommonUtils;
+import com.intellij.codeInsight.template.postfix.util.PostfixTemplatesUtils;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiExpression;
 import org.jetbrains.annotations.NotNull;
@@ -20,7 +20,7 @@ public class ForDescendingPostfixTemplate extends ForIndexedPostfixTemplate {
   @NotNull
   @Override
   protected String getComparativeSign(@NotNull PsiExpression expr) {
-    return CommonUtils.isNumber(expr.getType()) ? ">" : ">=";
+    return PostfixTemplatesUtils.isNumber(expr.getType()) ? ">" : ">=";
   }
 
   @Nullable
@@ -30,7 +30,7 @@ public class ForDescendingPostfixTemplate extends ForIndexedPostfixTemplate {
     if (bound == null) {
       return null;
     }
-    return CommonUtils.isNumber(expression.getType())
+    return PostfixTemplatesUtils.isNumber(expression.getType())
       ? Pair.create(bound, "0")
       : Pair.create(bound + " - 1", "0");
   }

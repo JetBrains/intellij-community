@@ -1,6 +1,6 @@
 package com.intellij.codeInsight.template.postfix.templates;
 
-import com.intellij.codeInsight.template.postfix.util.CommonUtils;
+import com.intellij.codeInsight.template.postfix.util.PostfixTemplatesUtils;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiElement;
@@ -22,6 +22,6 @@ public class ThrowExceptionPostfixTemplate extends PostfixTemplate {
 
   @Override
   public void expand(@NotNull PsiElement context, @NotNull Editor editor) {
-    CommonUtils.createSimpleStatement(context, editor, "throw");
+    PostfixTemplatesUtils.createSimpleStatement(context, editor, "throw");
   }
 }

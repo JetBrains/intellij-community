@@ -1,6 +1,6 @@
 package com.intellij.codeInsight.template.postfix.templates;
 
-import com.intellij.codeInsight.template.postfix.util.JavaSurroundersProxy;
+import com.intellij.codeInsight.template.postfix.util.PostfixTemplatesUtils;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -38,7 +38,7 @@ public abstract class NullCheckPostfixTemplate extends PostfixTemplate {
     PsiElement replace = expr.replace(condition);
     assert replace instanceof PsiExpression;
 
-    TextRange range = JavaSurroundersProxy.ifStatement(project, editor, (PsiExpression)replace);
+    TextRange range = PostfixTemplatesUtils.ifStatement(project, editor, (PsiExpression)replace);
     if (range != null) {
       editor.getCaretModel().moveToOffset(range.getStartOffset());
     }

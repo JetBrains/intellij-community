@@ -4,7 +4,7 @@ import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateManager;
 import com.intellij.codeInsight.template.impl.MacroCallNode;
 import com.intellij.codeInsight.template.macro.SuggestVariableNameMacro;
-import com.intellij.codeInsight.template.postfix.util.CommonUtils;
+import com.intellij.codeInsight.template.postfix.util.PostfixTemplatesUtils;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -25,20 +25,21 @@ public abstract class ForIndexedPostfixTemplate extends PostfixTemplate {
   public boolean isApplicable(@NotNull PsiElement context, @NotNull Document copyDocument, int newOffset) {
     PsiExpression expr = getTopmostExpression(context);
     if (expr == null || !(expr.getParent() instanceof PsiExpressionStatement)) return false;
-    return CommonUtils.isNumber(expr.getType()) || CommonUtils.isArray(expr.getType()) || CommonUtils.isIterable(expr.getType());
+    return PostfixTemplatesUtils.isNumber(expr.getType()) || PostfixTemplatesUtils.isArray(expr.getType()) || PostfixTemplatesUtils
+      .isIterable(expr.getType());
   }
 
   @Override
   public void expand(@NotNull PsiElement context, @NotNull Editor editor) {
     PsiExpression expr = getTopmostExpression(context);
     if (expr == null) {
-      CommonUtils.showErrorHint(context.getProject(), editor);
+      PostfixTemplatesUtils.showErrorHint(context.getProject(), editor);
       return;
     }
 
     Pair<String, String> bounds = calculateBounds(expr);
     if (bounds == null) {
-      CommonUtils.showErrorHint(context.getProject(), editor);
+      PostfixTemplatesUtils.showErrorHint(context.getProject(), editor);
       return;
     }
     Project project = context.getProject();
@@ -79,13 +80,13 @@ public abstract class ForIndexedPostfixTemplate extends PostfixTemplate {
   @Nullable
   protected static String getExpressionBound(@NotNull PsiExpression expr) {
     PsiType type = expr.getType();
-    if (CommonUtils.isNumber(type)) {
+    if (PostfixTemplatesUtils.isNumber(type)) {
       return expr.getText();
     }
-    else if (CommonUtils.isArray(type)) {
+    else if (PostfixTemplatesUtils.isArray(type)) {
       return expr.getText() + ".length";
     }
-    else if (CommonUtils.isIterable(type)) {
+    else if (PostfixTemplatesUtils.isIterable(type)) {
       return expr.getText() + ".size()";
     }
     return null;
@@ -94,7 +95,7 @@ public abstract class ForIndexedPostfixTemplate extends PostfixTemplate {
   @NotNull
   private static String suggestIndexType(@NotNull PsiExpression expr) {
     PsiType type = expr.getType();
-    if (CommonUtils.isNumber(type)) {
+    if (PostfixTemplatesUtils.isNumber(type)) {
       return type.getCanonicalText();
     }
     return "int";

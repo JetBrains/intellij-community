@@ -1,6 +1,7 @@
 package com.intellij.codeInsight.template.postfix.templates;
 
-import com.intellij.codeInsight.template.postfix.util.JavaSurroundersProxy;
+import com.intellij.codeInsight.generation.surroundWith.JavaWithCastSurrounder;
+import com.intellij.codeInsight.template.postfix.util.PostfixTemplatesUtils;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiExpression;
 import org.jetbrains.annotations.NotNull;
@@ -12,6 +13,6 @@ public class CastExpressionPostfixTemplate extends ExpressionPostfixTemplateWith
 
   @Override
   protected void doIt(@NotNull final Editor editor, @NotNull final PsiExpression expression) {
-    JavaSurroundersProxy.cast(expression.getProject(), editor, expression);
+    PostfixTemplatesUtils.apply(new JavaWithCastSurrounder(), expression.getProject(), editor, expression);
   }
 }

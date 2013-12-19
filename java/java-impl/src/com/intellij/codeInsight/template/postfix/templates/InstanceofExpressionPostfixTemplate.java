@@ -5,7 +5,7 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.PsiTypeLookupItem;
 import com.intellij.codeInsight.template.*;
 import com.intellij.codeInsight.template.postfix.util.Aliases;
-import com.intellij.codeInsight.template.postfix.util.CommonUtils;
+import com.intellij.codeInsight.template.postfix.util.PostfixTemplatesUtils;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
@@ -53,7 +53,7 @@ public class InstanceofExpressionPostfixTemplate extends PostfixTemplate {
     else {
       RangeMarker rangeMarker = expr.getUserData(ElementToWorkOn.TEXT_RANGE);
       if (rangeMarker == null) {
-        CommonUtils.showErrorHint(project, editor);
+        PostfixTemplatesUtils.showErrorHint(project, editor);
         return;
       }
       range = new TextRange(rangeMarker.getStartOffset(), rangeMarker.getEndOffset());

@@ -27,7 +27,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.psi.util.FileTypeUtils;
 import org.jetbrains.annotations.NonNls;
 
-class JavaWithIfExpressionSurrounder extends JavaExpressionSurrounder{
+public class JavaWithIfExpressionSurrounder extends JavaExpressionSurrounder{
   @Override
   public boolean isApplicable(PsiExpression expr) {
     PsiType type = expr.getType();

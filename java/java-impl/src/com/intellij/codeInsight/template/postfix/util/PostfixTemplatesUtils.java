@@ -1,8 +1,11 @@
 package com.intellij.codeInsight.template.postfix.util;
 
+import com.intellij.codeInsight.generation.surroundWith.JavaExpressionSurrounder;
+import com.intellij.codeInsight.generation.surroundWith.JavaWithIfExpressionSurrounder;
 import com.intellij.codeInsight.template.postfix.templates.PostfixTemplate;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
@@ -10,8 +13,8 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public abstract class CommonUtils {
-  private CommonUtils() {
+public abstract class PostfixTemplatesUtils {
+  private PostfixTemplatesUtils() {
   }
 
   public static void showErrorHint(Project project, Editor editor) {
@@ -54,6 +57,31 @@ public abstract class CommonUtils {
 
     PsiPrimitiveType unboxedType = PsiPrimitiveType.getUnboxedType(type);
     return PsiType.INT.equals(unboxedType) || PsiType.BYTE.equals(unboxedType) || PsiType.LONG.equals(unboxedType);
+  }
+
+  @Nullable
+  public static TextRange ifStatement(@NotNull Project project, @NotNull Editor editor, @NotNull PsiExpression expr) {
+    JavaExpressionSurrounder surrounder = new JavaWithIfExpressionSurrounder();
+    PsiElement[] elements = {expr};
+    if (surrounder.isApplicable(elements)) {
+      return surrounder.surroundElements(project, editor, elements);
+    }
+    else {
+      showErrorHint(project, editor);
+    }
+    return null;
+  }
+
+  @Nullable
+  public static TextRange apply(@NotNull JavaExpressionSurrounder surrounder, @NotNull Project project, @NotNull Editor editor, @NotNull PsiExpression expr) {
+    PsiElement[] elements = {expr};
+    if (surrounder.isApplicable(elements)) {
+      return surrounder.surroundElements(project, editor, elements);
+    }
+    else {
+      showErrorHint(project, editor);
+    }
+    return null;
   }
 }
 
