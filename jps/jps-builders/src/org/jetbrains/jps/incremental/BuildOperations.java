@@ -225,7 +225,7 @@ public class BuildOperations {
     }
     boolean deleted = file.delete();
     if (deleted && children == null) {
-      deletedPaths.add(file.getPath());
+      deletedPaths.add(FileUtil.toSystemIndependentName(file.getPath()));
     }
     return deleted;
   }
