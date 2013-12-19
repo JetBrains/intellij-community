@@ -136,19 +136,18 @@ public class ProjectTypeStep extends ModuleWizardStep implements Disposable {
     MultiMap<TemplatesGroup,ProjectTemplate> templatesMap = CreateFromTemplateMode.getTemplatesMap(context, false);
     List<TemplatesGroup> groups = new ArrayList<TemplatesGroup>(templatesMap.keySet());
     Collections.sort(groups);
-    MultiMap<String, ProjectCategory> map = new MultiMap<String, ProjectCategory>();
+    MultiMap<TemplatesGroup, ProjectCategory> map = new MultiMap<TemplatesGroup, ProjectCategory>();
     for (TemplatesGroup group : groups) {
-      String name = group.getName();
       for (ProjectTemplate template : templatesMap.get(group)) {
         TemplateBasedProjectType projectType = new TemplateBasedProjectType(template);
-        map.putValue(name, projectType);
+        map.putValue(group, projectType);
       }
-      for (ProjectCategory category : categories.get(name)) {
-        map.putValue(name, category);
+      for (ProjectCategory category : categories.get(group.getName())) {
+        map.putValue(group, category);
       }
     }
 
-    myProjectTypesList = new ProjectTypesList(myProjectTypeList, map);
+    myProjectTypesList = new ProjectTypesList(myProjectTypeList, map, myBuilders);
 
     myProjectTypeList.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
       @Override

@@ -16,26 +16,30 @@
 package com.intellij.ide.projectWizard;
 
 import com.intellij.ide.util.newProjectWizard.SelectTemplateSettings;
+import com.intellij.ide.util.newProjectWizard.TemplatesGroup;
+import com.intellij.ide.util.projectWizard.ModuleBuilder;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
+import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.ui.popup.ListItemDescriptor;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
+import com.intellij.platform.ProjectTemplatesFactory;
 import com.intellij.ui.CollectionListModel;
 import com.intellij.ui.ListSpeedSearch;
 import com.intellij.ui.SpeedSearchComparator;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.popup.list.GroupedItemsListRenderer;
+import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author Dmitry Avdeev
@@ -47,7 +51,7 @@ public class ProjectTypesList implements Disposable {
   private final CollectionListModel<TemplateItem> myModel;
   private Pair<TemplateItem, Integer> myBestMatch;
 
-  public ProjectTypesList(JBList list, MultiMap<String, ProjectCategory> map) {
+  public ProjectTypesList(JBList list, MultiMap<TemplatesGroup, ProjectCategory> map, FactoryMap<ProjectCategory, ModuleBuilder> builders) {
 
     myList = list;
     myList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
@@ -58,7 +62,7 @@ public class ProjectTypesList implements Disposable {
         return super.getElementText(element);
       }
     }.setComparator(new SpeedSearchComparator(false));
-    List<TemplateItem> items = buildItems(map);
+    List<TemplateItem> items = buildItems(map, builders);
     myModel = new CollectionListModel<TemplateItem>(items);
 
     myList.setCellRenderer(new GroupedItemsListRenderer(new ListItemDescriptor() {
@@ -137,17 +141,48 @@ public class ProjectTypesList implements Disposable {
     }
   }
 
-  private List<TemplateItem> buildItems(MultiMap<String, ProjectCategory> map) {
+  private static List<TemplateItem> buildItems(final MultiMap<TemplatesGroup, ProjectCategory> map, final FactoryMap<ProjectCategory, ModuleBuilder> builders) {
     List<TemplateItem> items = new ArrayList<TemplateItem>();
-    List<String> groups = new ArrayList<String>(map.keySet());
-    Collections.sort(groups);
-    for (String group : groups) {
+    List<TemplatesGroup> groups = new ArrayList<TemplatesGroup>(map.keySet());
+
+    final Map<ModuleType, Integer> moduleTypeMap = new HashMap<ModuleType, Integer>();
+    for (ProjectCategory category : map.values()) {
+      ModuleType type = builders.get(category).getModuleType();
+      Integer integer = moduleTypeMap.get(type);
+      moduleTypeMap.put(type, integer == null ? 0 : integer + 1);
+    }
+
+    Collections.sort(groups, new Comparator<TemplatesGroup>() {
+      @Override
+      public int compare(TemplatesGroup o1, TemplatesGroup o2) {
+        int weight = Comparing.compare(o1.getName().equals(ProjectTemplatesFactory.OTHER_GROUP), o2.getName().equals(ProjectTemplatesFactory.OTHER_GROUP));
+        if (weight != 0) return weight;
+        int byModuleType = getModuleTypePopularity(o2, map, builders, moduleTypeMap) - getModuleTypePopularity(o1, map, builders, moduleTypeMap);
+        if (byModuleType != 0) return byModuleType;
+        int i = map.get(o2).size() - map.get(o1).size(); // compare group size
+        return i == 0 ? o1.compareTo(o2) : i;
+      }
+    });
+
+    for (TemplatesGroup group : groups) {
       for (ProjectCategory template : map.get(group)) {
-        TemplateItem templateItem = new TemplateItem(template, group);
+        TemplateItem templateItem = new TemplateItem(template, group.getName());
         items.add(templateItem);
       }
     }
     return items;
+  }
+
+  private static int getModuleTypePopularity(TemplatesGroup group,
+                                              MultiMap<TemplatesGroup, ProjectCategory> map,
+                                              FactoryMap<ProjectCategory, ModuleBuilder> builders,
+                                              Map<ModuleType, Integer> moduleTypeMap) {
+    int moduleTypePopularity = 0;
+    for (ProjectCategory category : map.get(group)) {
+      ModuleType type = builders.get(category).getModuleType();
+      moduleTypePopularity = Math.max(moduleTypePopularity, moduleTypeMap.get(type));
+    }
+    return moduleTypePopularity;
   }
 
   @Nullable
