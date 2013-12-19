@@ -253,7 +253,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
     }, new Condition<Object>() {
       @Override
       public boolean value(Object o) {
-        return isDisposed || project.isDisposed() || searchHasBeenCancelled();
+        return isDisposed || project.isDisposed();
       }
     },200);
   }
