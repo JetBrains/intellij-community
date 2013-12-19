@@ -77,29 +77,9 @@ public class GradleExecutionHelper {
                                         @NotNull ProjectConnection connection,
                                         @Nullable GradleExecutionSettings settings,
                                         @NotNull ExternalSystemTaskNotificationListener listener,
-                                        @Nullable final String vmOptions) {
+                                        @NotNull final List<String> vmOptions) {
     BuildLauncher result = connection.newBuild();
-    List<String> extraJvmArgs =
-      vmOptions == null ? ContainerUtil.<String>emptyList() :
-      ContainerUtil.newArrayList(StringUtil.split(vmOptions.trim(), " "));
-    prepare(result, id, settings, listener, extraJvmArgs, connection);
-    return result;
-  }
-
-  @SuppressWarnings({"MethodMayBeStatic", "UnusedDeclaration"})
-  @NotNull
-  public BuildLauncher getBuildLauncher(@NotNull final ExternalSystemTaskId id,
-                                        @NotNull ProjectConnection connection,
-                                        @Nullable GradleExecutionSettings settings,
-                                        @NotNull ExternalSystemTaskNotificationListener listener,
-                                        @Nullable final String vmOptions,
-                                        @NotNull final OutputStream standardOutput,
-                                        @NotNull final OutputStream standardError) {
-    BuildLauncher result = connection.newBuild();
-    List<String> extraJvmArgs =
-      vmOptions == null ? ContainerUtil.<String>emptyList() :
-      ContainerUtil.newArrayList(StringUtil.split(vmOptions.trim(), " "));
-    prepare(result, id, settings, listener, extraJvmArgs, connection, standardOutput, standardError);
+    prepare(result, id, settings, listener, vmOptions, connection);
     return result;
   }
 

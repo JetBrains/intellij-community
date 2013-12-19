@@ -49,8 +49,8 @@ public class ExternalSystemTaskManagerWrapper<S extends ExternalSystemExecutionS
                            @NotNull List<String> taskNames,
                            @NotNull String projectPath,
                            @Nullable S settings,
-                           @Nullable String vmOptions,
-                           @Nullable String scriptParameters,
+                           @NotNull List<String> vmOptions,
+                           @NotNull List<String> scriptParameters,
                            @Nullable String debuggerSetup) throws RemoteException, ExternalSystemException
   {
     myProgressManager.onQueued(id);

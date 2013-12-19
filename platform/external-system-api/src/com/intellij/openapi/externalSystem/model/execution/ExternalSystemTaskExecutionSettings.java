@@ -102,6 +102,7 @@ public class ExternalSystemTaskExecutionSettings implements Cloneable {
     result.setExternalSystemIdString(getExternalSystemIdString());
     result.setExternalProjectPath(getExternalProjectPath());
     result.setVmOptions(getVmOptions());
+    result.setScriptParameters(getScriptParameters());
     result.setTaskNames(ContainerUtilRt.newArrayList(getTaskNames()));
     result.setTaskDescriptions(ContainerUtilRt.newArrayList(getTaskDescriptions()));
     return result;

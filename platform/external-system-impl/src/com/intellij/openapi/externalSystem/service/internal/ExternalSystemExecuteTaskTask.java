@@ -25,7 +25,9 @@ import com.intellij.openapi.externalSystem.service.RemoteExternalSystemFacade;
 import com.intellij.openapi.externalSystem.service.remote.RemoteExternalSystemTaskManager;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ContainerUtilRt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -100,7 +102,10 @@ public class ExternalSystemExecuteTaskTask extends AbstractExternalSystemTask {
     RemoteExternalSystemTaskManager taskManager = facade.getTaskManager();
     List<String> taskNames = ContainerUtilRt.map2List(myTasksToExecute, MAPPER);
 
-    taskManager.executeTasks(getId(), taskNames, getExternalProjectPath(), settings, myVmOptions, myScriptParameters, myDebuggerSetup);
+    final List<String> vmOptions = parseCmdParameters(myVmOptions);
+    final List<String> scriptParametersList = parseCmdParameters(myScriptParameters);
+
+    taskManager.executeTasks(getId(), taskNames, getExternalProjectPath(), settings, vmOptions, scriptParametersList, myDebuggerSetup);
   }
 
   @Override
@@ -110,5 +115,21 @@ public class ExternalSystemExecuteTaskTask extends AbstractExternalSystemTask {
     RemoteExternalSystemTaskManager taskManager = facade.getTaskManager();
 
     return taskManager.cancelTask(getId());
+  }
+
+  private static List<String> parseCmdParameters(@Nullable String cmdArgsLine) {
+    final List<String> scriptParametersList = ContainerUtil.newArrayList();
+    if (cmdArgsLine != null) {
+      // filter nulls and empty strings
+      scriptParametersList.addAll(ContainerUtil.mapNotNull(
+        StringUtil.split(cmdArgsLine.trim(), " "), new Function<String, String>() {
+          @Override
+          public String fun(String s) {
+            return StringUtil.isEmpty(s) ? null : s.trim();
+          }
+        }
+      ));
+    }
+    return scriptParametersList;
   }
 }
