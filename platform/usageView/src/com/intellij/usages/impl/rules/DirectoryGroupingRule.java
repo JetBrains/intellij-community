@@ -100,12 +100,7 @@ public class DirectoryGroupingRule implements UsageGroupingRule {
     @NotNull
     public String getText(UsageView view) {
       String relativePath = VfsUtilCore.getRelativePath(myDir, myProject.getBaseDir(), File.separatorChar);
-      if (relativePath != null) {
-        return relativePath;
-      }
-      String url = myDir.getPresentableUrl();
-
-      return url != null ? url : "<invalid>";
+      return relativePath != null ? relativePath : myDir.getPresentableUrl();
     }
 
     @Override

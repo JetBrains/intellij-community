@@ -155,7 +155,7 @@ public class GitUIUtil {
     return new ListCellRendererWrapper<VirtualFile>() {
       @Override
       public void customize(final JList list, final VirtualFile file, final int index, final boolean selected, final boolean hasFocus) {
-        setText(file == null || !file.isValid() ? "(invalid)" : file.getPresentableUrl());
+        setText(file == null ? "(invalid)" : file.getPresentableUrl());
       }
     };
   }

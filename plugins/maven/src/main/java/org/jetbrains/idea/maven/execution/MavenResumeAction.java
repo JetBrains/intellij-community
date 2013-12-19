@@ -297,7 +297,9 @@ public class MavenResumeAction extends AnAction {
         goals.add(myResumeModuleId);
       }
 
-      myRunner.execute(new ExecutionEnvironmentBuilder(myEnvironment).setContentToReuse(null).build());
+      runConfiguration.getRunnerParameters().setGoals(goals);
+
+      myRunner.execute(new ExecutionEnvironmentBuilder(myEnvironment).setContentToReuse(null).setRunProfile(runConfiguration).build());
     }
     catch (RunCanceledByUserException ignore) {
     }
