@@ -23,7 +23,6 @@
     <orderEntry type="library" name="JavaHelp" level="project" />
     <orderEntry type="module" module-name="lang-api" />
     <orderEntry type="library" name="jna" level="project" />
-    <orderEntry type="library" name="http-client-3.1" level="project" />
     <orderEntry type="library" name="winp" level="project" />
     <orderEntry type="library" name="swingx" level="project" />
     <orderEntry type="module" module-name="core-impl" exported="" />
@@ -40,6 +39,7 @@
     <orderEntry type="library" name="jayatana" level="project" />
     <orderEntry type="module" module-name="editor-ui-ex" exported="" />
     <orderEntry type="library" name="gson" level="project" />
+    <orderEntry type="library" name="http-client" level="project" />
   </component>
 </module>
 
