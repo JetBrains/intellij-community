@@ -24,6 +24,7 @@ import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.configurations.ModuleBasedConfiguration;
 import com.intellij.execution.configurations.RunConfigurationBase;
 import com.intellij.execution.util.JreVersionDetector;
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.util.ClassFilter;
 import com.intellij.ide.util.PackageChooserDialog;
 import com.intellij.openapi.diagnostic.Logger;
@@ -163,7 +164,7 @@ public class CoverageConfigurable extends SettingsEditor<RunConfigurationBase> {
 
     myTrackTestSourcesCb.setSelected(configuration.isTrackTestFolders());
   }
-  
+
   protected boolean canHavePerTestCoverage() {
     return CoverageEnabledConfiguration.getOrCreate(myConfig).canHavePerTestCoverage();
   }
@@ -239,9 +240,9 @@ public class CoverageConfigurable extends SettingsEditor<RunConfigurationBase> {
     cPanel.add(tracingPanel);
     myRunnerPanel.add(cPanel, new GridBagConstraints(0, 1, GridBagConstraints.REMAINDER, 1, 1, 1, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0,0,0,0), 0, 0));
 
-    final GridBagConstraints gc = new GridBagConstraints(0, GridBagConstraints.RELATIVE, 
-                                                         1, 1, 1, 0, 
-                                                         GridBagConstraints.NORTHWEST, GridBagConstraints.BOTH, 
+    final GridBagConstraints gc = new GridBagConstraints(0, GridBagConstraints.RELATIVE,
+                                                         1, 1, 1, 0,
+                                                         GridBagConstraints.NORTHWEST, GridBagConstraints.BOTH,
                                                          new Insets(0, 0, 0, 0), 0, 0);
     result.add(myRunnerPanel, gc);
 
@@ -260,7 +261,7 @@ public class CoverageConfigurable extends SettingsEditor<RunConfigurationBase> {
     result.add(panel, gc);
 
     myCoverageNotSupportedLabel = new JLabel(CodeInsightBundle.message("code.coverage.is.not.supported"));
-    myCoverageNotSupportedLabel.setIcon(UIUtil.getOptionPanelWarningIcon());
+    myCoverageNotSupportedLabel.setIcon(AllIcons.General.WarningDialog);
     result.add(myCoverageNotSupportedLabel, gc);
     return result;
   }
