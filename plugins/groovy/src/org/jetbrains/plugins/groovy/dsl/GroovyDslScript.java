@@ -76,6 +76,9 @@ public class GroovyDslScript {
 
       return holder.processMembers(descriptor, processor, state);
     }
+    catch (ProcessCanceledException e) {
+      throw e;
+    }
     catch (Throwable e) {
       handleDslError(e);
       return true;
