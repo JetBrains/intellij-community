@@ -33,7 +33,7 @@ public abstract class WebBrowserService {
 
   @NotNull
   public Collection<Url> getUrlsToOpen(@NotNull final PsiElement element, boolean preferLocalUrl) throws WebBrowserUrlProvider.BrowserException {
-    OpenInBrowserRequest request = OpenInBrowserRequest.createRequest(element);
+    OpenInBrowserRequest request = OpenInBrowserRequest.create(element);
     return request == null ? Collections.<Url>emptyList() : getUrlsToOpen(request, preferLocalUrl);
   }
 }

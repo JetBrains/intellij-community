@@ -35,8 +35,7 @@ class SelectInDefaultBrowserTarget extends SelectInTargetBase {
   @Override
   public boolean canSelect(SelectInContext context) {
     Object selectorInFile = context.getSelectorInFile();
-    OpenInBrowserRequest
-      request = selectorInFile instanceof PsiElement ? OpenInBrowserRequest.createRequest((PsiElement)selectorInFile) : null;
+    OpenInBrowserRequest request = selectorInFile instanceof PsiElement ? OpenInBrowserRequest.create((PsiElement)selectorInFile) : null;
     if (request == null) {
       return false;
     }
@@ -65,7 +64,7 @@ class SelectInDefaultBrowserTarget extends SelectInTargetBase {
   public void selectIn(SelectInContext context, boolean requestFocus) {
     PsiElement element = (PsiElement)context.getSelectorInFile();
     LOG.assertTrue(element != null);
-    OpenFileInDefaultBrowserAction.open(OpenInBrowserRequest.createRequest(element), false, null);
+    OpenFileInDefaultBrowserAction.open(OpenInBrowserRequest.create(element), false, null);
   }
 
   @Override

@@ -147,7 +147,7 @@ public class OpenFileInDefaultBrowserAction extends DumbAwareAction {
     else {
       final PsiFile psiFile = CommonDataKeys.PSI_FILE.getData(context);
       if (psiFile != null) {
-        return OpenInBrowserRequest.createRequest(psiFile);
+        return OpenInBrowserRequest.create(psiFile);
       }
 
       final VirtualFile virtualFile = CommonDataKeys.VIRTUAL_FILE.getData(context);

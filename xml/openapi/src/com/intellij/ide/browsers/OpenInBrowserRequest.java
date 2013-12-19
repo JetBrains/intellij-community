@@ -22,7 +22,7 @@ public abstract class OpenInBrowserRequest {
   }
 
   @Nullable
-  public static OpenInBrowserRequest createRequest(@NotNull final PsiElement element) {
+  public static OpenInBrowserRequest create(@NotNull final PsiElement element) {
     PsiFile psiFile = element.getContainingFile();
     if (psiFile == null) {
       return null;
