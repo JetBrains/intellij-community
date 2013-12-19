@@ -42,7 +42,7 @@ public class PostfixLiveTemplate extends CustomLiveTemplateBase {
       Aliases aliases = template.getClass().getAnnotation(Aliases.class);
       if (aliases != null) {
         for (String key : aliases.value()) {
-          register("." + key, template);
+          register(key, template);
         }
       }
     }
@@ -60,10 +60,7 @@ public class PostfixLiveTemplate extends CustomLiveTemplateBase {
   public String computeTemplateKey(@NotNull CustomTemplateCallback callback) {
     Editor editor = callback.getEditor();
     String key = computeTemplateKeyWithoutContextChecking(editor);
-    
-    if (key == null) {
-      return null;
-    }
+    if (key == null) return null;
     return isApplicableTemplate(getTemplateByKey(key), key, callback.getContext().getContainingFile(), editor) ? key : null;
   }
   
@@ -75,7 +72,7 @@ public class PostfixLiveTemplate extends CustomLiveTemplateBase {
     while (startOffset > 0) {
       char currentChar = documentContent.charAt(startOffset - 1);
       if (!Character.isJavaIdentifierPart(currentChar)) {
-        if (currentChar != '.') {
+        if (currentChar != '.' && currentChar != '!') {
           return null;
         }
         startOffset--;
