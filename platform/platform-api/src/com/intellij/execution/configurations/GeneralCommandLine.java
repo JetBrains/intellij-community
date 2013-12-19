@@ -15,7 +15,6 @@
  */
 package com.intellij.execution.configurations;
 
-import com.google.common.collect.Maps;
 import com.intellij.execution.CommandLineUtil;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Platform;
@@ -27,12 +26,10 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.EnvironmentUtil;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.CaseInsensitiveStringHashingStrategy;
-import com.pty4j.PtyProcess;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -65,10 +62,8 @@ public class GeneralCommandLine implements UserDataHolder {
   private Charset myCharset = CharsetToolkit.getDefaultSystemCharset();
   private boolean myRedirectErrorStream = false;
   private Map<Object, Object> myUserData = null;
-  private boolean myStartProcessWithPty = false;
 
-  public GeneralCommandLine() {
-  }
+  public GeneralCommandLine() { }
 
   public GeneralCommandLine(@NotNull String... command) {
     this(Arrays.asList(command));
@@ -147,15 +142,6 @@ public class GeneralCommandLine implements UserDataHolder {
     return myPassParentEnvironment;
   }
 
-  /**
-   * If argument is true the process created with Pseudo-Terminal (PTY). 
-   * This works only on Unix. On Windows the option is ignored.   
-   */
-  public GeneralCommandLine withPty(boolean startProcessWithPty) {
-    myStartProcessWithPty = startProcessWithPty;
-    return this;
-  }
-
   public void addParameters(final String... parameters) {
     for (String parameter : parameters) {
       addParameter(parameter);
@@ -183,6 +169,10 @@ public class GeneralCommandLine implements UserDataHolder {
 
   public void setCharset(@NotNull final Charset charset) {
     myCharset = charset;
+  }
+
+  public boolean isRedirectErrorStream() {
+    return myRedirectErrorStream;
   }
 
   public void setRedirectErrorStream(final boolean redirectErrorStream) {
@@ -255,20 +245,6 @@ public class GeneralCommandLine implements UserDataHolder {
     }
 
     try {
-      if (myStartProcessWithPty && SystemInfo.isUnix) {
-        try {
-          Map<String, String> env = Maps.newHashMap();
-          setupEnvironment(env);
-          if (myRedirectErrorStream) {
-            LOG.error("Launching process with PTY and redirected error stream is unsupported yet");
-          }
-          return PtyProcessHolder.doExec(myWorkDirectory, commands, env);
-        }
-        catch (Throwable e) {
-          LOG.error("Couldn't run process with PTY", e);
-        }
-      }
-
       return startProcess(commands);
     }
     catch (IOException e) {
@@ -277,13 +253,7 @@ public class GeneralCommandLine implements UserDataHolder {
     }
   }
 
-  private static class PtyProcessHolder { // holder for lazy PtyProcess class loading
-    private static Process doExec(File workDirectory, List<String> commands, Map<String, String> env) throws IOException {
-      return PtyProcess.exec(ArrayUtil.toStringArray(commands), env, workDirectory != null ? workDirectory.getPath() : null, true);
-    }
-  }
-
-  private Process startProcess(List<String> commands) throws IOException {
+  protected Process startProcess(@NotNull List<String> commands) throws IOException {
     ProcessBuilder builder = new ProcessBuilder(commands);
     setupEnvironment(builder.environment());
     builder.directory(myWorkDirectory);
@@ -304,11 +274,11 @@ public class GeneralCommandLine implements UserDataHolder {
     }
   }
 
-  private void setupEnvironment(final Map<String, String> environment) {
+  protected void setupEnvironment(@NotNull Map<String, String> environment) {
     environment.clear();
 
     if (myPassParentEnvironment) {
-      environment.putAll(PlatformUtils.isAppCode() ? System.getenv() // Temporarily fix for OC-8606 
+      environment.putAll(PlatformUtils.isAppCode() ? System.getenv() // Temporarily fix for OC-8606
                                                    : EnvironmentUtil.getEnvironmentMap());
     }
 
