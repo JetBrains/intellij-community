@@ -25,10 +25,10 @@ import com.intellij.openapi.externalSystem.service.RemoteExternalSystemFacade;
 import com.intellij.openapi.externalSystem.service.remote.RemoteExternalSystemTaskManager;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ContainerUtilRt;
+import com.intellij.util.execution.ParametersListUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -118,18 +118,6 @@ public class ExternalSystemExecuteTaskTask extends AbstractExternalSystemTask {
   }
 
   private static List<String> parseCmdParameters(@Nullable String cmdArgsLine) {
-    final List<String> scriptParametersList = ContainerUtil.newArrayList();
-    if (cmdArgsLine != null) {
-      // filter nulls and empty strings
-      scriptParametersList.addAll(ContainerUtil.mapNotNull(
-        StringUtil.split(cmdArgsLine.trim(), " "), new Function<String, String>() {
-          @Override
-          public String fun(String s) {
-            return StringUtil.isEmpty(s) ? null : s.trim();
-          }
-        }
-      ));
-    }
-    return scriptParametersList;
+    return cmdArgsLine != null ? ParametersListUtil.parse(cmdArgsLine) : ContainerUtil.<String>newArrayList();
   }
 }

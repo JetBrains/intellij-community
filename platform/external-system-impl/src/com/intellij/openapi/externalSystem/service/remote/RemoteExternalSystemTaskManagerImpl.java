@@ -20,8 +20,8 @@ import com.intellij.openapi.externalSystem.model.settings.ExternalSystemExecutio
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
 import com.intellij.openapi.externalSystem.task.AbstractExternalSystemTaskManager;
 import com.intellij.openapi.externalSystem.task.ExternalSystemTaskManager;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Producer;
+import com.intellij.util.execution.ParametersListUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -59,7 +59,7 @@ public class RemoteExternalSystemTaskManagerImpl<S extends ExternalSystemExecuti
           ((AbstractExternalSystemTaskManager<S>)myDelegate)
             .executeTasks(id, taskNames, projectPath, settings, vmOptions, scriptParameters, debuggerSetup, getNotificationListener());
         } else {
-          myDelegate.executeTasks(id, taskNames, projectPath, settings, StringUtil.join(vmOptions, " "), debuggerSetup, getNotificationListener());
+          myDelegate.executeTasks(id, taskNames, projectPath, settings, ParametersListUtil.join(vmOptions), debuggerSetup, getNotificationListener());
         }
         return null;
       }
