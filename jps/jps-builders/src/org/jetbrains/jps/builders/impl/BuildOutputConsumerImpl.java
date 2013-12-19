@@ -17,6 +17,7 @@ package org.jetbrains.jps.builders.impl;
 
 import com.intellij.openapi.util.io.FileUtil;
 import gnu.trove.THashSet;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.builders.BuildOutputConsumer;
 import org.jetbrains.jps.builders.BuildTarget;
 import org.jetbrains.jps.builders.storage.SourceToOutputMapping;
@@ -45,26 +46,53 @@ public class BuildOutputConsumerImpl implements BuildOutputConsumer {
     myOutputs = myTarget.getOutputRoots(context);
   }
 
-  @Override
-  public void registerOutputFile(final File outputFile, Collection<String> sourcePaths) throws IOException {
-    final String outputFilePath = FileUtil.toSystemIndependentName(outputFile.getPath());
+  private void registerOutput(final File output, boolean isDirectory, Collection<String> sourcePaths) throws IOException {
+    final String outputPath = FileUtil.toSystemIndependentName(output.getPath());
     for (File outputRoot : myOutputs) {
-      String outputRootPath = FileUtil.toSystemIndependentName(outputRoot.getPath());
-      final String relativePath = FileUtil.getRelativePath(outputRootPath, outputFilePath, '/');
+      final String outputRootPath = FileUtil.toSystemIndependentName(outputRoot.getPath());
+      final String relativePath = FileUtil.getRelativePath(outputRootPath, outputPath, '/');
       if (relativePath != null && !relativePath.startsWith("../")) {
         // the relative path must be under the root or equal to it
-        myFileGeneratedEvent.add(outputRootPath, relativePath);
+        if (isDirectory) {
+          addEventsRecursively(output, outputRootPath, relativePath);
+        }
+        else {
+          myFileGeneratedEvent.add(outputRootPath, relativePath);
+        }
       }
     }
     final SourceToOutputMapping mapping = myContext.getProjectDescriptor().dataManager.getSourceToOutputMap(myTarget);
     for (String sourcePath : sourcePaths) {
       if (myRegisteredSources.add(FileUtil.toSystemIndependentName(sourcePath))) {
-        mapping.setOutput(sourcePath, outputFilePath);
+        mapping.setOutput(sourcePath, outputPath);
       }
       else {
-        mapping.appendOutput(sourcePath, outputFilePath);
+        mapping.appendOutput(sourcePath, outputPath);
       }
     }
+  }
+
+  private void addEventsRecursively(File output, String outputRootPath, String relativePath) {
+    File[] children = output.listFiles();
+    if (children == null) {
+      myFileGeneratedEvent.add(outputRootPath, relativePath);
+    }
+    else {
+      String prefix = relativePath.isEmpty() || relativePath.equals(".") ? "" : relativePath + "/";
+      for (File child : children) {
+        addEventsRecursively(child, outputRootPath, prefix + child.getName());
+      }
+    }
+  }
+
+  @Override
+  public void registerOutputFile(@NotNull final File outputFile, @NotNull Collection<String> sourcePaths) throws IOException {
+    registerOutput(outputFile, false, sourcePaths);
+  }
+
+  @Override
+  public void registerOutputDirectory(@NotNull File outputDir, @NotNull Collection<String> sourcePaths) throws IOException {
+    registerOutput(outputDir, true,sourcePaths);
   }
 
   public void fireFileGeneratedEvent() {
