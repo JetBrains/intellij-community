@@ -373,7 +373,7 @@ public class GroovyBuilder extends ModuleLevelBuilder {
     return toCompile;
   }
 
-  private static boolean updateDependencies(CompileContext context,
+  private boolean updateDependencies(CompileContext context,
                                             ModuleChunk chunk,
                                             DirtyFilesHolder<JavaSourceRootDescriptor, ModuleBuildTarget> dirtyFilesHolder,
                                             List<File> toCompile,
@@ -393,7 +393,17 @@ public class GroovyBuilder extends ModuleLevelBuilder {
           final String outputPath = FileUtil.toSystemIndependentName(item.outputPath);
           final File outputFile = new File(outputPath);
           outputConsumer.registerOutputFile(target, outputFile, Collections.singleton(sourcePath));
-          callback.associate(outputPath, sourcePath, new ClassReader(FileUtil.loadFileBytes(outputFile)));
+          try {
+            callback.associate(outputPath, sourcePath, new ClassReader(FileUtil.loadFileBytes(outputFile)));
+          }
+          catch (Throwable e) {
+            // need this to make sure that unexpected errors in, for example, ASM will not ruin the compilation  
+            final String message = "Class dependency information may be incomplete! Error parsing generated class " + item.outputPath;
+            LOG.info(message, e);
+            context.processMessage(new CompilerMessage(
+              myBuilderName, BuildMessage.Kind.WARNING, message + "\n" + CompilerMessage.getTextFromThrowable(e), sourcePath)
+            );
+          }
           successfullyCompiledFiles.add(new File(sourcePath));
         }
       }
