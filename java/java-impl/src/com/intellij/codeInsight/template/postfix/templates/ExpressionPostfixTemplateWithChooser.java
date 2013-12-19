@@ -6,7 +6,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pass;
 import com.intellij.psi.PsiElement;
@@ -30,20 +29,12 @@ public abstract class ExpressionPostfixTemplateWithChooser extends PostfixTempla
 
   @Override
   public boolean isApplicable(@NotNull PsiElement context, @NotNull Document copyDocument, int newOffset) {
-    Editor editor = EditorFactory.getInstance().createEditor(copyDocument);
-    boolean result;
-    try {
-      result = !getExpressions(context, editor, newOffset).isEmpty();
-    }
-    finally {
-      EditorFactory.getInstance().releaseEditor(editor);
-    }
-    return result;
+    return !getExpressions(context, copyDocument, newOffset).isEmpty();
   }
 
   @Override
   public void expand(@NotNull PsiElement context, @NotNull final Editor editor) {
-    List<PsiExpression> expressions = getExpressions(context, editor, editor.getCaretModel().getOffset());
+    List<PsiExpression> expressions = getExpressions(context, editor.getDocument(), editor.getCaretModel().getOffset());
 
     if (expressions.isEmpty()) {
       PostfixTemplatesUtils.showErrorHint(context.getProject(), editor);
@@ -74,8 +65,8 @@ public abstract class ExpressionPostfixTemplateWithChooser extends PostfixTempla
   }
 
   @NotNull
-  protected List<PsiExpression> getExpressions(@NotNull PsiElement context, @NotNull Editor editor, int offset) {
-    List<PsiExpression> expressions = IntroduceVariableBase.collectExpressions(context.getContainingFile(), editor, offset);
+  protected List<PsiExpression> getExpressions(@NotNull PsiElement context, @NotNull Document document, int offset) {
+    List<PsiExpression> expressions = IntroduceVariableBase.collectExpressions(context.getContainingFile(), document, offset, false);
     return ContainerUtil.filter(expressions.isEmpty() ? maybeTopmostExpression(context) : expressions, getTypeCondition());
   }
 

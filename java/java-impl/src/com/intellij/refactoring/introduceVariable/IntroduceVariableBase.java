@@ -175,7 +175,13 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
                                                        final Editor editor,
                                                        final int offset,
                                                        boolean acceptVoid) {
-    Document document = editor.getDocument();
+    return collectExpressions(file, editor.getDocument(), offset, acceptVoid);
+  }
+
+  public static List<PsiExpression> collectExpressions(final PsiFile file,
+                                                       final Document document,
+                                                       final int offset,
+                                                       boolean acceptVoid) {
     CharSequence text = document.getCharsSequence();
     int correctedOffset = offset;
     int textLength = document.getTextLength();
