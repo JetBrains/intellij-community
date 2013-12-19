@@ -83,8 +83,8 @@ public class AddGradleDslPluginAction extends CodeInsightAction {
 
   @NotNull
   private static KeyValue<String, String> createPluginKey(@NotNull String pluginName) {
-    String description =
-      GradleDocumentationBundle.messageOrDefault("gradle.documentation.org.gradle.api.Project.apply.plugin." + pluginName, "");
+    String description = GradleDocumentationBundle.messageOrDefault(
+      String.format("gradle.documentation.org.gradle.api.Project.apply.plugin.%s.non-html", pluginName), "");
     return KeyValue.create(pluginName, description);
   }
 }
