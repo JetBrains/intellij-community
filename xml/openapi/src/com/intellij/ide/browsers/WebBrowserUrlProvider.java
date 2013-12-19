@@ -89,7 +89,7 @@ public abstract class WebBrowserUrlProvider {
 
     VirtualFile file = request.getVirtualFile();
     try {
-      Collection<Url> urls = getUrls(request, file);
+      Collection<Url> urls = getUrls(request);
       if (!urls.isEmpty()) {
         request.setResult(urls);
         return true;
@@ -117,8 +117,8 @@ public abstract class WebBrowserUrlProvider {
   }
 
   @NotNull
-  public Collection<Url> getUrls(@NotNull OpenInBrowserRequest request, @NotNull VirtualFile virtualFile) throws BrowserException {
-    return ContainerUtil.createMaybeSingletonList(getUrl(request, virtualFile));
+  public Collection<Url> getUrls(@NotNull OpenInBrowserRequest request) throws BrowserException {
+    return ContainerUtil.createMaybeSingletonList(getUrl(request, request.getVirtualFile()));
   }
 
   @Nullable

@@ -50,7 +50,7 @@ public class WebBrowserServiceImpl extends WebBrowserService {
         }
 
         try {
-          Collection<Url> urls = provider.getUrls(request, virtualFile);
+          Collection<Url> urls = provider.getUrls(request);
           if (!urls.isEmpty()) {
             return urls;
           }
