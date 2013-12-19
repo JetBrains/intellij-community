@@ -2070,4 +2070,18 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
       actualResult
     );
   }
+
+  public void testReplaceWithEmptyString() {
+    String source = "public class Peepers {\n    public long serialVersionUID = 1L;    \n}";
+    String search = "long serialVersionUID = $value$;";
+    String replace = "";
+    String expectedResult = "public class Peepers {    \n}";
+
+    String actualResult = replacer.testReplace(source, search, replace, options, true);
+
+    assertEquals(
+      expectedResult,
+      actualResult
+    );
+  }
 }

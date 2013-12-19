@@ -84,23 +84,21 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
     if (physical) {
       throw new UnsupportedOperationException(getClass() + " cannot create physical PSI");
     }
-    PsiElement[] result;
     PsiElementFactory elementFactory = JavaPsiFacade.getInstance(project).getElementFactory();
     if (context == PatternTreeContext.Block) {
       PsiElement element = elementFactory.createStatementFromText("{\n" + text + "\n}", null);
-      result = ((PsiBlockStatement)element).getCodeBlock().getChildren();
+      final PsiElement[] children = ((PsiBlockStatement)element).getCodeBlock().getChildren();
       final int extraChildCount = 4;
 
-      if (result.length > extraChildCount) {
-        PsiElement[] newresult = new PsiElement[result.length - extraChildCount];
+      if (children.length > extraChildCount) {
+        PsiElement[] result = new PsiElement[children.length - extraChildCount];
         final int extraChildStart = 2;
-        System.arraycopy(result, extraChildStart, newresult, 0, result.length - extraChildCount);
-        result = newresult;
+        System.arraycopy(children, extraChildStart, result, 0, children.length - extraChildCount);
+        return result;
       }
       else {
-        result = PsiElement.EMPTY_ARRAY;
+        return PsiElement.EMPTY_ARRAY;
       }
-
     }
     else if (context == PatternTreeContext.Class) {
       PsiElement element = elementFactory.createStatementFromText("class A {\n" + text + "\n}", null);
@@ -110,19 +108,19 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
 
       PsiElement endChild = clazz.getRBrace();
       if (endChild != null) endChild = endChild.getPrevSibling();
+      if (startChild == endChild) return PsiElement.EMPTY_ARRAY; // nothing produced
 
-      List<PsiElement> resultElementsList = new ArrayList<PsiElement>(3);
+      final List<PsiElement> result = new ArrayList<PsiElement>(3);
       assert startChild != null;
-      for (PsiElement el = startChild.getNextSibling(); el != endChild && el != null; el = el.getNextSibling()) {
-        resultElementsList.add(el);
+      for (PsiElement el = startChild.getNextSibling(); el != endChild && el != null && !(el instanceof PsiErrorElement); el = el.getNextSibling()) {
+        result.add(el);
       }
 
-      result = PsiUtilCore.toPsiElementArray(resultElementsList);
+      return PsiUtilCore.toPsiElementArray(result);
     }
     else {
-      result = PsiFileFactory.getInstance(project).createFileFromText("__dummy.java", text).getChildren();
+      return PsiFileFactory.getInstance(project).createFileFromText("__dummy.java", text).getChildren();
     }
-    return result;
   }
 
   @NotNull
