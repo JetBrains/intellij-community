@@ -204,15 +204,13 @@ public class GradleExecutionHelper {
                                      @NotNull GradleExecutionSettings settings,
                                      @NotNull ExternalSystemTaskNotificationListener listener) {
 
-    if (!settings.getDistributionType().isWrapped()) return;
+    // use it only for customized wrapper
+    // TODO works correctly only or root project
+    if (settings.getDistributionType() != DistributionType.WRAPPED) return;
 
-    if (settings.getDistributionType() == DistributionType.DEFAULT_WRAPPED &&
-        GradleUtil.findDefaultWrapperPropertiesFile(projectPath) != null) {
-      return;
-    }
     ProjectConnection connection = getConnection(projectPath, settings);
     try {
-      BuildLauncher launcher = getBuildLauncher(id, connection, settings, listener, null);
+      BuildLauncher launcher = getBuildLauncher(id, connection, settings, listener, ContainerUtil.<String>newArrayList());
       try {
         final File tempFile = FileUtil.createTempFile("wrap", ".gradle");
         tempFile.deleteOnExit();
@@ -235,11 +233,11 @@ public class GradleExecutionHelper {
         settings.setWrapperPropertyFile(wrapperPropertyFile);
       }
       catch (IOException e) {
-        throw new ExternalSystemException(e);
+        LOG.warn("Can't update wrapper", e);
       }
     }
     catch (Throwable e) {
-      throw new ExternalSystemException(e);
+      LOG.warn("Can't update wrapper", e);
     }
     finally {
       try {
