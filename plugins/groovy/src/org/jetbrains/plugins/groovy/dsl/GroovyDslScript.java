@@ -27,7 +27,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.ResolveState;
 import com.intellij.psi.scope.PsiScopeProcessor;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.containers.MultiMap;
 import groovy.lang.Closure;
@@ -77,7 +76,7 @@ public class GroovyDslScript {
 
       return holder.processMembers(descriptor, processor, state);
     }
-    catch (IncorrectOperationException e) {
+    catch (Throwable e) {
       handleDslError(e);
       return true;
     }
@@ -136,6 +135,9 @@ public class GroovyDslScript {
     }
     if (file != null) {
       GroovyDslFileIndex.invokeDslErrorPopup(e, project, file);
+    } else {
+      LOG.info("Error when executing internal GDSL " + myPath, e);
+      GroovyDslFileIndex.stopGdsl();
     }
     return false;
   }
