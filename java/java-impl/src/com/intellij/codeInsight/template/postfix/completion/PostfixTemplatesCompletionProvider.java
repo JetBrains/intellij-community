@@ -37,7 +37,7 @@ class PostfixTemplatesCompletionProvider extends CompletionProvider<CompletionPa
       return;
     }
 
-    PostfixLiveTemplate postfixLiveTemplate = getPostfixLiveTemplate(parameters.getOriginalFile(), parameters.getOffset());
+    PostfixLiveTemplate postfixLiveTemplate = getPostfixLiveTemplate(parameters.getOriginalFile(), parameters.getEditor());
     if (postfixLiveTemplate != null) {
       PsiFile file = parameters.getPosition().getContainingFile();
       final CustomTemplateCallback callback = new CustomTemplateCallback(parameters.getEditor(), file, false);
@@ -50,7 +50,8 @@ class PostfixTemplatesCompletionProvider extends CompletionProvider<CompletionPa
         }
       }
 
-      String possibleKey = postfixLiveTemplate.computeTemplateKeyWithoutContextChecking(parameters.getEditor());
+      CharSequence documentContent = parameters.getEditor().getDocument().getCharsSequence();
+      String possibleKey = postfixLiveTemplate.computeTemplateKeyWithoutContextChecking(documentContent, parameters.getOffset());
       if (StringUtil.isNotEmpty(possibleKey)) {
         result = result.withPrefixMatcher(possibleKey);
         result.restartCompletionOnPrefixChange(StandardPatterns.string().startsWith(possibleKey));

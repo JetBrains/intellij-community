@@ -74,15 +74,13 @@ public class PostfixLiveTemplate extends CustomLiveTemplateBase {
   @Override
   public String computeTemplateKey(@NotNull CustomTemplateCallback callback) {
     Editor editor = callback.getEditor();
-    String key = computeTemplateKeyWithoutContextChecking(editor);
+    String key = computeTemplateKeyWithoutContextChecking(editor.getDocument().getCharsSequence(), editor.getCaretModel().getOffset());
     if (key == null) return null;
     return isApplicableTemplate(getTemplateByKey(key), key, callback.getContext().getContainingFile(), editor) ? key : null;
   }
   
   @Nullable
-  public String computeTemplateKeyWithoutContextChecking(@NotNull Editor editor) {
-    int currentOffset = editor.getCaretModel().getOffset();
-    CharSequence documentContent = editor.getDocument().getCharsSequence();
+  public String computeTemplateKeyWithoutContextChecking(@NotNull CharSequence documentContent, int currentOffset) {
     int startOffset = currentOffset;
     while (startOffset > 0) {
       char currentChar = documentContent.charAt(startOffset - 1);
@@ -119,11 +117,11 @@ public class PostfixLiveTemplate extends CustomLiveTemplateBase {
   @Override
   public boolean isApplicable(PsiFile file, int offset, boolean wrapping) {
     PostfixTemplatesSettings settings = PostfixTemplatesSettings.getInstance();
-    return !wrapping 
-           && file != null
-           && settings != null
-           && settings.isPostfixTemplatesEnabled()
-           && PsiUtilCore.getLanguageAtOffset(file, offset) == JavaLanguage.INSTANCE;
+    if (wrapping  || file == null || settings == null || !settings.isPostfixTemplatesEnabled() ||
+        PsiUtilCore.getLanguageAtOffset(file, offset) != JavaLanguage.INSTANCE) {
+      return false;
+    }
+    return StringUtil.isNotEmpty(computeTemplateKeyWithoutContextChecking(file.getText(), offset + 1));
   }
 
   @Override
