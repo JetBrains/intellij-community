@@ -43,7 +43,7 @@ public class PackageGroupingRule extends DirectoryGroupingRule {
   }
 
   @Override
-  protected UsageGroup getGroupForFile(final VirtualFile dir) {
+  protected UsageGroup getGroupForFile(@NotNull final VirtualFile dir) {
     PsiDirectory psiDirectory = PsiManager.getInstance(myProject).findDirectory(dir);
     if (psiDirectory != null) {
       PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage(psiDirectory);
