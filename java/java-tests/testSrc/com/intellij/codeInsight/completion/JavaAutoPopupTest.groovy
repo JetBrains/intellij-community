@@ -24,6 +24,7 @@ import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.codeInsight.lookup.PsiTypeLookupItem
 import com.intellij.codeInsight.lookup.impl.LookupImpl
 import com.intellij.codeInsight.template.*
+import com.intellij.codeInsight.template.impl.LiveTemplateDocumentationProvider
 import com.intellij.codeInsight.template.impl.TemplateImpl
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl
 import com.intellij.codeInsight.template.impl.TemplateSettings
@@ -1518,6 +1519,25 @@ class X extends Foo {
     assert myFixture.lookupElementStrings == ['public int getField']
   }
 
+  public void "test live template quick doc"() {
+    myFixture.configureByText "a.java", """
+class Cls {
+  void foo() {
+    <caret>
+  }
+  void mySout() {}
+}
+""" 
+    type('sout')
+    assert lookup
+    assert 'sout' in myFixture.lookupElementStrings
+
+    def docProvider = new LiveTemplateDocumentationProvider()
+    def docElement = docProvider.getDocumentationElementForLookupItem(myFixture.psiManager, lookup.currentItem, null)
+    assert docElement.presentation.presentableText == 'sout'
+    assert docProvider.generateDoc(docElement, docElement).contains('System.out')
+  }
+
   public void "test finishing class reference property value completion with dot opens autopopup"() {
     myFixture.configureByText "a.properties", "myprop=ja<caret>"
     type 'v'
@@ -1552,5 +1572,4 @@ class Foo {
     def tabKeyPresentation = KeyEvent.getKeyText(TemplateSettings.TAB_CHAR as int)
     assert p.typeText == "  [$tabKeyPresentation] "
   }
-
 }
