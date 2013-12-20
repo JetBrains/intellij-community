@@ -25,5 +25,6 @@ public abstract class NotificationsConfiguration extends NotificationsAdapter {
     return ApplicationManager.getApplication().getComponent(NotificationsConfiguration.class);
   }
 
+  @Deprecated
   public abstract void registerToolWindowCapability(@NotNull String groupId, @NotNull String toolWindowId);
 }
