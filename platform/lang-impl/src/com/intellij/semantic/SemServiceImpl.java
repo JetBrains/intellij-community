@@ -32,7 +32,6 @@ import com.intellij.util.Processor;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.*;
 import com.intellij.util.messages.MessageBusConnection;
-import com.intellij.util.pico.IdeaPicoContainer;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -55,8 +54,8 @@ public class SemServiceImpl extends SemService{
     }
   };
   private final ConcurrentWeakHashMap<PsiElement, SoftReference<SemCacheChunk>> myCache = new ConcurrentWeakHashMap<PsiElement, SoftReference<SemCacheChunk>>();
-  private final MultiMap<SemKey, NullableFunction<PsiElement, ? extends SemElement>> myProducers;
-  private final MultiMap<SemKey, SemKey> myInheritors;
+  private volatile MultiMap<SemKey, NullableFunction<PsiElement, ? extends SemElement>> myProducers;
+  private volatile MultiMap<SemKey, SemKey> myInheritors;
   private final Project myProject;
 
   private boolean myBulkChange = false;
@@ -83,10 +82,6 @@ public class SemServiceImpl extends SemService{
       }
     });
 
-
-    myProducers = collectProducers();
-
-    myInheritors = cacheKeyHierarchy(myProducers.keySet());
 
     final LowMemoryWatcher watcher = LowMemoryWatcher.register(new Runnable() {
       @Override
@@ -146,10 +141,8 @@ public class SemServiceImpl extends SemService{
       }
     };
 
-    final IdeaPicoContainer container = new IdeaPicoContainer(myProject.getPicoContainer());
-    container.registerComponentInstance(SemService.class.getName(), this);
     for (SemContributorEP contributor : myProject.getExtensions(SemContributor.EP_NAME)) {
-      contributor.registerSemProviders(container, registrar);
+      contributor.registerSemProviders(myProject.getPicoContainer(), registrar);
     }
 
     return map;
@@ -190,6 +183,8 @@ public class SemServiceImpl extends SemService{
       return cached;
     }
 
+    ensureInitialized();
+
     RecursionGuard.StackStamp stamp = RecursionManager.createGuard("semService").markStack();
 
     LinkedHashSet<T> result = new LinkedHashSet<T>();
@@ -208,6 +203,13 @@ public class SemServiceImpl extends SemService{
     }
 
     return new ArrayList<T>(result);
+  }
+
+  private void ensureInitialized() {
+    if (myInheritors == null) {
+      myProducers = collectProducers();
+      myInheritors = cacheKeyHierarchy(myProducers.keySet());
+    }
   }
 
   @NotNull
