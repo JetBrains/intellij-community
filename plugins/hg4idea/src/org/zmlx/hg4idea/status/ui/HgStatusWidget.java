@@ -33,7 +33,7 @@ import org.zmlx.hg4idea.HgProjectSettings;
 import org.zmlx.hg4idea.HgUpdater;
 import org.zmlx.hg4idea.HgVcs;
 import org.zmlx.hg4idea.action.HgBranchPopup;
-import org.zmlx.hg4idea.repo.HgRepositoryImpl;
+import org.zmlx.hg4idea.repo.HgRepository;
 import org.zmlx.hg4idea.status.HgCurrentBranchStatus;
 import org.zmlx.hg4idea.util.HgUtil;
 
@@ -101,8 +101,9 @@ public class HgStatusWidget extends EditorBasedWidget
       return null;
     }
     VirtualFile root = HgUtil.getRootForSelectedFile(project);
-    if (root != null) {
-      return HgBranchPopup.getInstance(project, HgRepositoryImpl.getInstance(root, project, project)).asListPopup();
+    HgRepository repository = HgUtil.getRepositoryManager(project).getRepositoryForRoot(root);
+    if (repository != null) {
+      return HgBranchPopup.getInstance(project, repository).asListPopup();
     }
     return null;
   }
