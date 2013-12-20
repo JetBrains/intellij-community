@@ -13,33 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.binaryCalculators;
 
-package org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions;
-
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiPolyVariantReference;
-import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 
 /**
- * @author ilyas
+ * Created by Max Medvedev on 12/20/13
  */
-public interface GrAssignmentExpression extends GrExpression, PsiPolyVariantReference {
-
-  @NotNull
-  GrExpression getLValue();
+public class GrDivExpressionTypeCalculator extends GrNumericBinaryExpressionTypeCalculator {
+  public static final GrDivExpressionTypeCalculator INSTANCE = new GrDivExpressionTypeCalculator();
 
   @Nullable
-  GrExpression getRValue();
+  @Override
+  protected PsiType inferNumericType(@NotNull PsiType ltype, @NotNull PsiType rtype, GrBinaryFacade e) {
+    if (GrBinaryExpressionUtil.isFloatOrDouble(ltype, rtype)) {
+      return GrBinaryExpressionUtil.createDouble(e);
+    }
 
-  @NotNull
-  IElementType getOperationTokenType();
+    return GrBinaryExpressionUtil.createBigDecimal(e);
+  }
 
-  @NotNull
-  GroovyResolveResult[] multiResolve(boolean incompleteCode);
-
-  @NotNull
-  PsiElement getOperationToken();
 }

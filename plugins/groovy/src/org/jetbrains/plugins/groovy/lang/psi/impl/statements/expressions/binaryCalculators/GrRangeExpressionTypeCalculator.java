@@ -13,11 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions;
+package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.binaryCalculators;
 
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiType;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinaryExpression;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrRangeType;
 
 /**
@@ -27,13 +26,13 @@ public class GrRangeExpressionTypeCalculator extends GrBinaryExpressionTypeCalcu
   public static final GrBinaryExpressionTypeCalculator INSTANCE = new GrRangeExpressionTypeCalculator();
 
   @Override
-  public PsiType fun(GrBinaryExpression e) {
+  public PsiType fun(GrBinaryFacade e) {
     final PsiType type = super.fun(e);
     if (type != null) return type;
 
     final PsiType ltype = GrBinaryExpressionUtil.getLeftType(e);
     final PsiType rtype = GrBinaryExpressionUtil.getRightType(e);
 
-    return new GrRangeType(e.getResolveScope(), JavaPsiFacade.getInstance(e.getProject()), ltype, rtype);
+    return new GrRangeType(e.getPsiElement().getResolveScope(), JavaPsiFacade.getInstance(e.getPsiElement().getProject()), ltype, rtype);
   }
 }

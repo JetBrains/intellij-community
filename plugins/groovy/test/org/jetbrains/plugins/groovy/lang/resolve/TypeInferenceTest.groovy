@@ -265,7 +265,7 @@ class X {
 
     def getAt(String s) {new X()}
 
-    def plus(X x, int i) {x}
+    def plus(int i) {this}
 }
 
 map = new X()
@@ -273,7 +273,7 @@ map = new X()
 map['i'] += 2
 ''') as GroovyFile
     GrAssignmentExpression assignment = file.topStatements[2] as GrAssignmentExpression
-    assertTrue(assignment.LValue.type.equalsToText(JAVA_UTIL_DATE))
+    assertType("X", assignment.type)
   }
 
   void testAllTypeParamsAreSubstituted() {

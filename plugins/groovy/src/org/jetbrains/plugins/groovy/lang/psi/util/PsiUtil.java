@@ -249,10 +249,10 @@ public class PsiUtil {
       GrIndexProperty index = (GrIndexProperty)parent;
       PsiType[] argTypes = getArgumentTypes(index.getNamedArguments(), index.getExpressionArguments(), index.getClosureArguments(), nullAsBottom, stopAt, byShape);
       if (isLValue(index) && argTypes != null) {
-        PsiType initializer = TypeInferenceHelper.getInitializerFor(index);
-        if (initializer == null && !nullAsBottom) {
-          initializer = TypesUtil.getJavaLangObject(index);
-        }
+        PsiType rawInitializer = TypeInferenceHelper.getInitializerFor(index);
+
+        PsiType initializer = rawInitializer == null && !nullAsBottom ? TypesUtil.getJavaLangObject(index)
+                                                                      : rawInitializer;
         return ArrayUtil.append(argTypes, initializer);
       }
       else {

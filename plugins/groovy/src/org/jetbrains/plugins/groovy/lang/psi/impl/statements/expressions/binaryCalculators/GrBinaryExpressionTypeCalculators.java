@@ -13,14 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions;
+package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.binaryCalculators;
 
 import com.intellij.psi.PsiType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinaryExpression;
 
 import java.util.Map;
 
@@ -30,7 +29,7 @@ import static org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes.*;
  * Created by Max Medvedev on 12/20/13
  */
 public class GrBinaryExpressionTypeCalculators {
-  private static final Map<IElementType, Function<GrBinaryExpression, PsiType>> MAP = ContainerUtil.newLinkedHashMap();
+  private static final Map<IElementType, Function<GrBinaryFacade, PsiType>> MAP = ContainerUtil.newLinkedHashMap();
 
   static {
 
@@ -41,8 +40,8 @@ public class GrBinaryExpressionTypeCalculators {
 
     MAP.put(mSTAR, GrMultiplicativeExpressionTypeCalculator.INSTANCE);
     MAP.put(mSTAR_ASSIGN, GrMultiplicativeExpressionTypeCalculator.INSTANCE);
-    MAP.put(mDIV, GrMultiplicativeExpressionTypeCalculator.INSTANCE);
-    MAP.put(mDIV_ASSIGN, GrMultiplicativeExpressionTypeCalculator.INSTANCE);
+    MAP.put(mDIV, GrDivExpressionTypeCalculator.INSTANCE);
+    MAP.put(mDIV_ASSIGN, GrDivExpressionTypeCalculator.INSTANCE);
     MAP.put(mMOD, GrDecimalBinaryExpressionTypeCalculator.INSTANCE);
     MAP.put(mMOD_ASSIGN, GrDecimalBinaryExpressionTypeCalculator.INSTANCE);
 
@@ -85,8 +84,8 @@ public class GrBinaryExpressionTypeCalculators {
   }
 
   @NotNull
-  public static Function<GrBinaryExpression, PsiType> getTypeCalculator(GrBinaryExpression e) {
-    final Function<GrBinaryExpression, PsiType> function = MAP.get(e.getOperationTokenType());
+  public static Function<GrBinaryFacade, PsiType> getTypeCalculator(GrBinaryFacade e) {
+    final Function<GrBinaryFacade, PsiType> function = MAP.get(e.getOperationTokenType());
     assert function != null : e.getOperationTokenType();
     return function;
   }

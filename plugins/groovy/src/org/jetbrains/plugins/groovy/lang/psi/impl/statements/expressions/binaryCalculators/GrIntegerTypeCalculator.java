@@ -13,21 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions;
+package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.binaryCalculators;
 
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiType;
 import com.intellij.util.Function;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinaryExpression;
 
 /**
  * Created by Max Medvedev on 12/20/13
  */
-public class GrIntegerTypeCalculator implements Function<GrBinaryExpression,PsiType> {
+public class GrIntegerTypeCalculator implements Function<GrBinaryFacade,PsiType> {
   public static final GrIntegerTypeCalculator INSTANCE = new GrIntegerTypeCalculator();
 
   @Override
-  public PsiType fun(GrBinaryExpression expression) {
+  public PsiType fun(GrBinaryFacade expression) {
     return GrBinaryExpressionUtil.getTypeByFQName(CommonClassNames.JAVA_LANG_INTEGER, expression);
   }
 }

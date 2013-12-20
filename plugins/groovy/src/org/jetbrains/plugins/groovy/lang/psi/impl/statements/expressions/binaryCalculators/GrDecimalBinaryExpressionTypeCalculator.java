@@ -13,14 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions;
+package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.binaryCalculators;
 
 import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinaryExpression;
 
-import static org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrBinaryExpressionUtil.*;
+import static org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.binaryCalculators.GrBinaryExpressionUtil.*;
 
 /**
  * Created by Max Medvedev on 12/20/13
@@ -30,7 +29,7 @@ public class GrDecimalBinaryExpressionTypeCalculator extends GrNumericBinaryExpr
 
   @Nullable
   @Override
-  protected PsiType inferNumericType(@NotNull PsiType ltype, @NotNull PsiType rtype, GrBinaryExpression e) {
+  protected PsiType inferNumericType(@NotNull PsiType ltype, @NotNull PsiType rtype, GrBinaryFacade e) {
     if (isBigDecimal(ltype, rtype)) return null;
     if (isFloatOrDouble(ltype, rtype)) return null;
     if (isLong(ltype, rtype)) return createLong(e);

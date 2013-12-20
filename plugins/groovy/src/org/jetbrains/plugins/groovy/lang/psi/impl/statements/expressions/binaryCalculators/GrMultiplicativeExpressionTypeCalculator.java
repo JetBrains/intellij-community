@@ -13,14 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions;
+package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.binaryCalculators;
 
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinaryExpression;
 
 /**
  * Created by Max Medvedev on 12/20/13
@@ -30,15 +27,7 @@ public class GrMultiplicativeExpressionTypeCalculator extends GrNumericBinaryExp
 
   @Nullable
   @Override
-  protected PsiType inferNumericType(@NotNull PsiType ltype, @NotNull PsiType rtype, GrBinaryExpression e) {
-    if (e.getOperationTokenType() == GroovyTokenTypes.mSTAR) return GrBinaryExpressionUtil.getDefaultNumericResultType(ltype, rtype, e);
-    if (e.getOperationTokenType() == GroovyTokenTypes.mDIV) return getDivType(ltype, rtype, e);
-
-    return null;
-  }
-
-  private static PsiType getDivType(PsiType ltype, PsiType rtype, PsiElement e) {
-    if (GrBinaryExpressionUtil.isFloatOrDouble(ltype, rtype)) return GrBinaryExpressionUtil.createDouble(e);
-    return GrBinaryExpressionUtil.createBigDecimal(e);
+  protected PsiType inferNumericType(@NotNull PsiType ltype, @NotNull PsiType rtype, GrBinaryFacade e) {
+    return GrBinaryExpressionUtil.getDefaultNumericResultType(ltype, rtype, e);
   }
 }

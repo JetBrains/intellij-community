@@ -13,14 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions;
+package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.binaryCalculators;
 
 import com.intellij.psi.PsiType;
 import com.intellij.util.Function;
 import com.intellij.util.NullableFunction;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinaryExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
@@ -28,21 +27,21 @@ import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 /**
  * Created by Max Medvedev on 12/20/13
  */
-public class GrBinaryExpressionTypeCalculator implements NullableFunction<GrBinaryExpression, PsiType> {
-  public static final Function<GrBinaryExpression, PsiType> INSTANCE = new GrBinaryExpressionTypeCalculator();
+public class GrBinaryExpressionTypeCalculator implements NullableFunction<GrBinaryFacade, PsiType> {
+  public static final Function<GrBinaryFacade, PsiType> INSTANCE = new GrBinaryExpressionTypeCalculator();
 
   @Override
   @Nullable
-  public PsiType fun(GrBinaryExpression e) {
+  public PsiType fun(GrBinaryFacade e) {
     final GroovyResolveResult resolveResult = PsiImplUtil.extractUniqueResult(e.multiResolve(false));
     if (resolveResult.getElement() != null) {
-      return ResolveUtil.extractReturnTypeFromCandidate(resolveResult, e, new PsiType[]{getRightType(e)});
+      return ResolveUtil.extractReturnTypeFromCandidate(resolveResult, e.getPsiElement(), new PsiType[]{getRightType(e)});
     }
     return null;
   }
 
   @Nullable
-  protected static PsiType getRightType(GrBinaryExpression e) {
+  protected static PsiType getRightType(GrBinaryFacade e) {
     final GrExpression rightOperand = e.getRightOperand();
     return rightOperand == null ? null : rightOperand.getType();
   }

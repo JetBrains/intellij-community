@@ -35,6 +35,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinary
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.types.TypeInferenceHelper;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.binaryCalculators.GrBinaryExpressionTypeCalculators;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.binaryCalculators.GrBinaryFacade;
 
 /**
  * @author ilyas
@@ -52,6 +54,51 @@ public abstract class GrBinaryExpressionImpl extends GrExpressionImpl implements
 
       PsiType rType = binary.getRightType();
       return TypesUtil.getOverloadedOperatorCandidates(lType, opType, binary, new PsiType[]{rType}, incompleteCode);
+    }
+  };
+
+  private static final Function<GrBinaryExpressionImpl, PsiType> TYPE_CALCULATOR = new Function<GrBinaryExpressionImpl, PsiType>() {
+    @Override
+    public PsiType fun(GrBinaryExpressionImpl expression) {
+      return GrBinaryExpressionTypeCalculators.getTypeCalculator(expression.getFacade()).fun(expression.getFacade());
+    }
+  };
+
+  private final GrBinaryFacade myFacade = new GrBinaryFacade() {
+    @NotNull
+    @Override
+    public GrExpression getLeftOperand() {
+      return GrBinaryExpressionImpl.this.getLeftOperand();
+    }
+
+    @Nullable
+    @Override
+    public GrExpression getRightOperand() {
+      return GrBinaryExpressionImpl.this.getRightOperand();
+    }
+
+    @NotNull
+    @Override
+    public IElementType getOperationTokenType() {
+      return GrBinaryExpressionImpl.this.getOperationTokenType();
+    }
+
+    @NotNull
+    @Override
+    public PsiElement getOperationToken() {
+      return GrBinaryExpressionImpl.this.getOperationToken();
+    }
+
+    @NotNull
+    @Override
+    public GroovyResolveResult[] multiResolve(boolean incompleteCode) {
+      return GrBinaryExpressionImpl.this.multiResolve(incompleteCode);
+    }
+
+    @NotNull
+    @Override
+    public GrExpression getPsiElement() {
+      return GrBinaryExpressionImpl.this;
     }
   };
 
@@ -106,12 +153,7 @@ public abstract class GrBinaryExpressionImpl extends GrExpressionImpl implements
 
   @Override
   public PsiType getType() {
-    return TypeInferenceHelper.getCurrentContext().getExpressionType(this, getTypeCalculator());
-  }
-
-  @NotNull
-  protected Function<GrBinaryExpression, PsiType> getTypeCalculator() {
-    return GrBinaryExpressionTypeCalculators.getTypeCalculator(this);
+    return TypeInferenceHelper.getCurrentContext().getExpressionType(this, TYPE_CALCULATOR);
   }
 
   @Override
@@ -166,6 +208,10 @@ public abstract class GrBinaryExpressionImpl extends GrExpressionImpl implements
   @Override
   public PsiReference getReference() {
     return this;
+  }
+
+  private GrBinaryFacade getFacade() {
+    return myFacade;
   }
 
 }

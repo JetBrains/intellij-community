@@ -13,33 +13,35 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-package org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions;
+package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.binaryCalculators;
 
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiPolyVariantReference;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 
 /**
- * @author ilyas
+ * Created by Max Medvedev on 12/20/13
  */
-public interface GrAssignmentExpression extends GrExpression, PsiPolyVariantReference {
+public interface GrBinaryFacade {
 
   @NotNull
-  GrExpression getLValue();
+  GrExpression getLeftOperand();
 
   @Nullable
-  GrExpression getRValue();
+  GrExpression getRightOperand();
 
   @NotNull
   IElementType getOperationTokenType();
 
   @NotNull
-  GroovyResolveResult[] multiResolve(boolean incompleteCode);
+  PsiElement getOperationToken();
 
   @NotNull
-  PsiElement getOperationToken();
+  GroovyResolveResult[] multiResolve(final boolean incompleteCode);
+
+  @NotNull
+  GrExpression getPsiElement();
 }
