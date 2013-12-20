@@ -40,6 +40,7 @@ import icons.GradleIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.execution.GradleTaskLocation;
+import org.jetbrains.plugins.gradle.service.resolve.GradleResolverUtil;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 import org.jetbrains.plugins.gradle.service.GradleInstallationManager;
 import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
@@ -50,7 +51,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.arithmetic.GrShiftExpressionImpl;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.runner.GroovyScriptRunConfiguration;
 import org.jetbrains.plugins.groovy.runner.GroovyScriptRunner;
@@ -129,7 +129,7 @@ public class GradleScriptType extends GroovyScriptType {
     }
     else if (parent instanceof GrApplicationStatement) {
       PsiElement shiftExpression = parent.getChildren()[1].getChildren()[0];
-      if (shiftExpression instanceof GrShiftExpressionImpl) {
+      if (GradleResolverUtil.isLShiftElement(shiftExpression)) {
         PsiElement shiftiesChild = shiftExpression.getChildren()[0];
         if (shiftiesChild instanceof GrReferenceExpression) {
           return Collections.singletonList(shiftiesChild.getText());
