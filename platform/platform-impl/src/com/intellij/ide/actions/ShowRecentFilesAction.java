@@ -23,7 +23,6 @@ import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 
@@ -36,10 +35,7 @@ public class ShowRecentFilesAction extends DumbAwareAction {
     final Project project = e.getData(CommonDataKeys.PROJECT);
     if (project != null) {
       FeatureUsageTracker.getInstance().triggerFeatureUsed("navigation.recent.files");
-      final Switcher.SwitcherPanel switcher = Switcher.createAndShowSwitcher(project, IdeBundle.message("title.popup.recent.files"), true);
-      if (FileEditorManagerEx.getInstanceEx(project).hasOpenedFile()) {
-        switcher.goForward();
-      }
+      Switcher.createAndShowSwitcher(project, IdeBundle.message("title.popup.recent.files"), true);
     }
   }
 }
