@@ -19,7 +19,6 @@ package org.jetbrains.idea.svn.actions;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.DiffManager;
 import com.intellij.openapi.diff.FileContent;
@@ -35,6 +34,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.AbstractVcsHelper;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.FileStatusManager;
+import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -42,6 +42,7 @@ import com.intellij.util.WaitForProgressToShow;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.*;
 import org.jetbrains.idea.svn.branchConfig.SvnBranchConfigurationNew;
+import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.status.SvnDiffEditor;
 import org.tmatesoft.svn.core.*;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
@@ -55,10 +56,10 @@ import org.tmatesoft.svn.core.internal.wc17.SVNReporter17;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCContext;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.wc.*;
+import org.tmatesoft.svn.core.wc2.SvnTarget;
 import org.tmatesoft.svn.util.SVNDebugLog;
 import org.tmatesoft.svn.util.SVNLogType;
 
-import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
@@ -172,7 +173,7 @@ public class CompareWithBranchAction extends AnAction implements DumbAware {
             changes.clear();
           }
           catch (SVNException ex) {
-            reportException(ex, baseUrl);
+            reportException(new SvnBindException(ex), baseUrl);
           }
         }
 
@@ -275,7 +276,7 @@ public class CompareWithBranchAction extends AnAction implements DumbAware {
     }
 
     public void compareFileWithBranch(final String baseUrl, final long revision) {
-      final ByteArrayOutputStream baos = new ByteArrayOutputStream();
+      final Ref<byte[]> content = new Ref<byte[]>();
       final StringBuilder remoteTitleBuilder = new StringBuilder();
       final Ref<Boolean> success = new Ref<Boolean>();
       ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
@@ -292,12 +293,17 @@ public class CompareWithBranchAction extends AnAction implements DumbAware {
               return;
             }
             remoteTitleBuilder.append(svnurl.toString());
-            SVNWCClient client = vcs.createWCClient();
-            client.doGetFileContents(svnurl, SVNRevision.UNDEFINED, SVNRevision.HEAD, true, baos);
+            content.set(SvnUtil.getFileContents(vcs, SvnTarget.fromURL(svnurl), SVNRevision.HEAD, SVNRevision.UNDEFINED));
             success.set(true);
           }
           catch (SVNException ex) {
+            reportException(new SvnBindException(ex), baseUrl);
+          }
+          catch (SvnBindException ex) {
             reportException(ex, baseUrl);
+          }
+          catch (VcsException ex) {
+            reportGeneralException(ex, baseUrl);
           }
         }
       }, SvnBundle.message("compare.with.branch.progress.loading.content"), true, myProject);
@@ -305,7 +311,7 @@ public class CompareWithBranchAction extends AnAction implements DumbAware {
         return;
       }
       SimpleDiffRequest req = new SimpleDiffRequest(myProject, SvnBundle.message("compare.with.branch.diff.title"));
-      req.setContents(new SimpleContent(CharsetToolkit.bytesToString(baos.toByteArray(), myVirtualFile.getCharset())),
+      req.setContents(new SimpleContent(CharsetToolkit.bytesToString(content.get(), myVirtualFile.getCharset())),
                       new FileContent(myProject, myVirtualFile));
       req.setContentTitles(remoteTitleBuilder.toString(), myVirtualFile.getPresentableUrl());
       DiffManager.getInstance().getDiffTool().show(req);
@@ -335,23 +341,27 @@ public class CompareWithBranchAction extends AnAction implements DumbAware {
       return SVNURL.parseURIEncoded(SVNPathUtil.append(baseUrl, relativePath));
     }
 
-    private void reportException(final SVNException ex, final String baseUrl) {
-      final SVNErrorCode errorCode = ex.getErrorMessage().getErrorCode();
-      if (errorCode.equals(SVNErrorCode.RA_ILLEGAL_URL) ||
-          errorCode.equals(SVNErrorCode.CLIENT_UNRELATED_RESOURCES) ||
-          errorCode.equals(SVNErrorCode.RA_DAV_PATH_NOT_FOUND) ||
-          errorCode.equals(SVNErrorCode.FS_NOT_FOUND)) {
+    private void reportException(final SvnBindException e, final String baseUrl) {
+      if (e.contains(SVNErrorCode.RA_ILLEGAL_URL) ||
+          e.contains(SVNErrorCode.CLIENT_UNRELATED_RESOURCES) ||
+          e.contains(SVNErrorCode.RA_DAV_PATH_NOT_FOUND) ||
+          e.contains(SVNErrorCode.FS_NOT_FOUND) ||
+          e.contains(SVNErrorCode.ILLEGAL_TARGET)) {
         reportNotFound(baseUrl);
       }
       else {
-        WaitForProgressToShow.runOrInvokeLaterAboveProgress(new Runnable() {
-            public void run() {
-              Messages.showMessageDialog(myProject, ex.getMessage(),
-                                         SvnBundle.message("compare.with.branch.error.title"), Messages.getErrorIcon());
-            }
-          }, null, myProject);
-        LOG.info(ex);
+        reportGeneralException(e, baseUrl);
       }
+    }
+
+    private void reportGeneralException(final Exception e, final String baseUrl) {
+      WaitForProgressToShow.runOrInvokeLaterAboveProgress(new Runnable() {
+        public void run() {
+          Messages.showMessageDialog(myProject, e.getMessage(),
+                                     SvnBundle.message("compare.with.branch.error.title"), Messages.getErrorIcon());
+        }
+      }, null, myProject);
+      LOG.info(e);
     }
 
     private void reportNotFound(final String baseUrl) {
