@@ -654,7 +654,7 @@
           <option name="ERROR_STRIPE_COLOR" />
         </value>
       </option>
-      
+
       <option name="EXECUTIONPOINT_ATTRIBUTES">
         <value>
           <option name="BACKGROUND" value="ff"/>
@@ -1052,7 +1052,43 @@
             <option name="ERROR_STRIPE_COLOR" />
           </value>
         </option>
+        <option name="SPY-JS.FUNCTION_SCOPE">
+          <value>
+            <option name="BACKGROUND" value="ffffd7"/>
+            <option name="EFFECT_TYPE" value="2"/>
+          </value>
+        </option>
+        <option name="SPY-JS.PROGRAM_SCOPE">
+          <value>
+            <option name="BACKGROUND" value="ffffd7"/>
+            <option name="EFFECT_TYPE" value="2"/>
+          </value>
+        </option>
+        <option name="SPY-JS.EXCEPTION">
+          <value>
+            <option name="BACKGROUND" value="FFCCCC"/>
+            <option name="EFFECT_TYPE" value="2"/>
+          </value>
+        </option>
+        <option name="SPY-JS.PATH_LEVEL_ONE">
+          <value>
+            <option name="BACKGROUND" value="E2FFE2"/>
+            <option name="EFFECT_TYPE" value="2"/>
+          </value>
+        </option>
+        <option name="SPY-JS.PATH_LEVEL_TWO">
+          <value>
+            <option name="EFFECT_COLOR" value="000000"/>
+            <option name="EFFECT_TYPE" value="1"/>
+          </value>
+        </option>
+        <option name="SPY-JS.VALUE_HINT">
+          <value>
+            <option name="EFFECT_COLOR" value="a9a9a9"/>
+            <option name="EFFECT_TYPE" value="0"/>
+          </value>
+        </option>
     </attributes>
-    
+
   </scheme>
 </component>
