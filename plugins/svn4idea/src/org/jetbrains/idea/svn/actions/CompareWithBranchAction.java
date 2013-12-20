@@ -26,6 +26,7 @@ import com.intellij.openapi.diff.SimpleContent;
 import com.intellij.openapi.diff.SimpleDiffRequest;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
@@ -39,6 +40,7 @@ import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.WaitForProgressToShow;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.*;
 import org.jetbrains.idea.svn.branchConfig.SvnBranchConfigurationNew;
@@ -75,11 +77,8 @@ public class CompareWithBranchAction extends AnAction implements DumbAware {
     assert project != null;
     final VirtualFile virtualFile = e.getData(CommonDataKeys.VIRTUAL_FILE);
 
-    SelectBranchPopup.show(project, virtualFile, new SelectBranchPopup.BranchSelectedCallback() {
-      public void branchSelected(final Project project, final SvnBranchConfigurationNew configuration, final String url, final long revision) {
-        new CompareWithBranchOperation(project, virtualFile, configuration).compareWithBranch(url, revision);
-      }
-    }, SvnBundle.message("compare.with.branch.popup.title"));
+    SelectBranchPopup
+      .show(project, virtualFile, new MyBranchSelectedCallback(virtualFile), SvnBundle.message("compare.with.branch.popup.title"));
   }
 
   @Override
@@ -100,226 +99,90 @@ public class CompareWithBranchAction extends AnAction implements DumbAware {
     return true;
   }
 
+  private static class MyBranchSelectedCallback implements SelectBranchPopup.BranchSelectedCallback {
 
-  private class CompareWithBranchOperation {
-    private final Project myProject;
-    private final VirtualFile myVirtualFile;
-    private final SvnBranchConfigurationNew myConfiguration;
+    @NotNull private final VirtualFile myVirtualFile;
 
-    public CompareWithBranchOperation(final Project project, final VirtualFile virtualFile, final SvnBranchConfigurationNew config) {
-      myProject = project;
+    public MyBranchSelectedCallback(@NotNull VirtualFile virtualFile) {
       myVirtualFile = virtualFile;
-      myConfiguration = config;
     }
 
-    public void compareWithBranch(final String baseUrl, final long revision) {
-      if (myVirtualFile.isDirectory()) {
-        compareDirectoryWithBranch(baseUrl, revision);
-      }
-      else {
-        compareFileWithBranch(baseUrl, revision);
-      }
-    }
-    final StringBuilder titleBuilder = new StringBuilder();
+    public void branchSelected(Project project, SvnBranchConfigurationNew configuration, String url, long revision) {
+      ElementWithBranchComparer comparer =
+        myVirtualFile.isDirectory()
+        ? new DirectoryWithBranchComparer(project, myVirtualFile, url, revision)
+        : new FileWithBranchComparer(project, myVirtualFile, url, revision);
 
-    public void compareDirectoryWithBranch(final String baseUrl, final long revision) {
-      final List<Change> changes = new ArrayList<Change>();
-      ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
-        public void run() {
+      comparer.run();
+    }
+  }
+
+  private static abstract class ElementWithBranchComparer {
+
+    @NotNull protected final Project myProject;
+    @NotNull protected final SvnVcs myVcs;
+    @NotNull protected final VirtualFile myVirtualFile;
+    @NotNull protected final String myBranchUrl;
+    protected final long myBranchRevision;
+    protected SVNURL myElementUrl;
+
+    protected ElementWithBranchComparer(@NotNull Project project,
+                                        @NotNull VirtualFile virtualFile,
+                                        @NotNull String branchUrl,
+                                        long branchRevision) {
+      myProject = project;
+      myVcs = SvnVcs.getInstance(myProject);
+      myVirtualFile = virtualFile;
+      myBranchUrl = branchUrl;
+      myBranchRevision = branchRevision;
+    }
+
+    public void run() {
+      new Task.Modal(myProject, getTitle(), true) {
+        @Override
+        public void run(@NotNull ProgressIndicator indicator) {
           try {
-            final SvnVcs vcs = SvnVcs.getInstance(myProject);
-            final SVNURL url = getURLInBranch(vcs, baseUrl);
-            if (url == null) return;  // todo diagnostics
-            titleBuilder.append(SvnBundle.message("repository.browser.compare.title",
-                                                  url.toString(),
-                                                  FileUtil.toSystemDependentName(myVirtualFile.getPresentableUrl())));
-
-            final File ioFile = new File(myVirtualFile.getPath());
-            if (SvnUtil.is17CopyPart(ioFile)) {
-              report17DirDiff(vcs, url);
-            } else {
-              report16DirDiff(vcs, url);
+            beforeCompare();
+            myElementUrl = resolveElementUrl();
+            if (myElementUrl == null) {
+              reportNotFound();
             }
-            
-            /*              final SVNInfo info1 = vcs.createWCClient().doInfo(new File(myVirtualFile.getPath()), SVNRevision.HEAD);
-                          if (info1 == null) return;
-
-                          if (info1 == null) {
-                            SVNErrorMessage err =
-                              SVNErrorMessage.create(SVNErrorCode.ENTRY_NOT_FOUND, "''{0}'' is not under version control", myVirtualFile.getPath());
-                            SVNErrorManager.error(err, SVNLogType.WC);
-                          }
-                          else if (info1.getURL() == null) {
-                            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_MISSING_URL, "''{0}'' has no URL", myVirtualFile.getPath());
-                            SVNErrorManager.error(err, SVNLogType.WC);
-                          }
-            */
-
-            // todo
-
-
-            /*final SVNDiffClient diffClient = vcs.createDiffClient();
-            diffClient.doDiffStatus(info1.getURL(), info1.getRevision(), url, info1.getRevision(), SVNDepth.INFINITY, false,
-                                    new ISVNDiffStatusHandler() {
-                                      @Override
-                                      public void handleDiffStatus(SVNDiffStatus diffStatus) throws SVNException {
-                                        diffStatus.getModificationType()
-                                      }
-                                    });*/
-
-            /*public void doDiffStatus(File path1, SVNRevision rN, File path2, SVNRevision rM, SVNDepth depth, boolean useAncestry, ISVNDiffStatusHandler handler) throws SVNException {*/
+            else {
+              compare();
+            }
           }
-          catch(SVNCancelException ex) {
-            changes.clear();
+          catch (SVNCancelException ex) {
+            ElementWithBranchComparer.this.onCancel();
           }
           catch (SVNException ex) {
-            reportException(new SvnBindException(ex), baseUrl);
-          }
-        }
-
-        private void report17DirDiff(SvnVcs vcs, SVNURL url) throws SVNException {
-          final File ioFile = new File(myVirtualFile.getPath());
-          final SVNWCClient wcClient = vcs.createWCClient();
-          final SVNInfo info1 = wcClient.doInfo(ioFile, SVNRevision.HEAD);
-
-          if (info1 == null) {
-            SVNErrorMessage err =
-              SVNErrorMessage.create(SVNErrorCode.ENTRY_NOT_FOUND, "''{0}'' is not under version control", myVirtualFile.getPath());
-            SVNErrorManager.error(err, SVNLogType.WC);
-          }
-          else if (info1.getURL() == null) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_MISSING_URL, "''{0}'' has no URL", myVirtualFile.getPath());
-            SVNErrorManager.error(err, SVNLogType.WC);
-          }
-
-          final SVNReporter17 reporter17 =
-            new SVNReporter17(ioFile, new SVNWCContext(SvnConfiguration.getInstance(myProject).getOptions(myProject), new ISVNEventHandler() {
-              @Override
-              public void handleEvent(SVNEvent event, double progress) throws SVNException {
-              }
-
-              @Override
-              public void checkCancelled() throws SVNCancelException {
-              }
-            }),
-                              false, true, SVNDepth.INFINITY, false, false, true, false,
-                              SVNDebugLog.getDefaultLog());
-          SVNRepository repository = null;
-          SVNRepository repository2 = null;
-          try {
-            repository = vcs.createRepository(info1.getURL());
-            long rev = repository.getLatestRevision();
-            repository2 = vcs.createRepository(url.toString());
-            SvnDiffEditor diffEditor = new SvnDiffEditor(myVirtualFile, repository2, rev, true);
-            repository.diff(url, rev, rev, null, true, SVNDepth.INFINITY, false, reporter17,
-                            SVNCancellableEditor.newInstance(diffEditor, new SvnProgressCanceller(), null));
-            changes.addAll(diffEditor.getChangesMap().values());
-          } finally {
-            if (repository != null) {
-              repository.closeSession();
-            }
-            if (repository2 != null) {
-              repository2.closeSession();
-            }
-          }
-        }
-
-        private void report16DirDiff(SvnVcs vcs, SVNURL url) throws SVNException {
-          // here there's 1.6 copy so ok to use SVNWCAccess
-          final SVNWCAccess wcAccess = SVNWCAccess.newInstance(null);
-          wcAccess.setOptions(vcs.getSvnOptions());
-          SVNRepository repository = null;
-          SVNRepository repository2 = null;
-          try {
-            SVNAdminAreaInfo info = wcAccess.openAnchor(new File(myVirtualFile.getPath()), false, SVNWCAccess.INFINITE_DEPTH);
-            File anchorPath = info.getAnchor().getRoot();
-            String target = "".equals(info.getTargetName()) ? null : info.getTargetName();
-
-            SVNEntry anchorEntry = info.getAnchor().getEntry("", false);
-            if (anchorEntry == null) {
-              SVNErrorMessage err =
-                SVNErrorMessage.create(SVNErrorCode.ENTRY_NOT_FOUND, "''{0}'' is not under version control", anchorPath);
-              SVNErrorManager.error(err, SVNLogType.WC);
-            }
-            else if (anchorEntry.getURL() == null) {
-              SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_MISSING_URL, "''{0}'' has no URL", anchorPath);
-              SVNErrorManager.error(err, SVNLogType.WC);
-            }
-
-            SVNURL anchorURL = anchorEntry.getSVNURL();
-            SVNReporter reporter = new SVNReporter(info, info.getAnchor().getFile(info.getTargetName()), false, true, SVNDepth.INFINITY,
-                                                   false, false, true, SVNDebugLog.getDefaultLog());
-
-            repository = vcs.createRepository(anchorURL.toString());
-            long rev = repository.getLatestRevision();
-            repository2 = vcs.createRepository((target == null) ? url.toString() : url.removePathTail().toString());
-            SvnDiffEditor diffEditor = new SvnDiffEditor((target == null) ? myVirtualFile : myVirtualFile.getParent(),
-              repository2, rev, true);
-            repository.diff(url, rev, rev, target, true, true, false, reporter,
-                            SVNCancellableEditor.newInstance(diffEditor, new SvnProgressCanceller(), null));
-            changes.addAll(diffEditor.getChangesMap().values());
-          }
-          finally {
-            wcAccess.close();
-            if (repository != null) {
-              repository.closeSession();
-            }
-            if (repository2 != null) {
-              repository2.closeSession();
-            }
-          }
-        }
-      }, SvnBundle.message("progress.computing.difference"), true, myProject);
-      if (!changes.isEmpty()) {
-        AbstractVcsHelper.getInstance(myProject).showWhatDiffersBrowser(null, changes, titleBuilder.toString());
-      }
-    }
-
-    public void compareFileWithBranch(final String baseUrl, final long revision) {
-      final Ref<byte[]> content = new Ref<byte[]>();
-      final StringBuilder remoteTitleBuilder = new StringBuilder();
-      final Ref<Boolean> success = new Ref<Boolean>();
-      ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
-        public void run() {
-          try {
-            final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
-            if (indicator != null) {
-              indicator.setIndeterminate(true);
-            }
-            final SvnVcs vcs = SvnVcs.getInstance(myProject);
-            SVNURL svnurl = getURLInBranch(vcs, baseUrl);
-            if (svnurl == null) {
-              reportNotFound(baseUrl);
-              return;
-            }
-            remoteTitleBuilder.append(svnurl.toString());
-            content.set(SvnUtil.getFileContents(vcs, SvnTarget.fromURL(svnurl), SVNRevision.HEAD, SVNRevision.UNDEFINED));
-            success.set(true);
-          }
-          catch (SVNException ex) {
-            reportException(new SvnBindException(ex), baseUrl);
+            reportException(new SvnBindException(ex));
           }
           catch (SvnBindException ex) {
-            reportException(ex, baseUrl);
+            reportException(ex);
           }
           catch (VcsException ex) {
-            reportGeneralException(ex, baseUrl);
+            reportGeneralException(ex);
           }
         }
-      }, SvnBundle.message("compare.with.branch.progress.loading.content"), true, myProject);
-      if (success.isNull()) {
-        return;
-      }
-      SimpleDiffRequest req = new SimpleDiffRequest(myProject, SvnBundle.message("compare.with.branch.diff.title"));
-      req.setContents(new SimpleContent(CharsetToolkit.bytesToString(content.get(), myVirtualFile.getCharset())),
-                      new FileContent(myProject, myVirtualFile));
-      req.setContentTitles(remoteTitleBuilder.toString(), myVirtualFile.getPresentableUrl());
-      DiffManager.getInstance().getDiffTool().show(req);
+      }.queue();
+      showResult();
     }
 
+    protected void beforeCompare() {
+    }
+
+    protected abstract void compare() throws SVNException, VcsException;
+
+    protected abstract void showResult();
+
+    protected void onCancel() {
+    }
+
+    public abstract String getTitle();
+
     @Nullable
-    private SVNURL getURLInBranch(final SvnVcs vcs, final String baseUrl) throws SVNException {
-      final SvnFileUrlMapping urlMapping = vcs.getSvnFileUrlMapping();
+    protected SVNURL resolveElementUrl() throws SVNException {
+      final SvnFileUrlMapping urlMapping = myVcs.getSvnFileUrlMapping();
       final File file = new File(myVirtualFile.getPath());
       final SVNURL fileUrl = urlMapping.getUrlForFile(file);
       if (fileUrl == null) {
@@ -332,29 +195,29 @@ public class CompareWithBranchAction extends AnAction implements DumbAware {
         return null;
       }
 
-      final SVNURL thisBranchForUrl = SvnUtil.getBranchForUrl(vcs, rootMixed.getVirtualFile(), fileUrlString);
+      final SVNURL thisBranchForUrl = SvnUtil.getBranchForUrl(myVcs, rootMixed.getVirtualFile(), fileUrlString);
       if (thisBranchForUrl == null) {
         return null;
       }
 
       final String relativePath = SVNPathUtil.getRelativePath(thisBranchForUrl.toString(), fileUrlString);
-      return SVNURL.parseURIEncoded(SVNPathUtil.append(baseUrl, relativePath));
+      return SVNURL.parseURIEncoded(SVNPathUtil.append(myBranchUrl, relativePath));
     }
 
-    private void reportException(final SvnBindException e, final String baseUrl) {
+    private void reportException(final SvnBindException e) {
       if (e.contains(SVNErrorCode.RA_ILLEGAL_URL) ||
           e.contains(SVNErrorCode.CLIENT_UNRELATED_RESOURCES) ||
           e.contains(SVNErrorCode.RA_DAV_PATH_NOT_FOUND) ||
           e.contains(SVNErrorCode.FS_NOT_FOUND) ||
           e.contains(SVNErrorCode.ILLEGAL_TARGET)) {
-        reportNotFound(baseUrl);
+        reportNotFound();
       }
       else {
-        reportGeneralException(e, baseUrl);
+        reportGeneralException(e);
       }
     }
 
-    private void reportGeneralException(final Exception e, final String baseUrl) {
+    private void reportGeneralException(final Exception e) {
       WaitForProgressToShow.runOrInvokeLaterAboveProgress(new Runnable() {
         public void run() {
           Messages.showMessageDialog(myProject, e.getMessage(),
@@ -364,14 +227,198 @@ public class CompareWithBranchAction extends AnAction implements DumbAware {
       LOG.info(e);
     }
 
-    private void reportNotFound(final String baseUrl) {
+    private void reportNotFound() {
       WaitForProgressToShow.runOrInvokeLaterAboveProgress(new Runnable() {
-          public void run() {
-            Messages.showMessageDialog(myProject,
-                                       SvnBundle.message("compare.with.branch.location.error", myVirtualFile.getPresentableUrl(), baseUrl),
-                                       SvnBundle.message("compare.with.branch.error.title"), Messages.getErrorIcon());
+        public void run() {
+          Messages.showMessageDialog(myProject,
+                                     SvnBundle
+                                       .message("compare.with.branch.location.error", myVirtualFile.getPresentableUrl(), myBranchUrl),
+                                     SvnBundle.message("compare.with.branch.error.title"), Messages.getErrorIcon());
+        }
+      }, null, myProject);
+    }
+  }
+
+  public static class FileWithBranchComparer extends ElementWithBranchComparer {
+
+    @NotNull private final Ref<byte[]> content = new Ref<byte[]>();
+    @NotNull private final StringBuilder remoteTitleBuilder = new StringBuilder();
+    @NotNull private final Ref<Boolean> success = new Ref<Boolean>();
+
+    public FileWithBranchComparer(@NotNull Project project,
+                                  @NotNull VirtualFile virtualFile,
+                                  @NotNull String branchUrl,
+                                  long branchRevision) {
+      super(project, virtualFile, branchUrl, branchRevision);
+    }
+
+    @Override
+    protected void beforeCompare() {
+      final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
+      if (indicator != null) {
+        indicator.setIndeterminate(true);
+      }
+    }
+
+    @Override
+    protected void compare() throws SVNException, VcsException {
+      remoteTitleBuilder.append(myElementUrl);
+      content.set(SvnUtil.getFileContents(myVcs, SvnTarget.fromURL(myElementUrl), SVNRevision.HEAD, SVNRevision.UNDEFINED));
+      success.set(true);
+    }
+
+    @Override
+    protected void showResult() {
+      if (!success.isNull()) {
+        SimpleDiffRequest req = new SimpleDiffRequest(myProject, SvnBundle.message("compare.with.branch.diff.title"));
+        req.setContents(new SimpleContent(CharsetToolkit.bytesToString(content.get(), myVirtualFile.getCharset())),
+                        new FileContent(myProject, myVirtualFile));
+        req.setContentTitles(remoteTitleBuilder.toString(), myVirtualFile.getPresentableUrl());
+        DiffManager.getInstance().getDiffTool().show(req);
+      }
+    }
+
+    @Override
+    public String getTitle() {
+      return SvnBundle.message("compare.with.branch.progress.loading.content");
+    }
+  }
+
+  public static class DirectoryWithBranchComparer extends ElementWithBranchComparer {
+
+    @NotNull private final StringBuilder titleBuilder = new StringBuilder();
+    @NotNull private final List<Change> changes = new ArrayList<Change>();
+
+    public DirectoryWithBranchComparer(@NotNull Project project,
+                                       @NotNull VirtualFile virtualFile,
+                                       @NotNull String branchUrl,
+                                       long branchRevision) {
+      super(project, virtualFile, branchUrl, branchRevision);
+    }
+
+    @Override
+    protected void compare() throws SVNException, VcsException {
+      titleBuilder.append(SvnBundle.message("repository.browser.compare.title", myElementUrl,
+                                            FileUtil.toSystemDependentName(myVirtualFile.getPresentableUrl())));
+
+      final File ioFile = new File(myVirtualFile.getPath());
+      if (SvnUtil.is17CopyPart(ioFile)) {
+        report17DirDiff();
+      }
+      else {
+        report16DirDiff();
+      }
+    }
+
+    private void report17DirDiff() throws SVNException {
+      final File ioFile = new File(myVirtualFile.getPath());
+      final SVNWCClient wcClient = myVcs.createWCClient();
+      final SVNInfo info1 = wcClient.doInfo(ioFile, SVNRevision.HEAD);
+
+      if (info1 == null) {
+        SVNErrorMessage err =
+          SVNErrorMessage.create(SVNErrorCode.ENTRY_NOT_FOUND, "''{0}'' is not under version control", myVirtualFile.getPath());
+        SVNErrorManager.error(err, SVNLogType.WC);
+      }
+      else if (info1.getURL() == null) {
+        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_MISSING_URL, "''{0}'' has no URL", myVirtualFile.getPath());
+        SVNErrorManager.error(err, SVNLogType.WC);
+      }
+
+      final SVNReporter17 reporter17 =
+        new SVNReporter17(ioFile, new SVNWCContext(SvnConfiguration.getInstance(myProject).getOptions(myProject), new ISVNEventHandler() {
+          @Override
+          public void handleEvent(SVNEvent event, double progress) throws SVNException {
           }
-        }, null, myProject);
+
+          @Override
+          public void checkCancelled() throws SVNCancelException {
+          }
+        }),
+                          false, true, SVNDepth.INFINITY, false, false, true, false,
+                          SVNDebugLog.getDefaultLog());
+      SVNRepository repository = null;
+      SVNRepository repository2 = null;
+      try {
+        repository = myVcs.createRepository(info1.getURL());
+        long rev = repository.getLatestRevision();
+        repository2 = myVcs.createRepository(myElementUrl.toString());
+        SvnDiffEditor diffEditor = new SvnDiffEditor(myVirtualFile, repository2, rev, true);
+        repository.diff(myElementUrl, rev, rev, null, true, SVNDepth.INFINITY, false, reporter17,
+                        SVNCancellableEditor.newInstance(diffEditor, new SvnProgressCanceller(), null));
+        changes.addAll(diffEditor.getChangesMap().values());
+      }
+      finally {
+        if (repository != null) {
+          repository.closeSession();
+        }
+        if (repository2 != null) {
+          repository2.closeSession();
+        }
+      }
+    }
+
+    private void report16DirDiff() throws SVNException {
+      // here there's 1.6 copy so ok to use SVNWCAccess
+      final SVNWCAccess wcAccess = SVNWCAccess.newInstance(null);
+      wcAccess.setOptions(myVcs.getSvnOptions());
+      SVNRepository repository = null;
+      SVNRepository repository2 = null;
+      try {
+        SVNAdminAreaInfo info = wcAccess.openAnchor(new File(myVirtualFile.getPath()), false, SVNWCAccess.INFINITE_DEPTH);
+        File anchorPath = info.getAnchor().getRoot();
+        String target = "".equals(info.getTargetName()) ? null : info.getTargetName();
+
+        SVNEntry anchorEntry = info.getAnchor().getEntry("", false);
+        if (anchorEntry == null) {
+          SVNErrorMessage err =
+            SVNErrorMessage.create(SVNErrorCode.ENTRY_NOT_FOUND, "''{0}'' is not under version control", anchorPath);
+          SVNErrorManager.error(err, SVNLogType.WC);
+        }
+        else if (anchorEntry.getURL() == null) {
+          SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_MISSING_URL, "''{0}'' has no URL", anchorPath);
+          SVNErrorManager.error(err, SVNLogType.WC);
+        }
+
+        SVNURL anchorURL = anchorEntry.getSVNURL();
+        SVNReporter reporter = new SVNReporter(info, info.getAnchor().getFile(info.getTargetName()), false, true, SVNDepth.INFINITY,
+                                               false, false, true, SVNDebugLog.getDefaultLog());
+
+        repository = myVcs.createRepository(anchorURL.toString());
+        long rev = repository.getLatestRevision();
+        repository2 = myVcs.createRepository((target == null) ? myElementUrl.toString() : myElementUrl.removePathTail().toString());
+        SvnDiffEditor diffEditor = new SvnDiffEditor((target == null) ? myVirtualFile : myVirtualFile.getParent(),
+                                                     repository2, rev, true);
+        repository.diff(myElementUrl, rev, rev, target, true, true, false, reporter,
+                        SVNCancellableEditor.newInstance(diffEditor, new SvnProgressCanceller(), null));
+        changes.addAll(diffEditor.getChangesMap().values());
+      }
+      finally {
+        wcAccess.close();
+        if (repository != null) {
+          repository.closeSession();
+        }
+        if (repository2 != null) {
+          repository2.closeSession();
+        }
+      }
+    }
+
+    @Override
+    protected void onCancel() {
+      changes.clear();
+    }
+
+    @Override
+    protected void showResult() {
+      if (!changes.isEmpty()) {
+        AbstractVcsHelper.getInstance(myProject).showWhatDiffersBrowser(null, changes, titleBuilder.toString());
+      }
+    }
+
+    @Override
+    public String getTitle() {
+      return SvnBundle.message("progress.computing.difference");
     }
   }
 }
