@@ -18,7 +18,6 @@ package standardDsls
 import com.intellij.psi.PsiType
 import com.intellij.psi.util.PsiUtil
 
-import static standardDsls.Constants.STRING
 /**
  * @author Maxim.Medvedev
  */
@@ -59,27 +58,6 @@ contributor(ctype: "java.util.Collection") {
 
 contributor(ctype:"groovy.lang.GString") {
   delegatesTo(findClass("java.lang.String"))
-}
-
-[Integer, Double, Float, Byte, Long, Short, Number].each {
-  def className = it.canonicalName
-  contributor(ctype: className) {
-    method name: "plus", type: className, params: [arg: className]
-    method name: "minus", type: className, params: [arg: className]
-    method name: "multiply", type: className, params: [arg: className]
-    method name: "power", type: className, params: [arg: className]
-    method name: "div", type: className, params: [arg: className]
-    method name: "mod", type: className, params: [arg: className]
-    method name: "or", type: className, params: [arg: className]
-    method name: "and", type: className, params: [arg: className]
-    method name: "xor", type: className, params: [arg: className]
-    method name: "next", type: className
-    method name: "previous", type: className
-    method name: "negative", type: className
-    method name: "positive", type: className
-
-    method name: "plus", type: STRING, params: [arg: STRING]
-  }
 }
 
 contributor(ctype: 'groovy.lang.MetaClass') {

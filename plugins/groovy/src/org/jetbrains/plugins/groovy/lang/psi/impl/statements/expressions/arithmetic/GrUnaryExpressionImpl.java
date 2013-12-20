@@ -36,7 +36,7 @@ import org.jetbrains.plugins.groovy.lang.psi.dataFlow.types.TypeInferenceHelper;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrExpressionImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
-import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
+import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
 /**
@@ -73,19 +73,15 @@ public class GrUnaryExpressionImpl extends GrExpressionImpl implements GrUnaryEx
     //hack for DGM.next(Number):Number
     private boolean isIncDecNumber(GroovyResolveResult result) {
       PsiElement element = result.getElement();
-      if (element == null) return false;
-
-      if (element instanceof GrGdkMethod) element = ((GrGdkMethod)element).getStaticMethod();
 
       if (!(element instanceof PsiMethod)) return false;
 
-      final PsiMethod method = (PsiMethod)element;
+      final PsiMethod method = element instanceof GrGdkMethod ? ((GrGdkMethod)element).getStaticMethod() : (PsiMethod)element;
 
       final String name = method.getName();
       if (!"next".equals(name) && !"previous".equals(name)) return false;
 
-      final PsiClass containingClass = method.getContainingClass();
-      if (containingClass == null || !GroovyCommonClassNames.DEFAULT_GROOVY_METHODS.equals(containingClass.getQualifiedName())) return false;
+      if (!PsiUtil.isDGMMethod(method)) return false;
 
       final PsiParameter[] parameters = method.getParameterList().getParameters();
       if (parameters.length != 1) return false;

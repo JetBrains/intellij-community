@@ -13,23 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions;
 
-package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.arithmetic;
-
-import com.intellij.lang.ASTNode;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrBinaryExpressionImpl;
+import com.intellij.psi.PsiType;
+import com.intellij.util.Function;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinaryExpression;
 
 /**
- * @author ilyas
+ * Created by Max Medvedev on 12/20/13
  */
-public class GrMultiplicativeExpressionImpl extends GrBinaryExpressionImpl {
+public class GrAssignTypeCalculator implements Function<GrBinaryExpression, PsiType> {
+  public static final GrAssignTypeCalculator INSTANCE = new GrAssignTypeCalculator();
 
-  public GrMultiplicativeExpressionImpl(@NotNull ASTNode node) {
-    super(node);
-  }
-
-  public String toString() {
-    return "Multiplicative expression";
+  @Override
+  public PsiType fun(GrBinaryExpression expression) {
+    return GrBinaryExpressionUtil.getRightType(expression);
   }
 }

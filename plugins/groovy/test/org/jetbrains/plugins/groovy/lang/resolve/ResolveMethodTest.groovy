@@ -1872,11 +1872,11 @@ def bar(Object o) {
   void testBinaryWithQualifiedRefsInArgs() {
     GrBinaryExpression expr = configureByText('_.groovy', '''\
 class Base {
-    public static final int SHOW_NAME = 0x0001; // variable, method, class
-    public static final int SHOW_TYPE = 0x0002; // variable, method
-    public static final int TYPE_AFTER = 0x0004; // variable, method
-    public static final int SHOW_MODIFIERS = 0x0008; // variable, method, class
-    public static final int MODIFIERS_AFTER = 0x0010; // variable, method, class
+    def or(String s) {}
+    def or(Base b) {}
+
+    public static Base SHOW_NAME = new Base()
+    public static Base SHOW_TYPE = new Base()
 }
 
 class GrTypeDefinition  {

@@ -37,6 +37,13 @@ import static com.intellij.psi.CommonClassNames.*
 public class TypeInferenceTest extends GroovyResolveTestCase {
   final String basePath = TestUtils.testDataPath + "resolve/inference/"
 
+  @Override
+  protected void setUp() {
+    super.setUp()
+
+    myFixture.addClass("package java.math; public class BigDecimal extends Number implements Comparable<BigDecimal> {}");
+  }
+
   public void testTryFinallyFlow() {
     GrReferenceExpression ref = (GrReferenceExpression)configureByFile("tryFinallyFlow/A.groovy").element;
     final PsiType type = ref.type;
@@ -169,7 +176,7 @@ public class TypeInferenceTest extends GroovyResolveTestCase {
   }
 
   public void testConditionalExpressionWithNumericTypes() {
-    assertTypeEquals("java.math.BigDecimal", "A.groovy");
+    assertTypeEquals("java.lang.Number", "A.groovy");
   }
 
   public void testImplicitCallMethod() {
@@ -621,6 +628,83 @@ class Any {
       }
       ~new A()
 ''', 'java.lang.String')
+  }
+
+  void testPlus1() {
+    doExprTest('2+2', 'java.lang.Integer')
+  }
+
+  void testPlus2() {
+    doExprTest('2f+2', 'java.lang.Double')
+  }
+
+  void testPlus3() {
+    doExprTest('2f+2f', 'java.lang.Double')
+  }
+
+  void testPlus4() {
+    doExprTest('2.5+2', 'java.math.BigDecimal')
+  }
+
+  void testMultiply1() {
+    doExprTest('2*2', 'java.lang.Integer')
+  }
+
+  void testMultiply2() {
+    doExprTest('2f*2f', 'java.lang.Double')
+  }
+
+  void testMultiply3() {
+    doExprTest('2d*2d', 'java.lang.Double')
+  }
+
+  void testMultiply4() {
+    doExprTest('2.4*2', 'java.math.BigDecimal')
+  }
+
+  void testMultiply5() {
+    doExprTest('((byte)2)*((byte)2)', 'java.lang.Integer')
+  }
+
+  void testMultiply6() {
+    doExprTest('"abc"*"cde"', 'java.lang.String') //expected number as a right operand
+  }
+
+  void testMultiply7() {
+    doExprTest('''
+      class A {
+        def multiply(A a) {new B()}
+      }
+      class B{}
+      new A()*new A()
+''', 'B')
+  }
+
+  void testMultiply8() {
+    doExprTest('''
+      class A { }
+      new A()*new A()
+''', null)
+  }
+
+  void testDiv1() {
+    doExprTest('1/2', 'java.math.BigDecimal')
+  }
+
+  void testDiv2() {
+    doExprTest('1/2.4', 'java.math.BigDecimal')
+  }
+
+  void testDiv3() {
+    doExprTest('1d/2', 'java.lang.Double')
+  }
+
+  void testDiv4() {
+    doExprTest('1f/2', 'java.lang.Double')
+  }
+
+  void testDiv5() {
+    doExprTest('1f/2.4', 'java.lang.Double')
   }
 
   private void doTest(@Language("Groovy") String text, String type) {

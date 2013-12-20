@@ -36,6 +36,7 @@ import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.SpreadState;
@@ -44,7 +45,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotationMemberValue;
 import org.jetbrains.plugins.groovy.lang.psi.api.signatures.GrClosureSignature;
 import org.jetbrains.plugins.groovy.lang.psi.api.signatures.GrSignature;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinaryExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.impl.*;
 import org.jetbrains.plugins.groovy.lang.psi.impl.signatures.GrClosureSignatureImpl;
@@ -86,27 +86,6 @@ public class TypesUtil {
   };
 
   private TypesUtil() {
-  }
-
-  @Nullable
-  public static PsiType getNumericResultType(GrBinaryExpression binaryExpression) {
-    PsiType lType = binaryExpression.getLeftOperand().getType();
-    final GrExpression rop = binaryExpression.getRightOperand();
-    PsiType rType = rop == null ? null : rop.getType();
-    if (lType == null || rType == null) return null;
-    return getLeastUpperBoundForNumericType(lType, rType);
-  }
-
-  @Nullable
-  private static PsiType getLeastUpperBoundForNumericType(@NotNull PsiType lType, @NotNull PsiType rType) {
-    String lCanonical = lType.getCanonicalText();
-    String rCanonical = rType.getCanonicalText();
-    if (JAVA_LANG_FLOAT.equals(lCanonical)) lCanonical = JAVA_LANG_DOUBLE;
-    if (JAVA_LANG_FLOAT.equals(rCanonical)) rCanonical = JAVA_LANG_DOUBLE;
-    if (TYPE_TO_RANK.containsKey(lCanonical) && TYPE_TO_RANK.containsKey(rCanonical)) {
-      return TYPE_TO_RANK.get(lCanonical) > TYPE_TO_RANK.get(rCanonical) ? lType : rType;
-    }
-    return null;
   }
 
   @NotNull
@@ -182,6 +161,7 @@ public class TypesUtil {
     ourOperationsToOperatorNames.put(mSTAR_STAR, "power");
     ourOperationsToOperatorNames.put(COMPOSITE_LSHIFT_SIGN, "leftShift");
     ourOperationsToOperatorNames.put(COMPOSITE_RSHIFT_SIGN, "rightShift");
+    ourOperationsToOperatorNames.put(GroovyElementTypes.COMPOSITE_TRIPLE_SHIFT_SIGN, "rightShiftUnsigned");
     ourOperationsToOperatorNames.put(mEQUAL, "equals");
     ourOperationsToOperatorNames.put(mNOT_EQUAL, "equals");
 
@@ -583,8 +563,6 @@ public class TypesUtil {
              CommonClassNames.JAVA_LANG_STRING.equals(type1.getInternalCanonicalText())) {
       return type1;
     }
-    final PsiType result = getLeastUpperBoundForNumericType(type1, type2);
-    if (result != null) return result;
     return GenericsUtil.getLeastUpperBound(type1, type2, manager);
   }
 

@@ -1332,4 +1332,15 @@ public class PsiUtil {
       return null;
     }
   }
+
+  public static boolean isDGMMethod(@Nullable PsiElement element) {
+    if (!(element instanceof PsiMethod)) return false;
+
+    final PsiMethod method = element instanceof GrGdkMethod ? ((GrGdkMethod)element).getStaticMethod() : (PsiMethod)element;
+    final PsiClass aClass = method.getContainingClass();
+    if (aClass == null) return false;
+
+    final String qname = aClass.getQualifiedName();
+    return GroovyCommonClassNames.GROOVY_EXTENSION_CLASSES.contains(qname);
+  }
 }
