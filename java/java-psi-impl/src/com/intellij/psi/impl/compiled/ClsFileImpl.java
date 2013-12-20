@@ -271,11 +271,16 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub>
       @Nullable
       @Override
       public Result<PsiElement> compute() {
-        return Result.create(calcNavigationElement(), ClsFileImpl.this, FileIndexFacade.getInstance(getProject()).getRootModificationTracker());
+        PsiElement target = calcNavigationElement();
+        return Result.create(target, 
+                             ClsFileImpl.this, 
+                             target.getContainingFile(), 
+                             FileIndexFacade.getInstance(getProject()).getRootModificationTracker());
       }
     });
   }
 
+  @NotNull
   private PsiElement calcNavigationElement() {
     for (ClsCustomNavigationPolicy customNavigationPolicy : Extensions.getExtensions(ClsCustomNavigationPolicy.EP_NAME)) {
       if (customNavigationPolicy instanceof ClsCustomNavigationPolicyEx) {

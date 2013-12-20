@@ -34,6 +34,7 @@ public abstract class JavaPsiImplementationHelper {
 
   public abstract PsiClass getOriginalClass(PsiClass psiClass);
 
+  @NotNull
   public abstract PsiElement getClsFileNavigationElement(PsiJavaFile clsFile);
 
   /**
