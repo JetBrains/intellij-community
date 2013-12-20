@@ -15,6 +15,7 @@
  */
 package org.jetbrains.jps.builders.impl;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
@@ -22,6 +23,8 @@ import org.jetbrains.jps.builders.BuildOutputConsumer;
 import org.jetbrains.jps.builders.BuildTarget;
 import org.jetbrains.jps.builders.storage.SourceToOutputMapping;
 import org.jetbrains.jps.incremental.CompileContext;
+import org.jetbrains.jps.incremental.ModuleBuildTarget;
+import org.jetbrains.jps.incremental.artifacts.ArtifactBuildTarget;
 import org.jetbrains.jps.incremental.messages.FileGeneratedEvent;
 
 import java.io.File;
@@ -33,6 +36,7 @@ import java.util.Collection;
 *         Date: 11/16/12
 */
 public class BuildOutputConsumerImpl implements BuildOutputConsumer {
+  private static final Logger LOG = Logger.getInstance(BuildOutputConsumerImpl.class);
   private final BuildTarget<?> myTarget;
   private final CompileContext myContext;
   private FileGeneratedEvent myFileGeneratedEvent;
@@ -92,7 +96,9 @@ public class BuildOutputConsumerImpl implements BuildOutputConsumer {
 
   @Override
   public void registerOutputDirectory(@NotNull File outputDir, @NotNull Collection<String> sourcePaths) throws IOException {
-    registerOutput(outputDir, true,sourcePaths);
+    LOG.assertTrue(!(myTarget instanceof ModuleBuildTarget) && !(myTarget instanceof ArtifactBuildTarget),
+                   "'registerOutputDirectory' method cannot be used for target " + myTarget + ", it will break incremental compilation");
+    registerOutput(outputDir, true, sourcePaths);
   }
 
   public void fireFileGeneratedEvent() {
