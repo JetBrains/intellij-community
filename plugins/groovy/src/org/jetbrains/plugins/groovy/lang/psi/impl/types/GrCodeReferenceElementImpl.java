@@ -600,9 +600,9 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl<GrCodeRef
       return parent instanceof GrAnnotation || parent instanceof GrCodeReferenceElement && isAnnotationRef((GrCodeReferenceElement)parent);
     }
 
-    private static PsiFile getContextFile(PsiElement ref) {
+    private static PsiFile getContextFile(@NotNull PsiElement ref) {
       final PsiFile file = ref.getContainingFile();
-      if (file.isPhysical()) {
+      if (file.isPhysical() || file.getContext() == null) {
         return file;
       }
       else {
