@@ -6,12 +6,15 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.structuralsearch.MalformedPatternException;
 import com.intellij.structuralsearch.MatchResult;
 import com.intellij.structuralsearch.MatchVariableConstraint;
 import com.intellij.structuralsearch.StructuralSearchUtil;
-import com.intellij.structuralsearch.impl.matcher.*;
-import com.intellij.structuralsearch.impl.matcher.handlers.SubstitutionHandler;
+import com.intellij.structuralsearch.impl.matcher.JavaCompiledPattern;
+import com.intellij.structuralsearch.impl.matcher.MatchResultImpl;
+import com.intellij.structuralsearch.impl.matcher.MatcherImplUtil;
+import com.intellij.structuralsearch.impl.matcher.PatternTreeContext;
 import com.intellij.structuralsearch.impl.matcher.predicates.ScriptSupport;
 import com.intellij.structuralsearch.plugin.replace.ReplaceOptions;
 import com.intellij.util.IncorrectOperationException;
@@ -163,8 +166,8 @@ final class ReplacementBuilder extends JavaRecursiveElementWalkingVisitor {
       MatchResult r = matchMap.get(info.name);
       if (info.replacementVariable) {
         offset = insertSubstitution(result, offset, info, generateReplacement(info, match));
-      } else
-      if (r != null) {
+      }
+      else if (r != null) {
         offset = handleSubstitution(info, r, result, offset);
       }
       else {
@@ -186,7 +189,6 @@ final class ReplacementBuilder extends JavaRecursiveElementWalkingVisitor {
         }
         offset = insertSubstitution(result, offset, info, "");
       }
-
     }
 
     replacementInfo.variableMap = (HashMap<String, MatchResult>)matchMap.clone();
@@ -220,15 +222,14 @@ final class ReplacementBuilder extends JavaRecursiveElementWalkingVisitor {
         StringBuilder buf = new StringBuilder();
         handleMethodParameter(buf,info);
         replacementString = buf.toString();
-      } else
-      if (match.getAllSons().size() > 0 && !match.isScopeMatch()) {
+      }
+      else if (match.getAllSons().size() > 0 && !match.isScopeMatch()) {
         // compound matches
         StringBuilder buf = new StringBuilder();
-        MatchResult previous;
         MatchResult r = null;
 
         for (final MatchResult matchResult : match.getAllSons()) {
-          previous = r;
+          MatchResult previous = r;
           r = matchResult;
 
           final PsiElement currentElement = r.getMatch();
@@ -261,7 +262,13 @@ final class ReplacementBuilder extends JavaRecursiveElementWalkingVisitor {
               buf.append(',');
             }
             else if (info.classContext) {
-              buf.append('\n');
+              final PsiElement prevSibling = PsiTreeUtil.skipSiblingsBackward(currentElement, PsiWhiteSpace.class);
+              if (prevSibling instanceof PsiJavaToken && JavaTokenType.COMMA.equals(((PsiJavaToken)prevSibling).getTokenType())) {
+                buf.append(',');
+              }
+              else {
+                buf.append('\n');
+              }
             }
             else {
               buf.append(' ');
@@ -285,7 +292,7 @@ final class ReplacementBuilder extends JavaRecursiveElementWalkingVisitor {
       }
 
       offset = insertSubstitution(result,offset,info,replacementString);
-      offset = removeExtraSemicolon(info, offset, result,match);
+      offset = removeExtraSemicolon(info, offset, result, match);
       if (forceAddingNewLine && info.statementContext) {
         result.insert(info.startIndex+offset+1,'\n');
         offset ++;

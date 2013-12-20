@@ -2084,4 +2084,18 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
       actualResult
     );
   }
+
+  public void testReplaceMultipleFieldsInSingleDeclaraion() {
+    String source = "abstract class MyClass implements java.util.List {\n  private String a, b;\n}";
+    String search = "class 'Name implements java.util.List {\n  'ClassContent*\n}";
+    String replace = "class $Name$ {\n  $ClassContent$\n}";
+    String expectedResult = "abstract  class MyClass {\n  private String a,b;\n}";
+
+    String actualResult = replacer.testReplace(source, search, replace, options, true);
+
+    assertEquals(
+      expectedResult,
+      actualResult
+    );
+  }
 }
