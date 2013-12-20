@@ -43,7 +43,7 @@ public class NodeAroundProvider implements AroundProvider<Node> {
       Node commitNode = getCommitNodeInRow(i);
       if (commitNode != null) {
         Hash hash = myDataHolder.getHash(commitNode.getCommitIndex());
-        commits.putValue(node.getBranch().getRepositoryRoot(), hash);
+        commits.putValue(commitNode.getBranch().getRepositoryRoot(), hash);
       }
     }
     return commits;
