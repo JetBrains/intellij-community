@@ -112,6 +112,7 @@ public class DirectoryIndexImpl extends DirectoryIndex {
         myState.myProjectExcludeRoots.clear();
         myState.myRootTypeId.clear();
         myState.myRootTypes.clear();
+        myRootIndex = null;
       }
     });
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -118,9 +118,6 @@ public class TargetElementUtilBase {
 
   /**
    * @deprecated adjust offset with PsiElement should be used instead to provide correct checking for identifier part
-   * @param document
-   * @param offset
-   * @return
    */
   public static int adjustOffset(Document document, final int offset) {
     return adjustOffset(null, document, offset);

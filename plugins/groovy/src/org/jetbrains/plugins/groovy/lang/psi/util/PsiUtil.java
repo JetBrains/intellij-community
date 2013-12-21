@@ -249,10 +249,10 @@ public class PsiUtil {
       GrIndexProperty index = (GrIndexProperty)parent;
       PsiType[] argTypes = getArgumentTypes(index.getNamedArguments(), index.getExpressionArguments(), index.getClosureArguments(), nullAsBottom, stopAt, byShape);
       if (isLValue(index) && argTypes != null) {
-        PsiType initializer = TypeInferenceHelper.getInitializerFor(index);
-        if (initializer == null && !nullAsBottom) {
-          initializer = TypesUtil.getJavaLangObject(index);
-        }
+        PsiType rawInitializer = TypeInferenceHelper.getInitializerFor(index);
+
+        PsiType initializer = rawInitializer == null && !nullAsBottom ? TypesUtil.getJavaLangObject(index)
+                                                                      : rawInitializer;
         return ArrayUtil.append(argTypes, initializer);
       }
       else {
@@ -1331,5 +1331,16 @@ public class PsiUtil {
     else {
       return null;
     }
+  }
+
+  public static boolean isDGMMethod(@Nullable PsiElement element) {
+    if (!(element instanceof PsiMethod)) return false;
+
+    final PsiMethod method = element instanceof GrGdkMethod ? ((GrGdkMethod)element).getStaticMethod() : (PsiMethod)element;
+    final PsiClass aClass = method.getContainingClass();
+    if (aClass == null) return false;
+
+    final String qname = aClass.getQualifiedName();
+    return GroovyCommonClassNames.GROOVY_EXTENSION_CLASSES.contains(qname);
   }
 }

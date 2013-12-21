@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,35 +17,13 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.arithmetic;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.psi.CommonClassNames;
-import com.intellij.psi.PsiType;
-import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrBinaryExpressionImpl;
 
 /**
  * @author ilyas
  */
 public class GrShiftExpressionImpl extends GrBinaryExpressionImpl {
-
-  private static class MyTypeCalculator implements Function<GrBinaryExpressionImpl, PsiType> {
-    private static final Function<GrBinaryExpressionImpl, PsiType> INSTANCE = new MyTypeCalculator();
-
-    @Nullable
-    @Override
-    public PsiType fun(GrBinaryExpressionImpl binary) {
-      PsiType lopType = binary.getLeftOperand().getType();
-      if (lopType == null) return null;
-      if (lopType.equalsToText(CommonClassNames.JAVA_LANG_BYTE) ||
-          lopType.equalsToText(CommonClassNames.JAVA_LANG_CHARACTER) ||
-          lopType.equalsToText(CommonClassNames.JAVA_LANG_SHORT) ||
-          lopType.equalsToText(CommonClassNames.JAVA_LANG_INTEGER)) {
-        return binary.getTypeByFQName(CommonClassNames.JAVA_LANG_INTEGER);
-      }
-      return null;
-    }
-  }
 
   public GrShiftExpressionImpl(@NotNull ASTNode node) {
     super(node);
@@ -55,8 +33,4 @@ public class GrShiftExpressionImpl extends GrBinaryExpressionImpl {
     return "Shift expression";
   }
 
-  @Override
-  protected Function<GrBinaryExpressionImpl, PsiType> getTypeCalculator() {
-    return MyTypeCalculator.INSTANCE;
-  }
 }

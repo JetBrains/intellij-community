@@ -13,14 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.plugins.groovy.lang.resolve;
-
+package org.jetbrains.plugins.groovy.lang.resolve
 
 import com.intellij.psi.PsiIntersectionType
 import com.intellij.psi.PsiReference
 import com.intellij.psi.PsiType
+import org.intellij.lang.annotations.Language
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression
@@ -35,6 +36,13 @@ import static com.intellij.psi.CommonClassNames.*
  */
 public class TypeInferenceTest extends GroovyResolveTestCase {
   final String basePath = TestUtils.testDataPath + "resolve/inference/"
+
+  @Override
+  protected void setUp() {
+    super.setUp()
+
+    myFixture.addClass("package java.math; public class BigDecimal extends Number implements Comparable<BigDecimal> {}");
+  }
 
   public void testTryFinallyFlow() {
     GrReferenceExpression ref = (GrReferenceExpression)configureByFile("tryFinallyFlow/A.groovy").element;
@@ -168,7 +176,7 @@ public class TypeInferenceTest extends GroovyResolveTestCase {
   }
 
   public void testConditionalExpressionWithNumericTypes() {
-    assertTypeEquals("java.math.BigDecimal", "A.groovy");
+    assertTypeEquals("java.lang.Number", "A.groovy");
   }
 
   public void testImplicitCallMethod() {
@@ -257,7 +265,7 @@ class X {
 
     def getAt(String s) {new X()}
 
-    def plus(X x, int i) {x}
+    def plus(int i) {this}
 }
 
 map = new X()
@@ -265,7 +273,7 @@ map = new X()
 map['i'] += 2
 ''') as GroovyFile
     GrAssignmentExpression assignment = file.topStatements[2] as GrAssignmentExpression
-    assertTrue(assignment.LValue.type.equalsToText(JAVA_UTIL_DATE))
+    assertType("X", assignment.type)
   }
 
   void testAllTypeParamsAreSubstituted() {
@@ -605,33 +613,111 @@ class Any {
 ''', 'java.lang.Object')
   }
 
-  private void doTest(String text, String type) {
+  void testUnary() {
+    doExprTest('~/abc/', 'java.util.regex.Pattern')
+  }
+
+  void testUnary2() {
+    doExprTest('-/abc/', null)
+  }
+
+  void testUnary3() {
+    doExprTest('''
+      class A {
+        def bitwiseNegate() {'abc'}
+      }
+      ~new A()
+''', 'java.lang.String')
+  }
+
+  void testPlus1() {
+    doExprTest('2+2', 'java.lang.Integer')
+  }
+
+  void testPlus2() {
+    doExprTest('2f+2', 'java.lang.Double')
+  }
+
+  void testPlus3() {
+    doExprTest('2f+2f', 'java.lang.Double')
+  }
+
+  void testPlus4() {
+    doExprTest('2.5+2', 'java.math.BigDecimal')
+  }
+
+  void testMultiply1() {
+    doExprTest('2*2', 'java.lang.Integer')
+  }
+
+  void testMultiply2() {
+    doExprTest('2f*2f', 'java.lang.Double')
+  }
+
+  void testMultiply3() {
+    doExprTest('2d*2d', 'java.lang.Double')
+  }
+
+  void testMultiply4() {
+    doExprTest('2.4*2', 'java.math.BigDecimal')
+  }
+
+  void testMultiply5() {
+    doExprTest('((byte)2)*((byte)2)', 'java.lang.Integer')
+  }
+
+  void testMultiply6() {
+    doExprTest('"abc"*"cde"', 'java.lang.String') //expected number as a right operand
+  }
+
+  void testMultiply7() {
+    doExprTest('''
+      class A {
+        def multiply(A a) {new B()}
+      }
+      class B{}
+      new A()*new A()
+''', 'B')
+  }
+
+  void testMultiply8() {
+    doExprTest('''
+      class A { }
+      new A()*new A()
+''', null)
+  }
+
+  void testDiv1() {
+    doExprTest('1/2', 'java.math.BigDecimal')
+  }
+
+  void testDiv2() {
+    doExprTest('1/2.4', 'java.math.BigDecimal')
+  }
+
+  void testDiv3() {
+    doExprTest('1d/2', 'java.lang.Double')
+  }
+
+  void testDiv4() {
+    doExprTest('1f/2', 'java.lang.Double')
+  }
+
+  void testDiv5() {
+    doExprTest('1f/2.4', 'java.lang.Double')
+  }
+
+  private void doTest(@Language("Groovy") String text, String type) {
     def file = myFixture.configureByText('_.groovy', text)
     def ref = file.findReferenceAt(myFixture.editor.caretModel.offset) as GrReferenceExpression
     def actual = ref.type
-    if (type == null) {
-      assertNull(actual)
-      return
-    }
-
-    assertNotNull(actual)
-    if (actual instanceof PsiIntersectionType) {
-      assertEquals(type, genIntersectionTypeText(actual))
-    }
-    else {
-      assertEquals(type, actual.canonicalText)
-    }
+    assertType(type, actual)
   }
 
-  private static String genIntersectionTypeText(PsiIntersectionType t) {
-    StringBuilder b = new StringBuilder('[')
-    for (PsiType c : t.conjuncts) {
-      b.append(c.canonicalText).append(',')
-    }
-    if (t.conjuncts) {
-      b.replace(b.length() - 1, b.length(), ']')
-    }
-    return b.toString()
+  private void doExprTest(@Language("Groovy") String text, String expectedType) {
+    GroovyFile file = myFixture.configureByText('_.groovy', text) as GroovyFile
+    GrStatement lastStatement = file.statements.last()
+    assertInstanceOf lastStatement, GrExpression
+    assertType(expectedType, (lastStatement as GrExpression).type)
   }
-
 }

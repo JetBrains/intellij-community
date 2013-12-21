@@ -100,6 +100,9 @@ public abstract class AbstractVcsLogTableModel<CommitColumnClass, CommitId> exte
   @Nullable
   public abstract Hash getHashAtRow(int row);
 
+  @Nullable
+  public abstract CommitId getCommit(int row);
+
   @Override
   public Class<?> getColumnClass(int column) {
     switch (column) {

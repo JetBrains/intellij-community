@@ -15,7 +15,9 @@
  */
 package com.intellij.vcs.log.data;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.util.io.IOUtil;
@@ -35,9 +37,10 @@ import java.io.IOException;
 /**
  * Supports the int <-> Hash persistent mapping.
  */
-class VcsLogHashMap {
+class VcsLogHashMap implements Disposable {
 
   private static final File LOG_CACHE_APP_DIR = new File(PathManager.getSystemPath(), "vcs-log");
+  private static final Logger LOG = Logger.getInstance(VcsLogHashMap.class);
 
   private final PersistentEnumerator<Hash> myPersistentEnumerator;
 
@@ -58,6 +61,16 @@ class VcsLogHashMap {
 
   int getOrPut(@NotNull Hash hash) throws IOException {
     return myPersistentEnumerator.enumerate(hash);
+  }
+
+  @Override
+  public void dispose() {
+    try {
+      myPersistentEnumerator.close();
+    }
+    catch (IOException e) {
+      LOG.warn(e);
+    }
   }
 
   private static class MyHashKeyDescriptor implements KeyDescriptor<Hash> {

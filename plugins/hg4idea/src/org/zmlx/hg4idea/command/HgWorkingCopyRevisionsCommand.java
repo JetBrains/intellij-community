@@ -184,7 +184,7 @@ public class HgWorkingCopyRevisionsCommand {
                                               boolean silent) {
     final List<String> args = new LinkedList<String>();
     args.add("--template");
-    args.add(HgChangesetUtil.makeTemplate("{rev}", "{node|short}"));
+    args.add(HgChangesetUtil.makeTemplate("{rev}", "{node}"));
     if (revision != null) {
       args.add("-r");
       args.add(revision.getChangeset());

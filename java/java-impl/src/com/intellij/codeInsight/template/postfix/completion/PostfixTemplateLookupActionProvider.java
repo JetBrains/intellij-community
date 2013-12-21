@@ -36,7 +36,7 @@ public class PostfixTemplateLookupActionProvider implements LookupActionProvider
     if (element instanceof PostfixTemplateLookupElement) {
       final PostfixTemplate template = ((PostfixTemplateLookupElement)element).getPostfixTemplate();
 
-      consumer.consume(new LookupElementAction(PlatformIcons.EDIT, "Edit postfix completion settings") {
+      consumer.consume(new LookupElementAction(PlatformIcons.EDIT, "Edit postfix templates settings") {
         @Override
         public Result performLookupAction() {
           final Project project = lookup.getEditor().getProject();

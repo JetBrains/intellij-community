@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -417,7 +417,8 @@ public class FindInProjectUtil {
     return GlobalSearchScope.filesScope(project, getLocalScopeFiles((LocalSearchScope)scope));
   }
 
-  private static Set<VirtualFile> getLocalScopeFiles(LocalSearchScope scope) {
+  @NotNull
+  private static Set<VirtualFile> getLocalScopeFiles(@NotNull LocalSearchScope scope) {
     Set<VirtualFile> files = new LinkedHashSet<VirtualFile>();
     for (PsiElement element : scope.getScope()) {
       PsiFile file = element.getContainingFile();
@@ -442,7 +443,7 @@ public class FindInProjectUtil {
     CacheManager cacheManager = CacheManager.SERVICE.getInstance(project);
     SearchScope customScope = findModel.getCustomScope();
     GlobalSearchScope scope = psiDirectory != null
-                              ? GlobalSearchScopes.directoryScope(psiDirectory, true)
+                              ? GlobalSearchScopesCore.directoryScope(psiDirectory, true)
                               : module != null
                                 ? module.getModuleContentScope()
                                 : customScope instanceof GlobalSearchScope

@@ -1460,7 +1460,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
   }
 
   private interface DocumentContent {
-    String getText();
+    CharSequence getText();
 
     long getModificationStamp();
   }
@@ -1473,8 +1473,8 @@ public class FileBasedIndexImpl extends FileBasedIndex {
     }
 
     @Override
-    public String getText() {
-      return myDocument.getText();
+    public CharSequence getText() {
+      return myDocument.getImmutableCharSequence();
     }
 
     @Override
@@ -1493,13 +1493,13 @@ public class FileBasedIndexImpl extends FileBasedIndex {
     }
 
     @Override
-    public String getText() {
+    public CharSequence getText() {
       if (myFile.getViewProvider().getModificationStamp() != myDocument.getModificationStamp()) {
         final ASTNode node = myFile.getNode();
         assert node != null;
-        return node.getText();
+        return node.getChars();
       }
-      return myDocument.getText();
+      return myDocument.getImmutableCharSequence();
     }
 
     @Override
@@ -1540,7 +1540,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
     final long currentDocStamp = content.getModificationStamp();
     final long previousDocStamp = myLastIndexedDocStamps.getAndSet(document, requestedIndexId, currentDocStamp);
     if (currentDocStamp != previousDocStamp) {
-      final String contentText = content.getText();
+      final CharSequence contentText = content.getText();
       if (!isTooLarge(vFile, contentText.length()) &&
           getAffectedIndexCandidates(vFile).contains(requestedIndexId) &&
           getInputFilter(requestedIndexId).acceptInput(vFile)) {

@@ -31,6 +31,7 @@ public class CoreJavaPsiImplementationHelper extends JavaPsiImplementationHelper
     return psiClass;
   }
 
+  @NotNull
   @Override
   public PsiElement getClsFileNavigationElement(PsiJavaFile clsFile) {
     return clsFile;

@@ -446,7 +446,9 @@ public class IncProjectBuilder {
         for (String out : outs) {
           BuildOperations.deleteRecursively(out, deletedPaths, dirsToDelete);
         }
-        context.processMessage(new FileDeletedEvent(deletedPaths));
+        if (!deletedPaths.isEmpty()) {
+          context.processMessage(new FileDeletedEvent(deletedPaths));
+        }
       }
     }
     registerTargetsWithClearedOutput(context, Collections.singletonList(target));
@@ -959,18 +961,20 @@ public class IncProjectBuilder {
         for (String deletedSource : pathsForIteration) {
           // deleting outputs corresponding to non-existing source
           final Collection<String> outputs = sourceToOutputStorage.getOutputs(deletedSource);
-          List<String> deletedOutputPaths = new ArrayList<String>();
           if (outputs != null && !outputs.isEmpty()) {
+            List<String> deletedOutputPaths = new ArrayList<String>();
             for (String output : outputs) {
               final boolean deleted = BuildOperations.deleteRecursively(output, deletedOutputPaths, shouldPruneEmptyDirs ? dirsToDelete : null);
               if (deleted) {
                 doneSomething = true;
               }
             }
-            if (logger.isEnabled()) {
-              logger.logDeletedFiles(deletedOutputPaths);
+            if (!deletedOutputPaths.isEmpty()) {
+              if (logger.isEnabled()) {
+                logger.logDeletedFiles(deletedOutputPaths);
+              }
+              context.processMessage(new FileDeletedEvent(deletedOutputPaths));
             }
-            context.processMessage(new FileDeletedEvent(deletedOutputPaths));
           }
 
           if (target instanceof ModuleBuildTarget) {

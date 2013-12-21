@@ -19,7 +19,7 @@ import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.compiler.CompilerConfigurationImpl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.ex.CompileContextEx;
-import com.intellij.openapi.module.LanguageLevelUtil;
+import com.intellij.openapi.module.EffectiveLanguageLevelUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -304,7 +304,7 @@ public class ModuleChunk extends Chunk<Module> {
 
   //the check for equal language levels is done elsewhere
   public LanguageLevel getLanguageLevel() {
-    return LanguageLevelUtil.getEffectiveLanguageLevel(getNodes().iterator().next());
+    return EffectiveLanguageLevelUtil.getEffectiveLanguageLevel(getNodes().iterator().next());
   }
 
   public Project getProject() {

@@ -207,9 +207,9 @@ public class BuildOperations {
   public static boolean deleteRecursively(@NotNull String path, @NotNull Collection<String> deletedPaths, @Nullable Set<File> parentDirs) {
     File file = new File(path);
     boolean deleted = deleteRecursively(file, deletedPaths);
-    if (deleted) {
+    if (deleted && parentDirs != null) {
       File parent = file.getParentFile();
-      if (parent != null && parentDirs != null) {
+      if (parent != null) {
         parentDirs.add(parent);
       }
     }

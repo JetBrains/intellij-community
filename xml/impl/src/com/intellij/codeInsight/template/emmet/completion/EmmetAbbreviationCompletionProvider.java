@@ -95,7 +95,7 @@ abstract public class EmmetAbbreviationCompletionProvider extends CompletionProv
   }
 
   protected LiveTemplateLookupElement createLookupElement(TemplateImpl template) {
-    return new LiveTemplateLookupElement(template, null, true, true);
+    return new EmmetAbbreviationLookupElement(template, null, true);
   }
 
   protected abstract ZenCodingGenerator getGenerator();

@@ -18,6 +18,7 @@ package com.intellij.openapi.vcs.impl;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.FileIndexFacade;
+import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.ProjectBaseDirectory;
@@ -71,6 +72,12 @@ public class DefaultFileIndexFacade extends FileIndexFacade {
 
   public boolean isValidAncestor(@NotNull final VirtualFile baseDir, @NotNull final VirtualFile childDir) {
     return VfsUtil.isAncestor(baseDir, childDir, false);
+  }
+
+  @NotNull
+  @Override
+  public ModificationTracker getRootModificationTracker() {
+    return ModificationTracker.NEVER_CHANGED;
   }
 
   private VirtualFile getBaseDir() {

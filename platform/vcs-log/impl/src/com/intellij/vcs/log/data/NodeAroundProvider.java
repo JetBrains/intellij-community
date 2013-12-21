@@ -43,7 +43,7 @@ public class NodeAroundProvider implements AroundProvider<Node> {
       Node commitNode = getCommitNodeInRow(i);
       if (commitNode != null) {
         Hash hash = myDataHolder.getHash(commitNode.getCommitIndex());
-        commits.putValue(node.getBranch().getRepositoryRoot(), hash);
+        commits.putValue(commitNode.getBranch().getRepositoryRoot(), hash);
       }
     }
     return commits;
@@ -63,7 +63,7 @@ public class NodeAroundProvider implements AroundProvider<Node> {
     }
     NodeRow row = graph.getNodeRows().get(rowIndex);
     for (Node node : row.getNodes()) {
-      if (node.getType() == Node.NodeType.COMMIT_NODE) {
+      if (node.getType() == Node.NodeType.COMMIT_NODE || node.getType() == Node.NodeType.END_COMMIT_NODE) {
         return node;
       }
     }

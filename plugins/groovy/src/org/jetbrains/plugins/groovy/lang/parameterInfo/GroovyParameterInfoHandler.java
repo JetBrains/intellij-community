@@ -102,11 +102,11 @@ public class GroovyParameterInfoHandler implements ParameterInfoHandlerWithTabAc
     return ArrayUtil.EMPTY_OBJECT_ARRAY;
   }
 
-  public GroovyPsiElement findElementForParameterInfo(CreateParameterInfoContext context) {
+  public GroovyPsiElement findElementForParameterInfo(@NotNull CreateParameterInfoContext context) {
     return findAnchorElement(context.getEditor().getCaretModel().getOffset(), context.getFile());
   }
 
-  public GroovyPsiElement findElementForUpdatingParameterInfo(UpdateParameterInfoContext context) {
+  public GroovyPsiElement findElementForUpdatingParameterInfo(@NotNull UpdateParameterInfoContext context) {
     return findAnchorElement(context.getEditor().getCaretModel().getOffset(), context.getFile());
   }
 
@@ -210,7 +210,7 @@ public class GroovyParameterInfoHandler implements ParameterInfoHandlerWithTabAc
     return resolveResult.isInvokedOnProperty() || resolveResult.getElement() instanceof PsiVariable;
   }
 
-  public void updateParameterInfo(@NotNull GroovyPsiElement place, UpdateParameterInfoContext context) {
+  public void updateParameterInfo(@NotNull GroovyPsiElement place, @NotNull UpdateParameterInfoContext context) {
     final PsiElement parameterOwner = context.getParameterOwner();
     if (parameterOwner != place) {
       context.removeHint();
@@ -318,7 +318,7 @@ public class GroovyParameterInfoHandler implements ParameterInfoHandlerWithTabAc
     return true;
   }
 
-  public void updateUI(Object o, ParameterInfoUIContext context) {
+  public void updateUI(Object o, @NotNull ParameterInfoUIContext context) {
     CodeInsightSettings settings = CodeInsightSettings.getInstance();
 
     if (o == null) return;

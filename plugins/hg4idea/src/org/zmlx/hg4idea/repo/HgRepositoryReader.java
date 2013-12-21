@@ -20,6 +20,7 @@ import com.intellij.dvcs.repo.Repository;
 import com.intellij.dvcs.repo.RepositoryUtil;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.VcsLogObjectsFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -110,8 +111,8 @@ public class HgRepositoryReader {
   }
 
   @NotNull
-  public Collection<HgNameWithHashInfo> readBranches() {
-    List<HgNameWithHashInfo> branches = new ArrayList<HgNameWithHashInfo>();
+  public Map<String, Set<Hash>> readBranches() {
+    Map<String, Set<Hash>> branchesWithHashes = new HashMap<String, Set<Hash>>();
     // Set<String> branchNames = new HashSet<String>();
     if (isBranchInfoAvailable()) {
       String[] branchesWithHeads = RepositoryUtil.tryLoadFile(myBranchHeadsFile).split("\n");
@@ -120,13 +121,18 @@ public class HgRepositoryReader {
         Matcher matcher = HASH_NAME.matcher(branchesWithHeads[i]);
         if (matcher.matches()) {
           String name = matcher.group(2);
-          // if (branchNames.add(name)) {
-          branches.add(new HgNameWithHashInfo(name, myVcsObjectsFactory.createHash(matcher.group(1))));
-          //}
+          if (branchesWithHashes.containsKey(name)) {
+            branchesWithHashes.get(name).add(myVcsObjectsFactory.createHash(matcher.group(1)));
+          }
+          else {
+            Set<Hash> hashes = new HashSet<Hash>();
+            hashes.add(myVcsObjectsFactory.createHash(matcher.group(1)));
+            branchesWithHashes.put(name, hashes);
+          }
         }
       }
     }
-    return branches;
+    return branchesWithHashes;
   }
 
   public boolean isMergeInProgress() {
