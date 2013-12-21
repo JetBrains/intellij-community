@@ -13,10 +13,10 @@
     <orderEntry type="library" name="cli-parser" level="project" />
     <orderEntry type="library" name="Ant" level="project" />
     <orderEntry type="module" module-name="jps-model-serialization" />
-    <orderEntry type="module-library" scope="PROVIDED">
+    <orderEntry type="module-library">
       <library>
         <CLASSES>
-          <root url="jar://$MODULE_DIR$/../../build/lib/gant/lib/gant_groovy2.1-1.9.10.jar!/" />
+          <root url="jar://$MODULE_DIR$/../../build/lib/gant/lib/gant_groovy2.0-1.9.8.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
