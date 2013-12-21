@@ -95,6 +95,7 @@ public class VcsLogUI {
     if (previousModel instanceof AbstractVcsLogTableModel) { // initially it is an empty DefaultTableModel
       restoreSelection(table, (AbstractVcsLogTableModel)previousModel, selectedRows, model);
     }
+    table.setPaintBusy(false);
   }
 
   private static void restoreSelection(@NotNull VcsLogGraphTable table, @NotNull AbstractVcsLogTableModel previousModel,

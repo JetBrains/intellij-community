@@ -90,13 +90,12 @@ public class VcsLogFilterer {
     });
   }
 
-  public void requestVcs(@NotNull Collection<VcsLogFilter> filters, final Runnable onSuccess) {
+  public void requestVcs(@NotNull Collection<VcsLogFilter> filters) {
     myLogDataHolder.getFilteredDetailsFromTheVcs(filters, new Consumer<List<VcsFullCommitDetails>>() {
       @Override
       public void consume(List<VcsFullCommitDetails> details) {
         myUI.setModel(new NoGraphTableModel(myUI, details, myLogDataHolder.getDataPack().getRefsModel(), false));
         myUI.updateUI();
-        onSuccess.run();
       }
     });
   }
