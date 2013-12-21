@@ -271,7 +271,12 @@ final class ReplacementBuilder extends JavaRecursiveElementWalkingVisitor {
               }
             }
             else {
-              buf.append(' ');
+              if (currentElement.getParent() instanceof PsiReferenceList) {
+                buf.append(',');
+              }
+              else {
+                buf.append(' ');
+              }
             }
           }
 

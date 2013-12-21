@@ -2085,7 +2085,7 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
     );
   }
 
-  public void testReplaceMultipleFieldsInSingleDeclaraion() {
+  public void testReplaceMultipleFieldsInSingleDeclaration() {
     String source = "abstract class MyClass implements java.util.List {\n  private String a, b;\n}";
     String search = "class 'Name implements java.util.List {\n  'ClassContent*\n}";
     String replace = "class $Name$ {\n  $ClassContent$\n}";
@@ -2093,6 +2093,23 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
 
     String actualResult = replacer.testReplace(source, search, replace, options, true);
 
+    assertEquals(
+      expectedResult,
+      actualResult
+    );
+  }
+
+  public void testReplaceInImplementsList() {
+    String source = "import java.io.Externalizable;\n" +
+                    "import java.io.Serializable;\n" +
+                    "abstract class MyClass implements Serializable, java.util.List, Externalizable {}";
+    String search = "class 'TestCase implements java.util.List, 'others* {\n    'MyClassContent\n}";
+    String replace = "class $TestCase$ implements $others$ {\n    $MyClassContent$\n}";
+    String expectedResult = "import java.io.Externalizable;\n" +
+                            "import java.io.Serializable;\n" +
+                            "abstract  class MyClass implements Externalizable,Serializable {\n    \n}";
+
+    String actualResult = replacer.testReplace(source, search, replace, options, true);
     assertEquals(
       expectedResult,
       actualResult
