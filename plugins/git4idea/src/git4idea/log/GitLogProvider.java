@@ -189,7 +189,8 @@ public class GitLogProvider implements VcsLogProvider {
   @NotNull
   @Override
   public List<? extends VcsFullCommitDetails> getFilteredDetails(@NotNull final VirtualFile root,
-                                                                 @NotNull Collection<VcsLogFilter> filters) throws VcsException {
+                                                                 @NotNull Collection<VcsLogFilter> filters,
+                                                                 int maxCount) throws VcsException {
     if (!isRepositoryReady(root)) {
       return Collections.emptyList();
     }
@@ -243,6 +244,9 @@ public class GitLogProvider implements VcsLogProvider {
     }
 
     filterParameters.add("--regexp-ignore-case"); // affects case sensitivity of any filter (except file filter)
+    if (maxCount > 0) {
+      filterParameters.add("--max-count=" + maxCount);
+    }
 
     // note: this filter must be the last parameter, because it uses "--" which separates parameters from paths
     List<VcsLogStructureFilter> structureFilters = ContainerUtil.findAll(filters, VcsLogStructureFilter.class);
