@@ -61,7 +61,6 @@ public final class HgCommandExecutor {
   private final Project myProject;
   private final HgVcs myVcs;
   private final String myDestination;
-  private final List<String> operationsWithTextIndicator = Arrays.asList("clone", "push", "pull", "update", "merge");
 
   @NotNull private Charset myCharset;
   private boolean myIsSilent = false;
@@ -208,8 +207,8 @@ public final class HgCommandExecutor {
       String workingDir = repo != null ? repo.getPath() : null;
       ShellCommand shellCommand = new ShellCommand(cmdLine, workingDir, myCharset);
       long startTime = System.currentTimeMillis();
-      LOG.debug(String.format("hg %s.started", operation));
-      result = shellCommand.execute(operationsWithTextIndicator.contains(operation));
+      LOG.debug(String.format("hg %s started", operation));
+      result = shellCommand.execute(myShowOutput);
       LOG.debug(String.format("hg %s finished. Took %s ms", operation, System.currentTimeMillis() - startTime));
       if (!HgErrorUtil.isAuthorizationError(result)) {
         passReceiver.saveCredentials();
