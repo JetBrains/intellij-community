@@ -172,6 +172,9 @@ public abstract class TokenSets {
                                                                COMPOSITE_LSHIFT_SIGN, COMPOSITE_RSHIFT_SIGN, COMPOSITE_TRIPLE_SHIFT_SIGN,
                                                                mREGEX_FIND, mREGEX_MATCH, mRANGE_INCLUSIVE, mRANGE_EXCLUSIVE);
 
+  public static final TokenSet ASSOCIATIVE_BINARY_OP_SET = TokenSet.create(mBAND, mBOR, mBXOR, mEQUAL, mLOR, mPLUS, mSTAR, mNOT_EQUAL, mLAND);
+
+
   public static final TokenSet BINARY_EXPRESSIONS = TokenSet.create(ADDITIVE_EXPRESSION, MULTIPLICATIVE_EXPRESSION, POWER_EXPRESSION,
                                                                     POWER_EXPRESSION_SIMPLE, LOGICAL_OR_EXPRESSION, LOGICAL_AND_EXPRESSION,
                                                                     INCLUSIVE_OR_EXPRESSION, EXCLUSIVE_OR_EXPRESSION, AND_EXPRESSION,
