@@ -126,8 +126,8 @@ def foo() {
 
     PsiType type = inferType(explicitType)
 
-    final MockSettings settings = new MockSettings(false, "preved", type, replaceAllOccurrences)
-    final GrIntroduceVariableHandler introduceVariableHandler = new MockGrIntroduceVariableHandler(settings)
+    final IntroduceLocalVariableTest.MockSettings settings = new IntroduceLocalVariableTest.MockSettings(false, "preved", type, replaceAllOccurrences)
+    final GrIntroduceVariableHandler introduceVariableHandler = new IntroduceLocalVariableTest.MockGrIntroduceVariableHandler(settings)
 
     introduceVariableHandler.invoke(myFixture.project, myFixture.editor, myFixture.file, null)
   }
