@@ -41,7 +41,6 @@ final class ReplacementBuilder extends JavaRecursiveElementWalkingVisitor {
     boolean methodParameterContext;
     boolean statementContext;
     boolean variableInitialContext;
-    boolean classContext;
     int afterDelimiterPos;
     boolean hasCommaBefore;
     int beforeDelimiterPos;
@@ -99,9 +98,6 @@ final class ReplacementBuilder extends JavaRecursiveElementWalkingVisitor {
         else if (ch == ',' || ch == ')') {
           info.parameterContext = true;
           info.hasCommaAfter = ch == ',';
-        }
-        else if (ch == '}') {
-          info.classContext = true;
         }
         info.afterDelimiterPos = pos;
       }
@@ -220,7 +216,7 @@ final class ReplacementBuilder extends JavaRecursiveElementWalkingVisitor {
 
       if (info.methodParameterContext) {
         StringBuilder buf = new StringBuilder();
-        handleMethodParameter(buf,info);
+        handleMethodParameter(buf, info);
         replacementString = buf.toString();
       }
       else if (match.getAllSons().size() > 0 && !match.isScopeMatch()) {
@@ -235,6 +231,7 @@ final class ReplacementBuilder extends JavaRecursiveElementWalkingVisitor {
           final PsiElement currentElement = r.getMatch();
 
           if (buf.length() > 0) {
+            final PsiElement parent = currentElement.getParent();
             if (info.statementContext) {
               final PsiElement previousElement = previous.getMatchRef().getElement();
 
@@ -261,7 +258,7 @@ final class ReplacementBuilder extends JavaRecursiveElementWalkingVisitor {
             else if (info.parameterContext) {
               buf.append(',');
             }
-            else if (info.classContext) {
+            else if (parent instanceof PsiClass) {
               final PsiElement prevSibling = PsiTreeUtil.skipSiblingsBackward(currentElement, PsiWhiteSpace.class);
               if (prevSibling instanceof PsiJavaToken && JavaTokenType.COMMA.equals(((PsiJavaToken)prevSibling).getTokenType())) {
                 buf.append(',');
@@ -270,13 +267,11 @@ final class ReplacementBuilder extends JavaRecursiveElementWalkingVisitor {
                 buf.append('\n');
               }
             }
+            else if (parent instanceof PsiReferenceList) {
+              buf.append(',');
+            }
             else {
-              if (currentElement.getParent() instanceof PsiReferenceList) {
-                buf.append(',');
-              }
-              else {
-                buf.append(' ');
-              }
+              buf.append(' ');
             }
           }
 

@@ -1571,7 +1571,7 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
     String s45 = "@MyAnnotation\n" +
                  "class $Class$ implements $Interface$ {}";
     String expectedResult16 = "@MyAnnotation public @Deprecated\n" +
-                              "class Foo implements Comparable<Foo> {int x; void m(){}}";
+                              "class Foo implements Comparable<Foo> {int x;\nvoid m(){}}";
 
     actualResult = replacer.testReplace(s43,s44,s45,options, true);
     assertEquals(
@@ -2108,6 +2108,33 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
     String expectedResult = "import java.io.Externalizable;\n" +
                             "import java.io.Serializable;\n" +
                             "abstract  class MyClass implements Externalizable,Serializable {\n    \n}";
+
+    String actualResult = replacer.testReplace(source, search, replace, options, true);
+    assertEquals(
+      expectedResult,
+      actualResult
+    );
+  }
+
+  public void testReplaceFieldWithEndOfLineComment() {
+    String source = "class MyClass {\n" +
+                    "    private String b;// comment\n" +
+                    "    public void foo() {\n" +
+                    "    }\n" +
+                    "}";
+    String search = "class 'Class {\n    'Content*\n}";
+    String replace = "class $Class$ {\n" +
+                     "    void x() {}\n" +
+                     "    $Content$\n" +
+                     "    void bar() {}\n" +
+                     "}";
+    String expectedResult = "class MyClass {\n" +
+                            "    void x() {}\n" +
+                            "    private String b;// comment\n" +
+                            "public void foo() {\n" +
+                            "    }\n" +
+                            "    void bar() {}\n" +
+                            "}";
 
     String actualResult = replacer.testReplace(source, search, replace, options, true);
     assertEquals(
