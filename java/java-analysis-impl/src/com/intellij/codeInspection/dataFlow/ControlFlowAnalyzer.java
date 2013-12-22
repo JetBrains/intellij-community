@@ -1193,14 +1193,12 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
 
   private void generateBooleanAssignmentExpression(boolean and, PsiExpression lExpression, PsiExpression rExpression, PsiType exprType) {
     lExpression.accept(this);
-    addInstruction(new DupInstruction());
     generateBoxingUnboxingInstructionFor(lExpression, exprType);
+    addInstruction(new DupInstruction());
 
     rExpression.accept(this);
     generateBoxingUnboxingInstructionFor(rExpression, exprType);
-
-    lExpression.accept(this);
-    generateBoxingUnboxingInstructionFor(lExpression, exprType);
+    addInstruction(new SwapInstruction());
 
     combineStackBooleans(and, lExpression);
   }
