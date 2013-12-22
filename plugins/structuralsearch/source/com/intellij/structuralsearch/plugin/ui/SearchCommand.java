@@ -6,6 +6,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiNameIdentifierOwner;
 import com.intellij.structuralsearch.MatchResult;
 import com.intellij.structuralsearch.MatchResultSink;
 import com.intellij.structuralsearch.MatchingProcess;
@@ -91,7 +92,7 @@ public class SearchCommand {
           } else {
             PsiElement element = result.getMatch();
             info = new UsageInfo(
-              element,
+              element instanceof PsiNameIdentifierOwner ? ((PsiNameIdentifierOwner)element).getNameIdentifier() : element,
               result.getStart(),
               result.getEnd()==-1?element.getTextLength() : result.getEnd()
             );
