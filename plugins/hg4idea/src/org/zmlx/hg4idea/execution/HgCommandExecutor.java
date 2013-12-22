@@ -213,7 +213,7 @@ public final class HgCommandExecutor {
       String workingDir = repo != null ? repo.getPath() : null;
       ShellCommand shellCommand = new ShellCommand(cmdLine, workingDir, myCharset);
       long startTime = System.currentTimeMillis();
-      LOG.debug(String.format("hg %s.started", operation));
+      LOG.debug(String.format("hg %s started", operation));
       result = shellCommand.execute();
       LOG.debug(String.format("hg %s finished. Took %s ms", operation, System.currentTimeMillis() - startTime));
       if (!HgErrorUtil.isAuthorizationError(result)) {
