@@ -147,7 +147,7 @@ public class DataFlowRunner {
       MultiMapBasedOnSet<BranchingInstruction, DfaMemoryState> processedStates = new MultiMapBasedOnSet<BranchingInstruction, DfaMemoryState>();
       MultiMapBasedOnSet<BranchingInstruction, DfaMemoryState> incomingStates = new MultiMapBasedOnSet<BranchingInstruction, DfaMemoryState>();
 
-      WorkingTimeMeasurer measurer = new WorkingTimeMeasurer(shouldCheckTimeLimit() ? ourTimeLimit : ourTimeLimit * 42);
+      WorkingTimeMeasurer measurer = new WorkingTimeMeasurer(shouldCheckTimeLimit() ? ourTimeLimit : ourTimeLimit * 5);
       int count = 0;
       while (!queue.isEmpty()) {
         for (DfaInstructionState instructionState : queue.getNextInstructionStates(joinInstructions)) {
