@@ -330,7 +330,8 @@ public class EditorHyperlinkSupport {
         break;
       }
     }
-    int newIndex = i > 0 ? i % ranges.size() : 0;
+    int initial = i > 0 ? i % ranges.size() : 0;
+    int newIndex = initial;
     while (newIndex < ranges.size() && newIndex >= 0) {
       newIndex = (newIndex + delta + ranges.size()) % ranges.size();
       final RangeHighlighter next = ranges.get(newIndex);
@@ -342,7 +343,7 @@ public class EditorHyperlinkSupport {
           }
         }, newIndex == -1 ? -1 : newIndex + 1, ranges.size());
       }
-      if (newIndex == i) {
+      if (newIndex == initial) {
         break; // cycled through everything, found no next/prev hyperlink
       }
     }
