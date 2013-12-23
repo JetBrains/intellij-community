@@ -283,9 +283,9 @@ public class ClsMethodImpl extends ClsMemberImpl<PsiMethodStub> implements PsiAn
       @Nullable
       @Override
       public Result<PsiMethod> compute() {
-        return Result.create(calcSourceMirrorMethod(), 
-                             getContainingFile(), 
-                             getContainingFile().getNavigationElement(), 
+        return Result.create(calcSourceMirrorMethod(),
+                             getContainingFile(),
+                             getContainingFile().getNavigationElement(),
                              FileIndexFacade.getInstance(getProject()).getRootModificationTracker());
       }
     });

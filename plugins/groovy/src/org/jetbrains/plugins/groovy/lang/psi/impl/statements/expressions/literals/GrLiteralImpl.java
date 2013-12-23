@@ -54,7 +54,7 @@ public class GrLiteralImpl extends GrAbstractLiteral implements GrLiteral, PsiLa
 
   public PsiType getType() {
     IElementType elemType = getLiteralType(this);
-    return elemType == kNULL ? PsiType.NULL : TypesUtil.getPsiType(this, elemType);
+    return TypesUtil.getPsiType(this, elemType);
   }
 
   public void accept(GroovyElementVisitor visitor) {

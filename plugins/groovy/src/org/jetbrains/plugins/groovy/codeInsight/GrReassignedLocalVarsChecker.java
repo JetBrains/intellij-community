@@ -37,7 +37,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.types.TypeInferenceHelper;
@@ -57,7 +56,7 @@ public class GrReassignedLocalVarsChecker {
   private static final Key<CachedValue<Boolean>> REASSIGNED_VAR = Key.create("least upper bound type");
 
   @Nullable
-  public static Boolean isReassignedVar(final GrReferenceExpression refExpr) {
+  public static Boolean isReassignedVar(@NotNull final GrReferenceExpression refExpr) {
     if (!PsiUtil.isCompileStatic(refExpr)) {
       return false;
     }
@@ -86,7 +85,7 @@ public class GrReassignedLocalVarsChecker {
     return data.getValue();
   }
 
-  private static boolean isReassignedVarImpl(final GrVariable resolved) {
+  private static boolean isReassignedVarImpl(@NotNull final GrVariable resolved) {
     final GrControlFlowOwner variableScope = PsiTreeUtil.getParentOfType(resolved, GrCodeBlock.class, GroovyFile.class);
     if (variableScope == null) return false;
 
@@ -97,7 +96,7 @@ public class GrReassignedLocalVarsChecker {
         ((GroovyPsiElement)scope).accept(new GroovyRecursiveElementVisitor() {
           @Override
           public void visitClosure(GrClosableBlock closure) {
-            if (getAssignedVarsInsideBlock(closure).contains(name)) {
+            if (getUsedVarsInsideBlock(closure).contains(name)) {
               isReassigned.set(true);
             }
           }
@@ -133,7 +132,7 @@ public class GrReassignedLocalVarsChecker {
   }
 
   @Nullable
-  private static PsiType getLeastUpperBoundByVar(final GrVariable resolved) {
+  private static PsiType getLeastUpperBoundByVar(@NotNull final GrVariable resolved) {
     CachedValue<PsiType> data = resolved.getUserData(LEAST_UPPER_BOUND_TYPE);
     if (data == null) {
       data = CachedValuesManager.getManager(resolved.getProject()).createCachedValue(new CachedValueProvider<PsiType>() {
@@ -148,7 +147,7 @@ public class GrReassignedLocalVarsChecker {
   }
 
   @Nullable
-  private static PsiType getLeastUpperBoundByVarImpl(final GrVariable resolved) {
+  private static PsiType getLeastUpperBoundByVarImpl(@NotNull final GrVariable resolved) {
     return RecursionManager.doPreventingRecursion(resolved, false, new NullableComputable<PsiType>() {
       @Override
       public PsiType compute() {
@@ -170,7 +169,7 @@ public class GrReassignedLocalVarsChecker {
   }
 
   @NotNull
-  private static Set<String> getAssignedVarsInsideBlock(@NotNull final GrCodeBlock block) {
+  private static Set<String> getUsedVarsInsideBlock(@NotNull final GrCodeBlock block) {
     CachedValue<Set<String>> data = block.getUserData(ASSIGNED_VARS);
 
     if (data == null) {
@@ -181,27 +180,24 @@ public class GrReassignedLocalVarsChecker {
           final Set<String> result = ContainerUtil.newHashSet();
 
           block.acceptChildren(new GroovyRecursiveElementVisitor() {
-            @Override
-            public void visitAssignmentExpression(GrAssignmentExpression expression) {
-              super.visitAssignmentExpression(expression);
-
-              GrExpression lValue = expression.getLValue();
-              if (lValue instanceof GrReferenceExpression && !((GrReferenceExpression)lValue).isQualified()) {
-                result.add(((GrReferenceExpression)lValue).getReferenceName());
-              }
-            }
 
             @Override
             public void visitOpenBlock(GrOpenBlock openBlock) {
-              result.addAll(getAssignedVarsInsideBlock(openBlock));
+              result.addAll(getUsedVarsInsideBlock(openBlock));
             }
 
             @Override
             public void visitClosure(GrClosableBlock closure) {
-              result.addAll(getAssignedVarsInsideBlock(closure));
+              result.addAll(getUsedVarsInsideBlock(closure));
+            }
+
+            @Override
+            public void visitReferenceExpression(GrReferenceExpression referenceExpression) {
+              if (referenceExpression.getQualifier() == null && referenceExpression.getReferenceName() != null) {
+                result.add(referenceExpression.getReferenceName());
+              }
             }
           });
-
           return Result.create(result, block);
         }
       }, false);

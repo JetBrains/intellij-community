@@ -709,15 +709,10 @@ public class ControlFlowUtils {
    * @param ahead if true search for next write. if false searches for previous write
    * @return all write instructions leading to (or preceding) the place
    */
-  public static ReadWriteVariableInstruction[] findWriteAccess(GrVariable local, final PsiElement place, boolean ahead) {
-    List<ReadWriteVariableInstruction> res = findAccess(local, place, ahead, true);
-    return res.toArray(new ReadWriteVariableInstruction[res.size()]);
-  }
-
   public static List<ReadWriteVariableInstruction> findAccess(GrVariable local, final PsiElement place, boolean ahead, boolean writeAccessOnly) {
     LOG.assertTrue(!(local instanceof GrField), local.getClass());
 
-    final GrControlFlowOwner owner = findControlFlowOwner(local);
+    final GrControlFlowOwner owner = findControlFlowOwner(place);
     assert owner != null;
 
     final Instruction cur = findInstruction(place, owner.getControlFlow());

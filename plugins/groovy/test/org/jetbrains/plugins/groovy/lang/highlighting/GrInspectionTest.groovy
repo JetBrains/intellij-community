@@ -149,7 +149,7 @@ boolean bar(def list) {
 test() {
     def var = "abc"
     def cl = {
-        <warning descr="Local variable var is reassigned in closure with other type">var</warning> = new Date()
+        <warning descr="Local variable 'var' is reassigned">var</warning> = new Date()
     }
     cl()
     var.toUpperCase()
@@ -158,7 +158,7 @@ test() {
 test2() {
     def var = "abc"
     def cl = {
-        var = 'cde'
+        <warning descr="Local variable 'var' is reassigned">var</warning> = 'cde'
     }
     cl()
     var.toUpperCase()
