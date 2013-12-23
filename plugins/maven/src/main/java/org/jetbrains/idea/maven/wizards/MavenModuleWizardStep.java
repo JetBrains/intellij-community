@@ -199,6 +199,7 @@ public class MavenModuleWizardStep extends ModuleWizardStep {
 
   @Override
   public void updateStep() {
+    if (myArchetypes.isSkipUpdateUI()) return;
 
     if (isMavenizedProject()) {
       MavenProject parent = myBuilder.findPotentialParentProject(myProjectOrNull);
