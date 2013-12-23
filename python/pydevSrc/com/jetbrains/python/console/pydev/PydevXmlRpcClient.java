@@ -1,17 +1,12 @@
 package com.jetbrains.python.console.pydev;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.net.NetUtils;
 import org.apache.xmlrpc.*;
 
-import java.io.IOException;
-import java.io.PrintWriter;
 import java.net.MalformedURLException;
-import java.net.Socket;
 import java.net.URL;
 import java.util.Arrays;
-import java.util.Scanner;
 import java.util.Vector;
 
 /**
@@ -25,12 +20,12 @@ public class PydevXmlRpcClient implements IPydevXmlRpcClient {
   /**
    * Internal xml-rpc client (responsible for the actual communication with the server)
    */
-  private XmlRpcClient impl;
+  private final XmlRpcClient impl;
 
   /**
    * The process where the server is being executed.
    */
-  private Process process;
+  private final Process process;
 
   /**
    * ItelliJ Logging
@@ -43,15 +38,9 @@ public class PydevXmlRpcClient implements IPydevXmlRpcClient {
   /**
    * Constructor (see fields description)
    */
-  public PydevXmlRpcClient(Process process, int port)
-    throws MalformedURLException {
-
-    String hostname = NetUtils.getLocalHostString();
-
-    URL url = new URL("http://" + hostname + ':' + port + "/RPC2");
-
-    XmlRpc.setDefaultInputEncoding("UTF8"); //eventhough it uses UTF anyway
-    this.impl = new XmlRpcClientLite(url);
+  public PydevXmlRpcClient(Process process, int port) throws MalformedURLException {
+    XmlRpc.setDefaultInputEncoding("UTF8"); //even though it uses UTF anyway
+    impl = new XmlRpcClientLite(NetUtils.getLocalHostString(), port);
     //this.impl = new XmlRpcClient(url, new CommonsXmlRpcTransportFactory(url));
     this.process = process;
   }
@@ -64,16 +53,19 @@ public class PydevXmlRpcClient implements IPydevXmlRpcClient {
    *
    * @return the result from executing the given command in the server.
    */
+  @Override
   public Object execute(String command, Object[] args) throws XmlRpcException {
     final Object[] result = new Object[]{null};
 
     //make an async call so that we can keep track of not actually having an answer.
-    this.impl.executeAsync(command, new Vector(Arrays.asList(args)), new AsyncCallback() {
+    impl.executeAsync(command, new Vector(Arrays.asList(args)), new AsyncCallback() {
 
+      @Override
       public void handleError(Exception error, URL url, String method) {
         result[0] = new Object[]{error.getMessage()};
       }
 
+      @Override
       public void handleResult(Object recievedResult, URL url, String method) {
         result[0] = recievedResult;
       }

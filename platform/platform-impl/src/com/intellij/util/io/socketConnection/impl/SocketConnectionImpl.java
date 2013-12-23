@@ -18,6 +18,7 @@ package com.intellij.util.io.socketConnection.impl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.io.socketConnection.*;
+import com.intellij.util.net.NetUtils;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -71,7 +72,7 @@ public class SocketConnectionImpl<Request extends AbstractRequest, Response exte
         host = InetAddress.getLocalHost();
       }
       catch (UnknownHostException ignored) {
-        host = InetAddress.getByName(null);
+        host = NetUtils.getLoopbackAddress();
       }
     }
 
