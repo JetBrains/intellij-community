@@ -15,8 +15,14 @@
  */
 package com.intellij.codeInsight.template;
 
+import com.intellij.codeInsight.template.impl.CustomLiveTemplateLookupElement;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.Collection;
+import java.util.Collections;
 
 abstract public class CustomLiveTemplateBase implements CustomLiveTemplate {
   /**
@@ -25,5 +31,18 @@ abstract public class CustomLiveTemplateBase implements CustomLiveTemplate {
    */
   public boolean hasCompletionItem(@NotNull PsiFile file, int offset) {
     return false;
+  }
+
+  /**
+   * Return lookup elements for popup that appears on ListTemplateAction (Ctrl + J)
+   */
+  @NotNull
+  public Collection<? extends CustomLiveTemplateLookupElement> getLookupElements(@NotNull PsiFile file, @NotNull Editor editor, int offset) {
+    return Collections.emptyList();
+  }
+
+  @Nullable
+  public String computeTemplateKeyWithoutContextChecking(@NotNull CustomTemplateCallback callback) {
+    return computeTemplateKey(callback);
   }
 }

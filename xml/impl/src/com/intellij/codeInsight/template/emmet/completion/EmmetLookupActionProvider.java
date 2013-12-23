@@ -21,6 +21,8 @@ import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupActionProvider;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementAction;
+import com.intellij.codeInsight.template.emmet.ZenCodingTemplate;
+import com.intellij.codeInsight.template.impl.CustomLiveTemplateLookupElement;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.options.ShowSettingsUtil;
@@ -31,7 +33,8 @@ import com.intellij.util.PlatformIcons;
 public class EmmetLookupActionProvider implements LookupActionProvider {
   @Override
   public void fillActions(LookupElement element, final Lookup lookup, Consumer<LookupElementAction> consumer) {
-    if (element instanceof EmmetAbbreviationLookupElement) {
+    if (element instanceof CustomLiveTemplateLookupElement  && 
+        ((CustomLiveTemplateLookupElement)element).getCustomLiveTemplate() instanceof ZenCodingTemplate) {
       consumer.consume(new LookupElementAction(PlatformIcons.EDIT, "Edit Emmet settings") {
         @Override
         public Result performLookupAction() {
