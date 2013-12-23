@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,6 +44,7 @@ public class ClsMirrorBuildingTest extends LightIdeaTestCase {
   public void testClassRefs() { doTest(); }
   public void testEA46236() { doTest("ValuedEnum"); }
   public void testKotlinFunList() { doTest(); }
+  public void testBounds() { doTest(); }
 
   private void doTest() {
     doTest(getTestName(false));

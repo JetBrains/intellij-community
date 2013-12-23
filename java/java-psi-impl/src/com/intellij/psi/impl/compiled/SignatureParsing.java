@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,12 +29,13 @@ import com.intellij.psi.impl.java.stubs.impl.PsiTypeParameterStubImpl;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.cls.ClsFormatException;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.StringRef;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import java.text.CharacterIterator;
-import java.util.ArrayList;
+import java.util.List;
 
 @SuppressWarnings({"HardCodedStringLiteral"})
 public class SignatureParsing {
@@ -69,14 +70,18 @@ public class SignatureParsing {
     //todo parse annotations on type param
     PsiTypeParameterStub parameterStub = new PsiTypeParameterStubImpl(parent, StringRef.fromString(name.toString()));
 
-    ArrayList<String> bounds = null;
+    List<String> bounds = ContainerUtil.newSmartList();
     while (signatureIterator.current() == ':') {
       signatureIterator.next();
       String bound = parseTopLevelClassRefSignature(signatureIterator);
-      if (bound != null && !bound.equals(CommonClassNames.JAVA_LANG_OBJECT)) {
-        if (bounds == null) bounds = new ArrayList<String>();
+      if (bound != null) {
         bounds.add(bound);
       }
+    }
+
+    int size = bounds.size();
+    if (size > 0 && CommonClassNames.JAVA_LANG_OBJECT.equals(bounds.get(size - 1))) {
+      bounds.remove(size - 1);
     }
 
     StubBuildingVisitor.newReferenceList(JavaStubElementTypes.EXTENDS_BOUND_LIST, parameterStub, ArrayUtil.toStringArray(bounds));
