@@ -164,8 +164,10 @@ public abstract class GrInplaceVariableIntroducer extends GrAbstractInplaceIntro
   @Override
   protected void addAdditionalVariables(TemplateBuilderImpl builder) {
     GrVariable variable = getVariable();
-    assert variable != null;
-    TypeConstraint[] constraints = {SupertypeConstraint.create(variable.getInitializerGroovy().getType())};
+    assert variable != null && variable.getInitializerGroovy() != null;
+    final PsiType initializerType = variable.getInitializerGroovy().getType();
+    TypeConstraint[] constraints = initializerType != null ? new SupertypeConstraint[]{SupertypeConstraint.create(initializerType)}
+                                                           : TypeConstraint.EMPTY_ARRAY;
     ChooseTypeExpression typeExpression = new ChooseTypeExpression(constraints, variable.getManager(), variable.getResolveScope(), true, GroovyApplicationSettings.getInstance().INTRODUCE_LOCAL_SELECT_DEF);
     PsiElement element = variable.getTypeElementGroovy() != null ? variable.getTypeElementGroovy()
                                                                  : PsiUtil.findModifierInList(variable.getModifierList(), GrModifier.DEF);
