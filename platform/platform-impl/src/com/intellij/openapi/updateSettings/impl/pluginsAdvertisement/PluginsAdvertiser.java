@@ -42,6 +42,7 @@ import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.EditorNotifications;
+import com.intellij.util.PlatformUtils;
 import com.intellij.util.net.HttpConfigurable;
 import com.intellij.util.xmlb.XmlSerializer;
 import com.intellij.util.xmlb.annotations.MapAnnotation;
@@ -214,7 +215,8 @@ public class PluginsAdvertiser implements StartupActivity {
     return null;
   }
 
-  static boolean hasBundledNotInstalledPlugin(Collection<Plugin> plugins) {
+  static boolean hasBundledPluginToInstall(Collection<Plugin> plugins) {
+    if (PlatformUtils.isIdea()) return false;
     for (Plugin plugin : plugins) {
       if (plugin.myBundled && PluginManager.getPlugin(PluginId.getId(plugin.myPluginId)) == null) {
         return true;
@@ -274,7 +276,7 @@ public class PluginsAdvertiser implements StartupActivity {
                 } 
               }
 
-              myBundledPlugins = hasBundledNotInstalledPlugin(ids.values());
+              myBundledPlugins = hasBundledPluginToInstall(ids.values());
 
               for (IdeaPluginDescriptor loadedPlugin : myAllPlugins) {
                 final PluginId pluginId = loadedPlugin.getPluginId();
