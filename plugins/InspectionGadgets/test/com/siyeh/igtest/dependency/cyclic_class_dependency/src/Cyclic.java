@@ -1,4 +1,4 @@
-package com.siyeh.igtest.abstraction.cyclic_class_dependency.src;
+package com.siyeh.igtest.dependency.cyclic_class_dependency.src;
 
 /**
  * @author Bas Leijdekkers

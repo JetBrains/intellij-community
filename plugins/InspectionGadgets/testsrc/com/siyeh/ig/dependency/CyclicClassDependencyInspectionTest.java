@@ -13,10 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.siyeh.ig.abstraction;
+package com.siyeh.ig.dependency;
 
 import com.siyeh.ig.IGInspectionTestCase;
-import com.siyeh.ig.dependency.CyclicClassDependencyInspection;
 
 /**
  * @author Bas Leijdekkers
@@ -24,6 +23,6 @@ import com.siyeh.ig.dependency.CyclicClassDependencyInspection;
 public class CyclicClassDependencyInspectionTest extends IGInspectionTestCase {
 
   public void test() {
-    doTest("com/siyeh/igtest/abstraction/cyclic_class_dependency", new CyclicClassDependencyInspection());
+    doTest("com/siyeh/igtest/dependency/cyclic_class_dependency", new CyclicClassDependencyInspection());
   }
 }
