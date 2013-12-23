@@ -273,8 +273,7 @@ public class PsiSuperMethodImplUtil {
             if (superClass != null) {
               if (superClass.isInterface() ||
                   CommonClassNames.JAVA_LANG_OBJECT.equals(superClass.getQualifiedName())) {
-                if (superMethod.hasModifierProperty(PsiModifier.STATIC) ||
-                    hierarchicalMethodSignature.getMethod().hasModifierProperty(PsiModifier.STATIC)) {
+                if (superMethod.hasModifierProperty(PsiModifier.STATIC)) {
                   return false;
                 }
                 if (superMethod.hasModifierProperty(PsiModifier.DEFAULT) ||
