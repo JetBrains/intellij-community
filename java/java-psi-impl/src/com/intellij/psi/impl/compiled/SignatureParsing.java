@@ -56,14 +56,13 @@ public class SignatureParsing {
     return list;
   }
 
-  private static PsiTypeParameterStub parseTypeParameter(CharacterIterator signatureIterator, PsiTypeParameterListStub parent)
-      throws ClsFormatException {
+  private static PsiTypeParameterStub parseTypeParameter(CharacterIterator iterator, PsiTypeParameterListStub parent) throws ClsFormatException {
     StringBuilder name = new StringBuilder();
-    while (signatureIterator.current() != ':' && signatureIterator.current() != CharacterIterator.DONE) {
-      name.append(signatureIterator.current());
-      signatureIterator.next();
+    while (iterator.current() != ':' && iterator.current() != CharacterIterator.DONE) {
+      name.append(iterator.current());
+      iterator.next();
     }
-    if (signatureIterator.current() == CharacterIterator.DONE) {
+    if (iterator.current() == CharacterIterator.DONE) {
       throw new ClsFormatException();
     }
 
@@ -71,9 +70,9 @@ public class SignatureParsing {
     PsiTypeParameterStub parameterStub = new PsiTypeParameterStubImpl(parent, StringRef.fromString(name.toString()));
 
     List<String> bounds = ContainerUtil.newSmartList();
-    while (signatureIterator.current() == ':') {
-      signatureIterator.next();
-      String bound = parseTopLevelClassRefSignature(signatureIterator);
+    while (iterator.current() == ':') {
+      iterator.next();
+      String bound = parseTopLevelClassRefSignature(iterator);
       if (bound != null) {
         bounds.add(bound);
       }
