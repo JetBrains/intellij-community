@@ -138,7 +138,7 @@ public class PluginAdvertiserEditorNotificationProvider extends EditorNotificati
           });
         }
       });
-    } else if (PluginsAdvertiser.hasBundledNotInstalledPlugin(plugins)){
+    } else if (PluginsAdvertiser.hasBundledPluginToInstall(plugins)){
       if (PropertiesComponent.getInstance().isTrueValue(PluginsAdvertiser.IGNORE_ULTIMATE_EDITION)) {
         return null;
       }
