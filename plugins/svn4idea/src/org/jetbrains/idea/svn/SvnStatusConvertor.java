@@ -18,11 +18,22 @@ package org.jetbrains.idea.svn;
 import com.intellij.openapi.vcs.FileStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.svn.portable.PortableStatus;
 import org.tmatesoft.svn.core.wc.SVNStatus;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
 
 public class SvnStatusConvertor {
   private SvnStatusConvertor() {
+  }
+
+  @NotNull
+  public static FileStatus convertStatus(@Nullable SVNStatusType itemStatus, @Nullable SVNStatusType propertiesStatus) {
+    PortableStatus status = new PortableStatus();
+
+    status.setContentsStatus(itemStatus);
+    status.setPropertiesStatus(propertiesStatus);
+
+    return convertStatus(status);
   }
 
   @NotNull

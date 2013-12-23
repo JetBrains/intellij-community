@@ -67,7 +67,7 @@ public class SvnStatusHandler extends DefaultHandler {
   }
 
   @Nullable
-  private static SVNStatusType getStatus(@NotNull String code) {
+  public static SVNStatusType getStatus(@NotNull String code) {
     SVNStatusType result = ourStatusTypes.get(code);
 
     if (result == null) {
