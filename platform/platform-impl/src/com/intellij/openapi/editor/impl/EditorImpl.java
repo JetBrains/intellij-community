@@ -55,7 +55,6 @@ import com.intellij.openapi.editor.highlighter.HighlighterClient;
 import com.intellij.openapi.editor.impl.event.MarkupModelListener;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapAppliancePlaces;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapDrawingType;
-import com.intellij.openapi.editor.impl.softwrap.SoftWrapHelper;
 import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
@@ -433,7 +432,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       public void recalculationEnds() {
         if (myCaretModel.isUpToDate()) {
           myCaretModel.updateVisualPosition();
-          myScrollingModel.scrollToCaret(ScrollType.RELATIVE);
         }
       }
 
@@ -900,12 +898,37 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   @Override
   public void setFontSize(final int fontSize) {
+    setFontSize(fontSize, null);
+  }
+
+  /**
+   * Changes editor font size, attempting to keep a given point unmoved. If point is not given, top left screen corner is assumed.
+   *
+   * @param fontSize new font size
+   * @param zoomCenter zoom point, relative to viewport
+   */
+  private void setFontSize(final int fontSize, @Nullable Point zoomCenter) {
     int oldFontSize = myScheme.getEditorFontSize();
+
+    Rectangle visibleArea = myScrollingModel.getVisibleArea();
+    Point zoomCenterRelative = zoomCenter == null ? new Point() : zoomCenter;
+    Point zoomCenterAbsolute = new Point(visibleArea.x + zoomCenterRelative.x, visibleArea.y + zoomCenterRelative.y);
+    LogicalPosition zoomCenterLogical = xyToLogicalPosition(zoomCenterAbsolute).withoutVisualPositionInfo();
+
     myScheme.setEditorFontSize(fontSize);
     myPropertyChangeSupport.firePropertyChange(PROP_FONT_SIZE, oldFontSize, fontSize);
     // Update vertical scroll bar bounds if necessary (we had a problem that use increased editor font size and it was not possible
     // to scroll to the bottom of the document).
     myScrollPane.getViewport().invalidate();
+
+    Point shiftedZoomCenterAbsolute = logicalPositionToXY(zoomCenterLogical);
+    myScrollingModel.disableAnimation();
+    try {
+      myScrollingModel.scrollToOffsets(visibleArea.x == 0 ? 0 : shiftedZoomCenterAbsolute.x - zoomCenterRelative.x, // stick to left border if it's visible
+                                       shiftedZoomCenterAbsolute.y - zoomCenterRelative.y);
+    } finally {
+      myScrollingModel.enableAnimation();
+    }
   }
 
   public int getFontSize() {
@@ -6495,8 +6518,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   private class MyScrollPane extends JBScrollPane {
-
-
     private MyScrollPane() {
       setViewportBorder(new EmptyBorder(0, 0, 0, 0));
     }
@@ -6507,7 +6528,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         if (EditorUtil.isChangeFontSize(e)) {
           int size = myScheme.getEditorFontSize() - e.getWheelRotation();
           if (size >= MIN_FONT_SIZE) {
-            setFontSize(size);
+            setFontSize(size, SwingUtilities.convertPoint(this, e.getPoint(), getViewport()));
           }
           return;
         }
