@@ -17,6 +17,7 @@ package com.jetbrains.python.codeInsight.userSkeletons;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -53,7 +54,10 @@ import java.util.List;
  */
 public class PyUserSkeletonsUtil {
   public static final String USER_SKELETONS_DIR = "python-skeletons";
+  private static final Logger LOG = Logger.getInstance("#com.jetbrains.python.codeInsight.userSkeletons.PyUserSkeletonsUtil");
+
   @Nullable private static VirtualFile ourUserSkeletonsDirectory;
+  private static boolean ourNoSkeletonsErrorReported = false;
 
   @NotNull
   private static List<String> getPossibleUserSkeletonsPaths() {
@@ -74,6 +78,10 @@ public class PyUserSkeletonsUtil {
           break;
         }
       }
+    }
+    if (!ourNoSkeletonsErrorReported && ourUserSkeletonsDirectory == null) {
+      ourNoSkeletonsErrorReported = true;
+      LOG.error("python-skeletons directory not found in paths: " + getPossibleUserSkeletonsPaths());
     }
     return ourUserSkeletonsDirectory;
   }

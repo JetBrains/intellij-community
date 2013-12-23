@@ -172,7 +172,7 @@ public class PyBuiltinCache {
   }
 
   public boolean isValid() {
-    return myBuiltinsFile == null || myBuiltinsFile.isValid();
+    return myBuiltinsFile != null && myBuiltinsFile.isValid();
   }
 
   /**
