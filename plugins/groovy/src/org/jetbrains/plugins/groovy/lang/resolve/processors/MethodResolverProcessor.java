@@ -112,12 +112,16 @@ public class MethodResolverProcessor extends ResolverProcessor implements GrMeth
 
       boolean isAccessible = isAccessible(method);
       boolean isStaticsOK = isStaticsOK(method, resolveContext, true);
+      boolean isApplicable = PsiUtil.isApplicable(myArgumentTypes, method, substitutor, myPlace, myByShape);
+      boolean isValidResult = isStaticsOK && isAccessible && isApplicable;
 
-      if (!myAllVariants && isStaticsOK && isAccessible && PsiUtil.isApplicable(myArgumentTypes, method, substitutor, myPlace, myByShape)) {
-        addCandidate(new GroovyResolveResultImpl(method, resolveContext, spreadState, substitutor, isAccessible, isStaticsOK));
+      GroovyResolveResultImpl candidate = new GroovyResolveResultImpl(method, resolveContext, spreadState, substitutor, isAccessible, isStaticsOK, false, isValidResult);
+
+      if (!myAllVariants && isValidResult) {
+        addCandidate(candidate);
       }
       else {
-        myInapplicableCandidates.add(new GroovyResolveResultImpl(method, resolveContext, spreadState, substitutor, isAccessible, isStaticsOK));
+        myInapplicableCandidates.add(candidate);
       }
 
       return true;

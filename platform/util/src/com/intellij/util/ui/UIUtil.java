@@ -493,13 +493,14 @@ public class UIUtil {
     return UIManager.getColor("Label.disabledText");
   }
 
+  /** @deprecated to remove in IDEA 14 */
+  @SuppressWarnings("UnusedDeclaration")
   public static Icon getOptionPanelWarningIcon() {
-    return UIManager.getIcon("OptionPane.warningIcon");
+    return getWarningIcon();
   }
 
-  /**
-   * @deprecated use com.intellij.util.ui.UIUtil#getQuestionIcon()
-   */
+  /** @deprecated to remove in IDEA 14 */
+  @SuppressWarnings("UnusedDeclaration")
   public static Icon getOptionPanelQuestionIcon() {
     return getQuestionIcon();
   }

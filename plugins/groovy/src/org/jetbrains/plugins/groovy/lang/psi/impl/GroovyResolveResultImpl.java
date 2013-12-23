@@ -31,6 +31,8 @@ public class GroovyResolveResultImpl implements GroovyResolveResult {
   private final PsiElement myElement;
   private final boolean myIsAccessible;
   private final boolean myIsStaticsOK;
+  private final boolean myIsApplicable;
+
   private final PsiSubstitutor mySubstitutor;
   private final boolean myIsInvokedOnProperty;
 
@@ -38,7 +40,7 @@ public class GroovyResolveResultImpl implements GroovyResolveResult {
   private final SpreadState mySpreadState;
 
   public GroovyResolveResultImpl(@NotNull PsiElement element, boolean isAccessible) {
-    this(element, null, null, PsiSubstitutor.EMPTY, isAccessible, true, false);
+    this(element, null, null, PsiSubstitutor.EMPTY, isAccessible, true, false, true);
   }
 
   public GroovyResolveResultImpl(@NotNull PsiElement element,
@@ -47,11 +49,11 @@ public class GroovyResolveResultImpl implements GroovyResolveResult {
                                  @NotNull PsiSubstitutor substitutor,
                                  boolean isAccessible,
                                  boolean staticsOK) {
-    this(element, resolveContext, spreadState, substitutor, isAccessible, staticsOK, false);
+    this(element, resolveContext, spreadState, substitutor, isAccessible, staticsOK, false, true);
   }
 
   public GroovyResolveResultImpl(PsiClassType.ClassResolveResult classResolveResult) {
-    this(classResolveResult.getElement(), null, null, classResolveResult.getSubstitutor(), classResolveResult.isAccessible(), classResolveResult.isStaticsScopeCorrect(), false);
+    this(classResolveResult.getElement(), null, null, classResolveResult.getSubstitutor(), classResolveResult.isAccessible(), classResolveResult.isStaticsScopeCorrect(), false, classResolveResult.isValidResult());
   }
 
   public GroovyResolveResultImpl(@NotNull PsiElement element,
@@ -60,7 +62,8 @@ public class GroovyResolveResultImpl implements GroovyResolveResult {
                                  @NotNull PsiSubstitutor substitutor,
                                  boolean isAccessible,
                                  boolean staticsOK,
-                                 boolean isInvokedOnProperty) {
+                                 boolean isInvokedOnProperty,
+                                 boolean isApplicable) {
     myCurrentFileResolveContext = resolveContext;
     myElement = element;
     myIsAccessible = isAccessible;
@@ -68,6 +71,7 @@ public class GroovyResolveResultImpl implements GroovyResolveResult {
     myIsStaticsOK = staticsOK;
     myIsInvokedOnProperty = isInvokedOnProperty;
     mySpreadState = spreadState;
+    myIsApplicable = isApplicable;
   }
 
   @NotNull
@@ -83,13 +87,18 @@ public class GroovyResolveResultImpl implements GroovyResolveResult {
     return myIsStaticsOK;
   }
 
+  @Override
+  public boolean isApplicable() {
+    return myIsApplicable;
+  }
+
   @Nullable
   public PsiElement getElement() {
     return myElement;
   }
 
   public boolean isValidResult() {
-    return isAccessible();
+    return isAccessible() && isApplicable() && isStaticsOK();
   }
 
   public boolean equals(Object o) {

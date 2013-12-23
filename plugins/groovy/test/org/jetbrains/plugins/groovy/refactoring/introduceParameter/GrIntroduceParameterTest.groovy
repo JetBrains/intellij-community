@@ -23,11 +23,11 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiType
 import com.intellij.psi.impl.source.PostprocessReformattingAspect
 import com.intellij.refactoring.IntroduceParameterRefactoring
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 import gnu.trove.TIntArrayList
 import gnu.trove.TObjectIntHashMap
 import junit.framework.Assert
 import org.jetbrains.annotations.Nullable
+import org.jetbrains.plugins.groovy.LightGroovyTestCase
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression
@@ -37,10 +37,11 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUt
 import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceHandlerBase
 import org.jetbrains.plugins.groovy.refactoring.introduce.parameter.*
 import org.jetbrains.plugins.groovy.util.TestUtils
+
 /**
  * @author Maxim.Medvedev
  */
-public class GrIntroduceParameterTest extends LightCodeInsightFixtureTestCase {
+public class GrIntroduceParameterTest extends LightGroovyTestCase {
 
   protected String getBasePath() {
     return TestUtils.getTestDataPath() + "refactoring/introduceParameterGroovy/" + getTestName(true) + '/';

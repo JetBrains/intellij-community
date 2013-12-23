@@ -103,12 +103,12 @@ public class ExternalSystemTaskSettingsControl implements ExternalSystemSettings
 
     myVmOptionsLabel = new JBLabel(ExternalSystemBundle.message("run.configuration.settings.label.vmoptions"));
     myVmOptionsEditor = new RawCommandLineEditor();
-    myVmOptionsEditor.setDialogCaption(ExternalSystemBundle.message("run.configuration.settings.caption.vmoptions"));
+    myVmOptionsEditor.setDialogCaption(ExternalSystemBundle.message("run.configuration.settings.label.vmoptions"));
     canvas.add(myVmOptionsLabel, ExternalSystemUiUtil.getLabelConstraints(0));
     canvas.add(myVmOptionsEditor, ExternalSystemUiUtil.getFillLineConstraints(0));
     myScriptParametersLabel = new JBLabel(ExternalSystemBundle.message("run.configuration.settings.label.script.parameters"));
     myScriptParametersEditor = new RawCommandLineEditor();
-    myScriptParametersEditor.setDialogCaption(ExternalSystemBundle.message("run.configuration.settings.caption.script.parameters"));
+    myScriptParametersEditor.setDialogCaption(ExternalSystemBundle.message("run.configuration.settings.label.script.parameters"));
     canvas.add(myScriptParametersLabel, ExternalSystemUiUtil.getLabelConstraints(0));
     canvas.add(myScriptParametersEditor, ExternalSystemUiUtil.getFillLineConstraints(0));
   }

@@ -442,17 +442,13 @@ public class IncProjectBuilder {
     for (String srcPath : map.getSources()) {
       final Collection<String> outs = map.getOutputs(srcPath);
       if (outs != null && !outs.isEmpty()) {
+        List<String> deletedPaths = new ArrayList<String>();
         for (String out : outs) {
-          final File outFile = new File(out);
-          final boolean deleted = outFile.delete();
-          if (deleted && dirsToDelete != null) {
-            final File parent = outFile.getParentFile();
-            if (parent != null) {
-              dirsToDelete.add(parent);
-            }
-          }
+          BuildOperations.deleteRecursively(out, deletedPaths, dirsToDelete);
         }
-        context.processMessage(new FileDeletedEvent(outs));
+        if (!deletedPaths.isEmpty()) {
+          context.processMessage(new FileDeletedEvent(deletedPaths));
+        }
       }
     }
     registerTargetsWithClearedOutput(context, Collections.singletonList(target));
@@ -965,26 +961,20 @@ public class IncProjectBuilder {
         for (String deletedSource : pathsForIteration) {
           // deleting outputs corresponding to non-existing source
           final Collection<String> outputs = sourceToOutputStorage.getOutputs(deletedSource);
-
           if (outputs != null && !outputs.isEmpty()) {
-            if (logger.isEnabled()) {
-              logger.logDeletedFiles(outputs);
-            }
-
+            List<String> deletedOutputPaths = new ArrayList<String>();
             for (String output : outputs) {
-              final File outFile = new File(output);
-              final boolean deleted = outFile.delete();
+              final boolean deleted = BuildOperations.deleteRecursively(output, deletedOutputPaths, shouldPruneEmptyDirs ? dirsToDelete : null);
               if (deleted) {
                 doneSomething = true;
-                if (shouldPruneEmptyDirs) {
-                  final File parent = outFile.getParentFile();
-                  if (parent != null) {
-                    dirsToDelete.add(parent);
-                  }
-                }
               }
             }
-            context.processMessage(new FileDeletedEvent(outputs));
+            if (!deletedOutputPaths.isEmpty()) {
+              if (logger.isEnabled()) {
+                logger.logDeletedFiles(deletedOutputPaths);
+              }
+              context.processMessage(new FileDeletedEvent(deletedOutputPaths));
+            }
           }
 
           if (target instanceof ModuleBuildTarget) {

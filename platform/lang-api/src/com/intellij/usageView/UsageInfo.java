@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -209,7 +209,7 @@ public class UsageInfo {
     PsiElement element = getElement();
     if (element == null) return null;
     TextRange range = element.getTextRange();
-    ProperTextRange.assertProperRange(range, element);
+    TextRange.assertProperRange(range, element);
     if (element instanceof PsiFile) {
       // hack: it's actually a range inside file, use document for range checking since during the "find|replace all" operation, file range might have been changed
       Document document = PsiDocumentManager.getInstance(getProject()).getDocument((PsiFile)element);

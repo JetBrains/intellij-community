@@ -188,13 +188,7 @@ public class DependentGroovycRunner {
         continue;
       }
 
-      unit.addSource(new SourceUnit(file, unit.getConfiguration(), unit.getClassLoader(), unit.getErrorCollector()) {
-        public void parse() throws CompilationFailedException {
-          System.out.println(GroovyRtConstants.PRESENTABLE_MESSAGE + "Parsing " + file.getName() + "...");
-          super.parse();
-          System.out.println(GroovyRtConstants.CLEAR_PRESENTABLE);
-        }
-      });
+      unit.addSource(new SourceUnit(file, unit.getConfiguration(), unit.getClassLoader(), unit.getErrorCollector()));
     }
   }
 

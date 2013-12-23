@@ -412,23 +412,6 @@ public class InjectedLanguageUtil {
     return combinedEdiablesLength != elementRange.getLength();
   }
 
-  public static boolean isSelectionIsAboutToOverflowInjectedFragment(@NotNull EditorWindow injectedEditor, @NotNull TextRange selRange) {
-    int selStart = selRange.getStartOffset();
-    int selEnd = selRange.getEndOffset();
-    DocumentWindow document = injectedEditor.getDocument();
-
-    TextRange hostRange = document.injectedToHost(selRange.grown(2).shiftRight(-1));
-    boolean isStartOverflows = document.hostToInjected(hostRange.getStartOffset()) == selStart;
-
-    boolean isEndOverflows = document.hostToInjected(hostRange.getEndOffset()) == selEnd;
-    //if (!isEndOverflows) {
-    //  int hostNext = document.injectedToHost(selEnd + 1);
-    //  isEndOverflows = document.hostToInjected(hostNext) == selEnd;
-    //}
-
-    return isStartOverflows || isEndOverflows;
-  }
-
   public static boolean hasInjections(@NotNull PsiLanguageInjectionHost host) {
     if (!host.isPhysical()) return false;
     final Ref<Boolean> result = Ref.create(false);

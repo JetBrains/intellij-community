@@ -115,7 +115,7 @@ public class CheckValidXmlInScriptBodyInspectionBase extends XmlSuppressableInsp
   }
 
   protected LocalQuickFix createFix(PsiFile psiFile, PsiElement psiElement, int offsetInElement) {
-    throw new UnsupportedOperationException();
+    return null;
   }
 
   @Override

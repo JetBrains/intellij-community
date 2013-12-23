@@ -39,6 +39,7 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URL;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -296,6 +297,19 @@ public class VfsUtilTest extends PlatformLangTestCase {
     VirtualFile vFile2 = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
     assertNotNull(vFile2);
     assertTrue(vFile2.isDirectory());
+  }
+
+  public void testPresentableUrlSurvivesDeletion() throws IOException {
+    final VirtualFile file = createTempFile("txt", null, "content", Charset.defaultCharset());
+    String url = file.getPresentableUrl();
+    assertNotNull(url);
+    new WriteAction() {
+      @Override
+      protected void run(@NotNull Result result) throws Throwable {
+        file.delete(this);
+      }
+    }.execute();
+    assertEquals(url, file.getPresentableUrl());
   }
 
   public void testToUri() {

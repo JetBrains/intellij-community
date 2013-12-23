@@ -15,7 +15,9 @@
  */
 package org.jetbrains.idea.maven.indices;
 
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
@@ -100,8 +102,22 @@ public class MavenProjectIndicesManager extends MavenSimpleProjectComponent {
   public void scheduleUpdateIndicesList(@Nullable final Consumer<List<MavenIndex>> consumer) {
     myUpdateQueue.queue(new Update(MavenProjectIndicesManager.this) {
       public void run() {
-        myProjectIndices = MavenIndicesManager.getInstance().ensureIndicesExist(
-          myProject, getLocalRepository(), collectRemoteRepositoriesIdsAndUrls());
+        Set<Pair<String, String>> remoteRepositoriesIdsAndUrls;
+        File localRepository;
+
+        AccessToken accessToken = ReadAction.start();
+
+        try {
+          if (myProject.isDisposed()) return;
+
+          remoteRepositoriesIdsAndUrls = collectRemoteRepositoriesIdsAndUrls();
+          localRepository = getLocalRepository();
+        }
+        finally {
+          accessToken.finish();
+        }
+
+        myProjectIndices = MavenIndicesManager.getInstance().ensureIndicesExist(myProject, localRepository, remoteRepositoriesIdsAndUrls);
         if(consumer != null) {
           consumer.consume(myProjectIndices);
         }

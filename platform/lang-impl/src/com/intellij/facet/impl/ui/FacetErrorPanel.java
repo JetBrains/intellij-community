@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,8 +20,8 @@ import com.intellij.facet.ui.FacetConfigurationQuickFix;
 import com.intellij.facet.ui.FacetEditorValidator;
 import com.intellij.facet.ui.FacetValidatorsManager;
 import com.intellij.facet.ui.ValidationResult;
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.ui.UserActivityListener;
 import com.intellij.ui.UserActivityWatcher;
 import com.intellij.util.containers.ContainerUtil;
@@ -53,7 +53,7 @@ public class FacetErrorPanel {
   public FacetErrorPanel() {
     myValidatorsManager = new FacetValidatorsManagerImpl();
     myWarningLabel = new JLabel();
-    myWarningLabel.setIcon(Messages.getWarningIcon());
+    myWarningLabel.setIcon(AllIcons.General.WarningDialog);
     myQuickFixButton.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(final ActionEvent e) {

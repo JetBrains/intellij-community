@@ -463,6 +463,7 @@ public final class InternalDecorator extends JPanel implements Queryable, TypeSa
     else if (myInfo.isSliding()) {
       group.add(myToggleDockModeAction);
       group.add(myToggleFloatingModeAction);
+      group.add(myToggleSideModeAction);
     }
     return group;
   }

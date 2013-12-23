@@ -16,11 +16,13 @@
 package org.zmlx.hg4idea.action;
 
 import com.intellij.dvcs.DvcsUtil;
+import com.intellij.dvcs.repo.Repository;
 import com.intellij.dvcs.ui.NewBranchAction;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -28,16 +30,18 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.update.UpdatedFiles;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.Function;
 import com.intellij.util.PlatformIcons;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.vcs.log.Hash;
+import com.intellij.vcs.log.impl.HashImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.zmlx.hg4idea.HgNameWithHashInfo;
 import org.zmlx.hg4idea.HgRevisionNumber;
 import org.zmlx.hg4idea.HgVcs;
 import org.zmlx.hg4idea.HgVcsMessages;
-import org.zmlx.hg4idea.command.HgBookmarkCreateCommand;
-import org.zmlx.hg4idea.command.HgBranchCreateCommand;
-import org.zmlx.hg4idea.command.HgMergeCommand;
-import org.zmlx.hg4idea.command.HgUpdateCommand;
+import org.zmlx.hg4idea.command.*;
 import org.zmlx.hg4idea.execution.HgCommandException;
 import org.zmlx.hg4idea.execution.HgCommandResult;
 import org.zmlx.hg4idea.execution.HgCommandResultHandler;
@@ -48,8 +52,7 @@ import org.zmlx.hg4idea.ui.HgBookmarkDialog;
 import org.zmlx.hg4idea.util.HgErrorUtil;
 import org.zmlx.hg4idea.util.HgUtil;
 
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author Nadya Zabrodina
@@ -68,7 +71,7 @@ public class HgBranchPopupActions {
     DefaultActionGroup popupGroup = new DefaultActionGroup(null, false);
     popupGroup.addAction(new HgNewBranchAction(myProject, Collections.singletonList(myRepository), myRepository.getRoot()));
     popupGroup.addAction(new HgNewBookmarkAction(myProject, Collections.singletonList(myRepository), myRepository.getRoot()));
-
+    popupGroup.addAction(new HgShowUnnamedHeadsForCurrentBranchAction(myProject, myRepository));
     if (toInsert != null) {
       popupGroup.addAll(toInsert);
     }
@@ -86,9 +89,9 @@ public class HgBranchPopupActions {
     }
 
     popupGroup.addSeparator("Branches");
-    List<String> branchNames = HgUtil.getNamesWithoutHashes(myRepository.getBranches());
-    Collections.sort(branchNames);
-    for (String branch : branchNames) {
+    List<String> branchNamesList = new ArrayList<String>(myRepository.getBranches().keySet());
+    Collections.sort(branchNamesList);
+    for (String branch : branchNamesList) {
       if (!branch.equals(myRepository.getCurrentBranch())) { // don't show current branch in the list
         popupGroup.add(new BranchActions(myProject, branch, myRepository));
       }
@@ -171,6 +174,73 @@ public class HgBranchPopupActions {
         catch (HgCommandException exception) {
           HgAbstractGlobalAction.handleException(myProject, exception);
         }
+      }
+    }
+  }
+
+  static private class HgShowUnnamedHeadsForCurrentBranchAction extends ActionGroup {
+    @NotNull final Project myProject;
+    @NotNull final HgRepository myRepository;
+    @NotNull final String myCurrentBranchName;
+    @NotNull Collection<Hash> myHeads = new HashSet<Hash>();
+
+    public HgShowUnnamedHeadsForCurrentBranchAction(@NotNull Project project,
+                                                    @NotNull HgRepository repository) {
+      super(null, true);
+      myProject = project;
+      myRepository = repository;
+      myCurrentBranchName = repository.getCurrentBranch();
+      getTemplatePresentation().setText(String.format("Unnamed heads for %s", myCurrentBranchName));
+      ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+        @Override
+        public void run() {
+          myHeads = filterUnnamedHeads();
+        }
+      });
+    }
+
+    @NotNull
+    private Collection<Hash> filterUnnamedHeads() {
+      Collection<Hash> branchWithHashes = myRepository.getBranches().get(myCurrentBranchName);
+      if (branchWithHashes == null) {
+        // repository is fresh or branch is fresh.
+        return Collections.emptySet();
+      }
+      else {
+        List<HgRevisionNumber> parents = new HgWorkingCopyRevisionsCommand(myProject).parents(myRepository.getRoot());
+        if (parents.size() == 1) {
+          Collection<Hash> bookmarkHashes = ContainerUtil.map(myRepository.getBookmarks(), new Function<HgNameWithHashInfo, Hash>() {
+
+            @Override
+            public Hash fun(HgNameWithHashInfo info) {
+              return info.getHash();
+            }
+          });
+          branchWithHashes.removeAll(bookmarkHashes);
+          branchWithHashes.remove(HashImpl.build(parents.get(0).getChangeset()));
+        }
+      }
+      return branchWithHashes;
+    }
+
+    @NotNull
+    @Override
+    public AnAction[] getChildren(@Nullable AnActionEvent e) {
+      List<AnAction> branchHeadActions = new ArrayList<AnAction>();
+      for (Hash hash : myHeads) {
+        branchHeadActions.add(new BranchActions(myProject, hash.toShortString(), myRepository));
+      }
+      return ContainerUtil.toArray(branchHeadActions, new AnAction[branchHeadActions.size()]);
+    }
+
+    @Override
+    public void update(final AnActionEvent e) {
+      if (myRepository.isFresh()) {
+        e.getPresentation().setEnabled(false);
+        e.getPresentation().setDescription("Checkout of a new branch is not possible before the first commit.");
+      }
+      else if (Repository.State.MERGING.equals(myRepository.getState())) {
+        e.getPresentation().setEnabled(false);
       }
     }
   }

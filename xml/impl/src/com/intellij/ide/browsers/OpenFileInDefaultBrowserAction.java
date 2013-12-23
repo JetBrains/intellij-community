@@ -21,22 +21,29 @@ import com.intellij.ide.browsers.impl.WebBrowserServiceImpl;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.DumbAwareAction;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.AsyncResult;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.Consumer;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.Url;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.XmlBundle;
 import com.intellij.xml.util.HtmlUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.event.InputEvent;
@@ -45,48 +52,47 @@ import java.util.Collection;
 public class OpenFileInDefaultBrowserAction extends DumbAwareAction {
   private static final Logger LOG = Logger.getInstance(OpenFileInDefaultBrowserAction.class);
 
+  @Nullable
+  public static Pair<OpenInBrowserRequest, WebBrowserUrlProvider> doUpdate(AnActionEvent event) {
+    OpenInBrowserRequest request = createRequest(event.getDataContext());
+    boolean applicable = false;
+    WebBrowserUrlProvider provider = null;
+    if (request != null) {
+      applicable = HtmlUtil.isHtmlFile(request.getFile()) && !(request.getVirtualFile() instanceof LightVirtualFile);
+      if (!applicable) {
+        provider = WebBrowserServiceImpl.getProvider(request);
+        applicable = provider != null;
+      }
+    }
+
+    Presentation presentation = event.getPresentation();
+    presentation.setVisible(applicable);
+    presentation.setVisible(applicable);
+    return applicable ? Pair.create(request, provider) : null;
+  }
+
   @Override
   public void update(AnActionEvent e) {
-    final DataContext dataContext = e.getDataContext();
-    final PsiFile file = CommonDataKeys.PSI_FILE.getData(dataContext);
-    final Presentation presentation = e.getPresentation();
+    Presentation presentation = e.getPresentation();
 
-    if (file == null || file.getVirtualFile() == null) {
-      presentation.setVisible(false);
-      presentation.setEnabled(false);
+    Pair<OpenInBrowserRequest, WebBrowserUrlProvider> result = doUpdate(e);
+    if (result == null) {
       return;
     }
 
-    Pair<WebBrowserUrlProvider, Collection<Url>> browserUrlProvider = WebBrowserServiceImpl.getProvider(file);
-    final boolean isHtmlFile = HtmlUtil.isHtmlFile(file);
-    if (browserUrlProvider == null) {
-      if (file.getVirtualFile() instanceof LightVirtualFile) {
-        presentation.setVisible(false);
-        presentation.setEnabled(false);
-        return;
-      }
-      else {
-        presentation.setEnabled(isHtmlFile);
-      }
-    }
-    else {
-      presentation.setEnabled(true);
-    }
-    presentation.setVisible(true);
-
+    WebBrowserUrlProvider browserUrlProvider = result.second;
     String text = getTemplatePresentation().getText();
     String description = getTemplatePresentation().getDescription();
-
     if (browserUrlProvider != null) {
-      final String customText = browserUrlProvider.first.getOpenInBrowserActionText(file);
+      final String customText = browserUrlProvider.getOpenInBrowserActionText(result.first.getFile());
       if (customText != null) {
         text = customText;
       }
-      final String customDescription = browserUrlProvider.first.getOpenInBrowserActionDescription(file);
+      final String customDescription = browserUrlProvider.getOpenInBrowserActionDescription(result.first.getFile());
       if (customDescription != null) {
         description = customDescription;
       }
-      if (isHtmlFile) {
+      if (HtmlUtil.isHtmlFile(result.first.getFile())) {
         description += " (hold Shift to open URL of local file)";
       }
     }
@@ -109,16 +115,89 @@ public class OpenFileInDefaultBrowserAction extends DumbAwareAction {
 
   @Override
   public void actionPerformed(AnActionEvent e) {
-    DataContext dataContext = e.getDataContext();
-    PsiFile psiFile = CommonDataKeys.PSI_FILE.getData(dataContext);
-    LOG.assertTrue(psiFile != null);
-    InputEvent event = e.getInputEvent();
-    doOpen(psiFile, event != null && event.isShiftDown(), null);
+    open(e, null);
   }
 
-  public static void doOpen(PsiElement psiFile, boolean preferLocalUrl, final WebBrowser browser) {
+  @Nullable
+  public static OpenInBrowserRequest createRequest(@NotNull DataContext context) {
+    final Editor editor = CommonDataKeys.EDITOR.getData(context);
+    if (editor != null) {
+      Project project = editor.getProject();
+      if (project != null && project.isInitialized()) {
+        PsiFile psiFile = CommonDataKeys.PSI_FILE.getData(context);
+        if (psiFile == null) {
+          psiFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
+        }
+        if (psiFile != null) {
+          return new OpenInBrowserRequest(psiFile) {
+            private PsiElement element;
+
+            @NotNull
+            @Override
+            public PsiElement getElement() {
+              if (element == null) {
+                element = getFile().findElementAt(editor.getCaretModel().getOffset());
+              }
+              return ObjectUtils.chooseNotNull(element, getFile());
+            }
+          };
+        }
+      }
+    }
+    else {
+      final PsiFile psiFile = CommonDataKeys.PSI_FILE.getData(context);
+      if (psiFile != null) {
+        return OpenInBrowserRequest.create(psiFile);
+      }
+
+      final VirtualFile virtualFile = CommonDataKeys.VIRTUAL_FILE.getData(context);
+      final Project project = CommonDataKeys.PROJECT.getData(context);
+      if (virtualFile != null && !virtualFile.isDirectory() && virtualFile.isValid() && project != null && project.isInitialized()) {
+        return new OpenInBrowserRequest() {
+          @NotNull
+          @Override
+          public VirtualFile getVirtualFile() {
+            return virtualFile;
+          }
+
+          @NotNull
+          @Override
+          public Project getProject() {
+            return project;
+          }
+
+          @NotNull
+          @Override
+          public PsiElement getElement() {
+            return getFile();
+          }
+
+          @NotNull
+          @Override
+          public PsiFile getFile() {
+            if (file == null) {
+              file = PsiManager.getInstance(getProject()).findFile(virtualFile);
+              LOG.assertTrue(file != null);
+            }
+            return file;
+          }
+        };
+      }
+    }
+    return null;
+  }
+
+  public static void open(@NotNull AnActionEvent event, @Nullable WebBrowser browser) {
+    open(createRequest(event.getDataContext()), (event.getModifiers() & InputEvent.SHIFT_MASK) != 0, browser);
+  }
+
+  public static void open(@Nullable OpenInBrowserRequest request, boolean preferLocalUrl, @Nullable final WebBrowser browser) {
+    if (request == null) {
+      return;
+    }
+
     try {
-      Collection<Url> urls = WebBrowserService.getInstance().getUrlToOpen(psiFile, preferLocalUrl);
+      Collection<Url> urls = WebBrowserService.getInstance().getUrlsToOpen(request, preferLocalUrl);
       if (!urls.isEmpty()) {
         chooseUrl(urls).doWhenDone(new Consumer<Url>() {
           @Override

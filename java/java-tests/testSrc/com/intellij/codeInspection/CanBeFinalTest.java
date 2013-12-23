@@ -42,6 +42,10 @@ public class CanBeFinalTest extends InspectionTestCase {
     doTest();
   }
 
+  public void testanonymous() throws Exception {
+    doTest();
+  }
+
   public void testmethodInheritance() throws Exception {
     doTest();
   }

@@ -100,7 +100,7 @@ public class GroovyTypeParameterInfoHandler implements ParameterInfoHandlerWithT
 
   @Nullable
   @Override
-  public GrTypeArgumentList findElementForParameterInfo(CreateParameterInfoContext context) {
+  public GrTypeArgumentList findElementForParameterInfo(@NotNull CreateParameterInfoContext context) {
     final GrTypeArgumentList parameterList = ParameterInfoUtils.findParentOfType(context.getFile(), context.getOffset(), GrTypeArgumentList.class);
 
     if (parameterList != null) {
@@ -121,19 +121,19 @@ public class GroovyTypeParameterInfoHandler implements ParameterInfoHandlerWithT
   }
 
   @Override
-  public void showParameterInfo(@NotNull GrTypeArgumentList element, CreateParameterInfoContext context) {
+  public void showParameterInfo(@NotNull GrTypeArgumentList element, @NotNull CreateParameterInfoContext context) {
     context.showHint(element, element.getTextRange().getStartOffset() + 1, this);
   }
 
   @Nullable
   @Override
-  public GrTypeArgumentList findElementForUpdatingParameterInfo(UpdateParameterInfoContext context) {
+  public GrTypeArgumentList findElementForUpdatingParameterInfo(@NotNull UpdateParameterInfoContext context) {
     return ParameterInfoUtils.findParentOfType(context.getFile(), context.getOffset(), GrTypeArgumentList.class);
   }
 
   @Override
-  public void updateParameterInfo(@NotNull GrTypeArgumentList o, UpdateParameterInfoContext context) {
-    int index = ParameterInfoUtils.getCurrentParameterIndex(o.getNode(), context.getOffset(), getActualParameterDelimiterType());
+  public void updateParameterInfo(@NotNull GrTypeArgumentList parameterOwner, @NotNull UpdateParameterInfoContext context) {
+    int index = ParameterInfoUtils.getCurrentParameterIndex(parameterOwner.getNode(), context.getOffset(), getActualParameterDelimiterType());
     context.setCurrentParameter(index);
     final Object[] objectsToView = context.getObjectsToView();
     context.setHighlightedParameter(index < objectsToView.length && index >= 0 ? (PsiElement)objectsToView[index] : null);
@@ -151,7 +151,7 @@ public class GroovyTypeParameterInfoHandler implements ParameterInfoHandlerWithT
   }
 
   @Override
-  public void updateUI(PsiTypeParameter p, ParameterInfoUIContext context) {
+  public void updateUI(PsiTypeParameter p, @NotNull ParameterInfoUIContext context) {
     @NonNls StringBuilder buffer = new StringBuilder();
     buffer.append(p.getName());
     int highlightEndOffset = buffer.length();

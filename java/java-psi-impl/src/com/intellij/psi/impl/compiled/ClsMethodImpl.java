@@ -18,6 +18,7 @@ package com.intellij.psi.impl.compiled;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.ItemPresentationProviders;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.util.AtomicNotNullLazyValue;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.text.StringUtil;
@@ -34,9 +35,7 @@ import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.scope.util.PsiScopesUtil;
 import com.intellij.psi.search.SearchScope;
-import com.intellij.psi.util.MethodSignature;
-import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
-import com.intellij.psi.util.MethodSignatureUtil;
+import com.intellij.psi.util.*;
 import com.intellij.ui.RowIcon;
 import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NotNull;
@@ -280,6 +279,20 @@ public class ClsMethodImpl extends ClsMemberImpl<PsiMethodStub> implements PsiAn
 
   @Nullable
   public PsiMethod getSourceMirrorMethod() {
+    return CachedValuesManager.getCachedValue(this, new CachedValueProvider<PsiMethod>() {
+      @Nullable
+      @Override
+      public Result<PsiMethod> compute() {
+        return Result.create(calcSourceMirrorMethod(), 
+                             getContainingFile(), 
+                             getContainingFile().getNavigationElement(), 
+                             FileIndexFacade.getInstance(getProject()).getRootModificationTracker());
+      }
+    });
+  }
+
+  @Nullable
+  private PsiMethod calcSourceMirrorMethod() {
     PsiClass sourceClassMirror = ((ClsClassImpl)getParent()).getSourceMirrorClass();
     if (sourceClassMirror == null) return null;
     for (PsiMethod sourceMethod : sourceClassMirror.findMethodsByName(getName(), false)) {

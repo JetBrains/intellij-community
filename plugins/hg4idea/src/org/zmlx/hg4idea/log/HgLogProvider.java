@@ -103,18 +103,22 @@ public class HgLogProvider implements VcsLogProvider {
     }
 
     repository.update();
-    Collection<HgNameWithHashInfo> branches = repository.getBranches();
+    Map<String, Set<Hash>> branches = repository.getBranches();
     Collection<HgNameWithHashInfo> bookmarks = repository.getBookmarks();
     Collection<HgNameWithHashInfo> tags = repository.getTags();
     Collection<HgNameWithHashInfo> localTags = repository.getLocalTags();
 
     Collection<VcsRef> refs = new ArrayList<VcsRef>(branches.size() + bookmarks.size());
 
-    for (HgNameWithHashInfo branchInfo : branches) {
-      refs.add(myVcsObjectsFactory.createRef(myVcsObjectsFactory.createHash(branchInfo.getHash()), branchInfo.getName(), HgRefManager.BRANCH, root));
+    for (Map.Entry<String, Set<Hash>> entry : branches.entrySet()) {
+      String branchName = entry.getKey();
+      for (Hash hash : entry.getValue()) {
+        refs.add(myVcsObjectsFactory.createRef(hash, branchName, HgRefManager.BRANCH, root));
+      }
     }
+
     for (HgNameWithHashInfo bookmarkInfo : bookmarks) {
-      refs.add(myVcsObjectsFactory.createRef(myVcsObjectsFactory.createHash(bookmarkInfo.getHash()), bookmarkInfo.getName(),
+      refs.add(myVcsObjectsFactory.createRef(bookmarkInfo.getHash(), bookmarkInfo.getName(),
                          HgRefManager.BOOKMARK, root));
     }
     String currentRevision = repository.getCurrentRevision();
@@ -122,10 +126,10 @@ public class HgLogProvider implements VcsLogProvider {
       refs.add(myVcsObjectsFactory.createRef(myVcsObjectsFactory.createHash(currentRevision), "tip", HgRefManager.HEAD, root));
     }
     for (HgNameWithHashInfo tagInfo : tags) {
-      refs.add(myVcsObjectsFactory.createRef(myVcsObjectsFactory.createHash(tagInfo.getHash()), tagInfo.getName(), HgRefManager.TAG, root));
+      refs.add(myVcsObjectsFactory.createRef(tagInfo.getHash(), tagInfo.getName(), HgRefManager.TAG, root));
     }
     for (HgNameWithHashInfo localTagInfo : localTags) {
-      refs.add(myVcsObjectsFactory.createRef(myVcsObjectsFactory.createHash(localTagInfo.getHash()), localTagInfo.getName(),
+      refs.add(myVcsObjectsFactory.createRef(localTagInfo.getHash(), localTagInfo.getName(),
                               HgRefManager.LOCAL_TAG, root));
     }
     return refs;

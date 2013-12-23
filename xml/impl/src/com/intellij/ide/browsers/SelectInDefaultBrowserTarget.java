@@ -20,15 +20,12 @@ import com.intellij.ide.SelectInTargetBase;
 import com.intellij.ide.StandardTargetWeights;
 import com.intellij.ide.browsers.impl.WebBrowserServiceImpl;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.impl.http.HttpVirtualFile;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.LightVirtualFile;
-import com.intellij.util.Url;
 import com.intellij.xml.XmlBundle;
 import com.intellij.xml.util.HtmlUtil;
-
-import java.util.Collection;
 
 class SelectInDefaultBrowserTarget extends SelectInTargetBase {
   private static final Logger LOG = Logger.getInstance(SelectInDefaultBrowserTarget.class);
@@ -38,22 +35,19 @@ class SelectInDefaultBrowserTarget extends SelectInTargetBase {
   @Override
   public boolean canSelect(SelectInContext context) {
     Object selectorInFile = context.getSelectorInFile();
-    if (!(selectorInFile instanceof PsiElement)) {
+    OpenInBrowserRequest request = selectorInFile instanceof PsiElement ? OpenInBrowserRequest.create((PsiElement)selectorInFile) : null;
+    if (request == null) {
       return false;
     }
 
-    PsiFile file = ((PsiElement)selectorInFile).getContainingFile();
-    if (file == null || file.getVirtualFile() == null) {
-      return false;
-    }
-
-    Pair<WebBrowserUrlProvider, Collection<Url>> browserUrlProvider = WebBrowserServiceImpl.getProvider(file);
+    WebBrowserUrlProvider urlProvider = WebBrowserServiceImpl.getProvider(request);
     currentName = XmlBundle.message("browser.select.in.default.name");
-    if (browserUrlProvider == null) {
-      return HtmlUtil.isHtmlFile(file) && !(file.getVirtualFile() instanceof LightVirtualFile);
+    if (urlProvider == null) {
+      VirtualFile virtualFile = request.getVirtualFile();
+      return virtualFile instanceof HttpVirtualFile || (HtmlUtil.isHtmlFile(request.getFile()) && !(virtualFile instanceof LightVirtualFile));
     }
     else {
-      String customText = browserUrlProvider.first.getOpenInBrowserActionText(file);
+      String customText = urlProvider.getOpenInBrowserActionText(request.getFile());
       if (customText != null) {
         currentName = customText;
       }
@@ -68,11 +62,9 @@ class SelectInDefaultBrowserTarget extends SelectInTargetBase {
 
   @Override
   public void selectIn(SelectInContext context, boolean requestFocus) {
-    PsiElement psiElement = (PsiElement)context.getSelectorInFile();
-    LOG.assertTrue(psiElement != null);
-    PsiFile psiFile = psiElement.getContainingFile();
-    LOG.assertTrue(psiFile != null);
-    OpenFileInDefaultBrowserAction.doOpen(psiFile, false, null);
+    PsiElement element = (PsiElement)context.getSelectorInFile();
+    LOG.assertTrue(element != null);
+    OpenFileInDefaultBrowserAction.open(OpenInBrowserRequest.create(element), false, null);
   }
 
   @Override

@@ -67,12 +67,7 @@ public class NoGraphTableModel extends AbstractVcsLogTableModel<CommitCell, Hash
     }
 
     myUi.getTable().setPaintBusy(true);
-    myUi.getFilterer().requestVcs(myUi.collectFilters(), new Runnable() {
-      @Override
-      public void run() {
-        myUi.getTable().setPaintBusy(false);
-      }
-    });
+    myUi.getFilterer().requestVcs(myUi.collectFilters());
     myAllowLoadingMoreRequest = false; // Don't send the request to VCS twice
   }
 
@@ -122,6 +117,12 @@ public class NoGraphTableModel extends AbstractVcsLogTableModel<CommitCell, Hash
   @Override
   public Hash getHashAtRow(int row) {
     return myCommits.get(row).getHash();
+  }
+
+  @Nullable
+  @Override
+  public Hash getCommit(int row) {
+    return getHashAtRow(row);
   }
 
   @NotNull

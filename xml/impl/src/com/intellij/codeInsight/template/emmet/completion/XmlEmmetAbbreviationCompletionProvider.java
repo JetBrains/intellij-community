@@ -37,7 +37,7 @@ public class XmlEmmetAbbreviationCompletionProvider extends EmmetAbbreviationCom
   protected LiveTemplateLookupElement createLookupElement(final TemplateImpl template) {
     final String description = template.getDescription();
     template.setDescription(null);
-    return new LiveTemplateLookupElement(template, description, false, true);
+    return new EmmetAbbreviationLookupElement(template, description, false);
   }
 
   @Override

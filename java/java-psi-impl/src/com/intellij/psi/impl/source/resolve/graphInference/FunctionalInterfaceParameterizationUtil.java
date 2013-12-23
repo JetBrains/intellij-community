@@ -84,6 +84,9 @@ public class FunctionalInterfaceParameterizationUtil {
 
       final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(psiClass.getProject());
       final PsiParameter[] targetMethodParams = interfaceMethod.getParameterList().getParameters();
+      if (targetMethodParams.length != lambdaParams.length) {
+        return null;
+      }
       for (int i = 0; i < targetMethodParams.length; i++) {
         if (resolve) {
           session.addConstraint(new TypeEqualityConstraint(lambdaParams[i].getType(), targetMethodParams[i].getType()));

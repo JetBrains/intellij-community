@@ -97,6 +97,10 @@ public class ReformatCodeAction extends AnAction implements DumbAware {
         if (shouldOptimizeImports) {
           processor = new OptimizeImportsProcessor(processor);
         }
+        if (selectedFlags.isRearrangeEntries()) {
+          processor = new RearrangeCodeProcessor(processor, null);
+        }
+
         processor.run();
       }
       return;
@@ -131,7 +135,7 @@ public class ReformatCodeAction extends AnAction implements DumbAware {
     boolean optimizeImports = ReformatFilesDialog.isOptmizeImportsOptionOn();
     boolean processWholeFile = false;
     boolean processChangedTextOnly = PropertiesComponent.getInstance().getBoolean(LayoutCodeConstants.PROCESS_CHANGED_TEXT_KEY, false);
-    boolean rearrangeEntries = PropertiesComponent.getInstance().getBoolean(LayoutCodeConstants.REARRANGE_ENTRIES_KEY, false);
+    boolean rearrangeEntries = getLastSavedRearrangeCbState(project, file);
 
     final boolean showDialog = EditorSettingsExternalizable.getInstance().getOptions().SHOW_REFORMAT_DIALOG;
 
@@ -150,6 +154,10 @@ public class ReformatCodeAction extends AnAction implements DumbAware {
         if (optimizeImports) {
           processor = new OptimizeImportsProcessor(processor);
         }
+        if (selectedFlags.isRearrangeEntries()) {
+          processor = new RearrangeCodeProcessor(processor, null);
+        }
+
         processor.run();
         return;
       }
@@ -212,6 +220,10 @@ public class ReformatCodeAction extends AnAction implements DumbAware {
 
     if (shouldOptimizeImports) {
       processor = new OptimizeImportsProcessor(processor);
+    }
+
+    if (selectedFlags.isRearrangeEntries()) {
+      processor = new RearrangeCodeProcessor(processor, null);
     }
 
     processor.run();
@@ -357,6 +369,12 @@ public class ReformatCodeAction extends AnAction implements DumbAware {
     return dialog;
   }
 
+  public static boolean getLastSavedRearrangeCbState(@NotNull Project project, @Nullable PsiFile file) {
+    if (file != null) {
+      return LayoutCodeSettingsStorage.getLastSavedRearrangeEntriesCbStateFor(project, file.getLanguage());
+    }
+    return LayoutCodeSettingsStorage.getLastSavedRearrangeEntriesCbStateFor(project);
+  }
 
   protected static void setTestOptions(ReformatFilesOptions options) {
     myTestOptions = options;

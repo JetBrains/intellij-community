@@ -64,10 +64,10 @@ public abstract class GroovyShellActionBase extends DumbAwareAction {
   public static final Key<Boolean> GROOVY_SHELL_FILE = Key.create("GROOVY_SHELL_FILE");
   private static final String GROOVY_SHELL_LAST_MODULE = "Groovy.Shell.LastModule";
 
-  private static List<Module> getGroovyCompatibleModules(Project project) {
+  private List<Module> getGroovyCompatibleModules(Project project) {
     ArrayList<Module> result = new ArrayList<Module>();
     for (Module module : ModuleManager.getInstance(project).getModules()) {
-      if (GroovyUtils.isSuitableModule(module)) {
+      if (isSuitableModule(module)) {
         Sdk sdk = ModuleRootManager.getInstance(module).getSdk();
         if (sdk != null && sdk.getSdkType() instanceof JavaSdkType) {
           result.add(module);
@@ -75,6 +75,10 @@ public abstract class GroovyShellActionBase extends DumbAwareAction {
       }
     }
     return result;
+  }
+
+  protected boolean isSuitableModule(Module module) {
+    return GroovyUtils.isSuitableModule(module);
   }
 
   @Override

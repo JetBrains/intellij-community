@@ -15,7 +15,11 @@
  */
 package org.jetbrains.plugins.groovy.lang.psi.util;
 
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
+
+import java.util.Collections;
+import java.util.Set;
 
 /**
  * @author Maxim.Medvedev
@@ -65,6 +69,22 @@ public final class GroovyCommonClassNames {
   @NonNls public static final String GROOVY_LANG_DELEGATES_TO_TARGET = "groovy.lang.DelegatesTo.Target";
   @NonNls public static final String GROOVY_TRANSFORM_COMPILE_DYNAMIC = "groovy.transform.CompileDynamic";
 
+
+  public static final Set<String> GROOVY_EXTENSION_CLASSES = Collections.unmodifiableSet(ContainerUtil.newLinkedHashSet(
+    "org.codehaus.groovy.runtime.DateGroovyMethods",
+    "org.codehaus.groovy.runtime.DefaultGroovyMethods",
+    "org.codehaus.groovy.runtime.DefaultGroovyStaticMethods",
+    "org.codehaus.groovy.runtime.EncodingGroovyMethods",
+    "org.codehaus.groovy.runtime.IOGroovyMethods",
+    "org.codehaus.groovy.runtime.ProcessGroovyMethods",
+    "org.codehaus.groovy.runtime.ResourceGroovyMethods",
+    "org.codehaus.groovy.runtime.SocketGroovyMethods",
+    "org.codehaus.groovy.runtime.SqlGroovyMethods",
+    "org.codehaus.groovy.runtime.StringGroovyMethods",
+    "org.codehaus.groovy.runtime.SwingGroovyMethods",
+    "org.codehaus.groovy.runtime.XmlGroovyMethods",
+    "org.codehaus.groovy.vmplugin.v5.PluginDefaultGroovyMethods"
+  ));
 
   private GroovyCommonClassNames() {
   }

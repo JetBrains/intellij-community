@@ -69,13 +69,11 @@ public class GroovyConsoleRunner extends GroovyShellRunner {
   @NotNull
   @Override
   public String getTitle(@NotNull Module module) {
-    String homePath = LibrariesUtil.getGroovyHomePath(module);
-    boolean bundled = false;
-    if (homePath == null || !hasGroovyAll(module)) {
-      homePath = GroovyUtils.getBundledGroovyJar().getParentFile().getParent();
-      bundled = true;
-    }
-    String version = GroovyConfigUtils.getInstance().getSDKVersion(homePath);
+    String moduleGroovyHomePath = LibrariesUtil.getGroovyHomePath(module);
+    boolean bundled = moduleGroovyHomePath == null || !hasGroovyAll(module);
+    String homePathToUse = bundled ? GroovyUtils.getBundledGroovyJar().getParentFile().getParent() : moduleGroovyHomePath;
+
+    String version = GroovyConfigUtils.getInstance().getSDKVersion(homePathToUse);
     return version == AbstractConfigUtils.UNDEFINED_VERSION ? "" : " (" + (bundled ? "Bundled " : "") + "Groovy " + version + ")";
   }
 

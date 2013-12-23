@@ -34,10 +34,12 @@ public interface GrAssignmentExpression extends GrExpression, PsiPolyVariantRefe
   @Nullable
   GrExpression getRValue();
 
+  @NotNull
   IElementType getOperationTokenType();
 
   @NotNull
   GroovyResolveResult[] multiResolve(boolean incompleteCode);
 
+  @NotNull
   PsiElement getOperationToken();
 }

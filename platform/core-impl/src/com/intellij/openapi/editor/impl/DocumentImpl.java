@@ -56,6 +56,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.impl.DocumentImpl");
   public static boolean CHECK_DOCUMENT_CONSISTENCY = ApplicationManager.getApplication() != null && ApplicationManager.getApplication().isUnitTestMode();
 
+  private final Ref<DocumentListener[]> myCachedDocumentListeners = Ref.create(null);
   private final List<DocumentListener> myDocumentListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private final RangeMarkerTree<RangeMarkerEx> myRangeMarkers = new RangeMarkerTree<RangeMarkerEx>(this);
   private final List<RangeMarker> myGuardedBlocks = new ArrayList<RangeMarker>();
@@ -70,7 +71,6 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
   private volatile long myModificationStamp;
   private final PropertyChangeSupport myPropertyChangeSupport = new PropertyChangeSupport(this);
 
-  private final Ref<DocumentListener[]> myCachedDocumentListeners = Ref.create(null);
   private final List<EditReadOnlyListener> myReadOnlyListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
   private int myCheckGuardedBlocks = 0;
@@ -713,9 +713,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
 
   @Override
   public void addDocumentListener(@NotNull DocumentListener listener) {
-    if (myCachedDocumentListeners != null) {
-      myCachedDocumentListeners.set(null);
-    }
+    myCachedDocumentListeners.set(null);
 
     LOG.assertTrue(!myDocumentListeners.contains(listener), "Already registered: " + listener);
     boolean added = myDocumentListeners.add(listener);
@@ -729,12 +727,13 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
   }
 
   private static class DocumentListenerDisposable implements Disposable {
+    private final DocumentListener myListener;
+    private final Ref<DocumentListener[]> myCachedDocumentListenersRef;
+    private final List<DocumentListener> myDocumentListeners;
 
-    private DocumentListener myListener;
-    private Ref<DocumentListener[]> myCachedDocumentListenersRef;
-    private List<DocumentListener> myDocumentListeners;
-
-    public DocumentListenerDisposable(DocumentListener listener, Ref<DocumentListener[]> cachedDocumentListenersRef, List<DocumentListener> documentListeners) {
+    public DocumentListenerDisposable(@NotNull DocumentListener listener,
+                                      @NotNull Ref<DocumentListener[]> cachedDocumentListenersRef,
+                                      @NotNull List<DocumentListener> documentListeners) {
       myListener = listener;
       myCachedDocumentListenersRef = cachedDocumentListenersRef;
       myDocumentListeners = documentListeners;
@@ -751,12 +750,10 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
     doRemoveDocumentListener(listener, myCachedDocumentListeners, myDocumentListeners);
   }
 
-  private static void doRemoveDocumentListener(DocumentListener listener,
-                                               Ref<DocumentListener[]> cachedDocumentListenersRef,
-                                               List<DocumentListener> documentListeners) {
-    if (cachedDocumentListenersRef != null) {
-      cachedDocumentListenersRef.set(null);
-    }
+  private static void doRemoveDocumentListener(@NotNull DocumentListener listener,
+                                               @NotNull Ref<DocumentListener[]> cachedDocumentListenersRef,
+                                               @NotNull List<DocumentListener> documentListeners) {
+    cachedDocumentListenersRef.set(null);
     boolean success = documentListeners.remove(listener);
     if (!success) {
       LOG.error("Can't remove document listener (" + listener + "). Registered cachedDocumentListenersRef: " + documentListeners);

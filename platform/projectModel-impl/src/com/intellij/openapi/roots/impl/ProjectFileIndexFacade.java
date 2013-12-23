@@ -21,6 +21,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -85,5 +86,11 @@ public class ProjectFileIndexFacade extends FileIndexFacade {
       if (myDirectoryIndex.getInfoForDirectory(childDir) == null) return false;
       childDir = childDir.getParent();
     }
+  }
+
+  @NotNull
+  @Override
+  public ModificationTracker getRootModificationTracker() {
+    return ProjectRootManager.getInstance(myProject);
   }
 }

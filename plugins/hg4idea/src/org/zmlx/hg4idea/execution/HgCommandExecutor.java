@@ -61,11 +61,12 @@ public final class HgCommandExecutor {
   private final Project myProject;
   private final HgVcs myVcs;
   private final String myDestination;
-  private final List<String> operationsWithTextIndicator = Arrays.asList("clone", "push", "pull", "update", "merge");
 
   @NotNull private Charset myCharset;
   private boolean myIsSilent = false;
   private boolean myShowOutput = false;
+
+  private boolean myOutputAlwaysSuppressed = false;    //for command with enormous output, like log or cat
   private List<String> myOptions = DEFAULT_OPTIONS;
   @Nullable private ModalityState myState;
 
@@ -101,6 +102,10 @@ public final class HgCommandExecutor {
 
   public void setShowOutput(boolean showOutput) {
     myShowOutput = showOutput;
+  }
+
+  public void setOutputAlwaysSuppressed(boolean outputAlwaysSuppressed) {
+    myOutputAlwaysSuppressed = outputAlwaysSuppressed;
   }
 
   public void execute(@Nullable final VirtualFile repo, @NotNull final String operation, @Nullable final List<String> arguments,
@@ -208,8 +213,8 @@ public final class HgCommandExecutor {
       String workingDir = repo != null ? repo.getPath() : null;
       ShellCommand shellCommand = new ShellCommand(cmdLine, workingDir, myCharset);
       long startTime = System.currentTimeMillis();
-      LOG.debug(String.format("hg %s.started", operation));
-      result = shellCommand.execute(operationsWithTextIndicator.contains(operation));
+      LOG.debug(String.format("hg %s started", operation));
+      result = shellCommand.execute(myShowOutput);
       LOG.debug(String.format("hg %s finished. Took %s ms", operation, System.currentTimeMillis() - startTime));
       if (!HgErrorUtil.isAuthorizationError(result)) {
         passReceiver.saveCredentials();
@@ -231,7 +236,7 @@ public final class HgCommandExecutor {
     }
     String warnings = warningReceiver.getWarnings();
     result.setWarnings(warnings);
-    logResult(result, operation);
+    logResult(result);
     return result;
   }
 
@@ -264,7 +269,7 @@ public final class HgCommandExecutor {
   }
 
   @SuppressWarnings("UseOfSystemOutOrSystemErr")
-  private void logResult(@NotNull HgCommandResult result, @NotNull String operationName) {
+  private void logResult(@NotNull HgCommandResult result) {
     final boolean unitTestMode = ApplicationManager.getApplication().isUnitTestMode();
 
     // log output if needed
@@ -272,13 +277,14 @@ public final class HgCommandExecutor {
       if (unitTestMode) {
         System.out.print(result.getRawOutput() + "\n");
       }
-      else if (!myIsSilent && myShowOutput) {
-        LOG.info(result.getRawOutput());
-        myVcs.showMessageInConsole(result.getRawOutput(), ConsoleViewContentType.SYSTEM_OUTPUT.getAttributes());
-      }
-      else if (!StringUtil.equalsIgnoreCase(operationName, "log")) {
-        //too big output for log command!
-        LOG.debug(result.getRawOutput());
+      else if (!myOutputAlwaysSuppressed) {
+        if (!myIsSilent && myShowOutput) {
+          LOG.info(result.getRawOutput());
+          myVcs.showMessageInConsole(result.getRawOutput(), ConsoleViewContentType.SYSTEM_OUTPUT.getAttributes());
+        }
+        else {
+          LOG.debug(result.getRawOutput());
+        }
       }
     }
 

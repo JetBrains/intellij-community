@@ -26,6 +26,7 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.FocusChangeListener;
 import com.intellij.openapi.fileTypes.PlainTextLanguage;
 import com.intellij.openapi.keymap.KeymapUtil;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
@@ -134,7 +135,7 @@ public class TextFieldWithAutoCompletion<T> extends LanguageTextField {
     return editor;
   }
 
-  public static class StringsCompletionProvider extends TextFieldWithAutoCompletionListProvider<String> {
+  public static class StringsCompletionProvider extends TextFieldWithAutoCompletionListProvider<String> implements DumbAware {
     @Nullable private final Icon myIcon;
 
     public StringsCompletionProvider(@Nullable final Collection<String> variants,

@@ -21,8 +21,6 @@ public interface LayoutCodeOptions extends ReformatFilesOptions {
 
   boolean isProcessDirectory();
 
-  boolean isRearrangeEntries();
-
   boolean isIncludeSubdirectories();
 
 }

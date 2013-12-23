@@ -19,7 +19,6 @@ import com.intellij.codeInsight.intention.impl.CreateFieldFromParameterActionBas
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
-import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.Nullable;
@@ -60,7 +59,7 @@ public class GrCreateFieldForParameterIntention extends CreateFieldFromParameter
   }
 
   private static boolean checkAssignmentToFieldExists(PsiParameter parameter) {
-    for (PsiReference reference : ReferencesSearch.search(parameter, new LocalSearchScope(parameter.getDeclarationScope()), false).findAll()) {
+    for (PsiReference reference : ReferencesSearch.search(parameter).findAll()) {
       PsiElement element = reference.getElement();
       if (element instanceof GrReferenceExpression &&
           element.getParent() instanceof GrAssignmentExpression &&

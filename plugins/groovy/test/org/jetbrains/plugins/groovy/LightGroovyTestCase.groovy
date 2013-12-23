@@ -16,6 +16,8 @@
 
 package org.jetbrains.plugins.groovy
 
+import com.intellij.psi.PsiIntersectionType
+import com.intellij.psi.PsiType
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 import org.jetbrains.annotations.NonNls
@@ -243,6 +245,32 @@ public abstract class TestCase extends junit.framework.Assert implements junit.f
     public void setName(java.lang.String name) { /* compiled code */ }
 }
 ''')
+  }
+
+  public static void assertType(String expected, PsiType actual) {
+    if (expected == null) {
+      assertNull(actual)
+      return
+    }
+
+    assertNotNull(actual)
+    if (actual instanceof PsiIntersectionType) {
+      assertEquals(expected, genIntersectionTypeText(actual))
+    }
+    else {
+      assertEquals(expected, actual.canonicalText)
+    }
+  }
+
+  private static String genIntersectionTypeText(PsiIntersectionType t) {
+    StringBuilder b = new StringBuilder('[')
+    for (PsiType c : t.conjuncts) {
+      b << c.canonicalText << ','
+    }
+    if (t.conjuncts) {
+      b.replace(b.length() - 1, b.length(), ']')
+    }
+    return b
   }
 
 }

@@ -154,7 +154,7 @@ public class GroovyAnnotationAttributeInfoHandler implements ParameterInfoHandle
   }
 
   @Override
-  public void updateParameterInfo(@NotNull GrAnnotationArgumentList o, @NotNull UpdateParameterInfoContext context) {
+  public void updateParameterInfo(@NotNull GrAnnotationArgumentList parameterOwner, @NotNull UpdateParameterInfoContext context) {
     context.setHighlightedParameter(findAnnotationMethod(context.getFile(), context.getEditor()));
   }
 
