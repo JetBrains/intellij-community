@@ -246,7 +246,7 @@ public class FindUsagesManager implements JDOMExternalizable {
   }
 
   public void findUsages(@NotNull PsiElement psiElement, final PsiFile scopeFile, final FileEditor editor, boolean showDialog) {
-    doShowDialogAndStartFind(psiElement, scopeFile, editor, showDialog, true);
+    doShowDialogAndStartFind(psiElement, scopeFile, editor, showDialog, false);
   }
 
   private void doShowDialogAndStartFind(@NotNull PsiElement psiElement,
