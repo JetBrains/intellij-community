@@ -15,7 +15,7 @@
  */
 package com.intellij.platform.templates;
 
-import com.intellij.ide.projectWizard.EmptyProjectBuilder;
+import com.intellij.ide.util.projectWizard.EmptyModuleBuilder;
 import com.intellij.ide.util.projectWizard.ModuleBuilder;
 import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.platform.ProjectTemplate;
@@ -28,7 +28,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -42,27 +41,24 @@ public class PlainModuleTemplatesFactory extends ProjectTemplatesFactory {
   @Override
   public String[] getGroups() {
     List<ModuleBuilder> builders = ModuleBuilder.getAllBuilders();
+    builders.add(new EmptyModuleBuilder());
+
     Set<String> groups = ContainerUtil.map2Set(builders, new Function<ModuleBuilder, String>() {
       @Override
       public String fun(ModuleBuilder builder) {
         return builder.getGroupName();
       }
     });
-    HashSet<String> set = new HashSet<String>(groups);
-    set.add(OTHER_GROUP);
-    return ArrayUtil.toStringArray(set);
+    return ArrayUtil.toStringArray(groups);
   }
 
   @NotNull
   @Override
   public ProjectTemplate[] createTemplates(final String group, WizardContext context) {
-    if (OTHER_GROUP.equals(group)) {
-      if (!context.isCreatingNewProject()) {
-        return ProjectTemplate.EMPTY_ARRAY;
-      }
-      return new ProjectTemplate[]{new BuilderBasedTemplate(new EmptyProjectBuilder())};
-    }
     List<ModuleBuilder> builders = ModuleBuilder.getAllBuilders();
+    if (context.isCreatingNewProject()) {
+      builders.add(new EmptyModuleBuilder());
+    }
     List<ProjectTemplate> templates = ContainerUtil.mapNotNull(builders, new NullableFunction<ModuleBuilder, ProjectTemplate>() {
       @Nullable
       @Override
@@ -78,7 +74,7 @@ public class PlainModuleTemplatesFactory extends ProjectTemplatesFactory {
     List<ModuleBuilder> builders = ModuleBuilder.getAllBuilders();
     for (ModuleBuilder builder : builders) {
       if (group.equals(builder.getGroupName())) {
-        return builder.getNodeIcon();
+        return builder.getBigIcon() == null ? builder.getNodeIcon() : builder.getBigIcon();
       }
     }
     return null;

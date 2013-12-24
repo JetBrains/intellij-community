@@ -15,6 +15,7 @@
  */
 package com.intellij.ide.projectWizard;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.util.newProjectWizard.AbstractProjectWizard;
 import com.intellij.ide.util.newProjectWizard.StepSequence;
 import com.intellij.ide.util.projectWizard.ModuleWizardStep;
@@ -32,7 +33,7 @@ public class NewProjectWizard extends AbstractProjectWizard {
   private final StepSequence mySequence;
 
   public NewProjectWizard(@Nullable Project project, @NotNull ModulesProvider modulesProvider, @Nullable String defaultPath) {
-    super("New Project", project, defaultPath);
+    super(project == null ? IdeBundle.message("title.new.project") : IdeBundle.message("title.add.module"), project, defaultPath);
     myWizardContext.setNewWizard(true);
     mySequence = new StepSequence();
     mySequence.addCommonStep(new ProjectTypeStep(myWizardContext, this, modulesProvider));

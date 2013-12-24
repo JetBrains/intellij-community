@@ -15,47 +15,29 @@
  */
 package com.intellij.ide.projectWizard;
 
-import com.intellij.CommonBundle;
-import com.intellij.framework.addSupport.FrameworkSupportInModuleProvider;
-import com.intellij.ide.util.frameworkSupport.FrameworkRole;
-import com.intellij.ide.util.frameworkSupport.FrameworkSupportUtil;
-import com.intellij.ide.util.newProjectWizard.AddSupportForFrameworksPanel;
 import com.intellij.ide.util.newProjectWizard.TemplatesGroup;
-import com.intellij.ide.util.newProjectWizard.impl.FrameworkSupportModelBase;
 import com.intellij.ide.util.newProjectWizard.modes.CreateFromTemplateMode;
 import com.intellij.ide.util.projectWizard.ModuleBuilder;
 import com.intellij.ide.util.projectWizard.ModuleWizardStep;
 import com.intellij.ide.util.projectWizard.WizardContext;
-import com.intellij.ide.wizard.CommitStepException;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectBundle;
-import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
-import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainer;
-import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainerFactory;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.platform.ProjectTemplate;
 import com.intellij.platform.ProjectTemplateEP;
 import com.intellij.platform.templates.ArchivedProjectTemplate;
 import com.intellij.platform.templates.LocalArchivedTemplate;
 import com.intellij.platform.templates.RemoteTemplatesFactory;
-import com.intellij.ui.*;
+import com.intellij.ui.CollectionListModel;
+import com.intellij.ui.ColoredListCellRenderer;
+import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.components.JBList;
-import com.intellij.ui.tabs.TabInfo;
-import com.intellij.ui.tabs.TabsListener;
-import com.intellij.ui.tabs.impl.JBTabsImpl;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ConcurrentMultiMap;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
@@ -66,6 +48,8 @@ import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.net.URL;
 import java.util.*;
 import java.util.List;
@@ -74,230 +58,166 @@ import java.util.List;
  * @author Dmitry Avdeev
  *         Date: 04.09.13
  */
-public class ProjectTypeStep extends ModuleWizardStep implements Disposable {
+@SuppressWarnings("unchecked")
+public class ProjectTypeStep extends ModuleWizardStep implements Disposable, ActionListener {
 
-  private static final String FRAMEWORKS_CARD = "frameworks card";
+  private static final String DEFAULT_CARD = "default card";
+
   private final WizardContext myContext;
   private final NewProjectWizard myWizard;
   private final ModulesProvider myModulesProvider;
-  private final JTextPane myTemplateDescription;
   private JPanel myPanel;
   private JPanel myOptionsPanel;
   private JBList myProjectTypeList;
-
-  private final ProjectTypesList myProjectTypesList;
-  private final JBList myTemplatesList;
-  private final TabInfo myFrameworksTab;
-  private final TabInfo myTemplatesTab;
+  private JTextPane myDescription;
+  private JBList myTemplatesList;
 
   @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
-  private final FactoryMap<ProjectCategory, ModuleBuilder> myBuilders = new FactoryMap<ProjectCategory, ModuleBuilder>() {
+  private final FactoryMap<ProjectTemplate, ModuleBuilder> myBuilders = new FactoryMap<ProjectTemplate, ModuleBuilder>() {
     @Nullable
     @Override
-    protected ModuleBuilder create(ProjectCategory key) {
-      return key.createModuleBuilder();
+    protected ModuleBuilder create(ProjectTemplate key) {
+      return (ModuleBuilder)key.createModuleBuilder();
     }
   };
   private final Set<String> myCards = new HashSet<String>();
 
-  private final AddSupportForFrameworksPanel myFrameworksPanel;
-  private final ModuleBuilder.ModuleConfigurationUpdater myConfigurationUpdater;
-  private boolean myCommitted;
-  private final JBTabsImpl myTabs;
-  private final MultiMap<String, ProjectTemplate> myTemplates = loadLocalTemplates();
+  private final MultiMap<TemplatesGroup,ProjectTemplate> myTemplatesMap;
 
   public ProjectTypeStep(WizardContext context, NewProjectWizard wizard, ModulesProvider modulesProvider) {
     myContext = context;
     myWizard = wizard;
     myModulesProvider = modulesProvider;
-    Project project = context.getProject();
-    final LibrariesContainer container = LibrariesContainerFactory.createContainer(project);
-    FrameworkSupportModelBase model = new FrameworkSupportModelBase(project, null, container) {
-      @NotNull
-      @Override
-      public String getBaseDirectoryForLibrariesPath() {
-        ModuleBuilder builder = getSelectedBuilder();
-        assert builder != null;
-        return StringUtil.notNullize(builder.getContentEntryPath());
-      }
-    };
-    myConfigurationUpdater = new ModuleBuilder.ModuleConfigurationUpdater() {
-      @Override
-      public void update(@NotNull Module module, @NotNull ModifiableRootModel rootModel) {
-        myFrameworksPanel.addSupport(module, rootModel);
-      }
-    };
 
-    final MultiMap<String, ProjectCategory> categories = new MultiMap<String, ProjectCategory>();
+    myTemplatesMap = new ConcurrentMultiMap<TemplatesGroup, ProjectTemplate>();
+    myTemplatesMap.putAllValues(CreateFromTemplateMode.getTemplatesMap(context, false));
+
     for (ProjectCategory category : ProjectCategory.EXTENSION_POINT_NAME.getExtensions()) {
-      categories.putValue(category.getGroupName(), category);
+      myTemplatesMap.put(new TemplatesGroup(category), new ArrayList<ProjectTemplate>());
+    }
+    if (context.isCreatingNewProject()) {
+      MultiMap<String, ProjectTemplate> localTemplates = loadLocalTemplates();
+      for (TemplatesGroup group : myTemplatesMap.keySet()) {
+        myTemplatesMap.putValues(group, localTemplates.get(group.getId()));
+      }
     }
 
-    MultiMap<TemplatesGroup,ProjectTemplate> templatesMap = CreateFromTemplateMode.getTemplatesMap(context, false);
-    List<TemplatesGroup> groups = new ArrayList<TemplatesGroup>(templatesMap.keySet());
+    // remove empty groups
+    for (Iterator<Map.Entry<TemplatesGroup, Collection<ProjectTemplate>>> iterator = myTemplatesMap.entrySet().iterator();
+         iterator.hasNext(); ) {
+      Map.Entry<TemplatesGroup, Collection<ProjectTemplate>> entry = iterator.next();
+      if (entry.getValue().isEmpty()) {
+        iterator.remove();
+      }
+    }
+
+    List<TemplatesGroup> groups = new ArrayList<TemplatesGroup>(myTemplatesMap.keySet());
     Collections.sort(groups);
-    MultiMap<TemplatesGroup, ProjectCategory> map = new MultiMap<TemplatesGroup, ProjectCategory>();
-    for (TemplatesGroup group : groups) {
-      for (ProjectTemplate template : templatesMap.get(group)) {
-        TemplateBasedProjectType projectType = new TemplateBasedProjectType(template);
-        map.putValue(group, projectType);
+
+    // move subgroups
+    MultiMap<String, TemplatesGroup> subGroups = new MultiMap<String, TemplatesGroup>();
+    for (ListIterator<TemplatesGroup> iterator = groups.listIterator(); iterator.hasNext(); ) {
+      TemplatesGroup group = iterator.next();
+      if (group.getParentGroup() != null) {
+        subGroups.putValue(group.getParentGroup(), group);
+        iterator.remove();
       }
-      for (ProjectCategory category : categories.get(group.getName())) {
-        map.putValue(group, category);
+    }
+    for (ListIterator<TemplatesGroup> iterator = groups.listIterator(); iterator.hasNext(); ) {
+      TemplatesGroup group = iterator.next();
+      for (TemplatesGroup subGroup : subGroups.get(group.getName())) {
+        iterator.add(subGroup);
       }
     }
 
-    myProjectTypesList = new ProjectTypesList(myProjectTypeList, map, myBuilders);
+    myProjectTypeList.setModel(new CollectionListModel<TemplatesGroup>(groups));
+    myProjectTypeList.setCellRenderer(new ColoredListCellRenderer<TemplatesGroup>() {
+      @Override
+      protected void customizeCellRenderer(JList list, TemplatesGroup value, int index, boolean selected, boolean hasFocus) {
+        if (value.getParentGroup() != null) {
+          append("         ");
+        }
+        else {
+          setBorder(IdeBorderFactory.createEmptyBorder(3, 10, 3, 5));
+        }
+        append(value.getName());
+        setIcon(value.getIcon());
+      }
+    });
 
     myProjectTypeList.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
       @Override
       public void valueChanged(ListSelectionEvent e) {
-        projectTypeChanged(true);
+        projectTypeChanged();
       }
     });
 
-    for (ProjectCategory category : map.values()) {
-      myWizard.getSequence().addStepsForBuilder(myBuilders.get(category), context, modulesProvider);
-    }
-    myFrameworksPanel = new AddSupportForFrameworksPanel(Collections.<FrameworkSupportInModuleProvider>emptyList(), model, true);
-    Disposer.register(wizard.getDisposable(), myFrameworksPanel);
-
-    myTemplatesList = new JBList();
-    myTemplatesList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-    myTemplatesList.setCellRenderer(new ColoredListCellRenderer<ProjectCategory>() {
+    myTemplatesList.setCellRenderer(new ColoredListCellRenderer<ProjectTemplate>() {
       @Override
-      protected void customizeCellRenderer(JList list, ProjectCategory value, int index, boolean selected, boolean hasFocus) {
-        append(value.getDisplayName()).setIcon(value.getIcon());
+      protected void customizeCellRenderer(JList list, ProjectTemplate value, int index, boolean selected, boolean hasFocus) {
+        append(value.getName()).setIcon(value.getIcon());
       }
     });
-    myTemplatesList.addListSelectionListener(new ListSelectionListener() {
+    myTemplatesList.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
       @Override
       public void valueChanged(ListSelectionEvent e) {
-        projectTypeChanged(false);
-        ProjectCategory type = (ProjectCategory)myTemplatesList.getSelectedValue();
-        myTemplateDescription.setText(type == null ? "" : type.getDescription());
+        updateSelection();
       }
     });
+    for (ProjectTemplate category : myTemplatesMap.values()) {
+      myWizard.getSequence().addStepsForBuilder(myBuilders.get(category), context, modulesProvider);
+    }
 
-    myTabs = new JBTabsImpl(null, IdeFocusManager.findInstance(), this);
-    myFrameworksTab = new TabInfo(myFrameworksPanel.getMainPanel()).setText("  Frameworks  ");
-    myTabs.addTab(myFrameworksTab);
-
-    JPanel templatesPanel = new JPanel(new BorderLayout());
-    templatesPanel.add(ScrollPaneFactory.createScrollPane(myTemplatesList, SideBorder.BOTTOM));
-    myTemplateDescription = new JTextPane();
-    myTemplateDescription.setBorder(IdeBorderFactory.createEmptyBorder(5, 5, 5, 5));
-    Messages.installHyperlinkSupport(myTemplateDescription);
-    templatesPanel.add(myTemplateDescription, BorderLayout.SOUTH);
-
-    myTemplatesTab = new TabInfo(templatesPanel).setText("   Templates   ");
-    myTabs.addTab(myTemplatesTab);
-    myOptionsPanel.add(myTabs.getComponent(), FRAMEWORKS_CARD);
-
-    myTabs.addListener(new TabsListener.Adapter() {
-      @Override
-      public void selectionChanged(TabInfo oldSelection, TabInfo newSelection) {
-        projectTypeChanged(false);
-      }
-    });
+    Messages.installHyperlinkSupport(myDescription);
+    myProjectTypeList.setSelectedIndex(0);
   }
 
   // new category or template is selected
-  public void projectTypeChanged(boolean updatePanel) {
-    ModuleBuilder builder = getSelectedBuilder();
-    if (builder != null) {
-      myContext.setProjectBuilder(builder);
-      myWizard.getSequence().setType(builder.getBuilderId());
-      if (myFrameworksTab == myTabs.getSelectedInfo()) {
-        builder.addModuleConfigurationUpdater(myConfigurationUpdater);
+  public void projectTypeChanged() {
+
+    TemplatesGroup group = getSelectedGroup();
+    if (group == null) return;
+    Collection<ProjectTemplate> templates = myTemplatesMap.get(group);
+    String card = DEFAULT_CARD;
+    if (templates.size() == 1) {
+      ModuleBuilder builder = myBuilders.get(templates.iterator().next());
+      JComponent panel = builder.getCustomOptionsPanel(this);
+      if (panel != null) {
+        card = builder.getBuilderId();
+        if (myCards.add(card)) {
+          myOptionsPanel.add(panel, card);
+        }
       }
     }
-    if (updatePanel) {
-      ProjectCategory type = getSelectedProjectType();
-      if (type != null) {
-        updateOptionsPanel(type);
-      }
-    }
+    myTemplatesList.setModel(new CollectionListModel(templates));
+    myTemplatesList.setSelectedIndex(0);
+    ((CardLayout)myOptionsPanel.getLayout()).show(myOptionsPanel, card);
+    updateSelection();
+  }
+
+  private TemplatesGroup getSelectedGroup() {
+    return (TemplatesGroup)myProjectTypeList.getSelectedValue();
   }
 
   @Nullable
-  public ProjectCategory getSelectedProjectType() {
-    if (myTabs.getSelectedInfo() == myFrameworksTab) {
-      return myProjectTypesList.getSelectedType();
+  public ProjectTemplate getSelectedTemplate() {
+    TemplatesGroup group = getSelectedGroup();
+    if (group == null) return null;
+    Collection<ProjectTemplate> categories = myTemplatesMap.get(group);
+    if (categories.size() == 1) {
+      ProjectTemplate template = categories.iterator().next();
+      if (myCards.contains(myBuilders.get(template).getBuilderId())) {
+        return template;
+      }
     }
-    else {
-      return (ProjectCategory)myTemplatesList.getSelectedValue();
-    }
+    return (ProjectTemplate)myTemplatesList.getSelectedValue();
   }
 
   @Nullable
   private ModuleBuilder getSelectedBuilder() {
-    ProjectCategory object = getSelectedProjectType();
-    return object == null ? null : myBuilders.get(object);
-  }
 
-  private void updateOptionsPanel(final @NotNull ProjectCategory projectCategory) {
-    ModuleBuilder builder = myBuilders.get(projectCategory);
-    JComponent panel = builder.getCustomOptionsPanel(new Disposable() {
-      @Override
-      public void dispose() {
-        disposeUIResources();
-      }
-    });
-    String card;
-    if (panel != null) {
-      card = builder.getBuilderId();
-      if (myCards.add(card)) {
-        myOptionsPanel.add(panel, card);
-      }
-    }
-    else {
-      card = FRAMEWORKS_CARD;
-      List<FrameworkSupportInModuleProvider> allProviders = FrameworkSupportUtil.getProviders(builder);
-      List<FrameworkSupportInModuleProvider> matched =
-        ContainerUtil.filter(allProviders, new Condition<FrameworkSupportInModuleProvider>() {
-          @Override
-          public boolean value(FrameworkSupportInModuleProvider provider) {
-            return matchFramework(projectCategory, provider);
-          }
-        });
-
-      myFrameworksPanel.setProviders(matched,
-                                     new HashSet<String>(Arrays.asList(projectCategory.getAssociatedFrameworkIds())),
-                                     new HashSet<String>(Arrays.asList(projectCategory.getPreselectedFrameworkIds())));
-
-      boolean hasTemplates = updateTemplates(projectCategory, true);
-      myFrameworksTab.setEnabled(!matched.isEmpty() || !hasTemplates);
-    }
-    ((CardLayout)myOptionsPanel.getLayout()).show(myOptionsPanel, card);
-  }
-
-  private boolean updateTemplates(ProjectCategory projectCategory, boolean initial) {
-    List<ProjectCategory> templates = ContainerUtil.map(myTemplates.get(projectCategory.getId()), new Function<ProjectTemplate, ProjectCategory>() {
-      @Override
-      public ProjectCategory fun(ProjectTemplate template) {
-        return new TemplateBasedProjectType(template);
-      }
-    });
-
-    //noinspection unchecked
-    myTemplatesList.setModel(new CollectionListModel<ProjectCategory>(templates));
-    myTemplatesTab.setEnabled(!templates.isEmpty());
-    if (initial && !templates.isEmpty()) {
-      myTemplatesList.setSelectedIndex(0);
-    }
-    return !templates.isEmpty();
-  }
-
-  private boolean matchFramework(ProjectCategory projectCategory, FrameworkSupportInModuleProvider framework) {
-
-    if (!framework.isEnabledForModuleBuilder(myBuilders.get(projectCategory))) return false;
-
-    FrameworkRole[] roles = framework.getRoles();
-    if (roles.length == 0) return true;
-
-    List<FrameworkRole> acceptable = Arrays.asList(projectCategory.getAcceptableFrameworkRoles());
-    return ContainerUtil.intersects(Arrays.asList(roles), acceptable);
+    ProjectTemplate template = getSelectedTemplate();
+    return template == null ? null : myBuilders.get(template);
   }
 
   @Override
@@ -314,29 +234,13 @@ public class ProjectTypeStep extends ModuleWizardStep implements Disposable {
 
   @Override
   public void updateStep() {
-    myProjectTypesList.resetSelection();
-    loadRemoteTemplates();
+    if (myContext.isCreatingNewProject()) {
+      loadRemoteTemplates();
+    }
   }
 
   @Override
   public void onStepLeaving() {
-    myProjectTypesList.saveSelection();
-  }
-
-  @Override
-  public void onWizardFinished() throws CommitStepException {
-    if (!myCommitted && myTabs.getSelectedInfo() == myFrameworksTab) {
-      boolean ok = myFrameworksPanel.downloadLibraries();
-      if (!ok) {
-        int answer = Messages.showYesNoDialog(getComponent(),
-                                              ProjectBundle.message("warning.message.some.required.libraries.wasn.t.downloaded"),
-                                              CommonBundle.getWarningTitle(), Messages.getWarningIcon());
-        if (answer != Messages.YES) {
-          throw new CommitStepException(null);
-        }
-      }
-      myCommitted = true;
-    }
   }
 
   @Override
@@ -345,13 +249,21 @@ public class ProjectTypeStep extends ModuleWizardStep implements Disposable {
   }
 
   @TestOnly
-  public AddSupportForFrameworksPanel getFrameworksPanel() {
-    return myFrameworksPanel;
-  }
-
-  @TestOnly
   public boolean setSelectedProjectType(String group, String name) {
-    return myProjectTypesList.setSelectedType(group, name);
+    ListModel model = myProjectTypeList.getModel();
+    for (int i = 0; i < model.getSize(); i++) {
+      if (group.equals(((TemplatesGroup)model.getElementAt(i)).getName())) {
+        myProjectTypeList.setSelectedIndex(i);
+        ListModel model1 = myTemplatesList.getModel();
+        for (int j = 0; j < model1.getSize(); j++) {
+          if (name.equals(((ProjectTemplate)model1.getElementAt(j)).getName())) {
+            myTemplatesList.setSelectedIndex(j);
+            return true;
+          }
+        }
+      }
+    }
+    return false;
   }
 
   @Override
@@ -388,17 +300,21 @@ public class ProjectTypeStep extends ModuleWizardStep implements Disposable {
             ProjectTemplate[] templates = factory.createTemplates(group, myContext);
             for (ProjectTemplate template : templates) {
               String id = ((ArchivedProjectTemplate)template).getCategory();
-              myTemplates.putValue(id == null ? group : id, template);
+              for (TemplatesGroup templatesGroup : myTemplatesMap.keySet()) {
+                if (Comparing.equal(id, templatesGroup.getId()) || Comparing.equal(group, templatesGroup.getName())) {
+                  myTemplatesMap.putValue(templatesGroup, template);
+                }
+              }
             }
-         }
+          }
           //noinspection SSBasedInspection
           SwingUtilities.invokeLater(new Runnable() {
             public void run() {
+              TemplatesGroup group = getSelectedGroup();
+              if (group == null) return;
+              Collection<ProjectTemplate> templates = myTemplatesMap.get(group);
               int index = myTemplatesList.getSelectedIndex();
-              ProjectCategory type = myProjectTypesList.getSelectedType();
-              if (type != null) {
-                updateTemplates(type, false);
-              }
+              myTemplatesList.setModel(new CollectionListModel(templates));
               myTemplatesList.setSelectedIndex(index);
             }
           });
@@ -408,6 +324,25 @@ public class ProjectTypeStep extends ModuleWizardStep implements Disposable {
         }
       }
     });
+  }
 
+  @Override
+  public void actionPerformed(ActionEvent e) {
+    updateSelection();
+  }
+
+  private void updateSelection() {
+    ProjectTemplate template = getSelectedTemplate();
+    if (template != null) {
+      myDescription.setText("<html>" + template.getDescription() + "<html>");
+    }
+    else {
+      myDescription.setText("");
+    }
+    ModuleBuilder builder = getSelectedBuilder();
+    if (builder != null) {
+      myContext.setProjectBuilder(builder);
+      myWizard.getSequence().setType(builder.getBuilderId());
+    }
   }
 }

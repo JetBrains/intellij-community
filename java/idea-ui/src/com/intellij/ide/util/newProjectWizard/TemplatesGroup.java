@@ -15,6 +15,7 @@
  */
 package com.intellij.ide.util.newProjectWizard;
 
+import com.intellij.ide.projectWizard.ProjectCategory;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -29,12 +30,20 @@ public class TemplatesGroup implements Comparable<TemplatesGroup> {
   private final String myDescription;
   private final Icon myIcon;
   private final int myWeight;
+  private final String myParentGroup;
+  private final String myId;
 
-  public TemplatesGroup(String name, String description, Icon icon, int weight) {
+  public TemplatesGroup(String name, String description, Icon icon, int weight, String parentGroup, String id) {
     myName = name;
     myDescription = description;
     myIcon = icon;
     myWeight = weight;
+    myParentGroup = parentGroup;
+    myId = id;
+  }
+
+  public TemplatesGroup(ProjectCategory category) {
+    this(category.getDisplayName(), category.getDescription(), null, 0, category.getGroupName(), category.getId());
   }
 
   public String getName() {
@@ -75,5 +84,13 @@ public class TemplatesGroup implements Comparable<TemplatesGroup> {
   public int compareTo(@NotNull TemplatesGroup o) {
     int i = o.myWeight - myWeight;
     return i == 0 ? o.getName().compareTo(getName()) : i;
+  }
+
+  public String getParentGroup() {
+    return myParentGroup;
+  }
+
+  public String getId() {
+    return myId;
   }
 }
