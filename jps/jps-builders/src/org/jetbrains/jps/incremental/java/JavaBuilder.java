@@ -43,6 +43,7 @@ import org.jetbrains.jps.builders.java.JavaSourceRootDescriptor;
 import org.jetbrains.jps.builders.java.dependencyView.Callbacks;
 import org.jetbrains.jps.builders.java.dependencyView.Mappings;
 import org.jetbrains.jps.builders.logging.ProjectBuilderLogger;
+import org.jetbrains.jps.builders.storage.BuildDataCorruptedException;
 import org.jetbrains.jps.cmdline.ProjectDescriptor;
 import org.jetbrains.jps.incremental.*;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
@@ -190,6 +191,9 @@ public class JavaBuilder extends ModuleLevelBuilder {
       }
 
       return compile(context, chunk, dirtyFilesHolder, filesToCompile, outputConsumer);
+    }
+    catch (BuildDataCorruptedException e) {
+      throw e;
     }
     catch (ProjectBuildException e) {
       throw e;

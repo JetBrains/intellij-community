@@ -44,6 +44,7 @@ import org.jetbrains.jps.builders.java.JavaBuilderUtil;
 import org.jetbrains.jps.builders.java.JavaSourceRootDescriptor;
 import org.jetbrains.jps.builders.java.dependencyView.Callbacks;
 import org.jetbrains.jps.builders.logging.ProjectBuilderLogger;
+import org.jetbrains.jps.builders.storage.BuildDataCorruptedException;
 import org.jetbrains.jps.builders.storage.SourceToOutputMapping;
 import org.jetbrains.jps.cmdline.BuildRunner;
 import org.jetbrains.jps.cmdline.ProjectDescriptor;
@@ -194,30 +195,31 @@ public class IncProjectBuilder {
         myMessageDispatcher.processMessage(new ProgressMessage(msg));
       }
     }
+    catch (BuildDataCorruptedException e) {
+      LOG.info(e);
+      requestRebuild(e, e);
+    }
     catch (ProjectBuildException e) {
       LOG.info(e);
       final Throwable cause = e.getCause();
       if (cause instanceof PersistentEnumerator.CorruptedException ||
           cause instanceof MappingFailedException ||
-          cause instanceof IOException) {
-        
-        myMessageDispatcher.processMessage(new CompilerMessage(
-          "", BuildMessage.Kind.INFO,
-          "Internal caches are corrupted or have outdated format, forcing project rebuild: " +
-          e.getMessage())
-        );
-        throw new RebuildRequestedException(cause);
+          cause instanceof IOException ||
+          cause instanceof BuildDataCorruptedException) {
+        requestRebuild(e, cause);
       }
       else {
         // should stop the build with error
         final String errMessage = e.getMessage();
         final CompilerMessage msg;
         if (StringUtil.isEmptyOrSpaces(errMessage)) {
-          msg = new CompilerMessage("", cause != null? cause : e);
+          msg = new CompilerMessage("", cause != null ? cause : e);
         }
         else {
-          final String causeMessage = cause != null? cause.getMessage() : "";
-          msg = new CompilerMessage("", BuildMessage.Kind.ERROR, StringUtil.isEmptyOrSpaces(causeMessage) || errMessage.equals(causeMessage)? errMessage : errMessage + ": " + causeMessage);
+          final String causeMessage = cause != null ? cause.getMessage() : "";
+          msg = new CompilerMessage("", BuildMessage.Kind.ERROR, StringUtil.isEmptyOrSpaces(causeMessage) || errMessage.equals(causeMessage)
+                                                                 ? errMessage
+                                                                 : errMessage + ": " + causeMessage);
         }
         myMessageDispatcher.processMessage(msg);
       }
@@ -226,7 +228,7 @@ public class IncProjectBuilder {
       memWatcher.stop();
       flushContext(context);
       // wait for async tasks
-      final CanceledStatus status = context == null? CanceledStatus.NULL : context.getCancelStatus();
+      final CanceledStatus status = context == null ? CanceledStatus.NULL : context.getCancelStatus();
       synchronized (myAsyncTasks) {
         for (Future task : myAsyncTasks) {
           if (status.isCanceled()) {
@@ -236,6 +238,13 @@ public class IncProjectBuilder {
         }
       }
     }
+  }
+
+  private void requestRebuild(Exception e, Throwable cause) throws RebuildRequestedException {
+    myMessageDispatcher.processMessage(new CompilerMessage("", BuildMessage.Kind.INFO,
+                                                           "Internal caches are corrupted or have outdated format, forcing project rebuild: " +
+                                                           e.getMessage()));
+    throw new RebuildRequestedException(cause);
   }
 
   private static void waitForTask(@NotNull CanceledStatus status, Future task) {
@@ -850,6 +859,9 @@ public class IncProjectBuilder {
       //    }
       //  }));
       //}
+    }
+    catch (BuildDataCorruptedException e) {
+      throw e;
     }
     catch (ProjectBuildException e) {
       throw e;

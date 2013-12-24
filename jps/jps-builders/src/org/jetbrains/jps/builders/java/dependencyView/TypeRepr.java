@@ -19,6 +19,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.DataInputOutputUtil;
 import org.jetbrains.asm4.Type;
+import org.jetbrains.jps.builders.storage.BuildDataCorruptedException;
 
 import java.io.DataInput;
 import java.io.DataOutput;
@@ -68,7 +69,7 @@ class TypeRepr {
         DataInputOutputUtil.writeINT(out, type);
       }
       catch (IOException e) {
-        throw new RuntimeException(e);
+        throw new BuildDataCorruptedException(e);
       }
     }
 
@@ -81,7 +82,7 @@ class TypeRepr {
         type = DataInputOutputUtil.readINT(in);
       }
       catch (IOException e) {
-        throw new RuntimeException(e);
+        throw new BuildDataCorruptedException(e);
       }
     }
 
@@ -150,7 +151,7 @@ class TypeRepr {
         elementType.save(out);
       }
       catch (IOException e) {
-        throw new RuntimeException(e);
+        throw new BuildDataCorruptedException(e);
       }
     }
   }
@@ -190,7 +191,7 @@ class TypeRepr {
         }
       }
       catch (IOException e) {
-        throw new RuntimeException(e);
+        throw new BuildDataCorruptedException(e);
       }
     }
 
@@ -225,7 +226,7 @@ class TypeRepr {
         }
       }
       catch (IOException e) {
-        throw new RuntimeException(e);
+        throw new BuildDataCorruptedException(e);
       }
     }
   }

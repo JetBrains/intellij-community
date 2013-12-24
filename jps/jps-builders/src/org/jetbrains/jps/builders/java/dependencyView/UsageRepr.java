@@ -20,6 +20,7 @@ import com.intellij.util.io.DataInputOutputUtil;
 import gnu.trove.TIntHashSet;
 import gnu.trove.TIntProcedure;
 import org.jetbrains.asm4.Type;
+import org.jetbrains.jps.builders.storage.BuildDataCorruptedException;
 
 import java.io.DataInput;
 import java.io.DataOutput;
@@ -82,7 +83,7 @@ class UsageRepr {
         myOwner = DataInputOutputUtil.readINT(in);
       }
       catch (IOException e) {
-        throw new RuntimeException(e);
+        throw new BuildDataCorruptedException(e);
       }
     }
 
@@ -93,7 +94,7 @@ class UsageRepr {
         DataInputOutputUtil.writeINT(out, myOwner);
       }
       catch (IOException e) {
-        throw new RuntimeException(e);
+        throw new BuildDataCorruptedException(e);
       }
     }
 
@@ -130,7 +131,7 @@ class UsageRepr {
         myType = TypeRepr.externalizer(context).read(in);
       }
       catch (IOException e) {
-        throw new RuntimeException(e);
+        throw new BuildDataCorruptedException(e);
       }
     }
 
@@ -221,7 +222,7 @@ class UsageRepr {
         myReturnType = externalizer.read(in);
       }
       catch (IOException e) {
-        throw new RuntimeException(e);
+        throw new BuildDataCorruptedException(e);
       }
     }
 
@@ -289,7 +290,7 @@ class UsageRepr {
         myArity = DataInputOutputUtil.readINT(in);
       }
       catch (IOException e) {
-        throw new RuntimeException(e);
+        throw new BuildDataCorruptedException(e);
       }
     }
 
@@ -300,7 +301,7 @@ class UsageRepr {
         DataInputOutputUtil.writeINT(out, myArity);
       }
       catch (IOException e) {
-        throw new RuntimeException(e);
+        throw new BuildDataCorruptedException(e);
       }
     }
 
@@ -353,7 +354,7 @@ class UsageRepr {
         myClassName = DataInputOutputUtil.readINT(in);
       }
       catch (IOException e) {
-        throw new RuntimeException(e);
+        throw new BuildDataCorruptedException(e);
       }
     }
 
@@ -364,7 +365,7 @@ class UsageRepr {
         DataInputOutputUtil.writeINT(out, myClassName);
       }
       catch (IOException e) {
-        throw new RuntimeException(e);
+        throw new BuildDataCorruptedException(e);
       }
     }
 
@@ -410,7 +411,7 @@ class UsageRepr {
         DataInputOutputUtil.writeINT(out, myClassName);
       }
       catch (IOException e) {
-        throw new RuntimeException(e);
+        throw new BuildDataCorruptedException(e);
       }
     }
   }
@@ -432,7 +433,7 @@ class UsageRepr {
         myClassName = DataInputOutputUtil.readINT(in);
       }
       catch (IOException e) {
-        throw new RuntimeException(e);
+        throw new BuildDataCorruptedException(e);
       }
     }
 
@@ -443,7 +444,7 @@ class UsageRepr {
         DataInputOutputUtil.writeINT(out, myClassName);
       }
       catch (IOException e) {
-        throw new RuntimeException(e);
+        throw new BuildDataCorruptedException(e);
       }
     }
 
@@ -486,7 +487,7 @@ class UsageRepr {
         DataInputOutputUtil.writeINT(out, myClassName);
       }
       catch (IOException e) {
-        throw new RuntimeException(e);
+        throw new BuildDataCorruptedException(e);
       }
     }
 
@@ -573,7 +574,7 @@ class UsageRepr {
         myUsedTargets = (EnumSet<ElemType>)RW.read(elementTypeExternalizer, EnumSet.noneOf(ElemType.class), in);
       }
       catch (IOException e) {
-        throw new RuntimeException(e);
+        throw new BuildDataCorruptedException(e);
       }
     }
 
@@ -586,7 +587,7 @@ class UsageRepr {
         RW.save(myUsedTargets, elementTypeExternalizer, out);
       }
       catch (IOException e) {
-        throw new RuntimeException(e);
+        throw new BuildDataCorruptedException(e);
       }
     }
 

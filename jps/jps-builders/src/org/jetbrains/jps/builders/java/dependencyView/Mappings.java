@@ -25,6 +25,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.asm4.ClassReader;
 import org.jetbrains.asm4.Opcodes;
+import org.jetbrains.jps.builders.storage.BuildDataCorruptedException;
 import org.jetbrains.jps.incremental.storage.FileKeyDescriptor;
 
 import java.io.File;
@@ -165,7 +166,7 @@ public class Mappings {
         return new Mappings(this);
       }
       catch (IOException e) {
-        throw new RuntimeException(e);
+        throw new BuildDataCorruptedException(e);
       }
     }
   }

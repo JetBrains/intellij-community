@@ -19,12 +19,16 @@ import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.DataInputOutputUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.asm4.Type;
+import org.jetbrains.jps.builders.storage.BuildDataCorruptedException;
 
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 import java.io.PrintStream;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Set;
 
 /**
  * @author: db
@@ -141,7 +145,7 @@ class MethodRepr extends ProtoMember {
       myExceptions = (Set<TypeRepr.AbstractType>)RW.read(externalizer, new THashSet<TypeRepr.AbstractType>(0), in);
     }
     catch (IOException e) {
-      throw new RuntimeException(e);
+      throw new BuildDataCorruptedException(e);
     }
   }
 
