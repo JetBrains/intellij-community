@@ -34,7 +34,8 @@ public enum LanguageLevel {
   PYTHON30(30, true, false, false, true),
   PYTHON31(31, true, false, true, true),
   PYTHON32(32, true, false, true, true),
-  PYTHON33(33, true, false, true, true);
+  PYTHON33(33, true, false, true, true),
+  PYTHON34(34, true, false, true, true);
 
   public static LanguageLevel FORCE_LANGUAGE_LEVEL = null;
 
