@@ -374,7 +374,7 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
           myFixButton.setVisible(true);
           myQuickFix = quickFix;
         }
-
+        myValidationPanel.setVisible(true);
       }
       else {
         mySeparator.setVisible(false);
