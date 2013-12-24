@@ -6,6 +6,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiCodeFragment;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.search.DelegatingGlobalSearchScope;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -68,5 +70,23 @@ public class JavaProjectRootsUtil {
       }
     }
     return false;
+  }
+
+  public static GlobalSearchScope getScopeWithoutGeneratedSources(@NotNull GlobalSearchScope baseScope, @NotNull Project project) {
+    return new NonGeneratedSourceScope(baseScope, project);
+  }
+
+  private static class NonGeneratedSourceScope extends DelegatingGlobalSearchScope {
+    @NotNull private final Project myProject;
+
+    private NonGeneratedSourceScope(@NotNull GlobalSearchScope baseScope, @NotNull Project project) {
+      super(baseScope);
+      myProject = project;
+    }
+
+    @Override
+    public boolean contains(@NotNull VirtualFile file) {
+      return super.contains(file) && !isInGeneratedCode(file, myProject);
+    }
   }
 }

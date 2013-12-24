@@ -32,6 +32,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Pass;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.ProjectScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
@@ -175,7 +176,8 @@ public class MoveClassesOrPackagesDialog extends RefactoringDialog {
     myWithBrowseButtonReference = createPackageChooser();
     myClassPackageChooser = createPackageChooser();
 
-    myInnerClassChooser = new ClassNameReferenceEditor(myProject, null, ProjectScope.getProjectScope(myProject));
+    GlobalSearchScope scope = JavaProjectRootsUtil.getScopeWithoutGeneratedSources(ProjectScope.getProjectScope(myProject), myProject);
+    myInnerClassChooser = new ClassNameReferenceEditor(myProject, null, scope);
     myInnerClassChooser.addDocumentListener(new DocumentAdapter() {
       public void documentChanged(DocumentEvent e) {
         validateButtons();
