@@ -30,4 +30,5 @@ public class NewPostfixTemplateTest extends PostfixTemplateTestCase {
   public void testNew06() { doTest(); }
   public void testNew07() { doTest(); }
   public void testNew08() { doTest(); }
+  public void testNewOnAssignExpression() { doTest(); }
 }
