@@ -162,7 +162,8 @@ public class HgLogProvider implements VcsLogProvider {
   @NotNull
   @Override
   public List<? extends VcsFullCommitDetails> getFilteredDetails(@NotNull final VirtualFile root,
-                                                                 @NotNull Collection<VcsLogFilter> filters) throws VcsException {
+                                                                 @NotNull Collection<VcsLogFilter> filters,
+                                                                 int maxCount) throws VcsException {
     List<String> filterParameters = ContainerUtil.newArrayList();
 
     List<VcsLogBranchFilter> branchFilters = ContainerUtil.findAll(filters, VcsLogBranchFilter.class);
@@ -225,7 +226,7 @@ public class HgLogProvider implements VcsLogProvider {
       }
     }
 
-    return HgHistoryUtil.history(myProject, root, -1, ArrayUtil.toStringArray(filterParameters));
+    return HgHistoryUtil.history(myProject, root, maxCount, ArrayUtil.toStringArray(filterParameters));
   }
 
   @Nullable

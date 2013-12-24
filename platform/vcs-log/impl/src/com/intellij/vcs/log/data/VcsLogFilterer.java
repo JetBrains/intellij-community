@@ -1,5 +1,6 @@
 package com.intellij.vcs.log.data;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Ref;
@@ -24,7 +25,9 @@ import java.util.List;
 public class VcsLogFilterer {
 
   private static final Logger LOG = Logger.getInstance(VcsLogFilterer.class);
-  
+
+  private static final int LOAD_MORE_COMMITS_FIRST_STEP_LIMIT = 200;
+
   private static final Function<Node,Boolean> ALL_NODES_VISIBLE = new Function<Node, Boolean>() {
     @Override
     public Boolean fun(Node node) {
@@ -67,7 +70,7 @@ public class VcsLogFilterer {
     final AbstractVcsLogTableModel model;
     if (!detailsFilters.isEmpty()) {
       List<VcsFullCommitDetails> filteredCommits = filterByDetails(dataPack, graphModel, detailsFilters);
-      model = new NoGraphTableModel(myUI, filteredCommits, dataPack.getRefsModel(), true);
+      model = new NoGraphTableModel(myUI, filteredCommits, dataPack.getRefsModel(), LoadMoreStage.INITIAL);
     }
     else {
       model = new GraphTableModel(myLogDataHolder, myUI);
@@ -90,14 +93,39 @@ public class VcsLogFilterer {
     });
   }
 
-  public void requestVcs(@NotNull Collection<VcsLogFilter> filters) {
+  public void requestVcs(@NotNull Collection<VcsLogFilter> filters, final LoadMoreStage loadMoreStage) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
+    int maxCount;
+    if (loadMoreStage == LoadMoreStage.INITIAL) {
+      maxCount = LOAD_MORE_COMMITS_FIRST_STEP_LIMIT;
+    }
+    else {
+      maxCount = -1;
+    }
     myLogDataHolder.getFilteredDetailsFromTheVcs(filters, new Consumer<List<VcsFullCommitDetails>>() {
       @Override
       public void consume(List<VcsFullCommitDetails> details) {
-        myUI.setModel(new NoGraphTableModel(myUI, details, myLogDataHolder.getDataPack().getRefsModel(), false));
+        LoadMoreStage newLoadMoreStage = advanceLoadMoreStage(loadMoreStage);
+        myUI.setModel(new NoGraphTableModel(myUI, details, myLogDataHolder.getDataPack().getRefsModel(), newLoadMoreStage));
         myUI.updateUI();
       }
-    });
+    }, maxCount);
+  }
+
+  @NotNull
+  private static LoadMoreStage advanceLoadMoreStage(@NotNull LoadMoreStage loadMoreStage) {
+    LoadMoreStage newLoadMoreStage;
+    if (loadMoreStage == LoadMoreStage.INITIAL) {
+      newLoadMoreStage = LoadMoreStage.LOADED_MORE;
+    }
+    else if (loadMoreStage == LoadMoreStage.LOADED_MORE) {
+      newLoadMoreStage = LoadMoreStage.ALL_REQUESTED;
+    }
+    else {
+      LOG.warn("Incorrect previous load more stage: " + loadMoreStage);
+      newLoadMoreStage = LoadMoreStage.ALL_REQUESTED;
+    }
+    return newLoadMoreStage;
   }
 
   private void applyGraphFilters(final GraphModel graphModel, final List<VcsLogGraphFilter> onGraphFilters) {
