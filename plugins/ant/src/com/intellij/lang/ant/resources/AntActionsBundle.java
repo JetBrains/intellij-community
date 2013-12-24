@@ -17,6 +17,7 @@ package com.intellij.lang.ant.resources;
 
 import com.intellij.CommonBundle;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.PropertyKey;
 
 import java.lang.ref.Reference;
@@ -24,8 +25,12 @@ import java.lang.ref.SoftReference;
 import java.util.ResourceBundle;
 
 public final class AntActionsBundle {
-  private static Reference<ResourceBundle> ourBundle;
 
+  public static String message(@NotNull @PropertyKey(resourceBundle = IDEA_ACTIONS_BUNDLE) String key, @NotNull Object... params) {
+    return CommonBundle.message(getBundle(), key, params);
+  }
+
+  private static Reference<ResourceBundle> ourBundle;
   @NonNls private static final String IDEA_ACTIONS_BUNDLE = "com.intellij.lang.ant.resources.AntActionsBundle";
 
   private AntActionsBundle() {
@@ -39,10 +44,6 @@ public final class AntActionsBundle {
   @SuppressWarnings({"HardCodedStringLiteral", "UnresolvedPropertyKey"})
   public static String actionDescription(@NonNls String actionId) {
     return message("action." + actionId + ".description");
-  }
-
-  public static String message(@PropertyKey(resourceBundle = IDEA_ACTIONS_BUNDLE)String key, Object... params) {
-    return CommonBundle.message(getBundle(), key, params);
   }
 
   private static ResourceBundle getBundle() {

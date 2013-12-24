@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,21 +18,22 @@ package com.intellij.openapi.vfs;
 
 import com.intellij.AbstractBundle;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.PropertyKey;
 
 /**
  * @author yole
  */
 public class VfsBundle extends AbstractBundle {
+
+  public static String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, @NotNull Object... params) {
+    return ourInstance.getMessage(key, params);
+  }
+
   @NonNls private static final String BUNDLE = "messages.VfsBundle";
   private static final VfsBundle ourInstance = new VfsBundle();
 
   private VfsBundle() {
     super(BUNDLE);
   }
-
-  public static String message(@PropertyKey(resourceBundle = BUNDLE)String key, Object... params) {
-    return ourInstance.getMessage(key, params);
-  }
-
 }

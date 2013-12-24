@@ -16,6 +16,7 @@
 package org.jetbrains.plugins.groovy.codeInspection;
 
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.PropertyKey;
 
 import java.util.ResourceBundle;
@@ -29,14 +30,13 @@ import com.intellij.CommonBundle;
  */
 public class GroovyInspectionBundle {
 
-  private static Reference<ResourceBundle> ourBundle;
-
-  @NonNls
-  private static final String BUNDLE = "org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionBundle";
-
-  public static String message(@PropertyKey(resourceBundle = BUNDLE)String key, Object... params) {
+  public static String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, @NotNull Object... params) {
     return CommonBundle.message(getBundle(), key, params);
   }
+
+  private static Reference<ResourceBundle> ourBundle;
+  @NonNls
+  private static final String BUNDLE = "org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionBundle";
 
   private static ResourceBundle getBundle() {
     ResourceBundle bundle = com.intellij.reference.SoftReference.dereference(ourBundle);
@@ -47,5 +47,4 @@ public class GroovyInspectionBundle {
     }
     return bundle;
   }
-
 }

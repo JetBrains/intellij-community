@@ -18,6 +18,7 @@ package org.jetbrains.plugins.gradle.util;
 import com.intellij.AbstractBundle;
 import com.intellij.CommonBundle;
 import com.intellij.reference.SoftReference;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.PropertyKey;
 
 import java.lang.ref.Reference;
@@ -29,6 +30,10 @@ import java.util.ResourceBundle;
  */
 public class GradleDocumentationBundle extends AbstractBundle {
 
+  public static String message(@NotNull @PropertyKey(resourceBundle = PATH_TO_BUNDLE) String key, @NotNull Object... params) {
+    return BUNDLE.getMessage(key, params);
+  }
+
   public static final String PATH_TO_BUNDLE = "i18n.GradleDocumentationBundle";
   private static final GradleDocumentationBundle BUNDLE = new GradleDocumentationBundle();
   private static Reference<ResourceBundle> ourBundle;
@@ -37,11 +42,9 @@ public class GradleDocumentationBundle extends AbstractBundle {
     super(PATH_TO_BUNDLE);
   }
 
-  public static String message(@PropertyKey(resourceBundle = PATH_TO_BUNDLE) String key, Object... params) {
-    return BUNDLE.getMessage(key, params);
-  }
-
-  public static String messageOrDefault(String key, String defaultValue, Object... params) {
+  public static String messageOrDefault(@NotNull @PropertyKey(resourceBundle = PATH_TO_BUNDLE) String key,
+                                        String defaultValue,
+                                        @NotNull Object... params) {
     return CommonBundle.messageOrDefault(getBundle(), key, defaultValue, params);
   }
 
