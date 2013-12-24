@@ -186,6 +186,22 @@ public abstract class AbstractIndentParser implements PsiParser {
     }
   }
 
+  public void recalculateCurrentIndent() {
+    int i = 0;
+    int firstIndentOffset = myBuilder.getCurrentOffset();
+    while (myBuilder.rawLookup(i) != null && myBuilder.rawLookup(i) != getEolElementType()) {
+      firstIndentOffset = myBuilder.rawTokenTypeStart(i);
+      i--;
+    }
+    int lastIndentOffset = firstIndentOffset;
+    i++;
+    while (myBuilder.rawLookup(i) == getIndentElementType()) {
+      i++;
+      lastIndentOffset = myBuilder.rawTokenTypeStart(i);
+    }
+    myCurrentIndent = lastIndentOffset - firstIndentOffset;
+  }
+
   protected void advanceUntil(TokenSet tokenSet) {
     while (getTokenType() != null && !isNewLine() && !tokenSet.contains(getTokenType())) {
       advance();
