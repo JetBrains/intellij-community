@@ -401,24 +401,18 @@ public class IncProjectBuilder {
 
   private void cleanOutputRoots(CompileContext context) throws ProjectBuildException {
     // whole project is affected
-    ProjectDescriptor projectDescriptor = context.getProjectDescriptor();
-    JpsJavaCompilerConfiguration configuration =
-      JpsJavaExtensionService.getInstance().getOrCreateCompilerConfiguration(projectDescriptor.getProject());
+    final ProjectDescriptor projectDescriptor = context.getProjectDescriptor();
+    final JpsJavaCompilerConfiguration configuration = JpsJavaExtensionService.getInstance().getOrCreateCompilerConfiguration(projectDescriptor.getProject());
     final boolean shouldClear = configuration.isClearOutputDirectoryOnRebuild();
-    try {
-      if (shouldClear) {
-        clearOutputs(context);
-      }
-      else {
-        for (BuildTarget<?> target : projectDescriptor.getBuildTargetIndex().getAllTargets()) {
-          if (context.getScope().isAffected(target)) {
-            clearOutputFiles(context, target);
-          }
+    if (shouldClear) {
+      clearOutputs(context);
+    }
+    else {
+      for (BuildTarget<?> target : projectDescriptor.getBuildTargetIndex().getAllTargets()) {
+        if (context.getScope().isAffected(target)) {
+          clearOutputFilesUninterruptibly(context, target);
         }
       }
-    }
-    catch (IOException e) {
-      throw new ProjectBuildException("Error cleaning output files", e);
     }
 
     try {
@@ -475,7 +469,7 @@ public class IncProjectBuilder {
     }
   }
 
-  private void clearOutputs(CompileContext context) throws ProjectBuildException, IOException {
+  private void clearOutputs(CompileContext context) throws ProjectBuildException {
     final MultiMap<File, BuildTarget<?>> rootsToDelete = new MultiMapBasedOnSet<File, BuildTarget<?>>();
     final Set<File> allSourceRoots = new HashSet<File>();
 
@@ -546,7 +540,7 @@ public class IncProjectBuilder {
         );
         // clean only those files we are aware of
         for (BuildTarget<?> target : entry.getValue()) {
-          clearOutputFiles(context, target);
+          clearOutputFilesUninterruptibly(context, target);
         }
       }
     }
@@ -555,6 +549,20 @@ public class IncProjectBuilder {
     myAsyncTasks.add(
       FileUtil.asyncDelete(filesToDelete)
     );
+  }
+
+  private static void clearOutputFilesUninterruptibly(CompileContext context, BuildTarget<?> target) {
+    try {
+      clearOutputFiles(context, target);
+    }
+    catch (IOException e) {
+      LOG.info(e);
+      String reason = e.getMessage();
+      if (reason == null) {
+        reason = e.getClass().getName();
+      }
+      context.processMessage(new CompilerMessage("", BuildMessage.Kind.WARNING, "Problems clearing output files for target \"" + target.getPresentableName() + "\": " + reason));
+    }
   }
 
   private static void runTasks(CompileContext context, final List<BuildTask> tasks) throws ProjectBuildException {
