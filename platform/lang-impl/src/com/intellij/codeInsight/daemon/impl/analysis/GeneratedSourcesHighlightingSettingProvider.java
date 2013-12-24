@@ -30,7 +30,7 @@ public class GeneratedSourcesHighlightingSettingProvider extends DefaultHighligh
   public FileHighlightingSetting getDefaultSetting(@NotNull Project project, @NotNull VirtualFile file) {
     for (GeneratedSourcesFilter filter : GeneratedSourcesFilter.EP_NAME.getExtensions()) {
       if (filter.isGeneratedSource(file, project)) {
-        return FileHighlightingSetting.SKIP_HIGHLIGHTING;
+        return FileHighlightingSetting.SKIP_INSPECTION;
       }
     }
     return null;
