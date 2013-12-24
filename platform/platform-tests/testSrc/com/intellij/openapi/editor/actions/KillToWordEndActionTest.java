@@ -15,6 +15,9 @@
  */
 package com.intellij.openapi.editor.actions;
 
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.impl.CaretModelImpl;
+import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.ide.KillRingTransferable;
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase;
@@ -112,6 +115,23 @@ public class KillToWordEndActionTest extends LightPlatformCodeInsightTestCase {
   public void testSubsequentKills() throws Exception {
     String text = "<caret>first second third";
     configureFromFileText(getTestName(false) + ".txt", text);
+    killToWordEnd();
+    killToWordEnd();
+    checkResultByText(" third");
+
+    Transferable contents = CopyPasteManager.getInstance().getContents();
+    assertTrue(contents instanceof KillRingTransferable);
+    Object string = contents.getTransferData(DataFlavor.stringFlavor);
+    assertEquals("first second", string);
+  }
+
+  public void testDoubleEditors() throws Exception {
+    String text = "<caret>first second third";
+    configureFromFileText(getTestName(false) + ".txt", text);
+    final Document document = myEditor.getDocument();
+    final CaretModelImpl caretModel = new CaretModelImpl((EditorImpl)myEditor);
+    document.addDocumentListener(caretModel);
+    caretModel.moveToOffset(document.getTextLength()-1);
     killToWordEnd();
     killToWordEnd();
     checkResultByText(" third");
