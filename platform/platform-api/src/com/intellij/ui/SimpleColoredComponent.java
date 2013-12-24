@@ -172,6 +172,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
     repaint();
   }
 
+  @Override
   public void append(@NotNull final String fragment, @NotNull final SimpleTextAttributes attributes, Object tag) {
     _append(fragment, attributes, tag);
     revalidateAndRepaint();
@@ -182,7 +183,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
     if (myFragmentTags == null) {
       myFragmentTags = new ArrayList<Object>();
     }
-    while(myFragmentTags.size() < myFragments.size()-1) {
+    while (myFragmentTags.size() < myFragments.size() - 1) {
       myFragmentTags.add(null);
     }
     myFragmentTags.add(tag);
