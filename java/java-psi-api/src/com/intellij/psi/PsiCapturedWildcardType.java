@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,16 +47,19 @@ public class PsiCapturedWildcardType extends PsiType {
     return new PsiCapturedWildcardType(existential, context);
   }
 
+  @NotNull
   @Override
   public String getPresentableText() {
     return myExistential.getPresentableText();
   }
 
+  @NotNull
   @Override
   public String getCanonicalText() {
     return myExistential.getCanonicalText();
   }
 
+  @NotNull
   @Override
   public String getInternalCanonicalText() {
     //noinspection HardCodedStringLiteral
@@ -69,7 +72,7 @@ public class PsiCapturedWildcardType extends PsiType {
   }
 
   @Override
-  public boolean equalsToText(String text) {
+  public boolean equalsToText(@NotNull String text) {
     return false;
   }
 

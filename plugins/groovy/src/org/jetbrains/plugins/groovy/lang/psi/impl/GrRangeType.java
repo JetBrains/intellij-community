@@ -34,8 +34,8 @@ import static org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.
  * @author Maxim.Medvedev
  */
 public class GrRangeType extends GrLiteralClassType {
-  private final @Nullable PsiType myLeft;
-  private final @Nullable PsiType myRight;
+  @Nullable private final PsiType myLeft;
+  @Nullable private final PsiType myRight;
   private final PsiType myIterationType;
   private final String myQualifiedName;
 
@@ -97,6 +97,7 @@ public class GrRangeType extends GrLiteralClassType {
     return new GrRangeType(languageLevel, myScope, myFacade, myLeft, myRight);
   }
 
+  @NotNull
   @Override
   public String getInternalCanonicalText() {
     return "[" +
