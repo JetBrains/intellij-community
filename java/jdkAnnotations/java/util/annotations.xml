@@ -10,6 +10,15 @@
       <val name="targetIsContainer" val="true"/>
     </annotation>
   </item>
+  <item name='java.util.ArrayList java.util.Iterator&lt;E&gt; iterator()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.ArrayList java.util.ListIterator&lt;E&gt; listIterator()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.ArrayList java.util.ListIterator&lt;E&gt; listIterator(int)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
   <item name="java.util.Arrays T[] copyOf(T[], int)">
     <annotation name="org.jetbrains.annotations.NotNull" />
   </item>
