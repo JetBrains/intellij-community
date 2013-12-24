@@ -141,8 +141,7 @@ public interface InferenceContext {
       return _getCachedValue(element, new Computable<PsiType>() {
         @Override
         public PsiType compute() {
-          PsiType type = calculator.fun(element);
-          return type == PsiType.NULL ? null : type;
+          return calculator.fun(element);
         }
       }, "type");
     }
