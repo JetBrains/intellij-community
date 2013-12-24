@@ -18,6 +18,7 @@ package com.intellij.codeInsight.template.impl;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementPresentation;
 import com.intellij.codeInsight.lookup.RealLookupElementPresentation;
+import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -63,7 +64,9 @@ abstract public class LiveTemplateLookupElement extends LookupElement {
         }
         presentation.setTypeText("  [" + KeyEvent.getKeyText(shortcut) + "] ");
       }
-      presentation.setTailText(" (" + myDescription + ")", true);
+      if (StringUtil.isNotEmpty(myDescription)) {
+        presentation.setTailText(" (" + myDescription + ")", true);
+      }
     }
     else {
       presentation.setTypeText(myDescription);
