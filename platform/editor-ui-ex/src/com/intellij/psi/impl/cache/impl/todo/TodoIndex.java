@@ -28,6 +28,7 @@ import com.intellij.psi.search.IndexPatternProvider;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.indexing.*;
 import com.intellij.util.io.DataExternalizer;
+import com.intellij.util.io.IntInlineKeyDescriptor;
 import com.intellij.util.io.KeyDescriptor;
 import com.intellij.util.messages.MessageBus;
 import org.jetbrains.annotations.NonNls;
@@ -82,15 +83,10 @@ public class TodoIndex extends FileBasedIndexExtension<TodoIndexEntry, Integer> 
     }
   };
   
-  private final DataExternalizer<Integer> myValueExternalizer = new DataExternalizer<Integer>() {
+  private final DataExternalizer<Integer> myValueExternalizer = new IntInlineKeyDescriptor() {
     @Override
-    public void save(final DataOutput out, final Integer value) throws IOException {
-      out.writeInt(value.intValue());
-    }
-
-    @Override
-    public Integer read(final DataInput in) throws IOException {
-      return Integer.valueOf(in.readInt());
+    protected boolean isCompactFormat() {
+      return true;
     }
   };
 
@@ -131,7 +127,7 @@ public class TodoIndex extends FileBasedIndexExtension<TodoIndexEntry, Integer> 
 
   @Override
   public int getVersion() {
-    return 5;
+    return 6;
   }
 
   @Override
