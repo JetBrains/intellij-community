@@ -196,7 +196,7 @@ public class GrIntroduceParameterHandler implements RefactoringActionHandler, Me
       }.showChooser(new Pass<OccurrencesChooser.ReplaceChoice>() {
         @Override
         public void pass(OccurrencesChooser.ReplaceChoice choice) {
-          startInplace(info, context);
+          startInplace(info, context, choice == OccurrencesChooser.ReplaceChoice.ALL);
         }
       }, occurrencesMap);
     }
@@ -209,8 +209,8 @@ public class GrIntroduceParameterHandler implements RefactoringActionHandler, Me
     new GrIntroduceParameterDialog(info).show();
   }
 
-  private void startInplace(final IntroduceParameterInfo info, final GrIntroduceContext context) {
-    final GrIntroduceParameterSettings settings = getSettingsForInplace(info, context);
+  private void startInplace(final IntroduceParameterInfo info, final GrIntroduceContext context, boolean replaceAll) {
+    final GrIntroduceParameterSettings settings = getSettingsForInplace(info, context, replaceAll);
     if (settings == null) return;
 
     CommandProcessor.getInstance().executeCommand(info.getProject(), new Runnable() {
@@ -274,7 +274,9 @@ public class GrIntroduceParameterHandler implements RefactoringActionHandler, Me
     return new GrInplaceParameterIntroducer(parameter, context.getEditor(), context.getProject(), REFACTORING_NAME, occurrences, context.getPlace(), settings, expr);
   }
 
-  private static GrIntroduceParameterSettings getSettingsForInplace(@NotNull IntroduceParameterInfo info, @NotNull GrIntroduceContext context) {
+  private static GrIntroduceParameterSettings getSettingsForInplace(@NotNull IntroduceParameterInfo info,
+                                                                    @NotNull GrIntroduceContext context,
+                                                                    boolean replaceAll) {
     GrExpression expr = context.getExpression();
     GrVariable var = context.getVar();
 
@@ -283,7 +285,7 @@ public class GrIntroduceParameterHandler implements RefactoringActionHandler, Me
       GroovyIntroduceParameterUtil.suggestNames(var, expr, info.getStringPartInfo(), info.getToReplaceIn(), info.getProject());
     return new GrIntroduceExpressionSettingsImpl(info, names.iterator().next(), false, new TIntArrayList(toRemove.getValues()), false,
                                                  IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE, expr, var,
-                                                 getType(expr, var, info.getStringPartInfo()), false);
+                                                 getType(expr, var, info.getStringPartInfo()), replaceAll, false);
   }
 
   @Nullable

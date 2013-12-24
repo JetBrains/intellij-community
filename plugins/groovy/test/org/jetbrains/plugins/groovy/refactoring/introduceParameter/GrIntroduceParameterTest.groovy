@@ -178,7 +178,7 @@ public class GrIntroduceParameterTest extends LightGroovyTestCase {
     final PsiType type = TypesUtil.
       unboxPrimitiveTypeWrapper(var != null ? var.getType() : expr != null ? expr.getType() : context.stringPartInfo.literal.type);
     return new GrIntroduceExpressionSettingsImpl(context, "anObject", declareFinal, toRemove, generateDelegate, replaceFieldsWithGetters,
-                                                 expr, var, type, true);
+                                                 expr, var, type, false, true);
   }
   
   
