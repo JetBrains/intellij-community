@@ -39,6 +39,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.artifacts.ArtifactManager;
 import com.intellij.packaging.artifacts.ArtifactType;
@@ -186,7 +187,9 @@ public class AppEngineSupportProvider extends FacetBasedFrameworkSupportProvider
           library = libraryTable.createLibrary(name);
           final Library.ModifiableModel model = library.getModifiableModel();
           for (String path : jarDirectories) {
-            model.addJarDirectory(VfsUtilCore.pathToUrl(path), false);
+            String url = VfsUtilCore.pathToUrl(path);
+            VirtualFileManager.getInstance().refreshAndFindFileByUrl(url);
+            model.addJarDirectory(url, false);
           }
           for (VirtualFile sourceRoot : sources) {
             model.addRoot(sourceRoot, OrderRootType.SOURCES);
