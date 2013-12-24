@@ -150,6 +150,7 @@ public class ProjectTypeStep extends ModuleWizardStep implements Disposable, Act
       }
     });
 
+    myTemplatesList.setNewProject(context.isCreatingNewProject());
     myTemplatesList.addListSelectionListener(new ListSelectionListener() {
       @Override
       public void valueChanged(ListSelectionEvent e) {

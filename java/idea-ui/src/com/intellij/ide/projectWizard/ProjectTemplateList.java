@@ -42,9 +42,12 @@ import java.util.List;
  */
 public class ProjectTemplateList extends JPanel {
 
+  private boolean myNewProject;
   private JBList myList;
   private JPanel myPanel;
   private JTextPane myDescriptionPane;
+
+  private ProjectTemplate myFirstProjectType;
   private ProjectTemplate myFirstArchivedTemplate;
 
   public ProjectTemplateList() {
@@ -72,16 +75,15 @@ public class ProjectTemplateList extends JPanel {
 
       @Override
       public boolean hasSeparatorAboveOf(ProjectTemplate value) {
-        return value == myFirstArchivedTemplate;
+        return value == myFirstArchivedTemplate || value == myFirstProjectType;
       }
 
       @Nullable
       @Override
       public String getCaptionAboveOf(ProjectTemplate value) {
-        return "Project Templates";
+        return value == myFirstArchivedTemplate ? "Ready-To-Use Templates" : "Configurable " + (myNewProject ? "Project" : "Module") + " Types";
       }
     }));
-
 
     myList.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
       @Override
@@ -108,6 +110,13 @@ public class ProjectTemplateList extends JPanel {
       @Override
       public int compare(ProjectTemplate o1, ProjectTemplate o2) {
         return Comparing.compare(o1 instanceof ArchivedProjectTemplate, o2 instanceof ArchivedProjectTemplate);
+      }
+    });
+
+    myFirstProjectType = ContainerUtil.find(list, new Condition<ProjectTemplate>() {
+      @Override
+      public boolean value(ProjectTemplate template) {
+        return !(template instanceof ArchivedProjectTemplate);
       }
     });
     myFirstArchivedTemplate = ContainerUtil.find(list, new Condition<ProjectTemplate>() {
@@ -145,5 +154,9 @@ public class ProjectTemplateList extends JPanel {
 
   public void setPaintBusy(boolean b) {
     myList.setPaintBusy(b);
+  }
+
+  public void setNewProject(boolean newProject) {
+    myNewProject = newProject;
   }
 }
