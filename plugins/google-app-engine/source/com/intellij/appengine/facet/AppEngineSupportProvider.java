@@ -37,6 +37,7 @@ import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.artifacts.ArtifactManager;
@@ -56,6 +57,8 @@ import javax.swing.text.JTextComponent;
 import java.awt.*;
 import java.io.IOException;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * @author nik
@@ -120,7 +123,7 @@ public class AppEngineSupportProvider extends FacetBasedFrameworkSupportProvider
     webIntegration.setupRunConfiguration(sdk, artifact, project);
     webIntegration.addDevServerToModuleDependencies(rootModel, sdk);
 
-    final Library apiJar = addProjectLibrary(module, "AppEngine API", sdk.getLibUserDirectoryPath(), VirtualFile.EMPTY_ARRAY);
+    final Library apiJar = addProjectLibrary(module, "AppEngine API", sdk.getUserLibraryPaths(), VirtualFile.EMPTY_ARRAY);
     rootModel.addLibraryEntry(apiJar);
     webIntegration.addLibraryToArtifact(apiJar, artifact, project);
 
@@ -151,7 +154,7 @@ public class AppEngineSupportProvider extends FacetBasedFrameworkSupportProvider
       catch (IOException e) {
         LOG.error(e);
       }
-      final Library library = addProjectLibrary(module, "AppEngine ORM", sdk.getOrmLibDirectoryPath(), sdk.getOrmLibSources());
+      final Library library = addProjectLibrary(module, "AppEngine ORM", Collections.singletonList(sdk.getOrmLibDirectoryPath()), sdk.getOrmLibSources());
       rootModel.addLibraryEntry(library);
       webIntegration.addLibraryToArtifact(library, artifact, project);
     }
@@ -174,7 +177,7 @@ public class AppEngineSupportProvider extends FacetBasedFrameworkSupportProvider
     return artifactManager.addArtifact(module.getName(), artifactType, root);
   }
 
-  private static Library addProjectLibrary(final Module module, final String name, final String path, final VirtualFile[] sources) {
+  private static Library addProjectLibrary(final Module module, final String name, final List<String> jarDirectories, final VirtualFile[] sources) {
     return new WriteAction<Library>() {
       protected void run(final Result<Library> result) {
         final LibraryTable libraryTable = LibraryTablesRegistrar.getInstance().getLibraryTable(module.getProject());
@@ -182,7 +185,9 @@ public class AppEngineSupportProvider extends FacetBasedFrameworkSupportProvider
         if (library == null) {
           library = libraryTable.createLibrary(name);
           final Library.ModifiableModel model = library.getModifiableModel();
-          model.addJarDirectory(VfsUtil.pathToUrl(path), false);
+          for (String path : jarDirectories) {
+            model.addJarDirectory(VfsUtilCore.pathToUrl(path), false);
+          }
           for (VirtualFile sourceRoot : sources) {
             model.addRoot(sourceRoot, OrderRootType.SOURCES);
           }
