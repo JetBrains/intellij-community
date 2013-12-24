@@ -840,8 +840,14 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
       }
       else {
         if (myChild2.getElementType() == JavaElementType.BLOCK_STATEMENT || myChild2.getElementType() == JavaElementType.CODE_BLOCK) {
-          myResult = getSpaceBeforeLBrace(mySettings.SPACE_BEFORE_ELSE_LBRACE, mySettings.BRACE_STYLE, null,
-                                          mySettings.KEEP_SIMPLE_BLOCKS_IN_ONE_LINE, true);
+          PsiElement branch = statement.getElseBranch();
+          boolean shouldKeepInOneLine = mySettings.KEEP_SIMPLE_BLOCKS_IN_ONE_LINE
+                                        && branch != null
+                                        && !branch.textContains('\n');
+
+          myResult = getSpaceBeforeLBrace(mySettings.SPACE_BEFORE_ELSE_LBRACE,
+                                          mySettings.BRACE_STYLE,
+                                          null, shouldKeepInOneLine, true);
         }
         else {
           createSpacingBeforeElementInsideControlStatement();
@@ -849,10 +855,19 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
       }
     }
     else if (myChild2.getElementType() == JavaElementType.BLOCK_STATEMENT || myChild2.getElementType() == JavaElementType.CODE_BLOCK) {
-      boolean space = myRole2 == ChildRole.ELSE_BRANCH ? mySettings.SPACE_BEFORE_ELSE_LBRACE : mySettings.SPACE_BEFORE_IF_LBRACE;
+      boolean space = myRole2 == ChildRole.ELSE_BRANCH ? mySettings.SPACE_BEFORE_ELSE_LBRACE
+                                                       : mySettings.SPACE_BEFORE_IF_LBRACE;
+
+      PsiElement branch = myRole2 == ChildRole.ELSE_BRANCH ? statement.getElseBranch()
+                                                           : statement.getThenBranch();
+
+      boolean shouldKeepInOneLine = mySettings.KEEP_SIMPLE_BLOCKS_IN_ONE_LINE
+                                    && branch != null
+                                    && !branch.textContains('\n');
+
       myResult = getSpaceBeforeLBrace(space, mySettings.BRACE_STYLE,
                                       new TextRange(myParent.getTextRange().getStartOffset(), myChild1.getTextRange().getEndOffset()),
-                                      mySettings.KEEP_SIMPLE_BLOCKS_IN_ONE_LINE, true);
+                                      shouldKeepInOneLine, true);
     }
     else if (myRole2 == ChildRole.LPARENTH) {
       createSpaceInCode(mySettings.SPACE_BEFORE_IF_PARENTHESES);
@@ -909,7 +924,7 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
     else if (braceStyle == CommonCodeStyleSettings.END_OF_LINE || braceStyle == CommonCodeStyleSettings.NEXT_LINE_IF_WRAPPED) {
       return createNonLFSpace(space, null, false);
     }
-    else if (braceStyle == CommonCodeStyleSettings.NEXT_LINE && !mySettings.KEEP_SIMPLE_METHODS_IN_ONE_LINE) {
+    else if (braceStyle == CommonCodeStyleSettings.NEXT_LINE) {
       space = (keepOneLine && spaceBeforeLbrace) ? 1 : 0;
       return Spacing.createSpacing(space, 0, keepOneLine ? 0 : 1, false, mySettings.KEEP_BLANK_LINES_IN_CODE);
     }
@@ -917,9 +932,7 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
       TextRange dependencyRangeToUse = dependantRange == null || useParentBlockAsDependencyAllTheTime
                                        ? myParent.getTextRange() : dependantRange;
 
-      return Spacing.createDependentLFSpacing(
-        space, space, dependencyRangeToUse, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_CODE
-      );
+      return Spacing.createDependentLFSpacing(space, space, dependencyRangeToUse, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_CODE);
     }
     else {
       return Spacing.createSpacing(0, 0, 1, false, mySettings.KEEP_BLANK_LINES_IN_CODE);
@@ -1043,8 +1056,12 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
 
       ASTNode dependencyEndAnchor = mySettings.METHOD_BRACE_STYLE == CommonCodeStyleSettings.NEXT_LINE ? myChild2 : myChild1;
       int dependencyEnd = dependencyEndAnchor.getTextRange().getEndOffset();
+      boolean keepInOneLine = mySettings.KEEP_SIMPLE_METHODS_IN_ONE_LINE
+                              && method.getBody() != null
+                              && !method.getBody().textContains('\n');
+
       myResult = getSpaceBeforeLBrace(mySettings.SPACE_BEFORE_METHOD_LBRACE, mySettings.METHOD_BRACE_STYLE,
-                                      new TextRange(dependencyStart, dependencyEnd), mySettings.KEEP_SIMPLE_METHODS_IN_ONE_LINE,
+                                      new TextRange(dependencyStart, dependencyEnd), keepInOneLine,
                                       useParentBlockAsDependencyAllTheTime);
     }
     else if (myRole1 == ChildRole.MODIFIER_LIST) {

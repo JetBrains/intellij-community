@@ -2195,8 +2195,12 @@ public void testSCR260() throws Exception {
     getSettings().KEEP_SIMPLE_METHODS_IN_ONE_LINE = true;
     getSettings().ALIGN_MULTILINE_PARAMETERS = true;
     getSettings().METHOD_PARAMETERS_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED;
-    doTextTest("class TEst {\n" + "void foo(A a,B b){ /* compiled code */ }\n" + "}",
-               "class TEst {\n" + "    void foo(A a, B b)\n" + "    { /* compiled code */ }\n" + "}");
+    doTextTest("class TEst {\n" +
+               "    void foo(A a,B b){ /* compiled code */ }\n" +
+               "}",
+               "class TEst {\n" +
+               "    void foo(A a,\n" +
+               "             B b) { /* compiled code */ }\n" + "}");
   }
 
   public void testSCR1615() throws Exception {
