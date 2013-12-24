@@ -315,7 +315,7 @@ public class InferenceSession {
                 if (argumentList != null) {
                   final PsiExpression[] expressions = argumentList.getExpressions();
                   final int idx = LambdaUtil.getLambdaIdx(argumentList, context);
-                  final PsiType[] types = new PsiType[expressions.length];
+                  final PsiType[] types = PsiType.createArray(expressions.length);
                   for (int i = 0; i < expressions.length; i++) {
                     if (i != idx) {
                       types[i] = expressions[i].getType();

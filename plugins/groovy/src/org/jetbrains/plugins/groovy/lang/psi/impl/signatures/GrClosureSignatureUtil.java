@@ -368,7 +368,7 @@ public class GrClosureSignatureUtil {
     PsiType type;
     @Nullable Arg arg;
 
-    private ArgWrapper(PsiType type, Arg arg) {
+    private ArgWrapper(PsiType type, @Nullable Arg arg) {
       this.type = type;
       this.arg = arg;
     }
@@ -515,7 +515,7 @@ public class GrClosureSignatureUtil {
       this.context = context;
       this.params = params;
       this.args = args;
-      this.types = new PsiType[args.length];
+      this.types = PsiType.createArray(args.length);
       for (int i = 0; i < args.length; i++) {
         types[i] = typeComputer.fun(args[i]);
       }
@@ -819,7 +819,7 @@ public class GrClosureSignatureUtil {
                                                    List<PsiType> paramTypes,
                                                    PsiTypeParameter[] typeParameters,
                                                    PsiSubstitutor substitutor) {
-    return MethodSignatureUtil.createMethodSignature(name, paramTypes.toArray(new PsiType[paramTypes.size()]), typeParameters, substitutor);
+    return MethodSignatureUtil.createMethodSignature(name, paramTypes.toArray(PsiType.createArray(paramTypes.size())), typeParameters, substitutor);
   }
 
   public static void generateAllMethodSignaturesByClosureSignature(@NotNull String name,
@@ -866,7 +866,7 @@ public class GrClosureSignatureUtil {
   @Nullable
   public static PsiType getTypeByArg(ArgInfo<PsiElement> arg, PsiManager manager, GlobalSearchScope resolveScope) {
     if (arg.isMultiArg) {
-      if (arg.args.size() == 0) return PsiType.getJavaLangObject(manager, resolveScope).createArrayType();
+      if (arg.args.isEmpty()) return PsiType.getJavaLangObject(manager, resolveScope).createArrayType();
       PsiType leastUpperBound = null;
       PsiElement first = arg.args.get(0);
       if (first instanceof GrNamedArgument) {
@@ -887,7 +887,7 @@ public class GrClosureSignatureUtil {
       }
     }
     else {
-      if (arg.args.size() == 0) return null;
+      if (arg.args.isEmpty()) return null;
       PsiElement elem = arg.args.get(0);
       if (elem instanceof GrExpression) {
         return ((GrExpression)elem).getType();

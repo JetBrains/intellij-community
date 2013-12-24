@@ -508,7 +508,7 @@ public class TypesUtil {
       if (components1.length == 0) return genNewListBy(type2, manager);
       if (components2.length == 0) return genNewListBy(type1, manager);
 
-      PsiType[] components3 = new PsiType[Math.min(components1.length, components2.length)];
+      PsiType[] components3 = PsiType.createArray(Math.min(components1.length, components2.length));
       for (int i = 0; i < components3.length; i++) {
         PsiType c1 = components1[i];
         PsiType c2 = components2[i];
@@ -849,7 +849,7 @@ public class TypesUtil {
       public PsiType fun(GrAnnotationMemberValue value) {
         return inferAnnotationMemberValueType(value);
       }
-    }, new PsiType[initializers.length]);
+    }, PsiType.createArray(initializers.length));
     return new GrTupleType(types, JavaPsiFacade.getInstance(value.getProject()), value.getResolveScope());
   }
 

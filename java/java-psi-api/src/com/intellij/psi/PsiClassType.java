@@ -166,7 +166,7 @@ public abstract class PsiClassType extends PsiType {
     if (aClass == null) return EMPTY_ARRAY;
 
     PsiClassType[] superTypes = aClass.getSuperTypes();
-    PsiType[] substitutionResults = new PsiType[superTypes.length];
+    PsiType[] substitutionResults = createArray(superTypes.length);
     for (int i = 0; i < superTypes.length; i++) {
       substitutionResults[i] = resolveResult.getSubstitutor().substitute(superTypes[i]);
     }
@@ -248,6 +248,7 @@ public abstract class PsiClassType extends PsiType {
         return null;
       }
 
+      @NotNull
       @Override
       public PsiSubstitutor getSubstitutor() {
         return PsiSubstitutor.EMPTY;

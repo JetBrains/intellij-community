@@ -53,10 +53,12 @@ public class GrDocMethodParamsImpl extends GroovyDocPsiElementImpl implements Gr
     return "GrDocMethodParameterList";
   }
 
+  @Override
   public void accept(GroovyElementVisitor visitor) {
     visitor.visitDocMethodParameterList(this);
   }
 
+  @Override
   public PsiType[] getParameterTypes() {
     ArrayList<PsiType> types = new ArrayList<PsiType>();
     PsiManagerEx manager = getManager();
@@ -73,9 +75,10 @@ public class GrDocMethodParamsImpl extends GroovyDocPsiElementImpl implements Gr
         types.add(null);
       }
     }
-    return types.toArray(new PsiType[types.size()]);
+    return types.toArray(PsiType.createArray(types.size()));
   }
 
+  @Override
   public GrDocMethodParameter[] getParameters() {
     List<GrDocMethodParameter> result = new ArrayList<GrDocMethodParameter>();
     for (PsiElement cur = getFirstChild(); cur != null; cur = cur.getNextSibling()) {
@@ -84,6 +87,7 @@ public class GrDocMethodParamsImpl extends GroovyDocPsiElementImpl implements Gr
     return result.toArray(new GrDocMethodParameter[result.size()]);
   }
 
+  @Override
   @NotNull
   public PsiElement getLeftParen() {
     ASTNode paren = getNode().findChildByType(GroovyDocTokenTypes.mGDOC_TAG_VALUE_LPAREN);
@@ -91,6 +95,7 @@ public class GrDocMethodParamsImpl extends GroovyDocPsiElementImpl implements Gr
     return paren.getPsi();
   }
 
+  @Override
   @Nullable
   public PsiElement getRightParen() {
     ASTNode paren = getNode().findChildByType(GroovyDocTokenTypes.mGDOC_TAG_VALUE_RPAREN);

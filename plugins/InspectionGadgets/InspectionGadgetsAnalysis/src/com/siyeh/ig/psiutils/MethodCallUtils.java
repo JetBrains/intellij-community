@@ -79,7 +79,7 @@ public class MethodCallUtils {
     }
     final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(expression.getProject());
     final PsiElementFactory factory = psiFacade.getElementFactory();
-    final PsiType[] parameterTypes = new PsiType[parameterTypeStrings.length];
+    final PsiType[] parameterTypes = PsiType.createArray(parameterTypeStrings.length);
     final GlobalSearchScope scope = expression.getResolveScope();
     for (int i = 0; i < parameterTypeStrings.length; i++) {
       final String parameterTypeString = parameterTypeStrings[i];

@@ -51,16 +51,19 @@ public class PsiPrimitiveType extends PsiType {
     }
   }
 
+  @NotNull
   @Override
   public String getPresentableText() {
     return getAnnotationsTextPrefix(false, false, true) + myName;
   }
 
+  @NotNull
   @Override
   public String getCanonicalText() {
     return myName;
   }
 
+  @NotNull
   @Override
   public String getInternalCanonicalText() {
     return getAnnotationsTextPrefix(true, false, true) + myName;
@@ -75,7 +78,7 @@ public class PsiPrimitiveType extends PsiType {
   }
 
   @Override
-  public boolean equalsToText(String text) {
+  public boolean equalsToText(@NotNull String text) {
     return myName.equals(text);
   }
 
@@ -92,7 +95,7 @@ public class PsiPrimitiveType extends PsiType {
   @Override
   @NotNull
   public PsiType[] getSuperTypes() {
-    return new PsiType[0];
+    return EMPTY_ARRAY;
   }
 
   /**

@@ -90,7 +90,7 @@ public class GenericsUtil {
       for (PsiType type : conjuncts) {
         newConjuncts.add(getLeastUpperBound(type, type2, compared, manager));
       }
-      return PsiIntersectionType.createIntersection(newConjuncts.toArray(new PsiType[newConjuncts.size()]));
+      return PsiIntersectionType.createIntersection(newConjuncts.toArray(PsiType.createArray(newConjuncts.size())));
     }
     if (type2 instanceof PsiIntersectionType) {
       return getLeastUpperBound(type2, type1, compared, manager);
@@ -454,7 +454,7 @@ public class GenericsUtil {
         result.add(substitutionMap.get(key));
       }
     }
-    return PsiSubstitutor.EMPTY.putAll(psiClass, result.toArray(new PsiType[result.size()]));
+    return PsiSubstitutor.EMPTY.putAll(psiClass, result.toArray(PsiType.createArray(result.size())));
   }
 
   public static PsiType eliminateWildcards(PsiType type) {
@@ -463,7 +463,7 @@ public class GenericsUtil {
 
   public static PsiType eliminateWildcards(PsiType type, final boolean eliminateInTypeArguments) {
     if (eliminateInTypeArguments && type instanceof PsiClassType) {
-      PsiClassType classType = ((PsiClassType)type);
+      PsiClassType classType = (PsiClassType)type;
       JavaResolveResult resolveResult = classType.resolveGenerics();
       PsiClass aClass = (PsiClass)resolveResult.getElement();
       if (aClass != null) {

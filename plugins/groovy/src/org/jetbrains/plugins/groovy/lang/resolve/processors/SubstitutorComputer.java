@@ -126,7 +126,7 @@ public class SubstitutorComputer {
       final PsiElement resolveContext = state.get(ResolverProcessor.RESOLVE_CONTEXT);
       if (method instanceof GrGdkMethod) {
         //type inference should be performed from static method
-        PsiType[] newArgTypes = new PsiType[argTypes.length + 1];
+        PsiType[] newArgTypes = PsiType.createArray(argTypes.length + 1);
         if (GdkMethodUtil.isInWithContext(resolveContext)) {
           newArgTypes[0] = ((GrExpression)resolveContext).getType();
         }
@@ -163,8 +163,8 @@ public class SubstitutorComputer {
 
     int max = Math.max(params.length, argTypes.length);
 
-    PsiType[] parameterTypes = new PsiType[max];
-    PsiType[] argumentTypes = new PsiType[max];
+    PsiType[] parameterTypes = PsiType.createArray(max);
+    PsiType[] argumentTypes = PsiType.createArray(max);
     int i = 0;
     for (int paramIndex = 0; paramIndex < argInfos.length; paramIndex++) {
       PsiType paramType = params[paramIndex].getType();

@@ -72,7 +72,7 @@ public class ClsReferenceParameterListImpl extends ClsElementImpl implements Psi
   public PsiType[] getTypeArguments() {
     PsiType[] cachedTypes = myTypeParametersCachedTypes;
     if (cachedTypes == null) {
-      cachedTypes = myTypeParameters.length == 0 ? PsiType.EMPTY_ARRAY : new PsiType[myTypeParameters.length];
+      cachedTypes = PsiType.createArray(myTypeParameters.length);
       for (int i = 0; i < cachedTypes.length; i++) {
         cachedTypes[cachedTypes.length - i - 1] = myTypeParameters[i].getType();
       }

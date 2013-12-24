@@ -87,6 +87,7 @@ public class GrMapType extends GrLiteralClassType {
     return myJavaClassName;
   }
 
+  @Override
   @NotNull
   public String getClassName() {
     return StringUtil.getShortName(myJavaClassName);
@@ -110,7 +111,7 @@ public class GrMapType extends GrLiteralClassType {
       result.add(entry.first);
     }
     result.remove(null);
-    return result.toArray(new PsiType[result.size()]);
+    return result.toArray(createArray(result.size()));
   }
 
   public PsiType[] getAllValueTypes() {
@@ -120,9 +121,10 @@ public class GrMapType extends GrLiteralClassType {
       result.add(entry.second);
     }
     result.remove(null);
-    return result.toArray(new PsiType[result.size()]);
+    return result.toArray(createArray(result.size()));
   }
 
+  @Override
   @NotNull
   public PsiType[] getParameters() {
     final PsiType[] keyTypes = getAllKeyTypes();
@@ -134,9 +136,11 @@ public class GrMapType extends GrLiteralClassType {
     return new PsiType[]{getLeastUpperBound(keyTypes), getLeastUpperBound(valueTypes)};
   }
 
+  @Override
+  @NotNull
   public String getInternalCanonicalText() {
-    if (myStringEntries.size() == 0) {
-      if (myOtherEntries.size() == 0) return "[:]";
+    if (myStringEntries.isEmpty()) {
+      if (myOtherEntries.isEmpty()) return "[:]";
       String name = getJavaClassName();
       final PsiType[] params = getParameters();
       return name + "<" + getInternalText(params[0]) + ", " + getInternalText(params[1]) + ">";
@@ -159,6 +163,7 @@ public class GrMapType extends GrLiteralClassType {
     return param == null ? "null" : param.getInternalCanonicalText();
   }
 
+  @Override
   public boolean isValid() {
     for (PsiType type : myStringEntries.values()) {
       if (type != null && !type.isValid()) {
@@ -177,6 +182,7 @@ public class GrMapType extends GrLiteralClassType {
     return true;
   }
 
+  @Override
   @NotNull
   public PsiClassType setLanguageLevel(@NotNull final LanguageLevel languageLevel) {
     return new GrMapType(myFacade, getResolveScope(), myStringEntries, myOtherEntries, languageLevel);
@@ -189,6 +195,7 @@ public class GrMapType extends GrLiteralClassType {
     return super.equals(obj);
   }
 
+  @Override
   public boolean isAssignableFrom(@NotNull PsiType type) {
     return type instanceof GrMapType || super.isAssignableFrom(type);
   }

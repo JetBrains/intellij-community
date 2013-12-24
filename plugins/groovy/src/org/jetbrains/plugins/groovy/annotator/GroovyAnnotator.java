@@ -207,7 +207,7 @@ public class GroovyAnnotator extends GroovyElementVisitor {
 
       if (typeElement instanceof GrDisjunctionTypeElement) {
         final GrTypeElement[] elements = ((GrDisjunctionTypeElement)typeElement).getTypeElements();
-        PsiType[] types = new PsiType[elements.length];
+        PsiType[] types = PsiType.createArray(elements.length);
         for (int i = 0; i < elements.length; i++) {
           types[i] = elements[i].getType();
         }
@@ -1426,6 +1426,7 @@ public class GroovyAnnotator extends GroovyElementVisitor {
   }
 
 
+  @Override
   public void visitAnnotation(GrAnnotation annotation) {
     final GrCodeReferenceElement ref = annotation.getClassReference();
     final PsiElement resolved = ref.resolve();
@@ -2092,7 +2093,7 @@ public class GroovyAnnotator extends GroovyElementVisitor {
     String packageName = "<default package>";
     if (file instanceof GroovyFile) {
       final String name = ((GroovyFile)file).getPackageName();
-      if (name.length() > 0) packageName = name;
+      if (!name.isEmpty()) packageName = name;
     }
     return packageName;
   }

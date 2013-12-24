@@ -285,7 +285,7 @@ public class UnnecessaryUnboxingInspection extends BaseInspection {
       if (containingClass == null) {
         return false;
       }
-      final PsiType[] types = new PsiType[expressions.length];
+      final PsiType[] types = PsiType.createArray(expressions.length);
       for (int i = 0; i < expressions.length; i++) {
         final PsiExpression expression = expressions[i];
         final PsiType type = expression.getType();

@@ -197,7 +197,7 @@ public class QuickfixUtil {
       for (PsiType type : PsiUtil.getArgumentTypes(referenceExpression, false)) {
         unboxedTypes.add(TypesUtil.unboxPrimitiveTypeWrapperAndEraseGenerics(type));
       }
-      final PsiType[] types = unboxedTypes.toArray(new PsiType[unboxedTypes.size()]);
+      final PsiType[] types = unboxedTypes.toArray(PsiType.createArray(unboxedTypes.size()));
       final String[] names = getMethodArgumentsNames(referenceExpression.getProject(), types);
       final List<ParamInfo> infos = swapArgumentsAndTypes(names, types);
 
