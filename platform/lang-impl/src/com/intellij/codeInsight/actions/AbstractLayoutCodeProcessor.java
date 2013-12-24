@@ -33,20 +33,20 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressWindow;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectCoreUtil;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.ex.MessagesEx;
-import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.SequentialModalProgressTask;
 import com.intellij.util.SequentialTask;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.FutureTask;
@@ -59,7 +59,7 @@ public abstract class AbstractLayoutCodeProcessor {
 
   private PsiDirectory myDirectory;
   private PsiFile myFile;
-  private PsiFile[] myFiles;
+  private List<PsiFile> myFiles;
   private boolean myIncludeSubdirs;
 
   private final String myProgressText;
@@ -155,14 +155,14 @@ public abstract class AbstractLayoutCodeProcessor {
     myProcessChangedTextOnly = processChangedTextOnly;
   }
 
-  private static PsiFile[] filterFiles(PsiFile[] files){
+  private static List<PsiFile> filterFiles(PsiFile[] files) {
     ArrayList<PsiFile> list = new ArrayList<PsiFile>();
     for (PsiFile file : files) {
-      if (isFormatable(file)) {
+      if (canBeFormatted(file)) {
         list.add(file);
       }
     }
-    return PsiUtilCore.toPsiFileArray(list);
+    return list;
   }
 
   @Nullable
@@ -316,7 +316,7 @@ public abstract class AbstractLayoutCodeProcessor {
     };
   }
 
-  private void runProcessFiles(final PsiFile[] files) {
+  private void runProcessFiles(final List<PsiFile> files) {
     // let's just ignore read-only files here
 
     final Runnable[] resultRunnable = new Runnable[1];
@@ -324,7 +324,7 @@ public abstract class AbstractLayoutCodeProcessor {
       new Runnable() {
         @Override
         public void run() {
-          resultRunnable[0] = preprocessFiles(new ArrayList<PsiFile>(Arrays.asList(files)));
+          resultRunnable[0] = preprocessFiles(new ArrayList<PsiFile>(files));
         }
       },
       new Runnable() {
@@ -334,13 +334,13 @@ public abstract class AbstractLayoutCodeProcessor {
             resultRunnable[0].run();
           }
         }
-      }, files.length > 1
+      }, files.size() > 1
     );
   }
 
   private void runProcessDirectory(final PsiDirectory directory, final boolean recursive) {
     final ArrayList<PsiFile> array = new ArrayList<PsiFile>();
-    collectFilesToProcess(array, directory, getIgnoreRoots(directory.getProject()), recursive);
+    collectFilesToProcess(array, directory, recursive);
     final String where = CodeInsightBundle.message("process.scope.directory", directory.getVirtualFile().getPresentableUrl());
     runProcessOnFiles(where, array);
   }
@@ -371,7 +371,7 @@ public abstract class AbstractLayoutCodeProcessor {
     for (VirtualFile root : contentRoots) {
       PsiDirectory dir = PsiManager.getInstance(myProject).findDirectory(root);
       if (dir != null) {
-        collectFilesToProcess(array, dir, getIgnoreRoots(module.getProject()), true);
+        collectFilesToProcess(array, dir, true);
       }
     }
   }
@@ -413,80 +413,26 @@ public abstract class AbstractLayoutCodeProcessor {
     }, array.size() > 1);
   }
 
-  private static boolean isFormatable(PsiFile file) {
-    return LanguageFormatting.INSTANCE.forContext(file) != null;
+  private static boolean canBeFormatted(PsiFile file) {
+    if (LanguageFormatting.INSTANCE.forContext(file) == null) {
+      return false;
+    }
+    VirtualFile virtualFile = file.getVirtualFile();
+    return virtualFile == null || !ProjectCoreUtil.isProjectOrWorkspaceFile(virtualFile);
   }
 
-  /**
-   * There is a possible case that 'reformat' is invoked against particular directory via 'Project View'. We don't want
-   * to modify project/module files then (these are internal files and their change due to reformatting will trigger dialog
-   * that asks user if he or she wants to reload a project because of config file contents change).
-   * <p/>
-   * This method allows to collect set of file system entries (either files or directories) which contents should be ignored
-   * during bulk reformatting.
-   *
-   * @param project  target project
-   * @return         collection of file system entries that shouldn't be touched during bulk reformatting
-   */
-  private static Set<VirtualFile> getIgnoreRoots(@NotNull Project project) {
-    Set<VirtualFile> result = new HashSet<VirtualFile>();
-
-    VirtualFile projectBaseDir = project.getBaseDir();
-    if (projectBaseDir != null && projectBaseDir.isDirectory()) {
-      VirtualFile projectVirtualDirectory = projectBaseDir.findChild(Project.DIRECTORY_STORE_FOLDER);
-      if (projectVirtualDirectory != null) {
-        result.add(projectVirtualDirectory);
-      }
-    }
-
-    VirtualFile projectFile = project.getProjectFile();
-    if (projectFile != null) {
-      result.add(projectFile);
-    }
-
-    VirtualFile workspaceFile = project.getWorkspaceFile();
-    if (workspaceFile != null) {
-      result.add(workspaceFile);
-    }
-
-    for (Module m : ModuleManager.getInstance(project).getModules()) {
-      VirtualFile moduleFile = m.getModuleFile();
-      if (moduleFile != null) {
-        result.add(moduleFile);
-      }
-    }
-
-    return result;
-  }
-
-  private static void collectFilesToProcess(ArrayList<PsiFile> array, PsiDirectory dir, @NotNull Set<VirtualFile> ignoreRoots,
-                                            boolean recursive)
-  {
+  private static void collectFilesToProcess(ArrayList<PsiFile> array, PsiDirectory dir, boolean recursive) {
     PsiFile[] files = dir.getFiles();
     for (PsiFile file : files) {
-      if (isFormatable(file) && !shouldIgnore(file, ignoreRoots)) {
+      if (canBeFormatted(file)) {
         array.add(file);
       }
     }
-    if (recursive){
-      PsiDirectory[] subdirs = dir.getSubdirectories();
-      for (PsiDirectory subdir : subdirs) {
-        collectFilesToProcess(array, subdir, ignoreRoots, recursive);
+    if (recursive) {
+      for (PsiDirectory subdir : dir.getSubdirectories()) {
+        collectFilesToProcess(array, subdir, recursive);
       }
     }
-  }
-
-  private static boolean shouldIgnore(@NotNull PsiFile file, Set<VirtualFile> ignoreRoots) {
-    VirtualFile virtualFile = file.getVirtualFile();
-    if (virtualFile == null) {
-      return false;
-    }
-    for (VirtualFile root : ignoreRoots) {
-      if (VfsUtilCore.isAncestor(root, virtualFile, false)) {
-        return true;
-      }
-    }
-    return false;
   }
 
   private void runLayoutCodeProcess(final Runnable readAction, final Runnable writeAction, final boolean globalAction) {
