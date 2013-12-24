@@ -57,7 +57,10 @@ import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess;
 import org.tmatesoft.svn.core.internal.wc17.SVNReporter17;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCContext;
 import org.tmatesoft.svn.core.io.SVNRepository;
-import org.tmatesoft.svn.core.wc.*;
+import org.tmatesoft.svn.core.wc.ISVNEventHandler;
+import org.tmatesoft.svn.core.wc.SVNEvent;
+import org.tmatesoft.svn.core.wc.SVNInfo;
+import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 import org.tmatesoft.svn.util.SVNDebugLog;
 import org.tmatesoft.svn.util.SVNLogType;
@@ -302,7 +305,14 @@ public class CompareWithBranchAction extends AnAction implements DumbAware {
                                             FileUtil.toSystemDependentName(myVirtualFile.getPresentableUrl())));
 
       final File ioFile = new File(myVirtualFile.getPath());
-      if (SvnUtil.is17CopyPart(ioFile)) {
+      WorkingCopyFormat format = myVcs.getWorkingCopyFormat(ioFile);
+
+      if (WorkingCopyFormat.ONE_DOT_EIGHT.equals(format)) {
+        // svn 1.7 command line "--summarize" option for "diff" command does not support comparing working copy directories with repository
+        // directories - that is why command line is only used explicitly for svn 1.8
+        compareWithCommandLine();
+      }
+      else if (WorkingCopyFormat.ONE_DOT_SEVEN.equals(format)) {
         report17DirDiff();
       }
       else {
@@ -310,10 +320,16 @@ public class CompareWithBranchAction extends AnAction implements DumbAware {
       }
     }
 
+    private void compareWithCommandLine() throws VcsException {
+      SvnTarget target1 = SvnTarget.fromFile(new File(myVirtualFile.getPath()));
+      SvnTarget target2 = SvnTarget.fromURL(myElementUrl);
+
+      changes.addAll(myVcs.getFactory(target1).createDiffClient().compare(target1, target2));
+    }
+
     private void report17DirDiff() throws SVNException {
       final File ioFile = new File(myVirtualFile.getPath());
-      final SVNWCClient wcClient = myVcs.createWCClient();
-      final SVNInfo info1 = wcClient.doInfo(ioFile, SVNRevision.HEAD);
+      final SVNInfo info1 = myVcs.getInfo(ioFile, SVNRevision.HEAD);
 
       if (info1 == null) {
         SVNErrorMessage err =
