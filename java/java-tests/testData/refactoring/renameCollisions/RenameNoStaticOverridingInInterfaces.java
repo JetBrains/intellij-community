@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,22 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.ide.projectWizard;
-
-import com.intellij.ide.util.projectWizard.EmptyModuleBuilder;
-
-/**
-* @author Dmitry Avdeev
-*         Date: 27.09.13
-*/
-public class EmptyProjectBuilder extends EmptyModuleBuilder {
-  @Override
-  public String getPresentableName() {
-    return "Empty Project";
-  }
-
-  @Override
-  public String getDescription() {
-    return "Empty project without modules. Use it to create free-style module structure.";
-  }
+interface A
+{
+  static void foo(){}
+}
+interface B extends A
+{
+  static int ba<caret>r(){ return 1; }
 }

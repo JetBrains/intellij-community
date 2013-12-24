@@ -18,7 +18,6 @@ package com.intellij.ide.util.projectWizard;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.highlighter.ModuleFileType;
 import com.intellij.ide.util.frameworkSupport.FrameworkRole;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -140,11 +139,6 @@ public abstract class ModuleBuilder extends AbstractModuleBuilder {
         }
       };
     }
-  }
-
-  @Nullable
-  public JComponent getCustomOptionsPanel(Disposable parentDisposable) {
-    return null;
   }
 
   protected List<WizardInputField> getAdditionalFields() {

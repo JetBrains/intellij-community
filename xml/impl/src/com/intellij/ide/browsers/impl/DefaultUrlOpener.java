@@ -38,6 +38,7 @@ import java.util.List;
 public class DefaultUrlOpener extends UrlOpener {
   private static final Logger LOG = Logger.getInstance(DefaultUrlOpener.class);
 
+  @Override
   public boolean openUrl(final @NotNull WebBrowser browser, final @NotNull String url) {
     return launchBrowser(browser, url, false);
   }

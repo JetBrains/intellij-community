@@ -196,7 +196,7 @@ public class XmlBlock extends AbstractXmlBlock {
   }
 
 
-  private List<Block> splitComment() {
+  protected List<Block> splitComment() {
     if (myNode.getElementType() != XmlElementType.XML_COMMENT) return EMPTY;
     final ArrayList<Block> result = new ArrayList<Block>(3);
     ASTNode child = myNode.getFirstChildNode();

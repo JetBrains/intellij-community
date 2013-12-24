@@ -32,8 +32,8 @@ import com.intellij.util.PlatformIcons;
 public class LiveTemplateLookupActionProvider implements LookupActionProvider {
   @Override
   public void fillActions(LookupElement element, final Lookup lookup, Consumer<LookupElementAction> consumer) {
-    if (element instanceof LiveTemplateLookupElement) {
-      final TemplateImpl template = ((LiveTemplateLookupElement)element).getTemplate();
+    if (element instanceof LiveTemplateLookupElementImpl) {
+      final TemplateImpl template = ((LiveTemplateLookupElementImpl)element).getTemplate();
       final TemplateImpl templateFromSettings = TemplateSettings.getInstance().getTemplate(template.getKey(), template.getGroupName());
 
       if (templateFromSettings != null) {

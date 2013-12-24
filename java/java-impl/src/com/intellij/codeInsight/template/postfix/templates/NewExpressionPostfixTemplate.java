@@ -44,7 +44,7 @@ public class NewExpressionPostfixTemplate extends PostfixTemplate {
 
           PsiElementFactory factory = JavaPsiFacade.getInstance(context.getProject()).getElementFactory();
           PsiNewExpression newExpression = (PsiNewExpression)factory.createExpressionFromText(template, context);
-          PsiElement replace = ref.getParent().replace(newExpression);
+          PsiElement replace = ((PsiJavaReference)ref).getElement().replace(newExpression);
           replace.getNode().addLeaf(JavaTokenType.SEMICOLON, ";", null);
           int offset = calculateOffset((PsiNewExpression)replace, accessibility, typeRequiresRefinement);
           editor.getCaretModel().moveToOffset(offset);

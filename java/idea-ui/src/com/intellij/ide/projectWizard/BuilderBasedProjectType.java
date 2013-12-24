@@ -23,13 +23,6 @@ public class BuilderBasedProjectType extends ProjectCategory {
     return myModuleType.createModuleBuilder();
   }
 
-  public static class Empty extends BuilderBasedProjectType {
-
-    public Empty() {
-      super(ModuleType.EMPTY);
-    }
-  }
-
   public static class Java extends BuilderBasedProjectType {
 
     public Java() {

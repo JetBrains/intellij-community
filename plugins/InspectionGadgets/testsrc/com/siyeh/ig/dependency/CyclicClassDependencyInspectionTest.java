@@ -13,21 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.ide.projectWizard;
+package com.siyeh.ig.dependency;
 
-import com.intellij.ide.impl.NewProjectUtil;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
+import com.siyeh.ig.IGInspectionTestCase;
 
 /**
- * @author Dmitry Avdeev
- *         Date: 04.09.13
+ * @author Bas Leijdekkers
  */
-public class NewProjectWizardAction extends AnAction {
-  @Override
-  public void actionPerformed(AnActionEvent e) {
-    NewProjectWizard wizard = new NewProjectWizard(null, ModulesProvider.EMPTY_MODULES_PROVIDER, null);
-    NewProjectUtil.createNewProject(getEventProject(e), wizard);
+public class CyclicClassDependencyInspectionTest extends IGInspectionTestCase {
+
+  public void test() {
+    doTest("com/siyeh/igtest/dependency/cyclic_class_dependency", new CyclicClassDependencyInspection());
   }
 }

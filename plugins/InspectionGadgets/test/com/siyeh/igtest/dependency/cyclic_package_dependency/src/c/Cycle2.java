@@ -13,15 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.codeInsight.template.emmet.completion;
+package c;
 
-import com.intellij.codeInsight.template.impl.LiveTemplateLookupElement;
-import com.intellij.codeInsight.template.impl.TemplateImpl;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import b.Cycle1;
 
-public class EmmetAbbreviationLookupElement extends LiveTemplateLookupElement {
-  public EmmetAbbreviationLookupElement(@NotNull TemplateImpl template, @Nullable String lookupString, boolean sudden) {
-    super(template, lookupString, sudden, true);
+/**
+ * @author Bas Leijdekkers
+ */
+public class Cycle2 {
+
+  public void b() {}
+
+  void c(Cycle1 c) {
+    c.a();
   }
 }

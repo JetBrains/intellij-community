@@ -317,7 +317,7 @@ public class ScrollingModelImpl implements ScrollingModelEx {
     scrollbar.setValue(scrollOffset);
   }
 
-  private void scrollToOffsets(int hOffset, int vOffset) {
+  void scrollToOffsets(int hOffset, int vOffset) {
     if (myAccumulateViewportChanges) {
       myAccumulatedXOffset = hOffset;
       myAccumulatedYOffset = vOffset;

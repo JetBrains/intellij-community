@@ -73,10 +73,8 @@ import javax.swing.plaf.ComponentUI;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.geom.AffineTransform;
-import java.util.ArrayList;
+import java.util.*;
 import java.util.List;
-import java.util.Map;
-import java.util.TreeMap;
 
 class EditorGutterComponentImpl extends EditorGutterComponentEx implements MouseListener, MouseMotionListener {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.impl.EditorGutterComponentImpl");
@@ -86,6 +84,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
   private static final TooltipGroup GUTTER_TOOLTIP_GROUP = new TooltipGroup("GUTTER_TOOLTIP_GROUP", 0);
 
   private final EditorImpl myEditor;
+  private final FoldingAnchorsOverlayStrategy myAnchorsDisplayStrategy;
   private int myLineMarkerAreaWidth = START_ICON_AREA_WIDTH + FREE_PAINTERS_AREA_WIDTH;
   private int myIconsAreaWidth = START_ICON_AREA_WIDTH;
   private int myLineNumberAreaWidth = 0;
@@ -118,6 +117,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
         }
       });
     }
+    myAnchorsDisplayStrategy = new FoldingAnchorsOverlayStrategy(editor);
   }
 
   @SuppressWarnings({"ConstantConditions"})
@@ -237,7 +237,8 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
       try {
         int firstVisibleOffset = myEditor.logicalPositionToOffset(myEditor.xyToLogicalPosition(new Point(0, clip.y - myEditor.getLineHeight())));
         int lastVisibleOffset = myEditor.logicalPositionToOffset(myEditor.xyToLogicalPosition(new Point(0, clip.y + clip.height + myEditor.getLineHeight())));
-        paintFoldingBackground(g, clip, firstVisibleOffset, lastVisibleOffset);
+        paintFoldingBackground(g, clip);
+        paintFoldingLines((Graphics2D)g, clip);
         paintLineMarkers(g, clip, firstVisibleOffset, lastVisibleOffset);
         paintFoldingTree(g, clip, firstVisibleOffset, lastVisibleOffset);
         paintLineNumbers(g, clip);
@@ -339,7 +340,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
       doPaintFoldingTree((Graphics2D)g, clip, firstVisibleOffset, lastVisibleOffset);
     }
     else {
-      UIUtil.drawVDottedLine((Graphics2D)g, clip.x + clip.width -1, clip.y, clip.y + clip.height, null, getOutlineColor(false));
+      UIUtil.drawVDottedLine((Graphics2D)g, clip.x + clip.width - 1, clip.y, clip.y + clip.height, null, getOutlineColor(false));
     }
   }
 
@@ -816,51 +817,18 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     updateSize();
   }
 
-  private int offsetToVisualLine(int offset) {
-    offset = Math.min(myEditor.getDocument().getTextLength() - 1, offset);
-    return myEditor.offsetToVisualLine(offset);
-  }
-
   private void doPaintFoldingTree(final Graphics2D g, final Rectangle clip, int firstVisibleOffset, int lastVisibleOffset) {
     final int anchorX = getFoldingAreaOffset();
     final int width = getFoldingAnchorWidth();
 
-    doForVisibleFoldRegions(
-      new NullableFunction<FoldRegion, Void>() {
-        @Override
-        public Void fun(FoldRegion foldRegion) {
-          drawAnchor(foldRegion, width, clip, g, anchorX, false, false);
-          return null;
-        }
-      },
-      firstVisibleOffset,
-      lastVisibleOffset
-    );
-
-    if (myActiveFoldRegion != null) {
-      drawAnchor(myActiveFoldRegion, width, clip, g, anchorX, true, true);
-      drawAnchor(myActiveFoldRegion, width, clip, g, anchorX, true, false);
+    Collection<DisplayedFoldingAnchor> anchorsToDisplay =
+      myAnchorsDisplayStrategy.getAnchorsToDisplay(firstVisibleOffset, lastVisibleOffset, myActiveFoldRegion);
+    for (DisplayedFoldingAnchor anchor : anchorsToDisplay) {
+      drawAnchor(width, clip, g, anchorX, anchor.visualLine, anchor.type, anchor.foldRegion == myActiveFoldRegion);
     }
   }
 
-  private void doForVisibleFoldRegions(@NotNull NullableFunction<FoldRegion, Void> action, int firstVisibleOffset, int lastVisibleOffset) {
-    FoldRegion[] visibleFoldRegions = myEditor.getFoldingModel().fetchVisible();
-    final Document document = myEditor.getDocument();
-    for (FoldRegion visibleFoldRegion : visibleFoldRegions) {
-      if (!visibleFoldRegion.isValid()) continue;
-      final int startOffset = visibleFoldRegion.getStartOffset();
-      if (startOffset > lastVisibleOffset) continue;
-      final int endOffset = getEndOffset(visibleFoldRegion);
-      if (endOffset < firstVisibleOffset) continue;
-      if (document.getLineNumber(startOffset) >= document.getLineNumber(endOffset)) {
-        //TODO den remove this check as soon as editor performance on dimension mapping is improved (IDEA-69317)
-        continue;
-      }
-      action.fun(visibleFoldRegion);
-    }
-  }
-  
-  private void paintFoldingBackground(Graphics g, Rectangle clip, int firstVisibleOffset, int lastVisibleOffset) {
+  private void paintFoldingBackground(Graphics g, Rectangle clip) {
     int lineX = getWhitespaceSeparatorOffset();
     paintBackground(g, clip, getFoldingAreaOffset(), getFoldingAreaWidth());
 
@@ -868,11 +836,9 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     g.fillRect(lineX, clip.y, getFoldingAreaWidth(), clip.height);
 
     paintCaretRowBackground(g, lineX, getFoldingAnchorWidth());
-
-    doPaintFoldingBoxBackground((Graphics2D)g, clip, firstVisibleOffset, lastVisibleOffset);
   }
 
-  private void doPaintFoldingBoxBackground(final Graphics2D g, final Rectangle clip, int firstVisibleOffset, int lastVisibleOffset) {
+  private void paintFoldingLines(final Graphics2D g, final Rectangle clip) {
     if (!isFoldingOutlineShown()) return;
 
     UIUtil.drawVDottedLine(g, getWhitespaceSeparatorOffset(), clip.y, clip.y + clip.height, null, getOutlineColor(false));
@@ -880,21 +846,20 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     final int anchorX = getFoldingAreaOffset();
     final int width = getFoldingAnchorWidth();
 
-    if (myActiveFoldRegion != null) {
-      drawFoldingLines(myActiveFoldRegion, clip, width, anchorX, g);
-    }
+    if (myActiveFoldRegion != null && myActiveFoldRegion.isExpanded() && myActiveFoldRegion.isValid()) {
+      int foldStart = myEditor.offsetToVisualLine(myActiveFoldRegion.getStartOffset());
+      int foldEnd = myEditor.offsetToVisualLine(getEndOffset(myActiveFoldRegion));
+      int startY = myEditor.visibleLineToY(foldStart + 1) - myEditor.getDescent();
+      int endY = myEditor.visibleLineToY(foldEnd) + myEditor.getLineHeight() -
+                 myEditor.getDescent();
 
-    doForVisibleFoldRegions(
-      new NullableFunction<FoldRegion, Void>() {
-        @Override
-        public Void fun(FoldRegion foldRegion) {
-          drawAnchor(foldRegion, width, clip, g, anchorX, false, true);
-          return null;
-        }
-      },
-      firstVisibleOffset,
-      lastVisibleOffset
-    );
+      if (startY <= clip.y + clip.height && endY + 1 + myEditor.getDescent() >= clip.y) {
+        int lineX = anchorX + width / 2;
+
+        g.setColor(getOutlineColor(true));
+        UIUtil.drawLine(g, lineX, startY, lineX, endY);
+      }
+    }
   }
 
   @Override
@@ -911,52 +876,35 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
 
   public int getHeadCenterY(FoldRegion foldRange) {
     int width = getFoldingAnchorWidth();
-    int foldStart = offsetToVisualLine(foldRange.getStartOffset());
+    int foldStart = myEditor.offsetToVisualLine(foldRange.getStartOffset());
 
     return myEditor.visibleLineToY(foldStart) + myEditor.getLineHeight() - myEditor.getDescent() - width / 2;
   }
 
-  private void drawAnchor(FoldRegion foldRange, int width, Rectangle clip, Graphics2D g,
-                          int anchorX, boolean active, boolean paintBackground) {
-    if (!foldRange.isValid()) {
-      return;
-    }
-    int startOffset = foldRange.getStartOffset();
+  private void drawAnchor(int width, Rectangle clip, Graphics2D g, int anchorX, int visualLine,
+                          DisplayedFoldingAnchor.Type type, boolean active) {
 
-    final int endOffset = getEndOffset(foldRange);
-    if (!isFoldingPossible(startOffset, endOffset)) {
-      return;
-    }
-
-    int foldStart = offsetToVisualLine(startOffset);
-    int y = myEditor.visibleLineToY(foldStart) + myEditor.getLineHeight() - myEditor.getDescent() -
-            width;
     int height = width + 2;
-
-    final FoldingGroup group = foldRange.getGroup();
-
-    final boolean drawTop = group == null || myEditor.getFoldingModel().getFirstRegion(group, foldRange) == foldRange;
-    if (!foldRange.isExpanded()) {
-      if (y <= clip.y + clip.height && y + height >= clip.y) {
-        if (drawTop) {
-          drawSquareWithPlus(g, anchorX, y, width, active, paintBackground);
+    int y;
+    switch (type) {
+      case COLLAPSED:
+        y = myEditor.visibleLineToY(visualLine) + myEditor.getLineHeight() - myEditor.getDescent() - width;
+        if (y <= clip.y + clip.height && y + height >= clip.y) {
+          drawSquareWithPlus(g, anchorX, y, width, active);
         }
-      }
-    }
-    else {
-      int foldEnd = offsetToVisualLine(endOffset);
-      int endY = myEditor.visibleLineToY(foldEnd) + myEditor.getLineHeight() -
-                 myEditor.getDescent();
-
-      if (y <= clip.y + clip.height && y + height >= clip.y) {
-        if (drawTop) {
-          drawDirectedBox(g, anchorX, y, width, height, width - 2, active, paintBackground);
+        break;
+      case EXPANDED_TOP:
+        y = myEditor.visibleLineToY(visualLine) + myEditor.getLineHeight() - myEditor.getDescent() - width;
+        if (y <= clip.y + clip.height && y + height >= clip.y) {
+          drawDirectedBox(g, anchorX, y, width, height, width - 2, active);
         }
-      }
-
-      if (endY - height <= clip.y + clip.height && endY >= clip.y) {
-        drawDirectedBox(g, anchorX, endY, width, -height, -width + 2, active, paintBackground);
-      }
+        break;
+      case EXPANDED_BOTTOM:
+        y = myEditor.visibleLineToY(visualLine) + myEditor.getLineHeight() - myEditor.getDescent();
+        if (y - height <= clip.y + clip.height && y >= clip.y) {
+          drawDirectedBox(g, anchorX, y, width, -height, -width + 2, active);
+        }
+        break;
     }
   }
 
@@ -972,7 +920,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
                                int width,
                                int height,
                                int baseHeight,
-                               boolean active, boolean paintBackground) {
+                               boolean active) {
     Object antialiasing = g.getRenderingHint(RenderingHints.KEY_ANTIALIASING);
     if (SystemInfo.isMac && SystemInfo.JAVA_VERSION.startsWith("1.4.1") || UIUtil.isRetina()) {
       g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
@@ -982,19 +930,15 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
       int[] xPoints = {anchorX, anchorX + width, anchorX + width, anchorX + width / 2, anchorX};
       int[] yPoints = {y, y, y + baseHeight, y + height, y + baseHeight};
 
-      if (paintBackground) {
-        g.setColor(myEditor.getBackgroundColor());
+      g.setColor(myEditor.getBackgroundColor());
+      g.fillPolygon(xPoints, yPoints, 5);
 
-        g.fillPolygon(xPoints, yPoints, 5);
-      }
-      else {
-        g.setColor(getOutlineColor(active));
-        g.drawPolygon(xPoints, yPoints, 5);
+      g.setColor(getOutlineColor(active));
+      g.drawPolygon(xPoints, yPoints, 5);
 
-        //Minus
-        int minusHeight = y + baseHeight / 2 + (height - baseHeight) / 4;
-        UIUtil.drawLine(g, anchorX + 2, minusHeight, anchorX + width - 2, minusHeight);
-      }
+      //Minus
+      int minusHeight = y + baseHeight / 2 + (height - baseHeight) / 4;
+      UIUtil.drawLine(g, anchorX + 2, minusHeight, anchorX + width - 2, minusHeight);
     }
     finally {
       g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, antialiasing);
@@ -1005,9 +949,8 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
                                   int anchorX,
                                   int y,
                                   int width,
-                                  boolean active,
-                                  boolean paintBackground) {
-    drawSquareWithMinus(g, anchorX, y, width, active, paintBackground);
+                                  boolean active) {
+    drawSquareWithMinus(g, anchorX, y, width, active);
 
     UIUtil.drawLine(g, anchorX + width / 2, y + 2, anchorX + width / 2, y + width - 2);
   }
@@ -1017,37 +960,16 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
                                    int anchorX,
                                    int y,
                                    int width,
-                                   boolean active,
-                                   boolean paintBackground) {
-    if (paintBackground) {
-      g.setColor(myEditor.getBackgroundColor());
-      g.fillRect(anchorX, y, width, width);
-    }
-    else {
-      g.setColor(getOutlineColor(active));
-      g.drawRect(anchorX, y, width, width);
+                                   boolean active) {
+    g.setColor(myEditor.getBackgroundColor());
+    g.fillRect(anchorX, y, width, width);
 
-      // Draw plus
-      if (!active) g.setColor(getOutlineColor(true));
-      UIUtil.drawLine(g, anchorX + 2, y + width / 2, anchorX + width - 2, y + width / 2);
-    }
-  }
+    g.setColor(getOutlineColor(active));
+    g.drawRect(anchorX, y, width, width);
 
-  private void drawFoldingLines(FoldRegion foldRange, Rectangle clip, int width, int anchorX, Graphics2D g) {
-    if (foldRange.isExpanded() && foldRange.isValid()) {
-      int foldStart = offsetToVisualLine(foldRange.getStartOffset());
-      int foldEnd = offsetToVisualLine(getEndOffset(foldRange));
-      int startY = myEditor.visibleLineToY(foldStart + 1) - myEditor.getDescent();
-      int endY = myEditor.visibleLineToY(foldEnd) + myEditor.getLineHeight() -
-                 myEditor.getDescent();
-
-      if (startY > clip.y + clip.height || endY + 1 + myEditor.getDescent() < clip.y) return;
-
-      int lineX = anchorX + width / 2;
-
-      g.setColor(getOutlineColor(true));
-      UIUtil.drawLine(g, lineX, startY, lineX, endY);
-    }
+    // Draw plus
+    if (!active) g.setColor(getOutlineColor(true));
+    UIUtil.drawLine(g, anchorX + 2, y + width / 2, anchorX + width - 2, y + width / 2);
   }
 
   private int getFoldingAnchorWidth() {
@@ -1135,53 +1057,15 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     int anchorX = getFoldingAreaOffset();
     int anchorWidth = getFoldingAnchorWidth();
 
-    FoldRegion[] visibleRanges = myEditor.getFoldingModel().fetchVisible();
-    for (FoldRegion foldRange : visibleRanges) {
-      if (!foldRange.isValid()) continue;
-      final FoldingGroup group = foldRange.getGroup();
-      if (group != null && myEditor.getFoldingModel().getFirstRegion(group, foldRange) != foldRange) {
-        continue;
-      }
+    int neighbourhoodStartOffset = myEditor.logicalPositionToOffset(myEditor.xyToLogicalPosition(new Point(0, y - myEditor.getLineHeight())));
+    int neighbourhoodEndOffset = myEditor.logicalPositionToOffset(myEditor.xyToLogicalPosition(new Point(0, y + myEditor.getLineHeight())));
 
-      int foldStart = offsetToVisualLine(foldRange.getStartOffset());
-      final int endOffset = getEndOffset(foldRange);
-      int foldEnd = offsetToVisualLine(endOffset);
-      if (!isFoldingPossible(foldRange.getStartOffset(), endOffset)) {
-        continue;
-      }
-
-      if (rectangleByFoldOffset(foldStart, anchorWidth, anchorX).contains(x, y)) return foldRange;
-      if ((group == null || foldRange.isExpanded()) && rectangleByFoldOffset(foldEnd, anchorWidth, anchorX).contains(x, y)) return foldRange;
+    Collection<DisplayedFoldingAnchor> displayedAnchors = myAnchorsDisplayStrategy.getAnchorsToDisplay(neighbourhoodStartOffset, neighbourhoodEndOffset, null);
+    for (DisplayedFoldingAnchor anchor : displayedAnchors) {
+      if (rectangleByFoldOffset(anchor.visualLine, anchorWidth, anchorX).contains(x, y)) return anchor.foldRegion;
     }
 
     return null;
-  }
-
-  /**
-   * Allows to answer if there may be folding for the given offsets.
-   * <p/>
-   * The rule is that we can fold range that occupies multiple logical or visual lines.
-   *
-   * @param startOffset   start offset of the target region to check
-   * @param endOffset     end offset of the target region to check
-   * @return
-   */
-  private boolean isFoldingPossible(int startOffset, int endOffset) {
-    Document document = myEditor.getDocument();
-    if (startOffset >= document.getTextLength()) {
-      return false;
-    }
-
-    int endOffsetToUse = Math.min(endOffset, document.getTextLength());
-    if (endOffsetToUse <= startOffset) {
-      return false;
-    }
-
-    if (document.getLineNumber(startOffset) != document.getLineNumber(endOffsetToUse)) {
-      return true;
-    }
-    return myEditor.getSettings().isAllowSingleLogicalLineFolding()
-      && !myEditor.getSoftWrapModel().getSoftWrapsForRange(startOffset, endOffsetToUse).isEmpty();
   }
 
   @SuppressWarnings("SuspiciousNameCombination")

@@ -25,16 +25,13 @@ import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.platform.ProjectTemplate;
 import com.intellij.platform.ProjectTemplatesFactory;
 import com.intellij.platform.templates.ArchivedTemplatesFactory;
-import com.intellij.platform.templates.LocalArchivedTemplate;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 
 /**
  * @author Dmitry Avdeev
@@ -54,35 +51,12 @@ public class CreateFromTemplateMode extends WizardMode {
         List<ProjectTemplate> values = Arrays.asList(templates);
         if (!values.isEmpty()) {
           Icon icon = factory.getGroupIcon(group);
-          TemplatesGroup templatesGroup = new TemplatesGroup(group, null, icon, factory.getGroupWeight(group));
-          if (icon != null) {
-            Collection<ProjectTemplate> collection = groups.remove(templatesGroup);
-            groups.putValues(templatesGroup, values);
-            if (collection != null) {
-              groups.putValues(templatesGroup, collection);
-            }
-          }
-          else {
-            groups.putValues(templatesGroup, values);
-          }
+          TemplatesGroup templatesGroup = new TemplatesGroup(group, null, icon, factory.getGroupWeight(group), null, group);
+          groups.putValues(templatesGroup, values);
         }
       }
     }
-    final MultiMap<TemplatesGroup, ProjectTemplate> sorted = new MultiMap<TemplatesGroup, ProjectTemplate>();
-    // put single leafs under "Other"
-    for (Map.Entry<TemplatesGroup, Collection<ProjectTemplate>> entry : groups.entrySet()) {
-      Collection<ProjectTemplate> templates = entry.getValue();
-      String name = entry.getKey().getName();
-      if (templates.size() == 1 && !ProjectTemplatesFactory.CUSTOM_GROUP.equals(name) && !"Java".equals(name)) {
-
-        if (!(templates.iterator().next() instanceof LocalArchivedTemplate)) {
-          sorted.putValues(new TemplatesGroup(ProjectTemplatesFactory.OTHER_GROUP, null, null, -1), templates);
-          continue;
-        }
-      }
-      sorted.putValues(entry.getKey(), templates);
-    }
-    return sorted;
+    return groups;
   }
 
   @NotNull

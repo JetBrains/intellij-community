@@ -46,7 +46,7 @@ class PostfixTemplatesCompletionProvider extends CompletionProvider<CompletionPa
         PostfixTemplate template = postfixLiveTemplate.getTemplateByKey(computedKey);
         if (template != null) {
           result = result.withPrefixMatcher(computedKey);
-          result.addElement(new PostfixTemplateLookupElement(template, postfixLiveTemplate.getShortcut()));
+          result.addElement(new PostfixTemplateLookupElement(postfixLiveTemplate, template, computedKey, true));
         }
       }
 

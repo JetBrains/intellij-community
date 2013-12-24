@@ -21,6 +21,7 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.codeInsight.template.postfix.settings.PostfixTemplatesSettings;
 import com.intellij.codeInsight.template.postfix.templates.InstanceofExpressionPostfixTemplate;
+import com.intellij.codeInsight.template.postfix.templates.NotNullCheckPostfixTemplate;
 import com.intellij.codeInsight.template.postfix.templates.PostfixTemplate;
 import com.intellij.codeInsight.template.postfix.templates.SwitchStatementPostfixTemplate;
 import com.intellij.util.containers.ContainerUtil;
@@ -34,6 +35,10 @@ public class TemplatesCompletionTest extends CompletionAutoPopupTestCase {
 
   public void testShowTemplateInAutoPopup() {
     doAutoPopupTest("instanceof", InstanceofExpressionPostfixTemplate.class);
+  }
+
+  public void testShowAutoPopupForAliases() {
+    doAutoPopupTest("nn", NotNullCheckPostfixTemplate.class);
   }
 
   public void testDoNotShowTemplateIfPluginIsDisabled() {
