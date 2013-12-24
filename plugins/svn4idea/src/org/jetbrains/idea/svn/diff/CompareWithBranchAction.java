@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.jetbrains.idea.svn.actions;
+package org.jetbrains.idea.svn.diff;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -43,6 +43,7 @@ import com.intellij.util.WaitForProgressToShow;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.*;
+import org.jetbrains.idea.svn.actions.SelectBranchPopup;
 import org.jetbrains.idea.svn.branchConfig.SvnBranchConfigurationNew;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.status.SvnDiffEditor;
@@ -73,7 +74,7 @@ import java.util.List;
  * @author yole
  */
 public class CompareWithBranchAction extends AnAction implements DumbAware {
-  private static final Logger LOG = Logger.getInstance("#org.jetbrains.idea.svn.actions.CompareWithBranchAction");
+  private static final Logger LOG = Logger.getInstance("#org.jetbrains.idea.svn.diff.CompareWithBranchAction");
 
   public void actionPerformed(AnActionEvent e) {
     Project project = e.getData(CommonDataKeys.PROJECT);
