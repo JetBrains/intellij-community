@@ -27,9 +27,9 @@ import org.jetbrains.idea.svn.SvnVcs;
 public class SvnRepositoryBinaryContentRevision extends SvnRepositoryContentRevision implements BinaryContentRevision {
   private byte[] myBinaryContent;
 
-  public SvnRepositoryBinaryContentRevision(final SvnVcs vcs, final String repositoryRoot, final String path,
+  public SvnRepositoryBinaryContentRevision(final SvnVcs vcs, final String path,
                                             @Nullable final FilePath localPath, final long revision) {
-    super(vcs, repositoryRoot, path, localPath, revision);
+    super(vcs, path, localPath, revision);
   }
 
   @Nullable

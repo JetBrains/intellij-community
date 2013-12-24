@@ -39,7 +39,6 @@ import com.intellij.openapi.vcs.impl.ContentRevisionCache;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.*;
-import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 
@@ -48,24 +47,16 @@ import java.io.IOException;
 import java.io.OutputStream;
 
 public class SvnRepositoryContentRevision implements ContentRevision, MarkerVcsContentRevision {
-  private final String myRepositoryRoot;
   private final SvnVcs myVcs;
   private final String myPath;
   @NotNull private final FilePath myFilePath;
   private final long myRevision;
 
-  SvnRepositoryContentRevision(final SvnVcs vcs, final String repositoryRoot, final String path, @Nullable final FilePath localPath,
+  public SvnRepositoryContentRevision(final SvnVcs vcs, final String path, @Nullable final FilePath localPath,
                                       final long revision) {
     myVcs = vcs;
     myPath = path;
-    myRepositoryRoot = repositoryRoot;
-    if (localPath != null) {
-      myFilePath = localPath;
-    }
-    else {
-      final String fullPath = SvnUtil.appendMultiParts(repositoryRoot, myPath);
-      myFilePath = VcsContextFactory.SERVICE.getInstance().createFilePathOnNonLocal(fullPath, false);
-    }
+    myFilePath = localPath != null ? localPath : VcsContextFactory.SERVICE.getInstance().createFilePathOnNonLocal(myPath, false);
     myRevision = revision;
   }
 
@@ -117,15 +108,16 @@ public class SvnRepositoryContentRevision implements ContentRevision, MarkerVcsC
 
   public static SvnRepositoryContentRevision create(final SvnVcs vcs, final String repositoryRoot, final String path,
                                                     @Nullable final FilePath localPath, final long revision) {
+    // TODO: not clear why filename and file type are only checked if path contains '/'
     int fileNamePos = path.lastIndexOf('/');
     if (fileNamePos >= 0) {
       String fileName = path.substring(fileNamePos);
       final FileType fileType = FileTypeManager.getInstance().getFileTypeByFileName(fileName);
       if (fileType.isBinary()) {
-        return new SvnRepositoryBinaryContentRevision(vcs, repositoryRoot, path, localPath, revision);
+        return new SvnRepositoryBinaryContentRevision(vcs, SvnUtil.appendMultiParts(repositoryRoot, path), localPath, revision);
       }
     }
-    return new SvnRepositoryContentRevision(vcs, repositoryRoot, path, localPath, revision);
+    return new SvnRepositoryContentRevision(vcs, SvnUtil.appendMultiParts(repositoryRoot, path), localPath, revision);
   }
 
   @Override
@@ -172,12 +164,7 @@ public class SvnRepositoryContentRevision implements ContentRevision, MarkerVcsC
   }
 
   public String getFullPath() {
-    String fullPath = myRepositoryRoot;
-    if (!fullPath.endsWith("/") && !myPath.startsWith("/")) {
-      fullPath += "/";
-    }
-    fullPath += myPath;
-    return fullPath;
+    return myPath;
   }
 
   public String getPath() {
