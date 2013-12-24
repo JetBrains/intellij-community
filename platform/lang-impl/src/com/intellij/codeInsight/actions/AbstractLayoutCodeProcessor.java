@@ -34,6 +34,7 @@ import com.intellij.openapi.progress.util.ProgressWindow;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectCoreUtil;
+import com.intellij.openapi.roots.GeneratedSourcesFilter;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.ex.MessagesEx;
@@ -148,17 +149,17 @@ public abstract class AbstractLayoutCodeProcessor {
   {
     myProject = project;
     myModule = null;
-    myFiles = filterFiles(files);
+    myFiles = filterFilesTo(files, new ArrayList<PsiFile>());
     myProgressText = progressText;
     myCommandName = commandName;
     myPostRunnable = postRunnable;
     myProcessChangedTextOnly = processChangedTextOnly;
   }
 
-  private static List<PsiFile> filterFiles(PsiFile[] files) {
-    ArrayList<PsiFile> list = new ArrayList<PsiFile>();
+  private static List<PsiFile> filterFilesTo(PsiFile[] files, List<PsiFile> list) {
+    GeneratedSourcesFilter[] filters = GeneratedSourcesFilter.EP_NAME.getExtensions();
     for (PsiFile file : files) {
-      if (canBeFormatted(file)) {
+      if (canBeFormatted(file, filters)) {
         list.add(file);
       }
     }
@@ -413,24 +414,28 @@ public abstract class AbstractLayoutCodeProcessor {
     }, array.size() > 1);
   }
 
-  private static boolean canBeFormatted(PsiFile file) {
+  private static boolean canBeFormatted(PsiFile file, GeneratedSourcesFilter[] generatedSourcesFilters) {
     if (LanguageFormatting.INSTANCE.forContext(file) == null) {
       return false;
     }
     VirtualFile virtualFile = file.getVirtualFile();
-    return virtualFile == null || !ProjectCoreUtil.isProjectOrWorkspaceFile(virtualFile);
-  }
+    if (virtualFile == null) return true;
 
-  private static void collectFilesToProcess(ArrayList<PsiFile> array, PsiDirectory dir, boolean recursive) {
-    PsiFile[] files = dir.getFiles();
-    for (PsiFile file : files) {
-      if (canBeFormatted(file)) {
-        array.add(file);
+    if (ProjectCoreUtil.isProjectOrWorkspaceFile(virtualFile)) return false;
+
+    for (GeneratedSourcesFilter filter : generatedSourcesFilters) {
+      if (filter.isGeneratedSource(virtualFile, file.getProject())) {
+        return false;
       }
     }
+    return true;
+  }
+
+  private static void collectFilesToProcess(List<PsiFile> result, PsiDirectory dir, boolean recursive) {
+    filterFilesTo(dir.getFiles(), result);
     if (recursive) {
       for (PsiDirectory subdir : dir.getSubdirectories()) {
-        collectFilesToProcess(array, subdir, recursive);
+        collectFilesToProcess(result, subdir, recursive);
       }
     }
   }
