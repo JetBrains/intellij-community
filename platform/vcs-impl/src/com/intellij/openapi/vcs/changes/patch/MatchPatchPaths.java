@@ -89,10 +89,6 @@ public class MatchPatchPaths {
               }
             }
           }
-          // if we found some match for lower directory, lets stop with checking its parents..
-          if (best != null) {
-            break;
-          }
         }
       }
       if (best != null) {
