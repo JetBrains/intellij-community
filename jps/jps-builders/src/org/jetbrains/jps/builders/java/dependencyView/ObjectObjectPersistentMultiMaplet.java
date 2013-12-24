@@ -22,6 +22,7 @@ import com.intellij.util.io.KeyDescriptor;
 import com.intellij.util.io.PersistentHashMap;
 import gnu.trove.TObjectObjectProcedure;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.jps.builders.storage.BuildDataCorruptedException;
 
 import java.io.*;
 import java.util.Collection;
@@ -53,7 +54,7 @@ public class ObjectObjectPersistentMultiMaplet<K, V extends Streamable> extends 
           return collection == null? NULL_COLLECTION : collection;
         }
         catch (IOException e) {
-          throw new RuntimeException(e);
+          throw new BuildDataCorruptedException(e);
         }
       }
     };
@@ -66,7 +67,7 @@ public class ObjectObjectPersistentMultiMaplet<K, V extends Streamable> extends 
       return myMap.containsMapping(key);
     }
     catch (IOException e) {
-      throw new RuntimeException(e);
+      throw new BuildDataCorruptedException(e);
     }
   }
 
@@ -88,7 +89,7 @@ public class ObjectObjectPersistentMultiMaplet<K, V extends Streamable> extends 
       }
     }
     catch (IOException e) {
-      throw new RuntimeException(e);
+      throw new BuildDataCorruptedException(e);
     }
   }
 
@@ -105,7 +106,7 @@ public class ObjectObjectPersistentMultiMaplet<K, V extends Streamable> extends 
       });
     }
     catch (IOException e) {
-      throw new RuntimeException(e);
+      throw new BuildDataCorruptedException(e);
     }
   }
 
@@ -132,7 +133,7 @@ public class ObjectObjectPersistentMultiMaplet<K, V extends Streamable> extends 
       }
     }
     catch (IOException e) {
-      throw new RuntimeException(e);
+      throw new BuildDataCorruptedException(e);
     }
   }
 
@@ -154,7 +155,7 @@ public class ObjectObjectPersistentMultiMaplet<K, V extends Streamable> extends 
       }
     }
     catch (IOException e) {
-      throw new RuntimeException(e);
+      throw new BuildDataCorruptedException(e);
     }
   }
 
@@ -165,7 +166,7 @@ public class ObjectObjectPersistentMultiMaplet<K, V extends Streamable> extends 
       myMap.remove(key);
     }
     catch (IOException e) {
-      throw new RuntimeException(e);
+      throw new BuildDataCorruptedException(e);
     }
   }
 
@@ -198,7 +199,7 @@ public class ObjectObjectPersistentMultiMaplet<K, V extends Streamable> extends 
       myMap.close();
     }
     catch (IOException e) {
-      throw new RuntimeException(e);
+      throw new BuildDataCorruptedException(e);
     }
   }
 
@@ -223,13 +224,13 @@ public class ObjectObjectPersistentMultiMaplet<K, V extends Streamable> extends 
             return procedure.execute(key, myMap.get(key));
           }
           catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new BuildDataCorruptedException(e);
           }
         }
       });
     }
     catch (IOException e) {
-      throw new RuntimeException(e);
+      throw new BuildDataCorruptedException(e);
     }
   }
 

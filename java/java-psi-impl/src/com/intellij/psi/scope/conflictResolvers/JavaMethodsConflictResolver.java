@@ -454,8 +454,8 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
     final PsiSubstitutor classSubstitutor2 = info2.getSubstitutor();
 
     final int max = Math.max(params1.length, params2.length);
-    PsiType[] types1 = new PsiType[max];
-    PsiType[] types2 = new PsiType[max];
+    PsiType[] types1 = PsiType.createArray(max);
+    PsiType[] types2 = PsiType.createArray(max);
     final boolean varargsPosition = applicabilityLevel == MethodCandidateInfo.ApplicabilityLevel.VARARGS;
     for (int i = 0; i < max; i++) {
       ProgressManager.checkCanceled();
@@ -642,7 +642,7 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
   }
 
   private static PsiType[] typesAtSite(PsiType[] types1, PsiSubstitutor siteSubstitutor1) {
-    final PsiType[] types = new PsiType[types1.length];
+    final PsiType[] types = PsiType.createArray(types1.length);
     for (int i = 0; i < types1.length; i++) {
       types[i] = siteSubstitutor1.substitute(types1[i]);
     }

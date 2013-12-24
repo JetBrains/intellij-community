@@ -323,7 +323,7 @@ public class PsiUtil {
       }
 
       if (stopAt == expression) {
-        return result.toArray(new PsiType[result.size()]);
+        return result.toArray(PsiType.createArray(result.size()));
       }
     }
 
@@ -340,7 +340,7 @@ public class PsiUtil {
       }
     }
 
-    return result.toArray(new PsiType[result.size()]);
+    return result.toArray(PsiType.createArray(result.size()));
   }
 
   @Nullable
@@ -390,8 +390,9 @@ public class PsiUtil {
     }
   }
 
-  public static Iterable<PsiClass> iterateSupers(final @NotNull PsiClass psiClass, final boolean includeSelf) {
+  public static Iterable<PsiClass> iterateSupers(@NotNull final PsiClass psiClass, final boolean includeSelf) {
     return new Iterable<PsiClass>() {
+      @Override
       public Iterator<PsiClass> iterator() {
         return new Iterator<PsiClass>() {
           TIntStack indices = new TIntStack();
@@ -413,6 +414,7 @@ public class PsiUtil {
             pushSuper(psiClass);
           }
 
+          @Override
           public boolean hasNext() {
             nextElement();
             return current != null;
@@ -450,6 +452,7 @@ public class PsiUtil {
             indices.push(0);
           }
 
+          @Override
           @NotNull
           public PsiClass next() {
             nextElement();
@@ -458,6 +461,7 @@ public class PsiUtil {
             return current;
           }
 
+          @Override
           public void remove() {
             throw new IllegalStateException("should not be called");
           }
@@ -600,7 +604,7 @@ public class PsiUtil {
       PsiClassType classType = (PsiClassType)qualifierType;
       final PsiClassType.ClassResolveResult resolveResult = classType.resolveGenerics();
       GrExpression[] arguments = expr.getArgumentList().getExpressionArguments();
-      PsiType[] argTypes = new PsiType[arguments.length];
+      PsiType[] argTypes = PsiType.createArray(arguments.length);
       for (int i = 0; i < arguments.length; i++) {
         PsiType argType = arguments[i].getType();
         if (argType == null) argType = TypesUtil.getJavaLangObject(expr);

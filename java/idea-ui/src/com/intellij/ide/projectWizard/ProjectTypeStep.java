@@ -150,6 +150,7 @@ public class ProjectTypeStep extends ModuleWizardStep implements Disposable, Act
       }
     });
 
+    myTemplatesList.setNewProject(context.isCreatingNewProject());
     myTemplatesList.addListSelectionListener(new ListSelectionListener() {
       @Override
       public void valueChanged(ListSelectionEvent e) {
@@ -192,15 +193,15 @@ public class ProjectTypeStep extends ModuleWizardStep implements Disposable, Act
   private boolean selectCustomOptions(Collection<ProjectTemplate> templates) {
     if (templates.size() == 1) {
       ModuleBuilder builder = myBuilders.get(templates.iterator().next());
-      JComponent panel = builder.getCustomOptionsPanel(this);
-      if (panel != null) {
-        String card = builder.getBuilderId();
-        if (myCards.add(card)) {
-          myOptionsPanel.add(panel, card);
-        }
-        ((CardLayout)myOptionsPanel.getLayout()).show(myOptionsPanel, card);
-        return true;
+      String card = builder.getBuilderId();
+      if (!myCards.contains(card)) {
+        JComponent panel = builder.getCustomOptionsPanel(this);
+        if (panel == null) return false;
+        myCards.add(card);
+        myOptionsPanel.add(panel, card);
       }
+      ((CardLayout)myOptionsPanel.getLayout()).show(myOptionsPanel, card);
+      return true;
     }
     return false;
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,12 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.xdebugger.impl.ui.tree.nodes;
+package org.jetbrains.jps.builders.storage;
 
-import com.intellij.xdebugger.evaluation.XDebuggerEvaluator;
+import java.io.IOException;
 
 /**
+ * This exception indicates that some internal build storage cannot be loaded or saved properly. Rebuild will be requested to recover from
+ * the corruption.
+ *
  * @author nik
  */
-public abstract class XEvaluationCallbackBase implements XDebuggerEvaluator.XEvaluationCallback {
+public class BuildDataCorruptedException extends RuntimeException {
+  public BuildDataCorruptedException(IOException cause) {
+    super(cause);
+  }
+
+  @Override
+  public synchronized IOException getCause() {
+    return (IOException)super.getCause();
+  }
 }

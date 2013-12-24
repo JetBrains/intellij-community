@@ -78,11 +78,13 @@ public class GroovyPsiManager {
     myProject = project;
 
     ((PsiManagerEx)PsiManager.getInstance(myProject)).registerRunnableToRunOnAnyChange(new Runnable() {
+      @Override
       public void run() {
         dropTypesCache();
       }
     });
     ((PsiManagerEx)PsiManager.getInstance(myProject)).registerRunnableToRunOnChange(new Runnable() {
+      @Override
       public void run() {
         myClassCache.clear();
       }
@@ -90,6 +92,7 @@ public class GroovyPsiManager {
 
     final MessageBusConnection connection = myProject.getMessageBus().connect();
     connection.subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootAdapter() {
+      @Override
       public void rootsChanged(ModuleRootEvent event) {
         dropTypesCache();
         myClassCache.clear();
@@ -188,19 +191,22 @@ public class GroovyPsiManager {
 
 
   private static final PsiType UNKNOWN_TYPE = new PsiType(PsiAnnotation.EMPTY_ARRAY) {
+    @NotNull
     @Override
     public String getPresentableText() {
-      return null;
+      return "?";
     }
 
+    @NotNull
     @Override
     public String getCanonicalText() {
-      return null;
+      return "?";
     }
 
+    @NotNull
     @Override
     public String getInternalCanonicalText() {
-      return null;
+      return "?";
     }
 
     @Override
@@ -209,7 +215,7 @@ public class GroovyPsiManager {
     }
 
     @Override
-    public boolean equalsToText(@NonNls String text) {
+    public boolean equalsToText(@NotNull @NonNls String text) {
       return false;
     }
 

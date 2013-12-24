@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,6 +42,7 @@ public class ExtractClosureHelperImpl extends ExtractInfoHelperBase implements G
   private final boolean myGenerateDelegate;
   private final int myReplaceFieldsWithGetters;
   private final boolean myForceReturn;
+  private final boolean myReplaceAllOccurrences;
 
   private PsiType myType = null;
   private boolean myForceDef;
@@ -52,9 +53,12 @@ public class ExtractClosureHelperImpl extends ExtractInfoHelperBase implements G
                                   TIntArrayList toRemove,
                                   boolean generateDelegate,
                                   int replaceFieldsWithGetters,
-                                  boolean forceReturn, boolean forceDef) {
+                                  boolean forceReturn,
+                                  boolean replaceAllOccurrences,
+                                  boolean forceDef) {
     super(info);
     myForceReturn = forceReturn;
+    myReplaceAllOccurrences = replaceAllOccurrences;
     myForceDef = forceDef;
     myOwner = info.getToReplaceIn();
     myToSearchFor = info.getToSearchFor();
@@ -99,7 +103,7 @@ public class ExtractClosureHelperImpl extends ExtractInfoHelperBase implements G
 
   @Override
   public boolean replaceAllOccurrences() {
-    return false;
+    return myReplaceAllOccurrences;
   }
 
   @Override

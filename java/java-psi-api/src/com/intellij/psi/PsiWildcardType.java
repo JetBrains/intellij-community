@@ -35,6 +35,7 @@ public class PsiWildcardType extends PsiType {
   @NonNls private static final String EXTENDS_PREFIX = "? extends ";
   @NonNls private static final String SUPER_PREFIX = "? super ";
 
+  @NotNull
   private final PsiManager myManager;
   private final boolean myIsExtending;
   private final PsiType myBound;
@@ -79,6 +80,7 @@ public class PsiWildcardType extends PsiType {
     return annotations.length == 0 ? this : new PsiWildcardType(this, annotations);
   }
 
+  @NotNull
   @Override
   public String getPresentableText() {
     return getAnnotationsTextPrefix(false, false, true) +
@@ -86,10 +88,12 @@ public class PsiWildcardType extends PsiType {
   }
 
   @Override
+  @NotNull
   public String getCanonicalText() {
-    return (myBound == null ? "?" : (myIsExtending ? EXTENDS_PREFIX : SUPER_PREFIX) + myBound.getCanonicalText());
+    return myBound == null ? "?" : (myIsExtending ? EXTENDS_PREFIX : SUPER_PREFIX) + myBound.getCanonicalText();
   }
 
+  @NotNull
   @Override
   public String getInternalCanonicalText() {
     return getAnnotationsTextPrefix(true, false, true) +
@@ -115,7 +119,7 @@ public class PsiWildcardType extends PsiType {
   }
 
   @Override
-  public boolean equalsToText(String text) {
+  public boolean equalsToText(@NotNull String text) {
     if (myBound == null) return "?".equals(text);
     if (myIsExtending) {
       return text.startsWith(EXTENDS_PREFIX) && myBound.equalsToText(text.substring(EXTENDS_PREFIX.length()));
@@ -124,7 +128,7 @@ public class PsiWildcardType extends PsiType {
       return text.startsWith(SUPER_PREFIX) && myBound.equalsToText(text.substring(SUPER_PREFIX.length()));
     }
   }
-
+  @NotNull
   public PsiManager getManager() {
     return myManager;
   }
@@ -204,6 +208,7 @@ public class PsiWildcardType extends PsiType {
    *
    * @return <code>PsiType</code> representing a lower bound. Never returns <code>null</code>.
    */
+  @NotNull
   public PsiType getExtendsBound() {
     if (myBound == null || !myIsExtending) {
       return getJavaLangObject(myManager, getResolveScope());
@@ -222,6 +227,7 @@ public class PsiWildcardType extends PsiType {
    *
    * @return <code>PsiType</code> representing an upper bound. Never returns <code>null</code>.
    */
+  @NotNull
   public PsiType getSuperBound() {
     return myBound == null || myIsExtending ? NULL : myBound;
   }

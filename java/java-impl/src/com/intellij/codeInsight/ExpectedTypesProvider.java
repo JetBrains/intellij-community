@@ -163,7 +163,7 @@ public class ExpectedTypesProvider {
       }
     }
 
-    return set.toArray(new PsiType[set.size()]);
+    return set.toArray(PsiType.createArray(set.size()));
   }
 
   private static void processType(@NotNull PsiType type, @NotNull PsiTypeVisitor<PsiType> visitor, @NotNull Set<PsiType> typeSet) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,12 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.xdebugger.impl.ui.tree.nodes;
+package com.intellij.vcs.log.data;
 
-import com.intellij.xdebugger.evaluation.XDebuggerEvaluator;
+public enum LoadMoreStage {
+  /**
+   * Initial table view; "load more" was not requested yet.
+   */
+  INITIAL,
 
-/**
- * @author nik
- */
-public abstract class XEvaluationCallbackBase implements XDebuggerEvaluator.XEvaluationCallback {
+  /**
+   * "Load more" was once requested with a limited number of commits.
+   */
+  LOADED_MORE,
+
+  /**
+   * All commits matching the given filters were requested from the VCS, requesting more won't cause any effect.
+   */
+  ALL_REQUESTED
 }

@@ -173,6 +173,7 @@ libraryLicense(name: "Apache Lucene", libraryName: "lucene-core-2.4.1.jar", vers
 libraryLicense(name: "Apache Sanselan", libraryName: "Sanselan", version: "0.98", license: "Apache 2.0", url: "http://commons.apache.org/sanselan/")
 libraryLicense(name: "Automaton", libraryName: "automaton.jar", version: "1.11", license: "BSD", url: "http://www.brics.dk/automaton/", licenseUrl: "http://www.opensource.org/licenses/bsd-license.php")
 libraryLicense(name: "DTDParser", version: "1.13", license: "LGPL", url: "http://sourceforge.net/projects/dtdparser/", licenseUrl: "http://www.opensource.org/licenses/lgpl-2.1")
+libraryLicense(name: "Gant", version: "1.9.8", libraryName: "gant_groovy2.0-1.9.8.jar", license: "Apache 2.0", url: "http://gant.codehaus.org/", licenseUrl: "http://gant.codehaus.org/Licence")
 libraryLicense(name: "Ganymed", version: "bundled with SVNKit", libraryName: "svnkit.jar", license: "BSD", url: "http://www.ganymed.ethz.ch/ssh2/", licenseUrl: "http://www.ganymed.ethz.ch/ssh2/LICENSE.txt")
 libraryLicense(name: "sqljet", version: "bundled with SVNKit", libraryName: "sqljet.jar", license: "link (commercial license)", url: "http://sqljet.com", licenseUrl: "http://svnkit.com/license.html")
 libraryLicense(name: "svnkit-javahl", version: "bundled with SVNKit", libraryName: "svnkit-javahl.jar", license: "link (commercial license)", url: "http://www.svnkit.com/", licenseUrl: "http://svnkit.com/license.html")

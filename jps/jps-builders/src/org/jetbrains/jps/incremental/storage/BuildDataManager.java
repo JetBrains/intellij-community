@@ -20,6 +20,7 @@ import com.intellij.openapi.util.AtomicNotNullLazyValue;
 import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.builders.storage.BuildDataCorruptedException;
 import org.jetbrains.jps.builders.BuildTarget;
 import org.jetbrains.jps.builders.impl.BuildTargetChunk;
 import org.jetbrains.jps.builders.impl.storage.BuildTargetStorages;
@@ -101,7 +102,7 @@ public class BuildDataManager implements StorageOwner {
             return new SourceToOutputMappingImpl(new File(getSourceToOutputMapRoot(key), "data"));
           }
           catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new BuildDataCorruptedException(e);
           }
         }
       };
@@ -236,12 +237,8 @@ public class BuildDataManager implements StorageOwner {
             try {
               mappings.close();
             }
-            catch (RuntimeException e) {
-              final Throwable cause = e.getCause();
-              if (cause instanceof IOException) {
-                throw ((IOException)cause);
-              }
-              throw e;
+            catch (BuildDataCorruptedException e) {
+              throw e.getCause();
             }
           }
         }
@@ -294,12 +291,8 @@ public class BuildDataManager implements StorageOwner {
     try {
       return lazy.getValue();
     }
-    catch (RuntimeException e) {
-      final Throwable cause = e.getCause();
-      if (cause instanceof IOException) {
-        throw (IOException)cause;
-      }
-      throw e;
+    catch (BuildDataCorruptedException e) {
+      throw e.getCause();
     }
   }
   

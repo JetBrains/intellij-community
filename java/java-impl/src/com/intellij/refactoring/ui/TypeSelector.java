@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -75,7 +75,7 @@ public class TypeSelector {
   }
 
   public PsiType[] getTypes() {
-    final PsiType[] types = new PsiType[myComboBoxModel.mySuggestions.length];
+    final PsiType[] types = PsiType.createArray(myComboBoxModel.mySuggestions.length);
     for (int i = 0; i < types.length; i++) {
       types[i] = myComboBoxModel.mySuggestions[i].getType();
     }
@@ -147,11 +147,13 @@ public class TypeSelector {
     }
 
     // implements javax.swing.ListModel
+    @Override
     public int getSize() {
       return mySuggestions.length;
     }
 
     // implements javax.swing.ListModel
+    @Override
     public Object getElementAt(int index) {
       return mySuggestions[index];
     }

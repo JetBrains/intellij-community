@@ -17,6 +17,7 @@ package org.jetbrains.jps.builders.java.dependencyView;
 
 import com.intellij.util.io.DataInputOutputUtil;
 import org.jetbrains.asm4.Opcodes;
+import org.jetbrains.jps.builders.storage.BuildDataCorruptedException;
 
 import java.io.DataInput;
 import java.io.DataOutput;
@@ -45,7 +46,7 @@ class Proto implements RW.Savable, Streamable {
       name = DataInputOutputUtil.readINT(in);
     }
     catch (IOException e) {
-      throw new RuntimeException(e);
+      throw new BuildDataCorruptedException(e);
     }
   }
 
@@ -57,7 +58,7 @@ class Proto implements RW.Savable, Streamable {
       DataInputOutputUtil.writeINT(out, name);
     }
     catch (IOException e) {
-      throw new RuntimeException(e);
+      throw new BuildDataCorruptedException(e);
     }
   }
 

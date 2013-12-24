@@ -15,7 +15,7 @@
  */
 package com.intellij.xdebugger.impl.ui.tree.nodes;
 
-import com.intellij.ui.SimpleColoredComponent;
+import com.intellij.ui.ColoredTextContainer;
 import com.intellij.ui.SimpleColoredText;
 import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.util.ArrayUtilRt;
@@ -181,7 +181,7 @@ public abstract class XDebuggerTreeNode implements TreeNode, TreeSpeedSearch.Pat
 
   public abstract void clearChildren();
 
-  public void appendToComponent(SimpleColoredComponent component) {
+  public void appendToComponent(@NotNull ColoredTextContainer component) {
     getText().appendToComponent(component);
 
     XDebuggerTreeNodeHyperlink link = getLink();

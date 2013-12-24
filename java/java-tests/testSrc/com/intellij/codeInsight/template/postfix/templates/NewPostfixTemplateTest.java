@@ -17,20 +17,18 @@ package com.intellij.codeInsight.template.postfix.templates;
 
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author ignatov
- */
 public class NewPostfixTemplateTest extends PostfixTemplateTestCase {
   @NotNull
   @Override
   protected String getSuffix() { return "new"; }
 
-  public void _testNew01() { doTest(); }
-  public void _testNew02() { doTest(); }
-  public void _testNew03() { doTest(); }
-  public void _testNew04() { doTest(); }
-  public void _testNew05() { doTest(); }
-  public void _testNew06() { doTest(); }
-  public void _testNew07() { doTest(); }
-  public void _testNew08() { doTest(); }
+  public void testNew01() { doTest(); }
+  public void testNew02() { doTest(); }
+  public void testNew03() { doTest(); }
+  public void testNew04() { doTest(); }
+  public void testNew05() { doTest(); }
+  public void testNew06() { doTest(); }
+  public void testNew07() { doTest(); }
+  public void testNew08() { doTest(); }
+  public void testNewOnAssignExpression() { doTest(); }
 }

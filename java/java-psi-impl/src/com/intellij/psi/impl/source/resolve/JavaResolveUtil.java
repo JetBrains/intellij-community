@@ -232,7 +232,8 @@ public class JavaResolveUtil {
         CandidateInfo resolveResult = (CandidateInfo)result[i];
         PsiElement resultElement = resolveResult.getElement();
         if (resultElement instanceof PsiClass && ((PsiClass)resultElement).hasTypeParameters()) {
-          result[i] = new CandidateInfo(resolveResult, resolveResult.getSubstitutor().putAll((PsiClass)resultElement, parameters));
+          PsiSubstitutor substitutor = resolveResult.getSubstitutor().putAll((PsiClass)resultElement, parameters);
+          result[i] = new CandidateInfo(resolveResult, substitutor);
         }
       }
     }

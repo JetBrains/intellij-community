@@ -113,7 +113,7 @@ public class TypeProvider {
     final GrParameter[] parameters = method.getParameters();
 
     final TIntArrayList paramInds = new TIntArrayList(parameters.length);
-    final PsiType[] types = new PsiType[parameters.length];
+    final PsiType[] types = PsiType.createArray(parameters.length);
     for (int i = 0; i < parameters.length; i++) {
       if (parameters[i].getTypeElementGroovy() == null) {
         paramInds.add(i);
@@ -122,7 +122,7 @@ public class TypeProvider {
       }
     }
 
-    if (paramInds.size() > 0) {
+    if (!paramInds.isEmpty()) {
       final GrClosureSignature signature = GrClosureSignatureUtil.createSignature(method, PsiSubstitutor.EMPTY);
       MethodReferencesSearch.search(method, true).forEach(new Processor<PsiReference>() {
         @Override

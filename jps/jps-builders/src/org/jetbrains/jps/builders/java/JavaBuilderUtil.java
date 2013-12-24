@@ -27,6 +27,7 @@ import org.jetbrains.jps.builders.BuildRootIndex;
 import org.jetbrains.jps.builders.DirtyFilesHolder;
 import org.jetbrains.jps.builders.java.dependencyView.Callbacks;
 import org.jetbrains.jps.builders.java.dependencyView.Mappings;
+import org.jetbrains.jps.builders.storage.BuildDataCorruptedException;
 import org.jetbrains.jps.incremental.*;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
 import org.jetbrains.jps.incremental.messages.CompilerMessage;
@@ -177,12 +178,8 @@ public class JavaBuilderUtil {
 
       return additionalPassRequired;
     }
-    catch (RuntimeException e) {
-      final Throwable cause = e.getCause();
-      if (cause instanceof IOException) {
-        throw ((IOException)cause);
-      }
-      throw e;
+    catch (BuildDataCorruptedException e) {
+      throw e.getCause();
     }
     finally {
       context.processMessage(new ProgressMessage("")); // clean progress messages

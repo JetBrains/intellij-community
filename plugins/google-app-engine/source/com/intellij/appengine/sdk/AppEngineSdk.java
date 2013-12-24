@@ -21,6 +21,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.util.List;
 
 /**
  * @author nik
@@ -47,7 +48,7 @@ public interface AppEngineSdk {
 
   String getOrmLibDirectoryPath();
 
-  String getLibUserDirectoryPath();
+  List<String> getUserLibraryPaths();
 
   VirtualFile[] getOrmLibSources();
 

@@ -12,6 +12,7 @@ import com.intellij.vcs.log.VcsFullCommitDetails;
 import com.intellij.vcs.log.VcsRef;
 import com.intellij.vcs.log.VcsShortCommitDetails;
 import com.intellij.vcs.log.data.AroundProvider;
+import com.intellij.vcs.log.data.LoadMoreStage;
 import com.intellij.vcs.log.data.RefsModel;
 import com.intellij.vcs.log.graph.render.CommitCell;
 import com.intellij.vcs.log.ui.VcsLogUI;
@@ -19,6 +20,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class NoGraphTableModel extends AbstractVcsLogTableModel<CommitCell, Hash> {
 
@@ -28,14 +30,15 @@ public class NoGraphTableModel extends AbstractVcsLogTableModel<CommitCell, Hash
   @NotNull private final List<VcsFullCommitDetails> myCommits;
   @NotNull private final RefsModel myRefsModel;
   @NotNull private final AroundProvider<Hash> myAroundProvider;
-  private boolean myAllowLoadingMoreRequest;
+  @NotNull private final LoadMoreStage myLoadMoreStage;
+  @NotNull private final AtomicBoolean myLoadMoreWasRequested = new AtomicBoolean();
 
   public NoGraphTableModel(@NotNull VcsLogUI UI, @NotNull List<VcsFullCommitDetails> commits, @NotNull RefsModel refsModel,
-                           boolean allowLoadingMoreRequest) {
+                           @NotNull LoadMoreStage loadMoreStage) {
     myUi = UI;
     myCommits = commits;
     myRefsModel = refsModel;
-    myAllowLoadingMoreRequest = allowLoadingMoreRequest;
+    myLoadMoreStage = loadMoreStage;
     myAroundProvider = new HashAroundProvider();
   }
 
@@ -62,13 +65,11 @@ public class NoGraphTableModel extends AbstractVcsLogTableModel<CommitCell, Hash
 
   @Override
   public void requestToLoadMore() {
-    if (!myAllowLoadingMoreRequest) {
-      return;
+    if (myLoadMoreWasRequested.compareAndSet(false, true)     // Don't send the request to VCS twice
+        && myLoadMoreStage != LoadMoreStage.ALL_REQUESTED) {  // or when everything possible is loaded
+      myUi.getTable().setPaintBusy(true);
+      myUi.getFilterer().requestVcs(myUi.collectFilters(), myLoadMoreStage);
     }
-
-    myUi.getTable().setPaintBusy(true);
-    myUi.getFilterer().requestVcs(myUi.collectFilters());
-    myAllowLoadingMoreRequest = false; // Don't send the request to VCS twice
   }
 
   @Nullable

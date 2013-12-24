@@ -46,11 +46,16 @@ public class SimpleColoredText implements ColoredTextContainer {
   }
 
   @Override
+  public void append(@NotNull String fragment, @NotNull SimpleTextAttributes attributes, Object tag) {
+    append(fragment, attributes);
+  }
+
+  @Override
   public void setIcon(@Nullable Icon icon) {
   }
 
   @Override
-  public void setToolTipText(String text) {
+  public void setToolTipText(@Nullable String text) {
   }
 
   public void clear() {
@@ -59,9 +64,9 @@ public class SimpleColoredText implements ColoredTextContainer {
     myAttributes.clear();
   }
 
-  public void appendToComponent(SimpleColoredComponent component) {
+  public void appendToComponent(@NotNull ColoredTextContainer component) {
     int size = myTexts.size();
-    for (int i=0; i < size; i++){
+    for (int i = 0; i < size; i++) {
       String text = myTexts.get(i);
       SimpleTextAttributes attribute = myAttributes.get(i);
       component.append(text, attribute);

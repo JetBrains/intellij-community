@@ -478,7 +478,8 @@ public class VcsLogDataHolder implements Disposable {
     return myUserRegistry.getUsers();
   }
 
-  public void getFilteredDetailsFromTheVcs(final Collection<VcsLogFilter> filters, final Consumer<List<VcsFullCommitDetails>> success) {
+  public void getFilteredDetailsFromTheVcs(final Collection<VcsLogFilter> filters, final Consumer<List<VcsFullCommitDetails>> success,
+                                           final int maxCount) {
     runInBackground(new ThrowableConsumer<ProgressIndicator, VcsException>() {
       @Override
       public void consume(ProgressIndicator indicator) throws VcsException {
@@ -486,7 +487,7 @@ public class VcsLogDataHolder implements Disposable {
         Collection<List<? extends TimedVcsCommit>> logs = ContainerUtil.newArrayList();
         final Map<Hash, VcsFullCommitDetails> allDetails = ContainerUtil.newHashMap();
         for (Map.Entry<VirtualFile, VcsLogProvider> entry : myLogProviders.entrySet()) {
-          List<? extends VcsFullCommitDetails> details = entry.getValue().getFilteredDetails(entry.getKey(), filters);
+          List<? extends VcsFullCommitDetails> details = entry.getValue().getFilteredDetails(entry.getKey(), filters, maxCount);
           logs.add(getCommitsFromDetails(details));
           for (VcsFullCommitDetails detail : details) {
             allDetails.put(detail.getHash(), detail);

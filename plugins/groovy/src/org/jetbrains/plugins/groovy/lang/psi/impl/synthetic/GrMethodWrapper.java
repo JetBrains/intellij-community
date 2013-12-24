@@ -28,19 +28,22 @@ import org.jetbrains.annotations.Nullable;
 public class GrMethodWrapper extends GrLightMethodBuilder {
 
   private static final PsiType TYPE_MARKER = new PsiType(PsiAnnotation.EMPTY_ARRAY) {
+    @NotNull
     @Override
     public String getPresentableText() {
-      return null;
+      return "?";
     }
 
+    @NotNull
     @Override
     public String getCanonicalText() {
-      return null;
+      return "?";
     }
 
+    @NotNull
     @Override
     public String getInternalCanonicalText() {
-      return null;
+      return "?";
     }
 
     @Override
@@ -49,7 +52,7 @@ public class GrMethodWrapper extends GrLightMethodBuilder {
     }
 
     @Override
-    public boolean equalsToText(@NonNls String text) {
+    public boolean equalsToText(@NotNull @NonNls String text) {
       return false;
     }
 

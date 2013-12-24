@@ -63,11 +63,13 @@ public class GrClosureType extends GrLiteralClassType {
     myTypeArgs = typeArgs;
   }
 
+  @Override
   @NotNull
   public String getClassName() {
     return "Closure";
   }
 
+  @Override
   @NotNull
   public PsiType[] getParameters() {
     if (myTypeArgs == null) {
@@ -98,6 +100,7 @@ public class GrClosureType extends GrLiteralClassType {
     return GroovyCommonClassNames.GROOVY_LANG_CLOSURE;
   }
 
+  @Override
   @NotNull
   public PsiClassType rawType() {
     if (myTypeArgs != null && myTypeArgs.length == 0) {
@@ -107,11 +110,13 @@ public class GrClosureType extends GrLiteralClassType {
     return new GrClosureType(getLanguageLevel(), getResolveScope(), myFacade, mySignature, false);
   }
 
-  @Nullable
+  @Override
+  @NotNull
   public String getInternalCanonicalText() {
     return getCanonicalText();
   }
 
+  @Override
   public boolean isValid() {
     return mySignature.isValid();
   }
@@ -124,10 +129,12 @@ public class GrClosureType extends GrLiteralClassType {
     return super.equals(obj);
   }
 
-  public boolean equalsToText(@NonNls String text) {
+  @Override
+  public boolean equalsToText(@NotNull @NonNls String text) {
     return text != null && text.equals(GroovyCommonClassNames.GROOVY_LANG_CLOSURE);
   }
 
+  @Override
   @NotNull
   public PsiClassType setLanguageLevel(@NotNull final LanguageLevel languageLevel) {
     return new GrClosureType(languageLevel, myScope, myFacade, mySignature, myTypeArgs);
