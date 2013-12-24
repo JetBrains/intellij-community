@@ -25,11 +25,8 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.platform.ProjectTemplate;
 import com.intellij.platform.ProjectTemplateEP;
 import com.intellij.platform.templates.ArchivedProjectTemplate;
@@ -71,8 +68,7 @@ public class ProjectTypeStep extends ModuleWizardStep implements Disposable, Act
   private JPanel myPanel;
   private JPanel myOptionsPanel;
   private JBList myProjectTypeList;
-  private JTextPane myDescription;
-  private JBList myTemplatesList;
+  private ProjectTemplateList myTemplatesList;
 
   @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
   private final FactoryMap<ProjectTemplate, ModuleBuilder> myBuilders = new FactoryMap<ProjectTemplate, ModuleBuilder>() {
@@ -83,8 +79,8 @@ public class ProjectTypeStep extends ModuleWizardStep implements Disposable, Act
     }
   };
   private final Set<String> myCards = new HashSet<String>();
-
   private final MultiMap<TemplatesGroup,ProjectTemplate> myTemplatesMap;
+  private boolean myRemoteTemplatesLoaded;
 
   public ProjectTypeStep(WizardContext context, NewProjectWizard wizard, ModulesProvider modulesProvider) {
     myContext = context;
@@ -154,23 +150,17 @@ public class ProjectTypeStep extends ModuleWizardStep implements Disposable, Act
       }
     });
 
-    myTemplatesList.setCellRenderer(new ColoredListCellRenderer<ProjectTemplate>() {
-      @Override
-      protected void customizeCellRenderer(JList list, ProjectTemplate value, int index, boolean selected, boolean hasFocus) {
-        append(value.getName()).setIcon(value.getIcon());
-      }
-    });
-    myTemplatesList.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
+    myTemplatesList.addListSelectionListener(new ListSelectionListener() {
       @Override
       public void valueChanged(ListSelectionEvent e) {
         updateSelection();
       }
     });
+
     for (ProjectTemplate category : myTemplatesMap.values()) {
       myWizard.getSequence().addStepsForBuilder(myBuilders.get(category), context, modulesProvider);
     }
 
-    Messages.installHyperlinkSupport(myDescription);
     myProjectTypeList.setSelectedIndex(0);
   }
 
@@ -180,21 +170,39 @@ public class ProjectTypeStep extends ModuleWizardStep implements Disposable, Act
     TemplatesGroup group = getSelectedGroup();
     if (group == null) return;
     Collection<ProjectTemplate> templates = myTemplatesMap.get(group);
-    String card = DEFAULT_CARD;
+    if (!selectCustomOptions(templates)) {
+      setTemplatesList(group, templates);
+      ((CardLayout)myOptionsPanel.getLayout()).show(myOptionsPanel, DEFAULT_CARD);
+    }
+    updateSelection();
+  }
+
+  private void setTemplatesList(TemplatesGroup group, Collection<ProjectTemplate> templates) {
+    ArrayList<ProjectTemplate> list = new ArrayList<ProjectTemplate>(templates);
+    if (group.getParentGroup() == null) {
+      for (TemplatesGroup templatesGroup : myTemplatesMap.keySet()) {
+        if (group.getName().equals(templatesGroup.getParentGroup())) {
+          list.addAll(myTemplatesMap.get(templatesGroup));
+        }
+      }
+    }
+    myTemplatesList.setTemplates(list);
+  }
+
+  private boolean selectCustomOptions(Collection<ProjectTemplate> templates) {
     if (templates.size() == 1) {
       ModuleBuilder builder = myBuilders.get(templates.iterator().next());
       JComponent panel = builder.getCustomOptionsPanel(this);
       if (panel != null) {
-        card = builder.getBuilderId();
+        String card = builder.getBuilderId();
         if (myCards.add(card)) {
           myOptionsPanel.add(panel, card);
         }
+        ((CardLayout)myOptionsPanel.getLayout()).show(myOptionsPanel, card);
+        return true;
       }
     }
-    myTemplatesList.setModel(new CollectionListModel(templates));
-    myTemplatesList.setSelectedIndex(0);
-    ((CardLayout)myOptionsPanel.getLayout()).show(myOptionsPanel, card);
-    updateSelection();
+    return false;
   }
 
   private TemplatesGroup getSelectedGroup() {
@@ -212,7 +220,7 @@ public class ProjectTypeStep extends ModuleWizardStep implements Disposable, Act
         return template;
       }
     }
-    return (ProjectTemplate)myTemplatesList.getSelectedValue();
+    return myTemplatesList.getSelectedTemplate();
   }
 
   @Nullable
@@ -236,7 +244,7 @@ public class ProjectTypeStep extends ModuleWizardStep implements Disposable, Act
 
   @Override
   public void updateStep() {
-    if (myContext.isCreatingNewProject()) {
+    if (myContext.isCreatingNewProject() && !myRemoteTemplatesLoaded) {
       loadRemoteTemplates();
     }
   }
@@ -256,13 +264,7 @@ public class ProjectTypeStep extends ModuleWizardStep implements Disposable, Act
     for (int i = 0; i < model.getSize(); i++) {
       if (group.equals(((TemplatesGroup)model.getElementAt(i)).getName())) {
         myProjectTypeList.setSelectedIndex(i);
-        ListModel model1 = myTemplatesList.getModel();
-        for (int j = 0; j < model1.getSize(); j++) {
-          if (name.equals(((ProjectTemplate)model1.getElementAt(j)).getName())) {
-            myTemplatesList.setSelectedIndex(j);
-            return true;
-          }
-        }
+        return myTemplatesList.setSelectedTemplate(name);
       }
     }
     return false;
@@ -315,14 +317,13 @@ public class ProjectTypeStep extends ModuleWizardStep implements Disposable, Act
               TemplatesGroup group = getSelectedGroup();
               if (group == null) return;
               Collection<ProjectTemplate> templates = myTemplatesMap.get(group);
-              int index = myTemplatesList.getSelectedIndex();
-              myTemplatesList.setModel(new CollectionListModel(templates));
-              myTemplatesList.setSelectedIndex(index);
+              setTemplatesList(group, templates);
             }
           });
         }
         finally {
           myTemplatesList.setPaintBusy(false);
+          myRemoteTemplatesLoaded = true;
         }
       }
     });
@@ -334,19 +335,6 @@ public class ProjectTypeStep extends ModuleWizardStep implements Disposable, Act
   }
 
   private void updateSelection() {
-    ProjectTemplate template = getSelectedTemplate();
-    if (template != null) {
-      String description = template.getDescription();
-      if (StringUtil.isNotEmpty(description)) {
-        description = "<html><body><font " +
-                      (SystemInfo.isMac ? "" : "face=\"Verdana\" size=\"-1\"") + '>' + description +
-                      "</font></body></html>";
-        myDescription.setText(description);
-      }
-    }
-    else {
-      myDescription.setText("");
-    }
     ModuleBuilder builder = getSelectedBuilder();
     if (builder != null) {
       myContext.setProjectBuilder(builder);
