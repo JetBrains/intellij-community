@@ -914,6 +914,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     Point zoomCenterRelative = zoomCenter == null ? new Point() : zoomCenter;
     Point zoomCenterAbsolute = new Point(visibleArea.x + zoomCenterRelative.x, visibleArea.y + zoomCenterRelative.y);
     LogicalPosition zoomCenterLogical = xyToLogicalPosition(zoomCenterAbsolute).withoutVisualPositionInfo();
+    int oldLineHeight = getLineHeight();
+    int intraLineOffset = zoomCenterAbsolute.y % oldLineHeight;
 
     myScheme.setEditorFontSize(fontSize);
     myPropertyChangeSupport.firePropertyChange(PROP_FONT_SIZE, oldFontSize, fontSize);
@@ -925,7 +927,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myScrollingModel.disableAnimation();
     try {
       myScrollingModel.scrollToOffsets(visibleArea.x == 0 ? 0 : shiftedZoomCenterAbsolute.x - zoomCenterRelative.x, // stick to left border if it's visible
-                                       shiftedZoomCenterAbsolute.y - zoomCenterRelative.y);
+                                       shiftedZoomCenterAbsolute.y - zoomCenterRelative.y + (intraLineOffset * getLineHeight() + oldLineHeight / 2) / oldLineHeight);
     } finally {
       myScrollingModel.enableAnimation();
     }
