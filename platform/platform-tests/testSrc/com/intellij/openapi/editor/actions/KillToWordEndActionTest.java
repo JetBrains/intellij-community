@@ -16,8 +16,11 @@
 package com.intellij.openapi.editor.actions;
 
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.FoldRegion;
+import com.intellij.openapi.editor.FoldingModel;
 import com.intellij.openapi.editor.impl.CaretModelImpl;
 import com.intellij.openapi.editor.impl.EditorImpl;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.ide.KillRingTransferable;
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase;
@@ -123,6 +126,68 @@ public class KillToWordEndActionTest extends LightPlatformCodeInsightTestCase {
     assertTrue(contents instanceof KillRingTransferable);
     Object string = contents.getTransferData(DataFlavor.stringFlavor);
     assertEquals("first second", string);
+  }
+
+  public void testSubsequentKillsInterruptedBySave() throws Exception {
+    String text = "public class ParentCopy {\n" +
+                  "        public Insets getBorderInsets(<caret>Component c) {\n" +
+                  "        }\n" +
+                  "    }";
+    configureFromFileText(getTestName(false) + ".java", text);
+    cutToLineEnd();
+    cutToLineEnd();
+    final FileDocumentManager manager = FileDocumentManager.getInstance();
+    manager.saveAllDocuments();
+    cutToLineEnd();
+    cutToLineEnd();
+    checkResultByText("public class ParentCopy {\n" +
+                      "        public Insets getBorderInsets(    }");
+
+    Transferable contents = CopyPasteManager.getInstance().getContents();
+    assertTrue(contents instanceof KillRingTransferable);
+    Object string = contents.getTransferData(DataFlavor.stringFlavor);
+    assertEquals("Component c) {\n        }\n", string);
+  }
+
+  public void testSubsequentKillsWithFolding() throws Exception {
+    String text = "public class ParentCopy {\n" +
+                  "        public Insets getBorderInsets(<caret>Component c) {\n" +
+                  "        }\n" +
+                  "    }";
+    configureFromFileText(getTestName(false) + ".java", text);
+    final FoldingModel model = myEditor.getFoldingModel();
+    model.runBatchFoldingOperation(new Runnable() {
+      @Override
+      public void run() {
+        final FoldRegion foldRegion = model.addFoldRegion(70, 90, "");
+        if (foldRegion == null) return ;
+        foldRegion.setExpanded(false);
+        assertFalse(foldRegion.isExpanded());
+      }
+    });
+
+    cutToLineEnd();
+    cutToLineEnd();
+    model.runBatchFoldingOperationDoNotCollapseCaret(new Runnable() {
+      @Override
+      public void run() {
+        final FoldRegion[] regions = model.getAllFoldRegions();
+        for (FoldRegion region : regions) {
+          if (region == null) return;
+          region.setExpanded(true);
+        }
+
+      }
+    });
+    cutToLineEnd();
+    cutToLineEnd();
+    checkResultByText("public class ParentCopy {\n" +
+                      "        public Insets getBorderInsets(    }");
+
+    Transferable contents = CopyPasteManager.getInstance().getContents();
+    assertTrue(contents instanceof KillRingTransferable);
+    Object string = contents.getTransferData(DataFlavor.stringFlavor);
+    assertEquals("Component c) {\n        }\n", string);
   }
 
   public void testDoubleEditors() throws Exception {
