@@ -743,7 +743,7 @@ public class SvnUtil {
     }
   }
 
-  public static String appendMultiParts(@NotNull final String base, @NotNull final String subPath) throws SVNException {
+  public static String appendMultiParts(@NotNull final String base, @NotNull final String subPath) {
     if (StringUtil.isEmpty(subPath)) return base;
     final List<String> parts = StringUtil.split(subPath.replace('\\', '/'), "/", true);
     String result = base;

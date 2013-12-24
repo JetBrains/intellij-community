@@ -63,16 +63,8 @@ public class SvnRepositoryContentRevision implements ContentRevision, MarkerVcsC
       myFilePath = localPath;
     }
     else {
-      FilePath local;
-      try {
-        final String fullPath = SvnUtil.appendMultiParts(repositoryRoot, myPath);
-        local = VcsContextFactory.SERVICE.getInstance().createFilePathOnNonLocal(fullPath, false);
-      }
-      catch (SVNException e) {
-        // todo what to do safely?
-        local = VcsContextFactory.SERVICE.getInstance().createFilePathOnNonLocal(repositoryRoot, false);
-      }
-      myFilePath = local;
+      final String fullPath = SvnUtil.appendMultiParts(repositoryRoot, myPath);
+      myFilePath = VcsContextFactory.SERVICE.getInstance().createFilePathOnNonLocal(fullPath, false);
     }
     myRevision = revision;
   }
