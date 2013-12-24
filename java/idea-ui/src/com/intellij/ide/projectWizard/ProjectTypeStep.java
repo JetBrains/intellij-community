@@ -28,6 +28,8 @@ import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.platform.ProjectTemplate;
 import com.intellij.platform.ProjectTemplateEP;
 import com.intellij.platform.templates.ArchivedProjectTemplate;
@@ -334,7 +336,13 @@ public class ProjectTypeStep extends ModuleWizardStep implements Disposable, Act
   private void updateSelection() {
     ProjectTemplate template = getSelectedTemplate();
     if (template != null) {
-      myDescription.setText("<html>" + template.getDescription() + "<html>");
+      String description = template.getDescription();
+      if (StringUtil.isNotEmpty(description)) {
+        description = "<html><body><font " +
+                      (SystemInfo.isMac ? "" : "face=\"Verdana\" size=\"-1\"") + '>' + description +
+                      "</font></body></html>";
+        myDescription.setText(description);
+      }
     }
     else {
       myDescription.setText("");
