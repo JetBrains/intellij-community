@@ -61,6 +61,44 @@ $some_long_variable_name<caret>
 
   }
 
+  public void testFromAnotherFile2() {
+    myFixture.configureByText "b.txt", '''
+foo function foo2
+'''
+    myFixture.configureByText "a.txt", '''
+f<caret>
+'''
+
+    complete()
+    myFixture.checkResult '''
+foo2<caret>
+'''
+    complete()
+    myFixture.checkResult '''
+function<caret>
+'''
+    complete()
+    myFixture.checkResult '''
+foo<caret>
+'''
+    myFixture.configureByText "a.txt", '''
+f<caret>
+'''
+    backComplete()
+    myFixture.checkResult '''
+foo<caret>
+'''
+
+    backComplete()
+    myFixture.checkResult '''
+function<caret>
+'''
+    backComplete()
+    myFixture.checkResult '''
+foo2<caret>
+'''
+  }
+
   public void "test no middle matching"() {
     myFixture.configureByText "a.txt", '''
 fooExpression
