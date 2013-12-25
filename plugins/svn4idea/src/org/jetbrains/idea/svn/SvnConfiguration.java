@@ -79,7 +79,6 @@ public class SvnConfiguration implements PersistentStateComponent<Element> {
   private final Project myProject;
 
   public String PASSWORD = "";
-  public String[] ADD_PATHS = null;
 
   private String myConfigurationDirectory;
   private boolean myIsUseDefaultConfiguration;
@@ -424,13 +423,6 @@ public class SvnConfiguration implements PersistentStateComponent<Element> {
   @SuppressWarnings({"HardCodedStringLiteral"})
   public void readExternal(Element element) throws InvalidDataException {
     DefaultJDOMExternalizer.readExternal(this, element);
-    List elems = element.getChildren("addpath");
-    LOG.debug(elems.toString());
-    ADD_PATHS = new String[elems.size()];
-    for (int i = 0; i < elems.size(); i++) {
-      Element elem = (Element)elems.get(i);
-      ADD_PATHS[i] = elem.getAttributeValue("path");
-    }
     Element configurationDirectory = element.getChild("configuration");
     if (configurationDirectory != null) {
       myConfigurationDirectory = configurationDirectory.getText();
@@ -511,13 +503,6 @@ public class SvnConfiguration implements PersistentStateComponent<Element> {
   @SuppressWarnings({"HardCodedStringLiteral"})
   public void writeExternal(Element element) throws WriteExternalException {
     DefaultJDOMExternalizer.writeExternal(this, element);
-    if (ADD_PATHS != null) {
-      for (String aADD_PATHS : ADD_PATHS) {
-        Element elem = new Element("addpath");
-        elem.setAttribute("path", aADD_PATHS);
-        element.addContent(elem);
-      }
-    }
     if (myConfigurationDirectory != null) {
       Element configurationDirectory = new Element("configuration");
       configurationDirectory.setText(myConfigurationDirectory);
