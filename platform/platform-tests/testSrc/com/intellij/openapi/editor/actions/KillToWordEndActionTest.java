@@ -160,7 +160,7 @@ public class KillToWordEndActionTest extends LightPlatformCodeInsightTestCase {
       @Override
       public void run() {
         final FoldRegion foldRegion = model.addFoldRegion(70, 90, "");
-        if (foldRegion == null) return ;
+        assertNotNull(foldRegion);
         foldRegion.setExpanded(false);
         assertFalse(foldRegion.isExpanded());
       }
@@ -173,7 +173,7 @@ public class KillToWordEndActionTest extends LightPlatformCodeInsightTestCase {
       public void run() {
         final FoldRegion[] regions = model.getAllFoldRegions();
         for (FoldRegion region : regions) {
-          if (region == null) return;
+          assertNotNull(region);
           region.setExpanded(true);
         }
 
