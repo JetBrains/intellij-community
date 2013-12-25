@@ -82,8 +82,8 @@ public class GitLogProvider implements VcsLogProvider {
       return Collections.emptyList();
     }
 
-    String[] params = {"HEAD", "--branches", "--remotes", "--tags", "--encoding=UTF-8", "--full-history", "--sparse",
-      "--max-count=" + commitCount};
+    String[] params = ArrayUtil.mergeArrays(ArrayUtil.toStringArray(GitHistoryUtils.LOG_ALL),
+                                            "--encoding=UTF-8", "--full-history", "--sparse", "--max-count=" + commitCount);
     if (ordered) {
       params = ArrayUtil.append(params, "--date-order");
     }
@@ -208,7 +208,7 @@ public class GitLogProvider implements VcsLogProvider {
       filterParameters.add(branchFilter.getBranchName());
     }
     else {
-      filterParameters.add("--all");
+      filterParameters.addAll(GitHistoryUtils.LOG_ALL);
     }
 
     List<VcsLogUserFilter> userFilters = ContainerUtil.findAll(filters, VcsLogUserFilter.class);

@@ -55,7 +55,7 @@ public abstract class AbstractBundle {
     myPathToBundle = pathToBundle;
   }
 
-  public String getMessage(@NotNull String key, Object... params) {
+  public String getMessage(@NotNull String key, @NotNull Object... params) {
     return CommonBundle.message(getBundle(), key, params);
   }
 

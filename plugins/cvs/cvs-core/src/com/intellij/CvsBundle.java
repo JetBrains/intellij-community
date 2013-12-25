@@ -13,7 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij;import org.jetbrains.annotations.NonNls;
+package com.intellij;
+
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.PropertyKey;
 
 import java.lang.ref.Reference;
@@ -21,8 +24,12 @@ import java.lang.ref.SoftReference;
 import java.util.ResourceBundle;
 
 public class CvsBundle {
-  private static Reference<ResourceBundle> ourBundle;
 
+  public static String message(@NotNull @PropertyKey(resourceBundle = BUNDLE_NAME) String key, @NotNull Object... params) {
+    return CommonBundle.message(getBundle(), key, params);
+  }
+
+  private static Reference<ResourceBundle> ourBundle;
   @NonNls private static final String BUNDLE_NAME = "com.intellij.cvsSupport2.CvsBundle";
 
   private CvsBundle() {
@@ -62,10 +69,6 @@ public class CvsBundle {
 
   public static String getAnnotateOperationName() {
     return message("operation.name.annotate");
-  }
-
-  public static String message(@PropertyKey(resourceBundle = BUNDLE_NAME)String key, Object... params) {
-    return CommonBundle.message(getBundle(), key, params);
   }
 
   private static ResourceBundle getBundle() {

@@ -17,6 +17,7 @@ package org.netbeans.lib.cvsclient;
 
 import com.intellij.CommonBundle;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.PropertyKey;
 
 import java.lang.ref.Reference;
@@ -27,15 +28,15 @@ import java.util.ResourceBundle;
  * @author lesya
  */
 public class JavaCvsSrcBundle {
-  private static Reference<ResourceBundle> ourBundle;
 
+  public static String message(@NotNull @PropertyKey(resourceBundle = PATH_TO_BUNDLE) String key, @NotNull Object... params) {
+    return CommonBundle.message(getBundle(), key, params);
+  }
+
+  private static Reference<ResourceBundle> ourBundle;
   @NonNls protected static final String PATH_TO_BUNDLE = "org.netbeans.lib.cvsclient.JavaCvsSrcBundle";
 
   private JavaCvsSrcBundle() {
-  }
-
-  public static String message(@PropertyKey(resourceBundle = PATH_TO_BUNDLE)String key, Object... params) {
-    return CommonBundle.message(getBundle(), key, params);
   }
 
   private static ResourceBundle getBundle() {

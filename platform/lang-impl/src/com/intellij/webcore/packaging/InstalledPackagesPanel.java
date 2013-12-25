@@ -33,6 +33,7 @@ import java.util.*;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class InstalledPackagesPanel extends JPanel {
   protected final JButton myInstallButton;
@@ -397,8 +398,11 @@ public class InstalledPackagesPanel extends JPanel {
             final Collection<InstalledPackage> finalPackages = packages;
 
             final Map<String, RepoPackage> cache = buildNameToPackageMap(packageManagementService.getAllPackagesCached());
+            final boolean shouldFetchLatestVersionsForOnlyInstalledPackages = shouldFetchLatestVersionsForOnlyInstalledPackages();
             if (cache.isEmpty()) {
-              refreshLatestVersions();
+              if (!shouldFetchLatestVersionsForOnlyInstalledPackages) {
+                refreshLatestVersions();
+              }
             }
             application.invokeLater(new Runnable() {
               @Override
@@ -414,6 +418,9 @@ public class InstalledPackagesPanel extends JPanel {
                   if (!cache.isEmpty()) {
                     myPackagesTable.setPaintBusy(false);
                   }
+                  if (shouldFetchLatestVersionsForOnlyInstalledPackages) {
+                    setLatestVersionsForInstalledPackages();
+                  }
                 }
               }
             }, ModalityState.any());
@@ -421,6 +428,69 @@ public class InstalledPackagesPanel extends JPanel {
         }
       }
     });
+  }
+
+  private InstalledPackage getInstalledPackageAt(int index) {
+    return (InstalledPackage) myPackagesTableModel.getValueAt(index, 0);
+  }
+
+  private void setLatestVersionsForInstalledPackages() {
+    final PackageManagementServiceEx serviceEx = getServiceEx();
+    if (serviceEx == null) {
+      return;
+    }
+    final AtomicInteger restPackageCount = new AtomicInteger(0);
+    for (int i = 0; i < myPackagesTableModel.getRowCount(); ++i) {
+      final int finalIndex = i;
+      final InstalledPackage pkg = getInstalledPackageAt(finalIndex);
+      restPackageCount.incrementAndGet();
+      serviceEx.fetchLatestVersion(pkg.getName(), new CatchingConsumer<String, Exception>() {
+
+        private void decrement() {
+          if (restPackageCount.decrementAndGet() == 0) {
+            ApplicationManager.getApplication().invokeLater(new Runnable() {
+              @Override
+              public void run() {
+                myPackagesTable.setPaintBusy(false);
+              }
+            }, ModalityState.any());
+          }
+        }
+
+        @Override
+        public void consume(Exception e) {
+          decrement();
+        }
+
+        @Override
+        public void consume(@Nullable final String latestVersion) {
+          if (latestVersion == null) {
+            decrement();
+            return;
+          }
+          ApplicationManager.getApplication().invokeLater(new Runnable() {
+            @Override
+            public void run() {
+              if (finalIndex < myPackagesTableModel.getRowCount()) {
+                InstalledPackage p = getInstalledPackageAt(finalIndex);
+                if (pkg == p) {
+                  myPackagesTableModel.setValueAt(latestVersion, finalIndex, 2);
+                }
+              }
+              decrement();
+            }
+          }, ModalityState.any());
+        }
+      });
+    }
+  }
+
+  private boolean shouldFetchLatestVersionsForOnlyInstalledPackages() {
+    PackageManagementServiceEx serviceEx = getServiceEx();
+    if (serviceEx != null) {
+      return serviceEx.shouldFetchLatestVersionsForOnlyInstalledPackages();
+    }
+    return false;
   }
 
   private void refreshLatestVersions() {

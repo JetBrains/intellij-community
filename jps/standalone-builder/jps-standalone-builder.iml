@@ -16,7 +16,7 @@
     <orderEntry type="module-library" scope="PROVIDED">
       <library>
         <CLASSES>
-          <root url="jar://$MODULE_DIR$/../../build/lib/gant/lib/gant_groovy2.0-1.9.8.jar!/" />
+          <root url="jar://$MODULE_DIR$/../../build/lib/gant/lib/gant_groovy2.1-1.9.10.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />

@@ -35,6 +35,10 @@ public class FileReferenceHelperRegistrar {
     return Extensions.getExtensions(FileReferenceHelper.EP_NAME);
   }
 
+  /**
+   * @deprecated this method is broken, please avoid using it, use getHelpers() instead
+   */
+  @Deprecated
   @NotNull
   public static <T extends PsiFileSystemItem> FileReferenceHelper getNotNullHelper(@NotNull T psiFileSystemItem) {
     FileReferenceHelper helper = getHelper(psiFileSystemItem);

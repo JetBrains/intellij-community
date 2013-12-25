@@ -69,6 +69,12 @@ import static git4idea.history.GitLogParser.GitLogOption.*;
  * A collection of methods for retrieving history information from native Git.
  */
 public class GitHistoryUtils {
+
+  /**
+   * A parameter to {@code git log} which is equivalent to {@code --all}, but doesn't show the stuff from index or stash.
+   */
+  public static List<String> LOG_ALL = Arrays.asList("HEAD", "--branches", "--remotes", "--tags");
+
   private final static Logger LOG = Logger.getInstance("#git4idea.history.GitHistoryUtils");
 
   private GitHistoryUtils() {
@@ -197,9 +203,8 @@ public class GitHistoryUtils {
 
     final GitLineHandler h = new GitLineHandler(project, root, GitCommand.LOG);
     h.setSilent(true);
-    h.addParameters("HEAD", "--branches", "--remotes", "--tags",
-                    "--pretty=format:%H%x20%ct%x0A", "--date-order", "--reverse", "--encoding=UTF-8", "--full-history",
-                    "--sparse");
+    h.addParameters(LOG_ALL);
+    h.addParameters("--pretty=format:%H%x20%ct%x0A", "--date-order", "--reverse", "--encoding=UTF-8", "--full-history", "--sparse");
     h.endOptions();
 
     final OutputStream[] stream = new OutputStream[1];
@@ -485,7 +490,7 @@ public class GitHistoryUtils {
                                            AUTHOR_EMAIL, AUTHOR_TIME, SUBJECT);
     h.setStdoutSuppressed(true);
     h.addParameters(parser.getPretty(), "--encoding=UTF-8");
-    h.addParameters("HEAD", "--branches", "--remotes", "--tags");
+    h.addParameters(LOG_ALL);
     h.addParameters("--full-history", "--sparse");
     h.endOptions();
 
@@ -544,7 +549,7 @@ public class GitHistoryUtils {
                                                  AUTHOR_NAME, AUTHOR_EMAIL);
     h.setStdoutSuppressed(true);
     h.addParameters(parser.getPretty(), "--encoding=UTF-8");
-    h.addParameters("HEAD", "--branches", "--remotes", "--tags");
+    h.addParameters(LOG_ALL);
     h.addParameters("--full-history", "--sparse");
     h.addParameters("--date-order");
     h.endOptions();

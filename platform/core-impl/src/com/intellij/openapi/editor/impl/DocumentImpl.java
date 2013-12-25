@@ -32,7 +32,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.reference.SoftReference;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.LocalTimeCounter;
@@ -183,12 +182,11 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
         }
         else {
           final int finalStart = whiteSpaceStart;
+          // document must be unblocked by now. If not, some Save handler attempted to modify PSI
+          // which should have been caught by assertion in com.intellij.pom.core.impl.PomModelImpl.runTransaction
           CommandProcessor.getInstance().runUndoTransparentAction(new Runnable() {
             @Override
             public void run() {
-              if (project != null) {
-                PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(DocumentImpl.this);
-              }
               ApplicationManager.getApplication().runWriteAction(new DocumentRunnable(DocumentImpl.this, project) {
                 @Override
                 public void run() {
@@ -233,6 +231,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
     return myRangeMarkers.removeInterval(rangeMarker);
   }
 
+  @Override
   public void registerRangeMarker(@NotNull RangeMarkerEx rangeMarker,
                                   int start,
                                   int end,

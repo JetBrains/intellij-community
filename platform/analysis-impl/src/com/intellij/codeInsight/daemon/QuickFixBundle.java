@@ -17,6 +17,7 @@ package com.intellij.codeInsight.daemon;
 
 import com.intellij.CommonBundle;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.PropertyKey;
 
 import java.lang.ref.Reference;
@@ -34,7 +35,7 @@ public class QuickFixBundle {
   private QuickFixBundle() {
   }
 
-  public static String message(@NonNls @PropertyKey(resourceBundle = BUNDLE)String key, Object... params) {
+  public static String message(@NotNull @NonNls @PropertyKey(resourceBundle = BUNDLE)String key, @NotNull Object... params) {
     return CommonBundle.message(getBundle(), key, params);
   }
 

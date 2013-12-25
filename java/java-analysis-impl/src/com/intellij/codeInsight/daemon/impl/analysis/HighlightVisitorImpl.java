@@ -52,6 +52,7 @@ import java.util.Map;
 import java.util.Set;
 
 public class HighlightVisitorImpl extends JavaElementVisitor implements HighlightVisitor {
+  @NotNull
   private final PsiResolveHelper myResolveHelper;
 
   private HighlightInfoHolder myHolder;

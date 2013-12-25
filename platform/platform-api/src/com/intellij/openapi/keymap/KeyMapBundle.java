@@ -18,6 +18,7 @@ package com.intellij.openapi.keymap;
 
 import com.intellij.CommonBundle;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.PropertyKey;
 
 import java.lang.ref.Reference;
@@ -31,16 +32,16 @@ import java.util.ResourceBundle;
  * Time: 17:13:10
  */
 public class KeyMapBundle {
-  private static Reference<ResourceBundle> ourBundle;
 
+  public static String message(@NotNull @PropertyKey(resourceBundle = "messages.KeyMapBundle") String key, @NotNull Object... params) {
+    return CommonBundle.message(getBundle(), key, params);
+  }
+
+  private static Reference<ResourceBundle> ourBundle;
   @NonNls
   protected static final String PATH_TO_BUNDLE = "messages.KeyMapBundle";
 
   private KeyMapBundle() {
-  }
-
-  public static String message(@PropertyKey(resourceBundle = "messages.KeyMapBundle")String key, Object... params) {
-    return CommonBundle.message(getBundle(), key, params);
   }
 
   private static ResourceBundle getBundle() {

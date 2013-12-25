@@ -30,15 +30,13 @@ import java.util.ResourceBundle;
  */
 public class GroovyBundle {
 
-  private static Reference<ResourceBundle> ourBundle;
-
-  @NonNls
-  private static final String BUNDLE = "org.jetbrains.plugins.groovy.GroovyBundle";
-
-  @NotNull
-  public static String message(@PropertyKey(resourceBundle = BUNDLE)String key, Object... params) {
+  public static String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, @NotNull Object... params) {
     return CommonBundle.message(getBundle(), key, params);
   }
+
+  private static Reference<ResourceBundle> ourBundle;
+  @NonNls
+  private static final String BUNDLE = "org.jetbrains.plugins.groovy.GroovyBundle";
 
   private static ResourceBundle getBundle() {
     ResourceBundle bundle = com.intellij.reference.SoftReference.dereference(ourBundle);
@@ -49,5 +47,4 @@ public class GroovyBundle {
     }
     return bundle;
   }
-
 }

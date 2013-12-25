@@ -4095,7 +4095,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       // further dragging (if any).
       if (myDragOnGutterSelectionStartLine >= 0) {
         mySelectionModel.removeSelection();
-        myCaretModel.moveToOffset(myDocument.getLineStartOffset(myDragOnGutterSelectionStartLine));
+        myCaretModel.moveToOffset(myDragOnGutterSelectionStartLine < myDocument.getLineCount()
+                                  ? myDocument.getLineStartOffset(myDragOnGutterSelectionStartLine) : myDocument.getTextLength());
       }
       myDragOnGutterSelectionStartLine = - 1;
     }

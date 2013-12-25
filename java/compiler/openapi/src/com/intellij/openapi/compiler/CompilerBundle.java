@@ -18,6 +18,7 @@ package com.intellij.openapi.compiler;
 import com.intellij.CommonBundle;
 import com.intellij.openapi.projectRoots.Sdk;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.PropertyKey;
 
 import java.lang.ref.Reference;
@@ -29,8 +30,12 @@ import java.util.ResourceBundle;
  *         Date: Sep 9, 2005
  */
 public class CompilerBundle {
-  private static Reference<ResourceBundle> ourBundle;
 
+  public static String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, @NotNull Object... params) {
+    return CommonBundle.message(getBundle(), key, params);
+  }
+
+  private static Reference<ResourceBundle> ourBundle;
   @NonNls private static final String BUNDLE = "messages.CompilerBundle";
 
   private CompilerBundle() {
@@ -38,10 +43,6 @@ public class CompilerBundle {
 
   public static String jdkHomeNotFoundMessage(final Sdk jdk) {
     return message("javac.error.jdk.home.missing", jdk.getName(), jdk.getHomePath());
-  }
-
-  public static String message(@PropertyKey(resourceBundle = BUNDLE)String key, Object... params) {
-    return CommonBundle.message(getBundle(), key, params);
   }
 
   private static ResourceBundle getBundle() {

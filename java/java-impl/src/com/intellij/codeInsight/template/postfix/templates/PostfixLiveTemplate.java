@@ -94,6 +94,9 @@ public class PostfixLiveTemplate extends CustomLiveTemplateBase {
   @Nullable
   public String computeTemplateKeyWithoutContextChecking(@NotNull CharSequence documentContent, int currentOffset) {
     int startOffset = currentOffset;
+    if (documentContent.length() < startOffset) {
+      return null;
+    }
     while (startOffset > 0) {
       char currentChar = documentContent.charAt(startOffset - 1);
       if (!Character.isJavaIdentifierPart(currentChar)) {

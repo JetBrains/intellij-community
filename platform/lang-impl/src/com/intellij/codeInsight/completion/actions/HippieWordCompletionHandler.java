@@ -76,7 +76,7 @@ public class HippieWordCompletionHandler implements CodeInsightActionHandler {
       fromOtherFiles = false;
     }
 
-    CompletionVariant nextVariant = computeNextVariant(editor, oldPrefix, lastProposedVariant, data, file, fromOtherFiles);
+    CompletionVariant nextVariant = computeNextVariant(editor, oldPrefix, lastProposedVariant, data, file, fromOtherFiles, false);
     if (nextVariant == null) return;
 
     int replacementEnd = data.startOffset + data.myWordUnderCursor.length();
@@ -110,16 +110,20 @@ public class HippieWordCompletionHandler implements CodeInsightActionHandler {
                                                @Nullable CompletionVariant lastProposedVariant,
                                                final CompletionData data,
                                                PsiFile file,
-                                               boolean includeWordsFromOtherFiles
+                                               boolean includeWordsFromOtherFiles,
+                                               boolean weAlreadyDoBestAttempt
   ) {
     final List<CompletionVariant> variants = computeVariants(editor, new CamelHumpMatcher(StringUtil.notNullize(prefix)), file, includeWordsFromOtherFiles);
-    if (variants.isEmpty()) return null;
+    if (variants.isEmpty()) {
+      return weAlreadyDoBestAttempt ? null:computeNextVariant(editor, prefix, null, data, file, !includeWordsFromOtherFiles, true);
+    }
 
-    if (lastProposedVariant != null) {
+    if (lastProposedVariant != null) { // intern lastProposedVariant
       for (CompletionVariant variant : variants) {
         if (variant.variant.equals(lastProposedVariant.variant)) {
           if (lastProposedVariant.offset > data.startOffset && variant.offset > data.startOffset) lastProposedVariant = variant;
           if (lastProposedVariant.offset < data.startOffset && variant.offset < data.startOffset) lastProposedVariant = variant;
+          if (includeWordsFromOtherFiles && lastProposedVariant.editor == variant.editor) lastProposedVariant = variant;
         }
       }
     }
@@ -129,6 +133,9 @@ public class HippieWordCompletionHandler implements CodeInsightActionHandler {
       CompletionVariant result = null;
 
       if (myForward) {
+        if (includeWordsFromOtherFiles) {
+          return variants.get(variants.size() - 1);
+        }
         for (CompletionVariant variant : variants) {
           if (variant.offset < data.startOffset) {
             result = variant;
@@ -140,6 +147,9 @@ public class HippieWordCompletionHandler implements CodeInsightActionHandler {
         }
       }
       else {
+        if (includeWordsFromOtherFiles) {
+          return variants.get(0);
+        }
         for (CompletionVariant variant : variants) {
           if (variant.offset > data.startOffset) {
             return variant;
@@ -158,7 +168,7 @@ public class HippieWordCompletionHandler implements CodeInsightActionHandler {
       for (CompletionVariant variant : variants) {
         if (variant == lastProposedVariant) {
           if (result == null) {
-            return computeNextVariant(editor, prefix, null, data, file, !includeWordsFromOtherFiles);
+            return computeNextVariant(editor, prefix, null, data, file, !includeWordsFromOtherFiles, true);
           }
           return result;
         }
@@ -175,7 +185,7 @@ public class HippieWordCompletionHandler implements CodeInsightActionHandler {
             return i.next();
           }
           else {
-            return computeNextVariant(editor, prefix, null, data, file, !includeWordsFromOtherFiles);
+            return computeNextVariant(editor, prefix, null, data, file, !includeWordsFromOtherFiles, true);
           }
         }
       }
