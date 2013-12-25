@@ -1089,7 +1089,9 @@ public class MavenDependencyCompletionAndResolutionTest extends MavenDomWithIndi
       PsiReference reference = psiFile.findReferenceAt(i);
       assert reference != null;
 
-      throw new RuntimeException("Ref:" + reference + ", type: " + reference.getClass().getName() + ", isSoft: " + reference.isSoft(), e);
+      System.err.println("testDontHighlightProblemsInNonManagedPom2 debug info: Ref:" + reference + ", type: " + reference.getClass().getName() + ", isSoft: " + reference.isSoft());
+
+      throw e;
     }
   }
 
