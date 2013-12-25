@@ -105,6 +105,7 @@ public class FileUtil extends FileUtilRt {
     return !ThreeState.NO.equals(isAncestorThreeState(ancestor, file, strict));
   }
 
+  @NotNull
   public static ThreeState isAncestorThreeState(@NotNull String ancestor, @NotNull String file, boolean strict) {
     String ancestorPath = toCanonicalPath(ancestor);
     String filePath = toCanonicalPath(file);
@@ -127,6 +128,7 @@ public class FileUtil extends FileUtilRt {
   /**
    * @return ThreeState.YES if same path or immediate parent
    */
+  @NotNull
   private static ThreeState startsWith(@NotNull String path, @NotNull String start, boolean strict, boolean caseSensitive,
                                        boolean checkImmediateParent) {
     final int length1 = path.length();
@@ -138,12 +140,11 @@ public class FileUtil extends FileUtilRt {
       return strict ? ThreeState.NO : ThreeState.YES;
     }
     char last2 = start.charAt(length2 - 1);
-    char next1;
     int slashOrSeparatorIdx = length2;
     if (last2 == '/' || last2 == File.separatorChar) {
       slashOrSeparatorIdx = length2 - 1;
     }
-    next1 = path.charAt(slashOrSeparatorIdx);
+    char next1 = path.charAt(slashOrSeparatorIdx);
     if (next1 == '/' || next1 == File.separatorChar) {
       if (!checkImmediateParent) return ThreeState.YES;
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import com.intellij.openapi.vcs.changes.ChangeListManagerImpl;
 import com.intellij.openapi.vcs.impl.FileStatusProvider;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ThreeState;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
@@ -48,8 +49,9 @@ public class ChangelistConflictFileStatusProvider implements FileStatusProvider 
     myConflictTracker = changeListManager.getConflictTracker();
   }
 
+  @Override
   @Nullable
-  public FileStatus getFileStatus(VirtualFile virtualFile) {
+  public FileStatus getFileStatus(@NotNull VirtualFile virtualFile) {
     ChangelistConflictTracker.Options options = myConflictTracker.getOptions();
     if (!options.TRACKING_ENABLED) {
       return null;
@@ -69,12 +71,14 @@ public class ChangelistConflictFileStatusProvider implements FileStatusProvider 
     return null;
   }
 
-  public void refreshFileStatusFromDocument(VirtualFile file, Document doc) {
+  @Override
+  public void refreshFileStatusFromDocument(@NotNull VirtualFile virtualFile, @NotNull Document doc) {
 
   }
 
+  @NotNull
   @Override
-  public ThreeState getNotChangedDirectoryParentingStatus(VirtualFile vf) {
+  public ThreeState getNotChangedDirectoryParentingStatus(@NotNull VirtualFile virtualFile) {
     throw new UnsupportedOperationException("Shouldn't be called");
   }
 }

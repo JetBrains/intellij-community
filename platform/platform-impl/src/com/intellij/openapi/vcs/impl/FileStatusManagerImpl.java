@@ -99,6 +99,7 @@ public class FileStatusManagerImpl extends FileStatusManager implements ProjectC
       @Override
       public void run() {
         DocumentAdapter documentListener = new DocumentAdapter() {
+          @Override
           public void documentChanged(DocumentEvent event) {
             VirtualFile file = FileDocumentManager.getInstance().getFile(event.getDocument());
             if (file != null) {
@@ -114,6 +115,7 @@ public class FileStatusManagerImpl extends FileStatusManager implements ProjectC
       }
     });
     startupManager.registerPostStartupActivity(new DumbAwareRunnable() {
+      @Override
       public void run() {
         fileStatusesChanged();
       }
@@ -139,47 +141,58 @@ public class FileStatusManagerImpl extends FileStatusManager implements ProjectC
     return getDefaultStatus(virtualFile);
   }
 
+  @NotNull
   public static FileStatus getDefaultStatus(@NotNull final VirtualFile file) {
     return file.isValid() && file.is(VFileProperty.SPECIAL) ? FileStatus.IGNORED : FileStatus.NOT_CHANGED;
   }
 
+  @Override
   public void projectClosed() {
   }
 
+  @Override
   public void projectOpened() {
   }
 
+  @Override
   public void disposeComponent() {
     myCachedStatuses.clear();
   }
 
+  @Override
   @NotNull
   public String getComponentName() {
     return "FileStatusManager";
   }
 
+  @Override
   public void initComponent() {
   }
 
+  @Override
   public void addFileStatusListener(@NotNull FileStatusListener listener) {
     myListeners.add(listener);
   }
 
+  @Override
   public void addFileStatusListener(final FileStatusListener listener, Disposable parentDisposable) {
     addFileStatusListener(listener);
     Disposer.register(parentDisposable, new Disposable() {
+      @Override
       public void dispose() {
         removeFileStatusListener(listener);
       }
     });
   }
 
+  @Override
   public void fileStatusesChanged() {
     if (myProject.isDisposed()) {
       return;
     }
     if (!ApplicationManager.getApplication().isDispatchThread()) {
       ApplicationManager.getApplication().invokeLater(new DumbAwareRunnable() {
+        @Override
         public void run() {
           fileStatusesChanged();
         }
@@ -195,26 +208,28 @@ public class FileStatusManagerImpl extends FileStatusManager implements ProjectC
     }
   }
 
-  private void cacheChangedFileStatus(final VirtualFile vf, final FileStatus fs) {
-    myCachedStatuses.put(vf, fs);
+  private void cacheChangedFileStatus(final VirtualFile virtualFile, final FileStatus fs) {
+    myCachedStatuses.put(virtualFile, fs);
     if (FileStatus.NOT_CHANGED.equals(fs)) {
-      final ThreeState parentingStatus = myFileStatusProvider.getNotChangedDirectoryParentingStatus(vf);
+      final ThreeState parentingStatus = myFileStatusProvider.getNotChangedDirectoryParentingStatus(virtualFile);
       if (ThreeState.YES.equals(parentingStatus)) {
-        myWhetherExactlyParentToChanged.put(vf, true);
+        myWhetherExactlyParentToChanged.put(virtualFile, true);
       }
       else if (ThreeState.UNSURE.equals(parentingStatus)) {
-        myWhetherExactlyParentToChanged.put(vf, false);
+        myWhetherExactlyParentToChanged.put(virtualFile, false);
       }
     }
     else {
-      myWhetherExactlyParentToChanged.remove(vf);
+      myWhetherExactlyParentToChanged.remove(virtualFile);
     }
   }
 
+  @Override
   public void fileStatusChanged(final VirtualFile file) {
     final Application application = ApplicationManager.getApplication();
     if (!application.isDispatchThread() && !application.isUnitTestMode()) {
       ApplicationManager.getApplication().invokeLater(new DumbAwareRunnable() {
+        @Override
         public void run() {
           fileStatusChanged(file);
         }
@@ -222,7 +237,7 @@ public class FileStatusManagerImpl extends FileStatusManager implements ProjectC
       return;
     }
 
-    if ((file == null) || (!file.isValid())) return;
+    if (file == null || !file.isValid()) return;
     FileStatus cachedStatus = getCachedStatus(file);
     if (cachedStatus == FileStatusNull.INSTANCE) {
       return;
@@ -240,7 +255,8 @@ public class FileStatusManagerImpl extends FileStatusManager implements ProjectC
     }
   }
 
-  public FileStatus getStatus(final VirtualFile file) {
+  @Override
+  public FileStatus getStatus(@NotNull final VirtualFile file) {
     if (file instanceof LightVirtualFile) {
       return FileStatus.NOT_CHANGED;  // do not leak light files via cache
     }
@@ -258,6 +274,7 @@ public class FileStatusManagerImpl extends FileStatusManager implements ProjectC
     return myCachedStatuses.get(file);
   }
 
+  @Override
   public void removeFileStatusListener(FileStatusListener listener) {
     myListeners.remove(listener);
   }
@@ -271,7 +288,7 @@ public class FileStatusManagerImpl extends FileStatusManager implements ProjectC
     final Boolean exactMatch = myWhetherExactlyParentToChanged.get(vf);
     return exactMatch == null
            ? notChangedColor
-           : (exactMatch ? FileStatus.NOT_CHANGED_IMMEDIATE.getColor() : FileStatus.NOT_CHANGED_RECURSIVE.getColor());
+           : exactMatch ? FileStatus.NOT_CHANGED_IMMEDIATE.getColor() : FileStatus.NOT_CHANGED_RECURSIVE.getColor();
   }
 
   public void refreshFileStatusFromDocument(final VirtualFile file, final Document doc) {
