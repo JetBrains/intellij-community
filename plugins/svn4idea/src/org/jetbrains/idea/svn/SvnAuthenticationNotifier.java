@@ -23,6 +23,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.NamedRunnable;
@@ -414,7 +415,7 @@ public class SvnAuthenticationNotifier extends GenericNotifierImpl<SvnAuthentica
                                                         SvnBundle.message("confirmation.title.clear.authentication.cache")) {
                                                         @Override
                                                         public void run() {
-                                                          SvnConfigurable.clearAuthenticationCache(project, null, configuration
+                                                          clearAuthenticationCache(project, null, configuration
                                                             .getConfigurationDirectory());
                                                         }
                                                       },
@@ -435,5 +436,24 @@ public class SvnAuthenticationNotifier extends GenericNotifierImpl<SvnAuthentica
         );
       }
     }, ModalityState.NON_MODAL, project.getDisposed());
+  }
+
+  public static void clearAuthenticationCache(@NotNull final Project project, final Component component, final String configDirPath) {
+    if (configDirPath != null) {
+      int result;
+      if (component == null) {
+        result = Messages.showYesNoDialog(project, SvnBundle.message("confirmation.text.delete.stored.authentication.information"),
+                                          SvnBundle.message("confirmation.title.clear.authentication.cache"),
+                                          Messages.getWarningIcon());
+      } else {
+        result = Messages.showYesNoDialog(component, SvnBundle.message("confirmation.text.delete.stored.authentication.information"),
+                                          SvnBundle.message("confirmation.title.clear.authentication.cache"),
+                                          Messages.getWarningIcon());
+      }
+      if (result == Messages.YES) {
+        SvnConfiguration.RUNTIME_AUTH_CACHE.clear();
+        SvnConfiguration.getInstance(project).clearAuthenticationDirectory(project);
+      }
+    }
   }
 }

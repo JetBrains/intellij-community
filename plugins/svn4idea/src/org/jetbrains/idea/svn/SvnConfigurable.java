@@ -25,7 +25,6 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.SystemInfo;
@@ -102,7 +101,7 @@ public class SvnConfigurable implements Configurable {
 
     myClearAuthButton.addActionListener(new ActionListener(){
       public void actionPerformed(final ActionEvent e) {
-        clearAuthenticationCache(myProject, myComponent, myConfigurationDirectoryText.getText());
+        SvnAuthenticationNotifier.clearAuthenticationCache(myProject, myComponent, myConfigurationDirectoryText.getText());
       }
     });
 
@@ -178,25 +177,6 @@ public class SvnConfigurable implements Configurable {
     }
     final String resultPath = file.getPath().replace('/', File.separatorChar);
     dirConsumer.consume(resultPath);
-  }
-
-  public static void clearAuthenticationCache(@NotNull final Project project, final Component component, final String configDirPath) {
-    if (configDirPath != null) {
-      int result;
-      if (component == null) {
-        result = Messages.showYesNoDialog(project, SvnBundle.message("confirmation.text.delete.stored.authentication.information"),
-                                          SvnBundle.message("confirmation.title.clear.authentication.cache"),
-                                          Messages.getWarningIcon());
-      } else {
-        result = Messages.showYesNoDialog(component, SvnBundle.message("confirmation.text.delete.stored.authentication.information"),
-                                          SvnBundle.message("confirmation.title.clear.authentication.cache"),
-                                          Messages.getWarningIcon());
-      }
-      if (result == Messages.YES) {
-        SvnConfiguration.RUNTIME_AUTH_CACHE.clear();
-        SvnConfiguration.getInstance(project).clearAuthenticationDirectory(project);
-      }
-    }
   }
 
   private static FileChooserDescriptor createFileDescriptor() {
