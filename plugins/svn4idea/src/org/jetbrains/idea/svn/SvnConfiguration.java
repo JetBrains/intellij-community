@@ -27,14 +27,11 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.changes.VcsAnnotationRefresher;
 import org.jdom.Attribute;
 import org.jdom.DataConversionException;
 import org.jdom.Element;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.svn.config.ProxyGroup;
 import org.jetbrains.idea.svn.config.SvnServerFileKeys;
 import org.jetbrains.idea.svn.dialogs.SvnAuthenticationProvider;
 import org.jetbrains.idea.svn.dialogs.SvnInteractiveAuthenticationProvider;
@@ -55,9 +52,6 @@ import org.tmatesoft.svn.core.wc.SVNWCUtil;
 
 import java.io.File;
 import java.io.FilenameFilter;
-import java.net.InetSocketAddress;
-import java.net.PasswordAuthentication;
-import java.net.Proxy;
 import java.util.*;
 
 @State(
@@ -73,8 +67,6 @@ public class SvnConfiguration implements PersistentStateComponent<Element> {
   private static final Logger LOG = Logger.getInstance("org.jetbrains.idea.svn.SvnConfiguration");
   public final static int ourMaxAnnotateRevisionsDefault = 500;
 
-  private final static String SERVERS_FILE_NAME = "servers";
-  
   public static final String CLEANUP_ON_START_RUN = "cleanupOnStartRun";
   private final Project myProject;
 
@@ -163,7 +155,7 @@ public class SvnConfiguration implements PersistentStateComponent<Element> {
 
   private void initServers() {
     if (myConfigFile == null) {
-      myConfigFile = new IdeaSVNConfigFile(new File(getConfigurationDirectory(), SERVERS_FILE_NAME));
+      myConfigFile = new IdeaSVNConfigFile(new File(getConfigurationDirectory(), IdeaSVNConfigFile.SERVERS_FILE_NAME));
     }
     myConfigFile.updateGroups();
   }
@@ -174,59 +166,6 @@ public class SvnConfiguration implements PersistentStateComponent<Element> {
     long cut = value / 1000;
     myConfigFile.setValue("global", SvnServerFileKeys.TIMEOUT, String.valueOf(cut));
     myConfigFile.save();
-  }
-
-  public static void putProxyIntoServersFile(final File configDir, final String host, final Proxy proxyInfo) {
-    final IdeaSVNConfigFile configFile = new IdeaSVNConfigFile(new File(configDir, SERVERS_FILE_NAME));
-    configFile.updateGroups();
-
-    String groupName = ensureHostGroup(host, configFile);
-
-    final HashMap<String, String> map = new HashMap<String, String>();
-    final InetSocketAddress address = ((InetSocketAddress) proxyInfo.address());
-    map.put(SvnAuthenticationManager.HTTP_PROXY_HOST, address.getHostName());
-    map.put(SvnAuthenticationManager.HTTP_PROXY_PORT, String.valueOf(address.getPort()));
-    configFile.addGroup(groupName, host + "*", map);
-    configFile.save();
-  }
-
-  @NotNull
-  public static String ensureHostGroup(@NotNull String host, @NotNull IdeaSVNConfigFile configFile) {
-    String groupName = SvnAuthenticationManager.getGroupForHost(host, configFile);
-
-    if (StringUtil.isEmptyOrSpaces(groupName)) {
-      groupName = getNewGroupName(host, configFile);
-    }
-
-    return groupName;
-  }
-
-  @NotNull
-  public static String getNewGroupName(@NotNull String host, @NotNull IdeaSVNConfigFile configFile) {
-    String groupName = host;
-    final Map<String,ProxyGroup> groups = configFile.getAllGroups();
-    while (StringUtil.isEmptyOrSpaces(groupName) || groups.containsKey(groupName)) {
-      groupName += "1";
-    }
-    return groupName;
-  }
-
-  public static boolean putProxyCredentialsIntoServerFile(@NotNull final File configDir, @NotNull final String host,
-                                                          @NotNull final PasswordAuthentication authentication) {
-    final IdeaSVNConfigFile configFile = new IdeaSVNConfigFile(new File(configDir, SERVERS_FILE_NAME));
-    configFile.updateGroups();
-
-    String groupName = SvnAuthenticationManager.getGroupForHost(host, configFile);
-    // no proxy defined in group -> no sense in password
-    if (StringUtil.isEmptyOrSpaces(groupName)) return false;
-    final Map<String, String> properties = configFile.getAllGroups().get(groupName).getProperties();
-    if (StringUtil.isEmptyOrSpaces(properties.get(SvnAuthenticationManager.HTTP_PROXY_HOST))) return false;
-    if (StringUtil.isEmptyOrSpaces(properties.get(SvnAuthenticationManager.HTTP_PROXY_PORT))) return false;
-
-    configFile.setValue(groupName, SvnAuthenticationManager.HTTP_PROXY_USERNAME, authentication.getUserName());
-    configFile.setValue(groupName, SvnAuthenticationManager.HTTP_PROXY_PASSWORD, String.valueOf(authentication.getPassword()));
-    configFile.save();
-    return true;
   }
 
   public static SvnConfiguration getInstance(final Project project) {
@@ -431,7 +370,7 @@ public class SvnConfiguration implements PersistentStateComponent<Element> {
       SVNConfigFile.createDefaultConfiguration(dir);
     }
 
-    systemManager.set(new SvnServerFileManagerImpl(new IdeaSVNConfigFile(new File(SVNFileUtil.getSystemConfigurationDirectory(), SERVERS_FILE_NAME))));
+    systemManager.set(new SvnServerFileManagerImpl(new IdeaSVNConfigFile(new File(SVNFileUtil.getSystemConfigurationDirectory(), IdeaSVNConfigFile.SERVERS_FILE_NAME))));
     initServers();
     userManager.set(new SvnServerFileManagerImpl(myConfigFile));
   }

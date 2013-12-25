@@ -33,10 +33,7 @@ import com.intellij.util.net.HttpConfigurable;
 import com.intellij.util.proxy.CommonProxy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.svn.SvnAuthenticationManager;
-import org.jetbrains.idea.svn.SvnBundle;
-import org.jetbrains.idea.svn.SvnConfiguration;
-import org.jetbrains.idea.svn.SvnVcs;
+import org.jetbrains.idea.svn.*;
 import org.jetbrains.idea.svn.commandLine.AuthenticationCallback;
 import org.jetbrains.idea.svn.dialogs.SimpleCredentialsDialog;
 import org.tmatesoft.svn.core.*;
@@ -221,7 +218,7 @@ public class IdeaSvnkitBasedAuthenticationCallback implements AuthenticationCall
 
     final Proxy proxy = getIdeaDefinedProxy(repositoryUrl);
     if (proxy != null){
-      SvnConfiguration.putProxyIntoServersFile(myTempDirectory, repositoryUrl.getHost(), proxy);
+      IdeaSVNConfigFile.putProxyIntoServersFile(myTempDirectory, repositoryUrl.getHost(), proxy);
     }
     return true;
   }
@@ -301,7 +298,7 @@ public class IdeaSvnkitBasedAuthenticationCallback implements AuthenticationCall
         PopupUtil.showBalloonForActiveComponent("Failed to authenticate to proxy: " + e.getMessage(), MessageType.ERROR);
         return false;
       }
-      return SvnConfiguration.putProxyCredentialsIntoServerFile(myTempDirectory, repositoryUrl.getHost(), authentication);
+      return IdeaSVNConfigFile.putProxyCredentialsIntoServerFile(myTempDirectory, repositoryUrl.getHost(), authentication);
     }
     return false;
   }
