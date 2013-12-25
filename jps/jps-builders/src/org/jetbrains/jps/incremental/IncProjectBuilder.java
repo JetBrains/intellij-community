@@ -555,7 +555,7 @@ public class IncProjectBuilder {
     try {
       clearOutputFiles(context, target);
     }
-    catch (IOException e) {
+    catch (Throwable e) {
       LOG.info(e);
       String reason = e.getMessage();
       if (reason == null) {
