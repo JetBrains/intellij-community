@@ -1775,7 +1775,6 @@ public class FileBasedIndexImpl extends FileBasedIndex {
 
     // important: no hard referencing currentFC to avoid OOME, the methods introduced for this purpose!
     final Computable<Boolean> update = index.update(inputId, currentFC);
-    final FileType fileType = file.getFileType();
 
     scheduleUpdate(indexId,
                    createUpdateComputableWithBufferingDisabled(update),
@@ -1972,7 +1971,6 @@ public class FileBasedIndexImpl extends FileBasedIndex {
           if (!fileIsDirectory && !isTooLarge(file)) {
             final List<ID<?, ?>> candidates = getAffectedIndexCandidates(file);
             //noinspection ForLoopReplaceableByForEach
-            FileType fileType = file.getFileType();
             boolean scheduleForUpdate = false;
             boolean resetStamp = false;
 
@@ -2039,7 +2037,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
       cleanProcessedFlag(file);
       IndexingStamp.flushCache(file);
 
-      final List<ID<?, ?>> affectedIndexCandidates = getAffectedIndexCandidates(file);
+      final List<ID<?, ?>> affectedIndexCandidates = IndexingStamp.getIndexedIds(file);
       final List<ID<?, ?>> affectedIndices = new ArrayList<ID<?, ?>>(affectedIndexCandidates.size());
 
       //noinspection ForLoopReplaceableByForEach
@@ -2047,14 +2045,10 @@ public class FileBasedIndexImpl extends FileBasedIndex {
         final ID<?, ?> indexId = affectedIndexCandidates.get(i);
         try {
           if (!needsFileContentLoading(indexId)) {
-            if (shouldUpdateIndex(file, indexId)) {
-              updateSingleIndex(indexId, file, null);
-            }
+            updateSingleIndex(indexId, file, null);
           }
           else { // the index requires file content
-            if (shouldUpdateIndex(file, indexId)) {
-              affectedIndices.add(indexId);
-            }
+            affectedIndices.add(indexId);
           }
         }
         catch (StorageException e) {
@@ -2069,7 +2063,6 @@ public class FileBasedIndexImpl extends FileBasedIndex {
           ApplicationManager.getApplication().runReadAction(new Runnable() {
             @Override
             public void run() {
-              FileType fileType = file.getFileType();
               for (ID<?, ?> indexId : affectedIndices) {
                 IndexingStamp.update(file, indexId, IndexInfrastructure.INVALID_STAMP2);
               }
@@ -2406,11 +2399,6 @@ public class FileBasedIndexImpl extends FileBasedIndex {
       }
       return true;
     }
-  }
-
-  private boolean shouldUpdateIndex(final VirtualFile file, final ID<?, ?> indexId) {
-    return getInputFilter(indexId).acceptInput(file) &&
-           (isMock(file) || isFileIndexed(file, indexId));
   }
 
   private boolean shouldIndexFile(final VirtualFile file, final ID<?, ?> indexId) {
