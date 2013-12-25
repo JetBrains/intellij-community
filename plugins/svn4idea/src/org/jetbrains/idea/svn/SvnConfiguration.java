@@ -81,7 +81,6 @@ public class SvnConfiguration implements PersistentStateComponent<Element> {
   private long mySSHReadTimeout = DEFAULT_SSH_TIMEOUT;
 
   public static final AuthStorage RUNTIME_AUTH_CACHE = new AuthStorage();
-  public String LAST_MERGED_REVISION = null;
   public SVNDepth UPDATE_DEPTH = SVNDepth.UNKNOWN;
 
   public boolean MERGE_DRY_RUN = false;
