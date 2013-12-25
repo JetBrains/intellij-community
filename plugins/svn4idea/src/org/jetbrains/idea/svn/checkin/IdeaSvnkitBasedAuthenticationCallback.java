@@ -36,6 +36,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.*;
 import org.jetbrains.idea.svn.commandLine.AuthenticationCallback;
 import org.jetbrains.idea.svn.dialogs.SimpleCredentialsDialog;
+import org.jetbrains.idea.svn.dialogs.SvnInteractiveAuthenticationProvider;
 import org.tmatesoft.svn.core.*;
 import org.tmatesoft.svn.core.auth.*;
 import org.tmatesoft.svn.core.internal.util.SVNBase64;
@@ -355,7 +356,12 @@ public class IdeaSvnkitBasedAuthenticationCallback implements AuthenticationCall
     }
 
     protected SvnAuthenticationManager createTmpManager() {
-      return SvnConfiguration.createForTmpDir(myVcs.getProject(), myTempDirectory);
+      final SvnAuthenticationManager interactive = new SvnAuthenticationManager(myVcs.getProject(), myTempDirectory);
+
+      interactive.setRuntimeStorage(SvnConfiguration.RUNTIME_AUTH_CACHE);
+      interactive.setAuthenticationProvider(new SvnInteractiveAuthenticationProvider(myVcs, interactive));
+
+      return interactive;
     }
 
     protected abstract T getWithPassive(SvnAuthenticationManager passive) throws SVNException;

@@ -26,7 +26,6 @@ import com.intellij.openapi.vcs.changes.VcsAnnotationRefresher;
 import org.jdom.Attribute;
 import org.jdom.DataConversionException;
 import org.jdom.Element;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.config.SvnServerFileKeys;
 import org.jetbrains.idea.svn.dialogs.SvnAuthenticationProvider;
 import org.jetbrains.idea.svn.dialogs.SvnInteractiveAuthenticationProvider;
@@ -289,23 +288,6 @@ public class SvnConfiguration implements PersistentStateComponent<Element> {
       myOptions = SVNWCUtil.createDefaultOptions(path.getAbsoluteFile(), true);
     }
     return myOptions;
-  }
-
-  public static SvnAuthenticationManager createForTmpDir(final Project project, final File dir) {
-    return createForTmpDir(project, dir, null);
-  }
-
-  public static SvnAuthenticationManager createForTmpDir(final Project project, final File dir,
-                                                         @Nullable final SvnInteractiveAuthenticationProvider provider) {
-    final SvnVcs vcs = SvnVcs.getInstance(project);
-
-    final SvnAuthenticationManager interactive = new SvnAuthenticationManager(project, dir);
-    interactive.setRuntimeStorage(RUNTIME_AUTH_CACHE);
-    final SvnInteractiveAuthenticationProvider interactiveProvider = provider == null ?
-                                                                     new SvnInteractiveAuthenticationProvider(vcs, interactive) : provider;
-    interactive.setAuthenticationProvider(interactiveProvider);
-
-    return interactive;
   }
 
   public SvnAuthenticationManager getAuthenticationManager(final SvnVcs svnVcs) {
