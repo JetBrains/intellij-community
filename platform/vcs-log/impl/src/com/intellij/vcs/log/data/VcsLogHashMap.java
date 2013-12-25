@@ -63,6 +63,10 @@ class VcsLogHashMap implements Disposable {
     return myPersistentEnumerator.enumerate(hash);
   }
 
+  void flush() {
+    myPersistentEnumerator.force();
+  }
+
   @Override
   public void dispose() {
     try {

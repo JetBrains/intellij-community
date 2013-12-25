@@ -298,12 +298,14 @@ public class VcsLogDataHolder implements Disposable {
   }
 
   private List<CompactCommit> compactHashes(List<TimedVcsCommit> commits) {
-    return ContainerUtil.map(commits, new Function<TimedVcsCommit, CompactCommit>() {
+    List<CompactCommit> compactedHashes = ContainerUtil.map(commits, new Function<TimedVcsCommit, CompactCommit>() {
       @Override
       public CompactCommit fun(final TimedVcsCommit commit) {
         return commit instanceof CompactCommit ? (CompactCommit)commit : new CompactCommit(commit);
       }
     });
+    myHashMap.flush();
+    return compactedHashes;
   }
 
   /**
@@ -600,12 +602,14 @@ public class VcsLogDataHolder implements Disposable {
   }
 
   private List<TimedVcsCommit> getCommitsFromDetails(List<? extends VcsFullCommitDetails> firstBlockDetails) {
-    return ContainerUtil.map(firstBlockDetails, new Function<VcsFullCommitDetails, TimedVcsCommit>() {
+    List<TimedVcsCommit> commits = ContainerUtil.map(firstBlockDetails, new Function<VcsFullCommitDetails, TimedVcsCommit>() {
       @Override
       public TimedVcsCommit fun(VcsFullCommitDetails details) {
         return new CompactCommit(details.getHash(), details.getParents(), details.getTime());
       }
     });
+    myHashMap.flush();
+    return commits;
   }
 
   private void runInBackground(final ThrowableConsumer<ProgressIndicator, VcsException> task, final String title) {
