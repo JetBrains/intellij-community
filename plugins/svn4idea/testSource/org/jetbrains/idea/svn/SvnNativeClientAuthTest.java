@@ -29,6 +29,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.Convertor;
 import junit.framework.Assert;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.checkout.SvnCheckoutProvider;
 import org.junit.Before;
 import org.tmatesoft.svn.core.*;
@@ -143,8 +144,7 @@ public class SvnNativeClientAuthTest extends Svn17TestCase {
     //Assert.assertEquals(myExpectedCreds, myCredentialsAskedInteractivelyCount);
 
     final SvnConfiguration instance = SvnConfiguration.getInstance(myProject);
-    instance.clearAuthenticationDirectory(myProject);
-    instance.clearRuntimeStorage();
+    clearAuthCache(instance);
 
     Assert.assertEquals(SvnConfiguration.UseAcceleration.commandLine, instance.myUseAcceleration);
     mySaveCredentials = false;
@@ -166,8 +166,7 @@ public class SvnNativeClientAuthTest extends Svn17TestCase {
     //Assert.assertEquals(myExpectedCert, myCertificateAskedInteractivelyCount);
 
     final SvnConfiguration instance = SvnConfiguration.getInstance(myProject);
-    instance.clearAuthenticationDirectory(myProject);
-    instance.clearRuntimeStorage();
+    clearAuthCache(instance);
 
     Assert.assertEquals(SvnConfiguration.UseAcceleration.commandLine, instance.myUseAcceleration);
     mySaveCredentials = false;
@@ -191,8 +190,7 @@ public class SvnNativeClientAuthTest extends Svn17TestCase {
     //Assert.assertEquals(myExpectedCert, myCertificateAskedInteractivelyCount);
 
     final SvnConfiguration instance = SvnConfiguration.getInstance(myProject);
-    instance.clearAuthenticationDirectory(myProject);
-    instance.clearRuntimeStorage();
+    clearAuthCache(instance);
 
     Assert.assertEquals(SvnConfiguration.UseAcceleration.commandLine, instance.myUseAcceleration);
     mySaveCredentials = true;
@@ -215,8 +213,7 @@ public class SvnNativeClientAuthTest extends Svn17TestCase {
     //Assert.assertEquals(myExpectedCreds, myCredentialsAskedInteractivelyCount);
 
     final SvnConfiguration instance = SvnConfiguration.getInstance(myProject);
-    instance.clearAuthenticationDirectory(myProject);
-    instance.clearRuntimeStorage();
+    clearAuthCache(instance);
 
     Assert.assertEquals(SvnConfiguration.UseAcceleration.commandLine, instance.myUseAcceleration);
     mySaveCredentials = true;
@@ -237,8 +234,7 @@ public class SvnNativeClientAuthTest extends Svn17TestCase {
     //Assert.assertEquals(myExpectedCreds, myCredentialsAskedInteractivelyCount);
 
     final SvnConfiguration instance = SvnConfiguration.getInstance(myProject);
-    instance.clearAuthenticationDirectory(myProject);
-    instance.clearRuntimeStorage();
+    clearAuthCache(instance);
 
     Assert.assertEquals(SvnConfiguration.UseAcceleration.commandLine, instance.myUseAcceleration);
     mySaveCredentials = false;
@@ -260,8 +256,7 @@ public class SvnNativeClientAuthTest extends Svn17TestCase {
     //Assert.assertEquals(myExpectedCert, myCertificateAskedInteractivelyCount);
 
     final SvnConfiguration instance = SvnConfiguration.getInstance(myProject);
-    instance.clearAuthenticationDirectory(myProject);
-    instance.clearRuntimeStorage();
+    clearAuthCache(instance);
 
     Assert.assertEquals(SvnConfiguration.UseAcceleration.commandLine, instance.myUseAcceleration);
     mySaveCredentials = false;
@@ -285,8 +280,7 @@ public class SvnNativeClientAuthTest extends Svn17TestCase {
     //Assert.assertEquals(myExpectedCert, myCertificateAskedInteractivelyCount);
 
     final SvnConfiguration instance = SvnConfiguration.getInstance(myProject);
-    instance.clearAuthenticationDirectory(myProject);
-    instance.clearRuntimeStorage();
+    clearAuthCache(instance);
 
     Assert.assertEquals(SvnConfiguration.UseAcceleration.commandLine, instance.myUseAcceleration);
     mySaveCredentials = true;
@@ -310,8 +304,7 @@ public class SvnNativeClientAuthTest extends Svn17TestCase {
     //Assert.assertEquals(myExpectedCert, myCertificateAskedInteractivelyCount);
 
     final SvnConfiguration instance = SvnConfiguration.getInstance(myProject);
-    instance.clearAuthenticationDirectory(myProject);
-    instance.clearRuntimeStorage();
+    clearAuthCache(instance);
 
     Assert.assertEquals(SvnConfiguration.UseAcceleration.commandLine, instance.myUseAcceleration);
     mySaveCredentials = true;
@@ -329,6 +322,11 @@ public class SvnNativeClientAuthTest extends Svn17TestCase {
     //Assert.assertEquals(myExpectedCert, myCertificateAskedInteractivelyCount);
   }
 
+  private void clearAuthCache(@NotNull SvnConfiguration instance) {
+    instance.clearAuthenticationDirectory(myProject);
+    instance.clearRuntimeStorage();
+  }
+
   @Test
   public void testMixedSSLCommit() throws Exception {
     final File wc1 = testCheckoutImpl(ourHTTPS_URL);
@@ -336,8 +334,7 @@ public class SvnNativeClientAuthTest extends Svn17TestCase {
     //Assert.assertEquals(myExpectedCert, myCertificateAskedInteractivelyCount);
 
     final SvnConfiguration instance = SvnConfiguration.getInstance(myProject);
-    instance.clearAuthenticationDirectory(myProject);
-    instance.clearRuntimeStorage();
+    clearAuthCache(instance);
 
     Assert.assertEquals(SvnConfiguration.UseAcceleration.commandLine, instance.myUseAcceleration);
     mySaveCredentials = false;
@@ -354,8 +351,7 @@ public class SvnNativeClientAuthTest extends Svn17TestCase {
     //Assert.assertEquals(myExpectedCreds, myCredentialsAskedInteractivelyCount);
     //Assert.assertEquals(myExpectedCert, myCertificateAskedInteractivelyCount);
     //------------
-    instance.clearAuthenticationDirectory(myProject);
-    instance.clearRuntimeStorage();
+    clearAuthCache(instance);
     mySaveCredentials = true;
     myCertificateAnswer = ISVNAuthenticationProvider.ACCEPTED_TEMPORARY;
 
@@ -373,8 +369,7 @@ public class SvnNativeClientAuthTest extends Svn17TestCase {
     //Assert.assertEquals(myExpectedCreds, myCredentialsAskedInteractivelyCount);
 
     final SvnConfiguration instance = SvnConfiguration.getInstance(myProject);
-    instance.clearAuthenticationDirectory(myProject);
-    instance.clearRuntimeStorage();
+    clearAuthCache(instance);
 
     Assert.assertEquals(SvnConfiguration.UseAcceleration.commandLine, instance.myUseAcceleration);
     mySaveCredentials = true;
@@ -395,8 +390,7 @@ public class SvnNativeClientAuthTest extends Svn17TestCase {
     //Assert.assertEquals(myExpectedCreds, myCredentialsAskedInteractivelyCount);
 
     final SvnConfiguration instance = SvnConfiguration.getInstance(myProject);
-    instance.clearAuthenticationDirectory(myProject);
-    instance.clearRuntimeStorage();
+    clearAuthCache(instance);
 
     Assert.assertEquals(SvnConfiguration.UseAcceleration.commandLine, instance.myUseAcceleration);
     mySaveCredentials = false;
@@ -419,8 +413,7 @@ public class SvnNativeClientAuthTest extends Svn17TestCase {
     //Assert.assertEquals(myExpectedCert, myCertificateAskedInteractivelyCount);
 
     final SvnConfiguration instance = SvnConfiguration.getInstance(myProject);
-    instance.clearAuthenticationDirectory(myProject);
-    instance.clearRuntimeStorage();
+    clearAuthCache(instance);
 
     Assert.assertEquals(SvnConfiguration.UseAcceleration.commandLine, instance.myUseAcceleration);
     mySaveCredentials = false;
@@ -446,8 +439,7 @@ public class SvnNativeClientAuthTest extends Svn17TestCase {
     //Assert.assertEquals(myExpectedCert, myCertificateAskedInteractivelyCount);
 
     final SvnConfiguration instance = SvnConfiguration.getInstance(myProject);
-    instance.clearAuthenticationDirectory(myProject);
-    instance.clearRuntimeStorage();
+    clearAuthCache(instance);
 
     Assert.assertEquals(SvnConfiguration.UseAcceleration.commandLine, instance.myUseAcceleration);
     mySaveCredentials = false;
@@ -480,8 +472,7 @@ public class SvnNativeClientAuthTest extends Svn17TestCase {
     //Assert.assertEquals(myExpectedCreds, myCredentialsAskedInteractivelyCount);
 
     final SvnConfiguration instance = SvnConfiguration.getInstance(myProject);
-    instance.clearAuthenticationDirectory(myProject);
-    instance.clearRuntimeStorage();
+    clearAuthCache(instance);
 
     Assert.assertEquals(SvnConfiguration.UseAcceleration.commandLine, instance.myUseAcceleration);
     mySaveCredentials = false;
@@ -507,8 +498,7 @@ public class SvnNativeClientAuthTest extends Svn17TestCase {
     //Assert.assertEquals(myExpectedCert, myCertificateAskedInteractivelyCount);
 
     final SvnConfiguration instance = SvnConfiguration.getInstance(myProject);
-    instance.clearAuthenticationDirectory(myProject);
-    instance.clearRuntimeStorage();
+    clearAuthCache(instance);
 
     Assert.assertEquals(SvnConfiguration.UseAcceleration.commandLine, instance.myUseAcceleration);
     mySaveCredentials = false;
