@@ -23,6 +23,7 @@ import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.ide.KillRingTransferable;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase;
 import org.jetbrains.annotations.NotNull;
 
@@ -195,15 +196,20 @@ public class KillToWordEndActionTest extends LightPlatformCodeInsightTestCase {
     configureFromFileText(getTestName(false) + ".txt", text);
     final Document document = myEditor.getDocument();
     final CaretModelImpl caretModel = new CaretModelImpl((EditorImpl)myEditor);
-    document.addDocumentListener(caretModel);
-    caretModel.moveToOffset(document.getTextLength()-1);
-    killToWordEnd();
-    killToWordEnd();
-    checkResultByText(" third");
+    try {
+      document.addDocumentListener(caretModel);
+      caretModel.moveToOffset(document.getTextLength()-1);
+      killToWordEnd();
+      killToWordEnd();
+      checkResultByText(" third");
 
-    Transferable contents = CopyPasteManager.getInstance().getContents();
-    assertTrue(contents instanceof KillRingTransferable);
-    Object string = contents.getTransferData(DataFlavor.stringFlavor);
-    assertEquals("first second", string);
+      Transferable contents = CopyPasteManager.getInstance().getContents();
+      assertTrue(contents instanceof KillRingTransferable);
+      Object string = contents.getTransferData(DataFlavor.stringFlavor);
+      assertEquals("first second", string);
+    }
+    finally {
+      Disposer.dispose(caretModel);
+    }
   }
 }
