@@ -16,10 +16,12 @@
 package org.jetbrains.idea.svn;
 
 import com.intellij.notification.NotificationType;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
@@ -28,6 +30,7 @@ import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.NamedRunnable;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.impl.GenericNotifierImpl;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
@@ -46,12 +49,15 @@ import org.tmatesoft.svn.core.SVNAuthenticationException;
 import org.tmatesoft.svn.core.SVNCancelException;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.auth.SVNAuthentication;
 import org.tmatesoft.svn.core.internal.util.SVNURLUtil;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 
 import javax.swing.*;
 import java.awt.*;
+import java.io.File;
+import java.io.FilenameFilter;
 import java.net.*;
 import java.util.*;
 import java.util.List;
@@ -59,6 +65,9 @@ import java.util.Timer;
 
 public class SvnAuthenticationNotifier extends GenericNotifierImpl<SvnAuthenticationNotifier.AuthenticationRequest, SVNURL> {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.idea.svn.SvnAuthenticationNotifier");
+
+  private static final List<String> ourAuthKinds = Arrays.asList(ISVNAuthenticationManager.PASSWORD, ISVNAuthenticationManager.SSH,
+    ISVNAuthenticationManager.SSL, ISVNAuthenticationManager.USERNAME, "svn.ssl.server", "svn.ssh.server");
 
   private final SvnVcs myVcs;
   private final RootsToWorkingCopies myRootsToWorkingCopies;
@@ -452,7 +461,42 @@ public class SvnAuthenticationNotifier extends GenericNotifierImpl<SvnAuthentica
       }
       if (result == Messages.YES) {
         SvnConfiguration.RUNTIME_AUTH_CACHE.clear();
-        SvnConfiguration.getInstance(project).clearAuthenticationDirectory(project);
+        clearAuthenticationDirectory(SvnConfiguration.getInstance(project));
+      }
+    }
+  }
+
+  public static void clearAuthenticationDirectory(@NotNull SvnConfiguration configuration) {
+    final File authDir = new File(configuration.getConfigurationDirectory(), "auth");
+    if (authDir.exists()) {
+      final Runnable process = new Runnable() {
+        public void run() {
+          final ProgressIndicator ind = ProgressManager.getInstance().getProgressIndicator();
+          if (ind != null) {
+            ind.setIndeterminate(true);
+            ind.setText("Clearing stored credentials in " + authDir.getAbsolutePath());
+          }
+          final File[] files = authDir.listFiles(new FilenameFilter() {
+            public boolean accept(File dir, String name) {
+              return ourAuthKinds.contains(name);
+            }
+          });
+
+          for (File dir : files) {
+            if (ind != null) {
+              ind.setText("Deleting " + dir.getAbsolutePath());
+            }
+            FileUtil.delete(dir);
+          }
+        }
+      };
+      final Application application = ApplicationManager.getApplication();
+      if (application.isUnitTestMode() || !application.isDispatchThread()) {
+        process.run();
+      }
+      else {
+        ProgressManager.getInstance()
+          .runProcessWithProgressSynchronously(process, "button.text.clear.authentication.cache", false, configuration.getProject());
       }
     }
   }

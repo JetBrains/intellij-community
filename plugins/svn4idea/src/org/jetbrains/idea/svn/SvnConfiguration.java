@@ -18,15 +18,10 @@
 package org.jetbrains.idea.svn;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.changes.VcsAnnotationRefresher;
 import org.jdom.Attribute;
 import org.jdom.DataConversionException;
@@ -40,7 +35,6 @@ import org.jetbrains.idea.svn.update.UpdateRootInfo;
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationProvider;
 import org.tmatesoft.svn.core.auth.SVNAuthentication;
 import org.tmatesoft.svn.core.internal.wc.ISVNAuthenticationStorage;
@@ -51,7 +45,6 @@ import org.tmatesoft.svn.core.wc.SVNDiffOptions;
 import org.tmatesoft.svn.core.wc.SVNWCUtil;
 
 import java.io.File;
-import java.io.FilenameFilter;
 import java.util.*;
 
 @State(
@@ -180,7 +173,7 @@ public class SvnConfiguration implements PersistentStateComponent<Element> {
     final boolean changed = IGNORE_SPACES_IN_ANNOTATE != value;
     IGNORE_SPACES_IN_ANNOTATE = value;
     if (changed) {
-      myProject.getMessageBus().syncPublisher(VcsAnnotationRefresher.LOCAL_CHANGES_CHANGED).configurationChanged(SvnVcs.getKey());
+      getProject().getMessageBus().syncPublisher(VcsAnnotationRefresher.LOCAL_CHANGES_CHANGED).configurationChanged(SvnVcs.getKey());
     }
   }
 
@@ -198,6 +191,10 @@ public class SvnConfiguration implements PersistentStateComponent<Element> {
 
   public void setSSHReadTimeout(long SSHReadTimeout) {
     mySSHReadTimeout = SSHReadTimeout;
+  }
+
+  public Project getProject() {
+    return myProject;
   }
 
   public class SvnSupportOptions {
@@ -544,42 +541,6 @@ public class SvnConfiguration implements PersistentStateComponent<Element> {
   // TODO: Check why SvnUpdateEnvironment.validationOptions is fully commented and then remove this method if necessary
   public Map<File, UpdateRootInfo> getUpdateInfosMap() {
     return Collections.unmodifiableMap(myUpdateRootInfos);
-  }
-
-  private static final List<String> ourAuthKinds = Arrays.asList(ISVNAuthenticationManager.PASSWORD, ISVNAuthenticationManager.SSH,
-    ISVNAuthenticationManager.SSL, ISVNAuthenticationManager.USERNAME, "svn.ssl.server", "svn.ssh.server");
-
-  public void clearAuthenticationDirectory(@Nullable Project project) {
-    final File authDir = new File(getConfigurationDirectory(), "auth");
-    if (authDir.exists()) {
-      final Runnable process = new Runnable() {
-        public void run() {
-          final ProgressIndicator ind = ProgressManager.getInstance().getProgressIndicator();
-          if (ind != null) {
-            ind.setIndeterminate(true);
-            ind.setText("Clearing stored credentials in " + authDir.getAbsolutePath());
-          }
-          final File[] files = authDir.listFiles(new FilenameFilter() {
-            public boolean accept(File dir, String name) {
-              return ourAuthKinds.contains(name);
-            }
-          });
-
-          for (File dir : files) {
-            if (ind != null) {
-              ind.setText("Deleting " + dir.getAbsolutePath());
-            }
-            FileUtil.delete(dir);
-          }
-        }
-      };
-      final Application application = ApplicationManager.getApplication();
-      if (application.isUnitTestMode() || ! application.isDispatchThread()) {
-        process.run();
-      } else {
-        ProgressManager.getInstance().runProcessWithProgressSynchronously(process, "button.text.clear.authentication.cache", false, project);
-      }
-    }
   }
 
   public void acknowledge(final String kind, final String realm, final Object object) {

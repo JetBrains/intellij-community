@@ -25,6 +25,7 @@ import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.ui.UIUtil;
 import junit.framework.Assert;
 import org.jetbrains.idea.svn.SvnAuthenticationManager;
+import org.jetbrains.idea.svn.SvnAuthenticationNotifier;
 import org.jetbrains.idea.svn.SvnConfiguration;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.auth.ProviderType;
@@ -784,7 +785,7 @@ public class SvnAuthenticationTest extends PlatformTestCase {
   }
 
   private void clearAuthCache() {
-    myConfiguration.clearAuthenticationDirectory(getProject());
+    SvnAuthenticationNotifier.clearAuthenticationDirectory(myConfiguration);
   }
 
   public void testPlaintextPromptAndSecondPrompt() throws Exception {

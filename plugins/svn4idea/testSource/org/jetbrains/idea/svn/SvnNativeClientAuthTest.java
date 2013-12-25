@@ -322,8 +322,8 @@ public class SvnNativeClientAuthTest extends Svn17TestCase {
     //Assert.assertEquals(myExpectedCert, myCertificateAskedInteractivelyCount);
   }
 
-  private void clearAuthCache(@NotNull SvnConfiguration instance) {
-    instance.clearAuthenticationDirectory(myProject);
+  private static void clearAuthCache(@NotNull SvnConfiguration instance) {
+    SvnAuthenticationNotifier.clearAuthenticationDirectory(instance);
     instance.clearRuntimeStorage();
   }
 

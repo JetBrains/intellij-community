@@ -781,7 +781,7 @@ public class SvnAuthenticationTest extends PlatformTestCase {
   }
 
   private void clearAuthCache() {
-    myConfiguration.clearAuthenticationDirectory(getProject());
+    SvnAuthenticationNotifier.clearAuthenticationDirectory(myConfiguration);
   }
 
   public void testPlaintextPromptAndSecondPrompt() throws Exception {
