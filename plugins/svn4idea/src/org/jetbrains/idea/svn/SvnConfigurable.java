@@ -262,10 +262,10 @@ public class SvnConfigurable implements Configurable {
         return true;
       }
     }
-    if (configuration.mySSHConnectionTimeout/1000 != ((SpinnerNumberModel) mySSHConnectionTimeout.getModel()).getNumber().longValue()) {
+    if (configuration.getSSHConnectionTimeout() /1000 != ((SpinnerNumberModel) mySSHConnectionTimeout.getModel()).getNumber().longValue()) {
       return true;
     }
-    if (configuration.mySSHReadTimeout/1000 != ((SpinnerNumberModel) mySSHReadTimeout.getModel()).getNumber().longValue()) {
+    if (configuration.getSSHReadTimeout() /1000 != ((SpinnerNumberModel) mySSHReadTimeout.getModel()).getNumber().longValue()) {
       return true;
     }
     if (configuration.getHttpTimeout()/1000 != ((SpinnerNumberModel) myHttpTimeout.getModel()).getNumber().longValue()) {
@@ -297,8 +297,8 @@ public class SvnConfigurable implements Configurable {
     } else {
       configuration.setMaxAnnotateRevisions(((SpinnerNumberModel) myNumRevsInAnnotations.getModel()).getNumber().intValue());
     }
-    configuration.mySSHConnectionTimeout = ((SpinnerNumberModel) mySSHConnectionTimeout.getModel()).getNumber().longValue() * 1000;
-    configuration.mySSHReadTimeout = ((SpinnerNumberModel) mySSHReadTimeout.getModel()).getNumber().longValue() * 1000;
+    configuration.setSSHConnectionTimeout(((SpinnerNumberModel) mySSHConnectionTimeout.getModel()).getNumber().longValue() * 1000);
+    configuration.setSSHReadTimeout(((SpinnerNumberModel) mySSHReadTimeout.getModel()).getNumber().longValue() * 1000);
 
     final SvnApplicationSettings applicationSettings17 = SvnApplicationSettings.getInstance();
     boolean reloadWorkingCopies = !acceleration().equals(configuration.myUseAcceleration) ||
@@ -344,8 +344,8 @@ public class SvnConfigurable implements Configurable {
       myNumRevsInAnnotations.setValue(annotateRevisions);
     }
     myNumRevsInAnnotations.setEnabled(myMaximumNumberOfRevisionsCheckBox.isSelected());
-    mySSHConnectionTimeout.setValue(Long.valueOf(configuration.mySSHConnectionTimeout / 1000));
-    mySSHReadTimeout.setValue(Long.valueOf(configuration.mySSHReadTimeout / 1000));
+    mySSHConnectionTimeout.setValue(Long.valueOf(configuration.getSSHConnectionTimeout() / 1000));
+    mySSHReadTimeout.setValue(Long.valueOf(configuration.getSSHReadTimeout() / 1000));
     myHttpTimeout.setValue(Long.valueOf(configuration.getHttpTimeout() / 1000));
     myWithCommandLineClient.setSelected(configuration.isCommandLine());
     final SvnApplicationSettings applicationSettings17 = SvnApplicationSettings.getInstance();
@@ -381,8 +381,8 @@ public class SvnConfigurable implements Configurable {
     myNumRevsInAnnotations = new JSpinner(new SpinnerNumberModel(value, 10, 100000, 100));
 
     final Long maximum = 30 * 60 * 1000L;
-    final long connection = configuration.mySSHConnectionTimeout <= maximum ? configuration.mySSHConnectionTimeout : maximum;
-    final long read = configuration.mySSHReadTimeout <= maximum ? configuration.mySSHReadTimeout : maximum;
+    final long connection = configuration.getSSHConnectionTimeout() <= maximum ? configuration.getSSHConnectionTimeout() : maximum;
+    final long read = configuration.getSSHReadTimeout() <= maximum ? configuration.getSSHReadTimeout() : maximum;
     mySSHConnectionTimeout = new JSpinner(new SpinnerNumberModel(Long.valueOf(connection / 1000), Long.valueOf(0L), maximum, Long.valueOf(10L)));
     mySSHReadTimeout = new JSpinner(new SpinnerNumberModel(Long.valueOf(read / 1000), Long.valueOf(0L), maximum, Long.valueOf(10L)));
     myHttpTimeout = new JSpinner(new SpinnerNumberModel(Long.valueOf(read / 1000), Long.valueOf(0L), maximum, Long.valueOf(10L)));

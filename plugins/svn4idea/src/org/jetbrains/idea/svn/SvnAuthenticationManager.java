@@ -674,7 +674,7 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager im
         return DEFAULT_READ_TIMEOUT;
     }
     if (SVN_SSH.equals(protocol)) {
-      return (int) getConfig().mySSHReadTimeout;
+      return (int)getConfig().getSSHReadTimeout();
     }
     return 0;
   }
@@ -683,7 +683,7 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager im
   public int getConnectTimeout(SVNRepository repository) {
     String protocol = repository.getLocation().getProtocol();
     if (SVN_SSH.equals(protocol)) {
-      return (int) getConfig().mySSHConnectionTimeout;
+      return (int)getConfig().getSSHConnectionTimeout();
     }
     final int connectTimeout = super.getConnectTimeout(repository);
     if ((HTTP.equals(protocol) || HTTPS.equals(protocol)) && (connectTimeout <= 0)) {

@@ -93,8 +93,8 @@ public class SvnConfiguration implements PersistentStateComponent<Element> {
   private boolean myCleanupRun;
   private int myMaxAnnotateRevisions = ourMaxAnnotateRevisionsDefault;
   private final static long DEFAULT_SSH_TIMEOUT = 30 * 1000;
-  public long mySSHConnectionTimeout = DEFAULT_SSH_TIMEOUT;
-  public long mySSHReadTimeout = DEFAULT_SSH_TIMEOUT;
+  private long mySSHConnectionTimeout = DEFAULT_SSH_TIMEOUT;
+  private long mySSHReadTimeout = DEFAULT_SSH_TIMEOUT;
 
   public static final AuthStorage RUNTIME_AUTH_CACHE = new AuthStorage();
   public String LAST_MERGED_REVISION = null;
@@ -243,6 +243,22 @@ public class SvnConfiguration implements PersistentStateComponent<Element> {
     if (changed) {
       myProject.getMessageBus().syncPublisher(VcsAnnotationRefresher.LOCAL_CHANGES_CHANGED).configurationChanged(SvnVcs.getKey());
     }
+  }
+
+  public long getSSHConnectionTimeout() {
+    return mySSHConnectionTimeout;
+  }
+
+  public void setSSHConnectionTimeout(long SSHConnectionTimeout) {
+    mySSHConnectionTimeout = SSHConnectionTimeout;
+  }
+
+  public long getSSHReadTimeout() {
+    return mySSHReadTimeout;
+  }
+
+  public void setSSHReadTimeout(long SSHReadTimeout) {
+    mySSHReadTimeout = SSHReadTimeout;
   }
 
   public class SvnSupportOptions {
