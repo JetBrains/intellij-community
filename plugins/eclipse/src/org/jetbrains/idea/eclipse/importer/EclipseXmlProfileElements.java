@@ -46,4 +46,6 @@ public interface EclipseXmlProfileElements {
   String OPTION_NEW_LINE_AT_EOF = "org.eclipse.jdt.core.formatter.insert_new_line_at_end_of_file_if_missing";
   String OPTION_INDENT_CLASS_BODY_DECL = "org.eclipse.jdt.core.formatter.indent_body_declarations_compare_to_type_header";
   String OPTION_TAB_CHAR = "org.eclipse.jdt.core.formatter.tabulation.char";
+  String OPTION_CONTINUATION_INDENT = "org.eclipse.jdt.core.formatter.continuation_indentation";
+  String OPTION_TAB_SIZE = "org.eclipse.jdt.core.formatter.tabulation.size";
 }

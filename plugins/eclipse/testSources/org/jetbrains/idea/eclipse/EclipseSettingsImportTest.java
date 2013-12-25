@@ -31,6 +31,7 @@ public class EclipseSettingsImportTest extends PlatformTestCase {
     
     CommonCodeStyleSettings javaSettings = settings.getCommonSettings("Java");
     CommonCodeStyleSettings.IndentOptions indentOptions = javaSettings.getIndentOptions();
+    assertNotNull(indentOptions);
     javaSettings.SPACE_AFTER_COMMA_IN_TYPE_ARGUMENTS = false;
     javaSettings.SPACE_WITHIN_ARRAY_INITIALIZER_BRACES = false;
     javaSettings.ARRAY_INITIALIZER_RBRACE_ON_NEXT_LINE = true;
@@ -93,6 +94,7 @@ public class EclipseSettingsImportTest extends PlatformTestCase {
     javaSettings.KEEP_CONTROL_STATEMENT_IN_ONE_LINE = true;
     indentOptions.USE_TAB_CHARACTER = false;
     indentOptions.SMART_TABS = false;
+    indentOptions.TAB_SIZE = 3;
     settings.FORMATTER_TAGS_ENABLED = false;
 
     InputStream inputStream = new FileInputStream(input);
@@ -116,7 +118,7 @@ public class EclipseSettingsImportTest extends PlatformTestCase {
       assertFalse(javaSettings.CATCH_ON_NEW_LINE);
       assertTrue(javaSettings.SPACE_BEFORE_WHILE_PARENTHESES);
       assertEquals(1, javaSettings.BLANK_LINES_AFTER_PACKAGE);
-      assertEquals(2, javaSettings.getIndentOptions().CONTINUATION_INDENT_SIZE);
+      assertEquals(8, javaSettings.getIndentOptions().CONTINUATION_INDENT_SIZE);
       assertFalse(javaSettings.ALIGN_MULTILINE_PARAMETERS_IN_CALLS);
       assertEquals(0, javaSettings.BLANK_LINES_BEFORE_PACKAGE);
       assertFalse(javaSettings.SPACE_WITHIN_FOR_PARENTHESES);
