@@ -469,15 +469,6 @@ public class SvnConfiguration implements PersistentStateComponent<Element> {
     else {
       myIsUseDefaultConfiguration = true;
     }
-    // compatibility: this setting was moved from .iws to global settings
-    List urls = element.getChildren("checkoutURL");
-    for (Object url1 : urls) {
-      Element child = (Element)url1;
-      String url = child.getText();
-      if (url != null) {
-        SvnApplicationSettings.getInstance().addCheckoutURL(url);
-      }
-    }
     myIsKeepLocks = element.getChild("keepLocks") != null;
     final Element useProxy = element.getChild("myIsUseDefaultProxy");
     if (useProxy == null) {
