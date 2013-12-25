@@ -1055,11 +1055,11 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
 
   public void refreshSSLProperty() {
     if (ourSSLProtocolsExplicitlySet) return;
-    if (SvnConfiguration.SSLProtocols.all.equals(myConfiguration.SSL_PROTOCOLS)) {
+    if (SvnConfiguration.SSLProtocols.all.equals(myConfiguration.getSslProtocols())) {
       System.clearProperty(SVNKIT_HTTP_SSL_PROTOCOLS);
-    } else if (SvnConfiguration.SSLProtocols.sslv3.equals(myConfiguration.SSL_PROTOCOLS)) {
+    } else if (SvnConfiguration.SSLProtocols.sslv3.equals(myConfiguration.getSslProtocols())) {
       System.setProperty(SVNKIT_HTTP_SSL_PROTOCOLS, "SSLv3");
-    } else if (SvnConfiguration.SSLProtocols.tlsv1.equals(myConfiguration.SSL_PROTOCOLS)) {
+    } else if (SvnConfiguration.SSLProtocols.tlsv1.equals(myConfiguration.getSslProtocols())) {
       System.setProperty(SVNKIT_HTTP_SSL_PROTOCOLS, "TLSv1");
     }
   }

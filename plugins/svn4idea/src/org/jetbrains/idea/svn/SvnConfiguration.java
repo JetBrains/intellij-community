@@ -77,8 +77,8 @@ public class SvnConfiguration implements PersistentStateComponent<Element> {
   private boolean myCleanupRun;
   private int myMaxAnnotateRevisions = ourMaxAnnotateRevisionsDefault;
   private final static long DEFAULT_SSH_TIMEOUT = 30 * 1000;
-  private long mySSHConnectionTimeout = DEFAULT_SSH_TIMEOUT;
-  private long mySSHReadTimeout = DEFAULT_SSH_TIMEOUT;
+  public long mySSHConnectionTimeout = DEFAULT_SSH_TIMEOUT;
+  public long mySSHReadTimeout = DEFAULT_SSH_TIMEOUT;
 
   public static final AuthStorage RUNTIME_AUTH_CACHE = new AuthStorage();
   public SVNDepth UPDATE_DEPTH = SVNDepth.UNKNOWN;
@@ -87,7 +87,6 @@ public class SvnConfiguration implements PersistentStateComponent<Element> {
   public boolean MERGE_DIFF_USE_ANCESTRY = true;
   public boolean UPDATE_LOCK_ON_DEMAND = false;
   public boolean IGNORE_SPACES_IN_MERGE = false;
-  //public boolean DETECT_NESTED_COPIES = true;
   public boolean CHECK_NESTED_FOR_QUICK_MERGE = false;
   public boolean IGNORE_SPACES_IN_ANNOTATE = true;
   public boolean SHOW_MERGE_SOURCES_IN_ANNOTATE = true;
@@ -105,7 +104,7 @@ public class SvnConfiguration implements PersistentStateComponent<Element> {
   private IdeaSVNConfigFile myConfigFile;
 
   public boolean isCommandLine() {
-    return UseAcceleration.commandLine.equals(myUseAcceleration);
+    return UseAcceleration.commandLine.equals(getUseAcceleration());
   }
 
   @Override
@@ -141,7 +140,7 @@ public class SvnConfiguration implements PersistentStateComponent<Element> {
   }
 
   public SVNDiffOptions getMergeOptions() {
-    return new SVNDiffOptions(IGNORE_SPACES_IN_MERGE, IGNORE_SPACES_IN_MERGE, IGNORE_SPACES_IN_MERGE);
+    return new SVNDiffOptions(isIgnoreSpacesInMerge(), isIgnoreSpacesInMerge(), isIgnoreSpacesInMerge());
   }
 
   private void initServers() {
@@ -175,24 +174,124 @@ public class SvnConfiguration implements PersistentStateComponent<Element> {
     }
   }
 
-  public long getSSHConnectionTimeout() {
+  public long getSshConnectionTimeout() {
     return mySSHConnectionTimeout;
   }
 
-  public void setSSHConnectionTimeout(long SSHConnectionTimeout) {
-    mySSHConnectionTimeout = SSHConnectionTimeout;
+  public void setSshConnectionTimeout(long sshConnectionTimeout) {
+    mySSHConnectionTimeout = sshConnectionTimeout;
   }
 
-  public long getSSHReadTimeout() {
+  public long getSshReadTimeout() {
     return mySSHReadTimeout;
   }
 
-  public void setSSHReadTimeout(long SSHReadTimeout) {
-    mySSHReadTimeout = SSHReadTimeout;
+  public void setSshReadTimeout(long sshReadTimeout) {
+    mySSHReadTimeout = sshReadTimeout;
   }
 
   public Project getProject() {
     return myProject;
+  }
+
+  public Boolean isKeepNewFilesAsIsForTreeConflictMerge() {
+    return TREE_CONFLICT_MERGE_THEIRS_NEW_INTO_OLD_PLACE;
+  }
+
+  public void setKeepNewFilesAsIsForTreeConflictMerge(Boolean keepNewFilesAsIsForTreeConflictMerge) {
+    this.TREE_CONFLICT_MERGE_THEIRS_NEW_INTO_OLD_PLACE = keepNewFilesAsIsForTreeConflictMerge;
+  }
+
+  public SSLProtocols getSslProtocols() {
+    return SSL_PROTOCOLS;
+  }
+
+  public void setSslProtocols(SSLProtocols sslProtocols) {
+    this.SSL_PROTOCOLS = sslProtocols;
+  }
+
+  public SVNDepth getUpdateDepth() {
+    return UPDATE_DEPTH;
+  }
+
+  public void setUpdateDepth(SVNDepth updateDepth) {
+    this.UPDATE_DEPTH = updateDepth;
+  }
+
+  public UseAcceleration getUseAcceleration() {
+    return myUseAcceleration;
+  }
+
+  public void setUseAcceleration(UseAcceleration useAcceleration) {
+    myUseAcceleration = useAcceleration;
+  }
+
+  public boolean isIgnoreExternals() {
+    return IGNORE_EXTERNALS;
+  }
+
+  public void setIgnoreExternals(boolean ignoreExternals) {
+    this.IGNORE_EXTERNALS = ignoreExternals;
+  }
+
+  public boolean isMergeDryRun() {
+    return MERGE_DRY_RUN;
+  }
+
+  public void setMergeDryRun(boolean mergeDryRun) {
+    this.MERGE_DRY_RUN = mergeDryRun;
+  }
+
+  public boolean isMergeDiffUseAncestry() {
+    return MERGE_DIFF_USE_ANCESTRY;
+  }
+
+  public void setMergeDiffUseAncestry(boolean mergeDiffUseAncestry) {
+    this.MERGE_DIFF_USE_ANCESTRY = mergeDiffUseAncestry;
+  }
+
+  public boolean isUpdateLockOnDemand() {
+    return UPDATE_LOCK_ON_DEMAND;
+  }
+
+  public void setUpdateLockOnDemand(boolean updateLockOnDemand) {
+    this.UPDATE_LOCK_ON_DEMAND = updateLockOnDemand;
+  }
+
+  public boolean isIgnoreSpacesInMerge() {
+    return IGNORE_SPACES_IN_MERGE;
+  }
+
+  public void setIgnoreSpacesInMerge(boolean ignoreSpacesInMerge) {
+    this.IGNORE_SPACES_IN_MERGE = ignoreSpacesInMerge;
+  }
+
+  public boolean isCheckNestedForQuickMerge() {
+    return CHECK_NESTED_FOR_QUICK_MERGE;
+  }
+
+  public void setCheckNestedForQuickMerge(boolean checkNestedForQuickMerge) {
+    this.CHECK_NESTED_FOR_QUICK_MERGE = checkNestedForQuickMerge;
+  }
+
+  public boolean isIgnoreSpacesInAnnotate() {
+    return IGNORE_SPACES_IN_ANNOTATE;
+  }
+
+  public boolean isShowMergeSourcesInAnnotate() {
+    return SHOW_MERGE_SOURCES_IN_ANNOTATE;
+  }
+
+  public void setShowMergeSourcesInAnnotate(boolean showMergeSourcesInAnnotate) {
+    this.SHOW_MERGE_SOURCES_IN_ANNOTATE = showMergeSourcesInAnnotate;
+  }
+
+  public boolean isForceUpdate() {
+    return FORCE_UPDATE;
+  }
+
+  public void setForceUpdate(boolean forceUpdate) {
+    this.FORCE_UPDATE = forceUpdate;
   }
 
   public class SvnSupportOptions {
@@ -405,7 +504,7 @@ public class SvnConfiguration implements PersistentStateComponent<Element> {
       final Attribute acceleration = element.getAttribute("myUseAcceleration");
       if (acceleration != null) {
         try {
-          myUseAcceleration = UseAcceleration.valueOf(acceleration.getValue());
+          setUseAcceleration(UseAcceleration.valueOf(acceleration.getValue()));
         } catch (IllegalArgumentException e) {
           //
         }
@@ -423,13 +522,13 @@ public class SvnConfiguration implements PersistentStateComponent<Element> {
     final Attribute protocols = element.getAttribute("SSL_PROTOCOLS");
     if (protocols != null) {
       try {
-        SSL_PROTOCOLS = SSLProtocols.valueOf(protocols.getValue());
+        setSslProtocols(SSLProtocols.valueOf(protocols.getValue()));
       } catch (IllegalArgumentException e) {
         //
       }
     }
     if (treeConflictMergeNewFilesPlace != null) {
-      TREE_CONFLICT_MERGE_THEIRS_NEW_INTO_OLD_PLACE = Boolean.parseBoolean(treeConflictMergeNewFilesPlace.getValue());
+      setKeepNewFilesAsIsForTreeConflictMerge(Boolean.parseBoolean(treeConflictMergeNewFilesPlace.getValue()));
     }
   }
 
@@ -450,12 +549,13 @@ public class SvnConfiguration implements PersistentStateComponent<Element> {
       element.addContent(new Element("supportedVersion").setText(String.valueOf(mySupportOptions.myVersion)));
     }
     element.setAttribute("maxAnnotateRevisions", String.valueOf(myMaxAnnotateRevisions));
-    element.setAttribute("myUseAcceleration", String.valueOf(myUseAcceleration));
+    element.setAttribute("myUseAcceleration", String.valueOf(getUseAcceleration()));
     element.setAttribute("myAutoUpdateAfterCommit", String.valueOf(myAutoUpdateAfterCommit));
     element.setAttribute(CLEANUP_ON_START_RUN, String.valueOf(myCleanupRun));
-    element.setAttribute("SSL_PROTOCOLS", SSL_PROTOCOLS.name());
-    if (TREE_CONFLICT_MERGE_THEIRS_NEW_INTO_OLD_PLACE != null) {
-      element.setAttribute("TREE_CONFLICT_MERGE_THEIRS_NEW_INTO_OLD_PLACE", String.valueOf(TREE_CONFLICT_MERGE_THEIRS_NEW_INTO_OLD_PLACE));
+    element.setAttribute("SSL_PROTOCOLS", getSslProtocols().name());
+    if (isKeepNewFilesAsIsForTreeConflictMerge() != null) {
+      element.setAttribute("TREE_CONFLICT_MERGE_THEIRS_NEW_INTO_OLD_PLACE", String.valueOf(
+        isKeepNewFilesAsIsForTreeConflictMerge()));
     }
   }
 

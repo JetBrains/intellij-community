@@ -63,7 +63,7 @@ public class OneRecursiveShotMergeInfoWorker implements MergeInfoWorker {
   }
   
   public void prepare() throws VcsException {
-    final SVNDepth depth = SvnConfiguration.getInstance(myProject).CHECK_NESTED_FOR_QUICK_MERGE ? SVNDepth.INFINITY : SVNDepth.EMPTY;
+    final SVNDepth depth = SvnConfiguration.getInstance(myProject).isCheckNestedForQuickMerge() ? SVNDepth.INFINITY : SVNDepth.EMPTY;
     ISVNPropertyHandler handler = new ISVNPropertyHandler() {
       public void handleProperty(File path, SVNPropertyData property) throws SVNException {
         final String key = keyFromFile(path);

@@ -219,19 +219,19 @@ public class SvnConfigurable implements Configurable {
     if (configuration.isIsUseDefaultProxy() != myUseCommonProxy.isSelected()) {
       return true;
     }
-    if (configuration.UPDATE_LOCK_ON_DEMAND != myLockOnDemand.isSelected()) {
+    if (configuration.isUpdateLockOnDemand() != myLockOnDemand.isSelected()) {
       return true;
     }
-    if (configuration.CHECK_NESTED_FOR_QUICK_MERGE != myCheckNestedInQuickMerge.isSelected()) {
+    if (configuration.isCheckNestedForQuickMerge() != myCheckNestedInQuickMerge.isSelected()) {
       return true;
     }
-    if (configuration.IGNORE_SPACES_IN_ANNOTATE != myIgnoreWhitespaceDifferenciesInCheckBox.isSelected()) {
+    if (configuration.isIgnoreSpacesInAnnotate() != myIgnoreWhitespaceDifferenciesInCheckBox.isSelected()) {
       return true;
     }
-    if (configuration.SHOW_MERGE_SOURCES_IN_ANNOTATE != myShowMergeSourceInAnnotate.isSelected()) {
+    if (configuration.isShowMergeSourcesInAnnotate() != myShowMergeSourceInAnnotate.isSelected()) {
       return true;
     }
-    if (! configuration.myUseAcceleration.equals(acceleration())) return true;
+    if (! configuration.getUseAcceleration().equals(acceleration())) return true;
     final int annotateRevisions = configuration.getMaxAnnotateRevisions();
     final boolean useMaxInAnnot = annotateRevisions != -1;
     if (useMaxInAnnot != myMaximumNumberOfRevisionsCheckBox.isSelected()) {
@@ -242,16 +242,16 @@ public class SvnConfigurable implements Configurable {
         return true;
       }
     }
-    if (configuration.getSSHConnectionTimeout() /1000 != ((SpinnerNumberModel) mySSHConnectionTimeout.getModel()).getNumber().longValue()) {
+    if (configuration.getSshConnectionTimeout() /1000 != ((SpinnerNumberModel) mySSHConnectionTimeout.getModel()).getNumber().longValue()) {
       return true;
     }
-    if (configuration.getSSHReadTimeout() /1000 != ((SpinnerNumberModel) mySSHReadTimeout.getModel()).getNumber().longValue()) {
+    if (configuration.getSshReadTimeout() /1000 != ((SpinnerNumberModel) mySSHReadTimeout.getModel()).getNumber().longValue()) {
       return true;
     }
     if (configuration.getHttpTimeout()/1000 != ((SpinnerNumberModel) myHttpTimeout.getModel()).getNumber().longValue()) {
       return true;
     }
-    if (! getSelectedSSL().equals(configuration.SSL_PROTOCOLS)) return true;
+    if (! getSelectedSSL().equals(configuration.getSslProtocols())) return true;
     final SvnApplicationSettings applicationSettings17 = SvnApplicationSettings.getInstance();
     if (! Comparing.equal(applicationSettings17.getCommandLinePath(), myCommandLineClient.getText().trim())) return true;
     return !configuration.getConfigurationDirectory().equals(myConfigurationDirectoryText.getText().trim());
@@ -268,23 +268,23 @@ public class SvnConfigurable implements Configurable {
 
     configuration.setIsUseDefaultProxy(myUseCommonProxy.isSelected());
     final SvnVcs vcs17 = SvnVcs.getInstance(myProject);
-    configuration.CHECK_NESTED_FOR_QUICK_MERGE = myCheckNestedInQuickMerge.isSelected();
-    configuration.UPDATE_LOCK_ON_DEMAND = myLockOnDemand.isSelected();
+    configuration.setCheckNestedForQuickMerge(myCheckNestedInQuickMerge.isSelected());
+    configuration.setUpdateLockOnDemand(myLockOnDemand.isSelected());
     configuration.setIgnoreSpacesInAnnotate(myIgnoreWhitespaceDifferenciesInCheckBox.isSelected());
-    configuration.SHOW_MERGE_SOURCES_IN_ANNOTATE = myShowMergeSourceInAnnotate.isSelected();
+    configuration.setShowMergeSourcesInAnnotate(myShowMergeSourceInAnnotate.isSelected());
     if (! myMaximumNumberOfRevisionsCheckBox.isSelected()) {
       configuration.setMaxAnnotateRevisions(-1);
     } else {
       configuration.setMaxAnnotateRevisions(((SpinnerNumberModel) myNumRevsInAnnotations.getModel()).getNumber().intValue());
     }
-    configuration.setSSHConnectionTimeout(((SpinnerNumberModel) mySSHConnectionTimeout.getModel()).getNumber().longValue() * 1000);
-    configuration.setSSHReadTimeout(((SpinnerNumberModel) mySSHReadTimeout.getModel()).getNumber().longValue() * 1000);
+    configuration.setSshConnectionTimeout(((SpinnerNumberModel)mySSHConnectionTimeout.getModel()).getNumber().longValue() * 1000);
+    configuration.setSshReadTimeout(((SpinnerNumberModel)mySSHReadTimeout.getModel()).getNumber().longValue() * 1000);
 
     final SvnApplicationSettings applicationSettings17 = SvnApplicationSettings.getInstance();
-    boolean reloadWorkingCopies = !acceleration().equals(configuration.myUseAcceleration) ||
+    boolean reloadWorkingCopies = !acceleration().equals(configuration.getUseAcceleration()) ||
                                   !StringUtil.equals(applicationSettings17.getCommandLinePath(), myCommandLineClient.getText().trim());
-    configuration.myUseAcceleration = acceleration();
-    configuration.SSL_PROTOCOLS = getSelectedSSL();
+    configuration.setUseAcceleration(acceleration());
+    configuration.setSslProtocols(getSelectedSSL());
     SvnVcs.getInstance(myProject).refreshSSLProperty();
 
     applicationSettings17.setCommandLinePath(myCommandLineClient.getText().trim());
@@ -305,15 +305,15 @@ public class SvnConfigurable implements Configurable {
     myConfigurationDirectoryText.setText(path);
     myUseDefaultCheckBox.setSelected(configuration.isUseDefaultConfiguation());
     myUseCommonProxy.setSelected(configuration.isIsUseDefaultProxy());
-    myCheckNestedInQuickMerge.setSelected(configuration.CHECK_NESTED_FOR_QUICK_MERGE);
+    myCheckNestedInQuickMerge.setSelected(configuration.isCheckNestedForQuickMerge());
 
     boolean enabled = !myUseDefaultCheckBox.isSelected();
     myConfigurationDirectoryText.setEnabled(enabled);
     myConfigurationDirectoryText.setEditable(enabled);
     myConfigurationDirectoryLabel.setEnabled(enabled);
-    myLockOnDemand.setSelected(configuration.UPDATE_LOCK_ON_DEMAND);
-    myIgnoreWhitespaceDifferenciesInCheckBox.setSelected(configuration.IGNORE_SPACES_IN_ANNOTATE);
-    myShowMergeSourceInAnnotate.setSelected(configuration.SHOW_MERGE_SOURCES_IN_ANNOTATE);
+    myLockOnDemand.setSelected(configuration.isUpdateLockOnDemand());
+    myIgnoreWhitespaceDifferenciesInCheckBox.setSelected(configuration.isIgnoreSpacesInAnnotate());
+    myShowMergeSourceInAnnotate.setSelected(configuration.isShowMergeSourcesInAnnotate());
 
     final int annotateRevisions = configuration.getMaxAnnotateRevisions();
     if (annotateRevisions == -1) {
@@ -324,16 +324,16 @@ public class SvnConfigurable implements Configurable {
       myNumRevsInAnnotations.setValue(annotateRevisions);
     }
     myNumRevsInAnnotations.setEnabled(myMaximumNumberOfRevisionsCheckBox.isSelected());
-    mySSHConnectionTimeout.setValue(Long.valueOf(configuration.getSSHConnectionTimeout() / 1000));
-    mySSHReadTimeout.setValue(Long.valueOf(configuration.getSSHReadTimeout() / 1000));
+    mySSHConnectionTimeout.setValue(Long.valueOf(configuration.getSshConnectionTimeout() / 1000));
+    mySSHReadTimeout.setValue(Long.valueOf(configuration.getSshReadTimeout() / 1000));
     myHttpTimeout.setValue(Long.valueOf(configuration.getHttpTimeout() / 1000));
     myWithCommandLineClient.setSelected(configuration.isCommandLine());
     final SvnApplicationSettings applicationSettings17 = SvnApplicationSettings.getInstance();
     myCommandLineClient.setText(applicationSettings17.getCommandLinePath());
 
-    if (SvnConfiguration.SSLProtocols.sslv3.equals(configuration.SSL_PROTOCOLS)) {
+    if (SvnConfiguration.SSLProtocols.sslv3.equals(configuration.getSslProtocols())) {
       mySSLv3RadioButton.setSelected(true);
-    } else if (SvnConfiguration.SSLProtocols.tlsv1.equals(configuration.SSL_PROTOCOLS)) {
+    } else if (SvnConfiguration.SSLProtocols.tlsv1.equals(configuration.getSslProtocols())) {
       myTLSv1RadioButton.setSelected(true);
     } else {
       myAllRadioButton.setSelected(true);
@@ -361,8 +361,8 @@ public class SvnConfigurable implements Configurable {
     myNumRevsInAnnotations = new JSpinner(new SpinnerNumberModel(value, 10, 100000, 100));
 
     final Long maximum = 30 * 60 * 1000L;
-    final long connection = configuration.getSSHConnectionTimeout() <= maximum ? configuration.getSSHConnectionTimeout() : maximum;
-    final long read = configuration.getSSHReadTimeout() <= maximum ? configuration.getSSHReadTimeout() : maximum;
+    final long connection = configuration.getSshConnectionTimeout() <= maximum ? configuration.getSshConnectionTimeout() : maximum;
+    final long read = configuration.getSshReadTimeout() <= maximum ? configuration.getSshReadTimeout() : maximum;
     mySSHConnectionTimeout = new JSpinner(new SpinnerNumberModel(Long.valueOf(connection / 1000), Long.valueOf(0L), maximum, Long.valueOf(10L)));
     mySSHReadTimeout = new JSpinner(new SpinnerNumberModel(Long.valueOf(read / 1000), Long.valueOf(0L), maximum, Long.valueOf(10L)));
     myHttpTimeout = new JSpinner(new SpinnerNumberModel(Long.valueOf(read / 1000), Long.valueOf(0L), maximum, Long.valueOf(10L)));
