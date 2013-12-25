@@ -78,7 +78,6 @@ public class SvnConfiguration implements PersistentStateComponent<Element> {
   public static final String CLEANUP_ON_START_RUN = "cleanupOnStartRun";
   private final Project myProject;
 
-  public String USER = "";
   public String PASSWORD = "";
   public String[] ADD_PATHS = null;
 
@@ -267,10 +266,6 @@ public class SvnConfiguration implements PersistentStateComponent<Element> {
     private final static long CHANGELIST_SUPPORT = 124;
     private final static long UPGRADE_TO_16_VERSION_ASKED = 125;
 
-    public boolean upgradeTo16Asked() {
-      return (myVersion != null) && (UPGRADE_TO_16_VERSION_ASKED <= myVersion);
-    }
-
     public boolean changeListsSynchronized() {
       return (myVersion != null) && (CHANGELIST_SUPPORT <= myVersion);
     }
@@ -364,17 +359,6 @@ public class SvnConfiguration implements PersistentStateComponent<Element> {
     return interactive;
   }
 
-  public SvnAuthenticationManager getManager(final AuthManagerType type, final SvnVcs vcs) {
-    if (AuthManagerType.active.equals(type)) {
-      return getInteractiveManager(vcs);
-    } else if (AuthManagerType.passive.equals(type)) {
-      return getPassiveAuthenticationManager(vcs.getProject());
-    } else if (AuthManagerType.usual.equals(type)) {
-      return getAuthenticationManager(vcs);
-    }
-    throw new IllegalArgumentException();
-  }
-
   public SvnAuthenticationManager getAuthenticationManager(final SvnVcs svnVcs) {
     if (myAuthManager == null) {
       // reloaded when configuration directory changes
@@ -439,6 +423,7 @@ public class SvnConfiguration implements PersistentStateComponent<Element> {
     userManager.set(new SvnServerFileManagerImpl(myConfigFile));
   }
 
+  // TODO: remove unused "myUpgradeMode" from configuration
   public String getUpgradeMode() {
     return myUpgradeMode;
   }
@@ -563,15 +548,15 @@ public class SvnConfiguration implements PersistentStateComponent<Element> {
     }
     element.addContent(new Element("myIsUseDefaultProxy").setText(myIsUseDefaultProxy ? "true" : "false"));
     if (mySupportOptions != null) {
-      element.addContent(new Element("supportedVersion").setText("" + mySupportOptions.myVersion));
+      element.addContent(new Element("supportedVersion").setText(String.valueOf(mySupportOptions.myVersion)));
     }
-    element.setAttribute("maxAnnotateRevisions", "" + myMaxAnnotateRevisions);
-    element.setAttribute("myUseAcceleration", "" + myUseAcceleration);
-    element.setAttribute("myAutoUpdateAfterCommit", "" + myAutoUpdateAfterCommit);
-    element.setAttribute(CLEANUP_ON_START_RUN, "" + myCleanupRun);
+    element.setAttribute("maxAnnotateRevisions", String.valueOf(myMaxAnnotateRevisions));
+    element.setAttribute("myUseAcceleration", String.valueOf(myUseAcceleration));
+    element.setAttribute("myAutoUpdateAfterCommit", String.valueOf(myAutoUpdateAfterCommit));
+    element.setAttribute(CLEANUP_ON_START_RUN, String.valueOf(myCleanupRun));
     element.setAttribute("SSL_PROTOCOLS", SSL_PROTOCOLS.name());
     if (TREE_CONFLICT_MERGE_THEIRS_NEW_INTO_OLD_PLACE != null) {
-      element.setAttribute("TREE_CONFLICT_MERGE_THEIRS_NEW_INTO_OLD_PLACE", "" + TREE_CONFLICT_MERGE_THEIRS_NEW_INTO_OLD_PLACE);
+      element.setAttribute("TREE_CONFLICT_MERGE_THEIRS_NEW_INTO_OLD_PLACE", String.valueOf(TREE_CONFLICT_MERGE_THEIRS_NEW_INTO_OLD_PLACE));
     }
   }
 
@@ -591,6 +576,7 @@ public class SvnConfiguration implements PersistentStateComponent<Element> {
     myIsKeepLocks = keepLocks;
   }
 
+  // TODO: remove unused "myRemoteStatus" from configuration
   public boolean isRemoteStatus() {
     return myRemoteStatus;
   }
@@ -643,6 +629,7 @@ public class SvnConfiguration implements PersistentStateComponent<Element> {
     return myUpdateRootInfos.get(file);
   }
 
+  // TODO: Check why SvnUpdateEnvironment.validationOptions is fully commented and then remove this method if necessary
   public Map<File, UpdateRootInfo> getUpdateInfosMap() {
     return Collections.unmodifiableMap(myUpdateRootInfos);
   }
@@ -682,10 +669,6 @@ public class SvnConfiguration implements PersistentStateComponent<Element> {
       }
     }
   }
-  
-  public boolean haveCredentialsFor(final String kind, final String realm) {
-    return RUNTIME_AUTH_CACHE.getData(kind, realm) != null;
-  }
 
   public void acknowledge(final String kind, final String realm, final Object object) {
     RUNTIME_AUTH_CACHE.putData(kind, realm, object);
@@ -721,7 +704,7 @@ public class SvnConfiguration implements PersistentStateComponent<Element> {
     myCleanupRun = cleanupRun;
   }
 
-  public static enum SSLProtocols {
+  public enum SSLProtocols {
     sslv3, tlsv1, all
   }
 }
