@@ -139,5 +139,7 @@
 
     <vcs name="svn" vcsClass="org.jetbrains.idea.svn.SvnVcs" displayName="Subversion" administrativeAreaName=".svn, _svn" crawlUpToCheckUnderVcs="true"/>
     <vcsPopupProvider implementation="org.jetbrains.idea.svn.actions.SvnQuickListContentProvider"/>
+
+    <statistics.usagesCollector implementation="org.jetbrains.idea.svn.statistics.SvnWorkingCopyFormatUsagesCollector"/>
   </extensions>
 </idea-plugin>
