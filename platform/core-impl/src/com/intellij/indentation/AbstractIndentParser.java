@@ -218,9 +218,17 @@ public abstract class AbstractIndentParser implements PsiParser {
     errorMarker.error(message);
   }
 
-  protected void errorUntilEol(String message) {
+  protected void errorUntilEol(@NotNull String message) {
     PsiBuilder.Marker errorMarker = mark();
     advanceUntilEol();
+    errorMarker.error(message);
+  }
+  
+  protected void errorUntilEof(@NotNull String message) {
+    PsiBuilder.Marker errorMarker = mark();
+    while (!eof()) {
+      advance();
+    }
     errorMarker.error(message);
   }
 
