@@ -62,8 +62,6 @@ public class SvnConfiguration implements PersistentStateComponent<Element> {
   public static final String CLEANUP_ON_START_RUN = "cleanupOnStartRun";
   private final Project myProject;
 
-  public String PASSWORD = "";
-
   private String myConfigurationDirectory;
   private boolean myIsUseDefaultConfiguration;
   private boolean myIsUseDefaultProxy;
@@ -81,6 +79,8 @@ public class SvnConfiguration implements PersistentStateComponent<Element> {
   public long mySSHReadTimeout = DEFAULT_SSH_TIMEOUT;
 
   public static final AuthStorage RUNTIME_AUTH_CACHE = new AuthStorage();
+  // TODO: update depth is not stored in configuration as SVNDepth has wrong type for DefaultJDOMExternalizer
+  // TODO: check if it should be stored
   public SVNDepth UPDATE_DEPTH = SVNDepth.UNKNOWN;
 
   public boolean MERGE_DRY_RUN = false;
