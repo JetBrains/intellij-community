@@ -513,7 +513,7 @@ public class GeneralIdBasedToSMTRunnerEventsConvertor extends GeneralTestEventsP
       }
     }
     if (runningLeaves.isEmpty()) {
-      throw new RuntimeException("No running leaves found, running nodes: " + myRunningNodes);
+      return myTestsRootNode;
     }
     if (runningLeaves.size() == 1) {
       return runningLeaves.iterator().next();
