@@ -87,11 +87,9 @@ public class SvnConfiguration implements PersistentStateComponent<Element> {
   private ISVNOptions myOptions;
   private boolean myIsKeepLocks;
   private boolean myAutoUpdateAfterCommit;
-  private boolean myRemoteStatus;
   private SvnAuthenticationManager myAuthManager;
   private SvnAuthenticationManager myPassiveAuthManager;
   private SvnAuthenticationManager myInteractiveManager;
-  private String myUpgradeMode;
   private SvnSupportOptions mySupportOptions;
   private boolean myCleanupRun;
   private int myMaxAnnotateRevisions = ourMaxAnnotateRevisionsDefault;
@@ -423,15 +421,6 @@ public class SvnConfiguration implements PersistentStateComponent<Element> {
     userManager.set(new SvnServerFileManagerImpl(myConfigFile));
   }
 
-  // TODO: remove unused "myUpgradeMode" from configuration
-  public String getUpgradeMode() {
-    return myUpgradeMode;
-  }
-
-  public void setUpgradeMode(String upgradeMode) {
-    myUpgradeMode = upgradeMode;
-  }
-
   @SuppressWarnings({"HardCodedStringLiteral"})
   public void readExternal(Element element) throws InvalidDataException {
     DefaultJDOMExternalizer.readExternal(this, element);
@@ -466,8 +455,6 @@ public class SvnConfiguration implements PersistentStateComponent<Element> {
       }
     }
     myIsKeepLocks = element.getChild("keepLocks") != null;
-    myRemoteStatus = element.getChild("remoteStatus") != null;
-    myUpgradeMode = element.getChild("upgradeMode") != null ? element.getChild("upgradeMode").getText() : null;
     final Element useProxy = element.getChild("myIsUseDefaultProxy");
     if (useProxy == null) {
       myIsUseDefaultProxy = false;
@@ -540,12 +527,6 @@ public class SvnConfiguration implements PersistentStateComponent<Element> {
     if (myIsKeepLocks) {
       element.addContent(new Element("keepLocks"));
     }
-    if (myRemoteStatus) {
-      element.addContent(new Element("remoteStatus"));
-    }
-    if (myUpgradeMode != null) {
-      element.addContent(new Element("upgradeMode").setText(myUpgradeMode));
-    }
     element.addContent(new Element("myIsUseDefaultProxy").setText(myIsUseDefaultProxy ? "true" : "false"));
     if (mySupportOptions != null) {
       element.addContent(new Element("supportedVersion").setText(String.valueOf(mySupportOptions.myVersion)));
@@ -574,15 +555,6 @@ public class SvnConfiguration implements PersistentStateComponent<Element> {
 
   public void setKeepLocks(boolean keepLocks) {
     myIsKeepLocks = keepLocks;
-  }
-
-  // TODO: remove unused "myRemoteStatus" from configuration
-  public boolean isRemoteStatus() {
-    return myRemoteStatus;
-  }
-
-  public void setRemoteStatus(boolean remote) {
-    myRemoteStatus = remote;
   }
 
   public boolean isIsUseDefaultProxy() {
