@@ -292,6 +292,7 @@ public final class StripeButton extends AnchoredButton implements ActionListener
 
   public void apply(final WindowInfoImpl info) {
     setSelected(info.isVisible() || info.isActive());
+    updateState();
   }
 
   void dispose() {
@@ -344,7 +345,7 @@ public final class StripeButton extends AnchoredButton implements ActionListener
       setVisible(true);
     }
     else {
-      setVisible(toShow);
+      setVisible(toShow && window.isVisibleOnPanel());
     }
     setEnabled(toShow && !window.isPlaceholderMode());
   }

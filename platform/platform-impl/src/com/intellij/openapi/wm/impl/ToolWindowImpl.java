@@ -411,6 +411,18 @@ public final class ToolWindowImpl implements ToolWindowEx {
     return myHideOnEmptyContent;
   }
 
+  @Override
+  public void setVisibleOnPanel(boolean visibleOnPanel) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
+    myToolWindowManager.setToolWindowVisibleOnPanel(myId, visibleOnPanel);
+  }
+
+  @Override
+  public boolean isVisibleOnPanel() {
+    ApplicationManager.getApplication().assertIsDispatchThread();
+    return myToolWindowManager.isToolWindowVisibleOnPanel(myId);
+  }
+
   public boolean isDisposed() {
     return myContentManager.isDisposed();
   }

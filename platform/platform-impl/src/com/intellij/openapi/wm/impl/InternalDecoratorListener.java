@@ -44,4 +44,5 @@ interface InternalDecoratorListener extends EventListener{
 
   public void contentUiTypeChanges(InternalDecorator sources, ToolWindowContentUiType type);
 
+  public void visibleOnPanelChanged(InternalDecorator source, boolean visibleOnPanel);
 }
