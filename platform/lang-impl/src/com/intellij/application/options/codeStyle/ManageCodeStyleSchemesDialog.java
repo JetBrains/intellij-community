@@ -217,6 +217,7 @@ public class ManageCodeStyleSchemesDialog extends DialogWrapper {
       VirtualFile[] selection = fileChooser.choose(CodeStyleSchemesUIConfiguration.Util.getRecentImportFile(), null);
       if (selection.length == 1) {
         VirtualFile selectedFile = selection[0];
+        selectedFile.refresh(false, false);
         CodeStyleSchemesUIConfiguration.Util.setRecentImportFile(selectedFile);
         try {
           InputStream nameInputStream = selectedFile.getInputStream();
