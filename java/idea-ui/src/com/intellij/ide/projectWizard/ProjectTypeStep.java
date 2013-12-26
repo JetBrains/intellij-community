@@ -130,7 +130,7 @@ public class ProjectTypeStep extends ModuleWizardStep implements Disposable, Act
   }
 
   private List<TemplatesGroup> fillTemplatesMap(WizardContext context) {
-    myTemplatesMap.putAllValues(CreateFromTemplateMode.getTemplatesMap(context, false));
+    myTemplatesMap.putAllValues(CreateFromTemplateMode.getTemplatesMap(context));
 
     for (ProjectCategory category : ProjectCategory.EXTENSION_POINT_NAME.getExtensions()) {
       myTemplatesMap.put(new TemplatesGroup(category), new ArrayList<ProjectTemplate>());
