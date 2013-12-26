@@ -1,1 +1,1 @@
-import <warning descr="Python version 3.0, 3.1, 3.2, 3.3 do not have module Bastion">Bastion</warning>
+import <warning descr="Python version 3.0, 3.1, 3.2, 3.3, 3.4 do not have module Bastion">Bastion</warning>

@@ -109,7 +109,10 @@ public enum LanguageLevel {
       if (pythonVersion.startsWith("3.2")) {
         return PYTHON32;
       }
-      return PYTHON33;
+      if (pythonVersion.startsWith("3.3")) {
+        return PYTHON33;
+      }
+      return PYTHON34;
     }
     return PYTHON24;
   }

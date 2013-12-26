@@ -51,6 +51,7 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
     AVAILABLE_PREFIXES.put(LanguageLevel.PYTHON31, Sets.newHashSet("R", "B", "BR"));
     AVAILABLE_PREFIXES.put(LanguageLevel.PYTHON32, Sets.newHashSet("R", "B", "BR"));
     AVAILABLE_PREFIXES.put(LanguageLevel.PYTHON33, Sets.newHashSet("R", "U", "B", "BR", "RB"));
+    AVAILABLE_PREFIXES.put(LanguageLevel.PYTHON34, Sets.newHashSet("R", "U", "B", "BR", "RB"));
   }
 
   public CompatibilityVisitor(List<LanguageLevel> versionsToProcess) {
