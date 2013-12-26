@@ -17,9 +17,9 @@ package com.intellij.cvsSupport2.connections.ssh;
 
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.util.Consumer;
-import com.trilead.ssh2.ChannelCondition;
-import com.trilead.ssh2.Session;
-import com.trilead.ssh2.StreamGobbler;
+import com.trilead.ssh2_build213.ChannelCondition;
+import com.trilead.ssh2_build213.Session;
+import com.trilead.ssh2_build213.StreamGobbler;
 import org.netbeans.lib.cvsclient.connection.AuthenticationException;
 import org.netbeans.lib.cvsclient.connection.IConnection;
 import org.netbeans.lib.cvsclient.io.IStreamLogger;

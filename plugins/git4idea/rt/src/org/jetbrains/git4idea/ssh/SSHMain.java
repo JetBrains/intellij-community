@@ -17,7 +17,11 @@ package org.jetbrains.git4idea.ssh;
 
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.util.ArrayUtilRt;
+import com.jcraft.jsch.agentproxy.AgentProxyException;
+import com.jcraft.jsch.agentproxy.ConnectorFactory;
+import com.jcraft.jsch.agentproxy.TrileadAgentProxy;
 import com.trilead.ssh2.*;
+import com.trilead.ssh2.auth.AgentProxy;
 import com.trilead.ssh2.crypto.PEMDecoder;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
@@ -208,6 +212,16 @@ public class SSHMain {
         if (!c.isAuthMethodAvailable(myHost.getUser(), PUBLIC_KEY_METHOD)) {
           continue;
         }
+        TrileadAgentProxy agentProxy = null;
+        try {
+          agentProxy = new TrileadAgentProxy(ConnectorFactory.getDefault().createConnector());
+          if(tryAgentProxy(c, agentProxy)) {
+            return;
+          }
+        }
+        catch (AgentProxyException e) {
+          //log("Unable to authenticate with SSH agent: " + e.toString());
+        }
         File key = myHost.getIdentityFile();
         if (key == null) {
           for (String a : myHost.getHostKeyAlgorithms()) {
@@ -289,6 +303,17 @@ public class SSHMain {
     int port = myHost.getPort();
     return myHost.getUser() + "@" + myHost.getHostName() + (port == 22 ? "" : ":" + port);
   }
+
+private boolean tryAgentProxy(final Connection c, final AgentProxy agentProxy) {
+  try {
+    return c.authenticateWithAgent(myHost.getUser(), agentProxy);
+  }
+  catch (IOException e) {
+    myLastError = SSHMainBundle.message("ssh-agent-communication-failure");
+    myErrorCause = e;
+    return false;
+  }
+}
 
   /**
    * Try public key

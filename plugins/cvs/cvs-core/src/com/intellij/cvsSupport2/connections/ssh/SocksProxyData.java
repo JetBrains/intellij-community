@@ -15,7 +15,7 @@
  */
 package com.intellij.cvsSupport2.connections.ssh;
 
-import com.trilead.ssh2.SelfConnectionProxyData;
+import com.trilead.ssh2_build213.SelfConnectionProxyData;
 import org.netbeans.lib.cvsclient.connection.ConnectionSettings;
 
 import java.io.IOException;
