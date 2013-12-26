@@ -15,7 +15,7 @@
     <orderEntry type="module" module-name="vcs-api" />
     <orderEntry type="module" module-name="platform-api" />
     <orderEntry type="module" module-name="vcs-impl" />
-    <orderEntry type="module-library">
+    <orderEntry type="module-library" exported="">
       <library>
         <CLASSES>
           <root url="jar://$MODULE_DIR$/lib/svnkit.jar!/" />
@@ -24,15 +24,6 @@
         <SOURCES>
           <root url="jar://$MODULE_DIR$/lib/svnkitsrc.zip!/" />
         </SOURCES>
-      </library>
-    </orderEntry>
-    <orderEntry type="module-library">
-      <library name="trilead-ssh2">
-        <CLASSES>
-          <root url="jar://$MODULE_DIR$/lib/trilead.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES />
       </library>
     </orderEntry>
     <orderEntry type="module" module-name="platform-impl" />
@@ -68,17 +59,29 @@
     <orderEntry type="module-library">
       <library>
         <CLASSES>
-          <root url="jar://$MODULE_DIR$/lib/svnkit-javahl.jar!/" />
+          <root url="jar://$MODULE_DIR$/lib/svnkit-javahl16.jar!/" />
+          <root url="jar://$MODULE_DIR$/lib/svnkit.jar!/" />
         </CLASSES>
         <JAVADOC />
-        <SOURCES>
-          <root url="jar://$MODULE_DIR$/lib/svnkit-javahl16.zip!/" />
-        </SOURCES>
+        <SOURCES />
       </library>
     </orderEntry>
     <orderEntry type="library" name="jna" level="project" />
     <orderEntry type="library" name="pty4j" level="project" />
     <orderEntry type="library" name="purejavacomm" level="project" />
+    <orderEntry type="module" module-name="bindSvn" />
+    <orderEntry type="module-library">
+      <library>
+        <CLASSES>
+          <root url="jar://$MODULE_DIR$/bindSvn/lib/javahl.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
+    <orderEntry type="library" exported="" name="jsch.agentproxy.trilead-ssh2" level="project" />
+    <orderEntry type="library" exported="" name="jsch.agentproxy" level="project" />
+    <orderEntry type="library" exported="" name="trilead-ssh2" level="project" />
   </component>
 </module>
 

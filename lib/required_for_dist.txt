@@ -27,6 +27,12 @@ jh.jar
 jna-utils.jar
 jna.jar
 jsch-0.1.50.jar
+jsch.agentproxy.core.jar
+jsch.agentproxy.pageant.jar
+jsch.agentproxy.sshagent.jar
+jsch.agentproxy.svnkit-trilead-ssh2-thick.jar
+jsch.agentproxy.svnkit-trilead-ssh2.jar
+jsch.agentproxy.usocket-jna.jar
 jsr166e.jar
 jsr173_1.0_api.jar
 junit-4.10.jar
@@ -51,6 +57,7 @@ sanselan-0.98-snapshot.jar
 serviceMessages.jar
 snappy-java-1.0.5.jar
 swingx-core-1.6.2.jar
+trilead-ssh2.jar
 trove4j.jar
 velocity.jar
 winp-1.17-patched.jar

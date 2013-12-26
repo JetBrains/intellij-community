@@ -25,6 +25,9 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.WaitForProgressToShow;
+import com.jcraft.jsch.agentproxy.AgentProxyException;
+import com.jcraft.jsch.agentproxy.ConnectorFactory;
+import com.jcraft.jsch.agentproxy.TrileadAgentProxy;
 import org.jetbrains.idea.svn.SvnAuthenticationManager;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnConfiguration;
@@ -121,56 +124,69 @@ public class SvnInteractiveAuthenticationProvider implements ISVNAuthenticationP
         }
       };
     }
-    else if (ISVNAuthenticationManager.SSH.equals(kind)) {
-      command = new Runnable() {
-        public void run() {
-          SSHCredentialsDialog dialog = new SSHCredentialsDialog(myProject, realm, userName, authCredsOn, url.getPort());
-          if (errorMessage == null) {
-            dialog.setTitle(SvnBundle.message("dialog.title.authentication.required"));
-          }
-          else {
-            dialog.setTitle(SvnBundle.message("dialog.title.authentication.required.was.failed"));
-          }
-          dialog.show();
-          if (dialog.isOK()) {
-            int port = dialog.getPortNumber();
-            if (dialog.getKeyFile() != null && dialog.getKeyFile().trim().length() > 0) {
-              String passphrase = dialog.getPassphrase();
-              if (passphrase != null && passphrase.length() == 0) {
-                passphrase = null;
-              }
-              result[0] =
-                new SVNSSHAuthentication(dialog.getUserName(), new File(dialog.getKeyFile()), passphrase, port, dialog.isSaveAllowed(),
-                                         url, false);
+    else {
+      if (ISVNAuthenticationManager.SSH.equals(kind)) {
+        command = new Runnable() {
+          public void run() {
+            SSHCredentialsDialog dialog = new SSHCredentialsDialog(myProject, realm, userName, authCredsOn, url.getPort());
+            if (errorMessage == null) {
+              dialog.setTitle(SvnBundle.message("dialog.title.authentication.required"));
             }
             else {
-              result[0] = new SVNSSHAuthentication(dialog.getUserName(), dialog.getPassword(), port, dialog.isSaveAllowed(), url, false);
+              dialog.setTitle(SvnBundle.message("dialog.title.authentication.required.was.failed"));
+            }
+            dialog.show();
+            if (dialog.isOK()) {
+              int port = dialog.getPortNumber();
+              if (dialog.isAgentSelected()) {
+                TrileadAgentProxy agentProxy = null;
+                try {
+                  agentProxy = new TrileadAgentProxy(ConnectorFactory.getDefault().createConnector());
+                  result[0] = new SVNSSHAuthentication(dialog.getUserName(), (com.trilead.ssh2.auth.AgentProxy)agentProxy, port, url, false);
+                }
+                catch (AgentProxyException e) {
+                  log("Unable to connect to SSH agent: " + e.toString());
+                }
+              }
+              else if (dialog.getKeyFile() != null && dialog.getKeyFile().trim().length() > 0) {
+                String passphrase = dialog.getPassphrase();
+                if (passphrase != null && passphrase.length() == 0) {
+                  passphrase = null;
+                }
+                result[0] =
+                  new SVNSSHAuthentication(dialog.getUserName(), new File(dialog.getKeyFile()), passphrase, port, dialog.isSaveAllowed(),
+                                           url, false);
+              }
+              else {
+                result[0] = new SVNSSHAuthentication(dialog.getUserName(), dialog.getPassword(), port, dialog.isSaveAllowed(), url, false);
+              }
             }
           }
-        }
-      };
-    } else if (ISVNAuthenticationManager.SSL.equals(kind)) {
-      command = new Runnable() {
-        public void run() {
-          final ISVNHostOptions options = myManager.getHostOptionsProvider().getHostOptions(url);
-          final String file = options.getSSLClientCertFile();
-          final SSLCredentialsDialog dialog = new SSLCredentialsDialog(myProject, realm, authCredsOn);
-          if (!StringUtil.isEmptyOrSpaces(file)) {
-            dialog.setFile(file);
+        };
+      }
+      else if (ISVNAuthenticationManager.SSL.equals(kind)) {
+        command = new Runnable() {
+          public void run() {
+            final ISVNHostOptions options = myManager.getHostOptionsProvider().getHostOptions(url);
+            final String file = options.getSSLClientCertFile();
+            final SSLCredentialsDialog dialog = new SSLCredentialsDialog(myProject, realm, authCredsOn);
+            if (!StringUtil.isEmptyOrSpaces(file)) {
+              dialog.setFile(file);
+            }
+            if (errorMessage == null) {
+              dialog.setTitle(SvnBundle.message("dialog.title.authentication.required"));
+            }
+            else {
+              dialog.setTitle(SvnBundle.message("dialog.title.authentication.required.was.failed"));
+            }
+            dialog.show();
+            if (dialog.isOK()) {
+              result[0] = new SVNSSLAuthentication(new File(dialog.getCertificatePath()), String.valueOf(dialog.getCertificatePassword()),
+                                                   dialog.getSaveAuth(), url, false);
+            }
           }
-          if (errorMessage == null) {
-            dialog.setTitle(SvnBundle.message("dialog.title.authentication.required"));
-          }
-          else {
-            dialog.setTitle(SvnBundle.message("dialog.title.authentication.required.was.failed"));
-          }
-          dialog.show();
-          if (dialog.isOK()) {
-            result[0] = new SVNSSLAuthentication(new File(dialog.getCertificatePath()), String.valueOf(dialog.getCertificatePassword()),
-                                                 dialog.getSaveAuth(), url, false);
-          }
-        }
-      };
+        };
+      }
     }
 
     if (command != null) {
