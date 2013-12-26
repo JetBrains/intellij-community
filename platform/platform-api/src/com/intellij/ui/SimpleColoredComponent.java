@@ -56,11 +56,11 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
 
   public static final Color SHADOW_COLOR = new JBColor(new Color(250, 250, 250, 140), Gray._0.withAlpha(50));
   public static final Color STYLE_SEARCH_MATCH_BACKGROUND = SHADOW_COLOR; //api compatibility
-  public static final int   FRAGMENT_ICON                 = -2;
+  public static final int FRAGMENT_ICON = -2;
 
-  private final ArrayList<String>               myFragments;
-  private final ArrayList<SimpleTextAttributes> myAttributes;
-  private ArrayList<Object> myFragmentTags = null;
+  private final List<String> myFragments;
+  private final List<SimpleTextAttributes> myAttributes;
+  private List<Object> myFragmentTags = null;
 
   /**
    * Component's icon. It can be <code>null</code>.
@@ -116,6 +116,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
     setOpaque(true);
   }
 
+  @NotNull
   public ColoredIterator iterator() {
     return new MyIterator();
   }
@@ -230,7 +231,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
    * @param icon icon
    */
   @Override
-  public final void setIcon(final @Nullable Icon icon) {
+  public final void setIcon(@Nullable final Icon icon) {
     myIcon = icon;
     revalidateAndRepaint();
   }
@@ -238,6 +239,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
   /**
    * @return "leave" (internal) internal paddings of the component
    */
+  @NotNull
   public Insets getIpad() {
     return myIpad;
   }
@@ -246,7 +248,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
    * Sets specified internal paddings
    * @param ipad insets
    */
-  public void setIpad(final Insets ipad) {
+  public void setIpad(@NotNull Insets ipad) {
     myIpad = ipad;
 
     revalidateAndRepaint();
@@ -461,7 +463,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
   protected JLabel formatToLabel(@NotNull JLabel label) {
     label.setIcon(myIcon);
 
-    if (myFragments.size() > 0) {
+    if (!myFragments.isEmpty()) {
       final StringBuilder text = new StringBuilder();
       text.append("<html><body style=\"white-space:nowrap\">");
 
@@ -485,7 +487,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
   }
 
   static void formatText(@NotNull StringBuilder builder, @NotNull String fragment, @NotNull SimpleTextAttributes attributes) {
-    if (fragment.length() > 0) {
+    if (!fragment.isEmpty()) {
       builder.append("<span");
       formatStyle(builder, attributes);
       builder.append('>').append(convertFragment(fragment)).append("</span>");
@@ -493,7 +495,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
   }
 
   static void formatLink(@NotNull StringBuilder builder, @NotNull String fragment, @NotNull SimpleTextAttributes attributes, @NotNull String url) {
-    if (fragment.length() > 0) {
+    if (!fragment.isEmpty()) {
       builder.append("<a href=\"").append(StringUtil.replace(url, "\"", "%22")).append("\"");
       formatStyle(builder, attributes);
       builder.append('>').append(convertFragment(fragment)).append("</a>");
@@ -809,7 +811,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
     final StringBuilder buffer = new StringBuilder("Components hierarchy:\n");
     for (Container c = this; c != null; c = c.getParent()) {
       buffer.append('\n');
-      buffer.append(c.toString());
+      buffer.append(c);
     }
     return buffer.toString();
   }
