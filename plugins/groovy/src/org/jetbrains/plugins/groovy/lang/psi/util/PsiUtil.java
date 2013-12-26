@@ -28,9 +28,7 @@ import com.intellij.psi.impl.light.LightElement;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
-import com.intellij.psi.util.InheritanceUtil;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.psi.util.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.VisibilityUtil;
@@ -56,6 +54,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgument
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrSpreadArgument;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrAssertStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrReturnStatement;
@@ -63,6 +62,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrThrowStatem
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrCaseSection;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrForInClause;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrIndexProperty;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrPropertySelection;
@@ -73,6 +73,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrNamedArgumentsOwner;
+import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.types.TypeInferenceHelper;
 import org.jetbrains.plugins.groovy.lang.psi.impl.*;
 import org.jetbrains.plugins.groovy.lang.psi.impl.signatures.GrClosureSignatureUtil;
@@ -1346,5 +1347,39 @@ public class PsiUtil {
 
     final String qname = aClass.getQualifiedName();
     return GroovyCommonClassNames.GROOVY_EXTENSION_CLASSES.contains(qname);
+  }
+
+  public static boolean isVoidMethodCall(@Nullable GrExpression expression) {
+    if (expression instanceof GrMethodCall && PsiType.NULL.equals(expression.getType())) {
+      final GroovyResolveResult resolveResult = ((GrMethodCall)expression).advancedResolve();
+      final PsiType[] args = getArgumentTypes(((GrMethodCall)expression).getInvokedExpression(), true);
+      return PsiType.VOID.equals(ResolveUtil.extractReturnTypeFromCandidate(resolveResult, expression, args));
+    }
+
+    return false;
+  }
+
+  public static boolean isVoidMethod(@NotNull PsiMethod method) {
+    return PsiType.VOID.equals(method.getReturnType()) ||
+
+           method instanceof GrMethod &&
+           ((GrMethod)method).getReturnTypeElementGroovy() == null &&
+           ((GrMethod)method).getBlock() != null &&
+           isBlockReturnVoid(((GrMethod)method).getBlock());
+  }
+
+  public static boolean isBlockReturnVoid(@NotNull final GrCodeBlock block) {
+    return CachedValuesManager.getCachedValue(block, new CachedValueProvider<Boolean>() {
+      @Nullable
+      @Override
+      public Result<Boolean> compute() {
+        return Result.create(ControlFlowUtils.visitAllExitPoints(block, new ControlFlowUtils.ExitPointVisitor() {
+          @Override
+          public boolean visitExitPoint(Instruction instruction, @Nullable GrExpression returnValue) {
+            return returnValue == null || !(returnValue instanceof GrLiteral);
+          }
+        }), PsiModificationTracker.MODIFICATION_COUNT);
+      }
+    });
   }
 }

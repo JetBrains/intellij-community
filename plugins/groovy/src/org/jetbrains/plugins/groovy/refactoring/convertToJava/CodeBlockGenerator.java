@@ -101,14 +101,18 @@ public class CodeBlockGenerator extends Generator {
   public void generateMethodBody(GrMethod method) {
     final GrOpenBlock block = method.getBlock();
 
-    boolean shouldInsertReturnNull = false;
+    boolean shouldInsertReturnNull;
     myExitPoints.clear();
     PsiType returnType = context.typeProvider.getReturnType(method);
     if (!method.isConstructor() && returnType != PsiType.VOID) {
       myExitPoints.addAll(ControlFlowUtils.collectReturns(block));
-      shouldInsertReturnNull = block != null && !(returnType instanceof PsiPrimitiveType) &&
-                               MissingReturnInspection.methodMissesSomeReturns(block,
-                                                                               MissingReturnInspection.ReturnStatus.getReturnStatus(method));
+      shouldInsertReturnNull = block != null &&
+                               !(returnType instanceof PsiPrimitiveType) &&
+                               MissingReturnInspection.methodMissesSomeReturns(block, MissingReturnInspection.ReturnStatus.getReturnStatus(
+                                 method));
+    }
+    else {
+      shouldInsertReturnNull = false;
     }
 
     if (block != null) {
@@ -321,13 +325,23 @@ public class CodeBlockGenerator extends Generator {
     GenerationUtil.writeStatement(builder, context, expression, new StatementWriter() {
       @Override
       public void writeStatement(StringBuilder builder, ExpressionContext context) {
-        if (myExitPoints.contains(expression) && expression.getType() != PsiType.VOID) {
+        if (myExitPoints.contains(expression) && isRealExpression(expression)) {
           writeReturn(builder, context, expression);
         }
         else {
           expression.accept(new ExpressionGenerator(builder, context));
           builder.append(';');
         }
+      }
+
+      private boolean isRealExpression(GrExpression expression) {
+        final PsiType type = expression.getType();
+
+        if (type == PsiType.VOID) return false; //statement
+
+        if (type == PsiType.NULL) return !org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil.isVoidMethodCall(expression);
+
+        return true;
       }
     });
   }

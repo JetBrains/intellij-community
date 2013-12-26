@@ -557,7 +557,7 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
   public GrMethod createMethodFromSignature(String name, GrClosureSignature signature) {
     StringBuilder builder = new StringBuilder("public");
     final PsiType returnType = signature.getReturnType();
-    if (returnType != null) {
+    if (returnType != null && returnType != PsiType.NULL) {
       builder.append(' ');
       builder.append(returnType.getCanonicalText());
     }

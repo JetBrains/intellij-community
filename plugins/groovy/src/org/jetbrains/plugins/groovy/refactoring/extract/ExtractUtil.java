@@ -39,6 +39,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaratio
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
@@ -407,11 +408,11 @@ public class ExtractUtil {
       GrExpression expr = stringPartInfo != null
                           ? GrIntroduceHandlerBase.generateExpressionFromStringPart(stringPartInfo, helper.getProject())
                           : (GrExpression)PsiUtil.skipParentheses(helper.getStatements()[0], false);
-      boolean addReturn = !isVoid && forceReturn;
+      boolean addReturn = !isVoid && forceReturn && !PsiUtil.isVoidMethodCall(expr);
       if (addReturn) {
         buffer.append("return ");
-        expr = ApplicationStatementUtil.convertToMethodCallExpression(expr);
-        buffer.append(expr.getText());
+        final GrExpression methodCall = ApplicationStatementUtil.convertToMethodCallExpression(expr);
+        buffer.append(methodCall.getText());
       }
       else {
         buffer.append(expr != null ? expr.getText() : "");
