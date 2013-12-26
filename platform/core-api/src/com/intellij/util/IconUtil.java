@@ -121,44 +121,46 @@ public class IconUtil {
     return new ImageIcon(second);
   }
 
+  private static final NullableFunction<FileIconKey, Icon> ICON_NULLABLE_FUNCTION = new NullableFunction<FileIconKey, Icon>() {
+    @Override
+    public Icon fun(final FileIconKey key) {
+      final VirtualFile file = key.getFile();
+      final int flags = key.getFlags();
+      final Project project = key.getProject();
+
+      if (!file.isValid() || project != null && (project.isDisposed() || !wasEverInitialized(project))) return null;
+
+      final Icon providersIcon = getProvidersIcon(file, flags, project);
+      Icon icon = providersIcon == null ? VirtualFilePresentation.getIcon(file) : providersIcon;
+
+      final boolean dumb = project != null && DumbService.getInstance(project).isDumb();
+      for (FileIconPatcher patcher : getPatchers()) {
+        if (dumb && !DumbService.isDumbAware(patcher)) {
+          continue;
+        }
+
+        icon = patcher.patchIcon(icon, file, flags, project);
+      }
+
+      if ((flags & Iconable.ICON_FLAG_READ_STATUS) != 0 &&
+          (!file.isWritable() || !WritingAccessProvider.isPotentiallyWritable(file, project))) {
+        icon = new LayeredIcon(icon, PlatformIcons.LOCKED_ICON);
+      }
+      if (file.is(VFileProperty.SYMLINK)) {
+        icon = new LayeredIcon(icon, PlatformIcons.SYMLINK_ICON);
+      }
+
+      Iconable.LastComputedIcon.put(file, icon, flags);
+
+      return icon;
+    }
+  };
+
   public static Icon getIcon(@NotNull final VirtualFile file, @Iconable.IconFlags final int flags, @Nullable final Project project) {
     Icon lastIcon = Iconable.LastComputedIcon.get(file, flags);
 
     final Icon base = lastIcon != null ? lastIcon : VirtualFilePresentation.getIcon(file);
-    return IconDeferrer.getInstance().defer(base, new FileIconKey(file, project, flags), new NullableFunction<FileIconKey, Icon>() {
-      @Override
-      public Icon fun(final FileIconKey key) {
-        final VirtualFile file = key.getFile();
-        final int flags = key.getFlags();
-        final Project project = key.getProject();
-
-        if (!file.isValid() || project != null && (project.isDisposed() || !wasEverInitialized(project))) return null;
-
-        final Icon providersIcon = getProvidersIcon(file, flags, project);
-        Icon icon = providersIcon == null ? VirtualFilePresentation.getIcon(file) : providersIcon;
-
-        final boolean dumb = project != null && DumbService.getInstance(project).isDumb();
-        for (FileIconPatcher patcher : getPatchers()) {
-          if (dumb && !DumbService.isDumbAware(patcher)) {
-            continue;
-          }
-
-          icon = patcher.patchIcon(icon, file, flags, project);
-        }
-
-        if ((flags & Iconable.ICON_FLAG_READ_STATUS) != 0 &&
-            (!file.isWritable() || !WritingAccessProvider.isPotentiallyWritable(file, project))) {
-          icon = new LayeredIcon(icon, PlatformIcons.LOCKED_ICON);
-        }
-        if (file.is(VFileProperty.SYMLINK)) {
-          icon = new LayeredIcon(icon, PlatformIcons.SYMLINK_ICON);
-        }
-
-        Iconable.LastComputedIcon.put(file, icon, flags);
-
-        return icon;
-      }
-    });
+    return IconDeferrer.getInstance().defer(base, new FileIconKey(file, project, flags), ICON_NULLABLE_FUNCTION);
   }
 
   @Nullable

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,7 +41,8 @@ public class IconDeferrerImpl extends IconDeferrer {
     }
   };
   private long myLastClearTimestamp = 0;
-  @SuppressWarnings("UnusedDeclaration") private final LowMemoryWatcher myLowMemoryWatcher = LowMemoryWatcher.register(new Runnable() {
+  @SuppressWarnings("UnusedDeclaration")
+  private final LowMemoryWatcher myLowMemoryWatcher = LowMemoryWatcher.register(new Runnable() {
     @Override
     public void run() {
       clear();
@@ -81,7 +82,7 @@ public class IconDeferrerImpl extends IconDeferrer {
       Icon result = myIconsCache.get(param);
       if (result == null) {
         final long started = myLastClearTimestamp;
-        result = new DeferredIconImpl<T>(base, param, f).setDoneListener(new DeferredIconImpl.IconListener<T>() {
+        result = new DeferredIconImpl<T>(base, param, f, new DeferredIconImpl.IconListener<T>() {
           @Override
           public void evalDone(T key, @NotNull Icon r) {
             synchronized (LOCK) {
@@ -106,7 +107,7 @@ public class IconDeferrerImpl extends IconDeferrer {
     }
   };
 
-  public static void evaluateDeferred(@NotNull Runnable runnable) {
+  static void evaluateDeferred(@NotNull Runnable runnable) {
     try {
       myEvaluationIsInProgress.set(Boolean.TRUE);
       runnable.run();

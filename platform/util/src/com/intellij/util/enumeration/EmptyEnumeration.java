@@ -15,10 +15,12 @@
  */
 package com.intellij.util.enumeration;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.util.Enumeration;
 import java.util.NoSuchElementException;
 
-public final class EmptyEnumeration implements Enumeration {
+public final class EmptyEnumeration<E> implements Enumeration<E> {
   public static Enumeration INSTANCE = new EmptyEnumeration();
 
   private EmptyEnumeration(){
@@ -30,8 +32,14 @@ public final class EmptyEnumeration implements Enumeration {
   }
 
   @Override
-  public Object nextElement(){
+  public E nextElement(){
     throw new NoSuchElementException();
+  }
+
+  @NotNull
+  public static <E> Enumeration<E> getInstance() {
+    //noinspection unchecked
+    return INSTANCE;
   }
 }
 

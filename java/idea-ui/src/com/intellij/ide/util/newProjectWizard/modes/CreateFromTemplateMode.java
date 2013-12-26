@@ -24,7 +24,6 @@ import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.platform.ProjectTemplate;
 import com.intellij.platform.ProjectTemplatesFactory;
-import com.intellij.platform.templates.ArchivedTemplatesFactory;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -41,11 +40,10 @@ public class CreateFromTemplateMode extends WizardMode {
 
   private SelectTemplateStep mySelectTemplateStep;
 
-  public static MultiMap<TemplatesGroup, ProjectTemplate> getTemplatesMap(WizardContext context, boolean includeArchived) {
+  public static MultiMap<TemplatesGroup, ProjectTemplate> getTemplatesMap(WizardContext context) {
     ProjectTemplatesFactory[] factories = ProjectTemplatesFactory.EP_NAME.getExtensions();
     final MultiMap<TemplatesGroup, ProjectTemplate> groups = new MultiMap<TemplatesGroup, ProjectTemplate>();
     for (ProjectTemplatesFactory factory : factories) {
-      if (!includeArchived && (factory instanceof ArchivedTemplatesFactory)) continue;
       for (String group : factory.getGroups()) {
         ProjectTemplate[] templates = factory.createTemplates(group, context);
         List<ProjectTemplate> values = Arrays.asList(templates);
@@ -79,7 +77,7 @@ public class CreateFromTemplateMode extends WizardMode {
   @Nullable
   @Override
   protected StepSequence createSteps(@NotNull WizardContext context, @NotNull ModulesProvider modulesProvider) {
-    MultiMap<TemplatesGroup, ProjectTemplate> map = getTemplatesMap(context, true);
+    MultiMap<TemplatesGroup, ProjectTemplate> map = getTemplatesMap(context);
     StepSequence sequence = new StepSequence();
     for (ProjectTemplate template : map.values()) {
       sequence.addStepsForBuilder(template.createModuleBuilder(), context, modulesProvider);

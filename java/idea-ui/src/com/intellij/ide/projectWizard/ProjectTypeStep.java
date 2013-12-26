@@ -36,7 +36,9 @@ import com.intellij.ui.CollectionListModel;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.components.JBList;
+import com.intellij.util.Function;
 import com.intellij.util.containers.ConcurrentMultiMap;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
@@ -88,45 +90,7 @@ public class ProjectTypeStep extends ModuleWizardStep implements Disposable, Act
     myModulesProvider = modulesProvider;
 
     myTemplatesMap = new ConcurrentMultiMap<TemplatesGroup, ProjectTemplate>();
-    myTemplatesMap.putAllValues(CreateFromTemplateMode.getTemplatesMap(context, false));
-
-    for (ProjectCategory category : ProjectCategory.EXTENSION_POINT_NAME.getExtensions()) {
-      myTemplatesMap.put(new TemplatesGroup(category), new ArrayList<ProjectTemplate>());
-    }
-    if (context.isCreatingNewProject()) {
-      MultiMap<String, ProjectTemplate> localTemplates = loadLocalTemplates();
-      for (TemplatesGroup group : myTemplatesMap.keySet()) {
-        myTemplatesMap.putValues(group, localTemplates.get(group.getId()));
-      }
-    }
-
-    // remove empty groups
-    for (Iterator<Map.Entry<TemplatesGroup, Collection<ProjectTemplate>>> iterator = myTemplatesMap.entrySet().iterator();
-         iterator.hasNext(); ) {
-      Map.Entry<TemplatesGroup, Collection<ProjectTemplate>> entry = iterator.next();
-      if (entry.getValue().isEmpty()) {
-        iterator.remove();
-      }
-    }
-
-    List<TemplatesGroup> groups = new ArrayList<TemplatesGroup>(myTemplatesMap.keySet());
-    Collections.sort(groups);
-
-    // move subgroups
-    MultiMap<String, TemplatesGroup> subGroups = new MultiMap<String, TemplatesGroup>();
-    for (ListIterator<TemplatesGroup> iterator = groups.listIterator(); iterator.hasNext(); ) {
-      TemplatesGroup group = iterator.next();
-      if (group.getParentGroup() != null) {
-        subGroups.putValue(group.getParentGroup(), group);
-        iterator.remove();
-      }
-    }
-    for (ListIterator<TemplatesGroup> iterator = groups.listIterator(); iterator.hasNext(); ) {
-      TemplatesGroup group = iterator.next();
-      for (TemplatesGroup subGroup : subGroups.get(group.getName())) {
-        iterator.add(subGroup);
-      }
-    }
+    List<TemplatesGroup> groups = fillTemplatesMap(context);
 
     myProjectTypeList.setModel(new CollectionListModel<TemplatesGroup>(groups));
     myProjectTypeList.setCellRenderer(new ColoredListCellRenderer<TemplatesGroup>() {
@@ -137,9 +101,9 @@ public class ProjectTypeStep extends ModuleWizardStep implements Disposable, Act
         }
         else {
           setBorder(IdeBorderFactory.createEmptyBorder(3, 10, 3, 5));
+          setIcon(value.getIcon());
         }
         append(value.getName());
-        setIcon(value.getIcon());
       }
     });
 
@@ -163,6 +127,56 @@ public class ProjectTypeStep extends ModuleWizardStep implements Disposable, Act
     }
 
     myProjectTypeList.setSelectedIndex(0);
+  }
+
+  private List<TemplatesGroup> fillTemplatesMap(WizardContext context) {
+    myTemplatesMap.putAllValues(CreateFromTemplateMode.getTemplatesMap(context));
+
+    for (ProjectCategory category : ProjectCategory.EXTENSION_POINT_NAME.getExtensions()) {
+      myTemplatesMap.put(new TemplatesGroup(category), new ArrayList<ProjectTemplate>());
+    }
+    if (context.isCreatingNewProject()) {
+      MultiMap<String, ProjectTemplate> localTemplates = loadLocalTemplates();
+      for (TemplatesGroup group : myTemplatesMap.keySet()) {
+        myTemplatesMap.putValues(group, localTemplates.get(group.getId()));
+      }
+    }
+
+    // remove empty groups
+    for (Iterator<Map.Entry<TemplatesGroup, Collection<ProjectTemplate>>> iterator = myTemplatesMap.entrySet().iterator();
+         iterator.hasNext(); ) {
+      Map.Entry<TemplatesGroup, Collection<ProjectTemplate>> entry = iterator.next();
+      if (entry.getValue().isEmpty()) {
+        iterator.remove();
+      }
+    }
+
+    List<TemplatesGroup> groups = new ArrayList<TemplatesGroup>(myTemplatesMap.keySet());
+    Collections.sort(groups);
+    Set<String> groupNames = ContainerUtil.map2Set(groups, new Function<TemplatesGroup, String>() {
+      @Override
+      public String fun(TemplatesGroup group) {
+        return group.getName();
+      }
+    });
+
+    // move subgroups
+    MultiMap<String, TemplatesGroup> subGroups = new MultiMap<String, TemplatesGroup>();
+    for (ListIterator<TemplatesGroup> iterator = groups.listIterator(); iterator.hasNext(); ) {
+      TemplatesGroup group = iterator.next();
+      String parentGroup = group.getParentGroup();
+      if (parentGroup != null && groupNames.contains(parentGroup) && !group.getName().equals(parentGroup)) {
+        subGroups.putValue(parentGroup, group);
+        iterator.remove();
+      }
+    }
+    for (ListIterator<TemplatesGroup> iterator = groups.listIterator(); iterator.hasNext(); ) {
+      TemplatesGroup group = iterator.next();
+      for (TemplatesGroup subGroup : subGroups.get(group.getName())) {
+        iterator.add(subGroup);
+      }
+    }
+    return groups;
   }
 
   // new category or template is selected

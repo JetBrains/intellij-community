@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.intellij.ui;
 
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -41,16 +42,16 @@ public interface PaintingParent {
    * @return a rectangle, if null -- the whole component will be repainted
    */
   @Nullable
-  Rectangle getChildRec(Component c);
+  Rectangle getChildRec(@NotNull Component c);
 
   class Wrapper extends JPanel implements PaintingParent {
-    public Wrapper(Component component) {
+    public Wrapper(@NotNull Component component) {
       super(new BorderLayout(0,0));
       add(component);
     }
 
     @Override
-    public Rectangle getChildRec(Component c) {
+    public Rectangle getChildRec(@NotNull Component c) {
       return null;
     }
   }

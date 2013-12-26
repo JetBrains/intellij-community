@@ -230,6 +230,10 @@
       <skipForDefaultProject/>
     </component>
 
+    <component>
+      <interface-class>com.intellij.ide.GeneratedSourceFileChangeTracker</interface-class>
+      <implementation-class>com.intellij.ide.GeneratedSourceFileChangeTrackerImpl</implementation-class>
+    </component>
   </project-components>
 
   <module-components>

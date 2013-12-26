@@ -13,24 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.ui;
+package com.intellij.ide;
 
-import com.intellij.ide.IdeBundle;
+import com.intellij.openapi.components.AbstractProjectComponent;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.tree.DefaultMutableTreeNode;
-
-public class LoadingNode extends DefaultMutableTreeNode {
-  public LoadingNode() {
-    this(getText());
-  }
-
+/**
+ * @author nik
+ */
+public abstract class GeneratedSourceFileChangeTracker extends AbstractProjectComponent {
   @NotNull
-  public static String getText() {
-    return IdeBundle.message("treenode.loading");
+  public static GeneratedSourceFileChangeTracker getInstance(@NotNull Project project) {
+    return project.getComponent(GeneratedSourceFileChangeTracker.class);
   }
 
-  public LoadingNode(@NotNull String text) {
-    super(text);
+  protected GeneratedSourceFileChangeTracker(Project project) {
+    super(project);
   }
+
+  public abstract boolean isEditedGeneratedFile(@NotNull VirtualFile file);
 }

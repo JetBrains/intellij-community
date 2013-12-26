@@ -440,6 +440,7 @@ public class ActionsTree {
   }
 
   private class KeymapsRenderer extends ColoredTreeCellRenderer {
+    // Make sure that the text rendered by this method is 'searchable' via com.intellij.openapi.keymap.impl.ui.ActionsTree.filter method.
     public void customizeCellRenderer(JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
       final boolean showIcons = UISettings.getInstance().SHOW_ICONS_IN_MENUS;
       Keymap originalKeymap = myKeymap != null ? myKeymap.getParent() : null;

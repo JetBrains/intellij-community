@@ -177,7 +177,7 @@ public class OpenFileInDefaultBrowserAction extends DumbAwareAction {
           public PsiFile getFile() {
             if (file == null) {
               file = PsiManager.getInstance(getProject()).findFile(virtualFile);
-              LOG.assertTrue(file != null);
+              LOG.assertTrue(file != null, virtualFile.getPath());
             }
             return file;
           }

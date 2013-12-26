@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -693,8 +693,9 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
     return null;
   }
 
-  public ThreeState haveChangesUnder(final VirtualFile vf) {
-    final String absolutePath = new File(vf.getPath()).getAbsolutePath();
+  @NotNull
+  public ThreeState haveChangesUnder(@NotNull VirtualFile virtualFile) {
+    final String absolutePath = new File(virtualFile.getPath()).getAbsolutePath();
     final SortedSet<String> tailSet = myIdx.getAffectedPaths().tailSet(absolutePath);
     for (String path : tailSet) {
       return FileUtil.isAncestorThreeState(absolutePath, path, false);

@@ -45,7 +45,7 @@ public class SystemNotificationsImpl extends SystemNotifications implements Pers
     if (!areNotificationsEnabled() || ApplicationManager.getApplication().isActive()) return;
 
     if (SystemInfo.isLinux && Registry.is("ide.linux.gtk.notifications.enabled") ) {
-      LibNotifyWrapper.showNotification(title, text);
+      LibNotifyWrapper.showWithAppIcon(title, text);
       return;
     }
 

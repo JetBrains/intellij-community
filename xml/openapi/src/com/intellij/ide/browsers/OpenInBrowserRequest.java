@@ -23,8 +23,8 @@ public abstract class OpenInBrowserRequest {
 
   @Nullable
   public static OpenInBrowserRequest create(@NotNull final PsiElement element) {
-    PsiFile psiFile = element.getContainingFile();
-    if (psiFile == null) {
+    PsiFile psiFile = element.isValid() ? element.getContainingFile() : null;
+    if (psiFile == null || psiFile.getVirtualFile() == null) {
       return null;
     }
 

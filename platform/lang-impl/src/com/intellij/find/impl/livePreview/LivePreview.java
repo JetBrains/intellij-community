@@ -547,9 +547,17 @@ public class LivePreview extends DocumentAdapter implements SearchResults.Search
       int startOffset = cur.getStartOffset();
       int endOffset = cur.getEndOffset();
 
-      Point startPoint = myEditor.visualPositionToXY(myEditor.offsetToVisualPosition(startOffset));
-      Point endPoint = myEditor.visualPositionToXY(myEditor.offsetToVisualPosition(endOffset));
-      Point point = new Point((startPoint.x + endPoint.x)/2, startPoint.y);
+      if (startOffset >= myEditor.getDocument().getTextLength()) {
+        if (!object.isDisposed()) {
+          ApplicationManager.getApplication().invokeLater(new Runnable() {
+            @Override
+            public void run() {
+              object.hide();
+            }
+          });
+        }
+        return null;
+      }
       if (!SearchResults.insideVisibleArea(myEditor, cur)) {
         ApplicationManager.getApplication().invokeLater(new Runnable() {
           @Override
@@ -575,6 +583,11 @@ public class LivePreview extends DocumentAdapter implements SearchResults.Search
         myVisibleAreaListenersToRemove.add(visibleAreaListener);
 
       }
+
+      Point startPoint = myEditor.visualPositionToXY(myEditor.offsetToVisualPosition(startOffset));
+      Point endPoint = myEditor.visualPositionToXY(myEditor.offsetToVisualPosition(endOffset));
+      Point point = new Point((startPoint.x + endPoint.x)/2, startPoint.y);
+
       return new RelativePoint(myEditor.getContentComponent(), point);
     }
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ package com.intellij.ui;
 import com.intellij.concurrency.Job;
 import com.intellij.concurrency.JobLauncher;
 import com.intellij.ide.PowerSaveMode;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.IndexNotReadyException;
@@ -45,6 +46,7 @@ import java.util.Set;
 
 public class DeferredIconImpl<T> implements DeferredIcon {
   private static final RepaintScheduler ourRepaintScheduler = new RepaintScheduler();
+  @NotNull
   private volatile Icon myDelegateIcon;
   private Function<T, Icon> myEvaluator;
   private volatile boolean myIsScheduled = false;
@@ -53,7 +55,7 @@ public class DeferredIconImpl<T> implements DeferredIcon {
   private final boolean myNeedReadAction;
   private boolean myDone;
 
-  private IconListener<T> myEvalListener;
+  private final IconListener<T> myEvalListener;
   private static final TransferToEDTQueue<Runnable> ourLaterInvocator = new TransferToEDTQueue<Runnable>("Deferred icon later invocator", new Processor<Runnable>() {
     @Override
     public boolean process(Runnable runnable) {
@@ -62,17 +64,22 @@ public class DeferredIconImpl<T> implements DeferredIcon {
     }
   }, Condition.FALSE, 200);
 
-  public DeferredIconImpl(Icon baseIcon, T param, @NotNull Function<T, Icon> evaluator) {
-    this(baseIcon, param, true, evaluator);
+  DeferredIconImpl(Icon baseIcon, T param, @NotNull Function<T, Icon> evaluator, @NotNull IconListener<T> listener) {
+    this(baseIcon, param, true, evaluator, listener);
   }
 
   public DeferredIconImpl(Icon baseIcon, T param, final boolean needReadAction, @NotNull Function<T, Icon> evaluator) {
+    this(baseIcon, param, needReadAction, evaluator, null);
+  }
+  private DeferredIconImpl(Icon baseIcon, T param, final boolean needReadAction, @NotNull Function<T, Icon> evaluator, IconListener<T> listener) {
     myParam = param;
     myDelegateIcon = nonNull(baseIcon);
     myEvaluator = evaluator;
     myNeedReadAction = needReadAction;
+    myEvalListener = listener;
   }
 
+  @NotNull
   private static Icon nonNull(final Icon icon) {
     return icon == null ? EMPTY_ICON : icon;
   }
@@ -271,17 +278,19 @@ public class DeferredIconImpl<T> implements DeferredIcon {
     private final Alarm myAlarm = new Alarm();
     private final Set<RepaintRequest> myQueue = new LinkedHashSet<RepaintRequest>();
 
-    public void pushDirtyComponent(final Component c, final Rectangle rec) {
+    public void pushDirtyComponent(@NotNull Component c, final Rectangle rec) {
+      ApplicationManager.getApplication().assertIsDispatchThread(); // assert myQueue accessed from EDT only
       myAlarm.cancelAllRequests();
       myAlarm.addRequest(new Runnable() {
         @Override
         public void run() {
           for (RepaintRequest each : myQueue) {
             Rectangle r = each.getRectangle();
-            if (r != null) {
-              each.getComponent().repaint(r.x, r.y, r.width, r.height);
-            } else {
+            if (r == null) {
               each.getComponent().repaint();
+            }
+            else {
+              each.getComponent().repaint(r.x, r.y, r.width, r.height);
             }
           }
           myQueue.clear();
@@ -296,11 +305,12 @@ public class DeferredIconImpl<T> implements DeferredIcon {
     private final Component myComponent;
     private final Rectangle myRectangle;
 
-    private RepaintRequest(Component component, Rectangle rectangle) {
+    private RepaintRequest(@NotNull Component component, Rectangle rectangle) {
       myComponent = component;
       myRectangle = rectangle;
     }
 
+    @NotNull
     public Component getComponent() {
       return myComponent;
     }
@@ -308,11 +318,6 @@ public class DeferredIconImpl<T> implements DeferredIcon {
     public Rectangle getRectangle() {
       return myRectangle;
     }
-  }
-
-  public DeferredIconImpl setDoneListener(@NotNull IconListener<T> disposer) {
-    myEvalListener = disposer;
-    return this;
   }
 
   public interface IconListener<T> {
