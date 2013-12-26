@@ -15,10 +15,12 @@
  */
 package com.intellij.ui;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationGroup;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.util.lang.UrlClassLoader;
 
 /**
@@ -50,6 +52,17 @@ public class LibNotifyWrapper {
                          message, NotificationType.INFORMATION)
       );
     }
+  }
+
+  /**
+   * Shows a libnotify notification with an icon from the ide bin directory.
+   * If there is no such icon a default information icon is shown.
+   * @param title notification title
+   * @param description notification description
+   */
+  public static void showWithAppIcon(final String title, final String description) {
+    String iconPath = AllIcons.findIcon(PathManager.getBinPath());
+    show(title, description, (iconPath == null) ? "dialog-information" : iconPath);
   }
 
 }

@@ -17,6 +17,7 @@ package com.intellij.ide.actions;
 
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.util.ExecUtil;
+import com.intellij.icons.AllIcons;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
@@ -49,8 +50,6 @@ import static java.util.Arrays.asList;
 
 public class CreateDesktopEntryAction extends DumbAwareAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.actions.CreateDesktopEntryAction");
-
-  private static final int MIN_ICON_SIZE = 32;
 
   public static boolean isAvailable() {
     return SystemInfo.isUnix && SystemInfo.hasXdgOpen();
@@ -138,7 +137,7 @@ public class CreateDesktopEntryAction extends DumbAwareAction {
     String name = ApplicationNamesInfo.getInstance().getFullProductName();
     if (PlatformUtils.isCommunity()) name += " Community Edition";
 
-    final String iconPath = findIcon(binPath);
+    final String iconPath = AllIcons.findIcon(binPath);
     if (iconPath == null) {
       throw new RuntimeException(ApplicationBundle.message("desktop.entry.icon.missing", binPath));
     }
@@ -159,34 +158,6 @@ public class CreateDesktopEntryAction extends DumbAwareAction {
     FileUtil.writeToFile(entryFile, content);
     entryFile.deleteOnExit();
     return entryFile;
-  }
-
-  @Nullable
-  private static String findIcon(final String iconsPath) {
-    final File iconsDir = new File(iconsPath);
-
-    // 1. look for .svg icon
-    for (String child : iconsDir.list()) {
-      if (child.endsWith(".svg")) {
-        return iconsPath + '/' + child;
-      }
-    }
-
-    // 2. look for .png icon of max size
-    int max = 0;
-    String iconPath = null;
-    for (String child : iconsDir.list()) {
-      if (!child.endsWith(".png")) continue;
-      final String path = iconsPath + '/' + child;
-      final Icon icon = new ImageIcon(path);
-      final int size = icon.getIconHeight();
-      if (size >= MIN_ICON_SIZE && size > max && size == icon.getIconWidth()) {
-        max = size;
-        iconPath = path;
-      }
-    }
-
-    return iconPath;
   }
 
   @Nullable
