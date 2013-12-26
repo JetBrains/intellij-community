@@ -16,9 +16,9 @@
 package com.intellij.cvsSupport2.connections.ssh;
 
 import com.intellij.cvsSupport2.config.ProxySettings;
-import com.trilead.ssh2.HTTPProxyData;
-import com.trilead.ssh2.ProxyData;
-import com.trilead.ssh2.transport.SocketFactory;
+import com.trilead.ssh2_build213.HTTPProxyData;
+import com.trilead.ssh2_build213.ProxyData;
+import com.trilead.ssh2_build213.transport.SocketFactory;
 import org.jetbrains.annotations.Nullable;
 import org.netbeans.lib.cvsclient.connection.ConnectionSettings;
 

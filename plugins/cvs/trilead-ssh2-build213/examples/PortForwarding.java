@@ -1,5 +1,5 @@
-import com.trilead.ssh2.Connection;
-import com.trilead.ssh2.LocalPortForwarder;
+import com.trilead.ssh2_build213.Connection;
+import com.trilead.ssh2_build213.LocalPortForwarder;
 
 import java.io.File;
 import java.io.IOException;
