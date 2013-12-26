@@ -109,7 +109,7 @@ public abstract class ProjectWizardTestCase<T extends AbstractProjectWizard> ext
   }
 
   protected Project createProject(Consumer<Step> adjuster) throws IOException {
-    createWizard(getProject());
+    createWizard(null);
     runWizard(adjuster);
     myCreatedProject = NewProjectUtil.createFromWizard(myWizard, null);
     return myCreatedProject;
