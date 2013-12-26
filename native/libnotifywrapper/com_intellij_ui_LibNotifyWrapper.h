@@ -11,10 +11,10 @@ extern "C" {
 /*
  * Class:     com_intellij_ui_LibNotifyWrapper
  * Method:    showNotification
- * Signature: (Ljava/lang/String;Ljava/lang/String;)V
+ * Signature: (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V
  */
 JNIEXPORT void JNICALL Java_com_intellij_ui_LibNotifyWrapper_showNotification
-  (JNIEnv *, jclass, jstring, jstring);
+  (JNIEnv *, jclass, jstring, jstring, jstring);
 
 #ifdef __cplusplus
 }

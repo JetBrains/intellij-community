@@ -15,7 +15,10 @@
  */
 package com.intellij.ui;
 
-import com.intellij.openapi.application.PathManager;
+import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationGroup;
+import com.intellij.notification.NotificationType;
+import com.intellij.notification.Notifications;
 import com.intellij.util.lang.UrlClassLoader;
 
 /**
@@ -23,9 +26,30 @@ import com.intellij.util.lang.UrlClassLoader;
  */
 public class LibNotifyWrapper {
 
+  private final static String message = "Looks like you have run 32-bit Java on a 64-bit version of OS " +
+                                "or just have not installed appropriate libnotify.so library";
+
+  private static boolean available = true;
+
   static{
     UrlClassLoader.loadPlatformLibrary("notifywrapper");
   }
 
-  native public static void showNotification(String title, String description);
+  native private static void showNotification(final String title, final String description, final String iconPath);
+
+  public static void show(final String title, final String description, final String iconPath) {
+    if (! available) return;
+    try {
+      showNotification(title, description, iconPath);
+    } catch (UnsatisfiedLinkError ule) {
+      available = false;
+      NotificationGroup.balloonGroup("Linux configuration messages");
+      Notifications.Bus.notify(
+        new Notification("Linux configuration messages",
+                         "Notification library has not been installed",
+                         message, NotificationType.INFORMATION)
+      );
+    }
+  }
+
 }
