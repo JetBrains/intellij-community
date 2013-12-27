@@ -32,6 +32,7 @@ import com.intellij.openapi.vcs.CalledInAwt;
 import com.intellij.openapi.vcs.changes.committed.AbstractCalledLater;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.util.EventDispatcher;
+import com.intellij.util.SystemProperties;
 import com.intellij.util.messages.Topic;
 import com.intellij.util.net.HttpConfigurable;
 import com.intellij.util.proxy.CommonProxy;
@@ -117,6 +118,40 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager im
 
       }
     });
+  }
+
+  public String getDefaultUsername(String kind, SVNURL url) {
+    String result = SystemProperties.getUserName();
+
+    // USERNAME authentication is also requested in SVNSSHConnector.open()
+    if (ISVNAuthenticationManager.SSH.equals(kind) ||
+        (ISVNAuthenticationManager.USERNAME.equals(kind) && SVN_SSH.equals(url.getProtocol()))) {
+      result = url != null && !StringUtil.isEmpty(url.getUserInfo()) ? url.getUserInfo() : getDefaultOptions().getDefaultSSHUserName();
+    }
+
+    return result;
+  }
+
+  @Override
+  protected SVNSSHAuthentication getDefaultSSHAuthentication(SVNURL url) {
+    String userName = getDefaultUsername(ISVNAuthenticationManager.SSH, url);
+
+    // This is fully copied from base class - DefaultSVNAuthenticationManager - as there are no setters in Authentication classes
+    // and there is no url parameter if overriding getDefaultOptions()
+    String password = getDefaultOptions().getDefaultSSHPassword();
+    String keyFile = getDefaultOptions().getDefaultSSHKeyFile();
+    int port = getDefaultOptions().getDefaultSSHPortNumber();
+    String passphrase = getDefaultOptions().getDefaultSSHPassphrase();
+
+    if (userName != null && password != null) {
+      return new SVNSSHAuthentication(userName, password, port, getHostOptionsProvider().getHostOptions(url).isAuthStorageEnabled(), url,
+                                      false);
+    }
+    else if (userName != null && keyFile != null) {
+      return new SVNSSHAuthentication(userName, new File(keyFile), passphrase, port,
+                                      getHostOptionsProvider().getHostOptions(url).isAuthStorageEnabled(), url, false);
+    }
+    return null;
   }
 
   private class AuthenticationProviderProxy implements ISVNAuthenticationProvider {

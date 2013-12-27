@@ -23,7 +23,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
-import com.intellij.util.SystemProperties;
 import com.intellij.util.WaitForProgressToShow;
 import org.jetbrains.idea.svn.SvnAuthenticationManager;
 import org.jetbrains.idea.svn.SvnBundle;
@@ -81,7 +80,7 @@ public class SvnInteractiveAuthenticationProvider implements ISVNAuthenticationP
     final boolean authCredsOn = authMayBeStored && myManager.getHostOptionsProvider().getHostOptions(url).isAuthStorageEnabled();
 
     final String userName =
-      previousAuth != null && previousAuth.getUserName() != null ? previousAuth.getUserName() : SystemProperties.getUserName();
+      previousAuth != null && previousAuth.getUserName() != null ? previousAuth.getUserName() : myManager.getDefaultUsername(kind, url);
     if (ISVNAuthenticationManager.PASSWORD.equals(kind)) {// || ISVNAuthenticationManager.USERNAME.equals(kind)) {
       command = new Runnable() {
         public void run() {
