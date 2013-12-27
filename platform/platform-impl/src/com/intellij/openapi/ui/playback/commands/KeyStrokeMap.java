@@ -25,7 +25,7 @@ import java.awt.event.KeyEvent;
 import java.util.HashMap;
 import java.util.Map;
 
-public class KeyStokeMap {
+public class KeyStrokeMap {
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.ui.debugger.extensions.playback.KeyStokeMap");
 
