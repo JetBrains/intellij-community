@@ -207,7 +207,7 @@ public abstract class AbstractExpandableItemsHandler<KeyType, ComponentType exte
 
     if (selected == null
         || !myComponent.isShowing()
-        || (!myComponent.isFocusOwner() && !processIfUnfocused)
+        || !myComponent.isFocusOwner() && !processIfUnfocused
         || isPopup()) {
       hideHint();
       return;
@@ -333,7 +333,7 @@ public abstract class AbstractExpandableItemsHandler<KeyType, ComponentType exte
 
 
     if (isPaintBorder()) {
-      g.translate((visibleRect.x + visibleRect.width - cellBounds.x), 0);
+      g.translate(visibleRect.x + visibleRect.width - cellBounds.x, 0);
       g.setColor(getBorderColor());
       int rightX = size.width - 1;
       final int h = size.height;
