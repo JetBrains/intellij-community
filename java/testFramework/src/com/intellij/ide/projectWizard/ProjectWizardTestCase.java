@@ -86,7 +86,7 @@ public abstract class ProjectWizardTestCase<T extends AbstractProjectWizard> ext
 
     createWizard(project);
     ProjectTypeStep step = (ProjectTypeStep)myWizard.getCurrentStepObject();
-    boolean condition = step.setSelectedProjectType(group, name);
+    boolean condition = step.setSelectedTemplate(group, name);
     if (!condition) {
       throw new IllegalArgumentException(group + "/" + name + " template not found");
     }

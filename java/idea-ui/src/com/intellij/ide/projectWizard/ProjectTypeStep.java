@@ -274,7 +274,7 @@ public class ProjectTypeStep extends ModuleWizardStep implements Disposable, Act
   }
 
   @TestOnly
-  public boolean setSelectedProjectType(String group, String name) {
+  public boolean setSelectedTemplate(String group, String name) {
     ListModel model = myProjectTypeList.getModel();
     for (int i = 0; i < model.getSize(); i++) {
       if (group.equals(((TemplatesGroup)model.getElementAt(i)).getName())) {
