@@ -743,7 +743,7 @@ public final class UpdateChecker {
 
     OutputStream out = new BufferedOutputStream(new FileOutputStream(tempFile));
     try {
-      URLConnection connection = new URL(new URL(getPatchesUrl()), fileName).openConnection();
+      URLConnection connection = HttpConfigurable.getInstance().openConnection(new URL(new URL(getPatchesUrl()), fileName).toString());
       try {
         InputStream in = UrlConnectionUtil.getConnectionInputStreamWithException(connection, i);
         try {
