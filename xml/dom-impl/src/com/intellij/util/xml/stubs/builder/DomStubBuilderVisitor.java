@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -52,16 +52,19 @@ class DomStubBuilderVisitor {
     String nsKey = description instanceof DomChildrenDescription ? ((DomChildrenDescription)description).getXmlName().getNamespaceKey() : "";
     if (element instanceof XmlTag) {
       XmlTag tag = (XmlTag)element;
+
+      String elementClass = null;
+      if (handler.getAnnotation(StubbedOccurrence.class) != null) {
+        final Type type = description.getType();
+        elementClass = ((Class)type).getName();
+      }
+
       ElementStub stub = new ElementStub(parent,
                                          StringRef.fromString(tag.getName()),
                                          StringRef.fromNullableString(nsKey),
                                          index,
-                                         description instanceof CustomDomChildrenDescription);
-      if (handler.getAnnotation(StubbedOccurrence.class) != null) {
-        final Type type = description.getType();
-        stub.setElementClass((Class)type);
-      }
-
+                                         description instanceof CustomDomChildrenDescription,
+                                         StringRef.fromNullableString(elementClass));
       for (XmlAttribute attribute : tag.getAttributes()) {
         visitXmlElement(attribute, stub, 0);
       }
