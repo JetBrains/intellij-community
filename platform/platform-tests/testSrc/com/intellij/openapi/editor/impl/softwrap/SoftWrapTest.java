@@ -17,7 +17,7 @@ package com.intellij.openapi.editor.impl.softwrap;
 
 import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.SoftWrap;
-import com.intellij.openapi.editor.impl.AbstractEditorProcessingOnDocumentModificationTest;
+import com.intellij.openapi.editor.impl.AbstractEditorTest;
 import com.intellij.testFramework.EditorTestUtil;
 import com.intellij.testFramework.TestFileType;
 
@@ -27,7 +27,7 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class SoftWrapTest extends AbstractEditorProcessingOnDocumentModificationTest {
+public class SoftWrapTest extends AbstractEditorTest {
 
   public void testCollapsedRegionWithLongPlaceholderAtLineStart1() throws IOException {
     doTestSoftWraps(10, "<fold text='veryVeryVeryLongPlaceholder'>foo</fold>");

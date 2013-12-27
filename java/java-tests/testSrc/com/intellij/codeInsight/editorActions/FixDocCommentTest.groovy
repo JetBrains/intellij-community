@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,13 +15,13 @@
  */
 package com.intellij.codeInsight.editorActions
 
-import com.intellij.openapi.editor.impl.AbstractEditorProcessingOnDocumentModificationTest
+import com.intellij.openapi.editor.impl.AbstractEditorTest
 
 /**
  * @author Denis Zhdanov
  * @since 9/20/12 6:17 PM
  */
-class FixDocCommentTest extends AbstractEditorProcessingOnDocumentModificationTest {
+class FixDocCommentTest extends AbstractEditorTest {
 
   void testGenerateMethodDoc() {
     doTest(
