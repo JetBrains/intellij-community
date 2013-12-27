@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,7 +44,7 @@ import java.util.regex.Pattern;
  * @author Denis Zhdanov
  * @since 11/18/10 7:43 PM
  */
-public abstract class AbstractEditorProcessingOnDocumentModificationTest extends LightPlatformCodeInsightTestCase {
+public abstract class AbstractEditorTest extends LightPlatformCodeInsightTestCase {
   protected void init(@NotNull @NonNls String fileText, @NotNull TestFileType type) throws IOException {
     configureFromFileText(getFileName(type), fileText);
   }
