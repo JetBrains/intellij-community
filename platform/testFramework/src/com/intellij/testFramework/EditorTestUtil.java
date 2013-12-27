@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,9 @@ import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.openapi.editor.actionSystem.TypedAction;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
+import com.intellij.openapi.editor.impl.DefaultEditorTextRepresentationHelper;
+import com.intellij.openapi.editor.impl.SoftWrapModelImpl;
+import com.intellij.openapi.editor.impl.softwrap.mapping.SoftWrapApplianceManager;
 import com.intellij.psi.tree.IElementType;
 import junit.framework.Assert;
 import org.jetbrains.annotations.NotNull;
@@ -131,5 +134,43 @@ public class EditorTestUtil {
     }
 
     return new int[]{caretPosInSourceFile, visualColumnOffset, selectionStartInSourceFile, selectionEndInSourceFile};
+  }
+
+  /**
+   * Configures given editor to wrap at given character count.
+   *
+   * @return whether any actual wraps of editor contents were created as a result of turning on soft wraps
+   */
+  public static boolean configureSoftWraps(Editor editor, final int charCountToWrapAt) {
+    int charWidthInPixels = 7;
+    // we're adding 1 to charCountToWrapAt, to account for wrap character width, and 1 to overall width to overcome wrapping logic subtleties
+    return configureSoftWraps(editor, (charCountToWrapAt + 1) * charWidthInPixels + 1, charWidthInPixels);
+  }
+
+  /**
+   * Configures given editor to wrap at given width, assuming characters are of given width
+   *
+   * @return whether any actual wraps of editor contents were created as a result of turning on soft wraps
+   */
+  public static boolean configureSoftWraps(Editor editor, final int visibleWidth, final int charWidthInPixels) {
+    editor.getSettings().setUseSoftWraps(true);
+    SoftWrapModelImpl model = (SoftWrapModelImpl)editor.getSoftWrapModel();
+    model.reinitSettings();
+
+    SoftWrapApplianceManager applianceManager = model.getApplianceManager();
+    applianceManager.setWidthProvider(new SoftWrapApplianceManager.VisibleAreaWidthProvider() {
+      @Override
+      public int getVisibleAreaWidth() {
+        return visibleWidth;
+      }
+    });
+    applianceManager.setRepresentationHelper(new DefaultEditorTextRepresentationHelper(editor) {
+      @Override
+      public int charWidth(char c, int fontType) {
+        return charWidthInPixels;
+      }
+    });
+    applianceManager.registerSoftWrapIfNecessary();
+    return !model.getRegisteredSoftWraps().isEmpty();
   }
 }
