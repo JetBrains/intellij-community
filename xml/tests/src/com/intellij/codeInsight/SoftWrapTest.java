@@ -27,7 +27,7 @@ public class SoftWrapTest extends LightPlatformCodeInsightFixtureTestCase {
   public void testSoftWrapInInjection() throws Exception {
 
     myFixture.configureByFile("softWrap.html");
-    EditorTestUtil.configureSoftWraps(myFixture.getEditor(), 85);
+    EditorTestUtil.configureSoftWraps(myFixture.getEditor(), 83);
     myFixture.type('j');
     myFixture.checkResultByFile("softWrap_after.html");
   }

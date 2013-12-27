@@ -36,7 +36,7 @@ public class SelectLineActionTest extends LightPlatformCodeInsightTestCase {
     prepare("first line\n" +
             "second line<caret>\n" + // this line will be wrapped and caret is positioned after the wrap
             "third line");
-    assertTrue("Failed to activate soft wrapping", EditorTestUtil.configureSoftWraps(myEditor, 8));
+    assertTrue("Failed to activate soft wrapping", EditorTestUtil.configureSoftWraps(myEditor, 6));
     selectLine();
     checkResultByText("first line\n" +
                       "<caret><selection>second line\n" +
