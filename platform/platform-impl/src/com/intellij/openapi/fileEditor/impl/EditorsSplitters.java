@@ -25,9 +25,7 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.impl.text.FileDropHandler;
-import com.intellij.openapi.keymap.KeymapManager;
-import com.intellij.openapi.keymap.KeymapUtil;
-import com.intellij.openapi.keymap.MacKeymapUtil;
+import com.intellij.openapi.keymap.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.*;
@@ -80,6 +78,7 @@ public class EditorsSplitters extends IdePanePanel {
   int myInsideChange = 0;
   private final MyFocusWatcher myFocusWatcher;
   private final Alarm myIconUpdaterAlarm = new Alarm();
+  private final KeymapManagerListener myKeymapListener;
 
   public EditorsSplitters(final FileEditorManagerImpl manager, DockManager dockManager, boolean createOwnDockableContainer) {
     super(new BorderLayout());
@@ -94,6 +93,14 @@ public class EditorsSplitters extends IdePanePanel {
       Disposer.register(manager.getProject(), dockable);
       dockManager.register(dockable);
     }
+    myKeymapListener = new KeymapManagerListener() {
+      @Override
+      public void activeKeymapChanged(Keymap keymap) {
+        invalidate();
+        repaint();
+      }
+    };
+    KeymapManager.getInstance().addKeymapManagerListener(myKeymapListener);
   }
   
   public FileEditorManagerImpl getManager() {
@@ -118,6 +125,7 @@ public class EditorsSplitters extends IdePanePanel {
   public void dispose() {
     myIconUpdaterAlarm.cancelAllRequests();
     stopListeningFocus();
+    KeymapManager.getInstance().removeKeymapManagerListener(myKeymapListener);
   }
 
   @Nullable
