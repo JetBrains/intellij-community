@@ -749,10 +749,6 @@ public class PsiImplUtil {
     return type;
   }
 
-  public static boolean isWhiteSpace(@Nullable PsiElement element) {
-    return hasElementType(element, TokenSets.WHITE_SPACES_SET);
-  }
-
   public static boolean hasElementType(@Nullable PsiElement next, @NotNull final IElementType type) {
     if (next == null) return false;
     final ASTNode astNode = next.getNode();
@@ -841,5 +837,13 @@ public class PsiImplUtil {
   public static boolean hasImmutableAnnotation(PsiModifierList modifierList) {
     return modifierList.findAnnotation(GROOVY_LANG_IMMUTABLE) != null ||
            modifierList.findAnnotation(GROOVY_TRANSFORM_IMMUTABLE) != null;
+  }
+
+  public static boolean isWhiteSpaceOrNls(@Nullable PsiElement sibling) {
+    return sibling != null && isWhiteSpaceOrNls(sibling.getNode());
+  }
+
+  public static boolean isWhiteSpaceOrNls(@Nullable ASTNode node) {
+    return node != null && TokenSets.WHITE_SPACES_SET.contains(node.getElementType());
   }
 }

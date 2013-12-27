@@ -39,7 +39,7 @@ import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.codeStyle.GroovyCodeStyleSettings;
 import org.jetbrains.plugins.groovy.formatter.blocks.GroovyBlock;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
-import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
+import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 
 
 /**
@@ -94,12 +94,12 @@ public class GroovyFormattingModelBuilder implements FormattingModelBuilder {
     @Override
     protected String replaceWithPsiInLeaf(TextRange textRange, String whiteSpace, ASTNode leafElement) {
       if (!myCanModifyAllWhiteSpaces) {
-        if (TokenSets.WHITE_SPACES_SET.contains(leafElement.getElementType())) return null;
+        if (PsiImplUtil.isWhiteSpaceOrNls(leafElement)) return null;
       }
 
       IElementType elementTypeToUse = TokenType.WHITE_SPACE;
       ASTNode prevNode = TreeUtil.prevLeaf(leafElement);
-      if (prevNode != null && TokenSets.WHITE_SPACES_SET.contains(prevNode.getElementType())) {
+      if (prevNode != null && PsiImplUtil.isWhiteSpaceOrNls(prevNode)) {
         elementTypeToUse = prevNode.getElementType();
       }
       FormatterUtil.replaceWhiteSpace(whiteSpace, leafElement, elementTypeToUse, textRange);

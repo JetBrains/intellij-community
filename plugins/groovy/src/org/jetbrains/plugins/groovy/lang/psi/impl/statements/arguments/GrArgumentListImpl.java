@@ -209,7 +209,7 @@ public class GrArgumentListImpl extends GroovyPsiElementImpl implements GrArgume
       ASTNode prev = TreeUtil.skipElementsBack(child.getTreePrev(), TokenSets.WHITE_SPACES_OR_COMMENTS);
       if (prev != null && prev.getElementType() == mCOMMA) {
         final ASTNode pprev = prev.getTreePrev();
-        if (pprev != null && TokenSets.WHITE_SPACES_SET.contains(pprev.getElementType())) {
+        if (pprev != null && PsiImplUtil.isWhiteSpaceOrNls(pprev)) {
           super.deleteChildInternal(pprev);
         }
         super.deleteChildInternal(prev);
@@ -218,7 +218,7 @@ public class GrArgumentListImpl extends GroovyPsiElementImpl implements GrArgume
         ASTNode next = TreeUtil.skipElements(child.getTreeNext(), TokenSets.WHITE_SPACES_OR_COMMENTS);
         if (next != null && next.getElementType() == mCOMMA) {
           final ASTNode nnext = next.getTreeNext();
-          if (nnext != null && TokenSets.WHITE_SPACES_SET.contains(nnext.getElementType())) {
+          if (nnext != null && PsiImplUtil.isWhiteSpaceOrNls(nnext)) {
             super.deleteChildInternal(nnext);
           }
           super.deleteChildInternal(next);

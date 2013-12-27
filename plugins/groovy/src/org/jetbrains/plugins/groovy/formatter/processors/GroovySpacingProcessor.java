@@ -63,6 +63,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.GrTopStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrArrayTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeParameterList;
+import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 
 import static org.jetbrains.plugins.groovy.GroovyFileType.GROOVY_LANGUAGE;
 import static org.jetbrains.plugins.groovy.formatter.models.spacing.SpacingTokens.*;
@@ -1074,7 +1075,7 @@ public class GroovySpacingProcessor extends GroovyElementVisitor {
   }
 
   static boolean isWhiteSpace(final ASTNode node) {
-    return node != null && (TokenSets.WHITE_SPACES_SET.contains(node.getElementType()) || node.getTextLength() == 0);
+    return node != null && (PsiImplUtil.isWhiteSpaceOrNls(node) || node.getTextLength() == 0);
   }
 }
 

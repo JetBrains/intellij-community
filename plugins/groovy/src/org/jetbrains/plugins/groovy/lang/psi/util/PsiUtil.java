@@ -1314,7 +1314,7 @@ public class PsiUtil {
 
   public static boolean isLineFeed(@Nullable PsiElement e) {
     return e != null &&
-           TokenSets.WHITE_SPACES_SET.contains(e.getNode().getElementType()) &&
+           PsiImplUtil.isWhiteSpaceOrNls(e) &&
            (e.getText().indexOf('\n') >= 0 || e.getText().indexOf('\r') >= 0);
   }
 

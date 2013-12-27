@@ -34,6 +34,7 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.impl.source.tree.LeafPsiElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.*;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ReflectionCache;
@@ -64,6 +65,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrStatementOwner;
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrVariableDeclarationOwner;
+import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 
 import java.util.*;
 
@@ -91,11 +93,11 @@ public abstract class GroovyRefactoringUtil {
     PsiElement element2 = file.getViewProvider().findElementAt(endOffset - 1, file.getLanguage());
     if (element1 == null || element2 == null) return null;
 
-    if (TokenSets.WHITE_SPACES_SET.contains(element1.getNode().getElementType())) {
+    if (PsiImplUtil.isWhiteSpaceOrNls(element1)) {
       startOffset = element1.getTextRange().getEndOffset();
       element1 = file.getViewProvider().findElementAt(startOffset, file.getLanguage());
     }
-    if (TokenSets.WHITE_SPACES_SET.contains(element2.getNode().getElementType())) {
+    if (PsiImplUtil.isWhiteSpaceOrNls(element2)) {
       endOffset = element2.getTextRange().getStartOffset();
       element2 = file.getViewProvider().findElementAt(endOffset - 1, file.getLanguage());
     }

@@ -48,7 +48,6 @@ import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocComment;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocCommentOwner;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.impl.GrDocCommentUtil;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
-import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier;
@@ -60,6 +59,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefini
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGdkMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
+import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrPropertyForCompletion;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrImplicitVariable;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightVariable;
@@ -195,7 +195,7 @@ public class GroovyDocumentationProvider implements CodeDocumentationProvider, E
 
   private static void appendInferredType(PsiElement originalElement, GrVariable variable, StringBuilder buffer) {
     PsiType inferredType = null;
-    if (TokenSets.WHITE_SPACES_SET.contains(originalElement.getNode().getElementType())) {
+    if (PsiImplUtil.isWhiteSpaceOrNls(originalElement)) {
       originalElement = PsiTreeUtil.prevLeaf(originalElement);
     }
     if (originalElement != null && originalElement.getNode().getElementType() == GroovyTokenTypes.mIDENT) {
