@@ -23,7 +23,7 @@ import java.util.Arrays;
 import java.util.Collections;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assume.assumeTrue;
+import static org.junit.Assert.fail;
 
 public class FontPreferencesTest {
   private final FontPreferences myPreferences = new FontPreferences();
@@ -133,8 +133,7 @@ public class FontPreferencesTest {
         return name;
       }
     }
-    System.out.println("Couldn't find existing font not in " + Arrays.toString(names) + ", skipping the test");
-    assumeTrue(false);
+    fail("Couldn't find existing font not in " + Arrays.toString(names));
     return null;
   }
 
