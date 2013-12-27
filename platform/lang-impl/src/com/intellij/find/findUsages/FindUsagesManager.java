@@ -138,11 +138,11 @@ public class FindUsagesManager implements JDOMExternalizable {
     myLastSearchInFileData.myElements = null;
   }
 
-  public boolean findNextUsageInFile(FileEditor editor) {
+  public boolean findNextUsageInFile(@NotNull FileEditor editor) {
     return findUsageInFile(editor, FileSearchScope.AFTER_CARET);
   }
 
-  public boolean findPreviousUsageInFile(FileEditor editor) {
+  public boolean findPreviousUsageInFile(@NotNull FileEditor editor) {
     return findUsageInFile(editor, FileSearchScope.BEFORE_CARET);
   }
 
@@ -159,7 +159,7 @@ public class FindUsagesManager implements JDOMExternalizable {
   private boolean findUsageInFile(@NotNull FileEditor editor, @NotNull FileSearchScope direction) {
     PsiElement[] elements = restorePsiElements(myLastSearchInFileData, true);
     if (elements == null) return false;
-    if (elements.length == 0) return true;//all elements have invalidated
+    if (elements.length == 0) return true; //all elements have been invalidated
 
     UsageInfoToUsageConverter.TargetElementsDescriptor descriptor = new UsageInfoToUsageConverter.TargetElementsDescriptor(elements);
 
@@ -177,8 +177,7 @@ public class FindUsagesManager implements JDOMExternalizable {
 
   // returns null if cannot find, empty Pair if all elements have been changed
   @Nullable
-  private PsiElement[] restorePsiElements(SearchData searchData, final boolean showErrorMessage) {
-    if (searchData == null) return null;
+  private PsiElement[] restorePsiElements(@NotNull SearchData searchData, final boolean showErrorMessage) {
     SmartPsiElementPointer[] lastSearchElements = searchData.myElements;
     if (lastSearchElements == null) return null;
     List<PsiElement> elements = new ArrayList<PsiElement>();
@@ -197,11 +196,12 @@ public class FindUsagesManager implements JDOMExternalizable {
     return PsiUtilCore.toPsiElementArray(elements);
   }
 
-  private void initLastSearchElement(final FindUsagesOptions findUsagesOptions,
-                                     UsageInfoToUsageConverter.TargetElementsDescriptor descriptor) {
+  private void initLastSearchElement(@NotNull FindUsagesOptions findUsagesOptions,
+                                     @NotNull UsageInfoToUsageConverter.TargetElementsDescriptor descriptor) {
     myLastSearchInFileData = createSearchData(descriptor.getAllElements(), findUsagesOptions);
   }
 
+  @NotNull
   private SearchData createSearchData(@NotNull List<? extends PsiElement> psiElements, final FindUsagesOptions findUsagesOptions) {
     SearchData data = new SearchData();
 
@@ -476,7 +476,8 @@ public class FindUsagesManager implements JDOMExternalizable {
   }
 
 
-  private static PsiElement2UsageTargetAdapter[] convertToUsageTargets(final List<? extends PsiElement> elementsToSearch) {
+  @NotNull
+  private static PsiElement2UsageTargetAdapter[] convertToUsageTargets(@NotNull List<? extends PsiElement> elementsToSearch) {
     final ArrayList<PsiElement2UsageTargetAdapter> targets = new ArrayList<PsiElement2UsageTargetAdapter>(elementsToSearch.size());
     for (PsiElement element : elementsToSearch) {
       convertToUsageTarget(targets, element);
