@@ -1,3 +1,18 @@
+/*
+ * Copyright 2000-2013 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.lang.properties.editor;
 
 import gnu.trove.TIntHashSet;
@@ -35,10 +50,11 @@ public class ResourceBundleUtilTest {
     { "\\   starting from white spaces", "   starting from white spaces" },
     { "\\ \t  starting from white spaces and tabs", " \t  starting from white spaces and tabs" },
     { "first line \\\nsecond line", "first line \nsecond line" },
-    
-    // Non-ascii symbols.
-    { "wei\\u00DF", "wei\u00DF" },
-    
+
+    // Non-ascii symbols and escaped characters
+    { "wei\u00DF", "wei\u00DF" },
+    { "wei\\u00DF", "wei\\u00DF" },
+
     // All together.
     { "\\\t text with \\\nspecial symbols\\:\\\n\\#", "\t text with \nspecial symbols:\n#" }
   };
