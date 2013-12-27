@@ -1197,10 +1197,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         else {
           prevX = x;
           c = text.charAt(offset);
-          charWidth = charToVisibleWidth(c, fontType, x);
-          if (charWidth == 0) {
+          if (c == '\n') {
             break;
           }
+          charWidth = charToVisibleWidth(c, fontType, x);
           x += charWidth;
 
           if (x >= px) {

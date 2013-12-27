@@ -13,13 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.usages;
+package com.intellij.openapi.editor.impl;
 
-import com.intellij.psi.PsiElement;
+import com.intellij.openapi.editor.VisualPosition;
+import com.intellij.testFramework.LightPlatformCodeInsightTestCase;
 
-/**
- * @author max
- */
-public interface PsiElementUsageTarget extends ConfigurableUsageTarget {
-  PsiElement getElement();
+public class EditorImplTest extends LightPlatformCodeInsightTestCase {
+  public void testPositionCalculationForZeroWidthChars() throws Exception {
+    configureFromFileText(getTestName(false) + ".txt", "some\u2044text");
+    VisualPosition pos = new VisualPosition(0, 6);
+    VisualPosition recalculatedPos = myEditor.xyToVisualPosition(myEditor.visualPositionToXY(pos));
+    assertEquals(pos, recalculatedPos);
+  }
 }

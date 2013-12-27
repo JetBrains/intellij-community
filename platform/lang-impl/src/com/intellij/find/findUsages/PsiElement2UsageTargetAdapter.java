@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -185,6 +185,15 @@ public class PsiElement2UsageTargetAdapter implements PsiElementUsageTarget, Typ
       if (element != null && element.getTextRange() != null) {
         sink.put(UsageView.USAGE_INFO_KEY, new UsageInfo(element));
       }
+    }
+  }
+
+  @Override
+  public void showSettings() {
+    FindUsagesManager findUsagesManager = ((FindManagerImpl)FindManager.getInstance(myPointer.getProject())).getFindUsagesManager();
+    PsiElement element = getElement();
+    if (element != null) {
+      findUsagesManager.findUsages(element, null, null, true);
     }
   }
 

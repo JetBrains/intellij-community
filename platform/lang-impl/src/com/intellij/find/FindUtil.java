@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -304,10 +304,10 @@ public class FindUtil {
     return usages;
   }
 
-  public static void findAllAndShow(final Project project, final Editor editor, final FindModel findModel) {
+  public static void findAllAndShow(@NotNull Project project, @NotNull Editor editor, @NotNull FindModel findModel) {
     List<Usage> usages = findAll(project, editor, findModel);
     if (usages == null) return;
-    final UsageTarget[] usageTargets = {new FindInProjectUtil.StringUsageTarget(findModel.getStringToFind())};
+    final UsageTarget[] usageTargets = {new FindInProjectUtil.StringUsageTarget(project, findModel.getStringToFind())};
     final UsageViewPresentation usageViewPresentation = FindInProjectUtil.setupViewPresentation(false, findModel);
     UsageViewManager.getInstance(project).showUsages(usageTargets, usages.toArray(new Usage[usages.size()]), usageViewPresentation);
   }

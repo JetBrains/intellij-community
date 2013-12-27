@@ -198,7 +198,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
   private static FindUsagesOptions getDefaultOptions(@NotNull FindUsagesHandler handler) {
     FindUsagesOptions options = handler.getFindUsagesOptions(DataManager.getInstance().getDataContext());
     // by default, scope in FindUsagesOptions is copied from the FindSettings, but we need a default one
-    options.searchScope = FindUsagesManager.getMaximalScope(handler);
+    //options.searchScope = FindUsagesManager.getMaximalScope(handler);
     return options;
   }
 

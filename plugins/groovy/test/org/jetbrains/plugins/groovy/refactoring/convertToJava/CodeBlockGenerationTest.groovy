@@ -196,4 +196,6 @@ public final class Matcher {
   void testStringConverting() { doTest() }
 
   void testInWitchClassCheck() { doTest() }
+
+  void testSwitch() { doTest() }
 }

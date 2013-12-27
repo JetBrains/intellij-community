@@ -260,7 +260,8 @@ public class UsageViewManagerImpl extends UsageViewManager {
   private class SearchForUsagesRunnable implements Runnable {
     private final AtomicInteger myUsageCountWithoutDefinition = new AtomicInteger(0);
     private final AtomicReference<Usage> myFirstUsage = new AtomicReference<Usage>();
-    @NotNull private final Project myProject;
+    @NotNull
+    private final Project myProject;
     private final AtomicReference<UsageViewImpl> myUsageViewRef;
     private final UsageViewPresentation myPresentation;
     private final UsageTarget[] mySearchFor;
@@ -316,6 +317,7 @@ public class UsageViewManagerImpl extends UsageViewManager {
       SwingUtilities.invokeLater(new Runnable() {
         @Override
         public void run() {
+          if (myProject.isDisposed()) return;
           addContent(usageView, myPresentation);
           if (myListener != null) {
             myListener.usageViewCreated(usageView);

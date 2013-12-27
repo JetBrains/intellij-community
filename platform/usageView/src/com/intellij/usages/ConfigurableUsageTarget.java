@@ -15,11 +15,6 @@
  */
 package com.intellij.usages;
 
-import com.intellij.psi.PsiElement;
-
-/**
- * @author max
- */
-public interface PsiElementUsageTarget extends ConfigurableUsageTarget {
-  PsiElement getElement();
+public interface ConfigurableUsageTarget extends UsageTarget {
+  void showSettings();
 }
