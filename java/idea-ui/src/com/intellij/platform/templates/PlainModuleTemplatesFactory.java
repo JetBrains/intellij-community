@@ -72,6 +72,7 @@ public class PlainModuleTemplatesFactory extends ProjectTemplatesFactory {
   @Override
   public Icon getGroupIcon(String group) {
     List<ModuleBuilder> builders = ModuleBuilder.getAllBuilders();
+    builders.add(new EmptyModuleBuilder());
     for (ModuleBuilder builder : builders) {
       if (group.equals(builder.getGroupName())) {
         return builder.getBigIcon() == null ? builder.getNodeIcon() : builder.getBigIcon();
