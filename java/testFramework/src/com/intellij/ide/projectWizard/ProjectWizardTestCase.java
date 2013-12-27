@@ -5,7 +5,6 @@ import com.intellij.ide.impl.NewProjectUtil;
 import com.intellij.ide.util.newProjectWizard.AbstractProjectWizard;
 import com.intellij.ide.util.newProjectWizard.AddModuleWizard;
 import com.intellij.ide.util.newProjectWizard.SelectTemplateSettings;
-import com.intellij.ide.util.newProjectWizard.SelectTemplateStep;
 import com.intellij.ide.wizard.Step;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
@@ -86,8 +85,8 @@ public abstract class ProjectWizardTestCase<T extends AbstractProjectWizard> ext
   protected void runWizard(String group, String name, Project project, @Nullable Consumer<Step> adjuster) throws IOException {
 
     createWizard(project);
-    SelectTemplateStep step = (SelectTemplateStep)myWizard.getCurrentStepObject();
-    boolean condition = step.setSelectedTemplate(group, name);
+    ProjectTypeStep step = (ProjectTypeStep)myWizard.getCurrentStepObject();
+    boolean condition = step.setSelectedProjectType(group, name);
     if (!condition) {
       throw new IllegalArgumentException(group + "/" + name + " template not found");
     }
