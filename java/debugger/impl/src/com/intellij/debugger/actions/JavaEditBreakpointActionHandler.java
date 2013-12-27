@@ -15,6 +15,7 @@
  */
 package com.intellij.debugger.actions;
 
+import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.ui.breakpoints.BreakpointFactory;
 import com.intellij.debugger.ui.breakpoints.BreakpointPropertiesPanel;
 import com.intellij.debugger.ui.breakpoints.BreakpointWithHighlighter;
@@ -66,6 +67,7 @@ public class JavaEditBreakpointActionHandler extends EditBreakpointActionHandler
       @Override
       public void onClosed(LightweightWindowEvent event) {
         propertiesPanel.saveTo(javaBreakpoint, EmptyRunnable.getInstance());
+        DebuggerManagerEx.getInstanceEx(project).getBreakpointManager().fireBreakpointChanged(javaBreakpoint);
       }
     };
 
