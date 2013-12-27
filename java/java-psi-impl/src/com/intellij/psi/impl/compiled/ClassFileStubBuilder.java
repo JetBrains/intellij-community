@@ -39,7 +39,13 @@ public class ClassFileStubBuilder implements BinaryFileStubBuilder {
 
   @Override
   public boolean acceptsFile(final VirtualFile file) {
-    return true;
+    final ClsStubBuilderFactory[] factories = Extensions.getExtensions(ClsStubBuilderFactory.EP_NAME);
+    for (ClsStubBuilderFactory factory : factories) {
+      if (!factory.isInnerClass(file)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   @Override
