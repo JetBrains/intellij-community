@@ -23,7 +23,7 @@ import java.io.*;
  * User: lia
  */
 public class StudyDirectoryProjectGenerator implements DirectoryProjectGenerator {
-
+    static TaskManager taskManager = null;
     RunManager runManager;
     RunnerAndConfigurationSettings  runConfiguration;
     @Nls
@@ -77,13 +77,24 @@ public class StudyDirectoryProjectGenerator implements DirectoryProjectGenerator
             InputStream metaIS = StudyDirectoryProjectGenerator.class.getResourceAsStream("tasks.meta");
             BufferedReader reader = new BufferedReader(new InputStreamReader(metaIS));
             final int tasksNumber = Integer.parseInt(reader.readLine());
-            final Task[] tasks = new Task[tasksNumber];
+            taskManager = TaskManager.getInstance();
             for (int task = 0; task < tasksNumber; task++) {
+
                 int n = Integer.parseInt(reader.readLine());
-                tasks[task] = new Task(n);
+                taskManager.addTask(n);
                 for (int h = 0; h < n; h++) {
-                    tasks[task].setFileName(reader.readLine());
+                     taskManager.setFileName(task, reader.readLine());
                 }
+                String taskTextFileName = Integer.toString(task + 1) + ".meta";
+                System.out.println(taskTextFileName);
+                InputStream taskTextIS = StudyDirectoryProjectGenerator.class.getResourceAsStream(taskTextFileName);
+                System.out.println((taskTextIS == null));
+                BufferedReader taskTextReader = new BufferedReader(new InputStreamReader(taskTextIS));
+                System.out.println((taskTextReader == null));
+                while(taskTextReader.ready()) {
+                    taskManager.addTaskTextLine(task, taskTextReader.readLine());
+                }
+
             }
             reader.close();
 
@@ -93,8 +104,8 @@ public class StudyDirectoryProjectGenerator implements DirectoryProjectGenerator
                     try {
                         for (int task = 0; task < tasksNumber; task++) {
                             VirtualFile taskDirectory = baseDir.createChildDirectory(this, "task" + (task + 1));
-                            for (int file = 0; file < tasks[task].getFileNum(); file++) {
-                                final String curFileName = tasks[task].fileNames.get(file);
+                            for (int file = 0; file < taskManager.getTaskFileNum(task); file++) {
+                                final String curFileName = taskManager.getFileName(task, file);
                                 createFile(curFileName, taskDirectory);
                             }
                             createFile("task1_tests.py", baseDir.findChild("task1"));   //TODO: tests must copy with tasks

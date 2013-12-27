@@ -9,13 +9,21 @@ import java.util.ArrayList;
  */
 public class Task {
     ArrayList<String> fileNames;
+    private StringBuilder taskText;
     public Task(int n) {
         fileNames =  new ArrayList<String>(n);
+        taskText = new StringBuilder();
     }
     public void setFileName(String name) {
         fileNames.add(name);
     }
     public int getFileNum() {
         return fileNames.size();
+    }
+    public void addTaskTextLine(String line) {
+        taskText.append(line);
+    }
+    public  String getTaskText() {
+        return taskText.toString();
     }
 }

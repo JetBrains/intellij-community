@@ -41,5 +41,7 @@
     <!-- Add your extensions here -->
     <directoryProjectGenerator implementation="ru.compscicenter.edide.StudyDirectoryProjectGenerator"/>
     <configurationType implementation="ru.compscicenter.edide.StudyConfigurationType"/>
+    <toolWindow id="Task Text" icon="/general/add.png" anchor="right" factoryClass="ru.compscicenter.edide.TaskTextToolWindowFactory"
+            conditionClass="ru.compscicenter.edide.myCondition" secondary="false"/>
   </extensions>
 </idea-plugin>
