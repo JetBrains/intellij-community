@@ -163,7 +163,7 @@ public class ReplaceInProjectManager {
                                   final FindManager findManager) {
     presentation.setMergeDupLinesAvailable(false);
     final ReplaceContext[] context = new ReplaceContext[1];
-    manager.searchAndShowUsages(new UsageTarget[]{new FindInProjectUtil.StringUsageTarget(findModelCopy.getStringToFind())},
+    manager.searchAndShowUsages(new UsageTarget[]{new FindInProjectUtil.StringUsageTarget(myProject, findModelCopy.getStringToFind())},
                                 usageSearcherFactory, processPresentation, presentation, new UsageViewManager.UsageViewStateListener() {
         @Override
         public void usageViewCreated(@NotNull UsageView usageView) {
