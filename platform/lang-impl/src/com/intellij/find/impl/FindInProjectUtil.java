@@ -18,7 +18,9 @@ package com.intellij.find.impl;
 
 import com.intellij.BundleBase;
 import com.intellij.find.*;
+import com.intellij.find.findInProject.FindInProjectManager;
 import com.intellij.find.ngrams.TrigramIndex;
+import com.intellij.ide.DataManager;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -54,10 +56,12 @@ import com.intellij.openapi.vfs.ex.VirtualFileManagerEx;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.cache.CacheManager;
 import com.intellij.psi.search.*;
+import com.intellij.ui.content.Content;
 import com.intellij.usageView.UsageInfo;
+import com.intellij.usageView.UsageViewManager;
+import com.intellij.usages.ConfigurableUsageTarget;
 import com.intellij.usages.FindUsagesProcessPresentation;
 import com.intellij.usages.UsageLimitUtil;
-import com.intellij.usages.UsageTarget;
 import com.intellij.usages.UsageViewPresentation;
 import com.intellij.usages.impl.UsageViewManagerImpl;
 import com.intellij.util.CommonProcessors;
@@ -657,7 +661,8 @@ public class FindInProjectUtil {
     return processPresentation;
   }
 
-  public static class StringUsageTarget implements UsageTarget {
+  public static class StringUsageTarget implements ConfigurableUsageTarget {
+    @NotNull private final Project myProject;
     private final String myStringToFind;
 
     private final ItemPresentation myItemPresentation = new ItemPresentation() {
@@ -677,7 +682,8 @@ public class FindInProjectUtil {
       }
     };
 
-    public StringUsageTarget(@NotNull String _stringToFind) {
+    public StringUsageTarget(@NotNull Project project, @NotNull String _stringToFind) {
+      myProject = project;
       myStringToFind = _stringToFind;
     }
 
@@ -731,6 +737,14 @@ public class FindInProjectUtil {
     @Override
     public boolean canNavigateToSource() {
       return false;
+    }
+
+    @Override
+    public void showSettings() {
+      Content selectedContent = UsageViewManager.getInstance(myProject).getSelectedContent(true);
+      JComponent component = selectedContent == null ? null : selectedContent.getComponent();
+      FindInProjectManager findInProjectManager = FindInProjectManager.getInstance(myProject);
+      findInProjectManager.findInProject(DataManager.getInstance().getDataContext(component));
     }
   }
 }
