@@ -97,4 +97,10 @@ public class ModuleUtil extends ModuleUtilCore {
     }
     return modules.length == 0;
   }
+
+  @Nullable
+  public static ModuleType getModuleType(@NotNull Module module) {
+    String type = module.getOptionValue(Module.ELEMENT_TYPE);
+    return ModuleTypeManager.getInstance().findByID(type);
+  }
 }
