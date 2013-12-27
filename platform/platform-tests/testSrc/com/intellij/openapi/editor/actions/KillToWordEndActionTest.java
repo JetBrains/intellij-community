@@ -212,4 +212,127 @@ public class KillToWordEndActionTest extends LightPlatformCodeInsightTestCase {
       Disposer.dispose(caretModel);
     }
   }
+
+
+  public void testKillsInterruptedByDelete() throws Exception {
+    String text = "public class ParentCopy {\n" +
+                  "        public Insets getBorderInsets(<caret>Component c) {\n" +
+                  "        }\n" +
+                  "    }";
+    configureFromFileText(getTestName(false) + ".java", text);
+    cutToLineEnd();
+    deleteLine();
+    cutToLineEnd();
+    cutToLineEnd();
+    checkResultByText("public class ParentCopy {\n" +
+                      "        }");
+
+    Transferable contents = CopyPasteManager.getInstance().getContents();
+    assertTrue(contents instanceof KillRingTransferable);
+    Object string = contents.getTransferData(DataFlavor.stringFlavor);
+    assertEquals("\n" +
+                 "    }", string);
+  }
+
+  public void testKillsInterruptedByDeleteLine() throws Exception {
+    String text = "public class ParentCopy {\n" +
+                  "        public Insets getBorderInsets(<caret>Component c) {\n" +
+                  "        }\n" +
+                  "    }";
+    configureFromFileText(getTestName(false) + ".java", text);
+    cutToLineEnd();
+    deleteLine();
+    cutToLineEnd();
+    cutToLineEnd();
+    checkResultByText("public class ParentCopy {\n" +
+                      "        }");
+
+    Transferable contents = CopyPasteManager.getInstance().getContents();
+    assertTrue(contents instanceof KillRingTransferable);
+    Object string = contents.getTransferData(DataFlavor.stringFlavor);
+    assertEquals("\n" +
+                 "    }", string);
+  }
+
+  public void testKillsInterruptedByDeleteLineEnd() throws Exception {
+    String text = "public class ParentCopy {\n" +
+                  "        public Insets getBorderInsets(<caret>Component c) {\n" +
+                  "        }\n" +
+                  "    }";
+    configureFromFileText(getTestName(false) + ".java", text);
+    cutToLineEnd();
+    executeAction("EditorDeleteToLineEnd");
+    cutToLineEnd();
+    cutToLineEnd();
+    checkResultByText("public class ParentCopy {\n" +
+                      "        public Insets getBorderInsets(    }");
+
+    Transferable contents = CopyPasteManager.getInstance().getContents();
+    assertTrue(contents instanceof KillRingTransferable);
+    Object string = contents.getTransferData(DataFlavor.stringFlavor);
+    assertEquals("        }\n", string);
+  }
+
+  public void testKillsInterruptedByDeleteWord() throws Exception {
+    String text = "public class ParentCopy {\n" +
+                  "        public Insets getBorderInsets(<caret>Component c) {\n" +
+                  "        }\n" +
+                  "    }";
+    configureFromFileText(getTestName(false) + ".java", text);
+    cutToLineEnd();
+    executeAction("EditorDeleteToWordEnd");
+    cutToLineEnd();
+    cutToLineEnd();
+    checkResultByText("public class ParentCopy {\n" +
+                      "        public Insets getBorderInsets(    }");
+
+    Transferable contents = CopyPasteManager.getInstance().getContents();
+    assertTrue(contents instanceof KillRingTransferable);
+    Object string = contents.getTransferData(DataFlavor.stringFlavor);
+    assertEquals("}\n", string);
+  }
+
+  public void testKillsInterruptedBySplit() throws Exception {
+    String text = "public class ParentCopy {\n" +
+                  "        public Insets getBorderInsets(<caret>Component c) {\n" +
+                  "        }\n" +
+                  "    }";
+    configureFromFileText(getTestName(false) + ".java", text);
+    cutToLineEnd();
+    executeAction("EditorSplitLine");
+    cutToLineEnd();
+    cutToLineEnd();
+    checkResultByText("public class ParentCopy {\n" +
+                      "        public Insets getBorderInsets(        }\n" +
+                      "    }");
+
+    Transferable contents = CopyPasteManager.getInstance().getContents();
+    assertTrue(contents instanceof KillRingTransferable);
+    Object string = contents.getTransferData(DataFlavor.stringFlavor);
+    assertEquals("\n" +
+                 "                \n", string);
+  }
+
+  public void testKillsInterruptedByStartNewLine() throws Exception {
+    String text = "public class ParentCopy {\n" +
+                  "        public Insets getBorderInsets(<caret>Component c) {\n" +
+                  "        }\n" +
+                  "    }";
+    configureFromFileText(getTestName(false) + ".java", text);
+    cutToLineEnd();
+    executeAction("EditorStartNewLine");
+    cutToLineEnd();
+    cutToLineEnd();
+    checkResultByText("public class ParentCopy {\n" +
+                      "        public Insets getBorderInsets(\n" +
+                      "                \n" +
+                      "    }");
+
+    Transferable contents = CopyPasteManager.getInstance().getContents();
+    assertTrue(contents instanceof KillRingTransferable);
+    Object string = contents.getTransferData(DataFlavor.stringFlavor);
+    assertEquals("\n" +
+                 "        }", string);
+  }
+
 }

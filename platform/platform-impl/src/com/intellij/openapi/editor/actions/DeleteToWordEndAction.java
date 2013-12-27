@@ -29,6 +29,7 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler;
+import com.intellij.openapi.ide.CopyPasteManager;
 
 public class DeleteToWordEndAction extends TextComponentEditorAction {
   public DeleteToWordEndAction() {
@@ -46,6 +47,7 @@ public class DeleteToWordEndAction extends TextComponentEditorAction {
     @Override
     public void executeWriteAction(Editor editor, DataContext dataContext) {
       CommandProcessor.getInstance().setCurrentCommandGroupId(EditorActionUtil.DELETE_COMMAND_GROUP);
+      CopyPasteManager.getInstance().stopKillRings();
       boolean camelMode = editor.getSettings().isCamelWords();
       if (myNegateCamelMode) {
         camelMode = !camelMode;
