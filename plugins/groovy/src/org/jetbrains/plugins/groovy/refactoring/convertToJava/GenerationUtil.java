@@ -248,7 +248,7 @@ public class GenerationUtil {
     }
   }
 
-  public static void writeStatement(final StringBuilder builder, ExpressionContext context, @Nullable GrStatement statement, StatementWriter writer) {
+  public static void writeStatement(@NotNull StringBuilder builder, @NotNull ExpressionContext context, @Nullable GrStatement statement, @NotNull StatementWriter writer) {
     StringBuilder statementBuilder = new StringBuilder();
     ExpressionContext statementContext = context.copy();
     writer.writeStatement(statementBuilder, statementContext);
