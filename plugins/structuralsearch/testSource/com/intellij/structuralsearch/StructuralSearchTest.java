@@ -378,7 +378,7 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
     assertFalse("subexpr match",findMatchesCount(s2,s3)==0);
     assertEquals("search for new ",findMatchesCount(s10,s11),0);
     assertEquals("search for anonymous classes",findMatchesCount(s12,s13),1);
-    // expr in definition intiialiZer
+    // expr in definition initializer
     assertEquals(
       "expr in def initializer",
       3,
@@ -723,23 +723,23 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
       findMatchesCount(s10019,s10020)
     );
 
-    //String s1008 = "int a, b, c, d; int a,b,c; int c,d; int e;";
-    //String s1009 = "int 'a{3,4};";
-    //
-    //assertEquals(
-    //  "search many declarations",
-    //  2,
-    //  findMatchesCount(s1008,s1009)
-    //);
+    String s1008 = "int a, b, c, d; int a,b,c; int c,d; int e;";
+    String s1009 = "int '_a{3,4};";
 
-    //String s1 = "super(1,1);  call(1,1); call(2,2);";
-    //String s2 = "super('t*);";
-    //
-    //assertEquals(
-    //  "search super",
-    //  1,
-    //  findMatchesCount(s10019,s10020)
-    //);
+    assertEquals(
+      "search many declarations",
+      2,
+      findMatchesCount(s1008,s1009)
+    );
+
+    String s1 = "super(1,1);  call(1,1); call(2,2);";
+    String s2 = "super('_t*);";
+
+    assertEquals(
+      "search super",
+      1,
+      findMatchesCount(s1,s2)
+    );
 
     String s10021 = "short a = 1;\n" +
                     "short b = 2;\n" +
@@ -805,14 +805,14 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
       findMatchesCount(s10029,s10030)
     );
 
-    //String s10031 = "try { a(); } catch(Exception ex) {} catch(Error error) { 1=1; }\n" +
-    //                "try { a(); } catch(Exception ex) {}";
-    //String s10032 = "try { a(); } catch('_Type+ 'Arg+) { 'Statements*; }\n";
-    //assertEquals(
-    //  "finally matching",
-    //  2,
-    //  findMatchesCount(s10031,s10032)
-    //);
+    String s10031 = "try { a(); } catch(Exception ex) {} catch(Error error) { 1=1; }\n" +
+                    "try { a(); } catch(Exception ex) {}";
+    String s10032 = "try { a(); } catch('_Type+ 'Arg+) { 'Statements*; }\n";
+    assertEquals(
+      "finally matching",
+      2,
+      findMatchesCount(s10031,s10032)
+    );
 
     String s10033 = "return x;\n" +
                     "return !x;\n" +
@@ -820,11 +820,11 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
                     "return (x);\n" +
                     "return !(x);";
     String s10034 = "return ('a);";
-    assertEquals("Find statement with parethesized expr",2,findMatchesCount(s10033,s10034));
+    assertEquals("Find statement with parenthesized expr",2,findMatchesCount(s10033,s10034));
   }
 
   public void testSearchClass() {
-    // no modifer list in interface vars
+    // no modifier list in interface vars
     assertEquals(
       "no modifier for interface vars",
       findMatchesCount(s43,s44),
@@ -859,14 +859,14 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
       1
     );
 
-    //String s51 = "class C extends java.awt.List {} class A extends java.util.List {} class B extends java.awt.List {} ";
-    //String s52 = "class 'B extends 'C:java\\.awt\\.List {}";
-    //
-    //assertEquals(
-    //  "reference could differ in package 2",
-    //  findMatchesCount(s51,s52),
-    //  2
-    //);
+    String s51 = "class C extends java.awt.List {} class A extends java.util.List {} class B extends java.awt.List {} ";
+    String s52 = "class 'B extends '_C:java\\.awt\\.List {}";
+
+    assertEquals(
+      "reference could differ in package 2",
+      findMatchesCount(s51,s52),
+      2
+    );
 
     assertEquals(
       "method access modifier",
