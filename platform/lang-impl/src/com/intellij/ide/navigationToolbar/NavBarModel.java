@@ -219,8 +219,7 @@ public class NavBarModel {
   private void traverseToRoot(@NotNull PsiElement psiElement, Set<VirtualFile> roots, List<Object> model) {
     if (!psiElement.isValid()) return;
     final PsiFile containingFile = psiElement.getContainingFile();
-    if (containingFile != null &&
-        (containingFile.getVirtualFile() == null || !containingFile.getViewProvider().isPhysical())) return; //non phisycal elements
+    if (containingFile != null && containingFile.getVirtualFile() == null) return; //non physical elements
     psiElement = getOriginalElement(psiElement);
     PsiElement resultElement = psiElement;
 
