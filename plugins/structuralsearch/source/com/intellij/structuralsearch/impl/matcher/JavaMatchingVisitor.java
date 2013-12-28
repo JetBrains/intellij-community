@@ -176,7 +176,7 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
         }
       }
 
-      myMatchingVisitor.setResult(set.size() == 0 || myMatchingVisitor
+      myMatchingVisitor.setResult(set.isEmpty() || myMatchingVisitor
         .matchInAnyOrder(set.toArray(new PsiAnnotation[set.size()]), list2.getAnnotations()));
     }
     else {
@@ -189,12 +189,16 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
     final PsiDocTag tag2 = (PsiDocTag)myMatchingVisitor.getElement();
     final boolean isTypedVar = myMatchingVisitor.getMatchContext().getPattern().isTypedVar(tag.getNameElement());
 
-    myMatchingVisitor.setResult((isTypedVar || tag.getName().equals(tag2.getName())));
+    myMatchingVisitor.setResult(isTypedVar || tag.getName().equals(tag2.getName()));
 
-    final PsiDocTagValue psiDocTagValue = tag.getValueElement();
+    PsiElement psiDocTagValue = tag.getValueElement();
     boolean isTypedValue = false;
 
     if (myMatchingVisitor.getResult() && psiDocTagValue != null) {
+      final PsiElement[] children = psiDocTagValue.getChildren();
+      if (children.length == 1) {
+        psiDocTagValue = children[0];
+      }
       isTypedValue = myMatchingVisitor.getMatchContext().getPattern().isTypedVar(psiDocTagValue);
 
       if (isTypedValue) {
@@ -561,7 +565,7 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
         !(qualifier instanceof PsiThisExpression)
       ) {
       if (myMatchingVisitor.getElement() instanceof PsiReferenceExpression) {
-        final PsiReferenceExpression psiReferenceExpression = ((PsiReferenceExpression)myMatchingVisitor.getElement());
+        final PsiReferenceExpression psiReferenceExpression = (PsiReferenceExpression)myMatchingVisitor.getElement();
 
         if (psiReferenceExpression.getQualifierExpression() == null) {
           myMatchingVisitor.setElement(psiReferenceExpression.getReferenceNameElement());
@@ -971,11 +975,11 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
     }
 
     final PsiExpression qualifier = mcallRef1.getQualifierExpression();
-    final PsiExpression elementQualfier = mcallRef2.getQualifierExpression();
+    final PsiExpression elementQualifier = mcallRef2.getQualifierExpression();
     if (qualifier != null) {
 
-      if (elementQualfier != null) {
-        myMatchingVisitor.setResult(myMatchingVisitor.match(qualifier, elementQualfier));
+      if (elementQualifier != null) {
+        myMatchingVisitor.setResult(myMatchingVisitor.match(qualifier, elementQualifier));
         if (!myMatchingVisitor.getResult()) return;
       }
       else {
@@ -1019,7 +1023,7 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
         }
       }
     }
-    else if (elementQualfier != null) {
+    else if (elementQualifier != null) {
       myMatchingVisitor.setResult(false);
       return;
     }

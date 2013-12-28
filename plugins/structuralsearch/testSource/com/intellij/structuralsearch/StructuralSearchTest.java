@@ -1579,7 +1579,7 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
     );
   }
 
-  public void _testSearchJavaDoc() {
+  public void testSearchJavaDoc() {
     // javadoc comment in class
     assertEquals(
       "java doc comment in class",
@@ -1595,16 +1595,16 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
 
     // javadoc comment for field
     assertEquals(
-      "javadoc coment for field",
-      findMatchesCount(s57,s58_2),
-      2
+      "javadoc comment for field",
+      2,
+      findMatchesCount(s57, s58_2)
     );
 
     // javadoc comment for method
     assertEquals(
-      "javadoc coment for method",
-      findMatchesCount(s57,s58_3),
-      3
+      "javadoc comment for method",
+      3,
+      findMatchesCount(s57, s58_3)
     );
 
     // just javadoc comment search
@@ -1628,8 +1628,8 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
 
     assertEquals(
       "optional tag value match",
-      findMatchesCount(s57,s58_5),
-      6
+      6,
+      findMatchesCount(s57, s58_5)
     );
 
     assertEquals(
@@ -1640,14 +1640,14 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
 
     assertEquals(
       "multiple tags match *",
-      findMatchesCount(s75,s76_2),
-      3
+      3,
+      findMatchesCount(s75, s76_2)
     );
 
     assertEquals(
       "multiple tags match ?",
-      findMatchesCount(s75,s76_3),
-      3
+      3,
+      findMatchesCount(s75, s76_3)
     );
 
   }
