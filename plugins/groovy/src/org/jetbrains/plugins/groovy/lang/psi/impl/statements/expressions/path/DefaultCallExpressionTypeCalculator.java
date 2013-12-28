@@ -62,7 +62,7 @@ public class DefaultCallExpressionTypeCalculator extends GrCallExpressionTypeCal
                              ? nonVoid
                              : TypesUtil.substituteBoxAndNormalizeType(nonVoid, resolveResult.getSubstitutor(), resolveResult.getSpreadState(), callExpression);
 
-        LOG.assertTrue(normalized != null);
+        LOG.assertTrue(normalized != null, "return type: " + returnType + "; substitutor: " + resolveResult.getSubstitutor());
 
         if (result == null || normalized.isAssignableFrom(result)) {
           result = normalized;
