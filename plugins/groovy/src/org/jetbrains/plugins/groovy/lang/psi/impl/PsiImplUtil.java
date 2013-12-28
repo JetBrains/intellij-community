@@ -49,6 +49,8 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrCondition;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrConstructorInvocation;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
@@ -845,5 +847,37 @@ public class PsiImplUtil {
 
   public static boolean isWhiteSpaceOrNls(@Nullable ASTNode node) {
     return node != null && TokenSets.WHITE_SPACES_SET.contains(node.getElementType());
+  }
+
+  public static void insertPlaceHolderToModifierListAtEndIfNeeded(GrModifierList modifierList) {
+    PsiElement newLineAfterModifierList = findNewLineAfterElement(modifierList);
+    if (newLineAfterModifierList != null) {
+      modifierList.setModifierProperty(GrModifier.DEF, false);
+
+      if (modifierList.getModifiers().length > 0) {
+        modifierList.getNode().addLeaf(mNLS, newLineAfterModifierList.getText(), null);
+      }
+      modifierList.getNode().addLeaf(kDEF, "def", null);
+      final PsiElement newLineUpdated = findNewLineAfterElement(modifierList);
+      if (newLineUpdated != null) newLineUpdated.delete();
+      if (!isWhiteSpaceOrNls(modifierList.getNextSibling())) {
+        modifierList.getParent().getNode().addLeaf(TokenType.WHITE_SPACE, " ", modifierList.getNextSibling().getNode());
+      }
+    }
+    else if (modifierList.getModifiers().length == 0) {
+      modifierList.setModifierProperty(GrModifier.DEF, true);
+    }
+  }
+
+  @Nullable
+  private static PsiElement findNewLineAfterElement(PsiElement element) {
+    PsiElement sibling = element.getNextSibling();
+    while (sibling != null && isWhiteSpaceOrNls(sibling)) {
+      if (PsiUtil.isNewLine(sibling)) {
+        return sibling;
+      }
+      sibling = sibling.getNextSibling();
+    }
+    return null;
   }
 }
