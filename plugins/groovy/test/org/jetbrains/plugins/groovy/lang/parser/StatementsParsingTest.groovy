@@ -116,6 +116,7 @@ public class StatementsParsingTest extends GroovyParsingTestCase {
   public void testMultiple_assign$grvy2086() throws Throwable { doTest("multiple_assign/grvy-2086.test"); }
   public void testMultiple_assign$mult_assign() throws Throwable { doTest(); }
   public void testMultiple_assign$mult_def() throws Throwable { doTest(); }
+  public void testMultiple_assign$without_assign() throws Throwable { doTest(); }
   public void testSwitch$laforge1() throws Throwable { doTest(); }
   public void testSwitch$swit1() throws Throwable { doTest(); }
   public void testSwitch$swit2() throws Throwable { doTest(); }
