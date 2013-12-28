@@ -411,8 +411,8 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
     GrExpression rValue = expression.getRValue();
     if (rValue != null) {
       rValue.accept(this);
-      lValue.accept(this);
     }
+    lValue.accept(this);
   }
 
   @Override
