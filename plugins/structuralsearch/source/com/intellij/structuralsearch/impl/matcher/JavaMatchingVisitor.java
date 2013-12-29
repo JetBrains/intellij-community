@@ -598,14 +598,7 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
     }
 
     // handle field selection
-    if (!(myMatchingVisitor.getElement().getParent() instanceof PsiMethodCallExpression) && // element is not a method) &&
-        qualifier != null &&
-        (reference2Qualifier != null ||
-         (qualifier instanceof PsiThisExpression &&
-          MatchUtils.getReferencedElement(myMatchingVisitor.getElement()) instanceof PsiField
-         )
-        )
-      ) {
+    if (!(myMatchingVisitor.getElement().getParent() instanceof PsiMethodCallExpression) && qualifier != null) {
       final PsiElement referenceElement = reference.getReferenceNameElement();
       final PsiElement referenceElement2 = reference2.getReferenceNameElement();
 
@@ -613,15 +606,66 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
         myMatchingVisitor.setResult(myMatchingVisitor.handleTypedElement(referenceElement, referenceElement2));
       }
       else {
-        myMatchingVisitor
-          .setResult((referenceElement2 != null && referenceElement != null && referenceElement.textMatches(referenceElement2)) ||
-                     referenceElement == referenceElement2);
+        myMatchingVisitor.setResult(
+          (referenceElement2 != null && referenceElement != null && referenceElement.textMatches(referenceElement2)) ||
+          referenceElement == referenceElement2);
       }
 
-      if (myMatchingVisitor.getResult() &&
-          reference2Qualifier != null
-        ) {
+      if (!myMatchingVisitor.getResult()) {
+        return;
+      }
+      if (reference2Qualifier != null) {
         myMatchingVisitor.setResult(myMatchingVisitor.match(qualifier, reference2Qualifier));
+      }
+      else {
+        if (qualifier instanceof PsiThisExpression && MatchUtils.getReferencedElement(myMatchingVisitor.getElement()) instanceof PsiField) {
+          myMatchingVisitor.setResult(true);
+          return;
+        }
+        final MatchingHandler handler = myMatchingVisitor.getMatchContext().getPattern().getHandler(qualifier);
+        if (!(handler instanceof SubstitutionHandler) || ((SubstitutionHandler)handler).getMinOccurs() != 0) {
+          myMatchingVisitor.setResult(false);
+          return;
+        }
+        else {
+          // we may have not ? expr_type constraint set on qualifier expression so validate it
+          // or for a static method a not ? name of reference constraint on the class qualifier (static import)
+          final SubstitutionHandler substitutionHandler = (SubstitutionHandler)handler;
+
+          MatchPredicate predicate = substitutionHandler.getPredicate();
+          if (predicate != null) {
+            boolean isNot = false;
+            if (predicate instanceof NotPredicate) {
+              isNot = true;
+              predicate = ((NotPredicate)predicate).getHandler();
+            }
+
+            boolean isStatic = false;
+            if (predicate instanceof RegExpPredicate) {
+              isStatic = true;
+            }
+            else if (!(predicate instanceof ExprTypePredicate)) {
+              predicate = null;
+            }
+
+            if (predicate != null) {
+              final PsiField method = (PsiField)reference2.resolve();
+              if (method != null) {
+                final PsiClass aClass = method.getContainingClass();
+                if (isStatic) {
+                  myMatchingVisitor.setResult(predicate.match(null, aClass, myMatchingVisitor.getMatchContext()));
+                }
+                else {
+                  myMatchingVisitor.setResult(((ExprTypePredicate)predicate).checkClass(aClass, myMatchingVisitor.getMatchContext()));
+                }
+              }
+              else {
+                myMatchingVisitor.setResult(false);
+              }
+              if (isNot) myMatchingVisitor.setResult(!myMatchingVisitor.getResult());
+            }
+          }
+        }
       }
 
       return;
