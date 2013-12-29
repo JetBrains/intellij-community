@@ -206,7 +206,8 @@ public class JavaCompilingVisitor extends JavaRecursiveElementWalkingVisitor {
         if (!hasNoNestedSubstitutionHandlers) {
           createAndSetSubstitutionHandlerFromReference(
             reference,
-            resolve != null ? ((PsiClass)resolve).getQualifiedName() : reference.getText()
+            resolve != null ? ((PsiClass)resolve).getQualifiedName() : reference.getText(),
+            referenceParent instanceof PsiExpression
           );
         }
       }
@@ -335,19 +336,19 @@ public class JavaCompilingVisitor extends JavaRecursiveElementWalkingVisitor {
 
     GlobalCompilingVisitor.setFilter(handler, ClassFilter.getInstance());
 
-    boolean hasSubsitutionHandler = false;
+    boolean hasSubstitutionHandler = false;
     for (PsiElement element = psiClass.getFirstChild(); element != null; element = element.getNextSibling()) {
       if (element instanceof PsiTypeElement && element.getNextSibling() instanceof PsiErrorElement) {
         // found match that
         MatchingHandler unmatchedSubstitutionHandler = pattern.getHandler(element);
         if (unmatchedSubstitutionHandler != null) {
           psiClass.putUserData(JavaCompiledPattern.ALL_CLASS_CONTENT_VAR_NAME_KEY, pattern.getTypedVarString(element));
-          hasSubsitutionHandler = true;
+          hasSubstitutionHandler = true;
         }
       }
     }
 
-    if (!hasSubsitutionHandler) {
+    if (!hasSubstitutionHandler) {
       String name = JavaCompiledPattern.ALL_CLASS_UNMATCHED_CONTENT_VAR_ARTIFICIAL_NAME;
       psiClass.putUserData(JavaCompiledPattern.ALL_CLASS_CONTENT_VAR_NAME_KEY, name);
       MatchOptions options = myCompilingVisitor.getContext().getOptions();
@@ -362,8 +363,10 @@ public class JavaCompilingVisitor extends JavaRecursiveElementWalkingVisitor {
     }
   }
 
-  private SubstitutionHandler createAndSetSubstitutionHandlerFromReference(final PsiElement expr, final String referenceText) {
-    final SubstitutionHandler substitutionHandler = new SubstitutionHandler("__" + referenceText.replace('.', '_'), false, 1, 1, false);
+  private SubstitutionHandler createAndSetSubstitutionHandlerFromReference(final PsiElement expr, final String referenceText,
+                                                                           boolean classQualifier) {
+    final SubstitutionHandler substitutionHandler =
+      new SubstitutionHandler("__" + referenceText.replace('.', '_'), false, classQualifier ? 0 : 1, 1, false);
     substitutionHandler.setPredicate(new RegExpPredicate(referenceText.replaceAll("\\.", "\\\\."), true, null, false, false));
     myCompilingVisitor.getContext().getPattern().setHandler(expr, substitutionHandler);
     return substitutionHandler;

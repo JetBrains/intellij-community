@@ -2161,6 +2161,20 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
     String s112 = "'Instance?:[exprtype( B )].getManager();";
     assertEquals("caring about missing qualifier type", 2, findMatchesCount(s111,s112));
 
+    String s113 = "class A { static void a() { a(); }}\n" +
+                  "class B { static void a() { a(); a(); }}\n";
+    String s114 = "'_Q?:[regex( B )].a()";
+    assertEquals("should care about implicit class qualifier", 2, findMatchesCount(s113, s114));
+
+    String s114a = "B.a()";
+    assertEquals("simple implicit class qualifier query", 2, findMatchesCount(s113, s114a));
+
+    // todo:
+    //String s115 = "class A { int a; int f() { return a; }\n" +
+    //              "class B { int a; int g() { return a + a; }\n";
+    //String s116 = "'Instance?:[exprtype( B )].a";
+    //assertEquals("should care about implicit instance qualifier", 2, findMatchesCount(s115, s116));
+
     // b) hierarchy navigation support
     // c) or search support
 

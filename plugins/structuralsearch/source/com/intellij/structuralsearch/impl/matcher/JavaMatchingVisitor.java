@@ -957,17 +957,18 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
 
   @Override
   public void visitMethodCallExpression(final PsiMethodCallExpression mcall) {
-    if (!(myMatchingVisitor.getElement() instanceof PsiMethodCallExpression)) {
+    final PsiElement element = myMatchingVisitor.getElement();
+    if (!(element instanceof PsiMethodCallExpression)) {
       myMatchingVisitor.setResult(false);
       return;
     }
-    final PsiMethodCallExpression mcall2 = (PsiMethodCallExpression)myMatchingVisitor.getElement();
+    final PsiMethodCallExpression mcall2 = (PsiMethodCallExpression)element;
     final PsiReferenceExpression mcallRef1 = mcall.getMethodExpression();
     final PsiReferenceExpression mcallRef2 = mcall2.getMethodExpression();
 
     final String mcallname1 = mcallRef1.getReferenceName();
     final String mcallname2 = mcallRef2.getReferenceName();
-    boolean isTypedVar = myMatchingVisitor.getMatchContext().getPattern().isTypedVar(mcallRef1.getReferenceNameElement());
+    final boolean isTypedVar = myMatchingVisitor.getMatchContext().getPattern().isTypedVar(mcallRef1.getReferenceNameElement());
 
     if (mcallname1 != null && !mcallname1.equals(mcallname2) && !isTypedVar) {
       myMatchingVisitor.setResult(false);
@@ -983,39 +984,47 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
         if (!myMatchingVisitor.getResult()) return;
       }
       else {
-        MatchingHandler handler = myMatchingVisitor.getMatchContext().getPattern().getHandler(qualifier);
-        if (!(handler instanceof SubstitutionHandler) ||
-            ((SubstitutionHandler)handler).getMinOccurs() != 0) {
+        final MatchingHandler handler = myMatchingVisitor.getMatchContext().getPattern().getHandler(qualifier);
+        if (!(handler instanceof SubstitutionHandler) || ((SubstitutionHandler)handler).getMinOccurs() != 0) {
           myMatchingVisitor.setResult(false);
           return;
         }
         else {
           // we may have not ? expr_type constraint set on qualifier expression so validate it
-          SubstitutionHandler substitutionHandler = (SubstitutionHandler)handler;
+          // or for a static method a not ? name of reference constraint on the class qualifier (static import)
+          final SubstitutionHandler substitutionHandler = (SubstitutionHandler)handler;
 
-          if (substitutionHandler.getPredicate() != null) {
-            boolean isnot = false;
-            MatchPredicate _predicate = substitutionHandler.getPredicate();
-            ExprTypePredicate predicate = null;
-
-            if (_predicate instanceof NotPredicate) {
-              isnot = true;
-              _predicate = ((NotPredicate)_predicate).getHandler();
+          MatchPredicate predicate = substitutionHandler.getPredicate();
+          if (predicate != null) {
+            boolean isNot = false;
+            if (predicate instanceof NotPredicate) {
+              isNot = true;
+              predicate = ((NotPredicate)predicate).getHandler();
             }
 
-            if (_predicate instanceof ExprTypePredicate) {
-              predicate = (ExprTypePredicate)_predicate;
+            boolean isStatic = false;
+            if (predicate instanceof RegExpPredicate) {
+              isStatic = true;
+            }
+            else if (!(predicate instanceof ExprTypePredicate)) {
+              predicate = null;
             }
 
             if (predicate != null) {
-              PsiMethod method = (PsiMethod)mcallRef2.resolve();
+              final PsiMethod method = (PsiMethod)mcallRef2.resolve();
               if (method != null) {
-                myMatchingVisitor.setResult(predicate.checkClass(method.getContainingClass(), myMatchingVisitor.getMatchContext()));
-                if (isnot) myMatchingVisitor.setResult(!myMatchingVisitor.getResult());
+                final PsiClass aClass = method.getContainingClass();
+                if (isStatic) {
+                  myMatchingVisitor.setResult(predicate.match(null, aClass, myMatchingVisitor.getMatchContext()));
+                }
+                else {
+                  myMatchingVisitor.setResult(((ExprTypePredicate)predicate).checkClass(aClass, myMatchingVisitor.getMatchContext()));
+                }
               }
               else {
                 myMatchingVisitor.setResult(false);
               }
+              if (isNot) myMatchingVisitor.setResult(!myMatchingVisitor.getResult());
 
               if (!myMatchingVisitor.getResult()) return;
             }
@@ -1032,8 +1041,7 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
 
     if (myMatchingVisitor.getResult() && isTypedVar) {
       boolean res = myMatchingVisitor.getResult();
-      res &= myMatchingVisitor
-        .handleTypedElement(mcallRef1.getReferenceNameElement(), mcallRef2.getReferenceNameElement());
+      res &= myMatchingVisitor.handleTypedElement(mcallRef1.getReferenceNameElement(), mcallRef2.getReferenceNameElement());
       myMatchingVisitor.setResult(res);
     }
   }
