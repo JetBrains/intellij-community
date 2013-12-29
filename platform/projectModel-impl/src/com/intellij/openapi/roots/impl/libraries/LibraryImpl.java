@@ -96,7 +96,8 @@ public class LibraryImpl extends TraceableDisposable implements LibraryEx.Modifi
 
   private LibraryImpl(@NotNull LibraryImpl from, LibraryImpl newSource, ModifiableRootModel rootModel) {
     this(from.myLibraryTable, rootModel, newSource, from.myName, from.myKind);
-    assert !from.isDisposed();
+    from.checkDisposed();
+
     if (from.myKind != null && from.myProperties != null) {
       myProperties = myKind.createDefaultProperties();
       //noinspection unchecked
@@ -137,11 +138,16 @@ public class LibraryImpl extends TraceableDisposable implements LibraryEx.Modifi
 
   @Override
   public void dispose() {
-    if (isDisposed()) {
-      throwDisposalError("Already disposed:");
-    }
+    checkDisposed();
+
     myDisposed = true;
     kill(null);
+  }
+
+  private void checkDisposed() {
+    if (isDisposed()) {
+      throwDisposalError("'" + myName + "' already disposed:");
+    }
   }
 
   @Override
@@ -157,7 +163,8 @@ public class LibraryImpl extends TraceableDisposable implements LibraryEx.Modifi
   @Override
   @NotNull
   public String[] getUrls(@NotNull OrderRootType rootType) {
-    assert !isDisposed();
+    checkDisposed();
+
     final VirtualFilePointerContainer result = myRoots.get(rootType);
     return result.getUrls();
   }
@@ -165,7 +172,8 @@ public class LibraryImpl extends TraceableDisposable implements LibraryEx.Modifi
   @Override
   @NotNull
   public VirtualFile[] getFiles(@NotNull OrderRootType rootType) {
-    assert !isDisposed();
+    checkDisposed();
+
     final List<VirtualFile> expanded = new ArrayList<VirtualFile>();
     for (VirtualFile file : myRoots.get(rootType).getFiles()) {
       if (file.isDirectory()) {
@@ -203,7 +211,7 @@ public class LibraryImpl extends TraceableDisposable implements LibraryEx.Modifi
   @Override
   @NotNull
   public ModifiableModelEx getModifiableModel() {
-    assert !isDisposed();
+    checkDisposed();
     return new LibraryImpl(this, this, myRootModel);
   }
 
@@ -330,7 +338,7 @@ public class LibraryImpl extends TraceableDisposable implements LibraryEx.Modifi
 
   @Override
   public void writeExternal(Element rootElement) throws WriteExternalException {
-    LOG.assertTrue(!isDisposed(), "Already disposed!");
+    checkDisposed();
 
     Element element = new Element(ELEMENT);
     if (myName != null) {
@@ -423,8 +431,8 @@ public class LibraryImpl extends TraceableDisposable implements LibraryEx.Modifi
 
   @Override
   public void addRoot(@NotNull String url, @NotNull OrderRootType rootType) {
+    checkDisposed();
     LOG.assertTrue(isWritable());
-    assert !isDisposed();
 
     final VirtualFilePointerContainer container = myRoots.get(rootType);
     container.add(url);
@@ -432,8 +440,8 @@ public class LibraryImpl extends TraceableDisposable implements LibraryEx.Modifi
 
   @Override
   public void addRoot(@NotNull VirtualFile file, @NotNull OrderRootType rootType) {
+    checkDisposed();
     LOG.assertTrue(isWritable());
-    assert !isDisposed();
 
     final VirtualFilePointerContainer container = myRoots.get(rootType);
     container.add(file);
@@ -451,8 +459,9 @@ public class LibraryImpl extends TraceableDisposable implements LibraryEx.Modifi
 
   @Override
   public void addJarDirectory(@NotNull final String url, final boolean recursive, @NotNull OrderRootType rootType) {
-    assert !isDisposed();
+    checkDisposed();
     LOG.assertTrue(isWritable());
+
     final VirtualFilePointerContainer container = myRoots.get(rootType);
     container.add(url);
     myJarDirectories.add(rootType, url, recursive);
@@ -460,8 +469,9 @@ public class LibraryImpl extends TraceableDisposable implements LibraryEx.Modifi
 
   @Override
   public void addJarDirectory(@NotNull final VirtualFile file, final boolean recursive, @NotNull OrderRootType rootType) {
-    assert !isDisposed();
+    checkDisposed();
     LOG.assertTrue(isWritable());
+
     final VirtualFilePointerContainer container = myRoots.get(rootType);
     container.add(file);
     myJarDirectories.add(rootType, file.getUrl(), recursive);
@@ -486,8 +496,9 @@ public class LibraryImpl extends TraceableDisposable implements LibraryEx.Modifi
 
   @Override
   public boolean removeRoot(@NotNull String url, @NotNull OrderRootType rootType) {
-    assert !isDisposed();
+    checkDisposed();
     LOG.assertTrue(isWritable());
+
     final VirtualFilePointerContainer container = myRoots.get(rootType);
     final VirtualFilePointer byUrl = container.findByUrl(url);
     if (byUrl != null) {
@@ -521,16 +532,18 @@ public class LibraryImpl extends TraceableDisposable implements LibraryEx.Modifi
 
   @Override
   public void moveRootUp(@NotNull String url, @NotNull OrderRootType rootType) {
-    assert !isDisposed();
+    checkDisposed();
     LOG.assertTrue(isWritable());
+
     final VirtualFilePointerContainer container = myRoots.get(rootType);
     container.moveUp(url);
   }
 
   @Override
   public void moveRootDown(@NotNull String url, @NotNull OrderRootType rootType) {
-    assert !isDisposed();
+    checkDisposed();
     LOG.assertTrue(isWritable());
+
     final VirtualFilePointerContainer container = myRoots.get(rootType);
     container.moveDown(url);
   }
@@ -571,7 +584,8 @@ public class LibraryImpl extends TraceableDisposable implements LibraryEx.Modifi
 
   @Override
   public void commit() {
-    assert !isDisposed();
+    checkDisposed();
+
     mySource.commit(this);
     Disposer.dispose(this);
   }
