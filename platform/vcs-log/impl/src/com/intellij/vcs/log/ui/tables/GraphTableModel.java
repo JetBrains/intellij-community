@@ -3,7 +3,6 @@ package com.intellij.vcs.log.ui.tables;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.changes.committed.CommittedChangesTreeBrowser;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.VcsFullCommitDetails;
@@ -19,7 +18,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -68,7 +66,7 @@ public class GraphTableModel extends AbstractVcsLogTableModel<GraphCommitCell, N
 
   @Nullable
   @Override
-  public List<Change> getSelectedChanges(int[] selectedRows) {
+  public List<Change> getSelectedChanges(@NotNull List<Integer> selectedRows) {
     List<Change> changes = new ArrayList<Change>();
     for (Node node : nodes(selectedRows)) {
       VcsFullCommitDetails commitData = myDataHolder.getCommitDetailsGetter().getCommitData(node, myNodeAroundProvider);
@@ -77,13 +75,12 @@ public class GraphTableModel extends AbstractVcsLogTableModel<GraphCommitCell, N
       }
       changes.addAll(commitData.getChanges());
     }
-    return CommittedChangesTreeBrowser.zipChanges(changes);
+    return changes;
   }
 
   @NotNull
-  private List<Node> nodes(int[] selectedRows) {
+  private List<Node> nodes(@NotNull List<Integer> selectedRows) {
     List<Node> result = new ArrayList<Node>();
-    Arrays.sort(selectedRows);
     for (int rowIndex : selectedRows) {
       Node node = PositionUtil.getNode(getGraphPrintCellForRow(rowIndex));
       if (node != null) {

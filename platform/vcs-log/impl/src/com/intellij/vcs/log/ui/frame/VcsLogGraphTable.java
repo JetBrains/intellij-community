@@ -6,6 +6,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.changes.committed.CommittedChangesTreeBrowser;
 import com.intellij.openapi.vcs.changes.issueLinks.TableLinkMouseListener;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.JBColor;
@@ -36,6 +37,7 @@ import java.awt.*;
 import java.awt.datatransfer.StringSelection;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
@@ -223,7 +225,18 @@ public class VcsLogGraphTable extends JBTable implements TypeSafeDataProvider, C
       LOG.error("Unexpected table model passed to the VcsLogGraphTable: " + model);
       return null;
     }
-    return ((AbstractVcsLogTableModel)model).getSelectedChanges(getSelectedRows());
+    List<Change> changes = ((AbstractVcsLogTableModel)model).getSelectedChanges(sortSelectedRows());
+    return changes == null ? null : CommittedChangesTreeBrowser.zipChanges(changes);
+  }
+
+  @NotNull
+  private List<Integer> sortSelectedRows() {
+    List<Integer> rows = ContainerUtil.newArrayList();
+    for (int row : getSelectedRows()) {
+      rows.add(row);
+    }
+    Collections.sort(rows, Collections.reverseOrder());
+    return rows;
   }
 
   @Override

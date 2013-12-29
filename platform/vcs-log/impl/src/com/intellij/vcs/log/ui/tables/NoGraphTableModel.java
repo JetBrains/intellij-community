@@ -74,8 +74,7 @@ public class NoGraphTableModel extends AbstractVcsLogTableModel<CommitCell, Hash
 
   @Nullable
   @Override
-  public List<Change> getSelectedChanges(int[] selectedRows) {
-    Arrays.sort(selectedRows);
+  public List<Change> getSelectedChanges(@NotNull List<Integer> selectedRows) {
     List<Change> changes = new ArrayList<Change>();
     for (int selectedRow : selectedRows) {
       changes.addAll(myCommits.get(selectedRow).getChanges());
