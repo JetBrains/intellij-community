@@ -79,12 +79,6 @@ public class GitUtil {
       if (o2 == null) {
         return 1;
       }
-      if (o1.getPresentableUrl() == null) {
-        return -1;
-      }
-      if (o2.getPresentableUrl() == null) {
-        return 1;
-      }
       return o1.getPresentableUrl().compareTo(o2.getPresentableUrl());
     }
   };

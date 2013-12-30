@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,6 +33,7 @@ public class GrTypeArgumentListImpl extends GroovyPsiElementImpl implements GrTy
     super(node);
   }
 
+  @Override
   public void accept(GroovyElementVisitor visitor) {
     visitor.visitTypeArgumentList(this);
   }
@@ -41,6 +42,7 @@ public class GrTypeArgumentListImpl extends GroovyPsiElementImpl implements GrTy
     return "Type arguments";
   }
 
+  @Override
   public GrTypeElement[] getTypeArgumentElements() {
     return findChildrenByClass(GrTypeElement.class);
   }
@@ -50,13 +52,14 @@ public class GrTypeArgumentListImpl extends GroovyPsiElementImpl implements GrTy
     final GrTypeElement[] elements = getTypeArgumentElements();
     if (elements.length == 0) return PsiType.EMPTY_ARRAY;
 
-    PsiType[] result = new PsiType[elements.length];
+    PsiType[] result = PsiType.createArray(elements.length);
     for (int i = 0; i < elements.length; i++) {
       result[i] = elements[i].getType();
     }
     return result;
   }
 
+  @Override
   public boolean isDiamond() {
     return getTypeArgumentElements().length == 0;
   }

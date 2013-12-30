@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -187,7 +187,7 @@ public class MethodUtils {
     final PsiElementFactory factory = psiFacade.getElementFactory();
     try {
       if (parameterTypeStrings != null) {
-        final PsiType[] parameterTypes = new PsiType[parameterTypeStrings.length];
+        final PsiType[] parameterTypes = PsiType.createArray(parameterTypeStrings.length);
         for (int i = 0; i < parameterTypeStrings.length; i++) {
           final String parameterTypeString = parameterTypeStrings[i];
           parameterTypes[i] = factory.createTypeFromText(parameterTypeString, method);

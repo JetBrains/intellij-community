@@ -19,6 +19,7 @@ import com.intellij.openapi.externalSystem.model.ExternalSystemException;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationEvent;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener;
+import com.intellij.openapi.externalSystem.task.AbstractExternalSystemTaskManager;
 import com.intellij.openapi.externalSystem.task.ExternalSystemTaskManager;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.util.io.FileUtil;
@@ -43,17 +44,32 @@ import java.util.List;
  * @author Denis Zhdanov
  * @since 3/14/13 5:09 PM
  */
-public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecutionSettings> {
+public class GradleTaskManager extends AbstractExternalSystemTaskManager<GradleExecutionSettings>
+  implements ExternalSystemTaskManager<GradleExecutionSettings> {
 
   private final GradleExecutionHelper myHelper = new GradleExecutionHelper();
+
+  /**
+   * TODO: remove the method in 13.1
+   */
+  @Override
+  public void executeTasks(@NotNull ExternalSystemTaskId id,
+                           @NotNull List<String> taskNames,
+                           @NotNull String projectPath,
+                           @Nullable GradleExecutionSettings settings,
+                           @Nullable String vmOptions,
+                           @Nullable String debuggerSetup,
+                           @NotNull ExternalSystemTaskNotificationListener listener) throws ExternalSystemException {
+    throw new UnsupportedOperationException();
+  }
 
   @Override
   public void executeTasks(@NotNull final ExternalSystemTaskId id,
                            @NotNull final List<String> taskNames,
                            @NotNull String projectPath,
                            @Nullable final GradleExecutionSettings settings,
-                           @Nullable final String vmOptions,
-                           @Nullable final String scriptParameters,
+                           @NotNull final List<String> vmOptions,
+                           @NotNull final List<String> scriptParameters,
                            @Nullable final String debuggerSetup,
                            @NotNull final ExternalSystemTaskNotificationListener listener) throws ExternalSystemException {
 
@@ -61,26 +77,13 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
       myHelper.ensureInstalledWrapper(id, projectPath, settings, listener);
     }
 
-    final List<String> scriptParametersList;
-    if (scriptParameters == null) {
-      scriptParametersList = ContainerUtil.newArrayList();
-    }
-    else {
-      // filter nulls and empty strings
-      scriptParametersList = ContainerUtil.mapNotNull(
-        StringUtil.split(scriptParameters.trim(), " "), new Function<String, String>() {
-          @Override
-          public String fun(String s) {
-            return StringUtil.isEmpty(s) ? null : s.trim();
-          }
-        }
-      );
-    }
-
     // TODO add support for external process mode
     if (ExternalSystemApiUtil.isInProcessMode(GradleConstants.SYSTEM_ID)) {
       for (GradleTaskManagerExtension gradleTaskManagerExtension : GradleTaskManagerExtension.EP_NAME.getExtensions()) {
-        if (gradleTaskManagerExtension.executeTasks(id, taskNames, projectPath, settings, vmOptions, debuggerSetup, listener)) return;
+        if (gradleTaskManagerExtension.executeTasks(
+          id, taskNames, projectPath, settings, vmOptions, scriptParameters, debuggerSetup, listener)) {
+          return;
+        }
       }
     }
 
@@ -100,16 +103,16 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
             };
             FileUtil.writeToFile(tempFile, StringUtil.join(lines, SystemProperties.getLineSeparator()));
 
-            scriptParametersList.add("--init-script");
-            scriptParametersList.add(tempFile.getAbsolutePath());
+            scriptParameters.add("--init-script");
+            scriptParameters.add(tempFile.getAbsolutePath());
           }
           catch (IOException e) {
             throw new ExternalSystemException(e);
           }
         }
 
-        if(!scriptParametersList.isEmpty()) {
-          launcher.withArguments(ArrayUtil.toStringArray(scriptParametersList));
+        if (!scriptParameters.isEmpty()) {
+          launcher.withArguments(ArrayUtil.toStringArray(scriptParameters));
         }
         launcher.forTasks(ArrayUtil.toStringArray(taskNames));
         launcher.run();

@@ -17,6 +17,7 @@ package org.jetbrains.plugins.gradle.codeInspection;
 
 import com.intellij.CommonBundle;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.PropertyKey;
 
 import java.lang.ref.Reference;
@@ -29,14 +30,13 @@ import java.util.ResourceBundle;
  */
 public class GradleInspectionBundle {
 
-  private static Reference<ResourceBundle> ourBundle;
-
-  @NonNls
-  private static final String BUNDLE = "org.jetbrains.plugins.gradle.codeInspection.GradleInspectionBundle";
-
-  public static String message(@PropertyKey(resourceBundle = BUNDLE)String key, Object... params) {
+  public static String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, @NotNull Object... params) {
     return CommonBundle.message(getBundle(), key, params);
   }
+
+  private static Reference<ResourceBundle> ourBundle;
+  @NonNls
+  private static final String BUNDLE = "org.jetbrains.plugins.gradle.codeInspection.GradleInspectionBundle";
 
   private static ResourceBundle getBundle() {
     ResourceBundle bundle = com.intellij.reference.SoftReference.dereference(ourBundle);
@@ -47,5 +47,4 @@ public class GradleInspectionBundle {
     }
     return bundle;
   }
-
 }

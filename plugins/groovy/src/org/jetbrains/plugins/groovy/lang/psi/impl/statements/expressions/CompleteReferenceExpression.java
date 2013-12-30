@@ -270,7 +270,7 @@ public class CompleteReferenceExpression {
     final GrPropertyForCompletion field = new GrPropertyForCompletion(method, name, type);
     if (resolveResult != null) {
       return new GroovyResolveResultImpl(field, resolveResult.getCurrentFileResolveContext(), resolveResult.getSpreadState(),
-                                         resolveResult.getSubstitutor(), resolveResult.isAccessible(), resolveResult.isStaticsOK(), false);
+                                         resolveResult.getSubstitutor(), resolveResult.isAccessible(), resolveResult.isStaticsOK());
     }
     else {
       return new GroovyResolveResultImpl(field, true);
@@ -501,7 +501,7 @@ public class CompleteReferenceExpression {
 
         result = new GroovyResolveResultImpl(element, result.getCurrentFileResolveContext(), result.getSpreadState(),
                                              result.getSubstitutor(), result.isAccessible(), result.isStaticsOK(),
-                                             result.isInvokedOnProperty());
+                                             result.isInvokedOnProperty(), result.isValidResult());
       }
 
       if (myFieldPointerOperator && !(element instanceof PsiVariable)) {

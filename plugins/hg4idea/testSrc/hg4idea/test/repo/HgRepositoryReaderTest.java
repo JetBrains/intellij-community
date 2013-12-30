@@ -80,7 +80,7 @@ public class HgRepositoryReaderTest extends HgPlatformTest {
   }
 
   public void testBranches() {
-    Collection<String> branches = HgUtil.getNamesWithoutHashes(myRepositoryReader.readBranches());
+    Collection<String> branches = myRepositoryReader.readBranches().keySet();
     VcsTestUtil.assertEqualCollections(branches, myBranches);
   }
 

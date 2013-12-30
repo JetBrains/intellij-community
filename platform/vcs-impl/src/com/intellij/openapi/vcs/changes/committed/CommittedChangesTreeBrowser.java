@@ -269,8 +269,12 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
     return result;
   }
 
-  // changes are assumed to be sorted ascending
-  public static List<Change> zipChanges(final List<Change> changes) {
+  /**
+   * Zips changes by removing duplicates (changes in the same file) and compounding the diff.
+   * <b>NB:</b> changes must be given in the time-ascending order, i.e the first change in the list should be the oldest one.
+   */
+  @NotNull
+  public static List<Change> zipChanges(@NotNull List<Change> changes) {
     final List<Change> result = new ArrayList<Change>();
     for (Change change : changes) {
       addOrReplaceChange(result, change);

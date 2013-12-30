@@ -175,7 +175,7 @@ public class EventLog {
   }
 
   private static String getStatusText(DocumentImpl logDoc, AtomicBoolean showMore, List<RangeMarker> lineSeparators, boolean hasHtml) {
-    DocumentImpl statusDoc = new DocumentImpl(logDoc.getText(),true);
+    DocumentImpl statusDoc = new DocumentImpl(logDoc.getImmutableCharSequence(),true);
     List<RangeMarker> statusSeparators = new ArrayList<RangeMarker>();
     for (RangeMarker separator : lineSeparators) {
       if (separator.isValid()) {

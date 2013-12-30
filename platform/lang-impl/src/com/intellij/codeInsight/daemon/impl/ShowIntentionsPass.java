@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,6 +45,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.IntentionFilterOwner;
 import com.intellij.psi.PsiDocumentManager;
@@ -132,10 +133,10 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
   }
 
   public static class IntentionsInfo {
-    public final List<HighlightInfo.IntentionActionDescriptor> intentionsToShow = new ArrayList<HighlightInfo.IntentionActionDescriptor>();
-    public final List<HighlightInfo.IntentionActionDescriptor> errorFixesToShow = new ArrayList<HighlightInfo.IntentionActionDescriptor>();
-    public final List<HighlightInfo.IntentionActionDescriptor> inspectionFixesToShow = new ArrayList<HighlightInfo.IntentionActionDescriptor>();
-    public final List<HighlightInfo.IntentionActionDescriptor> guttersToShow = new ArrayList<HighlightInfo.IntentionActionDescriptor>();
+    public final List<HighlightInfo.IntentionActionDescriptor> intentionsToShow = ContainerUtil.createLockFreeCopyOnWriteList();
+    public final List<HighlightInfo.IntentionActionDescriptor> errorFixesToShow = ContainerUtil.createLockFreeCopyOnWriteList();
+    public final List<HighlightInfo.IntentionActionDescriptor> inspectionFixesToShow = ContainerUtil.createLockFreeCopyOnWriteList();
+    public final List<HighlightInfo.IntentionActionDescriptor> guttersToShow = ContainerUtil.createLockFreeCopyOnWriteList();
 
     public void filterActions(@NotNull IntentionFilterOwner.IntentionActionsFilter actionsFilter) {
       filter(intentionsToShow, actionsFilter);
@@ -220,16 +221,13 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
     if (myIntentionsInfo.isEmpty()) {
       return;
     }
-    myShowBulb = !myIntentionsInfo.guttersToShow.isEmpty();
-    if (!myShowBulb) {
-      for (HighlightInfo.IntentionActionDescriptor descriptor : ContainerUtil.concat(myIntentionsInfo.errorFixesToShow, myIntentionsInfo.inspectionFixesToShow,myIntentionsInfo.intentionsToShow)) {
-        final IntentionAction action = descriptor.getAction();
-        if (IntentionManagerSettings.getInstance().isShowLightBulb(action)) {
-          myShowBulb = true;
-          break;
+    myShowBulb = !myIntentionsInfo.guttersToShow.isEmpty() ||
+      ContainerUtil.exists(ContainerUtil.concat(myIntentionsInfo.errorFixesToShow, myIntentionsInfo.inspectionFixesToShow,myIntentionsInfo.intentionsToShow), new Condition<HighlightInfo.IntentionActionDescriptor>() {
+        @Override
+        public boolean value(HighlightInfo.IntentionActionDescriptor descriptor) {
+          return IntentionManagerSettings.getInstance().isShowLightBulb(descriptor.getAction());
         }
-      }
-    }
+      });
   }
 
   private void updateActions(@NotNull DaemonCodeAnalyzerImpl codeAnalyzer) {

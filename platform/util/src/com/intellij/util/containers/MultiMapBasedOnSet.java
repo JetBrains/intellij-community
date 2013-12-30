@@ -15,6 +15,8 @@
  */
 package com.intellij.util.containers;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.util.*;
 
 /**
@@ -31,4 +33,10 @@ public class MultiMapBasedOnSet<K, V> extends MultiMap<K, V> {
   protected Collection<V> createEmptyCollection() {
     return Collections.emptySet();
   }
+
+  @NotNull
+  public static <K, V> MultiMap<K, V> createBasedOnSet() {
+    return new MultiMapBasedOnSet<K, V>();
+  }
+
 }

@@ -192,7 +192,7 @@ public class TypeSelectorManagerImpl implements TypeSelectorManager {
     });
 
     ArrayList<PsiType> result = normalizeTypeList(allowedTypes);
-    return result.toArray(new PsiType[result.size()]);
+    return result.toArray(PsiType.createArray(result.size()));
   }
 
   private PsiType[] getTypesForAll(final boolean areTypesDirected) {
@@ -232,7 +232,7 @@ public class TypeSelectorManagerImpl implements TypeSelectorManager {
     if (!areTypesDirected) {
       Collections.reverse(result);
     }
-    return result.toArray(new PsiType[result.size()]);
+    return result.toArray(PsiType.createArray(result.size()));
   }
 
   protected boolean isUsedAfter() {

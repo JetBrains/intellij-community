@@ -18,7 +18,6 @@ package com.intellij.debugger.ui.breakpoints;
 import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.SourcePosition;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.SimpleColoredComponent;
@@ -132,7 +131,7 @@ class JavaBreakpointItem extends BreakpointItem {
   @Override
   public void saveState() {
     if (myBreakpointPropertiesPanel != null) {
-      myBreakpointPropertiesPanel.saveTo(myBreakpoint, EmptyRunnable.INSTANCE);
+      myBreakpointPropertiesPanel.saveTo(myBreakpoint);
     }
   }
 

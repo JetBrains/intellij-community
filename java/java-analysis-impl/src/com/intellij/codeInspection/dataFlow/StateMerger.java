@@ -15,81 +15,123 @@
  */
 package com.intellij.codeInspection.dataFlow;
 
-import com.intellij.codeInspection.dataFlow.value.DfaConstValue;
-import com.intellij.codeInspection.dataFlow.value.DfaPsiType;
-import com.intellij.codeInspection.dataFlow.value.DfaValue;
-import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
+import com.intellij.codeInspection.dataFlow.value.*;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.UnorderedPair;
+import com.intellij.psi.JavaTokenType;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author peter
  */
 class StateMerger {
-  private final Map<DfaMemoryStateImpl, Map<DfaVariableValue, DfaConstValue>> myVarValues = ContainerUtil.newIdentityHashMap();
-  private final Map<DfaMemoryStateImpl, List<UnorderedPair<DfaValue>>> myEqPairs = ContainerUtil.newIdentityHashMap();
+  private final Map<DfaMemoryStateImpl, LinkedHashSet<Fact>> myFacts = ContainerUtil.newIdentityHashMap();
   private final Map<DfaMemoryState, Map<DfaVariableValue, DfaMemoryStateImpl>> myCopyCache = ContainerUtil.newIdentityHashMap();
 
   @Nullable
-  public List<DfaMemoryStateImpl> mergeByEquality(List<DfaMemoryStateImpl> states) {
-    final MultiMap<UnorderedPair<DfaValue>,DfaMemoryStateImpl> statesByEq = new MultiMap<UnorderedPair<DfaValue>, DfaMemoryStateImpl>();
+  List<DfaMemoryStateImpl> mergeByFacts(List<DfaMemoryStateImpl> states) {
+    MultiMap<Fact, DfaMemoryStateImpl> statesByFact = MultiMap.createLinked();
     for (DfaMemoryStateImpl state : states) {
       ProgressManager.checkCanceled();
-      for (UnorderedPair<DfaValue> pair : getEqPairs(state)) {
-        statesByEq.putValue(pair, state);
+      for (Fact fact : getFacts(state)) {
+        statesByFact.putValue(fact, state);
       }
     }
 
-    for (final DfaMemoryStateImpl state : states) {
+    for (final Fact fact : statesByFact.keySet()) {
+      if (statesByFact.get(fact).size() == states.size() || fact.myPositive) continue;
+
+      Collection<DfaMemoryStateImpl> statesWithNegations = statesByFact.get(fact.getPositiveCounterpart());
+      if (statesWithNegations.isEmpty()) continue;
+
       ProgressManager.checkCanceled();
-      MultiMap<DfaVariableValue, DfaValue> distincts = getDistinctsMap(state);
-      for (DfaVariableValue var : distincts.keySet()) {
-        Map<DfaValue, Collection<DfaMemoryStateImpl>> statesByValue = getCompatibleStatesByValue(state, var, distincts, statesByEq);
-        if (statesByValue == null) {
-          continue;
-        }
-
-        final THashSet<DfaMemoryStateImpl> complementaryStates = findComplementaryStates(var, statesByValue, state);
-        if (complementaryStates == null) {
-          continue;
-        }
-
-        DfaMemoryStateImpl copy = copyWithoutVar(state, var).createCopy();
-
-        complementaryStates.add(state);
-        mergeNullableState(var, copy, complementaryStates);
-        mergeUnknowns(copy, complementaryStates);
-        return getMergeResult(states, complementaryStates, copy);
+      
+      MultiMap<Set<Fact>, DfaMemoryStateImpl> statesByUnrelatedFacts = MultiMap.createLinked();
+      for (DfaMemoryStateImpl state : ContainerUtil.concat(statesByFact.get(fact), statesWithNegations)) {
+        statesByUnrelatedFacts.putValue(getUnrelatedFacts(fact, state), state);
       }
       
+      Set<DfaMemoryStateImpl> removedStates = ContainerUtil.newIdentityTroveSet();
+      List<DfaMemoryStateImpl> result = ContainerUtil.newArrayList();
+      for (Set<Fact> key : statesByUnrelatedFacts.keySet()) {
+        Collection<DfaMemoryStateImpl> group = statesByUnrelatedFacts.get(key);
+        if (group.size() > 1) {
+          DfaMemoryStateImpl copy = group.iterator().next().createCopy();
+          fact.removeFromState(copy);
+          if (fact.myType == FactType.equality) {
+            restoreOtherInequalities(fact, group, copy);
+          }
+          mergeUnknowns(copy, group);
+          
+          removedStates.addAll(group);
+          result.add(copy);
+        }
+      }
+
+      if (!result.isEmpty()) {
+        for (DfaMemoryStateImpl state : states) {
+          if (!removedStates.contains(state)) {
+            result.add(state);
+          }
+        }
+        return result;
+      }
     }
     return null;
+  }
+
+  private LinkedHashSet<Fact> getUnrelatedFacts(final Fact fact, DfaMemoryStateImpl state) {
+    return new LinkedHashSet<Fact>(ContainerUtil.filter(getFacts(state), new Condition<Fact>() {
+      @Override
+      public boolean value(Fact another) {
+        return !fact.invalidatesFact(another);
+      }
+    }));
+  }
+
+  private void restoreOtherInequalities(Fact removedFact, Collection<DfaMemoryStateImpl> mergedGroup, DfaMemoryStateImpl state) {
+    Set<DfaConstValue> inequalitiesToRestore = null;
+    for (DfaMemoryStateImpl member : mergedGroup) {
+      LinkedHashSet<Fact> memberFacts = getFacts(member);
+      if (memberFacts.contains(removedFact)) {
+        Set<DfaConstValue> otherInequalities = getOtherInequalities(removedFact, memberFacts, member);
+        if (inequalitiesToRestore == null) {
+          inequalitiesToRestore = otherInequalities;
+        } else {
+          inequalitiesToRestore.retainAll(otherInequalities);
+        }
+      }
+    }
+    if (inequalitiesToRestore != null) {
+      DfaRelationValue.Factory relationFactory = state.getFactory().getRelationFactory();
+      for (DfaConstValue toRestore : inequalitiesToRestore) {
+        state.applyCondition(relationFactory.createRelation(removedFact.myVar, toRestore, JavaTokenType.EQEQ, true));
+      }
+    }
+  }
+
+  private static Set<DfaConstValue> getOtherInequalities(Fact removedFact, LinkedHashSet<Fact> memberFacts, DfaMemoryStateImpl state) {
+    Set<DfaConstValue> otherInequalities = ContainerUtil.newLinkedHashSet();
+    for (Fact candidate : memberFacts) {
+      if (candidate.myType == FactType.equality && !candidate.myPositive && candidate.myVar == removedFact.myVar &&
+          !state.areEquivalent((DfaValue)candidate.myArg, (DfaValue)removedFact.myArg) && 
+          candidate.myArg instanceof DfaConstValue) {
+        otherInequalities.add((DfaConstValue)candidate.myArg);
+      }
+    }
+    return otherInequalities;
   }
 
   private static void mergeUnknowns(DfaMemoryStateImpl mergedState, Collection<DfaMemoryStateImpl> complementaryStates) {
     for (DfaMemoryStateImpl removedState : complementaryStates) {
       for (DfaVariableValue unknownVar : removedState.getUnknownVariables()) {
         mergedState.doFlush(unknownVar, true);
-      }
-    }
-  }
-  private static void mergeNullableState(DfaVariableValue var,
-                                             DfaMemoryStateImpl mergedState,
-                                             Collection<DfaMemoryStateImpl> complementaryStates) {
-    for (DfaMemoryStateImpl removedState : complementaryStates) {
-      if (removedState.getVariableState(var).isNullable()) {
-        mergedState.setVariableState(var, mergedState.getVariableState(var).withNullability(Nullness.NULLABLE));
       }
     }
   }
@@ -181,62 +223,10 @@ class StateMerger {
     return null;
   }
   
-  @Nullable
-  public List<DfaMemoryStateImpl> mergeByType(List<DfaMemoryStateImpl> states) {
-    MultiMap<Pair<DfaVariableValue, DfaPsiType>,DfaMemoryStateImpl> byInstanceof = new MultiMap<Pair<DfaVariableValue, DfaPsiType>, DfaMemoryStateImpl>();
-    for (final DfaMemoryStateImpl state : states) {
-      ProgressManager.checkCanceled();
-      for (DfaVariableValue value : state.getChangedVariables()) {
-        for (DfaPsiType instanceofValue : state.getVariableState(value).myInstanceofValues) {
-          byInstanceof.putValue(Pair.create(value, instanceofValue), state);
-        }
-      }
-    }
-    
-    for (final DfaMemoryStateImpl state : states) {
-      ProgressManager.checkCanceled();
-
-      for (final DfaVariableValue var : state.getChangedVariables()) {
-        for (final DfaPsiType notInstanceof : state.getVariableState(var).myNotInstanceofValues) {
-          final DfaVariableState varStateWithoutType = getVarStateWithoutType(state, var, notInstanceof);
-          List<DfaMemoryStateImpl> complementaryStates = ContainerUtil.filter(
-            byInstanceof.get(Pair.create(var, notInstanceof)),
-            new Condition<DfaMemoryStateImpl>() {
-              @Override
-              public boolean value(DfaMemoryStateImpl another) {
-                return seemCompatible(state, another, var) &&
-                       another.getVariableState(var).myInstanceofValues.contains(notInstanceof) &&
-                       varStateWithoutType.equals(getVarStateWithoutType(another, var, notInstanceof)) &&
-                       areEquivalentModuloVar(another, state, var) && 
-                       !(state.isNull(var) && another.isNotNull(var));
-              }
-            });
-          if (complementaryStates.isEmpty()) {
-            continue;
-          }
-
-          DfaMemoryStateImpl copy = state.createCopy();
-          copy.setVariableState(var, varStateWithoutType);
-          
-          complementaryStates.add(state);
-          mergeNullableState(var, copy, complementaryStates);
-          mergeUnknowns(copy, complementaryStates);
-          return getMergeResult(states, ContainerUtil.newIdentityTroveSet(complementaryStates), copy);
-        }
-      }
-
-    }
-    return null;
-  }
-
   private boolean areEquivalentModuloVar(DfaMemoryStateImpl state1, DfaMemoryStateImpl state2, DfaVariableValue var) {
     DfaMemoryStateImpl copy1 = copyWithoutVar(state1, var);
     DfaMemoryStateImpl copy2 = copyWithoutVar(state2, var);
     return copy2.equalsByRelations(copy1) && copy2.equalsByVariableStates(copy1);
-  }
-
-  private static DfaVariableState getVarStateWithoutType(DfaMemoryStateImpl s, DfaVariableValue var, DfaPsiType type) {
-    return s.getVariableState(var).withoutType(type).withNullability(Nullness.UNKNOWN);
   }
 
   private DfaMemoryStateImpl copyWithoutVar(DfaMemoryStateImpl state, DfaVariableValue var) {
@@ -253,129 +243,140 @@ class StateMerger {
     return copy;
   }
 
-  @Nullable
-  private THashSet<DfaMemoryStateImpl> findComplementaryStates(DfaVariableValue var,
-                                                                 Map<DfaValue, Collection<DfaMemoryStateImpl>> statesByValue,
-                                                                 DfaMemoryStateImpl state) {
-    THashSet<DfaMemoryStateImpl> removedStates = ContainerUtil.newIdentityTroveSet();
-  
-  eachValue: 
-    for (DfaValue value : statesByValue.keySet()) {
-      for (DfaMemoryStateImpl originalState : statesByValue.get(value)) {
-        if (areEquivalentModuloVar(originalState, state, var)) {
-          removedStates.add(originalState);
-          continue eachValue;
-        }
-      }
-      return null;
-    }
-    return removedStates;
-  }
-
-  @Nullable
-  private Map<DfaValue, Collection<DfaMemoryStateImpl>> getCompatibleStatesByValue(final DfaMemoryStateImpl state,
-                                                                                          final DfaVariableValue var,
-                                                                                          MultiMap<DfaVariableValue, DfaValue> distincts,
-                                                                                          MultiMap<UnorderedPair<DfaValue>,DfaMemoryStateImpl> statesByEq) {
-    Map<DfaValue, Collection<DfaMemoryStateImpl>> statesByValue = ContainerUtil.newHashMap();
-    for (DfaValue value : distincts.get(var)) {
-      List<DfaMemoryStateImpl> compatible = ContainerUtil.filter(statesByEq.get(createPair(var, value)), new Condition<DfaMemoryStateImpl>() {
-        @Override
-        public boolean value(DfaMemoryStateImpl state2) {
-          return seemCompatible(state, state2, var) &&
-                 areVarStatesEqualModuloNullability(state, state2, var);
-        }
-      });
-      if (compatible.isEmpty()) {
-        return null;
-      }
-      statesByValue.put(value, compatible);
-    }
-    return statesByValue;
-  }
-
   private static boolean areVarStatesEqualModuloNullability(DfaMemoryStateImpl state1, DfaMemoryStateImpl state2, DfaVariableValue var) {
     return state1.getVariableState(var).withNullability(Nullness.UNKNOWN).equals(state2.getVariableState(var).withNullability(Nullness.UNKNOWN));
   }
 
-  private boolean seemCompatible(DfaMemoryStateImpl state1, DfaMemoryStateImpl state2, DfaVariableValue differentVar) {
-    Map<DfaVariableValue, DfaConstValue> varValues1 = getVarValues(state1);
-    Map<DfaVariableValue, DfaConstValue> varValues2 = getVarValues(state2);
+  private LinkedHashSet<Fact> getFacts(DfaMemoryStateImpl state) {
+    LinkedHashSet<Fact> result = myFacts.get(state);
+    if (result != null) {
+      return result;
+    }
     
-    for (DfaVariableValue var : varValues1.keySet()) {
-      if (var != differentVar && varValues1.get(var) != varValues2.get(var)) {
-        return false;
-      }
-    }
-    for (DfaVariableValue var : varValues2.keySet()) {
-      if (var != differentVar && !varValues1.containsKey(var)) {
-        return false;
-      }
-    }
-    return true;
-  }
-
-  private Map<DfaVariableValue, DfaConstValue> getVarValues(DfaMemoryStateImpl state) {
-    Map<DfaVariableValue, DfaConstValue> map = myVarValues.get(state);
-    if (map == null) {
-      map = ContainerUtil.newHashMap();
-      for (UnorderedPair<DfaValue> pair : getEqPairs(state)) {
-        if (pair.first instanceof DfaVariableValue && pair.second instanceof DfaConstValue) {
-          map.put((DfaVariableValue)pair.first, (DfaConstValue)pair.second);
+    result = ContainerUtil.newLinkedHashSet();
+    for (EqClass eqClass : state.getNonTrivialEqClasses()) {
+      DfaConstValue constant = eqClass.findConstant(true);
+      List<DfaVariableValue> vars = eqClass.getVariables();
+      for (DfaVariableValue var : vars) {
+        if (constant != null) {
+          result.add(Fact.createEqualityFact(var, constant, true));
+        }
+        for (DfaVariableValue eqVar : vars) {
+          if (var != eqVar) {
+            result.add(Fact.createEqualityFact(var, eqVar, true));
+          }
         }
       }
-      myVarValues.put(state, map);
-
     }
-    return map;
-  }
-
-  private static MultiMap<DfaVariableValue, DfaValue> getDistinctsMap(DfaMemoryStateImpl state) {
-    MultiMap<DfaVariableValue, DfaValue> distincts = new MultiMap<DfaVariableValue, DfaValue>();
+    
     for (UnorderedPair<EqClass> classPair : state.getDistinctClassPairs()) {
-      for (DfaValue value1 : classPair.first.getMemberValues()) {
-        value1 = DfaMemoryStateImpl.unwrap(value1);
-        for (DfaValue value2 : classPair.second.getMemberValues()) {
-          value2 = DfaMemoryStateImpl.unwrap(value2);
-          if (value1 instanceof DfaVariableValue) {
-            if (value2 instanceof DfaVariableValue || value2 instanceof DfaConstValue) {
-              distincts.putValue((DfaVariableValue)value1, value2);
-            }
-          }
-          if (value2 instanceof DfaVariableValue) {
-            if (value1 instanceof DfaVariableValue || value1 instanceof DfaConstValue) {
-              distincts.putValue((DfaVariableValue)value2, value1);
-            }
-          }
-        }
-      }
-    }
-    return distincts;
-  }
+      List<DfaVariableValue> vars1 = classPair.first.getVariables();
+      List<DfaVariableValue> vars2 = classPair.second.getVariables();
+      
+      LinkedHashSet<DfaValue> firstSet = new LinkedHashSet<DfaValue>(vars1);
+      ContainerUtil.addIfNotNull(firstSet, classPair.first.findConstant(true));
 
-  private List<UnorderedPair<DfaValue>> getEqPairs(DfaMemoryStateImpl state) {
-    List<UnorderedPair<DfaValue>> result = myEqPairs.get(state);
-    if (result == null) {
-      Set<UnorderedPair<DfaValue>> eqPairs = ContainerUtil.newHashSet();
-      for (EqClass eqClass : state.getNonTrivialEqClasses()) {
-        DfaConstValue constant = eqClass.findConstant(true);
-        List<DfaVariableValue> vars = eqClass.getVariables();
-        for (int i = 0; i < vars.size(); i++) {
-          DfaVariableValue var = vars.get(i);
-          if (constant != null) {
-            eqPairs.add(createPair(var, constant));
-          }
-          for (int j = i + 1; j < vars.size(); j++) {
-            eqPairs.add(createPair(var, vars.get(j)));
-          }
+      LinkedHashSet<DfaValue> secondSet = new LinkedHashSet<DfaValue>(vars2);
+      ContainerUtil.addIfNotNull(secondSet, classPair.second.findConstant(true));
+
+      for (DfaVariableValue var : vars1) {
+        for (DfaValue value : secondSet) {
+          result.add(new Fact(FactType.equality, var, false, value));
         }
       }
-      myEqPairs.put(state, result = ContainerUtil.newArrayList(eqPairs));
+      for (DfaVariableValue var : vars2) {
+        for (DfaValue value : firstSet) {
+          result.add(new Fact(FactType.equality, var, false, value));
+        }
+      }
     }
+
+    Map<DfaVariableValue, DfaVariableState> states = state.getVariableStates();
+    for (DfaVariableValue var : states.keySet()) {
+      DfaVariableState variableState = states.get(var);
+      for (DfaPsiType type : variableState.getInstanceofValues()) {
+        result.add(new Fact(FactType.instanceOf, var, true, type));
+      }
+      for (DfaPsiType type : variableState.getNotInstanceofValues()) {
+        result.add(new Fact(FactType.instanceOf, var, false, type));
+      }
+    }
+
+    myFacts.put(state, result);
     return result;
   }
 
-  private static UnorderedPair<DfaValue> createPair(DfaVariableValue var, DfaValue val) {
-    return new UnorderedPair<DfaValue>(var, val);
+  private enum FactType { equality, instanceOf }
+
+  private static class Fact {
+    final FactType myType;
+    final DfaVariableValue myVar;
+    final boolean myPositive;
+    final Object myArg; // DfaValue for equality fact, DfaPsiType for instanceOf fact
+
+    private Fact(FactType type, DfaVariableValue var, boolean positive, Object arg) {
+      myType = type;
+      myVar = var;
+      myPositive = positive;
+      myArg = arg;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (!(o instanceof Fact)) return false;
+
+      Fact fact = (Fact)o;
+
+      if (myPositive != fact.myPositive) return false;
+      if (!myArg.equals(fact.myArg)) return false;
+      if (myType != fact.myType) return false;
+      if (!myVar.equals(fact.myVar)) return false;
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      int result = myType.hashCode();
+      result = 31 * result + myVar.hashCode();
+      result = 31 * result + (myPositive ? 1 : 0);
+      result = 31 * result + myArg.hashCode();
+      return result;
+    }
+
+    @Override
+    public String toString() {
+      return myVar + " " + (myPositive ? "" : "!") + myType + " " + myArg;
+    }
+
+    static Fact createEqualityFact(DfaVariableValue var, DfaValue val, boolean equal) {
+      if (val instanceof DfaVariableValue && val.getID() < var.getID()) {
+        return new Fact(FactType.equality, (DfaVariableValue)val, equal, var);
+      }
+      return new Fact(FactType.equality, var, equal, val);
+    }
+
+    Fact getPositiveCounterpart() {
+      return new Fact(myType, myVar, true, myArg);
+    }
+
+    boolean invalidatesFact(Fact another) {
+      if (another.myType != myType) return false;
+      if (myType == FactType.equality) {
+        return myVar == another.myVar || myVar == another.myArg;
+      }
+      return myVar == another.myVar && myArg == another.myArg;
+    }
+
+    void removeFromState(DfaMemoryStateImpl state) {
+      DfaVariableState varState = state.getVariableState(myVar);
+      if (myType == FactType.equality) {
+        state.flushVariable(myVar);
+        state.setVariableState(myVar, varState);
+      } else {
+        state.setVariableState(myVar, varState.withoutType((DfaPsiType)myArg));
+      }
+    }
   }
 }

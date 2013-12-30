@@ -62,6 +62,7 @@ import java.util.*;
 public class GroovyParameterInfoHandler implements ParameterInfoHandlerWithTabActionSupport<GroovyPsiElement, Object, GroovyPsiElement> {
   private static final Logger LOG = Logger.getInstance(GroovyParameterInfoHandler.class);
 
+  @Override
   public boolean couldShowInLookup() {
     return true;
   }
@@ -75,6 +76,7 @@ public class GroovyParameterInfoHandler implements ParameterInfoHandlerWithTabAc
   }
 
 
+  @Override
   public Object[] getParametersForLookup(LookupElement item, ParameterInfoContext context) {
     List<? extends PsiElement> elements = JavaCompletionUtil.getAllPsiElements(item);
 
@@ -91,6 +93,7 @@ public class GroovyParameterInfoHandler implements ParameterInfoHandlerWithTabAc
     return null;
   }
 
+  @Override
   public Object[] getParametersForDocumentation(Object resolveResult, ParameterInfoContext context) {
     if (resolveResult instanceof GroovyResolveResult) {
       final PsiElement element = ((GroovyResolveResult)resolveResult).getElement();
@@ -102,11 +105,13 @@ public class GroovyParameterInfoHandler implements ParameterInfoHandlerWithTabAc
     return ArrayUtil.EMPTY_OBJECT_ARRAY;
   }
 
-  public GroovyPsiElement findElementForParameterInfo(CreateParameterInfoContext context) {
+  @Override
+  public GroovyPsiElement findElementForParameterInfo(@NotNull CreateParameterInfoContext context) {
     return findAnchorElement(context.getEditor().getCaretModel().getOffset(), context.getFile());
   }
 
-  public GroovyPsiElement findElementForUpdatingParameterInfo(UpdateParameterInfoContext context) {
+  @Override
+  public GroovyPsiElement findElementForUpdatingParameterInfo(@NotNull UpdateParameterInfoContext context) {
     return findAnchorElement(context.getEditor().getCaretModel().getOffset(), context.getFile());
   }
 
@@ -131,6 +136,7 @@ public class GroovyParameterInfoHandler implements ParameterInfoHandlerWithTabAc
     return null;
   }
 
+  @Override
   @SuppressWarnings("unchecked")
   public void showParameterInfo(@NotNull GroovyPsiElement place, @NotNull CreateParameterInfoContext context) {
     GroovyResolveResult[] variants = ResolveUtil.getCallVariants(place);
@@ -210,7 +216,8 @@ public class GroovyParameterInfoHandler implements ParameterInfoHandlerWithTabAc
     return resolveResult.isInvokedOnProperty() || resolveResult.getElement() instanceof PsiVariable;
   }
 
-  public void updateParameterInfo(@NotNull GroovyPsiElement place, UpdateParameterInfoContext context) {
+  @Override
+  public void updateParameterInfo(@NotNull GroovyPsiElement place, @NotNull UpdateParameterInfoContext context) {
     final PsiElement parameterOwner = context.getParameterOwner();
     if (parameterOwner != place) {
       context.removeHint();
@@ -243,7 +250,7 @@ public class GroovyParameterInfoHandler implements ParameterInfoHandlerWithTabAc
           final PsiMethod method = (PsiMethod)namedElement;
           PsiParameter[] parameters = method.getParameterList().getParameters();
           parameters = updateConstructorParams(method, parameters, context.getParameterOwner());
-          parameterTypes = new PsiType[parameters.length];
+          parameterTypes = PsiType.createArray(parameters.length);
           for (int j = 0; j < parameters.length; j++) {
             parameterTypes[j] = parameters[j].getType();
           }
@@ -254,7 +261,7 @@ public class GroovyParameterInfoHandler implements ParameterInfoHandlerWithTabAc
       else if (objects[i] instanceof GrClosureSignature) {
         final GrClosureSignature signature = (GrClosureSignature)objects[i];
         argTypes = PsiUtil.getArgumentTypes(place, false);
-        parameterTypes = new PsiType[signature.getParameterCount()];
+        parameterTypes = PsiType.createArray(signature.getParameterCount());
         int j = 0;
         for (GrClosureParameter parameter : signature.getParameters()) {
           parameterTypes[j++] = parameter.getType();
@@ -310,15 +317,18 @@ public class GroovyParameterInfoHandler implements ParameterInfoHandlerWithTabAc
     return element != null && element.getNode().getElementType() == GroovyTokenTypes.mCOMMA;
   }
 
+  @Override
   public String getParameterCloseChars() {
     return ",){}";
   }
 
+  @Override
   public boolean tracksParameterIndex() {
     return true;
   }
 
-  public void updateUI(Object o, ParameterInfoUIContext context) {
+  @Override
+  public void updateUI(Object o, @NotNull ParameterInfoUIContext context) {
     CodeInsightSettings settings = CodeInsightSettings.getInstance();
 
     if (o == null) return;

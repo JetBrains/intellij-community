@@ -31,10 +31,10 @@ import java.util.List;
 public class GlobalPathReferenceProvider implements PathReferenceProvider {
 
   @NonNls private static final String[] PREFIXES = {
-    "mailto:", "tel:", "sms:", "skype:", "data:"
+    "mailto:", "tel:", "sms:", "skype:", "data:", "xmpp:"
   };
 
-  private static boolean startsWithAllowedPrefix(String s) {
+  public static boolean startsWithAllowedPrefix(String s) {
     for (String prefix : PREFIXES) {
       if (s.startsWith(prefix)) {
         return true;

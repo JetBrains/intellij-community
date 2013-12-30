@@ -240,7 +240,9 @@ public abstract class GroovyCompilerTestCase extends JavaCodeInsightFixtureTestC
         semaphore.up();
       }
     });
-    semaphore.waitFor();
+    if (!semaphore.waitFor(20000)) {
+      fail("Process took too long");
+    }
     return processHandler.get();
   }
 

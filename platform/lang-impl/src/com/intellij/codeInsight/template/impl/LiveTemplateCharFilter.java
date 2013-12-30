@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,7 +30,7 @@ public class LiveTemplateCharFilter extends CharFilter {
     if (item instanceof LiveTemplateLookupElement && lookup.isCompletion()) {
       if (Character.isJavaIdentifierPart(c)) return Result.ADD_TO_PREFIX;
 
-      if (c == ((LiveTemplateLookupElement)item).getTemplate().getShortcutChar()) {
+      if (c == ((LiveTemplateLookupElement)item).getTemplateShortcut()) {
         return Result.SELECT_ITEM_AND_FINISH_LOOKUP;
       }
       return Result.HIDE_LOOKUP;

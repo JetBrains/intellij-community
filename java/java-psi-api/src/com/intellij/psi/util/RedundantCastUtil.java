@@ -17,10 +17,12 @@ package com.intellij.psi.util;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -465,9 +467,11 @@ public class RedundantCastUtil {
       final PsiType expectedTypeByParent = PsiTypesUtil.getExpectedTypeByParent(typeCast);
       if (expectedTypeByParent != null) {
         try {
+          final Project project = operand.getProject();
+          final String uniqueVariableName = JavaCodeStyleManager.getInstance(project).suggestUniqueVariableName("l", parent, false);
           final PsiDeclarationStatement declarationStatement =
-            (PsiDeclarationStatement)JavaPsiFacade.getElementFactory(operand.getProject()).createStatementFromText(
-              expectedTypeByParent.getCanonicalText() + " l = " + operand.getText() + ";", parent);
+            (PsiDeclarationStatement)JavaPsiFacade.getElementFactory(project).createStatementFromText(
+              expectedTypeByParent.getCanonicalText() + " " + uniqueVariableName + " = " + operand.getText() + ";", parent);
           final PsiExpression initializer = ((PsiLocalVariable)declarationStatement.getDeclaredElements()[0]).getInitializer();
           LOG.assertTrue(initializer != null, operand.getText());
           opType = initializer.getType();

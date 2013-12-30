@@ -16,6 +16,7 @@
 package com.jetbrains.python.parsing;
 
 import com.intellij.lang.PsiBuilder;
+import com.intellij.lang.WhitespacesBinders;
 import com.intellij.psi.tree.IElementType;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyTokenTypes;
@@ -81,7 +82,7 @@ public class FunctionParsing extends Parsing {
       }
       else { // empty arglist node, so we always have it
         PsiBuilder.Marker argListMarker = myBuilder.mark();
-        argListMarker.setCustomEdgeTokenBinders(LeftBiasedWhitespaceBinder.INSTANCE, null);
+        argListMarker.setCustomEdgeTokenBinders(WhitespacesBinders.GREEDY_LEFT_BINDER, null);
         argListMarker.done(PyElementTypes.ARGUMENT_LIST);
       }
       if (atToken(PyTokenTypes.STATEMENT_BREAK)) {

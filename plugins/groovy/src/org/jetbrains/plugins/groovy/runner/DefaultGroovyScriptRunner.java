@@ -100,14 +100,13 @@ public class DefaultGroovyScriptRunner extends GroovyScriptRunner {
     setToolsJar(params);
 
     String groovyHome = useBundled ? FileUtil.toCanonicalPath(GroovyUtils.getBundledGroovyJar().getParentFile().getParent()) : LibrariesUtil.getGroovyHomePath(module);
-    if (groovyHome != null) {
-      groovyHome = FileUtil.toSystemDependentName(groovyHome);
-    }
-    if (groovyHome != null) {
-      setGroovyHome(params, groovyHome);
+    String groovyHomeDependentName = groovyHome != null ? FileUtil.toSystemDependentName(groovyHome) : null;
+
+    if (groovyHomeDependentName != null) {
+      setGroovyHome(params, groovyHomeDependentName);
     }
 
-    final String confPath = getConfPath(groovyHome);
+    final String confPath = getConfPath(groovyHomeDependentName);
     params.getVMParametersList().add("-Dgroovy.starter.conf=" + confPath);
     params.getVMParametersList().addAll(HttpConfigurable.convertArguments(HttpConfigurable.getJvmPropertiesList(false, null)));
 

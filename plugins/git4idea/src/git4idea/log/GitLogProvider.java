@@ -78,8 +78,12 @@ public class GitLogProvider implements VcsLogProvider {
   @Override
   public List<? extends VcsFullCommitDetails> readFirstBlock(@NotNull VirtualFile root,
                                                              boolean ordered, int commitCount) throws VcsException {
-    String[] params = { "HEAD", "--branches", "--remotes", "--tags", "--encoding=UTF-8", "--full-history", "--sparse",
-                        "--max-count=" + commitCount};
+    if (!isRepositoryReady(root)) {
+      return Collections.emptyList();
+    }
+
+    String[] params = ArrayUtil.mergeArrays(ArrayUtil.toStringArray(GitHistoryUtils.LOG_ALL),
+                                            "--encoding=UTF-8", "--full-history", "--sparse", "--max-count=" + commitCount);
     if (ordered) {
       params = ArrayUtil.append(params, "--date-order");
     }
@@ -89,6 +93,10 @@ public class GitLogProvider implements VcsLogProvider {
   @NotNull
   @Override
   public List<TimedVcsCommit> readAllHashes(@NotNull VirtualFile root, @NotNull Consumer<VcsUser> userRegistry) throws VcsException {
+    if (!isRepositoryReady(root)) {
+      return Collections.emptyList();
+    }
+
     return GitHistoryUtils.readAllHashes(myProject, root, userRegistry);
   }
 
@@ -107,13 +115,11 @@ public class GitLogProvider implements VcsLogProvider {
   @NotNull
   @Override
   public Collection<VcsRef> readAllRefs(@NotNull VirtualFile root) throws VcsException {
-    myRepositoryManager.waitUntilInitialized();
-    GitRepository repository = myRepositoryManager.getRepositoryForRoot(root);
-    if (repository == null) {
-      LOG.error("Repository not found for root " + root);
+    if (!isRepositoryReady(root)) {
       return Collections.emptyList();
     }
 
+    GitRepository repository = getRepository(root);
     repository.update();
     Collection<GitLocalBranch> localBranches = repository.getBranches().getLocalBranches();
     Collection<GitRemoteBranch> remoteBranches = repository.getBranches().getRemoteBranches();
@@ -183,7 +189,12 @@ public class GitLogProvider implements VcsLogProvider {
   @NotNull
   @Override
   public List<? extends VcsFullCommitDetails> getFilteredDetails(@NotNull final VirtualFile root,
-                                                                 @NotNull Collection<VcsLogFilter> filters) throws VcsException {
+                                                                 @NotNull Collection<VcsLogFilter> filters,
+                                                                 int maxCount) throws VcsException {
+    if (!isRepositoryReady(root)) {
+      return Collections.emptyList();
+    }
+
     List<String> filterParameters = ContainerUtil.newArrayList();
 
     List<VcsLogBranchFilter> branchFilters = ContainerUtil.findAll(filters, VcsLogBranchFilter.class);
@@ -197,7 +208,7 @@ public class GitLogProvider implements VcsLogProvider {
       filterParameters.add(branchFilter.getBranchName());
     }
     else {
-      filterParameters.add("--all");
+      filterParameters.addAll(GitHistoryUtils.LOG_ALL);
     }
 
     List<VcsLogUserFilter> userFilters = ContainerUtil.findAll(filters, VcsLogUserFilter.class);
@@ -233,6 +244,9 @@ public class GitLogProvider implements VcsLogProvider {
     }
 
     filterParameters.add("--regexp-ignore-case"); // affects case sensitivity of any filter (except file filter)
+    if (maxCount > 0) {
+      filterParameters.add("--max-count=" + maxCount);
+    }
 
     // note: this filter must be the last parameter, because it uses "--" which separates parameters from paths
     List<VcsLogStructureFilter> structureFilters = ContainerUtil.findAll(filters, VcsLogStructureFilter.class);
@@ -269,4 +283,24 @@ public class GitLogProvider implements VcsLogProvider {
   private static <T> String joinFilters(List<T> filters, Function<T, String> toString) {
     return StringUtil.join(filters, toString, "\\|");
   }
+
+  @Nullable
+  private GitRepository getRepository(@NotNull VirtualFile root) {
+    myRepositoryManager.waitUntilInitialized();
+    return myRepositoryManager.getRepositoryForRoot(root);
+  }
+
+  private boolean isRepositoryReady(@NotNull VirtualFile root) {
+    GitRepository repository = getRepository(root);
+    if (repository == null) {
+      LOG.error("Repository not found for root " + root);
+      return false;
+    }
+    else if (repository.isFresh()) {
+      LOG.info("Fresh repository: " + root);
+      return false;
+    }
+    return true;
+  }
+
 }

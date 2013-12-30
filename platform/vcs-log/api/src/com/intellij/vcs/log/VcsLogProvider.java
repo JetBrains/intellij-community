@@ -75,10 +75,12 @@ public interface VcsLogProvider {
 
   /**
    * Return commits with full details, which correspond to the given filters.
+   *
+   * @param maxCount maximum number of commits to request from the VCS, or -1 for unlimited.
    */
   @NotNull
   List<? extends VcsFullCommitDetails> getFilteredDetails(@NotNull VirtualFile root,
-                                                          @NotNull Collection<VcsLogFilter> filters) throws VcsException;
+                                                          @NotNull Collection<VcsLogFilter> filters, int maxCount) throws VcsException;
 
   /**
    * Returns the name of current user as specified for the given root,

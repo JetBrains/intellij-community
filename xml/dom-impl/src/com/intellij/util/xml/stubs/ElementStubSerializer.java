@@ -20,6 +20,7 @@ import com.intellij.psi.stubs.IndexSink;
 import com.intellij.psi.stubs.ObjectStubSerializer;
 import com.intellij.psi.stubs.StubInputStream;
 import com.intellij.psi.stubs.StubOutputStream;
+import com.intellij.util.xml.stubs.index.DomElementClassIndex;
 import com.intellij.util.xml.stubs.index.DomNamespaceKeyIndex;
 import org.jetbrains.annotations.NotNull;
 
@@ -37,14 +38,16 @@ public class ElementStubSerializer implements ObjectStubSerializer<ElementStub, 
   public void serialize(@NotNull ElementStub stub, @NotNull StubOutputStream dataStream) throws IOException {
     dataStream.writeName(stub.getName());
     dataStream.writeName(stub.getNamespaceKey());
-    dataStream.writeInt(stub.getIndex());
+    dataStream.writeVarInt(stub.getIndex());
     dataStream.writeBoolean(stub.isCustom());
+    dataStream.writeName(stub.getElementClass());
   }
 
   @NotNull
   @Override
   public ElementStub deserialize(@NotNull StubInputStream dataStream, ElementStub parentStub) throws IOException {
-    return new ElementStub(parentStub, dataStream.readName(), dataStream.readName(), dataStream.readInt(), dataStream.readBoolean());
+    return new ElementStub(parentStub, dataStream.readName(), dataStream.readName(),
+                           dataStream.readVarInt(), dataStream.readBoolean(), dataStream.readName());
   }
 
   @Override
@@ -52,6 +55,11 @@ public class ElementStubSerializer implements ObjectStubSerializer<ElementStub, 
     final String namespaceKey = stub.getNamespaceKey();
     if (StringUtil.isNotEmpty(namespaceKey)) {
       sink.occurrence(DomNamespaceKeyIndex.KEY, namespaceKey);
+    }
+
+    final String elementClass = stub.getElementClass();
+    if (elementClass != null) {
+      sink.occurrence(DomElementClassIndex.KEY, elementClass);
     }
   }
 

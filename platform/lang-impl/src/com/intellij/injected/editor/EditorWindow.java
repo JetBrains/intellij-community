@@ -511,7 +511,7 @@ public class EditorWindow extends UserDataHolderBase implements EditorEx {
 
   @Override
   public boolean isDisposed() {
-    return !myDisposed && myDelegate.isDisposed();
+    return myDisposed || myDelegate.isDisposed();
   }
 
   @Override

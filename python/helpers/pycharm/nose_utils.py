@@ -107,7 +107,7 @@ class TeamcityPlugin(ErrorClassPlugin, TextTestResult, TeamcityTestResult):
         location = location + ":" + str(test.test.lineno)
     else:
       suite = strclass(test.__class__)
-      suite_location = "python_uttestid://" + suite
+      suite_location = "python_nosetestid://" + suite
       try:
         from nose_helper.util import func_lineno
 
@@ -124,8 +124,8 @@ class TeamcityPlugin(ErrorClassPlugin, TextTestResult, TeamcityTestResult):
       except:
         test_id = test.id()
         suite_id = test_id[:test_id.rfind(".")]
-        suite_location = "python_uttestid://" + str(suite_id)
-        location = "python_uttestid://" + str(test_id)
+        suite_location = "python_nosetestid://" + str(suite_id)
+        location = "python_nosetestid://" + str(test_id)
     return (location, suite_location)
 
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -132,7 +132,7 @@ public class DFAType {
 
   @Nullable
   public PsiType getResultType() {
-    if (mixins.size() == 0) return primary;
+    if (mixins.isEmpty()) return primary;
 
     List<PsiType> types = new ArrayList<PsiType>();
     if (primary != null) {
@@ -143,8 +143,8 @@ public class DFAType {
         types.add(mixin.myType);
       }
     }
-    if (types.size() == 0) return null;
-    return PsiIntersectionType.createIntersection(types.toArray(new PsiType[types.size()]));
+    if (types.isEmpty()) return null;
+    return PsiIntersectionType.createIntersection(types.toArray(PsiType.createArray(types.size())));
   }
 
   public static DFAType create(@Nullable PsiType type) {

@@ -66,6 +66,7 @@ public class GrListOrMapImpl extends GrExpressionImpl implements GrListOrMap {
     super(node);
   }
 
+  @Override
   public void accept(GroovyElementVisitor visitor) {
     visitor.visitListOrMap(this);
   }
@@ -100,10 +101,12 @@ public class GrListOrMapImpl extends GrExpressionImpl implements GrListOrMap {
     super.deleteChildInternal(child);
   }
 
+  @Override
   public PsiType getType() {
     return TypeInferenceHelper.getCurrentContext().getExpressionType(this, TYPES_CALCULATOR);
   }
 
+  @Override
   public boolean isMap() {
     return findChildByType(MAP_LITERAL_TOKEN_SET) != null;
   }
@@ -118,6 +121,7 @@ public class GrListOrMapImpl extends GrExpressionImpl implements GrListOrMap {
     return findChildByType(GroovyTokenTypes.mRBRACK);
   }
 
+  @Override
   @NotNull
   public GrExpression[] getInitializers() {
     List<GrExpression> result = ContainerUtil.newArrayList();
@@ -129,6 +133,7 @@ public class GrListOrMapImpl extends GrExpressionImpl implements GrListOrMap {
     return result.toArray(new GrExpression[result.size()]);
   }
 
+  @Override
   @NotNull
   public GrNamedArgument[] getNamedArguments() {
     List<GrNamedArgument> result = new ArrayList<GrNamedArgument>();
@@ -183,6 +188,7 @@ public class GrListOrMapImpl extends GrExpressionImpl implements GrListOrMap {
   }
 
   private static class MyTypesCalculator implements Function<GrListOrMapImpl, PsiType> {
+    @Override
     @Nullable
     public PsiType fun(GrListOrMapImpl listOrMap) {
       final GlobalSearchScope scope = listOrMap.getResolveScope();
@@ -261,7 +267,7 @@ public class GrListOrMapImpl extends GrExpressionImpl implements GrListOrMap {
         }
       }
 
-      PsiType[] result = new PsiType[initializers.length];
+      PsiType[] result = PsiType.createArray(initializers.length);
       for (int i = 0; i < result.length; i++) {
         result[i] = initializers[i].getType();
       }

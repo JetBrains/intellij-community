@@ -22,6 +22,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.vcs.log.Hash;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.HgNameWithHashInfo;
@@ -29,6 +30,8 @@ import org.zmlx.hg4idea.HgVcs;
 import org.zmlx.hg4idea.util.HgUtil;
 
 import java.util.Collection;
+import java.util.Map;
+import java.util.Set;
 
 
 /**
@@ -96,7 +99,7 @@ public class HgRepositoryImpl extends RepositoryImpl implements HgRepository {
 
   @Override
   @NotNull
-  public Collection<HgNameWithHashInfo> getBranches() {
+  public Map<String, Set<Hash>> getBranches() {
     return myInfo.getBranches();
   }
 

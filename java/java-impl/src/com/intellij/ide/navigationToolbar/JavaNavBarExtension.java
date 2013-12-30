@@ -77,7 +77,7 @@ public class JavaNavBarExtension implements NavBarModelExtension{
       }
       return containingFile;
     }
-    return psiElement.isPhysical() ? psiElement : null;
+    return psiElement;
   }
 
   @Override

@@ -164,12 +164,9 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl<GrCodeRef
       }
     }
     else if (parent instanceof GrNewExpression || parent instanceof GrAnonymousClassDefinition) {
-      if (parent instanceof GrAnonymousClassDefinition) {
-        parent = parent.getParent();
-      }
-      assert parent instanceof GrNewExpression;
-      final GrNewExpression newExpression = (GrNewExpression)parent;
-      if (newExpression.getQualifier() != null) return CLASS_IN_QUALIFIED_NEW;
+      PsiElement newExpr = parent instanceof GrAnonymousClassDefinition ? parent.getParent() : parent;
+      assert newExpr instanceof GrNewExpression;
+      if (((GrNewExpression)newExpr).getQualifier() != null) return CLASS_IN_QUALIFIED_NEW;
     }
 
     return CLASS;
@@ -513,7 +510,10 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl<GrCodeRef
             }
           }
           else {
-            ResolveUtil.treeWalkUp(ref, processor, false);
+            // if ref is an annotation name reference we should not process declarations of annotated elements
+            // because inner annotations are not permitted and it can cause infinite recursion
+            PsiElement placeToStartWalking = isAnnotationRef(ref) ? getContextFile(ref) : ref;
+            ResolveUtil.treeWalkUp(placeToStartWalking, processor, false);
             GroovyResolveResult[] candidates = processor.getCandidates();
             if (candidates.length > 0) return candidates;
 
@@ -595,6 +595,21 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl<GrCodeRef
       return GroovyResolveResult.EMPTY_ARRAY;
     }
 
+    private static boolean isAnnotationRef(GrCodeReferenceElement ref) {
+      final PsiElement parent = ref.getParent();
+      return parent instanceof GrAnnotation || parent instanceof GrCodeReferenceElement && isAnnotationRef((GrCodeReferenceElement)parent);
+    }
+
+    private static PsiFile getContextFile(@NotNull PsiElement ref) {
+      final PsiFile file = ref.getContainingFile();
+      if (file.isPhysical() || file.getContext() == null) {
+        return file;
+      }
+      else {
+        return getContextFile(file.getContext());
+      }
+    }
+
     private static void processAccessors(GrCodeReferenceElementImpl ref,
                                          String refName,
                                          PsiClass clazz,
@@ -665,16 +680,6 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl<GrCodeRef
   @Override
   public void processVariants(PrefixMatcher matcher, CompletionParameters parameters, Consumer<LookupElement> consumer) {
     processVariantsImpl(getKind(true), consumer, matcher);
-  }
-
-  @Override
-  public PsiElement getContext() {
-    if (getParent() instanceof GrAnnotation) {
-      return getContainingFile();
-    }
-    else {
-      return super.getContext();
-    }
   }
 
   @NotNull

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,50 +16,63 @@
 package com.intellij.openapi.updateSettings.impl;
 
 import com.intellij.ide.BrowserUtil;
-import com.intellij.openapi.application.ApplicationNamesInfo;
-import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.ide.IdeBundle;
 import com.intellij.ui.BrowserHyperlinkListener;
 import com.intellij.ui.LicensingFacade;
-import com.intellij.ui.components.JBScrollPane;
-import com.intellij.util.ui.UIUtil;
-import com.intellij.xml.util.XmlStringUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
+import java.util.List;
 
 /**
  * @author yole
  */
-public class NewChannelDialog extends DialogWrapper {
+class NewChannelDialog extends AbstractUpdateDialog {
   private final UpdateChannel myChannel;
-  private String myInformationText;
+  private final BuildInfo myLatestBuild;
   private boolean myShowUpgradeButton = false;
+  private String myLicenseInfo = null;
 
-  public NewChannelDialog(UpdateChannel channel) {
-    super(true);
+  public NewChannelDialog(@NotNull UpdateChannel channel) {
+    super(false);
     myChannel = channel;
-    setTitle("New " + ApplicationNamesInfo.getInstance().getFullProductName() + " Version Available");
-    initInfo();
+    myLatestBuild = channel.getLatestBuild();
+    assert myLatestBuild != null;
+
+    LicensingFacade facade = LicensingFacade.getInstance();
+    if (facade != null) {
+      if (!myChannel.getLicensing().equals(UpdateChannel.LICENSING_EAP)) {
+        Boolean paidUpgrade = facade.isPaidUpgrade(myChannel.getMajorVersion(), myLatestBuild.getReleaseDate());
+        if (paidUpgrade == Boolean.TRUE) {
+          myShowUpgradeButton = true;
+          myLicenseInfo = IdeBundle.message("updates.channel.key.needed", myChannel.getEvalDays());
+        }
+        else if (paidUpgrade == Boolean.FALSE) {
+          myLicenseInfo = IdeBundle.message("updates.channel.existing.key");
+        }
+      }
+      else {
+        myLicenseInfo = IdeBundle.message("updates.channel.bundled.key");
+      }
+    }
+
     init();
-    setOKButtonText("More Info...");
-    setOKButtonMnemonic('M');
-    setCancelButtonText("Ignore This Update");
+  }
+
+  @Override
+  protected JComponent createCenterPanel() {
+    return new NewChannelPanel().myPanel;
   }
 
   @NotNull
   @Override
   protected Action[] createActions() {
-    Action remindLater = new AbstractAction("Remind Me Later") {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        UpdateSettings.getInstance().forgetChannelId(myChannel.getId());
-        doCancelAction();
-      }
-    };
+    List<Action> actions = ContainerUtil.newArrayList(getOKAction());
+
     if (myShowUpgradeButton) {
-      Action upgrade = new AbstractAction("Buy Upgrade Online") {
+      actions.add(new AbstractAction(IdeBundle.message("updates.buy.online.button")) {
         @Override
         public void actionPerformed(ActionEvent e) {
           LicensingFacade facade = LicensingFacade.getInstance();
@@ -67,54 +80,53 @@ public class NewChannelDialog extends DialogWrapper {
           BrowserUtil.launchBrowser(facade.getUpgradeUrl());
           doCancelAction();
         }
-      };
-      return new Action[] { getOKAction(), upgrade, remindLater, getCancelAction() };
+      });
     }
-    return new Action[] { getOKAction(), remindLater, getCancelAction() };
+
+    actions.add(new AbstractAction(IdeBundle.message("updates.remind.later.button")) {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        UpdateSettings.getInstance().forgetChannelId(myChannel.getId());
+        doCancelAction();
+      }
+    });
+
+    actions.add(getCancelAction());
+
+    return actions.toArray(new Action[actions.size()]);
   }
 
   @Override
-  protected JComponent createCenterPanel() {
-    JEditorPane pane = new JEditorPane(UIUtil.HTML_MIME, myInformationText);
-    pane.addHyperlinkListener(new BrowserHyperlinkListener());
-    pane.setEditable(false);
-    pane.setBackground(UIUtil.getLabelBackground());
-    JBScrollPane scrollPane = new JBScrollPane(pane);
-    scrollPane.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 0));
-    return scrollPane;
+  protected String getOkButtonText() {
+    return IdeBundle.message("updates.more.info.button");
   }
 
-  private void initInfo() {
-    StringBuilder builder = new StringBuilder();
-    builder.append("<head>").append(UIUtil.getCssFontDeclaration(UIUtil.getLabelFont())).append("</head><body>");
-    builder.append("<b>").append(myChannel.getName()).append("</b><br>");
-    builder.append(StringUtil.formatLinks(myChannel.getLatestBuild().getMessage())).append("<br><br>");
-    LicensingFacade facade = LicensingFacade.getInstance();
-    if (facade != null) {
-      if (!myChannel.getLicensing().equals(UpdateChannel.LICENSING_EAP)) {
-        Boolean paidUpgrade = facade.isPaidUpgrade(myChannel.getMajorVersion(), myChannel.getLatestBuild().getReleaseDate());
-        if (paidUpgrade != null) {
-          if (paidUpgrade) {
-            builder.append("You can evaluate the new version for ")
-              .append(myChannel.getEvalDays())
-              .append(" days or buy a license key or an upgrade online.");
-            myShowUpgradeButton = true;
-          }
-          else {
-            builder.append("The new version can be used with your existing license key.");
-          }
-        }
-      }
-      else {
-        builder.append("The new version has an expiration date and does not require a license key.");
-      }
-    }
-    myInformationText = XmlStringUtil.wrapInHtml(builder);
+  @Override
+  protected String getCancelButtonText() {
+    return IdeBundle.message("updates.ignore.update.button");
   }
 
   @Override
   protected void doOKAction() {
     BrowserUtil.launchBrowser(myChannel.getHomePageUrl());
     super.doOKAction();
+  }
+
+  private class NewChannelPanel {
+    private JPanel myPanel;
+    private JEditorPane myMessageArea;
+    private JEditorPane myLicenseArea;
+
+    private NewChannelPanel() {
+      String message = IdeBundle.message("updates.channel.name.message", myChannel.getName(), myLatestBuild.getMessage());
+      configureMessageArea(myMessageArea, message, null, new BrowserHyperlinkListener());
+
+      if (myLicenseInfo != null) {
+        configureMessageArea(myLicenseArea, myLicenseInfo, null, new BrowserHyperlinkListener());
+      }
+      else {
+        myLicenseArea.setVisible(false);
+      }
+    }
   }
 }

@@ -32,7 +32,7 @@ public class GradleProjectWizardTest extends NewProjectWizardTestCase {
       @Override
       public void consume(Step step) {
         if (step instanceof ProjectTypeStep) {
-          assertTrue(((ProjectTypeStep)step).setSelectedProjectType("Java", "Gradle"));
+          assertTrue(((ProjectTypeStep)step).setSelectedTemplate("Java", "Gradle"));
         }
       }
     });

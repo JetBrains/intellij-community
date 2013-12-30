@@ -16,8 +16,9 @@
 
 package com.intellij.util.containers;
 
+import com.intellij.util.containers.hash.LinkedHashMap;
+
 import java.util.Collection;
-import java.util.LinkedHashMap;
 import java.util.Map;
 
 /**

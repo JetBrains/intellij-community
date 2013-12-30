@@ -412,23 +412,6 @@ public class InjectedLanguageUtil {
     return combinedEdiablesLength != elementRange.getLength();
   }
 
-  public static boolean isSelectionIsAboutToOverflowInjectedFragment(@NotNull EditorWindow injectedEditor, @NotNull TextRange selRange) {
-    int selStart = selRange.getStartOffset();
-    int selEnd = selRange.getEndOffset();
-    DocumentWindow document = injectedEditor.getDocument();
-
-    TextRange hostRange = document.injectedToHost(selRange.grown(2).shiftRight(-1));
-    boolean isStartOverflows = document.hostToInjected(hostRange.getStartOffset()) == selStart;
-
-    boolean isEndOverflows = document.hostToInjected(hostRange.getEndOffset()) == selEnd;
-    //if (!isEndOverflows) {
-    //  int hostNext = document.injectedToHost(selEnd + 1);
-    //  isEndOverflows = document.hostToInjected(hostNext) == selEnd;
-    //}
-
-    return isStartOverflows || isEndOverflows;
-  }
-
   public static boolean hasInjections(@NotNull PsiLanguageInjectionHost host) {
     if (!host.isPhysical()) return false;
     final Ref<Boolean> result = Ref.create(false);
@@ -495,5 +478,24 @@ public class InjectedLanguageUtil {
 
   public static boolean isHighlightInjectionBackground(@Nullable PsiLanguageInjectionHost host) {
     return !(host instanceof InjectionBackgroundSuppressor);
+  }
+
+  public static int getInjectedStart(@NotNull List<PsiLanguageInjectionHost.Shred> places) {
+    PsiLanguageInjectionHost.Shred shred = places.get(0);
+    PsiLanguageInjectionHost host = shred.getHost();
+    assert host != null;
+    return shred.getRangeInsideHost().getStartOffset() + host.getTextOffset();
+  }
+
+  @Nullable
+  public static PsiElement findElementInInjected(@NotNull PsiLanguageInjectionHost injectionHost, final int offset) {
+    final Ref<PsiElement> ref = Ref.create();
+    enumerate(injectionHost, new PsiLanguageInjectionHost.InjectedPsiVisitor() {
+      @Override
+      public void visit(@NotNull final PsiFile injectedPsi, @NotNull final List<PsiLanguageInjectionHost.Shred> places) {
+        ref.set(injectedPsi.findElementAt(offset - getInjectedStart(places)));
+      }
+    });
+    return ref.get();
   }
 }

@@ -28,6 +28,7 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler;
+import com.intellij.openapi.ide.CopyPasteManager;
 
 public class DeleteLineAction extends TextComponentEditorAction {
   public DeleteLineAction() {
@@ -38,6 +39,7 @@ public class DeleteLineAction extends TextComponentEditorAction {
     @Override
     public void executeWriteAction(Editor editor, DataContext dataContext) {
       CommandProcessor.getInstance().setCurrentCommandGroupId(EditorActionUtil.DELETE_COMMAND_GROUP);
+      CopyPasteManager.getInstance().stopKillRings();
       SelectionModel selectionModel = editor.getSelectionModel();
       Document document = editor.getDocument();
 

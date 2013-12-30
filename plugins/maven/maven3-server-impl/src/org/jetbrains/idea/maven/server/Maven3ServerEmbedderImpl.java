@@ -420,7 +420,6 @@ public class Maven3ServerEmbedderImpl extends MavenRemoteObject implements Maven
   }
 
   private static MavenExecutionResult handleException(Throwable e) {
-      if (e instanceof RuntimeException) throw (RuntimeException) e;
       if (e instanceof Error) throw (Error) e;
 
       return new MavenExecutionResult(null, Collections.singletonList((Exception) e));

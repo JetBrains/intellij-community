@@ -76,6 +76,14 @@ public abstract class Intention extends BaseElementAtCaretIntentionAction {
     codeStyleManager.reformat(insertedElement);
   }
 
+  protected static void replaceExpressionAndShorten(@NonNls @NotNull String newExpression, @NotNull PsiExpression expression) {
+    final Project project = expression.getProject();
+    final PsiExpression newCall = JavaPsiFacade.getElementFactory(project).createExpressionFromText(newExpression, expression);
+    final PsiElement insertedElement = expression.replace(newCall);
+    final PsiElement shortenedElement = JavaCodeStyleManager.getInstance(project).shortenClassReferences(insertedElement);
+    CodeStyleManager.getInstance(project).reformat(shortenedElement);
+  }
+
   protected static void replaceExpressionWithNegatedExpression(@NotNull PsiExpression newExpression, @NotNull PsiExpression expression){
     final Project project = expression.getProject();
     final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);

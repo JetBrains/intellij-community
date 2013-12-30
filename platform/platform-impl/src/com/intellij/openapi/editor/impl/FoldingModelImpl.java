@@ -30,12 +30,10 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.FoldingGroup;
 import com.intellij.openapi.editor.LogicalPosition;
+import com.intellij.openapi.editor.ScrollingModel;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.event.DocumentEvent;
-import com.intellij.openapi.editor.ex.DocumentEx;
-import com.intellij.openapi.editor.ex.FoldingListener;
-import com.intellij.openapi.editor.ex.FoldingModelEx;
-import com.intellij.openapi.editor.ex.PrioritizedDocumentListener;
+import com.intellij.openapi.editor.ex.*;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
@@ -63,7 +61,7 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedDocumentList
 
   private int mySavedCaretX;
   private int mySavedCaretY;
-  private int mySavedCaretShift;
+  private int mySavedCaretPositionBeforeBatchFolding;
   private boolean myCaretPositionSaved;
   private final MultiMap<FoldingGroup, FoldRegion> myGroups = new MultiMap<FoldingGroup, FoldRegion>();
   private boolean myDocumentChangeProcessed = true;
@@ -205,8 +203,7 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedDocumentList
     myDoNotCollapseCaret |= dontCollapseCaret;
     boolean oldBatchFlag = myIsBatchFoldingProcessing;
     if (!oldBatchFlag) {
-      mySavedCaretShift =
-        myEditor.visibleLineToY(myEditor.getCaretModel().getVisualPosition().line) - myEditor.getScrollingModel().getVerticalScrollOffset();
+      mySavedCaretPositionBeforeBatchFolding = myEditor.visibleLineToY(myEditor.getCaretModel().getVisualPosition().line);
     }
 
     myIsBatchFoldingProcessing = true;
@@ -229,8 +226,12 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedDocumentList
     runBatchFoldingOperation(operation, true, true);
   }
 
+  /**
+   * Disables caret position adjustment after batch folding operation is finished.
+   * Should be called from inside batch operation runnable.
+   */
   public void flushCaretShift() {
-    mySavedCaretShift = -1;
+    mySavedCaretPositionBeforeBatchFolding = -1;
   }
 
   @Override
@@ -426,11 +427,18 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedDocumentList
       myEditor.getSelectionModel().setSelection(selectionStart, selectionEnd);
     }
 
-    if (mySavedCaretShift > 0) {
-      myEditor.getScrollingModel().disableAnimation();
-      int scrollTo = myEditor.visibleLineToY(myEditor.getCaretModel().getVisualPosition().line) - mySavedCaretShift;
-      myEditor.getScrollingModel().scrollVertically(scrollTo);
-      myEditor.getScrollingModel().enableAnimation();
+    if (mySavedCaretPositionBeforeBatchFolding >= 0) {
+      final int offset = myEditor.visibleLineToY(myEditor.getCaretModel().getVisualPosition().line) - mySavedCaretPositionBeforeBatchFolding;
+      final ScrollingModel scrollingModel = myEditor.getScrollingModel();
+      scrollingModel.runActionOnScrollingFinished(new Runnable() {
+        @Override
+        public void run() {
+          scrollingModel.disableAnimation();
+          int pos = scrollingModel.getVerticalScrollOffset();
+          scrollingModel.scrollVertically(pos + offset);
+          scrollingModel.enableAnimation();
+        }
+      });
     }
   }
 

@@ -41,19 +41,22 @@ public class PsiArrayType extends PsiType {
     myComponentType = componentType;
   }
 
+  @NotNull
   @Override
   public String getPresentableText() {
-    return StringUtil.joinOrNull(myComponentType.getPresentableText(), getAnnotationsTextPrefix(false, true, true), "[]");
+    return StringUtil.join(myComponentType.getPresentableText(), getAnnotationsTextPrefix(false, true, true), "[]");
   }
 
+  @NotNull
   @Override
   public String getCanonicalText() {
-    return StringUtil.joinOrNull(myComponentType.getCanonicalText(), "[]");
+    return StringUtil.join(myComponentType.getCanonicalText(), "[]");
   }
 
+  @NotNull
   @Override
   public String getInternalCanonicalText() {
-    return StringUtil.joinOrNull(myComponentType.getInternalCanonicalText(), getAnnotationsTextPrefix(true, true, true), "[]");
+    return StringUtil.join(myComponentType.getInternalCanonicalText(), getAnnotationsTextPrefix(true, true, true), "[]");
   }
 
   @Override
@@ -62,7 +65,7 @@ public class PsiArrayType extends PsiType {
   }
 
   @Override
-  public boolean equalsToText(String text) {
+  public boolean equalsToText(@NotNull String text) {
     return text.endsWith("[]") && myComponentType.equalsToText(text.substring(0, text.length() - 2));
   }
 
@@ -80,7 +83,7 @@ public class PsiArrayType extends PsiType {
   @NotNull
   public PsiType[] getSuperTypes() {
     final PsiType[] superTypes = myComponentType.getSuperTypes();
-    final PsiType[] result = new PsiType[superTypes.length];
+    final PsiType[] result = createArray(superTypes.length);
     for (int i = 0; i < superTypes.length; i++) {
       result[i] = superTypes[i].createArrayType();
     }

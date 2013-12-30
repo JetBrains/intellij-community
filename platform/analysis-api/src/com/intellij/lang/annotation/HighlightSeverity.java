@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,10 +15,7 @@
  */
 package com.intellij.lang.annotation;
 
-import com.intellij.openapi.util.DefaultJDOMExternalizer;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.JDOMExternalizable;
-import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.*;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -30,9 +27,9 @@ import org.jetbrains.annotations.NotNull;
  * @see com.intellij.lang.annotation.Annotation
  */
 
-public class HighlightSeverity implements Comparable<HighlightSeverity>, JDOMExternalizable {
-  public String myName;
-  public int myVal;
+public class HighlightSeverity implements Comparable<HighlightSeverity> {
+  public final String myName;
+  public final int myVal;
 
   /**
    * The standard severity level for information annotations.
@@ -86,7 +83,9 @@ public class HighlightSeverity implements Comparable<HighlightSeverity>, JDOMExt
 
 
   //read external only
-  public HighlightSeverity() {
+  public HighlightSeverity(@NotNull Element element) {
+    myName = JDOMExternalizerUtil.readField(element, "myName");
+    myVal = Integer.valueOf(JDOMExternalizerUtil.readField(element, "myVal"));
   }
 
   public String toString() {
@@ -98,16 +97,9 @@ public class HighlightSeverity implements Comparable<HighlightSeverity>, JDOMExt
     return myVal - highlightSeverity.myVal;
   }
 
-  @Override
-  public void readExternal(Element element) throws InvalidDataException {
-    DefaultJDOMExternalizer.readExternal(this, element);
-  }
-
-  @Override
   public void writeExternal(final Element element) throws WriteExternalException {
     DefaultJDOMExternalizer.writeExternal(this, element);
   }
-
 
   public boolean equals(final Object o) {
     if (this == o) return true;

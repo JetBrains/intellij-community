@@ -15,6 +15,7 @@
  */
 package com.intellij.ide.util.projectWizard;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -35,6 +36,15 @@ public abstract class AbstractModuleBuilder extends ProjectBuilder {
 
   @Nullable
   public ModuleWizardStep modifySettingsStep(@NotNull SettingsStep settingsStep) {
+    return null;
+  }
+
+  public boolean hasCustomOptionsPanel() {
+    return false;
+  }
+
+  @Nullable
+  public JComponent getCustomOptionsPanel(Disposable parentDisposable) {
     return null;
   }
 

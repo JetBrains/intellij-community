@@ -30,6 +30,7 @@ import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
+import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ui.MacUIUtil;
 
@@ -43,6 +44,7 @@ public class DeleteAction extends EditorAction {
     public void executeWriteAction(Editor editor, DataContext dataContext) {
       MacUIUtil.hideCursor();
       CommandProcessor.getInstance().setCurrentCommandGroupId(EditorActionUtil.DELETE_COMMAND_GROUP);
+      CopyPasteManager.getInstance().stopKillRings();
       SelectionModel selectionModel = editor.getSelectionModel();
       final LogicalPosition logicalBlockSelectionStart = selectionModel.getBlockStart();
       final LogicalPosition logicalBlockSelectionEnd = selectionModel.getBlockEnd();

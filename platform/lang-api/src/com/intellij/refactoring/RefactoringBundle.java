@@ -18,6 +18,7 @@ package com.intellij.refactoring;
 
 import com.intellij.CommonBundle;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.PropertyKey;
 
@@ -29,8 +30,12 @@ import java.util.ResourceBundle;
  * @author ven
  */
 public class RefactoringBundle {
-  private static Reference<ResourceBundle> ourBundle;
 
+  public static String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, @NotNull Object... params) {
+    return CommonBundle.message(getBundle(), key, params);
+  }
+
+  private static Reference<ResourceBundle> ourBundle;
   @NonNls private static final String BUNDLE = "messages.RefactoringBundle";
 
   private RefactoringBundle() {
@@ -72,11 +77,7 @@ public class RefactoringBundle {
     return message("cannot.perform.refactoring") + (message == null ? "" : "\n" + message);
   }
 
-  public static String message(@PropertyKey(resourceBundle = BUNDLE)String key, Object... params) {
-    return CommonBundle.message(getBundle(), key, params);
-  }
-
-  public static String message(@PropertyKey(resourceBundle = BUNDLE)String key) {
+  public static String message(@PropertyKey(resourceBundle = BUNDLE) String key) {
     return CommonBundle.message(getBundle(), key);
   }
 

@@ -31,6 +31,7 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileSystemUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileVisitor;
@@ -58,6 +59,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
@@ -681,10 +683,14 @@ public abstract class UsefulTestCase extends TestCase {
     String fileText;
     try {
       if (OVERWRITE_TESTDATA) {
-        FileUtil.writeToFile(new File(filePath), actualText);
+        VfsTestUtil.overwriteTestData(filePath, actualText);
         System.out.println("File " + filePath + " created.");
       }
-      fileText = FileUtil.loadFile(new File(filePath));
+      fileText = FileUtil.loadFile(new File(filePath), CharsetToolkit.UTF8);
+    }
+    catch (FileNotFoundException e) {
+      VfsTestUtil.overwriteTestData(filePath, actualText);
+      throw new AssertionFailedError("No output text found. File " + filePath + " created.");
     }
     catch (IOException e) {
       throw new RuntimeException(e);

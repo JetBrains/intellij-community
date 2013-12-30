@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -143,7 +143,8 @@ public class EditorTestUtil {
    */
   public static boolean configureSoftWraps(Editor editor, final int charCountToWrapAt) {
     int charWidthInPixels = 7;
-    return configureSoftWraps(editor, charCountToWrapAt * charWidthInPixels, charWidthInPixels);
+    // we're adding 1 to charCountToWrapAt, to account for wrap character width, and 1 to overall width to overcome wrapping logic subtleties
+    return configureSoftWraps(editor, (charCountToWrapAt + 1) * charWidthInPixels + 1, charWidthInPixels);
   }
 
   /**

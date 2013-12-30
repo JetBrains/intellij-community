@@ -23,6 +23,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
@@ -43,6 +44,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrUnaryExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
+import org.jetbrains.plugins.groovy.lang.psi.api.util.GrStatementOwner;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.AfterCallInstruction;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.ReadWriteVariableInstruction;
@@ -117,21 +119,18 @@ public class ControlFlowUtils {
     if (statementIsBreakTarget(switchStatement)) {
       return true;
     }
+
     final GrCaseSection[] caseClauses = switchStatement.getCaseSections();
 
-    if (caseClauses.length == 0) {
-      return true;
-    }
-    boolean hasDefaultCase = false;
-    for (GrCaseSection clause : caseClauses) {
-      if (clause.isDefault()) {
-        hasDefaultCase = true;
+    if (ContainerUtil.find(caseClauses, new Condition<GrCaseSection>() {
+      @Override
+      public boolean value(GrCaseSection section) {
+        return section.isDefault();
       }
+    }) == null) {
+      return true;
     }
 
-    if (!hasDefaultCase) {
-      return true;
-    }
     final GrCaseSection lastClause = caseClauses[caseClauses.length - 1];
     final GrStatement[] statements = lastClause.getStatements();
     if (statements.length == 0) {
@@ -296,25 +295,44 @@ public class ControlFlowUtils {
       if (statementToCheck == null) {
         return false;
       }
-      final GrStatement container = getContainingStatement(statementToCheck);
+
+      final PsiElement container = statementToCheck.getParent();
       if (container == null) {
         return false;
       }
-      if (isLoop(container)) {
+
+      if (container instanceof GrLoopStatement) {
         return false;
       }
-      if (container instanceof GrBlockStatement) {
-        if (!statementIsLastInBlock((GrBlockStatement)container, statementToCheck)) {
+      else if (container instanceof GrCaseSection) {
+        final GrCaseSection caseSection = (GrCaseSection)container;
+
+        if (!statementIsLastInBlock(caseSection, statementToCheck)) return false;
+
+        final PsiElement parent = container.getParent();
+        assert parent instanceof GrSwitchStatement;
+        final GrSwitchStatement switchStatement = (GrSwitchStatement)parent;
+
+        final GrCaseSection[] sections = switchStatement.getCaseSections();
+        if (ArrayUtil.getLastElement(sections) != caseSection) {
           return false;
         }
-        if (container.equals(body)) {
-          return true;
+      }
+      else if (container instanceof GrOpenBlock) {
+        final GrOpenBlock block = (GrOpenBlock)container;
+
+        if (!statementIsLastInBlock(block, statementToCheck)) return false;
+        final PsiElement parent = block.getParent();
+        if (parent instanceof GrBlockStatement) {
+          final GrBlockStatement blockStatement = (GrBlockStatement)parent;
+          if (blockStatement == body) return true;
         }
-        statementToCheck = PsiTreeUtil.getParentOfType(container, GrStatement.class);
       }
-      else {
-        statementToCheck = container;
+      else if (container instanceof GrClosableBlock) {
+        return false;
       }
+
+      statementToCheck = getContainingStatement(statementToCheck);
     }
   }
 
@@ -338,7 +356,7 @@ public class ControlFlowUtils {
       if (container instanceof GrCodeBlock) {
         if (elementToCheck instanceof GrStatement) {
           final GrCodeBlock codeBlock = (GrCodeBlock)container;
-          if (!statementIsLastInCodeBlock(codeBlock, (GrStatement)elementToCheck)) {
+          if (!statementIsLastInBlock(codeBlock, (GrStatement)elementToCheck)) {
             return false;
           }
         }
@@ -372,7 +390,7 @@ public class ControlFlowUtils {
         return false;
       }
       if (container instanceof GrCodeBlock) {
-        if (!statementIsLastInCodeBlock((GrCodeBlock)container, (GrStatement)statementToCheck)) {
+        if (!statementIsLastInBlock((GrCodeBlock)container, (GrStatement)statementToCheck)) {
           return false;
         }
         if (container.equals(body)) {
@@ -386,7 +404,7 @@ public class ControlFlowUtils {
     }
   }
 
-  private static boolean isLoop(@NotNull GroovyPsiElement element) {
+  private static boolean isLoop(@NotNull PsiElement element) {
     return element instanceof GrLoopStatement;
   }
 
@@ -401,20 +419,10 @@ public class ControlFlowUtils {
   }
 
   private static boolean statementIsLastInBlock(@NotNull GrBlockStatement block, @NotNull GrStatement statement) {
-    final GrStatement[] statements = block.getBlock().getStatements();
-    for (int i = statements.length - 1; i >= 0; i--) {
-      final GrStatement childStatement = statements[i];
-      if (statement.equals(childStatement)) {
-        return true;
-      }
-      if (!(childStatement instanceof GrReturnStatement)) {
-        return false;
-      }
-    }
-    return false;
+    return statementIsLastInBlock(block.getBlock(), statement);
   }
 
-  private static boolean statementIsLastInCodeBlock(@NotNull GrCodeBlock block, @NotNull GrStatement statement) {
+  private static boolean statementIsLastInBlock(@NotNull GrStatementOwner block, @NotNull GrStatement statement) {
     final GrStatement[] statements = block.getStatements();
     for (int i = statements.length - 1; i >= 0; i--) {
       final GrStatement childStatement = statements[i];
@@ -709,15 +717,10 @@ public class ControlFlowUtils {
    * @param ahead if true search for next write. if false searches for previous write
    * @return all write instructions leading to (or preceding) the place
    */
-  public static ReadWriteVariableInstruction[] findWriteAccess(GrVariable local, final PsiElement place, boolean ahead) {
-    List<ReadWriteVariableInstruction> res = findAccess(local, place, ahead, true);
-    return res.toArray(new ReadWriteVariableInstruction[res.size()]);
-  }
-
   public static List<ReadWriteVariableInstruction> findAccess(GrVariable local, final PsiElement place, boolean ahead, boolean writeAccessOnly) {
     LOG.assertTrue(!(local instanceof GrField), local.getClass());
 
-    final GrControlFlowOwner owner = findControlFlowOwner(local);
+    final GrControlFlowOwner owner = findControlFlowOwner(place);
     assert owner != null;
 
     final Instruction cur = findInstruction(place, owner.getControlFlow());

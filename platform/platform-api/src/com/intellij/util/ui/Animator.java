@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,7 +29,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public abstract class Animator implements Disposable {
-  private final static ScheduledExecutorService scheduler = ConcurrencyUtil.newSingleScheduledThreadExecutor("Animations");
+  private static final ScheduledExecutorService scheduler = ConcurrencyUtil.newSingleScheduledThreadExecutor("Animations");
 
   private final int myTotalFrames;
   private final int myCycleDuration;
@@ -106,6 +106,7 @@ public abstract class Animator implements Disposable {
     stopTicker();
 
     SwingUtilities.invokeLater(new Runnable() {
+      @Override
       public void run() {
         paintCycleEnd();
       }
@@ -159,6 +160,7 @@ public abstract class Animator implements Disposable {
 
   public abstract void paintNow(int frame, int totalFrames, int cycle);
 
+  @Override
   public void dispose() {
     myDisposed = true;
     stopTicker();

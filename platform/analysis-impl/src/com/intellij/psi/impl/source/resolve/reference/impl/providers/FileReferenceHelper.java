@@ -49,6 +49,10 @@ public abstract class FileReferenceHelper {
   @Nullable
   public PsiFileSystemItem getPsiFileSystemItem(final Project project, @NotNull final VirtualFile file) {
     final PsiManager psiManager = PsiManager.getInstance(project);
+    return getPsiFileSystemItem(psiManager, file);
+  }
+
+  public static PsiFileSystemItem getPsiFileSystemItem(PsiManager psiManager, VirtualFile file) {
     return file.isDirectory() ? psiManager.findDirectory(file) : psiManager.findFile(file);
   }
 

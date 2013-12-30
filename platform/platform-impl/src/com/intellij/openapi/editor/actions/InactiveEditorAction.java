@@ -24,6 +24,7 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class InactiveEditorAction extends EditorAction {
@@ -33,7 +34,7 @@ public class InactiveEditorAction extends EditorAction {
 
   @Override
   @Nullable
-  protected Editor getEditor(final DataContext dataContext) {
+  protected Editor getEditor(@NotNull final DataContext dataContext) {
     return CommonDataKeys.EDITOR_EVEN_IF_INACTIVE.getData(dataContext);
   }
 }

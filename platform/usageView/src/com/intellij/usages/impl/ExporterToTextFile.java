@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.intellij.usages.TextChunk;
 import com.intellij.usages.UsageGroup;
 import com.intellij.usages.UsageViewSettings;
 import com.intellij.util.SystemProperties;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.event.ChangeListener;
@@ -33,7 +34,7 @@ import java.util.TooManyListenersException;
 class ExporterToTextFile implements com.intellij.ide.ExporterToTextFile {
   private final UsageViewImpl myUsageView;
 
-  public ExporterToTextFile(UsageViewImpl usageView) {
+  public ExporterToTextFile(@NotNull UsageViewImpl usageView) {
     myUsageView = usageView;
   }
 

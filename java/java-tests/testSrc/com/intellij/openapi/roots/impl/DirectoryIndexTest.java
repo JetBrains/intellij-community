@@ -669,12 +669,12 @@ public class DirectoryIndexTest extends IdeaTestCase {
     fireRootsChanged();
 
     assertFalse(myIndex.isProjectExcludeRoot(myOutputDir));
-    //todo uncomment assertFalse(myIndex.isProjectExcludeRoot(projectOutputUnderContent));
+    assertFalse(myIndex.isProjectExcludeRoot(projectOutputUnderContent));
     
     projectOutputUnderContent.delete(this);
     projectOutputUnderContent = myModule1Dir.createChildDirectory(this, "projectOutputUnderContent");
     assertFalse(myIndex.isProjectExcludeRoot(myOutputDir));
-    //todo uncomment assertFalse(myIndex.isProjectExcludeRoot(projectOutputUnderContent));
+    assertFalse(myIndex.isProjectExcludeRoot(projectOutputUnderContent));
   }
 
   private void checkInfo(VirtualFile dir,

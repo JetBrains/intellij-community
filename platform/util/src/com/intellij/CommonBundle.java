@@ -31,14 +31,15 @@ import java.util.ResourceBundle;
  */
 @SuppressWarnings("MethodOverridesStaticMethodOfSuperclass")
 public class CommonBundle extends BundleBase {
+
+  public static String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, @NotNull Object... params) {
+    return message(getCommonBundle(), key, params);
+  }
+
   @NonNls private static final String BUNDLE = "messages.CommonBundle";
   private static Reference<ResourceBundle> ourBundle;
 
-  private CommonBundle() {}
-
-  @NotNull
-  public static String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, @NotNull Object... params) {
-    return message(getCommonBundle(), key, params);
+  private CommonBundle() {
   }
 
   @NotNull
@@ -52,9 +53,9 @@ public class CommonBundle extends BundleBase {
   }
 
   public static String messageOrDefault(@Nullable final ResourceBundle bundle,
-                                        final String key,
+                                        @NotNull String key,
                                         @Nullable final String defaultValue,
-                                        final Object... params) {
+                                        @NotNull Object... params) {
     return BundleBase.messageOrDefault(bundle, key, defaultValue, params);
   }
 
@@ -88,22 +89,21 @@ public class CommonBundle extends BundleBase {
     return message("tree.node.loading");
   }
 
-  public static String getOkButtonText(){
+  public static String getOkButtonText() {
     return message("button.ok");
   }
 
-  public static String getYesButtonText(){
+  public static String getYesButtonText() {
     return message("button.yes");
   }
 
-  public static String getNoButtonText(){
+  public static String getNoButtonText() {
     return message("button.no");
   }
 
-  public static String getContinueButtonText(){
+  public static String getContinueButtonText() {
     return message("button.continue");
   }
-
 
   public static String getYesForAllButtonText() {
     return message("button.yes.for.all");

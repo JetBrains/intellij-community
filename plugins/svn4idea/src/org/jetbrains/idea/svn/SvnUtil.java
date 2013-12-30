@@ -348,12 +348,7 @@ public class SvnUtil {
 
   public static <T> MultiMap<Pair<SVNURL, WorkingCopyFormat>, T> splitIntoRepositoriesMap(SvnVcs vcs,
     List<T> committables, Convertor<T, File> convertor) {
-    final MultiMap<Pair<SVNURL, WorkingCopyFormat>, T> result = new MultiMap<Pair<SVNURL, WorkingCopyFormat>, T>() {
-      @Override
-      protected Collection<T> createCollection() {
-        return new ArrayList<T>();
-      }
-    };
+    final MultiMap<Pair<SVNURL, WorkingCopyFormat>, T> result = MultiMap.create();
     for (T committable : committables) {
       final RootUrlInfo path = vcs.getSvnFileUrlMapping().getWcRootForFilePath(convertor.convert(committable));
       if (path == null) {

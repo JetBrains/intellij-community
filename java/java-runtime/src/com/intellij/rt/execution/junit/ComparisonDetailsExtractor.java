@@ -96,8 +96,12 @@ public class ComparisonDetailsExtractor extends ExceptionPacketFactory {
   public Packet createPacket(OutputObjectRegistry registry, Object test) {
     Packet packet = super.createPacket(registry, test);
     packet.
-        addLimitedString(myExpected).
-        addLimitedString(myActual);
+        addLimitedString(wrap(myExpected)).
+        addLimitedString(wrap(myActual));
     return packet;
+  }
+
+  private static String wrap(final String message) {
+    return message != null ? message : "null";
   }
 }

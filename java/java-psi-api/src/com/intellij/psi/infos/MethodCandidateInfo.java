@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,11 +40,12 @@ import java.util.Map;
 public class MethodCandidateInfo extends CandidateInfo{
   public static final RecursionGuard ourOverloadGuard = RecursionManager.createGuard("overload.guard");
   public static final ThreadLocal<Map<PsiElement,  Pair<PsiMethod, PsiSubstitutor>>> CURRENT_CANDIDATE = new ThreadLocal<Map<PsiElement,  Pair<PsiMethod, PsiSubstitutor>>>();
-  @ApplicabilityLevelConstant private int myApplicabilityLevel = 0;
+  @ApplicabilityLevelConstant
+  private int myApplicabilityLevel; // benign race
   private final PsiElement myArgumentList;
   private final PsiType[] myArgumentTypes;
   private final PsiType[] myTypeArguments;
-  private PsiSubstitutor myCalcedSubstitutor = null;
+  private PsiSubstitutor myCalcedSubstitutor; // benign race
   private final LanguageLevel myLanguageLevel;
 
   public MethodCandidateInfo(PsiElement candidate,
@@ -135,13 +136,16 @@ public class MethodCandidateInfo extends CandidateInfo{
     return super.getSubstitutor();
   }
   
+  @NotNull
   @Override
   public PsiSubstitutor getSubstitutor() {
     return getSubstitutor(true);
   }
-  
+
+  @NotNull
   public PsiSubstitutor getSubstitutor(boolean includeReturnConstraint) {
-    if (myCalcedSubstitutor == null || !includeReturnConstraint) {
+    PsiSubstitutor substitutor = myCalcedSubstitutor;
+    if (substitutor == null || !includeReturnConstraint) {
       PsiSubstitutor incompleteSubstitutor = super.getSubstitutor();
       PsiMethod method = getElement();
       if (myTypeArguments == null) {
@@ -153,18 +157,18 @@ public class MethodCandidateInfo extends CandidateInfo{
           return inferredSubstitutor;
         }
 
-        myCalcedSubstitutor = inferredSubstitutor;
+        myCalcedSubstitutor = substitutor = inferredSubstitutor;
       }
       else {
         PsiTypeParameter[] typeParams = method.getTypeParameters();
         for (int i = 0; i < myTypeArguments.length && i < typeParams.length; i++) {
           incompleteSubstitutor = incompleteSubstitutor.put(typeParams[i], myTypeArguments[i]);
         }
-        myCalcedSubstitutor = incompleteSubstitutor;
+        myCalcedSubstitutor = substitutor = incompleteSubstitutor;
       }
     }
 
-    return myCalcedSubstitutor;
+    return substitutor;
   }
 
 
@@ -192,6 +196,7 @@ public class MethodCandidateInfo extends CandidateInfo{
     return (PsiMethod)super.getElement();
   }
 
+  @NotNull
   public PsiSubstitutor inferTypeArguments(@NotNull ParameterTypeInferencePolicy policy, boolean includeReturnConstraint) {
     return inferTypeArguments(policy, myArgumentList instanceof PsiExpressionList
                                       ? ((PsiExpressionList)myArgumentList).getExpressions()
@@ -215,6 +220,7 @@ public class MethodCandidateInfo extends CandidateInfo{
     }
   }
 
+  @NotNull
   public PsiSubstitutor inferTypeArguments(@NotNull ParameterTypeInferencePolicy policy,
                                            @NotNull PsiExpression[] arguments, 
                                            boolean includeReturnConstraint) {

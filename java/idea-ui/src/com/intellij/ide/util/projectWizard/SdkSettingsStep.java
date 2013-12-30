@@ -31,6 +31,7 @@ import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Condition;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -102,8 +103,13 @@ public class SdkSettingsStep extends ModuleWizardStep {
     JPanel jdkPanel = new JPanel(new BorderLayout(4, 0));
     jdkPanel.add(myJdkComboBox);
     jdkPanel.add(button, BorderLayout.EAST);
-    settingsStep.addSettingsField((project == null ? "Project" : "Module") + " \u001BSDK:", jdkPanel);
+    settingsStep.addSettingsField(getSdkFieldLabel(project), jdkPanel);
 
+  }
+
+  @NotNull
+  protected String getSdkFieldLabel(@Nullable Project project) {
+    return (project == null ? "Project" : "Module") + " \u001BSDK:";
   }
 
   @Override

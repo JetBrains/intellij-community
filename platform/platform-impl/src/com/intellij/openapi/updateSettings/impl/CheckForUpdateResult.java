@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,83 +15,65 @@
  */
 package com.intellij.openapi.updateSettings.impl;
 
-
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
 public class CheckForUpdateResult {
-  @Nullable
+  private final BuildInfo myNewBuildInSelectedChannel;
   private final UpdateChannel myUpdatedChannel;
-
-  @Nullable
-  private final BuildInfo newBuildInSelectedChannel;
-
-  @NotNull
-  private final Collection<UpdateChannel> myNewChannels;
-
-  @NotNull
   private final List<String> myAllChannelIds;
-
-  @Nullable
-  private UpdateChannel myChannelToPropose;
-
-  @NotNull
-  private final UpdateStrategy.State state;
-  @Nullable
-  private final Exception error;
-
+  private final UpdateStrategy.State myState;
+  private final Exception myError;
+  private UpdateChannel myChannelToPropose = null;
 
   public CheckForUpdateResult(@Nullable UpdateChannel updated,
                               @Nullable BuildInfo newBuildInSelectedChannel,
                               @NotNull List<String> allChannelsIds) {
-    this.newBuildInSelectedChannel = newBuildInSelectedChannel;
+    myNewBuildInSelectedChannel = newBuildInSelectedChannel;
     myUpdatedChannel = updated;
-    myNewChannels = new ArrayList<UpdateChannel>();
-    this.myAllChannelIds = allChannelsIds;
-    this.state = UpdateStrategy.State.LOADED;
-    this.error = null;
+    myAllChannelIds = allChannelsIds;
+    myState = UpdateStrategy.State.LOADED;
+    myError = null;
   }
 
-  public CheckForUpdateResult(UpdateStrategy.State state, Exception e) {
-    this.newBuildInSelectedChannel = null;
-    myNewChannels = Collections.emptyList();
+  public CheckForUpdateResult(@NotNull UpdateStrategy.State state, @Nullable Exception e) {
+    myNewBuildInSelectedChannel = null;
+    myUpdatedChannel = null;
     myAllChannelIds = Collections.emptyList();
-    this.myChannelToPropose = null;
-    this.myUpdatedChannel = null;
-    this.state = state;
-    this.error = e;
+    myState = state;
+    myError = e;
   }
 
-  public CheckForUpdateResult(UpdateStrategy.State state) {
-    this(state,null);
+  public CheckForUpdateResult(@NotNull UpdateStrategy.State state) {
+    this(state, null);
   }
 
   @Nullable
   public BuildInfo getNewBuildInSelectedChannel() {
-    return newBuildInSelectedChannel;
+    return myNewBuildInSelectedChannel;
   }
 
-  public boolean hasNewBuildInSelectedChannel(){
-    return newBuildInSelectedChannel!=null;
-  }
-
-  public void addNewChannel(UpdateChannel channel) {
-    myNewChannels.add(channel);
-  }
-
-  @NotNull
-  public Collection<UpdateChannel> getNewChannels() {
-    return myNewChannels;
+  @Nullable
+  public UpdateChannel getUpdatedChannel() {
+    return myUpdatedChannel;
   }
 
   @NotNull
   public List<String> getAllChannelsIds() {
     return myAllChannelIds;
+  }
+
+  @NotNull
+  public UpdateStrategy.State getState() {
+    return myState;
+  }
+
+  @Nullable
+  public Exception getError() {
+    return myError;
   }
 
   @Nullable
@@ -101,20 +83,5 @@ public class CheckForUpdateResult {
 
   public void setChannelToPropose(@Nullable UpdateChannel channelToPropose) {
     myChannelToPropose = channelToPropose;
-  }
-
-  @NotNull
-  public UpdateStrategy.State getState() {
-    return state;
-  }
-
-  @Nullable
-  public Exception getError() {
-    return error;
-  }
-
-  @NotNull
-  public UpdateChannel getUpdatedChannel() {
-    return myUpdatedChannel;
   }
 }

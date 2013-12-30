@@ -713,12 +713,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     if (cycleUsed) {
       if (!myInSpareTimeUpdate) {
         myInSpareTimeUpdate = true;
-        final EditorNotificationPanel comp = new EditorNotificationPanel() {
-          {
-            myLabel.setIcon(AllIcons.General.ExclMark);
-            myLabel.setText("Too much output to process");
-          }
-        };
+        final EditorNotificationPanel comp = new EditorNotificationPanel().text("Too much output to process").icon(AllIcons.General.ExclMark);
         add(comp, BorderLayout.NORTH);
         performWhenNoDeferredOutput(new Runnable() {
           @Override

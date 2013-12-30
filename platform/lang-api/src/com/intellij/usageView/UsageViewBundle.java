@@ -18,6 +18,7 @@ package com.intellij.usageView;
 
 import com.intellij.CommonBundle;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.PropertyKey;
 
 import java.lang.ref.Reference;
@@ -28,8 +29,12 @@ import java.util.ResourceBundle;
  * @author yole
  */
 public class UsageViewBundle {
-  private static Reference<ResourceBundle> ourBundle;
 
+  public static String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, @NotNull Object... params) {
+    return CommonBundle.message(getBundle(), key, params);
+  }
+
+  private static Reference<ResourceBundle> ourBundle;
   @NonNls private static final String BUNDLE = "messages.UsageView";
 
   private UsageViewBundle() {
@@ -48,10 +53,6 @@ public class UsageViewBundle {
   @SuppressWarnings({"AutoBoxing"})
   public static String getReferencesString(int usagesCount, int filesCount) {
     return " (" + message("occurence.info.reference", usagesCount, filesCount) + ")";
-  }
-
-  public static String message(@PropertyKey(resourceBundle = BUNDLE)String key, Object... params) {
-    return CommonBundle.message(getBundle(), key, params);
   }
 
   private static ResourceBundle getBundle() {

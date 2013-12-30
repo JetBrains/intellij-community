@@ -640,7 +640,7 @@ public class ResolveUtil {
     return variants;
   }
 
-  public static GroovyResolveResult[] getConstructorResolveResult(PsiMethod[] constructors, PsiElement place) {
+  private static GroovyResolveResult[] getConstructorResolveResult(PsiMethod[] constructors, PsiElement place) {
     GroovyResolveResult[] variants = new GroovyResolveResult[constructors.length];
     for (int i = 0; i < constructors.length; i++) {
       final boolean isAccessible = PsiUtil.isAccessible(constructors[i], place, null);

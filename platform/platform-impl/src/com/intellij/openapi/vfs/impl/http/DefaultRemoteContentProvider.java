@@ -25,10 +25,15 @@ import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsBundle;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.PathUtilRt;
 import com.intellij.util.Url;
 import com.intellij.util.io.UrlConnectionUtil;
+import com.intellij.util.net.CertificatesManager;
 import org.jetbrains.annotations.NotNull;
 
+import javax.net.ssl.HostnameVerifier;
+import javax.net.ssl.HttpsURLConnection;
+import javax.net.ssl.SSLSession;
 import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URL;
@@ -66,6 +71,21 @@ public class DefaultRemoteContentProvider extends RemoteContentProvider {
       HttpURLConnection connection = (HttpURLConnection)new URL(url.toExternalForm()).openConnection();
       connection.setConnectTimeout(CONNECT_TIMEOUT);
       connection.setReadTimeout(READ_TIMEOUT);
+      if (connection instanceof HttpsURLConnection) {
+        try {
+          HttpsURLConnection httpsConnection = (HttpsURLConnection)connection;
+          httpsConnection.setHostnameVerifier(new HostnameVerifier() {
+            @Override
+            public boolean verify(String hostname, SSLSession session) {
+              return true;
+            }
+          });
+          httpsConnection.setSSLSocketFactory(CertificatesManager.createDefault().createSslContext().getSocketFactory());
+        }
+        catch (Exception e) {
+          LOG.warn(e);
+        }
+      }
       input = UrlConnectionUtil.getConnectionInputStreamWithException(connection, new EmptyProgressIndicator());
 
       final int responseCode = connection.getResponseCode();
@@ -83,7 +103,7 @@ public class DefaultRemoteContentProvider extends RemoteContentProvider {
 
       FileType fileType = RemoteFileUtil.getFileType(connection.getContentType());
       if (fileType == FileTypes.PLAIN_TEXT) {
-        FileType fileTypeByFileName = FileTypeRegistry.getInstance().getFileTypeByFileName(url.getPath());
+        FileType fileTypeByFileName = FileTypeRegistry.getInstance().getFileTypeByFileName(PathUtilRt.getFileName(url.getPath()));
         if (fileTypeByFileName != FileTypes.UNKNOWN) {
           fileType = fileTypeByFileName;
         }

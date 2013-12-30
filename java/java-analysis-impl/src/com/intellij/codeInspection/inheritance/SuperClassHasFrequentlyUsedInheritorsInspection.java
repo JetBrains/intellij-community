@@ -45,6 +45,7 @@ public class SuperClassHasFrequentlyUsedInheritorsInspection extends BaseJavaBat
                                         @NotNull final InspectionManager manager,
                                         final boolean isOnTheFly) {
     if (aClass.isInterface() ||
+        aClass.isEnum() ||
         aClass instanceof PsiTypeParameter ||
         aClass.getMethods().length != 0 ||
         aClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
@@ -86,7 +87,9 @@ public class SuperClassHasFrequentlyUsedInheritorsInspection extends BaseJavaBat
   @Nullable
   private static PsiClass getSuperIfUnique(@NotNull final PsiClass aClass) {
     if (aClass instanceof PsiAnonymousClass) {
-      return (PsiClass)((PsiAnonymousClass)aClass).getBaseClassReference().resolve();
+      final PsiClass returnClass = (PsiClass)((PsiAnonymousClass)aClass).getBaseClassReference().resolve();
+      if (returnClass != null && CommonClassNames.JAVA_LANG_OBJECT.equals(returnClass.getQualifiedName())) return null;
+      return returnClass;
     }
     final PsiReferenceList extendsList = aClass.getExtendsList();
     if (extendsList != null) {

@@ -20,6 +20,7 @@ import com.intellij.notification.NotificationType;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.utils.MavenUtil;
@@ -33,7 +34,20 @@ public class RemoveManagedFilesAction extends MavenAction {
   protected boolean isAvailable(AnActionEvent e) {
     if (!super.isAvailable(e)) return false;
 
-    return MavenActionUtil.getMavenProjectsFiles(e.getDataContext()).size() == 1;
+    List<VirtualFile> files = MavenActionUtil.getMavenProjectsFiles(e.getDataContext());
+    if (files.isEmpty()) return false;
+
+    return files.size() == 1 || isAllFilesAreManaged(MavenActionUtil.getProjectsManager(e.getDataContext()), files);
+  }
+
+  private static boolean isAllFilesAreManaged(@NotNull MavenProjectsManager projectsManager, List<VirtualFile> files) {
+    for (VirtualFile file : files) {
+      if (!projectsManager.isManagedFile(file)) {
+        return false;
+      }
+    }
+
+    return true;
   }
 
   @Override

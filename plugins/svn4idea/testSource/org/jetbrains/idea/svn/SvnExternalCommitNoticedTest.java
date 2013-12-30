@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,6 @@ import com.intellij.openapi.vcs.changes.ChangeListManagerImpl;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.impl.local.FileWatcher;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -44,7 +43,7 @@ public class SvnExternalCommitNoticedTest extends Svn17TestCase {
   @Override
   @Before
   public void setUp() throws Exception {
-    System.setProperty(FileWatcher.PROPERTY_WATCHER_DISABLED, "false");
+    //System.setProperty(FileWatcher.PROPERTY_WATCHER_DISABLED, "false");
     super.setUp();
 
     clManager = (ChangeListManagerImpl) ChangeListManager.getInstance(myProject);

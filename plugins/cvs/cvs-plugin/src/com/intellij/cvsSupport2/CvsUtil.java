@@ -154,10 +154,8 @@ public class CvsUtil {
   }
 
   private static boolean hasPlainFileInTheAdminDir(VirtualFile dir, String filename) {
-    VirtualFile child;
-    child = dir.findChild(filename);
-    if (child == null || child.isDirectory()) return false;
-    return true;
+    VirtualFile child = dir.findChild(filename);
+    return child != null && !child.isDirectory();
   }
 
   public static Entry getEntryFor(@NotNull VirtualFile file) {

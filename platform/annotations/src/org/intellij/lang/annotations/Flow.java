@@ -19,7 +19,6 @@ import org.jetbrains.annotations.NonNls;
 
 import java.lang.annotation.*;
 
-@Documented
 @Retention(RetentionPolicy.CLASS)
 @Target({ElementType.PARAMETER, ElementType.METHOD})
 /**

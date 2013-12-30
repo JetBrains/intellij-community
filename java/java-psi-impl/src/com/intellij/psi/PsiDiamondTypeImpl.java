@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -52,16 +52,19 @@ public class PsiDiamondTypeImpl extends PsiDiamondType {
     myTypeElement = psiTypeElement;
   }
 
+  @NotNull
   @Override
   public String getPresentableText() {
     return "";
   }
 
+  @NotNull
   @Override
   public String getCanonicalText() {
     return "";
   }
 
+  @NotNull
   @Override
   public String getInternalCanonicalText() {
     return "Diamond Type";
@@ -73,7 +76,7 @@ public class PsiDiamondTypeImpl extends PsiDiamondType {
   }
 
   @Override
-  public boolean equalsToText(@NonNls String text) {
+  public boolean equalsToText(@NotNull @NonNls String text) {
     return text != null && text.isEmpty();
   }
 

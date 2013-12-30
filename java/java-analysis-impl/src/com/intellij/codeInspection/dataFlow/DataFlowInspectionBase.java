@@ -104,6 +104,15 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
       }
 
       @Override
+      public void visitIfStatement(PsiIfStatement statement) {
+        PsiExpression condition = statement.getCondition();
+        if (BranchingInstruction.isBoolConst(condition)) {
+          LocalQuickFix fix = createSimplifyBooleanExpressionFix(condition, condition.textMatches(PsiKeyword.TRUE));
+          holder.registerProblem(condition, "Condition is always " + condition.getText(), fix);
+        }
+      }
+
+      @Override
       public void visitAnnotation(PsiAnnotation annotation) {
         if (!ControlFlowAnalyzer.ORG_JETBRAINS_ANNOTATIONS_CONTRACT.equals(annotation.getQualifiedName())) return;
 

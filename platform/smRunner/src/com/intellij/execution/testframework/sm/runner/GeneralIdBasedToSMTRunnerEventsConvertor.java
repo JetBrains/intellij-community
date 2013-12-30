@@ -137,6 +137,7 @@ public class GeneralIdBasedToSMTRunnerEventsConvertor extends GeneralTestEventsP
     if (node != null) {
       if (node.getState() == State.REGISTERED && startedNodeEvent.isRunning()) {
         node.setState(State.RUNNING);
+        myRunningNodes.add(node);
         node.getProxy().setStarted();
         if (suite) {
           fireOnSuiteStarted(node.getProxy());
@@ -172,13 +173,13 @@ public class GeneralIdBasedToSMTRunnerEventsConvertor extends GeneralTestEventsP
     State initialState = startedNodeEvent.isRunning() ? State.RUNNING : State.REGISTERED;
     node = new Node(startedNodeEvent.getId(), parentNode, childProxy, initialState);
     myNodeByIdMap.put(startedNodeEvent.getId(), node);
-    myRunningNodes.add(node);
     if (myLocator != null) {
       childProxy.setLocator(myLocator);
     }
     parentNode.getProxy().addChild(childProxy);
 
     if (node.getState() == State.RUNNING) {
+      myRunningNodes.add(node);
       // progress started
       childProxy.setStarted();
       if (suite) {
@@ -512,7 +513,7 @@ public class GeneralIdBasedToSMTRunnerEventsConvertor extends GeneralTestEventsP
       }
     }
     if (runningLeaves.isEmpty()) {
-      throw new RuntimeException("No running leaves found, running nodes: " + myRunningNodes);
+      return myTestsRootNode;
     }
     if (runningLeaves.size() == 1) {
       return runningLeaves.iterator().next();

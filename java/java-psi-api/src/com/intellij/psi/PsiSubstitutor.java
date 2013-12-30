@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,7 +37,9 @@ public interface PsiSubstitutor {
    * <b>Example:</b> consider class <code>List&lt;E&gt;</code>. <code>this</code>
    * inside class <code>List</code> has type List with EMPTY substitutor.
    */
+  @NotNull
   PsiSubstitutor EMPTY = EmptySubstitutor.getInstance();
+  @NotNull
   PsiSubstitutor UNKNOWN = EMPTY;
 
   /**
@@ -61,7 +63,7 @@ public interface PsiSubstitutor {
 
   //Should be used with great care, be sure to prevent infinite recursion that could arise
   // from the use of recursively bounded type parameters
-  PsiType substituteWithBoundsPromotion(PsiTypeParameter typeParameter);
+  PsiType substituteWithBoundsPromotion(@NotNull PsiTypeParameter typeParameter);
 
   /**
    * Creates a substitutor instance which provides the specified parameter to type mapping in addition
@@ -71,7 +73,8 @@ public interface PsiSubstitutor {
    * @param mapping        the type to which the parameter is mapped.
    * @return the new substitutor instance.
    */
-  PsiSubstitutor put(PsiTypeParameter classParameter, PsiType mapping);
+  @NotNull
+  PsiSubstitutor put(@NotNull PsiTypeParameter classParameter, PsiType mapping);
 
   /**
    * Creates a substitutor instance which maps the type parameters of the specified class to the
@@ -81,7 +84,8 @@ public interface PsiSubstitutor {
    * @param mappings    the types to which the parameters are mapped.
    * @return the new substitutor instance.
    */
-  PsiSubstitutor putAll(PsiClass parentClass, PsiType[] mappings);
+  @NotNull
+  PsiSubstitutor putAll(@NotNull PsiClass parentClass, PsiType[] mappings);
 
   /**
    * Creates a substitutor instance containing all mappings from this substitutor and the
@@ -90,7 +94,8 @@ public interface PsiSubstitutor {
    * @param another the substitutor to get the mappings from.
    * @return the new substitutor instance.
    */
-  PsiSubstitutor putAll(PsiSubstitutor another);
+  @NotNull
+  PsiSubstitutor putAll(@NotNull PsiSubstitutor another);
 
   /**
    * Returns the map from type parameters to types used for substitution by this substitutor.

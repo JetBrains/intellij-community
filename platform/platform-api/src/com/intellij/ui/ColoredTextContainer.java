@@ -6,8 +6,11 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 
 public interface ColoredTextContainer {
-  void append(@NotNull final String fragment, @NotNull final SimpleTextAttributes attributes);
-  void setIcon(@Nullable final Icon icon);
+  void append(@NotNull String fragment, @NotNull SimpleTextAttributes attributes);
 
-  void setToolTipText(String text);
+  void append(@NotNull String fragment, @NotNull SimpleTextAttributes attributes, Object tag);
+
+  void setIcon(@Nullable Icon icon);
+
+  void setToolTipText(@Nullable String text);
 }

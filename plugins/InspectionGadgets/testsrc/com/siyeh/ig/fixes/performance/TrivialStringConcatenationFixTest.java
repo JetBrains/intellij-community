@@ -13,6 +13,7 @@ public class TrivialStringConcatenationFixTest extends IGQuickFixesTestCase {
   }
 
   public void testParentheses() { doTest("Replace concatenation with 'completedTiles + \" , \" + (totalTiles - completedTiles)'"); }
+  public void testParentheses2() { doTest("Replace concatenation with '\" (\" + \"Groovy \" + (version) + \")\"'"); }
   public void testBinaryNull() { doTest("Replace concatenation with 'String.valueOf((Object)null)'"); }
   public void testAtTheEnd() { doTest("Replace concatenation with '\"asdf\" + 1 + o'"); }
 }

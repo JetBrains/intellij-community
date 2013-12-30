@@ -47,7 +47,7 @@ public class CustomTemplateCallback {
 
   private FileType myFileType;
 
-  public CustomTemplateCallback(Editor editor, PsiFile file, boolean wrapping) {
+  public CustomTemplateCallback(@NotNull Editor editor, @NotNull PsiFile file, boolean wrapping) {
     myProject = file.getProject();
     myTemplateManager = TemplateManager.getInstance(myProject);
 

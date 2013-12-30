@@ -1,4 +1,3 @@
-
 /*
  * Copyright 2000-2013 JetBrains s.r.o.
  *
@@ -102,7 +101,7 @@ public class GuessManagerImpl extends GuessManager {
       }
     }
 
-    return typesSet.toArray(new PsiType[typesSet.size()]);
+    return typesSet.toArray(PsiType.createArray(typesSet.size()));
   }
 
   @Nullable
@@ -125,7 +124,7 @@ public class GuessManagerImpl extends GuessManager {
     addExprTypesWhenContainerElement(types, expr);
     addExprTypesByDerivedClasses(types, expr);
 
-    return types.toArray(new PsiType[types.size()]);
+    return types.toArray(PsiType.createArray(types.size()));
   }
 
   @NotNull

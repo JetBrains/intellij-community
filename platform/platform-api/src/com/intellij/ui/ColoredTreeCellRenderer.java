@@ -45,15 +45,13 @@ public abstract class ColoredTreeCellRenderer extends SimpleColoredComponent imp
 
   private boolean myOpaque = true;
   @Override
-  public final Component getTreeCellRendererComponent(
-    JTree tree,
-    Object value,
-    boolean selected,
-    boolean expanded,
-    boolean leaf,
-    int row,
-    boolean hasFocus
-  ){
+  public final Component getTreeCellRendererComponent(JTree tree,
+                                                      Object value,
+                                                      boolean selected,
+                                                      boolean expanded,
+                                                      boolean leaf,
+                                                      int row,
+                                                      boolean hasFocus){
     myTree = tree;
 
     clear();
@@ -72,19 +70,17 @@ public abstract class ColoredTreeCellRenderer extends SimpleColoredComponent imp
         setBackground(hasFocus ? UIUtil.getTreeSelectionBackground() : UIUtil.getTreeUnfocusedSelectionBackground());
       }
     }
-    else {
-      if (selected) {
-        setPaintFocusBorder(true);
-        if (isFocused()) {
-          setBackground(UIUtil.getTreeSelectionBackground());
-        }
-        else {
-          setBackground(null);
-        }
+    else if (selected) {
+      setPaintFocusBorder(true);
+      if (isFocused()) {
+        setBackground(UIUtil.getTreeSelectionBackground());
       }
       else {
         setBackground(null);
       }
+    }
+    else {
+      setBackground(null);
     }
 
     if (value instanceof LoadingNode) {
@@ -176,13 +172,11 @@ public abstract class ColoredTreeCellRenderer extends SimpleColoredComponent imp
    * This method is invoked only for customization of component.
    * All component attributes are cleared when this method is being invoked.
    */
-  public abstract void customizeCellRenderer(
-    JTree tree,
-    Object value,
-    boolean selected,
-    boolean expanded,
-    boolean leaf,
-    int row,
-    boolean hasFocus
-  );
+  public abstract void customizeCellRenderer(@NotNull JTree tree,
+                                             Object value,
+                                             boolean selected,
+                                             boolean expanded,
+                                             boolean leaf,
+                                             int row,
+                                             boolean hasFocus);
 }

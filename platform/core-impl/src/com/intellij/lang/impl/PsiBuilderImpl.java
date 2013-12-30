@@ -122,20 +122,6 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     }
   });
 
-  private static final WhitespacesAndCommentsBinder DEFAULT_LEFT_EDGE_TOKEN_BINDER = new WhitespacesAndCommentsBinder() {
-    @Override
-    public int getEdgePosition(final List<IElementType> tokens, final boolean atStreamEdge, final TokenTextGetter getter) {
-      return tokens.size();
-    }
-  };
-
-  private static final WhitespacesAndCommentsBinder DEFAULT_RIGHT_EDGE_TOKEN_BINDER = new WhitespacesAndCommentsBinder() {
-    @Override
-    public int getEdgePosition(final List<IElementType> tokens, final boolean atStreamEdge, final TokenTextGetter getter) {
-      return 0;
-    }
-  };
-
   public static void registerWhitespaceToken(IElementType type) {
     ourAnyLanguageWhitespaceTokens = TokenSet.orSet(ourAnyLanguageWhitespaceTokens, TokenSet.create(type));
   }
@@ -302,7 +288,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     private int myHC = -1;
 
     private StartMarker() {
-      myEdgeTokenBinder = DEFAULT_LEFT_EDGE_TOKEN_BINDER;
+      myEdgeTokenBinder = WhitespacesBinders.DEFAULT_LEFT_BINDER;
     }
 
     @Override
@@ -314,7 +300,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
       myDebugAllocationPosition = null;
       myFirstChild = myLastChild = null;
       myHC = -1;
-      myEdgeTokenBinder = DEFAULT_LEFT_EDGE_TOKEN_BINDER;
+      myEdgeTokenBinder = WhitespacesBinders.DEFAULT_LEFT_BINDER;
     }
 
     @Override
@@ -577,7 +563,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     private boolean myCollapse = false;
 
     public DoneMarker() {
-      myEdgeTokenBinder = DEFAULT_RIGHT_EDGE_TOKEN_BINDER;
+      myEdgeTokenBinder = WhitespacesBinders.DEFAULT_RIGHT_BINDER;
     }
 
     public DoneMarker(final StartMarker marker, final int currentLexeme) {
@@ -590,7 +576,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     public void clean() {
       super.clean();
       myStart = null;
-      myEdgeTokenBinder = DEFAULT_RIGHT_EDGE_TOKEN_BINDER;
+      myEdgeTokenBinder = WhitespacesBinders.DEFAULT_RIGHT_BINDER;
     }
 
     @Override
@@ -637,7 +623,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
       myBuilder = builder;
       myMessage = message;
       myLexemeIndex = idx;
-      myEdgeTokenBinder = DEFAULT_RIGHT_EDGE_TOKEN_BINDER;
+      myEdgeTokenBinder = WhitespacesBinders.DEFAULT_RIGHT_BINDER;
     }
 
     @Override
@@ -883,7 +869,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
 
     DoneWithErrorMarker doneMarker = new DoneWithErrorMarker((StartMarker)marker, myCurrentLexeme, message);
     boolean tieToTheLeft = isEmpty(((StartMarker)marker).myLexemeIndex, myCurrentLexeme);
-    if (tieToTheLeft) ((StartMarker)marker).myEdgeTokenBinder = DEFAULT_RIGHT_EDGE_TOKEN_BINDER;
+    if (tieToTheLeft) ((StartMarker)marker).myEdgeTokenBinder = WhitespacesBinders.DEFAULT_RIGHT_BINDER;
 
     ((StartMarker)marker).myDoneMarker = doneMarker;
     myProduction.add(doneMarker);
@@ -897,7 +883,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
 
     DoneWithErrorMarker doneMarker = new DoneWithErrorMarker((StartMarker)marker, ((StartMarker)before).myLexemeIndex, message);
     boolean tieToTheLeft = isEmpty(((StartMarker)marker).myLexemeIndex, ((StartMarker)before).myLexemeIndex);
-    if (tieToTheLeft) ((StartMarker)marker).myEdgeTokenBinder = DEFAULT_RIGHT_EDGE_TOKEN_BINDER;
+    if (tieToTheLeft) ((StartMarker)marker).myEdgeTokenBinder = WhitespacesBinders.DEFAULT_RIGHT_BINDER;
 
     ((StartMarker)marker).myDoneMarker = doneMarker;
     myProduction.add(beforeIndex, doneMarker);
@@ -911,7 +897,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     doneMarker.myLexemeIndex = myCurrentLexeme;
     boolean tieToTheLeft = doneMarker.myStart.myType.isLeftBound() &&
                            isEmpty(((StartMarker)marker).myLexemeIndex, myCurrentLexeme);
-    if (tieToTheLeft) ((StartMarker)marker).myEdgeTokenBinder = DEFAULT_RIGHT_EDGE_TOKEN_BINDER;
+    if (tieToTheLeft) ((StartMarker)marker).myEdgeTokenBinder = WhitespacesBinders.DEFAULT_RIGHT_BINDER;
 
     ((StartMarker)marker).myDoneMarker = doneMarker;
     myProduction.add(doneMarker);
@@ -928,7 +914,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     doneMarker.myStart = (StartMarker)marker;
     boolean tieToTheLeft = doneMarker.myStart.myType.isLeftBound() &&
                            isEmpty(((StartMarker)marker).myLexemeIndex, ((StartMarker)before).myLexemeIndex);
-    if (tieToTheLeft) ((StartMarker)marker).myEdgeTokenBinder = DEFAULT_RIGHT_EDGE_TOKEN_BINDER;
+    if (tieToTheLeft) ((StartMarker)marker).myEdgeTokenBinder = WhitespacesBinders.DEFAULT_RIGHT_BINDER;
 
     ((StartMarker)marker).myDoneMarker = doneMarker;
     myProduction.add(beforeIndex, doneMarker);

@@ -593,12 +593,12 @@ public class GrPullUpHelper implements PullUpHelper<MemberInfo> {
 
   private static void addSpacesAround(@NotNull GrReferenceList list) {
     PsiElement prev = list.getPrevSibling();
-    if (!PsiImplUtil.isWhiteSpace(prev)) {
+    if (!PsiImplUtil.isWhiteSpaceOrNls(prev)) {
       list.getParent().getNode().addLeaf(TokenType.WHITE_SPACE, " ", list.getNode());
     }
 
     PsiElement next = list.getNextSibling();
-    if (!PsiImplUtil.isWhiteSpace(next)) {
+    if (!PsiImplUtil.isWhiteSpaceOrNls(next)) {
       list.getParent().getNode().addLeaf(TokenType.WHITE_SPACE, " ", list.getNode().getTreeNext());
     }
   }

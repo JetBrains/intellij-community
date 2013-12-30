@@ -89,12 +89,7 @@ public class CompletionLookupArranger extends LookupArranger {
   }
 
   private MultiMap<CompletionSorterImpl, LookupElement> groupItemsBySorter(List<LookupElement> source) {
-    MultiMap<CompletionSorterImpl, LookupElement> inputBySorter = new MultiMap<CompletionSorterImpl, LookupElement>() {
-      @Override
-      protected Map<CompletionSorterImpl, Collection<LookupElement>> createMap() {
-        return ContainerUtil.newLinkedHashMap();
-      }
-    };
+    MultiMap<CompletionSorterImpl, LookupElement> inputBySorter = MultiMap.createLinked();
     for (LookupElement element : source) {
       inputBySorter.putValue(obtainSorter(element), element);
     }
@@ -344,7 +339,7 @@ public class CompletionLookupArranger extends LookupArranger {
     for (int i = 0; i < items.size(); i++) {
       LookupElement item = items.get(i);
       boolean isTemplate = isLiveTemplate(item);
-      if (isAlphaSorted() && isPrefixItem(lookup, item, true) && !isTemplate ||
+      if (isPrefixItem(lookup, item, true) && !isTemplate ||
           item.getLookupString().equals(selectedText)) {
         return i;
       }
@@ -494,7 +489,7 @@ public class CompletionLookupArranger extends LookupArranger {
     public void addSparedChars(CompletionProgressIndicator indicator, LookupElement item, InsertionContext context, char completionChar) {
       String textInserted;
       if (context.getStartOffset() >= 0 && context.getTailOffset() >= context.getStartOffset()) {
-        textInserted = context.getDocument().getText().substring(context.getStartOffset(), context.getTailOffset());
+        textInserted = context.getDocument().getImmutableCharSequence().subSequence(context.getStartOffset(), context.getTailOffset()).toString();
       } else {
         textInserted = item.getLookupString();
       }

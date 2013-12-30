@@ -51,7 +51,7 @@ public class PyParameterInfoHandler implements ParameterInfoHandler<PyArgumentLi
     return ArrayUtil.EMPTY_OBJECT_ARRAY;  // we don't
   }
 
-  public PyArgumentList findElementForParameterInfo(final CreateParameterInfoContext context) {
+  public PyArgumentList findElementForParameterInfo(@NotNull final CreateParameterInfoContext context) {
     PyArgumentList arglist = findArgumentList(context);
     if (arglist != null) {
       final TypeEvalContext typeEvalContext = TypeEvalContext.userInitiated(arglist.getContainingFile());
@@ -69,11 +69,11 @@ public class PyParameterInfoHandler implements ParameterInfoHandler<PyArgumentLi
     return ParameterInfoUtils.findParentOfType(context.getFile(), context.getOffset(), PyArgumentList.class);
   }
 
-  public void showParameterInfo(@NotNull final PyArgumentList element, final CreateParameterInfoContext context) {
+  public void showParameterInfo(@NotNull final PyArgumentList element, @NotNull final CreateParameterInfoContext context) {
     context.showHint(element, element.getTextOffset(), this);
   }
 
-  public PyArgumentList findElementForUpdatingParameterInfo(final UpdateParameterInfoContext context) {
+  public PyArgumentList findElementForUpdatingParameterInfo(@NotNull final UpdateParameterInfoContext context) {
     return findArgumentList(context);
   }
 
@@ -82,7 +82,7 @@ public class PyParameterInfoHandler implements ParameterInfoHandler<PyArgumentLi
    We cannot store an index since we cannot determine what is an argument until we actually map arguments to parameters.
    This is because a tuple in arguments may be a whole argument or map to a tuple parameter.
    */
-  public void updateParameterInfo(@NotNull final PyArgumentList arglist, final UpdateParameterInfoContext context) {
+  public void updateParameterInfo(@NotNull final PyArgumentList arglist, @NotNull final UpdateParameterInfoContext context) {
     if (context.getParameterOwner() != arglist) {
       context.removeHint();
       return;
@@ -125,7 +125,7 @@ public class PyParameterInfoHandler implements ParameterInfoHandler<PyArgumentLi
   }
 
   @Override
-  public void updateUI(final CallArgumentsMapping prevResult, final ParameterInfoUIContext context) {
+  public void updateUI(final CallArgumentsMapping prevResult, @NotNull final ParameterInfoUIContext context) {
     if (prevResult == null) return;
     final PyArgumentList argList = prevResult.getArgumentList();
     if (!argList.isValid()) return;

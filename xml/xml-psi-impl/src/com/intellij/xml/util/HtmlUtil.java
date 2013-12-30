@@ -445,7 +445,7 @@ public class HtmlUtil {
     private static final TerminateException INSTANCE = new TerminateException();
   }
 
-  public static Charset detectCharsetFromMetaHttpEquiv(@NotNull String content) {
+  public static Charset detectCharsetFromMetaTag(@NotNull String content) {
     // check for <meta http-equiv="charset=CharsetName" > or <meta charset="CharsetName"> and return Charset
     // because we will lightly parse and explicit charset isn't used very often do quick check for applicability
     int charPrefix = content.indexOf(CHARSET);

@@ -81,6 +81,7 @@ public interface PsiElementFactory extends PsiJavaParserFacade, JVMElementFactor
    * @return the created annotation type instance.
    * @throws IncorrectOperationException if <code>name</code> is not a valid Java identifier.
    */
+  @Override
   @NotNull
   PsiClass createAnnotationType(@NotNull @NonNls String name) throws IncorrectOperationException;
 
@@ -123,6 +124,7 @@ public interface PsiElementFactory extends PsiJavaParserFacade, JVMElementFactor
    * @param name the name of the constructor to create.
    * @return the created constructor instance.
    */
+  @Override
   @NotNull
   PsiMethod createConstructor(@NotNull @NonNls String name);
 
@@ -162,6 +164,7 @@ public interface PsiElementFactory extends PsiJavaParserFacade, JVMElementFactor
    * @param substitutor the substitutor to use.
    * @return the class type instance.
    */
+  @Override
   @NotNull PsiClassType createType(@NotNull PsiClass resolve, @NotNull PsiSubstitutor substitutor);
 
   /**
@@ -173,8 +176,10 @@ public interface PsiElementFactory extends PsiJavaParserFacade, JVMElementFactor
    * @param languageLevel to memorize language level for allowing/prohibiting boxing/unboxing.
    * @return the class type instance.
    */
+  @Override
   @NotNull PsiClassType createType(@NotNull PsiClass resolve, @NotNull PsiSubstitutor substitutor, @Nullable LanguageLevel languageLevel);
 
+  @Override
   @NotNull PsiClassType createType(@NotNull PsiClass resolve,
                                    @NotNull PsiSubstitutor substitutor,
                                    @Nullable LanguageLevel languageLevel,
@@ -188,8 +193,10 @@ public interface PsiElementFactory extends PsiJavaParserFacade, JVMElementFactor
    */
   @NotNull PsiClassType createType(@NotNull PsiJavaCodeReferenceElement classReference);
 
+  @Override
   @NotNull PsiClassType createType(@NotNull PsiClass aClass, PsiType parameters);
 
+  @Override
   @NotNull PsiClassType createType(@NotNull PsiClass aClass, PsiType... parameters);
 
   /**
@@ -199,6 +206,7 @@ public interface PsiElementFactory extends PsiJavaParserFacade, JVMElementFactor
    * @param owner the class or method for which the substitutor is created.
    * @return the substitutor instance.
    */
+  @Override
   @NotNull PsiSubstitutor createRawSubstitutor(@NotNull PsiTypeParameterListOwner owner);
 
   /**
@@ -207,6 +215,7 @@ public interface PsiElementFactory extends PsiJavaParserFacade, JVMElementFactor
    * @param map the type parameter to type map used by the substitutor.
    * @return the substitutor instance.
    */
+  @Override
   @NotNull PsiSubstitutor createSubstitutor(@NotNull Map<PsiTypeParameter, PsiType> map);
 
   /**
@@ -216,6 +225,7 @@ public interface PsiElementFactory extends PsiJavaParserFacade, JVMElementFactor
    * @return the primitive type instance, or null if <code>name</code> is not a valid
    *         primitive type name.
    */
+  @Override
   @Nullable PsiPrimitiveType createPrimitiveType(@NotNull String text);
 
   /**
@@ -225,6 +235,7 @@ public interface PsiElementFactory extends PsiJavaParserFacade, JVMElementFactor
    * @param qName the full-qualified name of the class to create the reference to.
    * @return the class type instance.
    */
+  @Override
   @NotNull PsiClassType createTypeByFQClassName(@NotNull @NonNls String qName);
 
   /**
@@ -235,6 +246,7 @@ public interface PsiElementFactory extends PsiJavaParserFacade, JVMElementFactor
    * @param resolveScope the scope in which the class is searched.
    * @return the class type instance.
    */
+  @Override
   @NotNull PsiClassType createTypeByFQClassName(@NotNull @NonNls String qName, @NotNull GlobalSearchScope resolveScope);
 
   /**
@@ -251,6 +263,7 @@ public interface PsiElementFactory extends PsiJavaParserFacade, JVMElementFactor
    * @param type the class type to create the reference to.
    * @return the reference element instance.
    */
+  @Override
   @NotNull PsiJavaCodeReferenceElement createReferenceElementByType(@NotNull PsiClassType type);
 
   /**

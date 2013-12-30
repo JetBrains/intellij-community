@@ -111,8 +111,7 @@ public class AccessorResolverProcessor extends MethodResolverProcessor {
     final PsiElement resolveContext = state.get(RESOLVE_CONTEXT);
     final SpreadState spreadState = state.get(SpreadState.SPREAD_STATE);
     boolean isStaticsOK = isStaticsOK(method, resolveContext, true);
-    final GroovyResolveResultImpl candidate =
-      new GroovyResolveResultImpl(method, resolveContext, spreadState, substitutor, isAccessible, isStaticsOK, true);
+    final GroovyResolveResultImpl candidate = new GroovyResolveResultImpl(method, resolveContext, spreadState, substitutor, isAccessible, isStaticsOK, true, true);
     if (isAccessible && isStaticsOK) {
       addCandidate(candidate);
       return method instanceof GrGdkMethod; //don't stop searching if we found only gdk method

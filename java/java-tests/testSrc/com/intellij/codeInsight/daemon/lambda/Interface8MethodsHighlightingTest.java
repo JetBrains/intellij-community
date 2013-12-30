@@ -32,6 +32,7 @@ public class Interface8MethodsHighlightingTest extends LightDaemonAnalyzerTestCa
   public void testThisAccessibility() { doTest(false, false); }
   public void testStaticMethodCalls() { doTest(false, false); }
   public void testDefaultMethodOverrideEquivalentObject() { doTest(false, false); }
+  public void testStaticMethods() { doTest(false, false); }
   public void testDefaultSupersInStaticContext() {
     doTest(false, false);
   }

@@ -86,10 +86,10 @@ TestExternalSystemExecutionSettings>
   }
 
   @Override
-  void enhanceRemoteProcessing(@NotNull @NotNull SimpleJavaParameters parameters) throws ExecutionException {
+  void enhanceRemoteProcessing(@NotNull SimpleJavaParameters parameters) throws ExecutionException {
   }
 
   @Override
-  void enhanceLocalProcessing(@NotNull @NotNull List<URL> urls) {
+  void enhanceLocalProcessing(@NotNull List<URL> urls) {
   }
 }

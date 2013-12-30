@@ -20,5 +20,10 @@
     <line>49</line>
     <description>Switch label 'case 2:' is unreachable</description>
   </problem>
+  <problem>
+    <file>CaseAndNpe.java</file>
+    <line>80</line>
+    <description>Condition is always true</description>
+  </problem>
 </problems>
 

@@ -72,7 +72,7 @@ public class DirectoryGroupingRule implements UsageGroupingRule {
     return null;
   }
 
-  protected UsageGroup getGroupForFile(VirtualFile dir) {
+  protected UsageGroup getGroupForFile(@NotNull VirtualFile dir) {
     return new DirectoryGroup(dir);
   }
 
@@ -87,7 +87,7 @@ public class DirectoryGroupingRule implements UsageGroupingRule {
     public void update() {
     }
 
-    private DirectoryGroup(VirtualFile dir) {
+    private DirectoryGroup(@NotNull VirtualFile dir) {
       myDir = dir;
     }
 
@@ -99,13 +99,9 @@ public class DirectoryGroupingRule implements UsageGroupingRule {
     @Override
     @NotNull
     public String getText(UsageView view) {
-      String relativePath = VfsUtilCore.getRelativePath(myDir, myProject.getBaseDir(), File.separatorChar);
-      if (relativePath != null) {
-        return relativePath;
-      }
-      String url = myDir.getPresentableUrl();
-
-      return url != null ? url : "<invalid>";
+      VirtualFile baseDir = myProject.getBaseDir();
+      String relativePath = baseDir == null ? null : VfsUtilCore.getRelativePath(myDir, baseDir, File.separatorChar);
+      return relativePath == null ? myDir.getPresentableUrl() : relativePath;
     }
 
     @Override

@@ -93,6 +93,7 @@ public class MethodResolverProcessor extends ResolverProcessor implements GrMeth
   }
 
 
+  @Override
   public boolean execute(@NotNull PsiElement element, @NotNull ResolveState state) {
     if (myStopExecuting) {
       return false;
@@ -112,12 +113,16 @@ public class MethodResolverProcessor extends ResolverProcessor implements GrMeth
 
       boolean isAccessible = isAccessible(method);
       boolean isStaticsOK = isStaticsOK(method, resolveContext, true);
+      boolean isApplicable = PsiUtil.isApplicable(myArgumentTypes, method, substitutor, myPlace, myByShape);
+      boolean isValidResult = isStaticsOK && isAccessible && isApplicable;
 
-      if (!myAllVariants && isStaticsOK && isAccessible && PsiUtil.isApplicable(myArgumentTypes, method, substitutor, myPlace, myByShape)) {
-        addCandidate(new GroovyResolveResultImpl(method, resolveContext, spreadState, substitutor, isAccessible, isStaticsOK));
+      GroovyResolveResultImpl candidate = new GroovyResolveResultImpl(method, resolveContext, spreadState, substitutor, isAccessible, isStaticsOK, false, isValidResult);
+
+      if (!myAllVariants && isValidResult) {
+        addCandidate(candidate);
       }
       else {
-        myInapplicableCandidates.add(new GroovyResolveResultImpl(method, resolveContext, spreadState, substitutor, isAccessible, isStaticsOK));
+        myInapplicableCandidates.add(candidate);
       }
 
       return true;
@@ -126,6 +131,7 @@ public class MethodResolverProcessor extends ResolverProcessor implements GrMeth
     return true;
   }
 
+  @Override
   @NotNull
   public GroovyResolveResult[] getCandidates() {
     if (!myAllVariants && super.hasCandidates()) {
@@ -148,7 +154,7 @@ public class MethodResolverProcessor extends ResolverProcessor implements GrMeth
         result.add(candidate);
       }
     }
-    if (result.size() > 0) return result;
+    if (!result.isEmpty()) return result;
     return candidates;
   }
 
@@ -230,7 +236,7 @@ public class MethodResolverProcessor extends ResolverProcessor implements GrMeth
       final PsiParameter[] plusParameters = method.getParameterList().getParameters();
       final PsiParameter[] defParameters = another.getParameterList().getParameters();
 
-      final PsiType[] paramTypes = new PsiType[plusParameters.length];
+      final PsiType[] paramTypes = PsiType.createArray(plusParameters.length);
       for (int i = 0; i < paramTypes.length; i++) {
         paramTypes[i] = eliminateOneMethodInterfaces(plusParameters[i], defParameters, i);
 
@@ -270,7 +276,7 @@ public class MethodResolverProcessor extends ResolverProcessor implements GrMeth
       method1 = ((GrGdkMethod)method1).getStaticMethod();
       method2 = ((GrGdkMethod)method2).getStaticMethod();
       if (myArgumentTypes != null) {
-        argTypes = new PsiType[argTypes.length + 1];
+        argTypes = PsiType.createArray(argTypes.length + 1);
         System.arraycopy(myArgumentTypes, 0, argTypes, 1, myArgumentTypes.length);
         argTypes[0] = myThisType;
       }
@@ -345,6 +351,7 @@ public class MethodResolverProcessor extends ResolverProcessor implements GrMeth
   }
 
 
+  @Override
   public boolean hasCandidates() {
     return super.hasCandidates() || !myInapplicableCandidates.isEmpty();
   }
@@ -353,6 +360,7 @@ public class MethodResolverProcessor extends ResolverProcessor implements GrMeth
     return super.hasCandidates();
   }
 
+  @Override
   @Nullable
   public PsiType[] getArgumentTypes() {
     return myArgumentTypes;

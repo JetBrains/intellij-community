@@ -21,7 +21,6 @@ import com.intellij.codeInsight.editorActions.enter.EnterHandlerDelegateAdapter;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.editor.CaretModel;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -130,18 +129,18 @@ public class GroovyEnterHandler extends EnterHandlerDelegateAdapter {
     Project project = file.getProject();
     CaretModel caretModel = editor.getCaretModel();
 
-    String text = document.getText();
-    if (StringUtil.isEmpty(text)) {
+    if (!(file instanceof GroovyFileBase)) {
       return Result.Continue;
     }
 
-    if (!(file instanceof GroovyFileBase)) {
+    int docLength = document.getTextLength();
+    if (docLength == 0) {
       return Result.Continue;
     }
 
     final int caret = caretModel.getOffset();
     final EditorHighlighter highlighter = ((EditorEx)editor).getHighlighter();
-    if (caret >= 1 && caret < text.length() && CodeInsightSettings.getInstance().SMART_INDENT_ON_ENTER) {
+    if (caret >= 1 && caret < docLength && CodeInsightSettings.getInstance().SMART_INDENT_ON_ENTER) {
       HighlighterIterator iterator = highlighter.createIterator(caret);
       iterator.retreat();
       while (!iterator.atEnd() && TokenType.WHITE_SPACE == iterator.getTokenType()) {
@@ -164,7 +163,7 @@ public class GroovyEnterHandler extends EnterHandlerDelegateAdapter {
         if (element != null &&
             element.getNode().getElementType() == mRCURLY &&
             element.getParent() instanceof GrClosableBlock &&
-            text.length() > caret && afterArrow) {
+            docLength > caret && afterArrow) {
           return Result.DefaultForceIndent;
         }
       }
@@ -298,7 +297,7 @@ public class GroovyEnterHandler extends EnterHandlerDelegateAdapter {
 
     boolean isInsertIndent = isInsertIndent(caretOffset, stringElement.getTextRange().getStartOffset(), fileText);
 
-    // For simple String literals like 'abcdef'
+    // For simple String literals like 'abc'
     CaretModel caretModel = editor.getCaretModel();
     if (nodeElementType == mSTRING_LITERAL) {
       if (isSingleQuoteString(stringElement)) {

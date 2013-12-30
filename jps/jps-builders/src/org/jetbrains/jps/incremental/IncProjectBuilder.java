@@ -44,6 +44,7 @@ import org.jetbrains.jps.builders.java.JavaBuilderUtil;
 import org.jetbrains.jps.builders.java.JavaSourceRootDescriptor;
 import org.jetbrains.jps.builders.java.dependencyView.Callbacks;
 import org.jetbrains.jps.builders.logging.ProjectBuilderLogger;
+import org.jetbrains.jps.builders.storage.BuildDataCorruptedException;
 import org.jetbrains.jps.builders.storage.SourceToOutputMapping;
 import org.jetbrains.jps.cmdline.BuildRunner;
 import org.jetbrains.jps.cmdline.ProjectDescriptor;
@@ -194,30 +195,31 @@ public class IncProjectBuilder {
         myMessageDispatcher.processMessage(new ProgressMessage(msg));
       }
     }
+    catch (BuildDataCorruptedException e) {
+      LOG.info(e);
+      requestRebuild(e, e);
+    }
     catch (ProjectBuildException e) {
       LOG.info(e);
       final Throwable cause = e.getCause();
       if (cause instanceof PersistentEnumerator.CorruptedException ||
           cause instanceof MappingFailedException ||
-          cause instanceof IOException) {
-        
-        myMessageDispatcher.processMessage(new CompilerMessage(
-          "", BuildMessage.Kind.INFO,
-          "Internal caches are corrupted or have outdated format, forcing project rebuild: " +
-          e.getMessage())
-        );
-        throw new RebuildRequestedException(cause);
+          cause instanceof IOException ||
+          cause instanceof BuildDataCorruptedException) {
+        requestRebuild(e, cause);
       }
       else {
         // should stop the build with error
         final String errMessage = e.getMessage();
         final CompilerMessage msg;
         if (StringUtil.isEmptyOrSpaces(errMessage)) {
-          msg = new CompilerMessage("", cause != null? cause : e);
+          msg = new CompilerMessage("", cause != null ? cause : e);
         }
         else {
-          final String causeMessage = cause != null? cause.getMessage() : "";
-          msg = new CompilerMessage("", BuildMessage.Kind.ERROR, StringUtil.isEmptyOrSpaces(causeMessage) || errMessage.equals(causeMessage)? errMessage : errMessage + ": " + causeMessage);
+          final String causeMessage = cause != null ? cause.getMessage() : "";
+          msg = new CompilerMessage("", BuildMessage.Kind.ERROR, StringUtil.isEmptyOrSpaces(causeMessage) || errMessage.equals(causeMessage)
+                                                                 ? errMessage
+                                                                 : errMessage + ": " + causeMessage);
         }
         myMessageDispatcher.processMessage(msg);
       }
@@ -226,7 +228,7 @@ public class IncProjectBuilder {
       memWatcher.stop();
       flushContext(context);
       // wait for async tasks
-      final CanceledStatus status = context == null? CanceledStatus.NULL : context.getCancelStatus();
+      final CanceledStatus status = context == null ? CanceledStatus.NULL : context.getCancelStatus();
       synchronized (myAsyncTasks) {
         for (Future task : myAsyncTasks) {
           if (status.isCanceled()) {
@@ -236,6 +238,13 @@ public class IncProjectBuilder {
         }
       }
     }
+  }
+
+  private void requestRebuild(Exception e, Throwable cause) throws RebuildRequestedException {
+    myMessageDispatcher.processMessage(new CompilerMessage("", BuildMessage.Kind.INFO,
+                                                           "Internal caches are corrupted or have outdated format, forcing project rebuild: " +
+                                                           e.getMessage()));
+    throw new RebuildRequestedException(cause);
   }
 
   private static void waitForTask(@NotNull CanceledStatus status, Future task) {
@@ -401,24 +410,18 @@ public class IncProjectBuilder {
 
   private void cleanOutputRoots(CompileContext context) throws ProjectBuildException {
     // whole project is affected
-    ProjectDescriptor projectDescriptor = context.getProjectDescriptor();
-    JpsJavaCompilerConfiguration configuration =
-      JpsJavaExtensionService.getInstance().getOrCreateCompilerConfiguration(projectDescriptor.getProject());
+    final ProjectDescriptor projectDescriptor = context.getProjectDescriptor();
+    final JpsJavaCompilerConfiguration configuration = JpsJavaExtensionService.getInstance().getOrCreateCompilerConfiguration(projectDescriptor.getProject());
     final boolean shouldClear = configuration.isClearOutputDirectoryOnRebuild();
-    try {
-      if (shouldClear) {
-        clearOutputs(context);
-      }
-      else {
-        for (BuildTarget<?> target : projectDescriptor.getBuildTargetIndex().getAllTargets()) {
-          if (context.getScope().isAffected(target)) {
-            clearOutputFiles(context, target);
-          }
+    if (shouldClear) {
+      clearOutputs(context);
+    }
+    else {
+      for (BuildTarget<?> target : projectDescriptor.getBuildTargetIndex().getAllTargets()) {
+        if (context.getScope().isAffected(target)) {
+          clearOutputFilesUninterruptibly(context, target);
         }
       }
-    }
-    catch (IOException e) {
-      throw new ProjectBuildException("Error cleaning output files", e);
     }
 
     try {
@@ -442,17 +445,13 @@ public class IncProjectBuilder {
     for (String srcPath : map.getSources()) {
       final Collection<String> outs = map.getOutputs(srcPath);
       if (outs != null && !outs.isEmpty()) {
+        List<String> deletedPaths = new ArrayList<String>();
         for (String out : outs) {
-          final File outFile = new File(out);
-          final boolean deleted = outFile.delete();
-          if (deleted && dirsToDelete != null) {
-            final File parent = outFile.getParentFile();
-            if (parent != null) {
-              dirsToDelete.add(parent);
-            }
-          }
+          BuildOperations.deleteRecursively(out, deletedPaths, dirsToDelete);
         }
-        context.processMessage(new FileDeletedEvent(outs));
+        if (!deletedPaths.isEmpty()) {
+          context.processMessage(new FileDeletedEvent(deletedPaths));
+        }
       }
     }
     registerTargetsWithClearedOutput(context, Collections.singletonList(target));
@@ -479,7 +478,7 @@ public class IncProjectBuilder {
     }
   }
 
-  private void clearOutputs(CompileContext context) throws ProjectBuildException, IOException {
+  private void clearOutputs(CompileContext context) throws ProjectBuildException {
     final MultiMap<File, BuildTarget<?>> rootsToDelete = new MultiMapBasedOnSet<File, BuildTarget<?>>();
     final Set<File> allSourceRoots = new HashSet<File>();
 
@@ -550,7 +549,7 @@ public class IncProjectBuilder {
         );
         // clean only those files we are aware of
         for (BuildTarget<?> target : entry.getValue()) {
-          clearOutputFiles(context, target);
+          clearOutputFilesUninterruptibly(context, target);
         }
       }
     }
@@ -559,6 +558,20 @@ public class IncProjectBuilder {
     myAsyncTasks.add(
       FileUtil.asyncDelete(filesToDelete)
     );
+  }
+
+  private static void clearOutputFilesUninterruptibly(CompileContext context, BuildTarget<?> target) {
+    try {
+      clearOutputFiles(context, target);
+    }
+    catch (Throwable e) {
+      LOG.info(e);
+      String reason = e.getMessage();
+      if (reason == null) {
+        reason = e.getClass().getName();
+      }
+      context.processMessage(new CompilerMessage("", BuildMessage.Kind.WARNING, "Problems clearing output files for target \"" + target.getPresentableName() + "\": " + reason));
+    }
   }
 
   private static void runTasks(CompileContext context, final List<BuildTask> tasks) throws ProjectBuildException {
@@ -855,6 +868,9 @@ public class IncProjectBuilder {
       //  }));
       //}
     }
+    catch (BuildDataCorruptedException e) {
+      throw e;
+    }
     catch (ProjectBuildException e) {
       throw e;
     }
@@ -965,26 +981,20 @@ public class IncProjectBuilder {
         for (String deletedSource : pathsForIteration) {
           // deleting outputs corresponding to non-existing source
           final Collection<String> outputs = sourceToOutputStorage.getOutputs(deletedSource);
-
           if (outputs != null && !outputs.isEmpty()) {
-            if (logger.isEnabled()) {
-              logger.logDeletedFiles(outputs);
-            }
-
+            List<String> deletedOutputPaths = new ArrayList<String>();
             for (String output : outputs) {
-              final File outFile = new File(output);
-              final boolean deleted = outFile.delete();
+              final boolean deleted = BuildOperations.deleteRecursively(output, deletedOutputPaths, shouldPruneEmptyDirs ? dirsToDelete : null);
               if (deleted) {
                 doneSomething = true;
-                if (shouldPruneEmptyDirs) {
-                  final File parent = outFile.getParentFile();
-                  if (parent != null) {
-                    dirsToDelete.add(parent);
-                  }
-                }
               }
             }
-            context.processMessage(new FileDeletedEvent(outputs));
+            if (!deletedOutputPaths.isEmpty()) {
+              if (logger.isEnabled()) {
+                logger.logDeletedFiles(deletedOutputPaths);
+              }
+              context.processMessage(new FileDeletedEvent(deletedOutputPaths));
+            }
           }
 
           if (target instanceof ModuleBuildTarget) {

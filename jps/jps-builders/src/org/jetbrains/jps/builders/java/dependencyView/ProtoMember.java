@@ -17,6 +17,7 @@ package org.jetbrains.jps.builders.java.dependencyView;
 
 import com.intellij.util.io.DataInputOutputUtil;
 import org.jetbrains.asm4.Type;
+import org.jetbrains.jps.builders.storage.BuildDataCorruptedException;
 
 import java.io.DataInput;
 import java.io.DataOutput;
@@ -69,7 +70,7 @@ abstract class ProtoMember extends Proto {
       }
     }
     catch (IOException e) {
-      throw new RuntimeException(e);
+      throw new BuildDataCorruptedException(e);
     }
 
     assert (false);
@@ -84,7 +85,7 @@ abstract class ProtoMember extends Proto {
       myValue = loadTyped(in);
     }
     catch (IOException e) {
-      throw new RuntimeException(e);
+      throw new BuildDataCorruptedException(e);
     }
   }
 
@@ -123,7 +124,7 @@ abstract class ProtoMember extends Proto {
       }
     }
     catch (IOException e) {
-      throw new RuntimeException(e);
+      throw new BuildDataCorruptedException(e);
     }
   }
 

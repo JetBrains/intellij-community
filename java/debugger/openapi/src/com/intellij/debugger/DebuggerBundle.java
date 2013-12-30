@@ -18,6 +18,7 @@ package com.intellij.debugger;
 import com.intellij.CommonBundle;
 import com.intellij.execution.configurations.RemoteConnection;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.PropertyKey;
 
 import java.lang.ref.Reference;
@@ -25,8 +26,12 @@ import java.lang.ref.SoftReference;
 import java.util.ResourceBundle;
 
 public class DebuggerBundle {
-  private static Reference<ResourceBundle> ourBundle;
 
+  public static String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, @NotNull Object... params) {
+    return CommonBundle.message(getBundle(), key, params);
+  }
+
+  private static Reference<ResourceBundle> ourBundle;
   @NonNls private static final String BUNDLE = "messages.DebuggerBundle";
 
   private DebuggerBundle() {
@@ -38,10 +43,6 @@ public class DebuggerBundle {
 
   public static String getTransportName(final RemoteConnection connection) {
     return connection.isUseSockets() ? message("transport.name.socket") : message("transport.name.shared.memory");
-  }
-
-  public static String message(@PropertyKey(resourceBundle = BUNDLE)String key, Object... params) {
-    return CommonBundle.message(getBundle(), key, params);
   }
 
   private static ResourceBundle getBundle() {

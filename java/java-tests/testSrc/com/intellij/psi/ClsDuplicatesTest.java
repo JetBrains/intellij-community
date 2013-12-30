@@ -27,6 +27,28 @@ import gnu.trove.TObjectHashingStrategy;
 import java.util.Set;
 
 public class ClsDuplicatesTest extends PsiTestCase {
+  private Set<PsiNamedElement> myUnique = new THashSet<PsiNamedElement>(new TObjectHashingStrategy<PsiNamedElement>() {
+    @Override
+    public int computeHashCode(PsiNamedElement object) {
+      String name = object.getName();
+      return name == null ? 0 : name.hashCode();
+    }
+
+    @Override
+    public boolean equals(PsiNamedElement o1, PsiNamedElement o2) {
+      return o1.getParent() == o2.getParent() &&
+             o1.getClass() == o2.getClass() &&
+             StringUtil.equals(o1.getName(), o2.getName()) &&
+             StringUtil.equals(o1.getText(), o2.getText());
+    }
+  });
+
+  @Override
+  protected void tearDown() throws Exception {
+    myUnique = null;
+    super.tearDown();
+  }
+
   @Override
   protected Sdk getTestProjectJdk() {
     return JavaTestUtil.getTestJdk();
@@ -35,12 +57,11 @@ public class ClsDuplicatesTest extends PsiTestCase {
   public void testDuplicates() throws Exception {
     final PsiPackage rootPackage = JavaPsiFacade.getInstance(getProject()).findPackage("");
     assert rootPackage != null;
+
     final GlobalSearchScope scope = GlobalSearchScope.allScope(getProject());
     JavaRecursiveElementVisitor visitor = new JavaRecursiveElementVisitor() {
       @Override
       public void visitPackage(PsiPackage aPackage) {
-//        System.out.println(aPackage.getQualifiedName());
-
         visit(aPackage);
         for (PsiPackage subPackage : aPackage.getSubPackages(scope)) {
           visitPackage(subPackage);
@@ -60,46 +81,21 @@ public class ClsDuplicatesTest extends PsiTestCase {
 
       @Override
       public void visitClass(PsiClass aClass) {
-        if ("com.sun.xml.internal.bind.v2.runtime.unmarshaller.DomLoader.State".equals(aClass.getQualifiedName())) {
-          int i =0;
-        }
         super.visitClass(aClass);
         PsiElement parent = aClass.getParent();
-        if (parent instanceof PsiFile){
-          uniques.clear();
+        if (parent instanceof PsiFile) {
+          myUnique.clear();
         }
       }
     };
+
     rootPackage.accept(visitor);
   }
 
-  private final Set<PsiNamedElement> uniques = new THashSet<PsiNamedElement>(new TObjectHashingStrategy<PsiNamedElement>() {
-    @Override
-    public int computeHashCode(PsiNamedElement object) {
-      String name = object.getName();
-      return name == null ? 0 : name.hashCode();
-    }
-
-    @Override
-    public boolean equals(PsiNamedElement o1, PsiNamedElement o2) {
-      boolean eq = o1.getParent() == o2.getParent() && StringUtil.equals(o1.getName(), o2.getName()) && o1.getClass() == o2.getClass()
-                  && StringUtil.equals(o1.getText(), o2.getText());
-
-      if (eq) {
-        return true;
-      }
-      else {
-        return false;
-      }
-    }
-  });
-
   private void visit(PsiNamedElement element) {
-    if (!uniques.add(element)) {
-      fail("Duplicate Element: " +
-           ElementDescriptionUtil.getElementDescription(element, UsageViewLongNameLocation.INSTANCE) +
-           ": " +
-           element.getText());
+    if (!myUnique.add(element)) {
+      String description = ElementDescriptionUtil.getElementDescription(element, UsageViewLongNameLocation.INSTANCE);
+      fail("Duplicate Element: " + description + ": " + element.getText());
     }
   }
 }

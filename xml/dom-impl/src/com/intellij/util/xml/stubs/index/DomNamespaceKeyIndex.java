@@ -45,27 +45,21 @@ public class DomNamespaceKeyIndex extends StringStubIndexExtension<PsiFile> {
     if (!(file instanceof VirtualFileWithId)) return false;
 
     final int virtualFileId = ((VirtualFileWithId)file).getId();
-    CommonProcessors.FindFirstProcessor<String> processor =
-      new CommonProcessors.FindFirstProcessor<String>() {
-        @Override
-        protected boolean accept(String s) {
-          return namespaceKey.equals(s);
-        }
-      };
-    StubIndex.getInstance().processAllKeys(KEY, processor,
-                                           GlobalSearchScope.fileScope(domFileElement.getFile()),
-                                           new IdFilter() {
-                                             @Override
-                                             public boolean containsFileId(int id) {
-                                               return id == virtualFileId;
-                                             }
-                                           });
+    CommonProcessors.FindFirstProcessor<PsiFile> processor = new CommonProcessors.FindFirstProcessor<PsiFile>();
+    StubIndex.getInstance().process(
+      KEY,
+      namespaceKey,
+      domFileElement.getFile().getProject(),
+      GlobalSearchScope.fileScope(domFileElement.getFile()),
+       new IdFilter() {
+         @Override
+         public boolean containsFileId(int id) {
+           return id == virtualFileId;
+         }
+       },
+       processor
+    );
     return processor.isFound();
-  }
-
-  @Override
-  public boolean traceKeyHashToVirtualFileMapping() {
-    return true;
   }
 
   @NotNull
@@ -76,6 +70,6 @@ public class DomNamespaceKeyIndex extends StringStubIndexExtension<PsiFile> {
 
   @Override
   public int getVersion() {
-    return 0;
+    return 1;
   }
 }

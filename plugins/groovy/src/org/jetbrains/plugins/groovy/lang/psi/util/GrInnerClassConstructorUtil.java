@@ -68,13 +68,13 @@ public class GrInnerClassConstructorUtil {
         PsiElementFactory factory = JavaPsiFacade.getElementFactory(place.getProject());
         PsiClass scopeClass = PsiUtil.findEnclosingInstanceClassInScope(containingClass, place, true);
         if (scopeClass != null) {
-          PsiType[] newTypes = new PsiType[types.length + 1];
+          PsiType[] newTypes = PsiType.createArray(types.length + 1);
           newTypes[0] = factory.createType(scopeClass);
           System.arraycopy(types, 0, newTypes, 1, types.length);
           types = newTypes;
         }
         else if (types.length == 0 || !TypesUtil.isAssignableByMethodCallConversion(factory.createType(containingClass), types[0], place)) {
-          PsiType[] newTypes = new PsiType[types.length + 1];
+          PsiType[] newTypes = PsiType.createArray(types.length + 1);
           newTypes[0] = PsiType.NULL;
           System.arraycopy(types, 0, newTypes, 1, types.length);
           types = newTypes;

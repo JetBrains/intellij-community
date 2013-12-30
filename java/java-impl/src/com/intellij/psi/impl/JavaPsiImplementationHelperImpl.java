@@ -107,6 +107,7 @@ public class JavaPsiImplementationHelperImpl extends JavaPsiImplementationHelper
     return original != null ? original : psiClass;
   }
 
+  @NotNull
   @Override
   public PsiElement getClsFileNavigationElement(PsiJavaFile clsFile) {
     String packageName = clsFile.getPackageName();

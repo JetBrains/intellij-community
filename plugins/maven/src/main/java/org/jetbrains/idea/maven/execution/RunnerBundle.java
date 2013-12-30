@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,17 +16,19 @@
 package org.jetbrains.idea.maven.execution;
 
 import com.intellij.AbstractBundle;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.PropertyKey;
 
 public class RunnerBundle extends AbstractBundle {
+
+  public static String message(@NotNull @PropertyKey(resourceBundle = PATH_TO_BUNDLE) String key, @NotNull Object... params) {
+    return ourInstance.getMessage(key, params);
+  }
+
   private static final String PATH_TO_BUNDLE = "RunnerBundle";
   private static final AbstractBundle ourInstance = new RunnerBundle();
 
   private RunnerBundle() {
     super(PATH_TO_BUNDLE);
-  }
-
-  public static String message(@PropertyKey(resourceBundle = PATH_TO_BUNDLE)String key, Object... params) {
-    return ourInstance.getMessage(key, params);
   }
 }

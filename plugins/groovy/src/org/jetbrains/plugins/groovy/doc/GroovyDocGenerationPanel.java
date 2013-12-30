@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,7 +36,7 @@ import java.io.File;
 import java.util.HashSet;
 import java.util.Set;
 
-public final class GroovyDocGenerationPanel extends JPanel/* implements Disposable*/ {
+public final class GroovyDocGenerationPanel extends JPanel {
   JPanel myPanel;
   TextFieldWithBrowseButton myOutputDir;
   NonFocusableCheckBox myIsUse;
@@ -54,9 +54,6 @@ public final class GroovyDocGenerationPanel extends JPanel/* implements Disposab
   private final DefaultListModel myDataModel;
 
   GroovyDocGenerationPanel() {
-    //Disposer.register(this, myInputDir);
-    //Disposer.register(this, myOutputDir);
-
     myInputDir.addBrowseFolderListener(GroovyDocBundle.message("groovydoc.generate.directory.browse"), null, null,
                                        FileChooserDescriptorFactory.createSingleFolderDescriptor());
 
@@ -160,9 +157,5 @@ private static String[] toStringArray(final DefaultListModel model) {
 
   public JPanel getPanel() {
     return myPanel;
-  }
-
-  //@Override
-  public void dispose() {
   }
 }

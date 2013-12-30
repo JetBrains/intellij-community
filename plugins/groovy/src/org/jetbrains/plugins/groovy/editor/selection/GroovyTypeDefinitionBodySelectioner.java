@@ -49,7 +49,7 @@ public class GroovyTypeDefinitionBodySelectioner extends ExtendWordSelectionHand
     PsiElement lbrace = block.getLBrace();
     if (lbrace == null) return block.getTextRange().getStartOffset();
 
-    while (PsiImplUtil.isWhiteSpace(lbrace.getNextSibling())) {
+    while (PsiImplUtil.isWhiteSpaceOrNls(lbrace.getNextSibling())) {
       lbrace = lbrace.getNextSibling();
     }
     return lbrace.getTextRange().getEndOffset();
@@ -59,7 +59,7 @@ public class GroovyTypeDefinitionBodySelectioner extends ExtendWordSelectionHand
     PsiElement rbrace = block.getRBrace();
     if (rbrace == null) return block.getTextRange().getEndOffset();
 
-    while (PsiImplUtil.isWhiteSpace(rbrace.getPrevSibling()) && rbrace.getPrevSibling().getTextRange().getStartOffset() > startOffset) {
+    while (PsiImplUtil.isWhiteSpaceOrNls(rbrace.getPrevSibling()) && rbrace.getPrevSibling().getTextRange().getStartOffset() > startOffset) {
       rbrace = rbrace.getPrevSibling();
     }
 

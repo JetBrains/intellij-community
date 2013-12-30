@@ -33,6 +33,7 @@ import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.psi.GrControlFlowOwner;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrIndexProperty;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.InstanceOfInstruction;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.MixinTypeInstruction;
@@ -238,6 +239,10 @@ public class TypeInferenceHelper {
   public static PsiType getInitializerFor(PsiElement element) {
     final PsiElement parent = element.getParent();
     if (parent instanceof GrAssignmentExpression) {
+      if (element instanceof GrIndexProperty) {
+        final GrExpression rvalue = ((GrAssignmentExpression)parent).getRValue();
+        return rvalue != null ? rvalue.getType() : null; //don't try to infer assignment type in case of index property because of infinite recursion (example: a[2]+=4)
+      }
       return ((GrAssignmentExpression)parent).getType();
     }
 

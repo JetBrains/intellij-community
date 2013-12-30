@@ -712,67 +712,8 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
   @NotNull
   private Block createMethodCallExpressionBlock(@NotNull final ASTNode node, final Wrap blockWrap, final Alignment alignment) {
     final ArrayList<ASTNode> nodes = new ArrayList<ASTNode>();
-    final ArrayList<Block> subBlocks = new ArrayList<Block>();
     collectNodes(nodes, node);
-
-    final Wrap wrap = Wrap.createWrap(getWrapType(mySettings.METHOD_CALL_CHAIN_WRAP), false);
-
-    // We use this alignment object to align chained method calls to the first method invocation place if necessary (see IDEA-30369)
-    Alignment chainedCallsAlignment = createAlignment(mySettings.ALIGN_MULTILINE_CHAINED_METHODS, null);
-
-    // We want to align chained method calls only if method target is explicitly specified, i.e. we don't want to align methods
-    // chain like 'recursive().recursive().recursive()' but want to align calls like 'foo.recursive().recursive().recursive()'
-    boolean callPointDefined = false;
-    List<ASTNode> lookAheadNodes = null;
-    boolean afterIdentifier = false;
-
-    while (!nodes.isEmpty() || lookAheadNodes != null) {
-      final List<ASTNode> subNodes;
-      if (lookAheadNodes == null) {
-        subNodes = readToNextDot(nodes);
-      }
-      else {
-        subNodes = new ArrayList<ASTNode>(lookAheadNodes);
-        lookAheadNodes = null;
-      }
-      Alignment alignmentToUseForSubBlock = null;
-
-      // Just create a no-aligned sub-block if we don't need to bother with it's alignment (either due to end-user
-      // setup or sub-block state).
-      if (chainedCallsAlignment == null || subNodes.isEmpty()) {
-        subBlocks.add(createSyntheticBlock(subNodes, wrap, alignmentToUseForSubBlock));
-        continue;
-      }
-
-      IElementType lastNodeType = subNodes.get(subNodes.size() - 1).getElementType();
-      boolean currentSubBlockIsMethodCall = lastNodeType == JavaElementType.EXPRESSION_LIST;
-
-      // Update information about chained method alignment point if necessary. I.e. we want to align only continuous method calls
-      // like 'foo.bar().bar().bar()' but not 'foo.bar().foo.bar()'
-      if (callPointDefined && !currentSubBlockIsMethodCall) {
-        chainedCallsAlignment = createAlignment(mySettings.ALIGN_MULTILINE_CHAINED_METHODS, null);
-      }
-      callPointDefined |= !currentSubBlockIsMethodCall;
-
-      // We want to align method call only if call target is defined for the first chained method and current block is a method call.
-      if (callPointDefined && currentSubBlockIsMethodCall) {
-        alignmentToUseForSubBlock = chainedCallsAlignment;
-      }
-      else if (afterIdentifier && lastNodeType == JavaTokenType.IDENTIFIER) {
-        // Align method call to the last field access. Example:
-        //     MyClass.staticField
-        //            .foo();
-        lookAheadNodes = readToNextDot(nodes);
-        if (!lookAheadNodes.isEmpty() && lookAheadNodes.get(lookAheadNodes.size() - 1).getElementType() == JavaElementType.EXPRESSION_LIST) {
-          alignmentToUseForSubBlock = chainedCallsAlignment;
-        }
-      }
-      afterIdentifier = lastNodeType == JavaTokenType.IDENTIFIER;
-      subBlocks.add(createSyntheticBlock(subNodes, wrap, alignmentToUseForSubBlock));
-    }
-
-    return new SyntheticCodeBlock(subBlocks, alignment, mySettings,
-                                  Indent.getContinuationWithoutFirstIndent(myIndentSettings.USE_RELATIVE_INDENTS), blockWrap);
+    return new ChainMethodCallsBlockBuilder(alignment, blockWrap).build(nodes);
   }
 
   @NotNull
@@ -798,19 +739,6 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
     for (ASTNode node : subNodes) {
       result.add(createJavaBlock(node, getSettings(), Indent.getContinuationWithoutFirstIndent(myIndentSettings.USE_RELATIVE_INDENTS), null,
                                  AlignmentStrategy.getNullStrategy()));
-    }
-    return result;
-  }
-
-  @NotNull
-  private static List<ASTNode> readToNextDot(@NotNull List<ASTNode> nodes) {
-    final ArrayList<ASTNode> result = new ArrayList<ASTNode>();
-    result.add(nodes.remove(0));
-    for (Iterator<ASTNode> iterator = nodes.iterator(); iterator.hasNext();) {
-      ASTNode node = iterator.next();
-      if (node.getElementType() == JavaTokenType.DOT) break;
-      result.add(node);
-      iterator.remove();
     }
     return result;
   }
@@ -1499,5 +1427,106 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
     final SyntheticCodeBlock result = new SyntheticCodeBlock(localResult, null, getSettings(), indent, null);
     result.setChildAttributes(new ChildAttributes(getCodeBlockInternalIndent(childrenIndent), null));
     return result;
+  }
+
+  private class ChainMethodCallsBlockBuilder {
+    private Wrap blockWrap;
+    private Alignment blockAlignment;
+
+    private Wrap myWrap;
+    private Alignment myChainedCallsAlignment;
+
+    public ChainMethodCallsBlockBuilder(Alignment alignment, Wrap wrap) {
+      blockWrap = wrap;
+      blockAlignment = alignment;
+    }
+
+    public Block build(List<ASTNode> nodes)  {
+      myWrap = getNewWrap();
+      myChainedCallsAlignment = getNewAlignment();
+
+      List<Block> blocks = buildBlocksFrom(nodes);
+      Indent indent = Indent.getContinuationWithoutFirstIndent(myIndentSettings.USE_RELATIVE_INDENTS);
+
+      return new SyntheticCodeBlock(blocks, blockAlignment, mySettings, indent, blockWrap);
+    }
+
+    private List<Block> buildBlocksFrom(List<ASTNode> nodes) {
+      List<ChainedCallChunk> methodCall = splitMethodCallOnChunksByDots(nodes);
+      Wrap wrapToUse = null;
+      Alignment alignmentToUse = null;
+
+      List<Block> blocks = new ArrayList<Block>();
+
+      for (ChainedCallChunk currentCallChunk : methodCall) {
+        if (isMethodCall(currentCallChunk)) {
+          wrapToUse = myWrap;
+          alignmentToUse = shouldAlignMethod(currentCallChunk, methodCall) ? myChainedCallsAlignment : null;
+        }
+        else if (wrapToUse != null) {
+          wrapToUse = null;
+          alignmentToUse = null;
+
+          myChainedCallsAlignment = getNewAlignment();
+          myWrap = getNewWrap();
+        }
+
+        blocks.add(createSyntheticBlock(currentCallChunk.nodes, wrapToUse, alignmentToUse));
+      }
+
+      return blocks;
+    }
+
+    private boolean shouldAlignMethod(ChainedCallChunk currentMethodChunk, List<ChainedCallChunk> methodCall) {
+      return mySettings.ALIGN_MULTILINE_CHAINED_METHODS
+             && !currentMethodChunk.isEmpty()
+             && !chunkIsFirstInChainMethodCall(currentMethodChunk, methodCall);
+    }
+
+    private boolean chunkIsFirstInChainMethodCall(@NotNull ChainedCallChunk callChunk, @NotNull List<ChainedCallChunk> methodCall) {
+      return !methodCall.isEmpty() && callChunk == methodCall.get(0);
+    }
+
+    @NotNull
+    private List<ChainedCallChunk> splitMethodCallOnChunksByDots(@NotNull List<ASTNode> nodes) {
+      List<ChainedCallChunk> result = new ArrayList<ChainedCallChunk>();
+
+      List<ASTNode> current = new ArrayList<ASTNode>();
+      for (ASTNode node : nodes) {
+        if (node.getElementType() == JavaTokenType.DOT) {
+          result.add(new ChainedCallChunk(current));
+          current = new ArrayList<ASTNode>();
+        }
+        current.add(node);
+      }
+
+      result.add(new ChainedCallChunk(current));
+      return result;
+    }
+
+    private Alignment getNewAlignment() {
+      return createAlignment(mySettings.ALIGN_MULTILINE_CHAINED_METHODS, null);
+    }
+
+    private Wrap getNewWrap() {
+      return Wrap.createWrap(getWrapType(mySettings.METHOD_CALL_CHAIN_WRAP), false);
+    }
+
+    private boolean isMethodCall(@NotNull ChainedCallChunk callChunk) {
+      List<ASTNode> nodes = callChunk.nodes;
+      return !nodes.isEmpty() && nodes.get(nodes.size() - 1).getElementType() == JavaElementType.EXPRESSION_LIST;
+    }
+  }
+
+  private static class ChainedCallChunk {
+    @NotNull final List<ASTNode> nodes;
+
+    ChainedCallChunk(@NotNull List<ASTNode> nodes) {
+      this.nodes = nodes;
+    }
+
+    boolean isEmpty() {
+      return nodes.isEmpty();
+    }
   }
 }

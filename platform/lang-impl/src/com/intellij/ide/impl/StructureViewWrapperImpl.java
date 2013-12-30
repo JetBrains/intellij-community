@@ -31,8 +31,10 @@ import com.intellij.openapi.fileEditor.FileEditorProvider;
 import com.intellij.openapi.fileEditor.ex.FileEditorProviderManager;
 import com.intellij.openapi.fileEditor.impl.EditorWindow;
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
+import com.intellij.openapi.module.InternalModuleType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Comparing;
@@ -293,8 +295,8 @@ public class StructureViewWrapperImpl implements StructureViewWrapper, Disposabl
     if (file != null && file.isValid()) {
       if (file.isDirectory()) {
         if (ProjectRootsUtil.isModuleContentRoot(file, myProject)) {
-          Module module = ModuleUtil.findModuleForFile(file, myProject);
-          if (module != null) {
+          Module module = ModuleUtilCore.findModuleForFile(file, myProject);
+          if (module != null && !(ModuleUtil.getModuleType(module) instanceof InternalModuleType)) {
             myModuleStructureComponent = new ModuleStructureComponent(module);
             focusedComponent = hadFocus ? IdeFocusTraversalPolicy.getPreferredFocusedComponent(myModuleStructureComponent) : null;
             createSinglePanel(myModuleStructureComponent.getComponent());

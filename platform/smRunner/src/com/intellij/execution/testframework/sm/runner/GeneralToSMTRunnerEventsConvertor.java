@@ -17,13 +17,14 @@ package com.intellij.execution.testframework.sm.runner;
 
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.execution.testframework.AbstractTestProxy;
-import com.intellij.execution.testframework.sm.SMRunnerUtil;
 import com.intellij.execution.testframework.sm.SMTestRunnerConnectionUtil;
+import com.intellij.execution.testframework.sm.SMTestsRunnerBundle;
 import com.intellij.execution.testframework.sm.runner.events.*;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testIntegration.TestLocationProvider;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
@@ -339,7 +340,10 @@ public class GeneralToSMTRunnerEventsConvertor extends GeneralTestEventsProcesso
      addToInvokeLater(new Runnable() {
       public void run() {
         final String testName = ObjectUtils.assertNotNull(testIgnoredEvent.getName());
-        final String ignoreComment = testIgnoredEvent.getIgnoreComment();
+        String ignoreComment = testIgnoredEvent.getIgnoreComment();
+        if (StringUtil.isEmpty(ignoreComment)) {
+          ignoreComment = SMTestsRunnerBundle.message("sm.test.runner.states.test.is.ignored");
+        }
         final String stackTrace = testIgnoredEvent.getStacktrace();
         final String fullTestName = getFullTestName(testName);
         SMTestProxy testProxy = getProxyByFullTestName(fullTestName);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.application.ApplicationInfo;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.options.BaseConfigurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
@@ -58,7 +59,20 @@ public class UpdateSettingsConfigurable extends BaseConfigurable implements Sear
 
   public void apply() throws ConfigurationException {
     UpdateSettings settings = UpdateSettings.getInstance();
+
+    boolean wasEnabled = settings.CHECK_NEEDED;
     settings.CHECK_NEEDED = myUpdatesSettingsPanel.myCbCheckForUpdates.isSelected();
+    if (wasEnabled != settings.CHECK_NEEDED) {
+      UpdateCheckerComponent checker = ApplicationManager.getApplication().getComponent(UpdateCheckerComponent.class);
+      if (checker != null) {
+        if (wasEnabled) {
+          checker.cancelChecks();
+        }
+        else {
+          checker.queueNextCheck();
+        }
+      }
+    }
 
     settings.UPDATE_CHANNEL_TYPE = myUpdatesSettingsPanel.getSelectedChannelType().getCode();
   }
@@ -83,18 +97,15 @@ public class UpdateSettingsConfigurable extends BaseConfigurable implements Sear
   }
 
   private class UpdatesSettingsPanel {
-
     private JPanel myPanel;
     private JButton myBtnCheckNow;
     private JCheckBox myCbCheckForUpdates;
     private JLabel myBuildNumber;
     private JLabel myVersionNumber;
     private JLabel myLastCheckedDate;
-
     private JComboBox myUpdateChannelsBox;
 
     public UpdatesSettingsPanel() {
-
       final ApplicationInfo appInfo = ApplicationInfo.getInstance();
       final String majorVersion = appInfo.getMajorVersion();
       String versionNumber = "";
@@ -116,7 +127,7 @@ public class UpdateSettingsConfigurable extends BaseConfigurable implements Sear
           UpdateSettings settings = new UpdateSettings();
           settings.loadState(UpdateSettings.getInstance().getState());
           settings.UPDATE_CHANNEL_TYPE = getSelectedChannelType().getCode();
-          CheckForUpdateAction.actionPerformed(project, false, null, settings);  //todo load configured hosts on the fly
+          UpdateChecker.updateAndShowResult(project, true, null, settings);  //todo load configured hosts on the fly
           updateLastCheckedLabel();
         }
       });
@@ -129,9 +140,8 @@ public class UpdateSettingsConfigurable extends BaseConfigurable implements Sear
     }
 
     private void updateLastCheckedLabel() {
-      final long lastChecked = UpdateSettings.getInstance().LAST_TIME_CHECKED;
-      myLastCheckedDate
-        .setText(lastChecked == 0 ? IdeBundle.message("updates.last.check.never") : DateFormatUtil.formatPrettyDateTime(lastChecked));
+      long time = UpdateSettings.getInstance().LAST_TIME_CHECKED;
+      myLastCheckedDate.setText(time == 0 ? IdeBundle.message("updates.last.check.never") : DateFormatUtil.formatPrettyDateTime(time));
     }
 
     public ChannelStatus getSelectedChannelType() {

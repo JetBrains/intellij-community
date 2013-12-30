@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@ package com.intellij.codeInspection.defaultFileTemplateUsage;
 import com.intellij.codeInspection.*;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.impl.FileTemplateConfigurable;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
@@ -127,7 +127,7 @@ public class DefaultFileTemplateUsageInspection extends BaseJavaLocalInspectionT
 
           boolean ok = ShowSettingsUtil.getInstance().editConfigurable(project, configurable);
           if (ok) {
-            ApplicationManager.getApplication().runWriteAction(new Runnable() {
+            WriteCommandAction.runWriteCommandAction(project, new Runnable() {
               @Override
               public void run() {
                 myReplaceTemplateFix.applyFix(project, descriptor);

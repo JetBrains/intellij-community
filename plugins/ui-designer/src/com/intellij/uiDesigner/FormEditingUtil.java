@@ -629,6 +629,9 @@ public final class FormEditingUtil {
     if (directory != null) {
       PsiPackage pkg = JavaDirectoryService.getInstance().getPackage(directory);
       String packageName = pkg != null ? pkg.getQualifiedName() : "";
+      if (packageName.length() == 0) {
+        return file.getName();
+      }
       return packageName.replace('.', '/') + '/' + file.getName();
     }
     return null;

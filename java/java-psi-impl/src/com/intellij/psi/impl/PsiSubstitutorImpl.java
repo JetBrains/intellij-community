@@ -86,7 +86,7 @@ public class PsiSubstitutorImpl implements PsiSubstitutor {
     return mySubstitutionMap.containsKey(typeParameter);
   }
 
-  private PsiType getFromMap(PsiTypeParameter typeParameter) {
+  private PsiType getFromMap(@NotNull PsiTypeParameter typeParameter) {
     if (typeParameter instanceof LightTypeParameter) {
       typeParameter = ((LightTypeParameter)typeParameter).getDelegate();
     }
@@ -105,7 +105,7 @@ public class PsiSubstitutorImpl implements PsiSubstitutor {
   }
 
   @Override
-  public PsiType substituteWithBoundsPromotion(PsiTypeParameter typeParameter) {
+  public PsiType substituteWithBoundsPromotion(@NotNull PsiTypeParameter typeParameter) {
     return addBounds(substitute(typeParameter), typeParameter);
   }
 
@@ -306,7 +306,7 @@ public class PsiSubstitutorImpl implements PsiSubstitutor {
       return result;
     }
 
-    private PsiType substituteTypeParameter(final PsiTypeParameter typeParameter) {
+    private PsiType substituteTypeParameter(@NotNull PsiTypeParameter typeParameter) {
       PsiType t = getFromMap(typeParameter);
       if (myKind == SubstituteKind.SIMPLE) {
         return t;
@@ -350,7 +350,7 @@ public class PsiSubstitutorImpl implements PsiSubstitutor {
     }
   }
 
-  private PsiType addBounds(PsiType substituted, final PsiTypeParameter typeParameter) {
+  private PsiType addBounds(PsiType substituted, @NotNull PsiTypeParameter typeParameter) {
     PsiType oldSubstituted = substituted;
     PsiElement captureContext = null;
     if (substituted instanceof PsiCapturedWildcardType) {
@@ -432,6 +432,7 @@ public class PsiSubstitutorImpl implements PsiSubstitutor {
     return new PsiSubstitutorImpl(mySubstitutionMap);
   }
 
+  @NotNull
   @Override
   public PsiSubstitutor put(@NotNull PsiTypeParameter typeParameter, PsiType mapping) {
     PsiSubstitutorImpl ret = clone();
@@ -461,6 +462,7 @@ public class PsiSubstitutorImpl implements PsiSubstitutor {
     }
   }
 
+  @NotNull
   @Override
   public PsiSubstitutor putAll(@NotNull PsiClass parentClass, PsiType[] mappings) {
     PsiSubstitutorImpl substitutor = clone();
@@ -468,8 +470,9 @@ public class PsiSubstitutorImpl implements PsiSubstitutor {
     return substitutor;
   }
 
+  @NotNull
   @Override
-  public PsiSubstitutor putAll(PsiSubstitutor another) {
+  public PsiSubstitutor putAll(@NotNull PsiSubstitutor another) {
     if (another instanceof EmptySubstitutorImpl) return this;
     final PsiSubstitutorImpl anotherImpl = (PsiSubstitutorImpl)another;
     PsiSubstitutorImpl substitutor = clone();

@@ -45,7 +45,7 @@ public class TriggerAdditionOrDeletion {
 
   public TriggerAdditionOrDeletion(final Project project, boolean silentAddDelete) {
     myProject = project;
-    mySilentAddDelete = silentAddDelete;
+    mySilentAddDelete = true; // TODO there is no sense in making add/remove non-silent anywhen; wait for users feedback, then remove
     myExisting = new HashSet<FilePath>();
     myDeleted = new HashSet<FilePath>();
     myVcsManager = ProjectLevelVcsManager.getInstance(myProject);

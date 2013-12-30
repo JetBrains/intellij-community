@@ -329,6 +329,10 @@ public class EditorHyperlinkSupport {
                                                                    Collection<RangeHighlighter> sortedHighlighters,
                                                                    final int delta,
                                                                    final Consumer<RangeHighlighter> action) {
+    if (sortedHighlighters.isEmpty()) {
+      return null;
+    }
+
     final List<RangeHighlighter> ranges = new ArrayList<RangeHighlighter>(sortedHighlighters);
     int i;
     for (i = 0; i < ranges.size(); i++) {
@@ -337,7 +341,8 @@ public class EditorHyperlinkSupport {
         break;
       }
     }
-    int newIndex = i > 0 ? i % ranges.size() : 0;
+    i = i % ranges.size();
+    int newIndex = i;
     while (newIndex < ranges.size() && newIndex >= 0) {
       newIndex = (newIndex + delta + ranges.size()) % ranges.size();
       final RangeHighlighter next = ranges.get(newIndex);

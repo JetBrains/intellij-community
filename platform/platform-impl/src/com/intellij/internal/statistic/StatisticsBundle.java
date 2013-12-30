@@ -16,6 +16,7 @@
 package com.intellij.internal.statistic;
 
 import com.intellij.AbstractBundle;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.PropertyKey;
 
 /**
@@ -24,14 +25,14 @@ import org.jetbrains.annotations.PropertyKey;
  */
 public class StatisticsBundle extends AbstractBundle {
 
-  public static final  String       PATH_TO_BUNDLE = "messages.StatisticsBundle";
-  private static final StatisticsBundle BUNDLE         = new StatisticsBundle();
+  public static String message(@NotNull @PropertyKey(resourceBundle = PATH_TO_BUNDLE) String key, @NotNull Object... params) {
+    return BUNDLE.getMessage(key, params);
+  }
+
+  public static final String PATH_TO_BUNDLE = "messages.StatisticsBundle";
+  private static final StatisticsBundle BUNDLE = new StatisticsBundle();
 
   public StatisticsBundle() {
     super(PATH_TO_BUNDLE);
-  }
-
-  public static String message(@PropertyKey(resourceBundle = PATH_TO_BUNDLE) String key, Object... params) {
-    return BUNDLE.getMessage(key, params);
   }
 }

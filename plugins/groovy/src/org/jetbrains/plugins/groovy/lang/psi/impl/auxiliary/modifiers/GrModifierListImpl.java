@@ -31,6 +31,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
@@ -51,6 +52,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.packaging.GrPackageDef
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrStubElementBase;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.GrModifierListStub;
+import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 import java.util.ArrayList;
 import java.util.Map;
@@ -297,7 +299,7 @@ public class GrModifierListImpl extends GrStubElementBase<GrModifierListStub> im
     if (doSet) {
       if (isEmptyModifierList()) {
         final PsiElement nextSibling = getNextSibling();
-        if (nextSibling != null && !TokenSets.WHITE_SPACES_SET.contains(nextSibling.getNode().getElementType())) {
+        if (nextSibling != null && !PsiImplUtil.isWhiteSpaceOrNls(nextSibling)) {
           getNode().getTreeParent().addLeaf(TokenType.WHITE_SPACE, " ", nextSibling.getNode());
         }
       }
@@ -317,7 +319,7 @@ public class GrModifierListImpl extends GrStubElementBase<GrModifierListStub> im
 
       if (isEmptyModifierList()) {
         final PsiElement nextSibling = getNextSibling();
-        if (nextSibling != null && TokenSets.WHITE_SPACES_SET.contains(nextSibling.getNode().getElementType())) {
+        if (nextSibling != null && PsiImplUtil.isWhiteSpaceOrNls(nextSibling)) {
           nextSibling.delete();
         }
       }

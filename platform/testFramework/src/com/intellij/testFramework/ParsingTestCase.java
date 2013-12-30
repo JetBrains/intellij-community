@@ -34,7 +34,6 @@ import com.intellij.openapi.options.SchemesManagerFactory;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.impl.ProgressManagerImpl;
 import com.intellij.openapi.startup.StartupManager;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -46,7 +45,6 @@ import com.intellij.psi.impl.PsiFileFactoryImpl;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistryImpl;
 import com.intellij.psi.util.CachedValuesManager;
-import com.intellij.rt.execution.junit.FileComparisonFailure;
 import com.intellij.util.CachedValuesManagerImpl;
 import com.intellij.util.Function;
 import com.intellij.util.messages.MessageBus;
@@ -57,7 +55,6 @@ import org.picocontainer.*;
 import org.picocontainer.defaults.AbstractComponentAdapter;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.Set;
 
@@ -272,22 +269,8 @@ public abstract class ParsingTestCase extends PlatformLiteFixture {
   }
 
   public static void doCheckResult(String fullPath, String targetDataName, String text) throws IOException {
-    text = text.trim();
     String expectedFileName = fullPath + File.separatorChar + targetDataName;
-    if (OVERWRITE_TESTDATA) {
-      VfsTestUtil.overwriteTestData(expectedFileName, text);
-      System.out.println("File " + expectedFileName + " created.");
-    }
-    try {
-      String expectedText = doLoadFile(fullPath, targetDataName);
-      if (!Comparing.equal(expectedText, text)) {
-        throw new FileComparisonFailure(targetDataName, expectedText, text, expectedFileName);
-      }
-    }
-    catch(FileNotFoundException e){
-      VfsTestUtil.overwriteTestData(expectedFileName, text);
-      fail("No output text found. File " + expectedFileName + " created.");
-    }
+    UsefulTestCase.assertSameLinesWithFile(expectedFileName, text);
   }
 
   protected static String toParseTreeText(final PsiElement file,  boolean skipSpaces, boolean printRanges) {

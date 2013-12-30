@@ -30,6 +30,7 @@ import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.infos.CandidateInfo;
@@ -352,7 +353,6 @@ public class HighlightMethodUtil {
       }
 
       if (!resolveResult.isAccessible() || !resolveResult.isStaticsScopeCorrect()) {
-        //highlightInfo = checkAmbiguousMethodCall(referenceToMethod, results, list, element, resolveResult, methodCall, resolveHelper);
         highlightInfo = null;
       }
       else if (candidateInfo != null && !candidateInfo.isApplicable()) {
@@ -421,12 +421,13 @@ public class HighlightMethodUtil {
   }
 
   @Nullable
-  static HighlightInfo checkAmbiguousMethodCall(final PsiReferenceExpression referenceToMethod,
-                                                        JavaResolveResult[] resolveResults,
-                                                        @NotNull PsiExpressionList list,
-                                                        final PsiElement element,
-                                                        final JavaResolveResult resolveResult,
-                                                        final PsiMethodCallExpression methodCall, final PsiResolveHelper resolveHelper) {
+  static HighlightInfo checkAmbiguousMethodCall(@NotNull PsiReferenceExpression referenceToMethod,
+                                                @NotNull JavaResolveResult[] resolveResults,
+                                                @NotNull PsiExpressionList list,
+                                                final PsiElement element,
+                                                @NotNull JavaResolveResult resolveResult,
+                                                @NotNull PsiMethodCallExpression methodCall,
+                                                @NotNull PsiResolveHelper resolveHelper) {
     MethodCandidateInfo methodCandidate1 = null;
     MethodCandidateInfo methodCandidate2 = null;
     for (JavaResolveResult result : resolveResults) {
@@ -449,16 +450,24 @@ public class HighlightMethodUtil {
     PsiElement elementToHighlight;
     HighlightInfoType highlightInfoType = HighlightInfoType.ERROR;
     if (methodCandidate2 != null) {
-      String m1 = PsiFormatUtil.formatMethod(methodCandidate1.getElement(),
+      PsiMethod element1 = methodCandidate1.getElement();
+      String m1 = PsiFormatUtil.formatMethod(element1,
                                              methodCandidate1.getSubstitutor(),
                                              PsiFormatUtilBase.SHOW_CONTAINING_CLASS | PsiFormatUtilBase.SHOW_NAME |
                                              PsiFormatUtilBase.SHOW_PARAMETERS,
                                              PsiFormatUtilBase.SHOW_TYPE);
-      String m2 = PsiFormatUtil.formatMethod(methodCandidate2.getElement(),
+      PsiMethod element2 = methodCandidate2.getElement();
+      String m2 = PsiFormatUtil.formatMethod(element2,
                                              methodCandidate2.getSubstitutor(),
                                              PsiFormatUtilBase.SHOW_CONTAINING_CLASS | PsiFormatUtilBase.SHOW_NAME |
                                              PsiFormatUtilBase.SHOW_PARAMETERS,
                                              PsiFormatUtilBase.SHOW_TYPE);
+      VirtualFile virtualFile1 = PsiUtilCore.getVirtualFile(element1);
+      VirtualFile virtualFile2 = PsiUtilCore.getVirtualFile(element2);
+      if (!Comparing.equal(virtualFile1, virtualFile2)) {
+        if (virtualFile1 != null) m1 += " (In " + virtualFile1.getPresentableUrl() + ")";
+        if (virtualFile2 != null) m2 += " (In " + virtualFile2.getPresentableUrl() + ")";
+      }
       description = JavaErrorMessages.message("ambiguous.method.call", m1, m2);
       toolTip = createAmbiguousMethodHtmlTooltip(new MethodCandidateInfo[]{methodCandidate1, methodCandidate2});
       elementToHighlight = list;
@@ -506,7 +515,7 @@ public class HighlightMethodUtil {
   }
 
   private static MethodCandidateInfo[] toMethodCandidates(JavaResolveResult[] resolveResults) {
-    List<MethodCandidateInfo> candidateList = new ArrayList<MethodCandidateInfo>();
+    List<MethodCandidateInfo> candidateList = new ArrayList<MethodCandidateInfo>(resolveResults.length);
 
     for (JavaResolveResult result : resolveResults) {
       if (!(result instanceof MethodCandidateInfo)) continue;
@@ -1417,7 +1426,9 @@ public class HighlightMethodUtil {
     return builder.toString();
   }
 
-  private static void registerChangeParameterClassFix(PsiCall methodCall, PsiExpressionList list, HighlightInfo highlightInfo) {
+  private static void registerChangeParameterClassFix(@NotNull PsiCall methodCall,
+                                                      @NotNull PsiExpressionList list,
+                                                      HighlightInfo highlightInfo) {
     final JavaResolveResult result = methodCall.resolveMethodGenerics();
     PsiMethod method = (PsiMethod)result.getElement();
     final PsiSubstitutor substitutor = result.getSubstitutor();

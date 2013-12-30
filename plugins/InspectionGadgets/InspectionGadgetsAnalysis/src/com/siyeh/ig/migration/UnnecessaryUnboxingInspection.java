@@ -159,7 +159,19 @@ public class UnnecessaryUnboxingInspection extends BaseInspection {
       if (isPossibleObjectComparison(expression, containingExpression)) {
         return;
       }
-      if (containingExpression instanceof PsiConditionalExpression) {
+      if (containingExpression instanceof PsiTypeCastExpression) {
+        final PsiTypeCastExpression typeCastExpression = (PsiTypeCastExpression)containingExpression;
+        final PsiTypeElement typeElement = typeCastExpression.getCastType();
+        if (typeElement == null) {
+          return;
+        }
+        final PsiType castType = typeElement.getType();
+        final PsiType expressionType = expression.getType();
+        if (expressionType == null || !castType.isAssignableFrom(expressionType)) {
+          return;
+        }
+      }
+      else if (containingExpression instanceof PsiConditionalExpression) {
         final PsiConditionalExpression conditionalExpression = (PsiConditionalExpression)containingExpression;
         final PsiExpression thenExpression = conditionalExpression.getThenExpression();
         if (thenExpression == null) {
@@ -273,7 +285,7 @@ public class UnnecessaryUnboxingInspection extends BaseInspection {
       if (containingClass == null) {
         return false;
       }
-      final PsiType[] types = new PsiType[expressions.length];
+      final PsiType[] types = PsiType.createArray(expressions.length);
       for (int i = 0; i < expressions.length; i++) {
         final PsiExpression expression = expressions[i];
         final PsiType type = expression.getType();

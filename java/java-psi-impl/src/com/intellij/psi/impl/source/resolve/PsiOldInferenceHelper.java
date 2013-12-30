@@ -27,7 +27,6 @@ import com.intellij.openapi.util.RecursionGuard;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.resolve.graphInference.InferenceSession;
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.*;
@@ -57,36 +56,36 @@ public class PsiOldInferenceHelper implements PsiInferenceHelper {
                                                                                     @NotNull PsiSubstitutor partialSubstitutor,
                                                                                     final PsiElement parent,
                                                                                     @NotNull ParameterTypeInferencePolicy policy) {
-    PsiType[] paramTypes = new PsiType[arguments.length];
-    PsiType[] argTypes = new PsiType[arguments.length];
-    if (parameters.length > 0) {
-      for (int j = 0; j < argTypes.length; j++) {
-        final PsiExpression argument = arguments[j];
-        if (argument == null) continue;
-        if (argument instanceof PsiMethodCallExpression && PsiResolveHelper.ourGuard.currentStack().contains(argument)) continue;
+      PsiType[] paramTypes = PsiType.createArray(arguments.length);
+      PsiType[] argTypes = PsiType.createArray(arguments.length);
+      if (parameters.length > 0) {
+        for (int j = 0; j < argTypes.length; j++) {
+          final PsiExpression argument = arguments[j];
+          if (argument == null) continue;
+          if (argument instanceof PsiMethodCallExpression && PsiResolveHelper.ourGuard.currentStack().contains(argument)) continue;
 
-        final RecursionGuard.StackStamp stackStamp = PsiDiamondType.ourDiamondGuard.markStack();
-        argTypes[j] = argument.getType();
-        if (!stackStamp.mayCacheNow()) {
-          argTypes[j] = null;
-          continue;
-        }
+          final RecursionGuard.StackStamp stackStamp = PsiDiamondType.ourDiamondGuard.markStack();
+          argTypes[j] = argument.getType();
+          if (!stackStamp.mayCacheNow()) {
+            argTypes[j] = null;
+            continue;
+          }
 
-        final PsiParameter parameter = parameters[Math.min(j, parameters.length - 1)];
-        if (j >= parameters.length && !parameter.isVarArgs()) break;
-        paramTypes[j] = parameter.getType();
-        if (paramTypes[j] instanceof PsiEllipsisType) {
-          paramTypes[j] = ((PsiEllipsisType)paramTypes[j]).getComponentType();
-          if (arguments.length == parameters.length &&
-              argTypes[j] instanceof PsiArrayType &&
-              !(((PsiArrayType)argTypes[j]).getComponentType() instanceof PsiPrimitiveType)) {
-            argTypes[j] = ((PsiArrayType)argTypes[j]).getComponentType();
+          final PsiParameter parameter = parameters[Math.min(j, parameters.length - 1)];
+          if (j >= parameters.length && !parameter.isVarArgs()) break;
+          paramTypes[j] = parameter.getType();
+          if (paramTypes[j] instanceof PsiEllipsisType) {
+            paramTypes[j] = ((PsiEllipsisType)paramTypes[j]).getComponentType();
+            if (arguments.length == parameters.length &&
+                argTypes[j] instanceof PsiArrayType &&
+                !(((PsiArrayType)argTypes[j]).getComponentType() instanceof PsiPrimitiveType)) {
+              argTypes[j] = ((PsiArrayType)argTypes[j]).getComponentType();
+            }
           }
         }
       }
+      return inferTypeForMethodTypeParameterInner(typeParameter, paramTypes, argTypes, partialSubstitutor, parent, policy);
     }
-    return inferTypeForMethodTypeParameterInner(typeParameter, paramTypes, argTypes, partialSubstitutor, parent, policy);
-  }
 
   private Pair<PsiType, ConstraintType> inferTypeForMethodTypeParameterInner(@NotNull PsiTypeParameter typeParameter,
                                                                                     @NotNull PsiType[] paramTypes,
@@ -255,7 +254,7 @@ public class PsiOldInferenceHelper implements PsiInferenceHelper {
                                            @NotNull PsiElement parent,
                                            @NotNull ParameterTypeInferencePolicy policy,
                                            @NotNull LanguageLevel languageLevel) {
-    PsiType[] substitutions = new PsiType[typeParameters.length];
+    PsiType[] substitutions = PsiType.createArray(typeParameters.length);
     @SuppressWarnings("unchecked")
     Pair<PsiType, ConstraintType>[] constraints = new Pair[typeParameters.length];
     for (int i = 0; i < typeParameters.length; i++) {
@@ -307,7 +306,6 @@ public class PsiOldInferenceHelper implements PsiInferenceHelper {
                 }
               }
             }
-
           }
         }
 
@@ -334,7 +332,8 @@ public class PsiOldInferenceHelper implements PsiInferenceHelper {
           constraint = inferMethodTypeParameterFromParent(typeParameter, partialSubstitutor, parent, policy);
         }
         else if (constraint.getSecond() == ConstraintType.SUBTYPE) {
-          Pair<PsiType, ConstraintType> otherConstraint = inferMethodTypeParameterFromParent(typeParameter, partialSubstitutor, parent, policy);
+          Pair<PsiType, ConstraintType> otherConstraint =
+            inferMethodTypeParameterFromParent(typeParameter, partialSubstitutor, parent, policy);
           if (otherConstraint != null) {
             if (otherConstraint.getSecond() == ConstraintType.EQUALS || otherConstraint.getSecond() == ConstraintType.SUPERTYPE) {
               constraint = otherConstraint;
@@ -586,7 +585,7 @@ public class PsiOldInferenceHelper implements PsiInferenceHelper {
     if (functionalInterfaceMethod != null) {
       final PsiSubstitutor subst = LambdaUtil.getSubstitutor(functionalInterfaceMethod, resolveResult);
       final PsiParameter[] methodParameters = functionalInterfaceMethod.getParameterList().getParameters();
-      PsiType[] methodParamTypes = new PsiType[methodParameters.length];
+      PsiType[] methodParamTypes = PsiType.createArray(methodParameters.length);
       for (int i = 0; i < methodParameters.length; i++) {
         methodParamTypes[i] = GenericsUtil.eliminateWildcards(subst.substitute(methodParameters[i].getType()));
       }
@@ -595,7 +594,7 @@ public class PsiOldInferenceHelper implements PsiInferenceHelper {
         return null;
       }
 
-      final PsiType[] args = new PsiType[methodParameters.length];
+      final PsiType[] args = PsiType.createArray(methodParameters.length);
       Map<PsiMethodReferenceExpression,PsiType> map = PsiMethodReferenceUtil.ourRefs.get();
       if (map == null) {
         map = new HashMap<PsiMethodReferenceExpression, PsiType>();
@@ -744,7 +743,7 @@ public class PsiOldInferenceHelper implements PsiInferenceHelper {
                                                                                      PsiMethod method, PsiLambdaExpression lambdaExpression) {
     final PsiParameter[] parameters = lambdaExpression.getParameterList().getParameters();
     if (parameters.length == 0) return null;
-    final PsiType[] lambdaArgs = new PsiType[parameters.length];
+    final PsiType[] lambdaArgs = PsiType.createArray(parameters.length);
     for (int i = 0; i < parameters.length; i++) {
       PsiParameter parameter = parameters[i];
       if (parameter.getTypeElement() == null) {
@@ -754,7 +753,7 @@ public class PsiOldInferenceHelper implements PsiInferenceHelper {
     }
 
     final PsiParameter[] methodParameters = method.getParameterList().getParameters();
-    PsiType[] methodParamTypes = new PsiType[methodParameters.length];
+    PsiType[] methodParamTypes = PsiType.createArray(methodParameters.length);
     for (int i = 0; i < methodParameters.length; i++) {
       methodParamTypes[i] = GenericsUtil.eliminateWildcards(subst.substitute(methodParameters[i].getType()));
     }
@@ -764,7 +763,7 @@ public class PsiOldInferenceHelper implements PsiInferenceHelper {
   private static PsiType intersectAllExtends(PsiTypeParameter typeParam, PsiType arg) {
     if (arg == null) return null;
     PsiClassType[] superTypes = typeParam.getSuperTypes();
-    PsiType[] erasureTypes = new PsiType[superTypes.length];
+    PsiType[] erasureTypes = PsiType.createArray(superTypes.length);
     for (int i = 0; i < superTypes.length; i++) {
       erasureTypes[i] = TypeConversionUtil.erasure(superTypes[i]);
     }
@@ -1084,7 +1083,7 @@ public class PsiOldInferenceHelper implements PsiInferenceHelper {
 
         PsiType[] superTypes = typeParameter.getSuperTypes();
         if (superTypes.length == 0) return null;
-        final PsiType[] types = new PsiType[superTypes.length];
+        final PsiType[] types = PsiType.createArray(superTypes.length);
         for (int i = 0; i < superTypes.length; i++) {
           PsiType superType = substitutor.substitute(superTypes[i]);
           if (superType instanceof PsiClassType && ((PsiClassType)superType).isRaw()) {

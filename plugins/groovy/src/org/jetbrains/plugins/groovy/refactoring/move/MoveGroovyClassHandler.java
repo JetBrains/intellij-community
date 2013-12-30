@@ -37,7 +37,6 @@ import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocComment;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocCommentOwner;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.impl.GrDocCommentUtil;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
-import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
@@ -48,6 +47,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.GrTopStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.packaging.GrPackageDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
+import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
 import org.jetbrains.plugins.groovy.refactoring.GroovyChangeContextUtil;
 
@@ -186,7 +186,7 @@ public class MoveGroovyClassHandler implements MoveClassHandler {
     if (packageDefinition != null) packageDefinition.delete();
 
     PsiElement cur = newFile.getFirstChild();
-    while (cur != null && TokenSets.WHITE_SPACES_SET.contains(cur.getNode().getElementType())) {
+    while (cur != null && PsiImplUtil.isWhiteSpaceOrNls(cur)) {
       cur = cur.getNextSibling();
     }
     if (cur != null && cur != newFile.getFirstChild()) {
@@ -195,7 +195,7 @@ public class MoveGroovyClassHandler implements MoveClassHandler {
     }
 
     cur = newFile.getLastChild();
-    while (cur != null && TokenSets.WHITE_SPACES_SET.contains(cur.getNode().getElementType())) {
+    while (cur != null && PsiImplUtil.isWhiteSpaceOrNls(cur)) {
       cur = cur.getPrevSibling();
     }
     if (cur != null && cur != newFile.getLastChild()) {

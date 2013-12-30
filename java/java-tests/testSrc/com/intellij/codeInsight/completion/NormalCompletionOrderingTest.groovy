@@ -76,7 +76,7 @@ public class NormalCompletionOrderingTest extends CompletionSortingTestCase {
     final LookupImpl lookup = invokeCompletion(getTestName(false) + ".html");
     assertPreferredItems(0, "p", "param", "pre");
     incUseCount(lookup, 2);
-    assertPreferredItems(1, "p", "pre", "param");
+    assertPreferredItems(0, "p", "pre", "param");
   }
 
   public void testUppercaseMatters2() throws Throwable {
@@ -618,6 +618,10 @@ interface TxANotAnno {}
 
   public void testPreferString() {
     checkPreferredItems 0, 'String', 'System', 'Set'
+  }
+
+  public void testAnnotationEnum() {
+    checkPreferredItems 0, 'MyEnum.BAR', 'MyEnum', 'MyEnum.FOO'
   }
 
 }

@@ -22,10 +22,10 @@ import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.execution.*;
 import org.jetbrains.idea.maven.project.MavenGeneralSettings;
@@ -59,7 +59,12 @@ public class MavenExecuteGoalAction extends DumbAwareAction {
 
     dialog.setWorkDirectory(lastWorkingDirectory);
 
-    if (historyService.getCanceledCommand() != null) {
+    if (StringUtil.isEmptyOrSpaces(historyService.getCanceledCommand())) {
+      if (historyService.getHistory().size() > 0) {
+        dialog.setGoals(historyService.getHistory().get(0));
+      }
+    }
+    else {
       dialog.setGoals(historyService.getCanceledCommand());
     }
 

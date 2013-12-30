@@ -8,6 +8,8 @@ ERROR_NO_PIP = 2
 ERROR_NO_SETUPTOOLS = 3
 ERROR_EXCEPTION = 4
 
+os.putenv("PIP_REQUIRE_VIRTUALENV", "false")
+
 def exit(retcode):
     major, minor, micro, release, serial = sys.version_info
     version = major * 10 + minor

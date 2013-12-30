@@ -22,6 +22,7 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.ui.popup.PopupStep;
@@ -39,6 +40,8 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.util.*;
 import java.util.List;
 
@@ -50,6 +53,7 @@ public class DetectionExcludesConfigurable implements Configurable {
   private final DetectionExcludesConfigurationImpl myConfiguration;
   private final SortedListModel<ExcludeListItem> myModel;
   private JPanel myMainPanel;
+  private JCheckBox myEnabledDetectionCheckBox;
 
   public DetectionExcludesConfigurable(@NotNull Project project, @NotNull DetectionExcludesConfigurationImpl configuration) {
     myProject = project;
@@ -61,7 +65,7 @@ public class DetectionExcludesConfigurable implements Configurable {
   @Override
   @NotNull
   public JComponent createComponent() {
-    myMainPanel = new JPanel(new BorderLayout());
+    myEnabledDetectionCheckBox = new JCheckBox("Enable framework detection");
     final JBList excludesList = new JBList(myModel);
     excludesList.setCellRenderer(new ColoredListCellRenderer() {
       @Override
@@ -79,8 +83,17 @@ public class DetectionExcludesConfigurable implements Configurable {
           doAddAction(button);
         }
       });
-    myMainPanel.add(new JLabel("Exclude from detection:"), BorderLayout.NORTH);
-    myMainPanel.add(decorator.createPanel());
+    myMainPanel = new JPanel(new BorderLayout(0, 5));
+    myMainPanel.add(myEnabledDetectionCheckBox, BorderLayout.NORTH);
+    final LabeledComponent<JPanel> excludesComponent = LabeledComponent.create(decorator.createPanel(), "Exclude from detection:");
+    myMainPanel.add(excludesComponent);
+    myEnabledDetectionCheckBox.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        GuiUtils.enableChildren(myEnabledDetectionCheckBox.isSelected(), excludesComponent);
+      }
+    });
+    myEnabledDetectionCheckBox.setSelected(true);
     return myMainPanel;
   }
 
@@ -218,10 +231,11 @@ public class DetectionExcludesConfigurable implements Configurable {
 
   @Nullable
   private ExcludesConfigurationState computeState() {
-    if (myModel.getItems().isEmpty()) {
+    if (myModel.getItems().isEmpty() && myEnabledDetectionCheckBox.isSelected()) {
       return null;
     }
     final ExcludesConfigurationState state = new ExcludesConfigurationState();
+    state.setDetectionEnabled(myEnabledDetectionCheckBox.isSelected());
     for (ExcludeListItem item : myModel.getItems()) {
       final String url = item.getFileUrl();
       final String typeId = item.getFrameworkTypeId();
@@ -239,6 +253,7 @@ public class DetectionExcludesConfigurable implements Configurable {
   public void reset() {
     myModel.clear();
     final ExcludesConfigurationState state = myConfiguration.getActualState();
+    myEnabledDetectionCheckBox.setSelected(state == null || state.isDetectionEnabled());
     if (state != null) {
       for (String typeId : state.getFrameworkTypes()) {
         final FrameworkType frameworkType = FrameworkDetectorRegistry.getInstance().findFrameworkType(typeId);

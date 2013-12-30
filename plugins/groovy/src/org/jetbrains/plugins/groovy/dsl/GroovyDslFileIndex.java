@@ -405,7 +405,7 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
           ref.set(new ArrayList<Pair<File, GroovyDslExecutor>>());
           //noinspection InstanceofCatchParameter
           if (e instanceof Error) {
-            stopGdsl = true;
+            stopGdsl();
           }
           LOG.error(e);
         }
@@ -418,7 +418,7 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
     while (true) {
       ProgressManager.checkCanceled();
 
-      if (stopGdsl) {
+      if (ourGdslStopped) {
         return Collections.emptyList();
       }
       if (ref.get() != null || semaphore.waitFor(20)) {
@@ -427,12 +427,16 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
     }
   }
 
+  static void stopGdsl() {
+    ourGdslStopped = true;
+  }
+
   private static final Key<CachedValue<List<GroovyDslScript>>> SCRIPTS_CACHE = Key.create("GdslScriptCache");
   private static List<GroovyDslScript> getDslScripts(final Project project) {
     return CachedValuesManager.getManager(project).getCachedValue(project, SCRIPTS_CACHE, new CachedValueProvider<List<GroovyDslScript>>() {
       @Override
       public Result<List<GroovyDslScript>> compute() {
-        if (stopGdsl) {
+        if (ourGdslStopped) {
           return Result.create(Collections.<GroovyDslScript>emptyList(), Collections.emptyList());
         }
 
@@ -441,7 +445,7 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
         List<GroovyDslScript> result = new ArrayList<GroovyDslScript>();
 
         List<Pair<File, GroovyDslExecutor>> standardScripts = getStandardScripts();
-        if (stopGdsl) {
+        if (ourGdslStopped) {
           return Result.create(Collections.<GroovyDslScript>emptyList(), Collections.emptyList());
         }
         assert standardScripts != null;
@@ -475,7 +479,7 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
         }
 
         try {
-          while (count > 0 && !stopGdsl) {
+          while (count > 0 && !ourGdslStopped) {
             ProgressManager.checkCanceled();
             final Pair<VirtualFile, GroovyDslExecutor> pair = queue.poll(20, TimeUnit.MILLISECONDS);
             if (pair != null) {
@@ -561,11 +565,11 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
     }
   }
 
-  private static volatile boolean stopGdsl = false;
+  private static volatile boolean ourGdslStopped = false;
 
   @Nullable
   private static GroovyDslExecutor createExecutor(String text, VirtualFile vfile, final Project project) {
-    if (stopGdsl) {
+    if (ourGdslStopped) {
       return null;
     }
 
@@ -586,12 +590,12 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
 
       //noinspection InstanceofCatchParameter
       if (e instanceof OutOfMemoryError) {
-        stopGdsl = true;
+        stopGdsl();
         throw (Error)e;
       }
       //noinspection InstanceofCatchParameter
       if (e instanceof NoClassDefFoundError) {
-        stopGdsl = true;
+        stopGdsl();
         throw (NoClassDefFoundError) e;
       }
 

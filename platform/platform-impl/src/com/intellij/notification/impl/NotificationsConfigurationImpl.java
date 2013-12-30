@@ -15,14 +15,13 @@
  */
 package com.intellij.notification.impl;
 
-import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationDisplayType;
+import com.intellij.notification.NotificationGroup;
 import com.intellij.notification.NotificationsConfiguration;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.Function;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
 import org.jdom.Element;
@@ -62,12 +61,13 @@ public class NotificationsConfigurationImpl extends NotificationsConfiguration i
   }
 
   public synchronized boolean hasToolWindowCapability(@NotNull String groupId) {
-    return myToolWindowCapable.containsKey(groupId);
+    return getToolWindowId(groupId) != null || myToolWindowCapable.containsKey(groupId);
   }
 
   @Nullable
-  public synchronized String getToolWindowId(@NotNull String groupId) {
-    return myToolWindowCapable.get(groupId);
+  public String getToolWindowId(@NotNull String groupId) {
+    NotificationGroup group = NotificationGroup.findRegisteredGroup(groupId);
+    return group == null ? null : group.getToolWindowId();
   }
 
   public static NotificationSettings[] getAllSettings() {
@@ -91,11 +91,15 @@ public class NotificationsConfigurationImpl extends NotificationsConfiguration i
   private synchronized void _remove(String... toRemove) {
     for (final String id : toRemove) {
       myIdToSettingsMap.remove(id);
+      myToolWindowCapable.remove(id);
     }
   }
 
   private synchronized NotificationSettings[] _getAllSettings() {
-    Collection<NotificationSettings> settings = myIdToSettingsMap.values();
+    Collection<NotificationSettings> settings = ContainerUtil.newHashSet(myIdToSettingsMap.values());
+    for (NotificationGroup group : NotificationGroup.getAllRegisteredGroups()) {
+      settings.add(getSettings(group.getDisplayId()));
+    }
     NotificationSettings[] result = settings.toArray(new NotificationSettings[settings.size()]);
     Arrays.sort(result, new Comparator<NotificationSettings>() {
       @Override
@@ -114,7 +118,16 @@ public class NotificationsConfigurationImpl extends NotificationsConfiguration i
   @NotNull
   public static NotificationSettings getSettings(@NotNull final String groupId) {
     final NotificationSettings settings = getNotificationsConfigurationImpl()._getSettings(groupId);
-    return settings == null ? new NotificationSettings(groupId, NotificationDisplayType.BALLOON, true, false) : settings;
+    return settings == null ? getDefaultSettings(groupId) : settings;
+  }
+
+  @NotNull
+  private static NotificationSettings getDefaultSettings(String groupId) {
+    NotificationGroup group = NotificationGroup.findRegisteredGroup(groupId);
+    if (group != null) {
+      return new NotificationSettings(groupId, group.getDisplayType(), group.isLogByDefault(), false);
+    }
+    return new NotificationSettings(groupId, NotificationDisplayType.BALLOON, true, false);
   }
 
   @Override
@@ -154,19 +167,27 @@ public class NotificationsConfigurationImpl extends NotificationsConfiguration i
       changeSettings(groupDisplayName, displayType, shouldLog, shouldReadAloud);
     } else if (displayType == NotificationDisplayType.TOOL_WINDOW && !hasToolWindowCapability(groupDisplayName)) {
       // the first time with tool window capability
-      ObjectUtils.assertNotNull(_getSettings(groupDisplayName)).setDisplayType(NotificationDisplayType.TOOL_WINDOW);
+      changeSettings(getSettings(groupDisplayName).withDisplayType(NotificationDisplayType.TOOL_WINDOW));
       myToolWindowCapable.put(groupDisplayName, null);
     }
-
   }
 
   @Override
   public void changeSettings(String groupDisplayName, NotificationDisplayType displayType, boolean shouldLog, boolean shouldReadAloud) {
-    myIdToSettingsMap.put(groupDisplayName, new NotificationSettings(groupDisplayName, displayType, shouldLog, shouldReadAloud));
+    changeSettings(new NotificationSettings(groupDisplayName, displayType, shouldLog, shouldReadAloud));
+  }
+
+  public synchronized void changeSettings(NotificationSettings settings) {
+    String groupDisplayName = settings.getGroupId();
+    if (settings.equals(getDefaultSettings(groupDisplayName))) {
+      myIdToSettingsMap.remove(groupDisplayName);
+    } else {
+      myIdToSettingsMap.put(groupDisplayName, settings);
+    }
   }
 
   public synchronized boolean isRegistered(@NotNull final String id) {
-    return myIdToSettingsMap.containsKey(id);
+    return myIdToSettingsMap.containsKey(id) || NotificationGroup.findRegisteredGroup(id) != null;
   }
 
   @Override
@@ -177,6 +198,12 @@ public class NotificationsConfigurationImpl extends NotificationsConfiguration i
     }
     for (String entry: myToolWindowCapable.keySet()) {
       element.addContent(new Element("toolWindow").setAttribute("group", entry));
+    }
+    for (NotificationGroup group : NotificationGroup.getAllRegisteredGroups()) {
+      String displayId = group.getDisplayId();
+      if (!myToolWindowCapable.containsKey(displayId) && group.getToolWindowId() != null) {
+        element.addContent(new Element("toolWindow").setAttribute("group", displayId));
+      }
     }
     //noinspection NonPrivateFieldAccessedInSynchronizedContext
     if (!SHOW_BALLOONS) {

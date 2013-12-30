@@ -16,7 +16,6 @@
 package com.siyeh.ipp.asserttoif;
 
 import com.intellij.psi.*;
-import com.siyeh.ig.psiutils.TypeUtils;
 import com.siyeh.ipp.base.PsiElementPredicate;
 
 class IfStatementPredicate implements PsiElementPredicate {
@@ -39,18 +38,12 @@ class IfStatementPredicate implements PsiElementPredicate {
       return false;
     }
     final PsiStatement thenBranch = statement.getThenBranch();
-    return throwsException(thenBranch);
+    return isSimpleThrowStatement(thenBranch);
   }
 
-  private static boolean throwsException(PsiElement element) {
+  public static boolean isSimpleThrowStatement(PsiStatement element) {
     if (element instanceof PsiThrowStatement) {
-      final PsiThrowStatement throwStatement = (PsiThrowStatement)element;
-      final PsiExpression exception = throwStatement.getException();
-      if (!(exception instanceof PsiNewExpression)) {
-        return false;
-      }
-      final PsiNewExpression newExpression = (PsiNewExpression)exception;
-      return TypeUtils.expressionHasTypeOrSubtype(newExpression, CommonClassNames.JAVA_LANG_THROWABLE);
+      return true;
     }
     else if (element instanceof PsiBlockStatement) {
       final PsiBlockStatement blockStatement = (PsiBlockStatement)element;
@@ -60,7 +53,7 @@ class IfStatementPredicate implements PsiElementPredicate {
         return false;
       }
       final PsiStatement statement = statements[0];
-      return throwsException(statement);
+      return isSimpleThrowStatement(statement);
     }
     return false;
   }

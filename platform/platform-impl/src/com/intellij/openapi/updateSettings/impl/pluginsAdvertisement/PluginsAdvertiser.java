@@ -42,6 +42,7 @@ import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.EditorNotifications;
+import com.intellij.util.PlatformUtils;
 import com.intellij.util.net.HttpConfigurable;
 import com.intellij.util.xmlb.XmlSerializer;
 import com.intellij.util.xmlb.annotations.MapAnnotation;
@@ -214,7 +215,8 @@ public class PluginsAdvertiser implements StartupActivity {
     return null;
   }
 
-  static boolean hasBundledNotInstalledPlugin(Collection<Plugin> plugins) {
+  static boolean hasBundledPluginToInstall(Collection<Plugin> plugins) {
+    if (PlatformUtils.isIdea()) return false;
     for (Plugin plugin : plugins) {
       if (plugin.myBundled && PluginManager.getPlugin(PluginId.getId(plugin.myPluginId)) == null) {
         return true;
@@ -245,6 +247,7 @@ public class PluginsAdvertiser implements StartupActivity {
           public void run(@NotNull ProgressIndicator indicator) {
             try {
               myAllPlugins = RepositoryHelper.loadPluginsFromRepository(indicator);
+              if (project.isDisposed()) return;
               if (extensions == null) {
                 loadSupportedExtensions(myAllPlugins);
                 EditorNotifications.getInstance(project).updateAllNotifications();
@@ -253,6 +256,7 @@ public class PluginsAdvertiser implements StartupActivity {
               final Map<String, Plugin> ids = new HashMap<String, Plugin>();
               for (UnknownFeature feature : unknownFeatures) {
                 indicator.setText("Searching for plugin supporting \'" + feature.getImplementationName() + "\'");
+                ProgressManager.checkCanceled();
                 final List<Plugin> pluginId = retrieve(feature);
                 if (pluginId != null) {
                   for (Plugin plugin : pluginId) {
@@ -274,7 +278,7 @@ public class PluginsAdvertiser implements StartupActivity {
                 } 
               }
 
-              myBundledPlugins = hasBundledNotInstalledPlugin(ids.values());
+              myBundledPlugins = hasBundledPluginToInstall(ids.values());
 
               for (IdeaPluginDescriptor loadedPlugin : myAllPlugins) {
                 final PluginId pluginId = loadedPlugin.getPluginId();

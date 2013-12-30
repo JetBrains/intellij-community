@@ -24,6 +24,7 @@ import com.intellij.vcs.log.data.VcsLogUiProperties;
 import com.intellij.vcs.log.ui.VcsLogUI;
 import com.intellij.vcs.log.ui.filter.VcsLogClassicFilterUi;
 import com.intellij.vcs.log.ui.filter.VcsLogFilterUi;
+import com.intellij.vcs.log.ui.tables.GraphTableModel;
 import icons.VcsLogIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -151,14 +152,14 @@ public class MainFrame extends JPanel implements TypeSafeDataProvider {
   }
 
   private JComponent createActionsToolbar() {
-    AnAction hideBranchesAction = new DumbAwareAction("Collapse linear branches", "Collapse linear branches", VcsLogIcons.CollapseBranches) {
+    AnAction hideBranchesAction = new GraphAction("Collapse linear branches", "Collapse linear branches", VcsLogIcons.CollapseBranches) {
       @Override
       public void actionPerformed(AnActionEvent e) {
         myUI.hideAll();
       }
     };
 
-    AnAction showBranchesAction = new DumbAwareAction("Expand all branches", "Expand all branches", VcsLogIcons.ExpandBranches) {
+    AnAction showBranchesAction = new GraphAction("Expand all branches", "Expand all branches", VcsLogIcons.ExpandBranches) {
       @Override
       public void actionPerformed(AnActionEvent e) {
         myUI.showAll();
@@ -214,17 +215,19 @@ public class MainFrame extends JPanel implements TypeSafeDataProvider {
       sink.put(key, myLog);
     }
     else if (VcsDataKeys.CHANGES.equals(key)) {
-      if (myGraphTable.getSelectedRowCount() == 1) {
-        List<Change> selectedChanges = getSelectedChanges();
-        if (selectedChanges != null) {
-          sink.put(VcsDataKeys.CHANGES, ArrayUtil.toObjectArray(selectedChanges, Change.class));
-        }
+      List<Change> selectedChanges = getSelectedChanges();
+      if (selectedChanges != null) {
+        sink.put(VcsDataKeys.CHANGES, ArrayUtil.toObjectArray(selectedChanges, Change.class));
       }
     }
   }
 
   public Component getToolbar() {
     return myToolbar;
+  }
+
+  public boolean areGraphActionsEnabled() {
+    return myGraphTable.getModel() instanceof GraphTableModel && myGraphTable.getRowCount() > 0;
   }
 
   private class CommitSelectionListener implements ListSelectionListener {
@@ -289,6 +292,24 @@ public class MainFrame extends JPanel implements TypeSafeDataProvider {
     @Override
     public void setSelected(AnActionEvent e, boolean state) {
       myUI.setLongEdgeVisibility(state);
+    }
+
+    @Override
+    public void update(AnActionEvent e) {
+      super.update(e);
+      e.getPresentation().setEnabled(areGraphActionsEnabled());
+    }
+  }
+
+  private abstract class GraphAction extends DumbAwareAction {
+
+    public GraphAction(String text, String description, Icon icon) {
+      super(text, description, icon);
+    }
+
+    @Override
+    public void update(AnActionEvent e) {
+      e.getPresentation().setEnabled(areGraphActionsEnabled());
     }
   }
 }

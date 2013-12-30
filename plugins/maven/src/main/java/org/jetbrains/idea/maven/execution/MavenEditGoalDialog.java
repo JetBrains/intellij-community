@@ -138,9 +138,8 @@ public class MavenEditGoalDialog extends DialogWrapper {
     if (goalsComboBox != null) {
       goalsComboBox.setSelectedItem(goals);
     }
-    else {
-      goalsEditor.setText(goals);
-    }
+
+    goalsEditor.setText(goals);
   }
 
   @NotNull

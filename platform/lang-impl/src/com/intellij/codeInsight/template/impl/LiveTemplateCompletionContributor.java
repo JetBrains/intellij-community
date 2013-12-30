@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -71,7 +71,7 @@ public class LiveTemplateCompletionContributor extends CompletionContributor {
         final TemplateImpl template = findApplicableTemplate(file, offset, templatePrefix);
         if (template != null) {
           result = result.withPrefixMatcher(template.getKey());
-          result.addElement(new LiveTemplateLookupElement(template, true));
+          result.addElement(new LiveTemplateLookupElementImpl(template, true));
         }
         for (final TemplateImpl possible : templates) {
           result.restartCompletionOnPrefixChange(possible.getKey());
@@ -90,7 +90,7 @@ public class LiveTemplateCompletionContributor extends CompletionContributor {
     if (!templatesShown.get()) {
       templatesShown.set(true);
       for (final TemplateImpl possible : templates) {
-        result.addElement(new LiveTemplateLookupElement(possible, false));
+        result.addElement(new LiveTemplateLookupElementImpl(possible, false));
       }
     }
   }

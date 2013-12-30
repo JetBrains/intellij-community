@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -74,7 +74,7 @@ public class DumpGroovyControlFlowAction extends AnAction implements DumbAware {
     final List<GrControlFlowOwner> result = new ArrayList<GrControlFlowOwner>();
 
     for (GrControlFlowOwner owner = ControlFlowUtils.findControlFlowOwner(elementAtCaret);
-         owner != null;
+         owner != null && !result.contains(owner);
          owner = ControlFlowUtils.findControlFlowOwner(owner)) {
       result.add(owner);
     }
