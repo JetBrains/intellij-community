@@ -146,11 +146,23 @@ public class BrowsersConfiguration implements PersistentStateComponent<Element> 
     }
   }
 
+  @NotNull
   public List<BrowserFamily> getActiveBrowsers() {
     final List<BrowserFamily> browsers = new ArrayList<BrowserFamily>();
     for (BrowserFamily family : BrowserFamily.values()) {
       if (getBrowserSettings(family).isActive()) {
         browsers.add(family);
+      }
+    }
+    return browsers;
+  }
+
+  @NotNull
+  public List<WebBrowser> getActive() {
+    List<WebBrowser> browsers = new ArrayList<WebBrowser>();
+    for (BrowserFamily family : BrowserFamily.values()) {
+      if (getBrowserSettings(family).isActive()) {
+        browsers.add(WebBrowser.getStandardBrowser(family));
       }
     }
     return browsers;

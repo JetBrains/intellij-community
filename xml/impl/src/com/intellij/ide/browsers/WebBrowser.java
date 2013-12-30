@@ -31,7 +31,6 @@ import static com.intellij.ide.browsers.BrowsersConfiguration.BrowserFamily;
  TODO Vladimir Krivosheev: get rid of BrowserFamily enum usage, allow to create custom browsers at Web Browsers page in Settings (WEB-2093). 
  */
 public class WebBrowser {
-
   public static final WebBrowser CHROME = createStandardBrowser(BrowserFamily.CHROME);
   public static final WebBrowser FIREFOX = createStandardBrowser(BrowserFamily.FIREFOX);
   public static final WebBrowser EXPLORER = createStandardBrowser(BrowserFamily.EXPLORER);
