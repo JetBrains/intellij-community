@@ -32,10 +32,9 @@ import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.reference.SoftLazyValue;
+import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.MultiMap;
-import com.intellij.util.text.CharArrayUtil;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -82,14 +81,7 @@ public class XmlPropertiesFile implements PropertiesFile {
                                   new CachedValueProvider<PropertiesFile>() {
                                     @Override
                                     public Result<PropertiesFile> compute() {
-                                      CharSequence contents = file.getViewProvider().getContents();
-                                      PropertiesFile value = null;
-                                      if (CharArrayUtil.indexOf(contents, XmlPropertiesIndex.HTTP_JAVA_SUN_COM_DTD_PROPERTIES_DTD, 0) != -1 &&
-                                          XmlPropertiesIndex.isAccepted(contents)
-                                         ) {
-                                        value = new XmlPropertiesFile(file);
-                                      }
-
+                                      PropertiesFile value = XmlPropertiesIndex.isPropertiesFile(file) ? new XmlPropertiesFile(file) : null;
                                       return Result.create(value, file);
                                     }
                                   }, false);
