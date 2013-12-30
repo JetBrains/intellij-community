@@ -35,6 +35,9 @@ import org.jetbrains.idea.svn.branchConfig.InfoStorage;
 import org.jetbrains.idea.svn.branchConfig.SvnBranchConfigManager;
 import org.jetbrains.idea.svn.branchConfig.SvnBranchConfigurationNew;
 import org.jetbrains.idea.svn.integrate.SvnBranchItem;
+import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.internal.util.SVNURLUtil;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -57,7 +60,11 @@ public class BranchConfigurationDialog extends DialogWrapper {
   private final SvnBranchConfigManager mySvnBranchConfigManager;
   private final VirtualFile myRoot;
 
-  public BranchConfigurationDialog(@NotNull final Project project, @NotNull final SvnBranchConfigurationNew configuration, final @NotNull String rootUrl, @NotNull final VirtualFile root, @NotNull String url) {
+  public BranchConfigurationDialog(@NotNull final Project project,
+                                   @NotNull final SvnBranchConfigurationNew configuration,
+                                   final @NotNull SVNURL rootUrl,
+                                   @NotNull final VirtualFile root,
+                                   @NotNull String url) {
     super(project, true);
     myRoot = root;
     init();
@@ -95,7 +102,7 @@ public class BranchConfigurationDialog extends DialogWrapper {
         .setAddAction(new AnActionButtonRunnable() {
           @Override
           public void run(AnActionButton button) {
-            final String selectedUrl = SelectLocationDialog.selectLocation(project, rootUrl);
+            final String selectedUrl = SelectLocationDialog.selectLocation(project, rootUrl.toDecodedString());
             if (selectedUrl != null) {
               if (!configuration.getBranchUrls().contains(selectedUrl)) {
                 configuration
@@ -127,27 +134,41 @@ public class BranchConfigurationDialog extends DialogWrapper {
   }
 
   private class TrunkUrlValidator extends DocumentAdapter {
-    private final String myRootUrl;
-    private final String myRootUrlPrefix;
+    private final SVNURL myRootUrl;
     private final SvnBranchConfigurationNew myConfiguration;
 
-    private TrunkUrlValidator(final String rootUrl, final SvnBranchConfigurationNew configuration) {
+    private TrunkUrlValidator(final SVNURL rootUrl, final SvnBranchConfigurationNew configuration) {
       myRootUrl = rootUrl;
-      myRootUrlPrefix = rootUrl + "/";
       myConfiguration = configuration;
     }
 
     protected void textChanged(final DocumentEvent e) {
-      final String currentValue = myTrunkLocationTextField.getText();
-      final boolean valueOk = (currentValue != null) && (currentValue.equals(myRootUrl) || currentValue.startsWith(myRootUrlPrefix));
-      final boolean prefixOk = (currentValue != null) && (currentValue.startsWith(myRootUrlPrefix)) &&
-          (currentValue.length() > myRootUrlPrefix.length());
+      SVNURL url = parseUrl(myTrunkLocationTextField.getText());
 
-      myTrunkLocationTextField.getButton().setEnabled(valueOk);
-      if (prefixOk) {
-        myConfiguration.setTrunkUrl(currentValue.endsWith("/") ? currentValue.substring(0, currentValue.length() - 1) : currentValue);
+      if (url != null) {
+        boolean isAncestor = SVNURLUtil.isAncestor(myRootUrl, url);
+        boolean areNotSame = isAncestor && !url.equals(myRootUrl);
+
+        myTrunkLocationTextField.getButton().setEnabled(isAncestor);
+        if (areNotSame) {
+          myConfiguration.setTrunkUrl(url.toDecodedString());
+        }
+        myErrorPrompt.setText(areNotSame ? "" : SvnBundle.message("configure.branches.error.wrong.url", myRootUrl));
       }
-      myErrorPrompt.setText(prefixOk ? "" : SvnBundle.message("configure.branches.error.wrong.url", myRootUrl));
+    }
+
+    @Nullable
+    private SVNURL parseUrl(@NotNull String url) {
+      SVNURL result = null;
+
+      try {
+        result = SvnUtil.createUrl(url);
+      }
+      catch (SVNException e) {
+        myErrorPrompt.setText(e.getMessage());
+      }
+
+      return result;
     }
   }
 
@@ -180,7 +201,7 @@ public class BranchConfigurationDialog extends DialogWrapper {
     if (wcRoot == null) {
       return;
     }
-    final String rootUrl = wcRoot.getRepositoryUrl();
+    final SVNURL rootUrl = wcRoot.getRepositoryUrlUrl();
     if (rootUrl == null) {
       Messages.showErrorDialog(project, SvnBundle.message("configure.branches.error.no.connection.title"),
                                SvnBundle.message("configure.branches.title"));

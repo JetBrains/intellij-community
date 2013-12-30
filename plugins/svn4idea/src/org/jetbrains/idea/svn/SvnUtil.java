@@ -786,6 +786,19 @@ public class SvnUtil {
     return !hasDefaultPort(url) ? url.getPort() : DEFAULT_PORT_INDICATOR;
   }
 
+  @NotNull
+  public static SVNURL createUrl(@NotNull String url) throws SVNException {
+    SVNURL result = SVNURL.parseURIEncoded(url);
+
+    // explicitly check if port corresponds to default port and recreate url specifying default port indicator
+    if (result.hasPort() && hasDefaultPort(result)) {
+      result = SVNURL
+        .create(result.getProtocol(), result.getUserInfo(), result.getHost(), DEFAULT_PORT_INDICATOR, result.getURIEncodedPath(), true);
+    }
+
+    return result;
+  }
+
   public static SVNURL parseUrl(@NotNull String url) {
     try {
       return SVNURL.parseURIEncoded(url);
