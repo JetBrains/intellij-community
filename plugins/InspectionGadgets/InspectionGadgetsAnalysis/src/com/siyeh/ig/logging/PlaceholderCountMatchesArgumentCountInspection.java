@@ -70,6 +70,14 @@ public class PlaceholderCountMatchesArgumentCountInspection extends BaseInspecti
       if (!loggingMethodNames.contains(name)) {
         return;
       }
+      final PsiMethod method = expression.resolveMethod();
+      if (method == null) {
+        return;
+      }
+      final PsiClass aClass = method.getContainingClass();
+      if (!InheritanceUtil.isInheritor(aClass, "org.slf4j.Logger")) {
+        return;
+      }
       final PsiExpressionList argumentList = expression.getArgumentList();
       final PsiExpression[] arguments = argumentList.getExpressions();
       if (arguments.length == 0) {
