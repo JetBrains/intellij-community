@@ -97,12 +97,7 @@ public class TemplateSettings implements PersistentStateComponent<Element>, Expo
 
   @NonNls private static final String TEMPLATES_CONFIG_FOLDER = "templates";
 
-  private final MultiMap<String,TemplateImpl> myTemplates = new MultiMap<String,TemplateImpl>() {
-    @Override
-    protected Map<String, Collection<TemplateImpl>> createMap() {
-      return new LinkedHashMap<String, Collection<TemplateImpl>>();
-    }
-  };
+  private final MultiMap<String,TemplateImpl> myTemplates = MultiMap.createLinked();
     
   private final Map<String,Template> myTemplatesById = new LinkedHashMap<String,Template>();
   private final Map<TemplateKey,TemplateImpl> myDefaultTemplates = new LinkedHashMap<TemplateKey, TemplateImpl>();
