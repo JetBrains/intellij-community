@@ -76,4 +76,15 @@ public class PlaceholderCountMatchesArgumentCountInspectionTest extends LightIns
            "    public static class SecondException extends Exception { }\n" +
            "}");
   }
+
+  public void testNoSlf4j() {
+    doTest("class FalsePositiveSLF4J {\n" +
+           "    public void method( DefinitelyNotSLF4J definitelyNotSLF4J ) {\n" +
+           "        definitelyNotSLF4J.trace( \"not a trace message\", \"not a trace parameter\" );\n" +
+           "    }\n" +
+           "    public interface DefinitelyNotSLF4J {\n" +
+           "        void trace( String firstParameter, Object secondParameter );\n" +
+           "    }\n" +
+           "}");
+  }
 }
