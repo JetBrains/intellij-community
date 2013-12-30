@@ -592,8 +592,29 @@ public class JavaDocInfoGenerator {
       generateEpilogue(buffer);
   }
 
-  private static void appendInitializer(StringBuilder buffer, PsiVariable variable) {
+  public static PsiExpression calcInitializerExpression(PsiVariable variable) {
     PsiExpression initializer = variable.getInitializer();
+    if (initializer != null) {
+      PsiModifierList modifierList = variable.getModifierList();
+      if (modifierList != null && modifierList.hasModifierProperty(PsiModifier.FINAL) && !(initializer instanceof PsiLiteralExpression)) {
+        JavaPsiFacade instance = JavaPsiFacade.getInstance(variable.getProject());
+        Object o = instance.getConstantEvaluationHelper().computeConstantExpression(initializer);
+        if (o != null) {
+          String text = o.toString();
+          PsiType type = variable.getType();
+          if (type.equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
+            text = "\"" + StringUtil.trimLog(text, 120) + "\"";
+          }
+          else if (type.equalsToText("char")) text = "'" + text + "'";
+          initializer = instance.getElementFactory().createExpressionFromText(text, variable);
+        }
+      }
+    }
+    return initializer;
+  }
+
+  private static void appendInitializer(StringBuilder buffer, PsiVariable variable) {
+    PsiExpression initializer = calcInitializerExpression(variable);
     if (initializer != null) {
       buffer.append(" = ");
 
