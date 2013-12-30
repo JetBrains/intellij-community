@@ -267,6 +267,8 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
       ParameterInfoController.findArgumentList(file, editor.getCaretModel().getOffset(), -1);
     if (list != null) {
       myParameterInfoController = ParameterInfoController.findControllerAtOffset(editor, list.getTextRange().getStartOffset());
+      LookupEx lookup = LookupManager.getInstance(myProject).getActiveLookup();
+      if (lookup != null) myParameterInfoController = null; // take completion variants for documentation then
     }
 
     final PsiElement originalElement = getContextElement(editor, file);
@@ -665,8 +667,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
 
       @Nullable
       private String generateParameterInfoDocumentation(DocumentationProvider provider) {
-        LookupEx lookup = LookupManager.getInstance(myProject).getActiveLookup();
-        final Object[] objects = lookup != null ? ArrayUtil.EMPTY_OBJECT_ARRAY : myParameterInfoController.getSelectedElements();
+        final Object[] objects = myParameterInfoController.getSelectedElements();
 
         if (objects.length > 0) {
           @NonNls StringBuffer sb = null;
