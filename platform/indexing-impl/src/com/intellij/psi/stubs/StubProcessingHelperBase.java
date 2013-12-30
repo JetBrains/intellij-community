@@ -60,7 +60,7 @@ public abstract class StubProcessingHelperBase {
       if (objectStubTree == null) {
         return true;
       }
-      if (customStubs) {
+      if (customStubs && !(objectStubTree instanceof StubTree)) {
         return processor.process((Psi)psiFile); // e.g. dom indices
       }
       stubTree = (StubTree)objectStubTree;
