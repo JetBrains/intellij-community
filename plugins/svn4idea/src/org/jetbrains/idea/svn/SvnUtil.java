@@ -73,6 +73,7 @@ public class SvnUtil {
   @NonNls public static final String WC_DB_FILE_NAME = "wc.db";
   @NonNls public static final String DIR_PROPS_FILE_NAME = "dir-props";
   @NonNls public static final String PATH_TO_LOCK_FILE = SVN_ADMIN_DIR_NAME + "/lock";
+  public static final int DEFAULT_PORT_INDICATOR = -1;
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.idea.svn.SvnUtil");
 
   public static final Pattern ERROR_PATTERN = Pattern.compile("^svn: (E(\\d+)): (.*)$", Pattern.MULTILINE);
@@ -771,6 +772,18 @@ public class SvnUtil {
     ClientFactory factory = target.isFile() ? vcs.getFactory(target.getFile()) : vcs.getFactory();
 
     return factory.createContentClient().getContent(target, revision, pegRevision);
+  }
+
+  public static boolean hasDefaultPort(@NotNull SVNURL result) {
+    return !result.hasPort() || SVNURL.getDefaultPortNumber(result.getProtocol()) == result.getPort();
+  }
+
+  /**
+   * When creating SVNURL with default port, some negative value should be specified as port number, otherwise specified port value (even
+   * if equals to default) will occur in toString() result.
+   */
+  public static int resolvePort(@NotNull SVNURL url) {
+    return !hasDefaultPort(url) ? url.getPort() : DEFAULT_PORT_INDICATOR;
   }
 
   public static SVNURL parseUrl(@NotNull String url) {
