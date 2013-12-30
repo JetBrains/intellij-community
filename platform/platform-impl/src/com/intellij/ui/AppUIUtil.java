@@ -36,6 +36,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Field;
@@ -169,5 +170,35 @@ public class AppUIUtil {
     JTextField field = new JTextField();
     new TextComponentUndoProvider(field);
     return field;
+  }
+
+  private static final int MIN_ICON_SIZE = 32;
+
+  @Nullable
+  public static String findIcon(final String iconsPath) {
+    final File iconsDir = new File(iconsPath);
+
+    // 1. look for .svg icon
+    for (String child : iconsDir.list()) {
+      if (child.endsWith(".svg")) {
+        return iconsPath + '/' + child;
+      }
+    }
+
+    // 2. look for .png icon of max size
+    int max = 0;
+    String iconPath = null;
+    for (String child : iconsDir.list()) {
+      if (!child.endsWith(".png")) continue;
+      final String path = iconsPath + '/' + child;
+      final Icon icon = new ImageIcon(path);
+      final int size = icon.getIconHeight();
+      if (size >= MIN_ICON_SIZE && size > max && size == icon.getIconWidth()) {
+        max = size;
+        iconPath = path;
+      }
+    }
+
+    return iconPath;
   }
 }
