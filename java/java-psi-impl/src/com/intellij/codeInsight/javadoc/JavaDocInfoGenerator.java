@@ -71,7 +71,9 @@ public class JavaDocInfoGenerator {
   @NonNls private static final String INHERITDOC_TAG = "inheritDoc";
   @NonNls private static final String DOCROOT_TAG    = "docRoot";
   @NonNls private static final String VALUE_TAG      = "value";
-  
+  private static final String LT = "&lt;";
+  private static final String GT = "&gt;";
+
   private final Project    myProject;
   private final PsiElement myElement;
   
@@ -732,7 +734,7 @@ public class JavaDocInfoGenerator {
     }
 
     final String typeParamsString = generateTypeParameters(method);
-    indent += typeParamsString.length();
+    indent += StringUtil.unescapeXml(StringUtil.stripHtml(typeParamsString, true)).length();
     if (!typeParamsString.isEmpty()) {
       buffer.append(typeParamsString);
       buffer.append("&nbsp;");
@@ -1083,8 +1085,8 @@ public class JavaDocInfoGenerator {
   }
 
   private static void appendPlainText(@NonNls String text, final StringBuilder buffer) {
-    text = text.replaceAll("<", "&lt;");
-    text = text.replaceAll(">", "&gt;");
+    text = text.replaceAll("<", LT);
+    text = text.replaceAll(">", GT);
 
     buffer.append(text);
   }
@@ -1540,12 +1542,12 @@ public class JavaDocInfoGenerator {
       buffer.append("<font color=red>");
       buffer.append(label);
       buffer.append("</font>");
-      return label.length();
+      return StringUtil.stripHtml(label, true).length();
     }
 
 
     generateLink(buffer, target, label, plainLink);
-    return label.length();
+    return StringUtil.stripHtml(label, true).length();
   }
 
   /**
@@ -1605,9 +1607,10 @@ public class JavaDocInfoGenerator {
       PsiSubstitutor psiSubst = result.getSubstitutor();
 
       if (psiClass == null) {
-        String text = "<font color=red>" + StringUtil.escapeXml(type.getCanonicalText()) + "</font>";
+        String canonicalText = type.getCanonicalText();
+        String text = "<font color=red>" + StringUtil.escapeXml(canonicalText) + "</font>";
         buffer.append(text);
-        return text.length();
+        return canonicalText.length();
       }
 
       String qName = psiClass.getQualifiedName();
@@ -1632,7 +1635,8 @@ public class JavaDocInfoGenerator {
 
         PsiTypeParameter[] params = psiClass.getTypeParameters();
 
-        subst.append("&lt;");
+        subst.append(LT);
+        length += 1;
         boolean goodSubst = true;
         for (int i = 0; i < params.length; i++) {
           PsiType t = psiSubst.substitute(params[i]);
@@ -1649,7 +1653,8 @@ public class JavaDocInfoGenerator {
           }
         }
 
-        subst.append("&gt;");
+        subst.append(GT);
+        length += 1;
         if (goodSubst) {
           String text = subst.toString();
 
@@ -1662,9 +1667,10 @@ public class JavaDocInfoGenerator {
 
     if (type instanceof PsiDisjunctionType || type instanceof PsiIntersectionType) {
       if (!generateLink) {
-        final String text = StringUtil.escapeXml(type.getCanonicalText());
+        String canonicalText = type.getCanonicalText();
+        final String text = StringUtil.escapeXml(canonicalText);
         buffer.append(text);
-        return text.length();
+        return canonicalText.length();
       }
       else {
         final String separator = type instanceof PsiDisjunctionType ? " | " : " & ";
@@ -1697,7 +1703,7 @@ public class JavaDocInfoGenerator {
 
       StringBuilder buffer = new StringBuilder();
 
-      buffer.append("&lt;");
+      buffer.append(LT);
 
       for (int i = 0; i < parms.length; i++) {
         PsiTypeParameter p = parms[i];
@@ -1723,7 +1729,7 @@ public class JavaDocInfoGenerator {
         }
       }
 
-      buffer.append("&gt;");
+      buffer.append(GT);
 
       return buffer.toString();
     }
