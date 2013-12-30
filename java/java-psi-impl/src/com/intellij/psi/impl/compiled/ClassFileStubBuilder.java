@@ -25,8 +25,7 @@ import com.intellij.psi.stubs.StubElement;
 import com.intellij.util.cls.ClsFormatException;
 import com.intellij.util.indexing.FileContent;
 
-import java.util.Arrays;
-import java.util.Comparator;
+import java.util.*;
 
 /**
  * @author max
@@ -73,8 +72,9 @@ public class ClassFileStubBuilder implements BinaryFileStubBuilder {
   @Override
   public int getStubVersion() {
     int version = STUB_VERSION;
-    final ClsStubBuilderFactory[] factories = Extensions.getExtensions(ClsStubBuilderFactory.EP_NAME);
-    Arrays.sort(factories, new Comparator<ClsStubBuilderFactory>() { // stable order
+    List<ClsStubBuilderFactory> factories = new ArrayList<ClsStubBuilderFactory>(Arrays.asList(
+      Extensions.getExtensions(ClsStubBuilderFactory.EP_NAME)));
+    Collections.sort(factories, new Comparator<ClsStubBuilderFactory>() { // stable order in copy
       @Override
       public int compare(ClsStubBuilderFactory o1, ClsStubBuilderFactory o2) {
         return o1.getClass().getName().compareTo(o2.getClass().getName());

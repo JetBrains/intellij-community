@@ -39,7 +39,7 @@ public class HtmlScriptLanguageInjector implements MultiHostInjector {
       return;
     }
     XmlTag scriptTag = ((XmlText)host).getParentTag();
-    if (scriptTag == null || !"script".equalsIgnoreCase(scriptTag.getLocalName())) {
+    if (scriptTag == null || !HtmlUtil.isScriptTag(scriptTag)) {
       return;
     }
     String mimeType = scriptTag.getAttributeValue("type");
