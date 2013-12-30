@@ -72,9 +72,9 @@ public class GradleTaskManager extends AbstractExternalSystemTaskManager<GradleE
                            @Nullable final String debuggerSetup,
                            @NotNull final ExternalSystemTaskNotificationListener listener) throws ExternalSystemException {
 
-    if (settings != null) {
-      myHelper.ensureInstalledWrapper(id, projectPath, settings, listener);
-    }
+//    if (settings != null) {
+//      myHelper.ensureInstalledWrapper(id, projectPath, settings, listener);
+//    }
 
     // TODO add support for external process mode
     if (ExternalSystemApiUtil.isInProcessMode(GradleConstants.SYSTEM_ID)) {

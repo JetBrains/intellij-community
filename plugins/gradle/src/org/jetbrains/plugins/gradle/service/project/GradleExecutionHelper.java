@@ -45,7 +45,6 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.lang.reflect.Field;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
@@ -204,9 +203,12 @@ public class GradleExecutionHelper {
                                      @NotNull GradleExecutionSettings settings,
                                      @NotNull ExternalSystemTaskNotificationListener listener) {
 
-    // use it only for customized wrapper
-    // TODO works correctly only or root project
-    if (settings.getDistributionType() != DistributionType.WRAPPED) return;
+    if (!settings.getDistributionType().isWrapped()) return;
+
+    if (settings.getDistributionType() == DistributionType.DEFAULT_WRAPPED &&
+        GradleUtil.findDefaultWrapperPropertiesFile(projectPath) != null) {
+      return;
+    }
 
     ProjectConnection connection = getConnection(projectPath, settings);
     try {
