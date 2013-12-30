@@ -480,7 +480,9 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, DataProvider {
   }
 
   public void storeFullScreenStateIfNeeded() {
-    storeFullScreenStateIfNeeded(myFrameDecorator.isInFullScreen());
+    if (myFrameDecorator != null) {
+      storeFullScreenStateIfNeeded(myFrameDecorator.isInFullScreen());
+    }
   }
 
   public void storeFullScreenStateIfNeeded(boolean state) {
