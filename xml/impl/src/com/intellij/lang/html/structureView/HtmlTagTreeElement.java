@@ -24,6 +24,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.xml.util.HtmlUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -69,7 +70,7 @@ class HtmlTagTreeElement extends PsiTreeElementBase<XmlTag> implements LocationP
       return null;
     }
 
-    if (tag.getName().equalsIgnoreCase("img") || tag.getName().equalsIgnoreCase("script")) {
+    if (tag.getName().equalsIgnoreCase("img") || HtmlUtil.isScriptTag(tag)) {
       return getPathDescription(tag.getAttributeValue("src"));
     }
     else if (tag.getName().equalsIgnoreCase("link")) {

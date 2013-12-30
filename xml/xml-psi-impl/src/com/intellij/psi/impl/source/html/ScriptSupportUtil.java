@@ -28,8 +28,8 @@ import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.xml.*;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.util.HtmlPsiUtil;
+import com.intellij.xml.util.HtmlUtil;
 import com.intellij.xml.util.XmlPsiUtil;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -41,7 +41,6 @@ import java.util.List;
 public class ScriptSupportUtil {
   private static final Key<CachedValue<XmlTag[]>> CachedScriptTagsKey = Key.create("script tags");
   private static final ThreadLocal<String> ProcessingDeclarationsFlag = new ThreadLocal<String>();
-  @NonNls private static final String SCRIPT_TAG = "script";
 
   private ScriptSupportUtil() {
   }
@@ -66,13 +65,14 @@ public class ScriptSupportUtil {
 
               if (document != null) {
                 PsiElementProcessor psiElementProcessor = new PsiElementProcessor() {
+                  @Override
                   public boolean execute(@NotNull final PsiElement element) {
                     if (element instanceof XmlTag) {
                       final XmlTag tag = (XmlTag)element;
 
-                      if (SCRIPT_TAG.equalsIgnoreCase(tag.getName())) {
+                      if (HtmlUtil.SCRIPT_TAG_NAME.equalsIgnoreCase(tag.getName())) {
                         final XmlElementDescriptor descriptor = tag.getDescriptor();
-                        if (descriptor != null && SCRIPT_TAG.equals(descriptor.getName())) {
+                        if (descriptor != null && HtmlUtil.SCRIPT_TAG_NAME.equals(descriptor.getName())) {
                           scriptTags.add(tag);
                         }
                       }
