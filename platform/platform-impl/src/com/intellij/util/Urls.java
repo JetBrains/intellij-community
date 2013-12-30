@@ -83,6 +83,10 @@ public final class Urls {
 
   @Nullable
   public static Url parse(@NotNull String url, boolean asLocalIfNoScheme) {
+    if (url.isEmpty()) {
+      return null;
+    }
+
     if (asLocalIfNoScheme && !URLUtil.containsScheme(url)) {
       // nodejs debug — files only in local filesystem
       return new LocalFileUrl(url);
@@ -101,7 +105,7 @@ public final class Urls {
       return toUriWithoutParameters(asUrl);
     }
     catch (Exception e) {
-      LOG.info("Can't parse " + url, e);
+      LOG.info("Cannot parse url " + url, e);
       return null;
     }
   }
