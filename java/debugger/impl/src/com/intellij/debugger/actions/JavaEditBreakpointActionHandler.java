@@ -29,7 +29,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.JBPopupListener;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
-import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.util.ui.UIUtil;
@@ -66,7 +65,7 @@ public class JavaEditBreakpointActionHandler extends EditBreakpointActionHandler
     final JBPopupListener saveOnClose = new JBPopupListener.Adapter() {
       @Override
       public void onClosed(LightweightWindowEvent event) {
-        propertiesPanel.saveTo(javaBreakpoint, EmptyRunnable.getInstance());
+        propertiesPanel.saveTo(javaBreakpoint);
         DebuggerManagerEx.getInstanceEx(project).getBreakpointManager().fireBreakpointChanged(javaBreakpoint);
       }
     };
