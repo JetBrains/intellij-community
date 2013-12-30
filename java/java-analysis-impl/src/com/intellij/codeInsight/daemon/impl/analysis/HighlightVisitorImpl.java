@@ -29,7 +29,6 @@ import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.JavaVersionService;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.pom.java.LanguageLevel;
@@ -202,7 +201,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   public void visitAnnotation(PsiAnnotation annotation) {
     super.visitAnnotation(annotation);
     if (!myHolder.hasErrorResults()) myHolder.add(HighlightUtil.checkAnnotationFeature(annotation, myLanguageLevel, myFile));
-    if (!myHolder.hasErrorResults()) myHolder.add(AnnotationsHighlightUtil.checkApplicability(annotation, myLanguageLevel,myFile));
+    if (!myHolder.hasErrorResults()) myHolder.add(AnnotationsHighlightUtil.checkApplicability(annotation, myLanguageLevel, myFile));
     if (!myHolder.hasErrorResults()) myHolder.add(AnnotationsHighlightUtil.checkAnnotationType(annotation));
     if (!myHolder.hasErrorResults()) myHolder.add(AnnotationsHighlightUtil.checkMissingAttributes(annotation));
     if (!myHolder.hasErrorResults()) myHolder.add(AnnotationsHighlightUtil.checkTargetAnnotationDuplicates(annotation));
@@ -1080,7 +1079,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
         final PsiTypeParameterListOwner owner = ((PsiTypeParameter)resolved).getOwner();
         if (owner instanceof PsiClass) {
           final PsiClass outerClass = (PsiClass)owner;
-          if (!InheritanceUtil.hasEnclosingInstanceInScope(outerClass, ref, true, false)) {
+          if (!InheritanceUtil.hasEnclosingInstanceInScope(outerClass, ref, false, false)) {
             myHolder.add(HighlightClassUtil.reportIllegalEnclosingUsage(ref, aClass, (PsiClass)owner, ref));
           }
         }
@@ -1240,7 +1239,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
         }
       }
     }
-    
+
     if (!myHolder.hasErrorResults()) {
       myHolder.add(PsiMethodReferenceHighlightingUtil.checkRawConstructorReference(expression));
     }

@@ -775,9 +775,9 @@ public class CodeCompletionHandlerBase {
           }
           final Document document = pair.second;
           assert document != null;
-          document.setText(file.getText());
+          document.setText(file.getViewProvider().getContents());
           return copy;
-        }
+        }        
       }
     }
 

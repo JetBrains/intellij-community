@@ -32,6 +32,11 @@ import java.util.List;
  */
 public interface ExternalSystemTaskManager<S extends ExternalSystemExecutionSettings> {
 
+  /**
+   *
+   * @deprecated will be removed in 13.1
+   */
+  @Deprecated
   void executeTasks(@NotNull ExternalSystemTaskId id,
                     @NotNull List<String> taskNames,
                     @NotNull String projectPath,

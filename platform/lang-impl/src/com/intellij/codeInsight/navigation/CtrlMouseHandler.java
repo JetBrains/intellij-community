@@ -916,6 +916,7 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
   private static TextAttributes patchAttributesColor(TextAttributes attributes, TextRange range, Editor editor) {
     int line = editor.offsetToLogicalPosition(range.getStartOffset()).line;
     for (RangeHighlighter highlighter : editor.getMarkupModel().getAllHighlighters()) {
+      if (!highlighter.isValid()) continue;
       if (highlighter.getTargetArea() == HighlighterTargetArea.LINES_IN_RANGE &&
           editor.offsetToLogicalPosition(highlighter.getStartOffset()).line == line) {
         TextAttributes textAttributes = highlighter.getTextAttributes();

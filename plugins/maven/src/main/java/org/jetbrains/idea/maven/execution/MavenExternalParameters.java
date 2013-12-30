@@ -262,6 +262,12 @@ public class MavenExternalParameters {
 
           res.setProperty(mavenProject.getMavenId().getGroupId()
                           + ':' + mavenProject.getMavenId().getArtifactId()
+                          + ":test-jar"
+                          + ':' + mavenProject.getMavenId().getVersion(),
+                          mavenProject.getTestOutputDirectory());
+
+          res.setProperty(mavenProject.getMavenId().getGroupId()
+                          + ':' + mavenProject.getMavenId().getArtifactId()
                           + ':' + mavenProject.getPackaging()
                           + ':' + mavenProject.getMavenId().getVersion(),
                            mavenProject.getOutputDirectory());
@@ -495,6 +501,10 @@ public class MavenExternalParameters {
 
     if (coreSettings.isAlwaysUpdateSnapshots()) {
       cmdList.add("--update-snapshots");
+    }
+
+    if (StringUtil.isNotEmpty(coreSettings.getThreads())) {
+      cmdList.add("-T", coreSettings.getThreads());
     }
 
     addIfNotEmpty(cmdList, coreSettings.getFailureBehavior().getCommandLineOption());

@@ -165,4 +165,81 @@ public class JavaFormatterBracesTest extends AbstractJavaFormatterTest {
     doTextTest(text, text);
   }
 
+  public void testKeepSimpleBlocksInOneLine_OnIfStatementsThenBlock() throws Exception {
+    getSettings().KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = true;
+    String singleLine = "if (2 > 3) { System.out.println(\"AA!\"); }";
+
+    getSettings().BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE;
+    doMethodTest(singleLine, singleLine);
+
+    getSettings().BRACE_STYLE = CommonCodeStyleSettings.END_OF_LINE;
+    doMethodTest(singleLine, singleLine);
+  }
+
+  public void testKeepSimpleBlocksInOneLine_OnIfStatementsElseBlock() throws Exception {
+    getSettings().KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = true;
+
+    String before = "if (2 > 3) {\n" +
+                    "    System.out.println(\"AA!\");\n" +
+                    "} else { int a = 3; }";
+
+    String afterNextLineOption = "if (2 > 3)\n" +
+                                 "{\n" +
+                                 "    System.out.println(\"AA!\");\n" +
+                                 "} else { int a = 3; }";
+
+    getSettings().BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE;
+    doMethodTest(before, afterNextLineOption);
+
+    getSettings().BRACE_STYLE = CommonCodeStyleSettings.END_OF_LINE;
+    doMethodTest(before, before);
+  }
+
+  public void testIfStatement_WhenBraceOnNextLine_AndKeepSimpleBlockInOneLineEnabled() throws Exception {
+    getSettings().KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = true;
+    getSettings().BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE;
+    String before = "if (2 > 3) {\n" +
+                    "    System.out.println(\"AA!\");\n" +
+                    "}";
+    String after = "if (2 > 3)\n" +
+                   "{\n" +
+                   "    System.out.println(\"AA!\");\n" +
+                   "}";
+    doMethodTest(before, after);
+  }
+
+  public void testIfStatementElseBranchIsOnNewLine() throws Exception {
+    getSettings().KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = true;
+    getSettings().BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE;
+    String before = "if (2 > 3) {\n" +
+                    "    System.out.println(\"AA!\");\n" +
+                    "} else {\n" +
+                    "    int a = 3;\n" +
+                    "}";
+    String after = "if (2 > 3)\n" +
+                   "{\n" +
+                   "    System.out.println(\"AA!\");\n" +
+                   "} else\n" +
+                   "{\n" +
+                   "    int a = 3;\n" +
+                   "}";
+    doMethodTest(before, after);
+  }
+
+  public void testIfElseBranchesKeepedInOneLine() throws Exception {
+    getSettings().KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = true;
+    getSettings().BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE;
+
+    String singleLine = "if (2 > 3) { System.out.println(\"AA!\"); } else { System.out.println(\"BBB!!\"); }";
+    String multiLine = "if (2 > 3) { System.out.println(\"AA!\"); }\n" +
+                       "else { System.out.println(\"BBB!!\"); }";
+
+    getSettings().ELSE_ON_NEW_LINE = false;
+    doMethodTest(singleLine, singleLine);
+    doMethodTest(multiLine, singleLine);
+
+    getSettings().ELSE_ON_NEW_LINE = true;
+    doMethodTest(singleLine, multiLine);
+    doMethodTest(multiLine, multiLine);
+  }
 }

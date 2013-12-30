@@ -113,4 +113,13 @@ public class CommonTest extends IncrementalTestCase {
   public void testAddDuplicateClass() throws Exception {
     doTest();
   }
+
+  public void testAddClassHidingImportedClass() throws Exception {
+    doTest();
+  }
+
+  public void testAddClassHidingImportedClass2() throws Exception {
+    doTest();
+  }
+
 }

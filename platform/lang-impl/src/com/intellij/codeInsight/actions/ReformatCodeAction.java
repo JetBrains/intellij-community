@@ -46,6 +46,7 @@ import com.intellij.psi.codeStyle.arrangement.engine.ArrangementEngine;
 import com.intellij.psi.util.PsiUtilCore;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
@@ -151,7 +152,8 @@ public class ReformatCodeAction extends AnAction implements DumbAware {
     boolean optimizeImports = ReformatFilesDialog.isOptmizeImportsOptionOn();
     boolean processWholeFile = false;
     boolean processChangedTextOnly = PropertiesComponent.getInstance().getBoolean(LayoutCodeConstants.PROCESS_CHANGED_TEXT_KEY, false);
-    boolean rearrangeEntries = PropertiesComponent.getInstance().getBoolean(LayoutCodeConstants.REARRANGE_ENTRIES_KEY, false);
+    boolean rearrangeEntries = getLastSavedRearrangeCbState(project, file);
+
     final boolean showDialog = EditorSettingsExternalizable.getInstance().getOptions().SHOW_REFORMAT_DIALOG;
     if (showDialog || (file == null && dir != null)) {
       final LayoutCodeDialog dialog = new LayoutCodeDialog(project, CodeInsightBundle.message("process.reformat.code"), file, dir,
@@ -216,6 +218,13 @@ public class ReformatCodeAction extends AnAction implements DumbAware {
         PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
       }
     }
+  }
+
+  public static boolean getLastSavedRearrangeCbState(@NotNull Project project, @Nullable PsiFile file) {
+    if (file != null) {
+      return LayoutCodeSettingsStorage.getLastSavedRearrangeEntriesCbStateFor(project, file.getLanguage());
+    }
+    return LayoutCodeSettingsStorage.getLastSavedRearrangeEntriesCbStateFor(project);
   }
 
   public static void updateShowDialogSetting(LayoutCodeDialog dialog, String title) {

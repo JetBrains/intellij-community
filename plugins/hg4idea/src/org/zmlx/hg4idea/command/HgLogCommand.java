@@ -272,7 +272,9 @@ public class HgLogCommand {
     if (myLogFile) {
       arguments.add(hgFile.getRelativePath());
     }
-    return new HgCommandExecutor(myProject).executeInCurrentThread(repo, "log", arguments);
+    HgCommandExecutor commandExecutor = new HgCommandExecutor(myProject);
+    commandExecutor.setOutputAlwaysSuppressed(true);
+    return commandExecutor.executeInCurrentThread(repo, "log", arguments);
   }
 
   private static Set<String> parseFileList(String fileListString) {

@@ -213,8 +213,15 @@ public class CommentByLineCommentHandler implements CodeInsightActionHandler {
     int offset = myDocument.getLineStartOffset(myStartLine);
     offset = CharArrayUtil.shiftForward(myDocument.getCharsSequence(), offset, " \t");
 
-    final Language languageSuitableForCompleteFragment = PsiUtilBase.reallyEvaluateLanguageInRange(offset, CharArrayUtil.shiftBackward(
-      myDocument.getCharsSequence(), myDocument.getLineEndOffset(myEndLine), " \t\n"), myFile);
+    int endOffset = CharArrayUtil.shiftBackward(myDocument.getCharsSequence(), myDocument.getLineEndOffset(myEndLine), " \t\n");
+    final Language languageSuitableForCompleteFragment;
+    if (offset >= endOffset) {  // we are on empty line
+      PsiElement element = myFile.findElementAt(offset);
+      if (element != null) languageSuitableForCompleteFragment = element.getParent().getLanguage();
+      else languageSuitableForCompleteFragment = null;
+    } else {
+      languageSuitableForCompleteFragment = PsiUtilBase.reallyEvaluateLanguageInRange(offset, endOffset, myFile);
+    }
 
     Commenter blockSuitableCommenter =
       languageSuitableForCompleteFragment == null ? LanguageCommenters.INSTANCE.forLanguage(myFile.getLanguage()) : null;

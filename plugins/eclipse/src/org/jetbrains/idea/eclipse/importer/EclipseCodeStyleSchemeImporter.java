@@ -215,6 +215,17 @@ public class EclipseCodeStyleSchemeImporter implements SchemeImporter<CodeStyleS
           indentOptions.USE_TAB_CHARACTER = false;
         }
       }
+      else if (OPTION_CONTINUATION_INDENT.equals(key)) {
+        indentOptions.CONTINUATION_INDENT_SIZE = indentOptions.TAB_SIZE * valueToInt(value);
+      }
+      else if (OPTION_TAB_SIZE.equals(key)) {
+        int newTabSize = valueToInt(value);
+        int continuationTabs = indentOptions.TAB_SIZE > 0 ? indentOptions.CONTINUATION_INDENT_SIZE / indentOptions.TAB_SIZE : -1;
+        indentOptions.TAB_SIZE = newTabSize;
+        if (continuationTabs >= 0) {
+          indentOptions.CONTINUATION_INDENT_SIZE = continuationTabs * newTabSize;
+        }
+      }
     }
   }
 }

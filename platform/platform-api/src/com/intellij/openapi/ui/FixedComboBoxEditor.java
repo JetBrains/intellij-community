@@ -135,8 +135,6 @@ public class FixedComboBoxEditor implements ComboBoxEditor {
   }
 
   private class MacComboBoxTextField extends JTextField implements DocumentListener, FocusListener {
-    private boolean myRepaintingParent;
-
     private MacComboBoxTextField() {
       setBorder(isEnabled() ? EDITOR_BORDER : DISABLED_EDITOR_BORDER);
       //setFont(UIUtil.getListFont());
@@ -174,7 +172,8 @@ public class FixedComboBoxEditor implements ComboBoxEditor {
 
     @Override
     public boolean hasFocus() {
-      if (myRepaintingParent) {
+      final Container parent = getParent();
+      if (parent instanceof ComboBox && ((ComboBox)parent).myPaintingNow) {
         return false; // to disable focus painting around combobox button
       }
       return super.hasFocus();
@@ -191,14 +190,7 @@ public class FixedComboBoxEditor implements ComboBoxEditor {
       if (parent instanceof JComponent && Boolean.TRUE == ((JComponent)parent).getClientProperty("JComboBox.isTableCellEditor")) return;
       final Container grandParent = parent.getParent();
       if (grandParent != null) {
-        myRepaintingParent = true;
         grandParent.repaint();
-        SwingUtilities.invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            myRepaintingParent = false;
-          }
-        });
       }
     }
 

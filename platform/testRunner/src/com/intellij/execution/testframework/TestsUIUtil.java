@@ -218,8 +218,8 @@ public class TestsUIUtil {
           myType = MessageType.ERROR;
         }
         else if (notStartedCount > 0) {
-          myTitle = ExecutionBundle.message("junit.runing.info.failed.to.start.error.message");
-          myText = passedCount + " passed, " + notStartedCount + " not started" ;
+          myTitle = !notStarted.isEmpty() ? ExecutionBundle.message("junit.runing.info.failed.to.start.error.message") : "Tests Ignored";
+          myText = passedCount + " passed, " + notStartedCount + (!notStarted.isEmpty() ? " not started" : " ignored");
           myType = MessageType.ERROR;
         }
         else {

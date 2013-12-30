@@ -60,6 +60,7 @@ import java.util.*;
 public abstract class GroovyShellActionBase extends DumbAwareAction {
   private static final Logger LOG = Logger.getInstance(GroovyShellActionBase.class);
 
+  public static final String GROOVY_SHELL_EXECUTE = "Groovy.Shell.Execute";
   public static final Key<Boolean> GROOVY_SHELL_FILE = Key.create("GROOVY_SHELL_FILE");
   private static final String GROOVY_SHELL_LAST_MODULE = "Groovy.Shell.LastModule";
 
@@ -166,7 +167,7 @@ public abstract class GroovyShellActionBase extends DumbAwareAction {
     final GroovyShellRunner shellRunner = getRunner(module);
     if (shellRunner == null) return;
 
-    AbstractConsoleRunnerWithHistory<LanguageConsoleView> runner = new GroovyConsoleRunner(getTitle(), shellRunner, module, "Groovy.Shell.Execute");
+    AbstractConsoleRunnerWithHistory<LanguageConsoleView> runner = new GroovyConsoleRunner(getTitle(), shellRunner, module);
     try {
       runner.initAndRun();
     }
@@ -183,18 +184,15 @@ public abstract class GroovyShellActionBase extends DumbAwareAction {
   protected abstract LanguageConsoleImpl createConsole(Project project, String title);
 
   private class GroovyConsoleRunner extends AbstractConsoleRunnerWithHistory<LanguageConsoleView> {
-    private final String myEmptyExecuteAction;
     private GroovyShellRunner myShellRunner;
     private Module myModule;
 
     private GroovyConsoleRunner(@NotNull String consoleTitle,
                                 @NotNull GroovyShellRunner shellRunner,
-                                @NotNull Module module,
-                                @NotNull String emptyExecuteAction) {
+                                @NotNull Module module) {
       super(module.getProject(), consoleTitle, shellRunner.getWorkingDirectory(module));
       myShellRunner = shellRunner;
       myModule = module;
-      myEmptyExecuteAction = emptyExecuteAction;
     }
 
     @Override
@@ -239,7 +237,7 @@ public abstract class GroovyShellActionBase extends DumbAwareAction {
 
         @Override
         public String getEmptyExecuteAction() {
-          return myEmptyExecuteAction;
+          return GROOVY_SHELL_EXECUTE;
         }
       };
       new ConsoleHistoryController(getConsoleTitle(), null, getLanguageConsole(), handler.getConsoleHistoryModel()).install();

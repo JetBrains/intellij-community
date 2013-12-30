@@ -749,7 +749,7 @@ skip_properties:
   ${If} $0 == "1"  
     ;ExecCmd::exec 'icacls "$INSTDIR" /grant %username%:F /T >"$INSTDIR"\installation_log.txt 2>"$INSTDIR"\installation_error.txt'
     AccessControl::GrantOnFile \
-      "$INSTDIR" "(S-1-5-32-545)" "GenericRead + GenericExecute + GenericWrite + Delete"
+      "$INSTDIR" "(S-1-5-32-545)" "GenericRead + GenericExecute"
   ${EndIf}
 SectionEnd
 

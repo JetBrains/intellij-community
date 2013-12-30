@@ -19,13 +19,20 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.FileTypeRegistry;
+import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsBundle;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.PathUtil;
 import com.intellij.util.io.UrlConnectionUtil;
+import com.intellij.util.net.CertificatesManager;
 import org.jetbrains.annotations.NotNull;
 
+import javax.net.ssl.HostnameVerifier;
+import javax.net.ssl.HttpsURLConnection;
+import javax.net.ssl.SSLSession;
 import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URL;
@@ -63,6 +70,21 @@ public class DefaultRemoteContentProvider extends RemoteContentProvider {
       HttpURLConnection connection = (HttpURLConnection)new URL(url).openConnection();
       connection.setConnectTimeout(CONNECT_TIMEOUT);
       connection.setReadTimeout(READ_TIMEOUT);
+      if (connection instanceof HttpsURLConnection) {
+        try {
+          HttpsURLConnection httpsConnection = (HttpsURLConnection)connection;
+          httpsConnection.setHostnameVerifier(new HostnameVerifier() {
+            @Override
+            public boolean verify(String hostname, SSLSession session) {
+              return true;
+            }
+          });
+          httpsConnection.setSSLSocketFactory(CertificatesManager.createDefault().createSslContext().getSocketFactory());
+        }
+        catch (Exception e) {
+          LOG.warn(e);
+        }
+      }
       input = UrlConnectionUtil.getConnectionInputStreamWithException(connection, new EmptyProgressIndicator());
 
       final int responseCode = connection.getResponseCode();
@@ -76,8 +98,13 @@ public class DefaultRemoteContentProvider extends RemoteContentProvider {
       if (size != -1) {
         callback.setProgressFraction(0);
       }
-      String contentType = connection.getContentType();
-      FileType fileType = RemoteFileUtil.getFileType(contentType);
+      FileType fileType = RemoteFileUtil.getFileType(connection.getContentType());
+      if (fileType == FileTypes.PLAIN_TEXT) {
+        FileType fileTypeByFileName = FileTypeRegistry.getInstance().getFileTypeByFileName(PathUtil.getFileName(url));
+        if (fileTypeByFileName != FileTypes.UNKNOWN) {
+          fileType = fileTypeByFileName;
+        }
+      }
 
       int len;
       final byte[] buf = new byte[1024];

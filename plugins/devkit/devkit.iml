@@ -39,6 +39,7 @@
       </library>
     </orderEntry>
     <orderEntry type="module" module-name="spellchecker" />
+    <orderEntry type="module" module-name="dom-tests" scope="TEST" />
   </component>
 </module>
 

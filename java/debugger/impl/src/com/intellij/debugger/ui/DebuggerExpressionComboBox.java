@@ -229,6 +229,8 @@ public class DebuggerExpressionComboBox extends DebuggerEditorImpl {
         final EditorTextField textField = (EditorTextField)editorComponent;
         final Editor editor = textField.getEditor();
         if (editor != null) {
+          int textLength = editor.getDocument().getTextLength();
+          offset = Math.min(offset, textLength);
           textField.getCaretModel().moveToOffset(offset);
           editor.getSelectionModel().setSelection(offset, offset);
         }

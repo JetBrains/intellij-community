@@ -1,4 +1,4 @@
-package com.intellij.tasks.impl.ssl;
+package com.intellij.util.net;
 
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -7,20 +7,16 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.StreamUtil;
-import org.apache.commons.httpclient.params.HttpConnectionParams;
-import org.apache.commons.httpclient.protocol.Protocol;
-import org.apache.commons.httpclient.protocol.ProtocolSocketFactory;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import javax.net.ssl.*;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.TrustManagerFactory;
+import javax.net.ssl.X509TrustManager;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
-import java.io.IOException;
-import java.net.InetAddress;
-import java.net.Socket;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
@@ -60,43 +56,6 @@ public class CertificatesManager {
     myCacertsPath = cacertsPath;
     myPassword = cacertsPassword;
   }
-
-  /**
-   * Creates instance of {@code Protocol} for registration by {@link org.apache.commons.httpclient.protocol.Protocol#registerProtocol(String, org.apache.commons.httpclient.protocol.Protocol)}
-   * <p/>
-   * See {@link #createSslContext()} for details
-   *
-   * @return protocol instance
-   */
-  @Nullable
-  public Protocol createProtocol() {
-    try {
-      final SSLSocketFactory factory = createSslContext().getSocketFactory();
-      return new Protocol("https", new ProtocolSocketFactory() {
-        @Override
-        public Socket createSocket(String host, int port, InetAddress localAddress, int localPort)
-          throws IOException {
-          return factory.createSocket(host, port, localAddress, localPort);
-        }
-
-        @Override
-        public Socket createSocket(String host, int port, InetAddress localAddress, int localPort, HttpConnectionParams params)
-          throws IOException {
-          return createSocket(host, port, localAddress, localPort);
-        }
-
-        @Override
-        public Socket createSocket(String host, int port) throws IOException {
-          return factory.createSocket(host, port);
-        }
-      }, 443);
-    }
-    catch (Exception e) {
-      LOG.error(e);
-      return null;
-    }
-  }
-
 
   /**
    * Creates special kind of {@code SSLContext} which X509TrustManager first checks certificate presence in

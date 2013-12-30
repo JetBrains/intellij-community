@@ -1488,6 +1488,7 @@ public class JavaDocInfoGenerator {
         if (!isAbstract) continue;
       }
       PsiClass superClass = superMethod.getContainingClass();
+      if (superClass == null) continue;
       if (!headerGenerated) {
         buffer.append("<DD><DL>");
         buffer.append("<DT><b>");

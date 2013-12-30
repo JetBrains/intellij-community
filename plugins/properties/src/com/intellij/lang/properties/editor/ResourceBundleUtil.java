@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,8 +20,6 @@ import com.intellij.lang.properties.ResourceBundle;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.LangDataKeys;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
@@ -29,7 +27,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
-import com.intellij.util.SystemProperties;
 import gnu.trove.TIntHashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -43,13 +40,7 @@ import java.util.Properties;
  */
 public class ResourceBundleUtil {
 
-  private static final String NATIVE_2_ASCII_CONVERSION_PATTERN = SystemProperties.getBooleanProperty("idea.native2ascii.lowercase", false)
-                                                                  ? "\\u%04x" : "\\u%04X";
-
   private static final TIntHashSet SYMBOLS_TO_ESCAPE = new TIntHashSet(new int[]{'#', '!', '=', ':'});
-  private static final TIntHashSet UNICODE_SYMBOLS   = new TIntHashSet(new int[]{
-    '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'A', 'a', 'A', 'b', 'B', 'c', 'C', 'd', 'D', 'e', 'E', 'f', 'F'
-  });
   private static final char        ESCAPE_SYMBOL     = '\\';
 
   private ResourceBundleUtil() {
@@ -125,15 +116,8 @@ public class ResourceBundleUtil {
     boolean escaped = false;
     for (int i = 0; i < text.length(); i++) {
       char c = text.charAt(i);
-      if (c == ESCAPE_SYMBOL && !escaped) {
-        char[] unicodeSymbols = parseUnicodeLiteral(text, i + 1);
-        if (unicodeSymbols != null) {
-          buffer.append(unicodeSymbols);
-          i += 5;
-        }
-        else {
-          escaped = true;
-        }
+      if (c == ESCAPE_SYMBOL && !escaped && (i == text.length() - 1 || (text.charAt(i + 1) != 'u' && text.charAt(i + 1) != 'U'))) {
+        escaped = true;
         continue;
       }
       if (escaped && c == 'n') {
@@ -143,45 +127,6 @@ public class ResourceBundleUtil {
       escaped = false;
     }
     return buffer.toString();
-  }
-
-  /**
-   * Tries to parse unicode literal contained at the given text at the given offset:
-   * <pre>
-   *   "my string to process \uABCD - with unicode literal"
-   *                          ^
-   *                          |
-   *                       offset
-   * </pre>
-   * I.e. this method checks if given text contains u[0123456789AaBbCcDdEeFf]{4} at the given offset; parses target unicode symbol
-   * and returns in case of the positive answer.
-   * 
-   * @param text  text to process
-   * @param i     offset which might point to 'u' part of unicode literal contained at the given text
-   * @return      16-bit char symbols for the target unicode code point located at the given text at the given offset if any;
-   *              <code>null</code> otherwise
-   */
-  @Nullable
-  private static char[] parseUnicodeLiteral(@NotNull String text, int i) {
-    if (text.length() < i + 5) {
-      return null;
-    }
-    char c = text.charAt(i);
-    if (c != 'u' && c != 'U') {
-      return null;
-    }
-    for (int j = i + 1; j < i + 5; j++) {
-      if (!UNICODE_SYMBOLS.contains(text.charAt(j))) {
-        return null;
-      }
-    }
-    try {
-      int codePoint = Integer.parseInt(text.substring(i + 1, i + 5), 16);
-      return Character.toChars(codePoint);
-    }
-    catch (IllegalArgumentException e) {
-      return null;
-    }
   }
 
   /**
@@ -205,16 +150,12 @@ public class ResourceBundleUtil {
       else if (c == ESCAPE_SYMBOL) {           // Escaped 'escape' symbol) 
         if (text.length() > i + 1) {
           final char nextChar = text.charAt(i + 1);
-          if (nextChar != 'n') {
+          if (nextChar != 'n' && nextChar != 'u' && nextChar != 'U') {
             buffer.append(ESCAPE_SYMBOL);
           }
         } else {
           buffer.append(ESCAPE_SYMBOL);
         }
-      }
-      else if (c > 127) { // Non-ascii symbol
-        buffer.append(String.format(NATIVE_2_ASCII_CONVERSION_PATTERN, (int)c));
-        continue;
       }
       buffer.append(c);
     }

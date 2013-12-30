@@ -17,12 +17,8 @@ package com.intellij.xdebugger.impl.ui;
 
 import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.LogicalPosition;
-import com.intellij.openapi.editor.impl.DocumentImpl;
-import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
@@ -35,7 +31,6 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.ui.AppUIUtil;
 import com.intellij.ui.EditorTextField;
-import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
@@ -105,28 +100,21 @@ public class DebuggerUIUtil {
   }
 
   public static void showValuePopup(@NotNull XFullValueEvaluator text, @NotNull MouseEvent event, @NotNull Project project) {
-    Document document = EditorFactory.getInstance().createDocument("Evaluating...");
-    if (document instanceof DocumentImpl) {
-      ((DocumentImpl)document).setAcceptSlashR(true);
-    }
-
-    EditorTextField textArea = new EditorTextField(document, project, FileTypes.PLAIN_TEXT, true);
+    EditorTextField textArea = new TextViewer("Evaluating...", project);
     textArea.setBackground(HintUtil.INFORMATION_COLOR);
 
     final FullValueEvaluationCallbackImpl callback = new FullValueEvaluationCallbackImpl(textArea);
     text.startEvaluation(callback);
 
-    final JScrollPane component = ScrollPaneFactory.createScrollPane(textArea);
-    final Dimension frameSize = WindowManager.getInstance().getFrame(project).getSize();
     Dimension size = DimensionService.getInstance().getSize(FULL_VALUE_POPUP_DIMENSION_KEY, project);
     if (size == null) {
+      Dimension frameSize = WindowManager.getInstance().getFrame(project).getSize();
       size = new Dimension(frameSize.width / 2, frameSize.height / 2);
     }
 
-    component.setPreferredSize(size);
-    component.setBorder(null);
+    textArea.setPreferredSize(size);
 
-    JBPopupFactory.getInstance().createComponentPopupBuilder(component, null)
+    JBPopupFactory.getInstance().createComponentPopupBuilder(textArea, null)
       .setResizable(true)
       .setMovable(true)
       .setDimensionServiceKey(project, FULL_VALUE_POPUP_DIMENSION_KEY, false)

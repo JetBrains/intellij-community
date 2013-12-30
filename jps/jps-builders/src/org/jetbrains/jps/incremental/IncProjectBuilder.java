@@ -401,24 +401,18 @@ public class IncProjectBuilder {
 
   private void cleanOutputRoots(CompileContext context) throws ProjectBuildException {
     // whole project is affected
-    ProjectDescriptor projectDescriptor = context.getProjectDescriptor();
-    JpsJavaCompilerConfiguration configuration =
-      JpsJavaExtensionService.getInstance().getOrCreateCompilerConfiguration(projectDescriptor.getProject());
+    final ProjectDescriptor projectDescriptor = context.getProjectDescriptor();
+    final JpsJavaCompilerConfiguration configuration = JpsJavaExtensionService.getInstance().getOrCreateCompilerConfiguration(projectDescriptor.getProject());
     final boolean shouldClear = configuration.isClearOutputDirectoryOnRebuild();
-    try {
-      if (shouldClear) {
-        clearOutputs(context);
-      }
-      else {
-        for (BuildTarget<?> target : projectDescriptor.getBuildTargetIndex().getAllTargets()) {
-          if (context.getScope().isAffected(target)) {
-            clearOutputFiles(context, target);
-          }
+    if (shouldClear) {
+      clearOutputs(context);
+    }
+    else {
+      for (BuildTarget<?> target : projectDescriptor.getBuildTargetIndex().getAllTargets()) {
+        if (context.getScope().isAffected(target)) {
+          clearOutputFilesUninterruptibly(context, target);
         }
       }
-    }
-    catch (IOException e) {
-      throw new ProjectBuildException("Error cleaning output files", e);
     }
 
     try {
@@ -442,17 +436,13 @@ public class IncProjectBuilder {
     for (String srcPath : map.getSources()) {
       final Collection<String> outs = map.getOutputs(srcPath);
       if (outs != null && !outs.isEmpty()) {
+        List<String> deletedPaths = new ArrayList<String>();
         for (String out : outs) {
-          final File outFile = new File(out);
-          final boolean deleted = outFile.delete();
-          if (deleted && dirsToDelete != null) {
-            final File parent = outFile.getParentFile();
-            if (parent != null) {
-              dirsToDelete.add(parent);
-            }
-          }
+          BuildOperations.deleteRecursively(out, deletedPaths, dirsToDelete);
         }
-        context.processMessage(new FileDeletedEvent(outs));
+        if (!deletedPaths.isEmpty()) {
+          context.processMessage(new FileDeletedEvent(deletedPaths));
+        }
       }
     }
     registerTargetsWithClearedOutput(context, Collections.singletonList(target));
@@ -479,7 +469,7 @@ public class IncProjectBuilder {
     }
   }
 
-  private void clearOutputs(CompileContext context) throws ProjectBuildException, IOException {
+  private void clearOutputs(CompileContext context) throws ProjectBuildException {
     final MultiMap<File, BuildTarget<?>> rootsToDelete = new MultiMapBasedOnSet<File, BuildTarget<?>>();
     final Set<File> allSourceRoots = new HashSet<File>();
 
@@ -550,7 +540,7 @@ public class IncProjectBuilder {
         );
         // clean only those files we are aware of
         for (BuildTarget<?> target : entry.getValue()) {
-          clearOutputFiles(context, target);
+          clearOutputFilesUninterruptibly(context, target);
         }
       }
     }
@@ -559,6 +549,20 @@ public class IncProjectBuilder {
     myAsyncTasks.add(
       FileUtil.asyncDelete(filesToDelete)
     );
+  }
+
+  private static void clearOutputFilesUninterruptibly(CompileContext context, BuildTarget<?> target) {
+    try {
+      clearOutputFiles(context, target);
+    }
+    catch (Throwable e) {
+      LOG.info(e);
+      String reason = e.getMessage();
+      if (reason == null) {
+        reason = e.getClass().getName();
+      }
+      context.processMessage(new CompilerMessage("", BuildMessage.Kind.WARNING, "Problems clearing output files for target \"" + target.getPresentableName() + "\": " + reason));
+    }
   }
 
   private static void runTasks(CompileContext context, final List<BuildTask> tasks) throws ProjectBuildException {
@@ -965,26 +969,20 @@ public class IncProjectBuilder {
         for (String deletedSource : pathsForIteration) {
           // deleting outputs corresponding to non-existing source
           final Collection<String> outputs = sourceToOutputStorage.getOutputs(deletedSource);
-
           if (outputs != null && !outputs.isEmpty()) {
-            if (logger.isEnabled()) {
-              logger.logDeletedFiles(outputs);
-            }
-
+            List<String> deletedOutputPaths = new ArrayList<String>();
             for (String output : outputs) {
-              final File outFile = new File(output);
-              final boolean deleted = outFile.delete();
+              final boolean deleted = BuildOperations.deleteRecursively(output, deletedOutputPaths, shouldPruneEmptyDirs ? dirsToDelete : null);
               if (deleted) {
                 doneSomething = true;
-                if (shouldPruneEmptyDirs) {
-                  final File parent = outFile.getParentFile();
-                  if (parent != null) {
-                    dirsToDelete.add(parent);
-                  }
-                }
               }
             }
-            context.processMessage(new FileDeletedEvent(outputs));
+            if (!deletedOutputPaths.isEmpty()) {
+              if (logger.isEnabled()) {
+                logger.logDeletedFiles(deletedOutputPaths);
+              }
+              context.processMessage(new FileDeletedEvent(deletedOutputPaths));
+            }
           }
 
           if (target instanceof ModuleBuildTarget) {

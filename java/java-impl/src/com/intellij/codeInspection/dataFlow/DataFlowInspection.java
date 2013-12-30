@@ -35,8 +35,8 @@ import java.util.List;
 
 public class DataFlowInspection extends DataFlowInspectionBase {
   @Override
-  protected void addSurroundWithIfFix(PsiExpression qualifier, List<LocalQuickFix> fixes) {
-    if (SurroundWithIfFix.isAvailable(qualifier)) {
+  protected void addSurroundWithIfFix(PsiExpression qualifier, List<LocalQuickFix> fixes, boolean onTheFly) {
+    if (onTheFly && SurroundWithIfFix.isAvailable(qualifier)) {
       fixes.add(new SurroundWithIfFix(qualifier));
     }
   }

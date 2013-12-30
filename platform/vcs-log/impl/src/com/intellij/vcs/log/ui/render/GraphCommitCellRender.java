@@ -51,16 +51,16 @@ public class GraphCommitCellRender extends AbstractPaddingCellRender {
   @Override
   protected int getLeftPadding(JTable table, @Nullable Object value) {
     GraphCommitCell cell = (GraphCommitCell)value;
-
     if (cell == null) {
       return 0;
     }
+    return calcPaddingBeforeText(cell, (Graphics2D)table.getGraphics());
+  }
 
-    int refPadding = calcRefsPadding(cell.getRefsToThisCommit(), (Graphics2D)table.getGraphics());
-
+  private int calcPaddingBeforeText(GraphCommitCell cell, Graphics2D g) {
+    int refPadding = calcRefsPadding(cell.getRefsToThisCommit(), g);
     int countCells = cell.getPrintCell().countCell();
     int graphPadding = countCells * WIDTH_NODE;
-
     return refPadding + graphPadding;
   }
 
@@ -82,9 +82,9 @@ public class GraphCommitCellRender extends AbstractPaddingCellRender {
       return;
     }
 
-    BufferedImage image = UIUtil.createImage(1000, HEIGHT_CELL, BufferedImage.TYPE_INT_ARGB);
+    int width = calcPaddingBeforeText(cell, (Graphics2D)g);
+    BufferedImage image = UIUtil.createImage(width, HEIGHT_CELL, BufferedImage.TYPE_INT_ARGB);
     Graphics2D g2 = image.createGraphics();
-    g2.setBackground(new Color(0, 0, 0, 0));
 
     graphPainter.draw(g2, cell.getPrintCell());
 

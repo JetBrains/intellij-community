@@ -20,7 +20,6 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.compiled.ClsFileImpl;
 import org.jetbrains.annotations.NotNull;
 
@@ -40,18 +39,21 @@ public class ClassFileViewProvider extends SingleRootFileViewProvider {
   protected PsiFile createFile(@NotNull final Project project, @NotNull final VirtualFile vFile, @NotNull final FileType fileType) {
     final FileIndexFacade fileIndex = ServiceManager.getService(project, FileIndexFacade.class);
     if (fileIndex.isInLibraryClasses(vFile) || !fileIndex.isInSource(vFile)) {
-      String name = vFile.getName();
-
-      // skip inners & anonymous (todo: read actual class name from file)
-      int dotIndex = name.lastIndexOf('.');
-      if (dotIndex < 0) dotIndex = name.length();
-      int index = name.lastIndexOf('$', dotIndex);
-      if (index <= 0 || index == dotIndex - 1) {
-        return new ClsFileImpl((PsiManagerImpl)PsiManager.getInstance(project), this);
+      if (!isInnerOrAnonymousClass(vFile)) {
+        return new ClsFileImpl(PsiManager.getInstance(project), this);
       }
     }
 
     return null;
+  }
+
+  public static boolean isInnerOrAnonymousClass(VirtualFile file) {
+    // todo: read actual class name from file
+    String name = file.getName();
+    int dotIndex = name.lastIndexOf('.');
+    if (dotIndex < 0) dotIndex = name.length();
+    int index = name.lastIndexOf('$', dotIndex);
+    return index > 0 && index != dotIndex - 1;
   }
 
   @NotNull

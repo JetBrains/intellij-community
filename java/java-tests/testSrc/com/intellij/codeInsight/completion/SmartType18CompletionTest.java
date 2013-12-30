@@ -73,6 +73,16 @@ public class SmartType18CompletionTest extends LightFixtureCompletionTestCase {
     doTest();
   }
 
+  public void testFilteredMethodReference() throws Exception {
+    doTest();
+  }
+
+  public void testNotAvailableInLambdaPositionAfterQualifier() throws Exception {
+    configureByFile("/" + getTestName(false) + ".java");
+    assertNotNull(myItems);
+    assertTrue(myItems.length == 0);
+  }
+
   public void testInferFromRawType() throws Exception {
     final PsiResolveHelperImpl helper = (PsiResolveHelperImpl)JavaPsiFacade.getInstance(getProject()).getResolveHelper();
     helper.setTestHelper(new PsiGraphInferenceHelper(getPsiManager()));

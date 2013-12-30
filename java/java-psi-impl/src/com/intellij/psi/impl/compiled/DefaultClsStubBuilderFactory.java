@@ -18,6 +18,7 @@ package com.intellij.psi.impl.compiled;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.ClassFileViewProvider;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.impl.java.stubs.PsiClassStub;
 import com.intellij.psi.impl.java.stubs.impl.PsiJavaFileStubImpl;
@@ -68,16 +69,7 @@ public class DefaultClsStubBuilderFactory extends ClsStubBuilderFactory {
 
   @Override
   public boolean isInnerClass(VirtualFile file) {
-    String name = file.getNameWithoutExtension();
-    int len = name.length();
-    int idx = name.indexOf('$');
-
-    while (idx > 0) {
-      if (idx + 1 < len && Character.isDigit(name.charAt(idx + 1))) return true;
-      idx = name.indexOf('$', idx + 1);
-    }
-
-    return false;
+    return ClassFileViewProvider.isInnerOrAnonymousClass(file);
   }
 
   private static class VirtualFileInnerClassStrategy implements InnerClassSourceStrategy<VirtualFile> {

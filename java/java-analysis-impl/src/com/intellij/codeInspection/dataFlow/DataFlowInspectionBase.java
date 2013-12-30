@@ -192,7 +192,7 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
   }
 
   @Nullable
-  private LocalQuickFix[] createNPEFixes(PsiExpression qualifier, PsiExpression expression) {
+  private LocalQuickFix[] createNPEFixes(PsiExpression qualifier, PsiExpression expression, boolean onTheFly) {
     if (qualifier == null || expression == null) return null;
     if (qualifier instanceof PsiMethodCallExpression) return null;
     if (qualifier instanceof PsiLiteralExpression && ((PsiLiteralExpression)qualifier).getValue() == null) return null;
@@ -208,7 +208,7 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
         fixes.add(new AddAssertStatementFix(binary));
       }
 
-      addSurroundWithIfFix(qualifier, fixes);
+      addSurroundWithIfFix(qualifier, fixes, onTheFly);
 
       if (ReplaceWithTernaryOperatorFix.isAvailable(qualifier, expression)) {
         fixes.add(new ReplaceWithTernaryOperatorFix(qualifier));
@@ -221,7 +221,7 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
     }
   }
 
-  protected void addSurroundWithIfFix(PsiExpression qualifier, List<LocalQuickFix> fixes) {
+  protected void addSurroundWithIfFix(PsiExpression qualifier, List<LocalQuickFix> fixes, boolean onTheFly) {
   }
 
   private void createDescription(StandardDataFlowRunner runner, ProblemsHolder holder, DataFlowInstructionVisitor visitor) {
@@ -238,7 +238,7 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
     HashSet<PsiElement> reportedAnchors = new HashSet<PsiElement>();
     for (PsiElement element : visitor.getProblems(NullabilityProblem.callNPE)) {
       if (reportedAnchors.add(element)) {
-        reportCallMayProduceNpe(holder, (PsiMethodCallExpression)element);
+        reportCallMayProduceNpe(holder, (PsiMethodCallExpression)element, holder.isOnTheFly());
       }
     }
     for (PsiElement element : visitor.getProblems(NullabilityProblem.fieldAccessNPE)) {
@@ -340,7 +340,7 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
       final String text = isNullLiteralExpression(expr)
                           ? "Passing <code>null</code> argument to non annotated parameter"
                           : "Argument <code>#ref</code> #loc might be null but passed to non annotated parameter";
-      LocalQuickFix[] fixes = createNPEFixes((PsiExpression)expr, (PsiExpression)expr);
+      LocalQuickFix[] fixes = createNPEFixes((PsiExpression)expr, (PsiExpression)expr, holder.isOnTheFly());
       final PsiElement parent = expr.getParent();
       if (parent instanceof PsiExpressionList) {
         final int idx = ArrayUtilRt.find(((PsiExpressionList)parent).getExpressions(), expr);
@@ -364,8 +364,8 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
     }
   }
 
-  private void reportCallMayProduceNpe(ProblemsHolder holder, PsiMethodCallExpression callExpression) {
-    LocalQuickFix[] fix = createNPEFixes(callExpression.getMethodExpression().getQualifierExpression(), callExpression);
+  private void reportCallMayProduceNpe(ProblemsHolder holder, PsiMethodCallExpression callExpression, boolean onTheFly) {
+    LocalQuickFix[] fix = createNPEFixes(callExpression.getMethodExpression().getQualifierExpression(), callExpression, onTheFly);
 
     holder.registerProblem(callExpression,
                            InspectionsBundle.message("dataflow.message.npe.method.invocation"),
@@ -374,13 +374,13 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
 
   private void reportFieldAccessMayProduceNpe(ProblemsHolder holder, PsiElement elementToAssert, PsiExpression expression) {
     if (expression instanceof PsiArrayAccessExpression) {
-      LocalQuickFix[] fix = createNPEFixes((PsiExpression)elementToAssert, expression);
+      LocalQuickFix[] fix = createNPEFixes((PsiExpression)elementToAssert, expression, holder.isOnTheFly());
       holder.registerProblem(expression,
                              InspectionsBundle.message("dataflow.message.npe.array.access"),
                              fix);
     }
     else {
-      LocalQuickFix[] fix = createNPEFixes((PsiExpression)elementToAssert, expression);
+      LocalQuickFix[] fix = createNPEFixes((PsiExpression)elementToAssert, expression, holder.isOnTheFly());
       assert elementToAssert != null;
       holder.registerProblem(elementToAssert,
                              InspectionsBundle.message("dataflow.message.npe.field.access"),
@@ -454,7 +454,7 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
       final String text = isNullLiteralExpression(expr)
                           ? InspectionsBundle.message("dataflow.message.passing.null.argument")
                           : InspectionsBundle.message("dataflow.message.passing.nullable.argument");
-      LocalQuickFix[] fixes = createNPEFixes((PsiExpression)expr, (PsiExpression)expr);
+      LocalQuickFix[] fixes = createNPEFixes((PsiExpression)expr, (PsiExpression)expr, holder.isOnTheFly());
       holder.registerProblem(expr, text, fixes);
     }
   }
@@ -479,8 +479,8 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
 
   private static void reportNullableReturns(StandardDataFlowRunner runner, DataFlowInstructionVisitor visitor, ProblemsHolder holder, Set<PsiElement> reportedAnchors) {
     for (PsiElement statement : visitor.getProblems(NullabilityProblem.nullableReturn)) {
-      final PsiExpression expr = ((PsiReturnStatement)statement).getReturnValue();
-      assert expr != null;
+      assert statement instanceof PsiExpression; 
+      final PsiExpression expr = (PsiExpression)statement;
       if (!reportedAnchors.add(expr)) continue;
 
       if (runner.isInNotNullMethod()) {

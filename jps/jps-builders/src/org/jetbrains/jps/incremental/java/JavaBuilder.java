@@ -60,8 +60,7 @@ import org.jetbrains.jps.model.module.JpsModule;
 import org.jetbrains.jps.model.module.JpsModuleType;
 import org.jetbrains.jps.service.JpsServiceManager;
 
-import javax.tools.Diagnostic;
-import javax.tools.JavaFileObject;
+import javax.tools.*;
 import java.io.*;
 import java.net.ServerSocket;
 import java.util.*;
@@ -81,6 +80,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
   public static final boolean USE_EMBEDDED_JAVAC = System.getProperty(GlobalOptions.USE_EXTERNAL_JAVAC_OPTION) == null;
   private static final Key<Integer> JAVA_COMPILER_VERSION_KEY = Key.create("_java_compiler_version_");
   public static final Key<Boolean> IS_ENABLED = Key.create("_java_compiler_enabled_");
+  private static final Key<Boolean> IS_COMPILER_API_SUPPORTED = Key.create("_java_compiler_api_supported_");
   private static final Key<AtomicReference<String>> COMPILER_VERSION_INFO = Key.create("_java_compiler_version_info_");
 
   private static final Set<String> FILTERED_OPTIONS = new HashSet<String>(Arrays.<String>asList(
@@ -138,7 +138,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
     }
     final boolean isJavac = JavaCompilers.JAVAC_ID.equalsIgnoreCase(compilerId) || JavaCompilers.JAVAC_API_ID.equalsIgnoreCase(compilerId);
     final boolean isEclipse = JavaCompilers.ECLIPSE_ID.equalsIgnoreCase(compilerId) || JavaCompilers.ECLIPSE_EMBEDDED_ID.equalsIgnoreCase(compilerId);
-    IS_ENABLED.set(context, isJavac || isEclipse);
+    IS_COMPILER_API_SUPPORTED.set(context, isJavac || isEclipse);
     String messageText = null;
     if (isJavac) {
       messageText = "Using javac " + System.getProperty("java.version") + " to compile java sources";
@@ -158,7 +158,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
                         @NotNull ModuleChunk chunk,
                         @NotNull DirtyFilesHolder<JavaSourceRootDescriptor, ModuleBuildTarget> dirtyFilesHolder,
                         @NotNull OutputConsumer outputConsumer) throws ProjectBuildException, IOException {
-    if (!IS_ENABLED.get(context, Boolean.TRUE)) {
+    if (!IS_ENABLED.get(context, Boolean.TRUE) || !IS_COMPILER_API_SUPPORTED.get(context, Boolean.TRUE)) {
       return ExitCode.NOTHING_DONE;
     }
     return doBuild(context, chunk, dirtyFilesHolder, outputConsumer);

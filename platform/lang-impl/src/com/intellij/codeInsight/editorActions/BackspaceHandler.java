@@ -129,7 +129,7 @@ public class BackspaceHandler extends EditorWriteActionHandler {
 
       editor.getDocument().deleteString(offset, offset + 1);
     }
-    else if (c == '"' || c == '\''){
+    else if (c == '"' || c == '\'' || c == '`'){
       char c1 = chars.charAt(offset);
       if (c1 != c) return true;
       if (wasClosingQuote) return true;

@@ -229,6 +229,12 @@ public class MemberInplaceRenamer extends VariableInplaceRenamer {
       renameProcessor = new RenameProcessor(myProject, element, newName,
                                             elementProcessor.isToSearchInComments(element),
                                             elementProcessor.isToSearchForTextOccurrences(element)){
+      @Nullable
+      @Override
+      protected String getRefactoringId() {
+        return "refactoring.inplace.rename";
+      }
+
       @Override
       public void doRun() {
         try {

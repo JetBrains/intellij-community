@@ -55,7 +55,7 @@ public class FileHeaderChecker {
       .getDefaultTemplate(FileTemplateManager.FILE_HEADER_TEMPLATE_NAME),
                                          file.getProject(), offsetToProperty
     );
-    Matcher matcher = pattern.matcher(file.getText());
+    Matcher matcher = pattern.matcher(file.getViewProvider().getContents());
     if (matcher.matches()) {
       final int startOffset = matcher.start(1);
       final int endOffset = matcher.end(1);

@@ -44,7 +44,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-public class JavaDocLocalInspectionBase extends AbstractBaseJavaLocalInspectionTool {
+public class JavaDocLocalInspectionBase extends BaseJavaBatchLocalInspectionTool {
   private static final Logger LOG = Logger.getInstance("com.intellij.codeInspection.javaDoc.JavaDocLocalInspectionBase");
   @NonNls protected static final String NONE = "none";
   @NonNls protected static final String PUBLIC = "public";

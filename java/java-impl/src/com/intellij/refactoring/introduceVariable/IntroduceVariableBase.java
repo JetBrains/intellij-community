@@ -37,10 +37,7 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Pass;
-import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.WindowManager;
@@ -414,6 +411,12 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
       final PsiExpression toBeExpression = createReplacement(fakeInitializer, project, prefix, suffix, parent, rangeMarker, refIdx);
       toBeExpression.accept(errorsVisitor);
       if (hasErrors[0]) return null;
+      if (literalExpression != null) {
+        PsiType type = toBeExpression.getType();
+        if (type != null && !type.equals(literalExpression.getType())) {
+          return null;
+        }
+      }
 
       final PsiReferenceExpression refExpr = PsiTreeUtil.getParentOfType(toBeExpression.findElementAt(refIdx[0]), PsiReferenceExpression.class);
       if (refExpr == null) return null;
@@ -692,6 +695,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
     while (true) {
       if (containerParent instanceof PsiFile) break;
       if (containerParent instanceof PsiMethod) break;
+      if (containerParent instanceof PsiLambdaExpression) break;
       if (!skipForStatement && containerParent instanceof PsiForStatement) break;
       containerParent = containerParent.getParent();
       if (containerParent instanceof PsiCodeBlock) {

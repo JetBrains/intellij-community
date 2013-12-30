@@ -150,7 +150,7 @@ public abstract class JavaFoldingBuilderBase extends CustomFoldingBuilder implem
   }
 
   public static boolean hasErrorElementsNearby(final PsiFile file, int startOffset, int endOffset) {
-    endOffset = CharArrayUtil.shiftForward(file.getText(), endOffset, " \t\n");
+    endOffset = CharArrayUtil.shiftForward(file.getViewProvider().getContents(), endOffset, " \t\n");
     for (PsiElement element : CollectHighlightsUtil.getElementsInRange(file, startOffset, endOffset)) {
       if (element instanceof PsiErrorElement) {
         return true;

@@ -18,18 +18,21 @@ package com.intellij.util.indexing;
 
 import com.intellij.openapi.vfs.InvalidVirtualFileAccessException;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.openapi.vfs.newvfs.FileAttribute;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ConcurrentHashMap;
 import com.intellij.util.io.DataInputOutputUtil;
 import gnu.trove.TObjectLongHashMap;
 import gnu.trove.TObjectLongProcedure;
+import gnu.trove.TObjectProcedure;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.util.List;
+import java.util.Collections;
 import java.util.concurrent.ArrayBlockingQueue;
 
 /**
@@ -176,6 +179,28 @@ public class IndexingStamp {
       catch (InvalidVirtualFileAccessException ignored /*ok to ignore it here*/) {
       }
     }
+  }
+
+  public static List<ID<?,?>> getIndexedIds(final VirtualFile file) {
+    synchronized (getStripedLock(file)) {
+      try {
+        Timestamps stamp = createOrGetTimeStamp(file);
+        if (stamp != null && stamp.myIndexStamps != null && !stamp.myIndexStamps.isEmpty()) {
+          final SmartList<ID<?, ?>> retained = new SmartList<ID<?, ?>>();
+          stamp.myIndexStamps.forEach(new TObjectProcedure<ID<?, ?>>() {
+            @Override
+            public boolean execute(ID<?, ?> object) {
+              retained.add(object);
+              return true;
+            }
+          });
+          return retained;
+        }
+      }
+      catch (InvalidVirtualFileAccessException ignored /*ok to ignore it here*/) {
+      }
+    }
+    return Collections.emptyList();
   }
 
   public static void flushCaches() {

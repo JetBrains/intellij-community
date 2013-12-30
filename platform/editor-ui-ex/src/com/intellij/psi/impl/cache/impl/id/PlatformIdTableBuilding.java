@@ -163,7 +163,7 @@ public abstract class PlatformIdTableBuilding {
           highlighter = editorHighlighter;
         }
         else {
-          highlighter = HighlighterFactory.createHighlighter(null, myFile);
+          highlighter = HighlighterFactory.createHighlighter(inputData.getProject(), myFile);
           highlighter.setText(chars);
         }
 

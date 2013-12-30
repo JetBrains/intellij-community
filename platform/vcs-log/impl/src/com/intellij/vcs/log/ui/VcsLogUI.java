@@ -3,6 +3,7 @@ package com.intellij.vcs.log.ui;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.VcsLog;
@@ -21,12 +22,14 @@ import com.intellij.vcs.log.impl.VcsLogImpl;
 import com.intellij.vcs.log.printmodel.SelectController;
 import com.intellij.vcs.log.ui.frame.MainFrame;
 import com.intellij.vcs.log.ui.frame.VcsLogGraphTable;
+import com.intellij.vcs.log.ui.tables.AbstractVcsLogTableModel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.table.TableModel;
 import java.awt.*;
 import java.util.Collection;
+import java.util.Set;
 
 /**
  * @author erokhins
@@ -82,8 +85,49 @@ public class VcsLogUI {
     });
   }
 
-  public void setModel(@NotNull TableModel model) {
-    myMainFrame.getGraphTable().setModel(model);
+  public void setModel(@NotNull AbstractVcsLogTableModel model) {
+    VcsLogGraphTable table = getTable();
+    int[] selectedRows = table.getSelectedRows();
+    TableModel previousModel = table.getModel();
+
+    table.setModel(model);
+
+    if (previousModel instanceof AbstractVcsLogTableModel) { // initially it is an empty DefaultTableModel
+      restoreSelection(table, (AbstractVcsLogTableModel)previousModel, selectedRows, model);
+    }
+  }
+
+  private static void restoreSelection(@NotNull VcsLogGraphTable table, @NotNull AbstractVcsLogTableModel previousModel,
+                                       int[] previousSelectedRows, @NotNull AbstractVcsLogTableModel newModel) {
+    Set<Hash> selectedHashes = getHashesAtRows(previousModel, previousSelectedRows);
+    Set<Integer> rowsToSelect = findNewRowsToSelect(newModel, selectedHashes);
+    for (Integer row : rowsToSelect) {
+      table.addRowSelectionInterval(row, row);
+    }
+  }
+
+  @NotNull
+  private static Set<Hash> getHashesAtRows(@NotNull AbstractVcsLogTableModel model, int[] rows) {
+    Set<Hash> hashes = ContainerUtil.newHashSet();
+    for (int row : rows) {
+      Hash hash = model.getHashAtRow(row);
+      if (hash != null) {
+        hashes.add(hash);
+      }
+    }
+    return hashes;
+  }
+
+  @NotNull
+  private static Set<Integer> findNewRowsToSelect(@NotNull AbstractVcsLogTableModel model, @NotNull Set<Hash> selectedHashes) {
+    Set<Integer> rowsToSelect = ContainerUtil.newHashSet();
+    for (int row = 0; row < model.getRowCount() && rowsToSelect.size() < selectedHashes.size(); row++) {//stop iterating if found all hashes
+      Hash hash = model.getHashAtRow(row);
+      if (hash != null && selectedHashes.contains(hash)) {
+        rowsToSelect.add(row);
+      }
+    }
+    return rowsToSelect;
   }
 
   public void updateUI() {

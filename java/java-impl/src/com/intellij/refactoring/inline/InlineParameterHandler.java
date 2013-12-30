@@ -33,6 +33,8 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.refactoring.listeners.RefactoringEventData;
+import com.intellij.refactoring.listeners.RefactoringEventListener;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.InlineUtil;
 import com.intellij.refactoring.util.RefactoringMessageDialog;
@@ -47,6 +49,7 @@ import java.util.*;
 public class InlineParameterHandler extends JavaInlineActionHandler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.inline.InlineParameterHandler");
   public static final String REFACTORING_NAME = RefactoringBundle.message("inline.parameter.refactoring");
+  public static final String REFACTORING_ID = "refactoring.inline.parameter";
 
   public boolean canInlineElement(PsiElement element) {
     if (element instanceof PsiParameter) {
@@ -212,8 +215,13 @@ public class InlineParameterHandler extends JavaInlineActionHandler {
       }
     }
 
+    final RefactoringEventData data = new RefactoringEventData();
+    data.addElement(psiElement.copy());
+    project.getMessageBus().syncPublisher(RefactoringEventListener.REFACTORING_EVENT_TOPIC).refactoringStarted(REFACTORING_ID, data);
 
     SameParameterValueInspection.InlineParameterValueFix.inlineSameParameterValue(method, psiParameter, constantExpression);
+
+    project.getMessageBus().syncPublisher(RefactoringEventListener.REFACTORING_EVENT_TOPIC).refactoringDone(REFACTORING_ID, null);
   }
 
   @Nullable

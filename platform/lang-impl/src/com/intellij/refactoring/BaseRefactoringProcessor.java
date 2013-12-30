@@ -25,6 +25,9 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
+import com.intellij.openapi.command.undo.BasicUndoableAction;
+import com.intellij.openapi.command.undo.UndoManager;
+import com.intellij.openapi.command.undo.UndoableAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -43,6 +46,8 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.refactoring.listeners.RefactoringEventData;
+import com.intellij.refactoring.listeners.RefactoringEventListener;
 import com.intellij.refactoring.listeners.RefactoringListenerManager;
 import com.intellij.refactoring.listeners.impl.RefactoringListenerManagerImpl;
 import com.intellij.refactoring.listeners.impl.RefactoringTransaction;
@@ -472,7 +477,34 @@ public abstract class BaseRefactoringProcessor implements Runnable {
       ApplicationManager.getApplication().runWriteAction(new Runnable() {
         @Override
         public void run() {
-          performRefactoring(writableUsageInfos);
+          final String refactoringId = getRefactoringId();
+          if (refactoringId != null) {
+            myProject.getMessageBus().syncPublisher(RefactoringEventListener.REFACTORING_EVENT_TOPIC).refactoringStarted(refactoringId, getBeforeData());
+          }
+
+          try {
+            if (refactoringId != null) {
+              UndoableAction action = new BasicUndoableAction() {
+                @Override
+                public void undo() {
+                  myProject.getMessageBus().syncPublisher(RefactoringEventListener.REFACTORING_EVENT_TOPIC).undoRefactoring(refactoringId);
+                }
+  
+                @Override
+                public void redo() {
+                }
+              };
+              UndoManager.getInstance(myProject).undoableActionPerformed(action);
+            }
+
+            performRefactoring(writableUsageInfos);
+          }
+          finally {
+            if (refactoringId != null) {
+              myProject.getMessageBus()
+                .syncPublisher(RefactoringEventListener.REFACTORING_EVENT_TOPIC).refactoringDone(refactoringId, getAfterData(writableUsageInfos));
+            }
+          }
         }
       });
 
@@ -595,6 +627,12 @@ public abstract class BaseRefactoringProcessor implements Runnable {
     }
 
     if (myPrepareSuccessfulSwingThreadCallback != null && !conflicts.isEmpty()) {
+      final String refactoringId = getRefactoringId();
+      if (refactoringId != null) {
+        RefactoringEventData conflictUsages = new RefactoringEventData();
+        conflictUsages.putUserData(RefactoringEventData.CONFLICTS_KEY, conflicts.values());
+        myProject.getMessageBus().syncPublisher(RefactoringEventListener.REFACTORING_EVENT_TOPIC).conflictsDetected(refactoringId, conflictUsages);
+      }
       final ConflictsDialog conflictsDialog = prepareConflictsDialog(conflicts, usages);
       conflictsDialog.show();
       if (!conflictsDialog.isOK()) {
@@ -614,6 +652,21 @@ public abstract class BaseRefactoringProcessor implements Runnable {
     return conflictsDialog;
   }
 
+  @Nullable
+  protected RefactoringEventData getBeforeData() {
+    return null;
+  }
+
+  @Nullable
+  protected RefactoringEventData getAfterData(UsageInfo[] usages) {
+    return null;
+  }
+
+  @Nullable
+  protected String getRefactoringId() {
+    return null;
+  }
+  
   @NotNull
   protected ConflictsDialog createConflictsDialog(MultiMap<PsiElement, String> conflicts, @Nullable final UsageInfo[] usages) {
     return new ConflictsDialog(myProject, conflicts, usages == null ? null : new Runnable() {

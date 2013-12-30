@@ -37,6 +37,7 @@ public abstract class StubProcessingHelperBase {
 
     PsiFile _psifile = PsiManager.getInstance(project).findFile(file);
     PsiFileWithStubSupport psiFile = null;
+    boolean customStubs = false;
 
     if (_psifile != null && !(_psifile instanceof PsiPlainTextFile)) {
       _psifile = _psifile.getViewProvider().getStubBindingRoot();
@@ -44,7 +45,9 @@ public abstract class StubProcessingHelperBase {
         psiFile = (PsiFileWithStubSupport)_psifile;
         stubTree = psiFile.getStubTree();
         if (stubTree == null && psiFile instanceof PsiFileImpl) {
-          stubTree = ((PsiFileImpl)psiFile).calcStubTree();
+          BinaryFileStubBuilder stubBuilder = BinaryFileStubBuilders.INSTANCE.forFileType(psiFile.getFileType());
+          if (stubBuilder == null) stubTree = ((PsiFileImpl)psiFile).calcStubTree();
+          else customStubs = true;
         }
       }
     }
@@ -56,6 +59,9 @@ public abstract class StubProcessingHelperBase {
       ObjectStubTree objectStubTree = StubTreeLoader.getInstance().readFromVFile(project, file);
       if (objectStubTree == null) {
         return true;
+      }
+      if (customStubs && !(objectStubTree instanceof StubTree)) {
+        return processor.process((Psi)psiFile); // e.g. dom indices
       }
       stubTree = (StubTree)objectStubTree;
       final List<StubElement<?>> plained = stubTree.getPlainList();

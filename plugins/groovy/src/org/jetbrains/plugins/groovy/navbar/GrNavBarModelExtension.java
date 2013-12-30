@@ -49,7 +49,7 @@ public class GrNavBarModelExtension implements NavBarModelExtension {
   public PsiElement adjustElement(PsiElement psiElement) {
     final ProjectFileIndex index = ProjectRootManager.getInstance(psiElement.getProject()).getFileIndex();
     final PsiFile containingFile = psiElement.getContainingFile();
-    if (containingFile != null) {
+    if (containingFile instanceof GroovyFileBase) {
       final VirtualFile file = containingFile.getVirtualFile();
       if (file != null && (index.isUnderSourceRootOfType(file, JavaModuleSourceRootTypes.SOURCES) || index.isInLibraryClasses(file) || index.isInLibrarySource(file))) {
         if (psiElement instanceof GroovyFileBase) {

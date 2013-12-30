@@ -142,11 +142,9 @@ public class XmlNamespaceIndex extends XmlIndex<XsdNamespaceBuilder> {
   public static IndexedRelevantResource<String, XsdNamespaceBuilder> guessSchema(String namespace,
                                                                                  @Nullable final String tagName,
                                                                                  @Nullable final String version,
-                                                                                 @Nullable Module module) {
+                                                                                 @Nullable Module module,
+                                                                                 @NotNull Project project) {
 
-    if (module == null) return null;
-
-    Project project = module.getProject();
     final List<IndexedRelevantResource<String, XsdNamespaceBuilder>>
       resources = getResourcesByNamespace(namespace, project, module);
 
@@ -157,9 +155,8 @@ public class XmlNamespaceIndex extends XmlIndex<XsdNamespaceBuilder> {
         @Override
         public int compare(IndexedRelevantResource<String, XsdNamespaceBuilder> o1,
                            IndexedRelevantResource<String, XsdNamespaceBuilder> o2) {
-
-          int i = o1.getValue().getRating(tagName, version) - o2.getValue().getRating(tagName, version);
-          return i == 0 ? o1.compareTo(o2) : i;
+          int i = o1.compareTo(o2);
+          return i == 0 ? o1.getValue().getRating(tagName, version) - o2.getValue().getRating(tagName, version) : i;
         }
       });
   }
@@ -173,7 +170,7 @@ public class XmlNamespaceIndex extends XmlIndex<XsdNamespaceBuilder> {
     if (DumbService.isDumb(file.getProject()) || XmlUtil.isStubBuilding()) return null;
 
     IndexedRelevantResource<String,XsdNamespaceBuilder> resource =
-      guessSchema(namespace, tagName, version, ModuleUtilCore.findModuleForPsiElement(file));
+      guessSchema(namespace, tagName, version, ModuleUtilCore.findModuleForPsiElement(file), file.getProject());
     if (resource == null) return null;
     return findSchemaFile(resource.getFile(), file);
   }

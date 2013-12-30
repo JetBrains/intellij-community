@@ -26,16 +26,25 @@ import com.intellij.psi.stubs.StubElement;
 import com.intellij.util.cls.ClsFormatException;
 import com.intellij.util.indexing.FileContent;
 
+import java.util.*;
+
 /**
  * @author max
  */
 public class ClassFileStubBuilder implements BinaryFileStubBuilder {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.compiled.ClassFileStubBuilder");
-  public static final int STUB_VERSION = JavaFileElementType.STUB_VERSION + 6;
+
+  public static final int STUB_VERSION = 7 + JavaFileElementType.STUB_VERSION;
 
   @Override
   public boolean acceptsFile(final VirtualFile file) {
-    return true;
+    final ClsStubBuilderFactory[] factories = Extensions.getExtensions(ClsStubBuilderFactory.EP_NAME);
+    for (ClsStubBuilderFactory factory : factories) {
+      if (!factory.isInnerClass(file)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   @Override
@@ -63,6 +72,18 @@ public class ClassFileStubBuilder implements BinaryFileStubBuilder {
 
   @Override
   public int getStubVersion() {
-    return STUB_VERSION;
+    int version = STUB_VERSION;
+    List<ClsStubBuilderFactory> factories = new ArrayList<ClsStubBuilderFactory>(Arrays.asList(
+      Extensions.getExtensions(ClsStubBuilderFactory.EP_NAME)));
+    Collections.sort(factories, new Comparator<ClsStubBuilderFactory>() { // stable order in copy
+      @Override
+      public int compare(ClsStubBuilderFactory o1, ClsStubBuilderFactory o2) {
+        return o1.getClass().getName().compareTo(o2.getClass().getName());
+      }
+    });
+    for(ClsStubBuilderFactory factory:factories) {
+      version = version * 31 + factory.getStubVersion() + factory.getClass().getName().hashCode();
+    }
+    return version;
   }
 }

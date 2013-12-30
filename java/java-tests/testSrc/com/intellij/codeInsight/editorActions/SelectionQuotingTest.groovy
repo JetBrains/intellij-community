@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
  */
 package com.intellij.codeInsight.editorActions
 
-import com.intellij.openapi.editor.impl.AbstractEditorProcessingOnDocumentModificationTest
+import com.intellij.openapi.editor.impl.AbstractEditorTest
 import com.intellij.testFramework.TestFileType
 import com.intellij.codeInsight.CodeInsightSettings
 
@@ -23,7 +23,7 @@ import com.intellij.codeInsight.CodeInsightSettings
  * @author Denis Zhdanov
  * @since 7/14/11 2:15 PM 
  */
-class SelectionQuotingTest extends AbstractEditorProcessingOnDocumentModificationTest {
+class SelectionQuotingTest extends AbstractEditorTest {
 
   void testBuggySelection() {
 
