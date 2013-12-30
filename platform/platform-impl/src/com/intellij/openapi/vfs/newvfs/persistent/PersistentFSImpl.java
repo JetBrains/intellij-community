@@ -45,6 +45,7 @@ import org.jetbrains.annotations.TestOnly;
 
 import java.io.*;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
@@ -54,12 +55,10 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 public class PersistentFSImpl extends PersistentFS implements ApplicationComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.newvfs.persistent.PersistentFS");
 
-  private final MessageBus myEventsBus;
+  private final MessageBus myEventBus;
 
   private final ReadWriteLock myRootsLock = new ReentrantReadWriteLock();
-  // (normalized)url -> root. guarded by myRootsLock
-  private final Map<String, VirtualFileSystemEntry> myRoots = new THashMap<String, VirtualFileSystemEntry>(FileUtil.PATH_HASHING_STRATEGY);
-  // root.getId() -> root. guarded by myRootsLock
+  private final Map<String, VirtualFileSystemEntry> myRoots = ContainerUtil.newTroveMap(FileUtil.PATH_HASHING_STRATEGY);
   private final TIntObjectHashMap<VirtualFileSystemEntry> myRootsById = new TIntObjectHashMap<VirtualFileSystemEntry>();
 
   private final ConcurrentIntObjectMap<VirtualFileSystemEntry> myIdToDirCache = new StripedLockIntObjectConcurrentHashMap<VirtualFileSystemEntry>();
@@ -67,17 +66,17 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
 
   // the root of all roots. All roots in myRoots and myRootsById maps are children of this super root. guarded by myRootsLock
   @Nullable private volatile VirtualFileSystemEntry mySuperRoot;
-  private boolean myShutDown = false;
-  @SuppressWarnings("UnusedDeclaration")
-  private final LowMemoryWatcher myLowMemoryWatcher = LowMemoryWatcher.register(new Runnable() {
-    @Override
-    public void run() {
-      clearIdCache();
-    }
-  });
 
-  public PersistentFSImpl(@NotNull final MessageBus bus) {
-    myEventsBus = bus;
+  private final AtomicBoolean myShutDown = new AtomicBoolean(false);
+
+  public PersistentFSImpl(@NotNull MessageBus bus) {
+    myEventBus = bus;
+    LowMemoryWatcher.register(new Runnable() {
+      @Override
+      public void run() {
+        clearIdCache();
+      }
+    });
     ShutDownTracker.getInstance().registerShutdownTask(new Runnable() {
       @Override
       public void run() {
@@ -87,13 +86,17 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
   }
 
   @Override
+  public void initComponent() {
+    FSRecords.connect();
+  }
+
+  @Override
   public void disposeComponent() {
     performShutdown();
   }
 
-  private synchronized void performShutdown() {
-    if (!myShutDown) {
-      myShutDown = true;
+  private void performShutdown() {
+    if (myShutDown.compareAndSet(false, true)) {
       LOG.info("VFS dispose started");
       FSRecords.dispose();
       LOG.info("VFS dispose completed");
@@ -105,11 +108,6 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
   @NotNull
   public String getComponentName() {
     return "app.component.PersistentFS";
-  }
-
-  @Override
-  public void initComponent() {
-    FSRecords.connect();
   }
 
   @Override
@@ -626,7 +624,7 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
 
         VFileContentChangeEvent event = new VFileContentChangeEvent(requestor, file, file.getModificationStamp(), modStamp, false);
         List<VFileContentChangeEvent> events = Collections.singletonList(event);
-        BulkFileListener publisher = myEventsBus.syncPublisher(VirtualFileManager.VFS_CHANGES);
+        BulkFileListener publisher = myEventBus.syncPublisher(VirtualFileManager.VFS_CHANGES);
         publisher.before(events);
 
         NewVirtualFileSystem delegate = getDelegate(file);
@@ -743,7 +741,7 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
 
     List<VFileEvent> validated = validateEvents(events);
 
-    BulkFileListener publisher = myEventsBus.syncPublisher(VirtualFileManager.VFS_CHANGES);
+    BulkFileListener publisher = myEventBus.syncPublisher(VirtualFileManager.VFS_CHANGES);
     publisher.before(validated);
 
     THashMap<VirtualFile, List<VFileEvent>> parentToChildrenEventsChanges = null;
@@ -869,8 +867,6 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
       if (root != null) return root;
 
       int rootId = FSRecords.findRootRecord(rootUrl);
-      root = myRootsById.get(rootId);
-      if (root != null) return root;
 
       if (isFakeRoot) {
         // fake super-root
@@ -884,8 +880,6 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
 
         // check one more time since the findFileByPath could have created the root (by reentering the findRoot)
         root = myRoots.get(rootUrl);
-        if (root != null) return root;
-        root = myRootsById.get(rootId);
         if (root != null) return root;
 
         root = new JarRoot(fs, rootId, parentLocalFile);
@@ -910,7 +904,7 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
         myRoots.put(rootUrl, root);
         myRootsById.put(rootId, root);
 
-        if (rootId != root.getId()) throw new AssertionError();
+        LOG.assertTrue(rootId == root.getId(), "root=" + root + " expected=" + rootId + " actual=" + root.getId());
       }
 
       return root;
