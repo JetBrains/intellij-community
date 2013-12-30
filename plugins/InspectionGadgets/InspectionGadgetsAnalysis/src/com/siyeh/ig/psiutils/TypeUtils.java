@@ -95,19 +95,7 @@ public class TypeUtils {
   }
 
   public static boolean expressionHasTypeOrSubtype(@Nullable PsiExpression expression, @NonNls @NotNull String typeName) {
-    if (expression == null) {
-      return false;
-    }
-    final PsiType type = expression.getType();
-    if (type == null) {
-      return false;
-    }
-    if (!(type instanceof PsiClassType)) {
-      return false;
-    }
-    final PsiClassType classType = (PsiClassType)type;
-    final PsiClass aClass = classType.resolve();
-    return aClass != null && InheritanceUtil.isInheritor(aClass, typeName);
+    return expressionHasTypeOrSubtype(expression, new String[] {typeName}) != null;
   }
 
   //getTypeIfOneOfOrSubtype
@@ -115,7 +103,10 @@ public class TypeUtils {
     if (expression == null) {
       return null;
     }
-    final PsiType type = expression.getType();
+    PsiType type = expression.getType();
+    if (type instanceof PsiLambdaExpressionType) {
+      type = ((PsiLambdaExpressionType)type).getExpression().getFunctionalInterfaceType();
+    }
     if (type == null) {
       return null;
     }
