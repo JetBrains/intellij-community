@@ -97,8 +97,8 @@ public class IntegratedSelectedOptionsDialog extends DialogWrapper {
     }
 
     SvnConfiguration svnConfig = SvnConfiguration.getInstance(myVcs.getProject());
-    myDryRunCheckbox.setSelected(svnConfig.MERGE_DRY_RUN);
-    myIgnoreWhitespacesCheckBox.setSelected(svnConfig.IGNORE_SPACES_IN_MERGE);
+    myDryRunCheckbox.setSelected(svnConfig.isMergeDryRun());
+    myIgnoreWhitespacesCheckBox.setSelected(svnConfig.isIgnoreSpacesInMerge());
 
     mySourceInfoLabel.setText(SvnBundle.message("action.Subversion.integrate.changes.branch.info.source.label.text", currentBranch));
     myTargetInfoLabel.setText(SvnBundle.message("action.Subversion.integrate.changes.branch.info.target.label.text", selectedBranchUrl));
@@ -223,8 +223,8 @@ public class IntegratedSelectedOptionsDialog extends DialogWrapper {
 
   public void saveOptions() {
     SvnConfiguration svnConfig = SvnConfiguration.getInstance(myVcs.getProject());
-    svnConfig.MERGE_DRY_RUN = myDryRunCheckbox.isSelected();
-    svnConfig.IGNORE_SPACES_IN_MERGE = myIgnoreWhitespacesCheckBox.isSelected();
+    svnConfig.setMergeDryRun(myDryRunCheckbox.isSelected());
+    svnConfig.setIgnoreSpacesInMerge(myIgnoreWhitespacesCheckBox.isSelected());
   }
 
   protected JComponent createCenterPanel() {

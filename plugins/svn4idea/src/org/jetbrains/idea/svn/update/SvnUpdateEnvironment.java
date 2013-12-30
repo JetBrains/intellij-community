@@ -83,10 +83,11 @@ public class SvnUpdateEnvironment extends AbstractSvnUpdateIntegrateEnvironment 
       if (isSwitch) {
         final UpdateClient updateClient = createUpdateClient(configuration, root, true, sourceUrl);
         myHandler.addToSwitch(root, sourceUrl);
-        rev = updateClient.doSwitch(root, rootInfo.getUrl(), SVNRevision.UNDEFINED, updateTo, configuration.UPDATE_DEPTH, configuration.FORCE_UPDATE, false);
+        rev = updateClient.doSwitch(root, rootInfo.getUrl(), SVNRevision.UNDEFINED, updateTo, configuration.getUpdateDepth(),
+                                    configuration.isForceUpdate(), false);
       } else {
         final UpdateClient updateClient = createUpdateClient(configuration, root, false, sourceUrl);
-        rev = updateClient.doUpdate(root, updateTo, configuration.UPDATE_DEPTH, configuration.FORCE_UPDATE, false);
+        rev = updateClient.doUpdate(root, updateTo, configuration.getUpdateDepth(), configuration.isForceUpdate(), false);
       }
 
       myPostUpdateFiles.setRevisions(root.getAbsolutePath(), myVcs, new SvnRevisionNumber(SVNRevision.create(rev)));
@@ -104,10 +105,10 @@ public class SvnUpdateEnvironment extends AbstractSvnUpdateIntegrateEnvironment 
       final UpdateClient updateClient = factory.createUpdateClient();
 
       if (! isSwitch) {
-        updateClient.setIgnoreExternals(configuration.IGNORE_EXTERNALS);
+        updateClient.setIgnoreExternals(configuration.isIgnoreExternals());
       }
       updateClient.setEventHandler(myHandler);
-      updateClient.setUpdateLocksOnDemand(configuration.UPDATE_LOCK_ON_DEMAND);
+      updateClient.setUpdateLocksOnDemand(configuration.isUpdateLockOnDemand());
 
       return updateClient;
     }

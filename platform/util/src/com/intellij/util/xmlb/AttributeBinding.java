@@ -35,6 +35,8 @@ public class AttributeBinding implements Binding {
   @Override
   public Object serialize(@NotNull Object o, Object context, SerializationFilter filter) {
     final Object v = myAccessor.read(o);
+    if (v == null) return context;
+
     final Object node = myBinding.serialize(v, context, filter);
 
     return new org.jdom.Attribute(myAttribute.value(), ((Content)node).getValue());

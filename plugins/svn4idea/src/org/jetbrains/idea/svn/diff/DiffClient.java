@@ -13,14 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.idea.svn;
+package org.jetbrains.idea.svn.diff;
+
+import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.changes.Change;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.idea.svn.api.SvnClient;
+import org.tmatesoft.svn.core.wc2.SvnTarget;
+
+import java.util.List;
 
 /**
- * Created with IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 2/28/13
- * Time: 10:14 AM
+ * @author Konstantin Kolosovsky.
  */
-public enum AuthManagerType {
-  active, passive, usual;
+public interface DiffClient extends SvnClient {
+
+  List<Change> compare(@NotNull SvnTarget target1, @NotNull SvnTarget target2) throws VcsException;
 }

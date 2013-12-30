@@ -213,13 +213,7 @@ public class SvnCommitRunner {
 
     @NotNull
     private File toFile(@NotNull String path) {
-      File result = new File(path);
-
-      if (!result.isAbsolute()) {
-        result = new File(myBase, result.getPath());
-      }
-
-      return result;
+      return CommandUtil.resolvePath(myBase, path);
     }
   }
 
