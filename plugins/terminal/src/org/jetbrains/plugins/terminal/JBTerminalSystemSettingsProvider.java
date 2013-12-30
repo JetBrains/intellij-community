@@ -100,7 +100,7 @@ class JBTerminalSystemSettingsProvider extends DefaultTabbedSettingsProvider imp
 
   @Override
   public boolean shouldCloseTabOnLogout(TtyConnector ttyConnector) {
-    return ttyConnector instanceof PtyProcessTtyConnector; //close tab only on logout of local pty, not remote
+    return TerminalOptionsProvider.getInstance().closeSessionOnLogout();
   }
 
   @Override
