@@ -48,8 +48,8 @@ import java.util.Map;
 
 public class Tree extends JTree implements ComponentWithEmptyText, ComponentWithExpandableItems<Integer>, Autoscroll, Queryable,
                                            ComponentWithFileColors {
-  private StatusText myEmptyText;
-  private ExpandableItemsHandler<Integer> myExpandableItemsHandler;
+  private final StatusText myEmptyText;
+  private final ExpandableItemsHandler<Integer> myExpandableItemsHandler;
 
   private AsyncProcessIcon myBusyIcon;
   private boolean myBusy;
@@ -60,20 +60,15 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
   private boolean myHorizontalAutoScrolling = true;
 
   public Tree() {
-    initTree_();
+    this(getDefaultTreeModel());
+  }
+
+  public Tree(TreeNode root) {
+    this(new DefaultTreeModel(root, false));
   }
 
   public Tree(TreeModel treemodel) {
     super(treemodel);
-    initTree_();
-  }
-
-  public Tree(TreeNode root) {
-    super(root);
-    initTree_();
-  }
-
-  private void initTree_() {
     myEmptyText = new StatusText(this) {
       @Override
       protected boolean isStatusVisible() {
@@ -151,6 +146,7 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
     return Condition.TRUE;
   }
   
+  @Override
   public boolean isFileColorsEnabled() {
     return false;
   }
@@ -297,6 +293,7 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
         myBusyIcon.setToolTipText(null);
         //noinspection SSBasedInspection
         SwingUtilities.invokeLater(new Runnable() {
+          @Override
           public void run() {
             if (myBusyIcon != null) {
               repaint();
@@ -348,7 +345,7 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
           component = pathObjects[pathObjects.length - 2];
         }
 
-        Color color = getFileColorFor(((DefaultMutableTreeNode)component));
+        Color color = getFileColorFor((DefaultMutableTreeNode)component);
         if (color != null) {
           g.setColor(color);
           g.fillRect(0, bounds.y, getWidth(), bounds.height);
@@ -390,6 +387,7 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
    *
    * Another hack to match selection UI (wide) and selection behavior (narrow) in Nimbus/GTK+.
    */
+  @Override
   protected void processMouseEvent(final MouseEvent e) {
     MouseEvent e2 = e;
 
@@ -406,7 +404,7 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
         if (path != null) {
           final Rectangle bounds = getPathBounds(path);
           if (bounds != null &&
-              (e.getY() > bounds.y && e.getY() < bounds.y + bounds.height) &&
+              e.getY() > bounds.y && e.getY() < bounds.y + bounds.height &&
               (e.getX() >= bounds.x + bounds.width ||
                e.getX() < bounds.x && !isLocationInExpandControl(path, e.getX(), e.getY()))) {
             int newX = bounds.x + bounds.width - 2;
@@ -443,16 +441,19 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
   /**
    * Disable Sun's speed search
    */
+  @Override
   public TreePath getNextMatch(String prefix, int startingRow, Position.Bias bias) {
     return null;
   }
 
   private static final int AUTOSCROLL_MARGIN = 10;
 
+  @Override
   public Insets getAutoscrollInsets() {
     return new Insets(getLocation().y + AUTOSCROLL_MARGIN, 0, getParent().getHeight() - AUTOSCROLL_MARGIN, getWidth() - 1);
   }
 
+  @Override
   public void autoscroll(Point p) {
     int realRow = getClosestRowForLocation(p.x, p.y);
     if (getLocation().y + p.y <= AUTOSCROLL_MARGIN) {
@@ -666,6 +667,7 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
   }
 
   private class MyMouseListener extends MouseAdapter {
+    @Override
     public void mousePressed(MouseEvent mouseevent) {
       if (!SwingUtilities.isLeftMouseButton(mouseevent) &&
           (SwingUtilities.isRightMouseButton(mouseevent) || SwingUtilities.isMiddleMouseButton(mouseevent))) {
@@ -712,8 +714,8 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
       else {
         boxLeftX = getWidth() - boxLeftX - insets.right + treeUI.getRightChildIndent() - 1;
       }
-      boxLeftX -= (getComponentOrientation().isLeftToRight() ? (int)Math.ceil(boxWidth / 2.0) : (int)Math.floor(boxWidth / 2.0));
-      return (mouseX >= boxLeftX && mouseX < (boxLeftX + boxWidth));
+      boxLeftX -= getComponentOrientation().isLeftToRight() ? (int)Math.ceil(boxWidth / 2.0) : (int)Math.floor(boxWidth / 2.0);
+      return mouseX >= boxLeftX && mouseX < boxLeftX + boxWidth;
     }
     return false;
   }
@@ -736,10 +738,12 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
       }
     }
 
+    @Override
     public void focusGained(FocusEvent e) {
       focusChanges();
     }
 
+    @Override
     public void focusLost(FocusEvent e) {
       focusChanges();
     }
@@ -770,6 +774,7 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
     boolean accept(T node);
   }
 
+  @Override
   public void putInfo(@NotNull Map<String, String> info) {
     final TreePath[] selection = getSelectionPaths();
     if (selection == null) return;
@@ -785,7 +790,7 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
         if (nodesText.length() > 0) {
           nodesText.append(";");
         }
-        nodesText.append(c.toString());
+        nodesText.append(c);
       }
     }
 
@@ -803,6 +808,7 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
     }
   }
 
+  @Override
   public Dimension getPreferredSize() {
     Dimension size = super.getPreferredSize();
 
