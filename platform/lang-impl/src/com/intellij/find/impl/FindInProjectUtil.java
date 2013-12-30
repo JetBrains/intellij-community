@@ -155,7 +155,10 @@ public class FindInProjectUtil {
     return virtualFile == null ? null : psiManager.findDirectory(virtualFile);
   }
 
-  private static void addFilesUnderDirectory(@NotNull PsiDirectory directory, @NotNull Collection<PsiFile> fileList, boolean isRecursive, @Nullable Pattern fileMaskRegExp) {
+  private static void addFilesUnderDirectory(@NotNull PsiDirectory directory,
+                                             @NotNull Collection<PsiFile> fileList,
+                                             boolean isRecursive,
+                                             @Nullable Pattern fileMaskRegExp) {
     final PsiElement[] children = directory.getChildren();
 
     for (PsiElement child : children) {
@@ -312,22 +315,19 @@ public class FindInProjectUtil {
     return count;
   }
 
-  @NotNull
-  private static Collection<PsiFile> getFilesToSearchIn(@NotNull final FindModel findModel,
-                                                        @NotNull final Project project,
-                                                        final PsiDirectory psiDirectory) {
-    return ApplicationManager.getApplication().runReadAction(new Computable<Collection<PsiFile>>() {
+  private static PsiFile findFile(@NotNull final PsiManager psiManager, @NotNull final VirtualFile virtualFile) {
+    return ApplicationManager.getApplication().runReadAction(new Computable<PsiFile>() {
       @Override
-      public Collection<PsiFile> compute() {
-        return getFilesToSearchInReadAction(findModel, project, psiDirectory);
+      public PsiFile compute() {
+        return psiManager.findFile(virtualFile);
       }
     });
   }
 
   @NotNull
-  private static Collection<PsiFile> getFilesToSearchInReadAction(@NotNull final FindModel findModel,
-                                                                  @NotNull final Project project,
-                                                                  @Nullable final PsiDirectory psiDirectory) {
+  private static Collection<PsiFile> getFilesToSearchIn(@NotNull final FindModel findModel,
+                                                        @NotNull final Project project,
+                                                        final PsiDirectory psiDirectory) {
     String moduleName = findModel.getModuleName();
     Module module = moduleName == null ? null : ModuleManager.getInstance(project).findModuleByName(moduleName);
     final FileIndex fileIndex = module == null ?
@@ -355,7 +355,7 @@ public class FindInProjectUtil {
           if (!virtualFile.isDirectory() &&
               (fileMaskRegExp == null || fileMaskRegExp.matcher(virtualFile.getName()).matches()) &&
               (globalCustomScope == null || globalCustomScope.contains(virtualFile))) {
-            final PsiFile psiFile = psiManager.findFile(virtualFile);
+            final PsiFile psiFile = findFile(psiManager, virtualFile);
             if (psiFile != null && !filesForFastWordSearch.contains(psiFile)) {
               myFiles.add(psiFile);
             }
@@ -391,8 +391,14 @@ public class FindInProjectUtil {
       return iterator.getFiles();
     }
     if (psiDirectory.isValid()) {
-      Collection<PsiFile> fileList = new THashSet<PsiFile>();
-      addFilesUnderDirectory(psiDirectory, fileList, findModel.isWithSubdirectories(), createFileMaskRegExp(findModel));
+      final Collection<PsiFile> fileList = new THashSet<PsiFile>();
+      ApplicationManager.getApplication().runReadAction(new Runnable() {
+        @Override
+        public void run() {
+          addFilesUnderDirectory(psiDirectory, fileList, findModel.isWithSubdirectories(), createFileMaskRegExp(findModel));
+        }
+      });
+
       return fileList;
     }
     return Collections.emptyList();
@@ -414,11 +420,16 @@ public class FindInProjectUtil {
   }
 
   @Nullable
-  private static GlobalSearchScope toGlobal(@NotNull Project project, @Nullable SearchScope scope) {
+  private static GlobalSearchScope toGlobal(@NotNull final Project project, @Nullable final SearchScope scope) {
     if (scope instanceof GlobalSearchScope || scope == null) {
       return (GlobalSearchScope)scope;
     }
-    return GlobalSearchScope.filesScope(project, getLocalScopeFiles((LocalSearchScope)scope));
+    return ApplicationManager.getApplication().runReadAction(new Computable<GlobalSearchScope>() {
+      @Override
+      public GlobalSearchScope compute() {
+        return GlobalSearchScope.filesScope(project, getLocalScopeFiles((LocalSearchScope)scope));
+      }
+    });
   }
 
   @NotNull
@@ -443,7 +454,7 @@ public class FindInProjectUtil {
       return new Pair<Boolean, Collection<PsiFile>>(false, Collections.<PsiFile>emptyList());
     }
 
-    PsiManager pm = PsiManager.getInstance(project);
+    final PsiManager pm = PsiManager.getInstance(project);
     CacheManager cacheManager = CacheManager.SERVICE.getInstance(project);
     SearchScope customScope = findModel.getCustomScope();
     GlobalSearchScope scope = psiDirectory != null
@@ -475,7 +486,7 @@ public class FindInProjectUtil {
         FileBasedIndex.getInstance().getFilesWithKey(TrigramIndex.INDEX_ID, keys, new CommonProcessors.CollectProcessor<VirtualFile>(hits), scope);
 
         for (VirtualFile hit : hits) {
-          resultFiles.add(pm.findFile(hit));
+          resultFiles.add(findFile(pm, hit));
         }
 
         filterMaskedFiles(resultFiles, fileMaskRegExp);
@@ -518,7 +529,7 @@ public class FindInProjectUtil {
         @Override
         public boolean processFile(VirtualFile file) {
           if (!file.isDirectory() && fileMaskRegExp.matcher(file.getName()).matches()) {
-            PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
+            PsiFile psiFile = findFile(pm, file);
             if (psiFile != null) {
               resultFiles.add(psiFile);
             }
