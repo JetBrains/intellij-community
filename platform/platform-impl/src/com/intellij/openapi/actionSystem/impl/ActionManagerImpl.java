@@ -22,6 +22,7 @@ import com.intellij.ide.ActivityTracker;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManager;
+import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.idea.IdeaLogger;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
@@ -47,7 +48,9 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.MultiMap;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashMap;
@@ -78,6 +81,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Applicat
   private final Map<PluginId, THashSet<String>> myPlugin2Id = new THashMap<PluginId, THashSet<String>>();
   private final TObjectIntHashMap<String> myId2Index = new TObjectIntHashMap<String>();
   private final Map<Object,String> myAction2Id = new THashMap<Object, String>();
+  private final MultiMap<String,String> myId2GroupId = new MultiMap<String, String>();
   private final List<String> myNotRegisteredInternalActionIds = new ArrayList<String>();
   private MyTimer myTimer;
 
@@ -88,6 +92,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Applicat
   private final DataManager myDataManager;
   private String myPrevPerformedActionId;
   private long myLastTimeEditorWasTypedIn = 0;
+
   @NonNls public static final String ACTION_ELEMENT_NAME = "action";
   @NonNls public static final String GROUP_ELEMENT_NAME = "group";
   @NonNls public static final String ACTIONS_ELEMENT_NAME = "actions";
@@ -123,6 +128,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Applicat
   @NonNls public static final String VALUE_ATTR_NAME = "value";
   @NonNls public static final String ACTIONS_BUNDLE = "messages.ActionsBundle";
   @NonNls public static final String USE_SHORTCUT_OF_ATTR_NAME = "use-shortcut-of";
+  @NonNls public static final String OVERRIDES_ATTR_NAME = "overrides";
 
   private final List<ActionPopupMenuImpl> myPopups = new ArrayList<ActionPopupMenuImpl>();
 
@@ -208,9 +214,9 @@ public final class ActionManagerImpl extends ActionManagerEx implements Applicat
 
 
   private void registerPluginActions() {
-    final IdeaPluginDescriptor[] plugins = PluginManager.getPlugins();
+    final IdeaPluginDescriptor[] plugins = PluginManagerCore.getPlugins();
     for (IdeaPluginDescriptor plugin : plugins) {
-      if (PluginManager.shouldSkipPlugin(plugin)) continue;
+      if (PluginManagerCore.shouldSkipPlugin(plugin)) continue;
       final List<Element> elementList = plugin.getActionsDescriptionElements();
       if (elementList != null) {
         for (Element e : elementList) {
@@ -412,9 +418,22 @@ public final class ActionManagerImpl extends ActionManagerEx implements Applicat
       ((KeymapManagerEx)myKeymapManager).bindShortcuts(element.getAttributeValue(USE_SHORTCUT_OF_ATTR_NAME), id);
     }
 
-    // register action
-    registerAction(id, stub, pluginId);
+    registerOrReplaceActionInner(element, id, stub, pluginId);
     return stub;
+  }
+
+  private void registerOrReplaceActionInner(@NotNull Element element, @NotNull String id, @NotNull AnAction action, @Nullable PluginId pluginId) {
+    synchronized (myLock) {
+      if (Boolean.valueOf(element.getAttributeValue(OVERRIDES_ATTR_NAME)).booleanValue()) {
+        if (getActionOrStub(id) == null) {
+          throw new RuntimeException(element.getName() + " '" + id + "' doesn't override anything");
+        }
+        replaceAction(id, action, pluginId);
+      }
+      else {
+        registerAction(id, action, pluginId);
+      }
+    }
   }
 
   private static void processAbbreviationNode(Element e, String id) {
@@ -427,7 +446,8 @@ public final class ActionManagerImpl extends ActionManagerEx implements Applicat
 
   @Nullable
   private static ResourceBundle getActionsResourceBundle(ClassLoader loader, IdeaPluginDescriptor plugin) {
-    @NonNls final String resBundleName = plugin != null && !plugin.getPluginId().getIdString().equals("com.intellij") ? plugin.getResourceBundleBaseName() : ACTIONS_BUNDLE;
+    @NonNls final String resBundleName = plugin != null && !"com.intellij".equals(plugin.getPluginId().getIdString())
+                                         ? plugin.getResourceBundleBaseName() : ACTIONS_BUNDLE;
     ResourceBundle bundle = null;
     if (resBundleName != null) {
       bundle = AbstractBundle.getResourceBundle(resBundleName, loader);
@@ -560,7 +580,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Applicat
       }
 
       if (id != null) {
-        registerAction(id, group);
+        registerOrReplaceActionInner(element, id, group, pluginId);
       }
       Presentation presentation = group.getTemplatePresentation();
 
@@ -593,7 +613,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Applicat
           AnAction action = processActionElement(child, loader, pluginId);
           if (action != null) {
             assertActionIsGroupOrStub(action);
-            ((DefaultActionGroup)group).addAction(action, Constraints.LAST, this).setAsSecondary(isSecondary(child));
+            addToGroupInner(group, action, Constraints.LAST, isSecondary(child));
           }
         }
         else if (SEPARATOR_ELEMENT_NAME.equals(name)) {
@@ -602,7 +622,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Applicat
         else if (GROUP_ELEMENT_NAME.equals(name)) {
           AnAction action = processGroupElement(child, loader, pluginId);
           if (action != null) {
-            ((DefaultActionGroup)group).add(action, this);
+            addToGroupInner(group, action, Constraints.LAST, false);
           }
         }
         else if (ADD_TO_GROUP_ELEMENT_NAME.equals(name)) {
@@ -611,7 +631,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Applicat
         else if (REFERENCE_ELEMENT_NAME.equals(name)) {
           AnAction action = processReferenceElement(child, pluginId);
           if (action != null) {
-            ((DefaultActionGroup)group).addAction(action, Constraints.LAST, this).setAsSecondary(isSecondary(child));
+            addToGroupInner(group, action, Constraints.LAST, isSecondary(child));
           }
         }
         else {
@@ -679,8 +699,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Applicat
     }
 
     // anchor attribute
-    final Anchor anchor = parseAnchor(element.getAttributeValue(ANCHOR_ELEMENT_NAME),
-                                      actionName, pluginId);
+    final Anchor anchor = parseAnchor(element.getAttributeValue(ANCHOR_ELEMENT_NAME), actionName, pluginId);
     if (anchor == null) {
       return;
     }
@@ -689,8 +708,12 @@ public final class ActionManagerImpl extends ActionManagerEx implements Applicat
     if (!checkRelativeToAction(relativeToActionId, anchor, actionName, pluginId)) {
       return;
     }
-    final DefaultActionGroup group = (DefaultActionGroup)parentGroup;
-    group.addAction(action, new Constraints(anchor, relativeToActionId), this).setAsSecondary(secondary);
+    addToGroupInner(parentGroup, action, new Constraints(anchor, relativeToActionId), secondary);
+  }
+
+  private void addToGroupInner(AnAction group, AnAction action, Constraints constraints, boolean secondary) {
+    ((DefaultActionGroup)group).addAction(action, constraints, this).setAsSecondary(secondary);
+    myId2GroupId.putValue(myAction2Id.get(action), myAction2Id.get(group));
   }
 
   public static boolean checkRelativeToAction(final String relativeToActionId,
@@ -916,7 +939,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Applicat
   public void registerAction(@NotNull String actionId, @NotNull AnAction action, @Nullable PluginId pluginId) {
     synchronized (myLock) {
       if (myId2Action.containsKey(actionId)) {
-        reportActionError(pluginId, "action with the ID \"" + actionId + "\" was already registered. Action being registered is " + action.toString() +
+        reportActionError(pluginId, "action with the ID \"" + actionId + "\" was already registered. Action being registered is " + action +
                                     "; Registered action is " +
                                        myId2Action.get(actionId) + getPluginInfo(pluginId));
         return;
@@ -1045,6 +1068,33 @@ public final class ActionManagerImpl extends ActionManagerEx implements Applicat
   @Override
   public boolean isTransparentOnlyActionsUpdateNow() {
     return myTransparentOnlyUpdate;
+  }
+
+  //@Override
+  //public AnAction replaceAction(String actionId, @NotNull AnAction newAction) {
+  //  synchronized (myLock) {
+  //    return replaceAction(actionId, newAction, null);
+  //  }
+  //}
+
+  private AnAction replaceAction(@NotNull String actionId, @NotNull AnAction newAction, @Nullable PluginId pluginId) {
+    AnAction oldAction = getActionOrStub(actionId);
+    if (oldAction != null) {
+      boolean isGroup = oldAction instanceof ActionGroup;
+      if (isGroup != newAction instanceof ActionGroup) {
+        throw new IllegalStateException("cannot replace a group with an action and vice versa: " + actionId);
+      }
+      unregisterAction(actionId);
+      if (isGroup) {
+        myId2GroupId.values().remove(actionId);
+      }
+    }
+    registerAction(actionId, newAction, pluginId);
+    for (String groupId : myId2GroupId.get(actionId)) {
+      DefaultActionGroup group = ObjectUtils.assertNotNull((DefaultActionGroup)getActionOrStub(groupId));
+      group.replaceAction(oldAction, newAction);
+    }
+    return oldAction;
   }
 
   private void flushActionPerformed() {
