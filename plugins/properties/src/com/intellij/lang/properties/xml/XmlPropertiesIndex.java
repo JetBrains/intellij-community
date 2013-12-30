@@ -31,6 +31,7 @@ public class XmlPropertiesIndex extends FileBasedIndexExtension<XmlPropertiesInd
   public static final ID<Key,String> NAME = ID.create("xmlProperties");
 
   private static final EnumeratorStringDescriptor ENUMERATOR_STRING_DESCRIPTOR = new EnumeratorStringDescriptor();
+  public static final String HTTP_JAVA_SUN_COM_DTD_PROPERTIES_DTD = "http://java.sun.com/dtd/properties.dtd";
 
   @NotNull
   @Override
@@ -66,7 +67,7 @@ public class XmlPropertiesIndex extends FileBasedIndexExtension<XmlPropertiesInd
 
   @Override
   public int getVersion() {
-    return 1;
+    return 2;
   }
 
   @Override
@@ -82,7 +83,11 @@ public class XmlPropertiesIndex extends FileBasedIndexExtension<XmlPropertiesInd
   @NotNull
   @Override
   public Map<Key, String> map(FileContent inputData) {
-    MyIXMLBuilderAdapter builder = parse(inputData.getContentAsText(), false);
+    CharSequence text = inputData.getContentAsText();
+    if(CharArrayUtil.indexOf(text, HTTP_JAVA_SUN_COM_DTD_PROPERTIES_DTD, 0) == -1) {
+      return Collections.emptyMap();
+    }
+    MyIXMLBuilderAdapter builder = parse(text, false);
     if (builder == null) return Collections.emptyMap();
     HashMap<Key, String> map = builder.myMap;
     if (builder.accepted) map.put(MARKER_KEY, "");
@@ -99,7 +104,7 @@ public class XmlPropertiesIndex extends FileBasedIndexExtension<XmlPropertiesInd
     StdXMLReader reader = new StdXMLReader(CharArrayUtil.readerFromCharSequence(text)) {
       @Override
       public Reader openStream(String publicID, String systemID) throws IOException {
-        if (!"http://java.sun.com/dtd/properties.dtd".equals(systemID)) throw new IOException();
+        if (!HTTP_JAVA_SUN_COM_DTD_PROPERTIES_DTD.equals(systemID)) throw new IOException();
         return new StringReader(" ");
       }
     };
