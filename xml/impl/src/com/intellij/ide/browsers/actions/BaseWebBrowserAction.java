@@ -1,6 +1,9 @@
 package com.intellij.ide.browsers.actions;
 
-import com.intellij.ide.browsers.*;
+import com.intellij.ide.browsers.BrowsersConfiguration;
+import com.intellij.ide.browsers.OpenInBrowserRequest;
+import com.intellij.ide.browsers.WebBrowser;
+import com.intellij.ide.browsers.WebBrowserUrlProvider;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Shortcut;
@@ -11,17 +14,13 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.xml.util.HtmlUtil;
 import org.jetbrains.annotations.NotNull;
 
-public class BaseWebBrowserAction extends DumbAwareAction {
+final class BaseWebBrowserAction extends DumbAwareAction {
   private final WebBrowser browser;
 
   public BaseWebBrowserAction(@NotNull WebBrowser browser) {
     super(browser.getName(), null, browser.getIcon());
 
     this.browser = browser;
-  }
-
-  public BaseWebBrowserAction(@NotNull BrowsersConfiguration.BrowserFamily family) {
-    this(WebBrowser.getStandardBrowser(family));
   }
 
   @Override
@@ -32,7 +31,7 @@ public class BaseWebBrowserAction extends DumbAwareAction {
       return;
     }
 
-    Pair<OpenInBrowserRequest, WebBrowserUrlProvider> result = OpenFileInDefaultBrowserAction.doUpdate(e);
+    Pair<OpenInBrowserRequest, WebBrowserUrlProvider> result = OpenInBrowserBaseGroupAction.doUpdate(e);
     if (result == null) {
       return;
     }
