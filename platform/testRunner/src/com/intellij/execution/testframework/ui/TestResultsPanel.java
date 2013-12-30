@@ -115,6 +115,7 @@ public abstract class TestResultsPanel extends JPanel implements Disposable {
     });
     rightPanel.add(myStatisticsSplitter, BorderLayout.CENTER);
     splitter.setSecondComponent(rightPanel);
+    testTreeView.setBorder(BorderFactory.createEmptyBorder(0, 3, 0, 0));
     setLeftComponent(testTreeView);
   }
 
