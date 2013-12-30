@@ -606,4 +606,8 @@ public class HtmlUtil {
     }
     return false;
   }
+
+  public static boolean isScriptTag(@NotNull HtmlTag tag) {
+    return tag.getName().equalsIgnoreCase("script");
+  }
 }
