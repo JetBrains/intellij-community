@@ -22,6 +22,7 @@ import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.codeInsight.hint.ParameterInfoController;
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.codeInsight.lookup.LookupEx;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.DataManager;
@@ -58,10 +59,7 @@ import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.ui.popup.NotLookupOrSearchCondition;
 import com.intellij.ui.popup.PopupPositionManager;
 import com.intellij.ui.popup.PopupUpdateProcessor;
-import com.intellij.util.Alarm;
-import com.intellij.util.BooleanFunction;
-import com.intellij.util.Consumer;
-import com.intellij.util.Processor;
+import com.intellij.util.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -667,7 +665,8 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
 
       @Nullable
       private String generateParameterInfoDocumentation(DocumentationProvider provider) {
-        final Object[] objects = myParameterInfoController.getSelectedElements();
+        LookupEx lookup = LookupManager.getInstance(myProject).getActiveLookup();
+        final Object[] objects = lookup != null ? ArrayUtil.EMPTY_OBJECT_ARRAY : myParameterInfoController.getSelectedElements();
 
         if (objects.length > 0) {
           @NonNls StringBuffer sb = null;
