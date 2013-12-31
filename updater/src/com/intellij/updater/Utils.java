@@ -16,8 +16,10 @@ public class Utils {
 
   @SuppressWarnings({"SSBasedInspection"})
   public static File createTempFile() throws IOException {
+    Runner.logger.trace("Utils.createTempFile");
     if (myTempDir == null) {
       myTempDir = File.createTempFile("idea.updater.", ".tmp");
+      Runner.logger.trace("Utils.createTempFile: " + myTempDir.getCanonicalPath());
       delete(myTempDir);
       myTempDir.mkdirs();
     }
