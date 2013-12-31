@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2013 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -202,10 +202,7 @@ public class DeclareCollectionAsInterfaceInspection extends BaseInspection {
         }
       }
       final PsiType type = variable.getType();
-      if (!CollectionUtils.isCollectionClass(type)) {
-        return;
-      }
-      if (LibraryUtil.isOverrideOfLibraryMethodParameter(variable)) {
+      if (!CollectionUtils.isCollectionClass(type) || LibraryUtil.isOverrideOfLibraryMethodParameter(variable)) {
         return;
       }
       final PsiTypeElement typeElement = variable.getTypeElement();

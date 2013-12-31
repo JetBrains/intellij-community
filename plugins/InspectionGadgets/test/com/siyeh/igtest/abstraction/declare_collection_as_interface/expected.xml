@@ -2,37 +2,51 @@
 <problems>
 
   <problem>
-    <file>DeclareCollectionsAsInterfaceInspection.java</file>
+    <file>DeclareCollectionAsInterface.java</file>
     <line>8</line>
     <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Collection declared by class, not interface</problem_class>
     <description>Declaration of &lt;code&gt;HashMap&lt;/code&gt; should probably be weakened to 'java.util.Map' #loc</description>
   </problem>
 
   <problem>
-    <file>DeclareCollectionsAsInterfaceInspection.java</file>
+    <file>DeclareCollectionAsInterface.java</file>
     <line>25</line>
     <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Collection declared by class, not interface</problem_class>
     <description>Declaration of &lt;code&gt;HashMap&lt;/code&gt; should probably be weakened to 'java.util.Map' #loc</description>
   </problem>
 
   <problem>
-    <file>DeclareCollectionsAsInterfaceInspection.java</file>
+    <file>DeclareCollectionAsInterface.java</file>
     <line>19</line>
     <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Collection declared by class, not interface</problem_class>
     <description>Declaration of &lt;code&gt;HashMap&lt;/code&gt; should probably be weakened to 'java.util.Map' #loc</description>
   </problem>
 
   <problem>
-    <file>DeclareCollectionsAsInterfaceInspection.java</file>
+    <file>DeclareCollectionAsInterface.java</file>
     <line>37</line>
     <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Collection declared by class, not interface</problem_class>
     <description>Declaration of &lt;code&gt;HashMap&lt;/code&gt; should probably be weakened to 'java.util.Map' #loc</description>
   </problem>
 
   <problem>
-    <file>DeclareCollectionsAsInterfaceInspection.java</file>
+    <file>DeclareCollectionAsInterface.java</file>
     <line>47</line>
     <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Collection declared by class, not interface</problem_class>
     <description>Declaration of &lt;code&gt;HashMap&lt;/code&gt; should probably be weakened to 'java.util.Map' #loc</description>
+  </problem>
+
+  <problem>
+    <file>DeclareCollectionAsInterface.java</file>
+    <line>52</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Collection declared by class, not interface</problem_class>
+    <description>Declaration of &lt;code&gt;ArrayList&lt;/code&gt; should probably be weakened to 'java.util.List' #loc</description>
+  </problem>
+
+  <problem>
+    <file>DeclareCollectionAsInterface.java</file>
+    <line>55</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Collection declared by class, not interface</problem_class>
+    <description>Declaration of &lt;code&gt;ArrayList&lt;/code&gt; should probably be weakened to 'java.util.List' #loc</description>
   </problem>
 </problems>
