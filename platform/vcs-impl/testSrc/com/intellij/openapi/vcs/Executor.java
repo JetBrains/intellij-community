@@ -31,7 +31,6 @@ import java.util.Collection;
 import java.util.List;
 
 /**
- *
  * @author Kirill Likhodedov
  */
 public class Executor {
@@ -136,7 +135,7 @@ public class Executor {
     }
 
     CapturingProcessHandler handler = new CapturingProcessHandler(clientProcess, CharsetToolkit.getDefaultSystemCharset());
-    ProcessOutput result = handler.runProcess(30*1000);
+    ProcessOutput result = handler.runProcess(30 * 1000);
     if (result.isTimeout()) {
       throw new RuntimeException("Timeout waiting for the command execution. Command: " + StringUtil.join(params, " "));
     }
@@ -192,8 +191,8 @@ public class Executor {
     return split;
   }
 
-  protected static String findExecutable(String programName, String unixExec, String winExec, Collection<String> pathEnvs) {
-    String exec = findInPathEnvs(programName, pathEnvs);
+  protected static String findExecutable(String programName, String unixExec, String winExec, Collection<String> envs) {
+    String exec = findEnvValue(programName, envs);
     if (exec != null) {
       return exec;
     }
@@ -201,17 +200,20 @@ public class Executor {
     if (fileExec != null) {
       return fileExec.getAbsolutePath();
     }
-    throw new IllegalStateException(programName + " executable not found. " +
-                                    "Please define a valid environment variable " + pathEnvs.iterator().next() +
-                                    " pointing to the " + programName + " executable.");
+    throw new IllegalStateException(programName + " executable not found. " + (envs.size() > 0 ?
+                                                                               "Please define a valid environment variable " +
+                                                                               envs.iterator().next() +
+                                                                               " pointing to the " +
+                                                                               programName +
+                                                                               " executable." : ""));
   }
 
-  protected static String findInPathEnvs(String programName, Collection<String> pathEnvs) {
-    for (String pathEnv : pathEnvs) {
-      String exec = System.getenv(pathEnv);
-      if (exec != null && new File(exec).canExecute()) {
-        log(String.format("Using %s from %s: %s", programName, pathEnv, exec));
-        return exec;
+  protected static String findEnvValue(String programNameForLog, Collection<String> envs) {
+    for (String env : envs) {
+      String val = System.getenv(env);
+      if (val != null && new File(val).canExecute()) {
+        log(String.format("Using %s from %s: %s", programNameForLog, env, val));
+        return val;
       }
     }
     return null;
@@ -225,7 +227,7 @@ public class Executor {
     String[] split = path.split("/");
     if (split.length > 3) {
       // split[0] is empty, because the path starts from /
-      return String.format("/%s/.../%s/%s", split[1], split[split.length-2], split[split.length-1]);
+      return String.format("/%s/.../%s/%s", split[1], split[split.length - 2], split[split.length - 1]);
     }
     return path;
   }
@@ -239,5 +241,4 @@ public class Executor {
     assert ourCurrentDir != null : "Current dir hasn't been initialized yet. Call cd at least once before any other command.";
     return new File(ourCurrentDir);
   }
-
 }
