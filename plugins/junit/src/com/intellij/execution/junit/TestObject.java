@@ -68,6 +68,7 @@ import com.intellij.rt.execution.junit.IDEAJUnitListener;
 import com.intellij.rt.execution.junit.JUnitStarter;
 import com.intellij.util.Function;
 import com.intellij.util.PathUtil;
+import com.intellij.util.ui.UIUtil;
 import jetbrains.buildServer.messages.serviceMessages.ServiceMessageTypes;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -421,12 +422,12 @@ public abstract class TestObject implements JavaCommandLine {
   private void appendForkInfo(Executor executor) throws ExecutionException {
     final String forkMode = myConfiguration.getForkMode();
     if (Comparing.strEqual(forkMode, "none")) {
-      final String workingDirectory = myConfiguration.getWorkingDirectory();
-      if (!JUnitConfiguration.TEST_PACKAGE.equals(myConfiguration.getPersistentData().TEST_OBJECT) ||
-          myConfiguration.getPersistentData().getScope() == TestSearchScope.SINGLE_MODULE ||
-          !("$" + PathMacroUtil.MODULE_DIR_MACRO_NAME + "$").equals(workingDirectory)) {
-        return;
+      if (forkPerModule()) {
+        final String actionName = UIUtil.removeMnemonic(executor.getStartActionText());
+        throw new CantRunException("'" + actionName + "' is disabled when per-module working directory is configured.<br/>" +
+                                   "Please specify single working directory, or change test scope to single module.");
       }
+      return;
     }
 
     if (getRunnerSettings() != null) {
