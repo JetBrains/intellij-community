@@ -171,4 +171,20 @@ public class StripTrailingSpacesTest extends LightPlatformCodeInsightTestCase {
     FileDocumentManager.getInstance().saveAllDocuments();
     checkResultByText(" xxx <caret>\nyyy\n\t\t\t\n");
   }
+
+  public void testOverrideStripTrailingSpaces() throws IOException {
+    EditorSettingsExternalizable settings = EditorSettingsExternalizable.getInstance();
+    settings.setStripTrailingSpaces(EditorSettingsExternalizable.STRIP_TRAILING_SPACES_NONE);
+    myVFile.putUserData(TrailingSpacesStripper.OVERRIDE_STRIP_TRAILING_SPACES_KEY,
+                        EditorSettingsExternalizable.STRIP_TRAILING_SPACES_WHOLE);
+    doTest("xxx<caret>\n   222    \nyyy",
+           "xxx<caret>\n   222\nyyy");
+  }
+
+  public void testOverrideEnsureNewline() throws  IOException {
+    EditorSettingsExternalizable settings = EditorSettingsExternalizable.getInstance();
+    settings.setEnsureNewLineAtEOF(false);
+    myVFile.putUserData(TrailingSpacesStripper.OVERRIDE_ENSURE_NEWLINE_KEY, TrailingSpacesStripper.ENSURE_NEWLINE);
+    doTest("XXX<caret>\nYYY", "XXX<caret>\nYYY\n");
+  }
 }
