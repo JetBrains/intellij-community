@@ -23,6 +23,7 @@ import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.ColorUtil;
@@ -42,7 +43,7 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 
 public abstract class ComboBoxAction extends AnAction implements CustomComponentAction {
-  private static final Icon ARROW_ICON = AllIcons.General.ComboBoxButtonArrow;
+  private static final Icon ARROW_ICON = UIUtil.isUnderDarcula() ? AllIcons.General.ComboArrow : AllIcons.General.ComboBoxButtonArrow;
   private static final Icon DISABLED_ARROW_ICON = IconLoader.getDisabledIcon(ARROW_ICON);
 
   private boolean mySmallVariant = true;
@@ -388,24 +389,16 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
           g2.setPaint(UIUtil.getGradientPaint(0, 0, UIUtil.getControlColor(), 0, h, ColorUtil.shift(UIUtil.getControlColor(), 0.8)));
         }
         else {
-          g2.setPaint(UIUtil.getGradientPaint(0, 0, new JBColor(Gray._245, Gray._131), 0, h, new JBColor(Gray._208, Gray._128)));
+          if (UIUtil.isUnderDarcula()) {
+            g2.setPaint(UIUtil.getGradientPaint(0, 0, ColorUtil.shift(UIUtil.getControlColor(), 1.1), 0, h, ColorUtil.shift(UIUtil.getControlColor(), 0.9)));
+          } else {
+            g2.setPaint(UIUtil.getGradientPaint(0, 0, new JBColor(SystemInfo.isMac? Gray._226 : Gray._245, Gray._131), 0, h, new JBColor(SystemInfo.isMac? Gray._198 : Gray._208, Gray._128)));
+          }
         }
         g2.fillRoundRect(2, 0, w - 2, h, 5, 5);
-        GraphicsUtil.setupAntialiasing(g2);
-        if (!UIUtil.isUnderDarcula()) {
-          if (!myMouseInside) {
-            g2.setPaint(UIUtil.getGradientPaint(0, 0, UIUtil.getBorderColor(), 0, h, UIUtil.getBorderColor().darker()));
-          } else {
-            g2.setPaint(UIUtil.getGradientPaint(0, 0, Gray._131, 0, h, Gray._128));
-          }
-        } else {
-          if (!myMouseInside) {
-            g2.setPaint(UIUtil.getGradientPaint(0, 0, ColorUtil.shift(UIUtil.getControlColor(), 1.2), 0, h, ColorUtil.shift(UIUtil.getControlColor(), 1.3)));
-          } else {
-            g2.setPaint(UIUtil.getGradientPaint(0, 0, ColorUtil.shift(UIUtil.getControlColor(), 1.4), 0, h, ColorUtil.shift(UIUtil.getControlColor(), 1.5)));
-          }
-        }
 
+        Color borderColor = myMouseInside ? new JBColor(Gray._111, Gray._118) : new JBColor(Gray._151, Gray._95);
+        g2.setPaint(borderColor);
         g2.drawRoundRect(2, 0, w - 3, h - 1, 5, 5);
 
         final Icon icon = getIcon();
