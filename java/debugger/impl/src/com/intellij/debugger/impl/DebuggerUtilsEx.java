@@ -230,6 +230,16 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     }
     return false;
   }
+  
+  public static int getEnabledNumber(ClassFilter[] classFilters) {
+    int res = 0;
+    for (ClassFilter filter : classFilters) {
+      if (filter.isEnabled()) {
+        res++;
+      }
+    }
+    return res;
+  }
 
   public static ClassFilter[] readFilters(List children) throws InvalidDataException {
     if (children == null || children.size() == 0) {

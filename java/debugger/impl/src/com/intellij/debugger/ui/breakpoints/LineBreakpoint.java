@@ -49,7 +49,6 @@ import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.search.EverythingGlobalScope;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.ui.classFilter.ClassFilter;
 import com.intellij.util.Function;
 import com.intellij.util.Processor;
 import com.intellij.util.StringBuilderSpinAllocator;
@@ -333,23 +332,7 @@ public class LineBreakpoint extends BreakpointWithHighlighter {
           className = frame.location().declaringType().name();
         }
       }
-      if (className != null) {
-        boolean matches = false;
-        for (ClassFilter classFilter : getClassFilters()) {
-          if (classFilter.isEnabled() && classFilter.matches(className)) {
-            matches = true;
-            break;
-          }
-        }
-        if(!matches) {
-          return false;
-        }
-        for (ClassFilter classFilter : getClassExclusionFilters()) {
-          if (classFilter.isEnabled() && classFilter.matches(className)) {
-            return false;
-          }
-        }
-      }
+      if (!typeMatchesClassFilters(className)) return false;
     }
     return super.evaluateCondition(context, event);
   }
