@@ -763,7 +763,7 @@ public class GitHistoryUtils {
                                            AUTHOR_EMAIL, COMMITTER_NAME, COMMITTER_EMAIL, PARENTS, SUBJECT, BODY, RAW_BODY);
     h.setStdoutSuppressed(true);
     h.addParameters(parameters);
-    h.addParameters("--name-status", parser.getPretty(), "--encoding=UTF-8");
+    h.addParameters("-M", "--name-status", parser.getPretty(), "--encoding=UTF-8");
     h.addParameters("--full-history", "--sparse");
     h.endOptions();
 
