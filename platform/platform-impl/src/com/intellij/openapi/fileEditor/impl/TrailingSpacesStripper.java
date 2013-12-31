@@ -19,7 +19,6 @@ import com.intellij.ide.DataManager;
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Document;
@@ -31,17 +30,23 @@ import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileDocumentManagerAdapter;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.util.text.CharArrayUtil;
 import gnu.trove.THashSet;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 import java.util.Set;
 
 public final class TrailingSpacesStripper extends FileDocumentManagerAdapter {
+
+  public static final Key<String> OVERRIDE_STRIP_TRAILING_SPACES_KEY = Key.create("OVERRIDE_TRIM_TRAILING_SPACES_KEY");
+  public static final Key<Boolean> OVERRIDE_ENSURE_NEWLINE_KEY = Key.create("OVERRIDE_ENSURE_NEWLINE_KEY");
+
   private final Set<Document> myDocumentsToStripLater = new THashSet<Document>();
 
   @Override
@@ -67,9 +72,11 @@ public final class TrailingSpacesStripper extends FileDocumentManagerAdapter {
     final EditorSettingsExternalizable settings = EditorSettingsExternalizable.getInstance();
     if (settings == null) return;
 
-    String stripTrailingSpaces = settings.getStripTrailingSpaces();
+    final String overrideStripTrailingSpacesData = file.getUserData(OVERRIDE_STRIP_TRAILING_SPACES_KEY);
+    final Boolean overrideEnsureNewlineData = file.getUserData(OVERRIDE_ENSURE_NEWLINE_KEY);
+    final String stripTrailingSpaces = overrideStripTrailingSpacesData != null ? overrideStripTrailingSpacesData : settings.getStripTrailingSpaces();
     final boolean doStrip = !stripTrailingSpaces.equals(EditorSettingsExternalizable.STRIP_TRAILING_SPACES_NONE);
-    final boolean ensureEOL = settings.isEnsureNewLineAtEOF();
+    final boolean ensureEOL = overrideEnsureNewlineData != null ? overrideEnsureNewlineData.booleanValue() : settings.isEnsureNewLineAtEOF();
 
     if (doStrip) {
       final boolean inChangedLinesOnly = !stripTrailingSpaces.equals(EditorSettingsExternalizable.STRIP_TRAILING_SPACES_WHOLE);
