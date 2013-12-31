@@ -170,10 +170,11 @@ public class ClsParameterImpl extends ClsRepositoryPsiElement<PsiParameterStub> 
     }
 
     if (name == null) {
-      JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(getProject());
-      String[] nameSuggestions = codeStyleManager.suggestVariableName(VariableKind.PARAMETER, null, null, getType()).names;
-
       name = "p";
+
+      // avoid hang due to nice name evaluation IDEA-116803
+      JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(getProject());
+      String[] nameSuggestions = codeStyleManager.suggestSimpleParameterName(getType()).names;
       if (nameSuggestions.length > 0 && nameSuggestions[0] != null) {
         name = nameSuggestions[0];
       }

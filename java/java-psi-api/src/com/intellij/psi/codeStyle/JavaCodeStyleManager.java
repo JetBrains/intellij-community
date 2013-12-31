@@ -122,6 +122,10 @@ public abstract class JavaCodeStyleManager {
     return suggestVariableName(kind, propertyName, expr, type, true);
   }
 
+  public SuggestedNameInfo suggestSimpleParameterName(@NotNull PsiType type) {
+    return suggestVariableName(VariableKind.PARAMETER, null, null, type, true);
+  }
+
 
   public abstract SuggestedNameInfo suggestVariableName(@NotNull VariableKind kind,
                                                         @Nullable String propertyName,
