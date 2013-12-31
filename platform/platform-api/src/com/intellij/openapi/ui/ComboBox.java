@@ -23,6 +23,7 @@ import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.ui.MacUIUtil;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -194,6 +195,9 @@ public class ComboBox extends ComboBoxWithWidePopup implements AWTEventListener 
     registerCancelOnEscape();
   }
 
+  public ComboBox(@NotNull Object[] items) {
+    this(items, -1);
+  }
 
   public boolean isSwingPopup() {
     return mySwingPopup;

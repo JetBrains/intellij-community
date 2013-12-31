@@ -233,7 +233,7 @@ public class LiveTemplateSettingsEditor extends JPanel {
 
     gbConstraints.gridx = 1;
     gbConstraints.insets = new Insets(0, 4, 0, 0);
-    myExpandByCombo = new ComboBox(new Object[]{myDefaultShortcutItem, SPACE, TAB, ENTER}, -1);
+    myExpandByCombo = new ComboBox(new String[]{myDefaultShortcutItem, SPACE, TAB, ENTER});
     myExpandByCombo.addItemListener(new ItemListener() {
       @Override
       public void itemStateChanged(ItemEvent e) {

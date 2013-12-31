@@ -73,7 +73,7 @@ public class NameSuggestionsField extends JPanel {
       myComponent = createTextFieldForName(nameSuggestions, fileType);
     }
     else {
-      final ComboBox combobox = new ComboBox(nameSuggestions,-1);
+      final ComboBox combobox = new ComboBox(nameSuggestions);
       combobox.setSelectedIndex(0);
       setupComboBox(combobox, fileType);
       myComponent = combobox;

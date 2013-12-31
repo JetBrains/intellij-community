@@ -272,7 +272,7 @@ public class MakeParameterizedStaticDialog extends AbstractMakeStaticDialog {
   }
 
   private JComboBox createComboBoxForName() {
-    final ComboBox combobox = new ComboBox(myNameSuggestions,-1);
+    final ComboBox combobox = new ComboBox(myNameSuggestions);
 
     combobox.setEditable(true);
     combobox.setSelectedIndex(0);
