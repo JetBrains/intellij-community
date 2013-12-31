@@ -188,7 +188,7 @@ public class SvnHistoryProvider
       }
     }
 
-    final boolean showMergeSources = SvnConfiguration.getInstance(myVcs.getProject()).SHOW_MERGE_SOURCES_IN_ANNOTATE;
+    final boolean showMergeSources = SvnConfiguration.getInstance(myVcs.getProject()).isShowMergeSourcesInAnnotate();
     final LogLoader logLoader;
     if (path.isNonLocal()) {
       logLoader = new RepositoryLoader(myVcs, committedPath, from, to, limit, peg, forceBackwards, showMergeSources);

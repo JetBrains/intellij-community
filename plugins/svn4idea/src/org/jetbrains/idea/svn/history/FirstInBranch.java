@@ -30,6 +30,9 @@ import org.tmatesoft.svn.core.wc.SVNRevision;
 import java.util.Map;
 import java.util.Set;
 
+// TODO: This one seem to determine revision in which branch was created - copied from trunk.
+// TODO: This could be done in one command "svn log <folder> -r 0:HEAD --stop-on-copy --limit 1".
+// TODO: Check for 1.7 and rewrite using this approach.
 public class FirstInBranch implements Runnable {
   private final SvnVcs myVcs;
   private final String myBranchUrl;

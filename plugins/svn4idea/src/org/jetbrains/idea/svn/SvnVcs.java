@@ -56,6 +56,7 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.Consumer;
 import com.intellij.util.Processor;
 import com.intellij.util.ThreeState;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.SoftHashMap;
 import com.intellij.util.messages.MessageBus;
@@ -979,6 +980,33 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
     return result;
   }
 
+  public void collectInfo(@NotNull Collection<File> files, @Nullable ISVNInfoHandler handler) {
+    File first = ContainerUtil.getFirstItem(files);
+
+    if (first != null) {
+      ClientFactory factory = getFactory(first);
+
+      try {
+        if (factory instanceof CmdClientFactory) {
+          factory.createInfoClient().doInfo(files, handler);
+        }
+        else {
+          // TODO: Generally this should be moved in SvnKit info client implementation.
+          // TODO: Currently left here to have exception logic as in handleInfoException to be applied for each file separately.
+          for (File file : files) {
+            SVNInfo info = getInfo(file);
+            if (handler != null) {
+              handler.handleInfo(info);
+            }
+          }
+        }
+      }
+      catch (SVNException e) {
+        handleInfoException(e);
+      }
+    }
+  }
+
   @Nullable
   public SVNInfo getInfo(@NotNull File ioFile, @NotNull SVNRevision revision) {
     SVNInfo result = null;
@@ -1027,11 +1055,11 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
 
   public void refreshSSLProperty() {
     if (ourSSLProtocolsExplicitlySet) return;
-    if (SvnConfiguration.SSLProtocols.all.equals(myConfiguration.SSL_PROTOCOLS)) {
+    if (SvnConfiguration.SSLProtocols.all.equals(myConfiguration.getSslProtocols())) {
       System.clearProperty(SVNKIT_HTTP_SSL_PROTOCOLS);
-    } else if (SvnConfiguration.SSLProtocols.sslv3.equals(myConfiguration.SSL_PROTOCOLS)) {
+    } else if (SvnConfiguration.SSLProtocols.sslv3.equals(myConfiguration.getSslProtocols())) {
       System.setProperty(SVNKIT_HTTP_SSL_PROTOCOLS, "SSLv3");
-    } else if (SvnConfiguration.SSLProtocols.tlsv1.equals(myConfiguration.SSL_PROTOCOLS)) {
+    } else if (SvnConfiguration.SSLProtocols.tlsv1.equals(myConfiguration.getSslProtocols())) {
       System.setProperty(SVNKIT_HTTP_SSL_PROTOCOLS, "TLSv1");
     }
   }

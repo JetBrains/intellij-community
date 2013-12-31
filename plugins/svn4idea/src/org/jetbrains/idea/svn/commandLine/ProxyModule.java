@@ -20,7 +20,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.IdeaSVNConfigFile;
 import org.jetbrains.idea.svn.SvnAuthenticationManager;
-import org.jetbrains.idea.svn.SvnConfiguration;
 import org.jetbrains.idea.svn.checkin.IdeaSvnkitBasedAuthenticationCallback;
 import org.tmatesoft.svn.core.SVNURL;
 
@@ -73,7 +72,7 @@ public class ProxyModule extends BaseCommandRuntimeModule {
     String groupName = SvnAuthenticationManager.getGroupForHost(host, configFile);
 
     if (StringUtil.isEmptyOrSpaces(groupName)) {
-      groupName = SvnConfiguration.getNewGroupName(host, configFile);
+      groupName = IdeaSVNConfigFile.getNewGroupName(host, configFile);
 
       command.put("--config-option");
       command.put(String.format("servers:groups:%s=%s*", groupName, host));

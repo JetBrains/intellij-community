@@ -16,10 +16,8 @@
 package com.intellij.icons;
 
 import com.intellij.openapi.util.IconLoader;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.io.File;
 
 /**
  * NOTE THIS FILE IS AUTO-GENERATED
@@ -363,6 +361,7 @@ public class AllIcons {
     public static final Icon ComboArrowLeftPassive = IconLoader.getIcon("/general/comboArrowLeftPassive.png"); // 5x9
     public static final Icon ComboArrowRight = IconLoader.getIcon("/general/comboArrowRight.png"); // 5x9
     public static final Icon ComboArrowRightPassive = IconLoader.getIcon("/general/comboArrowRightPassive.png"); // 5x9
+    public static final Icon ComboBoxButtonArrow = IconLoader.getIcon("/general/comboBoxButtonArrow.png"); // 8x8
     public static final Icon ComboUpPassive = IconLoader.getIcon("/general/comboUpPassive.png"); // 16x16
     public static final Icon ConfigurableDefault = IconLoader.getIcon("/general/configurableDefault.png"); // 32x32
     public static final Icon Configure = IconLoader.getIcon("/general/Configure.png"); // 32x32
@@ -1138,35 +1137,5 @@ public class AllIcons {
     public static final Icon Html5 = IconLoader.getIcon("/xml/html5.png"); // 16x16
     public static final Icon Html_id = IconLoader.getIcon("/xml/html_id.png"); // 16x16
 
-  }
-
-  private static final int MIN_ICON_SIZE = 32;
-
-  @Nullable
-  public static String findIcon(final String iconsPath) {
-    final File iconsDir = new File(iconsPath);
-
-    // 1. look for .svg icon
-    for (String child : iconsDir.list()) {
-      if (child.endsWith(".svg")) {
-        return iconsPath + '/' + child;
-      }
-    }
-
-    // 2. look for .png icon of max size
-    int max = 0;
-    String iconPath = null;
-    for (String child : iconsDir.list()) {
-      if (!child.endsWith(".png")) continue;
-      final String path = iconsPath + '/' + child;
-      final Icon icon = new ImageIcon(path);
-      final int size = icon.getIconHeight();
-      if (size >= MIN_ICON_SIZE && size > max && size == icon.getIconWidth()) {
-        max = size;
-        iconPath = path;
-      }
-    }
-
-    return iconPath;
   }
 }

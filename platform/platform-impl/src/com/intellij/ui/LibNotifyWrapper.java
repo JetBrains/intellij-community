@@ -15,7 +15,6 @@
  */
 package com.intellij.ui;
 
-import com.intellij.icons.AllIcons;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationGroup;
 import com.intellij.notification.NotificationType;
@@ -61,7 +60,7 @@ public class LibNotifyWrapper {
    * @param description notification description
    */
   public static void showWithAppIcon(final String title, final String description) {
-    String iconPath = AllIcons.findIcon(PathManager.getBinPath());
+    String iconPath = AppUIUtil.findIcon(PathManager.getBinPath());
     show(title, description, (iconPath == null) ? "dialog-information" : iconPath);
   }
 

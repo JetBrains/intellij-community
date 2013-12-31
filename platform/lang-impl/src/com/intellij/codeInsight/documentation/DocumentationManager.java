@@ -22,6 +22,7 @@ import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.codeInsight.hint.ParameterInfoController;
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.codeInsight.lookup.LookupEx;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.DataManager;
@@ -58,10 +59,7 @@ import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.ui.popup.NotLookupOrSearchCondition;
 import com.intellij.ui.popup.PopupPositionManager;
 import com.intellij.ui.popup.PopupUpdateProcessor;
-import com.intellij.util.Alarm;
-import com.intellij.util.BooleanFunction;
-import com.intellij.util.Consumer;
-import com.intellij.util.Processor;
+import com.intellij.util.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -269,6 +267,8 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
       ParameterInfoController.findArgumentList(file, editor.getCaretModel().getOffset(), -1);
     if (list != null) {
       myParameterInfoController = ParameterInfoController.findControllerAtOffset(editor, list.getTextRange().getStartOffset());
+      LookupEx lookup = LookupManager.getInstance(myProject).getActiveLookup();
+      if (lookup != null) myParameterInfoController = null; // take completion variants for documentation then
     }
 
     final PsiElement originalElement = getContextElement(editor, file);

@@ -20,11 +20,13 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
-import com.intellij.util.SystemProperties;
 import com.intellij.util.WaitForProgressToShow;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnAuthenticationManager;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnConfiguration;
@@ -81,18 +83,13 @@ public class SvnInteractiveAuthenticationProvider implements ISVNAuthenticationP
     final boolean authCredsOn = authMayBeStored && myManager.getHostOptionsProvider().getHostOptions(url).isAuthStorageEnabled();
 
     final String userName =
-      previousAuth != null && previousAuth.getUserName() != null ? previousAuth.getUserName() : SystemProperties.getUserName();
+      previousAuth != null && previousAuth.getUserName() != null ? previousAuth.getUserName() : myManager.getDefaultUsername(kind, url);
     if (ISVNAuthenticationManager.PASSWORD.equals(kind)) {// || ISVNAuthenticationManager.USERNAME.equals(kind)) {
       command = new Runnable() {
         public void run() {
           SimpleCredentialsDialog dialog = new SimpleCredentialsDialog(myProject);
           dialog.setup(realm, userName, authCredsOn);
-          if (errorMessage == null) {
-            dialog.setTitle(SvnBundle.message("dialog.title.authentication.required"));
-          }
-          else {
-            dialog.setTitle(SvnBundle.message("dialog.title.authentication.required.was.failed"));
-          }
+          setTitle(dialog, errorMessage);
           dialog.show();
           if (dialog.isOK()) {
             result[0] = new SVNPasswordAuthentication(dialog.getUserName(), dialog.getPassword(), dialog.isSaveAllowed(), url, false);
@@ -108,12 +105,7 @@ public class SvnInteractiveAuthenticationProvider implements ISVNAuthenticationP
         public void run() {
           UserNameCredentialsDialog dialog = new UserNameCredentialsDialog(myProject);
           dialog.setup(realm, userName, authCredsOn);
-          if (errorMessage == null) {
-            dialog.setTitle(SvnBundle.message("dialog.title.authentication.required"));
-          }
-          else {
-            dialog.setTitle(SvnBundle.message("dialog.title.authentication.required.was.failed"));
-          }
+          setTitle(dialog, errorMessage);
           dialog.show();
           if (dialog.isOK()) {
             result[0] = new SVNUserNameAuthentication(dialog.getUserName(), dialog.isSaveAllowed(), url, false);
@@ -125,12 +117,7 @@ public class SvnInteractiveAuthenticationProvider implements ISVNAuthenticationP
       command = new Runnable() {
         public void run() {
           SSHCredentialsDialog dialog = new SSHCredentialsDialog(myProject, realm, userName, authCredsOn, url.getPort());
-          if (errorMessage == null) {
-            dialog.setTitle(SvnBundle.message("dialog.title.authentication.required"));
-          }
-          else {
-            dialog.setTitle(SvnBundle.message("dialog.title.authentication.required.was.failed"));
-          }
+          setTitle(dialog, errorMessage);
           dialog.show();
           if (dialog.isOK()) {
             int port = dialog.getPortNumber();
@@ -158,12 +145,7 @@ public class SvnInteractiveAuthenticationProvider implements ISVNAuthenticationP
           if (!StringUtil.isEmptyOrSpaces(file)) {
             dialog.setFile(file);
           }
-          if (errorMessage == null) {
-            dialog.setTitle(SvnBundle.message("dialog.title.authentication.required"));
-          }
-          else {
-            dialog.setTitle(SvnBundle.message("dialog.title.authentication.required.was.failed"));
-          }
+          setTitle(dialog, errorMessage);
           dialog.show();
           if (dialog.isOK()) {
             result[0] = new SVNSSLAuthentication(new File(dialog.getCertificatePath()), String.valueOf(dialog.getCertificatePassword()),
@@ -182,6 +164,12 @@ public class SvnInteractiveAuthenticationProvider implements ISVNAuthenticationP
     callState.setWasCancelled(wasCanceled);
     myManager.requested(ProviderType.interactive, url, realm, kind, wasCanceled);
     return result[0];
+  }
+
+  private static void setTitle(@NotNull DialogWrapper dialog, @Nullable SVNErrorMessage errorMessage) {
+    dialog.setTitle(errorMessage == null
+                    ? SvnBundle.message("dialog.title.authentication.required")
+                    : SvnBundle.message("dialog.title.authentication.required.was.failed"));
   }
 
   public int acceptServerAuthentication(final SVNURL url, String realm, final Object certificate, final boolean resultMayBeStored) {

@@ -64,7 +64,7 @@ public class SvnMergeInfoTest extends Svn17TestCase {
     myWCInfo = new WCInfo(root, true, SVNDepth.INFINITY);
     myOneShotMergeInfoHelper = new OneShotMergeInfoHelper(myProject, myWCInfo, myRepoUrl + "/trunk");
 
-    SvnConfiguration.getInstance(myProject).CHECK_NESTED_FOR_QUICK_MERGE = true;
+    SvnConfiguration.getInstance(myProject).setCheckNestedForQuickMerge(true);
 //    AbstractVcs vcsFound = myProjectLevelVcsManager.findVcsByName(SvnVcs.VCS_NAME);
 //    Assert.assertEquals(1, myProjectLevelVcsManager.getRootsUnderVcs(vcsFound).length);
   }

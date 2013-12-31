@@ -13,11 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.ide.browsers;
+package com.intellij.ide.browsers.actions;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.GeneralSettings;
-import com.intellij.ide.browsers.impl.WebBrowserServiceImpl;
+import com.intellij.ide.browsers.*;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -33,7 +33,6 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
-import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.Consumer;
@@ -52,30 +51,11 @@ import java.util.Collection;
 public class OpenFileInDefaultBrowserAction extends DumbAwareAction {
   private static final Logger LOG = Logger.getInstance(OpenFileInDefaultBrowserAction.class);
 
-  @Nullable
-  public static Pair<OpenInBrowserRequest, WebBrowserUrlProvider> doUpdate(AnActionEvent event) {
-    OpenInBrowserRequest request = createRequest(event.getDataContext());
-    boolean applicable = false;
-    WebBrowserUrlProvider provider = null;
-    if (request != null) {
-      applicable = HtmlUtil.isHtmlFile(request.getFile()) && !(request.getVirtualFile() instanceof LightVirtualFile);
-      if (!applicable) {
-        provider = WebBrowserServiceImpl.getProvider(request);
-        applicable = provider != null;
-      }
-    }
-
-    Presentation presentation = event.getPresentation();
-    presentation.setVisible(applicable);
-    presentation.setVisible(applicable);
-    return applicable ? Pair.create(request, provider) : null;
-  }
-
   @Override
   public void update(AnActionEvent e) {
     Presentation presentation = e.getPresentation();
 
-    Pair<OpenInBrowserRequest, WebBrowserUrlProvider> result = doUpdate(e);
+    Pair<OpenInBrowserRequest, WebBrowserUrlProvider> result = OpenInBrowserBaseGroupAction.doUpdate(e);
     if (result == null) {
       return;
     }

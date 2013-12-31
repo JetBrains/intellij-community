@@ -32,14 +32,23 @@ import java.util.*;
  *
  */
 @SomeQueue
+// TODO: Used only in RemoteRevisionsNumberCache
 public class LazyRefreshingSelfQueue<T> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.LazyRefreshingSelfQueue");
 
+  // provides update interval in milliseconds.
   private final Getter<Long> myUpdateInterval;
-  // head is old. tail is new
+  // structure:
+  // 1) pairs with First == null
+  // 2) pairs with First != null sorted by First ascending
+  // pair.First - time when T was last processed
+  // pair.Second - some item T
   private final LinkedList<Pair<Long, T>> myQueue;
+  // Set of items that should be processed by myUpdater
   private final Set<T> myInProgress;
+  // checks if updateStep should be really performed
   private final Computable<Boolean> myShouldUpdateOldChecker;
+  // performs some actions on item T, for instance - updates some data for T in cache
   private final Consumer<T> myUpdater;
   private final Object myLock;
 
@@ -52,20 +61,14 @@ public class LazyRefreshingSelfQueue<T> {
     myLock = new Object();
   }
 
+  // adds item that should be updated at next updateStep() call
   public void addRequest(@NotNull final T t) {
     synchronized (myLock) {
       myQueue.addFirst(new Pair<Long,T>(null, t));
     }
   }
 
-  public void addRequests(final Collection<T> values) {
-    synchronized (myLock) {
-      for (T value : values) {
-        myQueue.addFirst(new Pair<Long,T>(null, value));
-      }
-    }
-  }
-
+  // unschedules item from update at next updateStep() call
   public void forceRemove(@NotNull final T t) {
     synchronized (myLock) {
       for (Iterator<Pair<Long, T>> iterator = myQueue.iterator(); iterator.hasNext();) {
@@ -80,11 +83,11 @@ public class LazyRefreshingSelfQueue<T> {
 
   // called by outside timer or something
   public void updateStep() {
-    final List<T> dirty = new LinkedList<T>();
-
     final long startTime = System.currentTimeMillis() - myUpdateInterval.get();
     boolean onlyAbsolute = true;
-    // check if we have some old items at all - if not, we would not check if repository latest revision had changed and will save time
+    // TODO: Actually we could store items with pair.First == null in separate list.
+    // checks item that has smallest update time - i.e. was not updated by the most time
+    // if its update time greater than current - interval => we should not update any item with pair.First != null this time (as they are ordered)
     synchronized (myLock) {
       for (Pair<Long, T> pair : myQueue) {
         if (pair.getFirst() != null) {
@@ -96,9 +99,10 @@ public class LazyRefreshingSelfQueue<T> {
 
     // do not ask under lock
     final Boolean shouldUpdateOld = onlyAbsolute ? false : myShouldUpdateOldChecker.compute();
+    final List<T> dirty = new LinkedList<T>();
 
     synchronized (myLock) {
-      // get absolute
+      // adds all pairs with pair.First == null to dirty
       while (! myQueue.isEmpty()) {
         final Pair<Long, T> pair = myQueue.get(0);
         if (pair.getFirst() == null) {
@@ -108,6 +112,7 @@ public class LazyRefreshingSelfQueue<T> {
         }
       }
       if (Boolean.TRUE.equals(shouldUpdateOld) && (! myQueue.isEmpty())) {
+        // adds all pairs with update time (pair.First) < current - interval to dirty
         while (! myQueue.isEmpty()) {
           final Pair<Long, T> pair = myQueue.get(0);
           if (pair.getFirst() < startTime) {
@@ -126,6 +131,8 @@ public class LazyRefreshingSelfQueue<T> {
     for (T t : dirty) {
       myUpdater.consume(t);
       synchronized (myLock) {
+        // output value of remove() is tracked not to process items that were removed from myInProgress in forceRemove()
+        // TODO: Probably more clear logic should be implemented
         if (myInProgress.remove(t)) {
           myQueue.addLast(new Pair<Long,T>(System.currentTimeMillis(), t));
         }

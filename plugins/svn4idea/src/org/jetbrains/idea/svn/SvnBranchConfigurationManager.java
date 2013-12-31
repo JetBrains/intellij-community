@@ -295,7 +295,7 @@ public class SvnBranchConfigurationManager implements PersistentStateComponent<S
       return result;
     }
 
-    private String serializeUrl(final String url, final Ref<Boolean> withUserInfo) {
+    private static String serializeUrl(final String url, final Ref<Boolean> withUserInfo) {
       if (Boolean.FALSE.equals(withUserInfo.get())) {
         return url;
       }
@@ -306,7 +306,8 @@ public class SvnBranchConfigurationManager implements PersistentStateComponent<S
           withUserInfo.set((userInfo != null) && (userInfo.length() > 0));
         }
         if (withUserInfo.get()) {
-          return SVNURL.create(svnurl.getProtocol(), null, svnurl.getHost(), svnurl.getPort(), svnurl.getURIEncodedPath(), true).toString();
+          return SVNURL.create(svnurl.getProtocol(), null, svnurl.getHost(), SvnUtil.resolvePort(svnurl), svnurl.getURIEncodedPath(), true)
+            .toString();
         }
       }
       catch (SVNException e) {
@@ -321,10 +322,11 @@ public class SvnBranchConfigurationManager implements PersistentStateComponent<S
       return svnurl != null ? svnurl.getUserInfo() : null;
     }
 
-    private String deserializeUrl(final String url, final String userInfo) {
+    private static String deserializeUrl(final String url, final String userInfo) {
       try {
         final SVNURL svnurl = SVNURL.parseURIEncoded(url);
-        return SVNURL.create(svnurl.getProtocol(), userInfo, svnurl.getHost(), svnurl.getPort(), svnurl.getURIEncodedPath(), true).toString();
+        return SVNURL.create(svnurl.getProtocol(), userInfo, svnurl.getHost(), SvnUtil.resolvePort(svnurl), svnurl.getURIEncodedPath(),
+                             true).toString();
       } catch (SVNException e) {
         return url;
       }

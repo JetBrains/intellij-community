@@ -22,6 +22,7 @@ import com.intellij.debugger.engine.*;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.events.DebuggerCommandImpl;
 import com.intellij.debugger.impl.DebuggerSession;
+import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.requests.ClassPrepareRequestor;
 import com.intellij.debugger.requests.RequestManager;
 import com.intellij.debugger.requests.Requestor;
@@ -163,29 +164,32 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
 
     if (requestor.CLASS_FILTERS_ENABLED && !(request instanceof BreakpointRequest) /*no built-in class filters support for breakpoint requests*/ ) {
       ClassFilter[] classFilters = requestor.getClassFilters();
-      for (final ClassFilter filter : classFilters) {
-        if (!filter.isEnabled()) {
-          continue;
-        }
-        final JVMName jvmClassName = ApplicationManager.getApplication().runReadAction(new Computable<JVMName>() {
-          public JVMName compute() {
-            PsiClass psiClass = DebuggerUtils.findClass(filter.getPattern(), myDebugProcess.getProject(), myDebugProcess.getSearchScope());
-            if (psiClass == null) {
-              return null;
+      if (DebuggerUtilsEx.getEnabledNumber(classFilters) == 1) {
+        for (final ClassFilter filter : classFilters) {
+          if (!filter.isEnabled()) {
+            continue;
+          }
+          final JVMName jvmClassName = ApplicationManager.getApplication().runReadAction(new Computable<JVMName>() {
+            public JVMName compute() {
+              PsiClass psiClass = DebuggerUtils.findClass(filter.getPattern(), myDebugProcess.getProject(), myDebugProcess.getSearchScope());
+              if (psiClass == null) {
+                return null;
+              }
+              return JVMNameUtil.getJVMQualifiedName(psiClass);
             }
-            return JVMNameUtil.getJVMQualifiedName(psiClass);
+          });
+          String pattern = filter.getPattern();
+          try {
+            if (jvmClassName != null) {
+              pattern = jvmClassName.getName(myDebugProcess);
+            }
           }
-        });
-        String pattern = filter.getPattern();
-        try {
-          if (jvmClassName != null) {
-            pattern = jvmClassName.getName(myDebugProcess);
+          catch (EvaluateException ignored) {
           }
-        }
-        catch (EvaluateException ignored) {
-        }
 
-        addClassFilter(request, pattern);
+          addClassFilter(request, pattern);
+          break; // adding more than one inclusion filter does not work, only events that satisfy ALL filters are placed in the event queue.
+        }
       }
 
       for (ClassFilter filter : requestor.getClassExclusionFilters()) {

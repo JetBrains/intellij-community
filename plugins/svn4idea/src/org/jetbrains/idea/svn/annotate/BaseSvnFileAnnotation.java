@@ -164,7 +164,7 @@ public abstract class BaseSvnFileAnnotation extends FileAnnotation {
     myContents = contents;
     myBaseRevision = baseRevision;
     myConfiguration = SvnConfiguration.getInstance(vcs.getProject());
-    myShowMergeSources = myConfiguration.SHOW_MERGE_SOURCES_IN_ANNOTATE;
+    myShowMergeSources = myConfiguration.isShowMergeSourcesInAnnotate();
 
     myInfos = new MyPartiallyCreatedInfos();
   }

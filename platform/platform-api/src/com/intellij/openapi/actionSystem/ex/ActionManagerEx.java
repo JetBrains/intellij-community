@@ -67,45 +67,24 @@ public abstract class ActionManagerEx extends ActionManager {
    *
    * @return null if string cannot be parsed.
    */
-
   @Nullable
-
   public static KeyStroke getKeyStroke(String s) {
-
     KeyStroke result = null;
-
     try {
-
       result = KeyStroke.getKeyStroke(s);
-
     }
     catch (Exception ex) {
-
       //ok
-
     }
-
-
     if (result == null && s != null && s.length() >= 2 && s.charAt(s.length() - 2) == ' ') {
-
       try {
-
         String s1 = s.substring(0, s.length() - 1) + Character.toUpperCase(s.charAt(s.length() - 1));
-
         result = KeyStroke.getKeyStroke(s1);
-
       }
-      catch (Exception ex) {
-
-        // ok
-
+      catch (Exception ignored) {
       }
-
     }
-
-
     return result;
-
   }
 
 

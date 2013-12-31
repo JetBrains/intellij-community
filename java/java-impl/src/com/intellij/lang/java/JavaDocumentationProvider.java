@@ -114,7 +114,7 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
   }
 
   private static void generateInitializer(StringBuilder buffer, PsiVariable variable) {
-    PsiExpression initializer = variable.getInitializer();
+    PsiExpression initializer = JavaDocInfoGenerator.calcInitializerExpression(variable);
     if (initializer != null) {
       String text = initializer.getText().trim();
       int index1 = text.indexOf('\n');

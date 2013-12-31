@@ -15,16 +15,24 @@
  */
 package org.jetbrains.idea.svn;
 
+import com.intellij.openapi.util.text.StringUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.config.DefaultProxyGroup;
 import org.jetbrains.idea.svn.config.ProxyGroup;
 import org.tmatesoft.svn.core.internal.wc.SVNConfigFile;
 
 import java.io.File;
+import java.net.InetSocketAddress;
+import java.net.PasswordAuthentication;
+import java.net.Proxy;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
 public class IdeaSVNConfigFile {
+
+  public final static String SERVERS_FILE_NAME = "servers";
+
   private final Map<String, String> myPatternsMap;
   private final long myLatestUpdate;
   private final File myFile;
@@ -39,6 +47,59 @@ public class IdeaSVNConfigFile {
     myFile = file;
     myLatestUpdate = -1;
     myPatternsMap = new HashMap<String, String>();
+  }
+
+  public static void putProxyIntoServersFile(final File configDir, final String host, final Proxy proxyInfo) {
+    final IdeaSVNConfigFile configFile = new IdeaSVNConfigFile(new File(configDir, SERVERS_FILE_NAME));
+    configFile.updateGroups();
+
+    String groupName = ensureHostGroup(host, configFile);
+
+    final HashMap<String, String> map = new HashMap<String, String>();
+    final InetSocketAddress address = ((InetSocketAddress) proxyInfo.address());
+    map.put(SvnAuthenticationManager.HTTP_PROXY_HOST, address.getHostName());
+    map.put(SvnAuthenticationManager.HTTP_PROXY_PORT, String.valueOf(address.getPort()));
+    configFile.addGroup(groupName, host + "*", map);
+    configFile.save();
+  }
+
+  @NotNull
+  public static String ensureHostGroup(@NotNull String host, @NotNull IdeaSVNConfigFile configFile) {
+    String groupName = SvnAuthenticationManager.getGroupForHost(host, configFile);
+
+    if (StringUtil.isEmptyOrSpaces(groupName)) {
+      groupName = getNewGroupName(host, configFile);
+    }
+
+    return groupName;
+  }
+
+  @NotNull
+  public static String getNewGroupName(@NotNull String host, @NotNull IdeaSVNConfigFile configFile) {
+    String groupName = host;
+    final Map<String,ProxyGroup> groups = configFile.getAllGroups();
+    while (StringUtil.isEmptyOrSpaces(groupName) || groups.containsKey(groupName)) {
+      groupName += "1";
+    }
+    return groupName;
+  }
+
+  public static boolean putProxyCredentialsIntoServerFile(@NotNull final File configDir, @NotNull final String host,
+                                                          @NotNull final PasswordAuthentication authentication) {
+    final IdeaSVNConfigFile configFile = new IdeaSVNConfigFile(new File(configDir, SERVERS_FILE_NAME));
+    configFile.updateGroups();
+
+    String groupName = SvnAuthenticationManager.getGroupForHost(host, configFile);
+    // no proxy defined in group -> no sense in password
+    if (StringUtil.isEmptyOrSpaces(groupName)) return false;
+    final Map<String, String> properties = configFile.getAllGroups().get(groupName).getProperties();
+    if (StringUtil.isEmptyOrSpaces(properties.get(SvnAuthenticationManager.HTTP_PROXY_HOST))) return false;
+    if (StringUtil.isEmptyOrSpaces(properties.get(SvnAuthenticationManager.HTTP_PROXY_PORT))) return false;
+
+    configFile.setValue(groupName, SvnAuthenticationManager.HTTP_PROXY_USERNAME, authentication.getUserName());
+    configFile.setValue(groupName, SvnAuthenticationManager.HTTP_PROXY_PASSWORD, String.valueOf(authentication.getPassword()));
+    configFile.save();
+    return true;
   }
 
   public void updateGroups() {

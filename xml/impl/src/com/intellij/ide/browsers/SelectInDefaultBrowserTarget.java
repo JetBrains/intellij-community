@@ -18,6 +18,7 @@ package com.intellij.ide.browsers;
 import com.intellij.ide.SelectInContext;
 import com.intellij.ide.SelectInTargetBase;
 import com.intellij.ide.StandardTargetWeights;
+import com.intellij.ide.browsers.actions.OpenFileInDefaultBrowserAction;
 import com.intellij.ide.browsers.impl.WebBrowserServiceImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.vfs.VirtualFile;

@@ -16,11 +16,11 @@
 package com.intellij.ide.browsers;
 
 import com.intellij.ide.BrowserSettings;
-import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.ComboboxWithBrowseButton;
+import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.Nullable;
@@ -31,11 +31,8 @@ import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author nik
- */
 public class BrowserSelector {
-  private ComboboxWithBrowseButton myBrowserComboWithBrowse;
+  private final ComboboxWithBrowseButton myBrowserComboWithBrowse;
 
   public BrowserSelector(final boolean allowDefaultBrowser) {
     myBrowserComboWithBrowse = new ComboboxWithBrowseButton(new ComboBox());
@@ -54,6 +51,7 @@ public class BrowserSelector {
     });
 
     final JComboBox comboBox = myBrowserComboWithBrowse.getComboBox();
+    //noinspection unchecked
     comboBox.setRenderer(new ListCellRendererWrapper<BrowsersConfiguration.BrowserFamily>() {
       @Override
       public void customize(JList list,
@@ -76,12 +74,12 @@ public class BrowserSelector {
   }
 
   private void initBrowsersComboModel(boolean allowDefaultBrowser) {
-    final List<BrowsersConfiguration.BrowserFamily> activeBrowsers = new ArrayList<BrowsersConfiguration.BrowserFamily>();
+    List<BrowsersConfiguration.BrowserFamily> activeBrowsers = new ArrayList<BrowsersConfiguration.BrowserFamily>();
     if (allowDefaultBrowser) {
       activeBrowsers.add(null);
     }
     activeBrowsers.addAll(BrowsersConfiguration.getInstance().getActiveBrowsers());
-
+    //noinspection unchecked
     myBrowserComboWithBrowse.getComboBox().setModel(new DefaultComboBoxModel(ArrayUtil.toObjectArray(activeBrowsers)));
   }
 

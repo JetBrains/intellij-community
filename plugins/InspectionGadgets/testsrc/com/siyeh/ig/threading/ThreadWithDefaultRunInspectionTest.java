@@ -13,14 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.idea.svn;
+package com.siyeh.ig.threading;
 
-/**
- * Created with IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 2/28/13
- * Time: 10:14 AM
- */
-public enum AuthManagerType {
-  active, passive, usual;
+import com.siyeh.ig.IGInspectionTestCase;
+
+public class ThreadWithDefaultRunInspectionTest extends IGInspectionTestCase {
+
+  public void test() throws Exception {
+    doTest("com/siyeh/igtest/threading/defaultRun", new ThreadWithDefaultRunMethodInspection());
+  }
 }

@@ -20,6 +20,7 @@ import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ContentRevision;
+import com.intellij.openapi.vcs.changes.CurrentContentRevision;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnRevisionNumber;
 import org.jetbrains.idea.svn.SvnVcs;
@@ -53,7 +54,10 @@ public class ShowPropertiesDiffAction extends AbstractShowPropertiesDiffAction {
   protected SVNRevision getAfterRevisionValue(final Change change, final SvnVcs vcs) throws SVNException {
     final ContentRevision afterRevision = change.getAfterRevision();
     if (afterRevision != null) {
-      return ((SvnRevisionNumber) afterRevision.getRevisionNumber()).getRevision();
+      // CurrentContentRevision will be here, for instance, if invoked from changes dialog for "Compare with Branch" action
+      return afterRevision instanceof CurrentContentRevision
+             ? SVNRevision.WORKING
+             : ((SvnRevisionNumber)afterRevision.getRevisionNumber()).getRevision();
     } else {
       return SVNRevision.create(((SvnRevisionNumber) change.getBeforeRevision().getRevisionNumber()).getRevision().getNumber() + 1);
     }

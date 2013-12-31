@@ -67,7 +67,7 @@ public class SvnStatusHandler extends DefaultHandler {
   }
 
   @Nullable
-  private static SVNStatusType getStatus(@NotNull String code) {
+  public static SVNStatusType getStatus(@NotNull String code) {
     SVNStatusType result = ourStatusTypes.get(code);
 
     if (result == null) {
@@ -739,16 +739,7 @@ public class SvnStatusHandler extends DefaultHandler {
     protected void updateStatus(Attributes attributes, PortableStatus status, SVNLockWrapper lock) throws SAXException {
       final String path = attributes.getValue("path");
       assertSAX(path != null);
-      final File file;
-      if (new File(path).isAbsolute()) {
-        file = new File(path);
-      } else {
-        if (".".equals(path)) {
-          file = myBase;
-        } else {
-          file = new File(myBase, path);
-        }
-      }
+      final File file = CommandUtil.resolvePath(myBase, path);
       status.setFile(file);
       final boolean exists = file.exists();
       if (exists) {

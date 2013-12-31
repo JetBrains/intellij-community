@@ -33,14 +33,12 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.classFilter.ClassFilter;
-import com.sun.jdi.BooleanValue;
-import com.sun.jdi.ObjectReference;
-import com.sun.jdi.VMDisconnectedException;
-import com.sun.jdi.Value;
+import com.sun.jdi.*;
 import com.sun.jdi.event.LocatableEvent;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -174,6 +172,11 @@ public abstract class FilteredRequestor implements LocatableEventRequestor, JDOM
       }
     }
 
+    if (CLASS_FILTERS_ENABLED) {
+      Location location = event.location();
+      if (!typeMatchesClassFilters(location.declaringType().name())) return false;
+    }
+
     if (CONDITION_ENABLED && getCondition() != null && !"".equals(getCondition().getText())) {
       try {
         ExpressionEvaluator evaluator = DebuggerInvocationUtil.commitAndRunReadAction(context.getProject(), new EvaluatingComputable<ExpressionEvaluator>() {
@@ -208,6 +211,31 @@ public abstract class FilteredRequestor implements LocatableEventRequestor, JDOM
       return true;
     }
 
+    return true;
+  }
+
+  boolean typeMatchesClassFilters(@Nullable String typeName) {
+    if (typeName == null) {
+      return true;
+    }
+    boolean matches = false, hasEnabled = false;
+    for (ClassFilter classFilter : getClassFilters()) {
+      if (classFilter.isEnabled()) {
+        hasEnabled = true;
+        if (classFilter.matches(typeName)) {
+          matches = true;
+          break;
+        }
+      }
+    }
+    if(hasEnabled && !matches) {
+      return false;
+    }
+    for (ClassFilter classFilter : getClassExclusionFilters()) {
+      if (classFilter.isEnabled() && classFilter.matches(typeName)) {
+        return false;
+      }
+    }
     return true;
   }
 

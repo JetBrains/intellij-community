@@ -74,6 +74,9 @@ public class ReplaceLambdaWithAnonymousIntention extends Intention {
       final Map<PsiElement, PsiElement> replacements = new HashMap<PsiElement, PsiElement>();
       blockFromText.accept(new JavaRecursiveElementWalkingVisitor() {
         @Override
+        public void visitClass(PsiClass aClass) {}
+
+        @Override
         public void visitSuperExpression(PsiSuperExpression expression) {
           super.visitSuperExpression(expression);
           if (expression.getQualifier() == null) {
