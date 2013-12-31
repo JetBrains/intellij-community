@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.vcs;
 
+import com.intellij.execution.configurations.PathEnvironmentVariableUtil;
 import com.intellij.execution.process.CapturingProcessHandler;
 import com.intellij.execution.process.ProcessOutput;
 import com.intellij.openapi.util.SystemInfo;
@@ -196,28 +197,13 @@ public class Executor {
     if (exec != null) {
       return exec;
     }
-    exec = findInPath(programName, unixExec, winExec);
-    if (exec != null) {
-      return exec;
+    File fileExec = PathEnvironmentVariableUtil.findInPath(SystemInfo.isWindows ? winExec : unixExec);
+    if (fileExec != null) {
+      return fileExec.getAbsolutePath();
     }
     throw new IllegalStateException(programName + " executable not found. " +
                                     "Please define a valid environment variable " + pathEnvs.iterator().next() +
                                     " pointing to the " + programName + " executable.");
-  }
-
-  protected static String findInPath(String programName, String unixExec, String winExec) {
-    String path = System.getenv(SystemInfo.isWindows ? "Path" : "PATH");
-    if (path != null) {
-      String name = SystemInfo.isWindows ? winExec : unixExec;
-      for (String dir : path.split(File.pathSeparator)) {
-        File file = new File(dir, name);
-        if (file.canExecute()) {
-          log("Using " + programName + " from PATH: " + file.getPath());
-          return file.getPath();
-        }
-      }
-    }
-    return null;
   }
 
   protected static String findInPathEnvs(String programName, Collection<String> pathEnvs) {
