@@ -40,8 +40,8 @@ public class WebBrowser {
   private final @NotNull BrowserFamily myFamily;
   private final @NotNull String myName;
   private final @NotNull Icon myIcon;
-  private final @NotNull Computable<String> myPathComputable;
-  private final @NotNull String myBrowserNotFoundMessage;
+  private final Computable<String> myPathComputable;
+  private final String myBrowserNotFoundMessage;
 
   @NotNull
   public static WebBrowser getStandardBrowser(final @NotNull BrowserFamily browserFamily) {
@@ -65,8 +65,8 @@ public class WebBrowser {
   private WebBrowser(final @NotNull BrowserFamily family,
                      final @NotNull String name,
                      final @NotNull Icon icon,
-                     final @NotNull NullableComputable<String> pathComputable,
-                     final @NotNull String browserNotFoundMessage) {
+                     final @Nullable NullableComputable<String> pathComputable,
+                     final @Nullable String browserNotFoundMessage) {
     myFamily = family;
     myName = name;
     myIcon = icon;
@@ -91,12 +91,17 @@ public class WebBrowser {
 
   @Nullable
   public String getPath() {
+    assert myPathComputable != null;
     return myPathComputable.compute();
   }
 
   @NotNull
   public String getBrowserNotFoundMessage() {
-    return myBrowserNotFoundMessage;
+    String message = myBrowserNotFoundMessage;
+    if (message == null) {
+      message = IdeBundle.message("error.0.browser.path.not.specified", getFamily().getName(), CommonBundle.settingsActionPath());
+    }
+    return message;
   }
 
   @Nullable
@@ -105,23 +110,22 @@ public class WebBrowser {
   }
 
   private static WebBrowser createStandardBrowser(final BrowserFamily family) {
-    final String browserNotFoundMessage = IdeBundle.message("error.0.browser.path.not.specified", family.getName(),
-                                                            CommonBundle.settingsActionPath());
-    return new WebBrowser(family, family.getName(), family.getIcon(), new NullableComputable<String>() {
-      @Override
-      @NotNull
-      public String compute() {
-        return BrowsersConfiguration.getInstance().getBrowserSettings(family).getPath();
-      }
-    }, browserNotFoundMessage) {
+    return new WebBrowser(family, family.getName(), family.getIcon(), null, null) {
       @Override
       @Nullable
       public BrowserSpecificSettings getBrowserSpecificSettings() {
-        return BrowsersConfiguration.getInstance().getBrowserSettings(getFamily()).getBrowserSpecificSettings();
+        return WebBrowserManager.getInstance().getBrowserSettings(this).getBrowserSpecificSettings();
+      }
+
+      @Nullable
+      @Override
+      public String getPath() {
+        return WebBrowserManager.getInstance().getBrowserSettings(this).getPath();
       }
     };
   }
 
+  @NotNull
   public static WebBrowser createCustomBrowser(final @NotNull BrowserFamily family,
                                                final @NotNull String name,
                                                final @NotNull Icon icon,

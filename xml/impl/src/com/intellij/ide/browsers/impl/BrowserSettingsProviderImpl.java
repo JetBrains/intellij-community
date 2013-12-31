@@ -16,24 +16,22 @@
 package com.intellij.ide.browsers.impl;
 
 import com.intellij.ide.BrowserSettingsProvider;
-import com.intellij.ide.browsers.BrowsersConfiguration;
+import com.intellij.ide.browsers.WebBrowserManager;
 import com.intellij.ide.browsers.WebBrowsersPanel;
 import com.intellij.openapi.options.ConfigurationException;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-/**
- * @author spleaner
- */
 public class BrowserSettingsProviderImpl extends BrowserSettingsProvider {
   private WebBrowsersPanel mySettingsPanel;
-  private final BrowsersConfiguration myConfiguration;
+  private final WebBrowserManager myConfiguration;
 
-  public BrowserSettingsProviderImpl(@NotNull final BrowsersConfiguration configuration) {
+  public BrowserSettingsProviderImpl(@NotNull WebBrowserManager configuration) {
     myConfiguration = configuration;
   }
 
+  @Override
   public JComponent createComponent() {
     if (mySettingsPanel == null) {
       mySettingsPanel = new WebBrowsersPanel(myConfiguration);
@@ -42,18 +40,22 @@ public class BrowserSettingsProviderImpl extends BrowserSettingsProvider {
     return mySettingsPanel;
   }
 
+  @Override
   public boolean isModified() {
     return mySettingsPanel.isModified();
   }
 
+  @Override
   public void apply() throws ConfigurationException {
     mySettingsPanel.apply();
   }
 
+  @Override
   public void reset() {
     mySettingsPanel.reset();
   }
 
+  @Override
   public void disposeUIResources() {
     mySettingsPanel.dispose();
     mySettingsPanel = null;

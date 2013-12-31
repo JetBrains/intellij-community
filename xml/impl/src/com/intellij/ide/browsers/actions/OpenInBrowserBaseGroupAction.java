@@ -1,13 +1,12 @@
 package com.intellij.ide.browsers.actions;
 
 import com.intellij.icons.AllIcons;
-import com.intellij.ide.browsers.BrowsersConfiguration;
 import com.intellij.ide.browsers.OpenInBrowserRequest;
 import com.intellij.ide.browsers.WebBrowser;
+import com.intellij.ide.browsers.WebBrowserManager;
 import com.intellij.ide.browsers.WebBrowserUrlProvider;
 import com.intellij.ide.browsers.impl.WebBrowserServiceImpl;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.Pair;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.xml.util.HtmlUtil;
@@ -16,13 +15,11 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public abstract class OpenInBrowserBaseGroupAction extends ActionGroup implements DumbAware {
-  public static final DataKey<OpenInBrowserRequest> OPEN_IN_BROWSER_REQUEST = DataKey.create("OPEN_IN_BROWSER_REQUEST");
-
+public abstract class OpenInBrowserBaseGroupAction extends ComputableActionGroup {
   private OpenFileInDefaultBrowserAction myDefaultBrowserAction;
 
   protected OpenInBrowserBaseGroupAction(boolean popup) {
-    super(null, popup);
+    super(popup);
   }
 
   @Nullable
@@ -46,22 +43,8 @@ public abstract class OpenInBrowserBaseGroupAction extends ActionGroup implement
 
   @NotNull
   @Override
-  public AnAction[] getChildren(@Nullable AnActionEvent e) {
-    if (e == null) {
-      return EMPTY_ARRAY;
-    }
-
-    Pair<OpenInBrowserRequest, WebBrowserUrlProvider> result = doUpdate(e);
-    if (result == null) {
-      return EMPTY_ARRAY;
-    }
-
-    return computeActions();
-  }
-
-  @NotNull
-  private AnAction[] computeActions() {
-    List<WebBrowser> browsers = BrowsersConfiguration.getInstance().getActive();
+  protected AnAction[] computeChildren(@NotNull ActionManager manager) {
+    List<WebBrowser> browsers = WebBrowserManager.getInstance().getBrowsers();
     boolean addDefaultBrowser = isPopup();
     int offset = addDefaultBrowser ? 1 : 0;
     AnAction[] actions = new AnAction[browsers.size() + offset];
@@ -82,7 +65,7 @@ public abstract class OpenInBrowserBaseGroupAction extends ActionGroup implement
     return actions;
   }
 
-  public static final class OpenInBrowserGroupAction extends OpenInBrowserBaseGroupAction implements DumbAware {
+  public static final class OpenInBrowserGroupAction extends OpenInBrowserBaseGroupAction {
     public OpenInBrowserGroupAction() {
       super(true);
     }

@@ -17,12 +17,12 @@ public class StartBrowserSettings {
   private static final String WITH_JS_DEBUGGER_ATTR = "with-js-debugger";
 
   private final boolean mySelected;
-  private final BrowsersConfiguration.BrowserFamily myBrowser;
+  private final WebBrowser myBrowser;
   private final String myUrl;
   private final boolean myStartJavaScriptDebugger;
 
   private StartBrowserSettings(boolean selected,
-                               @Nullable BrowsersConfiguration.BrowserFamily browser,
+                               @Nullable WebBrowser browser,
                                @NotNull String url,
                                boolean startJavaScriptDebugger) {
     mySelected = selected;
@@ -36,7 +36,7 @@ public class StartBrowserSettings {
   }
 
   @Nullable
-  public BrowsersConfiguration.BrowserFamily getBrowser() {
+  public WebBrowser getBrowser() {
     return myBrowser;
   }
 
@@ -54,7 +54,7 @@ public class StartBrowserSettings {
     Element child = parent.getChild(BROWSER_ELEMENT);
     if (child != null) {
       builder.setSelected(Boolean.parseBoolean(getAttrValue(child, START_BROWSER_ATTR)));
-      builder.setBrowser(BrowsersConfiguration.getInstance().findFamilyByName(getAttrValue(child, BROWSER_NAME_ATTR)));
+      builder.setBrowser(WebBrowserManager.getInstance().findBrowserByName(getAttrValue(child, BROWSER_NAME_ATTR)));
       builder.setUrl(StringUtil.notNullize(getAttrValue(child, URL_ATTR)));
       builder.setStartJavaScriptDebugger(Boolean.parseBoolean(getAttrValue(child, WITH_JS_DEBUGGER_ATTR)));
     }
@@ -80,7 +80,7 @@ public class StartBrowserSettings {
 
   public static class Builder {
     private boolean mySelected;
-    private BrowsersConfiguration.BrowserFamily myBrowser;
+    private WebBrowser myBrowser;
     private String myUrl = "";
     private boolean myStartJavaScriptDebugger;
 
@@ -102,10 +102,10 @@ public class StartBrowserSettings {
     }
 
     /**
-     * @param browser {@link com.intellij.ide.browsers.BrowsersConfiguration.BrowserFamily} instance,
+     * @param browser {@link com.intellij.ide.browsers.WebBrowser} instance,
      *                null if Default browser needed
      */
-    public Builder setBrowser(@Nullable BrowsersConfiguration.BrowserFamily browser) {
+    public Builder setBrowser(@Nullable WebBrowser browser) {
       myBrowser = browser;
       return this;
     }

@@ -42,26 +42,25 @@ public class BrowserSelector {
         final ShowSettingsUtil util = ShowSettingsUtil.getInstance();
         util.editConfigurable(myBrowserComboWithBrowse, new BrowserSettings());
 
-        final BrowsersConfiguration.BrowserFamily selectedItem = getSelectedBrowser();
+        WebBrowser selectedItem = getSelected();
         initBrowsersComboModel(allowDefaultBrowser);
         if (selectedItem != null) {
-          setSelectedBrowser(selectedItem);
+          setSelected(selectedItem);
         }
       }
     });
 
-    final JComboBox comboBox = myBrowserComboWithBrowse.getComboBox();
+    JComboBox comboBox = myBrowserComboWithBrowse.getComboBox();
     //noinspection unchecked
-    comboBox.setRenderer(new ListCellRendererWrapper<BrowsersConfiguration.BrowserFamily>() {
+    comboBox.setRenderer(new ListCellRendererWrapper<WebBrowser>() {
       @Override
       public void customize(JList list,
-                            BrowsersConfiguration.BrowserFamily value,
+                            WebBrowser value,
                             int index,
                             boolean selected,
                             boolean hasFocus) {
-        final Icon baseIcon = value != null ? value.getIcon() : PlatformIcons.WEB_ICON;
-        final Icon icon = myBrowserComboWithBrowse.isEnabled() ? baseIcon : IconLoader.getDisabledIcon(baseIcon);
-        setIcon(icon);
+        Icon baseIcon = value != null ? value.getIcon() : PlatformIcons.WEB_ICON;
+        setIcon(myBrowserComboWithBrowse.isEnabled() ? baseIcon : IconLoader.getDisabledIcon(baseIcon));
         setText(value != null ? value.getName() : "Default");
       }
     });
@@ -74,27 +73,47 @@ public class BrowserSelector {
   }
 
   private void initBrowsersComboModel(boolean allowDefaultBrowser) {
-    List<BrowsersConfiguration.BrowserFamily> activeBrowsers = new ArrayList<BrowsersConfiguration.BrowserFamily>();
+    List<WebBrowser> activeBrowsers = new ArrayList<WebBrowser>();
     if (allowDefaultBrowser) {
       activeBrowsers.add(null);
     }
-    activeBrowsers.addAll(BrowsersConfiguration.getInstance().getActiveBrowsers());
+    activeBrowsers.addAll(WebBrowserManager.getInstance().getActiveBrowsers());
     //noinspection unchecked
     myBrowserComboWithBrowse.getComboBox().setModel(new DefaultComboBoxModel(ArrayUtil.toObjectArray(activeBrowsers)));
   }
 
+  @SuppressWarnings({"deprecation", "UnusedDeclaration"})
   @Nullable
+  @Deprecated
+  /**
+   * @deprecated  to remove in IDEA 14
+   */
   public BrowsersConfiguration.BrowserFamily getSelectedBrowser() {
-    return (BrowsersConfiguration.BrowserFamily)myBrowserComboWithBrowse.getComboBox().getSelectedItem();
+    WebBrowser selected = getSelected();
+    return selected == null ? null : selected.getFamily();
+  }
+
+  @Nullable
+  public WebBrowser getSelected() {
+    return (WebBrowser)myBrowserComboWithBrowse.getComboBox().getSelectedItem();
   }
 
   @Nullable
   public String getSelectedBrowserFamilyName() {
-    final BrowsersConfiguration.BrowserFamily browser = getSelectedBrowser();
+    WebBrowser browser = getSelected();
     return browser != null ? browser.getName() : null;
   }
 
-  public void setSelectedBrowser(@Nullable BrowsersConfiguration.BrowserFamily selectedItem) {
+  @SuppressWarnings("UnusedDeclaration")
+  @Deprecated
+  /**
+   * @deprecated  to remove in IDEA 14
+   */
+  public void setSelectedBrowser(@SuppressWarnings("deprecation") @Nullable BrowsersConfiguration.BrowserFamily selectedItem) {
+    setSelected(selectedItem == null ? null : WebBrowser.getStandardBrowser(selectedItem));
+  }
+
+  public void setSelected(@Nullable WebBrowser selectedItem) {
     myBrowserComboWithBrowse.getComboBox().setSelectedItem(selectedItem);
   }
 }

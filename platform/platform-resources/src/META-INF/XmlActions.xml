@@ -72,7 +72,7 @@
       <add-to-group group-id="GenerateGroup" anchor="first"/>
     </action>
 
-    <!-- preserved to keep compatibility - if user configured shortcut for action, it should not be lost -->
+    <!-- id should be "OpenInDefaultBrowser", but existing name preserved to keep compatibility - if user configured shortcut for action, it should not be lost -->
     <action id="OpenInBrowser" class="com.intellij.ide.browsers.actions.OpenFileInDefaultBrowserAction"
             text="Open in default _browser" description="Open selected file in default browser"
             icon="AllIcons.Nodes.PpWeb">

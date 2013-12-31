@@ -25,8 +25,8 @@ import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.IdeBorderFactory;
-import com.intellij.util.containers.HashMap;
 import com.intellij.xml.XmlBundle;
+import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -41,14 +41,13 @@ import java.util.concurrent.ExecutionException;
  */
 public class WebBrowsersPanel extends JPanel {
   private final JPanel mySettingsPanel;
-  private Map<BrowsersConfiguration.BrowserFamily, Pair<JCheckBox, TextFieldWithBrowseButton>> myBrowserSettingsMap =
-    new HashMap<BrowsersConfiguration.BrowserFamily, Pair<JCheckBox, TextFieldWithBrowseButton>>();
-  private final BrowsersConfiguration myConfiguration;
+  private Map<BrowsersConfiguration.BrowserFamily, Pair<JCheckBox, TextFieldWithBrowseButton>> myBrowserSettingsMap = new THashMap<BrowsersConfiguration.BrowserFamily, Pair<JCheckBox, TextFieldWithBrowseButton>>();
+  private final WebBrowserManager myBrowserManager;
 
-  public WebBrowsersPanel(final BrowsersConfiguration configuration) {
+  public WebBrowsersPanel(WebBrowserManager browserManager) {
     setLayout(new BorderLayout());
 
-    myConfiguration = configuration;
+    myBrowserManager = browserManager;
 
     mySettingsPanel = new JPanel();
     mySettingsPanel.setLayout(new BoxLayout(mySettingsPanel, BoxLayout.Y_AXIS));
@@ -117,7 +116,7 @@ public class WebBrowsersPanel extends JPanel {
     result.add(bottomPanel);
     container.add(result);
 
-    final WebBrowserSettings settings = myConfiguration.getBrowserSettings(family);
+    final WebBrowserSettings settings = myBrowserManager.getBrowserSettings(family);
     field.getTextField().setText(settings.getPath());
     checkBox.setSelected(settings.isActive());
 
@@ -125,12 +124,12 @@ public class WebBrowsersPanel extends JPanel {
   }
 
   private void editSettings(BrowsersConfiguration.BrowserFamily family) {
-    BrowserSpecificSettings settings = myConfiguration.getBrowserSettings(family).getBrowserSpecificSettings();
+    BrowserSpecificSettings settings = myBrowserManager.getBrowserSettings(family).getBrowserSpecificSettings();
     if (settings == null) {
       settings = family.createBrowserSpecificSettings();
     }
     if (settings != null && ShowSettingsUtil.getInstance().editConfigurable(mySettingsPanel, settings.createConfigurable())) {
-      myConfiguration.updateBrowserSpecificSettings(family, settings);
+      myBrowserManager.updateBrowserSpecificSettings(family, settings);
     }
   }
 
@@ -192,7 +191,7 @@ public class WebBrowsersPanel extends JPanel {
 
   public boolean isModified() {
     for (BrowsersConfiguration.BrowserFamily family : BrowsersConfiguration.BrowserFamily.values()) {
-      final WebBrowserSettings old = myConfiguration.getBrowserSettings(family);
+      final WebBrowserSettings old = myBrowserManager.getBrowserSettings(family);
       final Pair<JCheckBox, TextFieldWithBrowseButton> settings = myBrowserSettingsMap.get(family);
 
       if (old.isActive() != settings.first.isSelected() || !old.getPath().equals(settings.second.getText())) {
@@ -206,14 +205,14 @@ public class WebBrowsersPanel extends JPanel {
   public void apply() {
     for (BrowsersConfiguration.BrowserFamily family : myBrowserSettingsMap.keySet()) {
       final Pair<JCheckBox, TextFieldWithBrowseButton> buttonPair = myBrowserSettingsMap.get(family);
-      myConfiguration.updateBrowserValue(family, buttonPair.second.getText(), buttonPair.first.isSelected());
+      myBrowserManager.updateBrowserValue(family, buttonPair.second.getText(), buttonPair.first.isSelected());
     }
   }
 
   public void reset() {
     for (BrowsersConfiguration.BrowserFamily family : myBrowserSettingsMap.keySet()) {
       final Pair<JCheckBox, TextFieldWithBrowseButton> buttonPair = myBrowserSettingsMap.get(family);
-      final WebBrowserSettings settings = myConfiguration.getBrowserSettings(family);
+      final WebBrowserSettings settings = myBrowserManager.getBrowserSettings(family);
       buttonPair.first.setSelected(settings.isActive());
       buttonPair.second.getTextField().setText(settings.getPath());
     }

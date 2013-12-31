@@ -1,8 +1,8 @@
 package com.intellij.ide.browsers.actions;
 
-import com.intellij.ide.browsers.BrowsersConfiguration;
 import com.intellij.ide.browsers.OpenInBrowserRequest;
 import com.intellij.ide.browsers.WebBrowser;
+import com.intellij.ide.browsers.WebBrowserManager;
 import com.intellij.ide.browsers.WebBrowserUrlProvider;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -25,7 +25,7 @@ final class BaseWebBrowserAction extends DumbAwareAction {
 
   @Override
   public void update(final AnActionEvent e) {
-    if (!BrowsersConfiguration.getInstance().getBrowserSettings(browser.getFamily()).isActive()) {
+    if (!WebBrowserManager.getInstance().getBrowserSettings(browser).isActive()) {
       e.getPresentation().setEnabled(false);
       e.getPresentation().setVisible(false);
       return;
