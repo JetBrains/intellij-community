@@ -17,7 +17,9 @@ package com.siyeh.ig.maturity;
 
 import com.intellij.codeInspection.BatchSuppressManager;
 import com.intellij.codeInspection.JavaSuppressionUtil;
+import com.intellij.codeInspection.SuppressionUtil;
 import com.intellij.codeInspection.SuppressionUtilCore;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.siyeh.InspectionGadgetsBundle;
@@ -66,7 +68,16 @@ public class SuppressionAnnotationInspectionBase extends BaseInspection {
       if (commentText.length() > 2) {
         @NonNls final String strippedComment = commentText.substring(2).trim();
         if (strippedComment.startsWith(SuppressionUtilCore.SUPPRESS_INSPECTIONS_TAG_NAME)) {
-          registerError(comment);
+          final String suppressedIds = JavaSuppressionUtil.getSuppressedInspectionIdsIn(comment);
+          final Iterable<String> ids = suppressedIds != null ? StringUtil.tokenize(suppressedIds, "[, ]") : null;
+          if (ids != null) {
+            for (String id : ids) {
+              if (!myAllowedSuppressions.contains(id)) {
+                registerError(comment, comment);
+                break;
+              }
+            }
+          }
         }
       }
     }
