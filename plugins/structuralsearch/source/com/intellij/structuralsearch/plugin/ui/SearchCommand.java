@@ -17,6 +17,7 @@ import com.intellij.structuralsearch.plugin.ui.actions.DoSearchAction;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.Usage;
 import com.intellij.usages.UsageInfo2UsageAdapter;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.Processor;
 
 /**
@@ -91,11 +92,10 @@ public class SearchCommand {
             info = new UsageInfo(parent,startOffset,end - parentStart);
           } else {
             PsiElement element = result.getMatch();
-            info = new UsageInfo(
-              element instanceof PsiNameIdentifierOwner ? ((PsiNameIdentifierOwner)element).getNameIdentifier() : element,
-              result.getStart(),
-              result.getEnd()==-1?element.getTextLength() : result.getEnd()
-            );
+            if (element instanceof PsiNameIdentifierOwner) {
+              element = ObjectUtils.notNull(((PsiNameIdentifierOwner)element).getNameIdentifier(), element);
+            }
+            info = new UsageInfo(element, result.getStart(), result.getEnd() == -1 ? element.getTextLength() : result.getEnd());
           }
 
           Usage usage = new UsageInfo2UsageAdapter(info);
