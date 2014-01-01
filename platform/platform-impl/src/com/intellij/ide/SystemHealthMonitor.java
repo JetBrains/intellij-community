@@ -131,13 +131,13 @@ public class SystemHealthMonitor extends ApplicationComponent.Adapter {
               }
             }));
           }
-          if (!future.isDone()) {
+          if (!future.isDone() || future.isCancelled()) {
             JobScheduler.getScheduler().schedule(this, 1, TimeUnit.SECONDS);
             return;
           }
 
           try {
-            final long fileUsableSpace = future.isCancelled() ? 0 : future.get();
+            final long fileUsableSpace = future.get();
             final long timeout = Math.max(5, (fileUsableSpace - LOW_DISK_SPACE_THRESHOLD) / MAX_WRITE_SPEED_IN_BPS);
             ourFreeSpaceCalculation.set(null);
 
