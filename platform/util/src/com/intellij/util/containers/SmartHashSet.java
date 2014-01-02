@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.lang.reflect.Array;
 import java.util.Collection;
+import java.util.ConcurrentModificationException;
 import java.util.Iterator;
 import java.util.Set;
 
@@ -149,9 +150,26 @@ public class SmartHashSet<T> extends THashSet<T> {
   @NotNull
   @Override
   public Iterator<T> iterator() {
-    T theElement = this.theElement;
     if (theElement != null) {
-      return new SingletonIterator<T>(theElement);
+      return new SingletonIteratorBase<T>() {
+        @Override
+        protected void checkCoModification() {
+          if (theElement == null) {
+            throw new ConcurrentModificationException();
+          }
+        }
+
+        @Override
+        protected T getElement() {
+          return theElement;
+        }
+
+        @Override
+        public void remove() {
+          checkCoModification();
+          clear();
+        }
+      };
     }
     return super.iterator();
   }

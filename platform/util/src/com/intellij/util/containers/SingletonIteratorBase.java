@@ -15,26 +15,28 @@
  */
 package com.intellij.util.containers;
 
-import com.intellij.util.IncorrectOperationException;
+import java.util.Iterator;
+import java.util.NoSuchElementException;
 
-public class SingletonIterator<T> extends SingletonIteratorBase<T> {
-  private final T myElement;
+public abstract class SingletonIteratorBase<T> implements Iterator<T> {
+  private boolean myVisited;
 
-  public SingletonIterator(T element) {
-    myElement = element;
+  @Override
+  public final boolean hasNext() {
+    return !myVisited;
   }
 
   @Override
-  protected void checkCoModification() {
+  public final T next() {
+    if (myVisited) {
+      throw new NoSuchElementException();
+    }
+    myVisited = true;
+    checkCoModification();
+    return getElement();
   }
 
-  @Override
-  protected T getElement() {
-    return myElement;
-  }
+  protected abstract void checkCoModification();
 
-  @Override
-  public void remove() {
-    throw new IncorrectOperationException();
-  }
+  protected abstract T getElement();
 }
