@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.util.io;
+package com.intellij.openapi.vfs.local;
 
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
@@ -25,17 +25,28 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
-import com.intellij.testFramework.PlatformTestCase;
+import com.intellij.testFramework.PlatformLangTestCase;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
 
-public class PersistentFSTest extends PlatformTestCase {
+public class PersistentFsTest extends PlatformLangTestCase {
+  private PersistentFS myFs;
+  private LocalFileSystem myLocalFs;
+
   @Override
   public void setUp() throws Exception {
-    initPlatformLangPrefix();
     super.setUp();
+    myFs = PersistentFS.getInstance();
+    myLocalFs = LocalFileSystem.getInstance();
+  }
+
+  @Override
+  protected void tearDown() throws Exception {
+    myLocalFs = null;
+    myFs = null;
+    super.tearDown();
   }
 
   public void testAccessingFileByID() throws Exception {
@@ -43,31 +54,29 @@ public class PersistentFSTest extends PlatformTestCase {
     File file = new File(dir, "test.txt");
     assertTrue(file.createNewFile());
 
-    VirtualFile vFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
+    VirtualFile vFile = myLocalFs.refreshAndFindFileByIoFile(file);
     assertNotNull(vFile);
 
     int id = ((VirtualFileWithId)vFile).getId();
+    assertSame(vFile, myFs.findFileById(id));
 
-    assertSame(vFile, PersistentFS.getInstance().findFileById(id));
     vFile.delete(this);
-
-    assertNull(PersistentFS.getInstance().findFileById(id));
+    assertNull(myFs.findFileById(id));
   }
 
   public void testListChildrenOfTheRootOfTheRoot() {
-    PersistentFS fs = PersistentFS.getInstance();
-    NewVirtualFile fakeRoot = fs.findRoot("", LocalFileSystem.getInstance());
+    NewVirtualFile fakeRoot = myFs.findRoot("", myLocalFs);
     assertNotNull(fakeRoot);
-    int users = fs.getId(fakeRoot, "Users", LocalFileSystem.getInstance());
+    int users = myFs.getId(fakeRoot, "Users", myLocalFs);
     assertEquals(0, users);
-    users = fs.getId(fakeRoot, "usr", LocalFileSystem.getInstance());
+    users = myFs.getId(fakeRoot, "usr", myLocalFs);
     assertEquals(0, users);
-    int win = fs.getId(fakeRoot, "Windows", LocalFileSystem.getInstance());
+    int win = myFs.getId(fakeRoot, "Windows", myLocalFs);
     assertEquals(0, win);
 
-    VirtualFile[] roots = fs.getRoots(LocalFileSystem.getInstance());
+    VirtualFile[] roots = myFs.getRoots(myLocalFs);
     for (VirtualFile root : roots) {
-      int rid = fs.getId(fakeRoot, root.getName(), LocalFileSystem.getInstance());
+      int rid = myFs.getId(fakeRoot, root.getName(), myLocalFs);
       assertTrue(root.getPath()+"; Roots:"+ Arrays.toString(roots), 0 != rid);
     }
 
@@ -84,19 +93,15 @@ public class PersistentFSTest extends PlatformTestCase {
   public void testFindRootShouldNotBeFooledByRelativePath() throws IOException {
     File tmp = createTempDirectory();
     File x = new File(tmp, "x.jar");
-    x.createNewFile();
-    LocalFileSystem lfs = LocalFileSystem.getInstance();
-    VirtualFile vx = lfs.refreshAndFindFileByIoFile(x);
+    assertTrue(x.createNewFile());
+
+    VirtualFile vx = myLocalFs.refreshAndFindFileByIoFile(x);
     assertNotNull(vx);
+
     JarFileSystem jfs = JarFileSystem.getInstance();
     VirtualFile root = jfs.getJarRootForLocalFile(vx);
-
-    PersistentFS fs = PersistentFS.getInstance();
-
     String path = vx.getPath() + "/../" + vx.getName() + JarFileSystem.JAR_SEPARATOR;
-    NewVirtualFile root1 = fs.findRoot(path, jfs);
-
-    assertSame(root1, root);
+    assertSame(myFs.findRoot(path, jfs), root);
   }
 
   public void testDeleteSubstRoots() throws IOException, InterruptedException {
@@ -104,8 +109,9 @@ public class PersistentFSTest extends PlatformTestCase {
 
     File tempDirectory = FileUtil.createTempDirectory(getTestName(false), null);
     File substRoot = IoTestUtil.createSubst(tempDirectory.getPath());
-    VirtualFile subst = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(substRoot);
+    VirtualFile subst = myLocalFs.refreshAndFindFileByIoFile(substRoot);
     assertNotNull(subst);
+
     try {
       final File[] children = substRoot.listFiles();
       assertNotNull(children);
@@ -114,9 +120,8 @@ public class PersistentFSTest extends PlatformTestCase {
       IoTestUtil.deleteSubst(substRoot.getPath());
     }
     subst.refresh(false, true);
-    PersistentFS fs = PersistentFS.getInstance();
 
-    VirtualFile[] roots = fs.getRoots(LocalFileSystem.getInstance());
+    VirtualFile[] roots = myFs.getRoots(myLocalFs);
     for (VirtualFile root : roots) {
       String rootPath = root.getPath();
       String prefix = StringUtil.commonPrefix(rootPath, substRoot.getPath());
