@@ -49,7 +49,9 @@ public class JUnitStarter {
     }
 
     final ArrayList listeners = new ArrayList();
-    boolean isJUnit4 = processParameters(argList, listeners);
+    final String[] name = new String[1];
+
+    boolean isJUnit4 = processParameters(argList, listeners, name);
 
     if (!canWorkWithJUnitVersion(err, isJUnit4)) {
       err.flush();
@@ -62,11 +64,11 @@ public class JUnitStarter {
 
     String[] array = new String[argList.size()];
     argList.copyInto(array);
-    int exitCode = prepareStreamsAndStart(array, isJUnit4, listeners, out, err);
+    int exitCode = prepareStreamsAndStart(array, isJUnit4, listeners, name[0], out, err);
     System.exit(exitCode);
   }
 
-  private static boolean processParameters(Vector args, final List listeners) {
+  private static boolean processParameters(Vector args, final List listeners, String[] params) {
     boolean isJunit4 = true;
     Vector result = new Vector(args.size());
     for (int i = 0; i < args.size(); i++) {
@@ -78,7 +80,10 @@ public class JUnitStarter {
         isJunit4 = false;
       }
       else {
-        if (arg.startsWith("@w@")) {
+        if (arg.startsWith("@name")) {
+          params[0] = arg.substring("@name".length());
+          continue;
+        } else if (arg.startsWith("@w@")) {
           ourWorkingDirs = arg.substring(3);
           continue;
         } else if (arg.startsWith("@@@")) {
@@ -185,7 +190,11 @@ public class JUnitStarter {
     new junit.textui.TestRunner().setPrinter(new com.intellij.junit3.JUnit3IdeaTestRunner.MockResultPrinter());
   }
 
-  private static int prepareStreamsAndStart(String[] args, final boolean isJUnit4, ArrayList listeners, SegmentedOutputStream out,
+  private static int prepareStreamsAndStart(String[] args,
+                                            final boolean isJUnit4,
+                                            ArrayList listeners,
+                                            String name,
+                                            SegmentedOutputStream out,
                                             SegmentedOutputStream err) {
     PrintStream oldOut = System.out;
     PrintStream oldErr = System.err;
@@ -194,12 +203,12 @@ public class JUnitStarter {
       System.setErr(new PrintStream(err));
       if (ourCommandFileName != null) {
         if (!"none".equals(ourForkMode) || ourWorkingDirs != null && new File(ourWorkingDirs).length() > 0) {
-          return JUnitForkedStarter.startForkedVMs(ourWorkingDirs, args, isJUnit4, listeners, out, err, ourForkMode, ourCommandFileName);
+          return JUnitForkedStarter.startForkedVMs(ourWorkingDirs, args, isJUnit4, listeners, name, out, err, ourForkMode, ourCommandFileName);
         }
       }
       IdeaTestRunner testRunner = (IdeaTestRunner)getAgentClass(isJUnit4).newInstance();
       testRunner.setStreams(out, err, 0);
-      return testRunner.startRunnerWithArgs(args, listeners, !SM_RUNNER);
+      return testRunner.startRunnerWithArgs(args, listeners, name, !SM_RUNNER);
     }
     catch (Exception e) {
       e.printStackTrace(System.err);

@@ -61,6 +61,7 @@ import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.psi.*;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
@@ -192,7 +193,14 @@ public abstract class TestObject implements JavaCommandLine {
   }
 
   protected void initialize() throws ExecutionException {
-    JavaParametersUtil.configureConfiguration(myJavaParameters, myConfiguration);
+    String parameters = myConfiguration.getProgramParameters();
+    myConfiguration.getPersistentData().setProgramParameters(null);
+    try {
+      JavaParametersUtil.configureConfiguration(myJavaParameters, myConfiguration);
+    }
+    finally {
+      myConfiguration.getPersistentData().setProgramParameters(parameters);
+    }
     myJavaParameters.setMainClass(JUnitConfiguration.JUNIT_START_CLASS);
     final Module module = myConfiguration.getConfigurationModule().getModule();
     if (myJavaParameters.getJdk() == null){
@@ -207,6 +215,9 @@ public abstract class TestObject implements JavaCommandLine {
       myJavaParameters.getClassPath().add(PathUtil.getJarPathForClass(ServiceMessageTypes.class));
     }
     myJavaParameters.getProgramParametersList().add(JUnitStarter.IDE_VERSION + JUnitStarter.VERSION);
+    if (!StringUtil.isEmptyOrSpaces(parameters)) {
+      myJavaParameters.getProgramParametersList().add("@name" + parameters);
+    }
     for (RunConfigurationExtension ext : Extensions.getExtensions(RunConfigurationExtension.EP_NAME)) {
       ext.updateJavaParameters(myConfiguration, myJavaParameters, getRunnerSettings());
     }
