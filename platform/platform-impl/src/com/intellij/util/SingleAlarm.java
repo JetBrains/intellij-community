@@ -28,6 +28,10 @@ public class SingleAlarm extends Alarm {
     this.delay = delay;
   }
 
+  public SingleAlarm(@NotNull Runnable task, int delay, @NotNull Disposable parentDisposable) {
+    this(task, delay, Alarm.ThreadToUse.SWING_THREAD, parentDisposable);
+  }
+
   public SingleAlarm(@NotNull Runnable task, int delay, @NotNull ThreadToUse threadToUse, @NotNull Disposable parentDisposable) {
     super(threadToUse, parentDisposable);
 
