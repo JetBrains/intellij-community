@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,7 +34,7 @@ public class VisitorDescription {
 
   public VisitorDescription(final Class<? extends DomElementVisitor> visitorClass) {
     myVisitorClass = visitorClass;
-    for (final Method method : ReflectionCache.getMethods(visitorClass)) {
+    for (final Method method : visitorClass.getMethods()) {
       final Class<?>[] parameterTypes = method.getParameterTypes();
       if (parameterTypes.length != 1) {
         continue;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -173,7 +173,7 @@ public class DefaultJDOMExternalizer {
         if ((modifiers & Modifier.FINAL) != 0) {
           // read external contents of final field
           Object value = field.get(data);
-          if (ReflectionCache.isInstance(value, JDOMExternalizable.class)) {
+          if (JDOMExternalizable.class.isInstance(value)) {
             final List children = e.getChildren("value");
             for (Object child : children) {
               Element valueTag = (Element)child;
