@@ -292,7 +292,8 @@ public class MinusculeMatcher implements Matcher {
         return null;
       }
       // if the user has typed a dot, don't skip other dots between humps
-      if (!allowSpecialChars && myHasDots && StringUtil.contains(name, nameIndex, nextOccurrence, '.')) {
+      // but one pattern dot may match several name dots
+      if (!allowSpecialChars && myHasDots && !isPatternChar(patternIndex - 1, '.') && StringUtil.contains(name, nameIndex, nextOccurrence, '.')) {
         return null;
       }
       // uppercase should match either uppercase or a word start
