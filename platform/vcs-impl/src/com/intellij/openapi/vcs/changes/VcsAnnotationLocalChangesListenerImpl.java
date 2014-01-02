@@ -64,12 +64,7 @@ public class VcsAnnotationLocalChangesListenerImpl implements Disposable, VcsAnn
     myDirtyPaths = new HashSet<String>();
     myDirtyChanges = new HashMap<String, VcsRevisionNumber>();
     myDirtyFiles = new HashSet<VirtualFile>();
-    myFileAnnotationMap = new MultiMap<VirtualFile, FileAnnotation>() {
-      @Override
-      protected Collection<FileAnnotation> createCollection() {
-        return new HashSet<FileAnnotation>(1);
-      }
-    };
+    myFileAnnotationMap = MultiMap.createSet();
     myVcsManager = vcsManager;
     myVcsKeySet = new HashSet<VcsKey>();
 
