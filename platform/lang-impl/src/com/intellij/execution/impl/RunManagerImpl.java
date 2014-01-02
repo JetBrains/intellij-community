@@ -673,6 +673,7 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
       }
       catch (Throwable e) {
         LOG.error(e);
+        continue;
       }
       if (configurationSettings == null) {
         if (myUnknownElements == null) myUnknownElements = new ArrayList<Element>(2);
