@@ -1,14 +1,21 @@
 package com.intellij.coverage;
 
+import com.intellij.execution.configurations.ModuleBasedConfiguration;
 import com.intellij.execution.configurations.RunConfigurationBase;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ProjectRootModificationTracker;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.GlobalSearchScopesCore;
+import com.intellij.psi.util.CachedValue;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.reference.SoftReference;
 import com.intellij.rt.coverage.data.ProjectData;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -25,6 +32,8 @@ public class CoverageSuitesBundle {
   private CoverageEngine myEngine;
 
   private Set<Module> myProcessedModules;
+
+  private CachedValue<GlobalSearchScope> myCachedValue;
 
   private SoftReference<ProjectData> myData = new SoftReference<ProjectData>(null);
   private static final Logger LOG = Logger.getInstance("#" + CoverageSuitesBundle.class.getName());
@@ -117,7 +126,7 @@ public class CoverageSuitesBundle {
   }
 
   public boolean contains(CoverageSuite suite) {
-    return ArrayUtil.find(mySuites, suite) > -1;
+    return ArrayUtilRt.find(mySuites, suite) > -1;
   }
 
   public void setCoverageData(ProjectData projectData) {
@@ -159,5 +168,30 @@ public class CoverageSuitesBundle {
       }
     }
     return null;
+  }
+
+  public GlobalSearchScope getSearchScope(final Project project) {
+    if (myCachedValue == null) {
+      myCachedValue = CachedValuesManager.getManager(project).createCachedValue(new CachedValueProvider<GlobalSearchScope>() {
+        @Nullable
+        @Override
+        public Result<GlobalSearchScope> compute() {
+          return new Result<GlobalSearchScope>(getSearchScopeInner(project), ProjectRootModificationTracker.getInstance(project));
+        }
+      }, false);
+    }
+    return myCachedValue.getValue();
+    
+  }
+
+  private GlobalSearchScope getSearchScopeInner(Project project) {
+    final RunConfigurationBase configuration = getRunConfiguration();
+    if (configuration instanceof ModuleBasedConfiguration) {
+      final Module module = ((ModuleBasedConfiguration)configuration).getConfigurationModule().getModule();
+      if (module != null) {
+        return GlobalSearchScope.moduleRuntimeScope(module, isTrackTestFolders());
+      }
+    }
+    return isTrackTestFolders() ? GlobalSearchScope.projectScope(project) : GlobalSearchScopesCore.projectProductionScope(project);
   }
 }
