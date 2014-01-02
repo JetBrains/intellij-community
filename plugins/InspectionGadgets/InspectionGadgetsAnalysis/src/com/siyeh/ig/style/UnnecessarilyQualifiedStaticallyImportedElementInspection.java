@@ -87,6 +87,9 @@ public class UnnecessarilyQualifiedStaticallyImportedElementInspection extends B
     @Override
     public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
       super.visitReferenceElement(reference);
+      if (reference instanceof PsiMethodReferenceExpression) {
+        return;
+      }
       final PsiElement qualifier = reference.getQualifier();
       if (!(qualifier instanceof PsiJavaCodeReferenceElement)) {
         return;
@@ -114,8 +117,7 @@ public class UnnecessarilyQualifiedStaticallyImportedElementInspection extends B
       registerError(qualifier, ProblemHighlightType.LIKE_UNUSED_SYMBOL, member);
     }
 
-    private static boolean isReferenceCorrectWithoutQualifier(
-      PsiJavaCodeReferenceElement reference, PsiMember member) {
+    private static boolean isReferenceCorrectWithoutQualifier(PsiJavaCodeReferenceElement reference, PsiMember member) {
       final String referenceName = reference.getReferenceName();
       if (referenceName == null) {
         return false;
