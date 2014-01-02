@@ -144,7 +144,7 @@ public class JUnit4TestRunnerUtil {
             }
           } else {
             final Class runnerClass = clazzAnnotation.value();
-            if (runnerClass.isAssignableFrom(Parameterized.class)) {
+            if (Parameterized.class.isAssignableFrom(runnerClass)) {
               try {
                 Class.forName("org.junit.runners.BlockJUnit4ClassRunner"); //ignore for junit4.4 and <
                 return Request.runner(new ParameterizedMethodRunner(clazz, methodName));
