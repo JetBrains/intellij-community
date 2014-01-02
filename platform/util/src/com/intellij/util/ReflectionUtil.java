@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,20 +40,20 @@ public class ReflectionUtil {
   @Nullable
   public static Type resolveVariable(@NotNull TypeVariable variable, @NotNull Class classType, boolean resolveInInterfacesOnly) {
     final Class aClass = getRawType(classType);
-    int index = ArrayUtilRt.find(ReflectionCache.getTypeParameters(aClass), variable);
+    int index = ArrayUtilRt.find(aClass.getTypeParameters(), variable);
     if (index >= 0) {
       return variable;
     }
 
-    final Class[] classes = ReflectionCache.getInterfaces(aClass);
-    final Type[] genericInterfaces = ReflectionCache.getGenericInterfaces(aClass);
+    final Class[] classes = aClass.getInterfaces();
+    final Type[] genericInterfaces = aClass.getGenericInterfaces();
     for (int i = 0; i <= classes.length; i++) {
       Class anInterface;
       if (i < classes.length) {
         anInterface = classes[i];
       }
       else {
-        anInterface = ReflectionCache.getSuperClass(aClass);
+        anInterface = aClass.getSuperclass();
         if (resolveInInterfacesOnly || anInterface == null) {
           continue;
         }
@@ -64,7 +64,7 @@ public class ReflectionUtil {
       }
       if (resolved instanceof TypeVariable) {
         final TypeVariable typeVariable = (TypeVariable)resolved;
-        index = ArrayUtilRt.find(ReflectionCache.getTypeParameters(anInterface), typeVariable);
+        index = ArrayUtilRt.find(anInterface.getTypeParameters(), typeVariable);
         if (index < 0) {
           LOG.error("Cannot resolve type variable:\n" + "typeVariable = " + typeVariable + "\n" + "genericDeclaration = " +
                     declarationToString(typeVariable.getGenericDeclaration()) + "\n" + "searching in " + declarationToString(anInterface));
@@ -106,7 +106,7 @@ public class ReflectionUtil {
 
   @NotNull
   public static Type[] getActualTypeArguments(@NotNull ParameterizedType parameterizedType) {
-    return ReflectionCache.getActualTypeArguments(parameterizedType);
+    return parameterizedType.getActualTypeArguments();
   }
 
   @Nullable
@@ -121,7 +121,7 @@ public class ReflectionUtil {
         return (Class<?>)((ParameterizedType)type).getRawType();
       }
       if (type instanceof TypeVariable && classType instanceof ParameterizedType) {
-        final int index = ArrayUtilRt.find(ReflectionCache.getTypeParameters(aClass), type);
+        final int index = ArrayUtilRt.find(aClass.getTypeParameters(), type);
         if (index >= 0) {
           return getRawType(getActualTypeArguments((ParameterizedType)classType)[index]);
         }
@@ -235,7 +235,7 @@ public class ReflectionUtil {
 
   @Nullable
   public static Method getMethod(@NotNull Class aClass, @NonNls @NotNull String name, @NotNull Class... parameters) {
-    return findMethod(ReflectionCache.getMethods(aClass), name, parameters);
+    return findMethod(aClass.getMethods(), name, parameters);
   }
 
   @Nullable
@@ -263,7 +263,7 @@ public class ReflectionUtil {
     Type type;
     Class current = aClass;
     while ((type = resolveVariable(variable, current, false)) == null) {
-      current = ReflectionCache.getSuperClass(current);
+      current = current.getSuperclass();
       if (current == null) {
         return null;
       }
