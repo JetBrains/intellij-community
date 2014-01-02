@@ -93,7 +93,7 @@ public class XDebuggerTestUtil {
   }
 
   public static void assertPosition(XSourcePosition pos, VirtualFile file, int line) throws IOException {
-    Assert.assertNotNull(pos);
+    Assert.assertNotNull("No current position", pos);
     Assert.assertEquals(new File(file.getPath()).getCanonicalPath(), new File(pos.getFile().getPath()).getCanonicalPath());
     if (line != -1) Assert.assertEquals(line, pos.getLine());
   }
