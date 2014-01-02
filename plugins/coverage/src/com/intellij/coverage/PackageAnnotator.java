@@ -1,5 +1,7 @@
 package com.intellij.coverage;
 
+import com.intellij.execution.configurations.ModuleBasedConfiguration;
+import com.intellij.execution.configurations.RunConfigurationBase;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleUtil;
@@ -91,7 +93,7 @@ public class PackageAnnotator {
   }
 
   //get read lock myself when needed
-  public void annotate(CoverageSuitesBundle suite, Annotator annotator) {
+  public void annotate(final CoverageSuitesBundle suite, Annotator annotator) {
     final ProjectData data = suite.getCoverageData();
 
     if (data == null) return;
@@ -109,6 +111,11 @@ public class PackageAnnotator {
 
     final Module[] modules = myCoverageManager.doInReadActionIfProjectOpen(new Computable<Module[]>() {
       public Module[] compute() {
+        final RunConfigurationBase configuration = suite.getRunConfiguration();
+        if (configuration instanceof ModuleBasedConfiguration) {
+          final Module[] mods = ((ModuleBasedConfiguration)configuration).getModules();
+          if (mods.length > 0) return mods;
+        }
         return ModuleManager.getInstance(myProject).getModules();
       }
     });

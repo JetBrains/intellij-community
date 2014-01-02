@@ -1,13 +1,18 @@
 package com.intellij.coverage;
 
+import com.intellij.coverage.view.JavaCoverageViewExtension;
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.projectView.ProjectViewNode;
 import com.intellij.ide.projectView.impl.nodes.PackageElement;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packageDependencies.ui.PackageDependenciesNode;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.SmartPsiElementPointer;
+import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import org.jetbrains.annotations.Nullable;
 
@@ -72,9 +77,13 @@ public class CoverageProjectViewClassNodeDecorator extends AbstractCoverageProve
     }
 
     if (element instanceof PsiClass) {
-      final String qName = ((PsiClass)element).getQualifiedName();
-      if (qName != null) {
-        data.setLocationString(javaCovAnnotator.getClassCoverageInformationString(qName, coverageDataManager));
+      final GlobalSearchScope searchScope = JavaCoverageViewExtension.getSearchScope(currentSuite, project);
+      final VirtualFile vFile = PsiUtilCore.getVirtualFile(element);
+      if (vFile != null && searchScope.contains(vFile)) {
+        final String qName = ((PsiClass)element).getQualifiedName();
+        if (qName != null) {
+          data.setLocationString(javaCovAnnotator.getClassCoverageInformationString(qName, coverageDataManager));
+        }
       }
     }
   }
