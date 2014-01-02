@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,9 @@ import org.jetbrains.annotations.Nullable;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * @author peter
@@ -47,7 +49,7 @@ public class JavaMethodSignature {
   @Nullable
   public final Method findMethod(final Class aClass) {
     Method method = getDeclaredMethod(aClass);
-    if (method == null && ReflectionCache.isInterface(aClass)) {
+    if (method == null && aClass.isInterface()) {
       method = getDeclaredMethod(Object.class);
     }
     return method;

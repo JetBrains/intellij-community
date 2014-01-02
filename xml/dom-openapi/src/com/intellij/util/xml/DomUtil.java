@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.*;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.ReflectionCache;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ConcurrentFactoryMap;
@@ -48,7 +47,7 @@ import java.util.*;
  */
 public class DomUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.xml.DomUtil");
-  public static final TypeVariable<Class<GenericValue>> GENERIC_VALUE_TYPE_VARIABLE = ReflectionCache.getTypeParameters(GenericValue.class)[0];
+  public static final TypeVariable<Class<GenericValue>> GENERIC_VALUE_TYPE_VARIABLE = GenericValue.class.getTypeParameters()[0];
   private static final Class<Void> DUMMY = void.class;
   private static final Key<DomFileElement> FILE_ELEMENT_KEY = Key.create("dom file element");
 
@@ -313,7 +312,7 @@ public class DomUtil {
   }
 
   public static Collection<Class> getAllInterfaces(final Class aClass, final Collection<Class> result) {
-    final Class[] interfaces = ReflectionCache.getInterfaces(aClass);
+    final Class[] interfaces = aClass.getInterfaces();
     ContainerUtil.addAll(result, interfaces);
     if (aClass.getSuperclass() != null) {
       getAllInterfaces(aClass.getSuperclass(), result);

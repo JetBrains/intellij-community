@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.MultiValuesMap;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.ReflectionCache;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.FactoryMap;
@@ -68,7 +67,7 @@ public class StaticGenericInfoBuilder {
 
     final Set<JavaMethod> methods = new LinkedHashSet<JavaMethod>();
     InvocationCache invocationCache = DomApplicationComponent.getInstance().getInvocationCache(myClass);
-    for (final Method method : ReflectionCache.getMethods(myClass)) {
+    for (final Method method : myClass.getMethods()) {
       methods.add(invocationCache.getInternedMethod(method));
     }
     for (final JavaMethod method : methods) {
@@ -81,7 +80,7 @@ public class StaticGenericInfoBuilder {
     {
       final Class implClass = DomApplicationComponent.getInstance().getImplementation(myClass);
       if (implClass != null) {
-        for (Method method : ReflectionCache.getMethods(implClass)) {
+        for (Method method : implClass.getMethods()) {
           final int modifiers = method.getModifiers();
           if (!Modifier.isAbstract(modifiers) &&
               !Modifier.isVolatile(modifiers) &&
