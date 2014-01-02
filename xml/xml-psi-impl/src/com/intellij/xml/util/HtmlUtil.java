@@ -609,7 +609,7 @@ public class HtmlUtil {
     return false;
   }
 
-  public static boolean isScriptTag(@NotNull XmlTag tag) {
-    return tag.getLocalName().equalsIgnoreCase(SCRIPT_TAG_NAME);
+  public static boolean isScriptTag(@Nullable XmlTag tag) {
+    return tag != null && tag.getLocalName().equalsIgnoreCase(SCRIPT_TAG_NAME);
   }
 }

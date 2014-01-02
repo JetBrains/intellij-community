@@ -1,61 +1,38 @@
+/*
+ * Copyright 2000-2014 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.ide.browsers.actions;
 
-import com.intellij.ide.browsers.OpenInBrowserRequest;
 import com.intellij.ide.browsers.WebBrowser;
 import com.intellij.ide.browsers.WebBrowserManager;
-import com.intellij.ide.browsers.WebBrowserUrlProvider;
-import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.Shortcut;
-import com.intellij.openapi.keymap.KeymapManager;
-import com.intellij.openapi.keymap.KeymapUtil;
-import com.intellij.openapi.project.DumbAwareAction;
-import com.intellij.openapi.util.Pair;
-import com.intellij.xml.util.HtmlUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-final class BaseWebBrowserAction extends DumbAwareAction {
+final class BaseWebBrowserAction extends BaseOpenInBrowserAction {
   private final WebBrowser browser;
 
   public BaseWebBrowserAction(@NotNull WebBrowser browser) {
-    super(browser.getName(), null, browser.getIcon());
+    super(browser);
 
     this.browser = browser;
   }
 
+  @Nullable
   @Override
-  public void update(final AnActionEvent e) {
-    if (!WebBrowserManager.getInstance().getBrowserSettings(browser).isActive()) {
-      e.getPresentation().setEnabled(false);
-      e.getPresentation().setVisible(false);
-      return;
-    }
-
-    Pair<OpenInBrowserRequest, WebBrowserUrlProvider> result = OpenInBrowserBaseGroupAction.doUpdate(e);
-    if (result == null) {
-      return;
-    }
-
-    String description = getTemplatePresentation().getText();
-    if (ActionPlaces.CONTEXT_TOOLBAR.equals(e.getPlace())) {
-      StringBuilder builder = new StringBuilder(description);
-      builder.append(" (");
-      Shortcut[] shortcuts = KeymapManager.getInstance().getActiveKeymap().getShortcuts("WebOpenInAction");
-      if (shortcuts.length > 0) {
-        builder.append(KeymapUtil.getShortcutText(shortcuts[0]));
-      }
-
-      if (HtmlUtil.isHtmlFile(result.first.getFile())) {
-        builder.append(", hold Shift to open URL of local file");
-      }
-      builder.append(')');
-      description = builder.toString();
-    }
-    e.getPresentation().setText(description);
-  }
-
-  @Override
-  public void actionPerformed(AnActionEvent e) {
-    OpenFileInDefaultBrowserAction.open(e, browser);
+  protected WebBrowser getBrowser(@NotNull AnActionEvent event) {
+    return WebBrowserManager.getInstance().getBrowserSettings(browser).isActive() ? browser : null;
   }
 }

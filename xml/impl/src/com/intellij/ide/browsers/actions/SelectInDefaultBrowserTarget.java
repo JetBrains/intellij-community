@@ -13,12 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.ide.browsers;
+package com.intellij.ide.browsers.actions;
 
 import com.intellij.ide.SelectInContext;
 import com.intellij.ide.SelectInTargetBase;
 import com.intellij.ide.StandardTargetWeights;
-import com.intellij.ide.browsers.actions.OpenFileInDefaultBrowserAction;
+import com.intellij.ide.browsers.OpenInBrowserRequest;
+import com.intellij.ide.browsers.WebBrowserUrlProvider;
 import com.intellij.ide.browsers.impl.WebBrowserServiceImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -65,7 +66,7 @@ class SelectInDefaultBrowserTarget extends SelectInTargetBase {
   public void selectIn(SelectInContext context, boolean requestFocus) {
     PsiElement element = (PsiElement)context.getSelectorInFile();
     LOG.assertTrue(element != null);
-    OpenFileInDefaultBrowserAction.open(OpenInBrowserRequest.create(element), false, null);
+    BaseOpenInBrowserAction.open(OpenInBrowserRequest.create(element), false, null);
   }
 
   @Override
