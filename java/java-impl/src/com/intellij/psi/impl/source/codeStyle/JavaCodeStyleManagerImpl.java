@@ -209,7 +209,8 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
   }
 
   @Override
-  public SuggestedNameInfo suggestSimpleParameterName(@NotNull PsiType type) {
+  public SuggestedNameInfo suggestCompiledParameterName(@NotNull PsiType type) {
+    // avoid hang due to nice name evaluation that uses indices for resolve (IDEA-116803)
     return new SuggestedNameInfo(suggestVariableNameByType(type, VariableKind.PARAMETER, true, true)) {
     };
   }

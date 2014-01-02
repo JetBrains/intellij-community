@@ -122,7 +122,11 @@ public abstract class JavaCodeStyleManager {
     return suggestVariableName(kind, propertyName, expr, type, true);
   }
 
-  public SuggestedNameInfo suggestSimpleParameterName(@NotNull PsiType type) {
+  /**
+   * Generates compiled parameter name for given type.
+   * Should not access indices due to performance reasons (e.g. see IDEA-116803)
+   */
+  public SuggestedNameInfo suggestCompiledParameterName(@NotNull PsiType type) {
     return suggestVariableName(VariableKind.PARAMETER, null, null, type, true);
   }
 
