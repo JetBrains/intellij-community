@@ -518,7 +518,7 @@
     <codeInsight.unresolvedReferenceQuickFixProvider
         implementation="com.intellij.psi.impl.source.resolve.reference.impl.providers.DependentNSReferenceQuickFixProvider"/>
 
-    <selectInTarget implementation="com.intellij.ide.browsers.SelectInDefaultBrowserTarget"/>
+    <selectInTarget implementation="com.intellij.ide.browsers.actions.SelectInDefaultBrowserTarget"/>
     <xml.xmlExtension implementation="com.intellij.xml.HtmlXmlExtension"/>
 
   </extensions>
