@@ -263,8 +263,18 @@ public class SmartList<E> extends AbstractList<E> {
         return a;
       }
     }
-    //noinspection SuspiciousToArrayCall
-    return super.toArray(a);
+
+    if (a.length < mySize) {
+      return (T[])Arrays.copyOf((E[])myElem, mySize, a.getClass());
+    }
+    else {
+      //noinspection SuspiciousSystemArraycopy
+      System.arraycopy(myElem, 0, a, 0, mySize);
+      if (a.length > mySize) {
+        a[mySize] = null;
+      }
+      return a;
+    }
   }
 
   /**
