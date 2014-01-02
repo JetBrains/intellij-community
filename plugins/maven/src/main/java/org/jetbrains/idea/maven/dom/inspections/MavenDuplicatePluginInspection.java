@@ -20,7 +20,6 @@ import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.MultiMap;
-import com.intellij.util.containers.MultiMapBasedOnSet;
 import com.intellij.util.xml.DomFileElement;
 import com.intellij.util.xml.highlighting.DomElementAnnotationHolder;
 import com.intellij.util.xml.highlighting.DomElementsInspection;
@@ -42,7 +41,7 @@ public class MavenDuplicatePluginInspection extends DomElementsInspection<MavenD
                                DomElementAnnotationHolder holder) {
     MavenDomProjectModel projectModel = domFileElement.getRootElement();
 
-    MultiMap<Pair<String,String>, MavenDomPlugin> duplicates = new MultiMapBasedOnSet<Pair<String, String>, MavenDomPlugin>();
+    MultiMap<Pair<String,String>, MavenDomPlugin> duplicates = MultiMap.createSet();
 
     for (MavenDomPlugin plugin : projectModel.getBuild().getPlugins().getPlugins()) {
       String groupId = plugin.getGroupId().getStringValue();

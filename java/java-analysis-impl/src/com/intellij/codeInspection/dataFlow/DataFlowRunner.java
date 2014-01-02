@@ -38,7 +38,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
-import com.intellij.util.containers.MultiMapBasedOnSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -144,8 +143,8 @@ public class DataFlowRunner {
         queue.offer(new DfaInstructionState(myInstructions[0], initialState));
       }
 
-      MultiMapBasedOnSet<BranchingInstruction, DfaMemoryState> processedStates = new MultiMapBasedOnSet<BranchingInstruction, DfaMemoryState>();
-      MultiMapBasedOnSet<BranchingInstruction, DfaMemoryState> incomingStates = new MultiMapBasedOnSet<BranchingInstruction, DfaMemoryState>();
+      MultiMap<BranchingInstruction, DfaMemoryState> processedStates = MultiMap.createSet();
+      MultiMap<BranchingInstruction, DfaMemoryState> incomingStates = MultiMap.createSet();
 
       WorkingTimeMeasurer measurer = new WorkingTimeMeasurer(shouldCheckTimeLimit() ? ourTimeLimit : ourTimeLimit * 5);
       int count = 0;

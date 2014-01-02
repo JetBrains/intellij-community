@@ -13,9 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.codeInsight.daemon.impl;
+package com.intellij.util.containers;
 
-import com.intellij.util.containers.SingletonIterator;
 import gnu.trove.THashSet;
 import gnu.trove.TObjectHashingStrategy;
 import gnu.trove.TObjectProcedure;

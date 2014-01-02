@@ -32,7 +32,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
-import com.intellij.util.containers.MultiMapBasedOnSet;
 import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -347,7 +346,7 @@ class RootIndex {
     @NotNull final LinkedHashSet<VirtualFile> classAndSourceRoots = ContainerUtil.newLinkedHashSet();
 
     @NotNull final Map<VirtualFile, Module> contentRootOf = ContainerUtil.newHashMap();
-    @NotNull final MultiMap<VirtualFile, Module> sourceRootOf = MultiMapBasedOnSet.createBasedOnSet();
+    @NotNull final MultiMap<VirtualFile, Module> sourceRootOf = MultiMap.createSet();
     @NotNull final TObjectIntHashMap<VirtualFile> rootTypeId = new TObjectIntHashMap<VirtualFile>();
     @NotNull final MultiMap<VirtualFile, OrderEntry> libClassRootEntries = MultiMap.createSmartList();
     @NotNull final MultiMap<VirtualFile, OrderEntry> libSourceRootEntries = MultiMap.createSmartList();

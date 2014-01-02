@@ -18,7 +18,6 @@ package com.intellij.util.containers;
 
 import com.intellij.util.SmartList;
 import gnu.trove.THashMap;
-import gnu.trove.THashSet;
 import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -285,7 +284,12 @@ public class MultiMap<K, V> implements Serializable {
     return new MultiMap<K, V>() {
       @Override
       protected Collection<V> createCollection() {
-        return new THashSet<V>();
+        return new SmartHashSet<V>();
+      }
+
+      @Override
+      protected Collection<V> createEmptyCollection() {
+        return Collections.emptySet();
       }
 
       @Override

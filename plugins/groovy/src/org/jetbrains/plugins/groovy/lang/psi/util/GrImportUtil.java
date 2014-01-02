@@ -16,7 +16,7 @@
 package org.jetbrains.plugins.groovy.lang.psi.util;
 
 import com.intellij.psi.PsiFile;
-import com.intellij.util.containers.MultiMapBasedOnSet;
+import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
@@ -30,7 +30,7 @@ import java.util.Collection;
  * @author Max Medvedev
  */
 public class GrImportUtil {
-  private static final LightCacheKey<MultiMapBasedOnSet<String, String>> KEY = LightCacheKey.createByFileModificationCount();
+  private static final LightCacheKey<MultiMap<String, String>> KEY = LightCacheKey.createByFileModificationCount();
 
   public static boolean acceptName(GrReferenceElement ref, String expected) {
     final String actual = ref.getReferenceName();
@@ -40,7 +40,7 @@ public class GrImportUtil {
 
     final PsiFile file = ref.getContainingFile();
     if (file instanceof GroovyFile) {
-      MultiMapBasedOnSet<String, String> data = KEY.getCachedValue(file);
+      MultiMap<String, String> data = KEY.getCachedValue(file);
       if (data == null) {
         data = collectAliases((GroovyFile)file);
         KEY.putCachedValue(file, data);
@@ -55,8 +55,8 @@ public class GrImportUtil {
   }
 
   @NotNull
-  private static MultiMapBasedOnSet<String, String> collectAliases(@NotNull GroovyFile file) {
-    MultiMapBasedOnSet<String, String> aliases = new MultiMapBasedOnSet<String, String>();
+  private static MultiMap<String, String> collectAliases(@NotNull GroovyFile file) {
+    MultiMap<String, String> aliases = MultiMap.createSet();
 
     for (GrImportStatement anImport : file.getImportStatements()) {
       if (anImport.isAliasedImport()) {

@@ -25,7 +25,6 @@ import com.intellij.util.SmartList;
 import com.intellij.util.concurrency.BoundedTaskExecutor;
 import com.intellij.util.containers.ConcurrentHashSet;
 import com.intellij.util.containers.MultiMap;
-import com.intellij.util.containers.MultiMapBasedOnSet;
 import com.intellij.util.io.MappingFailedException;
 import com.intellij.util.io.PersistentEnumerator;
 import gnu.trove.THashMap;
@@ -479,7 +478,7 @@ public class IncProjectBuilder {
   }
 
   private void clearOutputs(CompileContext context) throws ProjectBuildException {
-    final MultiMap<File, BuildTarget<?>> rootsToDelete = new MultiMapBasedOnSet<File, BuildTarget<?>>();
+    final MultiMap<File, BuildTarget<?>> rootsToDelete = MultiMap.createSet();
     final Set<File> allSourceRoots = new HashSet<File>();
 
     ProjectDescriptor projectDescriptor = context.getProjectDescriptor();
