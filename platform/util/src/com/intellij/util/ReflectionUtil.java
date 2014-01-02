@@ -335,4 +335,8 @@ public class ReflectionUtil {
       return null;
     }
   }
+
+  public static boolean isAssignable(@NotNull Class<?> ancestor, Class<?> descendant) {
+    return ancestor == descendant || ancestor.isAssignableFrom(descendant);
+  }
 }

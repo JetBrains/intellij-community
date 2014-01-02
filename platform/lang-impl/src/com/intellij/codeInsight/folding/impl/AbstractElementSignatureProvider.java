@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiNamedElement;
-import com.intellij.util.ReflectionCache;
+import com.intellij.util.ReflectionUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -81,7 +81,7 @@ public abstract class AbstractElementSignatureProvider implements ElementSignatu
     int index = 0;
 
     for (PsiElement child : children) {
-      if (ReflectionCache.isAssignable(hisClass, child.getClass())) {
+      if (ReflectionUtil.isAssignable(hisClass, child.getClass())) {
         T namedChild = hisClass.cast(child);
         final String childName = namedChild.getName();
 
@@ -106,7 +106,7 @@ public abstract class AbstractElementSignatureProvider implements ElementSignatu
     PsiElement[] children = parent.getChildren();
 
     for (PsiElement child : children) {
-      if (ReflectionCache.isAssignable(hisClass, child.getClass())) {
+      if (ReflectionUtil.isAssignable(hisClass, child.getClass())) {
         T namedChild = hisClass.cast(child);
         final String childName = namedChild.getName();
 

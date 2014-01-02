@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,7 @@ import com.intellij.psi.impl.source.DummyHolder;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.ReflectionCache;
+import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.IntArrayList;
 import gnu.trove.THashSet;
 import gnu.trove.TIntHashSet;
@@ -351,7 +351,7 @@ public class ControlFlowUtil {
   private static boolean isElementOfClass(PsiElement element, Class[] classesFilter) {
     if (classesFilter == null) return true;
     for (Class aClassesFilter : classesFilter) {
-      if (ReflectionCache.isAssignable(aClassesFilter, element.getClass())) {
+      if (ReflectionUtil.isAssignable(aClassesFilter, element.getClass())) {
         return true;
       }
     }

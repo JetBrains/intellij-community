@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,10 @@ import com.intellij.codeInsight.*;
 import com.intellij.codeInsight.completion.scope.JavaCompletionProcessor;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.openapi.util.Key;
-import com.intellij.patterns.*;
+import com.intellij.patterns.ElementPattern;
+import com.intellij.patterns.PatternCondition;
+import com.intellij.patterns.PsiElementPattern;
+import com.intellij.patterns.PsiJavaPatterns;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.ElementExtractorFilter;
 import com.intellij.psi.filters.ElementFilter;
@@ -37,7 +40,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.ProcessingContext;
-import com.intellij.util.ReflectionCache;
+import com.intellij.util.ReflectionUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
@@ -435,13 +438,13 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
 
         @Override
         public boolean isClassAcceptable(Class hintClass) {
-          if (ReflectionCache.isAssignable(PsiClass.class, hintClass)) {
+          if (ReflectionUtil.isAssignable(PsiClass.class, hintClass)) {
             return acceptClasses;
           }
 
-          if (ReflectionCache.isAssignable(PsiVariable.class, hintClass) ||
-              ReflectionCache.isAssignable(PsiMethod.class, hintClass) ||
-              ReflectionCache.isAssignable(CandidateInfo.class, hintClass)) {
+          if (ReflectionUtil.isAssignable(PsiVariable.class, hintClass) ||
+              ReflectionUtil.isAssignable(PsiMethod.class, hintClass) ||
+              ReflectionUtil.isAssignable(CandidateInfo.class, hintClass)) {
             return acceptMembers;
           }
           return false;

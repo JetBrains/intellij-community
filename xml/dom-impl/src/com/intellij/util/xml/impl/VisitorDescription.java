@@ -15,7 +15,7 @@
  */
 package com.intellij.util.xml.impl;
 
-import com.intellij.util.ReflectionCache;
+import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ConcurrentClassMap;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomElementVisitor;
@@ -40,7 +40,7 @@ public class VisitorDescription {
         continue;
       }
       final Class<?> domClass = parameterTypes[0];
-      if (!ReflectionCache.isAssignable(DomElement.class, domClass)) {
+      if (!ReflectionUtil.isAssignable(DomElement.class, domClass)) {
         continue;
       }
       final String methodName = method.getName();

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,7 @@ import com.intellij.psi.PsiReference;
 import com.intellij.psi.filters.ContextGetter;
 import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.filters.position.PatternFilter;
-import com.intellij.util.ReflectionCache;
+import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NonNls;
 
@@ -90,7 +90,7 @@ public class CompletionVariant {
   public boolean isScopeClassFinal(Class scopeClass){
     for (final Object myScopeClass : myScopeClasses) {
       Scope scope = (Scope)myScopeClass;
-      if (ReflectionCache.isAssignable(scope.myClass, scopeClass) && scope.myIsFinalScope) {
+      if (ReflectionUtil.isAssignable(scope.myClass, scopeClass) && scope.myIsFinalScope) {
         return true;
       }
     }
@@ -102,7 +102,7 @@ public class CompletionVariant {
 
     for (final Object myScopeClass : myScopeClasses) {
       final Class aClass = ((Scope)myScopeClass).myClass;
-      if (ReflectionCache.isAssignable(aClass, scopeClass)) {
+      if (ReflectionUtil.isAssignable(aClass, scopeClass)) {
         ret = true;
         break;
       }
@@ -110,7 +110,7 @@ public class CompletionVariant {
 
     if(ret){
       for (final Class aClass: myScopeClassExceptions) {
-        if (ReflectionCache.isAssignable(aClass, scopeClass)) {
+        if (ReflectionUtil.isAssignable(aClass, scopeClass)) {
           ret = false;
           break;
         }

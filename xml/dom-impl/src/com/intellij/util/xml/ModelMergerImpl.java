@@ -16,7 +16,6 @@
 package com.intellij.util.xml;
 
 import com.intellij.openapi.util.Pair;
-import com.intellij.util.ReflectionCache;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ConcurrentFactoryMap;
@@ -273,10 +272,10 @@ public class ModelMergerImpl implements ModelMerger {
     }
 
     private JavaMethod getJavaMethod(final Method method) {
-      if (ReflectionCache.isAssignable(MERGED_OBJECT_CLASS, method.getDeclaringClass())) {
+      if (ReflectionUtil.isAssignable(MERGED_OBJECT_CLASS, method.getDeclaringClass())) {
         return JavaMethod.getMethod(MERGED_OBJECT_CLASS, method);
       }
-      if (ReflectionCache.isAssignable(method.getDeclaringClass(), myClass)) {
+      if (ReflectionUtil.isAssignable(method.getDeclaringClass(), myClass)) {
         return JavaMethod.getMethod(myClass, method);
       }
       return JavaMethod.getMethod(method.getDeclaringClass(), method);
@@ -288,7 +287,7 @@ public class ModelMergerImpl implements ModelMerger {
     final Method method = getPrimaryKeyMethod(implementation.getClass());
     if (method != null) {
       final Object o = DomReflectionUtil.invokeMethod(method, implementation);
-      return ReflectionCache.isAssignable(GenericValue.class, method.getReturnType()) ? ((GenericValue)o).getValue() : o;
+      return ReflectionUtil.isAssignable(GenericValue.class, method.getReturnType()) ? ((GenericValue)o).getValue() : o;
     }
     else {
       if (implementation instanceof GenericValue) {
@@ -384,7 +383,7 @@ public class ModelMergerImpl implements ModelMerger {
 
   protected final Object mergeImplementations(final Class returnType, final List<Object> implementations) {
     for (int i = myMergingStrategies.size() - 1; i >= 0; i--) {
-      if (ReflectionCache.isAssignable(myMergingStrategyClasses.get(i), returnType)) {
+      if (ReflectionUtil.isAssignable(myMergingStrategyClasses.get(i), returnType)) {
         final Object o = myMergingStrategies.get(i).mergeChildren(returnType, implementations);
         if (o != null) {
           return o;

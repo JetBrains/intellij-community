@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
  */
 package com.intellij.ui;
 
-import com.intellij.util.ReflectionCache;
+import com.intellij.util.ReflectionUtil;
 
 import javax.swing.*;
 import java.awt.*;
@@ -51,7 +51,7 @@ public abstract class ComponentTreeWatcher {
       return true;
     }
     for (Class aClass : myControlsToIgnore) {
-      if (ReflectionCache.isAssignable(aClass, object.getClass())) {
+      if (ReflectionUtil.isAssignable(aClass, object.getClass())) {
         return true;
       }
     }

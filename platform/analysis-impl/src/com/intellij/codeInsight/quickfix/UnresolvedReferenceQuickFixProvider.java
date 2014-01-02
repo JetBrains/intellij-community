@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,7 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.psi.PsiReference;
-import com.intellij.util.ReflectionCache;
+import com.intellij.util.ReflectionUtil;
 import org.jetbrains.annotations.NotNull;
 
 public abstract class UnresolvedReferenceQuickFixProvider<T extends PsiReference> {
@@ -32,7 +32,7 @@ public abstract class UnresolvedReferenceQuickFixProvider<T extends PsiReference
       if (dumb && !DumbService.isDumbAware(each)) {
         continue;
       }
-      if (ReflectionCache.isAssignable(each.getReferenceClass(), referenceClass)) {
+      if (ReflectionUtil.isAssignable(each.getReferenceClass(), referenceClass)) {
         each.registerFixes(ref, registrar);
       }
     }

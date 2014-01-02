@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.xml.*;
 import com.intellij.util.ProcessingContext;
-import com.intellij.util.ReflectionCache;
+import com.intellij.util.ReflectionUtil;
 import com.intellij.util.xml.*;
 import com.intellij.xml.util.XmlEnumeratedValueReferenceProvider;
 import org.jetbrains.annotations.NotNull;
@@ -145,7 +145,7 @@ public class GenericValueReferenceProvider extends PsiReferenceProvider {
     final Class clazz = DomUtil.getGenericValueParameter(invocationHandler.getDomElementType());
     if (clazz == null) return PsiReference.EMPTY_ARRAY;
 
-    if (ReflectionCache.isAssignable(Integer.class, clazz)) {
+    if (ReflectionUtil.isAssignable(Integer.class, clazz)) {
       return new PsiReference[]{new GenericDomValueReference<Integer>((GenericDomValue<Integer>)domValue) {
         @NotNull
         public Object[] getVariants() {
@@ -153,7 +153,7 @@ public class GenericValueReferenceProvider extends PsiReferenceProvider {
         }
       }};
     }
-    if (ReflectionCache.isAssignable(String.class, clazz)) {
+    if (ReflectionUtil.isAssignable(String.class, clazz)) {
       return PsiReference.EMPTY_ARRAY;
     }
     PsiReferenceFactory provider = myProviders.get(clazz);

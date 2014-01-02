@@ -690,7 +690,7 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
   }
 
   public final String toString() {
-    if (ReflectionCache.isAssignable(GenericValue.class, getRawType())) {
+    if (ReflectionUtil.isAssignable(GenericValue.class, getRawType())) {
       return ((GenericValue)getProxy()).getStringValue();
     }
     return myType.toString() + " @" + hashCode();

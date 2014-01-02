@@ -16,7 +16,7 @@
 package com.intellij.openapi.util;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.util.ReflectionCache;
+import com.intellij.util.ReflectionUtil;
 import org.jdom.Element;
 import org.jdom.Verifier;
 import org.jetbrains.annotations.NotNull;
@@ -100,7 +100,7 @@ public class DefaultJDOMExternalizer {
             value = Integer.toString(color.getRGB() & 0xFFFFFF, 16);
           }
         }
-        else if (ReflectionCache.isAssignable(JDOMExternalizable.class, type)) {
+        else if (ReflectionUtil.isAssignable(JDOMExternalizable.class, type)) {
           Element element = new Element("option");
           parentNode.addContent(element);
           element.setAttribute("name", field.getName());
@@ -258,7 +258,7 @@ public class DefaultJDOMExternalizer {
           Color color = toColor(value);
           field.set(data, color);
         }
-        else if (ReflectionCache.isAssignable(JDOMExternalizable.class, type)) {
+        else if (ReflectionUtil.isAssignable(JDOMExternalizable.class, type)) {
           final List children = e.getChildren("value");
           if (!children.isEmpty()) {
             // compatibility with Selena's serialization which writes an empty tag for a bean which has a default value
