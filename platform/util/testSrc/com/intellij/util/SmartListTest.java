@@ -232,6 +232,13 @@ public class SmartListTest {
   }
 
   @Test
+  public void testEmptyToArray() {
+    SmartList<Integer> l = new SmartList<Integer>();
+    assertArrayEquals(l.toArray(), new Integer[]{});
+    assertArrayEquals(l.toArray(new Integer[]{}), new Integer[]{});
+  }
+
+  @Test
   public void testToArray() {
     SmartList<Integer> l = new SmartList<Integer>(0, 1);
     assertArrayEquals(l.toArray(), new Object[]{0, 1});

@@ -262,6 +262,9 @@ public class SmartList<E> extends AbstractList<E> {
     if (a.length < mySize) {
       return (T[])Arrays.copyOf((E[])myElem, mySize, a.getClass());
     }
+    else if (mySize == 0) {
+      return a;
+    }
     else {
       //noinspection SuspiciousSystemArraycopy
       System.arraycopy(myElem, 0, a, 0, mySize);
