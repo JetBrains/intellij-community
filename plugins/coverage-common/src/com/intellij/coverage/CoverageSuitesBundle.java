@@ -148,6 +148,7 @@ public class CoverageSuitesBundle {
     myProcessedModules.add(module);
   }
 
+  @Nullable
   public RunConfigurationBase getRunConfiguration() {
     for (CoverageSuite suite : mySuites) {
       if (suite instanceof BaseCoverageSuite) {
