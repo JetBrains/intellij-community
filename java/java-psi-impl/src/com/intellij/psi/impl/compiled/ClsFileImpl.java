@@ -267,21 +267,6 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub>
   @Override
   @NotNull
   public PsiElement getNavigationElement() {
-    return CachedValuesManager.getCachedValue(this, new CachedValueProvider<PsiElement>() {
-      @Nullable
-      @Override
-      public Result<PsiElement> compute() {
-        PsiElement target = calcNavigationElement();
-        return Result.create(target, 
-                             ClsFileImpl.this, 
-                             target.getContainingFile(), 
-                             FileIndexFacade.getInstance(getProject()).getRootModificationTracker());
-      }
-    });
-  }
-
-  @NotNull
-  private PsiElement calcNavigationElement() {
     for (ClsCustomNavigationPolicy customNavigationPolicy : Extensions.getExtensions(ClsCustomNavigationPolicy.EP_NAME)) {
       if (customNavigationPolicy instanceof ClsCustomNavigationPolicyEx) {
         PsiFile navigationElement = ((ClsCustomNavigationPolicyEx)customNavigationPolicy).getFileNavigationElement(this);
@@ -291,7 +276,17 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub>
       }
     }
 
-    return JavaPsiImplementationHelper.getInstance(getProject()).getClsFileNavigationElement(this);
+    return CachedValuesManager.getCachedValue(this, new CachedValueProvider<PsiElement>() {
+      @Nullable
+      @Override
+      public Result<PsiElement> compute() {
+        PsiElement target = JavaPsiImplementationHelper.getInstance(getProject()).getClsFileNavigationElement(ClsFileImpl.this);
+        return Result.create(target, 
+                             ClsFileImpl.this, 
+                             target.getContainingFile(), 
+                             FileIndexFacade.getInstance(getProject()).getRootModificationTracker());
+      }
+    });
   }
 
   @Override
