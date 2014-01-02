@@ -203,12 +203,14 @@ public abstract class PassExecutorService implements Disposable {
   }
 
   @Nullable
-  private FileEditor getPreferredFileEditor(@NotNull Document document, @NotNull List<FileEditor> fileEditors) {
-    final VirtualFile file = FileDocumentManager.getInstance().getFile(document);
-    if (file != null) {
-      final FileEditor selected = FileEditorManager.getInstance(myProject).getSelectedEditor(file);
-      if (fileEditors.contains(selected)) {
-        return selected;
+  private FileEditor getPreferredFileEditor(Document document, @NotNull List<FileEditor> fileEditors) {
+    if (document != null) {
+      final VirtualFile file = FileDocumentManager.getInstance().getFile(document);
+      if (file != null) {
+        final FileEditor selected = FileEditorManager.getInstance(myProject).getSelectedEditor(file);
+        if (fileEditors.contains(selected)) {
+          return selected;
+        }
       }
     }
     if (!fileEditors.isEmpty()) {
