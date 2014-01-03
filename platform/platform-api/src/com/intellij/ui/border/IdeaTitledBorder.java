@@ -14,8 +14,8 @@ import java.awt.*;
 public class IdeaTitledBorder extends TitledBorder {
 
   private final TitledSeparator titledSeparator;
-  private Insets insideInsets;
-  private Insets outsideInsets;
+  private final Insets insideInsets;
+  private final Insets outsideInsets;
 
   public IdeaTitledBorder(String title, int indent, Insets insets) {
     super(title);
@@ -23,9 +23,8 @@ public class IdeaTitledBorder extends TitledBorder {
     titledSeparator.setText(title);
     DialogUtil.registerMnemonic(titledSeparator.getLabel(), null);
 
-    this.outsideInsets = new Insets(insets.top, insets.left, insets.bottom, insets.right);
-
-    this.insideInsets = new Insets(TitledSeparator.BOTTOM_INSET, indent, 0, 0);
+    outsideInsets = new Insets(insets.top, insets.left, insets.bottom, insets.right);
+    insideInsets = new Insets(TitledSeparator.BOTTOM_INSET, indent, 0, 0);
   }
 
   @Override

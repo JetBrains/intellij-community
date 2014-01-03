@@ -27,10 +27,10 @@ import java.awt.*;
  * @author cdr
  */
 public class TitledSeparator extends JPanel {
-  public static int TOP_INSET = 7;
-  public static int BOTTOM_INSET = 5;
-  public static int SEPARATOR_LEFT_INSET = 6;
-  public static int SEPARATOR_RIGHT_INSET = 3;
+  public static final int TOP_INSET = 7;
+  public static final int BOTTOM_INSET = 5;
+  public static final int SEPARATOR_LEFT_INSET = 6;
+  public static final int SEPARATOR_RIGHT_INSET = 3;
 
   protected final JBLabel myLabel = new JBLabel() {
     @Override
