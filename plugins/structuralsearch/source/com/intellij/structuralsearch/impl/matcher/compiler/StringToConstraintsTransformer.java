@@ -8,6 +8,7 @@ import org.jetbrains.annotations.NonNls;
 import java.util.StringTokenizer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
 
 /**
  * Created by IntelliJ IDEA.
@@ -17,12 +18,11 @@ import java.util.regex.Pattern;
  * To change this template use File | Settings | File Templates.
  */
 class StringToConstraintsTransformer {
-  private static final StringBuffer buf = new StringBuffer();
   @NonNls private static final String P_STR = "(\\w+)\\('(\\w+)\\)";
   private static final Pattern p = Pattern.compile(P_STR);
   @NonNls private static final String P2_STR = "(\\w+)";
   private static final Pattern p2 = Pattern.compile(P2_STR);
-  @NonNls private static final String P3_STR = "(\\w+)\\(( ?(?:[\\\"\\*<>!\\.\\?\\:\\$\\\\\\(\\)\\[\\]\\w\\|\\+ =]+|(?:\\\"[^\\\"]*\\\")) ?)\\)";
+  @NonNls private static final String P3_STR = "(\\w+)\\(( ?(?:[\\\"\\*<>!\\.\\?\\:\\$\\\\\\(\\)\\[\\]\\w\\|\\+ =]*|(?:\\\"[^\\\"]*\\\")) ?)\\)";
   private static final Pattern p3 = Pattern.compile(P3_STR);
   @NonNls private static final String REF = "ref";
   @NonNls private static final String READ = "read";
@@ -38,9 +38,9 @@ class StringToConstraintsTransformer {
   static void transformOldPattern(MatchOptions options) {
       final String pattern = options.getSearchPattern();
 
-      buf.setLength(0);
+      final StringBuilder buf = new StringBuilder();
 
-      StringBuffer miscBuffer = null;
+      StringBuilder miscBuffer = null;
       int anonymousTypedVarsCount = 0;
 
       for(int index=0;index < pattern.length();++index) {
@@ -48,19 +48,20 @@ class StringToConstraintsTransformer {
 
         if (ch=='\'') {
           // doubling '
-          if (index + 1 < pattern.length() &&
+          final int length = pattern.length();
+          if (index + 1 < length &&
               pattern.charAt(index + 1)=='\''
              ) {
             // ignore next '
             index++;
-          } else if (index + 2 < pattern.length() &&
+          } else if (index + 2 < length &&
                      pattern.charAt(index + 2)=='\''
              ) {
             // eat simple character
             buf.append(ch);
             buf.append(pattern.charAt(++index));
             ch = pattern.charAt(++index);
-          } else if (index + 3 < pattern.length() &&
+          } else if (index + 3 < length &&
                      pattern.charAt(index + 1)=='\\' &&
                      pattern.charAt(index + 3)=='\''
           ) {
@@ -69,7 +70,7 @@ class StringToConstraintsTransformer {
             buf.append(pattern.charAt(++index));
             buf.append(pattern.charAt(++index));
             ch = pattern.charAt(++index);
-          } else if (index + 7 < pattern.length() &&
+          } else if (index + 7 < length &&
                      pattern.charAt(index + 1)=='\\' &&
                      pattern.charAt(index + 2)=='u' &&
                      pattern.charAt(index + 7)=='\'') {
@@ -86,18 +87,18 @@ class StringToConstraintsTransformer {
             // typed variable
 
             buf.append("$");
-            if (miscBuffer==null) miscBuffer = new StringBuffer();
+            if (miscBuffer == null) miscBuffer = new StringBuilder();
             else miscBuffer.setLength(0);
 
             // eat the name of typed var
-            for(++index;index<pattern.length() && Character.isJavaIdentifierPart(pattern.charAt(index));++index) {
-              ch = pattern.charAt(index);
+            for(++index; index< length && Character.isJavaIdentifierPart(ch = pattern.charAt(index)); ++index) {
               miscBuffer.append(ch);
               buf.append(ch);
             }
 
             boolean anonymous = false;
 
+            if (miscBuffer.length() == 0) throw new MalformedPatternException(SSRBundle.message("error.expected.character"));
             if (miscBuffer.charAt(0)=='_')  {
               anonymous = true;
 
@@ -127,8 +128,8 @@ class StringToConstraintsTransformer {
               constraintCreated = true;
             }
 
-            // Check the number of occurences for typed variable
-            if (index < pattern.length()) {
+            // Check the number of occurrences for typed variable
+            if (index < length) {
               char possibleQuantifier = pattern.charAt(index);
 
               if (possibleQuantifier=='+') {
@@ -144,9 +145,10 @@ class StringToConstraintsTransformer {
               } else if (possibleQuantifier=='{') {
                 ++index;
                 minOccurs = 0;
-                while( (ch = pattern.charAt(index))>='0' && ch <= '9') {
+                while (index < length && (ch = pattern.charAt(index)) >= '0' && ch <= '9') {
                   minOccurs *= 10;
-                  minOccurs += (ch-'0');
+                  minOccurs += (ch - '0');
+                  if (minOccurs < 0) throw new MalformedPatternException(SSRBundle.message("error.overflow"));
                   ++index;
                 }
 
@@ -154,20 +156,24 @@ class StringToConstraintsTransformer {
                   ++index;
                   maxOccurs = 0;
 
-                  while( (ch = pattern.charAt(index))>='0' && ch <= '9') {
+                  while (index < length && (ch = pattern.charAt(index)) >= '0' && ch <= '9') {
                     maxOccurs *= 10;
-                    maxOccurs += (ch-'0');
+                    maxOccurs += (ch - '0');
+                    if (maxOccurs < 0) throw new MalformedPatternException(SSRBundle.message("error.overflow"));
                     ++index;
                   }
                 } else {
                   maxOccurs = Integer.MAX_VALUE;
                 }
 
-                // ch must == }
+                if (ch != '}') {
+                  if (maxOccurs == Integer.MAX_VALUE) throw new MalformedPatternException(SSRBundle.message("error.expected.brace1"));
+                  else throw new MalformedPatternException(SSRBundle.message("error.expected.brace2"));
+                }
                 ++index;
               }
 
-              if (index < pattern.length()) {
+              if (index < length) {
                 ch = pattern.charAt(index);
                 if (ch=='?') {
                   greedy = false;
@@ -192,8 +198,8 @@ class StringToConstraintsTransformer {
               options.addVariableConstraint(constraint);
             }
 
-            if (index == pattern.length()) break;
-            // fall thri to append white space
+            if (index == length) break;
+            // fall through to append white space
             ch = pattern.charAt(index);
           }
         }
@@ -206,14 +212,15 @@ class StringToConstraintsTransformer {
 
   private static int eatTypedVarCondition(int index,
                                           String pattern,
-                                          StringBuffer miscBuffer,
+                                          StringBuilder miscBuffer,
                                           MatchVariableConstraint constraint) {
-    if (index<pattern.length() && pattern.charAt(index)==':') {
+    final int length = pattern.length();
+    if (index < length && pattern.charAt(index) == ':') {
       ++index;
+      if (index >= length) throw new MalformedPatternException(SSRBundle.message("error.expected.condition"));
 
-      final char ch = pattern.charAt(index);
-
-      if (ch=='+' || ch=='*' ) {
+      char ch = pattern.charAt(index);
+      if (ch == '+' || ch == '*') {
         // this is type axis navigation relation
         switch(ch) {
           case '+':
@@ -225,17 +232,20 @@ class StringToConstraintsTransformer {
         }
 
         ++index;
+        if (index >= length) throw new MalformedPatternException(SSRBundle.message("error.expected.condition"));
+        ch = pattern.charAt(index);
       }
 
-      if (pattern.charAt(index)=='[') {
+      if (ch == '[') {
         // eat complete condition
 
         miscBuffer.setLength(0);
-        for(++index;pattern.charAt(index)!=']' || pattern.charAt(index-1)=='\\';++index) {
-          miscBuffer.append(pattern.charAt(index));
+        for(++index; index < length && ((ch = pattern.charAt(index))!=']' || pattern.charAt(index-1)=='\\'); ++index) {
+          miscBuffer.append(ch);
         }
+        if (ch != ']') throw new MalformedPatternException(SSRBundle.message("error.expected.condition.or.bracket"));
         ++index;
-        parseCondition(constraint,miscBuffer.toString());
+        parseCondition(constraint, miscBuffer.toString());
       } else {
         // eat reg exp constraint
         miscBuffer.setLength(0);
@@ -247,20 +257,26 @@ class StringToConstraintsTransformer {
 
   private static int handleRegExp(int index,
                                   String pattern,
-                                  StringBuffer miscBuffer,
+                                  StringBuilder miscBuffer,
                                   MatchVariableConstraint constraint) {
-    for(;index<pattern.length() && !Character.isWhitespace(pattern.charAt(index));++index) {
-      miscBuffer.append(pattern.charAt(index));
+    final int length = pattern.length();
+    for(char ch; index < length && !Character.isWhitespace(ch = pattern.charAt(index)); ++index) {
+      miscBuffer.append(ch);
     }
 
+    if (miscBuffer.length()==0) return index;
     String regexp = miscBuffer.toString();
-    if (regexp.length()==0) return index;
 
     if (constraint.getRegExp()!=null &&
         constraint.getRegExp().length() > 0 &&
         !constraint.getRegExp().equals(regexp)) {
       throw new MalformedPatternException(SSRBundle.message("error.two.different.type.constraints"));
     } else {
+      try {
+        Pattern.compile(regexp);
+      } catch (PatternSyntaxException e) {
+        throw new MalformedPatternException(SSRBundle.message("invalid.regular.expression"));
+      }
       constraint.setRegExp(regexp);
     }
 
@@ -274,17 +290,17 @@ class StringToConstraintsTransformer {
         String token = tokenizer.nextToken().trim();
         boolean hasNot = false;
         boolean consumed = false;
-        String option;
 
         if (StringUtil.startsWithChar(token, '!')) {
           token = token.substring(1);
+          if (token.isEmpty()) throw new MalformedPatternException(SSRBundle.message("error.expected.option"));
           hasNot = true;
         }
 
         Matcher m = p.matcher(token);
 
         if (m.matches()) {
-          option = m.group(1);
+          String option = m.group(1);
 
           if (option.equalsIgnoreCase(REF)) {
             String name = m.group(2);
@@ -298,7 +314,7 @@ class StringToConstraintsTransformer {
           m = p2.matcher(token);
 
           if (m.matches()) {
-            option = m.group(1);
+            String option = m.group(1);
 
             if (option.equalsIgnoreCase(READ)) {
               constraint.setReadAccess(true);
@@ -313,16 +329,19 @@ class StringToConstraintsTransformer {
             m = p3.matcher(token);
 
             if (m.matches()) {
-              option = m.group(1);
+              String option = m.group(1);
 
-              if (option.equalsIgnoreCase(REGEX) ||
-                  option.equalsIgnoreCase(REGEXW)
-                  ) {
+              if (option.equalsIgnoreCase(REGEX) || option.equalsIgnoreCase(REGEXW)) {
                 String typePattern = getSingleParameter(m, SSRBundle.message("reg.exp.should.be.delimited.with.spaces.error.message"));
 
                 if (StringUtil.startsWithChar(typePattern, '*')) {
                   typePattern = typePattern.substring(1);
                   constraint.setWithinHierarchy(true);
+                }
+                try {
+                  Pattern.compile(typePattern);
+                } catch (PatternSyntaxException e) {
+                  throw new MalformedPatternException(SSRBundle.message("invalid.regular.expression"));
                 }
                 constraint.setRegExp( typePattern );
                 constraint.setInvertRegExp( hasNot );
@@ -338,6 +357,11 @@ class StringToConstraintsTransformer {
                   exprTypePattern = exprTypePattern.substring(1);
                   constraint.setExprTypeWithinHierarchy(true);
                 }
+                try {
+                  Pattern.compile(exprTypePattern);
+                } catch (PatternSyntaxException e) {
+                  throw new MalformedPatternException(SSRBundle.message("invalid.regular.expression"));
+                }
                 constraint.setNameOfExprType( exprTypePattern );
                 constraint.setInvertExprType( hasNot );
                 consumed = true;
@@ -348,6 +372,11 @@ class StringToConstraintsTransformer {
                 if (StringUtil.startsWithChar(exprTypePattern, '*')) {
                   exprTypePattern = exprTypePattern.substring(1);
                   constraint.setFormalArgTypeWithinHierarchy(true);
+                }
+                try {
+                  Pattern.compile(exprTypePattern);
+                } catch (PatternSyntaxException e) {
+                  throw new MalformedPatternException(SSRBundle.message("invalid.regular.expression"));
                 }
                 constraint.setNameOfFormalArgType( exprTypePattern );
                 constraint.setInvertFormalType( hasNot );
@@ -384,6 +413,7 @@ class StringToConstraintsTransformer {
 
   private static String getSingleParameter(Matcher m, String errorMessage) {
     final String value = m.group(2);
+    if (value.isEmpty()) return value;
 
     if (value.charAt(0)!=' ' || value.charAt(value.length()-1)!=' ') {
       throw new MalformedPatternException(errorMessage);
