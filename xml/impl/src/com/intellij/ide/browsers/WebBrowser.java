@@ -114,7 +114,7 @@ public class WebBrowser {
       @Override
       @Nullable
       public BrowserSpecificSettings getBrowserSpecificSettings() {
-        return WebBrowserManager.getInstance().getBrowserSettings(this).getBrowserSpecificSettings();
+        return WebBrowserManager.getInstance().getBrowserSettings(this).getSpecificSettings();
       }
 
       @Nullable

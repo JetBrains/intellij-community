@@ -56,7 +56,7 @@ public class BrowserSettingsPanel {
   @SuppressWarnings("UnusedDeclaration")
   private JComponent browsersTable;
 
-  private final Map<WebBrowserSettings, MutableWebBrowserSettings> modifiedBrowsers = new THashMap<WebBrowserSettings, MutableWebBrowserSettings>();
+  private final THashMap<WebBrowserSettings, MutableWebBrowserSettings> modifiedBrowsers = new THashMap<WebBrowserSettings, MutableWebBrowserSettings>();
 
   public BrowserSettingsPanel() {
     defaultBrowserPanel.setBorder(IdeBorderFactory.createTitledBorder("Default Browser", true));
@@ -108,7 +108,7 @@ public class BrowserSettingsPanel {
   }
 
   private void createUIComponents() {
-    ColumnInfo<WebBrowserSettings, Boolean> activeColumn = new ColumnInfo<WebBrowserSettings, Boolean>("") {
+    ColumnInfo[] columns = {new ColumnInfo<WebBrowserSettings, Boolean>("") {
       @Override
       public Class getColumnClass() {
         return Boolean.class;
@@ -128,11 +128,20 @@ public class BrowserSettingsPanel {
       public void setValue(WebBrowserSettings info, Boolean value) {
         getMutable(info).setActive(value);
       }
-    };
-    ColumnInfo[] columns = {activeColumn, new ColumnInfo<WebBrowserSettings, String>("Name") {
+    }, new ColumnInfo<WebBrowserSettings, String>("Name") {
       @Override
       public String valueOf(WebBrowserSettings info) {
         return getEffective(info).getName();
+      }
+
+      @Override
+      public boolean isCellEditable(WebBrowserSettings info) {
+        return true;
+      }
+
+      @Override
+      public void setValue(WebBrowserSettings info, String value) {
+        getMutable(info).setName(value);
       }
     }, new ColumnInfo<WebBrowserSettings, String>("Path") {
       @Override
@@ -172,6 +181,14 @@ public class BrowserSettingsPanel {
       return true;
     }
 
+    if (!modifiedBrowsers.isEmpty()) {
+      for (Map.Entry<WebBrowserSettings, MutableWebBrowserSettings> entry : modifiedBrowsers.entrySet()) {
+        if (entry.getValue().isChanged(entry.getKey())) {
+          return true;
+        }
+      }
+    }
+
     return false;
   }
 
@@ -191,7 +208,9 @@ public class BrowserSettingsPanel {
     settings.setUseDefaultBrowser(useSystemDefaultBrowser.isSelected());
     settings.setConfirmExtractFiles(confirmExtractFiles.isSelected());
 
-    //browsersPanel.apply();
+    if (!modifiedBrowsers.isEmpty()) {
+      WebBrowserManager.getInstance().apply(modifiedBrowsers);
+    }
   }
 
   public void reset() {
@@ -208,10 +227,9 @@ public class BrowserSettingsPanel {
 
     updateBrowserField();
 
-    //browsersPanel.reset();
+    modifiedBrowsers.clear();
   }
 
   public void disposeUIResources() {
-    //browsersPanel.dispose();
   }
 }

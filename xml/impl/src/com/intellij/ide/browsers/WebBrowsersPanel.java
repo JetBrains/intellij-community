@@ -121,7 +121,7 @@ public class WebBrowsersPanel extends JPanel {
   }
 
   private void editSettings(BrowsersConfiguration.BrowserFamily family) {
-    BrowserSpecificSettings settings = myBrowserManager.getBrowserSettings(family).getBrowserSpecificSettings();
+    BrowserSpecificSettings settings = myBrowserManager.getBrowserSettings(family).getSpecificSettings();
     if (settings == null) {
       settings = family.createBrowserSpecificSettings();
     }

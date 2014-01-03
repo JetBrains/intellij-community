@@ -15,6 +15,7 @@
  */
 package com.intellij.ide.browsers;
 
+import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -25,14 +26,14 @@ public class WebBrowserSettings {
   protected String name;
   protected String path;
   protected boolean active;
-  protected BrowserSpecificSettings myBrowserSpecificSettings;
+  protected BrowserSpecificSettings specificSettings;
 
-  public WebBrowserSettings(@NotNull BrowserFamily family, @NotNull String name, @NotNull String path, boolean active, @Nullable BrowserSpecificSettings browserSpecificSettings) {
+  public WebBrowserSettings(@NotNull BrowserFamily family, @NotNull String name, @NotNull String path, boolean active, @Nullable BrowserSpecificSettings specificSettings) {
     this.family = family;
     this.name = name;
     this.path = path;
     this.active = active;
-    myBrowserSpecificSettings = browserSpecificSettings;
+    this.specificSettings = specificSettings;
   }
 
   @NotNull
@@ -45,8 +46,8 @@ public class WebBrowserSettings {
   }
 
   @Nullable
-  public BrowserSpecificSettings getBrowserSpecificSettings() {
-    return myBrowserSpecificSettings;
+  public BrowserSpecificSettings getSpecificSettings() {
+    return specificSettings;
   }
 
   public MutableWebBrowserSettings createMutable() {
@@ -59,7 +60,7 @@ public class WebBrowserSettings {
 
   public static class MutableWebBrowserSettings extends WebBrowserSettings {
     private MutableWebBrowserSettings(@NotNull WebBrowserSettings settings) {
-      super(settings.family, settings.name, settings.path, settings.active, settings.myBrowserSpecificSettings);
+      super(settings.family, settings.name, settings.path, settings.active, settings.specificSettings);
     }
 
     public void setActive(boolean value) {
@@ -72,6 +73,10 @@ public class WebBrowserSettings {
 
     public void setPath(@NotNull String value) {
       path = value;
+    }
+
+    public boolean isChanged(@NotNull WebBrowserSettings info) {
+      return active != info.active || family != info.family || !StringUtil.equals(name, info.name) || !StringUtil.equals(path, info.path);
     }
   }
 }
