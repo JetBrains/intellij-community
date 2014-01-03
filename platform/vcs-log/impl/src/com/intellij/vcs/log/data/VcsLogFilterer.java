@@ -69,7 +69,7 @@ public class VcsLogFilterer {
     // apply details filters, and use simple table without graph (we can't filter by details and keep the graph yet).
     final AbstractVcsLogTableModel model;
     if (!detailsFilters.isEmpty()) {
-      List<VcsFullCommitDetails> filteredCommits = filterByDetails(dataPack, graphModel, detailsFilters);
+      List<VcsFullCommitDetails> filteredCommits = filterByDetails(graphModel, detailsFilters);
       model = new NoGraphTableModel(myUI, filteredCommits, dataPack.getRefsModel(), LoadMoreStage.INITIAL);
     }
     else {
@@ -147,18 +147,17 @@ public class VcsLogFilterer {
     });
   }
 
-  private List<VcsFullCommitDetails> filterByDetails(DataPack dataPack, final GraphModel graphModel,
-                                                     final List<VcsLogDetailsFilter> detailsFilters) {
+  @NotNull
+  private List<VcsFullCommitDetails> filterByDetails(@NotNull GraphModel graphModel, @NotNull List<VcsLogDetailsFilter> detailsFilters) {
     List<VcsFullCommitDetails> result = ContainerUtil.newArrayList();
     int topCommits = myLogDataHolder.getSettings().getRecentCommitsCount();
-    NodeAroundProvider nodeAroundProvider = new NodeAroundProvider(dataPack, myLogDataHolder);
     for (int i = 0; i < topCommits && i < graphModel.getGraph().getNodeRows().size(); i++) {
       Node node = graphModel.getGraph().getCommitNodeInRow(i);
       if (node == null) {
         // there can be nodes which contain no commits (IDEA-115442, branch filter case)
         continue;
       }
-      final VcsFullCommitDetails details = getDetailsFromCache(node, nodeAroundProvider);
+      final VcsFullCommitDetails details = getDetailsFromCache(node);
       if (details == null) {
         // Details for recent commits should be available in the cache.
         // However if they are not there for some reason, we stop filtering.
@@ -184,12 +183,12 @@ public class VcsLogFilterer {
   }
 
   @Nullable
-  private VcsFullCommitDetails getDetailsFromCache(@NotNull final Node node, @NotNull final NodeAroundProvider nodeAroundProvider) {
+  private VcsFullCommitDetails getDetailsFromCache(@NotNull final Node node) {
     final Ref<VcsFullCommitDetails> ref = Ref.create();
     UIUtil.invokeAndWaitIfNeeded(new Runnable() {
       @Override
       public void run() {
-        ref.set(myLogDataHolder.getCommitDetailsGetter().getCommitData(node, nodeAroundProvider));
+        ref.set(myLogDataHolder.getCommitDetailsGetter().getCommitDataIfAvailable(myLogDataHolder.getHash(node.getCommitIndex())));
       }
     });
     return ref.get();

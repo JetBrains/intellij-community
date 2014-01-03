@@ -484,39 +484,11 @@ public class GitHistoryUtils {
     return null;
   }
 
-  public static List<? extends VcsShortCommitDetails> readAllMiniDetails(final Project project, final VirtualFile root) throws VcsException {
-    GitSimpleHandler h = new GitSimpleHandler(project, root, GitCommand.LOG);
-    GitLogParser parser = new GitLogParser(project, GitLogParser.NameStatus.NONE, HASH, PARENTS, AUTHOR_NAME,
-                                           AUTHOR_EMAIL, AUTHOR_TIME, SUBJECT);
-    h.setStdoutSuppressed(true);
-    h.addParameters(parser.getPretty(), "--encoding=UTF-8");
-    h.addParameters(LOG_ALL);
-    h.addParameters("--full-history", "--sparse");
-    h.endOptions();
-
-    String output = h.run();
-
-    List<GitLogRecord> records = parser.parse(output);
-
-    return ContainerUtil.mapNotNull(records, new Function<GitLogRecord, VcsShortCommitDetails>() {
-      @Override
-      public VcsShortCommitDetails fun(GitLogRecord record) {
-        List<Hash> parents = new SmartList<Hash>();
-        for (String parent : record.getParentsHashes()) {
-          parents.add(HashImpl.build(parent));
-        }
-
-        return vcsObjectsFactory(project).createShortDetails(HashImpl.build(record.getHash()), parents, record.getAuthorTimeStamp(), root,
-                                             record.getSubject(), record.getAuthorName(), record.getAuthorEmail());
-      }
-    });
-  }
-
   public static List<? extends VcsShortCommitDetails> readMiniDetails(final Project project, final VirtualFile root, List<String> hashes) throws VcsException {
     GitSimpleHandler h = new GitSimpleHandler(project, root, GitCommand.LOG);
     GitLogParser parser = new GitLogParser(project, GitLogParser.NameStatus.NONE, HASH, PARENTS, AUTHOR_NAME,
                                            AUTHOR_EMAIL, COMMIT_TIME, SUBJECT);
-    h.setStdoutSuppressed(true);
+    h.setSilent(true);
     // git show can show either -p, or --name-status, or --name-only, but we need nothing, just details => using git log --no-walk
     h.addParameters("--no-walk");
     h.addParameters(parser.getPretty(), "--encoding=UTF-8");
@@ -1032,7 +1004,7 @@ public class GitHistoryUtils {
     GitLogParser parser = new GitLogParser(project, GitLogParser.NameStatus.STATUS,
                                            HASH, HASH, COMMIT_TIME, AUTHOR_NAME, AUTHOR_TIME, AUTHOR_EMAIL, COMMITTER_NAME,
                                            COMMITTER_EMAIL, PARENTS, REF_NAMES, SUBJECT, BODY, RAW_BODY);
-    h.setStdoutSuppressed(true);
+    h.setSilent(true);
     h.addParameters("--name-status", "-M", parser.getPretty(), "--encoding=UTF-8");
     h.addParameters(new ArrayList<String>(commitsIds));
 
@@ -1048,20 +1020,9 @@ public class GitHistoryUtils {
   @NotNull
   public static List<GitCommit> commitsDetails(@NotNull Project project, @NotNull VirtualFile root,
                                                @NotNull final Collection<String> hashes) throws VcsException {
-    GitSimpleHandler h = new GitSimpleHandler(project, root, GitCommand.SHOW);
-    GitLogParser parser = new GitLogParser(project, GitLogParser.NameStatus.STATUS,
-                                           HASH, HASH, COMMIT_TIME, AUTHOR_NAME, AUTHOR_TIME, AUTHOR_EMAIL, COMMITTER_NAME,
-                                           COMMITTER_EMAIL, PARENTS, REF_NAMES, SUBJECT, BODY, RAW_BODY);
-    h.setStdoutSuppressed(true);
-    h.addParameters("--name-status", "-M", parser.getPretty(), "--encoding=UTF-8");
-    h.addParameters(new ArrayList<String>(hashes));
-
-    String output = h.run();
-    final List<GitCommit> rc = new ArrayList<GitCommit>();
-    for (GitLogRecord record : parser.parse(output)) {
-      rc.add(createCommit(project, root, record));
-    }
-    return rc;
+    List<String> params = new ArrayList<String>(hashes);
+    params.add(0, "--no-walk=unsorted");
+    return getAllDetails(project, root, params);
   }
 
   @NotNull
@@ -1071,7 +1032,7 @@ public class GitHistoryUtils {
     GitLogParser parser = new GitLogParser(project, GitLogParser.NameStatus.STATUS,
                                            HASH, HASH, COMMIT_TIME, AUTHOR_NAME, AUTHOR_TIME, AUTHOR_EMAIL, COMMITTER_NAME,
                                            COMMITTER_EMAIL, PARENTS, REF_NAMES, SUBJECT, BODY, RAW_BODY);
-    h.setStdoutSuppressed(true);
+    h.setSilent(true);
     h.addParameters("--name-status", "-M", parser.getPretty(), "--encoding=UTF-8");
     h.addParameters(parameters);
 
