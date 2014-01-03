@@ -28,6 +28,8 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.util.Function;
+import com.intellij.util.NullableFunction;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -411,6 +413,22 @@ public class FileReferenceSet {
       }
     }
     return list;
+  }
+
+  @NotNull
+  protected Collection<PsiFileSystemItem> toFileSystemItems(VirtualFile... files) {
+    return toFileSystemItems(Arrays.asList(files));
+  }
+
+  @NotNull
+  protected Collection<PsiFileSystemItem> toFileSystemItems(@NotNull Collection<VirtualFile> files) {
+    final PsiManager manager = getElement().getManager();
+    return ContainerUtil.mapNotNull(files, new NullableFunction<VirtualFile, PsiFileSystemItem>() {
+      @Override
+      public PsiFileSystemItem fun(VirtualFile file) {
+        return file != null ? manager.findDirectory(file) : null;
+      }
+    });
   }
 
   protected Condition<PsiFileSystemItem> getReferenceCompletionFilter() {
