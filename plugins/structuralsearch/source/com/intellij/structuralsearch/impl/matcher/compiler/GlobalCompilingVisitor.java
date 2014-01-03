@@ -28,7 +28,7 @@ import static com.intellij.structuralsearch.MatchOptions.PACKAGE_LOCAL_MODIFIER_
  */
 public class GlobalCompilingVisitor {
   @NonNls private static final String SUBSTITUTION_PATTERN_STR = "\\b(__\\$_\\w+)\\b";
-  private static Pattern ourSubstitutionPattern = Pattern.compile(SUBSTITUTION_PATTERN_STR);
+  private static final Pattern ourSubstitutionPattern = Pattern.compile(SUBSTITUTION_PATTERN_STR);
   private static final Set<String> ourReservedWords = new HashSet<String>(
     Arrays.asList(MODIFIER_ANNOTATION_NAME, INSTANCE_MODIFIER_NAME, PACKAGE_LOCAL_MODIFIER_NAME)
   );
@@ -37,9 +37,6 @@ public class GlobalCompilingVisitor {
   private static final Pattern ourWordSearchPattern = Pattern.compile(WORD_SEARCH_PATTERN_STR);
   private CompileContext context;
   private final ArrayList<PsiElement> myLexicalNodes = new ArrayList<PsiElement>();
-
-  //private final JavaCompilingVisitor myJavaVisitor = new JavaCompilingVisitor(this);
-  //private final PsiElementVisitor myXmlVisitor = new XmlCompilingVisitor(this);
 
   private int myCodeBlockLevel;
 
@@ -125,13 +122,7 @@ public class GlobalCompilingVisitor {
   void compile(PsiElement[] elements, CompileContext context) {
     myCodeBlockLevel = 0;
     this.context = context;
-    /*if (element instanceof XmlElement) {
-      element.accept(myXmlVisitor);
-    }
-    else {
-      element.accept(myJavaVisitor);
-    }*/
-    StructuralSearchProfile profile = StructuralSearchUtil.getProfileByPsiElement(elements[0]);
+    final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByFileType(context.getOptions().getFileType());
     assert profile != null;
     profile.compile(elements, this);
 
