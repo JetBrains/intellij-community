@@ -107,7 +107,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
 
   @Nullable
   public String getDefaultMessageFor(FilePath[] filesToCheckin) {
-    StringBuilder rc = new StringBuilder();
+    LinkedHashSet<String> messages = ContainerUtil.newLinkedHashSet();
     for (VirtualFile root : GitUtil.gitRoots(Arrays.asList(filesToCheckin))) {
       VirtualFile mergeMsg = root.findFileByRelativePath(GitRepositoryFiles.GIT_MERGE_MSG);
       VirtualFile squashMsg = root.findFileByRelativePath(GitRepositoryFiles.GIT_SQUASH_MSG);
@@ -120,13 +120,13 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
         String encoding = GitConfigUtil.getCommitEncoding(myProject, root);
 
         if (mergeMsg != null) {
-          rc.append(loadMessage(mergeMsg, encoding));
+          messages.add(loadMessage(mergeMsg, encoding));
         }
         else if (squashMsg != null) {
-          rc.append(loadMessage(squashMsg, encoding));
+          messages.add(loadMessage(squashMsg, encoding));
         }
         else {
-          rc.append(loadMessage(normalMsg, encoding));
+          messages.add(loadMessage(normalMsg, encoding));
         }
       }
       catch (IOException e) {
@@ -135,14 +135,11 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
         }
       }
     }
-    if (rc.length() != 0) {
-      return rc.toString();
-    }
-    return null;
+    return joinOrNull(messages);
   }
 
-  private static char[] loadMessage(@NotNull VirtualFile messageFile, @NotNull String encoding) throws IOException {
-    return FileUtil.loadFileText(new File(messageFile.getPath()), encoding);
+  private static String loadMessage(@NotNull VirtualFile messageFile, @NotNull String encoding) throws IOException {
+    return FileUtil.loadFile(new File(messageFile.getPath()), encoding);
   }
 
   public String getHelpId() {
@@ -735,22 +732,17 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
     private String getLastCommitMessage() throws VcsException {
       Set<VirtualFile> roots = GitUtil.gitRoots(getSelectedFilePaths());
       final Ref<VcsException> exception = Ref.create();
-      String joined = StringUtil.join(roots, new Function<VirtualFile, String>() {
-        @Override
-        public String fun(VirtualFile root) {
-          try {
-            return getLastCommitMessage(root);
-          }
-          catch (VcsException e) {
-            exception.set(e);
-            return null;
-          }
+      LinkedHashSet<String> messages = ContainerUtil.newLinkedHashSet();
+      for (VirtualFile root : roots) {
+        String message = getLastCommitMessage(root);
+        if (message != null) {
+          messages.add(message);
         }
-      }, "\n");
+      }
       if (!exception.isNull()) {
         throw exception.get();
       }
-      return joined;
+      return joinOrNull(messages);
     }
 
     @Nullable
@@ -826,6 +818,12 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
         myAuthorDate = new Date(commit.getTime());
       }
     }
+  }
+
+  @Nullable
+  private static String joinOrNull(@NotNull Collection<String> messages) {
+    String joined = StringUtil.join(messages, "\n");
+    return StringUtil.isEmptyOrSpaces(joined) ? null : joined;
   }
 
   public void setNextCommitIsPushed(Boolean nextCommitIsPushed) {
