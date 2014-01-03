@@ -15,11 +15,13 @@
  */
 package com.intellij.ide.browsers;
 
-import com.intellij.ide.*;
+import com.intellij.ide.BrowserUtil;
+import com.intellij.ide.GeneralSettings;
+import com.intellij.ide.IdeBundle;
+import com.intellij.ide.browsers.impl.BrowserSettingsProviderImpl;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.options.ConfigurationException;
-import com.intellij.openapi.options.ex.ConfigurableWrapper;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.SystemInfo;
@@ -30,12 +32,11 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.List;
 
 public class BrowserSettingsPanel extends JPanel {
   private final JRadioButton myUseDefaultBrowser;
   private final JRadioButton myUseAlternativeBrowser;
-  private final List<BrowserSettingsProvider> mySettingsProviders;
+  private final BrowserSettingsProviderImpl mySettingsProvider;
   private final TextFieldWithBrowseButton myBrowserPathField;
   private final JCheckBox myConfirmExtractFiles;
 
@@ -106,11 +107,8 @@ public class BrowserSettingsPanel extends JPanel {
       myUseAlternativeBrowser.setVisible(false);
     }
 
-    mySettingsProviders = ConfigurableWrapper.createConfigurables(BrowserSettingsProviderEP.EP_NAME);
-    for (BrowserSettingsProvider settingsProvider : mySettingsProviders) {
-      outerPanel.add(settingsProvider.createComponent());
-    }
-
+    mySettingsProvider = new BrowserSettingsProviderImpl(WebBrowserManager.getInstance());
+    outerPanel.add(mySettingsProvider.createComponent());
     add(outerPanel, BorderLayout.NORTH);
   }
 
@@ -124,13 +122,7 @@ public class BrowserSettingsPanel extends JPanel {
       return true;
     }
 
-    for (BrowserSettingsProvider provider : mySettingsProviders) {
-      if (provider.isModified()) {
-        return true;
-      }
-    }
-
-    return false;
+    return mySettingsProvider.isModified();
   }
 
   private void updateBrowserField() {
@@ -149,9 +141,7 @@ public class BrowserSettingsPanel extends JPanel {
     settings.setUseDefaultBrowser(myUseDefaultBrowser.isSelected());
     settings.setConfirmExtractFiles(myConfirmExtractFiles.isSelected());
 
-    for (BrowserSettingsProvider provider : mySettingsProviders) {
-      provider.apply();
-    }
+    mySettingsProvider.apply();
   }
 
   public void reset() {
@@ -168,14 +158,10 @@ public class BrowserSettingsPanel extends JPanel {
 
     updateBrowserField();
 
-    for (BrowserSettingsProvider provider : mySettingsProviders) {
-      provider.reset();
-    }
+    mySettingsProvider.reset();
   }
 
   public void disposeUIResources() {
-    for (BrowserSettingsProvider provider : mySettingsProviders) {
-      provider.disposeUIResources();
-    }
+    mySettingsProvider.disposeUIResources();
   }
 }

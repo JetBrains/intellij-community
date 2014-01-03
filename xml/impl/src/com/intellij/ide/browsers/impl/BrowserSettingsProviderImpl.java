@@ -15,15 +15,15 @@
  */
 package com.intellij.ide.browsers.impl;
 
-import com.intellij.ide.BrowserSettingsProvider;
 import com.intellij.ide.browsers.WebBrowserManager;
 import com.intellij.ide.browsers.WebBrowsersPanel;
 import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.options.UnnamedConfigurable;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-public class BrowserSettingsProviderImpl extends BrowserSettingsProvider {
+public class BrowserSettingsProviderImpl implements UnnamedConfigurable {
   private WebBrowsersPanel mySettingsPanel;
   private final WebBrowserManager myConfiguration;
 
