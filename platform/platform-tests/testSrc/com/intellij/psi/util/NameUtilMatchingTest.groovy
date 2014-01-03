@@ -26,6 +26,7 @@ import com.intellij.util.ThrowableRunnable
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.text.Matcher
 import groovy.transform.CompileStatic
+import junit.framework.Assert
 import org.jetbrains.annotations.NonNls
 /**
  * @author max
@@ -640,11 +641,11 @@ public class NameUtilMatchingTest extends UsefulTestCase {
       public void run() {
         for (int i = 0; i < 100000; i++) {
           for (MinusculeMatcher matcher : matching) {
-            assertTrue(matcher.toString(), matcher.matches(longName));
+            Assert.assertTrue(matcher.toString(), matcher.matches(longName));
             matcher.matchingDegree(longName);
           }
           for (MinusculeMatcher matcher : nonMatching) {
-            assertFalse(matcher.toString(), matcher.matches(longName));
+            Assert.assertFalse(matcher.toString(), matcher.matches(longName));
           }
         }
       }

@@ -29,7 +29,7 @@ jna.jar
 jsch-0.1.50.jar
 jsr166e.jar
 jsr173_1.0_api.jar
-junit-4.10.jar
+junit-4.11.jar
 junit.jar
 jzlib-1.1.1.jar
 log4j.jar
