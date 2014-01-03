@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -97,15 +97,9 @@ public class PluginManager extends PluginManagerCore {
   }
 
   public static void processException(Throwable t) {
-    StartupAbortedException se = null;
+    @SuppressWarnings("ThrowableResultOfMethodCallIgnored") StartupAbortedException se = findCause(t);
 
-    if (t instanceof StartupAbortedException) {
-      se = (StartupAbortedException)t;
-    }
-    else if (t.getCause() instanceof StartupAbortedException) {
-      se = (StartupAbortedException)t.getCause();
-    }
-    else if (!IdeaApplication.isLoaded()) {
+    if (se == null && !IdeaApplication.isLoaded()) {
       se = new StartupAbortedException(t);
     }
 
@@ -127,6 +121,16 @@ public class PluginManager extends PluginManagerCore {
     if (!(t instanceof ProcessCanceledException)) {
       getLogger().error(t);
     }
+  }
+
+  private static StartupAbortedException findCause(Throwable t) {
+    while (t != null) {
+      if (t instanceof StartupAbortedException) {
+        return (StartupAbortedException)t;
+      }
+      t = t.getCause();
+    }
+    return null;
   }
 
   private static Thread.UncaughtExceptionHandler HANDLER = new Thread.UncaughtExceptionHandler() {
