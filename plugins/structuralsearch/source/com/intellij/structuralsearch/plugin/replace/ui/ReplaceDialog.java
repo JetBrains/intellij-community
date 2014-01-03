@@ -1,6 +1,5 @@
 package com.intellij.structuralsearch.plugin.replace.ui;
 
-import com.intellij.codeInsight.template.Expression;
 import com.intellij.codeInsight.template.impl.Variable;
 import com.intellij.history.LocalHistory;
 import com.intellij.history.LocalHistoryAction;
@@ -320,7 +319,7 @@ public class ReplaceDialog extends SearchDialog {
       Replacer.checkSupportedReplacementPattern(searchContext.getProject(), ((ReplaceConfiguration)model.getConfig()).getOptions());
     }
     catch (UnsupportedPatternException ex) {
-      reportMessage("unsupported.replacement.pattern.message", replaceCriteriaEdit, ex.getPattern());
+      reportMessage("unsupported.replacement.pattern.message", replaceCriteriaEdit, ex.getMessage());
       result = false;
     }
 
