@@ -43,7 +43,7 @@ public class TableView<Item> extends BaseTableView implements ItemsProvider, Sel
     setModelAndUpdateColumns(model);
   }
 
-  public void setModel(final TableModel dataModel) {
+  public void setModel(@NotNull final TableModel dataModel) {
     assert dataModel instanceof SortableColumnModel : "SortableColumnModel required";
     super.setModel(dataModel);
   }
