@@ -446,7 +446,7 @@ public abstract class BaseRefactoringProcessor implements Runnable {
     return usageInfos;
   }
 
-  private void doRefactoring(@NotNull Collection<UsageInfo> usageInfoSet) {
+  private void doRefactoring(@NotNull final Collection<UsageInfo> usageInfoSet) {
    for (Iterator<UsageInfo> iterator = usageInfoSet.iterator(); iterator.hasNext();) {
       UsageInfo usageInfo = iterator.next();
       final PsiElement element = usageInfo.getElement();
@@ -479,7 +479,11 @@ public abstract class BaseRefactoringProcessor implements Runnable {
         public void run() {
           final String refactoringId = getRefactoringId();
           if (refactoringId != null) {
-            myProject.getMessageBus().syncPublisher(RefactoringEventListener.REFACTORING_EVENT_TOPIC).refactoringStarted(refactoringId, getBeforeData());
+            RefactoringEventData data = getBeforeData();
+            if (data != null) {
+              data.addUsages(usageInfoSet);
+            }
+            myProject.getMessageBus().syncPublisher(RefactoringEventListener.REFACTORING_EVENT_TOPIC).refactoringStarted(refactoringId, data);
           }
 
           try {
