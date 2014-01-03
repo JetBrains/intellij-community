@@ -15,7 +15,6 @@
  */
 package com.intellij.ide.browsers;
 
-import com.intellij.ide.BrowserSettings;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.IconLoader;
