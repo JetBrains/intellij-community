@@ -17,10 +17,8 @@ package com.intellij.ide;
 
 import com.intellij.openapi.options.UnnamedConfigurable;
 
-/**
- * @author spleaner
- */
 public abstract class BrowserSettingsProvider implements UnnamedConfigurable {
   @Override
-  public void disposeUIResources() { }
+  public void disposeUIResources() {
+  }
 }

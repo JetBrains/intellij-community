@@ -23,30 +23,33 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-/**
- * @author spleaner
- */
-public class BrowserSettings implements Configurable, SearchableConfigurable {
+public class BrowserSettings implements SearchableConfigurable, Configurable.NoScroll {
   private BrowserSettingsPanel mySettingsPanel;
 
+  @Override
   @NotNull
   public String getId() {
     return getHelpTopic();
   }
 
+  @Override
   public Runnable enableSearch(final String option) {
     return null;
   }
 
+  @Override
   @Nls
   public String getDisplayName() {
     return IdeBundle.message("browsers.settings");
   }
 
+  @Override
+  @NotNull
   public String getHelpTopic() {
     return "reference.settings.ide.settings.web.browsers";
   }
 
+  @Override
   public JComponent createComponent() {
     if (mySettingsPanel == null) {
       mySettingsPanel = new BrowserSettingsPanel();
@@ -55,27 +58,30 @@ public class BrowserSettings implements Configurable, SearchableConfigurable {
     return mySettingsPanel;
   }
 
+  @Override
   public boolean isModified() {
     return mySettingsPanel != null && mySettingsPanel.isModified();
   }
 
+  @Override
   public void apply() throws ConfigurationException {
     if (mySettingsPanel != null) {
       mySettingsPanel.apply();
     }
   }
 
+  @Override
   public void reset() {
     if (mySettingsPanel != null) {
       mySettingsPanel.reset();
     }
   }
 
+  @Override
   public void disposeUIResources() {
     if (mySettingsPanel != null) {
       mySettingsPanel.disposeUIResources();
       mySettingsPanel = null;
     }
   }
-
 }

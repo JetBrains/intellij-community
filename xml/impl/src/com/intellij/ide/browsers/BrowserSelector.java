@@ -39,8 +39,7 @@ public class BrowserSelector {
     myBrowserComboWithBrowse.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
-        final ShowSettingsUtil util = ShowSettingsUtil.getInstance();
-        util.editConfigurable(myBrowserComboWithBrowse, new BrowserSettings());
+        ShowSettingsUtil.getInstance().editConfigurable(myBrowserComboWithBrowse, new BrowserSettings());
 
         WebBrowser selectedItem = getSelected();
         initBrowsersComboModel(allowDefaultBrowser);

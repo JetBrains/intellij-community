@@ -31,16 +31,12 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.List;
 
-/**
- * @author spleaner
- */
 public class BrowserSettingsPanel extends JPanel {
   private final JRadioButton myUseDefaultBrowser;
   private final JRadioButton myUseAlternativeBrowser;
   private final List<BrowserSettingsProvider> mySettingsProviders;
   private final TextFieldWithBrowseButton myBrowserPathField;
   private final JCheckBox myConfirmExtractFiles;
-  private final JButton myClearExtractedFiles;
 
   public BrowserSettingsPanel() {
     setLayout(new BorderLayout());
@@ -72,14 +68,15 @@ public class BrowserSettingsPanel extends JPanel {
 
     JPanel innerPanel3 = new JPanel(new BorderLayout());
     myConfirmExtractFiles = new JCheckBox("Show confirmation before extracting files");
-    myClearExtractedFiles = new JButton("Clear extracted files");
-    myClearExtractedFiles.addActionListener(new ActionListener() {
+    JButton clearExtractedFiles = new JButton("Clear extracted files");
+    clearExtractedFiles.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         BrowserUtil.clearExtractedFiles();
       }
     });
     innerPanel3.add(myConfirmExtractFiles, BorderLayout.CENTER);
-    innerPanel3.add(myClearExtractedFiles, BorderLayout.EAST);
+    innerPanel3.add(clearExtractedFiles, BorderLayout.EAST);
     genericPanel.add(innerPanel3);
 
     outerPanel.add(genericPanel);
@@ -95,6 +92,7 @@ public class BrowserSettingsPanel extends JPanel {
 
     if (BrowserUtil.canStartDefaultBrowser()) {
       ActionListener actionListener = new ActionListener() {
+        @Override
         public void actionPerformed(ActionEvent e) {
           updateBrowserField();
         }
@@ -116,9 +114,8 @@ public class BrowserSettingsPanel extends JPanel {
   }
 
   public boolean isModified() {
-    boolean isModified = false;
     GeneralSettings settings = GeneralSettings.getInstance();
-    isModified |= !Comparing.strEqual(settings.getBrowserPath(), myBrowserPathField.getText());
+    boolean isModified = !Comparing.strEqual(settings.getBrowserPath(), myBrowserPathField.getText());
     isModified |= settings.isUseDefaultBrowser() != myUseDefaultBrowser.isSelected();
     isModified |= settings.isConfirmExtractFiles() != myConfirmExtractFiles.isSelected();
 

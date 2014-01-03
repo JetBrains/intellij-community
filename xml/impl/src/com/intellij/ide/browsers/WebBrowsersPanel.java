@@ -36,9 +36,6 @@ import java.awt.event.ActionListener;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 
-/**
- * @author spleaner
- */
 public class WebBrowsersPanel extends JPanel {
   private final JPanel mySettingsPanel;
   private Map<BrowsersConfiguration.BrowserFamily, Pair<JCheckBox, TextFieldWithBrowseButton>> myBrowserSettingsMap = new THashMap<BrowsersConfiguration.BrowserFamily, Pair<JCheckBox, TextFieldWithBrowseButton>>();
