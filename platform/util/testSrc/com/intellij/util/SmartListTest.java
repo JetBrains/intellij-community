@@ -239,11 +239,17 @@ public class SmartListTest {
   }
 
   @Test
+  public void testSingleToArray() {
+    SmartList<String> l = new SmartList<String>("foo");
+    assertArrayEquals(l.toArray(ArrayUtilRt.EMPTY_STRING_ARRAY), new String[]{"foo"});
+  }
+
+  @Test
   public void testToArray() {
     SmartList<Integer> l = new SmartList<Integer>(0, 1);
     assertArrayEquals(l.toArray(), new Object[]{0, 1});
     assertArrayEquals(l.toArray(), new Integer[]{0, 1});
-
+    assertArrayEquals(l.toArray(new Integer[0]), new Integer[]{0, 1});
 
     assertArrayEquals(l.toArray(new Integer[4]), new Integer[]{0, 1, null, null});
 

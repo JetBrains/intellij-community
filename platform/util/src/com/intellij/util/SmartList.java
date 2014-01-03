@@ -19,6 +19,7 @@ import com.intellij.util.containers.EmptyIterator;
 import com.intellij.util.containers.SingletonIteratorBase;
 import org.jetbrains.annotations.NotNull;
 
+import java.lang.reflect.Array;
 import java.util.*;
 
 /**
@@ -248,31 +249,29 @@ public class SmartList<E> extends AbstractList<E> {
   @NotNull
   @Override
   public <T> T[] toArray(@NotNull T[] a) {
+    int aLength = a.length;
     if (mySize == 1) {
-      int length = a.length;
-      if (length != 0) {
+      if (aLength != 0) {
         a[0] = (T)myElem;
-        if (length > 1) {
-          a[1] = null;
-        }
-        return a;
+      }
+      else {
+        T[] r = (T[])Array.newInstance(a.getClass().getComponentType(), 1);
+        r[0] = (T)myElem;
+        return r;
       }
     }
-
-    if (a.length < mySize) {
+    else if (aLength < mySize) {
       return (T[])Arrays.copyOf((E[])myElem, mySize, a.getClass());
     }
-    else if (mySize == 0) {
-      return a;
-    }
-    else {
+    else if (mySize != 0) {
       //noinspection SuspiciousSystemArraycopy
       System.arraycopy(myElem, 0, a, 0, mySize);
-      if (a.length > mySize) {
-        a[mySize] = null;
-      }
-      return a;
     }
+
+    if (aLength > mySize) {
+      a[mySize] = null;
+    }
+    return a;
   }
 
   /**
