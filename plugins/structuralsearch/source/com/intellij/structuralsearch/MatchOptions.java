@@ -245,11 +245,11 @@ public class MatchOptions implements JDOMExternalizable, Cloneable {
 
     // @TODO deserialize scope
 
-    List elements = element.getChildren(CONSTRAINT_TAG_NAME);
+    List<Element> elements = element.getChildren(CONSTRAINT_TAG_NAME);
     if (elements!=null && !elements.isEmpty()) {
-      for (final Object element1 : elements) {
+      for (final Element element1 : elements) {
         final MatchVariableConstraint constraint = new MatchVariableConstraint();
-        constraint.readExternal((Element)element1);
+        constraint.readExternal(element1);
         addVariableConstraint(constraint);
       }
     }

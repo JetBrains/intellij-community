@@ -12,10 +12,7 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.Collections;
+import java.util.*;
 
 /**
  * @author Maxim.Mossienko
@@ -84,12 +81,12 @@ public class ReplaceOptions implements JDOMExternalizable, Cloneable, UserDataHo
     
     replacement = element.getAttributeValue(REPLACEMENT_ATTR_NAME);
 
-    List elements = element.getChildren(VARIABLE_DEFINITION_TAG_NAME);
+    List<Element> elements = element.getChildren(VARIABLE_DEFINITION_TAG_NAME);
 
     if (elements!=null && elements.size() > 0) {
-      for (final Object element1 : elements) {
+      for (final Element element1 : elements) {
         final ReplacementVariableDefinition variableDefinition = new ReplacementVariableDefinition();
-        variableDefinition.readExternal((Element)element1);
+        variableDefinition.readExternal(element1);
         addVariableDefinition(variableDefinition);
       }
     }
@@ -165,7 +162,7 @@ public class ReplaceOptions implements JDOMExternalizable, Cloneable, UserDataHo
 
   public void addVariableDefinition(ReplacementVariableDefinition definition) {
     if (variableDefs==null) {
-      variableDefs = new java.util.LinkedHashMap<String, ReplacementVariableDefinition>();
+      variableDefs = new LinkedHashMap<String, ReplacementVariableDefinition>();
     }
     variableDefs.put( definition.getName(), definition );
   }

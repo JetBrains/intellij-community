@@ -440,13 +440,13 @@ public class MatcherImpl {
    * @throws MalformedPatternException
    * @throws UnsupportedPatternException
    */
-  protected List testFindMatches(String source,
-                                 String pattern,
-                                 MatchOptions options,
-                                 boolean filePattern,
-                                 FileType sourceFileType,
-                                 String sourceExtension,
-                                 boolean physicalSourceFile)
+  protected List<MatchResult> testFindMatches(String source,
+                                              String pattern,
+                                              MatchOptions options,
+                                              boolean filePattern,
+                                              FileType sourceFileType,
+                                              String sourceExtension,
+                                              boolean physicalSourceFile)
     throws MalformedPatternException, UnsupportedPatternException {
 
     CollectingMatchResultSink sink = new CollectingMatchResultSink();
@@ -471,7 +471,7 @@ public class MatcherImpl {
     return sink.getMatches();
   }
 
-  protected List testFindMatches(String source, String pattern, MatchOptions options, boolean filePattern) {
+  protected List<MatchResult> testFindMatches(String source, String pattern, MatchOptions options, boolean filePattern) {
     return testFindMatches(source, pattern, options, filePattern, options.getFileType(), null, false);
   }
 

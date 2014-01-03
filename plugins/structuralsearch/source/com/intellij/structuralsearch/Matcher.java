@@ -40,7 +40,7 @@ public class Matcher extends MatcherImpl {
    * @throws MalformedPatternException
    * @throws UnsupportedPatternException
    */
-  public List testFindMatches(String source,
+  public List<MatchResult> testFindMatches(String source,
                               String pattern,
                               MatchOptions options,
                               boolean filePattern,
@@ -51,7 +51,7 @@ public class Matcher extends MatcherImpl {
     return super.testFindMatches(source, pattern, options, filePattern, sourceFileType, sourceExtension, physicalSourceFile);
   }
 
-  public List testFindMatches(String source, String pattern, MatchOptions options, boolean filePattern)
+  public List<MatchResult> testFindMatches(String source, String pattern, MatchOptions options, boolean filePattern)
     throws MalformedPatternException, UnsupportedPatternException {
     return super.testFindMatches(source, pattern, options, filePattern);
   }

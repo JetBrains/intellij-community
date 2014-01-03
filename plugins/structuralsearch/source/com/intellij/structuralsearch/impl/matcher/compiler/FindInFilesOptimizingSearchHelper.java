@@ -3,7 +3,6 @@ package com.intellij.structuralsearch.impl.matcher.compiler;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiAnonymousClass;
 import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.*;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
@@ -68,16 +67,11 @@ class FindInFilesOptimizingSearchHelper extends OptimizingSearchHelperBase {
   }
 
   protected void doAddSearchWordInComments(final String refname) {
-    helper.processAllFilesWithWordInComments(refname,
-                                                       (GlobalSearchScope)context.getOptions().getScope(),
-                                                       new MyFileProcessor()
-      );
+    helper.processAllFilesWithWordInComments(refname, (GlobalSearchScope)context.getOptions().getScope(), new MyFileProcessor());
   }
 
   protected void doAddSearchWordInLiterals(final String refname) {
-    helper.processAllFilesWithWordInLiterals(refname,
-                                                       (GlobalSearchScope)context.getOptions().getScope(),
-                                                       new MyFileProcessor());
+    helper.processAllFilesWithWordInLiterals(refname, (GlobalSearchScope)context.getOptions().getScope(), new MyFileProcessor());
   }
 
   public void endTransaction() {
@@ -89,33 +83,28 @@ class FindInFilesOptimizingSearchHelper extends OptimizingSearchHelperBase {
   }
 
   public boolean addDescendantsOf(final String refname, final boolean subtype) {
-    List classes = buildDescendants(refname,subtype);
+    final List<PsiClass> classes = buildDescendants(refname,subtype);
 
-    for (final Object aClass : classes) {
-      final PsiClass clazz = (PsiClass)aClass;
-      String text;
-
-      if (clazz instanceof PsiAnonymousClass) {
-        text = ((PsiAnonymousClass)clazz).getBaseClassReference().getReferenceName();
+    for (final PsiClass aClass : classes) {
+      if (aClass instanceof PsiAnonymousClass) {
+        addWordToSearchInCode(((PsiAnonymousClass)aClass).getBaseClassReference().getReferenceName());
       }
       else {
-        text = clazz.getName();
+        addWordToSearchInCode(aClass.getName());
       }
-
-      addWordToSearchInCode(text);
     }
 
-    return (classes.size()>0);
+    return classes.size() > 0;
   }
 
-  private List<PsiElement> buildDescendants(String className, boolean includeSelf) {
+  private List<PsiClass> buildDescendants(String className, boolean includeSelf) {
     if (!doOptimizing()) return Collections.emptyList();
-    PsiShortNamesCache cache = PsiShortNamesCache.getInstance(context.getProject());
-    SearchScope scope = context.getOptions().getScope();
-    PsiClass[] classes = cache.getClassesByName(className,(GlobalSearchScope)scope);
-    final List<PsiElement> results = new ArrayList<PsiElement>();
+    final PsiShortNamesCache cache = PsiShortNamesCache.getInstance(context.getProject());
+    final SearchScope scope = context.getOptions().getScope();
+    final PsiClass[] classes = cache.getClassesByName(className,(GlobalSearchScope)scope);
+    final List<PsiClass> results = new ArrayList<PsiClass>();
 
-    PsiElementProcessor<PsiClass> processor = new PsiElementProcessor<PsiClass>() {
+    final PsiElementProcessor<PsiClass> processor = new PsiElementProcessor<PsiClass>() {
       public boolean execute(@NotNull PsiClass element) {
         results.add(element);
         return true;
@@ -128,9 +117,7 @@ class FindInFilesOptimizingSearchHelper extends OptimizingSearchHelperBase {
     }
 
     if (includeSelf) {
-      for (PsiClass aClass : classes) {
-        results.add(aClass);
-      }
+      Collections.addAll(results, classes);
     }
 
     return results;

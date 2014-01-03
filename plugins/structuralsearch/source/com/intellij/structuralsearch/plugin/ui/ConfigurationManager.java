@@ -101,15 +101,14 @@ public class ConfigurationManager {
   }
 
   public static void readConfigurations(final Element element, @NotNull Collection<Configuration> configurations, @NotNull Collection<Configuration> historyConfigurations) {
-    List patterns = element.getChildren();
+    final List<Element> patterns = element.getChildren();
 
     if (patterns != null && patterns.size() > 0) {
-      for (final Object pattern : patterns) {
-        final Element childElement = (Element)pattern;
-        final Configuration config = readConfiguration(childElement);
+      for (final Element pattern : patterns) {
+        final Configuration config = readConfiguration(pattern);
         if (config == null) continue;
 
-        if (childElement.getAttribute(SAVE_HISTORY_ATTR_NAME) != null) {
+        if (pattern.getAttribute(SAVE_HISTORY_ATTR_NAME) != null) {
           historyConfigurations.add(config);
         }
         else {
