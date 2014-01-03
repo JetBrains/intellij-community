@@ -15,13 +15,13 @@
  */
 package com.intellij.refactoring.util;
 
-import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.refactoring.ui.TypeSelector;
 import com.intellij.refactoring.ui.TypeSelectorManager;
 import com.intellij.refactoring.ui.TypeSelectorManagerImpl;
 import com.intellij.ui.BooleanTableCellRenderer;
+import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.ui.TableUtil;
 import com.intellij.ui.ToolbarDecorator;
 import com.intellij.ui.components.JBComboBoxLabel;
@@ -82,8 +82,9 @@ public abstract class ParameterTablePanel extends JPanel {
 
     myTable.getSelectionModel().setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     myTable.setCellSelectionEnabled(true);
-    myTable.getColumnModel().getColumn(MyTableModel.CHECKMARK_COLUMN).setCellRenderer(new CheckBoxTableCellRenderer());
-    myTable.getColumnModel().getColumn(MyTableModel.CHECKMARK_COLUMN).setMaxWidth(new JCheckBox().getPreferredSize().width);
+    TableColumn checkboxColumn = myTable.getColumnModel().getColumn(MyTableModel.CHECKMARK_COLUMN);
+    TableUtil.setupCheckboxColumn(checkboxColumn);
+    checkboxColumn.setCellRenderer(new CheckBoxTableCellRenderer());
     myTable.getColumnModel().getColumn(MyTableModel.PARAMETER_NAME_COLUMN).setCellRenderer(new DefaultTableCellRenderer() {
       public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
         super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);

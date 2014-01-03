@@ -30,7 +30,6 @@ import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.event.*;
 import javax.swing.table.AbstractTableModel;
-import javax.swing.table.TableColumn;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -147,7 +146,7 @@ public class AutomaticUsageRenamingDialog<T> extends DialogWrapper {
       }
     });
 
-    setupCheckColumn();
+    TableUtil.setupCheckboxColumn(myTable, CHECK_COLUMN);
     setupOldNameColumn();
     setupNewNameColumn();
 
@@ -282,13 +281,6 @@ public class AutomaticUsageRenamingDialog<T> extends DialogWrapper {
         }
       }
     });
-  }
-
-  private void setupCheckColumn() {
-    TableColumn column = myTable.getColumnModel().getColumn(CHECK_COLUMN);
-    int checkBoxWidth = new JCheckBox().getPreferredSize().width;
-    column.setMaxWidth(checkBoxWidth);
-    column.setMinWidth(checkBoxWidth);
   }
 
   private void removeListener(JTextField textField) {

@@ -116,9 +116,7 @@ public class ClassFilterEditor extends JPanel implements ComponentWithEmptyText 
 
     TableColumnModel columnModel = myTable.getColumnModel();
     TableColumn column = columnModel.getColumn(FilterTableModel.CHECK_MARK);
-    int width = new JCheckBox().getPreferredSize().width;
-    column.setPreferredWidth(width);
-    column.setMaxWidth(width);
+    TableUtil.setupCheckboxColumn(column);
     column.setCellRenderer(new EnabledCellRenderer(myTable.getDefaultRenderer(Boolean.class)));
     columnModel.getColumn(FilterTableModel.FILTER).setCellRenderer(new FilterCellRenderer());
 

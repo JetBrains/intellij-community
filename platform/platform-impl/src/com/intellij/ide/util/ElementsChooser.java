@@ -71,13 +71,11 @@ public class ElementsChooser<T> extends JPanel implements ComponentWithEmptyText
     myTable.setColumnSelectionAllowed(false);
     JScrollPane pane = ScrollPaneFactory.createScrollPane(myTable);
     pane.setPreferredSize(new Dimension(100, 155));
-    int width = new JCheckBox().getPreferredSize().width;
     TableColumnModel columnModel = myTable.getColumnModel();
 
     if (elementsCanBeMarked) {
       TableColumn checkMarkColumn = columnModel.getColumn(myTableModel.CHECK_MARK_COLUM_INDEX);
-      checkMarkColumn.setPreferredWidth(width);
-      checkMarkColumn.setMaxWidth(width);
+      TableUtil.setupCheckboxColumn(checkMarkColumn);
       checkMarkColumn.setCellRenderer(new CheckMarkColumnCellRenderer(myTable.getDefaultRenderer(Boolean.class)));
     }
     columnModel.getColumn(myTableModel.ELEMENT_COLUMN_INDEX).setCellRenderer(new MyElementColumnCellRenderer());

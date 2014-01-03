@@ -26,6 +26,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.IdeBorderFactory;
+import com.intellij.ui.TableUtil;
 import com.intellij.ui.ToolbarDecorator;
 import com.intellij.ui.table.TableView;
 import com.intellij.util.ui.ColumnInfo;
@@ -107,7 +108,7 @@ public class BrowserSettingsPanel {
   }
 
   private void createUIComponents() {
-    ColumnInfo[] columns = {new ColumnInfo<WebBrowserSettings, Boolean>("") {
+    ColumnInfo<WebBrowserSettings, Boolean> activeColumn = new ColumnInfo<WebBrowserSettings, Boolean>("") {
       @Override
       public Class getColumnClass() {
         return Boolean.class;
@@ -127,7 +128,8 @@ public class BrowserSettingsPanel {
       public void setValue(WebBrowserSettings info, Boolean value) {
         getMutable(info).setActive(value);
       }
-    }, new ColumnInfo<WebBrowserSettings, String>("Name") {
+    };
+    ColumnInfo[] columns = {activeColumn, new ColumnInfo<WebBrowserSettings, String>("Name") {
       @Override
       public String valueOf(WebBrowserSettings info) {
         return getEffective(info).getName();
@@ -149,7 +151,10 @@ public class BrowserSettingsPanel {
       }
     }};
     ListTableModel<WebBrowserSettings> tableModel = new ListTableModel<WebBrowserSettings>(columns, WebBrowserManager.getInstance().getInfos());
-    browsersTable = ToolbarDecorator.createDecorator(new TableView<WebBrowserSettings>(tableModel)).createPanel();
+    TableView<WebBrowserSettings> table = new TableView<WebBrowserSettings>(tableModel);
+    TableUtil.setupCheckboxColumn(table.getColumnModel().getColumn(0));
+
+    browsersTable = ToolbarDecorator.createDecorator(table).createPanel();
   }
 
   @NotNull

@@ -176,9 +176,7 @@ public class AutomaticRenamingDialog extends DialogWrapper {
 
     final TableColumnModel columnModel = myTable.getColumnModel();
     columnModel.getColumn(CHECK_COLUMN).setCellRenderer(new BooleanTableCellRenderer());
-    final int checkBoxWidth = new JCheckBox().getPreferredSize().width;
-    columnModel.getColumn(CHECK_COLUMN).setMaxWidth(checkBoxWidth);
-    columnModel.getColumn(CHECK_COLUMN).setMinWidth(checkBoxWidth);
+    TableUtil.setupCheckboxColumn(columnModel.getColumn(CHECK_COLUMN));
 
     columnModel.getColumn(NEW_NAME_COLUMN).setCellEditor(new StringTableCellEditor(myProject));
     mySelectAllButton.addActionListener(new ActionListener() {

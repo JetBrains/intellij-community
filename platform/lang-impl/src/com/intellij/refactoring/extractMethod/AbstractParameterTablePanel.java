@@ -62,7 +62,7 @@ public abstract class AbstractParameterTablePanel extends JPanel {
 
     myTable.setTableHeader(null);
     myTable.getSelectionModel().setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-    myTable.getColumnModel().getColumn(MyTableModel.CHECKMARK_COLUMN).setMaxWidth(new JCheckBox().getPreferredSize().width);
+    TableUtil.setupCheckboxColumn(myTable, MyTableModel.CHECKMARK_COLUMN);
     myTable.getColumnModel().getColumn(MyTableModel.PARAMETER_NAME_COLUMN).setCellRenderer(new DefaultTableCellRenderer() {
       @Override
       public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {

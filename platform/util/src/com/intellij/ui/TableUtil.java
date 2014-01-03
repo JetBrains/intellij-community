@@ -21,6 +21,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.table.TableCellEditor;
+import javax.swing.table.TableColumn;
 import javax.swing.table.TableModel;
 import java.awt.*;
 import java.util.ArrayList;
@@ -195,5 +196,24 @@ public class TableUtil {
   public static void ensureSelectionExists(@NotNull JTable table) {
     if (table.getSelectedRow() != -1 || table.getRowCount() == 0) return;
     table.setRowSelectionInterval(0, 0);
+  }
+
+  /**
+   * @return column width
+   */
+  public static int setupCheckboxColumn(@NotNull JTable table, int columnIndex) {
+    return setupCheckboxColumn(table.getColumnModel().getColumn(columnIndex));
+  }
+
+  /**
+   * @return column width
+   */
+  public static int setupCheckboxColumn(@NotNull TableColumn column) {
+    int checkboxWidth = new JCheckBox().getPreferredSize().width;
+    column.setResizable(false);
+    column.setPreferredWidth(checkboxWidth);
+    column.setMaxWidth(checkboxWidth);
+    column.setMinWidth(checkboxWidth);
+    return checkboxWidth;
   }
 }
