@@ -36,15 +36,22 @@ public class LocalPathCellEditor extends AbstractTableCellEditor {
   private final String myTitle;
   private final Project myProject;
 
+  private FileChooserDescriptor myFileChooserDescriptor;
+
   protected CellEditorComponentWithBrowseButton<JTextField> myComponent;
 
-  public LocalPathCellEditor(@Nullable String title, @NotNull Project project) {
+  public LocalPathCellEditor(@Nullable String title, @Nullable Project project) {
     myTitle = title;
     myProject = project;
   }
 
-  public LocalPathCellEditor(@NotNull Project project) {
+  public LocalPathCellEditor(@Nullable Project project) {
     this(null, project);
+  }
+
+  public LocalPathCellEditor fileChooserDescriptor(@NotNull FileChooserDescriptor fileChooserDescriptor) {
+    myFileChooserDescriptor = fileChooserDescriptor;
+    return this;
   }
 
   @Override
@@ -80,11 +87,13 @@ public class LocalPathCellEditor extends AbstractTableCellEditor {
   }
 
   public FileChooserDescriptor getFileChooserDescriptor() {
-    FileChooserDescriptor descriptor = new FileChooserDescriptor(false, true, false, true, false, false);
-    if (myTitle != null) {
-      descriptor.setTitle(myTitle);
+    if (myFileChooserDescriptor == null) {
+      myFileChooserDescriptor = new FileChooserDescriptor(false, true, false, true, false, false);
+      if (myTitle != null) {
+        myFileChooserDescriptor.setTitle(myTitle);
+      }
+      myFileChooserDescriptor.setShowFileSystemRoots(true);
     }
-    descriptor.setShowFileSystemRoots(true);
-    return descriptor;
+    return myFileChooserDescriptor;
   }
 }

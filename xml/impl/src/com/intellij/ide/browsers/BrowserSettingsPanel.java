@@ -31,12 +31,13 @@ import com.intellij.ui.ToolbarDecorator;
 import com.intellij.ui.table.TableView;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.ListTableModel;
+import com.intellij.util.ui.LocalPathCellEditor;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.table.TableCellRenderer;
-import java.awt.*;
+import javax.swing.table.TableCellEditor;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.Map;
@@ -59,18 +60,20 @@ public class BrowserSettingsPanel {
   private JComponent browsersTable;
 
   private final THashMap<WebBrowserSettings, MutableWebBrowserSettings> modifiedBrowsers = new THashMap<WebBrowserSettings, MutableWebBrowserSettings>();
+  private final FileChooserDescriptor appFileChooserDescriptor;
 
   public BrowserSettingsPanel() {
     defaultBrowserPanel.setBorder(IdeBorderFactory.createTitledBorder("Default Browser", true));
 
-    FileChooserDescriptor descriptor = SystemInfo.isMac ?
-                                       new FileChooserDescriptor(false, true, false, false, false, false) {
-                                         @Override
-                                         public boolean isFileSelectable(VirtualFile file) {
-                                           return file.getName().endsWith(".app");
-                                         }
-                                       } : FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor();
-    alternativeBrowserPathField.addBrowseFolderListener(IdeBundle.message("title.select.path.to.browser"), null, null, descriptor);
+    appFileChooserDescriptor = SystemInfo.isMac ?
+                               new FileChooserDescriptor(false, true, false, false, false, false) {
+                                 @Override
+                                 public boolean isFileSelectable(VirtualFile file) {
+                                   return file.getName().endsWith(".app");
+                                 }
+                               } : FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor();
+    alternativeBrowserPathField.addBrowseFolderListener(IdeBundle.message("title.select.path.to.browser"), null, null,
+                                                        appFileChooserDescriptor);
 
     if (BrowserUtil.canStartDefaultBrowser()) {
       ActionListener actionListener = new ActionListener() {
@@ -160,22 +163,16 @@ public class BrowserSettingsPanel {
       public void setValue(WebBrowserSettings info, String value) {
         getMutable(info).setPath(value);
       }
+
+      @Nullable
+      @Override
+      public TableCellEditor getEditor(WebBrowserSettings info) {
+        return new LocalPathCellEditor(null).fileChooserDescriptor(appFileChooserDescriptor);
+      }
     }};
     ListTableModel<WebBrowserSettings> tableModel = new ListTableModel<WebBrowserSettings>(columns, WebBrowserManager.getInstance().getInfos());
     TableView<WebBrowserSettings> table = new TableView<WebBrowserSettings>(tableModel);
     TableUtil.setupCheckboxColumn(table.getColumnModel().getColumn(0));
-
-    table.getColumnModel().getColumn(2).setCellRenderer(new TableCellRenderer() {
-      @Override
-      public Component getTableCellRendererComponent(JTable table,
-                                                     Object value,
-                                                     boolean isSelected,
-                                                     boolean hasFocus,
-                                                     int row,
-                                                     int column) {
-        return null;
-      }
-    });
 
     browsersTable = ToolbarDecorator.createDecorator(table).createPanel();
   }
