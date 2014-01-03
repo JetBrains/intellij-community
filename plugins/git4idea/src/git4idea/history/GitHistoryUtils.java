@@ -516,7 +516,7 @@ public class GitHistoryUtils {
     GitSimpleHandler h = new GitSimpleHandler(project, root, GitCommand.LOG);
     GitLogParser parser = new GitLogParser(project, GitLogParser.NameStatus.NONE, HASH, PARENTS, AUTHOR_NAME,
                                            AUTHOR_EMAIL, COMMIT_TIME, SUBJECT);
-    h.setStdoutSuppressed(true);
+    h.setSilent(true);
     // git show can show either -p, or --name-status, or --name-only, but we need nothing, just details => using git log --no-walk
     h.addParameters("--no-walk");
     h.addParameters(parser.getPretty(), "--encoding=UTF-8");
@@ -1032,7 +1032,7 @@ public class GitHistoryUtils {
     GitLogParser parser = new GitLogParser(project, GitLogParser.NameStatus.STATUS,
                                            HASH, HASH, COMMIT_TIME, AUTHOR_NAME, AUTHOR_TIME, AUTHOR_EMAIL, COMMITTER_NAME,
                                            COMMITTER_EMAIL, PARENTS, REF_NAMES, SUBJECT, BODY, RAW_BODY);
-    h.setStdoutSuppressed(true);
+    h.setSilent(true);
     h.addParameters("--name-status", "-M", parser.getPretty(), "--encoding=UTF-8");
     h.addParameters(new ArrayList<String>(commitsIds));
 
@@ -1052,7 +1052,7 @@ public class GitHistoryUtils {
     GitLogParser parser = new GitLogParser(project, GitLogParser.NameStatus.STATUS,
                                            HASH, HASH, COMMIT_TIME, AUTHOR_NAME, AUTHOR_TIME, AUTHOR_EMAIL, COMMITTER_NAME,
                                            COMMITTER_EMAIL, PARENTS, REF_NAMES, SUBJECT, BODY, RAW_BODY);
-    h.setStdoutSuppressed(true);
+    h.setSilent(true);
     h.addParameters("--name-status", "-M", parser.getPretty(), "--encoding=UTF-8");
     h.addParameters(new ArrayList<String>(hashes));
 
@@ -1071,7 +1071,7 @@ public class GitHistoryUtils {
     GitLogParser parser = new GitLogParser(project, GitLogParser.NameStatus.STATUS,
                                            HASH, HASH, COMMIT_TIME, AUTHOR_NAME, AUTHOR_TIME, AUTHOR_EMAIL, COMMITTER_NAME,
                                            COMMITTER_EMAIL, PARENTS, REF_NAMES, SUBJECT, BODY, RAW_BODY);
-    h.setStdoutSuppressed(true);
+    h.setSilent(true);
     h.addParameters("--name-status", "-M", parser.getPretty(), "--encoding=UTF-8");
     h.addParameters(parameters);
 
