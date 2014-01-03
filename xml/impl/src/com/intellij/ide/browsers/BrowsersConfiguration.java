@@ -22,15 +22,12 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.SmartList;
 import com.intellij.xml.XmlBundle;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.io.File;
-import java.util.List;
 
 public class BrowsersConfiguration {
   public enum BrowserFamily {
@@ -95,44 +92,6 @@ public class BrowsersConfiguration {
     public Icon getIcon() {
       return myIcon;
     }
-  }
-
-  @SuppressWarnings("UnusedDeclaration")
-  @NotNull
-  @Deprecated
-  /**
-   * @deprecated  to remove in IDEA 14
-   */
-  public List<BrowserFamily> getActiveBrowsers() {
-    final List<BrowserFamily> browsers = new SmartList<BrowserFamily>();
-    for (BrowserFamily family : BrowserFamily.values()) {
-      if (getBrowserSettings(family).isActive()) {
-        browsers.add(family);
-      }
-    }
-    return browsers;
-  }
-
-  @SuppressWarnings({"UnusedDeclaration"})
-  @Deprecated
-  /**
-   * @deprecated  to remove in IDEA 14
-   */
-  public void updateBrowserSpecificSettings(BrowserFamily family, BrowserSpecificSettings specificSettings) {
-    final WebBrowserSettings settings = getBrowserSettings(family);
-    WebBrowserManager.getInstance().myBrowserToSettingsMap.put(family, new WebBrowserSettings(settings.getPath(), settings.isActive(), specificSettings));
-  }
-
-  @NotNull
-  public WebBrowserSettings getBrowserSettings(@NotNull final BrowserFamily browserFamily) {
-    WebBrowserSettings result = WebBrowserManager.getInstance().myBrowserToSettingsMap.get(browserFamily);
-    if (result == null) {
-      String path = browserFamily.getExecutionPath();
-      result = new WebBrowserSettings(StringUtil.notNullize(path), path != null, null);
-      WebBrowserManager.getInstance().myBrowserToSettingsMap.put(browserFamily, result);
-    }
-
-    return result;
   }
 
   @SuppressWarnings({"UnusedDeclaration"})

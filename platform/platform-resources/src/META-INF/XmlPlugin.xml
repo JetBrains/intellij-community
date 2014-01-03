@@ -519,6 +519,8 @@
     <selectInTarget implementation="com.intellij.ide.browsers.actions.SelectInDefaultBrowserTarget"/>
     <xml.xmlExtension implementation="com.intellij.xml.HtmlXmlExtension"/>
 
+    <applicationConfigurable instance="com.intellij.ide.browsers.BrowserSettings" id="reference.settings.ide.settings.web.browsers"
+                             key="browsers.settings" bundle="messages.IdeBundle"/>
   </extensions>
   <extensions defaultExtensionNs="org.jetbrains">
     <urlOpener implementation="com.intellij.ide.browsers.impl.DefaultUrlOpener" order="last"/>

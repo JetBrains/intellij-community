@@ -22,7 +22,6 @@ import com.intellij.util.containers.hash.LinkedHashMap;
 import com.intellij.util.xmlb.SkipDefaultValuesSerializationFilters;
 import com.intellij.util.xmlb.XmlSerializer;
 import org.jdom.Element;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -34,7 +33,7 @@ import static com.intellij.ide.browsers.BrowsersConfiguration.BrowserFamily;
 
 @State(name = "WebBrowsersConfiguration", storages = {@Storage(file = StoragePathMacros.APP_CONFIG + "/browsers.xml")})
 public class WebBrowserManager implements PersistentStateComponent<Element> {
-  final Map<BrowserFamily, WebBrowserSettings> myBrowserToSettingsMap = new LinkedHashMap<BrowserFamily, WebBrowserSettings>();
+  final Map<String, WebBrowserSettings> nameToInfo = new LinkedHashMap<String, WebBrowserSettings>();
 
   public static WebBrowserManager getInstance() {
     return ServiceManager.getService(WebBrowserManager.class);
@@ -42,14 +41,16 @@ public class WebBrowserManager implements PersistentStateComponent<Element> {
 
   @Override
   public Element getState() {
-    @NonNls Element element = new Element("WebBrowsersConfiguration");
-    for (Map.Entry<BrowserFamily, WebBrowserSettings> entry : myBrowserToSettingsMap.entrySet()) {
+    Element element = new Element("WebBrowsersConfiguration");
+    for (WebBrowserSettings info : nameToInfo.values()) {
       Element browser = new Element("browser");
-      browser.setAttribute("family", entry.getKey().toString());
-      WebBrowserSettings settings = entry.getValue();
-      browser.setAttribute("path", settings.getPath());
-      browser.setAttribute("active", Boolean.toString(settings.isActive()));
-      BrowserSpecificSettings specificSettings = settings.getBrowserSpecificSettings();
+      browser.setAttribute("family", info.getName());
+      browser.setAttribute("path", info.getPath());
+      if (!info.isActive()) {
+        browser.setAttribute("active", "false");
+      }
+
+      BrowserSpecificSettings specificSettings = info.getBrowserSpecificSettings();
       if (specificSettings != null) {
         Element settingsElement = new Element("settings");
         XmlSerializer.serializeInto(specificSettings, settingsElement, new SkipDefaultValuesSerializationFilters());
@@ -63,20 +64,35 @@ public class WebBrowserManager implements PersistentStateComponent<Element> {
     return element;
   }
 
+  @NotNull
+  public List<WebBrowserSettings> getInfos() {
+    return new ArrayList<WebBrowserSettings>(nameToInfo.values());
+  }
+
   @Override
   public void loadState(Element element) {
     for (Element child : element.getChildren("browser")) {
       Element settingsElement = child.getChild("settings");
+      BrowserFamily browserFamily;
       try {
-        BrowserFamily browserFamily = BrowserFamily.valueOf(child.getAttributeValue("family"));
-        BrowserSpecificSettings specificSettings = settingsElement == null ? null : browserFamily.createBrowserSpecificSettings();
-        if (specificSettings != null) {
-          XmlSerializer.deserializeInto(specificSettings, settingsElement);
-        }
-        myBrowserToSettingsMap.put(browserFamily, new WebBrowserSettings(child.getAttributeValue("path"), Boolean.parseBoolean(child.getAttributeValue("active")), specificSettings));
+        browserFamily = BrowserFamily.valueOf(child.getAttributeValue("family"));
       }
-      catch (IllegalArgumentException ignored) {
+      catch (RuntimeException e) {
+        continue;
       }
+
+      BrowserSpecificSettings specificSettings = settingsElement == null ? null : browserFamily.createBrowserSpecificSettings();
+      if (specificSettings != null) {
+        XmlSerializer.deserializeInto(specificSettings, settingsElement);
+      }
+
+      String active = child.getAttributeValue("active");
+      String name = StringUtil.notNullize(child.getAttributeValue("name"), browserFamily.getName());
+      nameToInfo.put(name, new WebBrowserSettings(browserFamily,
+                                                  name,
+                                                  StringUtil.notNullize(child.getAttributeValue("path")),
+                                                  active == null || Boolean.parseBoolean(active),
+                                                  specificSettings));
     }
   }
 
@@ -107,11 +123,11 @@ public class WebBrowserManager implements PersistentStateComponent<Element> {
 
   @NotNull
   public WebBrowserSettings getBrowserSettings(@NotNull BrowserFamily family) {
-    WebBrowserSettings result = myBrowserToSettingsMap.get(family);
+    WebBrowserSettings result = nameToInfo.get(family.getName());
     if (result == null) {
       String path = family.getExecutionPath();
-      result = new WebBrowserSettings(StringUtil.notNullize(path), path != null, null);
-      myBrowserToSettingsMap.put(family, result);
+      result = new WebBrowserSettings(family, family.getName(), StringUtil.notNullize(path), path != null, null);
+      nameToInfo.put(result.getName(), result);
     }
     return result;
   }
@@ -122,12 +138,12 @@ public class WebBrowserManager implements PersistentStateComponent<Element> {
 
   public void updateBrowserSpecificSettings(@NotNull BrowserFamily family, BrowserSpecificSettings specificSettings) {
     WebBrowserSettings settings = getBrowserSettings(family);
-    myBrowserToSettingsMap.put(family, new WebBrowserSettings(settings.getPath(), settings.isActive(), specificSettings));
+    nameToInfo.put(family.getName(), new WebBrowserSettings(family, family.getName(), settings.getPath(), settings.isActive(), specificSettings));
   }
 
-  public void updateBrowserValue(@NotNull WebBrowser browser, String path, boolean isActive) {
+  public void updateBrowserValue(@NotNull WebBrowser browser, @NotNull String path, boolean isActive) {
     WebBrowserSettings settings = getBrowserSettings(browser);
-    myBrowserToSettingsMap.put(browser.getFamily(), new WebBrowserSettings(path, isActive, settings.getBrowserSpecificSettings()));
+    nameToInfo.put(browser.getFamily().getName(), new WebBrowserSettings(browser.getFamily(), browser.getFamily().getName(), path, isActive, settings.getBrowserSpecificSettings()));
   }
 
   @Nullable
@@ -141,6 +157,6 @@ public class WebBrowserManager implements PersistentStateComponent<Element> {
   }
 
   public void updateBrowserValue(BrowserFamily family, String path, boolean isActive) {
-    myBrowserToSettingsMap.put(family, new WebBrowserSettings(path, isActive, getBrowserSettings(family).getBrowserSpecificSettings()));
+    nameToInfo.put(family.getName(), new WebBrowserSettings(family, family.getName(), path, isActive, getBrowserSettings(family).getBrowserSpecificSettings()));
   }
 }

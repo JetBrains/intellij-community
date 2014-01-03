@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@ package com.intellij.ide.browsers;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.GeneralSettings;
 import com.intellij.ide.IdeBundle;
-import com.intellij.ide.browsers.impl.BrowserSettingsProviderImpl;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.options.ConfigurationException;
@@ -27,61 +26,39 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.IdeBorderFactory;
+import com.intellij.ui.ToolbarDecorator;
+import com.intellij.ui.table.TableView;
+import com.intellij.util.ui.ColumnInfo;
+import com.intellij.util.ui.ListTableModel;
+import gnu.trove.THashMap;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.Map;
 
-public class BrowserSettingsPanel extends JPanel {
-  private final JRadioButton myUseDefaultBrowser;
-  private final JRadioButton myUseAlternativeBrowser;
-  private final BrowserSettingsProviderImpl mySettingsProvider;
-  private final TextFieldWithBrowseButton myBrowserPathField;
-  private final JCheckBox myConfirmExtractFiles;
+import static com.intellij.ide.browsers.WebBrowserSettings.MutableWebBrowserSettings;
+
+public class BrowserSettingsPanel {
+  private JPanel root;
+
+  private JRadioButton useSystemDefaultBrowser;
+
+  private JRadioButton useAlternativeBrowser;
+  private TextFieldWithBrowseButton alternativeBrowserPathField;
+
+  private JCheckBox confirmExtractFiles;
+  private JButton clearExtractedFiles;
+  private JPanel defaultBrowserPanel;
+
+  @SuppressWarnings("UnusedDeclaration")
+  private JComponent browsersTable;
+
+  private final Map<WebBrowserSettings, MutableWebBrowserSettings> modifiedBrowsers = new THashMap<WebBrowserSettings, MutableWebBrowserSettings>();
 
   public BrowserSettingsPanel() {
-    setLayout(new BorderLayout());
-
-    final JPanel outerPanel = new JPanel();
-    outerPanel.setLayout(new BoxLayout(outerPanel, BoxLayout.Y_AXIS));
-
-    // generic system browser
-    final JPanel genericPanel = new JPanel();
-    genericPanel.setBorder(IdeBorderFactory.createTitledBorder("Default Web Browser", true));
-    genericPanel.setLayout(new BoxLayout(genericPanel, BoxLayout.Y_AXIS));
-    final JPanel innerPanel1 = new JPanel(new BorderLayout());
-
-    final ButtonGroup group = new ButtonGroup();
-    myUseDefaultBrowser = new JRadioButton("Use system default browser");
-    group.add(myUseDefaultBrowser);
-
-    innerPanel1.add(myUseDefaultBrowser, BorderLayout.WEST);
-    genericPanel.add(innerPanel1);
-    final JPanel innerPanel2 = new JPanel(new BorderLayout());
-
-    myUseAlternativeBrowser = new JRadioButton("Use");
-    group.add(myUseAlternativeBrowser);
-
-    innerPanel2.add(myUseAlternativeBrowser, BorderLayout.WEST);
-    myBrowserPathField = new TextFieldWithBrowseButton();
-    innerPanel2.add(myBrowserPathField, BorderLayout.CENTER);
-    genericPanel.add(innerPanel2);
-
-    JPanel innerPanel3 = new JPanel(new BorderLayout());
-    myConfirmExtractFiles = new JCheckBox("Show confirmation before extracting files");
-    JButton clearExtractedFiles = new JButton("Clear extracted files");
-    clearExtractedFiles.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        BrowserUtil.clearExtractedFiles();
-      }
-    });
-    innerPanel3.add(myConfirmExtractFiles, BorderLayout.CENTER);
-    innerPanel3.add(clearExtractedFiles, BorderLayout.EAST);
-    genericPanel.add(innerPanel3);
-
-    outerPanel.add(genericPanel);
+    defaultBrowserPanel.setBorder(IdeBorderFactory.createTitledBorder("Default Browser", true));
 
     FileChooserDescriptor descriptor = SystemInfo.isMac ?
                                        new FileChooserDescriptor(false, true, false, false, false, false) {
@@ -90,7 +67,7 @@ public class BrowserSettingsPanel extends JPanel {
                                            return file.getName().endsWith(".app");
                                          }
                                        } : FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor();
-    myBrowserPathField.addBrowseFolderListener(IdeBundle.message("title.select.path.to.browser"), null, null, descriptor);
+    alternativeBrowserPathField.addBrowseFolderListener(IdeBundle.message("title.select.path.to.browser"), null, null, descriptor);
 
     if (BrowserUtil.canStartDefaultBrowser()) {
       ActionListener actionListener = new ActionListener() {
@@ -99,30 +76,98 @@ public class BrowserSettingsPanel extends JPanel {
           updateBrowserField();
         }
       };
-      myUseDefaultBrowser.addActionListener(actionListener);
-      myUseAlternativeBrowser.addActionListener(actionListener);
+      useSystemDefaultBrowser.addActionListener(actionListener);
+      useAlternativeBrowser.addActionListener(actionListener);
     }
     else {
-      myUseDefaultBrowser.setVisible(false);
-      myUseAlternativeBrowser.setVisible(false);
+      useSystemDefaultBrowser.setVisible(false);
+      useAlternativeBrowser.setVisible(false);
     }
 
-    mySettingsProvider = new BrowserSettingsProviderImpl(WebBrowserManager.getInstance());
-    outerPanel.add(mySettingsProvider.createComponent());
-    add(outerPanel, BorderLayout.NORTH);
+    clearExtractedFiles.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        BrowserUtil.clearExtractedFiles();
+      }
+    });
+  }
+
+  private WebBrowserSettings getEffective(WebBrowserSettings info) {
+    MutableWebBrowserSettings mutable = modifiedBrowsers.isEmpty() ? null : modifiedBrowsers.get(info);
+    return mutable == null ? info : mutable;
+  }
+
+  private MutableWebBrowserSettings getMutable(WebBrowserSettings info) {
+    MutableWebBrowserSettings mutable = modifiedBrowsers.get(info);
+    if (mutable == null) {
+      mutable = info.createMutable();
+      modifiedBrowsers.put(info, mutable);
+    }
+    return mutable;
+  }
+
+  private void createUIComponents() {
+    ColumnInfo[] columns = {new ColumnInfo<WebBrowserSettings, Boolean>("") {
+      @Override
+      public Class getColumnClass() {
+        return Boolean.class;
+      }
+
+      @Override
+      public Boolean valueOf(WebBrowserSettings info) {
+        return getEffective(info).isActive();
+      }
+
+      @Override
+      public boolean isCellEditable(WebBrowserSettings info) {
+        return true;
+      }
+
+      @Override
+      public void setValue(WebBrowserSettings info, Boolean value) {
+        getMutable(info).setActive(value);
+      }
+    }, new ColumnInfo<WebBrowserSettings, String>("Name") {
+      @Override
+      public String valueOf(WebBrowserSettings info) {
+        return getEffective(info).getName();
+      }
+    }, new ColumnInfo<WebBrowserSettings, String>("Path") {
+      @Override
+      public String valueOf(WebBrowserSettings info) {
+        return getEffective(info).getPath();
+      }
+
+      @Override
+      public boolean isCellEditable(WebBrowserSettings info) {
+        return true;
+      }
+
+      @Override
+      public void setValue(WebBrowserSettings info, String value) {
+        getMutable(info).setPath(value);
+      }
+    }};
+    ListTableModel<WebBrowserSettings> tableModel = new ListTableModel<WebBrowserSettings>(columns, WebBrowserManager.getInstance().getInfos());
+    browsersTable = ToolbarDecorator.createDecorator(new TableView<WebBrowserSettings>(tableModel)).createPanel();
+  }
+
+  @NotNull
+  public JPanel getComponent() {
+    return root;
   }
 
   public boolean isModified() {
     GeneralSettings settings = GeneralSettings.getInstance();
-    boolean isModified = !Comparing.strEqual(settings.getBrowserPath(), myBrowserPathField.getText());
-    isModified |= settings.isUseDefaultBrowser() != myUseDefaultBrowser.isSelected();
-    isModified |= settings.isConfirmExtractFiles() != myConfirmExtractFiles.isSelected();
+    boolean isModified = !Comparing.strEqual(settings.getBrowserPath(), alternativeBrowserPathField.getText());
+    isModified |= settings.isUseDefaultBrowser() != useSystemDefaultBrowser.isSelected();
+    isModified |= settings.isConfirmExtractFiles() != confirmExtractFiles.isSelected();
 
     if (isModified) {
       return true;
     }
 
-    return mySettingsProvider.isModified();
+    return false;
   }
 
   private void updateBrowserField() {
@@ -130,38 +175,38 @@ public class BrowserSettingsPanel extends JPanel {
       return;
     }
 
-    myBrowserPathField.getTextField().setEnabled(myUseAlternativeBrowser.isSelected());
-    myBrowserPathField.getButton().setEnabled(myUseAlternativeBrowser.isSelected());
+    alternativeBrowserPathField.getTextField().setEnabled(useAlternativeBrowser.isSelected());
+    alternativeBrowserPathField.getButton().setEnabled(useAlternativeBrowser.isSelected());
   }
 
   public void apply() throws ConfigurationException {
     GeneralSettings settings = GeneralSettings.getInstance();
 
-    settings.setBrowserPath(myBrowserPathField.getText());
-    settings.setUseDefaultBrowser(myUseDefaultBrowser.isSelected());
-    settings.setConfirmExtractFiles(myConfirmExtractFiles.isSelected());
+    settings.setBrowserPath(alternativeBrowserPathField.getText());
+    settings.setUseDefaultBrowser(useSystemDefaultBrowser.isSelected());
+    settings.setConfirmExtractFiles(confirmExtractFiles.isSelected());
 
-    mySettingsProvider.apply();
+    //browsersPanel.apply();
   }
 
   public void reset() {
     GeneralSettings settings = GeneralSettings.getInstance();
-    myBrowserPathField.setText(settings.getBrowserPath());
+    alternativeBrowserPathField.setText(settings.getBrowserPath());
 
     if (settings.isUseDefaultBrowser()) {
-      myUseDefaultBrowser.setSelected(true);
+      useSystemDefaultBrowser.setSelected(true);
     }
     else {
-      myUseAlternativeBrowser.setSelected(true);
+      useAlternativeBrowser.setSelected(true);
     }
-    myConfirmExtractFiles.setSelected(settings.isConfirmExtractFiles());
+    confirmExtractFiles.setSelected(settings.isConfirmExtractFiles());
 
     updateBrowserField();
 
-    mySettingsProvider.reset();
+    //browsersPanel.reset();
   }
 
   public void disposeUIResources() {
-    mySettingsProvider.disposeUIResources();
+    //browsersPanel.dispose();
   }
 }

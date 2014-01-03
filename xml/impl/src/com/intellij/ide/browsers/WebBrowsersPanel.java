@@ -41,10 +41,10 @@ public class WebBrowsersPanel extends JPanel {
   private Map<BrowsersConfiguration.BrowserFamily, Pair<JCheckBox, TextFieldWithBrowseButton>> myBrowserSettingsMap = new THashMap<BrowsersConfiguration.BrowserFamily, Pair<JCheckBox, TextFieldWithBrowseButton>>();
   private final WebBrowserManager myBrowserManager;
 
-  public WebBrowsersPanel(WebBrowserManager browserManager) {
+  public WebBrowsersPanel() {
     setLayout(new BorderLayout());
 
-    myBrowserManager = browserManager;
+    myBrowserManager = WebBrowserManager.getInstance();
 
     mySettingsPanel = new JPanel();
     mySettingsPanel.setLayout(new BoxLayout(mySettingsPanel, BoxLayout.Y_AXIS));

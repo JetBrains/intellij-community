@@ -15,32 +15,63 @@
  */
 package com.intellij.ide.browsers;
 
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author nik
- */
-public class WebBrowserSettings {
-  private final String myPath;
-  private final boolean myActive;
-  private final BrowserSpecificSettings myBrowserSpecificSettings;
+import static com.intellij.ide.browsers.BrowsersConfiguration.BrowserFamily;
 
-  public WebBrowserSettings(String path, boolean active, BrowserSpecificSettings browserSpecificSettings) {
-    myPath = path;
-    myActive = active;
+public class WebBrowserSettings {
+  protected BrowserFamily family;
+  protected String name;
+  protected String path;
+  protected boolean active;
+  protected BrowserSpecificSettings myBrowserSpecificSettings;
+
+  public WebBrowserSettings(@NotNull BrowserFamily family, @NotNull String name, @NotNull String path, boolean active, @Nullable BrowserSpecificSettings browserSpecificSettings) {
+    this.family = family;
+    this.name = name;
+    this.path = path;
+    this.active = active;
     myBrowserSpecificSettings = browserSpecificSettings;
   }
 
+  @NotNull
   public String getPath() {
-    return myPath;
+    return path;
   }
 
   public boolean isActive() {
-    return myActive;
+    return active;
   }
 
   @Nullable
   public BrowserSpecificSettings getBrowserSpecificSettings() {
     return myBrowserSpecificSettings;
+  }
+
+  public MutableWebBrowserSettings createMutable() {
+    return new MutableWebBrowserSettings(this);
+  }
+
+  public String getName() {
+    return name;
+  }
+
+  public static class MutableWebBrowserSettings extends WebBrowserSettings {
+    private MutableWebBrowserSettings(@NotNull WebBrowserSettings settings) {
+      super(settings.family, settings.name, settings.path, settings.active, settings.myBrowserSpecificSettings);
+    }
+
+    public void setActive(boolean value) {
+      active = value;
+    }
+
+    public void setName(@NotNull String value) {
+      name = value;
+    }
+
+    public void setPath(@NotNull String value) {
+      path = value;
+    }
   }
 }

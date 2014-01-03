@@ -205,10 +205,6 @@
     <applicationConfigurable instance="com.intellij.ide.ui.customization.CustomizationConfigurable" id="preferences.customizations"
                              key="title.customizations" bundle="messages.IdeBundle"/>
 
-    <!-- Web Browser -->
-    <applicationConfigurable instance="com.intellij.ide.BrowserSettings" id="reference.settings.ide.settings.web.browsers"
-                             key="browsers.settings" bundle="messages.IdeBundle"/>
-
     <!-- Notifications -->
     <applicationConfigurable instance="com.intellij.notification.impl.NotificationsConfigurable"/>
 
