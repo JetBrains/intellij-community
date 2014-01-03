@@ -23,7 +23,7 @@ import java.util.Map;
 public class CheckBoxList<T> extends JBList {
   private static final int DEFAULT_CHECK_BOX_WIDTH = 20;
   private CheckBoxListListener checkBoxListListener;
-  private BidirectionalMap<Object, JCheckBox> myItemMap = new BidirectionalMap<Object, JCheckBox>();
+  private final BidirectionalMap<Object, JCheckBox> myItemMap = new BidirectionalMap<Object, JCheckBox>();
 
   public CheckBoxList(final CheckBoxListListener checkBoxListListener) {
     this(new DefaultListModel(), checkBoxListListener);
@@ -47,8 +47,7 @@ public class CheckBoxList<T> extends JBList {
       @Override
       public void keyTyped(KeyEvent e) {
         if (e.getKeyChar() == ' ') {
-          int[] indices = CheckBoxList.this.getSelectedIndices();
-          for (int index : indices) {
+          for (int index : getSelectedIndices()) {
             if (index >= 0) {
               JCheckBox checkbox = (JCheckBox)getModel().getElementAt(index);
               setSelected(checkbox, index);
@@ -166,6 +165,7 @@ public class CheckBoxList<T> extends JBList {
       myBorder = new EmptyBorder(borderInsets);
     }
 
+    @Override
     public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
       JCheckBox checkbox = (JCheckBox)value;
       if (!UIUtil.isUnderNimbusLookAndFeel()) {
