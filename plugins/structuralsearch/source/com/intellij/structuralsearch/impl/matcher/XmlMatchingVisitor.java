@@ -17,9 +17,11 @@ import java.util.List;
 */
 public class XmlMatchingVisitor extends XmlElementVisitor {
   private final GlobalMatchingVisitor myMatchingVisitor;
+  private final boolean myCaseSensitive;
 
   public XmlMatchingVisitor(GlobalMatchingVisitor matchingVisitor) {
     myMatchingVisitor = matchingVisitor;
+    myCaseSensitive = myMatchingVisitor.getMatchContext().getOptions().isCaseSensitiveMatch();
   }
 
   @Override
@@ -31,7 +33,7 @@ public class XmlMatchingVisitor extends XmlElementVisitor {
     final XmlAttribute another = (XmlAttribute)myMatchingVisitor.getElement();
     final boolean isTypedVar = myMatchingVisitor.getMatchContext().getPattern().isTypedVar(attribute.getName());
 
-    myMatchingVisitor.setResult(attribute.getName().equals(another.getName()) || isTypedVar);
+    myMatchingVisitor.setResult(matches(attribute.getName(), another.getName()) || isTypedVar);
     if (myMatchingVisitor.getResult()) {
       myMatchingVisitor.setResult(myMatchingVisitor.match(attribute.getValueElement(), another.getValueElement()));
     }
@@ -55,7 +57,7 @@ public class XmlMatchingVisitor extends XmlElementVisitor {
       myMatchingVisitor.setResult(((SubstitutionHandler)handler).handle(another, offset, text2.length() - offset,
                                                                         myMatchingVisitor.getMatchContext()));
     } else {
-      myMatchingVisitor.setResult(text.equals(another.getValue()));
+      myMatchingVisitor.setResult(matches(text, another.getValue()));
     }
   }
 
@@ -63,7 +65,7 @@ public class XmlMatchingVisitor extends XmlElementVisitor {
     final XmlTag another = (XmlTag)myMatchingVisitor.getElement();
     final boolean isTypedVar = myMatchingVisitor.getMatchContext().getPattern().isTypedVar(tag.getName());
 
-    myMatchingVisitor.setResult((tag.getName().equals(another.getName()) || isTypedVar) &&
+    myMatchingVisitor.setResult((matches(tag.getName(), another.getName()) || isTypedVar) &&
                                 myMatchingVisitor.matchInAnyOrder(tag.getAttributes(), another.getAttributes()));
 
     if(myMatchingVisitor.getResult()) {
@@ -117,8 +119,12 @@ public class XmlMatchingVisitor extends XmlElementVisitor {
       if (isTypedVar) {
         myMatchingVisitor.setResult(myMatchingVisitor.handleTypedElement(token, myMatchingVisitor.getElement()));
       } else {
-        myMatchingVisitor.setResult(text.equals(myMatchingVisitor.getElement().getText()));
+        myMatchingVisitor.setResult(matches(text, myMatchingVisitor.getElement().getText()));
       }
     }
+  }
+
+  private boolean matches(String a, String b) {
+    return myCaseSensitive ? a.equals(b) : a.equalsIgnoreCase(b);
   }
 }

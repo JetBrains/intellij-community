@@ -30,6 +30,28 @@ public class XmlStructuralSearchTest extends StructuralSearchTestCase {
     pattern = TestUtils.loadFile("pattern4_2.html");
     assertEquals("Simple html find",1,findMatchesCount(content,pattern,false,StdFileTypes.HTML));
   }
+
+  public void testHtmlSearchCaseInsensitive() {
+    String html = "<HTML><HEAD><TITLE>Hello Worlds</TITLE></HEAD><body><img src='test.gif'><body></HTML>";
+    String pattern = "<title>'_a</title>";
+
+    options.setCaseSensitiveMatch(false);
+    assertEquals("case insensitive search", 1, findMatchesCount(html, pattern, false, StdFileTypes.HTML));
+
+    String pattern2 = "<'t SRC=\"'_v\"/>";
+    assertEquals("case insensitive attribute", 1, findMatchesCount(html, pattern2, false, StdFileTypes.HTML));
+
+    String pattern3 = "<'t '_a=\"TEST.gif\">";
+    assertEquals("case insensitive attribute value", 1, findMatchesCount(html, pattern3, false, StdFileTypes.HTML));
+  }
+
+  public void testHtmlSearchCaseSensitive() {
+    String html = "<HTML><HEAD><TITLE>Hello Worlds</TITLE></HEAD><body><img src='test.gif'><body></HTML>";
+    String pattern = "<title>'_a</title>";
+
+    options.setCaseSensitiveMatch(true);
+    assertEquals("case sensitive search", 0, findMatchesCount(html, pattern, false, StdFileTypes.HTML));
+  }
   
   public void testJspSearch() throws Exception {
     String content = TestUtils.loadFile("in1.html");
