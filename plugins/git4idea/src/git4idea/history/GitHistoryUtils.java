@@ -484,34 +484,6 @@ public class GitHistoryUtils {
     return null;
   }
 
-  public static List<? extends VcsShortCommitDetails> readAllMiniDetails(final Project project, final VirtualFile root) throws VcsException {
-    GitSimpleHandler h = new GitSimpleHandler(project, root, GitCommand.LOG);
-    GitLogParser parser = new GitLogParser(project, GitLogParser.NameStatus.NONE, HASH, PARENTS, AUTHOR_NAME,
-                                           AUTHOR_EMAIL, AUTHOR_TIME, SUBJECT);
-    h.setStdoutSuppressed(true);
-    h.addParameters(parser.getPretty(), "--encoding=UTF-8");
-    h.addParameters(LOG_ALL);
-    h.addParameters("--full-history", "--sparse");
-    h.endOptions();
-
-    String output = h.run();
-
-    List<GitLogRecord> records = parser.parse(output);
-
-    return ContainerUtil.mapNotNull(records, new Function<GitLogRecord, VcsShortCommitDetails>() {
-      @Override
-      public VcsShortCommitDetails fun(GitLogRecord record) {
-        List<Hash> parents = new SmartList<Hash>();
-        for (String parent : record.getParentsHashes()) {
-          parents.add(HashImpl.build(parent));
-        }
-
-        return vcsObjectsFactory(project).createShortDetails(HashImpl.build(record.getHash()), parents, record.getAuthorTimeStamp(), root,
-                                             record.getSubject(), record.getAuthorName(), record.getAuthorEmail());
-      }
-    });
-  }
-
   public static List<? extends VcsShortCommitDetails> readMiniDetails(final Project project, final VirtualFile root, List<String> hashes) throws VcsException {
     GitSimpleHandler h = new GitSimpleHandler(project, root, GitCommand.LOG);
     GitLogParser parser = new GitLogParser(project, GitLogParser.NameStatus.NONE, HASH, PARENTS, AUTHOR_NAME,
