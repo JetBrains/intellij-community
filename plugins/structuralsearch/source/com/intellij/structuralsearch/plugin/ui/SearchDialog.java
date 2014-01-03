@@ -972,7 +972,7 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
       }
     }
     catch (UnsupportedPatternException ex) {
-      reportMessage("this.pattern.is.unsupported.message", searchCriteriaEdit, ex.getPattern());
+      reportMessage("this.pattern.is.unsupported.message", searchCriteriaEdit, ex.getMessage());
       result = false;
     }
 
