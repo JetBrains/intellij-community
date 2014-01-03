@@ -43,10 +43,12 @@ import com.intellij.vcsUtil.VcsFileUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import git4idea.GitPlatformFacade;
 import git4idea.GitUtil;
+import git4idea.GitVcs;
 import git4idea.commands.GitCommand;
 import git4idea.commands.GitSimpleHandler;
 import git4idea.config.GitConfigUtil;
 import git4idea.config.GitVcsSettings;
+import git4idea.config.GitVersionSpecialty;
 import git4idea.history.NewGitUsersComponent;
 import git4idea.i18n.GitBundle;
 import git4idea.push.GitPusher;
@@ -600,6 +602,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
    * Checkin options for git
    */
   private class GitCheckinOptions implements CheckinChangeListSpecificComponent {
+    private final GitVcs myVcs;
     /**
      * A container panel
      */
@@ -625,6 +628,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
      * @param panel
      */
     GitCheckinOptions(@NotNull final Project project, @NotNull CheckinProjectPanel panel) {
+      myVcs = GitVcs.getInstance(project);
       myCheckinPanel = panel;
       myPanel = new JPanel(new GridBagLayout());
       final Insets insets = new Insets(2, 2, 2, 2);
@@ -749,8 +753,14 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
     private String getLastCommitMessage(@NotNull VirtualFile root) throws VcsException {
       GitSimpleHandler h = new GitSimpleHandler(myProject, root, GitCommand.LOG);
       h.addParameters("--max-count=1");
-      // only message: subject + body; "%-b" means that preceding line-feeds will be deleted if the body is empty
-      h.addParameters("--pretty=%s%n%n%-b");
+      if (GitVersionSpecialty.STARTED_USING_RAW_BODY_IN_FORMAT.existsIn(myVcs.getVersion())) {
+        h.addParameters("--pretty=%B");
+      }
+      else {
+        // only message: subject + body; "%-b" means that preceding line-feeds will be deleted if the body is empty
+        // %s strips newlines from subject; there is no way to work around it before 1.7.2 with %B (unless parsing some fixed format)
+        h.addParameters("--pretty=%s%n%n%-b");
+      }
       return h.run();
     }
 
