@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.*;
 import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.ex.temp.TempFileSystem;
 import com.intellij.openapi.vfs.newvfs.*;
 import com.intellij.openapi.vfs.newvfs.events.*;
 import com.intellij.openapi.vfs.newvfs.impl.FakeVirtualFile;
@@ -1024,12 +1025,12 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
   @Override
   @NotNull
   public VirtualFile[] getLocalRoots() {
-    final List<VirtualFile> roots = new ArrayList<VirtualFile>();
+    List<VirtualFile> roots = ContainerUtil.newSmartList();
 
     myRootsLock.readLock().lock();
     try {
       for (NewVirtualFile root : myRoots.values()) {
-        if (root.isInLocalFileSystem()) {
+        if (root.isInLocalFileSystem() && !(root.getFileSystem() instanceof TempFileSystem)) {
           roots.add(root);
         }
       }

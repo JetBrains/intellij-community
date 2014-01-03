@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.history.integration;
 
 import com.intellij.history.core.LocalHistoryFacade;
@@ -35,7 +34,6 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.encoding.EncodingRegistry;
-import com.intellij.openapi.vfs.ex.temp.TempFileSystem;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.util.NullableFunction;
@@ -52,7 +50,7 @@ public class IdeaGateway {
     = Key.create("LocalHistory.SAVED_DOCUMENT_CONTENT_AND_STAMP_KEY");
 
   public boolean isVersioned(@NotNull VirtualFile f) {
-    if (!isInLocalFS(f)) return false;
+    if (!f.isInLocalFileSystem()) return false;
 
     String fileName = f.getName();
     if (!f.isDirectory() && fileName.endsWith(".class")) return false;
@@ -69,10 +67,6 @@ public class IdeaGateway {
     return openProjects.length != 0 || !FileTypeManager.getInstance().isFileIgnored(f);
   }
 
-  private static boolean isInLocalFS(VirtualFile file) {
-    return file.isInLocalFileSystem() && !(file.getFileSystem() instanceof TempFileSystem);
-  }
-
   public boolean areContentChangesVersioned(@NotNull VirtualFile f) {
     return isVersioned(f) && !f.isDirectory() && areContentChangesVersioned(f.getName());
   }
@@ -83,7 +77,7 @@ public class IdeaGateway {
 
   public boolean ensureFilesAreWritable(@NotNull Project p, @NotNull List<VirtualFile> ff) {
     ReadonlyStatusHandler h = ReadonlyStatusHandler.getInstance(p);
-    return !h.ensureFilesWritable(VfsUtil.toVirtualFileArray(ff)).hasReadonlyFiles();
+    return !h.ensureFilesWritable(VfsUtilCore.toVirtualFileArray(ff)).hasReadonlyFiles();
   }
 
   @Nullable
@@ -166,12 +160,7 @@ public class IdeaGateway {
   }
 
   private static List<VirtualFile> getLocalRoots() {
-    return ContainerUtil.filter(ManagingFS.getInstance().getLocalRoots(), new Condition<VirtualFile>() {
-      @Override
-      public boolean value(VirtualFile file) {
-        return isInLocalFS(file);
-      }
-    });
+    return Arrays.asList(ManagingFS.getInstance().getLocalRoots());
   }
 
   private void doCreateChildrenForPathOnly(@NotNull DirectoryEntry parent,
