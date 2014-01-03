@@ -354,9 +354,9 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
   private static final String s94 = " class '_ {" +
                                     "private void b() {}" +
                                     "}";
-   private static final String s94_2 = " class '_ {" +
-                                       "public void b() {}" +
-                                       "}";
+  private static final String s94_2 = " class '_ {" +
+                                      "public void b() {}" +
+                                      "}";
   private static final String s94_3 = " class '_ {" +
                                       "protected int field;" +
                                       "}";
@@ -2493,25 +2493,25 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
     assertEquals("Find class within type hierarchy with not, 2", 1, findMatchesCount(s1,s2_2));
   }
 
-  //public void testFindTryWithoutProperFinally() {
-  //  String s1 = "try {\n" +
-  //              "  conn = 1;\n" +
-  //              "} finally {\n" +
-  //              "  conn.close();\n" +
-  //              "}\n" +
-  //              "try {\n" +
-  //              "  conn = 1;\n" +
-  //              "} finally {\n" +
-  //              "  int a = 1;\n" +
-  //              "}\n" +
-  //              "try {\n" +
-  //              "  conn = 1;\n" +
-  //              "} finally {\n" +
-  //              "  int a = 1;\n" +
-  //              "}";
-  //  String s2 = "try { '_StatementBefore*; '_Dcl:[regex( conn = 1 )]; '_StatementAfter*; } finally { '_Finally*:[!regex( .*conn.* ) ]; }";
-  //  assertEquals("FindTryWithoutProperFinally", 2, findMatchesCount(s1,s2));
-  //}
+  public void testFindTryWithoutProperFinally() {
+    String s1 = "try {\n" +
+                "  conn = 1;\n" +
+                "} finally {\n" +
+                "  conn.close();\n" +
+                "}\n" +
+                "try {\n" +
+                "  conn = 1;\n" +
+                "} finally {\n" +
+                "  int a = 1;\n" +
+                "}\n" +
+                "try {\n" +
+                "  conn = 1;\n" +
+                "} finally {\n" +
+                "  int a = 1;\n" +
+                "}";
+    String s2 = "try { '_StatementBefore*; '_Dcl:[regex( conn = 1 )]; '_StatementAfter*; } finally { '_Finally*:[!regex( .*conn.* ) ]; }";
+    assertEquals("FindTryWithoutProperFinally", 2, findMatchesCount(s1,s2));
+  }
 
   public void testBug() {
     String s1 = "public class DiallingNumber extends DataGroup\n" + "{\n" + "    protected static byte [] CLEAR = { };\n" + "\n" +
