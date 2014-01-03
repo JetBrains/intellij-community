@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,26 +21,26 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileInfoManager;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReference;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceSet;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
-import java.util.Collections;
 
 import static com.intellij.patterns.PsiJavaPatterns.literalExpression;
 import static com.intellij.testAssistant.TestDataLineMarkerProvider.*;
 
 /**
- * User: zolotov
- * Date: 9/20/13
+ * @author zolotov
+ * @since 9/20/13
  */
 public class TestDataReferenceContributor extends PsiReferenceContributor {
   @Override
@@ -82,13 +82,7 @@ public class TestDataReferenceContributor extends PsiReferenceContributor {
     @NotNull
     @Override
     public Collection<PsiFileSystemItem> computeDefaultContexts() {
-      final VirtualFile localSystemRoot = LocalFileSystem.getInstance().getRoot();
-      final PsiManager psiManager = PsiManager.getInstance(getElement().getProject());
-      final PsiDirectory psiRoot = psiManager.findDirectory(localSystemRoot);
-      if (psiRoot != null) {
-        return Collections.<PsiFileSystemItem>singleton(psiRoot);
-      }
-      return super.computeDefaultContexts();
+      return toFileSystemItems(ManagingFS.getInstance().getLocalRoots());
     }
 
     @Override
@@ -118,8 +112,9 @@ public class TestDataReferenceContributor extends PsiReferenceContributor {
           variants.add(FileInfoManager.getFileLookupItem(contentPsiRoot, CONTENT_ROOT_VARIABLE, contentPsiRoot.getIcon(0))
                          .withTypeText(contentPsiRoot.getVirtualFile().getPath(), true));
         }
-        return variants.toArray(new Object[variants.size()]);
+        return ArrayUtil.toObjectArray(variants);
       }
+
       return super.getVariants();
     }
 
