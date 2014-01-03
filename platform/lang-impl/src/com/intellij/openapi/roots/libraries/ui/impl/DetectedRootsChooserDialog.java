@@ -165,9 +165,6 @@ public class DetectedRootsChooserDialog extends DialogWrapper {
         }
         else {
           text = file.getPresentableUrl();
-          if (text == null) {
-            isValid = false;
-          }
           attributes = SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES;
           icon = PlatformIcons.DIRECTORY_CLOSED_ICON;
         }
@@ -176,9 +173,7 @@ public class DetectedRootsChooserDialog extends DialogWrapper {
         if (!isValid) {
           textRenderer.append("[INVALID] ", SimpleTextAttributes.ERROR_ATTRIBUTES);
         }
-        if (text != null) {
-          textRenderer.append(text, attributes);
-        }
+        textRenderer.append(text, attributes);
       }
     }, new ColumnInfo[]{ROOT_COLUMN, ROOT_TYPE_COLUMN});
 
