@@ -184,7 +184,7 @@ public class JavaExecutionUtil {
     return name == null || name.startsWith(ExecutionBundle.message("run.configuration.unnamed.name.prefix"));
   }
 
-  public static Location stepIntoSingleClass(final Location location) {
+  public static Location stepIntoSingleClass(@NotNull final Location location) {
     PsiElement element = location.getPsiElement();
     if (!(element instanceof PsiClassOwner)) {
       if (PsiTreeUtil.getParentOfType(element, PsiClass.class) != null) return location;

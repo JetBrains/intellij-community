@@ -21,6 +21,7 @@ import com.intellij.execution.Location;
 import com.intellij.execution.PsiLocation;
 import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.actions.ConfigurationFromContext;
+import com.intellij.execution.junit2.PsiClassParameterizedLocation;
 import com.intellij.execution.junit2.info.MethodLocation;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -40,14 +41,23 @@ public class TestMethodConfigurationProducer extends JUnitConfigurationProducer 
     if (PatternConfigurationProducer.isMultipleElementsSelected(context)) {
       return false;
     }
-    Location<PsiMethod> methodLocation = getTestMethod(context.getLocation());
+    final Location contextLocation = context.getLocation();
+    assert contextLocation != null;
+    final Location<PsiMethod> methodLocation = getTestMethod(contextLocation);
     if (methodLocation == null) return false;
+
+    if (contextLocation instanceof PsiClassParameterizedLocation) {
+      final String paramSetName = ((PsiClassParameterizedLocation)contextLocation).getParamSetName();
+      if (paramSetName != null) {
+        configuration.setProgramParameters(paramSetName);
+      }
+    }
     sourceElement.set(methodLocation.getPsiElement());
     setupConfigurationModule(context, configuration);
     final Module originalModule = configuration.getConfigurationModule().getModule();
     configuration.beMethodConfiguration(methodLocation);
     configuration.restoreOriginalModule(originalModule);
-    JavaRunConfigurationExtensionManager.getInstance().extendCreatedConfiguration(configuration, context.getLocation());
+    JavaRunConfigurationExtensionManager.getInstance().extendCreatedConfiguration(configuration, contextLocation);
     return true;
   }
 
