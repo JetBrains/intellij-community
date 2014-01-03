@@ -73,9 +73,9 @@ public class GitHistoryUtils {
   /**
    * A parameter to {@code git log} which is equivalent to {@code --all}, but doesn't show the stuff from index or stash.
    */
-  public static List<String> LOG_ALL = Arrays.asList("HEAD", "--branches", "--remotes", "--tags");
+  public static final List<String> LOG_ALL = Arrays.asList("HEAD", "--branches", "--remotes", "--tags");
 
-  private final static Logger LOG = Logger.getInstance("#git4idea.history.GitHistoryUtils");
+  private static final Logger LOG = Logger.getInstance("#git4idea.history.GitHistoryUtils");
 
   private GitHistoryUtils() {
   }
