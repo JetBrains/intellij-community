@@ -1020,20 +1020,9 @@ public class GitHistoryUtils {
   @NotNull
   public static List<GitCommit> commitsDetails(@NotNull Project project, @NotNull VirtualFile root,
                                                @NotNull final Collection<String> hashes) throws VcsException {
-    GitSimpleHandler h = new GitSimpleHandler(project, root, GitCommand.SHOW);
-    GitLogParser parser = new GitLogParser(project, GitLogParser.NameStatus.STATUS,
-                                           HASH, HASH, COMMIT_TIME, AUTHOR_NAME, AUTHOR_TIME, AUTHOR_EMAIL, COMMITTER_NAME,
-                                           COMMITTER_EMAIL, PARENTS, REF_NAMES, SUBJECT, BODY, RAW_BODY);
-    h.setSilent(true);
-    h.addParameters("--name-status", "-M", parser.getPretty(), "--encoding=UTF-8");
-    h.addParameters(new ArrayList<String>(hashes));
-
-    String output = h.run();
-    final List<GitCommit> rc = new ArrayList<GitCommit>();
-    for (GitLogRecord record : parser.parse(output)) {
-      rc.add(createCommit(project, root, record));
-    }
-    return rc;
+    List<String> params = new ArrayList<String>(hashes);
+    params.add(0, "--no-walk=unsorted");
+    return getAllDetails(project, root, params);
   }
 
   @NotNull
