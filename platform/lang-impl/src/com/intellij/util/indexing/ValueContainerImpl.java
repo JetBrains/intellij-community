@@ -22,6 +22,7 @@ import com.intellij.util.SmartList;
 import com.intellij.util.containers.EmptyIterator;
 import gnu.trove.THashMap;
 import gnu.trove.TIntHashSet;
+import gnu.trove.TIntIterator;
 import gnu.trove.TObjectObjectProcedure;
 
 import java.util.*;
@@ -47,14 +48,14 @@ class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implement
       attachFileSetForNewValue(value, inputId);
     }
     else {
-      final IdSet idSet;
+      final TIntHashSet idSet;
       if (input instanceof Integer) {
         idSet = new IdSet(3);
         idSet.add(((Integer)input).intValue());
         resetFileSetForValue(value, idSet);
       }
       else {
-        idSet = (IdSet)input;
+        idSet = (TIntHashSet)input;
       }
       idSet.add(inputId);
     }
@@ -98,8 +99,8 @@ class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implement
       return false;
     }
 
-    if (input instanceof IdSet) {
-      final IdSet idSet = (IdSet)input;
+    if (input instanceof TIntHashSet) {
+      final TIntHashSet idSet = (TIntHashSet)input;
       final boolean reallyRemoved = idSet.remove(inputId);
       if (reallyRemoved) {
         idSet.compact();
@@ -194,8 +195,8 @@ class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implement
   @Override
   public boolean isAssociated(Value value, final int inputId) {
     final Object input = getInput(value);
-    if (input instanceof IdSet) {
-      return ((IdSet)input).contains(inputId);
+    if (input instanceof TIntHashSet) {
+      return ((TIntHashSet)input).contains(inputId);
     }
     if (input instanceof Integer ){
       return inputId == ((Integer)input).intValue();
@@ -217,7 +218,7 @@ class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implement
       };
     }
     return new IntPredicate() {
-      final IdSet mySet = (IdSet)input;
+      final TIntHashSet mySet = (TIntHashSet)input;
       @Override
       boolean contains(int id) {
         return mySet.contains(id);
@@ -229,8 +230,8 @@ class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implement
   public IntIterator getInputIdsIterator(Value value) {
     final Object input = getInput(value);
     final IntIterator it;
-    if (input instanceof IdSet) {
-      it = ((IdSet) input).createIterator();
+    if (input instanceof TIntHashSet) {
+      it = new IntSetIterator((TIntHashSet)input);
     }
     else if (input instanceof Integer ){
       it = new SingleValueIterator(((Integer)input).intValue());
@@ -262,8 +263,8 @@ class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implement
       final ValueContainerImpl clone = (ValueContainerImpl)super.clone();
       if (myInputIdMapping instanceof THashMap) {
         clone.myInputIdMapping = mapCopy((THashMap<Value, Object>)myInputIdMapping);
-      } else if (myInputIdMappingValue instanceof IdSet) {
-        clone.myInputIdMappingValue = ((IdSet)myInputIdMappingValue).clone();
+      } else if (myInputIdMappingValue instanceof TIntHashSet) {
+        clone.myInputIdMappingValue = ((TIntHashSet)myInputIdMappingValue).clone();
       }
       return clone;
     }
@@ -377,6 +378,31 @@ class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implement
     }
   }
 
+  private static class IntSetIterator implements IntIterator {
+    private final TIntIterator mySetIterator;
+    private final int mySize;
+
+    public IntSetIterator(final TIntHashSet set) {
+      mySetIterator = set.iterator();
+      mySize = set.size();
+    }
+
+    @Override
+    public boolean hasNext() {
+      return mySetIterator.hasNext();
+    }
+
+    @Override
+    public int next() {
+      return mySetIterator.next();
+    }
+
+    @Override
+    public int size() {
+      return mySize;
+    }
+  }
+
   private THashMap<Value, Object> mapCopy(final THashMap<Value, Object> map) {
     if (map == null) {
       return null;
@@ -385,8 +411,8 @@ class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implement
     cloned.forEachEntry(new TObjectObjectProcedure<Value, Object>() {
       @Override
       public boolean execute(Value key, Object val) {
-        if (val instanceof IdSet) {
-          cloned.put(key, ((IdSet)val).clone());
+        if (val instanceof TIntHashSet) {
+          cloned.put(key, ((TIntHashSet)val).clone());
         }
         return true;
       }
@@ -401,4 +427,19 @@ class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implement
       return false;
     }
   };
+
+  private static class IdSet extends TIntHashSet {
+
+    private IdSet(final int initialCapacity) {
+      super(initialCapacity, 0.98f);
+    }
+
+    @Override
+    public void compact() {
+      if (((int)(capacity() * _loadFactor)/ Math.max(1, size())) >= 3) {
+        super.compact();
+      }
+    }
+  }
+
 }
