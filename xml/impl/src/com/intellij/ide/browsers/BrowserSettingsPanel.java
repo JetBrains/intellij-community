@@ -35,6 +35,8 @@ import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import javax.swing.table.TableCellRenderer;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.Map;
@@ -162,6 +164,18 @@ public class BrowserSettingsPanel {
     ListTableModel<WebBrowserSettings> tableModel = new ListTableModel<WebBrowserSettings>(columns, WebBrowserManager.getInstance().getInfos());
     TableView<WebBrowserSettings> table = new TableView<WebBrowserSettings>(tableModel);
     TableUtil.setupCheckboxColumn(table.getColumnModel().getColumn(0));
+
+    table.getColumnModel().getColumn(2).setCellRenderer(new TableCellRenderer() {
+      @Override
+      public Component getTableCellRendererComponent(JTable table,
+                                                     Object value,
+                                                     boolean isSelected,
+                                                     boolean hasFocus,
+                                                     int row,
+                                                     int column) {
+        return null;
+      }
+    });
 
     browsersTable = ToolbarDecorator.createDecorator(table).createPanel();
   }
