@@ -32,6 +32,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.rt.execution.junit.states.PoolOfTestStates;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -160,7 +161,7 @@ public class TestProxy extends AbstractTestProxy {
             final PsiAnnotationMemberValue attributeValue = annotation.findAttributeValue("value");
             if (attributeValue instanceof PsiClassObjectAccessExpression) {
               final PsiTypeElement operand = ((PsiClassObjectAccessExpression)attributeValue).getOperand();
-              if (operand.getType().equalsToText(JUnitUtil.PARAMETERIZED_CLASS_NAME)) {
+              if (InheritanceUtil.isInheritor(operand.getType(), JUnitUtil.PARAMETERIZED_CLASS_NAME)) {
                 return new PsiMemberParameterizedLocation(project, parentElement, getInfo().getName());
               }
             }
