@@ -12,6 +12,7 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.VcsLogProvider;
 import com.intellij.vcs.log.VcsShortCommitDetails;
+import com.intellij.vcs.log.ui.tables.AbstractVcsLogTableModel;
 import com.intellij.vcs.log.util.SequentialLimitedLifoExecutor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -79,15 +80,18 @@ public abstract class DataGetter<T extends VcsShortCommitDetails> implements Dis
     myLoadingFinishedListeners.clear();
   }
 
-  @NotNull
-  public <CommitId> T getCommitData(@NotNull CommitId id, @NotNull AroundProvider<CommitId> aroundProvider) {
+  @Nullable
+  public <CommitId> T getCommitData(int row, @NotNull AbstractVcsLogTableModel<?, CommitId> tableModel) {
     assert EventQueue.isDispatchThread();
-    Hash hash = aroundProvider.resolveId(id);
+    Hash hash = tableModel.getHashAtRow(row);
+    if (hash == null) {
+      return null;
+    }
     T details = getFromCache(hash);
     if (details != null) {
       return details;
     }
-    runLoadAroundCommitData(id, aroundProvider);
+    runLoadAroundCommitData(row, tableModel);
     return myCache.get(hash); // now it is in the cache as "Loading Details".
   }
 
@@ -112,9 +116,9 @@ public abstract class DataGetter<T extends VcsShortCommitDetails> implements Dis
     return (T)myDataHolder.getTopCommitDetails(hash);
   }
 
-  private <CommitId> void runLoadAroundCommitData(@NotNull CommitId id, @NotNull AroundProvider<CommitId> aroundProvider) {
+  private <CommitId> void runLoadAroundCommitData(int row, @NotNull AbstractVcsLogTableModel<?, CommitId> tableModel) {
     long taskNumber = myCurrentTaskIndex++;
-    MultiMap<VirtualFile, Hash> commits = aroundProvider.getCommitsAround(id, UP_PRELOAD_COUNT, DOWN_PRELOAD_COUNT);
+    MultiMap<VirtualFile, Hash> commits = getCommitsAround(row, tableModel, UP_PRELOAD_COUNT, DOWN_PRELOAD_COUNT);
     for (Map.Entry<VirtualFile, Collection<Hash>> hashesByRoots : commits.entrySet()) {
       VirtualFile root = hashesByRoots.getKey();
       Collection<Hash> hashes = hashesByRoots.getValue();
@@ -130,6 +134,21 @@ public abstract class DataGetter<T extends VcsShortCommitDetails> implements Dis
 
     TaskDescriptor task = new TaskDescriptor(commits);
     myLoader.queue(task);
+  }
+
+  @NotNull
+  private static <CommitId> MultiMap<VirtualFile, Hash> getCommitsAround(int selectedRow,
+                                                                         @NotNull AbstractVcsLogTableModel<?, CommitId> model,
+                                                                         int above, int below) {
+    MultiMap<VirtualFile, Hash> commits = MultiMap.create();
+    for (int row = Math.max(0, selectedRow - above); row < selectedRow + below && row < model.getRowCount(); row++) {
+      Hash hash = model.getHashAtRow(row);
+      if (hash != null) {
+        VirtualFile root = model.getRoot(row);
+        commits.putValue(root, hash);
+      }
+    }
+    return commits;
   }
 
   private void preLoadCommitData(@NotNull MultiMap<VirtualFile, Hash> commits) throws VcsException {
