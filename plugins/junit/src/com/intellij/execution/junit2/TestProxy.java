@@ -137,6 +137,13 @@ public class TestProxy extends AbstractTestProxy {
     final Location location = getInfo().getLocation(project, searchScope);
     if (location == null) {
       return checkParentParameterized(project, searchScope);
+    } else {
+      Location parentLocation = getParent().getLocation(project, searchScope);
+      if (parentLocation instanceof PsiMemberParameterizedLocation) {
+        return new PsiMemberParameterizedLocation(project, 
+                                                  location.getPsiElement(), 
+                                                  ((PsiMemberParameterizedLocation)parentLocation).getParamSetName());
+      }
     }
     return location;
   }
@@ -154,7 +161,7 @@ public class TestProxy extends AbstractTestProxy {
             if (attributeValue instanceof PsiClassObjectAccessExpression) {
               final PsiTypeElement operand = ((PsiClassObjectAccessExpression)attributeValue).getOperand();
               if (operand.getType().equalsToText(JUnitUtil.PARAMETERIZED_CLASS_NAME)) {
-                return new PsiClassParameterizedLocation(project, (PsiClass)parentElement, getInfo().getName());
+                return new PsiMemberParameterizedLocation(project, parentElement, getInfo().getName());
               }
             }
           }

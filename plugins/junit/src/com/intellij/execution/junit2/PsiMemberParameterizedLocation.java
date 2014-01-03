@@ -18,13 +18,15 @@ package com.intellij.execution.junit2;
 import com.intellij.execution.PsiLocation;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiMember;
 import org.jetbrains.annotations.NotNull;
 
-public class PsiClassParameterizedLocation extends PsiLocation<PsiClass> {
+public class PsiMemberParameterizedLocation extends PsiLocation<PsiElement> {
   private final String myParamSetName;
 
-  public PsiClassParameterizedLocation(@NotNull Project project, @NotNull PsiClass psiClass, String paramSetName) {
-    super(project, psiClass);
+  public PsiMemberParameterizedLocation(@NotNull Project project, @NotNull PsiElement psiElement, String paramSetName) {
+    super(project, psiElement);
     myParamSetName = paramSetName;
   }
 

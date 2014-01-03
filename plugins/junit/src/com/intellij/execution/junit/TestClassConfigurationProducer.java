@@ -20,7 +20,7 @@ import com.intellij.execution.JavaExecutionUtil;
 import com.intellij.execution.Location;
 import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.actions.ConfigurationFromContext;
-import com.intellij.execution.junit2.PsiClassParameterizedLocation;
+import com.intellij.execution.junit2.PsiMemberParameterizedLocation;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiClass;
@@ -39,8 +39,8 @@ public class TestClassConfigurationProducer extends JUnitConfigurationProducer {
     final Location location = JavaExecutionUtil.stepIntoSingleClass(contextLocation);
     if (location == null) return false;
 
-    if (contextLocation instanceof PsiClassParameterizedLocation) {
-      final String paramSetName = ((PsiClassParameterizedLocation)contextLocation).getParamSetName();
+    if (contextLocation instanceof PsiMemberParameterizedLocation) {
+      final String paramSetName = ((PsiMemberParameterizedLocation)contextLocation).getParamSetName();
       if (paramSetName != null) {
         configuration.setProgramParameters(paramSetName);
       }

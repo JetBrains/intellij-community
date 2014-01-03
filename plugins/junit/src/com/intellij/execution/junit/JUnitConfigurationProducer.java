@@ -23,7 +23,7 @@ import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.actions.ConfigurationFromContext;
 import com.intellij.execution.configurations.RunConfiguration;
-import com.intellij.execution.junit2.PsiClassParameterizedLocation;
+import com.intellij.execution.junit2.PsiMemberParameterizedLocation;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
@@ -47,8 +47,8 @@ public abstract class JUnitConfigurationProducer extends JavaRunConfigurationPro
     final RunConfiguration predefinedConfiguration = context.getOriginalConfiguration(JUnitConfigurationType.getInstance());
     final Location contextLocation = context.getLocation();
 
-    String paramSetName = contextLocation instanceof PsiClassParameterizedLocation
-                          ? ((PsiClassParameterizedLocation)contextLocation).getParamSetName() : null;
+    String paramSetName = contextLocation instanceof PsiMemberParameterizedLocation
+                          ? ((PsiMemberParameterizedLocation)contextLocation).getParamSetName() : null;
     assert contextLocation != null;
     Location location = JavaExecutionUtil.stepIntoSingleClass(contextLocation);
     final PsiElement element = location.getPsiElement();
