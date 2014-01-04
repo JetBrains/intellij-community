@@ -53,7 +53,7 @@ public class XmlStructuralSearchTest extends StructuralSearchTestCase {
     assertEquals("case sensitive search", 0, findMatchesCount(html, pattern, false, StdFileTypes.HTML));
   }
   
-  public void testJspSearch() throws Exception {
+  public void _testJspSearch() throws Exception {
     String content = TestUtils.loadFile("in1.html");
     String pattern = TestUtils.loadFile("pattern1.html");
     String pattern2 = TestUtils.loadFile("pattern1_2.html");
