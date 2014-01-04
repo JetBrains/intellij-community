@@ -85,6 +85,23 @@ public class XmlStructuralSearchTest extends StructuralSearchTestCase {
     assertEquals("Content match",6,findMatchesCount(s3,s4,false,StdFileTypes.XML));
   }
 
+  public void testXhtmlJspxSearch() {
+    String source = "<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Transitional//EN\"\n" +
+               "        \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd\">\n" +
+               "<html xmlns=\"http://www.w3.org/1999/xhtml\">\n" +
+               "<head><title>Title of document</title></head>\n" +
+               "<body>\n" +
+               "<b><i>This text is bold and italic</i></b>\n" +
+               "<p>This is a paragraph</p>\n" +
+               "<p>This is another paragraph</p>\n" +
+               "<img src=\"happy.gif\" alt=\"Happy face\"/>\n" +
+               "</body>\n" +
+               "</html>";
+    String pattern = "<p>$A$</p>";
+    assertEquals("xhtml", 2, findMatchesCount(source, pattern, false, StdFileTypes.XHTML));
+    assertEquals("jspx", 2, findMatchesCount(source, pattern, false, StdFileTypes.JSPX));
+  }
+
   //public void testXmlSearch2() {
   //  String s1 = "<body><p class=\"11\"> AAA </p><p class=\"22\"></p> <p> ZZZ </p> <p/> <p/> <p/> </body>";
   //  String s2 = "<p '_a?=\"'_t:[ regex( 11 ) ]\"> 'content? </p>";

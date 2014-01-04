@@ -61,7 +61,8 @@ public class XmlStructuralSearchProfile extends StructuralSearchProfile {
 
   @Override
   public boolean canProcess(@NotNull FileType fileType) {
-    return fileType == StdFileTypes.XML || fileType == StdFileTypes.HTML;
+    return fileType == StdFileTypes.XML || fileType == StdFileTypes.HTML ||
+           fileType == StdFileTypes.JSPX || fileType == StdFileTypes.XHTML;
   }
 
   public boolean isMyLanguage(@NotNull Language language) {
@@ -112,13 +113,13 @@ public class XmlStructuralSearchProfile extends StructuralSearchProfile {
 
   @Override
   public StructuralReplaceHandler getReplaceHandler(@NotNull ReplacementContext context) {
-    return new MyReplaceHanler(context);
+    return new MyReplaceHandler(context);
   }
 
-  private static class MyReplaceHanler extends StructuralReplaceHandler {
+  private static class MyReplaceHandler extends StructuralReplaceHandler {
     private final ReplacementContext myContext;
 
-    private MyReplaceHanler(ReplacementContext context) {
+    private MyReplaceHandler(ReplacementContext context) {
       myContext = context;
     }
 
