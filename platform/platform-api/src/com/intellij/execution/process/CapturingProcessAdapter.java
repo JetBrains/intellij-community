@@ -34,11 +34,15 @@ public class CapturingProcessAdapter extends ProcessAdapter {
 
   @Override
   public void onTextAvailable(ProcessEvent event, Key outputType) {
+    addToOutput(event.getText(), outputType);
+  }
+
+  protected void addToOutput(String text, Key outputType) {
     if (outputType == ProcessOutputTypes.STDOUT) {
-      myOutput.appendStdout(event.getText());
+      myOutput.appendStdout(text);
     }
     if (outputType == ProcessOutputTypes.STDERR) {
-      myOutput.appendStderr(event.getText());
+      myOutput.appendStderr(text);
     }
   }
 
