@@ -716,7 +716,7 @@ public final class UpdateChecker {
         InputStream in = UrlConnectionUtil.getConnectionInputStreamWithException(connection, i);
         try {
           int total = connection.getContentLength();
-          i.setIndeterminate(total > 0);
+          i.setIndeterminate(total <= 0);
 
           byte[] buffer = new byte[10 * 1024];
           int count;
