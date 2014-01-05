@@ -23,6 +23,10 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
+@Deprecated
+/**
+ * @deprecated Please use {@link com.intellij.util.ui.table.ComboBoxTableCellEditor}
+ */
 public class ComboBoxTableCellEditor extends AbstractTableCellEditor {
   public static final ComboBoxTableCellEditor INSTANCE = new ComboBoxTableCellEditor();
 
