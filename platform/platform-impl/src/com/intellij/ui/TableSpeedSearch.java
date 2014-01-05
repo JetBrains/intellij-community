@@ -27,7 +27,7 @@ public class TableSpeedSearch extends SpeedSearchBase<JTable> {
   private static final PairFunction<Object, Cell, String> TO_STRING = new PairFunction<Object, Cell, String>() {
     @Override
     public String fun(Object o, Cell cell) {
-      return o == null ? "" : o.toString();
+      return o == null || o instanceof Boolean ? "" : o.toString();
     }
   };
   private final PairFunction<Object, Cell, String> myToStringConvertor;
