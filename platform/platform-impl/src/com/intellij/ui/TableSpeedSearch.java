@@ -46,7 +46,10 @@ public class TableSpeedSearch extends SpeedSearchBase<JTable> {
 
   public TableSpeedSearch(JTable table, final PairFunction<Object, Cell, String> toStringConvertor) {
     super(table);
+
     myToStringConvertor = toStringConvertor;
+    // edit on F2 & double click, do not interfere with quick search
+    table.putClientProperty("JTable.autoStartsEdit", Boolean.FALSE);
   }
 
   protected boolean isSpeedSearchEnabled() {
