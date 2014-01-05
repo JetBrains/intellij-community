@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,11 +22,7 @@ import javax.swing.plaf.basic.BasicComboBoxRenderer;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.Iterator;
 
-/**
- * author: lesya
- */
 public class ComboBoxTableCellEditor extends AbstractTableCellEditor {
   public static final ComboBoxTableCellEditor INSTANCE = new ComboBoxTableCellEditor();
 
@@ -53,8 +49,9 @@ public class ComboBoxTableCellEditor extends AbstractTableCellEditor {
       options.selectFirst();
     }
     myComboBox.removeAllItems();
-    for (Iterator each = options.iterator(); each.hasNext();) {
-      myComboBox.addItem(each.next());
+    for (Object option : options) {
+      //noinspection unchecked
+      myComboBox.addItem(option);
     }
 
     myComboBox.setSelectedItem(options.getSelection());

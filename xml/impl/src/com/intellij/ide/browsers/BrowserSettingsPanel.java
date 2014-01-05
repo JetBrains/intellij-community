@@ -32,16 +32,20 @@ import com.intellij.ui.table.TableView;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.ListTableModel;
 import com.intellij.util.ui.LocalPathCellEditor;
+import com.intellij.util.ui.table.ComboBoxTableCellEditor;
+import com.intellij.util.ui.table.IconTableCellRenderer;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.table.TableCellEditor;
+import javax.swing.table.TableCellRenderer;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.Map;
 
+import static com.intellij.ide.browsers.BrowsersConfiguration.BrowserFamily;
 import static com.intellij.ide.browsers.WebBrowserSettings.MutableWebBrowserSettings;
 
 public class BrowserSettingsPanel {
@@ -131,7 +135,9 @@ public class BrowserSettingsPanel {
 
       @Override
       public void setValue(WebBrowserSettings info, Boolean value) {
-        getMutable(info).setActive(value);
+        if (value != info.active) {
+          getMutable(info).setActive(value);
+        }
       }
     }, new ColumnInfo<WebBrowserSettings, String>("Name") {
       @Override
@@ -146,7 +152,43 @@ public class BrowserSettingsPanel {
 
       @Override
       public void setValue(WebBrowserSettings info, String value) {
-        getMutable(info).setName(value);
+        if (!value.equals(info.getName())) {
+          getMutable(info).setName(value);
+        }
+      }
+    }, new ColumnInfo<WebBrowserSettings, BrowserFamily>("Family") {
+      @Override
+      public Class getColumnClass() {
+        return BrowserFamily.class;
+      }
+
+      @Override
+      public BrowserFamily valueOf(WebBrowserSettings info) {
+        return getEffective(info).getFamily();
+      }
+
+      @Override
+      public boolean isCellEditable(WebBrowserSettings info) {
+        return true;
+      }
+
+      @Override
+      public void setValue(WebBrowserSettings info, BrowserFamily value) {
+        if (value != info.getFamily()) {
+          getMutable(info).setFamily(value);
+        }
+      }
+
+      @Nullable
+      @Override
+      public TableCellRenderer getRenderer(WebBrowserSettings info) {
+        return IconTableCellRenderer.ICONABLE;
+      }
+
+      @Nullable
+      @Override
+      public TableCellEditor getEditor(WebBrowserSettings o) {
+        return ComboBoxTableCellEditor.INSTANCE;
       }
     }, new ColumnInfo<WebBrowserSettings, String>("Path") {
       @Override
@@ -161,7 +203,9 @@ public class BrowserSettingsPanel {
 
       @Override
       public void setValue(WebBrowserSettings info, String value) {
-        getMutable(info).setPath(value);
+        if (!value.equals(info.getPath())) {
+          getMutable(info).setPath(value);
+        }
       }
 
       @Nullable
@@ -172,6 +216,7 @@ public class BrowserSettingsPanel {
     }};
     ListTableModel<WebBrowserSettings> tableModel = new ListTableModel<WebBrowserSettings>(columns, WebBrowserManager.getInstance().getInfos());
     TableView<WebBrowserSettings> table = new TableView<WebBrowserSettings>(tableModel);
+    table.setStriped(true);
     TableUtil.setupCheckboxColumn(table.getColumnModel().getColumn(0));
 
     browsersTable = ToolbarDecorator.createDecorator(table).createPanel();
