@@ -29,6 +29,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Calendar;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
 
 class DateFilterPopupComponent extends FilterPopupComponent {
@@ -66,8 +68,8 @@ class DateFilterPopupComponent extends FilterPopupComponent {
 
   @Nullable
   @Override
-  protected VcsLogFilter getFilter() {
-    return myAfter == null && myBefore == null ? null : new VcsLogDateFilter(myAfter, myBefore);
+  protected Collection<VcsLogFilter> getFilters() {
+    return myAfter == null && myBefore == null ? null : Collections.<VcsLogFilter>singleton(new VcsLogDateFilter(myAfter, myBefore));
   }
 
   private void setOnlyAfter(Date after) {

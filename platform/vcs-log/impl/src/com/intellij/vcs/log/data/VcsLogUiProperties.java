@@ -19,14 +19,13 @@ import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.components.StoragePathMacros;
+import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.VcsLogSettings;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayDeque;
-import java.util.ArrayList;
-import java.util.Deque;
-import java.util.List;
+import java.util.*;
 
 /**
  * Stores UI configuration based on user activity and preferences.
@@ -42,7 +41,7 @@ public class VcsLogUiProperties implements PersistentStateComponent<VcsLogUiProp
 
   public static class State {
     public boolean SHOW_DETAILS = true;
-    public Deque<String> RECENTLY_FILTERED_USERS = new ArrayDeque<String>();
+    public Deque<UserGroup> RECENTLY_FILTERED_USER_GROUPS = new ArrayDeque<UserGroup>();
   }
 
   @Nullable
@@ -68,19 +67,44 @@ public class VcsLogUiProperties implements PersistentStateComponent<VcsLogUiProp
     myState.SHOW_DETAILS = showDetails;
   }
 
-  public void addRecentlyFilteredUser(@NotNull String username) {
-    if (myState.RECENTLY_FILTERED_USERS.contains(username)) {
+  public void addRecentlyFilteredUserGroup(@NotNull List<String> usersInGroup) {
+    UserGroup group = new UserGroup();
+    group.users = usersInGroup;
+    if (myState.RECENTLY_FILTERED_USER_GROUPS.contains(group)) {
       return;
     }
-    myState.RECENTLY_FILTERED_USERS.addFirst(username);
-    if (myState.RECENTLY_FILTERED_USERS.size() > RECENTLY_FILTERED_USERS_AMOUNT) {
-      myState.RECENTLY_FILTERED_USERS.removeLast();
+    myState.RECENTLY_FILTERED_USER_GROUPS.addFirst(group);
+    if (myState.RECENTLY_FILTERED_USER_GROUPS.size() > RECENTLY_FILTERED_USERS_AMOUNT) {
+      myState.RECENTLY_FILTERED_USER_GROUPS.removeLast();
     }
   }
 
   @NotNull
-  public List<String> getRecentlyFilteredUsers() {
-    return new ArrayList<String>(myState.RECENTLY_FILTERED_USERS);
+  public List<List<String>> getRecentlyFilteredUserGroups() {
+    return ContainerUtil.map2List(myState.RECENTLY_FILTERED_USER_GROUPS, new Function<UserGroup, List<String>>() {
+      @Override
+      public List<String> fun(UserGroup group) {
+        return group.users;
+      }
+    });
+  }
+
+  public static class UserGroup {
+    public List<String> users = new ArrayList<String>();
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+      UserGroup group = (UserGroup)o;
+      if (!users.equals(group.users)) return false;
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      return users.hashCode();
+    }
   }
 
 }
