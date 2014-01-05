@@ -16,26 +16,43 @@
 package com.intellij.ide.browsers;
 
 import com.intellij.openapi.components.*;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.SmartList;
-import com.intellij.util.containers.hash.LinkedHashMap;
 import com.intellij.util.xmlb.SkipDefaultValuesSerializationFilters;
 import com.intellij.util.xmlb.XmlSerializer;
-import gnu.trove.THashMap;
-import gnu.trove.TObjectObjectProcedure;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
-import java.util.Map;
+import java.util.UUID;
 
 import static com.intellij.ide.browsers.BrowsersConfiguration.BrowserFamily;
 
 @State(name = "WebBrowsersConfiguration", storages = {@Storage(file = StoragePathMacros.APP_CONFIG + "/browsers.xml")})
 public class WebBrowserManager implements PersistentStateComponent<Element> {
-  final Map<String, WebBrowserSettings> nameToInfo = new LinkedHashMap<String, WebBrowserSettings>();
+  private static final Logger LOG = Logger.getInstance(WebBrowserManager.class);
+
+  // default standard browser ID must be constant across all IDE versions on all machines for all users
+  private static final UUID DEFAULT_CHROME_ID = UUID.fromString("98CA6316-2F89-46D9-A9E5-FA9E2B0625B3");
+  private static final UUID DEFAULT_FIREFOX_ID = UUID.fromString("A7BB68E0-33C0-4D6F-A81A-AAC1FDB870C8");
+  private static final UUID DEFAULT_SAFARI_ID = UUID.fromString("E5120D43-2C3F-47EF-9F26-65E539E05186");
+  private static final UUID DEFAULT_OPERA_ID = UUID.fromString("53E2F627-B1A7-4DFA-BFA7-5B83CC034776");
+  private static final UUID DEFAULT_EXPLORER_ID = UUID.fromString("16BF23D4-93E0-4FFC-BFD6-CB13575177B0");
+
+  private final List<ConfigurableWebBrowser> browsers;
+
+  public WebBrowserManager() {
+    browsers = new ArrayList<ConfigurableWebBrowser>();
+    browsers.add(new ConfigurableWebBrowser(DEFAULT_CHROME_ID, BrowserFamily.CHROME));
+    browsers.add(new ConfigurableWebBrowser(DEFAULT_FIREFOX_ID, BrowserFamily.FIREFOX));
+    browsers.add(new ConfigurableWebBrowser(DEFAULT_SAFARI_ID, BrowserFamily.SAFARI));
+    browsers.add(new ConfigurableWebBrowser(DEFAULT_OPERA_ID, BrowserFamily.OPERA));
+    browsers.add(new ConfigurableWebBrowser(DEFAULT_EXPLORER_ID, BrowserFamily.EXPLORER));
+  }
 
   public static WebBrowserManager getInstance() {
     return ServiceManager.getService(WebBrowserManager.class);
@@ -43,136 +60,198 @@ public class WebBrowserManager implements PersistentStateComponent<Element> {
 
   @Override
   public Element getState() {
-    Element element = new Element("WebBrowsersConfiguration");
-    for (WebBrowserSettings info : nameToInfo.values()) {
-      Element browser = new Element("browser");
-      browser.setAttribute("family", info.getName());
-      browser.setAttribute("path", info.getPath());
-      if (!info.isActive()) {
-        browser.setAttribute("active", "false");
+    Element state = new Element("state");
+    for (ConfigurableWebBrowser browser : browsers) {
+      Element entry = new Element("browser");
+      entry.setAttribute("id", browser.getId().toString());
+      entry.setAttribute("name", browser.getName());
+      entry.setAttribute("family", browser.getFamily().name());
+      if (!StringUtil.isEmpty(browser.getPath())) {
+        entry.setAttribute("path", browser.getPath());
+      }
+      if (!browser.isActive()) {
+        entry.setAttribute("active", "false");
       }
 
-      BrowserSpecificSettings specificSettings = info.getSpecificSettings();
+      BrowserSpecificSettings specificSettings = browser.getSpecificSettings();
       if (specificSettings != null) {
         Element settingsElement = new Element("settings");
         XmlSerializer.serializeInto(specificSettings, settingsElement, new SkipDefaultValuesSerializationFilters());
         if (!settingsElement.getContent().isEmpty()) {
-          browser.addContent(settingsElement);
+          entry.addContent(settingsElement);
         }
       }
-      element.addContent(browser);
+      state.addContent(entry);
     }
-
-    return element;
+    return state;
   }
 
-  @NotNull
-  public List<WebBrowserSettings> getInfos() {
-    return new ArrayList<WebBrowserSettings>(nameToInfo.values());
+  @Nullable
+  private static BrowserFamily readFamily(String value) {
+    try {
+      return BrowserFamily.valueOf(value);
+    }
+    catch (RuntimeException e) {
+      LOG.warn(e);
+
+      for (BrowserFamily family : BrowserFamily.values()) {
+        if (family.getName().equalsIgnoreCase(value)) {
+          return family;
+        }
+      }
+
+      return null;
+    }
+  }
+
+  @Nullable
+  private static UUID readId(String value, @NotNull BrowserFamily family, @NotNull List<ConfigurableWebBrowser> existingBrowsers) {
+    if (StringUtil.isEmpty(value)) {
+      UUID id;
+      switch (family) {
+        case CHROME:
+          id = DEFAULT_CHROME_ID;
+          break;
+        case EXPLORER:
+          id = DEFAULT_EXPLORER_ID;
+          break;
+        case FIREFOX:
+          id = DEFAULT_FIREFOX_ID;
+          break;
+        case OPERA:
+          id = DEFAULT_OPERA_ID;
+          break;
+        case SAFARI:
+          id = DEFAULT_SAFARI_ID;
+          break;
+
+        default:
+          return null;
+      }
+
+      for (ConfigurableWebBrowser browser : existingBrowsers) {
+        if (browser.getId() == id) {
+          // duplicated entry, skip
+          return null;
+        }
+      }
+      return id;
+    }
+    else {
+      try {
+        return UUID.fromString(value);
+      }
+      catch (Exception e) {
+        LOG.warn(e);
+      }
+    }
+    return null;
   }
 
   @Override
   public void loadState(Element element) {
+    List<ConfigurableWebBrowser> list = new ArrayList<ConfigurableWebBrowser>();
     for (Element child : element.getChildren("browser")) {
-      Element settingsElement = child.getChild("settings");
-      BrowserFamily browserFamily;
-      try {
-        browserFamily = BrowserFamily.valueOf(child.getAttributeValue("family"));
-      }
-      catch (RuntimeException e) {
+      BrowserFamily family = readFamily(child.getAttributeValue("family"));
+      if (family == null) {
         continue;
       }
 
-      BrowserSpecificSettings specificSettings = settingsElement == null ? null : browserFamily.createBrowserSpecificSettings();
-      if (specificSettings != null) {
-        XmlSerializer.deserializeInto(specificSettings, settingsElement);
+      UUID id = readId(child.getAttributeValue("id"), family, list);
+      if (id == null) {
+        continue;
       }
 
-      String active = child.getAttributeValue("active");
-      String name = StringUtil.notNullize(child.getAttributeValue("name"), browserFamily.getName());
-      nameToInfo.put(name, new WebBrowserSettings(browserFamily,
-                                                  name,
-                                                  StringUtil.notNullize(child.getAttributeValue("path")),
-                                                  active == null || Boolean.parseBoolean(active),
-                                                  specificSettings));
+      Element settingsElement = child.getChild("settings");
+      BrowserSpecificSettings specificSettings = settingsElement == null ? null : family.createBrowserSpecificSettings();
+      if (specificSettings != null) {
+        try {
+          XmlSerializer.deserializeInto(specificSettings, settingsElement);
+        }
+        catch (Exception e) {
+          LOG.warn(e);
+        }
+      }
+
+      String activeValue = child.getAttributeValue("active");
+      list.add(new ConfigurableWebBrowser(id,
+                                          family,
+                                          StringUtil.notNullize(child.getAttributeValue("name"), family.getName()),
+                                          StringUtil.nullize(child.getAttributeValue("path"), true),
+                                          activeValue == null || Boolean.parseBoolean(activeValue),
+                                          specificSettings));
     }
+
+    browsers.clear();
+    browsers.addAll(list);
   }
 
   @NotNull
   public List<WebBrowser> getBrowsers() {
-    List<WebBrowser> result = new ArrayList<WebBrowser>();
-    for (BrowserFamily family : BrowserFamily.values()) {
-      result.add(WebBrowser.getStandardBrowser(family));
-    }
-    return result;
+    return Collections.<WebBrowser>unmodifiableList(browsers);
+  }
+
+  @NotNull
+  List<ConfigurableWebBrowser> getList() {
+    return browsers;
   }
 
   @NotNull
   public List<WebBrowser> getActiveBrowsers() {
     List<WebBrowser> result = new SmartList<WebBrowser>();
-    for (WebBrowser browser : getBrowsers()) {
-      if (getBrowserSettings(browser).isActive()) {
+    for (ConfigurableWebBrowser browser : browsers) {
+      if (browser.isActive()) {
         result.add(browser);
       }
     }
     return result;
   }
 
-  @NotNull
-  public WebBrowserSettings getBrowserSettings(@NotNull WebBrowser browser) {
-    return getBrowserSettings(browser.getFamily());
+  public void setBrowserSpecificSettings(@NotNull WebBrowser browser, @NotNull BrowserSpecificSettings specificSettings) {
+    ((ConfigurableWebBrowser)browser).setSpecificSettings(specificSettings);
   }
 
-  void apply(THashMap<WebBrowserSettings, WebBrowserSettings.MutableWebBrowserSettings> map) {
-    map.forEachEntry(new TObjectObjectProcedure<WebBrowserSettings, WebBrowserSettings.MutableWebBrowserSettings>() {
-      @Override
-      public boolean execute(WebBrowserSettings info, WebBrowserSettings.MutableWebBrowserSettings newInfo) {
-        info.active = newInfo.active;
-        info.name = newInfo.name;
-        info.path = newInfo.path;
-        info.family = newInfo.family;
-        info.specificSettings = newInfo.specificSettings;
-        return true;
-      }
-    });
-  }
-
-  @NotNull
-  public WebBrowserSettings getBrowserSettings(@NotNull BrowserFamily family) {
-    WebBrowserSettings result = nameToInfo.get(family.getName());
-    if (result == null) {
-      String path = family.getExecutionPath();
-      result = new WebBrowserSettings(family, family.getName(), StringUtil.notNullize(path), path != null, null);
-      nameToInfo.put(result.getName(), result);
-    }
-    return result;
-  }
-
-  public void updateBrowserSpecificSettings(@NotNull WebBrowser browser, BrowserSpecificSettings specificSettings) {
-    updateBrowserSpecificSettings(browser.getFamily(), specificSettings);
-  }
-
-  public void updateBrowserSpecificSettings(@NotNull BrowserFamily family, BrowserSpecificSettings specificSettings) {
-    WebBrowserSettings settings = getBrowserSettings(family);
-    nameToInfo.put(family.getName(), new WebBrowserSettings(family, family.getName(), settings.getPath(), settings.isActive(), specificSettings));
-  }
-
-  public void updateBrowserValue(@NotNull WebBrowser browser, @NotNull String path, boolean isActive) {
-    WebBrowserSettings settings = getBrowserSettings(browser);
-    nameToInfo.put(browser.getFamily().getName(), new WebBrowserSettings(browser.getFamily(), browser.getFamily().getName(), path, isActive, settings.getSpecificSettings()));
+  public void setBrowserPath(@NotNull WebBrowser browser, @Nullable String path, boolean isActive) {
+    ((ConfigurableWebBrowser)browser).setPath(path);
+    ((ConfigurableWebBrowser)browser).setActive(isActive);
   }
 
   @Nullable
-  public WebBrowser findBrowserByName(@Nullable String name) {
-    for (BrowserFamily family : BrowserFamily.values()) {
-      if (family.getName().equals(name)) {
-        return WebBrowser.getStandardBrowser(family);
+  public WebBrowser findBrowserById(@Nullable String idOrName) {
+    UUID id;
+    try {
+      id = UUID.fromString(idOrName);
+    }
+    catch (Exception e) {
+      LOG.warn(e);
+      for (ConfigurableWebBrowser browser : browsers) {
+        if (browser.getFamily().name().equals(idOrName) || browser.getFamily().getName().equals(idOrName)) {
+          return browser;
+        }
+      }
+      return null;
+    }
+
+    for (ConfigurableWebBrowser browser : browsers) {
+      if (browser.getId().equals(id)) {
+        return browser;
       }
     }
     return null;
   }
 
-  public void updateBrowserValue(BrowserFamily family, String path, boolean isActive) {
-    nameToInfo.put(family.getName(), new WebBrowserSettings(family, family.getName(), path, isActive, getBrowserSettings(family).getSpecificSettings()));
+  @NotNull
+  public WebBrowser getBrowser(@NotNull BrowserFamily family) {
+    for (ConfigurableWebBrowser browser : browsers) {
+      if (family.equals(browser.getFamily())) {
+        return browser;
+      }
+    }
+
+    throw new IllegalStateException("Must be at least one browser per family");
+  }
+
+  public boolean isActive(@NotNull WebBrowser browser) {
+    return !(browser instanceof ConfigurableWebBrowser) || ((ConfigurableWebBrowser)browser).isActive();
   }
 }

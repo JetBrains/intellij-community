@@ -59,7 +59,7 @@ public class OpenFileInDefaultBrowserAction extends DumbAwareAction {
 
     GeneralSettings settings = GeneralSettings.getInstance();
     if (!settings.isUseDefaultBrowser()) {
-      WebBrowser browser = WebBrowserManager.getInstance().findBrowserByName(settings.getBrowserPath());
+      WebBrowser browser = WebBrowserManager.getInstance().findBrowserById(settings.getBrowserPath());
       if (browser != null) {
         presentation.setIcon(browser.getIcon());
       }

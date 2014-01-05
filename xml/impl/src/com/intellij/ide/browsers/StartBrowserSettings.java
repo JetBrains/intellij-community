@@ -54,7 +54,7 @@ public class StartBrowserSettings {
     Element child = parent.getChild(BROWSER_ELEMENT);
     if (child != null) {
       builder.setSelected(Boolean.parseBoolean(getAttrValue(child, START_BROWSER_ATTR)));
-      builder.setBrowser(WebBrowserManager.getInstance().findBrowserByName(getAttrValue(child, BROWSER_NAME_ATTR)));
+      builder.setBrowser(WebBrowserManager.getInstance().findBrowserById(getAttrValue(child, BROWSER_NAME_ATTR)));
       builder.setUrl(StringUtil.notNullize(getAttrValue(child, URL_ATTR)));
       builder.setStartJavaScriptDebugger(Boolean.parseBoolean(getAttrValue(child, WITH_JS_DEBUGGER_ATTR)));
     }
@@ -65,7 +65,7 @@ public class StartBrowserSettings {
     Element child = new Element(BROWSER_ELEMENT);
     child.setAttribute(START_BROWSER_ATTR, String.valueOf(isSelected()));
     if (myBrowser != null) {
-      child.setAttribute(BROWSER_NAME_ATTR, myBrowser.getName());
+      child.setAttribute(BROWSER_NAME_ATTR, myBrowser.getId().toString());
     }
     child.setAttribute(URL_ATTR, getUrl());
     child.setAttribute(WITH_JS_DEBUGGER_ATTR, String.valueOf(isStartJavaScriptDebugger()));

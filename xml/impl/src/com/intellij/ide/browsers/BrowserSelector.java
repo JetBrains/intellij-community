@@ -18,9 +18,9 @@ package com.intellij.ide.browsers;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.ui.CollectionComboBoxModel;
 import com.intellij.ui.ComboboxWithBrowseButton;
 import com.intellij.ui.ListCellRendererWrapper;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.Nullable;
 
@@ -77,7 +77,7 @@ public class BrowserSelector {
     }
     activeBrowsers.addAll(WebBrowserManager.getInstance().getActiveBrowsers());
     //noinspection unchecked
-    myBrowserComboWithBrowse.getComboBox().setModel(new DefaultComboBoxModel(ArrayUtil.toObjectArray(activeBrowsers)));
+    myBrowserComboWithBrowse.getComboBox().setModel(new CollectionComboBoxModel(activeBrowsers));
   }
 
   @SuppressWarnings({"deprecation", "UnusedDeclaration"})
@@ -97,9 +97,9 @@ public class BrowserSelector {
   }
 
   @Nullable
-  public String getSelectedBrowserFamilyName() {
+  public String getSelectedBrowserId() {
     WebBrowser browser = getSelected();
-    return browser != null ? browser.getName() : null;
+    return browser != null ? browser.getId().toString() : null;
   }
 
   @SuppressWarnings("UnusedDeclaration")
@@ -108,7 +108,7 @@ public class BrowserSelector {
    * @deprecated  to remove in IDEA 14
    */
   public void setSelectedBrowser(@SuppressWarnings("deprecation") @Nullable BrowsersConfiguration.BrowserFamily selectedItem) {
-    setSelected(selectedItem == null ? null : WebBrowser.getStandardBrowser(selectedItem));
+    setSelected(selectedItem == null ? null : WebBrowserManager.getInstance().getBrowser(selectedItem));
   }
 
   public void setSelected(@Nullable WebBrowser selectedItem) {

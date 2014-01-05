@@ -24,7 +24,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.xml.XmlBundle;
-import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -54,11 +54,11 @@ public class BrowsersConfiguration {
     private final String myMacPath;
     private final Icon myIcon;
 
-    BrowserFamily(final String name,
-                  @NonNls final String windowsPath,
-                  @NonNls final String unixPath,
-                  @NonNls final String macPath,
-                  final Icon icon) {
+    BrowserFamily(@NotNull String name,
+                  @NotNull final String windowsPath,
+                  @Nullable final String unixPath,
+                  @Nullable final String macPath,
+                  @NotNull Icon icon) {
       myName = name;
       myWindowsPath = windowsPath;
       myUnixPath = unixPath;
@@ -79,11 +79,9 @@ public class BrowsersConfiguration {
       else if (SystemInfo.isMac) {
         return myMacPath;
       }
-      else if (SystemInfo.isUnix) {
+      else {
         return myUnixPath;
       }
-
-      return null;
     }
 
     public String getName() {

@@ -54,7 +54,7 @@ public class DefaultUrlOpener extends UrlOpener {
       return false;
     }
 
-    return doLaunchBrowser(browserPath, browser.getBrowserSpecificSettings(), url, newWindowIfPossible, additionalParameters);
+    return doLaunchBrowser(browserPath, browser.getSpecificSettings(), url, newWindowIfPossible, additionalParameters);
   }
 
   private static boolean doLaunchBrowser(final String browserPath,

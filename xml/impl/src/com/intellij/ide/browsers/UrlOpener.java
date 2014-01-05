@@ -24,7 +24,7 @@ public abstract class UrlOpener {
   public static final ExtensionPointName<UrlOpener> EP_NAME = ExtensionPointName.create("org.jetbrains.urlOpener");
 
   public static void launchBrowser(final @Nullable BrowsersConfiguration.BrowserFamily family, final @NotNull String url) {
-    launchBrowser(url, family == null ? null : WebBrowser.getStandardBrowser(family));
+    launchBrowser(url, family == null ? null : WebBrowserManager.getInstance().getBrowser(family));
   }
 
   // different params order in order not to break compilation for launchBrowser(null, url)
