@@ -58,6 +58,10 @@ public class WebBrowserSettings {
     return name;
   }
 
+  public BrowserFamily getFamily() {
+    return family;
+  }
+
   public static class MutableWebBrowserSettings extends WebBrowserSettings {
     private MutableWebBrowserSettings(@NotNull WebBrowserSettings settings) {
       super(settings.family, settings.name, settings.path, settings.active, settings.specificSettings);
@@ -69,6 +73,10 @@ public class WebBrowserSettings {
 
     public void setName(@NotNull String value) {
       name = value;
+    }
+
+    public void setFamily(@NotNull BrowserFamily value) {
+      family = value;
     }
 
     public void setPath(@NotNull String value) {

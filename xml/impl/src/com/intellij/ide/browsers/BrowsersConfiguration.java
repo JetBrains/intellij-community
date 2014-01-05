@@ -19,6 +19,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.browsers.chrome.ChromeSettings;
 import com.intellij.ide.browsers.firefox.FirefoxSettings;
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -30,7 +31,7 @@ import javax.swing.*;
 import java.io.File;
 
 public class BrowsersConfiguration {
-  public enum BrowserFamily {
+  public enum BrowserFamily implements Iconable {
     CHROME(XmlBundle.message("browsers.chrome"), "chrome", "google-chrome", "Google Chrome", AllIcons.Xml.Browsers.Chrome16) {
       @Override
       public BrowserSpecificSettings createBrowserSpecificSettings() {
@@ -91,6 +92,18 @@ public class BrowsersConfiguration {
 
     public Icon getIcon() {
       return myIcon;
+    }
+
+
+    @Override
+    public String toString() {
+      return myName;
+    }
+
+
+    @Override
+    public Icon getIcon(@IconFlags int flags) {
+      return getIcon();
     }
   }
 
