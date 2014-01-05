@@ -132,18 +132,27 @@ public class GeneralIdBasedToSMTRunnerEventsConvertor extends GeneralTestEventsP
     });
   }
 
+  private void setRunning(@NotNull Node testNode) {
+    Node node = testNode;
+    while (node != null && node.getState() == State.REGISTERED) {
+      node.setState(State.RUNNING);
+      myRunningNodes.add(node);
+      SMTestProxy proxy = node.getProxy();
+      proxy.setStarted();
+      if (proxy.isSuite()) {
+        fireOnSuiteStarted(proxy);
+      } else {
+        fireOnTestStarted(proxy);
+      }
+      node = node.getParentNode();
+    }
+  }
+
   private void doStartNode(@NotNull BaseStartedNodeEvent startedNodeEvent, boolean suite) {
     Node node = findNode(startedNodeEvent);
     if (node != null) {
       if (node.getState() == State.REGISTERED && startedNodeEvent.isRunning()) {
-        node.setState(State.RUNNING);
-        myRunningNodes.add(node);
-        node.getProxy().setStarted();
-        if (suite) {
-          fireOnSuiteStarted(node.getProxy());
-        } else {
-          fireOnTestStarted(node.getProxy());
-        }
+        setRunning(node);
       }
       else {
         logProblem(startedNodeEvent + " has been already started: " + node + "!");
@@ -170,23 +179,14 @@ public class GeneralIdBasedToSMTRunnerEventsConvertor extends GeneralTestEventsP
         childProxy.setPreferredPrinter(printer);
       }
     }
-    State initialState = startedNodeEvent.isRunning() ? State.RUNNING : State.REGISTERED;
-    node = new Node(startedNodeEvent.getId(), parentNode, childProxy, initialState);
+    node = new Node(startedNodeEvent.getId(), parentNode, childProxy, State.REGISTERED);
     myNodeByIdMap.put(startedNodeEvent.getId(), node);
     if (myLocator != null) {
       childProxy.setLocator(myLocator);
     }
     parentNode.getProxy().addChild(childProxy);
-
-    if (node.getState() == State.RUNNING) {
-      myRunningNodes.add(node);
-      // progress started
-      childProxy.setStarted();
-      if (suite) {
-        fireOnSuiteStarted(childProxy);
-      } else {
-        fireOnTestStarted(childProxy);
-      }
+    if (startedNodeEvent.isRunning()) {
+      setRunning(node);
     }
   }
 
