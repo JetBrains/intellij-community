@@ -26,6 +26,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.IdeBorderFactory;
+import com.intellij.ui.TableSpeedSearch;
 import com.intellij.ui.TableUtil;
 import com.intellij.ui.ToolbarDecorator;
 import com.intellij.ui.table.TableView;
@@ -217,6 +218,7 @@ public class BrowserSettingsPanel {
     ListTableModel<WebBrowserSettings> tableModel = new ListTableModel<WebBrowserSettings>(columns, WebBrowserManager.getInstance().getInfos());
     TableView<WebBrowserSettings> table = new TableView<WebBrowserSettings>(tableModel);
     table.setStriped(true);
+    new TableSpeedSearch(table);
     TableUtil.setupCheckboxColumn(table.getColumnModel().getColumn(0));
 
     browsersTable = ToolbarDecorator.createDecorator(table).createPanel();
