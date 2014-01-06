@@ -218,6 +218,10 @@ public class WebBrowserManager implements PersistentStateComponent<Element> {
 
   @Nullable
   public WebBrowser findBrowserById(@Nullable String idOrName) {
+    if (StringUtil.isEmpty(idOrName)) {
+      return null;
+    }
+
     UUID id;
     try {
       id = UUID.fromString(idOrName);
