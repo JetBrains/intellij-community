@@ -69,7 +69,7 @@ public class CommonContentEntriesEditor extends ModuleElementsEditor {
   protected ContentEntryTreeEditor myRootTreeEditor;
   private MyContentEntryEditorListener myContentEntryEditorListener;
   protected JPanel myEditorsPanel;
-  private final Map<String, ContentEntryEditor> myEntryToEditorMap = new HashMap<String, ContentEntryEditor>();
+  protected final Map<String, ContentEntryEditor> myEntryToEditorMap = new HashMap<String, ContentEntryEditor>();
   private String mySelectedEntryUrl;
 
   private VirtualFile myLastSelectedDir = null;
