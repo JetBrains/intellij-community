@@ -1,6 +1,6 @@
 <tips>
   <tip file="Welcome.html"/>
-  <tip file+"MultipleProjects.html"/>
+  <tip file="MultipleProjects.html"/>
   <tip file="GoToClass.html"/>
   <tip file="CodeCompletion.html"/>
   <tip file="ClassNameCompletion.html"/>
