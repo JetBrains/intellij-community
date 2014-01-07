@@ -72,7 +72,7 @@ class XmlSerializerImpl {
     throw new UnsupportedOperationException("Can't get binding for: " + type);
   }
 
-  private static synchronized Binding _getClassBinding(Class<?> aClass, Type originalType, final Accessor accessor) {
+  private static synchronized Binding _getClassBinding(Class<?> aClass, Type originalType, @Nullable Accessor accessor) {
     final Pair<Type, Accessor> p = new Pair<Type, Accessor>(originalType, accessor);
 
     Map<Pair<Type, Accessor>, Binding> map = getBindingCacheMap();
@@ -96,7 +96,7 @@ class XmlSerializerImpl {
     return map;
   }
 
-  private static Binding _getNonCachedClassBinding(final Class<?> aClass, final Accessor accessor, final Type originalType) {
+  private static Binding _getNonCachedClassBinding(final Class<?> aClass, @Nullable Accessor accessor, final Type originalType) {
     if (aClass.isPrimitive()) return new PrimitiveValueBinding(aClass);
     if (aClass.isArray()) {
       return Element.class.isAssignableFrom(aClass.getComponentType())
