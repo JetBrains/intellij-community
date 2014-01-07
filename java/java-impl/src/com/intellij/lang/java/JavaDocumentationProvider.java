@@ -49,6 +49,7 @@ import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiFormatUtilBase;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NonNls;
@@ -639,7 +640,14 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
       options |= PsiFormatUtilBase.SHOW_RAW_NON_TOP_TYPE;
       parameterOptions |= PsiFormatUtilBase.SHOW_RAW_NON_TOP_TYPE;
     }
-    return PsiFormatUtil.formatMethod(method, PsiSubstitutor.EMPTY, options, parameterOptions, 999);
+
+    String signature = PsiFormatUtil.formatMethod(method, PsiSubstitutor.EMPTY, options, parameterOptions, 999);
+
+    if (PsiUtil.isLanguageLevel8OrHigher(method)) {
+      signature = signature.replaceAll("\\(|\\)|, ", "-").replaceAll("\\[\\]", ":A");
+    }
+
+    return signature;
   }
 
   @Nullable

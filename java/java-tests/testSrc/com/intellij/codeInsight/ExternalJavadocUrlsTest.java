@@ -26,15 +26,11 @@ import com.intellij.util.containers.ContainerUtil;
 
 import java.util.List;
 
-/**
- * @author anna
- * @since 11/27/11
- */
 public class ExternalJavadocUrlsTest extends LightCodeInsightFixtureTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    PsiTestUtil.setJavadocUrls(myModule, "http://doc");
+    PsiTestUtil.setJavadocUrls(myModule, "http://doc" );
   }
 
   public void testVarargs() {
@@ -42,7 +38,7 @@ public class ExternalJavadocUrlsTest extends LightCodeInsightFixtureTestCase {
            "  void <caret>foo(Class<?>... cl) { }\n" +
            "}",
 
-           "foo(java.lang.Class...)", "foo(java.lang.Class<?>...)");
+           "foo-java.lang.Class...-", "foo-java.lang.Class<?>...-");
 
   }
 
@@ -52,10 +48,10 @@ public class ExternalJavadocUrlsTest extends LightCodeInsightFixtureTestCase {
            "}\n" +
            "class Comparator<X>{}",
 
-           "sort(T[], Comparator)", "sort(T[], Comparator<? super T>)");
+           "sort-T:A-Comparator-", "sort-T:A-Comparator<? super T>-");
   }
 
-  private void doTest(String text, String... expected) {
+  protected void doTest(String text, String... expected) {
     myFixture.configureByText("Test.java", text);
     PsiElement elementAtCaret = myFixture.getElementAtCaret();
     PsiMethod member = PsiTreeUtil.getParentOfType(elementAtCaret, PsiMethod.class, false);
