@@ -22,9 +22,11 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.text.CaseInsensitiveStringHashingStrategy;
 import com.intellij.util.text.CharArrayCharSequence;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.text.StringFactory;
+import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -61,6 +63,8 @@ public class StringUtil extends StringUtilRt {
       return "'" + s + "'";
     }
   };
+  
+  public static final TObjectHashingStrategy<String> CASE_INSENSITIVE_HASHING_POLICY = CaseInsensitiveStringHashingStrategy.INSTANCE;
 
   @NotNull
   public static List<String> getWordsInStringLongestFirst(@NotNull String find) {
