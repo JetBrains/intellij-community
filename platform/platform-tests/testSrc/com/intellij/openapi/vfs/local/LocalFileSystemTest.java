@@ -391,8 +391,14 @@ public class LocalFileSystemTest extends PlatformLangTestCase {
   }
 
   public void testNoMoreFakeRoots() throws Exception {
-    VirtualFile root = PersistentFS.getInstance().findRoot("", myFS);
-    assertNull(String.valueOf(root), root);
+    try {
+      PersistentFS.getInstance().findRoot("", myFS);
+      fail("should fail by assertion in PersistentFsImpl.findRoot()");
+    }
+    catch (AssertionError e) {
+      String message = e.getMessage();
+      assertTrue(message, message.startsWith("Invalid root"));
+    }
   }
 
   public void testCopyToPointDir() throws Exception {
