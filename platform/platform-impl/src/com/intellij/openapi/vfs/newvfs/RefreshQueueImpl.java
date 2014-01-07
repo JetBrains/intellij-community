@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -56,8 +56,8 @@ public class RefreshQueueImpl extends RefreshQueue {
       }
       else {
         if (((ApplicationEx)app).holdsReadLock()) {
-          LOG.error("Do not call synchronous refresh from inside read action except for event dispatch thread. " +
-                    "This will eventually cause deadlock if there are any events to fire");
+          LOG.error("Do not call synchronous refresh under read lock (except from EDT) - " +
+                    "this will cause a deadlock if there are any events to fire.");
           return;
         }
         queueSession(session, ModalityState.defaultModalityState());
@@ -82,14 +82,13 @@ public class RefreshQueueImpl extends RefreshQueue {
           }
         }
         finally {
-          final Application app = ApplicationManager.getApplication();
+          Application app = ApplicationManager.getApplication();
           app.invokeLater(new DumbAwareRunnable() {
             @Override
             public void run() {
-              if (app.isDisposed()) return;
               session.fireEvents(false);
             }
-          }, modality);
+          }, modality, app.getDisposed());
         }
       }
     });
