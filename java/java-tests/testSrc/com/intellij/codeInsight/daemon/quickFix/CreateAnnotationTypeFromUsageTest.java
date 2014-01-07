@@ -18,7 +18,7 @@ package com.intellij.codeInsight.daemon.quickFix;
 /**
  * @author ven
  */
-public class CreateAnnotationTypeFromUsageTest extends LightQuickFixTestCase{
+public class CreateAnnotationTypeFromUsageTest extends LightQuickFixParameterizedTestCase {
   public void test() throws Exception { doAllTests(); }
 
   @Override

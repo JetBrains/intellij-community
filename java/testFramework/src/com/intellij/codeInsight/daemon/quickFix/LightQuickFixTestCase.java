@@ -52,8 +52,8 @@ import java.util.regex.Pattern;
 import static com.intellij.util.ObjectUtils.notNull;
 
 public abstract class LightQuickFixTestCase extends LightDaemonAnalyzerTestCase {
-  @NonNls private static final String BEFORE_PREFIX = "before";
-  @NonNls private static final String AFTER_PREFIX = "after";
+  @NonNls protected static final String BEFORE_PREFIX = "before";
+  @NonNls protected static final String AFTER_PREFIX = "after";
 
   private static QuickFixTestCase myWrapper;
 
@@ -228,9 +228,18 @@ public abstract class LightQuickFixTestCase extends LightDaemonAnalyzerTestCase 
   protected void doAllTests() {
     doAllTests(createWrapper());
   }
+  protected void doSingleTest(String fileSuffix, String testDataPath) {
+    doTestFor(fileSuffix, createWrapper(testDataPath));
+  }
 
-  private QuickFixTestCase createWrapper() {
+  protected QuickFixTestCase createWrapper() {
+    return createWrapper(null);
+  }
+
+  protected QuickFixTestCase createWrapper(final String testDataPath) {
     return new QuickFixTestCase() {
+      public String myTestDataPath = testDataPath;
+
       @Override
       public String getBasePath() {
         return LightQuickFixTestCase.this.getBasePath();
@@ -238,7 +247,10 @@ public abstract class LightQuickFixTestCase extends LightDaemonAnalyzerTestCase 
 
       @Override
       public String getTestDataPath() {
-        return LightQuickFixTestCase.this.getTestDataPath();
+        if (myTestDataPath == null) {
+          myTestDataPath = LightQuickFixTestCase.this.getTestDataPath();
+        }
+        return myTestDataPath;
       }
 
       @Override

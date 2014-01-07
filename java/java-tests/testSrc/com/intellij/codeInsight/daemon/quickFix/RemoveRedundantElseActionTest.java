@@ -19,7 +19,7 @@ package com.intellij.codeInsight.daemon.quickFix;
  * User: anna
  * Date: Aug 30, 2010
  */
-public class RemoveRedundantElseActionTest extends LightQuickFixTestCase {
+public class RemoveRedundantElseActionTest extends LightQuickFixParameterizedTestCase {
 
   public void test() throws Exception { doAllTests(); }
 

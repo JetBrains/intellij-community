@@ -20,7 +20,7 @@ import com.intellij.openapi.command.WriteCommandAction;
 /**
  * User: anna
  */
-public class VariableAccessFromInnerClass18Test extends LightQuickFixTestCase {
+public class VariableAccessFromInnerClass18Test extends LightQuickFixParameterizedTestCase {
   public void test() throws Exception {
     doAllTests();
   }

@@ -21,7 +21,7 @@ import org.jetbrains.annotations.NotNull;
 
 
 //todo test3 should be checked if it compiles - as now javac infers Object instead of String?!
-public class Simplify2DiamondInspectionsTest extends LightQuickFixTestCase {
+public class Simplify2DiamondInspectionsTest extends LightQuickFixParameterizedTestCase {
   @NotNull
   @Override
   protected LocalInspectionTool[] configureLocalInspectionTools() {

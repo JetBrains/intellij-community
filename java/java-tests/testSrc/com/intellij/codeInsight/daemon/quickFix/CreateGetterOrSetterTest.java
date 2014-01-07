@@ -22,7 +22,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Danila Ponomarenko
  */
-public class CreateGetterOrSetterTest extends LightQuickFixTestCase {
+public class CreateGetterOrSetterTest extends LightQuickFixParameterizedTestCase {
   @NotNull
   @Override
   protected LocalInspectionTool[] configureLocalInspectionTools() {

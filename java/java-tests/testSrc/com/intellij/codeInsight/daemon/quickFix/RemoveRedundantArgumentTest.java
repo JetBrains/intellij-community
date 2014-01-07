@@ -1,6 +1,6 @@
 package com.intellij.codeInsight.daemon.quickFix;
 
-public class RemoveRedundantArgumentTest extends LightQuickFixTestCase {
+public class RemoveRedundantArgumentTest extends LightQuickFixParameterizedTestCase {
 
   public void test() throws Exception { doAllTests(); }
 
