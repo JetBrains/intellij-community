@@ -194,7 +194,7 @@ public class JUnit4TestRunnerUtil {
     if (Parameterized.class.isAssignableFrom(runnerClass)) {
       try {
         Class.forName("org.junit.runners.BlockJUnit4ClassRunner"); //ignore for junit4.4 and <
-        return Request.runner(new SelectedParameterizedRunner(clazz, name, methodName));
+        return Request.runner(new SelectedParameterizedRunner(clazz, name, methodName, runnerClass));
       }
       catch (Throwable throwable) {
         //return simple method runner
@@ -303,15 +303,26 @@ public class JUnit4TestRunnerUtil {
   private static class SelectedParameterizedRunner extends Parameterized {
     private final String myName;
     private final String myMethodName;
+    private Parameterized myRunnerClass;
 
-    public SelectedParameterizedRunner(Class clazz, String name, String methodName) throws Throwable {
+    public SelectedParameterizedRunner(Class clazz, String name, String methodName, Class runnerClass) throws Throwable {
       super(clazz);
       myName = name;
       myMethodName = methodName;
+      myRunnerClass = (Parameterized)runnerClass.getConstructor(new Class[] {Class.class}).newInstance(new Object[]{clazz});
     }
 
     protected List getChildren() {
-      final List children = super.getChildren();
+      List children;
+      try {
+        Method getChildren = Parameterized.class.getDeclaredMethod("getChildren", new Class[0]);
+        getChildren.setAccessible(true);
+        children = (List)getChildren.invoke(myRunnerClass, new Object[0]);
+      }
+      catch (Throwable e) {
+        children = super.getChildren();
+      }
+
       //filter by params
       if (myName != null) {
         for (Iterator iterator = children.iterator(); iterator.hasNext(); ) {
