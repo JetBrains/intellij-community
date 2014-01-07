@@ -17,13 +17,16 @@
 package com.intellij.util.xmlb;
 
 import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.xmlb.annotations.*;
 import junit.framework.AssertionFailedError;
 import junit.framework.TestCase;
 import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
-import java.util.Collection;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
@@ -1086,6 +1089,60 @@ public class XmlSerializerTest extends TestCase {
       bean);
   }
 
+  private static class BeanWithConverter {
+    private static class MyConverter extends Converter<Ref<String>> {
+      @Nullable
+      @Override
+      public Ref<String> fromString(@NotNull String value) {
+        return Ref.create(value);
+      }
+
+      @NotNull
+      @Override
+      public String toString(@NotNull Ref<String> o) {
+        return StringUtil.notNullize(o.get());
+      }
+    }
+
+    @Attribute(converter = MyConverter.class)
+    public Ref<String> foo;
+
+    @OptionTag(converter = MyConverter.class)
+    public Ref<String> bar;
+  }
+
+  public void testConverter() {
+    BeanWithConverter bean = new BeanWithConverter();
+    doSerializerTest("<BeanWithConverter>\n" +
+                     "  <option name=\"bar\" />\n" +
+                     "</BeanWithConverter>", bean);
+
+    bean.foo = Ref.create("testValue");
+    doSerializerTest("<BeanWithConverter foo=\"testValue\">\n" +
+                     "  <option name=\"bar\" />\n" +
+                     "</BeanWithConverter>", bean);
+
+    bean.foo = Ref.create();
+    bean.bar = Ref.create("testValue2");
+    doSerializerTest("<BeanWithConverter foo=\"\">\n" +
+                     "  <option name=\"bar\" value=\"testValue2\" />\n" +
+                     "</BeanWithConverter>", bean);
+  }
+
+  private static class BeanWithDefaultAttributeName {
+    @Attribute
+    public String getFoo() {
+      return "foo";
+    }
+
+    public void setFoo(@SuppressWarnings("UnusedParameters") String value) {
+    }
+  }
+
+  public void testDefaultAttributeName() {
+    BeanWithDefaultAttributeName bean = new BeanWithDefaultAttributeName();
+    doSerializerTest("<BeanWithDefaultAttributeName foo=\"foo\" />", bean);
+  }
 
   //---------------------------------------------------------------------------------------------------
   private static void assertSerializer(Object bean, String expected, SerializationFilter filter) {
