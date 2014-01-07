@@ -21,16 +21,26 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMember;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class PsiMemberParameterizedLocation extends PsiLocation<PsiElement> {
+  private final PsiClass myContainingClass;
   private final String myParamSetName;
 
-  public PsiMemberParameterizedLocation(@NotNull Project project, @NotNull PsiElement psiElement, String paramSetName) {
+  public PsiMemberParameterizedLocation(@NotNull Project project, 
+                                        @NotNull PsiElement psiElement,
+                                        @Nullable PsiClass containingClass,
+                                        String paramSetName) {
     super(project, psiElement);
+    myContainingClass = containingClass;
     myParamSetName = paramSetName;
   }
 
   public String getParamSetName() {
     return myParamSetName;
+  }
+
+  public PsiClass getContainingClass() {
+    return myContainingClass;
   }
 }
