@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -401,6 +401,15 @@ public class PsiTestUtil {
       @Override
       public void consume(ModifiableRootModel model) {
         model.getModuleExtension(CompilerModuleExtension.class).setExcludeOutput(exclude);
+      }
+    });
+  }
+
+  public static void setJavadocUrls(Module module, final String... urls) {
+    updateModel(module, new Consumer<ModifiableRootModel>() {
+      @Override
+      public void consume(ModifiableRootModel model) {
+        model.getModuleExtension(JavaModuleExternalPaths.class).setJavadocUrls(urls);
       }
     });
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,18 +23,31 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class PsiFormatUtil extends PsiFormatUtilBase {
-  @MagicConstant(flags = {SHOW_MODIFIERS, SHOW_TYPE, TYPE_AFTER, SHOW_CONTAINING_CLASS, SHOW_FQ_NAME, SHOW_NAME, SHOW_MODIFIERS, SHOW_INITIALIZER, SHOW_RAW_TYPE, SHOW_RAW_NON_TOP_TYPE, SHOW_FQ_CLASS_NAMES})
-  public @interface FormatVariableOptions {}
+  @MagicConstant(flags = {
+    SHOW_MODIFIERS, SHOW_TYPE, TYPE_AFTER, SHOW_CONTAINING_CLASS, SHOW_FQ_NAME, SHOW_NAME, SHOW_MODIFIERS,
+    SHOW_INITIALIZER, SHOW_RAW_TYPE, SHOW_RAW_NON_TOP_TYPE, SHOW_FQ_CLASS_NAMES})
+  public @interface FormatVariableOptions { }
 
-  public static String formatVariable(PsiVariable variable, @FormatVariableOptions int options, PsiSubstitutor substitutor){
+  @MagicConstant(flags = {
+    SHOW_MODIFIERS, MODIFIERS_AFTER, SHOW_TYPE, TYPE_AFTER, SHOW_CONTAINING_CLASS, SHOW_FQ_NAME, SHOW_NAME,
+    SHOW_PARAMETERS, SHOW_THROWS, SHOW_RAW_TYPE, SHOW_RAW_NON_TOP_TYPE, SHOW_FQ_CLASS_NAMES})
+  public @interface FormatMethodOptions { }
+
+  @MagicConstant(flags = {
+    SHOW_MODIFIERS, SHOW_NAME, SHOW_ANONYMOUS_CLASS_VERBOSE, SHOW_FQ_NAME, MODIFIERS_AFTER,
+    SHOW_EXTENDS_IMPLEMENTS, SHOW_REDUNDANT_MODIFIERS, JAVADOC_MODIFIERS_ONLY})
+  public @interface FormatClassOptions { }
+
+  public static String formatVariable(PsiVariable variable, @FormatVariableOptions int options, PsiSubstitutor substitutor) {
     StringBuilder buffer = new StringBuilder();
-    formatVariable(variable, options, substitutor,buffer);
+    formatVariable(variable, options, substitutor, buffer);
     return buffer.toString();
   }
+
   private static void formatVariable(PsiVariable variable,
                                      @FormatVariableOptions int options,
                                      PsiSubstitutor substitutor,
-                                     @NotNull StringBuilder buffer){
+                                     @NotNull StringBuilder buffer) {
     if ((options & SHOW_MODIFIERS) != 0 && (options & MODIFIERS_AFTER) == 0){
       formatModifiers(variable, options,buffer);
     }
@@ -103,20 +116,29 @@ public class PsiFormatUtil extends PsiFormatUtilBase {
     }
   }
 
-  public static String formatMethod(PsiMethod method, PsiSubstitutor substitutor, @FormatMethodOptions int options, @FormatVariableOptions int parameterOptions){
+  public static String formatMethod(PsiMethod method,
+                                    PsiSubstitutor substitutor,
+                                    @FormatMethodOptions int options,
+                                    @FormatVariableOptions int parameterOptions) {
     return formatMethod(method, substitutor, options, parameterOptions, MAX_PARAMS_TO_SHOW);
   }
 
-  public static String formatMethod(PsiMethod method, PsiSubstitutor substitutor, @FormatMethodOptions int options, @FormatVariableOptions int parameterOptions, int maxParametersToShow){
+  public static String formatMethod(PsiMethod method,
+                                    PsiSubstitutor substitutor,
+                                    @FormatMethodOptions int options,
+                                    @FormatVariableOptions int parameterOptions,
+                                    int maxParametersToShow) {
     StringBuilder buffer = new StringBuilder();
     formatMethod(method, substitutor, options, parameterOptions, maxParametersToShow,buffer);
     return buffer.toString();
   }
 
-  @MagicConstant(flags = {SHOW_MODIFIERS, MODIFIERS_AFTER, SHOW_TYPE, TYPE_AFTER, SHOW_CONTAINING_CLASS, SHOW_FQ_NAME, SHOW_NAME, SHOW_PARAMETERS, SHOW_THROWS, SHOW_RAW_TYPE, SHOW_RAW_NON_TOP_TYPE, SHOW_FQ_CLASS_NAMES})
-  public @interface FormatMethodOptions {}
-
-  private static void formatMethod(PsiMethod method, PsiSubstitutor substitutor, @FormatMethodOptions int options, @FormatVariableOptions int parameterOptions, int maxParametersToShow, StringBuilder buffer){
+  private static void formatMethod(PsiMethod method,
+                                   PsiSubstitutor substitutor,
+                                   @FormatMethodOptions int options,
+                                   @FormatVariableOptions int parameterOptions,
+                                   int maxParametersToShow,
+                                   StringBuilder buffer) {
     if ((options & SHOW_MODIFIERS) != 0 && (options & MODIFIERS_AFTER) == 0){
       formatModifiers(method, options,buffer);
     }
@@ -160,15 +182,15 @@ public class PsiFormatUtil extends PsiFormatUtilBase {
     }
     if ((options & SHOW_PARAMETERS) != 0){
       buffer.append('(');
-      PsiParameter[] parms = method.getParameterList().getParameters();
-      for(int i = 0; i < Math.min(parms.length, maxParametersToShow); i++) {
-        PsiParameter parm = parms[i];
+      PsiParameter[] params = method.getParameterList().getParameters();
+      for(int i = 0; i < Math.min(params.length, maxParametersToShow); i++) {
+        PsiParameter parm = params[i];
         if (i > 0){
           buffer.append(", ");
         }
         buffer.append(formatVariable(parm, parameterOptions, substitutor));
       }
-      if(parms.length > maxParametersToShow) {
+      if(params.length > maxParametersToShow) {
         buffer.append (", ...");
       }
       buffer.append(')');
@@ -196,12 +218,8 @@ public class PsiFormatUtil extends PsiFormatUtilBase {
     }
   }
 
-
-  @MagicConstant(flags = {SHOW_MODIFIERS, SHOW_NAME, SHOW_ANONYMOUS_CLASS_VERBOSE, SHOW_FQ_NAME, MODIFIERS_AFTER, SHOW_EXTENDS_IMPLEMENTS, SHOW_REDUNDANT_MODIFIERS, JAVADOC_MODIFIERS_ONLY})
-  public @interface FormatClassOptions {}
-
   @NotNull
-  public static String formatClass(@NotNull PsiClass aClass, @FormatClassOptions int options){
+  public static String formatClass(@NotNull PsiClass aClass, @FormatClassOptions int options) {
     StringBuilder buffer = new StringBuilder();
     if ((options & SHOW_MODIFIERS) != 0 && (options & MODIFIERS_AFTER) == 0){
       formatModifiers(aClass, options,buffer);
@@ -254,12 +272,13 @@ public class PsiFormatUtil extends PsiFormatUtilBase {
     return buffer.toString();
   }
 
-  public static String formatModifiers(PsiElement element, int options) throws IllegalArgumentException{
+  public static String formatModifiers(PsiElement element, int options) throws IllegalArgumentException {
     StringBuilder buffer = new StringBuilder();
-    formatModifiers(element, options,buffer);
+    formatModifiers(element, options, buffer);
     return buffer.toString();
   }
-  private static void formatModifiers(PsiElement element, int options, StringBuilder buffer) throws IllegalArgumentException{
+
+  private static void formatModifiers(PsiElement element, int options, StringBuilder buffer) throws IllegalArgumentException {
     PsiModifierList list;
     boolean isInterface = false;
     if (element instanceof PsiVariable){
@@ -342,7 +361,7 @@ public class PsiFormatUtil extends PsiFormatUtilBase {
     buffer.append(modifier);
   }
 
-  public static String formatReferenceList(PsiReferenceList list, int options){
+  public static String formatReferenceList(PsiReferenceList list, int options) {
     StringBuilder buffer = new StringBuilder();
     PsiJavaCodeReferenceElement[] refs = list.getReferenceElements();
     for(int i = 0; i < refs.length; i++) {
@@ -355,7 +374,7 @@ public class PsiFormatUtil extends PsiFormatUtilBase {
     return buffer.toString();
   }
 
-  public static String formatType(@Nullable PsiType type, int options, @NotNull PsiSubstitutor substitutor){
+  public static String formatType(@Nullable PsiType type, int options, @NotNull PsiSubstitutor substitutor) {
     type = substitutor.substitute(type);
     if ((options & SHOW_RAW_TYPE) != 0) {
       type = TypeConversionUtil.erasure(type);
@@ -372,7 +391,7 @@ public class PsiFormatUtil extends PsiFormatUtilBase {
     return (options & SHOW_FQ_CLASS_NAMES) == 0 ? type.getPresentableText() : type.getInternalCanonicalText();
   }
 
-  public static String formatReference(PsiJavaCodeReferenceElement ref, int options){
+  public static String formatReference(PsiJavaCodeReferenceElement ref, int options) {
     return (options & SHOW_FQ_CLASS_NAMES) == 0 ? ref.getText() : ref.getCanonicalText();
   }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,11 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.lang.java;
 
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.codeInsight.documentation.DocumentationManager;
+import com.intellij.codeInsight.documentation.DocumentationManagerProtocol;
 import com.intellij.codeInsight.documentation.PlatformDocumentationUtil;
 import com.intellij.codeInsight.editorActions.CodeDocumentationUtil;
 import com.intellij.codeInsight.javadoc.JavaDocExternalFilter;
@@ -31,10 +30,11 @@ import com.intellij.lang.documentation.CompositeDocumentationProvider;
 import com.intellij.lang.documentation.ExternalDocumentationProvider;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -49,12 +49,12 @@ import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiFormatUtilBase;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -157,7 +157,7 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
       }
     }
     else {
-      final Module module = ModuleUtil.findModuleForPsiElement(file);
+      final Module module = ModuleUtilCore.findModuleForPsiElement(file);
       if (module != null) {
         buffer.append('[').append(module.getName()).append("] ");
       }
@@ -533,7 +533,7 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
     return null;
   }
 
-  private String getMethodCandidateInfo(PsiMethodCallExpression expr) {
+  private static String getMethodCandidateInfo(PsiMethodCallExpression expr) {
     final PsiResolveHelper rh = JavaPsiFacade.getInstance(expr.getProject()).getResolveHelper();
     final CandidateInfo[] candidates = rh.getReferencedMethodCandidates(expr, true);
     final String text = expr.getText();
@@ -562,7 +562,7 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
   }
 
   private static void createElementLink(@NonNls final StringBuilder sb, final PsiElement element, final String str) {
-    sb.append("&nbsp;&nbsp;<a href=\"" + DocumentationManager.PSI_ELEMENT_PROTOCOL);
+    sb.append("&nbsp;&nbsp;<a href=\"" + DocumentationManagerProtocol.PSI_ELEMENT_PROTOCOL);
     sb.append(JavaDocUtil.getReferenceText(element.getProject(), element));
     sb.append("\">");
     sb.append(str);
@@ -593,19 +593,20 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
       PsiMethod method = (PsiMethod)element;
       PsiClass aClass = method.getContainingClass();
       if (aClass != null) {
-        final List<String> classUrls = findUrlForClass(aClass);
-
+        List<String> classUrls = findUrlForClass(aClass);
         if (classUrls != null) {
-          urls = new ArrayList<String>();
-          String signature = formatMethodSignature(method);
+          urls = ContainerUtil.newSmartList();
+
+          String rawSignature = formatMethodSignature(method, true);
           for (String classUrl : classUrls) {
-            urls.add(classUrl + "#" + signature);
+            urls.add(classUrl + "#" + rawSignature);
           }
-          signature = PsiFormatUtil.formatMethod(method, PsiSubstitutor.EMPTY,
-                                                 PsiFormatUtilBase.SHOW_NAME | PsiFormatUtilBase.SHOW_PARAMETERS,
-                                                 PsiFormatUtilBase.SHOW_TYPE | PsiFormatUtilBase.SHOW_FQ_CLASS_NAMES, 999);
-          for (String classUrl : classUrls) {
-            urls.add(classUrl + "#" + signature);
+
+          String signature = formatMethodSignature(method, false);
+          if (Comparing.compare(rawSignature, signature) != 0) {
+            for (String classUrl : classUrls) {
+              urls.add(classUrl + "#" + signature);
+            }
           }
         }
       }
@@ -631,25 +632,28 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
     }
   }
 
-  public static String formatMethodSignature(PsiMethod method) {
-    return PsiFormatUtil.formatMethod(method, PsiSubstitutor.EMPTY,
-                                      PsiFormatUtilBase.SHOW_NAME |
-                                      PsiFormatUtilBase.SHOW_PARAMETERS |
-                                      PsiFormatUtilBase.SHOW_RAW_NON_TOP_TYPE,
-                                      PsiFormatUtilBase.SHOW_TYPE |
-                                      PsiFormatUtilBase.SHOW_FQ_CLASS_NAMES |
-                                      PsiFormatUtilBase.SHOW_RAW_NON_TOP_TYPE,
-                                      999);
+  private static String formatMethodSignature(PsiMethod method, boolean raw) {
+    int options = PsiFormatUtilBase.SHOW_NAME | PsiFormatUtilBase.SHOW_PARAMETERS;
+    int parameterOptions = PsiFormatUtilBase.SHOW_TYPE | PsiFormatUtilBase.SHOW_FQ_CLASS_NAMES;
+    if (raw) {
+      options |= PsiFormatUtilBase.SHOW_RAW_NON_TOP_TYPE;
+      parameterOptions |= PsiFormatUtilBase.SHOW_RAW_NON_TOP_TYPE;
+    }
+    return PsiFormatUtil.formatMethod(method, PsiSubstitutor.EMPTY, options, parameterOptions, 999);
   }
 
   @Nullable
   public static List<String> findUrlForClass(PsiClass aClass) {
     String qName = aClass.getQualifiedName();
     if (qName == null) return null;
+
     PsiFile file = aClass.getContainingFile();
     if (!(file instanceof PsiJavaFile)) return null;
-    String packageName = ((PsiJavaFile)file).getPackageName();
 
+    VirtualFile virtualFile = file.getVirtualFile();
+    if (virtualFile == null) return null;
+
+    String packageName = ((PsiJavaFile)file).getPackageName();
     String relPath;
     if (packageName.length() > 0) {
       relPath = packageName.replace('.', '/') + '/' + qName.substring(packageName.length() + 1) + HTML_EXTENSION;
@@ -658,12 +662,7 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
       relPath = qName + HTML_EXTENSION;
     }
 
-    final PsiFile containingFile = aClass.getContainingFile();
-    if (containingFile == null) return null;
-    final VirtualFile virtualFile = containingFile.getVirtualFile();
-    if (virtualFile == null) return null;
-
-    return findUrlForVirtualFile(containingFile.getProject(), virtualFile, relPath);
+    return findUrlForVirtualFile(file.getProject(), virtualFile, relPath);
   }
 
   @Nullable
