@@ -34,6 +34,7 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.DebugUtil;
+import com.intellij.psi.util.PsiUtilCore;
 
 import java.util.List;
 
@@ -120,7 +121,7 @@ class CompletionAssertions {
   }
 
   static void assertHostInfo(PsiFile hostCopy, OffsetMap hostMap) {
-    assert hostCopy.isValid() : "file became invalid: " + hostCopy.getClass();
+    PsiUtilCore.ensureValid(hostCopy);
     if (hostMap.getOffset(CompletionInitializationContext.START_OFFSET) >= hostCopy.getTextLength()) {
       throw new AssertionError("startOffset outside the host file: " + hostMap.getOffset(CompletionInitializationContext.START_OFFSET) + "; " + hostCopy);
     }
