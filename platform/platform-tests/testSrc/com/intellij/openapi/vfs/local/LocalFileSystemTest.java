@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,6 @@ import com.intellij.openapi.vfs.newvfs.*;
 import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
-import com.intellij.openapi.vfs.newvfs.impl.FakeVirtualFile;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualDirectoryImpl;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
@@ -219,7 +218,13 @@ public class LocalFileSystemTest extends PlatformLangTestCase {
         assertEquals("C:/", root.getPath());
 
         root2 = myFS.findFileByPath("C:\\");
-        assertEquals(String.valueOf(root2), root, root2);
+        assertSame(String.valueOf(root), root, root2);
+
+        VirtualFileManager fm = VirtualFileManager.getInstance();
+        root = fm.findFileByUrl("file://C:/");
+        assertNotNull(root);
+        root2 = fm.findFileByUrl("file:///c:/");
+        assertSame(String.valueOf(root), root, root2);
       }
     }
     else if (SystemInfo.isUnix) {
@@ -385,34 +390,9 @@ public class LocalFileSystemTest extends PlatformLangTestCase {
     assertNull(vFile);
   }
 
-  public void testGetAttributesConvertsToAbsolute() throws Exception {
-    NewVirtualFile fakeRoot = PersistentFS.getInstance().findRoot("", myFS);
-    assertNotNull(fakeRoot);
-
-    File userDir = new File(System.getProperty("user.dir"));
-    File[] files = userDir.listFiles();
-    File fileToQuery;
-    if (files != null && files.length != 0) {
-      fileToQuery = files[0];
-    }
-    else if (userDir.isDirectory()) {
-      fileToQuery = FileUtil.createTempFile(userDir, getTestName(false), "", true);
-      myFilesToDelete.add(fileToQuery);
-    }
-    else {
-      // can't test
-      return;
-    }
-
-    FileAttributes attributes = myFS.getAttributes(new FakeVirtualFile(fakeRoot, fileToQuery.getName()));
-    assertNull(attributes);
-
-    attributes = myFS.getAttributes(new FakeVirtualFile(fakeRoot, "windows"));
-    assertNull(attributes);
-    attributes = myFS.getAttributes(new FakeVirtualFile(fakeRoot, "usr"));
-    assertNull(attributes);
-    attributes = myFS.getAttributes(new FakeVirtualFile(fakeRoot, "Users"));
-    assertNull(attributes);
+  public void testNoMoreFakeRoots() throws Exception {
+    VirtualFile root = PersistentFS.getInstance().findRoot("", myFS);
+    assertNull(String.valueOf(root), root);
   }
 
   public void testCopyToPointDir() throws Exception {

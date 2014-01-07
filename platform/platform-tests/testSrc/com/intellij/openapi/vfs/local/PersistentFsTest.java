@@ -23,13 +23,11 @@ import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWithId;
-import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.testFramework.PlatformLangTestCase;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Arrays;
 
 public class PersistentFsTest extends PlatformLangTestCase {
   private PersistentFS myFs;
@@ -62,32 +60,6 @@ public class PersistentFsTest extends PlatformLangTestCase {
 
     vFile.delete(this);
     assertNull(myFs.findFileById(id));
-  }
-
-  public void testListChildrenOfTheRootOfTheRoot() {
-    NewVirtualFile fakeRoot = myFs.findRoot("", myLocalFs);
-    assertNotNull(fakeRoot);
-    int users = myFs.getId(fakeRoot, "Users", myLocalFs);
-    assertEquals(0, users);
-    users = myFs.getId(fakeRoot, "usr", myLocalFs);
-    assertEquals(0, users);
-    int win = myFs.getId(fakeRoot, "Windows", myLocalFs);
-    assertEquals(0, win);
-
-    VirtualFile[] roots = myFs.getRoots(myLocalFs);
-    for (VirtualFile root : roots) {
-      int rid = myFs.getId(fakeRoot, root.getName(), myLocalFs);
-      assertTrue(root.getPath()+"; Roots:"+ Arrays.toString(roots), 0 != rid);
-    }
-
-    NewVirtualFile c = fakeRoot.refreshAndFindChild("Users");
-    assertNull(c);
-    c = fakeRoot.refreshAndFindChild("Users");
-    assertNull(c);
-    c = fakeRoot.refreshAndFindChild("Windows");
-    assertNull(c);
-    c = fakeRoot.refreshAndFindChild("Windows");
-    assertNull(c);
   }
 
   public void testFindRootShouldNotBeFooledByRelativePath() throws IOException {
