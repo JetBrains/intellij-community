@@ -75,6 +75,11 @@ public abstract class LightQuickFixParameterizedTestCase extends LightQuickFixTe
     return Collections.emptyList();
   }
 
+  @Override
+  protected void doAllTests() {
+    super.doAllTests();
+  }
+
   @NotNull
   @Override
   protected String getTestDataPath() {

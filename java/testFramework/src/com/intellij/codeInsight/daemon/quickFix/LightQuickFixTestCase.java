@@ -225,6 +225,10 @@ public abstract class LightQuickFixTestCase extends LightDaemonAnalyzerTestCase 
     doTestFor(fileSuffix, createWrapper());
   }
 
+  /**
+   * @deprecated use com.intellij.codeInsight.daemon.quickFix.LightQuickFixParameterizedTestCase to get separate tests for all data files in 
+   * testData directory
+   */
   protected void doAllTests() {
     doAllTests(createWrapper());
   }
