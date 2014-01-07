@@ -7,7 +7,6 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author spleaner
  */
-@SuppressWarnings({"ALL"})
 public class SplitTagActionTest extends LightIntentionActionTestCase {
   public void test() throws Exception { doAllTests(); }
 
