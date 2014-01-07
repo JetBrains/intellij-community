@@ -243,6 +243,12 @@ public class ReflectionUtil {
     return findMethod(aClass.getDeclaredMethods(), name, parameters);
   }
 
+  @Nullable
+  public static Class getMethodDeclaringClass(@NotNull Class<?> instanceClass, @NonNls @NotNull String name, @NotNull Class... parameters) {
+    Method method = getMethod(instanceClass, name, parameters);
+    return method == null ? null : method.getDeclaringClass();
+  }
+
   public static <T> T getField(@NotNull Class objectClass, Object object, @NotNull Class<T> type, @NotNull @NonNls String name) {
     try {
       final Field field = findAssignableField(objectClass, type, name);
