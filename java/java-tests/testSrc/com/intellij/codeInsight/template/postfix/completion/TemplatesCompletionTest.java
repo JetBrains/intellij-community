@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,10 +20,7 @@ import com.intellij.codeInsight.completion.CompletionAutoPopupTestCase;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.codeInsight.template.postfix.settings.PostfixTemplatesSettings;
-import com.intellij.codeInsight.template.postfix.templates.InstanceofExpressionPostfixTemplate;
-import com.intellij.codeInsight.template.postfix.templates.NotNullCheckPostfixTemplate;
-import com.intellij.codeInsight.template.postfix.templates.PostfixTemplate;
-import com.intellij.codeInsight.template.postfix.templates.SwitchStatementPostfixTemplate;
+import com.intellij.codeInsight.template.postfix.templates.*;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -39,6 +36,10 @@ public class TemplatesCompletionTest extends CompletionAutoPopupTestCase {
 
   public void testShowAutoPopupForAliases() {
     doAutoPopupTest("nn", NotNullCheckPostfixTemplate.class);
+  }
+  
+  public void testShowAutoPopupForFloatLiterals() {
+    doAutoPopupTest("fori", ForAscendingPostfixTemplate.class);
   }
 
   public void testDoNotShowTemplateIfPluginIsDisabled() {
