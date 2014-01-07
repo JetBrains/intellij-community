@@ -169,18 +169,7 @@ class BeanBinding implements Binding {
   }
 
   private Object instantiateBean() {
-    Object result;
-
-    try {
-      result = myBeanClass.newInstance();
-    }
-    catch (InstantiationException e) {
-      throw new XmlSerializationException(e);
-    }
-    catch (IllegalAccessException e) {
-      throw new XmlSerializationException(e);
-    }
-    return result;
+    return XmlSerializerImpl.newInstance(myBeanClass);
   }
 
   @Override

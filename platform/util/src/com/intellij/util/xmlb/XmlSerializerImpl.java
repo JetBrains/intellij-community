@@ -22,6 +22,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.lang.annotation.Annotation;
 import java.lang.ref.SoftReference;
+import java.lang.reflect.Constructor;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.*;
@@ -178,5 +179,24 @@ class XmlSerializerImpl {
     }
 
     return result.toArray(new Content[result.size()]);
+  }
+
+  /**
+   * {@link Class#newInstance()} cannot instantiate private classes
+   */
+  static <T> T newInstance(Class<T> aClass) {
+    try {
+      Constructor<T> constructor = aClass.getDeclaredConstructor();
+      try {
+        constructor.setAccessible(true);
+      }
+      catch (SecurityException e) {
+        return aClass.newInstance();
+      }
+      return constructor.newInstance();
+    }
+    catch (Exception e) {
+      throw new XmlSerializationException(e);
+    }
   }
 }
