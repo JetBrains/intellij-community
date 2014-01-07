@@ -226,8 +226,7 @@ public class WebBrowserManager implements PersistentStateComponent<Element> {
     try {
       id = UUID.fromString(idOrName);
     }
-    catch (Exception e) {
-      LOG.warn(e);
+    catch (IllegalArgumentException ignored) {
       for (ConfigurableWebBrowser browser : browsers) {
         if (browser.getFamily().name().equals(idOrName) || browser.getFamily().getName().equals(idOrName)) {
           return browser;
