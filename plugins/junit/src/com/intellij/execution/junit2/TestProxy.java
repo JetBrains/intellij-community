@@ -156,7 +156,7 @@ public class TestProxy extends AbstractTestProxy {
       if (parentLocation != null) {
         final PsiElement parentElement = parentLocation.getPsiElement();
         if (parentElement instanceof PsiClass) {
-          final PsiAnnotation annotation = AnnotationUtil.findAnnotation((PsiClass)parentElement, JUnitUtil.RUN_WITH);
+          final PsiAnnotation annotation = AnnotationUtil.findAnnotationInHierarchy((PsiClass)parentElement, Collections.singleton(JUnitUtil.RUN_WITH));
           if (annotation != null) {
             final PsiAnnotationMemberValue attributeValue = annotation.findAttributeValue("value");
             if (attributeValue instanceof PsiClassObjectAccessExpression) {
