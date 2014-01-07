@@ -1,6 +1,6 @@
 package com.intellij.codeInsight;
 
-import com.intellij.codeInsight.daemon.quickFix.LightQuickFixTestCase;
+import com.intellij.codeInsight.daemon.quickFix.LightQuickFixParameterizedTestCase;
 import com.intellij.openapi.application.PathManager;
 import org.jetbrains.annotations.NotNull;
 
@@ -8,7 +8,7 @@ import org.jetbrains.annotations.NotNull;
  * @author anna
  * Date: 28-Oct-2009
  */
-public class ConvertToAtomicIntentionTest extends LightQuickFixTestCase {
+public class ConvertToAtomicIntentionTest extends LightQuickFixParameterizedTestCase {
   @Override
   protected boolean shouldBeAvailableAfterExecution() {
     return true;

@@ -4,11 +4,11 @@
  */
 package com.intellij.codeInsight;
 
-import com.intellij.codeInsight.daemon.quickFix.LightQuickFixTestCase;
+import com.intellij.codeInsight.daemon.quickFix.LightQuickFixParameterizedTestCase;
 import com.intellij.openapi.application.PathManager;
 import org.jetbrains.annotations.NotNull;
 
-public class ConvertToThreadLocalIntentionTest extends LightQuickFixTestCase {
+public class ConvertToThreadLocalIntentionTest extends LightQuickFixParameterizedTestCase {
 
   @Override
   protected boolean shouldBeAvailableAfterExecution() {
