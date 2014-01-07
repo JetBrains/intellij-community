@@ -20,6 +20,7 @@ import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.execution.Location;
 import com.intellij.execution.junit.JUnitUtil;
 import com.intellij.execution.junit2.events.*;
+import com.intellij.execution.junit2.info.MethodLocation;
 import com.intellij.execution.junit2.info.TestInfo;
 import com.intellij.execution.junit2.states.IgnoredState;
 import com.intellij.execution.junit2.states.Statistics;
@@ -142,7 +143,8 @@ public class TestProxy extends AbstractTestProxy {
       Location parentLocation = getParent().getLocation(project, searchScope);
       if (parentLocation instanceof PsiMemberParameterizedLocation) {
         return new PsiMemberParameterizedLocation(project, 
-                                                  location.getPsiElement(), 
+                                                  location.getPsiElement(),
+                                                  location instanceof MethodLocation ? ((MethodLocation)location).getContainingClass() : null,
                                                   ((PsiMemberParameterizedLocation)parentLocation).getParamSetName());
       }
     }
@@ -162,7 +164,10 @@ public class TestProxy extends AbstractTestProxy {
             if (attributeValue instanceof PsiClassObjectAccessExpression) {
               final PsiTypeElement operand = ((PsiClassObjectAccessExpression)attributeValue).getOperand();
               if (InheritanceUtil.isInheritor(operand.getType(), JUnitUtil.PARAMETERIZED_CLASS_NAME)) {
-                return new PsiMemberParameterizedLocation(project, parentElement, getInfo().getName());
+                return new PsiMemberParameterizedLocation(project, 
+                                                          parentElement,
+                                                          null,
+                                                          getInfo().getName());
               }
             }
           }

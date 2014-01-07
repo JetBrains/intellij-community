@@ -43,13 +43,17 @@ public class TestMethodConfigurationProducer extends JUnitConfigurationProducer 
     }
     final Location contextLocation = context.getLocation();
     assert contextLocation != null;
-    final Location<PsiMethod> methodLocation = getTestMethod(contextLocation);
+    Location<PsiMethod> methodLocation = getTestMethod(contextLocation);
     if (methodLocation == null) return false;
 
     if (contextLocation instanceof PsiMemberParameterizedLocation) {
       final String paramSetName = ((PsiMemberParameterizedLocation)contextLocation).getParamSetName();
       if (paramSetName != null) {
         configuration.setProgramParameters(paramSetName);
+      }
+      PsiClass containingClass = ((PsiMemberParameterizedLocation)contextLocation).getContainingClass();
+      if (containingClass != null) {
+        methodLocation = MethodLocation.elementInClass(methodLocation.getPsiElement(), containingClass);
       }
     }
     sourceElement.set(methodLocation.getPsiElement());
