@@ -62,9 +62,7 @@ public abstract class CloudDeploymentRuntime extends DeploymentRuntime {
     myLoggingHandler = logManager == null ? new CloudSilentLoggingHandlerImpl() : new CloudLoggingHandlerImpl(logManager);
 
     CloudDeploymentNameConfiguration deploymentConfiguration = task.getConfiguration();
-    myApplicationName = deploymentConfiguration.isDefaultDeploymentName()
-                        ? serverRuntime.getDeploymentName(source)
-                        : deploymentConfiguration.getDeploymentName();
+    myApplicationName = deploymentConfiguration.getDeploymentSourceName(source);
 
     myPresentableName = source.getPresentableName();
 
