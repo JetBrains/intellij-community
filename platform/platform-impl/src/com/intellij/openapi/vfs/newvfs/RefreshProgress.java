@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,15 +32,12 @@ import javax.swing.*;
  * @author max
  */
 public class RefreshProgress extends ProgressIndicatorBase {
+  private static final Project[] NULL_ARRAY = {null};
+
   @NotNull
   public static ProgressIndicator create(@NotNull String message) {
     Application app = ApplicationManager.getApplication();
-    if (app == null || app.isUnitTestMode()) {
-      return new EmptyProgressIndicator();
-    }
-    else {
-      return new RefreshProgress(message);
-    }
+    return app == null || app.isUnitTestMode() ? new EmptyProgressIndicator() : new RefreshProgress(message);
   }
 
   private final String myMessage;
@@ -53,26 +50,11 @@ public class RefreshProgress extends ProgressIndicatorBase {
   @Override
   public void start() {
     super.start();
-
     //noinspection SSBasedInspection
     SwingUtilities.invokeLater(new Runnable() {
       @Override
       public void run() {
-        if (ApplicationManager.getApplication().isDisposed()) return;
-        final WindowManager windowManager = WindowManager.getInstance();
-        if (windowManager == null) return;
-
-        Project[] projects= ProjectManager.getInstance().getOpenProjects();
-        if(projects.length==0){
-          projects=new Project[]{null};
-        }
-
-        for (Project project : projects) {
-          final StatusBarEx statusBar = (StatusBarEx) windowManager.getStatusBar(project);
-          if (statusBar == null) continue;
-
-          statusBar.startRefreshIndication(myMessage);
-        }
+        multiplex(true);
       }
     });
   }
@@ -80,27 +62,33 @@ public class RefreshProgress extends ProgressIndicatorBase {
   @Override
   public void stop() {
     super.stop();
-
     //noinspection SSBasedInspection
     SwingUtilities.invokeLater(new Runnable() {
       @Override
       public void run() {
-        if (ApplicationManager.getApplication().isDisposed()) return;
-        final WindowManager windowManager = WindowManager.getInstance();
-        if (windowManager == null) return;
+        multiplex(false);
+      }
+    });
+  }
 
-        Project[] projects= ProjectManager.getInstance().getOpenProjects();
-        if(projects.length==0){
-          projects=new Project[]{null};
+  private void multiplex(boolean start) {
+    if (ApplicationManager.getApplication().isDisposed()) return;
+
+    WindowManager windowManager = WindowManager.getInstance();
+    if (windowManager == null) return;
+
+    Project[] projects = ProjectManager.getInstance().getOpenProjects();
+    if (projects.length == 0) projects = NULL_ARRAY;
+    for (Project project : projects) {
+      StatusBarEx statusBar = (StatusBarEx)windowManager.getStatusBar(project);
+      if (statusBar != null) {
+        if (start) {
+          statusBar.startRefreshIndication(myMessage);
         }
-
-        for (Project project : projects) {
-          final StatusBarEx statusBar = (StatusBarEx) windowManager.getStatusBar(project);
-          if (statusBar == null) continue;
-
+        else {
           statusBar.stopRefreshIndication();
         }
       }
-    });
+    }
   }
 }
