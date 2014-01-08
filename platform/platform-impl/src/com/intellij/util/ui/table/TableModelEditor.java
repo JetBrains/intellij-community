@@ -50,7 +50,7 @@ public class TableModelEditor<T> implements ElementProducer<T> {
    * source will be copied, passed list will not be used directly
    * itemClass must has empty constructor
    */
-  public TableModelEditor(@NotNull List<T> items, @NotNull ColumnInfo[] columns, @NotNull Function<T, T> cloneFactory, Class<T> itemClass) {
+  public TableModelEditor(@NotNull List<T> items, @NotNull ColumnInfo[] columns, @NotNull Function<T, T> cloneFactory, Class<T> itemClass, @NotNull String emptyText) {
     this.itemClass = itemClass;
     this.cloneFactory = cloneFactory;
 
@@ -61,6 +61,8 @@ public class TableModelEditor<T> implements ElementProducer<T> {
     if (columns[0].getColumnClass() == Boolean.class && columns[0].getName().isEmpty()) {
       TableUtil.setupCheckboxColumn(table.getColumnModel().getColumn(0));
     }
+
+    table.getEmptyText().setText(emptyText);
   }
 
   private static final class MyListTableModel<T> extends ListTableModel<T> {
@@ -225,6 +227,6 @@ public class TableModelEditor<T> implements ElementProducer<T> {
   }
 
   public void reset(@NotNull List<T> items) {
-    model.setItems(items);
+    model.setItems(new ArrayList<T>(items));
   }
 }

@@ -40,6 +40,7 @@ import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableCellRenderer;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.Collections;
 
 import static com.intellij.ide.browsers.BrowsersConfiguration.BrowserFamily;
 import static com.intellij.util.ui.table.TableModelEditor.EditableColumnInfo;
@@ -169,12 +170,12 @@ public class BrowserSettingsPanel {
   }
 
   private void createUIComponents() {
-    browsersEditor = new TableModelEditor<ConfigurableWebBrowser>(WebBrowserManager.getInstance().getList(), COLUMNS, new Function<ConfigurableWebBrowser, ConfigurableWebBrowser>() {
+    browsersEditor = new TableModelEditor<ConfigurableWebBrowser>(Collections.<ConfigurableWebBrowser>emptyList(), COLUMNS, new Function<ConfigurableWebBrowser, ConfigurableWebBrowser>() {
       @Override
       public ConfigurableWebBrowser fun(ConfigurableWebBrowser browser) {
         return new ConfigurableWebBrowser(browser.getId(), browser.getFamily(), browser.getName(), browser.getPath(), browser.isActive(), browser.getSpecificSettings());
       }
-    }, ConfigurableWebBrowser.class);
+    }, ConfigurableWebBrowser.class, "No web browsers configured");
     browsersTable = browsersEditor.createComponent();
   }
 
