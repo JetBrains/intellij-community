@@ -31,6 +31,7 @@ import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.LocalPathCellEditor;
 import com.intellij.util.ui.table.ComboBoxTableCellEditor;
 import com.intellij.util.ui.table.IconTableCellRenderer;
+import com.intellij.util.ui.table.TableModelEditor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -41,7 +42,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
 import static com.intellij.ide.browsers.BrowsersConfiguration.BrowserFamily;
-import static com.intellij.ide.browsers.TableModelEditor.EditableColumnInfo;
+import static com.intellij.util.ui.table.TableModelEditor.EditableColumnInfo;
 
 public class BrowserSettingsPanel {
   private static final FileChooserDescriptor APP_FILE_CHOOSER_DESCRIPTOR =
@@ -121,7 +122,6 @@ public class BrowserSettingsPanel {
       return new LocalPathCellEditor().fileChooserDescriptor(APP_FILE_CHOOSER_DESCRIPTOR);
     }
   }};
-
 
   private JPanel root;
 

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.ide.browsers;
+package com.intellij.util.ui.table;
 
 import com.intellij.openapi.util.Comparing;
 import com.intellij.ui.TableSpeedSearch;
