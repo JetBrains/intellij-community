@@ -125,25 +125,24 @@ public class TestLocationDataRule implements GetDataRule {
                                       PsiClass aClass) {
     final PsiAnnotation annotation = AnnotationUtil.findAnnotation(aClass, TestDataPath.class.getName());
     if (annotation != null) {
-      final Location parameterizedLocation = 
+      final Location parameterizedLocation =
         PsiMemberParameterizedLocation.getParameterizedLocation(aClass, "[" + fileName + "]", Parameterized.class.getName());
       if (parameterizedLocation != null) {
         return parameterizedLocation;
       }
-      else {
+      if (StringUtil.isJavaIdentifier(nameWithoutExtension)) {
         final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(project);
         PsiMethod method = aClass.findMethodBySignature(elementFactory.createMethod("test" + nameWithoutExtension, PsiType.VOID), true);
         if (method != null) {
           return MethodLocation.elementInClass(method, aClass);
-        } else {
-          method = aClass.findMethodBySignature(elementFactory.createMethod("test" + StringUtil.capitalize(nameWithoutExtension), PsiType.VOID), true);
-          if (method != null) {
-            return MethodLocation.elementInClass(method, aClass);
-          } else {
-            return new PsiLocation<PsiElement>(project, aClass);
-          }
+        }
+
+        method = aClass.findMethodBySignature(elementFactory.createMethod("test" + StringUtil.capitalize(nameWithoutExtension), PsiType.VOID), true);
+        if (method != null) {
+          return MethodLocation.elementInClass(method, aClass);
         }
       }
+      return new PsiLocation<PsiElement>(project, aClass);
     }
     return null;
   }
