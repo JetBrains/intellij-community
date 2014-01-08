@@ -556,7 +556,7 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
         createElementLink(sb, element, StringUtil.escapeXml(str));
       }
 
-      return CodeInsightBundle.message("javadoc.candiates", text, sb);
+      return CodeInsightBundle.message("javadoc.candidates", text, sb);
     }
 
     return CodeInsightBundle.message("javadoc.candidates.not.found", text);
