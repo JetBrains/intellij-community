@@ -103,8 +103,10 @@ final class ConfigurableWebBrowser extends WebBrowser {
 
     ConfigurableWebBrowser browser = (ConfigurableWebBrowser)o;
     return id.equals(browser.id) &&
+           family.equals(browser.family) &&
            active == browser.active &&
-           Comparing.equal(path, browser.path) &&
+           Comparing.strEqual(name, browser.name) &&
+           Comparing.strEqual(path, browser.path) &&
            Comparing.equal(specificSettings, browser.specificSettings);
   }
 

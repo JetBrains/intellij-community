@@ -24,7 +24,6 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.util.Function;
@@ -45,6 +44,85 @@ import static com.intellij.ide.browsers.BrowsersConfiguration.BrowserFamily;
 import static com.intellij.ide.browsers.TableModelEditor.EditableColumnInfo;
 
 public class BrowserSettingsPanel {
+  private static final FileChooserDescriptor APP_FILE_CHOOSER_DESCRIPTOR =
+    SystemInfo.isMac ? new FileChooserDescriptor(false, true, false, false, false, false) {
+      @Override
+      public boolean isFileSelectable(VirtualFile file) {
+        return file.getName().endsWith(".app");
+      }
+    } : FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor();
+
+  private static final ColumnInfo[] COLUMNS = {new EditableColumnInfo<ConfigurableWebBrowser, Boolean>() {
+    @Override
+    public Class getColumnClass() {
+      return Boolean.class;
+    }
+
+    @Override
+    public Boolean valueOf(ConfigurableWebBrowser item) {
+      return item.isActive();
+    }
+
+    @Override
+    public void setValue(ConfigurableWebBrowser item, Boolean value) {
+      item.setActive(value);
+    }
+  }, new EditableColumnInfo<ConfigurableWebBrowser, String>("Name") {
+    @Override
+    public String valueOf(ConfigurableWebBrowser item) {
+      return item.getName();
+    }
+
+    @Override
+    public void setValue(ConfigurableWebBrowser item, String value) {
+      item.setName(value);
+    }
+  }, new EditableColumnInfo<ConfigurableWebBrowser, BrowserFamily>("Family") {
+    @Override
+    public Class getColumnClass() {
+      return BrowserFamily.class;
+    }
+
+    @Override
+    public BrowserFamily valueOf(ConfigurableWebBrowser item) {
+      return item.getFamily();
+    }
+
+    @Override
+    public void setValue(ConfigurableWebBrowser item, BrowserFamily value) {
+      item.setFamily(value);
+    }
+
+    @Nullable
+    @Override
+    public TableCellRenderer getRenderer(ConfigurableWebBrowser item) {
+      return IconTableCellRenderer.ICONABLE;
+    }
+
+    @Nullable
+    @Override
+    public TableCellEditor getEditor(ConfigurableWebBrowser item) {
+      return ComboBoxTableCellEditor.INSTANCE;
+    }
+  }, new EditableColumnInfo<ConfigurableWebBrowser, String>("Path") {
+    @Override
+    public String valueOf(ConfigurableWebBrowser item) {
+      return item.getPath();
+    }
+
+    @Override
+    public void setValue(ConfigurableWebBrowser item, String value) {
+      item.setPath(value);
+    }
+
+    @Nullable
+    @Override
+    public TableCellEditor getEditor(ConfigurableWebBrowser item) {
+      return new LocalPathCellEditor().fileChooserDescriptor(APP_FILE_CHOOSER_DESCRIPTOR);
+    }
+  }};
+
+
   private JPanel root;
 
   private JRadioButton useSystemDefaultBrowser;
@@ -61,20 +139,11 @@ public class BrowserSettingsPanel {
 
   private TableModelEditor<ConfigurableWebBrowser> browsersEditor;
 
-  private final FileChooserDescriptor appFileChooserDescriptor;
-
   public BrowserSettingsPanel() {
     defaultBrowserPanel.setBorder(IdeBorderFactory.createTitledBorder("Default Browser", true));
 
-    appFileChooserDescriptor = SystemInfo.isMac ?
-                               new FileChooserDescriptor(false, true, false, false, false, false) {
-                                 @Override
-                                 public boolean isFileSelectable(VirtualFile file) {
-                                   return file.getName().endsWith(".app");
-                                 }
-                               } : FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor();
     alternativeBrowserPathField.addBrowseFolderListener(IdeBundle.message("title.select.path.to.browser"), null, null,
-                                                        appFileChooserDescriptor);
+                                                        APP_FILE_CHOOSER_DESCRIPTOR);
 
     if (BrowserUtil.canStartDefaultBrowser()) {
       ActionListener actionListener = new ActionListener() {
@@ -100,84 +169,7 @@ public class BrowserSettingsPanel {
   }
 
   private void createUIComponents() {
-    browsersEditor = new TableModelEditor<ConfigurableWebBrowser>(WebBrowserManager.getInstance().getList(), new ColumnInfo[]{new EditableColumnInfo<ConfigurableWebBrowser, Boolean>() {
-      @Override
-      public Class getColumnClass() {
-        return Boolean.class;
-      }
-
-      @Override
-      public Boolean valueOf(ConfigurableWebBrowser item) {
-        return browsersEditor.getEffective(item).isActive();
-      }
-
-      @Override
-      public void setValue(ConfigurableWebBrowser item, Boolean value) {
-        if (value != item.isActive()) {
-          browsersEditor.getMutable(item).setActive(value);
-        }
-      }
-    }, new EditableColumnInfo<ConfigurableWebBrowser, String>("Name") {
-      @Override
-      public String valueOf(ConfigurableWebBrowser item) {
-        return browsersEditor.getEffective(item).getName();
-      }
-
-      @Override
-      public void setValue(ConfigurableWebBrowser item, String value) {
-        if (!value.equals(item.getName())) {
-          browsersEditor.getMutable(item).setName(value);
-        }
-      }
-    }, new EditableColumnInfo<ConfigurableWebBrowser, BrowserFamily>("Family") {
-      @Override
-      public Class getColumnClass() {
-        return BrowserFamily.class;
-      }
-
-      @Override
-      public BrowserFamily valueOf(ConfigurableWebBrowser item) {
-        return browsersEditor.getEffective(item).getFamily();
-      }
-
-      @Override
-      public void setValue(ConfigurableWebBrowser item, BrowserFamily value) {
-        if (value != item.getFamily()) {
-          browsersEditor.getMutable(item).setFamily(value);
-        }
-      }
-
-      @Nullable
-      @Override
-      public TableCellRenderer getRenderer(ConfigurableWebBrowser item) {
-        return IconTableCellRenderer.ICONABLE;
-      }
-
-      @Nullable
-      @Override
-      public TableCellEditor getEditor(ConfigurableWebBrowser item) {
-        return ComboBoxTableCellEditor.INSTANCE;
-      }
-    }, new EditableColumnInfo<ConfigurableWebBrowser, String>("Path") {
-      @Override
-      public String valueOf(ConfigurableWebBrowser info) {
-        return browsersEditor.getEffective(info).getPath();
-      }
-
-      @Override
-      public void setValue(ConfigurableWebBrowser item, String value) {
-        String normalizedValue = StringUtil.nullize(value, true);
-        if (!Comparing.equal(normalizedValue, item.getPath())) {
-          browsersEditor.getMutable(item).setPath(normalizedValue);
-        }
-      }
-
-      @Nullable
-      @Override
-      public TableCellEditor getEditor(ConfigurableWebBrowser item) {
-        return new LocalPathCellEditor().fileChooserDescriptor(appFileChooserDescriptor);
-      }
-    }}, new Function<ConfigurableWebBrowser, ConfigurableWebBrowser>() {
+    browsersEditor = new TableModelEditor<ConfigurableWebBrowser>(WebBrowserManager.getInstance().getList(), COLUMNS, new Function<ConfigurableWebBrowser, ConfigurableWebBrowser>() {
       @Override
       public ConfigurableWebBrowser fun(ConfigurableWebBrowser browser) {
         return new ConfigurableWebBrowser(browser.getId(), browser.getFamily(), browser.getName(), browser.getPath(), browser.isActive(), browser.getSpecificSettings());
