@@ -24,6 +24,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.ui.table.TableView;
+import com.intellij.util.SmartList;
 import com.intellij.util.ui.EditableModel;
 import com.intellij.util.ui.ElementProducer;
 import com.intellij.util.ui.UIUtil;
@@ -52,7 +53,7 @@ public abstract class ToolbarDecorator implements CommonActionsPanel.ListenerFac
   protected boolean myUpActionEnabled;
   protected boolean myDownActionEnabled;
   protected Border myActionsPanelBorder;
-  private List<AnActionButton> myExtraActions = new ArrayList<AnActionButton>();
+  private final List<AnActionButton> myExtraActions = new SmartList<AnActionButton>();
   private ActionToolbarPosition myToolbarPosition;
   protected AnActionButtonRunnable myAddAction;
   protected AnActionButtonRunnable myEditAction;
@@ -399,6 +400,7 @@ public abstract class ToolbarDecorator implements CommonActionsPanel.ListenerFac
     return buttons.toArray(new CommonActionsPanel.Buttons[buttons.size()]);
   }
 
+  @Override
   public CommonActionsPanel.Listener createListener(final CommonActionsPanel panel) {
     return new CommonActionsPanel.Listener() {
       @Override
