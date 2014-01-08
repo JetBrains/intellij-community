@@ -105,6 +105,7 @@ public class MacFileChooserDialogImpl implements PathChooserDialog {
       try {
         //noinspection SSBasedInspection
         SwingUtilities.invokeLater(new Runnable() {
+          @Override
           public void run() {
             final IdeMenuBar bar = getMenuBar();
             if (bar != null) {
@@ -117,6 +118,7 @@ public class MacFileChooserDialogImpl implements PathChooserDialog {
         if (resultPaths.size() > 0) {
           //noinspection SSBasedInspection
           SwingUtilities.invokeLater(new Runnable() {
+            @Override
             public void run() {
               final List<VirtualFile> files = getChosenFiles(resultPaths);
               if (files.size() > 0) {
@@ -128,6 +130,7 @@ public class MacFileChooserDialogImpl implements PathChooserDialog {
         } else if (impl.myCallback instanceof FileChooser.FileChooserConsumer) {
           //noinspection SSBasedInspection
           SwingUtilities.invokeLater(new Runnable() {
+            @Override
             public void run() {
               ((FileChooser.FileChooserConsumer)impl.myCallback).cancelled();
             }
@@ -290,6 +293,7 @@ public class MacFileChooserDialogImpl implements PathChooserDialog {
 
     //noinspection SSBasedInspection
     SwingUtilities.invokeLater(new Runnable() {
+      @Override
       public void run() {
         showNativeChooserAsSheet(MacFileChooserDialogImpl.this, selectPath);
       }
