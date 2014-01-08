@@ -658,7 +658,7 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
 
   /**
    * file parameterized tests support
-   * @see FileBasedTestCaseHelper
+   * @see FileBasedTestCaseHelperEx
    */
 
   /**
@@ -667,6 +667,11 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
   @Parameterized.Parameter(0)
   public String myFileSuffix;
 
+  /**
+   * path to the root of test data in case of com.intellij.testFramework.FileBasedTestCaseHelperEx 
+   * or 
+   * path to the directory with current test data in case of @TestDataPath
+   */
   @Parameterized.Parameter(1)
   public String myTestDataPath;
 
@@ -681,20 +686,32 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
     if (!(testCase instanceof FileBasedTestCaseHelper)) {
       fail("Parameterized test should implement FileBasedTestCaseHelper");
     }
-    final FileBasedTestCaseHelper fileBasedTestCase = (FileBasedTestCaseHelper)testCase;
-    final String path = fileBasedTestCase.getRelativeBasePath();
-
-    assertNotNull("getBasePath() should not return null!", path);
 
     PathManagerEx.replaceLookupStrategy(klass, LightPlatformCodeInsightTestCase.class, com.intellij.testFramework.Parameterized.class);
 
+    final FileBasedTestCaseHelper fileBasedTestCase = (FileBasedTestCaseHelper)testCase;
     String testDataPath = testCase.getTestDataPath();
-    final String testDirPath = testDataPath.replace(File.separatorChar, '/') + path;
-    File testDir = new File(testDirPath);
+
+    File testDir = null;
+    if (fileBasedTestCase instanceof FileBasedTestCaseHelperEx) {
+      testDir = new File(testDataPath, ((FileBasedTestCaseHelperEx)fileBasedTestCase).getRelativeBasePath());
+    } else {
+      final TestDataPath annotation = klass.getAnnotation(TestDataPath.class);
+      if (annotation == null) {
+        fail("TestCase should implement com.intellij.testFramework.FileBasedTestCaseHelperEx or be annotated with com.intellij.testFramework.TestDataPath");
+      } else {
+        final String trimmedRoot = StringUtil.trimStart(StringUtil.trimStart(annotation.value(), "$CONTENT_ROOT"), "$PROJECT_ROOT");
+        final String lastPathComponent = new File(testDataPath).getName();
+        final int idx = trimmedRoot.indexOf(lastPathComponent);
+        testDataPath = testDataPath.replace(File.separatorChar, '/') + (idx > 0 ? trimmedRoot.substring(idx + lastPathComponent.length()) : trimmedRoot);
+        testDir = new File(testDataPath);
+      }
+    }
+
     final File[] files = testDir.listFiles();
 
     if (files == null) {
-      fail("Test files not found in " + testDirPath);
+      fail("Test files not found in " + testDir.getPath());
     }
 
     final List<Object[]> result = new ArrayList<Object[]>();
