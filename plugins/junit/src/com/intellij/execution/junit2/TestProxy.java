@@ -16,9 +16,7 @@
 
 package com.intellij.execution.junit2;
 
-import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.execution.Location;
-import com.intellij.execution.junit.JUnitUtil;
 import com.intellij.execution.junit2.events.*;
 import com.intellij.execution.junit2.info.MethodLocation;
 import com.intellij.execution.junit2.info.TestInfo;
@@ -33,7 +31,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.rt.execution.junit.states.PoolOfTestStates;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -158,19 +155,7 @@ public class TestProxy extends AbstractTestProxy {
       if (parentLocation != null) {
         final PsiElement parentElement = parentLocation.getPsiElement();
         if (parentElement instanceof PsiClass) {
-          final PsiAnnotation annotation = AnnotationUtil.findAnnotationInHierarchy((PsiClass)parentElement, Collections.singleton(JUnitUtil.RUN_WITH));
-          if (annotation != null) {
-            final PsiAnnotationMemberValue attributeValue = annotation.findAttributeValue("value");
-            if (attributeValue instanceof PsiClassObjectAccessExpression) {
-              final PsiTypeElement operand = ((PsiClassObjectAccessExpression)attributeValue).getOperand();
-              if (InheritanceUtil.isInheritor(operand.getType(), JUnitUtil.PARAMETERIZED_CLASS_NAME)) {
-                return new PsiMemberParameterizedLocation(project, 
-                                                          parentElement,
-                                                          null,
-                                                          getInfo().getName());
-              }
-            }
-          }
+          return PsiMemberParameterizedLocation.getParameterizedLocation((PsiClass)parentElement, getInfo().getName());
         }
       }
     }

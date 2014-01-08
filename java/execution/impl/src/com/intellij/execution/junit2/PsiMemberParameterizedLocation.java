@@ -15,13 +15,17 @@
  */
 package com.intellij.execution.junit2;
 
+import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.execution.Location;
 import com.intellij.execution.PsiLocation;
+import com.intellij.execution.junit.JUnitUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiMember;
+import com.intellij.psi.*;
+import com.intellij.psi.util.InheritanceUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Collections;
 
 public class PsiMemberParameterizedLocation extends PsiLocation<PsiElement> {
   private final PsiClass myContainingClass;
@@ -34,6 +38,29 @@ public class PsiMemberParameterizedLocation extends PsiLocation<PsiElement> {
     super(project, psiElement);
     myContainingClass = containingClass;
     myParamSetName = paramSetName;
+  }
+
+  public static Location getParameterizedLocation(PsiClass psiClass, String paramSetName) {
+    return getParameterizedLocation(psiClass, paramSetName, JUnitUtil.PARAMETERIZED_CLASS_NAME);
+  }
+
+  public static Location getParameterizedLocation(PsiClass psiClass,
+                                                  String paramSetName,
+                                                  String parameterizedClassName) {
+    final PsiAnnotation annotation = AnnotationUtil.findAnnotationInHierarchy(psiClass, Collections.singleton(JUnitUtil.RUN_WITH));
+    if (annotation != null) {
+      final PsiAnnotationMemberValue attributeValue = annotation.findAttributeValue("value");
+      if (attributeValue instanceof PsiClassObjectAccessExpression) {
+        final PsiTypeElement operand = ((PsiClassObjectAccessExpression)attributeValue).getOperand();
+        if (InheritanceUtil.isInheritor(operand.getType(), parameterizedClassName)) {
+          return new PsiMemberParameterizedLocation(psiClass.getProject(), 
+                                                    psiClass,
+                                                    null,
+                                                    paramSetName);
+        }
+      }
+    }
+    return null;
   }
 
   public String getParamSetName() {

@@ -26,6 +26,7 @@
     <fileEditorProvider implementation="com.intellij.testAssistant.TestDataGroupEditorProvider"/>
     <gotoRelatedProvider implementation="com.intellij.testAssistant.TestDataAsRelatedFileProvider"/>
     <psi.referenceContributor implementation="com.intellij.testAssistant.TestDataReferenceContributor"/>
+    <getDataRule key="Location" implementationClass="com.intellij.testAssistant.TestLocationDataRule"/>
   </extensions>
 
   <project-components>
