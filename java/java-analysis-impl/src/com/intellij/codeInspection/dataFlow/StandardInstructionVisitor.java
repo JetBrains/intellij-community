@@ -236,7 +236,7 @@ public class StandardInstructionVisitor extends InstructionVisitor {
     finally {
       memState.push(getMethodResultValue(instruction, qualifier, runner.getFactory()));
       if (instruction.shouldFlushFields()) {
-        memState.flushFields(runner.getFields());
+        memState.flushFields();
       }
     }
   }

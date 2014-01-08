@@ -50,7 +50,6 @@ public class DataFlowRunner {
 
   private Instruction[] myInstructions;
   private final MultiMap<PsiElement, DfaMemoryState> myNestedClosures = new MultiMap<PsiElement, DfaMemoryState>();
-  private DfaVariableValue[] myFields;
   private final DfaValueFactory myValueFactory;
 
   // Maximum allowed attempts to process instruction. Fail as too complex to process if certain instruction
@@ -112,7 +111,6 @@ public class DataFlowRunner {
 
       int endOffset = flow.getInstructionCount();
       myInstructions = flow.getInstructions();
-      myFields = flow.getFields();
       myNestedClosures.clear();
       
       Set<Instruction> joinInstructions = ContainerUtil.newHashSet();
@@ -279,10 +277,6 @@ public class DataFlowRunner {
     return myInstructions[index];
   }
 
-  public DfaVariableValue[] getFields() {
-    return myFields;
-  }
-
   public MultiMap<PsiElement, DfaMemoryState> getNestedClosures() {
     return new MultiMap<PsiElement, DfaMemoryState>(myNestedClosures);
   }
@@ -321,9 +315,9 @@ public class DataFlowRunner {
     return Pair.create(trueSet, falseSet);
   }
 
-  private DfaMemoryStateImpl createClosureState(DfaMemoryState memState) {
+  private static DfaMemoryStateImpl createClosureState(DfaMemoryState memState) {
     DfaMemoryStateImpl copy = (DfaMemoryStateImpl)memState.createCopy();
-    copy.flushFields(getFields());
+    copy.flushFields();
     Set<DfaVariableValue> vars = new HashSet<DfaVariableValue>(copy.getVariableStates().keySet());
     for (DfaVariableValue value : vars) {
       copy.flushDependencies(value);

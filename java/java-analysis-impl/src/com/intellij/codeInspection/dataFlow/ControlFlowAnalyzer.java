@@ -52,7 +52,6 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
 
   private final DfaValueFactory myFactory;
   private ControlFlow myCurrentFlow;
-  private Set<DfaVariableValue> myFields;
   private Stack<CatchDescriptor> myCatchStack;
   private DfaValue myRuntimeException;
   private DfaValue myError;
@@ -83,7 +82,6 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     PsiParameter mockVar = JavaPsiFacade.getElementFactory(manager.getProject()).createParameterFromText("java.lang.Object $exception$", null);
     myExceptionHolder = myFactory.getVarFactory().createVariableValue(mockVar, false);
     
-    myFields = new HashSet<DfaVariableValue>();
     myCatchStack = new Stack<CatchDescriptor>();
     myCurrentFlow = new ControlFlow(myFactory);
 
@@ -98,7 +96,6 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     if (parent instanceof PsiLambdaExpression && codeFragment instanceof PsiExpression) {
       addInstruction(new CheckReturnValueInstruction(codeFragment));
     }
-    myCurrentFlow.setFields(myFields.toArray(new DfaVariableValue[myFields.size()]));
 
     addInstruction(new ReturnInstruction(false));
 
@@ -1807,12 +1804,6 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
   @Nullable
   private DfaValue getExpressionDfaValue(PsiReferenceExpression expression) {
     DfaValue dfaValue = myFactory.createReferenceValue(expression);
-    if (dfaValue instanceof DfaVariableValue) {
-      DfaVariableValue dfaVariable = (DfaVariableValue)dfaValue;
-      if (dfaVariable.getPsiVariable() instanceof PsiField) {
-        myFields.add(dfaVariable);
-      }
-    }
     if (dfaValue == null) {
       PsiElement resolved = expression.resolve();
       if (resolved instanceof PsiField) {
@@ -1860,11 +1851,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
 
     PsiExpression qualifier = refExpr.getQualifierExpression();
     if (qualifier == null) {
-      DfaVariableValue result = myFactory.getVarFactory().createVariableValue(var, refExpr.getType(), false, null);
-      if (var instanceof PsiField) {
-        myFields.add(result);
-      }
-      return result;
+      return myFactory.getVarFactory().createVariableValue(var, refExpr.getType(), false, null);
     }
 
     if (!(var instanceof PsiField) || !var.hasModifierProperty(PsiModifier.TRANSIENT) && !var.hasModifierProperty(PsiModifier.VOLATILE)) {
