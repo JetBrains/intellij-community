@@ -125,7 +125,7 @@ public class DataFlowInspectionTest extends LightCodeInsightFixtureTestCase {
   public void testPrimitiveCastMayChangeValue() throws Throwable { doTest(); }
 
   public void testPassingNullableIntoVararg() throws Throwable { doTest(); }
-  public void testEqualsImpliesNotNull() throws Throwable { doTest(); }
+  public void testEqualsImpliesNotNull() throws Throwable { doTestReportConstantReferences(); }
   public void testEffectivelyUnqualified() throws Throwable { doTest(); }
 
   public void testSkipAssertions() {
