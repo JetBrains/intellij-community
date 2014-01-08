@@ -756,6 +756,8 @@ binding.setVariable("buildWinLauncher", { String ch, String inputPath, String ou
   }
 
   ant.java(classname: "com.pme.launcher.LauncherGeneratorMain", fork: "true") {
+    // prevent ant from appearing in the OSX Dock
+    jvmarg(line: "-Djava.awt.headless=true")
     arg(value: inputPath)
     arg(value: appInfo)
     arg(value: "$ch/native/WinLauncher/WinLauncher/resource.h")
