@@ -227,9 +227,6 @@ public class BrowserSettingsPanel {
 
     updateBrowserField();
 
-    browsersEditor.clear();
-  }
-
-  public void disposeUIResources() {
+    browsersEditor.reset(WebBrowserManager.getInstance().getList());
   }
 }

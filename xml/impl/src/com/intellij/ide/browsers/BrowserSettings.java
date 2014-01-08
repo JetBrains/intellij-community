@@ -79,9 +79,6 @@ public class BrowserSettings implements SearchableConfigurable, Configurable.NoS
 
   @Override
   public void disposeUIResources() {
-    if (mySettingsPanel != null) {
-      mySettingsPanel.disposeUIResources();
-      mySettingsPanel = null;
-    }
+    mySettingsPanel = null;
   }
 }

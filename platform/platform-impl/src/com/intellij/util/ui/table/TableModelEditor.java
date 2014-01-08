@@ -21,7 +21,6 @@ import com.intellij.ui.TableUtil;
 import com.intellij.ui.ToolbarDecorator;
 import com.intellij.ui.table.TableView;
 import com.intellij.util.Function;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.ElementProducer;
@@ -61,7 +60,7 @@ public class TableModelEditor<T> implements ElementProducer<T> {
   }
 
   private static final class MyListTableModel<T> extends ListTableModel<T> {
-    private final List<T> items;
+    private List<T> items;
     private final TableModelEditor<T> editor;
     private final THashMap<T, T> modifiedToOriginal = new THashMap<T, T>();
 
@@ -74,7 +73,9 @@ public class TableModelEditor<T> implements ElementProducer<T> {
 
     @Override
     public void setItems(@NotNull List<T> items) {
-      throw new IncorrectOperationException();
+      modifiedToOriginal.clear();
+      this.items = items;
+      super.setItems(items);
     }
 
     @Override
@@ -198,7 +199,7 @@ public class TableModelEditor<T> implements ElementProducer<T> {
     return model.apply();
   }
 
-  public void clear() {
-    model.modifiedToOriginal.clear();
+  public void reset(@NotNull List<T> items) {
+    model.setItems(items);
   }
 }
