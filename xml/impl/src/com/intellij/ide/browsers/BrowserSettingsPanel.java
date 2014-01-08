@@ -27,17 +27,11 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.IdeBorderFactory;
-import com.intellij.ui.TableSpeedSearch;
-import com.intellij.ui.TableUtil;
-import com.intellij.ui.ToolbarDecorator;
-import com.intellij.ui.table.TableView;
+import com.intellij.util.Function;
 import com.intellij.util.ui.ColumnInfo;
-import com.intellij.util.ui.ListTableModel;
 import com.intellij.util.ui.LocalPathCellEditor;
 import com.intellij.util.ui.table.ComboBoxTableCellEditor;
 import com.intellij.util.ui.table.IconTableCellRenderer;
-import gnu.trove.THashMap;
-import gnu.trove.TObjectObjectProcedure;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -46,10 +40,9 @@ import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableCellRenderer;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.ArrayList;
-import java.util.Map;
 
 import static com.intellij.ide.browsers.BrowsersConfiguration.BrowserFamily;
+import static com.intellij.ide.browsers.TableModelEditor.EditableColumnInfo;
 
 public class BrowserSettingsPanel {
   private JPanel root;
@@ -66,7 +59,8 @@ public class BrowserSettingsPanel {
   @SuppressWarnings("UnusedDeclaration")
   private JComponent browsersTable;
 
-  private final THashMap<ConfigurableWebBrowser, ConfigurableWebBrowser> modifiedBrowsers = new THashMap<ConfigurableWebBrowser, ConfigurableWebBrowser>();
+  private TableModelEditor<ConfigurableWebBrowser> browsersEditor;
+
   private final FileChooserDescriptor appFileChooserDescriptor;
 
   public BrowserSettingsPanel() {
@@ -105,125 +99,91 @@ public class BrowserSettingsPanel {
     });
   }
 
-  private ConfigurableWebBrowser getEffective(ConfigurableWebBrowser info) {
-    ConfigurableWebBrowser mutable = modifiedBrowsers.isEmpty() ? null : modifiedBrowsers.get(info);
-    return mutable == null ? info : mutable;
-  }
-
-  private ConfigurableWebBrowser getMutable(ConfigurableWebBrowser info) {
-    ConfigurableWebBrowser mutable = modifiedBrowsers.get(info);
-    if (mutable == null) {
-      mutable = new ConfigurableWebBrowser(info.getId(), info.getFamily(), info.getName(), info.getPath(), info.isActive(), info.getSpecificSettings());
-      modifiedBrowsers.put(info, mutable);
-    }
-    return mutable;
-  }
-
   private void createUIComponents() {
-    ColumnInfo[] columns = {new ColumnInfo<ConfigurableWebBrowser, Boolean>("") {
+    browsersEditor = new TableModelEditor<ConfigurableWebBrowser>(WebBrowserManager.getInstance().getList(), new ColumnInfo[]{new EditableColumnInfo<ConfigurableWebBrowser, Boolean>() {
       @Override
       public Class getColumnClass() {
         return Boolean.class;
       }
 
       @Override
-      public Boolean valueOf(ConfigurableWebBrowser info) {
-        return getEffective(info).isActive();
+      public Boolean valueOf(ConfigurableWebBrowser item) {
+        return browsersEditor.getEffective(item).isActive();
       }
 
       @Override
-      public boolean isCellEditable(ConfigurableWebBrowser info) {
-        return true;
-      }
-
-      @Override
-      public void setValue(ConfigurableWebBrowser info, Boolean value) {
-        if (value != info.isActive()) {
-          getMutable(info).setActive(value);
+      public void setValue(ConfigurableWebBrowser item, Boolean value) {
+        if (value != item.isActive()) {
+          browsersEditor.getMutable(item).setActive(value);
         }
       }
-    }, new ColumnInfo<ConfigurableWebBrowser, String>("Name") {
+    }, new EditableColumnInfo<ConfigurableWebBrowser, String>("Name") {
       @Override
-      public String valueOf(ConfigurableWebBrowser info) {
-        return getEffective(info).getName();
+      public String valueOf(ConfigurableWebBrowser item) {
+        return browsersEditor.getEffective(item).getName();
       }
 
       @Override
-      public boolean isCellEditable(ConfigurableWebBrowser info) {
-        return true;
-      }
-
-      @Override
-      public void setValue(ConfigurableWebBrowser info, String value) {
-        if (!value.equals(info.getName())) {
-          getMutable(info).setName(value);
+      public void setValue(ConfigurableWebBrowser item, String value) {
+        if (!value.equals(item.getName())) {
+          browsersEditor.getMutable(item).setName(value);
         }
       }
-    }, new ColumnInfo<ConfigurableWebBrowser, BrowserFamily>("Family") {
+    }, new EditableColumnInfo<ConfigurableWebBrowser, BrowserFamily>("Family") {
       @Override
       public Class getColumnClass() {
         return BrowserFamily.class;
       }
 
       @Override
-      public BrowserFamily valueOf(ConfigurableWebBrowser info) {
-        return getEffective(info).getFamily();
+      public BrowserFamily valueOf(ConfigurableWebBrowser item) {
+        return browsersEditor.getEffective(item).getFamily();
       }
 
       @Override
-      public boolean isCellEditable(ConfigurableWebBrowser info) {
-        return true;
-      }
-
-      @Override
-      public void setValue(ConfigurableWebBrowser info, BrowserFamily value) {
-        if (value != info.getFamily()) {
-          getMutable(info).setFamily(value);
+      public void setValue(ConfigurableWebBrowser item, BrowserFamily value) {
+        if (value != item.getFamily()) {
+          browsersEditor.getMutable(item).setFamily(value);
         }
       }
 
       @Nullable
       @Override
-      public TableCellRenderer getRenderer(ConfigurableWebBrowser info) {
+      public TableCellRenderer getRenderer(ConfigurableWebBrowser item) {
         return IconTableCellRenderer.ICONABLE;
       }
 
       @Nullable
       @Override
-      public TableCellEditor getEditor(ConfigurableWebBrowser o) {
+      public TableCellEditor getEditor(ConfigurableWebBrowser item) {
         return ComboBoxTableCellEditor.INSTANCE;
       }
-    }, new ColumnInfo<ConfigurableWebBrowser, String>("Path") {
+    }, new EditableColumnInfo<ConfigurableWebBrowser, String>("Path") {
       @Override
       public String valueOf(ConfigurableWebBrowser info) {
-        return getEffective(info).getPath();
+        return browsersEditor.getEffective(info).getPath();
       }
 
       @Override
-      public boolean isCellEditable(ConfigurableWebBrowser info) {
-        return true;
-      }
-
-      @Override
-      public void setValue(ConfigurableWebBrowser info, String value) {
-        if (!value.equals(info.getPath())) {
-          getMutable(info).setPath(StringUtil.nullize(value, true));
+      public void setValue(ConfigurableWebBrowser item, String value) {
+        String normalizedValue = StringUtil.nullize(value, true);
+        if (!Comparing.equal(normalizedValue, item.getPath())) {
+          browsersEditor.getMutable(item).setPath(normalizedValue);
         }
       }
 
       @Nullable
       @Override
-      public TableCellEditor getEditor(ConfigurableWebBrowser info) {
-        return new LocalPathCellEditor(null).fileChooserDescriptor(appFileChooserDescriptor);
+      public TableCellEditor getEditor(ConfigurableWebBrowser item) {
+        return new LocalPathCellEditor().fileChooserDescriptor(appFileChooserDescriptor);
       }
-    }};
-    ListTableModel<ConfigurableWebBrowser> tableModel = new ListTableModel<ConfigurableWebBrowser>(columns, new ArrayList<ConfigurableWebBrowser>(WebBrowserManager.getInstance().getList()));
-    TableView<ConfigurableWebBrowser> table = new TableView<ConfigurableWebBrowser>(tableModel);
-    table.setStriped(true);
-    new TableSpeedSearch(table);
-    TableUtil.setupCheckboxColumn(table.getColumnModel().getColumn(0));
-
-    browsersTable = ToolbarDecorator.createDecorator(table).createPanel();
+    }}, new Function<ConfigurableWebBrowser, ConfigurableWebBrowser>() {
+      @Override
+      public ConfigurableWebBrowser fun(ConfigurableWebBrowser browser) {
+        return new ConfigurableWebBrowser(browser.getId(), browser.getFamily(), browser.getName(), browser.getPath(), browser.isActive(), browser.getSpecificSettings());
+      }
+    }, ConfigurableWebBrowser.class);
+    browsersTable = browsersEditor.createComponent();
   }
 
   @NotNull
@@ -233,23 +193,13 @@ public class BrowserSettingsPanel {
 
   public boolean isModified() {
     GeneralSettings settings = GeneralSettings.getInstance();
-    boolean isModified = !Comparing.strEqual(settings.getBrowserPath(), alternativeBrowserPathField.getText());
-    isModified |= settings.isUseDefaultBrowser() != useSystemDefaultBrowser.isSelected();
-    isModified |= settings.isConfirmExtractFiles() != confirmExtractFiles.isSelected();
-
-    if (isModified) {
+    if (!Comparing.strEqual(settings.getBrowserPath(), alternativeBrowserPathField.getText()) ||
+        settings.isUseDefaultBrowser() != useSystemDefaultBrowser.isSelected() ||
+        settings.isConfirmExtractFiles() != confirmExtractFiles.isSelected()) {
       return true;
     }
 
-    if (!modifiedBrowsers.isEmpty()) {
-      for (Map.Entry<ConfigurableWebBrowser, ConfigurableWebBrowser> entry : modifiedBrowsers.entrySet()) {
-        if (entry.getValue().isChanged(entry.getKey())) {
-          return true;
-        }
-      }
-    }
-
-    return false;
+    return browsersEditor.isModified(WebBrowserManager.getInstance().getList());
   }
 
   private void updateBrowserField() {
@@ -268,19 +218,7 @@ public class BrowserSettingsPanel {
     settings.setUseDefaultBrowser(useSystemDefaultBrowser.isSelected());
     settings.setConfirmExtractFiles(confirmExtractFiles.isSelected());
 
-    if (!modifiedBrowsers.isEmpty()) {
-      modifiedBrowsers.forEachEntry(new TObjectObjectProcedure<ConfigurableWebBrowser, ConfigurableWebBrowser>() {
-        @Override
-        public boolean execute(ConfigurableWebBrowser info, ConfigurableWebBrowser newInfo) {
-          info.setName(newInfo.getName());
-          info.setFamily(newInfo.getFamily());
-          info.setPath(newInfo.getPath());
-          info.setActive(newInfo.isActive());
-          info.setSpecificSettings(newInfo.getSpecificSettings());
-          return true;
-        }
-      });
-    }
+    WebBrowserManager.getInstance().setList(browsersEditor.apply());
   }
 
   public void reset() {
@@ -297,7 +235,7 @@ public class BrowserSettingsPanel {
 
     updateBrowserField();
 
-    modifiedBrowsers.clear();
+    browsersEditor.clear();
   }
 
   public void disposeUIResources() {

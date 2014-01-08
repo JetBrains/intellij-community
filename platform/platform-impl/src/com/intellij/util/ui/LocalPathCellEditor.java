@@ -49,6 +49,10 @@ public class LocalPathCellEditor extends AbstractTableCellEditor {
     this(null, project);
   }
 
+  public LocalPathCellEditor() {
+    this(null, null);
+  }
+
   public LocalPathCellEditor fileChooserDescriptor(@NotNull FileChooserDescriptor fileChooserDescriptor) {
     myFileChooserDescriptor = fileChooserDescriptor;
     return this;

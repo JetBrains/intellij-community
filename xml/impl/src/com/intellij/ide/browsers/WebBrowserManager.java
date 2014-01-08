@@ -17,6 +17,7 @@ package com.intellij.ide.browsers;
 
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.xmlb.SkipDefaultValuesSerializationFilters;
@@ -33,7 +34,7 @@ import java.util.UUID;
 import static com.intellij.ide.browsers.BrowsersConfiguration.BrowserFamily;
 
 @State(name = "WebBrowsersConfiguration", storages = {@Storage(file = StoragePathMacros.APP_CONFIG + "/browsers.xml")})
-public class WebBrowserManager implements PersistentStateComponent<Element> {
+public class WebBrowserManager implements PersistentStateComponent<Element>, ModificationTracker {
   private static final Logger LOG = Logger.getInstance(WebBrowserManager.class);
 
   // default standard browser ID must be constant across all IDE versions on all machines for all users
@@ -43,7 +44,9 @@ public class WebBrowserManager implements PersistentStateComponent<Element> {
   private static final UUID DEFAULT_OPERA_ID = UUID.fromString("53E2F627-B1A7-4DFA-BFA7-5B83CC034776");
   private static final UUID DEFAULT_EXPLORER_ID = UUID.fromString("16BF23D4-93E0-4FFC-BFD6-CB13575177B0");
 
-  private final List<ConfigurableWebBrowser> browsers;
+  private List<ConfigurableWebBrowser> browsers;
+
+  private long modificationCount;
 
   public WebBrowserManager() {
     browsers = new ArrayList<ConfigurableWebBrowser>();
@@ -182,8 +185,7 @@ public class WebBrowserManager implements PersistentStateComponent<Element> {
                                           specificSettings));
     }
 
-    browsers.clear();
-    browsers.addAll(list);
+    setList(list);
   }
 
   @NotNull
@@ -194,6 +196,11 @@ public class WebBrowserManager implements PersistentStateComponent<Element> {
   @NotNull
   List<ConfigurableWebBrowser> getList() {
     return browsers;
+  }
+
+  void setList(@NotNull List<ConfigurableWebBrowser> value) {
+    browsers = value;
+    modificationCount++;
   }
 
   @NotNull
@@ -256,5 +263,10 @@ public class WebBrowserManager implements PersistentStateComponent<Element> {
 
   public boolean isActive(@NotNull WebBrowser browser) {
     return !(browser instanceof ConfigurableWebBrowser) || ((ConfigurableWebBrowser)browser).isActive();
+  }
+
+  @Override
+  public long getModificationCount() {
+    return modificationCount;
   }
 }

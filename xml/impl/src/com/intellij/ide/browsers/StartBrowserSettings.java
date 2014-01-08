@@ -36,7 +36,7 @@ public class StartBrowserSettings {
   }
 
   @Nullable
-  @Attribute("url")
+  @Attribute
   public String getUrl() {
     return myUrl;
   }

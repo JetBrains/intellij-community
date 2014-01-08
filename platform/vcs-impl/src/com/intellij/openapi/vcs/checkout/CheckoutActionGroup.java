@@ -18,17 +18,16 @@ package com.intellij.openapi.vcs.checkout;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.ComputableActionGroup;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.vcs.CheckoutProvider;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 
-public class CheckoutActionGroup extends ComputableActionGroup {
+public class CheckoutActionGroup extends ComputableActionGroup.Simple {
   @NotNull
   @Override
   protected AnAction[] computeChildren(@NotNull ActionManager manager) {
-    CheckoutProvider[] providers = Extensions.getExtensions(CheckoutProvider.EXTENSION_POINT_NAME);
+    CheckoutProvider[] providers = CheckoutProvider.EXTENSION_POINT_NAME.getExtensions();
     if (providers.length == 0) {
       return EMPTY_ARRAY;
     }

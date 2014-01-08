@@ -96,7 +96,7 @@ public abstract class ColumnInfo <Item, Aspect> {
   /**
    * @see com.intellij.util.ui.table.ComboBoxTableCellEditor
    */
-  public TableCellEditor getEditor(Item o) {
+  public TableCellEditor getEditor(Item item) {
     return null;
   }
 
