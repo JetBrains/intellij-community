@@ -143,9 +143,9 @@ public class ExternalJavaDocAction extends AnAction {
     }
   }
 
-  private PsiElement getElement(DataContext dataContext, Editor editor) {
+  private static PsiElement getElement(DataContext dataContext, Editor editor) {
     PsiElement element = CommonDataKeys.PSI_ELEMENT.getData(dataContext);
-    if (element == null) {
+    if (element == null && editor != null) {
       PsiReference reference = TargetElementUtilBase.findReference(editor, editor.getCaretModel().getOffset());
       if (reference != null) {
         element = reference.getElement();
