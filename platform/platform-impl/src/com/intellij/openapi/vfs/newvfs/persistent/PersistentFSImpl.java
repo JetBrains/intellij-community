@@ -845,60 +845,58 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
     }
 
     String rootUrl = normalizeRootUrl(basePath, fs);
-    VirtualFileSystemEntry root;
 
     myRootsLock.readLock().lock();
     try {
-      root = myRoots.get(rootUrl);
+      VirtualFileSystemEntry root = myRoots.get(rootUrl);
       if (root != null) return root;
     }
     finally {
       myRootsLock.readLock().unlock();
     }
 
+    VirtualFileSystemEntry newRoot;
+    int rootId = FSRecords.findRootRecord(rootUrl);
+
+    if (fs instanceof JarFileSystem) {
+      // optimization: for jar roots do not store base path in the myName field, use local FS file's getPath()
+      String parentPath = basePath.substring(0, basePath.indexOf(JarFileSystem.JAR_SEPARATOR));
+      VirtualFile parentFile = LocalFileSystem.getInstance().findFileByPath(parentPath);
+      if (parentFile == null) return null;
+      newRoot = new JarRoot(fs, rootId, parentFile);
+    }
+    else {
+      newRoot = new FsRoot(fs, rootId, basePath);
+    }
+
+    FileAttributes attributes = fs.getAttributes(newRoot);
+    if (attributes == null || !attributes.isDirectory()) {
+      return null;
+    }
+
+    boolean mark = false;
+
     myRootsLock.writeLock().lock();
     try {
-      root = myRoots.get(rootUrl);
+      VirtualFileSystemEntry root = myRoots.get(rootUrl);
       if (root != null) return root;
 
-      int rootId = FSRecords.findRootRecord(rootUrl);
+      mark = writeAttributesToRecord(rootId, 0, newRoot, fs, attributes);
 
-      if (fs instanceof JarFileSystem) {
-        // optimization: for jar roots do not store base path in the myName field, use local FS file's getPath()
-        String parentPath = basePath.substring(0, basePath.indexOf(JarFileSystem.JAR_SEPARATOR));
-        VirtualFile parentLocalFile = LocalFileSystem.getInstance().findFileByPath(parentPath);
-        if (parentLocalFile == null) return null;
-
-        // check one more time since the findFileByPath could have created the root (by reentering the findRoot)
-        root = myRoots.get(rootUrl);
-        if (root != null) return root;
-
-        root = new JarRoot(fs, rootId, parentLocalFile);
-      }
-      else {
-        root = new FsRoot(fs, rootId, basePath);
-      }
-
-      FileAttributes attributes = fs.getAttributes(root);
-      if (attributes == null || !attributes.isDirectory()) {
-        return null;
-      }
-
-      boolean newRoot = writeAttributesToRecord(rootId, 0, root, fs, attributes);
-      if (!newRoot && attributes.lastModified != FSRecords.getTimestamp(rootId)) {
-        root.markDirtyRecursively();
-      }
-
-      myRoots.put(rootUrl, root);
-      myRootsById.put(rootId, root);
-
-      LOG.assertTrue(rootId == root.getId(), "root=" + root + " expected=" + rootId + " actual=" + root.getId());
-
-      return root;
+      myRoots.put(rootUrl, newRoot);
+      myRootsById.put(rootId, newRoot);
     }
     finally {
       myRootsLock.writeLock().unlock();
     }
+
+    if (!mark && attributes.lastModified != FSRecords.getTimestamp(rootId)) {
+      newRoot.markDirtyRecursively();
+    }
+
+    LOG.assertTrue(rootId == newRoot.getId(), "root=" + newRoot + " expected=" + rootId + " actual=" + newRoot.getId());
+
+    return newRoot;
   }
 
   @NotNull
