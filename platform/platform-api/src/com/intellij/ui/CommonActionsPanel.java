@@ -22,6 +22,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.speedSearch.SpeedSearchSupply;
 import com.intellij.util.IconUtil;
+import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.ui.MacUIUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
@@ -78,10 +79,15 @@ public class CommonActionsPanel extends JPanel {
     void doEdit();
 
     class Adapter implements Listener {
+      @Override
       public void doAdd() {}
+      @Override
       public void doRemove() {}
+      @Override
       public void doUp() {}
+      @Override
       public void doDown() {}
+      @Override
       public void doEdit() {}
     }
   }
@@ -95,7 +101,7 @@ public class CommonActionsPanel extends JPanel {
                      Icon addIcon, Buttons... buttons) {
     super(new BorderLayout());
     final Listener listener = factory.createListener(this);
-    AnActionButton[] actions = new AnActionButton[buttons.length];
+    AnActionButton[] actions = new AnActionButton[buttons.length + (additionalActions == null ? 0 : additionalActions.length)];
     for (int i = 0; i < buttons.length; i++) {
       Buttons button = buttons[i];
       String name = null;
@@ -111,9 +117,10 @@ public class CommonActionsPanel extends JPanel {
       myButtons.put(button, b);
     }
     if (additionalActions != null && additionalActions.length > 0) {
-      final ArrayList<AnActionButton> allActions = new ArrayList<AnActionButton>(Arrays.asList(actions));
-      allActions.addAll(Arrays.asList(additionalActions));
-      actions = allActions.toArray(new AnActionButton[allActions.size()]);
+      int i = buttons.length;
+      for (AnActionButton button : additionalActions) {
+        actions[i++] = button;
+      }
     }
     myActions = actions;
     for (AnActionButton action : actions) {
@@ -122,7 +129,7 @@ public class CommonActionsPanel extends JPanel {
     if (buttonComparator != null) {
       Arrays.sort(myActions, buttonComparator);
     }
-    ArrayList<AnAction> toolbarActions = new ArrayList<AnAction>(Arrays.asList(myActions));
+    ArrayList<AnAction> toolbarActions = ContainerUtilRt.<AnAction>newArrayList(myActions);
     for (int i = 0; i < toolbarActions.size(); i++) {
         if (toolbarActions.get(i) instanceof AnActionButton.CheckedAnActionButton) {
           toolbarActions.set(i, ((AnActionButton.CheckedAnActionButton)toolbarActions.get(i)).getDelegate());

@@ -16,6 +16,7 @@
 package com.intellij.ui;
 
 import com.intellij.util.ui.ItemRemovable;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -215,5 +216,19 @@ public class TableUtil {
     column.setMaxWidth(checkboxWidth);
     column.setMinWidth(checkboxWidth);
     return checkboxWidth;
+  }
+
+  public static void updateScroller(@NotNull JTable table, boolean temporaryHideVerticalScrollBar) {
+    JScrollPane scrollPane = UIUtil.getParentOfType(JScrollPane.class, table);
+    if (scrollPane != null) {
+      if (temporaryHideVerticalScrollBar) {
+        final JScrollBar bar = scrollPane.getVerticalScrollBar();
+        if (bar == null || !bar.isVisible()) {
+          scrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER);
+        }
+      }
+      scrollPane.revalidate();
+      scrollPane.repaint();
+    }
   }
 }

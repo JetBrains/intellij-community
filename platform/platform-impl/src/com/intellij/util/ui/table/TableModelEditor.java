@@ -15,12 +15,15 @@
  */
 package com.intellij.util.ui.table;
 
+import com.intellij.ide.IdeBundle;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.ui.TableSpeedSearch;
 import com.intellij.ui.TableUtil;
 import com.intellij.ui.ToolbarDecorator;
 import com.intellij.ui.table.TableView;
 import com.intellij.util.Function;
+import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.ElementProducer;
@@ -31,13 +34,14 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.lang.reflect.Constructor;
 import java.util.ArrayList;
 import java.util.List;
 
 public class TableModelEditor<T> implements ElementProducer<T> {
   private final TableView<T> table;
 
-  private final Function<T, T> mutableFactory;
+  private final Function<T, T> cloneFactory;
   private final Class<T> itemClass;
 
   private final MyListTableModel<T> model;
@@ -46,9 +50,9 @@ public class TableModelEditor<T> implements ElementProducer<T> {
    * source will be copied, passed list will not be used directly
    * itemClass must has empty constructor
    */
-  public TableModelEditor(@NotNull List<T> items, @NotNull ColumnInfo[] columns, @NotNull Function<T, T> mutableFactory, Class<T> itemClass) {
+  public TableModelEditor(@NotNull List<T> items, @NotNull ColumnInfo[] columns, @NotNull Function<T, T> cloneFactory, Class<T> itemClass) {
     this.itemClass = itemClass;
-    this.mutableFactory = mutableFactory;
+    this.cloneFactory = cloneFactory;
 
     model = new MyListTableModel<T>(columns, new ArrayList<T>(items), this);
     table = new TableView<T>(model);
@@ -64,7 +68,7 @@ public class TableModelEditor<T> implements ElementProducer<T> {
     private final TableModelEditor<T> editor;
     private final THashMap<T, T> modifiedToOriginal = new THashMap<T, T>();
 
-    public MyListTableModel(ColumnInfo[] columns, List<T> items, TableModelEditor<T> editor) {
+    public MyListTableModel(@NotNull ColumnInfo[] columns, @NotNull List<T> items, @NotNull TableModelEditor<T> editor) {
       super(columns, items);
 
       this.items = items;
@@ -94,7 +98,7 @@ public class TableModelEditor<T> implements ElementProducer<T> {
             mutable = item;
           }
           else {
-            mutable = editor.mutableFactory.fun(item);
+            mutable = editor.cloneFactory.fun(item);
             modifiedToOriginal.put(mutable, item);
             items.set(rowIndex, mutable);
           }
@@ -167,20 +171,41 @@ public class TableModelEditor<T> implements ElementProducer<T> {
 
   @NotNull
   public JComponent createComponent() {
-    return ToolbarDecorator.createDecorator(table, this).createPanel();
+    return ToolbarDecorator.createDecorator(table, this).addExtraAction(
+      new ToolbarDecorator.ElementActionButton(IdeBundle.message("button.copy"), PlatformIcons.COPY_ICON) {
+        @Override
+        public void actionPerformed(AnActionEvent e) {
+          TableUtil.stopEditing(table);
+
+          List<T> selectedItems = table.getSelectedObjects();
+          if (selectedItems.isEmpty()) {
+            return;
+          }
+
+          for (T item : selectedItems) {
+            model.addRow(cloneFactory.fun(item));
+          }
+
+          table.requestFocus();
+          TableUtil.updateScroller(table, false);
+        }
+      }
+    ).createPanel();
   }
 
   @Override
   public T createElement() {
     try {
-      T item = itemClass.newInstance();
-      model.modifiedToOriginal.put(item, null);
-      return item;
+      Constructor<T> constructor = itemClass.getDeclaredConstructor();
+      try {
+        constructor.setAccessible(true);
+      }
+      catch (SecurityException e) {
+        return itemClass.newInstance();
+      }
+      return constructor.newInstance();
     }
-    catch (InstantiationException e) {
-      throw new RuntimeException(e);
-    }
-    catch (IllegalAccessException e) {
+    catch (Exception e) {
       throw new RuntimeException(e);
     }
   }

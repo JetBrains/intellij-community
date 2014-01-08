@@ -81,6 +81,14 @@ public abstract class ToolbarDecorator implements CommonActionsPanel.ListenerFac
 
   protected abstract void updateButtons();
 
+  protected void updateExtraElementActions(boolean someElementSelected) {
+    for (AnActionButton action : myExtraActions) {
+      if (action instanceof ElementActionButton) {
+        action.setEnabled(someElementSelected);
+      }
+    }
+  }
+
   public final CommonActionsPanel getActionsPanel() {
     return myActionsPanel;
   }
@@ -467,5 +475,25 @@ public abstract class ToolbarDecorator implements CommonActionsPanel.ListenerFac
     }
     //noinspection ConstantConditions
     return null;
+  }
+
+  /**
+   * Marker interface, button will be disabled if no selected element
+   */
+  public abstract static class ElementActionButton extends AnActionButton {
+    public ElementActionButton(String text, String description, @Nullable Icon icon) {
+      super(text, description, icon);
+    }
+
+    public ElementActionButton(String text, Icon icon) {
+      super(text, icon);
+    }
+
+    public ElementActionButton() {
+    }
+
+    public ElementActionButton(String text) {
+      super(text);
+    }
   }
 }
