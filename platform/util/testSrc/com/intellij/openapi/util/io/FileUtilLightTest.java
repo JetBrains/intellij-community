@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -155,5 +155,17 @@ public class FileUtilLightTest {
     String data = "key2=value2\nkey1=value1\nkey3=value3";
     Map<String, String> map = FileUtil.loadProperties(new StringReader(data));
     assertEquals(ContainerUtil.newArrayList("key2", "key1", "key3"), ContainerUtil.newArrayList(map.keySet()));
+  }
+
+  @Test
+  public void testRootPath() {
+    assertTrue(FileUtil.isRootPath("/"));
+    assertTrue(FileUtil.isRootPath("c:/"));
+    assertTrue(FileUtil.isRootPath("Z:\\"));
+
+    assertFalse(FileUtil.isRootPath(""));
+    assertFalse(FileUtil.isRootPath("/tmp"));
+    assertFalse(FileUtil.isRootPath("c:"));
+    assertFalse(FileUtil.isRootPath("X:\\Temp"));
   }
 }
