@@ -15,6 +15,7 @@
  */
 package com.intellij.testAssistant;
 
+import com.intellij.execution.Location;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
@@ -23,11 +24,13 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.ui.awt.RelativePoint;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -39,38 +42,38 @@ import java.util.List;
 public class NavigateToTestDataAction extends AnAction {
   @Override
   public void actionPerformed(AnActionEvent e) {
-    final PsiMethod method = findTargetMethod(e.getDataContext());
-    final Editor editor = e.getData(CommonDataKeys.EDITOR);
-    if (method == null || editor == null) {
-      return;
-    }
-    List<String> fileNames = findTestDataFiles(e.getDataContext());
+    final DataContext dataContext = e.getDataContext();
+    final Project project = CommonDataKeys.PROJECT.getData(dataContext);
+    List<String> fileNames = findTestDataFiles(dataContext);
     if (fileNames == null || fileNames.isEmpty()) {
       String message = "Cannot find testdata files for class";
       final Notification notification = new Notification("testdata", "Found no testdata files", message, NotificationType.INFORMATION);
-      Notifications.Bus.notify(notification, method.getProject());
+      Notifications.Bus.notify(notification, project);
     }
     else {
-      TestDataNavigationHandler.navigate(method, JBPopupFactory.getInstance().guessBestPopupLocation(editor), fileNames);
+      final Editor editor = e.getData(CommonDataKeys.EDITOR);
+      final JBPopupFactory popupFactory = JBPopupFactory.getInstance();
+      final RelativePoint point = editor != null ? popupFactory.guessBestPopupLocation(editor) : popupFactory.guessBestPopupLocation(dataContext);
+      
+      TestDataNavigationHandler.navigate(point, fileNames, project);
     }
   }
 
   @Nullable
   public static List<String> findTestDataFiles(@NotNull DataContext context) {
     final PsiMethod method = findTargetMethod(context);
-    final Editor editor = CommonDataKeys.EDITOR.getData(context);
-    if (method == null || editor == null) {
+    if (method == null) {
       return null;
     }
     final String name = method.getName();
 
-
-    String testDataPath = null;
     if (name.startsWith("test")) {
-      testDataPath = TestDataLineMarkerProvider.getTestDataBasePath(method.getContainingClass());
+      String testDataPath = TestDataLineMarkerProvider.getTestDataBasePath(method.getContainingClass());
+      final TestDataReferenceCollector collector = new TestDataReferenceCollector(testDataPath, name.substring(4));
+      return collector.collectTestDataReferences(method);
     }
-    final TestDataReferenceCollector collector = new TestDataReferenceCollector(testDataPath, name.substring(4));
-    return collector.collectTestDataReferences(method);
+
+    return null;
   }
 
   @Override
@@ -85,6 +88,14 @@ public class NavigateToTestDataAction extends AnAction {
     if (file != null && editor != null) {
       PsiElement element = file.findElementAt(editor.getCaretModel().getOffset());
       return PsiTreeUtil.getParentOfType(element, PsiMethod.class);
+    }
+
+    final Location<?> location = Location.DATA_KEY.getData(context);
+    if (location != null) {
+      final PsiElement element = location.getPsiElement();
+      if (element instanceof PsiMethod) {
+        return (PsiMethod)element;
+      }
     }
     return null;
   }

@@ -13,6 +13,10 @@
     <action id="DumpCleanTestData" internal="true" class="com.intellij.internal.DumpCleanHighlightingTestdataAction">
       <add-to-group group-id="Internal.Dump"/>
     </action>
+    <group>
+      <reference id="TestData.Navigate"/>
+      <add-to-group anchor="first" group-id="TestTreePopupMenu"/>
+    </group>
   </actions>
 
   <extensions defaultExtensionNs="com.intellij">
