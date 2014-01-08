@@ -15,7 +15,10 @@
  */
 package com.intellij.testAssistant;
 
+import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.execution.Location;
+import com.intellij.execution.junit.JUnitUtil;
+import com.intellij.execution.junit2.PsiMemberParameterizedLocation;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
@@ -25,15 +28,20 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ProjectFileIndex;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiMethod;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.*;
+import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.testFramework.Parameterized;
 import com.intellij.ui.awt.RelativePoint;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -71,6 +79,30 @@ public class NavigateToTestDataAction extends AnAction {
       String testDataPath = TestDataLineMarkerProvider.getTestDataBasePath(method.getContainingClass());
       final TestDataReferenceCollector collector = new TestDataReferenceCollector(testDataPath, name.substring(4));
       return collector.collectTestDataReferences(method);
+    }
+
+    final Location<?> location = Location.DATA_KEY.getData(context);
+    if (location instanceof PsiMemberParameterizedLocation) {
+      PsiClass containingClass = ((PsiMemberParameterizedLocation)location).getContainingClass();
+      if (containingClass == null) {
+        containingClass = PsiTreeUtil.getParentOfType(location.getPsiElement(), PsiClass.class, false);
+      }
+      if (containingClass != null) {
+        final PsiAnnotation annotation = AnnotationUtil.findAnnotationInHierarchy(containingClass, Collections.singleton(JUnitUtil.RUN_WITH));
+        if (annotation != null) {
+          final PsiAnnotationMemberValue memberValue = annotation.findAttributeValue("value");
+          if (memberValue instanceof PsiClassObjectAccessExpression) {
+            final PsiTypeElement operand = ((PsiClassObjectAccessExpression)memberValue).getOperand();
+            if (operand.getType().equalsToText(Parameterized.class.getName())) {
+              final String testDataPath = TestDataLineMarkerProvider.getTestDataBasePath(containingClass);
+              final String paramSetName = ((PsiMemberParameterizedLocation)location).getParamSetName();
+              final String baseFileName = StringUtil.trimEnd(StringUtil.trimStart(paramSetName, "["), "]");
+              final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(containingClass.getProject()).getFileIndex();
+              return TestDataGuessByExistingFilesUtil.suggestTestDataFiles(fileIndex, baseFileName, testDataPath, containingClass);
+            }
+          }
+        }
+      }
     }
 
     return null;
