@@ -167,7 +167,12 @@ class UserFilterPopupComponent extends FilterPopupComponent {
           if (event.isOk()) {
             final String userText = popupBuilder.getText().trim();
             Collection<String> selectedUsers = ContainerUtil.toCollection(StringUtil.tokenize(userText, new String(USERS_SEPARATORS)));
-            apply(selectedUsers, displayableText(selectedUsers), tooltip(selectedUsers));
+            if (selectedUsers.isEmpty()) {
+              apply(null, ALL, ALL);
+            }
+            else {
+              apply(selectedUsers, displayableText(selectedUsers), tooltip(selectedUsers));
+            }
           }
         }
       });
