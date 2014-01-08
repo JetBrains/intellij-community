@@ -202,7 +202,7 @@ public class ListTableModel<Item> extends TableViewModel<Item> implements ItemRe
     }
   }
 
-  public Object getItem(final int rowIndex) {
-    return getItems().get(rowIndex);
+  public Item getItem(final int rowIndex) {
+    return myItems.get(rowIndex);
   }
 }

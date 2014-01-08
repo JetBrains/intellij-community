@@ -44,7 +44,7 @@ import java.util.List;
  * @author yole
  */
 public class IssueNavigationConfigurationPanel extends JPanel implements SearchableConfigurable, Configurable.NoScroll {
-  private JBTable myLinkTable;
+  private final JBTable myLinkTable;
   private final Project myProject;
   private List<IssueNavigationLink> myLinks;
   private ListTableModel<IssueNavigationLink> myModel;
@@ -101,7 +101,7 @@ public class IssueNavigationConfigurationPanel extends JPanel implements Searcha
       }).setEditAction(new AnActionButtonRunnable() {
         @Override
         public void run(AnActionButton button) {
-          IssueNavigationLink link = (IssueNavigationLink) myModel.getItem(myLinkTable.getSelectedRow());
+          IssueNavigationLink link = myModel.getItem(myLinkTable.getSelectedRow());
           IssueLinkConfigurationDialog dlg = new IssueLinkConfigurationDialog(myProject);
           dlg.setTitle(VcsBundle.message("issue.link.edit.title"));
           dlg.setLink(link);
