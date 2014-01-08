@@ -58,9 +58,15 @@ import com.intellij.rt.execution.junit.FileComparisonFailure;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.runners.Parameterized;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTestCase {
   private static final Logger LOG = Logger.getInstance("#com.intellij.testFramework.LightCodeInsightTestCase");
@@ -134,6 +140,9 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
   @NonNls
   @NotNull
   protected String getTestDataPath() {
+    if (myTestDataPath != null) {
+      return myTestDataPath;
+    }
     return PathManagerEx.getTestDataPath();
   }
 
@@ -646,4 +655,105 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
       }
     };
   }
+
+  /**
+   * file parameterized tests support
+   * @see FileBasedTestCaseHelper
+   */
+
+  /**
+   * @Parameterized.Parameter fields are injected on parameterized test creation. 
+   */
+  @Parameterized.Parameter(0)
+  public String myFileSuffix;
+
+  @Parameterized.Parameter(1)
+  public String myTestDataPath;
+
+  @Parameterized.Parameters(name = "{0}")
+  public static List<Object[]> params() throws Throwable {
+    return Collections.emptyList();
+  }
+
+  @com.intellij.testFramework.Parameterized.Parameters(name = "{0}")
+  public static List<Object[]> params(Class<?> klass) throws Throwable{
+    final LightPlatformCodeInsightTestCase testCase = (LightPlatformCodeInsightTestCase)klass.newInstance();
+    if (!(testCase instanceof FileBasedTestCaseHelper)) {
+      fail("Parameterized test should implement FileBasedTestCaseHelper");
+    }
+    final FileBasedTestCaseHelper fileBasedTestCase = (FileBasedTestCaseHelper)testCase;
+    final String path = fileBasedTestCase.getRelativeBasePath();
+
+    assertNotNull("getBasePath() should not return null!", path);
+
+    PathManagerEx.replaceLookupStrategy(klass, LightPlatformCodeInsightTestCase.class, com.intellij.testFramework.Parameterized.class);
+
+    String testDataPath = testCase.getTestDataPath();
+    final String testDirPath = testDataPath.replace(File.separatorChar, '/') + path;
+    File testDir = new File(testDirPath);
+    final File[] files = testDir.listFiles();
+
+    if (files == null) {
+      fail("Test files not found in " + testDirPath);
+    }
+
+    final List<Object[]> result = new ArrayList<Object[]>();
+    for (File file : files) {
+      final String fileSuffix = fileBasedTestCase.getFileSuffix(file.getName());
+      if (fileSuffix != null) {
+        result.add(new Object[] {fileSuffix, testDataPath});
+      }
+    }
+    return result;
+  }
+  
+  @Override
+  public String getName() {
+    if (myFileSuffix != null) {
+      return "test" + myFileSuffix;
+    }
+    return super.getName();
+  }
+
+  @Before
+  public void before() throws Throwable {
+    final Throwable[] throwables = new Throwable[1];
+
+    invokeTestRunnable(new Runnable() {
+      @Override
+      public void run() {
+        try {
+          setUp();
+        }
+        catch (Throwable e) {
+          throwables[0] = e;
+        }
+      }
+    });
+
+    if (throwables[0] != null) {
+      throw throwables[0];
+    }
+  }
+
+  @After
+  public void after() throws Throwable {
+    final Throwable[] throwables = new Throwable[1];
+
+    invokeTestRunnable(new Runnable() {
+      @Override
+      public void run() {
+        try {
+          tearDown();
+        }
+        catch (Throwable e) {
+          throwables[0] = e;
+        }
+      }
+    });
+    if (throwables[0] != null) {
+      throw throwables[0];
+    }
+  }
+
 }
