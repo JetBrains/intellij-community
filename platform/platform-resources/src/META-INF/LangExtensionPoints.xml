@@ -514,7 +514,9 @@
 
     <extensionPoint name="scopeParserExtension" interface="com.intellij.psi.search.scope.packageSet.PackageSetParserExtension"/>
 
-    <extensionPoint name="referenceProviderType" beanClass="com.intellij.util.KeyedLazyInstanceEP"/>
+    <extensionPoint name="referenceProviderType" beanClass="com.intellij.util.KeyedLazyInstanceEP">
+      <with attribute="implementationClass" implements="com.intellij.psi.PsiReferenceProvider"/>
+    </extensionPoint>
 
     <extensionPoint name="colorSettingsPage" interface="com.intellij.openapi.options.colors.ColorSettingsPage"/>
     <extensionPoint name="colorAndFontPanelFactory" interface="com.intellij.application.options.colors.ColorAndFontPanelFactory"/>
@@ -597,6 +599,7 @@
       <with attribute="implementationClass" implements="com.intellij.psi.stubs.BinaryFileStubBuilder"/>
     </extensionPoint>
 
+    <!--suppress ExtensionPointBeanClass -->
     <extensionPoint name="stubElementTypeHolder"
                     beanClass="com.intellij.psi.stubs.StubElementTypeHolderEP"/>
 
