@@ -710,6 +710,10 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
   }
 
   public Collection<FilePath> getIncomingFiles(final RepositoryLocation location) {
+    // TODO: Implement this using "svn status -u" or probably use this command in other part of cache logic
+    // TODO: How to map RepositoryLocation to concrete working copy ???
+    // TODO: Seems that another parameter identifying local copy with for which we're detecting if repository location contains
+    // TODO: incoming files.
     return null;
   }
 

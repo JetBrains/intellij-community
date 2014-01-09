@@ -22,11 +22,16 @@ import com.intellij.openapi.vcs.actions.VcsContextFactory;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.diff.DiffMixin;
 import com.intellij.openapi.vcs.diff.DiffProvider;
+import com.intellij.openapi.vcs.diff.DiffProviderEx;
 import com.intellij.openapi.vcs.diff.ItemLatestState;
 import com.intellij.openapi.vcs.history.VcsRevisionDescription;
 import com.intellij.openapi.vcs.history.VcsRevisionDescriptionImpl;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.history.LatestExistentSearcher;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNPropertyValue;
@@ -35,10 +40,14 @@ import org.tmatesoft.svn.core.wc.*;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 
 import java.io.File;
+import java.util.List;
+import java.util.Map;
 
-public class SvnDiffProvider implements DiffProvider, DiffMixin {
+public class SvnDiffProvider extends DiffProviderEx implements DiffProvider, DiffMixin {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.idea.svn.SvnDiffProvider");
   public static final String COMMIT_MESSAGE = "svn:log";
+  private static final int BATCH_INFO_SIZE = 20;
+
   private final SvnVcs myVcs;
 
   public SvnDiffProvider(final SvnVcs vcs) {
@@ -47,11 +56,73 @@ public class SvnDiffProvider implements DiffProvider, DiffMixin {
 
   public VcsRevisionNumber getCurrentRevision(VirtualFile file) {
     final SVNInfo svnInfo = myVcs.getInfo(new File(file.getPresentableUrl()));
-    if (svnInfo == null) return null;
-    if (SVNRevision.UNDEFINED.equals(svnInfo.getCommittedRevision()) && svnInfo.getCopyFromRevision() != null) {
-      return new SvnRevisionNumber(svnInfo.getCopyFromRevision());
+
+    return getRevision(svnInfo);
+  }
+
+  @Nullable
+  private static VcsRevisionNumber getRevision(@Nullable SVNInfo info) {
+    VcsRevisionNumber result = null;
+
+    if (info != null) {
+      SVNRevision revision = SVNRevision.UNDEFINED.equals(info.getCommittedRevision()) && info.getCopyFromRevision() != null
+                             ? info.getCopyFromRevision()
+                             : info.getRevision();
+
+      result = new SvnRevisionNumber(revision);
     }
-    return new SvnRevisionNumber(svnInfo.getRevision());
+
+    return result;
+  }
+
+  @Override
+  public Map<VirtualFile, VcsRevisionNumber> getCurrentRevisions(Iterable<VirtualFile> files) {
+    Map<VirtualFile, VcsRevisionNumber> result = ContainerUtil.newHashMap();
+    Map<String, VirtualFile> items = ContainerUtil.newHashMap();
+    List<File> ioFiles = ContainerUtil.newArrayList();
+
+    for (VirtualFile file : files) {
+      File ioFile = VfsUtilCore.virtualToIoFile(file);
+      ioFiles.add(ioFile);
+      items.put(ioFile.getAbsolutePath(), file);
+
+      // process in blocks of BATCH_INFO_SIZE size
+      if (items.size() == BATCH_INFO_SIZE) {
+        collectRevisionsInBatch(result, items, ioFiles);
+        items.clear();
+        ioFiles.clear();
+      }
+    }
+    // process left files
+    collectRevisionsInBatch(result, items, ioFiles);
+
+    return result;
+  }
+
+  private void collectRevisionsInBatch(@NotNull final Map<VirtualFile, VcsRevisionNumber> revisionMap,
+                                       @NotNull final Map<String, VirtualFile> fileMap,
+                                       @NotNull List<File> ioFiles) {
+    myVcs.collectInfo(ioFiles, createInfoHandler(revisionMap, fileMap));
+  }
+
+  @NotNull
+  private static ISVNInfoHandler createInfoHandler(@NotNull final Map<VirtualFile, VcsRevisionNumber> revisionMap,
+                                                   @NotNull final Map<String, VirtualFile> fileMap) {
+    return new ISVNInfoHandler() {
+      @Override
+      public void handleInfo(SVNInfo info) throws SVNException {
+        if (info != null) {
+          VirtualFile file = fileMap.get(info.getFile().getAbsolutePath());
+
+          if (file != null) {
+            revisionMap.put(file, getRevision(info));
+          }
+          else {
+            LOG.info("Could not find virtual file for path " + info.getFile().getAbsolutePath());
+          }
+        }
+      }
+    };
   }
 
   @Override
