@@ -120,8 +120,8 @@ public class MacFileChooserDialogImpl implements PathChooserDialog {
           SwingUtilities.invokeLater(new Runnable() {
             @Override
             public void run() {
-              final List<VirtualFile> files = getChosenFiles(resultPaths, impl.myChooserDescriptor);
-              if (!files.isEmpty()) {
+              final List<VirtualFile> files = getChosenFiles(resultPaths);
+              if (files.size() > 0) {
                 FileChooserUtil.setLastOpenedFile(impl.myProject, files.get(files.size() - 1));
                 impl.myCallback.consume(files);
               }
@@ -169,17 +169,15 @@ public class MacFileChooserDialogImpl implements PathChooserDialog {
   }
 
   @NotNull
-  private static List<VirtualFile> getChosenFiles(@Nullable List<String> paths, @NotNull FileChooserDescriptor chooserDescriptor) {
-    if (ContainerUtil.isEmpty(paths)) {
-      return Collections.emptyList();
-    }
+  private static List<VirtualFile> getChosenFiles(final List<String> paths) {
+    if (paths == null || paths.size() == 0) return Collections.emptyList();
 
     final LocalFileSystem fs = LocalFileSystem.getInstance();
     final List<VirtualFile> files = ContainerUtil.newArrayListWithExpectedSize(paths.size());
     for (String path : paths) {
       final String vfsPath = FileUtil.toSystemIndependentName(path);
       final VirtualFile file = fs.refreshAndFindFileByPath(vfsPath);
-      if (file != null && file.isValid() && chooserDescriptor.isFileSelectable(file)) {
+      if (file != null && file.isValid()) {
         files.add(file);
       }
     }
