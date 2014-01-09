@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,8 +15,10 @@
  */
 package com.intellij.util;
 
+/** @deprecated use PlatformUtils (to remove in IDEA 14) */
 public class PlatformUtilsCore {
   public static final String PLATFORM_PREFIX_KEY = "idea.platform.prefix";
+
   public static final String IDEA_PREFIX = "idea";
   public static final String COMMUNITY_PREFIX = "Idea";
   public static final String APPCODE_PREFIX = "AppCode";
@@ -34,6 +36,10 @@ public class PlatformUtilsCore {
 
   public static String getPlatformPrefix(String defaultPrefix) {
     return System.getProperty(PLATFORM_PREFIX_KEY, defaultPrefix);
+  }
+
+  public static boolean isIntelliJ() {
+    return isIdea() || isCommunity();
   }
 
   public static boolean isIdea() {
@@ -57,8 +63,15 @@ public class PlatformUtilsCore {
   }
 
   public static boolean isPyCharm() {
-    String prefix = getPlatformPrefix();
-    return PYCHARM_PREFIX.equals(prefix) || (prefix != null && prefix.startsWith(PYCHARM_PREFIX2));
+    return isPyCharmPro() || isPyCharmCommunity();
+  }
+
+  static boolean isPyCharmPro() {
+    return PYCHARM_PREFIX.equals(getPlatformPrefix());
+  }
+
+  static boolean isPyCharmCommunity() {
+    return PYCHARM_PREFIX2.equals(getPlatformPrefix());
   }
 
   public static boolean isPhpStorm() {
@@ -67,9 +80,5 @@ public class PlatformUtilsCore {
 
   public static boolean isWebStorm() {
     return WEB_PREFIX.equals(getPlatformPrefix());
-  }
-
-  public static boolean isIntelliJ() {
-    return isIdea() || isCommunity();
   }
 }
