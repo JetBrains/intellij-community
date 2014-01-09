@@ -117,7 +117,7 @@ public class GitLogUI implements Disposable {
   private boolean myStarted;
   private String myPreviousFilter;
   private final CommentSearchContext myCommentSearchContext;
-  private List<String> myUsersSearchContext;
+  private final List<String> myUsersSearchContext;
   private String mySelectedBranch;
   private BranchSelectorAction myBranchSelectorAction;
   private final DescriptionRenderer myDescriptionRenderer;
@@ -159,7 +159,7 @@ public class GitLogUI implements Disposable {
   private JScrollPane myTableScrollPane;
   private GitLogUI.MyTextFieldAction myTextFieldAction;
   private DatesFilterI myDatesFilter;
-  private GitLogSettings mySettings;
+  private final GitLogSettings mySettings;
 
   public GitLogUI(Project project, final Mediator mediator) {
     myProject = project;
@@ -481,7 +481,7 @@ public class GitLogUI implements Disposable {
     });
 
     myBranchesLoaderImpl = new Consumer<CommitI>() {
-      private Processor<AbstractHash> myRecheck;
+      private final Processor<AbstractHash> myRecheck;
 
       {
         myRecheck = new Processor<AbstractHash>() {
@@ -1043,7 +1043,7 @@ public class GitLogUI implements Disposable {
 
   private class DataProviderPanel extends JPanel implements TypeSafeDataProvider {
 
-    private GitCommitDetailsProvider myCommitDetailsProvider;
+    private final GitCommitDetailsProvider myCommitDetailsProvider;
 
     private DataProviderPanel(LayoutManager layout) {
       super(layout);
@@ -1989,7 +1989,7 @@ public class GitLogUI implements Disposable {
     private final DumbAwareAction myMultiColorAction;
     private final DumbAwareAction myCalmAction;
     private final Icon myIcon;
-    private JLabel myLabel;
+    private final JLabel myLabel;
     private final GitLogUI.MySelectRootsForTreeAction myRootsForTreeAction;
     private final DumbAwareAction myDateOrder;
     private final DumbAwareAction myTopoOrder;
@@ -2102,7 +2102,7 @@ public class GitLogUI implements Disposable {
 
     @Override
     public void actionPerformed(AnActionEvent e) {
-      final CheckBoxList checkBoxList = new CheckBoxList();
+      final CheckBoxList<String> checkBoxList = new CheckBoxList<String>();
 
       final List<VirtualFile> order = myTableModel.getOrder();
       final Set<VirtualFile> activeRoots = myTableModel.getActiveRoots();

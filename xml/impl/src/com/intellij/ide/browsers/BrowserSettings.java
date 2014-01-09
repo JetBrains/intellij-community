@@ -25,7 +25,7 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 
 public class BrowserSettings implements SearchableConfigurable, Configurable.NoScroll {
-  private BrowserSettingsPanel mySettingsPanel;
+  private BrowserSettingsPanel myPanel;
 
   @Override
   @NotNull
@@ -52,33 +52,33 @@ public class BrowserSettings implements SearchableConfigurable, Configurable.NoS
 
   @Override
   public JComponent createComponent() {
-    if (mySettingsPanel == null) {
-      mySettingsPanel = new BrowserSettingsPanel();
+    if (myPanel == null) {
+      myPanel = new BrowserSettingsPanel();
     }
-    return mySettingsPanel.getComponent();
+    return myPanel.getComponent();
   }
 
   @Override
   public boolean isModified() {
-    return mySettingsPanel != null && mySettingsPanel.isModified();
+    return myPanel != null && myPanel.isModified();
   }
 
   @Override
   public void apply() throws ConfigurationException {
-    if (mySettingsPanel != null) {
-      mySettingsPanel.apply();
+    if (myPanel != null) {
+      myPanel.apply();
     }
   }
 
   @Override
   public void reset() {
-    if (mySettingsPanel != null) {
-      mySettingsPanel.reset();
+    if (myPanel != null) {
+      myPanel.reset();
     }
   }
 
   @Override
   public void disposeUIResources() {
-    mySettingsPanel = null;
+    myPanel = null;
   }
 }
