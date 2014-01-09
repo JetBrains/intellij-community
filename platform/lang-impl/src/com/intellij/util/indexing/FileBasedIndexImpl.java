@@ -2110,7 +2110,8 @@ public class FileBasedIndexImpl extends FileBasedIndex {
           LOG.info(e);
           requestRebuild(indexId);
         }
-        catch (ProcessCanceledException ignored) {
+        catch (ProcessCanceledException pce) {
+          LOG.error(pce);
         }
         catch (Throwable e) {
           LOG.info(e);
@@ -2134,20 +2135,27 @@ public class FileBasedIndexImpl extends FileBasedIndex {
       if (size == 0) {
         return;
       }
-      final ProgressIndicator current = ProgressManager.getInstance().getProgressIndicator();
-      final ProgressIndicator indicator = current != null ? current : new EmptyProgressIndicator();
-      indicator.setText("");
-      int count = 0;
-      while (true) {
-        InvalidationTask task = myFutureInvalidations.poll();
 
-        if (task == null) {
-          break;
+      // we must avoid PCE interruptions when removing data from indices
+      ProgressManager.getInstance().executeNonCancelableSection(
+        new Runnable() {
+          @Override
+          public void run() {
+            final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
+            indicator.setText("");
+            int count = 0;
+            while (true) {
+              InvalidationTask task = myFutureInvalidations.poll();
+
+              if (task == null) {
+                break;
+              }
+              indicator.setFraction((double)count++ / size);
+              task.run();
+            }
+          }
         }
-        indicator.setFraction((double)count++ / size);
-        indicator.setText2(task.getSubj().getPresentableUrl());
-        task.run();
-      }
+      );
     }
 
     private void iterateIndexableFiles(@NotNull final VirtualFile file, @NotNull final Processor<VirtualFile> processor) {
