@@ -19,15 +19,12 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.IoTestUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.JarFileSystem;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileWithId;
+import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.ex.temp.TempFileSystem;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.testFramework.PlatformLangTestCase;
 
 import java.io.File;
-import java.io.IOException;
 
 public class PersistentFsTest extends PlatformLangTestCase {
   private PersistentFS myFs;
@@ -62,7 +59,7 @@ public class PersistentFsTest extends PlatformLangTestCase {
     assertNull(myFs.findFileById(id));
   }
 
-  public void testFindRootShouldNotBeFooledByRelativePath() throws IOException {
+  public void testFindRootShouldNotBeFooledByRelativePath() throws Exception {
     File tmp = createTempDirectory();
     File x = new File(tmp, "x.jar");
     assertTrue(x.createNewFile());
@@ -76,7 +73,7 @@ public class PersistentFsTest extends PlatformLangTestCase {
     assertSame(myFs.findRoot(path, jfs), root);
   }
 
-  public void testDeleteSubstRoots() throws IOException, InterruptedException {
+  public void testDeleteSubstRoots() throws Exception {
     if (!SystemInfo.isWindows) return;
 
     File tempDirectory = FileUtil.createTempDirectory(getTestName(false), null);
@@ -98,6 +95,19 @@ public class PersistentFsTest extends PlatformLangTestCase {
       String rootPath = root.getPath();
       String prefix = StringUtil.commonPrefix(rootPath, substRoot.getPath());
       assertEmpty(prefix);
+    }
+  }
+
+  public void testLocalRoots() {
+    VirtualFile tempRoot = VirtualFileManager.getInstance().findFileByUrl("temp:///");
+    assertNotNull(tempRoot);
+
+    VirtualFile[] roots = myFs.getLocalRoots();
+    for (VirtualFile root : roots) {
+      assertTrue("root=" + root, root.isInLocalFileSystem());
+      VirtualFileSystem fs = root.getFileSystem();
+      assertTrue("fs=" + fs, fs instanceof LocalFileSystem);
+      assertFalse("fs=" + fs, fs instanceof TempFileSystem);
     }
   }
 }
