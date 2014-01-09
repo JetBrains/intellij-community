@@ -100,7 +100,7 @@ public class PullUpProcessor extends BaseRefactoringProcessor implements PullUpD
   @Nullable
   @Override
   protected String getRefactoringId() {
-    return "refactoring.pullUp";
+    return "refactoring.pull.up";
   }
 
   @Nullable
