@@ -15,10 +15,19 @@
  */
 package com.intellij.util.text;
 
+import org.jetbrains.annotations.NotNull;
+
 /**
  * @author peter
  */
-public interface CharArrayExternalizable {
+public interface CharArrayExternalizable extends CharSequence {
 
-  void getChars(int start, int end, char[] dest, int destPos);
+  /**
+   * Copies own character sub-sequence to the given array
+   * @param start the index where to start taking chars from in this sequence
+   * @param end the index where to end taking chars in this sequence
+   * @param dest the array to put characters into
+   * @param destPos the index where to put the characters in the dest array
+   */
+  void getChars(int start, int end, @NotNull char[] dest, int destPos);
 }
