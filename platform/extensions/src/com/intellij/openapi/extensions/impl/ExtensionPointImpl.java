@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,6 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.*;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.StringInterner;
@@ -146,8 +145,16 @@ public class ExtensionPointImpl<T> implements ExtensionPoint<T> {
       myLogger.error("Extension was already added: " + extension);
       return;
     }
+
+    Class<T> extensionClass = getExtensionClass();
+    if (!extensionClass.isInstance(extension)) {
+      myLogger.error("Extension '" + extension + "' does not implement " + extensionClass);
+      return;
+    }
+
     myExtensions.add(index, extension);
     myLoadedAdapters.add(index, adapter);
+
     if (runNotifications) {
       if (extension instanceof Extension) {
         try {
@@ -195,12 +202,6 @@ public class ExtensionPointImpl<T> implements ExtensionPoint<T> {
                         " extensions: " + myExtensions + ";\n" +
                         " getExtensionClass(): " + extensionClass + ";\n" +
                         " size:" + myExtensions.size() + ";" + result.length);
-            }
-
-            if (!extensionClass.isAssignableFrom(t.getClass())) {
-              LOG.error("Extension '" + t.getClass() + "' must be an instance of '" + extensionClass + "'",
-                        new ExtensionException(t.getClass()));
-              result = ArrayUtil.remove(result, i); // we assume that usually all extensions are OK
             }
           }
 
