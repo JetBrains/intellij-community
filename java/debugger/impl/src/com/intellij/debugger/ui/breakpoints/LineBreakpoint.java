@@ -319,22 +319,19 @@ public class LineBreakpoint extends BreakpointWithHighlighter {
   }
 
   @Override
-  public boolean evaluateCondition(EvaluationContextImpl context, LocatableEvent event) throws EvaluateException {
-    if(CLASS_FILTERS_ENABLED){
-      String className = null;
-      final ObjectReference thisObject = (ObjectReference)context.getThisObject();
-      if(thisObject != null) {
-        className = thisObject.referenceType().name();
-      }
-      else {
-        final StackFrameProxyImpl frame = context.getFrameProxy();
-        if (frame != null) {
-          className = frame.location().declaringType().name();
-        }
-      }
-      if (!typeMatchesClassFilters(className)) return false;
+  protected String calculateEventClass(EvaluationContextImpl context, LocatableEvent event) throws EvaluateException {
+    String className = null;
+    final ObjectReference thisObject = (ObjectReference)context.getThisObject();
+    if (thisObject != null) {
+      className = thisObject.referenceType().name();
     }
-    return super.evaluateCondition(context, event);
+    else {
+      final StackFrameProxyImpl frame = context.getFrameProxy();
+      if (frame != null) {
+        className = frame.location().declaringType().name();
+      }
+    }
+    return className;
   }
 
   public String toString() {

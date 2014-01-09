@@ -33,7 +33,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.classFilter.ClassFilter;
-import com.sun.jdi.*;
+import com.sun.jdi.BooleanValue;
+import com.sun.jdi.ObjectReference;
+import com.sun.jdi.VMDisconnectedException;
+import com.sun.jdi.Value;
 import com.sun.jdi.event.LocatableEvent;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -173,8 +176,8 @@ public abstract class FilteredRequestor implements LocatableEventRequestor, JDOM
     }
 
     if (CLASS_FILTERS_ENABLED) {
-      Location location = event.location();
-      if (!typeMatchesClassFilters(location.declaringType().name())) return false;
+      String typeName = calculateEventClass(context, event);
+      if (!typeMatchesClassFilters(typeName)) return false;
     }
 
     if (CONDITION_ENABLED && getCondition() != null && !"".equals(getCondition().getText())) {
@@ -214,7 +217,11 @@ public abstract class FilteredRequestor implements LocatableEventRequestor, JDOM
     return true;
   }
 
-  boolean typeMatchesClassFilters(@Nullable String typeName) {
+  protected String calculateEventClass(EvaluationContextImpl context, LocatableEvent event) throws EvaluateException {
+    return event.location().declaringType().name();
+  }
+
+  private boolean typeMatchesClassFilters(@Nullable String typeName) {
     if (typeName == null) {
       return true;
     }
