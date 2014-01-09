@@ -61,16 +61,22 @@ public class DocStringReferenceProvider extends PsiReferenceProvider {
         if (docString != null) {
           result.addAll(referencesFromNames(element, offset, docString,
                                             docString.getTagArguments(StructuredDocStringBase.PARAM_TAGS),
-                                            StructuredDocStringBase.PARAMETER));
+                                            StructuredDocStringBase.ReferenceType.PARAMETER));
           result.addAll(referencesFromNames(element, offset, docString,
                                             docString.getTagArguments(StructuredDocStringBase.PARAM_TYPE_TAGS),
-                                            StructuredDocStringBase.PARAMETER_TYPE));
+                                            StructuredDocStringBase.ReferenceType.PARAMETER_TYPE));
           result.addAll(referencesFromNames(element, offset, docString,
-                                            docString.getKeywordArgumentSubstrings(), StructuredDocStringBase.KEYWORD));
+                                            docString.getKeywordArgumentSubstrings(), StructuredDocStringBase.ReferenceType.KEYWORD));
 
           result.addAll(referencesFromNames(element, offset, docString,
-                                            docString.getTagArguments(StructuredDocStringBase.VARIABLE_TAGS),
-                                            StructuredDocStringBase.VARIABLE));
+                                            docString.getTagArguments("var"),
+                                            StructuredDocStringBase.ReferenceType.VARIABLE));
+          result.addAll(referencesFromNames(element, offset, docString,
+                                            docString.getTagArguments("cvar"),
+                                            StructuredDocStringBase.ReferenceType.CLASS_VARIABLE));
+          result.addAll(referencesFromNames(element, offset, docString,
+                                            docString.getTagArguments("ivar"),
+                                            StructuredDocStringBase.ReferenceType.INSTANCE_VARIABLE));
           result.addAll(returnTypes(element, docString, offset));
         }
         return result.toArray(new PsiReference[result.size()]);
@@ -94,7 +100,7 @@ public class DocStringReferenceProvider extends PsiReferenceProvider {
                                                         int offset,
                                                         StructuredDocString docString,
                                                         List<Substring> paramNames,
-                                                        String refType) {
+                                                        StructuredDocStringBase.ReferenceType refType) {
     List<PsiReference> result = new ArrayList<PsiReference>();
     for (Substring name : paramNames) {
       final String s = name.toString();
@@ -102,7 +108,7 @@ public class DocStringReferenceProvider extends PsiReferenceProvider {
         final TextRange range = name.getTextRange().shiftRight(offset);
         result.add(new DocStringParameterReference(element, range, refType));
       }
-      if (refType.equals(StructuredDocStringBase.PARAMETER_TYPE)) {
+      if (refType.equals(StructuredDocStringBase.ReferenceType.PARAMETER_TYPE)) {
         final Substring type = docString.getParamTypeSubstring(s);
         if (type != null) {
           result.addAll(parseTypeReferences(element, type, offset));
