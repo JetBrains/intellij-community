@@ -117,6 +117,14 @@ public class PullUpProcessor extends BaseRefactoringProcessor implements PullUpD
     return data;
   }
 
+  @Nullable
+  @Override
+  protected RefactoringEventData getAfterData(UsageInfo[] usages) {
+    final RefactoringEventData data = new RefactoringEventData();
+    data.addElement(myTargetSuperClass);
+    return data;
+  }
+
   protected void performRefactoring(UsageInfo[] usages) {
     moveMembersToBase();
     moveFieldInitializations();
