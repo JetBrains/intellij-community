@@ -64,7 +64,7 @@ import java.io.Writer;
  * @version 5.3, January 10, 2007
  */
 @SuppressWarnings("AssignmentToForLoopParameter")
-public final class ImmutableText extends ImmutableCharSequence {
+public final class ImmutableText extends ImmutableCharSequence implements CharArrayExternalizable {
 
   /**
    * Holds the default size for primitive blocks of characters.
@@ -132,24 +132,12 @@ public final class ImmutableText extends ImmutableCharSequence {
   private static ImmutableText valueOf(@NotNull CharSequence str, int start, int end) {
     int length = end - start;
     if (length <= BLOCK_SIZE) {
-      char[] chars = new char[length];
-      if (str instanceof String) {
-        ((String)str).getChars(start, end, chars, 0);
-      } else {
-        char[] array = CharArrayUtil.fromSequenceWithoutCopying(str);
-        if (array != null) {
-          System.arraycopy(array, start, chars, 0, length);
-        } else {
-          for (int i = start; i < end; i++) {
-            chars[i - start] = str.charAt(i);
-          }
-        }
-      }
-      return new ImmutableText(chars);
-    } else { // Splits on a block boundary.
-      int half = ((length + BLOCK_SIZE) >> 1) & BLOCK_MASK;
-      return new ImmutableText(valueOf(str, start, start + half), valueOf(str, start + half, end));
+      return new ImmutableText(CharArrayUtil.fromSequence(str, start, end));
     }
+
+    // Splits on a block boundary.
+    int half = ((length + BLOCK_SIZE) >> 1) & BLOCK_MASK;
+    return new ImmutableText(valueOf(str, start, start + half), valueOf(str, start + half, end));
   }
 
   /**
@@ -392,15 +380,7 @@ public final class ImmutableText extends ImmutableCharSequence {
 
   public ImmutableCharSequence subSequence(final int start, final int end) {
     if (start == 0 && end == length()) return this;
-    return new ImmutableSubSequence(this, start, end) {
-      @NotNull
-      @Override
-      public String toString() {
-        char[] chars = new char[end - start];
-        getChars(start, end, chars, 0);
-        return StringFactory.createShared(chars);
-      }
-    };
+    return new ImmutableSubSequence(this, start, end);
   }
 
   /**
