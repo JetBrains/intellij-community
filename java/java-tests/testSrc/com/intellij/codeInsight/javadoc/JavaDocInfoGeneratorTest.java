@@ -56,6 +56,10 @@ public class JavaDocInfoGeneratorTest extends CodeInsightTestCase {
     doTestMethod();
   }
 
+  public void testMethodFormatting() throws Exception {
+    doTestMethod();
+  }
+
   public void testInitializerWithNew() throws Exception {
     doTestField();
   }

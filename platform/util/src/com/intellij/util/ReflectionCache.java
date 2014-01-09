@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,8 +25,9 @@ import java.lang.reflect.TypeVariable;
 /**
  * Contrary to the name, this class doesn't do any caching. So the usages may be safely dropped in favor of plain reflection calls.
  * 
- * Consider caching higher-level things, if you see reflection in your snapshots. 
- * 
+ * Consider caching higher-level things, if you see reflection in your snapshots.
+ *
+ * @deprecated
  * @author peter
  */
 @SuppressWarnings({"MismatchedQueryAndUpdateOfCollection"})
@@ -49,6 +50,10 @@ public class ReflectionCache {
     return aClass.getMethods();
   }
 
+  /**
+   * @deprecated
+   * @see com.intellij.util.ReflectionUtil#isAssignable(Class, Class)
+   */
   public static boolean isAssignable(@NotNull Class ancestor, Class descendant) {
     return ancestor == descendant || ancestor.isAssignableFrom(descendant);
   }

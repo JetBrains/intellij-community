@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,6 @@ import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.PairProcessor;
 import com.intellij.util.ProcessingContext;
-import com.intellij.util.ReflectionCache;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -98,7 +97,7 @@ public abstract class PsiElementPattern<T extends PsiElement,Self extends PsiEle
       @Override
       public boolean accepts(@NotNull final T t, final ProcessingContext context) {
         for (final PsiReference reference : t.getReferences()) {
-          if (ReflectionCache.isInstance(reference, referenceClass)) {
+          if (referenceClass.isInstance(reference)) {
             return true;
           }
         }

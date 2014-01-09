@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1457,5 +1457,13 @@ public class FileUtil extends FileUtilRt {
     }.load(reader);
 
     return map;
+  }
+
+  public static boolean isRootPath(@NotNull File file) {
+    return isRootPath(file.getPath());
+  }
+
+  public static boolean isRootPath(@NotNull String path) {
+    return path.equals("/") || path.matches("[a-zA-Z]:[/\\\\]");
   }
 }

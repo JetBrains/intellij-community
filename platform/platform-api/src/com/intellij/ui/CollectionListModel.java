@@ -16,6 +16,7 @@
 
 package com.intellij.ui;
 
+import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.ui.EditableModel;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -34,7 +35,7 @@ public class CollectionListModel<T> extends AbstractListModel implements Editabl
   }
 
   public CollectionListModel(final T... items) {
-    myItems = new ArrayList<T>(Arrays.asList(items));
+    myItems = ContainerUtilRt.newArrayList(items);
   }
 
   @Override

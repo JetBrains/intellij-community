@@ -28,12 +28,8 @@ import java.util.*;
  */
 class DetectedRootData {
   private final File myDirectory;
-  private MultiMap<DetectedProjectRoot, ProjectStructureDetector> myRoots = new MultiMap<DetectedProjectRoot, ProjectStructureDetector>() {
-    @Override
-    protected Map<DetectedProjectRoot, Collection<ProjectStructureDetector>> createMap() {
-      return new LinkedHashMap<DetectedProjectRoot, Collection<ProjectStructureDetector>>();
-    }
-  };
+  private MultiMap<DetectedProjectRoot, ProjectStructureDetector> myRoots = MultiMap.createLinked();
+
   private boolean myIncluded = true;
   private DetectedProjectRoot mySelectedRoot;
 

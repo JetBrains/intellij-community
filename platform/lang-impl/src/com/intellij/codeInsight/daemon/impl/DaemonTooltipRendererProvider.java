@@ -135,7 +135,7 @@ public class DaemonTooltipRendererProvider implements ErrorStripTooltipRendererP
 
     @Override
     protected boolean dressDescription(@NotNull final Editor editor) {
-      final List<String> problems = StringUtil.split(UIUtil.getHtmlBody(myText), BORDER_LINE);
+      final List<String> problems = StringUtil.split(UIUtil.getHtmlBody(myText), UIUtil.BORDER_LINE);
       String text = "";
       for (String problem : problems) {
         final String ref = getLinkRef(problem);
@@ -145,15 +145,15 @@ public class DaemonTooltipRendererProvider implements ErrorStripTooltipRendererP
             description = DefaultInspectionToolPresentation.stripUIRefsFromInspectionDescription(UIUtil.getHtmlBody(description));
             text += UIUtil.getHtmlBody(problem).replace(DaemonBundle.message("inspection.extended.description"),
                                                         DaemonBundle.message("inspection.collapse.description")) +
-                    END_MARKER + "<p>" + description + BORDER_LINE;
+                    END_MARKER + "<p>" + description + UIUtil.BORDER_LINE;
           }
         }
         else {
-          text += UIUtil.getHtmlBody(problem) + BORDER_LINE;
+          text += UIUtil.getHtmlBody(problem) + UIUtil.BORDER_LINE;
         }
       }
       if (!text.isEmpty()) { //otherwise do not change anything
-        myText = "<html><body>" +  StringUtil.trimEnd(text, BORDER_LINE) + "</body></html>";
+        myText = "<html><body>" +  StringUtil.trimEnd(text, UIUtil.BORDER_LINE) + "</body></html>";
         return true;
       }
       return false;
@@ -175,14 +175,14 @@ public class DaemonTooltipRendererProvider implements ErrorStripTooltipRendererP
 
     @Override
     protected void stripDescription() {
-      final List<String> problems = StringUtil.split(UIUtil.getHtmlBody(myText), BORDER_LINE);
+      final List<String> problems = StringUtil.split(UIUtil.getHtmlBody(myText), UIUtil.BORDER_LINE);
       myText = "<html><body>";
       for (int i = 0, size = problems.size(); i < size; i++) {
         final String problem = StringUtil.split(problems.get(i), END_MARKER).get(0);
         myText += UIUtil.getHtmlBody(problem).replace(DaemonBundle.message("inspection.collapse.description"),
-                                                      DaemonBundle.message("inspection.extended.description")) + BORDER_LINE;
+                                                      DaemonBundle.message("inspection.extended.description")) + UIUtil.BORDER_LINE;
       }
-      myText = StringUtil.trimEnd(myText, BORDER_LINE) + "</body></html>";
+      myText = StringUtil.trimEnd(myText, UIUtil.BORDER_LINE) + "</body></html>";
     }
 
     @Override

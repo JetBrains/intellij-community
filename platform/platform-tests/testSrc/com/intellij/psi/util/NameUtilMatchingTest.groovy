@@ -26,6 +26,7 @@ import com.intellij.util.ThrowableRunnable
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.text.Matcher
 import groovy.transform.CompileStatic
+import junit.framework.Assert
 import org.jetbrains.annotations.NonNls
 /**
  * @author max
@@ -120,7 +121,8 @@ public class NameUtilMatchingTest extends UsefulTestCase {
     assertDoesntMatch("ARS.j", "activity_report_summary.xml");
     assertDoesntMatch("ARS.j", "activity_report_summary_justsometingwrong.xml");
 
-    assertDoesntMatch("foo.goo", "foo.bar.goo");
+    assertMatches("foo.goo", "foo.bar.goo");
+    assertDoesntMatch("*.ico", "sm.th.iks.concierge");
   }
 
   public void testSpaceForAnyWordsInBetween() {
@@ -177,7 +179,10 @@ public class NameUtilMatchingTest extends UsefulTestCase {
     assertMatches("ja", "jquery.autocomplete.js");
     assertDoesntMatch("ja.js", "jquery.autocomplete.js");
     assertMatches("jajs", "jquery.autocomplete.js");
+    assertMatches("jjs", "jquery.autocomplete.js");
+    assertMatches("j.js", "jquery.autocomplete.js");
     assertDoesntMatch("j.ajs", "jquery.autocomplete.js");
+    assertMatches("oracle.bnf", "oracle-11.2.bnf");
   }
 
   public void testNoExtension() {
@@ -636,11 +641,11 @@ public class NameUtilMatchingTest extends UsefulTestCase {
       public void run() {
         for (int i = 0; i < 100000; i++) {
           for (MinusculeMatcher matcher : matching) {
-            assertTrue(matcher.toString(), matcher.matches(longName));
+            Assert.assertTrue(matcher.toString(), matcher.matches(longName));
             matcher.matchingDegree(longName);
           }
           for (MinusculeMatcher matcher : nonMatching) {
-            assertFalse(matcher.toString(), matcher.matches(longName));
+            Assert.assertFalse(matcher.toString(), matcher.matches(longName));
           }
         }
       }

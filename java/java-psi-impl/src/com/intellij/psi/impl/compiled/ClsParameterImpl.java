@@ -20,7 +20,6 @@ import com.intellij.openapi.util.AtomicNotNullLazyValue;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
-import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.impl.ElementPresentationUtil;
 import com.intellij.psi.impl.cache.TypeInfo;
 import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
@@ -170,10 +169,10 @@ public class ClsParameterImpl extends ClsRepositoryPsiElement<PsiParameterStub> 
     }
 
     if (name == null) {
-      JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(getProject());
-      String[] nameSuggestions = codeStyleManager.suggestVariableName(VariableKind.PARAMETER, null, null, getType()).names;
-
       name = "p";
+
+      JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(getProject());
+      String[] nameSuggestions = codeStyleManager.suggestCompiledParameterName(getType()).names;
       if (nameSuggestions.length > 0 && nameSuggestions[0] != null) {
         name = nameSuggestions[0];
       }

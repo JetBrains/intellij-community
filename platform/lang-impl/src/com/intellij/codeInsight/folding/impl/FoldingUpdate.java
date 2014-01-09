@@ -210,8 +210,9 @@ public class FoldingUpdate {
                       " for " +language +
                       " and called on file " + psi +
                       " is outside document range: " + docRange,
-                      AttachmentFactory.createAttachment(document),
-                      new Attachment("psiTree.txt", DebugUtil.psiToString(psi, false, true)));
+                      ApplicationManager.getApplication().isInternal()
+                      ? new Attachment[] {AttachmentFactory.createAttachment(document), new Attachment("psiTree.txt", DebugUtil.psiToString(psi, false, true))}
+                      : new Attachment[0]);
           }
           elementsToFoldMap.putValue(descriptor.getElement().getPsi(), descriptor);
         }

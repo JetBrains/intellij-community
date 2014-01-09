@@ -1,54 +1,39 @@
 package com.intellij.refactoring;
 
-import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.TargetElementUtilBase;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.refactoring.invertBoolean.InvertBooleanProcessor;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.testFramework.TestDataPath;
 
 /**
  * @author ven
  */
-public class InvertBooleanTest extends LightRefactoringTestCase {
-  @NotNull
+@TestDataPath("$CONTENT_ROOT/testData/refactoring/invertBoolean/")
+public class InvertBooleanTest extends LightRefactoringParameterizedTestCase {
   @Override
-  protected String getTestDataPath() {
-    return JavaTestUtil.getJavaTestDataPath();
-  }
-
-  private static final String TEST_ROOT = "/refactoring/invertBoolean/";
-
-  public void test1() throws Exception { doTest(); }
-
-  public void test2() throws Exception { doTest(); } //inverting breaks overriding
-
-  public void testParameter() throws Exception { doTest(); } //inverting boolean parameter
-
-  public void testParameter1() throws Exception { doTest(); } //inverting boolean parameter more advanced stuff
-  public void testUnusedReturnValue() throws Exception { doTest(); }
-
-  public void testInnerClasses() throws Exception {doTest();}
-  public void testAnonymousClasses() throws Exception {doTest();}
-  public void testMethodRefs() throws Exception {
-    try {
-      doTest();
-      fail("Conflict expected.");
-    }
-    catch (BaseRefactoringProcessor.ConflictsInTestsException e) {
-      assertEquals("Method is used in method reference expression", e.getMessage());
-    }
-  }
-
-  private void doTest() throws Exception {
-    configureByFile(TEST_ROOT + getTestName(true) + ".java");
+  protected void perform() {
     PsiElement element = TargetElementUtilBase.findTargetElement(myEditor, TargetElementUtilBase.ELEMENT_NAME_ACCEPTED);
     assertTrue(element instanceof PsiNamedElement);
 
     final PsiNamedElement namedElement = (PsiNamedElement)element;
     final String name = namedElement.getName();
     new InvertBooleanProcessor(namedElement, name + "Inverted").run();
-    checkResultByFile(TEST_ROOT + getTestName(true) + "_after.java");
   }
 
+  @Override
+  protected String getAfterFile(String fileName) {
+    return FileUtilRt.getNameWithoutExtension(fileName) + "_" + AFTER_PREFIX + "." + FileUtilRt.getExtension(fileName);
+  }
+
+  @Override
+  protected String getBeforeFile(String fileName) {
+    return fileName;
+  }
+
+  @Override
+  public String getFileSuffix(String beforeFile) {
+    return !beforeFile.contains(AFTER_PREFIX) && !beforeFile.endsWith(CONFLICTS_SUFFIX) ? beforeFile : null;
+  }
 }

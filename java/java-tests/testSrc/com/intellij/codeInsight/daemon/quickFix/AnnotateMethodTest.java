@@ -4,11 +4,12 @@ import com.intellij.codeInspection.AnnotateMethodFix;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.nullable.NullableStuffInspection;
 import com.intellij.openapi.project.Project;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiMethod;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-public class AnnotateMethodTest extends LightQuickFix15TestCase {
+public class AnnotateMethodTest extends LightQuickFixTestCase {
   private boolean myMustBeAvailableAfterInvoke;
 
   @Override
@@ -44,4 +45,9 @@ public class AnnotateMethodTest extends LightQuickFix15TestCase {
   }
 
   public void test() throws Exception { doAllTests(); }
+
+  @Override
+  protected LanguageLevel getLanguageLevel() {
+    return LanguageLevel.JDK_1_5;
+  }
 }

@@ -215,11 +215,9 @@ public class MainFrame extends JPanel implements TypeSafeDataProvider {
       sink.put(key, myLog);
     }
     else if (VcsDataKeys.CHANGES.equals(key)) {
-      if (myGraphTable.getSelectedRowCount() == 1) {
-        List<Change> selectedChanges = getSelectedChanges();
-        if (selectedChanges != null) {
-          sink.put(VcsDataKeys.CHANGES, ArrayUtil.toObjectArray(selectedChanges, Change.class));
-        }
+      List<Change> selectedChanges = getSelectedChanges();
+      if (selectedChanges != null) {
+        sink.put(VcsDataKeys.CHANGES, ArrayUtil.toObjectArray(selectedChanges, Change.class));
       }
     }
   }

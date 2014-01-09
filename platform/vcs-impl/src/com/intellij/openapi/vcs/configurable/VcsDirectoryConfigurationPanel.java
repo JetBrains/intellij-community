@@ -73,7 +73,7 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
 
   private final MyDirectoryRenderer myDirectoryRenderer;
   private final ColumnInfo<VcsDirectoryMapping, VcsDirectoryMapping> DIRECTORY;
-  private JCheckBox myBaseRevisionTexts;
+  private final JCheckBox myBaseRevisionTexts;
   private ListTableModel<VcsDirectoryMapping> myModel;
   private final Map<String, VcsDescriptor> myAllVcss;
   private VcsContentAnnotationConfigurable myRecentlyChangedConfigurable;
@@ -135,22 +135,27 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
 
   private final ColumnInfo<VcsDirectoryMapping, String> VCS_SETTING =
     new ColumnInfo<VcsDirectoryMapping, String>(VcsBundle.message("column.name.configure.vcses.vcs")) {
+      @Override
       public String valueOf(final VcsDirectoryMapping object) {
         return object.getVcs();
       }
 
+      @Override
       public boolean isCellEditable(final VcsDirectoryMapping o) {
         return true;
       }
 
+      @Override
       public void setValue(final VcsDirectoryMapping o, final String aValue) {
         Collection<AbstractVcs> activeVcses = getActiveVcses();
         o.setVcs(aValue);
         checkNotifyListeners(activeVcses);
       }
 
+      @Override
       public TableCellRenderer getRenderer(final VcsDirectoryMapping p0) {
         return new ColoredTableCellRenderer() {
+          @Override
           protected void customizeCellRenderer(JTable table, Object value, boolean selected, boolean hasFocus, int row, int column) {
             final String vcsName = p0.getVcs();
             String text;
@@ -174,11 +179,13 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
       @Override
       public TableCellEditor getEditor(final VcsDirectoryMapping o) {
         return new AbstractTableCellEditor() {
+          @Override
           public Object getCellEditorValue() {
             final VcsDescriptor selectedVcs = (VcsDescriptor)myVcsComboBox.getComboBox().getSelectedItem();
             return ((selectedVcs == null) || selectedVcs.isNone()) ? "" : selectedVcs.getName();
           }
 
+          @Override
           public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row, int column) {
             String vcsName = (String)value;
             myVcsComboBox.getComboBox().setSelectedItem(myAllVcss.get(vcsName));
@@ -232,6 +239,7 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
 
     myDirectoryRenderer = new MyDirectoryRenderer(myProject);
     DIRECTORY = new ColumnInfo<VcsDirectoryMapping, VcsDirectoryMapping>(VcsBundle.message("column.info.configure.vcses.directory")) {
+      @Override
       public VcsDirectoryMapping valueOf(final VcsDirectoryMapping mapping) {
         return mapping;
       }
@@ -246,6 +254,7 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
     final JComboBox comboBox = myVcsComboBox.getComboBox();
     comboBox.setModel(buildVcsWrappersModel(myProject));
     comboBox.addItemListener(new ItemListener() {
+      @Override
       public void itemStateChanged(final ItemEvent e) {
         if (myDirectoryMappingTable.isEditing()) {
           myDirectoryMappingTable.stopEditing();
@@ -253,6 +262,7 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
       }
     });
     myVcsComboBox.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         final VcsDescriptor vcsWrapper = ((VcsDescriptor)comboBox.getSelectedItem());
         new VcsConfigurationsDialog(project, comboBox, vcsWrapper).show();
@@ -500,10 +510,12 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
     return myShowChangedRecursively;
   }
 
+  @Override
   public void reset() {
     initializeModel();
   }
 
+  @Override
   public void apply() throws ConfigurationException {
     myVcsManager.setDirectoryMappings(myModel.getItems());
     myRecentlyChangedConfigurable.apply();
@@ -516,6 +528,7 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
     initializeModel();
   }
 
+  @Override
   public boolean isModified() {
     if (myRecentlyChangedConfigurable.isModified()) return true;
     if (myLimitHistory.isModified()) return true;
@@ -560,19 +573,23 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
     return vcses;
   }
 
+  @Override
   @Nls
   public String getDisplayName() {
     return "Mappings";
   }
 
+  @Override
   public String getHelpTopic() {
     return null;
   }
 
+  @Override
   public JComponent createComponent() {
     return this;
   }
 
+  @Override
   public void disposeUIResources() {
     myLimitHistory.disposeUIResources();
     myScopeFilterConfig.disposeUIResources();

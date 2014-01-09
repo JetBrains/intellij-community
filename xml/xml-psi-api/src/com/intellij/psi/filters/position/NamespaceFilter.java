@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,11 +15,11 @@
  */
 package com.intellij.psi.filters.position;
 
-import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.xml.*;
-import com.intellij.util.ReflectionCache;
+import com.intellij.util.ReflectionUtil;
 import org.jetbrains.annotations.NonNls;
 
 public class NamespaceFilter implements ElementFilter {
@@ -30,7 +30,7 @@ public class NamespaceFilter implements ElementFilter {
   }
 
   public boolean isClassAcceptable(Class hintClass){
-    return ReflectionCache.isAssignable(XmlTag.class, hintClass) || ReflectionCache.isAssignable(XmlDocument.class, hintClass);
+    return ReflectionUtil.isAssignable(XmlTag.class, hintClass) || ReflectionUtil.isAssignable(XmlDocument.class, hintClass);
   }
 
   public boolean isAcceptable(Object element, PsiElement context){

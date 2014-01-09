@@ -667,7 +667,15 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
     Collections.sort(sortedElements, comparator); // ensure templates are loaded first!
 
     for (final Element element : sortedElements) {
-      if (loadConfiguration(element, false) == null) {
+      RunnerAndConfigurationSettings configurationSettings = null;
+      try {
+        configurationSettings = loadConfiguration(element, false);
+      }
+      catch (Throwable e) {
+        LOG.error(e);
+        continue;
+      }
+      if (configurationSettings == null) {
         if (myUnknownElements == null) myUnknownElements = new ArrayList<Element>(2);
         myUnknownElements.add(element);
       }

@@ -179,24 +179,31 @@ public abstract class CloudMultiSourceServerRuntimeInstance<
 
   public CloudDeploymentRuntime createDeploymentRuntime(final DeployToServerRunConfiguration<?, DC> runConfiguration)
     throws ServerRuntimeException {
+    return createDeploymentRuntime(runConfiguration.getDeploymentSource(),
+                                   runConfiguration.getDeploymentConfiguration(),
+                                   runConfiguration.getProject());
+  }
+
+  public CloudDeploymentRuntime createDeploymentRuntime(final DeploymentSource source, final DC configuration, final Project project)
+    throws ServerRuntimeException {
     return createDeploymentRuntime(new DeploymentTask<DC>() {
 
       @NotNull
       @Override
       public DeploymentSource getSource() {
-        return runConfiguration.getDeploymentSource();
+        return source;
       }
 
       @NotNull
       @Override
       public DC getConfiguration() {
-        return runConfiguration.getDeploymentConfiguration();
+        return configuration;
       }
 
       @NotNull
       @Override
       public Project getProject() {
-        return runConfiguration.getProject();
+        return project;
       }
 
       @Override

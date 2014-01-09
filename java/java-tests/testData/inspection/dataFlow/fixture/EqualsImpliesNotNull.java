@@ -21,4 +21,15 @@ class Test {
     System.out.println(<warning descr="Method invocation 'parentNode.toString()' may produce 'java.lang.NullPointerException'">parentNode.toString()</warning>);
   }
 
+  public static int foo(String a, String b) {
+    if (a.equals(b.startsWith("a") ? b : "")) {
+      return 0;
+    }
+    return a.length();
+  }
+
+  static boolean isEmpty(String s) {
+    return s.length() == 0;
+  }
+
 }

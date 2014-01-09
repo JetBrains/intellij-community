@@ -31,7 +31,6 @@ import org.jetbrains.idea.svn.update.UpdateEventHandler;
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.wc.SVNDiffOptions;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNRevisionRange;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
@@ -132,7 +131,7 @@ public class GroupMerger implements IMerger {
     SvnTarget source = SvnTarget.fromURL(myCurrentBranchUrl);
     MergeClient client = myVcs.getFactory(myTarget).createMergeClient();
 
-    client.merge(source, createRange(), myTarget, SVNDepth.INFINITY, mySvnConfig.MERGE_DRY_RUN, myDryRun, true,
+    client.merge(source, createRange(), myTarget, SVNDepth.INFINITY, mySvnConfig.isMergeDryRun(), myDryRun, true,
                  mySvnConfig.getMergeOptions(), myHandler);
   }
 

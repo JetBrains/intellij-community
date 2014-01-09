@@ -233,7 +233,7 @@ public class LiveTemplateSettingsEditor extends JPanel {
 
     gbConstraints.gridx = 1;
     gbConstraints.insets = new Insets(0, 4, 0, 0);
-    myExpandByCombo = new ComboBox(new Object[]{myDefaultShortcutItem, SPACE, TAB, ENTER}, -1);
+    myExpandByCombo = new ComboBox(new String[]{myDefaultShortcutItem, SPACE, TAB, ENTER});
     myExpandByCombo.addItemListener(new ItemListener() {
       @Override
       public void itemStateChanged(ItemEvent e) {
@@ -381,12 +381,7 @@ public class LiveTemplateSettingsEditor extends JPanel {
   static JPanel createPopupContextPanel(final Runnable onChange, final Map<TemplateContextType, Boolean> context) {
     JPanel panel = new JPanel(new BorderLayout());
 
-    MultiMap<TemplateContextType, TemplateContextType> hierarchy = new MultiMap<TemplateContextType, TemplateContextType>() {
-      @Override
-      protected Map<TemplateContextType, Collection<TemplateContextType>> createMap() {
-        return new LinkedHashMap<TemplateContextType, Collection<TemplateContextType>>();
-      }
-    };
+    MultiMap<TemplateContextType, TemplateContextType> hierarchy = MultiMap.createLinked();
     for (TemplateContextType type : context.keySet()) {
       hierarchy.putValue(type.getBaseContextType(), type);
     }

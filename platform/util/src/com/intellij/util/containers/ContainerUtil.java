@@ -2030,7 +2030,7 @@ public class ContainerUtil extends ContainerUtilRt {
     return result;
   }
 
-  @Contract("null -> null")
+  @Contract("null -> true")
   public static <T> boolean isEmpty(List<T> list) {
     return list == null || list.isEmpty();
   }

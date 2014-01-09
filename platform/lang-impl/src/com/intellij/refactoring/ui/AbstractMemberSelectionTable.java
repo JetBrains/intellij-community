@@ -19,7 +19,6 @@ package com.intellij.refactoring.ui;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.actionSystem.DataSink;
-import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.actionSystem.TypeSafeDataProvider;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.psi.PsiElement;
@@ -35,6 +34,7 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.table.AbstractTableModel;
+import javax.swing.table.TableColumn;
 import javax.swing.table.TableColumnModel;
 import java.awt.*;
 import java.util.ArrayList;
@@ -78,10 +78,9 @@ public abstract class AbstractMemberSelectionTable<T extends PsiElement, M exten
 
     TableColumnModel model = getColumnModel();
     model.getColumn(DISPLAY_NAME_COLUMN).setCellRenderer(new MyTableRenderer<T, M>(this));
-    model.getColumn(CHECKED_COLUMN).setCellRenderer(new MyBooleanRenderer<T, M>(this));
-    final int checkBoxWidth = new JCheckBox().getPreferredSize().width;
-    model.getColumn(CHECKED_COLUMN).setMaxWidth(checkBoxWidth);
-    model.getColumn(CHECKED_COLUMN).setMinWidth(checkBoxWidth);
+    TableColumn checkBoxColumn = model.getColumn(CHECKED_COLUMN);
+    TableUtil.setupCheckboxColumn(checkBoxColumn);
+    checkBoxColumn.setCellRenderer(new MyBooleanRenderer<T, M>(this));
     if (myAbstractEnabled) {
       int width = (int)(1.3 * getFontMetrics(getFont()).charsWidth(myAbstractColumnHeader.toCharArray(), 0, myAbstractColumnHeader.length()));
       model.getColumn(ABSTRACT_COLUMN).setMaxWidth(width);

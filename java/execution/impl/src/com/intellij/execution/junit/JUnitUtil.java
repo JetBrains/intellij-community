@@ -49,10 +49,10 @@ public class JUnitUtil {
   @NonNls public static final String SUITE_METHOD_NAME = "suite";
   public static final String BEFORE_ANNOTATION_NAME = "org.junit.Before";
   public static final String AFTER_ANNOTATION_NAME = "org.junit.After";
-  private static final String PARAMETRIZED_PARAMETERS_ANNOTATION_NAME = "org.junit.runners.Parameterized.Parameters";
+  public static final String PARAMETRIZED_PARAMETERS_ANNOTATION_NAME = "org.junit.runners.Parameterized.Parameters";
   private static final String AFTER_CLASS_ANNOTATION_NAME = "org.junit.AfterClass";
   private static final String BEFORE_CLASS_ANNOTATION_NAME = "org.junit.BeforeClass";
-  private static final String PARAMETERIZED_CLASS_NAME = "org.junit.runners.Parameterized";
+  public static final String PARAMETERIZED_CLASS_NAME = "org.junit.runners.Parameterized";
 
   public static boolean isSuiteMethod(@NotNull PsiMethod psiMethod) {
     if (!psiMethod.hasModifierProperty(PsiModifier.PUBLIC)) return false;

@@ -14,6 +14,7 @@ import com.intellij.remoteServer.agent.util.CloudGitApplication;
 import com.intellij.remoteServer.configuration.deployment.DeploymentSource;
 import com.intellij.remoteServer.runtime.deployment.DeploymentLogManager;
 import com.intellij.remoteServer.runtime.deployment.DeploymentTask;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.concurrency.Semaphore;
 import git4idea.GitUtil;
 import git4idea.actions.GitInit;
@@ -27,6 +28,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author michael.golubev
@@ -356,6 +359,23 @@ public class CloudGitDeploymentRuntime extends CloudDeploymentRuntime {
       @Override
       public CloudGitApplication compute() {
         return getDeployment().createApplication();
+      }
+    });
+  }
+
+  public CloudGitApplication findApplication4Repository() throws ServerRuntimeException {
+    final List<String> repositoryUrls = new ArrayList<String>();
+    for (GitRemote remote : getRepository().getRemotes()) {
+      for (String url : remote.getUrls()) {
+        repositoryUrls.add(url);
+      }
+    }
+
+    return getAgentTaskExecutor().execute(new Computable<CloudGitApplication>() {
+
+      @Override
+      public CloudGitApplication compute() {
+        return getDeployment().findApplication4Repository(ArrayUtil.toStringArray(repositoryUrls));
       }
     });
   }

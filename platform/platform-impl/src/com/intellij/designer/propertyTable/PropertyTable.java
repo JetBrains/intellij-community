@@ -25,6 +25,7 @@ import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
+import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
@@ -1149,8 +1150,7 @@ public abstract class PropertyTable extends JBTable {
         JComponent component = myEditor.getComponent(getCurrentComponent(), getPropertyContext(), getValue((Property)value), null);
 
         if (component instanceof JComboBox) {
-          component.putClientProperty("JComboBox.isTableCellEditor", Boolean.TRUE);
-          component.putClientProperty("tableCellEditor", this);
+          ComboBox.registerTableCellEditor((JComboBox)component, this);
         }
         else if (component instanceof JCheckBox) {
           component.putClientProperty("JComponent.sizeVariant", UIUtil.isUnderAquaLookAndFeel() ? "small" : null);

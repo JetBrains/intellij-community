@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.xml.XmlToken;
-import com.intellij.util.ReflectionCache;
+import com.intellij.util.ReflectionUtil;
 
 /**
  * Created by IntelliJ IDEA.
@@ -39,7 +39,7 @@ public class XmlTokenTypeFilter implements ElementFilter{
   }
 
   public boolean isClassAcceptable(Class hintClass){
-    return ReflectionCache.isAssignable(XmlToken.class, hintClass);
+    return ReflectionUtil.isAssignable(XmlToken.class, hintClass);
   }
 
   public boolean isAcceptable(Object element, PsiElement context){

@@ -53,7 +53,7 @@ elif [ -n "$JAVA_HOME" -a -x "$JAVA_HOME/bin/java" ]; then
 else
   JAVA_BIN_PATH=`which java`
   if [ -n "$JAVA_BIN_PATH" ]; then
-    if [ "$OS_TYPE" = "FreeBSD" ]; then
+    if [ "$OS_TYPE" = "FreeBSD" -o "$OS_TYPE" = "MidnightBSD" ]; then
       JAVA_LOCATION=`JAVAVM_DRYRUN=yes java | "$GREP" '^JAVA_HOME' | "$CUT" -c11-`
       if [ -x "$JAVA_LOCATION/bin/java" ]; then
         JDK="$JAVA_LOCATION"

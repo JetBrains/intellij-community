@@ -814,7 +814,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   }
 
   @Override
-  public void flushFields(DfaVariableValue[] fields) {
+  public void flushFields() {
     for (EqClass aClass : myEqClasses) {
       if (aClass != null) {
         for (DfaVariableValue value : aClass.getVariables()) {

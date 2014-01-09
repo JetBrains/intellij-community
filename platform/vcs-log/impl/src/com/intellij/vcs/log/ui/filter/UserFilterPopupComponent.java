@@ -15,24 +15,36 @@
  */
 package com.intellij.vcs.log.ui.filter;
 
-import com.intellij.openapi.actionSystem.ActionGroup;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.codeInsight.completion.CompletionResultSet;
+import com.intellij.codeInsight.lookup.LookupElementBuilder;
+import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.fileTypes.FileTypes;
+import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.DumbAwareAction;
-import com.intellij.openapi.ui.popup.JBPopup;
-import com.intellij.openapi.ui.popup.JBPopupAdapter;
-import com.intellij.openapi.ui.popup.LightweightWindowEvent;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.popup.*;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.spellchecker.ui.SpellCheckingEditorCustomization;
+import com.intellij.ui.EditorCustomization;
+import com.intellij.ui.EditorTextField;
+import com.intellij.ui.EditorTextFieldProvider;
+import com.intellij.ui.SoftWrapsEditorCustomization;
 import com.intellij.util.Function;
+import com.intellij.util.TextFieldCompletionProviderDumbAware;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.VcsLogFilter;
 import com.intellij.vcs.log.VcsUser;
 import com.intellij.vcs.log.data.VcsLogDataHolder;
 import com.intellij.vcs.log.data.VcsLogUiProperties;
 import com.intellij.vcs.log.data.VcsLogUserFilter;
-import com.intellij.vcs.log.ui.PopupWithTextFieldWithAutoCompletion;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
+import javax.swing.*;
+import javax.swing.border.CompoundBorder;
+import java.awt.*;
+import java.util.*;
 import java.util.List;
 
 /**
@@ -41,8 +53,12 @@ import java.util.List;
 class UserFilterPopupComponent extends FilterPopupComponent {
 
   private static final String ME = "me";
+  private static final char[] USERS_SEPARATORS = { ',', '|', '\n' };
+
   private final VcsLogDataHolder myDataHolder;
   private final VcsLogUiProperties myUiProperties;
+
+  @Nullable private Collection<String> mySelectedUsers;
 
   UserFilterPopupComponent(VcsLogClassicFilterUi filterUi, VcsLogDataHolder dataHolder, VcsLogUiProperties uiProperties) {
     super(filterUi, "User");
@@ -52,15 +68,22 @@ class UserFilterPopupComponent extends FilterPopupComponent {
 
   @Override
   protected ActionGroup createActionGroup() {
-    DefaultActionGroup group = new DefaultActionGroup();
-    group.add(createAllAction());
-    group.add(new SetValueAction(ME, this));
+    AnAction allAction = new DumbAwareAction(ALL) {
+      @Override
+      public void actionPerformed(AnActionEvent e) {
+        apply(null, ALL, ALL);
+      }
+    };
 
-    List<String> recentlyFilteredUsers = myUiProperties.getRecentlyFilteredUsers();
+    DefaultActionGroup group = new DefaultActionGroup();
+    group.add(allAction);
+    group.add(new UserAction(Collections.singleton(ME)));
+
+    List<List<String>> recentlyFilteredUsers = myUiProperties.getRecentlyFilteredUserGroups();
     if (!recentlyFilteredUsers.isEmpty()) {
       group.addSeparator("Recently searched");
-      for (String recentUser : recentlyFilteredUsers) {
-        group.add(new SetValueAction(recentUser, this));
+      for (List<String> recentGroup : recentlyFilteredUsers) {
+        group.add(new UserAction(recentGroup));
       }
     }
     group.addSeparator();
@@ -70,16 +93,50 @@ class UserFilterPopupComponent extends FilterPopupComponent {
 
   @Nullable
   @Override
-  protected VcsLogFilter getFilter() {
-    String value = getValue();
-    if (value == ALL) {
+  protected Collection<VcsLogFilter> getFilters() {
+    if (mySelectedUsers == null) {
       return null;
     }
-    if (value == ME) {
-      return new VcsLogUserFilter.Me(myDataHolder.getCurrentUser());
+    myUiProperties.addRecentlyFilteredUserGroup(new ArrayList<String>(mySelectedUsers));
+    return ContainerUtil.map(mySelectedUsers, new Function<String, VcsLogFilter>() {
+      @Override
+      public VcsLogFilter fun(String name) {
+        return name == ME ? new VcsLogUserFilter.Me(myDataHolder.getCurrentUser()) : new VcsLogUserFilter.ByName(name);
+      }
+    });
+  }
+
+  private void apply(Collection<String> users, String text, String tooltip) {
+    mySelectedUsers = users;
+    applyFilters();
+    setValue(text, tooltip);
+  }
+
+  @NotNull
+  private static String displayableText(@NotNull Collection<String> users) {
+    if (users.size() == 1) {
+      return users.iterator().next();
     }
-    myUiProperties.addRecentlyFilteredUser(value);
-    return new VcsLogUserFilter.ByName(value);
+    return StringUtil.shortenTextWithEllipsis(StringUtil.join(users, "|"), 30, 0, true);
+  }
+
+  @NotNull
+  private static String tooltip(@NotNull Collection<String> users) {
+    return StringUtil.join(users, ", ");
+  }
+
+  private class UserAction extends DumbAwareAction {
+    @NotNull private final Collection<String> myUsers;
+
+    UserAction(@NotNull Collection<String> users) {
+      super(displayableText(users), tooltip(users), null);
+      myUsers = users;
+    }
+
+    @Override
+    public void actionPerformed(AnActionEvent e) {
+      apply(myUsers, displayableText(myUsers), tooltip(myUsers));
+    }
   }
 
   private class SelectUserAction extends DumbAwareAction {
@@ -90,6 +147,11 @@ class UserFilterPopupComponent extends FilterPopupComponent {
 
     @Override
     public void actionPerformed(AnActionEvent e) {
+      Project project = e.getProject();
+      if (project == null) {
+        return;
+      }
+
       Collection<String> users = ContainerUtil.map(myDataHolder.getAllUsers(), new Function<VcsUser, String>() {
         @Override
         public String fun(VcsUser user) {
@@ -97,21 +159,110 @@ class UserFilterPopupComponent extends FilterPopupComponent {
         }
       });
 
-      final PopupWithTextFieldWithAutoCompletion textField = new PopupWithTextFieldWithAutoCompletion(e.getProject(), users);
-      JBPopup popup = textField.createPopup();
-
+      final MultilinePopupBuilder popupBuilder = new MultilinePopupBuilder(project, users);
+      JBPopup popup = popupBuilder.createPopup();
       popup.addListener(new JBPopupAdapter() {
         @Override
         public void onClosed(LightweightWindowEvent event) {
           if (event.isOk()) {
-            String user = textField.getText();
-            setValue(user);
-            applyFilters();
+            final String userText = popupBuilder.getText().trim();
+            Collection<String> selectedUsers = ContainerUtil.toCollection(StringUtil.tokenize(userText, new String(USERS_SEPARATORS)));
+            if (selectedUsers.isEmpty()) {
+              apply(null, ALL, ALL);
+            }
+            else {
+              apply(selectedUsers, displayableText(selectedUsers), tooltip(selectedUsers));
+            }
           }
         }
       });
       popup.showUnderneathOf(UserFilterPopupComponent.this);
     }
+  }
 
+  private static class MultilinePopupBuilder {
+    private final EditorTextField myTextField;
+
+    MultilinePopupBuilder(@NotNull Project project, @NotNull final Collection<String> users) {
+      myTextField = createTextField(project);
+      new UsersCompletionProvider(users).apply(myTextField);
+    }
+
+    @NotNull
+    private static EditorTextField createTextField(@NotNull Project project) {
+      final EditorTextFieldProvider service = ServiceManager.getService(project, EditorTextFieldProvider.class);
+      List<EditorCustomization> features = Arrays.<EditorCustomization>asList(SoftWrapsEditorCustomization.ENABLED,
+                                                                              SpellCheckingEditorCustomization.DISABLED);
+      EditorTextField textField = service.getEditorField(FileTypes.PLAIN_TEXT.getLanguage(), project, features);
+      textField.setBorder(new CompoundBorder(BorderFactory.createEmptyBorder(2, 2, 2, 2), textField.getBorder()));
+      textField.setOneLineMode(false);
+      return textField;
+    }
+
+    @NotNull
+    JBPopup createPopup() {
+      JPanel panel = new JPanel(new BorderLayout());
+      panel.add(myTextField, BorderLayout.CENTER);
+      ComponentPopupBuilder builder = JBPopupFactory.getInstance().createComponentPopupBuilder(panel, myTextField)
+        .setCancelOnClickOutside(true)
+        .setAdText(KeymapUtil.getShortcutsText(CommonShortcuts.CTRL_ENTER.getShortcuts()) + " to finish")
+        .setMovable(true)
+        .setRequestFocus(true)
+        .setResizable(true)
+        .setMayBeParent(true);
+
+      final JBPopup popup = builder.createPopup();
+      popup.setMinimumSize(new Dimension(200, 90));
+      AnAction okAction = new DumbAwareAction() {
+        @Override
+        public void actionPerformed(AnActionEvent e) {
+          unregisterCustomShortcutSet(popup.getContent());
+          popup.closeOk(e.getInputEvent());
+        }
+      };
+      okAction.registerCustomShortcutSet(CommonShortcuts.CTRL_ENTER, popup.getContent());
+      return popup;
+    }
+
+    String getText() {
+      return myTextField.getText();
+    }
+
+    private static class UsersCompletionProvider extends TextFieldCompletionProviderDumbAware {
+      @NotNull private final Collection<String> myUsers;
+
+      UsersCompletionProvider(@NotNull Collection<String> users) {
+        super(true);
+        myUsers = users;
+      }
+
+      @NotNull
+      @Override
+      protected String getPrefix(@NotNull String currentTextPrefix) {
+        final int separatorPosition = lastSeparatorPosition(currentTextPrefix);
+        return separatorPosition == -1 ? currentTextPrefix : currentTextPrefix.substring(separatorPosition + 1).trim();
+      }
+
+      private static int lastSeparatorPosition(@NotNull String text) {
+        int lastPosition = -1;
+        for (char separator : USERS_SEPARATORS) {
+          int lio = text.lastIndexOf(separator);
+          if (lio > lastPosition) {
+            lastPosition = lio;
+          }
+        }
+        return lastPosition;
+      }
+
+      @Override
+      protected void addCompletionVariants(@NotNull String text, int offset, @NotNull String prefix,
+                                           @NotNull CompletionResultSet result) {
+        result.addLookupAdvertisement("Select one or more users separated with comma, | or new lines");
+        for (String completionVariant : myUsers) {
+          final LookupElementBuilder element = LookupElementBuilder.create(completionVariant);
+          result.addElement(element.withLookupString(completionVariant.toLowerCase()));
+        }
+      }
+    }
   }
 }

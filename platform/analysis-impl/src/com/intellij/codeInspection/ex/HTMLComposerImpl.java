@@ -151,12 +151,16 @@ public abstract class HTMLComposerImpl extends HTMLComposer {
     while (!(refEntity instanceof RefProject)) {
       if (qName.length() > 0) qName = "." + qName;
 
-      String name = refEntity.getName();
+      String name = null;
       if (refEntity instanceof RefElement) {
         final HTMLComposerExtension extension = getLanguageExtension((RefElement)refEntity);
         if (extension != null) {
           name = extension.getQualifiedName(refEntity);
         }
+      }
+
+      if (name == null) {
+        name = refEntity.getName();
       }
 
       qName = name + qName;

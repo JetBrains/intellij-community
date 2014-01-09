@@ -18,6 +18,7 @@ package com.intellij.execution.junit2;
 
 import com.intellij.execution.Location;
 import com.intellij.execution.junit2.events.*;
+import com.intellij.execution.junit2.info.MethodLocation;
 import com.intellij.execution.junit2.info.TestInfo;
 import com.intellij.execution.junit2.states.IgnoredState;
 import com.intellij.execution.junit2.states.Statistics;
@@ -28,6 +29,7 @@ import com.intellij.execution.testframework.TestConsoleProperties;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.Navigatable;
+import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.rt.execution.junit.states.PoolOfTestStates;
 import org.jetbrains.annotations.NotNull;
@@ -131,7 +133,33 @@ public class TestProxy extends AbstractTestProxy {
   }
 
   public Location getLocation(final Project project, GlobalSearchScope searchScope) {
-    return getInfo().getLocation(project, searchScope);
+    final Location location = getInfo().getLocation(project, searchScope);
+    if (location == null) {
+      return checkParentParameterized(project, searchScope);
+    } else {
+      Location parentLocation = getParent().getLocation(project, searchScope);
+      if (parentLocation instanceof PsiMemberParameterizedLocation) {
+        return new PsiMemberParameterizedLocation(project, 
+                                                  location.getPsiElement(),
+                                                  location instanceof MethodLocation ? ((MethodLocation)location).getContainingClass() : null,
+                                                  ((PsiMemberParameterizedLocation)parentLocation).getParamSetName());
+      }
+    }
+    return location;
+  }
+
+  private Location checkParentParameterized(Project project, GlobalSearchScope searchScope) {
+    final TestProxy parent = getParent();
+    if (parent != null) {
+      final Location parentLocation = parent.getLocation(project, searchScope);
+      if (parentLocation != null) {
+        final PsiElement parentElement = parentLocation.getPsiElement();
+        if (parentElement instanceof PsiClass) {
+          return PsiMemberParameterizedLocation.getParameterizedLocation((PsiClass)parentElement, getInfo().getName());
+        }
+      }
+    }
+    return null;
   }
 
   public boolean isLeaf() {

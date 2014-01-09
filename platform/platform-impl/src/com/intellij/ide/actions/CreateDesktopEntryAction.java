@@ -17,7 +17,6 @@ package com.intellij.ide.actions;
 
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.util.ExecUtil;
-import com.intellij.icons.AllIcons;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
@@ -137,7 +136,7 @@ public class CreateDesktopEntryAction extends DumbAwareAction {
     String name = ApplicationNamesInfo.getInstance().getFullProductName();
     if (PlatformUtils.isCommunity()) name += " Community Edition";
 
-    final String iconPath = AllIcons.findIcon(binPath);
+    final String iconPath = AppUIUtil.findIcon(binPath);
     if (iconPath == null) {
       throw new RuntimeException(ApplicationBundle.message("desktop.entry.icon.missing", binPath));
     }

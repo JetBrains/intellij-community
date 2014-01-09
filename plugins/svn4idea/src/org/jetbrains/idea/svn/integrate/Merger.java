@@ -128,7 +128,7 @@ public class Merger implements IMerger {
     SvnTarget source = SvnTarget.fromURL(myCurrentBranchUrl);
     MergeClient client = myVcs.getFactory(myTarget).createMergeClient();
 
-    client.merge(source, createRange(), myTarget, SVNDepth.INFINITY, mySvnConfig.MERGE_DRY_RUN, isRecordOnly(), true,
+    client.merge(source, createRange(), myTarget, SVNDepth.INFINITY, mySvnConfig.isMergeDryRun(), isRecordOnly(), true,
                  mySvnConfig.getMergeOptions(), myHandler);
   }
 

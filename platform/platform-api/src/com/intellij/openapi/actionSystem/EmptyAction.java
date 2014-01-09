@@ -111,4 +111,11 @@ public class EmptyAction extends AnAction {
       }
     };
   }
+
+  public static class Group extends DefaultActionGroup {
+    public Group() {
+      super();
+      getTemplatePresentation().setEnabledAndVisible(false);
+    }
+  }
 }

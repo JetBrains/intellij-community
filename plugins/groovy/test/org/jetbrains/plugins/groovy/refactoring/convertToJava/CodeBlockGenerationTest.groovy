@@ -198,4 +198,6 @@ public final class Matcher {
   void testInWitchClassCheck() { doTest() }
 
   void testSwitch() { doTest() }
+
+  void testPropSelection() { doTest() }
 }

@@ -397,8 +397,7 @@ public class SMTestProxy extends AbstractTestProxy {
     fireOnNewPrintable(myState);
   }
 
-  public void setTestIgnored(@NotNull final String ignoreComment,
-                             @Nullable final String stackTrace) {
+  public void setTestIgnored(@Nullable String ignoreComment, @Nullable String stackTrace) {
     setStacktraceIfNotSet(stackTrace);
     myState = new TestIgnoredState(ignoreComment, stackTrace);
     fireOnNewPrintable(myState);

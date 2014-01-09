@@ -75,10 +75,6 @@ public class LivePreview extends DocumentAdapter implements SearchResults.Search
     updateInSelectionHighlighters();
   }
 
-  public void supressUpdate() {
-    mySuppressedUpdate = true;
-  }
-
   public void inSmartUpdate() {
     myInSmartUpdate = true;
   }
@@ -549,22 +545,12 @@ public class LivePreview extends DocumentAdapter implements SearchResults.Search
 
       if (startOffset >= myEditor.getDocument().getTextLength()) {
         if (!object.isDisposed()) {
-          ApplicationManager.getApplication().invokeLater(new Runnable() {
-            @Override
-            public void run() {
-              object.hide();
-            }
-          });
+          requestBalloonHiding(object);
         }
         return null;
       }
       if (!SearchResults.insideVisibleArea(myEditor, cur)) {
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            object.hide();
-          }
-        });
+        requestBalloonHiding(object);
 
         VisibleAreaListener visibleAreaListener = new VisibleAreaListener() {
           @Override
@@ -590,5 +576,14 @@ public class LivePreview extends DocumentAdapter implements SearchResults.Search
 
       return new RelativePoint(myEditor.getContentComponent(), point);
     }
+  }
+
+  private void requestBalloonHiding(final Balloon object) {
+    ApplicationManager.getApplication().invokeLater(new Runnable() {
+      @Override
+      public void run() {
+        object.hide();
+      }
+    });
   }
 }

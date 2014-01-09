@@ -323,6 +323,10 @@ public class VcsUtil {
     return getFilePath(new File(path), isDirectory);
   }
 
+  public static FilePath getFilePathOnNonLocal(String path, boolean isDirectory) {
+    return VcsContextFactory.SERVICE.getInstance().createFilePathOnNonLocal(path, isDirectory);
+  }
+
   public static FilePath getFilePath(File file, boolean isDirectory) {
     return VcsContextFactory.SERVICE.getInstance().createFilePathOn(file, isDirectory);
   }

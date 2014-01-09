@@ -70,6 +70,8 @@ public class HtmlUtil {
   @NonNls private static final String CHARSET_PREFIX = CHARSET+"=";
   @NonNls private static final String HTML5_DATA_ATTR_PREFIX = "data-";
 
+  public static final String SCRIPT_TAG_NAME = "script";
+
   public static final String[] CONTENT_TYPES =
     {"application/activemessage", "application/andrew-inset", "application/applefile", "application/atomicmail", "application/dca-rft",
       "application/dec-dx", "application/mac-binhex40"
@@ -488,7 +490,7 @@ public class HtmlUtil {
         public void endTag(final CharSequence localName, final String namespace, final int startoffset, final int endoffset) {
           @NonNls final String name = localName.toString().toLowerCase();
           if ("meta".equals(name) && (metHttpEquiv || metHttml5Charset) && contentAttributeValue != null) {
-            String charsetName = null;
+            String charsetName;
             if (metHttpEquiv) {
               int start = contentAttributeValue.indexOf(CHARSET_PREFIX);
               if (start == -1) return;
@@ -605,5 +607,9 @@ public class HtmlUtil {
       return language == XHTMLLanguage.INSTANCE;
     }
     return false;
+  }
+
+  public static boolean isScriptTag(@Nullable XmlTag tag) {
+    return tag != null && tag.getLocalName().equalsIgnoreCase(SCRIPT_TAG_NAME);
   }
 }

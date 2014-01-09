@@ -24,7 +24,7 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 
-public class RemoveRedundantUncheckedSuppressionTest extends LightQuickFixTestCase {
+public class RemoveRedundantUncheckedSuppressionTest extends LightQuickFixParameterizedTestCase {
   @NotNull
   @Override
   protected LocalInspectionTool[] configureLocalInspectionTools() {

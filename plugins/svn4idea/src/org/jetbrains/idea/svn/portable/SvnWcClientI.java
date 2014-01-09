@@ -15,6 +15,8 @@
  */
 package org.jetbrains.idea.svn.portable;
 
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.tmatesoft.svn.core.*;
 import org.tmatesoft.svn.core.wc.*;
 
@@ -38,4 +40,6 @@ public interface SvnWcClientI extends SvnMarkerInterface {
           ISVNInfoHandler handler) throws SVNException;
   SVNInfo doInfo(File path, SVNRevision revision) throws SVNException;
   SVNInfo doInfo(SVNURL url, SVNRevision pegRevision, SVNRevision revision) throws SVNException;
+
+  void doInfo(@NotNull Collection<File> paths, @Nullable ISVNInfoHandler handler) throws SVNException;
 }

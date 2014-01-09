@@ -49,11 +49,7 @@ public class PluginTable extends JBTable {
       final ColumnInfo columnInfo = model.getColumnInfos()[i];
       column.setCellEditor(columnInfo.getEditor(null));
       if (columnInfo.getColumnClass() == Boolean.class) {
-        final int width = new JCheckBox().getPreferredSize().width;
-        column.setWidth(width);
-        column.setPreferredWidth(width);
-        column.setMaxWidth(width);
-        column.setMinWidth(width);
+        TableUtil.setupCheckboxColumn(column);
       }
     }
 

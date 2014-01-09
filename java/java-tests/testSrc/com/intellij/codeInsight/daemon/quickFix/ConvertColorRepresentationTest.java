@@ -15,15 +15,22 @@
  */
 package com.intellij.codeInsight.daemon.quickFix;
 
+import com.intellij.pom.java.LanguageLevel;
+
 /**
  * @author Danila Ponomarenko
  */
-public class ConvertColorRepresentationTest extends LightQuickFix15TestCase {
+public class ConvertColorRepresentationTest extends LightQuickFixParameterizedTestCase {
 
   public void test() throws Exception { doAllTests(); }
 
   @Override
   protected String getBasePath() {
     return "/codeInsight/daemonCodeAnalyzer/quickFix/convertColorRepresentation";
+  }
+
+  @Override
+  protected LanguageLevel getLanguageLevel() {
+    return LanguageLevel.JDK_1_5;
   }
 }

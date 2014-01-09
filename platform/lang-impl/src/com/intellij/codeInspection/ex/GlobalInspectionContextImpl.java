@@ -335,6 +335,11 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
       public void visitFile(final PsiFile file) {
         final VirtualFile virtualFile = file.getVirtualFile();
         if (virtualFile == null) return;
+
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("Running local inspections on " + virtualFile.getPath());
+        }
+        
         String url = ProjectUtilCore.displayUrlRelativeToProject(virtualFile, virtualFile.getPresentableUrl(), getProject(), true, false);
         incrementJobDoneAmount(getStdJobDescriptors().LOCAL_ANALYSIS, url);
         if (SingleRootFileViewProvider.isTooLargeForIntelligence(virtualFile)) return;

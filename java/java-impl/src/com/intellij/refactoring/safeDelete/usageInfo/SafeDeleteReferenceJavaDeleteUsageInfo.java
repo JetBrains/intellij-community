@@ -15,9 +15,16 @@
  */
 package com.intellij.refactoring.safeDelete.usageInfo;
 
+import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpressionStatement;
+import com.intellij.psi.PsiStatement;
+import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
+import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.refactoring.safeDelete.ImportSearcher;
+import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
 
 /**
@@ -48,7 +55,12 @@ public class SafeDeleteReferenceJavaDeleteUsageInfo extends SafeDeleteReferenceS
         importStatement.delete();
       }
       else {
-        element.delete();
+        if (element instanceof PsiExpressionStatement && RefactoringUtil.isLoopOrIf(element.getParent())) {
+          final PsiStatement emptyTest = JavaPsiFacade.getInstance(getProject()).getElementFactory().createStatementFromText(";", null);
+          element.replace(emptyTest);
+        } else {
+          element.delete();
+        }
       }
     }
   }

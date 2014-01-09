@@ -171,6 +171,7 @@ public class GenerateDelegateHandler implements LanguageCodeInsightActionHandler
     method.getBody().add(stmt);
 
     for (PsiAnnotation annotation : methodCandidate.getElement().getModifierList().getAnnotations()) {
+      if (SuppressWarnings.class.getName().equals(annotation.getQualifiedName())) continue;
       method.getModifierList().add(annotation.copy());
     }
 

@@ -129,6 +129,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
     myIconOnTheRight = iconOnTheRight;
   }
 
+  @NotNull
   public final SimpleColoredComponent append(@NotNull String fragment) {
     append(fragment, SimpleTextAttributes.REGULAR_ATTRIBUTES);
     return this;
@@ -318,12 +319,14 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
   }
 
   @Override
+  @NotNull
   public Dimension getPreferredSize() {
     return computePreferredSize(false);
 
   }
 
   @Override
+  @NotNull
   public Dimension getMinimumSize() {
     return computePreferredSize(false);
   }
@@ -336,6 +339,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
     return null;
   }
 
+  @NotNull
   public final synchronized Dimension computePreferredSize(final boolean mainTextOnly) {
     // Calculate width
     int width = myIpad.left;
@@ -460,6 +464,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
     return -1;
   }
 
+  @NotNull
   protected JLabel formatToLabel(@NotNull JLabel label) {
     label.setIcon(myIcon);
 
@@ -578,7 +583,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
     g.fillRect(x, 0, width, height);
   }
 
-  protected void doPaintIcon(Graphics2D g, Icon icon, int offset) {
+  protected void doPaintIcon(@NotNull Graphics2D g, @NotNull Icon icon, int offset) {
     final Container parent = getParent();
     Color iconBackgroundColor = null;
     if ((isOpaque() || isIconOpaque()) && !isTransparentIconBackground()) {
@@ -764,11 +769,11 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
     return false;
   }
 
-  protected void paintIcon(Graphics g, Icon icon, int offset) {
+  protected void paintIcon(@NotNull Graphics g, @NotNull Icon icon, int offset) {
     icon.paintIcon(this, g, offset, (getHeight() - icon.getIconHeight()) / 2);
   }
 
-  protected void applyAdditionalHints(final Graphics g) {
+  protected void applyAdditionalHints(@NotNull Graphics g) {
   }
 
   @Override
@@ -785,7 +790,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
     myTransparentIconBackground = transparentIconBackground;
   }
 
-  public static int getTextBaseLine(FontMetrics metrics, final int height) {
+  public static int getTextBaseLine(@NotNull FontMetrics metrics, final int height) {
     return (height - metrics.getHeight()) / 2 + metrics.getAscent();
   }
 
@@ -806,6 +811,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
     }
   }
 
+  @NotNull
   private String logSwingPath() {
     //noinspection HardCodedStringLiteral
     final StringBuilder buffer = new StringBuilder("Components hierarchy:\n");
@@ -852,6 +858,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
     }
   }
 
+  @NotNull
   public CharSequence getCharSequence(boolean mainOnly) {
     List<String> fragments = mainOnly && myMainTextLastIndex > -1 && myMainTextLastIndex + 1 < myFragments.size()?
       myFragments.subList(0, myMainTextLastIndex + 1) : myFragments;

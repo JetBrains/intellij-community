@@ -29,6 +29,10 @@ public class UnnecessarilyQualifiedStaticallyImportedElementInspectionTest
     doTest(getTestName(true));
   }
 
+  public void testMethodRef() throws Exception {
+    doTest(getTestName(true));
+  }
+
   private void doTest(String testName) throws Exception {
     doTest("com/siyeh/igtest/style/unnecessarily_qualified_statically_imported_element/" + testName,
            new UnnecessarilyQualifiedStaticallyImportedElementInspection());

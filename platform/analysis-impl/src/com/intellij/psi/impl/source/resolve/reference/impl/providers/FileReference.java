@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -189,7 +190,11 @@ public class FileReference implements PsiFileReference, FileReferenceOwner, PsiP
           context = ((PackagePrefixFileSystemItem)context).getDirectory();
         }
 
-        if (context instanceof PsiDirectory && caseSensitivityApplies((PsiDirectory)context, caseSensitive)) {
+        if (context.getParent() == null && FileUtil.namesEqual(decoded, context.getName())) {
+          // match filesystem roots
+          result.add(new PsiElementResolveResult(getOriginalFile(context)));
+        }
+        else if (context instanceof PsiDirectory && caseSensitivityApplies((PsiDirectory)context, caseSensitive)) {
           // optimization: do not load all children into VFS
           PsiDirectory directory = (PsiDirectory)context;
           PsiFileSystemItem child = directory.findFile(decoded);

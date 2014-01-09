@@ -45,7 +45,6 @@ import java.net.URL;
  * @author cdr
  */
 public class LineTooltipRenderer extends ComparableObject.Impl implements TooltipRenderer {
-  @NonNls protected static final String BORDER_LINE = "<hr size=1 noshade>";
 
   @NonNls protected String myText;
 
@@ -323,7 +322,7 @@ public class LineTooltipRenderer extends ComparableObject.Impl implements Toolti
     else {
       String html1 = UIUtil.getHtmlBody(myText);
       String html2 = UIUtil.getHtmlBody(text);
-      newBody = html1 + BORDER_LINE + html2;
+      newBody = html1 + UIUtil.BORDER_LINE + html2;
     }
     myText = "<html><body>" + newBody + "</body></html>";
   }

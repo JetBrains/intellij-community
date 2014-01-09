@@ -35,6 +35,7 @@ import com.intellij.openapi.vfs.VirtualFileSystem;
 import com.intellij.util.PathUtil;
 import com.intellij.util.io.UrlConnectionUtil;
 import com.intellij.util.io.ZipUtil;
+import com.intellij.util.net.HttpConfigurable;
 import com.intellij.util.net.NetUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -262,7 +263,7 @@ public class PluginDownloader {
   }
 
   private URLConnection openConnection(final String url) throws IOException {
-    final URLConnection connection = new URL(url).openConnection();
+    final URLConnection connection = HttpConfigurable.getInstance().openConnection(url);
     if (connection instanceof HttpURLConnection) {
       final int responseCode = ((HttpURLConnection)connection).getResponseCode();
       if (responseCode != HttpURLConnection.HTTP_OK) {

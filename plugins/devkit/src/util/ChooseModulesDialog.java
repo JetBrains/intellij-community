@@ -27,6 +27,7 @@ import com.intellij.psi.xml.XmlFile;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.TableUtil;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.table.JBTable;
 import org.jetbrains.annotations.NonNls;
@@ -98,7 +99,7 @@ public class ChooseModulesDialog extends DialogWrapper {
     myView.setShowGrid(false);
     myView.setTableHeader(null);
     myView.setIntercellSpacing(new Dimension(0, 0));
-    myView.getColumnModel().getColumn(0).setMaxWidth(new JCheckBox().getPreferredSize().width);
+    TableUtil.setupCheckboxColumn(myView, 0);
     myView.getModel().addTableModelListener(new TableModelListener() {
       public void tableChanged(TableModelEvent e) {
         getOKAction().setEnabled(getSelectedModules().size() > 0);

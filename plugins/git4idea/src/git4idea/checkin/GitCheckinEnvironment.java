@@ -43,10 +43,12 @@ import com.intellij.vcsUtil.VcsFileUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import git4idea.GitPlatformFacade;
 import git4idea.GitUtil;
+import git4idea.GitVcs;
 import git4idea.commands.GitCommand;
 import git4idea.commands.GitSimpleHandler;
 import git4idea.config.GitConfigUtil;
 import git4idea.config.GitVcsSettings;
+import git4idea.config.GitVersionSpecialty;
 import git4idea.history.NewGitUsersComponent;
 import git4idea.i18n.GitBundle;
 import git4idea.push.GitPusher;
@@ -107,7 +109,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
 
   @Nullable
   public String getDefaultMessageFor(FilePath[] filesToCheckin) {
-    StringBuilder rc = new StringBuilder();
+    LinkedHashSet<String> messages = ContainerUtil.newLinkedHashSet();
     for (VirtualFile root : GitUtil.gitRoots(Arrays.asList(filesToCheckin))) {
       VirtualFile mergeMsg = root.findFileByRelativePath(GitRepositoryFiles.GIT_MERGE_MSG);
       VirtualFile squashMsg = root.findFileByRelativePath(GitRepositoryFiles.GIT_SQUASH_MSG);
@@ -120,13 +122,13 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
         String encoding = GitConfigUtil.getCommitEncoding(myProject, root);
 
         if (mergeMsg != null) {
-          rc.append(loadMessage(mergeMsg, encoding));
+          messages.add(loadMessage(mergeMsg, encoding));
         }
         else if (squashMsg != null) {
-          rc.append(loadMessage(squashMsg, encoding));
+          messages.add(loadMessage(squashMsg, encoding));
         }
         else {
-          rc.append(loadMessage(normalMsg, encoding));
+          messages.add(loadMessage(normalMsg, encoding));
         }
       }
       catch (IOException e) {
@@ -135,14 +137,11 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
         }
       }
     }
-    if (rc.length() != 0) {
-      return rc.toString();
-    }
-    return null;
+    return joinOrNull(messages);
   }
 
-  private static char[] loadMessage(@NotNull VirtualFile messageFile, @NotNull String encoding) throws IOException {
-    return FileUtil.loadFileText(new File(messageFile.getPath()), encoding);
+  private static String loadMessage(@NotNull VirtualFile messageFile, @NotNull String encoding) throws IOException {
+    return FileUtil.loadFile(new File(messageFile.getPath()), encoding);
   }
 
   public String getHelpId() {
@@ -603,6 +602,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
    * Checkin options for git
    */
   private class GitCheckinOptions implements CheckinChangeListSpecificComponent {
+    private final GitVcs myVcs;
     /**
      * A container panel
      */
@@ -628,6 +628,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
      * @param panel
      */
     GitCheckinOptions(@NotNull final Project project, @NotNull CheckinProjectPanel panel) {
+      myVcs = GitVcs.getInstance(project);
       myCheckinPanel = panel;
       myPanel = new JPanel(new GridBagLayout());
       final Insets insets = new Insets(2, 2, 2, 2);
@@ -735,30 +736,31 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
     private String getLastCommitMessage() throws VcsException {
       Set<VirtualFile> roots = GitUtil.gitRoots(getSelectedFilePaths());
       final Ref<VcsException> exception = Ref.create();
-      String joined = StringUtil.join(roots, new Function<VirtualFile, String>() {
-        @Override
-        public String fun(VirtualFile root) {
-          try {
-            return getLastCommitMessage(root);
-          }
-          catch (VcsException e) {
-            exception.set(e);
-            return null;
-          }
+      LinkedHashSet<String> messages = ContainerUtil.newLinkedHashSet();
+      for (VirtualFile root : roots) {
+        String message = getLastCommitMessage(root);
+        if (message != null) {
+          messages.add(message);
         }
-      }, "\n");
+      }
       if (!exception.isNull()) {
         throw exception.get();
       }
-      return joined;
+      return joinOrNull(messages);
     }
 
     @Nullable
     private String getLastCommitMessage(@NotNull VirtualFile root) throws VcsException {
       GitSimpleHandler h = new GitSimpleHandler(myProject, root, GitCommand.LOG);
       h.addParameters("--max-count=1");
-      // only message: subject + body; "%-b" means that preceding line-feeds will be deleted if the body is empty
-      h.addParameters("--pretty=%s%n%n%-b");
+      if (GitVersionSpecialty.STARTED_USING_RAW_BODY_IN_FORMAT.existsIn(myVcs.getVersion())) {
+        h.addParameters("--pretty=%B");
+      }
+      else {
+        // only message: subject + body; "%-b" means that preceding line-feeds will be deleted if the body is empty
+        // %s strips newlines from subject; there is no way to work around it before 1.7.2 with %B (unless parsing some fixed format)
+        h.addParameters("--pretty=%s%n%n%-b");
+      }
       return h.run();
     }
 
@@ -826,6 +828,12 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
         myAuthorDate = new Date(commit.getTime());
       }
     }
+  }
+
+  @Nullable
+  private static String joinOrNull(@NotNull Collection<String> messages) {
+    String joined = StringUtil.join(messages, "\n");
+    return StringUtil.isEmptyOrSpaces(joined) ? null : joined;
   }
 
   public void setNextCommitIsPushed(Boolean nextCommitIsPushed) {

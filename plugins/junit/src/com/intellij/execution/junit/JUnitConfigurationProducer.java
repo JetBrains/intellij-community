@@ -23,6 +23,7 @@ import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.actions.ConfigurationFromContext;
 import com.intellij.execution.configurations.RunConfiguration;
+import com.intellij.execution.junit2.PsiMemberParameterizedLocation;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
@@ -44,7 +45,12 @@ public abstract class JUnitConfigurationProducer extends JavaRunConfigurationPro
       return false;
     }
     final RunConfiguration predefinedConfiguration = context.getOriginalConfiguration(JUnitConfigurationType.getInstance());
-    Location location = JavaExecutionUtil.stepIntoSingleClass(context.getLocation());
+    final Location contextLocation = context.getLocation();
+
+    String paramSetName = contextLocation instanceof PsiMemberParameterizedLocation
+                          ? ((PsiMemberParameterizedLocation)contextLocation).getParamSetName() : null;
+    assert contextLocation != null;
+    Location location = JavaExecutionUtil.stepIntoSingleClass(contextLocation);
     final PsiElement element = location.getPsiElement();
     final PsiClass testClass = JUnitUtil.getTestClass(element);
     final PsiMethod testMethod = JUnitUtil.getTestMethod(element, false);
@@ -65,6 +71,7 @@ public abstract class JUnitConfigurationProducer extends JavaRunConfigurationPro
     final String vmParameters = predefinedConfiguration instanceof JUnitConfiguration ? ((JUnitConfiguration)predefinedConfiguration).getVMParameters() : null;
 
     if (vmParameters != null && !Comparing.strEqual(vmParameters, unitConfiguration.getVMParameters())) return false;
+    if (paramSetName != null && !Comparing.strEqual(paramSetName, unitConfiguration.getProgramParameters())) return false;
     final TestObject testobject = unitConfiguration.getTestObject();
     if (testobject != null) {
       if (testobject.isConfiguredByElement(unitConfiguration, testClass, testMethod, testPackage, testDir)) {

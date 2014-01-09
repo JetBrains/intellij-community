@@ -49,16 +49,15 @@ public class DomElementClassIndex extends StringStubIndexExtension<PsiFile> {
 
     final String clazzName = clazz.getName();
     final int virtualFileId = ((VirtualFileWithId)file).getId();
-    CommonProcessors.FindFirstProcessor<String> processor =
-      new CommonProcessors.FindFirstProcessor<String>() {
-        @Override
-        protected boolean accept(String s) {
-          return clazzName.equals(s);
-        }
-      };
+    //CommonProcessors.FindFirstProcessor<String> processor =
+    //  new CommonProcessors.FindFirstProcessor<String>() {
+    //    @Override
+    //    protected boolean accept(String s) {
+    //      return clazzName.equals(s);
+    //    }
+    //  };
 
 
-    /*
     CommonProcessors.FindFirstProcessor<? super PsiFile> processor =
       new CommonProcessors.FindFirstProcessor<PsiFile>();
     StubIndex.getInstance().process(KEY, clazzName,
@@ -72,16 +71,16 @@ public class DomElementClassIndex extends StringStubIndexExtension<PsiFile> {
                                     },
                                     processor
     );
-    */
-    StubIndex.getInstance().processAllKeys(KEY, processor,
-                                           GlobalSearchScope.fileScope(domFileElement.getFile()),
-                                           new IdFilter() {
-                                             @Override
-                                             public boolean containsFileId(int id) {
-                                               return id == virtualFileId;
-                                             }
-                                           }
-    );
+
+    //StubIndex.getInstance().processAllKeys(KEY, processor,
+    //                                       GlobalSearchScope.fileScope(domFileElement.getFile()),
+    //                                       new IdFilter() {
+    //                                         @Override
+    //                                         public boolean containsFileId(int id) {
+    //                                           return id == virtualFileId;
+    //                                         }
+    //                                       }
+    //);
     return processor.isFound();
   }
 

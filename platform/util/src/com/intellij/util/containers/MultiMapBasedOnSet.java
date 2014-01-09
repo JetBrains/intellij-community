@@ -17,10 +17,14 @@ package com.intellij.util.containers;
 
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
 
+@Deprecated
 /**
  * @author Sergey Evdokimov
+ * @deprecated Please use {@link MultiMap#createSet()}
+ * to remove in IDEA 15
  */
 public class MultiMapBasedOnSet<K, V> extends MultiMap<K, V> {
 
@@ -36,7 +40,7 @@ public class MultiMapBasedOnSet<K, V> extends MultiMap<K, V> {
 
   @NotNull
   public static <K, V> MultiMap<K, V> createBasedOnSet() {
-    return new MultiMapBasedOnSet<K, V>();
+    return MultiMap.createSet();
   }
 
 }

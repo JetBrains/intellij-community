@@ -169,7 +169,7 @@ public class UpdateOutputLineConverter {
   }
 
   private File createFile(String path) {
-    return FileUtil.isAbsolute(path) ? new File(path) : new File(myBase, path);
+    return CommandUtil.resolvePath(myBase, path);
   }
 
   @Nullable

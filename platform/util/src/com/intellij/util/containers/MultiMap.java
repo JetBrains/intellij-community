@@ -17,8 +17,8 @@
 package com.intellij.util.containers;
 
 import com.intellij.util.SmartList;
-import com.intellij.util.containers.hash.LinkedHashMap;
 import gnu.trove.THashMap;
+import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -27,6 +27,7 @@ import java.util.*;
 
 /**
  * @author Dmitry Avdeev
+ * Consider to use factory methods {@link #createLinked()}, {@link #createSet()}, {@link #createSmartList()}, {@link #create(gnu.trove.TObjectHashingStrategy)} instead of override.
  */
 public class MultiMap<K, V> implements Serializable {
   public static final MultiMap EMPTY = new EmptyMap();
@@ -52,7 +53,7 @@ public class MultiMap<K, V> implements Serializable {
     return new HashMap<K, Collection<V>>();
   }
 
-  protected Map<K, Collection<V>> createMap(int initialCapacity, float loadFactor) {
+  protected Map<K, Collection<V>>  createMap(int initialCapacity, float loadFactor) {
     return new HashMap<K, Collection<V>>(initialCapacity, loadFactor);
   }
 
@@ -244,13 +245,23 @@ public class MultiMap<K, V> implements Serializable {
   }
 
   @NotNull
-  public static <K, V> MultiMap<K, V> createLinked() {
+  public static <K, V> MultiMap<K, V> create(@NotNull final TObjectHashingStrategy<K> strategy) {
     return new MultiMap<K, V>() {
       @Override
       protected Map<K, Collection<V>> createMap() {
-        return new LinkedHashMap<K, Collection<V>>();
+        return new THashMap<K, Collection<V>>(strategy);
+      }
+
+      @Override
+      protected Collection<V> createCollection() {
+        return new SmartList<V>();
       }
     };
+  }
+
+  @NotNull
+  public static <K, V> MultiMap<K, V> createLinked() {
+    return new LinkedMultiMap<K, V>();
   }
 
   @NotNull
@@ -259,6 +270,26 @@ public class MultiMap<K, V> implements Serializable {
       @Override
       protected Collection<V> createCollection() {
         return new SmartList<V>();
+      }
+
+      @Override
+      protected Map<K, Collection<V>> createMap() {
+        return new THashMap<K, Collection<V>>();
+      }
+    };
+  }
+
+  @NotNull
+  public static <K, V> MultiMap<K, V> createSet() {
+    return new MultiMap<K, V>() {
+      @Override
+      protected Collection<V> createCollection() {
+        return new SmartHashSet<V>();
+      }
+
+      @Override
+      protected Collection<V> createEmptyCollection() {
+        return Collections.emptySet();
       }
 
       @Override

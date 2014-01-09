@@ -1,4 +1,3 @@
-
 /*
  * Copyright 2000-2013 JetBrains s.r.o.
  *
@@ -16,7 +15,7 @@
  */
 package com.intellij.codeInsight.daemon.quickFix;
 
-public class CastMethodParameters15Test extends LightQuickFixTestCase {
+public class CastMethodParameters15Test extends LightQuickFixParameterizedTestCase {
 
   @Override
   protected void setUp() throws Exception {

@@ -16,6 +16,7 @@
 package org.jetbrains.idea.svn.portable;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.tmatesoft.svn.core.*;
 import org.tmatesoft.svn.core.wc.*;
@@ -82,5 +83,10 @@ public class SvnkitSvnWcClient implements SvnWcClientI {
   @Override
   public SVNInfo doInfo(SVNURL url, SVNRevision pegRevision, SVNRevision revision) throws SVNException {
     return getClient().doInfo(url, pegRevision, revision);
+  }
+
+  @Override
+  public void doInfo(@NotNull Collection<File> paths, @Nullable ISVNInfoHandler handler) throws SVNException {
+    throw new UnsupportedOperationException();
   }
 }

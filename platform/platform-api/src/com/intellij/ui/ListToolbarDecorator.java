@@ -29,7 +29,7 @@ import java.beans.PropertyChangeListener;
  */
 class ListToolbarDecorator extends ToolbarDecorator {
   private final JList myList;
-  private EditableModel myEditableModel;
+  private final EditableModel myEditableModel;
 
   ListToolbarDecorator(JList list, @Nullable EditableModel editableModel) {
     myList = list;

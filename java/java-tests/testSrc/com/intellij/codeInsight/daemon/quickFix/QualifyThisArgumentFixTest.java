@@ -15,7 +15,7 @@
  */
 package com.intellij.codeInsight.daemon.quickFix;
 
-public class QualifyThisArgumentFixTest extends LightQuickFixTestCase {
+public class QualifyThisArgumentFixTest extends LightQuickFixParameterizedTestCase {
 
   public void test() throws Exception { doAllTests(); }
 

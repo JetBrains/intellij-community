@@ -15,15 +15,16 @@
  */
 package com.siyeh.ig.maturity;
 
-import com.intellij.codeInspection.InspectionProfile;
-import com.intellij.codeInspection.JavaSuppressionUtil;
-import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.RemoveAnnotationQuickFix;
+import com.intellij.codeInsight.FileModificationService;
+import com.intellij.codeInsight.daemon.impl.RemoveSuppressWarningAction;
+import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ui.ListEditForm;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiAnnotation;
+import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiModifierList;
 import com.siyeh.ig.DelegatingFix;
@@ -47,23 +48,51 @@ public class SuppressionAnnotationInspection extends SuppressionAnnotationInspec
   @NotNull
   @Override
   protected InspectionGadgetsFix[] buildFixes(Object... infos) { 
-    if (infos.length == 1 && infos[0] instanceof PsiAnnotation) {
-      final PsiAnnotation annotation = (PsiAnnotation)infos[0];
-      PsiElement parent = annotation.getParent();
-      final Collection<String> ids = JavaSuppressionUtil.getInspectionIdsSuppressedInAnnotation((PsiModifierList)parent);
-      if (!ids.isEmpty()) {
-        return new InspectionGadgetsFix[]{new DelegatingFix(new RemoveAnnotationQuickFix(annotation, null)), new AllowSuppressionsFix()};
+    if (infos.length == 1) {
+      if (infos[0] instanceof PsiAnnotation) {
+        final PsiAnnotation annotation = (PsiAnnotation)infos[0];
+        PsiElement parent = annotation.getParent();
+        final Collection<String> ids = JavaSuppressionUtil.getInspectionIdsSuppressedInAnnotation((PsiModifierList)parent);
+        if (!ids.isEmpty()) {
+          return new InspectionGadgetsFix[]{new DelegatingFix(new RemoveAnnotationQuickFix(annotation, null)), new AllowSuppressionsFix()};
+        }
+      } else if (infos[0] instanceof PsiComment) {
+        return new InspectionGadgetsFix[]{new RemoveSuppressCommentFix(), new AllowSuppressionsFix()};
       }
     }
     return InspectionGadgetsFix.EMPTY_ARRAY;
+  }
+
+  private static class RemoveSuppressCommentFix extends InspectionGadgetsFix {
+    @Override
+    protected void doFix(Project project, ProblemDescriptor descriptor) {
+      PsiElement psiElement = descriptor.getPsiElement();
+      if (psiElement != null) {
+        if (!FileModificationService.getInstance().preparePsiElementForWrite(psiElement)) return;
+        psiElement.delete();
+      }
+    }
+
+    @NotNull
+    @Override
+    public String getName() {
+      return getFamilyName();
+    }
+
+    @NotNull
+    @Override
+    public String getFamilyName() {
+      return "Remove //" + SuppressionUtilCore.SUPPRESS_INSPECTIONS_TAG_NAME;
+    }
   }
 
   private class AllowSuppressionsFix extends InspectionGadgetsFix {
     @Override
     protected void doFix(Project project, ProblemDescriptor descriptor) {
       final PsiElement psiElement = descriptor.getPsiElement();
-      if (psiElement instanceof PsiAnnotation) {
-        final Collection<String> ids = JavaSuppressionUtil.getInspectionIdsSuppressedInAnnotation((PsiModifierList)psiElement.getParent());
+      final String suppressedIds = JavaSuppressionUtil.getSuppressedInspectionIdsIn(psiElement);
+      final Iterable<String> ids = suppressedIds != null ? StringUtil.tokenize(suppressedIds, "[, ]") : null;
+      if (ids != null) {
         for (String id : ids) {
           if (!myAllowedSuppressions.contains(id)) {
             myAllowedSuppressions.add(id);

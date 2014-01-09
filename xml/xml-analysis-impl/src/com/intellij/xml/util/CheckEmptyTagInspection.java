@@ -44,8 +44,7 @@ import java.util.Set;
  */
 public class CheckEmptyTagInspection extends XmlSuppressableInspectionTool {
   private static final Logger LOG = Logger.getInstance("#com.intellij.xml.util.CheckEmptyTagInspection");
-  @NonNls private static final String SCRIPT_TAG_NAME = "script";
-  @NonNls private static final Set<String> ourTagsWithEmptyEndsNotAllowed = new THashSet<String>(Arrays.asList(SCRIPT_TAG_NAME, "div", "iframe"));
+  @NonNls private static final Set<String> ourTagsWithEmptyEndsNotAllowed = new THashSet<String>(Arrays.asList(HtmlUtil.SCRIPT_TAG_NAME, "div", "iframe"));
 
   @Override
   public boolean isEnabledByDefault() {

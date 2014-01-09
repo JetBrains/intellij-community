@@ -15,6 +15,10 @@
  */
 package com.intellij.testAssistant;
 
+import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.execution.Location;
+import com.intellij.execution.junit.JUnitUtil;
+import com.intellij.execution.junit2.PsiMemberParameterizedLocation;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
@@ -23,14 +27,21 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ProjectFileIndex;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiMethod;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.*;
+import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.testFramework.Parameterized;
+import com.intellij.ui.awt.RelativePoint;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -39,38 +50,62 @@ import java.util.List;
 public class NavigateToTestDataAction extends AnAction {
   @Override
   public void actionPerformed(AnActionEvent e) {
-    final PsiMethod method = findTargetMethod(e.getDataContext());
-    final Editor editor = e.getData(CommonDataKeys.EDITOR);
-    if (method == null || editor == null) {
-      return;
-    }
-    List<String> fileNames = findTestDataFiles(e.getDataContext());
+    final DataContext dataContext = e.getDataContext();
+    final Project project = CommonDataKeys.PROJECT.getData(dataContext);
+    List<String> fileNames = findTestDataFiles(dataContext);
     if (fileNames == null || fileNames.isEmpty()) {
       String message = "Cannot find testdata files for class";
       final Notification notification = new Notification("testdata", "Found no testdata files", message, NotificationType.INFORMATION);
-      Notifications.Bus.notify(notification, method.getProject());
+      Notifications.Bus.notify(notification, project);
     }
     else {
-      TestDataNavigationHandler.navigate(method, JBPopupFactory.getInstance().guessBestPopupLocation(editor), fileNames);
+      final Editor editor = e.getData(CommonDataKeys.EDITOR);
+      final JBPopupFactory popupFactory = JBPopupFactory.getInstance();
+      final RelativePoint point = editor != null ? popupFactory.guessBestPopupLocation(editor) : popupFactory.guessBestPopupLocation(dataContext);
+      
+      TestDataNavigationHandler.navigate(point, fileNames, project);
     }
   }
 
   @Nullable
   public static List<String> findTestDataFiles(@NotNull DataContext context) {
     final PsiMethod method = findTargetMethod(context);
-    final Editor editor = CommonDataKeys.EDITOR.getData(context);
-    if (method == null || editor == null) {
+    if (method == null) {
       return null;
     }
     final String name = method.getName();
 
-
-    String testDataPath = null;
     if (name.startsWith("test")) {
-      testDataPath = TestDataLineMarkerProvider.getTestDataBasePath(method.getContainingClass());
+      String testDataPath = TestDataLineMarkerProvider.getTestDataBasePath(method.getContainingClass());
+      final TestDataReferenceCollector collector = new TestDataReferenceCollector(testDataPath, name.substring(4));
+      return collector.collectTestDataReferences(method);
     }
-    final TestDataReferenceCollector collector = new TestDataReferenceCollector(testDataPath, name.substring(4));
-    return collector.collectTestDataReferences(method);
+
+    final Location<?> location = Location.DATA_KEY.getData(context);
+    if (location instanceof PsiMemberParameterizedLocation) {
+      PsiClass containingClass = ((PsiMemberParameterizedLocation)location).getContainingClass();
+      if (containingClass == null) {
+        containingClass = PsiTreeUtil.getParentOfType(location.getPsiElement(), PsiClass.class, false);
+      }
+      if (containingClass != null) {
+        final PsiAnnotation annotation = AnnotationUtil.findAnnotationInHierarchy(containingClass, Collections.singleton(JUnitUtil.RUN_WITH));
+        if (annotation != null) {
+          final PsiAnnotationMemberValue memberValue = annotation.findAttributeValue("value");
+          if (memberValue instanceof PsiClassObjectAccessExpression) {
+            final PsiTypeElement operand = ((PsiClassObjectAccessExpression)memberValue).getOperand();
+            if (operand.getType().equalsToText(Parameterized.class.getName())) {
+              final String testDataPath = TestDataLineMarkerProvider.getTestDataBasePath(containingClass);
+              final String paramSetName = ((PsiMemberParameterizedLocation)location).getParamSetName();
+              final String baseFileName = StringUtil.trimEnd(StringUtil.trimStart(paramSetName, "["), "]");
+              final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(containingClass.getProject()).getFileIndex();
+              return TestDataGuessByExistingFilesUtil.suggestTestDataFiles(fileIndex, baseFileName, testDataPath, containingClass);
+            }
+          }
+        }
+      }
+    }
+
+    return null;
   }
 
   @Override
@@ -85,6 +120,14 @@ public class NavigateToTestDataAction extends AnAction {
     if (file != null && editor != null) {
       PsiElement element = file.findElementAt(editor.getCaretModel().getOffset());
       return PsiTreeUtil.getParentOfType(element, PsiMethod.class);
+    }
+
+    final Location<?> location = Location.DATA_KEY.getData(context);
+    if (location != null) {
+      final PsiElement element = location.getPsiElement();
+      if (element instanceof PsiMethod) {
+        return (PsiMethod)element;
+      }
     }
     return null;
   }

@@ -25,7 +25,6 @@ import com.intellij.ide.util.ClassFilter;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.util.ui.DialogUtil;
-import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -106,11 +105,11 @@ public class ExceptionBreakpointPropertiesPanel extends BreakpointPropertiesPane
     myNotifyUncaughtCheckBox.setSelected(exceptionBreakpoint.NOTIFY_UNCAUGHT);
   }
 
-  public void saveTo(Breakpoint breakpoint, @NotNull Runnable afterUpdate) {
+  public void saveTo(Breakpoint breakpoint) {
     ExceptionBreakpoint exceptionBreakpoint = (ExceptionBreakpoint)breakpoint;
     exceptionBreakpoint.NOTIFY_CAUGHT = myNotifyCaughtCheckBox.isSelected();
     exceptionBreakpoint.NOTIFY_UNCAUGHT = myNotifyUncaughtCheckBox.isSelected();
 
-    super.saveTo(breakpoint, afterUpdate);
+    super.saveTo(breakpoint);
   }
 }

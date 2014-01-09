@@ -51,7 +51,8 @@ public enum SvnCommandName {
   importFolder("import", false),
   export("export", false),
   upgrade("upgrade", true),
-  list("list", false);
+  list("list", false),
+  diff("diff", false);
 
   private final String myName;
   private final boolean myWriteable;

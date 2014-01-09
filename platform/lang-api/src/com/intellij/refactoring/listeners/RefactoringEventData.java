@@ -17,7 +17,9 @@ package com.intellij.refactoring.listeners;
 
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolder;
+import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.psi.PsiElement;
+import com.intellij.usageView.UsageInfo;
 import com.intellij.util.Function;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
@@ -28,16 +30,11 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
-public class RefactoringEventData implements UserDataHolder {
-  private Map<Key, Object> data;
-
+public class RefactoringEventData extends UserDataHolderBase {
   public static final Key<Collection<? extends String>> CONFLICTS_KEY = Key.create("conflicts");
   public static final Key<PsiElement> PSI_ELEMENT_KEY = Key.create("element");
   public static final Key<PsiElement[]> PSI_ELEMENT_ARRAY_KEY = Key.create("elementArray");
-
-  public RefactoringEventData() {
-    data = new HashMap<Key, Object>();
-  }
+  public static final Key<Collection<UsageInfo>> USAGE_INFOS_KEY = Key.create("usageInfos");
 
   public void addElement(PsiElement element) {
     putUserData(PSI_ELEMENT_KEY, element);
@@ -58,16 +55,8 @@ public class RefactoringEventData implements UserDataHolder {
   public void addElements(PsiElement[] elements) {
     putUserData(PSI_ELEMENT_ARRAY_KEY, elements);
   }
-  
-  
-  @Nullable
-  @Override
-  public <T> T getUserData(@NotNull Key<T> key) {
-    return (T)data.get(key);
-  }
 
-  @Override
-  public <T> void putUserData(@NotNull Key<T> key, @Nullable T value) {
-    data.put(key, value);
+  public void addUsages(Collection<UsageInfo> usageInfos) {
+    putUserData(USAGE_INFOS_KEY, usageInfos);
   }
 }

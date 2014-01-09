@@ -23,6 +23,7 @@ import org.jetbrains.plugins.groovy.codeInspection.control.GroovyTrivialIfInspec
 import org.jetbrains.plugins.groovy.codeInspection.control.GroovyUnnecessaryContinueInspection
 import org.jetbrains.plugins.groovy.codeInspection.control.GroovyUnnecessaryReturnInspection
 import org.jetbrains.plugins.groovy.codeInspection.declaration.GrMethodMayBeStaticInspection
+import org.jetbrains.plugins.groovy.codeInspection.exception.GroovyEmptyCatchBlockInspection
 import org.jetbrains.plugins.groovy.codeInspection.metrics.GroovyOverlyLongMethodInspection
 import org.jetbrains.plugins.groovy.codeInspection.noReturnMethod.MissingReturnInspection
 import org.jetbrains.plugins.groovy.codeInspection.threading.GroovyUnconditionalWaitInspection
@@ -314,6 +315,36 @@ for(i in []) {
   }
 }
 ''', GroovyUnnecessaryContinueInspection)
+  }
+
+  void testEmptyCatchBlock1() {
+    testHighlighting('''
+try{} <warning descr="Empty 'catch' block">catch</warning>(IOException e) {}
+try{} catch(IOException ignored) {}
+try{} catch(IOException ignore) {}
+try{} catch(IOException e) {/*comment*/}
+''', GroovyEmptyCatchBlockInspection)
+  }
+
+  void testEmptyCatchBlock2() {
+    GroovyEmptyCatchBlockInspection inspection = new GroovyEmptyCatchBlockInspection()
+    inspection.myIgnore = false
+    myFixture.enableInspections(inspection)
+    testHighlighting('try{} <warning descr="Empty \'catch\' block">catch</warning>(IOException ignored) {}')
+  }
+
+  void testEmptyCatchBlock3() {
+    GroovyEmptyCatchBlockInspection inspection = new GroovyEmptyCatchBlockInspection()
+    inspection.myIgnore = false
+    myFixture.enableInspections(inspection)
+    testHighlighting('try{} <warning descr="Empty \'catch\' block">catch</warning>(IOException ignored) {}')
+  }
+
+  void testEmptyCatchBlock4() {
+    GroovyEmptyCatchBlockInspection inspection = new GroovyEmptyCatchBlockInspection()
+    inspection.myCountCommentsAsContent = false
+    myFixture.enableInspections(inspection)
+    testHighlighting('try{} <warning descr="Empty \'catch\' block">catch</warning>(IOException e) {/*comment*/}')
   }
 
 }

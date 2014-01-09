@@ -121,19 +121,30 @@ public final class ImmutableText extends ImmutableCharSequence {
    */
   public static ImmutableText valueOf(@NotNull Object obj) {
     if (obj instanceof ImmutableText) return (ImmutableText)obj;
-    if (obj instanceof CharSequence && ((CharSequence)obj).length() == 0) return EMPTY;
+    if (obj instanceof CharSequence) return ((CharSequence)obj).length() == 0 ? EMPTY : valueOf((CharSequence)obj);
     return valueOf(String.valueOf(obj));
   }
 
-  private static ImmutableText valueOf(@NotNull String str) {
+  private static ImmutableText valueOf(@NotNull CharSequence str) {
     return valueOf(str, 0, str.length());
   }
 
-  private static ImmutableText valueOf(@NotNull String str, int start, int end) {
+  private static ImmutableText valueOf(@NotNull CharSequence str, int start, int end) {
     int length = end - start;
     if (length <= BLOCK_SIZE) {
       char[] chars = new char[length];
-      str.getChars(start, end, chars, 0);
+      if (str instanceof String) {
+        ((String)str).getChars(start, end, chars, 0);
+      } else {
+        char[] array = CharArrayUtil.fromSequenceWithoutCopying(str);
+        if (array != null) {
+          System.arraycopy(array, start, chars, 0, length);
+        } else {
+          for (int i = start; i < end; i++) {
+            chars[i - start] = str.charAt(i);
+          }
+        }
+      }
       return new ImmutableText(chars);
     } else { // Splits on a block boundary.
       int half = ((length + BLOCK_SIZE) >> 1) & BLOCK_MASK;

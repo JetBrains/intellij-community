@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@ import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.plaf.TreeUI;
@@ -182,6 +183,7 @@ public class CommittedChangeListRenderer extends ColoredTreeCellRenderer {
     return description.substring(0, description.length()-1);
   }
 
+  @NotNull
   public Dimension getPreferredSize() {
     return new Dimension(2000, super.getPreferredSize().height);
   }

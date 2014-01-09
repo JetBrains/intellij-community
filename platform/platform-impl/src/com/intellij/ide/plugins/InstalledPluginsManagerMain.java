@@ -74,7 +74,7 @@ public class InstalledPluginsManagerMain extends PluginManagerMain {
     installPluginFromFileSystem.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
-        final FileChooserDescriptor descriptor = new FileChooserDescriptor(true, false, true, true, false, false){
+        final FileChooserDescriptor descriptor = new FileChooserDescriptor(false, false, true, true, false, false){
           @Override
           public boolean isFileSelectable(VirtualFile file) {
             final String extension = file.getExtension();

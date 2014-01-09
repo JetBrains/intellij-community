@@ -214,7 +214,7 @@ public class JUnitConfigurable extends SettingsEditor<JUnitConfiguration> implem
       }
     });
 
-    myCommonJavaParameters.getProgramParametersComponent().setVisible(false);
+    //myCommonJavaParameters.getProgramParametersComponent().setVisible(false);
 
     setAnchor(mySearchForTestsLabel);
     myModule.setAnchor(myAlternativeJREPanel.getCbEnabled());

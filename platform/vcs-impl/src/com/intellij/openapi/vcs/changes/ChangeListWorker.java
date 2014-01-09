@@ -108,10 +108,6 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
       protected Collection<Pair<Change, String>> createCollection() {
         return new LinkedList<Pair<Change, String>>();
       }
-
-      protected Collection<Pair<Change, String>> createEmptyCollection() {
-        return Collections.emptyList();
-      }
     };
 
     for (LocalChangeList changeList : myMap.values()) {

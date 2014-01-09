@@ -43,7 +43,8 @@ public class TableView<Item> extends BaseTableView implements ItemsProvider, Sel
     setModelAndUpdateColumns(model);
   }
 
-  public void setModel(final TableModel dataModel) {
+  @Override
+  public void setModel(@NotNull final TableModel dataModel) {
     assert dataModel instanceof SortableColumnModel : "SortableColumnModel required";
     super.setModel(dataModel);
   }
@@ -67,6 +68,7 @@ public class TableView<Item> extends BaseTableView implements ItemsProvider, Sel
     return (ListTableModel<Item>)super.getModel();
   }
 
+  @Override
   public TableCellRenderer getCellRenderer(int row, int column) {
     final ColumnInfo<Item, ?> columnInfo = getListTableModel().getColumnInfos()[convertColumnIndexToModel(column)];
     final Item item = getListTableModel().getItems().get(convertRowIndexToModel(row));
@@ -79,6 +81,7 @@ public class TableView<Item> extends BaseTableView implements ItemsProvider, Sel
     }
   }
 
+  @Override
   public void tableChanged(TableModelEvent e) {
     if (isEditing()) getCellEditor().cancelCellEditing();
     super.tableChanged(e);
@@ -181,6 +184,7 @@ public class TableView<Item> extends BaseTableView implements ItemsProvider, Sel
   }
 
 
+  @Override
   public Collection<Item> getSelection() {
     ArrayList<Item> result = new ArrayList<Item>();
     int[] selectedRows = getSelectedRows();
@@ -216,6 +220,7 @@ public class TableView<Item> extends BaseTableView implements ItemsProvider, Sel
     return result;
   }
 
+  @Override
   public void addSelection(Object item) {
     List items = getItems();
     if (!items.contains(item)) return;
@@ -225,12 +230,14 @@ public class TableView<Item> extends BaseTableView implements ItemsProvider, Sel
     getColumnModel().getSelectionModel().addSelectionInterval(0, getColumnCount()-1);
   }
 
+  @Override
   public TableCellEditor getCellEditor(int row, int column) {
     final ColumnInfo<Item, ?> columnInfo = getListTableModel().getColumnInfos()[convertColumnIndexToModel(column)];
     final TableCellEditor editor = columnInfo.getEditor(getListTableModel().getItems().get(convertRowIndexToModel(row)));
     return editor == null ? super.getCellEditor(row, column) : editor;
   }
 
+  @Override
   public List<Item> getItems() {
     return getListTableModel().getItems();
   }

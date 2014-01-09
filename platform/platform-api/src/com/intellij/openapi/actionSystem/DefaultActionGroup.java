@@ -35,6 +35,7 @@ import java.util.List;
  * to implement your own <code>ActionGroup</code>.
  *
  * @see Constraints
+ * @see ComputableActionGroup
  */
 public class DefaultActionGroup extends ActionGroup {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.actionSystem.DefaultActionGroup");
@@ -85,15 +86,15 @@ public class DefaultActionGroup extends ActionGroup {
    * @param actionManager ActionManager instance
    */
   public final void add(@NotNull AnAction action, @NotNull ActionManager actionManager) {
-    add(action, new Constraints(Anchor.LAST, null), actionManager);
+    add(action, Constraints.LAST, actionManager);
   }
 
   public final void add(@NotNull AnAction action) {
-    addAction(action, new Constraints(Anchor.LAST, null));
+    addAction(action, Constraints.LAST);
   }
 
   public final ActionInGroup addAction(@NotNull AnAction action) {
-    return addAction(action, new Constraints(Anchor.LAST, null));
+    return addAction(action, Constraints.LAST);
   }
 
   /**
@@ -235,6 +236,29 @@ public class DefaultActionGroup extends ActionGroup {
     mySortedChildren.clear();
     myPairs.clear();
   }
+
+
+  /**
+   * Replaces specified action with the new one.
+   */
+  public boolean replaceAction(AnAction oldAction, AnAction newAction) {
+    int index = mySortedChildren.indexOf(oldAction);
+    if (index >= 0) {
+      mySortedChildren.set(index, newAction);
+      return true;
+    }
+    else {
+      for (int i = 0; i < myPairs.size(); i++) {
+        Pair<AnAction, Constraints> pair = myPairs.get(i);
+        if (pair.first.equals(newAction)) {
+          myPairs.set(i, Pair.create(newAction, pair.second));
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
 
   /**
    * Returns group's children in the order determined by constraints.

@@ -91,22 +91,20 @@ public abstract class OrderPanel<T> extends JPanel {
   }
 
   public void setCheckboxColumnName(final String name) {
-    final int width;
+    TableColumn checkboxColumn = myEntryTable.getColumnModel().getColumn(getCheckboxColumn());
     if (StringUtil.isEmpty(name)) {
       CHECKBOX_COLUMN_NAME = "";
-      width = new JCheckBox().getPreferredSize().width;
+      TableUtil.setupCheckboxColumn(checkboxColumn);
     }
     else {
       CHECKBOX_COLUMN_NAME = name;
       final FontMetrics fontMetrics = myEntryTable.getFontMetrics(myEntryTable.getFont());
-      width = fontMetrics.stringWidth(" " + name + " ") + 4;
+      final int width = fontMetrics.stringWidth(" " + name + " ") + 4;
+      checkboxColumn.setWidth(width);
+      checkboxColumn.setPreferredWidth(width);
+      checkboxColumn.setMaxWidth(width);
+      checkboxColumn.setMinWidth(width);
     }
-
-    final TableColumn checkboxColumn = myEntryTable.getColumnModel().getColumn(getCheckboxColumn());
-    checkboxColumn.setWidth(width);
-    checkboxColumn.setPreferredWidth(width);
-    checkboxColumn.setMaxWidth(width);
-    checkboxColumn.setMinWidth(width);
   }
 
   public void moveSelectedItemsUp() {

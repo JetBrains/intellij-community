@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@ package com.intellij.openapi.vfs;
 
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
-import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
 import com.intellij.util.Processor;
 import com.intellij.util.io.fs.IFile;
@@ -101,12 +100,11 @@ public abstract class LocalFileSystem extends NewVirtualFileSystem {
 
   public abstract void refreshFiles(@NotNull Iterable<VirtualFile> files, boolean async, boolean recursive, @Nullable Runnable onFinish);
 
-  @NotNull
+  /** @deprecated fake root considered harmful (to remove in IDEA 14) */
   public final VirtualFile getRoot() {
-    final String rootPath = SystemInfo.isWindows ? "" : "/";
-    final NewVirtualFile root = ManagingFS.getInstance().findRoot(rootPath, this);
-    assert root != null : SystemInfo.OS_NAME;
-    return root;
+    VirtualFile[] roots = ManagingFS.getInstance().getLocalRoots();
+    assert roots.length > 0 : SystemInfo.OS_NAME;
+    return roots[0];
   }
 
   public interface WatchRequest {

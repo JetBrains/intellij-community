@@ -16,11 +16,13 @@
 package com.intellij.ui;
 
 import com.intellij.util.ui.ItemRemovable;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.table.TableCellEditor;
+import javax.swing.table.TableColumn;
 import javax.swing.table.TableModel;
 import java.awt.*;
 import java.util.ArrayList;
@@ -195,5 +197,38 @@ public class TableUtil {
   public static void ensureSelectionExists(@NotNull JTable table) {
     if (table.getSelectedRow() != -1 || table.getRowCount() == 0) return;
     table.setRowSelectionInterval(0, 0);
+  }
+
+  /**
+   * @return column width
+   */
+  public static int setupCheckboxColumn(@NotNull JTable table, int columnIndex) {
+    return setupCheckboxColumn(table.getColumnModel().getColumn(columnIndex));
+  }
+
+  /**
+   * @return column width
+   */
+  public static int setupCheckboxColumn(@NotNull TableColumn column) {
+    int checkboxWidth = new JCheckBox().getPreferredSize().width;
+    column.setResizable(false);
+    column.setPreferredWidth(checkboxWidth);
+    column.setMaxWidth(checkboxWidth);
+    column.setMinWidth(checkboxWidth);
+    return checkboxWidth;
+  }
+
+  public static void updateScroller(@NotNull JTable table, boolean temporaryHideVerticalScrollBar) {
+    JScrollPane scrollPane = UIUtil.getParentOfType(JScrollPane.class, table);
+    if (scrollPane != null) {
+      if (temporaryHideVerticalScrollBar) {
+        final JScrollBar bar = scrollPane.getVerticalScrollBar();
+        if (bar == null || !bar.isVisible()) {
+          scrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER);
+        }
+      }
+      scrollPane.revalidate();
+      scrollPane.repaint();
+    }
   }
 }

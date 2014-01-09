@@ -38,7 +38,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
-import com.intellij.util.containers.MultiMapBasedOnSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -51,7 +50,6 @@ public class DataFlowRunner {
 
   private Instruction[] myInstructions;
   private final MultiMap<PsiElement, DfaMemoryState> myNestedClosures = new MultiMap<PsiElement, DfaMemoryState>();
-  private DfaVariableValue[] myFields;
   private final DfaValueFactory myValueFactory;
 
   // Maximum allowed attempts to process instruction. Fail as too complex to process if certain instruction
@@ -113,7 +111,6 @@ public class DataFlowRunner {
 
       int endOffset = flow.getInstructionCount();
       myInstructions = flow.getInstructions();
-      myFields = flow.getFields();
       myNestedClosures.clear();
       
       Set<Instruction> joinInstructions = ContainerUtil.newHashSet();
@@ -144,8 +141,8 @@ public class DataFlowRunner {
         queue.offer(new DfaInstructionState(myInstructions[0], initialState));
       }
 
-      MultiMapBasedOnSet<BranchingInstruction, DfaMemoryState> processedStates = new MultiMapBasedOnSet<BranchingInstruction, DfaMemoryState>();
-      MultiMapBasedOnSet<BranchingInstruction, DfaMemoryState> incomingStates = new MultiMapBasedOnSet<BranchingInstruction, DfaMemoryState>();
+      MultiMap<BranchingInstruction, DfaMemoryState> processedStates = MultiMap.createSet();
+      MultiMap<BranchingInstruction, DfaMemoryState> incomingStates = MultiMap.createSet();
 
       WorkingTimeMeasurer measurer = new WorkingTimeMeasurer(shouldCheckTimeLimit() ? ourTimeLimit : ourTimeLimit * 5);
       int count = 0;
@@ -280,10 +277,6 @@ public class DataFlowRunner {
     return myInstructions[index];
   }
 
-  public DfaVariableValue[] getFields() {
-    return myFields;
-  }
-
   public MultiMap<PsiElement, DfaMemoryState> getNestedClosures() {
     return new MultiMap<PsiElement, DfaMemoryState>(myNestedClosures);
   }
@@ -322,9 +315,9 @@ public class DataFlowRunner {
     return Pair.create(trueSet, falseSet);
   }
 
-  private DfaMemoryStateImpl createClosureState(DfaMemoryState memState) {
+  private static DfaMemoryStateImpl createClosureState(DfaMemoryState memState) {
     DfaMemoryStateImpl copy = (DfaMemoryStateImpl)memState.createCopy();
-    copy.flushFields(getFields());
+    copy.flushFields();
     Set<DfaVariableValue> vars = new HashSet<DfaVariableValue>(copy.getVariableStates().keySet());
     for (DfaVariableValue value : vars) {
       copy.flushDependencies(value);

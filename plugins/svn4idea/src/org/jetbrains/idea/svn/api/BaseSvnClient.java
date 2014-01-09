@@ -57,6 +57,13 @@ public abstract class BaseSvnClient implements SvnClient {
     }
   }
 
+  protected void assertDirectory(@NotNull SvnTarget target) {
+    assertFile(target);
+    if (!target.getFile().isDirectory()) {
+      throw new IllegalArgumentException("Target should be directory " + target);
+    }
+  }
+
   protected void validateFormat(@NotNull WorkingCopyFormat format, @NotNull Collection<WorkingCopyFormat> supported) throws VcsException {
     if (!supported.contains(format)) {
       throw new VcsException(

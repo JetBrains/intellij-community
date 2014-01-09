@@ -263,6 +263,7 @@ public abstract class GrMethodBaseImpl extends GrStubElementBase<GrMethodStub> i
     GrTypeElement typeElement = getReturnTypeElementGroovy();
     if (newReturnType == null || newReturnType == PsiType.NULL) {
       if (typeElement != null) typeElement.delete();
+      insertPlaceHolderToModifierList();
       return null;
     }
     final GrTypeElement stub = GroovyPsiElementFactory.getInstance(getProject()).createTypeElement(newReturnType);
@@ -284,6 +285,11 @@ public abstract class GrMethodBaseImpl extends GrStubElementBase<GrMethodStub> i
       }
     });
     return newTypeElement;
+  }
+
+  private void insertPlaceHolderToModifierList() {
+    final GrModifierList list = getModifierList();
+    PsiImplUtil.insertPlaceHolderToModifierListAtEndIfNeeded(list);
   }
 
   @Override

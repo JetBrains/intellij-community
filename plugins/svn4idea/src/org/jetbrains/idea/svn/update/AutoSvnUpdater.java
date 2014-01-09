@@ -47,9 +47,9 @@ public class AutoSvnUpdater extends AbstractCommonUpdateAction {
   @Override
   protected void actionPerformed(VcsContext context) {
     final SvnConfiguration configuration17 = SvnConfiguration.getInstance(myProject);
-    configuration17.FORCE_UPDATE = false;
-    configuration17.UPDATE_LOCK_ON_DEMAND = false;
-    configuration17.UPDATE_DEPTH = SVNDepth.INFINITY;
+    configuration17.setForceUpdate(false);
+    configuration17.setUpdateLockOnDemand(false);
+    configuration17.setUpdateDepth(SVNDepth.INFINITY);
     final SvnVcs vcs = SvnVcs.getInstance(myProject);
     for (FilePath root : myRoots) {
       final UpdateRootInfo info = configuration17.getUpdateRootInfo(root.getIOFile(), vcs);

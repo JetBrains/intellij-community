@@ -1,9 +1,8 @@
-
 package com.intellij.codeInsight.daemon.quickFix;
 
 
 
-public class DeferFinalAssignmentTest extends LightQuickFixTestCase {
+public class DeferFinalAssignmentTest extends LightQuickFixParameterizedTestCase {
 
   public void test() throws Exception { doAllTests(); }
 
