@@ -18,18 +18,21 @@ package com.intellij.util.ui.table;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.ui.TableSpeedSearch;
-import com.intellij.ui.TableUtil;
-import com.intellij.ui.ToolbarDecorator;
+import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.ui.*;
 import com.intellij.ui.table.TableView;
 import com.intellij.util.Function;
+import com.intellij.util.FunctionUtil;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.ElementProducer;
 import com.intellij.util.ui.ListTableModel;
+import com.intellij.util.xmlb.SkipDefaultValuesSerializationFilters;
+import com.intellij.util.xmlb.XmlSerializer;
 import gnu.trove.THashMap;
 import gnu.trove.TObjectObjectProcedure;
+import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -40,19 +43,19 @@ import java.util.List;
 
 public class TableModelEditor<T> implements ElementProducer<T> {
   private final TableView<T> table;
+  private final ToolbarDecorator toolbarDecorator;
 
-  private final Function<T, T> cloneFactory;
-  private final Class<T> itemClass;
+  private final ItemEditor<T> itemEditor;
 
   private final MyListTableModel<T> model;
 
   /**
    * source will be copied, passed list will not be used directly
-   * itemClass must has empty constructor
+   *
+   * Implement {@link DialogItemEditor} instead of {@link ItemEditor} if you want provide dialog to edit.
    */
-  public TableModelEditor(@NotNull List<T> items, @NotNull ColumnInfo[] columns, @NotNull Function<T, T> cloneFactory, Class<T> itemClass, @NotNull String emptyText) {
-    this.itemClass = itemClass;
-    this.cloneFactory = cloneFactory;
+  public TableModelEditor(@NotNull List<T> items, @NotNull ColumnInfo[] columns, @NotNull ItemEditor<T> itemEditor, @NotNull String emptyText) {
+    this.itemEditor = itemEditor;
 
     model = new MyListTableModel<T>(columns, new ArrayList<T>(items), this);
     table = new TableView<T>(model);
@@ -63,6 +66,62 @@ public class TableModelEditor<T> implements ElementProducer<T> {
     }
 
     table.getEmptyText().setText(emptyText);
+    toolbarDecorator = ToolbarDecorator.createDecorator(table, this);
+
+    if (itemEditor instanceof DialogItemEditor) {
+      toolbarDecorator.setEditAction(new AnActionButtonRunnable() {
+        @Override
+        public void run(AnActionButton button) {
+          T item = table.getSelectedObject();
+          if (item != null) {
+            Function<T, T> mutator;
+            if (model.isMutable(item)) {
+              mutator = FunctionUtil.id();
+            }
+            else {
+              final int selectedRow = table.getSelectedRow();
+              mutator = new Function<T, T>() {
+                @Override
+                public T fun(T item) {
+                  return model.getMutable(selectedRow, item);
+                }
+              };
+            }
+            ((DialogItemEditor<T>)TableModelEditor.this.itemEditor).edit(item, mutator);
+          }
+        }
+      });
+    }
+  }
+
+  public static abstract class ItemEditor<T> {
+    /**
+     * Used for "add" and "in place edit" actions.
+     *
+     * You must perform deep clone in case of "add" operation, but in case of "in place edit" you should copy only exposed (via column) properties.
+     */
+    public abstract T clone(@NotNull T item, boolean forInPlaceEditing);
+
+    @NotNull
+    /**
+     * Class must have empty constructor.
+     */
+    public abstract Class<T> getItemClass();
+  }
+
+  public static abstract class DialogItemEditor<T> extends ItemEditor<T> {
+    public abstract void edit(@NotNull T item, @NotNull Function<T, T> mutator);
+
+    public abstract void applyEdited(@NotNull T oldItem, @NotNull T newItem);
+  }
+
+  @NotNull
+  public static <T> T cloneUsingXmlSerialization(@NotNull T oldItem, @NotNull T newItem) {
+    Element serialized = XmlSerializer.serialize(oldItem, new SkipDefaultValuesSerializationFilters());
+    if (!JDOMUtil.isEmpty(serialized)) {
+      XmlSerializer.deserializeInto(newItem, serialized);
+    }
+    return newItem;
   }
 
   private static final class MyListTableModel<T> extends ListTableModel<T> {
@@ -85,6 +144,12 @@ public class TableModelEditor<T> implements ElementProducer<T> {
     }
 
     @Override
+    public void removeRow(int index) {
+      modifiedToOriginal.remove(getItem(index));
+      super.removeRow(index);
+    }
+
+    @Override
     public void setValueAt(Object newValue, int rowIndex, int columnIndex) {
       if (rowIndex < getRowCount()) {
         @SuppressWarnings("unchecked")
@@ -95,31 +160,37 @@ public class TableModelEditor<T> implements ElementProducer<T> {
             ? !Comparing.strEqual(((String)oldValue), ((String)newValue))
             : !Comparing.equal(oldValue, newValue)) {
 
-          T mutable;
-          if (modifiedToOriginal.containsKey(item)) {
-            mutable = item;
-          }
-          else {
-            mutable = editor.cloneFactory.fun(item);
-            modifiedToOriginal.put(mutable, item);
-            items.set(rowIndex, mutable);
-          }
-
-          column.setValue(mutable, newValue);
+          column.setValue(getMutable(rowIndex, item), newValue);
         }
       }
     }
 
+    private T getMutable(int rowIndex, T item) {
+      if (isMutable(item)) {
+        return item;
+      }
+      else {
+        T mutable = editor.itemEditor.clone(item, true);
+        modifiedToOriginal.put(mutable, item);
+        items.set(rowIndex, mutable);
+        return mutable;
+      }
+    }
+
+    private boolean isMutable(T item) {
+      return modifiedToOriginal.containsKey(item);
+    }
+
     public boolean isModified(@NotNull List<T> oldItems) {
-      if (items.size() == oldItems.size()) {
+      if (items.size() != oldItems.size()) {
+        return true;
+      }
+      else {
         for (int i = 0, size = items.size(); i < size; i++) {
           if (!items.get(i).equals(oldItems.get(i))) {
             return true;
           }
         }
-      }
-      else {
-        return true;
       }
 
       return false;
@@ -135,18 +206,23 @@ public class TableModelEditor<T> implements ElementProducer<T> {
       final ColumnInfo<T, Object>[] columns = getColumnInfos();
       modifiedToOriginal.forEachEntry(new TObjectObjectProcedure<T, T>() {
         @Override
-        public boolean execute(T newItem, @Nullable T item) {
-          if (item == null) {
+        public boolean execute(T newItem, @Nullable T oldItem) {
+          if (oldItem == null) {
             // it is added item, we don't need to sync
             return true;
           }
 
           for (ColumnInfo<T, Object> column : columns) {
             if (column.isCellEditable(newItem)) {
-              column.setValue(item, column.valueOf(newItem));
+              column.setValue(oldItem, column.valueOf(newItem));
             }
           }
-          items.set(ContainerUtil.indexOfIdentity(items, newItem), item);
+
+          if (editor.itemEditor instanceof DialogItemEditor) {
+            ((DialogItemEditor<T>)editor.itemEditor).applyEdited(oldItem, newItem);
+          }
+
+          items.set(ContainerUtil.indexOfIdentity(items, newItem), oldItem);
           return true;
         }
       });
@@ -173,7 +249,7 @@ public class TableModelEditor<T> implements ElementProducer<T> {
 
   @NotNull
   public JComponent createComponent() {
-    return ToolbarDecorator.createDecorator(table, this).addExtraAction(
+    return toolbarDecorator.addExtraAction(
       new ToolbarDecorator.ElementActionButton(IdeBundle.message("button.copy"), PlatformIcons.COPY_ICON) {
         @Override
         public void actionPerformed(AnActionEvent e) {
@@ -185,7 +261,7 @@ public class TableModelEditor<T> implements ElementProducer<T> {
           }
 
           for (T item : selectedItems) {
-            model.addRow(cloneFactory.fun(item));
+            model.addRow(itemEditor.clone(item, false));
           }
 
           table.requestFocus();
@@ -198,12 +274,12 @@ public class TableModelEditor<T> implements ElementProducer<T> {
   @Override
   public T createElement() {
     try {
-      Constructor<T> constructor = itemClass.getDeclaredConstructor();
+      Constructor<T> constructor = itemEditor.getItemClass().getDeclaredConstructor();
       try {
         constructor.setAccessible(true);
       }
       catch (SecurityException e) {
-        return itemClass.newInstance();
+        return itemEditor.getItemClass().newInstance();
       }
       return constructor.newInstance();
     }
