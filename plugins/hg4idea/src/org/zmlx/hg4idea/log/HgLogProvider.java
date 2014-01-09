@@ -19,13 +19,11 @@ package org.zmlx.hg4idea.log;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsKey;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.VcsLogBranchFilter;
@@ -166,26 +164,20 @@ public class HgLogProvider implements VcsLogProvider {
                                                                  int maxCount) throws VcsException {
     List<String> filterParameters = ContainerUtil.newArrayList();
 
+    // branch filter and user filter may be used several times without delimiter
+    // or -r options with appropriate revset arguments delimited by '|' or 'and'.
     List<VcsLogBranchFilter> branchFilters = ContainerUtil.findAll(filters, VcsLogBranchFilter.class);
     if (!branchFilters.isEmpty()) {
-      String branchFilter = joinFilters(branchFilters, new Function<VcsLogBranchFilter, String>() {
-        @Override
-        public String fun(VcsLogBranchFilter filter) {
-          return filter.getBranchName();
-        }
-      });
-      filterParameters.add(prepareParameter("branch", branchFilter));
+      for (VcsLogBranchFilter branchFilter : branchFilters) {
+        filterParameters.add(prepareParameter("branch", branchFilter.getBranchName()));
+      }
     }
 
     List<VcsLogUserFilter> userFilters = ContainerUtil.findAll(filters, VcsLogUserFilter.class);
     if (!userFilters.isEmpty()) {
-      String authorFilter = joinFilters(userFilters, new Function<VcsLogUserFilter, String>() {
-        @Override
-        public String fun(VcsLogUserFilter filter) {
-          return filter.getUserName(root);
-        }
-      });
-      filterParameters.add(prepareParameter("user", authorFilter));
+      for (VcsLogUserFilter authorFilter : userFilters) {
+        filterParameters.add(prepareParameter("user", authorFilter.getUserName(root)));
+      }
     }
 
     List<VcsLogDateFilter> dateFilters = ContainerUtil.findAll(filters, VcsLogDateFilter.class);
@@ -248,9 +240,5 @@ public class HgLogProvider implements VcsLogProvider {
 
   private static String prepareParameter(String paramName, String value) {
     return "--" + paramName + "=" + value; // no value escaping needed, because the parameter itself will be quoted by GeneralCommandLine
-  }
-
-  private static <T> String joinFilters(List<T> filters, Function<T, String> toString) {
-    return StringUtil.join(filters, toString, "\\|");
   }
 }
