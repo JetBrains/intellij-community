@@ -31,12 +31,14 @@ public class Utils {
     File result = createTempFile();
     delete(result);
     result.mkdirs();
+    Runner.logger.trace("Utils.createTempDir. Created:  " + result.getCanonicalPath());
     return result;
   }
 
   public static void cleanup() throws IOException {
     if (myTempDir == null) return;
     delete(myTempDir);
+    Runner.logger.trace("Utils.cleanup. Deleted:  " + myTempDir.getCanonicalPath());
     myTempDir = null;
   }
 
@@ -46,6 +48,7 @@ public class Utils {
       if (files != null) {
         for (File each : files) {
           delete(each);
+          Runner.logger.trace("Utils.delete. Deleted:  " + each.getCanonicalPath());
         }
       }
     }
@@ -55,6 +58,7 @@ public class Utils {
         Thread.sleep(10);
       }
       catch (InterruptedException ignore) {
+        Runner.logger.error("[InterruptedException] from utils.delete " + System.getProperty("line.separator") + ignore);
       }
     }
     if (file.exists()) throw new IOException("Cannot delete file " + file);
@@ -62,6 +66,7 @@ public class Utils {
 
   public static void setExecutable(File file, boolean executable) throws IOException {
     if (executable && !file.setExecutable(true)) {
+      Runner.logger.error("Utils.setExecutable. Cannot set executable permissions for:  " + file.getCanonicalPath());
       throw new IOException("Cannot set executable permissions for: " + file);
     }
   }
@@ -72,12 +77,14 @@ public class Utils {
       if (files == null) throw new IOException("Cannot get directory's content: " + from);
       for (File each : files) {
         copy(each, new File(to, each.getName()));
+        Runner.logger.trace("Utils.copy. Copied:  " + each.getCanonicalPath());
       }
     }
     else {
       InputStream in = new BufferedInputStream(new FileInputStream(from));
       try {
         copyStreamToFile(in, to);
+        Runner.logger.trace("Utils.copy. copyStreamToFile from:  " + from.getCanonicalPath());
       }
       finally {
         in.close();
@@ -90,6 +97,7 @@ public class Utils {
     InputStream in = new BufferedInputStream(new FileInputStream(from));
     try {
       copyStream(in, out);
+      Runner.logger.trace("Utils.copyFileToStream. copyStream from: " + from.getCanonicalPath());
     }
     finally {
       in.close();
@@ -101,6 +109,7 @@ public class Utils {
     OutputStream out = new BufferedOutputStream(new FileOutputStream(to));
     try {
       copyStream(from, out);
+      Runner.logger.trace("Utils.copyStreamToFile. copyStream to: " + to.getCanonicalPath());
     }
     finally {
       out.close();
@@ -111,6 +120,7 @@ public class Utils {
     OutputStream out = new BufferedOutputStream(to);
     try {
       from.writeTo(out);
+      Runner.logger.trace("Utils.copyBytesToStream. writeTo to: " );
     }
     finally {
       out.flush();
@@ -125,6 +135,7 @@ public class Utils {
     ByteArrayOutputStream byteOut = new ByteArrayOutputStream();
     try {
       copyStream(in, byteOut);
+      Runner.logger.trace("Utils.readBytes. copyStream to: ");
     }
     finally {
       byteOut.close();
@@ -143,6 +154,7 @@ public class Utils {
   public static InputStream getEntryInputStream(ZipFile zipFile, String entryPath) throws IOException {
     InputStream result = findEntryInputStream(zipFile, entryPath);
     if (result == null) throw new IOException("Entry " + entryPath + " not found");
+    Runner.logger.trace("Utils.getEntryInputStream. findEntryInputStream: " + entryPath);
     return result;
   }
 

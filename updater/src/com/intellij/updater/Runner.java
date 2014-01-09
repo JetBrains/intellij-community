@@ -25,7 +25,7 @@ public class Runner {
   private static final String OLD_BUILD_DESCRIPTION = "old.build.description";
   private static final String NEW_BUILD_DESCRIPTION = "new.build.description";
 
-  private static void logConfigure(){
+  private static void initLogger(){
     String uHome = System.getProperty("user.home");
     System.out.println("***************** --- logConfigure ---");
     System.out.println("***************** uHome: " + uHome);
@@ -45,8 +45,7 @@ public class Runner {
     update_error.setAppend(true);
     update_error.activateOptions();
 //    Logger.getRootLogger().addAppender(update_error);
-
-    Logger rootLogger = Logger.getRootLogger();
+//    Logger rootLogger = Logger.getRootLogger();
 //    rootLogger.setLevel(Level.FATAL);
 //    rootLogger.getLoggerRepository().resetConfiguration();
 
@@ -54,15 +53,14 @@ public class Runner {
     logger.addAppender(update_error);
     logger.addAppender(update);
     logger.setLevel(Level.TRACE);
-    System.out.println("***************** --- create logger ---");
-
+    System.out.println("***************** --- logger created ---");
   }
 
   public static void main(String[] args) throws Exception {
     //String value = System.getenv("MY_HOME");
     //System.getProperty("java.io.tmpdir")
     //System.getProperty("user.home")
-    logConfigure();
+    initLogger();
 /*    String uHome = System.getProperty("user.home");
     System.out.println("***************** --- Updater ---");
     System.out.println("***************** uHome: " + uHome);
@@ -147,6 +145,7 @@ public class Runner {
         }
       }
     }
+    logger.trace("List: " + result.toString());
     return result;
   }
 
@@ -230,7 +229,7 @@ public class Runner {
 
   private static void install(final String destFolder) throws Exception {
     System.out.println("install, destFolder: " + destFolder);
-    logger.trace("install");
+    logger.trace("install: " + destFolder);
     InputStream in = Runner.class.getResourceAsStream("/" + PATCH_PROPERTIES_ENTRY);
     Properties props = new Properties();
     try {
@@ -326,7 +325,6 @@ public class Runner {
   private static File resolveJarFile() throws IOException {
     System.out.println("***************** resolveJarFile");
     logger.trace("***************** resolveJarFile");
-    System.out.println("***************** check the log");
     URL url = Runner.class.getResource("");
     if (url == null) throw new IOException("Cannot resolve jar file path");
     logger.trace("resolveJarFile " + url.getProtocol());

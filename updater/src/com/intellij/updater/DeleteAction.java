@@ -44,14 +44,18 @@ public class DeleteAction extends PatchAction {
   @Override
   protected void doApply(ZipFile patchFile, File toFile) throws IOException {
     Utils.delete(toFile);
+    Runner.logger.trace("DeleteAction.doApply delete File: " + toFile.getCanonicalPath());
   }
 
   protected void doBackup(File toFile, File backupFile) throws IOException {
     Utils.copy(toFile, backupFile);
+    Runner.logger.trace("DeleteAction.doBackup copy toFile: " + toFile.getCanonicalPath() + " backupFile " + backupFile.getCanonicalPath());
   }
 
   protected void doRevert(File toFile, File backupFile) throws IOException {
     Utils.delete(toFile); // make sure there is no directory remained on this path (may remain from previous 'create' actions
+    Runner.logger.trace("DeleteAction.doRevert delete toFile: " + toFile.getCanonicalPath());
     Utils.copy(backupFile, toFile);
+    Runner.logger.trace("DeleteAction.doRevert copy backupFile: " + backupFile.getCanonicalPath() + " toFile " + toFile.getCanonicalPath());
   }
 }

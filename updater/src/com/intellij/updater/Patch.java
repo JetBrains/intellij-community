@@ -181,6 +181,7 @@ public class Patch {
             new ActionsProcessor() {
               public void forEach(PatchAction each) throws IOException {
                 each.backup(toDir, backupDir);
+                Runner.logger.trace("Patch.revert Backing up files toDir: " + toDir.getCanonicalFile() + " to backupDir " + backupDir.getCanonicalFile());
               }
             });
 
@@ -193,14 +194,17 @@ public class Patch {
                 public void forEach(PatchAction each) throws IOException {
                   appliedActions.add(each);
                   each.apply(patchFile, toDir);
+                  Runner.logger.trace("Patch.apply applying patchFile" + patchFile.getName() + " to toDir " + toDir.getCanonicalFile());
                 }
               });
     }
     catch (OperationCancelledException e) {
+      Runner.logger.error("[OperationCancelledException] from Patch.apply " + System.getProperty("line.separator") + e);
       shouldRevert = true;
       cancelled = true;
     }
     catch (Throwable e) {
+      Runner.logger.error("[Exception] from Patch.apply " + System.getProperty("line.separator") + e);
       shouldRevert = true;
       ui.showError(e);
     }
@@ -225,6 +229,7 @@ public class Patch {
             new ActionsProcessor() {
               public void forEach(PatchAction each) throws IOException {
                 each.revert(toDir, backupDir);
+                Runner.logger.trace("Patch.revert revert toDir: " + toDir.getCanonicalFile() + " from backupDir " + backupDir.getCanonicalFile());
               }
             });
   }

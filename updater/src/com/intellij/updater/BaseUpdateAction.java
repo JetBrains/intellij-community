@@ -31,18 +31,21 @@ public abstract class BaseUpdateAction extends PatchAction {
   @Override
   protected void doBackup(File toFile, File backupFile) throws IOException {
     Utils.copy(toFile, backupFile);
+    Runner.logger.trace("BaseUpdateAction.doBackup Utils.copy toFile " + toFile.getCanonicalPath() + " backupFile " + backupFile.getCanonicalPath());
   }
 
   protected void replaceUpdated(File from, File dest) throws IOException {
     // on OS X code signing caches seem to be associated with specific file ids, so we need to remove the original file.
     if (!dest.delete()) throw new IOException("Cannot delete file " + dest);
     Utils.copy(from, dest);
+    Runner.logger.trace("BaseUpdateAction.doBackup Utils.copy from " + from.getCanonicalPath() + " dest " + dest.getCanonicalPath());
   }
 
   @Override
   protected void doRevert(File toFile, File backupFile) throws IOException {
     if (!toFile.exists() || isModified(toFile)) {
       Utils.copy(backupFile, toFile);
+      Runner.logger.trace("BaseUpdateAction.doRevert Utils.copy backupFile " + backupFile.getCanonicalPath() + " toFile " + toFile.getCanonicalPath());
     }
   }
 

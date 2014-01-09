@@ -103,9 +103,11 @@ public abstract class PatchAction {
       return true;
     }
     catch (OverlappingFileLockException e) {
+      Runner.logger.error("[OverlappingFileLockException] from PatchAction.isWritable" + System.getProperty("line.separator") + e);
       return false;
     }
     catch (IOException e) {
+      Runner.logger.error("[IOException] from PatchAction.isWritable" + System.getProperty("line.separator") + e);
       return false;
     }
   }
