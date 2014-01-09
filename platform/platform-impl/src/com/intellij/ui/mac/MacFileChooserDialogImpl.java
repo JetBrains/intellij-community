@@ -60,7 +60,8 @@ public class MacFileChooserDialogImpl implements PathChooserDialog {
   private static final Callback SHOULD_ENABLE_URL = new Callback() {
     @SuppressWarnings("UnusedDeclaration")
     public boolean callback(ID self, String selector, ID panel, ID url) {
-      if (ourImplMap.get(self) == null) {
+      MacFileChooserDialogImpl dialog = ourImplMap.get(self);
+      if (dialog == null) {
         // Since it has already been removed from the map, the file is likely to be valid if the user was able to select it
         return true;
       }
@@ -69,7 +70,7 @@ public class MacFileChooserDialogImpl implements PathChooserDialog {
       final String fileName = Foundation.toStringViaUTF8(filename);
       if (fileName == null) return false;
       final VirtualFile virtualFile = LocalFileSystem.getInstance().findFileByPath(fileName);
-      return virtualFile == null || (virtualFile.isDirectory() || ourImplMap.get(self).myChooserDescriptor.isFileSelectable(virtualFile));
+      return virtualFile == null || dialog.myChooserDescriptor.isFileSelectable(virtualFile);
     }
   };
 
