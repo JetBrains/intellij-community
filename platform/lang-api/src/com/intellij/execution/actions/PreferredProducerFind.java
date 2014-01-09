@@ -16,6 +16,7 @@
 
 package com.intellij.execution.actions;
 
+import com.intellij.diagnostic.PluginException;
 import com.intellij.execution.Location;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.ConfigurationType;
@@ -24,6 +25,7 @@ import com.intellij.execution.junit.RuntimeConfigurationProducer;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.extensions.PluginId;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -61,7 +63,8 @@ class PreferredProducerFind {
         producer = prototype.createProducer(location, context);
       }
       catch (AbstractMethodError e) {
-        LOG.error(prototype.toString(), e);
+        PluginId pluginId = ApplicationManager.getApplication().getPluginByClassName(prototype.getClass().getName());
+        LOG.error(prototype.toString(), pluginId != null ? new PluginException("Incompatible plugin", e, pluginId) : e);
         continue;
       }
       if (producer.getConfiguration() != null) {
