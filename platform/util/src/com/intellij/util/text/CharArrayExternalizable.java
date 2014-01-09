@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,22 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.testFramework;
-
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
+package com.intellij.util.text;
 
 /**
- * Specifies the path to testdata for the current test case class.
- * May use the variable $CONTENT_ROOT to specify the module content root or
- * $PROJECT_ROOT to use the project base directory.
- *
- * @author yole
+ * @author peter
  */
-@Retention(RetentionPolicy.RUNTIME)
-@Target({ElementType.TYPE})
-public @interface TestDataPath {
-  String value();
+public interface CharArrayExternalizable {
+
+  void getChars(int start, int end, char[] dest, int destPos);
 }

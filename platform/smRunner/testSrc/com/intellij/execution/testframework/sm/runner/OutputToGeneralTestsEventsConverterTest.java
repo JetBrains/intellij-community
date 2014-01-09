@@ -43,40 +43,35 @@ public class OutputToGeneralTestsEventsConverterTest extends BaseSMTRunnerTestCa
   }
 
   public void testLineBreaks_ServiceMessage() {
-    doCheckOutptut("\n##teamcity[enteredTheMatrix timestamp = '2011-06-03T13:00:08.259+0400']\n", "", true);
+    doCheckOutptut("\n##teamcity[enteredTheMatrix timestamp = '2011-06-03T13:00:08.259+0400']\n", "[stdout]\n", true);
   }
 
   public void testLineBreaks_NormalOutput() {
     doCheckOutptut("\na\nb\n\nc\n", "[stdout]\n" +
-                                    "[stdout]a" +
+                                    "[stdout]a\n" +
+                                    "[stdout]b\n" +
                                     "[stdout]\n" +
-                                    "[stdout]b" +
-                                    "[stdout]\n" +
-                                    "[stdout]\n" +
-                                    "[stdout]c" +
-                                    "[stdout]\n",
+                                    "[stdout]c\n",
                    true);
   }
 
   public void testLineBreaks_OutptutAndCommands() {
     doCheckOutptut("\na\n##teamcity[enteredTheMatrix timestamp = '2011-06-03T13:00:08.259+0400']\nb\n##teamcity[enteredTheMatrix timestamp = '2011-06-03T13:00:08.259+0400']\n\nc\n",
                    "[stdout]\n" +
-                   "[stdout]a" +
-                   "[stdout]b" +
+                   "[stdout]a\n" +
+                   "[stdout]b\n" +
                    "[stdout]\n" +
-                   "[stdout]c" +
-                   "[stdout]\n",
+                   "[stdout]c\n",
                    true);
   }
 
   public void testLineBreaks_AutoSplitIfProcessHandlerDoestSupportIt() {
     doCheckOutptut("\na\n##teamcity[enteredTheMatrix timestamp = '2011-06-03T13:00:08.259+0400']\nb\n##teamcity[testCount count = '1' timestamp = '2011-06-03T13:00:08.259+0400']\n\nc\n",
                    "[stdout]\n" +
-                   "[stdout]a" +
-                   "[stdout]b" +
+                   "[stdout]a\n" +
+                   "[stdout]b\n" +
                    "[stdout]\n" +
-                   "[stdout]c" +
-                   "[stdout]\n",
+                   "[stdout]c\n",
                    false);
   }
 

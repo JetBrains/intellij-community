@@ -70,6 +70,8 @@ import java.util.regex.Pattern;
 @SuppressWarnings("StaticMethodOnlyUsedInOneClass")
 public class UIUtil {
 
+  @NonNls public static final String BORDER_LINE = "<hr size=1 noshade>";
+
   private static final AtomicNotNullLazyValue<Boolean> X_RENDER_ACTIVE = new AtomicNotNullLazyValue<Boolean>() {
     @NotNull
     @Override

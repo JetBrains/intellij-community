@@ -17,12 +17,12 @@ package com.intellij.testAssistant;
 
 import com.intellij.execution.Location;
 import com.intellij.navigation.GotoRelatedItem;
+import com.intellij.navigation.GotoRelatedProvider;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.testIntegration.GotoTestRelatedProvider;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -30,7 +30,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Collections;
 import java.util.List;
 
-public class TestCaseAsRelatedFileProvider extends GotoTestRelatedProvider {
+public class TestCaseAsRelatedFileProvider extends GotoRelatedProvider {
   @NotNull
   @Override
   public List<? extends GotoRelatedItem> getItems(@NotNull DataContext context) {

@@ -5,16 +5,13 @@ import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.refactoring.invertBoolean.InvertBooleanProcessor;
+import com.intellij.testFramework.TestDataPath;
 
 /**
  * @author ven
  */
+@TestDataPath("$CONTENT_ROOT/testData/refactoring/invertBoolean/")
 public class InvertBooleanTest extends LightRefactoringParameterizedTestCase {
-  @Override
-  public String getRelativeBasePath(){
-    return "/refactoring/invertBoolean/";
-  }
-
   @Override
   protected void perform() {
     PsiElement element = TargetElementUtilBase.findTargetElement(myEditor, TargetElementUtilBase.ELEMENT_NAME_ACCEPTED);

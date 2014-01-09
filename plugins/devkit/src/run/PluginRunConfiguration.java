@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -145,10 +145,13 @@ public class PluginRunConfiguration extends RunConfigurationBase implements Modu
             String prefix = null;
 
             if (buildNumber.startsWith("IC")) {
-              prefix = PlatformUtils.COMMUNITY_PREFIX;
+              prefix = PlatformUtils.IDEA_CE_PREFIX;
             }
             else if (buildNumber.startsWith("PY")) {
               prefix = PlatformUtils.PYCHARM_PREFIX;
+            }
+            else if (buildNumber.startsWith("PC")) {
+              prefix = PlatformUtils.PYCHARM_CE_PREFIX;
             }
             else if (buildNumber.startsWith("RM")) {
               prefix = PlatformUtils.RUBY_PREFIX;
@@ -162,7 +165,13 @@ public class PluginRunConfiguration extends RunConfigurationBase implements Modu
             else if (buildNumber.startsWith("OC")) {
               prefix = buildNumber.contains("121") ? "CIDR" : PlatformUtils.APPCODE_PREFIX;
             }
-            if (prefix != null) vm.defineProperty(PlatformUtils.PLATFORM_PREFIX_KEY, prefix);
+            else if (buildNumber.startsWith("CP")) {
+              prefix = PlatformUtils.CPP_PREFIX;
+            }
+
+            if (prefix != null) {
+              vm.defineProperty(PlatformUtils.PLATFORM_PREFIX_KEY, prefix);
+            }
           }
         }
 

@@ -563,5 +563,10 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
     }
     return this;
   }
+
+  @Override
+  public String toString() {
+    return "GroovyFileImpl:" + getName();
+  }
 }
 

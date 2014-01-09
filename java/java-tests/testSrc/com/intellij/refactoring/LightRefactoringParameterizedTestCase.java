@@ -55,12 +55,12 @@ public abstract class LightRefactoringParameterizedTestCase extends LightRefacto
       @Override
       public void run() {
         try {
-          final String filePath = getRelativeBasePath() + getBeforeFile(myFileSuffix);
+          final String filePath = getBeforeFile(myFileSuffix);
           configureByFile(filePath);
 
-          final File testDir = new File(filePath).getParentFile();
+          final File testDir = new File(getTestDataPath(), filePath).getParentFile();
           final String afterName = getAfterFile(myFileSuffix);
-          final boolean conflictShouldBeFound = !new File(getTestDataPath() + "/" + testDir, afterName).exists();
+          final boolean conflictShouldBeFound = !new File(testDir, afterName).exists();
           try {
             perform();
             if (conflictShouldBeFound) {
@@ -71,7 +71,7 @@ public abstract class LightRefactoringParameterizedTestCase extends LightRefacto
             if (!conflictShouldBeFound) {
               fail("Conflict not expected");
             } else {
-              final File conflicts = new File(getTestDataPath() + "/" + testDir, FileUtilRt.getNameWithoutExtension(myFileSuffix) + CONFLICTS_SUFFIX);
+              final File conflicts = new File(testDir, FileUtilRt.getNameWithoutExtension(myFileSuffix) + CONFLICTS_SUFFIX);
               if (!conflicts.exists()) {
                 fail("Conflict file " + conflicts.getPath() + " not found");
               }
@@ -82,7 +82,7 @@ public abstract class LightRefactoringParameterizedTestCase extends LightRefacto
           }
 
           if (!conflictShouldBeFound) {
-            checkResultByFile(getRelativeBasePath() + getAfterFile(myFileSuffix));
+            checkResultByFile(getAfterFile(myFileSuffix));
           }
         }
         catch (Throwable e) {

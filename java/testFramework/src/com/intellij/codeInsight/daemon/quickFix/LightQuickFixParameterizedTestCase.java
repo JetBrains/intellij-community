@@ -15,13 +15,13 @@
  */
 package com.intellij.codeInsight.daemon.quickFix;
 
-import com.intellij.testFramework.FileBasedTestCaseHelper;
+import com.intellij.testFramework.FileBasedTestCaseHelperEx;
 import org.jetbrains.annotations.Nullable;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
 @RunWith(com.intellij.testFramework.Parameterized.class)
-public abstract class LightQuickFixParameterizedTestCase extends LightQuickFixTestCase implements FileBasedTestCaseHelper {
+public abstract class LightQuickFixParameterizedTestCase extends LightQuickFixTestCase implements FileBasedTestCaseHelperEx {
   @Override
   public String getRelativeBasePath() {
     return getBasePath();
