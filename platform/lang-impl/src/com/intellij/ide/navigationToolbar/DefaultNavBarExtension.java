@@ -21,21 +21,23 @@
 package com.intellij.ide.navigationToolbar;
 
 import com.intellij.analysis.AnalysisScopeBundle;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.JdkOrderEntry;
-import com.intellij.openapi.roots.LibraryOrderEntry;
-import com.intellij.openapi.roots.ModuleOrderEntry;
+import com.intellij.openapi.roots.*;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiDirectory;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
+import com.intellij.psi.*;
+import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.PsiFileSystemItemProcessor;
+import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.util.Processor;
+import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
-import java.util.Collections;
-
-public class DefaultNavBarExtension implements NavBarModelExtension{
+public class DefaultNavBarExtension extends AbstractNavBarModelExtension {
   @Override
   @Nullable
   public String getPresentableText(final Object object) {
@@ -66,12 +68,6 @@ public class DefaultNavBarExtension implements NavBarModelExtension{
   }
 
   @Override
-  @Nullable
-  public PsiElement getParent(final PsiElement object) {
-    return null;
-  }
-
-  @Override
   public PsiElement adjustElement(final PsiElement psiElement) {
     final PsiFile containingFile = psiElement.getContainingFile();
     if (containingFile != null) return containingFile;
@@ -79,7 +75,107 @@ public class DefaultNavBarExtension implements NavBarModelExtension{
   }
 
   @Override
-  public Collection<VirtualFile> additionalRoots(Project project) {
-    return Collections.emptyList();
+  public boolean processChildren(final Object object, final Object rootElement, final Processor<Object> processor) {
+    if (object instanceof Project) {
+      return processChildren((Project)object, processor);
+    }
+    else if (object instanceof Module) {
+      return processChildren((Module)object, processor);
+    }
+    else if (object instanceof PsiDirectoryContainer) {
+      final PsiDirectoryContainer psiPackage = (PsiDirectoryContainer)object;
+      final PsiDirectory[] psiDirectories = ApplicationManager.getApplication().runReadAction(
+        new Computable<PsiDirectory[]>() {
+          @Override
+          public PsiDirectory[] compute() {
+            return rootElement instanceof Module
+                   ? psiPackage.getDirectories(GlobalSearchScope.moduleScope((Module)rootElement))
+                   : psiPackage.getDirectories();
+          }
+        }
+      );
+      for (PsiDirectory psiDirectory : psiDirectories) {
+        if (!processChildren(psiDirectory, rootElement, processor)) return false;
+      }
+      return true;
+    }
+    else if (object instanceof PsiDirectory) {
+      return processChildren((PsiDirectory)object, rootElement, processor);
+    }
+    else if (object instanceof PsiFileSystemItem) {
+      return processChildren((PsiFileSystemItem)object, processor);
+    }
+    return true;
+  }
+
+  private static boolean processChildren(final Project object, final Processor<Object> processor) {
+    return ApplicationManager.getApplication().runReadAction(
+      new Computable<Boolean>() {
+        @Override
+        public Boolean compute() {
+          return ContainerUtil.process(ModuleManager.getInstance(object).getModules(), processor);
+        }
+      }
+    );
+  }
+
+  private static boolean processChildren(Module module, Processor<Object> processor) {
+    final PsiManager psiManager = PsiManager.getInstance(module.getProject());
+    ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
+    VirtualFile[] roots = moduleRootManager.getContentRoots();
+    for (final VirtualFile root : roots) {
+      final PsiDirectory psiDirectory = ApplicationManager.getApplication().runReadAction(
+        new Computable<PsiDirectory>() {
+          @Override
+          public PsiDirectory compute() {
+            return psiManager.findDirectory(root);
+          }
+        }
+      );
+      if (psiDirectory != null) {
+        if (!processor.process(psiDirectory)) return false;
+      }
+    }
+    return true;
+  }
+
+  private static boolean processChildren(final PsiDirectory object, final Object rootElement, final Processor<Object> processor) {
+    return ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
+      @Override
+      public Boolean compute() {
+        final ModuleFileIndex moduleFileIndex =
+          rootElement instanceof Module ? ModuleRootManager.getInstance((Module)rootElement).getFileIndex() : null;
+        final PsiElement[] children = object.getChildren();
+        for (PsiElement child : children) {
+          if (child != null && child.isValid()) {
+            if (moduleFileIndex != null) {
+              final VirtualFile virtualFile = PsiUtilCore.getVirtualFile(child);
+              if (virtualFile != null && !moduleFileIndex.isInContent(virtualFile)) continue;
+            }
+            if (!processor.process(child)) return false;
+          }
+        }
+        return true;
+      }
+    });
+  }
+
+  private static boolean processChildren(final PsiFileSystemItem object, final Processor<Object> processor) {
+    return ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
+      @Override
+      public Boolean compute() {
+        return object.processChildren(new PsiFileSystemItemProcessor() {
+          @Override
+          public boolean acceptItem(String name, boolean isDirectory) {
+            return true;
+          }
+
+          @Override
+          public boolean execute(@NotNull PsiFileSystemItem element) {
+            return processor.process(element);
+          }
+        });
+      }
+    });
   }
 }
