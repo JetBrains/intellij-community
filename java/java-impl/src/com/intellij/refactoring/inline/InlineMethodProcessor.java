@@ -357,6 +357,8 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
         result.put(memberContainer, inaccessibleReferenced);
         for (PsiMember member : referencedElements) {
           if (PsiTreeUtil.isAncestor(elementToInline, member, false)) continue;
+          if (elementToInline instanceof PsiClass && 
+              InheritanceUtil.isInheritorOrSelf((PsiClass)elementToInline, member.getContainingClass(), true)) continue;
           if (!PsiUtil.isAccessible(usage.getProject(), member, usageElement, null)) {
             inaccessibleReferenced.add(member);
           }
