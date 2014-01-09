@@ -362,6 +362,9 @@ public class BreakpointsDialog extends DialogWrapper {
     saveCurrentItem();
     Disposer.dispose(myListenerDisposable);
     saveBreakpointsDialogState();
+    for (BreakpointItem item : myBreakpointItems) {
+      item.dispose();
+    }
     super.dispose();
   }
 

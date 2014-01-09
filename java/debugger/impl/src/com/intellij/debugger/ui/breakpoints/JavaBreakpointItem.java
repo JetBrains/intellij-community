@@ -71,7 +71,10 @@ class JavaBreakpointItem extends BreakpointItem {
   @Override
   protected void doUpdateDetailView(DetailView panel, boolean editorOnly) {
     //saveState();
-    myBreakpointPropertiesPanel = null;
+    if (myBreakpointPropertiesPanel != null) {
+      myBreakpointPropertiesPanel.dispose();
+      myBreakpointPropertiesPanel = null;
+    }
 
     if (!editorOnly) {
       myBreakpointPropertiesPanel = myBreakpointFactory != null ? myBreakpointFactory
@@ -125,6 +128,7 @@ class JavaBreakpointItem extends BreakpointItem {
 
   @Override
   public void removed(Project project) {
+    dispose();
     DebuggerManagerEx.getInstanceEx(project).getBreakpointManager().removeBreakpoint(myBreakpoint);
   }
 
@@ -155,6 +159,14 @@ class JavaBreakpointItem extends BreakpointItem {
   @Override
   public boolean isDefaultBreakpoint() {
     return myBreakpoint.getCategory().equals(ExceptionBreakpoint.CATEGORY);
+  }
+
+  @Override
+  protected void dispose() {
+    if (myBreakpointPropertiesPanel != null) {
+      myBreakpointPropertiesPanel.dispose();
+      myBreakpointPropertiesPanel = null;
+    }
   }
 
   @Override
