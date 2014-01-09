@@ -138,17 +138,20 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
 
     final ProjectImportAction projectImportAction = new ProjectImportAction(resolverCtx.isPreviewMode());
 
-    // inject ProjectResolverContext into gradle project resolver extensions
-    // collect extra JVM arguments provided by gradle project resolver extensions
-    // and register classes of extra gradle project models required for extensions (e.g. com.android.builder.model.AndroidProject)
     final List<KeyValue<String, String>> extraJvmArgs = new ArrayList<KeyValue<String, String>>();
     for (GradleProjectResolverExtension resolverExtension = projectResolverChain;
          resolverExtension != null;
          resolverExtension = resolverExtension.getNext()) {
+      // inject ProjectResolverContext into gradle project resolver extensions
       resolverExtension.setProjectResolverContext(resolverCtx);
+      // pre-import checks
+      resolverExtension.preImportCheck();
+      // register classes of extra gradle project models required for extensions (e.g. com.android.builder.model.AndroidProject)
       projectImportAction.addExtraProjectModelClasses(resolverExtension.getExtraProjectModelClasses());
+      // collect extra JVM arguments provided by gradle project resolver extensions
       extraJvmArgs.addAll(resolverExtension.getExtraJvmArgs());
     }
+
     final ParametersList parametersList = new ParametersList();
     for (KeyValue<String, String> jvmArg : extraJvmArgs) {
       parametersList.addProperty(jvmArg.getKey(), jvmArg.getValue());

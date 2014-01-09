@@ -310,6 +310,10 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
   }
 
   @Override
+  public void preImportCheck() {
+  }
+
+  @Override
   public void enhanceRemoteProcessing(@NotNull SimpleJavaParameters parameters) throws ExecutionException {
     PathsList classPath = parameters.getClassPath();
 
