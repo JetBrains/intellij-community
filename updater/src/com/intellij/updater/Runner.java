@@ -14,12 +14,9 @@ import org.apache.log4j.Logger;
 import org.apache.log4j.Level;
 import org.apache.log4j.FileAppender;
 import org.apache.log4j.PatternLayout;
-import org.apache.log4j.PropertyConfigurator;
 
 public class Runner {
   public static Logger logger;
-//  public static Logger logger = Logger.getLogger("com.intellij.updater");
-
   private static final String PATCH_FILE_NAME = "patch-file.zip";
   private static final String PATCH_PROPERTIES_ENTRY = "patch.properties";
   private static final String OLD_BUILD_DESCRIPTION = "old.build.description";
@@ -32,22 +29,19 @@ public class Runner {
 
     FileAppender update = new FileAppender();
     update.setFile(uHome + "/update.log");
-    update.setLayout(new PatternLayout("%d{ABSOLUTE} %5p %t %c{1}:%M:%L - %m%n"));
+    //first version - %d{ABSOLUTE} %5p %t %c{1}:%M:%L - %m%n
+    //%-4r [%t] %-5p %c %x - %m%n
+    update.setLayout(new PatternLayout("%d{dd MMM yyyy HH:mm:ss} %-5p %C{1}.%M - %m%n"));
     update.setThreshold(Level.TRACE);
     update.setAppend(true);
     update.activateOptions();
-//    Logger.getRootLogger().addAppender(update);
 
     FileAppender update_error = new FileAppender();
     update_error.setFile(uHome + "/update_error.log");
-    update_error.setLayout(new PatternLayout("%d{ABSOLUTE} %5p %t %c{1}:%M:%L - %m%n"));
+    update_error.setLayout(new PatternLayout("%d{dd MMM yyyy HH:mm:ss} %-5p %C{1}.%M - %m%n"));
     update_error.setThreshold(Level.ERROR);
     update_error.setAppend(true);
     update_error.activateOptions();
-//    Logger.getRootLogger().addAppender(update_error);
-//    Logger rootLogger = Logger.getRootLogger();
-//    rootLogger.setLevel(Level.FATAL);
-//    rootLogger.getLoggerRepository().resetConfiguration();
 
     logger = Logger.getLogger("com.intellij.updater");
     logger.addAppender(update_error);
@@ -57,37 +51,9 @@ public class Runner {
   }
 
   public static void main(String[] args) throws Exception {
-    //String value = System.getenv("MY_HOME");
-    //System.getProperty("java.io.tmpdir")
-    //System.getProperty("user.home")
     initLogger();
-/*    String uHome = System.getProperty("user.home");
-    System.out.println("***************** --- Updater ---");
-    System.out.println("***************** uHome: " + uHome);
-    Properties pLog = new Properties();
-    InputStream pStream = Runner.class.getResourceAsStream("/log4j.properties");
-    try {
-      pLog.load(pStream);
-      System.out.println("load property file ");
-      pLog.put("***************** Log", uHome);
-    } catch (FileNotFoundException e) {
-        System.out.println("FileNotFoundException. log4j.properties is not available ");
-    } catch (IOException e) {
-        System.out.println("IOException " + e);
-    } finally{
-        System.out.println("***************** finaly");
-        pStream.close();
-    } */
-//    PropertyConfigurator.configure("/" + "log4j.properties");
     System.out.println("***************** PropertyConfigurator ");
-//    PropertyConfigurator.configure(pLog);
-    logger.trace("***************** --- Updater started ---");
-    System.out.println("***************** PropertyConfigurator ");
-//    logger.debug("Sample debug message");
-//    logger.info("Sample info message");
-//    logger.warn("Sample warn message");
-//    logger.error("Sample error message");
-//    logger.fatal("Sample fatal message");
+    logger.trace("--- Updater started ---");
 
     if (args.length != 2 && args.length < 6) {
       printUsage();
@@ -134,7 +100,7 @@ public class Runner {
   }
 
   public static List<String> extractFiles(String[] args, String paramName) {
-    logger.trace("List");
+//    logger.trace("List");
     List<String> result = new ArrayList<String>();
     for (String param : args) {
       if (param.startsWith(paramName + "=")) {
@@ -145,7 +111,8 @@ public class Runner {
         }
       }
     }
-    logger.trace("List: " + result.toString());
+//    logger.trace("List: " + result.toString());
+    logger.trace(result.toString());
     return result;
   }
 
@@ -164,7 +131,6 @@ public class Runner {
                              List<String> ignoredFiles,
                              List<String> criticalFiles,
                              List<String> optionalFiles) throws IOException, OperationCancelledException {
-    logger.trace("create");
     UpdaterUI ui = new ConsoleUpdaterUI();
     try {
       File tempPatchFile = Utils.createTempFile();
@@ -213,7 +179,7 @@ public class Runner {
       }
     }
     catch (Exception ex) {
-      logger.error("[Exception] from create" + System.getProperty("line.separator") + ex);
+      logger.error(ex);
     }
     finally {
       cleanup(ui);
@@ -221,7 +187,7 @@ public class Runner {
   }
 
   private static void cleanup(UpdaterUI ui) throws IOException {
-    logger.trace("cleanup");
+    logger.trace("Cleaning up...");
     ui.startProcess("Cleaning up...");
     ui.setProgressIndeterminate();
     Utils.cleanup();
@@ -229,14 +195,14 @@ public class Runner {
 
   private static void install(final String destFolder) throws Exception {
     System.out.println("install, destFolder: " + destFolder);
-    logger.trace("install: " + destFolder);
+    logger.trace("destFolder: " + destFolder);
     InputStream in = Runner.class.getResourceAsStream("/" + PATCH_PROPERTIES_ENTRY);
     Properties props = new Properties();
     try {
       props.load(in);
     }
     catch (Exception ex) {
-      logger.error("[Exception] from install. destFolder " + destFolder + System.getProperty("line.separator") + ex);
+      logger.error(ex.fillInStackTrace());
     }
     finally {
       in.close();
@@ -249,7 +215,7 @@ public class Runner {
           UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
         }
         catch (Exception ex) {
-          logger.error("[Exception] from invokeAndWait " + System.getProperty("line.separator") + ex);
+          logger.error(ex.fillInStackTrace());
         }
       }
     });
@@ -258,20 +224,19 @@ public class Runner {
                   props.getProperty(NEW_BUILD_DESCRIPTION),
                   new SwingUpdaterUI.InstallOperation() {
                     public boolean execute(UpdaterUI ui) throws OperationCancelledException {
-                      logger.trace("execute");
+                      logger.trace("installing patch to the " + destFolder + " dir");
                       return doInstall(ui, destFolder);
                     }
                   });
   }
 
   private static boolean doInstall(UpdaterUI ui, String destFolder) throws OperationCancelledException {
-    logger.trace("doInstall");
     try {
       try {
         File patchFile = Utils.createTempFile();
         ZipFile jarFile = new ZipFile(resolveJarFile());
 
-        logger.trace("doInstall: Extracting patch file...");
+        logger.trace("Extracting patch file...");
         ui.startProcess("Extracting patch file...");
         ui.setProgressIndeterminate();
         try {
@@ -281,7 +246,7 @@ public class Runner {
             Utils.copyStream(in, out);
           }
           catch (Exception ex) {
-            logger.error("[Exception] from doInstall " + patchFile.getCanonicalPath() + System.getProperty("line.separator") + ex);
+            logger.error(ex.fillInStackTrace());
           }
 
           finally {
@@ -290,7 +255,7 @@ public class Runner {
           }
         }
         catch (Exception ex) {
-          logger.error("[Exception] from doInstall: Extracting patch file" + System.getProperty("line.separator") + ex);
+          logger.error(ex.fillInStackTrace());
         }
 
         finally {
@@ -306,7 +271,7 @@ public class Runner {
       }
       catch (IOException e) {
         ui.showError(e);
-        logger.error("[Exception] from doInstall " + System.getProperty("line.separator") + e);
+        logger.error(e.fillInStackTrace());
       }
     }
     finally {
@@ -315,7 +280,7 @@ public class Runner {
       }
       catch (IOException e) {
         ui.showError(e);
-        logger.error("[Exception] from doInstall " + System.getProperty("line.separator") + e);
+        logger.error(e.fillInStackTrace());
       }
     }
 
@@ -324,10 +289,9 @@ public class Runner {
 
   private static File resolveJarFile() throws IOException {
     System.out.println("***************** resolveJarFile");
-    logger.trace("***************** resolveJarFile");
     URL url = Runner.class.getResource("");
     if (url == null) throw new IOException("Cannot resolve jar file path");
-    logger.trace("resolveJarFile " + url.getProtocol());
+    logger.trace("URL: " + url.getProtocol());
     if (!"jar".equals(url.getProtocol())) throw new IOException("Patch file is not a 'jar' file");
 
     String path = url.getPath();
@@ -342,7 +306,7 @@ public class Runner {
       return new File(new URI(jarFileUrl));
     }
     catch (URISyntaxException e) {
-      logger.error("[Exception] from resolveJarFile " + System.getProperty("line.separator") + e);
+      logger.error(e.fillInStackTrace());
       throw new IOException(e.getMessage());
     }
   }
