@@ -28,18 +28,18 @@ class MavenDontCheckDependencyInManagementSectionTest extends MavenDomTestCase {
 
   <dependencies>
     <dependency>
-      <groupId>xxxx</groupId>
-      <artifactId>yyyy</artifactId>
-      <version>zzzz</version>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+      <version>777</version>
     </dependency>
   </dependencies>
 
   <dependencyManagement>
     <dependencies>
       <dependency>
-        <groupId>xxxx</groupId>
-        <artifactId>yyyy</artifactId>
-        <version>zzzz</version>
+        <groupId>junit</groupId>
+        <artifactId>junit</artifactId>
+        <version>777</version>
       </dependency>
     </dependencies>
   </dependencyManagement>
@@ -47,18 +47,18 @@ class MavenDontCheckDependencyInManagementSectionTest extends MavenDomTestCase {
   <build>
     <plugins>
       <plugin>
-        <groupId>xxxx</groupId>
-        <artifactId>yyyy</artifactId>
-        <version>zzzz</version>
+        <groupId>junit</groupId>
+        <artifactId>junit</artifactId>
+        <version>777</version>
       </plugin>
     </plugins>
 
     <pluginManagement>
       <plugins>
         <plugin>
-          <groupId>xxxx</groupId>
-          <artifactId>yyyy</artifactId>
-          <version>zzzz</version>
+          <groupId>junit</groupId>
+          <artifactId>junit</artifactId>
+          <version>777</version>
         </plugin>
       </plugins>
     </pluginManagement>
@@ -72,18 +72,18 @@ class MavenDontCheckDependencyInManagementSectionTest extends MavenDomTestCase {
 
   <dependencies>
     <dependency>
-      <groupId><error>xxxx</error></groupId>
-      <artifactId><error>yyyy</error></artifactId>
-      <version><error>zzzz</error></version>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+      <version><error>777</error></version>
     </dependency>
   </dependencies>
 
   <dependencyManagement>
     <dependencies>
       <dependency>
-        <groupId>xxxx</groupId>
-        <artifactId>yyyy</artifactId>
-        <version>zzzz</version>
+        <groupId>junit</groupId>
+        <artifactId>junit</artifactId>
+        <version>777</version>
       </dependency>
     </dependencies>
   </dependencyManagement>
@@ -91,18 +91,18 @@ class MavenDontCheckDependencyInManagementSectionTest extends MavenDomTestCase {
   <build>
     <plugins>
       <plugin>
-        <groupId><error>xxxx</error></groupId>
-        <artifactId><error>yyyy</error></artifactId>
-        <version><error>zzzz</error></version>
+        <groupId>junit</groupId>
+        <artifactId>junit</artifactId>
+        <version><error>777</error></version>
       </plugin>
     </plugins>
 
     <pluginManagement>
       <plugins>
         <plugin>
-          <groupId>xxxx</groupId>
-          <artifactId>yyyy</artifactId>
-          <version>zzzz</version>
+          <groupId>junit</groupId>
+          <artifactId>junit</artifactId>
+          <version>777</version>
         </plugin>
       </plugins>
     </pluginManagement>
