@@ -89,8 +89,10 @@ public class PluginsAdvertiser implements StartupActivity {
         for (JsonElement jsonElement : jsonRootElement.getAsJsonArray()) {
           final JsonObject jsonObject = jsonElement.getAsJsonObject();
           final JsonElement pluginId = jsonObject.get("pluginId");
+          final JsonElement pluginName = jsonObject.get("pluginName");
           final JsonElement bundled = jsonObject.get("bundled");
           result.add(new Plugin(PluginId.getId(StringUtil.unquoteString(pluginId.toString())),
+                                pluginName != null ? StringUtil.unquoteString(pluginName.toString()) : null,
                                 Boolean.parseBoolean(StringUtil.unquoteString(bundled.toString()))));
         }
         return result;
@@ -142,7 +144,8 @@ public class PluginsAdvertiser implements StartupActivity {
             pluginIds = new HashSet<Plugin>();
             result.put(extension, pluginIds);
           }
-          pluginIds.add(new Plugin(PluginId.getId(pluginId), isBundled));
+          final JsonElement pluginNameElement = jsonObject.get("pluginName");
+          pluginIds.add(new Plugin(PluginId.getId(pluginId), pluginNameElement != null ? StringUtil.unquoteString(pluginNameElement.toString()) : null, isBundled));
         }
         saveExtensions(result);
         return result;
@@ -215,14 +218,15 @@ public class PluginsAdvertiser implements StartupActivity {
     return null;
   }
 
-  static boolean hasBundledPluginToInstall(Collection<Plugin> plugins) {
-    if (PlatformUtils.isIdeaUltimate()) return false;
+  static List<String> hasBundledPluginToInstall(Collection<Plugin> plugins) {
+    if (PlatformUtils.isIdeaUltimate()) return null;
+    final List<String> bundled = new ArrayList<String>();
     for (Plugin plugin : plugins) {
       if (plugin.myBundled && PluginManager.getPlugin(PluginId.getId(plugin.myPluginId)) == null) {
-        return true;
+        bundled.add(plugin.myPluginName != null ? plugin.myPluginName : plugin.myPluginId);
       }
     }
-    return false;
+    return bundled.isEmpty() ? null : bundled;
   }
 
   @Override
@@ -241,7 +245,7 @@ public class PluginsAdvertiser implements StartupActivity {
           private List<IdeaPluginDescriptor> myAllPlugins;
 
           private Map<Plugin, IdeaPluginDescriptor> myDisabledPlugins = new HashMap<Plugin, IdeaPluginDescriptor>();
-          private boolean myBundledPlugins = false;
+          private List<String> myBundledPlugin;
 
           @Override
           public void run(@NotNull ProgressIndicator indicator) {
@@ -278,7 +282,7 @@ public class PluginsAdvertiser implements StartupActivity {
                 }
               }
 
-              myBundledPlugins = hasBundledPluginToInstall(ids.values());
+              myBundledPlugin = hasBundledPluginToInstall(ids.values());
 
               for (IdeaPluginDescriptor loadedPlugin : myAllPlugins) {
                 final PluginId pluginId = loadedPlugin.getPluginId();
@@ -307,8 +311,8 @@ public class PluginsAdvertiser implements StartupActivity {
 
               message += "<a href=\"ignore\">Ignore All</a>";
             }
-            else if (myBundledPlugins && !PropertiesComponent.getInstance().isTrueValue(IGNORE_ULTIMATE_EDITION)) {
-              message = "Features covered by IntelliJ IDEA Ultimate Edition are detected.<br>" +
+            else if (myBundledPlugin != null && !PropertiesComponent.getInstance().isTrueValue(IGNORE_ULTIMATE_EDITION)) {
+              message = "Features covered by IntelliJ IDEA Ultimate Edition (" + StringUtil.join(myBundledPlugin, ", ") + ") are detected.<br>" +
                         "<a href=\"open\">" + CHECK_ULTIMATE_EDITION_TITLE + "</a><br>" +
                         "<a href=\"ignoreUltimate\">" + ULTIMATE_EDITION_SUGGESTION + "</a>";
             }
@@ -367,11 +371,13 @@ public class PluginsAdvertiser implements StartupActivity {
   @Tag("plugin")
   public static class Plugin implements Comparable<Plugin> {
     public String myPluginId;
+    public String myPluginName;
     public boolean myBundled;
 
-    public Plugin(PluginId pluginId, boolean bundled) {
+    public Plugin(PluginId pluginId, String pluginName, boolean bundled) {
       myPluginId = pluginId.getIdString();
       myBundled = bundled;
+      myPluginName = pluginName;
     }
 
     public Plugin() {
@@ -386,6 +392,7 @@ public class PluginsAdvertiser implements StartupActivity {
 
       if (myBundled != plugin.myBundled) return false;
       if (!myPluginId.equals(plugin.myPluginId)) return false;
+      if (myPluginName != null && !myPluginName.equals(plugin.myPluginName)) return false;
 
       return true;
     }
@@ -394,6 +401,7 @@ public class PluginsAdvertiser implements StartupActivity {
     public int hashCode() {
       int result = myPluginId.hashCode();
       result = 31 * result + (myBundled ? 1 : 0);
+      result = 31 * result + (myPluginName != null ? myPluginName.hashCode() : 0);
       return result;
     }
 
