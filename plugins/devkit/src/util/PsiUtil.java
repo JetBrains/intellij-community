@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.jetbrains.idea.devkit.util;
 
 import com.intellij.psi.*;
@@ -24,21 +23,15 @@ import org.jetbrains.annotations.Nullable;
  * @author Konstantin Bulenkov
  */
 public class PsiUtil {
-  private PsiUtil() {
-  }
+  private PsiUtil() { }
 
-  public static boolean isInstantiatable(@NotNull PsiClass cls) {
-    final PsiModifierList modifiers = cls.getModifierList();
-
-    if (modifiers == null
-        || cls.isInterface()
-        || modifiers.hasModifierProperty(PsiModifier.ABSTRACT)
-        || !isPublicOrStaticInnerClass(cls)) {
+  public static boolean isInstantiable(@NotNull PsiClass cls) {
+    final PsiModifierList modList = cls.getModifierList();
+    if (modList == null || cls.isInterface() || modList.hasModifierProperty(PsiModifier.ABSTRACT) || !isPublicOrStaticInnerClass(cls)) {
       return false;
     }
 
     final PsiMethod[] constructors = cls.getConstructors();
-
     if (constructors.length == 0) return true;
 
     for (PsiMethod constructor : constructors) {
@@ -58,24 +51,16 @@ public class PsiUtil {
            (cls.getParent() instanceof PsiFile || modifiers.hasModifierProperty(PsiModifier.STATIC));
   }
 
-  public static boolean isOneStatementMethod(@NotNull PsiMethod method) {
-    final PsiCodeBlock body = method.getBody();
-    return body != null
-           && body.getStatements().length == 1
-           && body.getStatements()[0] instanceof PsiReturnStatement;
-  }
-
   @Nullable
   public static String getReturnedLiteral(PsiMethod method, PsiClass cls) {
-    if (isOneStatementMethod(method)) {
-      final PsiExpression value = ((PsiReturnStatement)method.getBody().getStatements()[0]).getReturnValue();
-      if (value instanceof PsiLiteralExpression) {
-        final Object str = ((PsiLiteralExpression)value).getValue();
-        return str == null ? null : str.toString();
-      } else if (value instanceof PsiMethodCallExpression) {
-        if (isSimpleClassNameExpression((PsiMethodCallExpression)value)) {
-          return cls.getName();
-        }
+    final PsiExpression value = getReturnedExpression(method);
+    if (value instanceof PsiLiteralExpression) {
+      final Object str = ((PsiLiteralExpression)value).getValue();
+      return str == null ? null : str.toString();
+    }
+    else if (value instanceof PsiMethodCallExpression) {
+      if (isSimpleClassNameExpression((PsiMethodCallExpression)value)) {
+        return cls.getName();
       }
     }
     return null;
@@ -88,15 +73,19 @@ public class PsiUtil {
                .replaceAll("\n", "")
                .replaceAll("\t", "")
                .replaceAll("\r", "");
-    return "getClass().getSimpleName()".equals(text) || "this.getClass().getSimpleName()".equals(text); 
+    return "getClass().getSimpleName()".equals(text) || "this.getClass().getSimpleName()".equals(text);
   }
 
   @Nullable
   public static PsiExpression getReturnedExpression(PsiMethod method) {
-    if (isOneStatementMethod(method)) {
-      return ((PsiReturnStatement)method.getBody().getStatements()[0]).getReturnValue();
-    } else {
-      return null;
+    PsiCodeBlock body = method.getBody();
+    if (body != null) {
+      PsiStatement[] statements = body.getStatements();
+      if (statements.length == 1 && statements[0] instanceof PsiReturnStatement) {
+        return ((PsiReturnStatement)statements[0]).getReturnValue();
+      }
     }
+
+    return null;
   }
 }

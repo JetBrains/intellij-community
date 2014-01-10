@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,7 +46,7 @@ public class IntentionDescriptionNotFoundInspection extends DevKitInspectionBase
     final PsiIdentifier nameIdentifier = aClass.getNameIdentifier();
     final Module module = ModuleUtil.findModuleForPsiElement(aClass);
 
-    if (nameIdentifier == null || module == null || !PsiUtil.isInstantiatable(aClass)) return null;
+    if (nameIdentifier == null || module == null || !PsiUtil.isInstantiable(aClass)) return null;
 
     final PsiClass base = JavaPsiFacade.getInstance(project).findClass(INTENTION, GlobalSearchScope.allScope(project));
 
