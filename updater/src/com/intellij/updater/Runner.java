@@ -31,20 +31,21 @@ public class Runner {
 
   private static void initLogger(){
     String tmpDir = System.getProperty("java.io.tmpdir");
+    System.out.println("java.io.tmpdir: " + tmpDir);
 //    String uHome = System.getProperty("user.home");
     FileAppender update = new FileAppender();
 
-    update.setFile(tmpDir + "/idea_updater.log");
+    update.setFile(tmpDir + "idea_updater.log");
     update.setLayout(new PatternLayout("%d{dd MMM yyyy HH:mm:ss} %-5p %C{1}.%M - %m%n"));
     update.setThreshold(Level.ALL);
     update.setAppend(true);
     update.activateOptions();
 
     FileAppender update_error = new FileAppender();
-    update_error.setFile(tmpDir + "/idea_updater_error.log");
+    update_error.setFile(tmpDir + "idea_updater_error.log");
     update_error.setLayout(new PatternLayout("%d{dd MMM yyyy HH:mm:ss} %-5p %C{1}.%M - %m%n"));
     update_error.setThreshold(Level.ERROR);
-    update_error.setAppend(true);
+    update_error.setAppend(false); // The error info from old run of updater (if there were) can be found in idea_updater.log file
     update_error.activateOptions();
 
     logger = Logger.getLogger("com.intellij.updater");
