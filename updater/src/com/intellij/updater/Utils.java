@@ -71,19 +71,18 @@ public class Utils {
   }
 
   public static void copy(File from, File to) throws IOException {
+    Runner.logger.trace("from " + from.getCanonicalPath() + " to " + to.getCanonicalPath());
     if (from.isDirectory()) {
       File[] files = from.listFiles();
       if (files == null) throw new IOException("Cannot get directory's content: " + from);
       for (File each : files) {
         copy(each, new File(to, each.getName()));
-        Runner.logger.trace("copied file: " + each.getCanonicalPath());
       }
     }
     else {
       InputStream in = new BufferedInputStream(new FileInputStream(from));
       try {
         copyStreamToFile(in, to);
-        Runner.logger.trace("copy stream: " + in.toString() + " to file: " + to.getCanonicalPath());
       }
       finally {
         in.close();
@@ -93,10 +92,10 @@ public class Utils {
   }
 
   public static void copyFileToStream(File from, OutputStream out) throws IOException {
+    Runner.logger.trace("from: " + from.getCanonicalPath());
     InputStream in = new BufferedInputStream(new FileInputStream(from));
     try {
       copyStream(in, out);
-      Runner.logger.trace("copy stream: " + in.toString() + " to stream: " + out.toString());
     }
     finally {
       in.close();
@@ -104,11 +103,11 @@ public class Utils {
   }
 
   public static void copyStreamToFile(InputStream from, File to) throws IOException {
+    Runner.logger.trace("to: " + to.getCanonicalPath());
     to.getParentFile().mkdirs();
     OutputStream out = new BufferedOutputStream(new FileOutputStream(to));
     try {
       copyStream(from, out);
-      Runner.logger.trace("copy stream: " + from.toString() + " to stream: " + out.toString());
     }
     finally {
       out.close();
@@ -119,7 +118,6 @@ public class Utils {
     OutputStream out = new BufferedOutputStream(to);
     try {
       from.writeTo(out);
-      Runner.logger.trace("wrote to " + out.toString());
     }
     finally {
       out.flush();
@@ -134,7 +132,6 @@ public class Utils {
     ByteArrayOutputStream byteOut = new ByteArrayOutputStream();
     try {
       copyStream(in, byteOut);
-      Runner.logger.trace("copy stream: " + in.toString() + " to byteOut");
     }
     finally {
       byteOut.close();

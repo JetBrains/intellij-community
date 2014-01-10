@@ -224,7 +224,7 @@ public class Runner {
                   props.getProperty(NEW_BUILD_DESCRIPTION),
                   new SwingUpdaterUI.InstallOperation() {
                     public boolean execute(UpdaterUI ui) throws OperationCancelledException {
-                      logger.trace("installing patch to the " + destFolder + " dir");
+                      logger.trace("installing patch to the " + destFolder);
                       return doInstall(ui, destFolder);
                     }
                   });
@@ -291,7 +291,6 @@ public class Runner {
     System.out.println("***************** resolveJarFile");
     URL url = Runner.class.getResource("");
     if (url == null) throw new IOException("Cannot resolve jar file path");
-    logger.trace("URL: " + url.getProtocol());
     if (!"jar".equals(url.getProtocol())) throw new IOException("Patch file is not a 'jar' file");
 
     String path = url.getPath();
