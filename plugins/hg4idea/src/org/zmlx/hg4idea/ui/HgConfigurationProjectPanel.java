@@ -14,14 +14,18 @@ package org.zmlx.hg4idea.ui;
 
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import org.jetbrains.annotations.NotNull;
 import org.zmlx.hg4idea.HgProjectSettings;
 import org.zmlx.hg4idea.HgVcs;
 import org.zmlx.hg4idea.HgVcsMessages;
 import org.zmlx.hg4idea.util.HgUtil;
+import org.zmlx.hg4idea.util.HgVersion;
 
 import javax.swing.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 
 public class HgConfigurationProjectPanel {
 
@@ -30,12 +34,29 @@ public class HgConfigurationProjectPanel {
   private JPanel myMainPanel;
   private JCheckBox myCheckIncomingOutgoingCbx;
   private TextFieldWithBrowseButton myPathSelector;
+  private JButton myTestButton;
   private final HgVcs myVcs;
 
   public HgConfigurationProjectPanel(@NotNull HgProjectSettings projectSettings, @NotNull Project project) {
     myProjectSettings = projectSettings;
     myVcs = HgVcs.getInstance(project);
     loadSettings();
+    myTestButton.addActionListener(new ActionListener() {
+      public void actionPerformed(ActionEvent e) {
+        String executable = getCurrentPath();
+        HgVersion version;
+        try {
+          version = HgVersion.identifyVersion(executable);
+        }
+        catch (Exception exception) {
+          Messages.showErrorDialog(myMainPanel, exception.getMessage(), HgVcsMessages.message("hg4idea.run.failed.title"));
+          return;
+        }
+        Messages.showInfoMessage(myMainPanel, String.format("Mercurial version is %s", version.toString()),
+                                 HgVcsMessages.message("hg4idea.run.success.title")
+        );
+      }
+    });
   }
 
   public boolean isModified() {

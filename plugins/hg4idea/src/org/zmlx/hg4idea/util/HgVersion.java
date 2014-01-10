@@ -24,7 +24,7 @@ import org.zmlx.hg4idea.execution.HgCommandResult;
 import org.zmlx.hg4idea.execution.ShellCommandException;
 
 import java.text.ParseException;
-import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -67,36 +67,43 @@ public final class HgVersion implements Comparable<HgVersion> {
   private final int myMajor;
   private final int myMiddle;
   private final int myMinor;  //use only first digit after second dot
+  @NotNull private final Set<String> myUnsupportedExtensions;
 
   public HgVersion(int major, int middle, int minor) {
     myMajor = major;
     myMiddle = middle;
     myMinor = minor;
+    myUnsupportedExtensions = Collections.emptySet();
+  }
+
+  public HgVersion(int major, int middle, int minor, @NotNull Set<String> unsupportedExtensions) {
+    myMajor = major;
+    myMiddle = middle;
+    myMinor = minor;
+    myUnsupportedExtensions = unsupportedExtensions;
   }
 
   /**
    * Parses output of "Hg version" command.
    */
-
   @NotNull
   public static HgVersion parseVersionAndExtensionInfo(@Nullable String output,
-                                                       @NotNull List<String> errorLines,
-                                                       @NotNull Set<String> unsupportedExtensions)
+                                                       @NotNull List<String> errorLines)
     throws ParseException {
     if (StringUtil.isEmptyOrSpaces(output)) {
       throw new ParseException("Empty hg version output: " + output, 0);
     }
     Matcher matcher = HG_VERSION_PATTERN.matcher(output);
     if (matcher.matches()) {
-      unsupportedExtensions.addAll(parseUnsupportedExtensions(errorLines));
-      return new HgVersion(getIntGroup(matcher, 1), getIntGroup(matcher, 2), getIntGroup(matcher, 3));
+      return new HgVersion(getIntGroup(matcher, 1), getIntGroup(matcher, 2), getIntGroup(matcher, 3),
+                           parseUnsupportedExtensions(errorLines));
     }
     LOGGER.error("Couldn't identify hg version: " + output);
     throw new ParseException("Unsupported format of hg version output: " + output, 0);
   }
 
   @NotNull
-  public static Collection<String> parseUnsupportedExtensions(@NotNull List<String> errorLines) {
+  public static Set<String> parseUnsupportedExtensions(@NotNull List<String> errorLines) {
     // hg version command execute with null start directory,
     // but hgrc configuration file may be related to one of repository then extension may be failed to import too
     //before fixed use command exit value instead if errors.isEmpty
@@ -129,10 +136,10 @@ public final class HgVersion implements Comparable<HgVersion> {
   }
 
   @NotNull
-  public static HgVersion identifyVersion(@NotNull String executable, @NotNull Set<String> unsupportedExtensions)
+  public static HgVersion identifyVersion(@NotNull String executable)
     throws ShellCommandException, InterruptedException, ParseException {
     HgCommandResult versionResult = HgUtil.getVersionOutput(executable);
-    return parseVersionAndExtensionInfo(versionResult.getRawOutput(), versionResult.getErrorLines(), unsupportedExtensions);
+    return parseVersionAndExtensionInfo(versionResult.getRawOutput(), versionResult.getErrorLines());
   }
 
   /**
@@ -160,6 +167,15 @@ public final class HgVersion implements Comparable<HgVersion> {
 
   public boolean hasBranchHeadsServed() {
     return !isNull() && compareTo(BRANCH_HEADS_SERVED_FILE_EXIST) >= 0;
+  }
+
+  public boolean hasUnsupportedExtensions() {
+    return !myUnsupportedExtensions.isEmpty();
+  }
+
+  @NotNull
+  public Set<String> getUnsupportedExtensions() {
+    return myUnsupportedExtensions;
   }
 
   /**
