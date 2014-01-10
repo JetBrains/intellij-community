@@ -34,14 +34,14 @@ public class Runner {
 //    String uHome = System.getProperty("user.home");
     FileAppender update = new FileAppender();
 
-    update.setFile(tmpDir + "/update.log");
+    update.setFile(tmpDir + "/idea_updater.log");
     update.setLayout(new PatternLayout("%d{dd MMM yyyy HH:mm:ss} %-5p %C{1}.%M - %m%n"));
     update.setThreshold(Level.ALL);
     update.setAppend(true);
     update.activateOptions();
 
     FileAppender update_error = new FileAppender();
-    update_error.setFile(tmpDir + "/update_error.log");
+    update_error.setFile(tmpDir + "/idea_updater_error.log");
     update_error.setLayout(new PatternLayout("%d{dd MMM yyyy HH:mm:ss} %-5p %C{1}.%M - %m%n"));
     update_error.setThreshold(Level.ERROR);
     update_error.setAppend(true);
@@ -87,7 +87,7 @@ public class Runner {
       }
 
       String destFolder = args[1];
-      logger.info("args[1]: " + destFolder);
+      logger.info("destFolder: " + destFolder);
       install(destFolder);
     }
     else {
@@ -198,8 +198,6 @@ public class Runner {
   }
 
   private static void install(final String destFolder) throws Exception {
-    System.out.println("install, destFolder: " + destFolder);
-    logger.info("destFolder: " + destFolder);
     InputStream in = Runner.class.getResourceAsStream("/" + PATCH_PROPERTIES_ENTRY);
     Properties props = new Properties();
     try {
