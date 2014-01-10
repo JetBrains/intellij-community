@@ -17,14 +17,10 @@ package com.intellij.tasks.jira.model;
 
 import org.jetbrains.annotations.NotNull;
 
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
 /**
  * @author Mikhail Golubev
  */
 public class JiraStatus {
-  private static final Pattern ID_PATTERN = Pattern.compile(".*/(\\d+)/?$");
   private String id;
   private String self;
   private String name;
@@ -38,15 +34,14 @@ public class JiraStatus {
   /**
    * Status id is necessary to determine issue status regardless of the language
    * used in JIRA installation. However it omitted in case of REST API version 2.0.alpha1.
-   * Anyway it still may be extracted from status URL which always presents.
+   * Anyway it still may be extracted from status URL which is always available.
    */
   @NotNull
   public String getId() {
     if (id == null) {
-      Matcher m = ID_PATTERN.matcher(self);
-      if (m.matches()) {
-        return m.group(1);
-      }
+      String[] parts = self.split("/");
+      assert parts.length > 0;
+      id = parts[parts.length - 1];
     }
     return id;
   }
