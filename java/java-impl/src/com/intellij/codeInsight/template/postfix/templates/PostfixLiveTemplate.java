@@ -16,7 +16,6 @@
 package com.intellij.codeInsight.template.postfix.templates;
 
 import com.intellij.codeInsight.completion.CompletionInitializationContext;
-import com.intellij.codeInsight.completion.CompletionType;
 import com.intellij.codeInsight.completion.JavaCompletionContributor;
 import com.intellij.codeInsight.template.CustomLiveTemplateBase;
 import com.intellij.codeInsight.template.CustomTemplateCallback;
@@ -304,8 +303,6 @@ public class PostfixLiveTemplate extends CustomLiveTemplateBase {
   }
 
   private static boolean isSemicolonNeeded(@NotNull PsiFile file, @NotNull Editor editor) {
-    CompletionInitializationContext initializationContext = new CompletionInitializationContext(editor, file, CompletionType.BASIC);
-    new JavaCompletionContributor().beforeCompletion(initializationContext);
-    return StringUtil.endsWithChar(initializationContext.getDummyIdentifier(), ';');
+    return JavaCompletionContributor.semicolonNeeded(editor, file, CompletionInitializationContext.calcStartOffset(editor));
   }
 }
