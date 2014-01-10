@@ -16,23 +16,26 @@
 package com.intellij.openapi.extensions.impl;
 
 import com.intellij.openapi.extensions.*;
-import com.intellij.util.ThrowableRunnable;
-import org.hamcrest.CustomMatcher;
-import org.hamcrest.Description;
-import org.hamcrest.Matcher;
 import org.jetbrains.annotations.NotNull;
+import org.junit.After;
 import org.junit.Test;
 import org.picocontainer.defaults.DefaultPicoContainer;
 
 import static com.intellij.openapi.extensions.impl.ExtensionComponentAdapterTest.readElement;
-import static com.intellij.openapi.extensions.impl.TestLogProvider.TestLogException;
-import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.*;
 import static org.junit.Assert.*;
 
 /**
  * @author AKireyev
  */
 public class ExtensionPointImplTest {
+  private static final TestLogProvider ourTestLog = new TestLogProvider();
+
+  @After
+  public void tearDown() throws Exception {
+    ourTestLog.errors.clear();
+  }
+
   @Test
   public void testCreate() {
     ExtensionPoint<Integer> extensionPoint = buildExtensionPoint();
@@ -56,7 +59,7 @@ public class ExtensionPointImplTest {
     final AreaInstance area = new AreaInstance() {};
     final ExtensionPoint<Object> extensionPoint = new ExtensionPointImpl<Object>(
       "an.extension.point", Object.class.getName(), ExtensionPoint.Kind.INTERFACE, buildExtensionArea(), area,
-      TestLogProvider.INSTANCE, new UndefinedPluginDescriptor());
+      ourTestLog, new UndefinedPluginDescriptor());
 
     final boolean[] flags = new boolean[2];
     Extension extension = new Extension() {
@@ -152,79 +155,46 @@ public class ExtensionPointImplTest {
   @Test
   @SuppressWarnings("unchecked")
   public void testIncompatibleExtension() {
-    final ExtensionPoint extensionPoint = buildExtensionPoint();
+    ExtensionPoint extensionPoint = buildExtensionPoint();
 
-    extensionPoint.registerExtension(new Integer(1));
-    assertThat(extensionPoint.getExtensions().length, equalTo(1));
+    extensionPoint.registerExtension(new Double(0));
+    assertThat(ourTestLog.errors, hasSize(1));
 
-    assertThat(
-      new ThrowableRunnable() {
-        @Override
-        public void run() {
-          extensionPoint.registerExtension(new Double(0));
-        }
-      }, doesThrow(TestLogException.class)
-    );
-    assertThat(extensionPoint.getExtensions().length, equalTo(1));
+    assertThat(extensionPoint.getExtensions(), emptyArray());
+    assertThat(ourTestLog.errors, hasSize(1));
+
+    extensionPoint.registerExtension(new Integer(0));
+    assertThat(extensionPoint.getExtensions(), arrayWithSize(1));
+    assertThat(ourTestLog.errors, hasSize(1));
   }
 
   @Test
   public void testIncompatibleAdapter() throws Exception {
-    final ExtensionPointImpl<Integer> extensionPoint = (ExtensionPointImpl<Integer>)buildExtensionPoint();
+    ExtensionPoint<Integer> extensionPoint = buildExtensionPoint();
 
-    extensionPoint.registerExtension(new Integer(1));
-    assertThat(extensionPoint.getExtensions().length, equalTo(1));
+    ((ExtensionPointImpl)extensionPoint).registerExtensionAdapter(buildAdapter());
+    assertThat(ourTestLog.errors, empty());
 
-    assertThat(
-      new ThrowableRunnable() {
-        @Override
-        public void run() {
-          extensionPoint.registerExtensionAdapter(buildAdapter());
-        }
-      }, doesThrow(TestLogException.class)
-    );
-    assertThat(extensionPoint.getExtensions().length, equalTo(1));
+    assertThat(extensionPoint.getExtensions(), emptyArray());
+    assertThat(ourTestLog.errors, hasSize(1));
+
+    extensionPoint.registerExtension(new Integer(0));
+    assertThat(extensionPoint.getExtensions(), arrayWithSize(1));
+    assertThat(ourTestLog.errors, hasSize(1));
   }
 
   private static ExtensionPoint<Integer> buildExtensionPoint() {
     return new ExtensionPointImpl<Integer>(
       ExtensionsImplTest.EXTENSION_POINT_NAME_1, Integer.class.getName(), ExtensionPoint.Kind.INTERFACE,
-      buildExtensionArea(), null, TestLogProvider.INSTANCE, new UndefinedPluginDescriptor());
+      buildExtensionArea(), null, ourTestLog, new UndefinedPluginDescriptor());
   }
 
   private static ExtensionsAreaImpl buildExtensionArea() {
-    return new ExtensionsAreaImpl(new DefaultPicoContainer(), TestLogProvider.INSTANCE);
+    return new ExtensionsAreaImpl(new DefaultPicoContainer(), ourTestLog);
   }
 
   private static ExtensionComponentAdapter buildAdapter() {
     return new ExtensionComponentAdapter(
       String.class.getName(), readElement("<bean/>"), new DefaultPicoContainer(), new DefaultPluginDescriptor("test"), false);
-  }
-
-  private static Matcher<ThrowableRunnable> doesThrow(final Class<? extends Throwable> expected) {
-    return new CustomMatcher<ThrowableRunnable>(expected.getName()) {
-      private String myError = null;
-
-      @Override
-      public boolean matches(Object o) {
-        Throwable actual = null;
-        try { ((ThrowableRunnable)o).run(); }
-        catch (Throwable t) { actual = t; }
-
-        if (actual == null) {
-          myError = "nothing thrown";
-        }
-        else if (!expected.equals(actual.getClass())) {
-          myError = actual.getClass().getName();
-        }
-
-        return myError == null;
-      }
-
-      @Override
-      public void describeMismatch(Object item, Description description) {
-        description.appendText(myError);
-      }
-    };
   }
 }

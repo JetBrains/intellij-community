@@ -218,6 +218,12 @@ public class ContainerUtil extends ContainerUtilRt {
   }
 
   @NotNull
+  public static <T> Set<T> newHashOrEmptySet(@Nullable Iterable<? extends T> iterable) {
+    boolean empty = iterable == null || iterable instanceof Collection && ((Collection)iterable).isEmpty();
+    return empty ? Collections.<T>emptySet() : ContainerUtilRt.newHashSet(iterable);
+  }
+
+  @NotNull
   public static <T> LinkedHashSet<T> newLinkedHashSet() {
     return ContainerUtilRt.newLinkedHashSet();
   }

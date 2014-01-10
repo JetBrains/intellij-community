@@ -19,7 +19,6 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.*;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.StringInterner;
 import org.jdom.Element;
@@ -35,6 +34,7 @@ import java.util.*;
 /**
  * @author AKireyev
  */
+@SuppressWarnings("SynchronizeOnThis")
 public class ExtensionPointImpl<T> implements ExtensionPoint<T> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.extensions.impl.ExtensionPointImpl");
 
@@ -188,6 +188,7 @@ public class ExtensionPointImpl<T> implements ExtensionPoint<T> {
         result = myExtensionsCache;
         if (result == null) {
           processAdapters();
+
           Class<T> extensionClass = getExtensionClass();
           @SuppressWarnings("unchecked") T[] a = (T[])Array.newInstance(extensionClass, myExtensions.size());
           result = myExtensions.toArray(a);
@@ -224,28 +225,20 @@ public class ExtensionPointImpl<T> implements ExtensionPoint<T> {
   private void processAdapters() {
     int totalSize = myExtensionAdapters.size() + myLoadedAdapters.size();
     if (totalSize != 0) {
-      List<ExtensionComponentAdapter> allAdapters = new ArrayList<ExtensionComponentAdapter>(totalSize);
-      allAdapters.addAll(myExtensionAdapters);
-      allAdapters.addAll(myLoadedAdapters);
-
-      myExtensions.clear();
-      ExtensionComponentAdapter[] loadedAdapters = myLoadedAdapters.isEmpty()
-                                                   ? ExtensionComponentAdapter.EMPTY_ARRAY
-                                                   : myLoadedAdapters.toArray(new ExtensionComponentAdapter[myLoadedAdapters.size()]);
-      myLoadedAdapters.clear();
-      ExtensionComponentAdapter[] adapters = allAdapters.toArray(new ExtensionComponentAdapter[myExtensionAdapters.size()]);
+      List<ExtensionComponentAdapter> adapters = ContainerUtil.newArrayListWithCapacity(totalSize);
+      adapters.addAll(myExtensionAdapters);
+      adapters.addAll(myLoadedAdapters);
       LoadingOrder.sort(adapters);
-      List<T> extensions = new ArrayList<T>(adapters.length);
+
+      Set<ExtensionComponentAdapter> loaded = ContainerUtil.newHashOrEmptySet(myLoadedAdapters);
+      myExtensions.clear();
+      myExtensionAdapters.clear();
+      myLoadedAdapters.clear();
+
       for (ExtensionComponentAdapter adapter : adapters) {
         @SuppressWarnings("unchecked") T extension = (T)adapter.getExtension();
-        extensions.add(extension);
+        registerExtension(extension, adapter, myExtensions.size(), !loaded.contains(adapter));
       }
-
-      for (int i = 0; i < extensions.size(); i++) {
-        T extension = extensions.get(i);
-        registerExtension(extension, adapters[i], myExtensions.size(), ArrayUtilRt.find(loadedAdapters, adapters[i]) == -1);
-      }
-      myExtensionAdapters.clear();
     }
   }
 
@@ -253,9 +246,7 @@ public class ExtensionPointImpl<T> implements ExtensionPoint<T> {
   @Nullable
   public T getExtension() {
     T[] extensions = getExtensions();
-    if (extensions.length == 0) return null;
-
-    return extensions[0];
+    return extensions.length == 0 ? null : extensions[0];
   }
 
   @Override
@@ -397,13 +388,6 @@ public class ExtensionPointImpl<T> implements ExtensionPoint<T> {
   }
 
   synchronized void registerExtensionAdapter(@NotNull ExtensionComponentAdapter adapter) {
-    Class<T> extensionClass = getExtensionClass();
-    Class<?> implementationClass = adapter.getComponentImplementation();
-    if (!extensionClass.isAssignableFrom(implementationClass)) {
-      myLogger.error("Extension " + implementationClass + " does not implement " + extensionClass);
-      return;
-    }
-
     myExtensionAdapters.add(adapter);
     clearCache();
   }

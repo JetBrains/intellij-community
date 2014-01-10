@@ -16,40 +16,27 @@
 package com.intellij.openapi.extensions.impl;
 
 import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.extensions.LogProvider;
+import com.intellij.util.ExceptionUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
-public class TestLogProvider extends Extensions.SimpleLogProvider {
-  public static LogProvider INSTANCE = new TestLogProvider();
+import java.util.List;
 
-  TestLogProvider() { }
+public class TestLogProvider extends Extensions.SimpleLogProvider {
+  public final List<String> errors = ContainerUtil.newSmartList();
 
   @Override
   public void error(String message) {
-    throw new TestLogException(message);
+    errors.add(message);
   }
 
   @Override
   public void error(String message, @NotNull Throwable t) {
-    throw new TestLogException(message, t);
+    errors.add(message + "\n" + ExceptionUtil.getThrowableText(t));
   }
 
   @Override
   public void error(@NotNull Throwable t) {
-    throw new TestLogException(t);
-  }
-
-  public static class TestLogException extends RuntimeException {
-    public TestLogException(String message) {
-      super(message);
-    }
-
-    public TestLogException(String message, Throwable cause) {
-      super(message, cause);
-    }
-
-    public TestLogException(Throwable cause) {
-      super(cause);
-    }
+    errors.add(ExceptionUtil.getThrowableText(t));
   }
 }
