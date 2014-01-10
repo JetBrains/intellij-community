@@ -284,7 +284,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
       elementAtStart = PsiTreeUtil.skipSiblingsForward(elementAtStart, PsiWhiteSpace.class, PsiComment.class);
       if (elementAtStart == null) {
         if (injectedLanguageManager.isInjectedFragment(file)) {
-          return getSelectionFromInjectedHost(project, file, injectedLanguageManager);
+          return getSelectionFromInjectedHost(project, file, injectedLanguageManager, startOffset, endOffset);
         } else {
           return null;
         }
@@ -303,7 +303,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
     PsiElement elementAt = PsiTreeUtil.findCommonParent(elementAtStart, elementAtEnd);
     if (PsiTreeUtil.getParentOfType(elementAt, PsiExpression.class, false) == null) {
       if (injectedLanguageManager.isInjectedFragment(file)) {
-        return getSelectionFromInjectedHost(project, file, injectedLanguageManager);
+        return getSelectionFromInjectedHost(project, file, injectedLanguageManager, startOffset, endOffset);
       }
       elementAt = null;
     }
@@ -447,10 +447,9 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
 
   private static PsiExpression getSelectionFromInjectedHost(Project project,
                                                             PsiFile file,
-                                                            InjectedLanguageManager injectedLanguageManager) {
+                                                            InjectedLanguageManager injectedLanguageManager, int startOffset, int endOffset) {
     final PsiLanguageInjectionHost injectionHost = injectedLanguageManager.getInjectionHost(file);
-    final TextRange range = injectionHost.getTextRange();
-    return getSelectedExpression(project, injectionHost.getContainingFile(), range.getStartOffset(), range.getEndOffset());
+    return getSelectedExpression(project, injectionHost.getContainingFile(), injectedLanguageManager.injectedToHost(file, startOffset), injectedLanguageManager.injectedToHost(file, endOffset));
   }
 
   @Nullable
