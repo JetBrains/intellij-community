@@ -15,8 +15,10 @@
  */
 package com.intellij.mock;
 
+import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.*;
+import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.ThrowableComputable;
@@ -267,5 +269,11 @@ public class MockApplication extends MockComponentManager implements Application
     private static ThreadPoolExecutor createServiceImpl() {
       return new ThreadPoolExecutor(10, Integer.MAX_VALUE, 60L, TimeUnit.SECONDS, new SynchronousQueue<Runnable>(), ConcurrencyUtil.newNamedThreadFactory("MockApplication pooled thread"));
     }
+  }
+
+  @Nullable
+  @Override
+  public PluginId getPluginByClassName(@NotNull String className) {
+    return PluginManagerCore.getPluginByClassName(className);
   }
 }

@@ -405,6 +405,7 @@ reify
 reifying
 reindex
 renderer
+replacer
 repo
 resetlogs
 resizable
@@ -434,6 +435,7 @@ serializers
 servererror
 servlet
 servlets
+severities
 sftp
 shader
 significand

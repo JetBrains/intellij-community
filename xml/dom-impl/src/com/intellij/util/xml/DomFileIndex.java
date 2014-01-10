@@ -101,13 +101,6 @@ public class DomFileIndex extends ScalarIndexExtension<String>{
 
   @Override
   public int getVersion() {
-    final DomApplicationComponent component = DomApplicationComponent.getInstance();
-    int result = 0;
-    for (DomFileDescription description : component.getAllFileDescriptions()) {
-      result += description.getVersion();
-      result += description.getRootTagName().hashCode(); // so that a plugin enabling/disabling could trigger the reindexing
-    }
-    return result;
+    return DomApplicationComponent.getInstance().getCumulativeVersion();
   }
-
 }
