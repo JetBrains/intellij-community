@@ -46,7 +46,7 @@ public abstract class InternalInspection extends BaseJavaLocalInspectionTool {
     }
 
     Module module = ModuleUtilCore.findModuleForPsiElement(holder.getFile());
-    if (module != null && PluginModuleType.isPluginModuleOrDependency(module)) {
+    if (PluginModuleType.isPluginModuleOrDependency(module)) {
       return true;
     }
 
