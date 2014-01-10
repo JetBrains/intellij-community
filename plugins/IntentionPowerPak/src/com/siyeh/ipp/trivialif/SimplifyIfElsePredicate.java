@@ -69,7 +69,7 @@ class SimplifyIfElsePredicate implements PsiElementPredicate {
   public static boolean isSimplifiableImplicitReturn(
     PsiIfStatement ifStatement) {
     PsiStatement thenBranch = ifStatement.getThenBranch();
-    thenBranch = ConditionalUtils.stripBraces(thenBranch);
+    thenBranch = com.siyeh.ig.psiutils.ControlFlowUtils.stripBraces(thenBranch);
     if (ifStatement.getElseBranch() != null) {
       return false;
     }
@@ -87,7 +87,7 @@ class SimplifyIfElsePredicate implements PsiElementPredicate {
   public static boolean isSimplifiableImplicitReturnNegated(
     PsiIfStatement ifStatement) {
     PsiStatement thenBranch = ifStatement.getThenBranch();
-    thenBranch = ConditionalUtils.stripBraces(thenBranch);
+    thenBranch = com.siyeh.ig.psiutils.ControlFlowUtils.stripBraces(thenBranch);
     if (ifStatement.getElseBranch() != null) {
       return false;
     }
@@ -104,9 +104,9 @@ class SimplifyIfElsePredicate implements PsiElementPredicate {
 
   public static boolean isSimplifiableReturn(PsiIfStatement ifStatement) {
     PsiStatement thenBranch = ifStatement.getThenBranch();
-    thenBranch = ConditionalUtils.stripBraces(thenBranch);
+    thenBranch = com.siyeh.ig.psiutils.ControlFlowUtils.stripBraces(thenBranch);
     PsiStatement elseBranch = ifStatement.getElseBranch();
-    elseBranch = ConditionalUtils.stripBraces(elseBranch);
+    elseBranch = com.siyeh.ig.psiutils.ControlFlowUtils.stripBraces(elseBranch);
     return ConditionalUtils.isReturn(thenBranch, "true")
            && ConditionalUtils.isReturn(elseBranch, "false");
   }
@@ -114,18 +114,18 @@ class SimplifyIfElsePredicate implements PsiElementPredicate {
   public static boolean isSimplifiableReturnNegated(
     PsiIfStatement ifStatement) {
     PsiStatement thenBranch = ifStatement.getThenBranch();
-    thenBranch = ConditionalUtils.stripBraces(thenBranch);
+    thenBranch = com.siyeh.ig.psiutils.ControlFlowUtils.stripBraces(thenBranch);
     PsiStatement elseBranch = ifStatement.getElseBranch();
-    elseBranch = ConditionalUtils.stripBraces(elseBranch);
+    elseBranch = com.siyeh.ig.psiutils.ControlFlowUtils.stripBraces(elseBranch);
     return ConditionalUtils.isReturn(thenBranch, "false")
            && ConditionalUtils.isReturn(elseBranch, "true");
   }
 
   public static boolean isSimplifiableAssignment(PsiIfStatement ifStatement) {
     PsiStatement thenBranch = ifStatement.getThenBranch();
-    thenBranch = ConditionalUtils.stripBraces(thenBranch);
+    thenBranch = com.siyeh.ig.psiutils.ControlFlowUtils.stripBraces(thenBranch);
     PsiStatement elseBranch = ifStatement.getElseBranch();
-    elseBranch = ConditionalUtils.stripBraces(elseBranch);
+    elseBranch = com.siyeh.ig.psiutils.ControlFlowUtils.stripBraces(elseBranch);
     if (!(ConditionalUtils.isAssignment(thenBranch, "true") &&
           ConditionalUtils.isAssignment(elseBranch, "false"))) {
       return false;
@@ -152,9 +152,9 @@ class SimplifyIfElsePredicate implements PsiElementPredicate {
   public static boolean isSimplifiableAssignmentNegated(
     PsiIfStatement ifStatement) {
     PsiStatement thenBranch = ifStatement.getThenBranch();
-    thenBranch = ConditionalUtils.stripBraces(thenBranch);
+    thenBranch = com.siyeh.ig.psiutils.ControlFlowUtils.stripBraces(thenBranch);
     PsiStatement elseBranch = ifStatement.getElseBranch();
-    elseBranch = ConditionalUtils.stripBraces(elseBranch);
+    elseBranch = com.siyeh.ig.psiutils.ControlFlowUtils.stripBraces(elseBranch);
     if (!ConditionalUtils.isAssignment(thenBranch, "false") ||
         !ConditionalUtils.isAssignment(elseBranch, "true")) {
       return false;
@@ -184,7 +184,7 @@ class SimplifyIfElsePredicate implements PsiElementPredicate {
       return false;
     }
     PsiStatement thenBranch = ifStatement.getThenBranch();
-    thenBranch = ConditionalUtils.stripBraces(thenBranch);
+    thenBranch = com.siyeh.ig.psiutils.ControlFlowUtils.stripBraces(thenBranch);
     final PsiElement previousStatement =
       PsiTreeUtil.skipSiblingsBackward(ifStatement,
                                        PsiWhiteSpace.class);
@@ -192,7 +192,7 @@ class SimplifyIfElsePredicate implements PsiElementPredicate {
       return false;
     }
     PsiStatement elseBranch = (PsiStatement)previousStatement;
-    elseBranch = ConditionalUtils.stripBraces(elseBranch);
+    elseBranch = com.siyeh.ig.psiutils.ControlFlowUtils.stripBraces(elseBranch);
     if (!ConditionalUtils.isAssignment(thenBranch, "true") ||
         !ConditionalUtils.isAssignment(elseBranch, "false")) {
       return false;
@@ -218,7 +218,7 @@ class SimplifyIfElsePredicate implements PsiElementPredicate {
       return false;
     }
     PsiStatement thenBranch = ifStatement.getThenBranch();
-    thenBranch = ConditionalUtils.stripBraces(thenBranch);
+    thenBranch = com.siyeh.ig.psiutils.ControlFlowUtils.stripBraces(thenBranch);
     final PsiElement previousStatement =
       PsiTreeUtil.skipSiblingsBackward(ifStatement,
                                        PsiWhiteSpace.class);
@@ -226,7 +226,7 @@ class SimplifyIfElsePredicate implements PsiElementPredicate {
       return false;
     }
     PsiStatement elseBranch = (PsiStatement)previousStatement;
-    elseBranch = ConditionalUtils.stripBraces(elseBranch);
+    elseBranch = com.siyeh.ig.psiutils.ControlFlowUtils.stripBraces(elseBranch);
     if (!ConditionalUtils.isAssignment(thenBranch, "false") ||
         !ConditionalUtils.isAssignment(elseBranch, "true")) {
       return false;

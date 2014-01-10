@@ -18,10 +18,10 @@ package com.siyeh.ipp.trivialif;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.siyeh.ig.psiutils.ControlFlowUtils;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import com.siyeh.ipp.psiutils.BoolUtils;
-import com.siyeh.ipp.psiutils.ConditionalUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
 
@@ -105,7 +105,7 @@ public class SimplifyIfElseIntention extends Intention {
     final String conditionText = condition.getText();
     final PsiStatement thenBranch = statement.getThenBranch();
     final PsiExpressionStatement assignmentStatement =
-      (PsiExpressionStatement)ConditionalUtils.stripBraces(thenBranch);
+      (PsiExpressionStatement)ControlFlowUtils.stripBraces(thenBranch);
     final PsiAssignmentExpression assignmentExpression =
       (PsiAssignmentExpression)assignmentStatement.getExpression();
     final PsiJavaToken operator = assignmentExpression.getOperationSign();
@@ -129,7 +129,7 @@ public class SimplifyIfElseIntention extends Intention {
     final String conditionText = condition.getText();
     final PsiStatement thenBranch = statement.getThenBranch();
     final PsiExpressionStatement assignmentStatement =
-      (PsiExpressionStatement)ConditionalUtils.stripBraces(thenBranch);
+      (PsiExpressionStatement)ControlFlowUtils.stripBraces(thenBranch);
     final PsiAssignmentExpression assignmentExpression =
       (PsiAssignmentExpression)assignmentStatement.getExpression();
     final PsiJavaToken operator = assignmentExpression.getOperationSign();
@@ -153,7 +153,7 @@ public class SimplifyIfElseIntention extends Intention {
       BoolUtils.getNegatedExpressionText(condition);
     final PsiStatement thenBranch = statement.getThenBranch();
     final PsiExpressionStatement assignmentStatement =
-      (PsiExpressionStatement)ConditionalUtils.stripBraces(thenBranch);
+      (PsiExpressionStatement)ControlFlowUtils.stripBraces(thenBranch);
     final PsiAssignmentExpression assignmentExpression =
       (PsiAssignmentExpression)assignmentStatement.getExpression();
     final PsiJavaToken operator = assignmentExpression.getOperationSign();
@@ -199,7 +199,7 @@ public class SimplifyIfElseIntention extends Intention {
       BoolUtils.getNegatedExpressionText(condition);
     final PsiStatement thenBranch = statement.getThenBranch();
     final PsiExpressionStatement assignmentStatement =
-      (PsiExpressionStatement)ConditionalUtils.stripBraces(thenBranch);
+      (PsiExpressionStatement)ControlFlowUtils.stripBraces(thenBranch);
     final PsiAssignmentExpression assignmentExpression =
       (PsiAssignmentExpression)assignmentStatement.getExpression();
     final PsiJavaToken operator = assignmentExpression.getOperationSign();

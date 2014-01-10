@@ -22,7 +22,6 @@ import com.siyeh.ig.psiutils.EquivalenceChecker;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
-import com.siyeh.ipp.psiutils.ConditionalUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -46,9 +45,11 @@ public class ReplaceIfWithConditionalIntention extends Intention {
         return;
       }
       final PsiStatement thenBranch = ifStatement.getThenBranch();
-      final PsiExpressionStatement strippedThenBranch = (PsiExpressionStatement)ConditionalUtils.stripBraces(thenBranch);
+      final PsiExpressionStatement strippedThenBranch = (PsiExpressionStatement)com.siyeh.ig.psiutils.ControlFlowUtils
+        .stripBraces(thenBranch);
       final PsiStatement elseBranch = ifStatement.getElseBranch();
-      final PsiExpressionStatement strippedElseBranch = (PsiExpressionStatement)ConditionalUtils.stripBraces(elseBranch);
+      final PsiExpressionStatement strippedElseBranch = (PsiExpressionStatement)com.siyeh.ig.psiutils.ControlFlowUtils
+        .stripBraces(elseBranch);
       final PsiAssignmentExpression thenAssign = (PsiAssignmentExpression)strippedThenBranch.getExpression();
       final PsiAssignmentExpression elseAssign = (PsiAssignmentExpression)strippedElseBranch.getExpression();
       final PsiExpression lhs = thenAssign.getLExpression();
@@ -72,9 +73,9 @@ public class ReplaceIfWithConditionalIntention extends Intention {
         return;
       }
       final PsiStatement thenBranch = ifStatement.getThenBranch();
-      final PsiReturnStatement thenReturn = (PsiReturnStatement)ConditionalUtils.stripBraces(thenBranch);
+      final PsiReturnStatement thenReturn = (PsiReturnStatement)com.siyeh.ig.psiutils.ControlFlowUtils.stripBraces(thenBranch);
       final PsiStatement elseBranch = ifStatement.getElseBranch();
-      final PsiReturnStatement elseReturn = (PsiReturnStatement)ConditionalUtils.stripBraces(elseBranch);
+      final PsiReturnStatement elseReturn = (PsiReturnStatement)com.siyeh.ig.psiutils.ControlFlowUtils.stripBraces(elseBranch);
       final PsiExpression thenReturnValue = thenReturn.getReturnValue();
       if (thenReturnValue == null) {
         return;
@@ -96,8 +97,10 @@ public class ReplaceIfWithConditionalIntention extends Intention {
       if (condition == null) {
         return;
       }
-      final PsiExpressionStatement thenBranch = (PsiExpressionStatement)ConditionalUtils.stripBraces(ifStatement.getThenBranch());
-      final PsiExpressionStatement elseBranch = (PsiExpressionStatement)ConditionalUtils.stripBraces(ifStatement.getElseBranch());
+      final PsiExpressionStatement thenBranch = (PsiExpressionStatement)com.siyeh.ig.psiutils.ControlFlowUtils
+        .stripBraces(ifStatement.getThenBranch());
+      final PsiExpressionStatement elseBranch = (PsiExpressionStatement)com.siyeh.ig.psiutils.ControlFlowUtils
+        .stripBraces(ifStatement.getElseBranch());
       final PsiMethodCallExpression thenMethodCallExpression = (PsiMethodCallExpression)thenBranch.getExpression();
       final PsiMethodCallExpression elseMethodCallExpression = (PsiMethodCallExpression)elseBranch.getExpression();
       final StringBuilder replacementText = new StringBuilder(thenMethodCallExpression.getMethodExpression().getText());
@@ -137,7 +140,8 @@ public class ReplaceIfWithConditionalIntention extends Intention {
       if (condition == null) {
         return;
       }
-      final PsiReturnStatement thenBranch = (PsiReturnStatement)ConditionalUtils.stripBraces(ifStatement.getThenBranch());
+      final PsiReturnStatement thenBranch = (PsiReturnStatement)com.siyeh.ig.psiutils.ControlFlowUtils
+        .stripBraces(ifStatement.getThenBranch());
       final PsiExpression thenReturnValue = thenBranch.getReturnValue();
       if (thenReturnValue == null) {
         return;

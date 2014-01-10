@@ -22,23 +22,6 @@ public class ConditionalUtils {
 
   private ConditionalUtils() {}
 
-  public static PsiStatement stripBraces(PsiStatement branch) {
-    if (branch instanceof PsiBlockStatement) {
-      final PsiBlockStatement block = (PsiBlockStatement)branch;
-      final PsiCodeBlock codeBlock = block.getCodeBlock();
-      final PsiStatement[] statements = codeBlock.getStatements();
-      if (statements.length == 1) {
-        return statements[0];
-      }
-      else {
-        return block;
-      }
-    }
-    else {
-      return branch;
-    }
-  }
-
   public static boolean isReturn(PsiStatement statement,
                                  @NonNls String value) {
     if (statement == null) {
