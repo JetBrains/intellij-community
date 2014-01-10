@@ -18,7 +18,9 @@ package com.intellij.util.text;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * @author peter
+ * A char sequence that supports fast copying of its full or partial contents to a char array. May be useful for performance optimizations
+ * @see com.intellij.util.text.CharSequenceBackedByArray
+ * @see com.intellij.util.text.CharArrayUtil#getChars(CharSequence, char[], int) 
  */
 public interface CharArrayExternalizable extends CharSequence {
 
