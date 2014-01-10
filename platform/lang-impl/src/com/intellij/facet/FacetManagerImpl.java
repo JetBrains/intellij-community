@@ -237,7 +237,9 @@ public class FacetManagerImpl extends FacetManager implements ModuleComponent, P
     if (!invalidFacetManager.isIgnored(facet)) {
       FacetLoadingErrorDescription description = new FacetLoadingErrorDescription(facet);
       ProjectLoadingErrorsNotifier.getInstance(myModule.getProject()).registerError(description);
-      UnknownFeaturesCollector.getInstance(myModule.getProject()).registerUnknownFeature("com.intellij.facetType", typeId);
+      if (typeId != null) {
+        UnknownFeaturesCollector.getInstance(myModule.getProject()).registerUnknownFeature("com.intellij.facetType", typeId);
+      }
     }
   }
 
