@@ -814,7 +814,7 @@ public final class ImmutableText extends ImmutableCharSequence implements CharAr
    * @throws IndexOutOfBoundsException if <code>(start < 0) || (end < 0) ||
    *         (start > end) || (end > this.length())</code>
    */
-  public void getChars(int start, int end, char[] dest, int destPos) {
+  public void getChars(int start, int end, @NotNull char[] dest, int destPos) {
     if (_data != null) { // Primitive.
       if ((start < 0) || (end > _count) || (start > end))
         throw new IndexOutOfBoundsException();

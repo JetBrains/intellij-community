@@ -26,6 +26,7 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.PsiReplacementUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -72,7 +73,7 @@ public class UnclearBinaryExpressionInspection extends BaseInspection {
       }
       final PsiExpression expression = (PsiExpression)element;
       final StringBuilder newExpressionText = createReplacementText(expression, new StringBuilder());
-      replaceExpression(expression, newExpressionText.toString());
+      PsiReplacementUtil.replaceExpression(expression, newExpressionText.toString());
     }
 
     private static StringBuilder createReplacementText(@Nullable PsiExpression expression, StringBuilder out) {

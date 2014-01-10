@@ -4,6 +4,7 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.StreamUtil;
@@ -27,52 +28,112 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * {@code CertificatesManager} is responsible for negotiation SSL connection with server
- * that using trusted or self-signed certificates.
+ * and deals with untrusted/self-singed/expired and other kinds of digital certificates.
+ * <h1>Integration details:</h1>
+ * If you're using httpclient-3.1 without custom {@code Protocol} instance for HTTPS you don't have to do anything
+ * at all: default {@code HttpClient} will use "Default" {@code SSLContext}, which is set up by this component itself.
+ * <p/>
+ * However for httpclient-4.x you have several of choices:
+ * <ol>
+ * <li>Client returned by {@code HttpClients.createSystem()} will use "Default" SSL context as it does in httpclient-3.1.</li>
+ * <li>If you want to customize {@code HttpClient} using {@code HttpClients.custom()}, you can use the following methods of the builder
+ * (in the order of increasing complexity/flexibility)
+ * <ol>
+ * <li>{@code useSystemProperties()} methods makes {@code HttpClient} use "Default" SSL context again</li>
+ * <li>{@code setSSLContext()} and pass result of the {@link #getSslContext()}</li>
+ * <li>{@code setSSLSocketFactory()} and specify instance {@code SSLConnectionSocketFactory} which uses result of {@link #getSslContext()}.</li>
+ * <li>{@code setConnectionManager} and initialize it with {@code Registry} that binds aforementioned {@code SSLConnectionSocketFactory} to HTTPS protocol</li>
+ * </ol>
+ * </li>
+ * </ol>
  *
  * @author Mikhail Golubev
  */
-public class CertificatesManager {
-  private static final Logger LOG = Logger.getInstance(CertificatesManager.class);
-  private static final X509Certificate[] NO_CERTIFICATES = new X509Certificate[0];
+public class CertificatesManager implements ApplicationComponent {
 
+  @NonNls public static final String COMPONENT_NAME = "Certificates Manager";
   @NonNls private static final String DEFAULT_PATH = FileUtil.join(PathManager.getSystemPath(), "tasks", "cacerts");
   @NonNls private static final String DEFAULT_PASSWORD = "changeit";
 
-  @NotNull
-  public static CertificatesManager createDefault() {
-    return createInstance(DEFAULT_PATH, DEFAULT_PASSWORD);
-  }
+  private static final Logger LOG = Logger.getInstance(CertificatesManager.class);
+  private static final X509Certificate[] NO_CERTIFICATES = new X509Certificate[0];
 
-
-  @NotNull
-  public static CertificatesManager createInstance(@NotNull String cacertsPath, @NotNull String cacertsPassword) {
-    return new CertificatesManager(cacertsPath, cacertsPassword);
+  public static CertificatesManager getInstance() {
+    return (CertificatesManager)ApplicationManager.getApplication().getComponent(COMPONENT_NAME);
   }
 
   private final String myCacertsPath;
   private final String myPassword;
+  /**
+   * Lazy initialized
+   */
+  private SSLContext mySslContext;
 
-  private CertificatesManager(@NotNull String cacertsPath, @NotNull String cacertsPassword) {
-    myCacertsPath = cacertsPath;
-    myPassword = cacertsPassword;
+  /**
+   * Component initialization constructor
+   */
+  public CertificatesManager() {
+    myCacertsPath = DEFAULT_PATH;
+    myPassword = DEFAULT_PASSWORD;
+  }
+
+  @Override
+  public void initComponent() {
+    try {
+      // Don't do this: protocol created this way will ignore SSL tunnels. See IDEA-115708.
+      // Protocol.registerProtocol("https", CertificatesManager.createDefault().createProtocol());
+      SSLContext.setDefault(getSslContext());
+    }
+    catch (Exception e) {
+      LOG.error(e);
+    }
+  }
+
+  @Override
+  public void disposeComponent() {
+    // empty
+  }
+
+  @NotNull
+  @Override
+  public String getComponentName() {
+    return COMPONENT_NAME;
   }
 
   /**
-   * Creates special kind of {@code SSLContext} which X509TrustManager first checks certificate presence in
+   * Creates special kind of {@code SSLContext}, which X509TrustManager first checks certificate presence in
    * in default system-wide trust store (usually located at {@code ${JAVA_HOME}/lib/security/cacerts} or specified by
-   * {@code javax.net.ssl.trustStore} property) and when in the one specified by first argument of factory method
-   * {@link CertificatesManager#createInstance(String, String)}.
-   * If certificate wasn't found in either, manager will ask user whether it can be
-   * accepted (like web-browsers do) and if can, certificate will be added to specified trust store.
+   * {@code javax.net.ssl.trustStore} property) and when in the one specified by field {@link #myCacertsPath}.
+   * If certificate wasn't found in either, manager will ask user, whether it can be
+   * accepted (like web-browsers do) and then, if it does, certificate will be added to specified trust store.
+   * <p/>
+   * If any error occurred during creation its message will be logged and system default SSL context will be returned
+   * so clients don't have to deal with awkward JSSE errors.
    * </p>
-   * This method may be used for transition to HttpClient 4.x (see {@code HttpClients.custom().setSslContext(SSLContext)})
+   * This method may be used for transition to HttpClient 4.x (see {@code HttpClientBuilder#setSslContext(SSLContext)})
+   * and {@code org.apache.http.conn.ssl.SSLConnectionSocketFactory()}.
    *
-   * @return instance of SSLContext with described behavior
+   * @return instance of SSLContext with described behavior or default SSL context in case of error
    */
+  @NotNull
+  public synchronized SSLContext getSslContext() {
+    if (mySslContext == null) {
+      try {
+        mySslContext = createSslContext();
+      }
+      catch (Exception e) {
+        LOG.error(e);
+        mySslContext = getSystemSslContext();
+      }
+    }
+    return mySslContext;
+  }
+
+
   @NotNull
   public SSLContext createSslContext() throws Exception {
     // SSLContext context = SSLContext.getDefault();
-    SSLContext context = SSLContext.getInstance("TLS");
+    SSLContext context = getSystemSslContext();
     TrustManagerFactory factory = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
     factory.init((KeyStore)null);
     // assume that only X509 TrustManagers exist
@@ -85,6 +146,29 @@ public class CertificatesManager {
     return context;
   }
 
+  @NotNull
+  public static SSLContext getSystemSslContext() {
+    // NOTE SSLContext.getDefault() should not be called because it automatically creates
+    // default context with can't be initialized twice
+    try {
+      // actually TLSv1 support is mandatory for Java platform
+      return SSLContext.getInstance("TLS");
+    }
+    catch (NoSuchAlgorithmException e) {
+      LOG.error(e);
+      throw new IllegalStateException("Can't get system SSL context");
+    }
+  }
+
+  @NotNull
+  public String getCacertsPath() {
+    return myCacertsPath;
+  }
+
+  @NotNull
+  public String getPassword() {
+    return myPassword;
+  }
 
   private static class MyX509TrustManager implements X509TrustManager {
     private final X509TrustManager mySystemManager;

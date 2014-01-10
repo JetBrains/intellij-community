@@ -24,6 +24,7 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.ComparisonUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -114,8 +115,8 @@ public class ArrayEqualityInspection extends BaseInspection {
       }
       newExpressionText.append(rhs.getText());
       newExpressionText.append(')');
-      replaceExpressionAndShorten(binaryExpression,
-                                  newExpressionText.toString());
+      PsiReplacementUtil.replaceExpressionAndShorten(binaryExpression,
+                                                     newExpressionText.toString());
     }
   }
 

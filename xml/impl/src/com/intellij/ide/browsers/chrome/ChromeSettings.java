@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,19 +17,17 @@ package com.intellij.ide.browsers.chrome;
 
 import com.intellij.execution.configurations.ParametersList;
 import com.intellij.ide.browsers.BrowserSpecificSettings;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.xmlb.annotations.Tag;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author nik
- */
-public class ChromeSettings extends BrowserSpecificSettings {
-  @NonNls public static final String USER_DATA_DIR_ARG = "--user-data-dir=";
-  private String myCommandLineOptions = "";
+public final class ChromeSettings extends BrowserSpecificSettings {
+  public static final String USER_DATA_DIR_ARG = "--user-data-dir=";
+  private String myCommandLineOptions;
   private String myUserDataDirectoryPath;
   private boolean myUseCustomProfile;
 
@@ -52,12 +50,12 @@ public class ChromeSettings extends BrowserSpecificSettings {
     return myCommandLineOptions;
   }
 
-  public void setCommandLineOptions(String commandLineOptions) {
-    myCommandLineOptions = commandLineOptions;
+  public void setCommandLineOptions(@Nullable String value) {
+    myCommandLineOptions = StringUtil.nullize(value);
   }
 
-  public void setUserDataDirectoryPath(String userDataDirectoryPath) {
-    myUserDataDirectoryPath = userDataDirectoryPath;
+  public void setUserDataDirectoryPath(@Nullable String value) {
+    myUserDataDirectoryPath = StringUtil.nullize(value);
   }
 
   public void setUseCustomProfile(boolean useCustomProfile) {
@@ -76,8 +74,24 @@ public class ChromeSettings extends BrowserSpecificSettings {
     }
   }
 
+  @NotNull
   @Override
   public ChromeSettingsConfigurable createConfigurable() {
     return new ChromeSettingsConfigurable(this);
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+
+    ChromeSettings settings = (ChromeSettings)o;
+    return myUseCustomProfile == settings.myUseCustomProfile &&
+           Comparing.equal(myCommandLineOptions, settings.myCommandLineOptions) &&
+           Comparing.equal(myUserDataDirectoryPath, settings.myUserDataDirectoryPath);
   }
 }

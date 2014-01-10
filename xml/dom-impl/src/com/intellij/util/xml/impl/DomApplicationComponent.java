@@ -30,7 +30,6 @@ import com.intellij.util.xml.highlighting.DomElementsAnnotator;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
 
 import java.lang.reflect.Type;
 import java.util.List;
@@ -92,6 +91,15 @@ public class DomApplicationComponent {
 
   public static DomApplicationComponent getInstance() {
     return ServiceManager.getService(DomApplicationComponent.class);
+  }
+
+  public int getCumulativeVersion() {
+    int result = 0;
+    for (DomFileDescription description : getAllFileDescriptions()) {
+      result += description.getVersion();
+      result += description.getRootTagName().hashCode(); // so that a plugin enabling/disabling could trigger the reindexing
+    }
+    return result;
   }
 
   public final synchronized Set<DomFileDescription> getFileDescriptions(String rootTagName) {

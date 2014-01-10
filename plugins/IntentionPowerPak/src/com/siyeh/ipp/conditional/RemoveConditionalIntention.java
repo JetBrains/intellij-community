@@ -19,6 +19,7 @@ import com.intellij.psi.PsiConditionalExpression;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
 import com.intellij.util.IncorrectOperationException;
+import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import com.siyeh.ipp.psiutils.BoolUtils;
@@ -42,12 +43,12 @@ public class RemoveConditionalIntention extends Intention {
     @NonNls final String thenExpressionText = thenExpression.getText();
     if ("true".equals(thenExpressionText)) {
       final String newExpression = condition.getText();
-      replaceExpression(newExpression, expression);
+      PsiReplacementUtil.replaceExpression(expression, newExpression);
     }
     else {
       final String newExpression =
         BoolUtils.getNegatedExpressionText(condition);
-      replaceExpression(newExpression, expression);
+      PsiReplacementUtil.replaceExpression(expression, newExpression);
     }
   }
 }

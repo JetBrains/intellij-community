@@ -22,6 +22,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.PsiReplacementUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -61,7 +62,7 @@ public class DeleteUnnecessaryStatementFix extends InspectionGadgetsFix {
         parent instanceof PsiDoWhileStatement ||
         parent instanceof PsiForeachStatement ||
         parent instanceof PsiForStatement) {
-      replaceStatement(statement, "{}");
+      PsiReplacementUtil.replaceStatement(statement, "{}");
     }
     else {
       deleteElement(statement);

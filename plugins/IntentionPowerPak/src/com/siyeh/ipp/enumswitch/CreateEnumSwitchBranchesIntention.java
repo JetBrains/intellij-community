@@ -16,6 +16,7 @@
 package com.siyeh.ipp.enumswitch;
 
 import com.intellij.psi.*;
+import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NonNls;
@@ -69,7 +70,7 @@ public class CreateEnumSwitchBranchesIntention extends Intention {
         newStatementText.append("case ").append(missingEnumElement.getName()).append(": break;");
       }
       newStatementText.append('}');
-      replaceStatement(newStatementText.toString(), switchStatement);
+      PsiReplacementUtil.replaceStatement(switchStatement, newStatementText.toString());
       return;
     }
     final Map<PsiEnumConstant, PsiEnumConstant> nextEnumConstants = new HashMap<PsiEnumConstant, PsiEnumConstant>(fields.length);

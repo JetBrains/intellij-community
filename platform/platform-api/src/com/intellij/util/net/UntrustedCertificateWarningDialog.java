@@ -11,12 +11,14 @@ import com.intellij.ui.TitledSeparator;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.FormBuilder;
+import org.apache.commons.codec.digest.DigestUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.security.auth.x500.X500Principal;
 import javax.swing.*;
 import java.awt.*;
+import java.security.cert.CertificateEncodingException;
 import java.security.cert.X509Certificate;
 import java.text.DateFormat;
 import java.util.Map;
@@ -64,8 +66,13 @@ public class UntrustedCertificateWarningDialog extends DialogWrapper {
     builder = updateBuilderWithTitle(builder, "Validity Period");
     builder = builder
       .setIndent(IdeBorderFactory.TITLED_BORDER_INDENT)
-      .addLabeledComponent("Valid from", new JBLabel(DATE_FORMAT.format(myCertificate.getNotBefore())))
-      .addLabeledComponent("Valid until", new JBLabel(DATE_FORMAT.format(myCertificate.getNotAfter())));
+      .addLabeledComponent("Valid from:", new JBLabel(DATE_FORMAT.format(myCertificate.getNotBefore())))
+      .addLabeledComponent("Valid until:", new JBLabel(DATE_FORMAT.format(myCertificate.getNotAfter())));
+    builder = builder.setIndent(0);
+    builder = updateBuilderWithTitle(builder, "Fingerprints");
+    builder = builder.setIndent(IdeBorderFactory.TITLED_BORDER_INDENT);
+    builder = builder.addLabeledComponent("SHA-256:", getTextPane(getSHA256FingerPrint(certificate)));
+    builder = builder.addLabeledComponent("SHA-1:", getTextPane(getSHA1FingerPrint(certificate)));
     myCertificateInfoPanel.add(builder.getPanel(), BorderLayout.CENTER);
 
     setTitle("Untrusted Server's Certificate");
@@ -74,7 +81,7 @@ public class UntrustedCertificateWarningDialog extends DialogWrapper {
     myWarningSign.setIcon(AllIcons.General.WarningDialog);
 
     Messages.installHyperlinkSupport(myNoticePane);
-//    myNoticePane.setFont(myNoticePane.getFont().deriveFont((float)FontSize.SMALL.getSize()));
+    //    myNoticePane.setFont(myNoticePane.getFont().deriveFont((float)FontSize.SMALL.getSize()));
     myNoticePane.setText(
       String.format("<html><p><small>" +
                     "Accepted certificate will be saved in truststore <code>%s</code> with password <code>%s</code>" +
@@ -83,6 +90,47 @@ public class UntrustedCertificateWarningDialog extends DialogWrapper {
 
     init();
     LOG.debug("Preferred size: " + getPreferredSize());
+  }
+
+  private static String getSHA1FingerPrint(X509Certificate certificate) {
+    try {
+      return formatHex(DigestUtils.sha1Hex(certificate.getEncoded()));
+    }
+    catch (Exception e) {
+      return "N/A";
+    }
+  }
+
+  private static String getSHA256FingerPrint(X509Certificate certificate) {
+    try {
+      return formatHex(DigestUtils.sha256Hex(certificate.getEncoded()));
+    }
+    catch (CertificateEncodingException e) {
+      return "N/A";
+    }
+  }
+
+  @NotNull
+  private static String formatHex(@NotNull String hex) {
+    StringBuilder builder = new StringBuilder((int)(hex.length() * 1.5));
+    for (int i = 0; i < hex.length(); i += 2) {
+      builder.append(hex.substring(i, i + 2));
+      builder.append(' ');
+      if (builder.length() % 60 == 0) {
+        builder.append('\n');
+      }
+    }
+    return builder.toString().toUpperCase();
+  }
+
+  private static JComponent getTextPane(String text) {
+    JTextPane pane = new JTextPane();
+    pane.setOpaque(false);
+    pane.setEditable(false);
+    pane.setContentType("text/plain");
+    pane.setText(text);
+    //Messages.installHyperlinkSupport(pane);
+    return pane;
   }
 
   @SuppressWarnings("MethodMayBeStatic")

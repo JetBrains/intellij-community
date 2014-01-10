@@ -21,6 +21,7 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.SystemInfo;
@@ -41,6 +42,7 @@ import javax.swing.table.TableCellRenderer;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.Collections;
+import java.util.UUID;
 
 import static com.intellij.ide.browsers.BrowsersConfiguration.BrowserFamily;
 import static com.intellij.util.ui.table.TableModelEditor.EditableColumnInfo;
@@ -170,12 +172,49 @@ public class BrowserSettingsPanel {
   }
 
   private void createUIComponents() {
-    browsersEditor = new TableModelEditor<ConfigurableWebBrowser>(Collections.<ConfigurableWebBrowser>emptyList(), COLUMNS, new Function<ConfigurableWebBrowser, ConfigurableWebBrowser>() {
+    TableModelEditor.DialogItemEditor<ConfigurableWebBrowser> itemEditor = new TableModelEditor.DialogItemEditor<ConfigurableWebBrowser>() {
+      @NotNull
       @Override
-      public ConfigurableWebBrowser fun(ConfigurableWebBrowser browser) {
-        return new ConfigurableWebBrowser(browser.getId(), browser.getFamily(), browser.getName(), browser.getPath(), browser.isActive(), browser.getSpecificSettings());
+      public Class<ConfigurableWebBrowser> getItemClass() {
+        return ConfigurableWebBrowser.class;
       }
-    }, ConfigurableWebBrowser.class, "No web browsers configured");
+
+      @Override
+      public ConfigurableWebBrowser clone(@NotNull ConfigurableWebBrowser item, boolean forInPlaceEditing) {
+        return new ConfigurableWebBrowser(forInPlaceEditing ? item.getId() : UUID.randomUUID(),
+                                          item.getFamily(), item.getName(), item.getPath(), item.isActive(),
+                                          forInPlaceEditing ? item.getSpecificSettings() : cloneSettings(item));
+      }
+
+      @Override
+      public void edit(@NotNull ConfigurableWebBrowser browser, @NotNull Function<ConfigurableWebBrowser, ConfigurableWebBrowser> mutator) {
+        BrowserSpecificSettings settings = cloneSettings(browser);
+        if (settings != null && ShowSettingsUtil.getInstance().editConfigurable(browsersTable, settings.createConfigurable())) {
+          mutator.fun(browser).setSpecificSettings(settings);
+        }
+      }
+
+      @Nullable
+      private BrowserSpecificSettings cloneSettings(@NotNull ConfigurableWebBrowser browser) {
+        BrowserSpecificSettings settings = browser.getSpecificSettings();
+        if (settings == null) {
+          return null;
+        }
+
+        BrowserSpecificSettings newSettings = browser.getFamily().createBrowserSpecificSettings();
+        assert newSettings != null;
+        TableModelEditor.cloneUsingXmlSerialization(settings, newSettings);
+        return newSettings;
+      }
+
+      @Override
+      public void applyEdited(@NotNull ConfigurableWebBrowser oldItem, @NotNull ConfigurableWebBrowser newItem) {
+        oldItem.setSpecificSettings(newItem.getSpecificSettings());
+      }
+    };
+    browsersEditor = new TableModelEditor<ConfigurableWebBrowser>(Collections.<ConfigurableWebBrowser>emptyList(), COLUMNS,
+                                                                  itemEditor, "No web browsers configured"
+    );
     browsersTable = browsersEditor.createComponent();
   }
 

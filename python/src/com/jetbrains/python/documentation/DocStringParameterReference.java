@@ -38,9 +38,9 @@ import java.util.Set;
  * @author yole
  */
 public class DocStringParameterReference extends PsiReferenceBase<PsiElement> implements PsiReferenceEx {
-  private final String myType;
+  private final StructuredDocStringBase.ReferenceType myType;
 
-  public DocStringParameterReference(PsiElement element, TextRange range, String refType) {
+  public DocStringParameterReference(PsiElement element, TextRange range, StructuredDocStringBase.ReferenceType refType) {
     super(element, range);
     myType = refType;
   }
@@ -55,26 +55,42 @@ public class DocStringParameterReference extends PsiReferenceBase<PsiElement> im
       final PyFunction init = ((PyClass)owner).findMethodByName(PyNames.INIT, false);
       if (init != null) {
         PsiElement element = resolveParameter(init);
-        if (element == null)
-          element = resolveClassVariable(owner);
+        if (element == null && (myType.equals(StructuredDocStringBase.ReferenceType.CLASS_VARIABLE) ||
+                                myType.equals(StructuredDocStringBase.ReferenceType.PARAMETER_TYPE)))
+          element = resolveClassVariable((PyClass)owner);
+        if (element == null && (myType.equals(StructuredDocStringBase.ReferenceType.INSTANCE_VARIABLE) ||
+                                myType.equals(StructuredDocStringBase.ReferenceType.PARAMETER_TYPE)))
+          element = resolveInstanceVariable((PyClass)owner);
         return element;
       }
       else {
-        return resolveClassVariable(owner);
+        if (myType.equals(StructuredDocStringBase.ReferenceType.CLASS_VARIABLE) ||
+                                myType.equals(StructuredDocStringBase.ReferenceType.PARAMETER_TYPE))
+          return resolveClassVariable((PyClass)owner);
+        if (myType.equals(StructuredDocStringBase.ReferenceType.INSTANCE_VARIABLE) ||
+                                myType.equals(StructuredDocStringBase.ReferenceType.PARAMETER_TYPE))
+          return resolveInstanceVariable((PyClass)owner);
       }
     }
     return null;
   }
 
   @Nullable
-  private PsiElement resolveClassVariable(final PyDocStringOwner owner) {
-    final PyStatementList statementList = ((PyClass)owner).getStatementList();
-    for (PsiElement element : statementList.getChildren()) {
-      if (element instanceof PyAssignmentStatement) {
-        final PyExpression[] targets = ((PyAssignmentStatement)element).getTargets();
-        if (targets.length > 0 && targets[0].getText().equals(getCanonicalText()))
-          return targets[0];
-      }
+  private PsiElement resolveInstanceVariable(final PyClass owner) {
+    final List<PyTargetExpression> attributes = owner.getInstanceAttributes();
+    for (PyTargetExpression element : attributes) {
+      if (getCanonicalText().equals(element.getName()))
+        return element;
+    }
+    return null;
+  }
+
+  @Nullable
+  private PsiElement resolveClassVariable(@NotNull final PyClass owner) {
+    final List<PyTargetExpression> attributes = owner.getClassAttributes();
+    for (PyTargetExpression element : attributes) {
+      if (getCanonicalText().equals(element.getName()))
+        return element;
     }
     return null;
   }
@@ -123,7 +139,7 @@ public class DocStringParameterReference extends PsiReferenceBase<PsiElement> im
     return ArrayUtil.EMPTY_OBJECT_ARRAY;
   }
   
-  public String getType() {
+  public StructuredDocStringBase.ReferenceType getType() {
     return myType;
   }
 

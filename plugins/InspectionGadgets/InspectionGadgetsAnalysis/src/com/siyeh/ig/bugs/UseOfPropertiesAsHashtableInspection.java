@@ -25,6 +25,7 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -136,7 +137,7 @@ public class UseOfPropertiesAsHashtableInspection extends BaseInspection {
         newExpression.append(argument.getText());
       }
       newExpression.append(')');
-      replaceExpression(methodCallExpression, newExpression.toString());
+      PsiReplacementUtil.replaceExpression(methodCallExpression, newExpression.toString());
     }
   }
 

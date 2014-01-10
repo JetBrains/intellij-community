@@ -877,6 +877,12 @@ public abstract class BreakpointPropertiesPanel {
         }
 
         @Override
+        protected void dispose() {
+          super.dispose();
+          myEditor.dispose();
+        }
+
+        @Override
         protected void doOKAction() {
           myTargetEditor.setText(myEditor.getText());
           super.doOKAction();

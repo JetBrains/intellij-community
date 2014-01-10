@@ -57,7 +57,6 @@ public abstract class AddAnnotationIntention extends BaseIntentionAction {
 
   public boolean isAvailable(@NotNull final Project project, @NotNull final PsiElement element) {
     if (!element.isValid()) return false;
-    if (!PsiUtil.isLanguageLevel5OrHigher(element)) return false;
     final PsiModifierListOwner owner;
     if (!element.getManager().isInProject(element) || CodeStyleSettingsManager.getSettings(project).USE_EXTERNAL_ANNOTATIONS) {
       owner = AddAnnotationPsiFix.getContainer(element);

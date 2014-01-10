@@ -25,6 +25,7 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.BoolUtils;
 import com.siyeh.ig.psiutils.VariableSearchUtils;
 import org.jetbrains.annotations.NotNull;
@@ -109,7 +110,7 @@ public class ConstantIfStatementInspection extends BaseInspection {
           PsiTreeUtil.getParentOfType(branch, PsiCodeBlock.class);
         if (parentBlock == null) {
           final String elseText = branch.getText();
-          replaceStatement(statement, elseText);
+          PsiReplacementUtil.replaceStatement(statement, elseText);
           return;
         }
         final PsiCodeBlock block =
@@ -119,7 +120,7 @@ public class ConstantIfStatementInspection extends BaseInspection {
             block, parentBlock);
         if (hasConflicts) {
           final String elseText = branch.getText();
-          replaceStatement(statement, elseText);
+          PsiReplacementUtil.replaceStatement(statement, elseText);
         }
         else {
           final PsiElement containingElement = statement.getParent();
@@ -150,7 +151,7 @@ public class ConstantIfStatementInspection extends BaseInspection {
       }
       else {
         final String elseText = branch.getText();
-        replaceStatement(statement, elseText);
+        PsiReplacementUtil.replaceStatement(statement, elseText);
       }
     }
   }

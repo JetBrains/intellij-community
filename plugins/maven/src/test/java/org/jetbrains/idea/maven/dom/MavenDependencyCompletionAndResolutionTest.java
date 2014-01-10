@@ -1078,21 +1078,7 @@ public class MavenDependencyCompletionAndResolutionTest extends MavenDomWithIndi
                                     "</properties>");
 
     importProject();
-
-    try {
-      checkHighlighting(m, true, false, true);
-    }
-    catch (Throwable e) {
-      PsiFile psiFile = PsiManager.getInstance(myProject).findFile(m);
-      String text = psiFile.getText();
-      int i = text.indexOf("junitVersion");
-      PsiReference reference = psiFile.findReferenceAt(i);
-      assert reference != null;
-
-      System.err.println("testDontHighlightProblemsInNonManagedPom2 debug info: Ref:" + reference + ", type: " + reference.getClass().getName() + ", isSoft: " + reference.isSoft());
-
-      throw e;
-    }
+    checkHighlighting(m, true, false, true);
   }
 
   public void testUpdateIndicesIntention() throws Throwable {

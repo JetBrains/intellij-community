@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,28 +17,27 @@ package com.intellij.ide.browsers.firefox;
 
 import com.intellij.ide.browsers.BrowserSpecificSettings;
 import com.intellij.openapi.options.Configurable;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.xmlb.annotations.Tag;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.List;
 
-/**
- * @author nik
- */
-public class FirefoxSettings extends BrowserSpecificSettings {
+public final class FirefoxSettings extends BrowserSpecificSettings {
   private String myProfilesIniPath;
   private String myProfile;
 
   public FirefoxSettings() {
   }
 
-  public FirefoxSettings(String profilesIniPath, String profile) {
-    myProfilesIniPath = profilesIniPath;
-    myProfile = profile;
+  public FirefoxSettings(@Nullable String profilesIniPath, @Nullable String profile) {
+    myProfilesIniPath = StringUtil.nullize(profilesIniPath);
+    myProfile = StringUtil.nullize(profile);
   }
 
   @Nullable
@@ -47,8 +46,8 @@ public class FirefoxSettings extends BrowserSpecificSettings {
     return myProfilesIniPath;
   }
 
-  public void setProfilesIniPath(String profilesIniPath) {
-    myProfilesIniPath = profilesIniPath;
+  public void setProfilesIniPath(@Nullable String value) {
+    myProfilesIniPath = StringUtil.nullize(value);
   }
 
   @Nullable
@@ -57,10 +56,11 @@ public class FirefoxSettings extends BrowserSpecificSettings {
     return myProfile;
   }
 
-  public void setProfile(String profile) {
-    myProfile = profile;
+  public void setProfile(@Nullable String value) {
+    myProfile = StringUtil.nullize(value);
   }
 
+  @NotNull
   @Override
   public Configurable createConfigurable() {
     return new FirefoxSettingsConfigurable(this);
@@ -85,5 +85,19 @@ public class FirefoxSettings extends BrowserSpecificSettings {
       }
     }
     return ArrayUtil.EMPTY_STRING_ARRAY;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+
+    FirefoxSettings settings = (FirefoxSettings)o;
+    return Comparing.equal(myProfilesIniPath, settings.myProfilesIniPath) &&
+           Comparing.equal(myProfile, settings.myProfile);
   }
 }

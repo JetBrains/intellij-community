@@ -268,7 +268,9 @@ public class RedundantThrows extends GlobalJavaBatchInspectionTool {
         if (!FileModificationService.getInstance().preparePsiElementsForWrite(refsToDelete)) return;
 
         for (final PsiJavaCodeReferenceElement aRefsToDelete : refsToDelete) {
-          aRefsToDelete.delete();
+          if (aRefsToDelete.isValid()) {
+            aRefsToDelete.delete();
+          }
         }
       }
       catch (IncorrectOperationException e) {

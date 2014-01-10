@@ -26,6 +26,7 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.PsiReplacementUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -113,7 +114,7 @@ public class LoggerInitializedWithForeignClassInspectionBase extends BaseInspect
         return;
       }
       final PsiClassObjectAccessExpression classObjectAccessExpression = (PsiClassObjectAccessExpression)element;
-      replaceExpression(classObjectAccessExpression, newClassName + ".class");
+      PsiReplacementUtil.replaceExpression(classObjectAccessExpression, newClassName + ".class");
     }
   }
 

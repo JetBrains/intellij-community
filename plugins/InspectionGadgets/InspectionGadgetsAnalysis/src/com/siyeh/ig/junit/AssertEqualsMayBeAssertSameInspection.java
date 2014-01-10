@@ -23,6 +23,7 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.ImportUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -87,10 +88,10 @@ public class AssertEqualsMayBeAssertSameInspection extends BaseInspection {
       }
       final PsiExpression qualifier = methodExpression.getQualifierExpression();
       if (qualifier == null && ImportUtils.addStaticImport(className, "assertSame", methodExpression)) {
-        replaceExpression(methodExpression, "assertSame");
+        PsiReplacementUtil.replaceExpression(methodExpression, "assertSame");
       }
       else {
-        replaceExpression(methodExpression, className + ".assertSame");
+        PsiReplacementUtil.replaceExpression(methodExpression, className + ".assertSame");
       }
     }
   }

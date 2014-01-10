@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,17 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package com.intellij.openapi.actionSystem;
 
-/*
- * @author max
+/**
+ * This class purpose is to override (hide) already registered action groups by means of plugin.xml.
+ *
+ * @see EmptyAction
+ *
+ * @author gregsh
  */
-package com.intellij.psi.stubs;
+public final class EmptyActionGroup extends DefaultActionGroup {
+  public EmptyActionGroup() {
+    getTemplatePresentation().setEnabledAndVisible(false);
+  }
 
-import java.lang.annotation.*;
-
-@Inherited
-@Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.TYPE)
-public @interface SerializerClass {
-  Class<? extends StubSerializer> value();
+  @Override
+  public void update(AnActionEvent e) {
+    getTemplatePresentation().setEnabledAndVisible(false);
+  }
 }

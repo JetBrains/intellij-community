@@ -19,6 +19,7 @@ import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.IntentionPowerPackBundle;
+import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.ImportUtils;
 import com.siyeh.ipp.base.MutablyNamedIntention;
 import com.siyeh.ipp.base.PsiElementPredicate;
@@ -87,6 +88,6 @@ public class FlipAssertLiteralIntention extends MutablyNamedIntention {
       newCall.append(BoolUtils.getNegatedExpressionText(arguments[1]));
     }
     newCall.append(')');
-    replaceExpression(newCall.toString(), call);
+    PsiReplacementUtil.replaceExpression(call, newCall.toString());
   }
 }

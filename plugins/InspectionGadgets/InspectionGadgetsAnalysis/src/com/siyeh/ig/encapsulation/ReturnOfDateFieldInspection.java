@@ -25,6 +25,7 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -93,7 +94,7 @@ public class ReturnOfDateFieldInspection extends BaseInspection {
       if (type == null) {
         return;
       }
-      replaceExpression(referenceExpression, '(' + type + ')' + referenceExpression.getText() + ".clone()");
+      PsiReplacementUtil.replaceExpression(referenceExpression, '(' + type + ')' + referenceExpression.getText() + ".clone()");
     }
   }
 

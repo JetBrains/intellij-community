@@ -28,6 +28,7 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
 import com.siyeh.ig.psiutils.EquivalenceChecker;
 import org.jetbrains.annotations.NotNull;
@@ -101,7 +102,7 @@ public class IfStatementWithIdenticalBranchesInspection
         if (condition1 == null) {
           return;
         }
-        replaceExpression(condition1, buildOrExpressionText(
+        PsiReplacementUtil.replaceExpression(condition1, buildOrExpressionText(
           condition1, condition2));
         final PsiStatement elseElseBranch =
           elseIfStatement.getElseBranch();

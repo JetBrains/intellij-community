@@ -22,6 +22,7 @@ import com.intellij.psi.PsiJavaToken;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.IntentionPowerPackBundle;
+import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ipp.base.MutablyNamedIntention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import com.siyeh.ipp.psiutils.ComparisonUtils;
@@ -66,6 +67,6 @@ public class FlipComparisonIntention extends MutablyNamedIntention {
     final String expString = rhs.getText() +
                              ComparisonUtils.getFlippedComparison(tokenType) +
                              lhs.getText();
-    replaceExpression(expString, expression);
+    PsiReplacementUtil.replaceExpression(expression, expString);
   }
 }

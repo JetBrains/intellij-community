@@ -19,9 +19,9 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.IntentionPowerPackBundle;
+import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ipp.base.MutablyNamedIntention;
 import com.siyeh.ipp.base.PsiElementPredicate;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 public class AddArrayCreationExpressionIntention extends MutablyNamedIntention {
@@ -47,7 +47,8 @@ public class AddArrayCreationExpressionIntention extends MutablyNamedIntention {
     if (type == null) {
       return;
     }
-    replaceExpression("new " + TypeConversionUtil.erasure(type).getCanonicalText() + arrayInitializerExpression.getText(),
-                      arrayInitializerExpression);
+    PsiReplacementUtil.replaceExpression(arrayInitializerExpression, "new " +
+                                                                     TypeConversionUtil.erasure(type).getCanonicalText() +
+                                                                     arrayInitializerExpression.getText());
   }
 }

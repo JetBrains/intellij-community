@@ -21,6 +21,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
 import com.siyeh.ig.psiutils.VariableAccessUtils;
 import com.siyeh.ipp.base.Intention;
@@ -79,7 +80,8 @@ public class ObjectsRequireNonNullIntention extends Intention {
       }
       statementToDelete.delete();
     }
-    replaceExpressionAndShorten("java.util.Objects.requireNonNull(" + referenceExpression.getText() + ")", referenceExpression);
+    PsiReplacementUtil
+      .replaceExpressionAndShorten(referenceExpression, "java.util.Objects.requireNonNull(" + referenceExpression.getText() + ")");
   }
 
   private static class NullCheckedAssignmentPredicate implements PsiElementPredicate {

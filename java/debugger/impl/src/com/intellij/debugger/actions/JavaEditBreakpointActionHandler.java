@@ -66,6 +66,7 @@ public class JavaEditBreakpointActionHandler extends EditBreakpointActionHandler
       @Override
       public void onClosed(LightweightWindowEvent event) {
         propertiesPanel.saveTo(javaBreakpoint);
+        propertiesPanel.dispose();
         DebuggerManagerEx.getInstanceEx(project).getBreakpointManager().fireBreakpointChanged(javaBreakpoint);
       }
     };

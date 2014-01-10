@@ -23,6 +23,7 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
@@ -86,7 +87,7 @@ public class UnnecessaryToStringCallInspection extends BaseInspection {
       final PsiReferenceExpression methodExpression = methodCallExpression.getMethodExpression();
       final PsiExpression qualifier = methodExpression.getQualifierExpression();
       if (qualifier == null) {
-        replaceExpression(methodCallExpression, "this");
+        PsiReplacementUtil.replaceExpression(methodCallExpression, "this");
       } else {
         methodCallExpression.replace(qualifier);
       }
