@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -195,6 +195,11 @@ public class ContainerUtil extends ContainerUtilRt {
   @NotNull
   public static <T> HashSet<T> newHashSet() {
     return ContainerUtilRt.newHashSet();
+  }
+
+  @NotNull
+  public static <T> HashSet<T> newHashSet(int initialCapacity) {
+    return ContainerUtilRt.newHashSet(initialCapacity);
   }
 
   @NotNull
