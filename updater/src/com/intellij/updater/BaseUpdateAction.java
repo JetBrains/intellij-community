@@ -83,7 +83,6 @@ public abstract class BaseUpdateAction extends PatchAction {
   }
 
   protected void applyDiff(InputStream patchInput, InputStream oldFileIn, OutputStream toFileOut) throws IOException {
-    Runner.logger.info("applying diff");
     if (patchInput.read() == 1) {
       JBPatch.bspatch(oldFileIn, toFileOut, patchInput);
     }

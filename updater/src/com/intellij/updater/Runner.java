@@ -22,17 +22,26 @@ public class Runner {
   private static final String OLD_BUILD_DESCRIPTION = "old.build.description";
   private static final String NEW_BUILD_DESCRIPTION = "new.build.description";
 
+  public static String getStackTrace(Exception e){
+    StringWriter sw = new StringWriter();
+    PrintWriter pw = new PrintWriter(sw);
+    e.printStackTrace(pw);
+    return sw.toString();
+  }
+
   private static void initLogger(){
-    String uHome = System.getProperty("user.home");
+    String tmpDir = System.getProperty("java.io.tmpdir");
+//    String uHome = System.getProperty("user.home");
     FileAppender update = new FileAppender();
-    update.setFile(uHome + "/update.log");
+
+    update.setFile(tmpDir + "/update.log");
     update.setLayout(new PatternLayout("%d{dd MMM yyyy HH:mm:ss} %-5p %C{1}.%M - %m%n"));
-    update.setThreshold(Level.INFO);
+    update.setThreshold(Level.ALL);
     update.setAppend(true);
     update.activateOptions();
 
     FileAppender update_error = new FileAppender();
-    update_error.setFile(uHome + "/update_error.log");
+    update_error.setFile(tmpDir + "/update_error.log");
     update_error.setLayout(new PatternLayout("%d{dd MMM yyyy HH:mm:ss} %-5p %C{1}.%M - %m%n"));
     update_error.setThreshold(Level.ERROR);
     update_error.setAppend(true);
@@ -41,8 +50,7 @@ public class Runner {
     logger = Logger.getLogger("com.intellij.updater");
     logger.addAppender(update_error);
     logger.addAppender(update);
-    logger.setLevel(Level.INFO);
-    System.out.println("***************** --- logger created ---");
+    logger.setLevel(Level.ALL);
   }
 
   public static void main(String[] args) throws Exception {
@@ -79,10 +87,7 @@ public class Runner {
       }
 
       String destFolder = args[1];
-
       logger.info("args[1]: " + destFolder);
-      System.out.println("args[1]: " + destFolder);
-
       install(destFolder);
     }
     else {
@@ -146,7 +151,7 @@ public class Runner {
           }
         }
         catch (Exception ex) {
-          logger.error(ex.fillInStackTrace());
+          logger.error(getStackTrace(ex));
         }
         finally {
           in.close();
@@ -160,7 +165,7 @@ public class Runner {
           props.store(byteOut, "");
         }
         catch (Exception ex) {
-          logger.error(ex.fillInStackTrace());
+          logger.error(getStackTrace(ex));
         }
         finally {
           byteOut.close();
@@ -171,14 +176,14 @@ public class Runner {
         out.finish();
       }
       catch (Exception ex) {
-        logger.error(ex.fillInStackTrace());
+        logger.error(getStackTrace(ex));
       }
       finally {
         fileOut.close();
       }
     }
     catch (Exception ex) {
-      logger.error(ex.fillInStackTrace());
+      logger.error(getStackTrace(ex));
     }
     finally {
       cleanup(ui);
@@ -201,7 +206,7 @@ public class Runner {
       props.load(in);
     }
     catch (Exception ex) {
-      logger.error(ex.fillInStackTrace());
+      logger.error(getStackTrace(ex));
     }
     finally {
       in.close();
@@ -214,7 +219,7 @@ public class Runner {
           UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
         }
         catch (Exception ex) {
-          logger.error(ex.fillInStackTrace());
+          logger.error(getStackTrace(ex));
         }
       }
     });
@@ -245,7 +250,7 @@ public class Runner {
             Utils.copyStream(in, out);
           }
           catch (Exception ex) {
-            logger.error(ex.fillInStackTrace());
+            logger.error(getStackTrace(ex));
           }
           finally {
             in.close();
@@ -253,7 +258,7 @@ public class Runner {
           }
         }
         catch (Exception ex) {
-          logger.error(ex.fillInStackTrace());
+          logger.error(getStackTrace(ex));
         }
         finally {
           jarFile.close();
@@ -266,11 +271,11 @@ public class Runner {
       }
       catch (IOException e) {
         ui.showError(e);
-        logger.error(e.fillInStackTrace());
+        logger.error(getStackTrace(e));
       }
     }
     catch (Exception ex) {
-      logger.error(ex.fillInStackTrace());
+      logger.error(getStackTrace(ex));
     }
     finally {
       try {
@@ -278,7 +283,7 @@ public class Runner {
       }
       catch (IOException e) {
         ui.showError(e);
-        logger.error(e.fillInStackTrace());
+        logger.error(getStackTrace(e));
       }
     }
     return false;
@@ -301,7 +306,7 @@ public class Runner {
       return new File(new URI(jarFileUrl));
     }
     catch (URISyntaxException e) {
-      logger.error(e.fillInStackTrace());
+      logger.error(getStackTrace(e));
       throw new IOException(e.getMessage());
     }
   }
