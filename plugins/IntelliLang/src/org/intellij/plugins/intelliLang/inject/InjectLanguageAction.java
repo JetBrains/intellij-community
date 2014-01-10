@@ -96,7 +96,7 @@ public class InjectLanguageAction implements IntentionAction {
     if (injectedPsi == null || injectedPsi.isEmpty()) {
       return !InjectedReferencesContributor.isInjected(file.findReferenceAt(editor.getCaretModel().getOffset()));
     }
-    return true;
+    return false;
   }
 
   @Nullable
