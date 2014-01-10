@@ -16,7 +16,6 @@
 package com.intellij.util;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -94,11 +93,10 @@ public class PlatformUtils {
     return PlatformUtilsCore.isWebStorm();
   }
 
+  /** @deprecated not a common API; use DevKit's PsiUtil.isIdeaProject() when needed (to remove in IDEA 14) */
+  @SuppressWarnings("UnusedDeclaration")
   public static boolean isIdeaProject(@Nullable Project project) {
-    if (project == null) return false;
-    final VirtualFile baseDir = project.getBaseDir();
-    if (baseDir == null) return false;
-    return baseDir.findChild("idea.iml") != null || baseDir.findChild("community-main.iml") != null;
+    return false;
   }
 
   /** @deprecated use {@link #IDEA_CE_PREFIX} (to remove in IDEA 15) */
