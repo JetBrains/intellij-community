@@ -39,6 +39,7 @@ import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileEditor.impl.EditorWindow;
 import com.intellij.openapi.fileEditor.impl.EditorWithProviderComposite;
+import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.Balloon;
@@ -164,6 +165,9 @@ public class QuickEditHandler extends DocumentAdapter implements Disposable {
       public void editorReleased(@NotNull EditorFactoryEvent event) {
         if (event.getEditor().getDocument() != myNewDocument) return;
         if (-- myEditorCount > 0) return;
+
+        if (Boolean.TRUE.equals(myNewVirtualFile.getUserData(FileEditorManagerImpl.CLOSING_TO_REOPEN))) return;
+
         Disposer.dispose(QuickEditHandler.this);
       }
     }, this);
