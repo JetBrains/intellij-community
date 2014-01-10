@@ -79,8 +79,8 @@ public class KillableColoredProcessHandler extends ColoredProcessHandler impleme
 
   @Override
   protected void destroyProcessImpl() {
-    // call super.closeStreams() after process termination, because
-    // otherwise process's output stream can also be closed for no reason
+    // Don't close streams, because a process may survive graceful termination.
+    // Streams will be closed after the process is really terminated.
     try {
       myProcess.getOutputStream().flush();
     }
