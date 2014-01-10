@@ -277,7 +277,7 @@ public class PackageAnnotator {
                 JavaPsiFacade.getInstance(myManager.getProject()).findClass(toplevelClassSrcFQName, GlobalSearchScope.moduleScope(module));
               if (aClass == null || !aClass.isValid()) return Boolean.FALSE;
               containingFile[0] = aClass.getContainingFile().getVirtualFile();
-              assert containingFile[0] != null;
+              assert containingFile[0] != null : aClass;
               final ModuleFileIndex fileIndex = ModuleRootManager.getInstance(module).getFileIndex();
               return fileIndex.isUnderSourceRootOfType(containingFile[0], JavaModuleSourceRootTypes.SOURCES)
                      && (trackTestFolders || !fileIndex.isInTestSourceContent(containingFile[0]));
