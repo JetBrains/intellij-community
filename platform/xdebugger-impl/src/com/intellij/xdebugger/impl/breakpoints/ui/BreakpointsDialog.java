@@ -135,6 +135,7 @@ public class BreakpointsDialog extends DialogWrapper {
 
   void collectItems() {
     if (!myBreakpointsPanelProviders.isEmpty()) {
+      disposeItems();
       myBreakpointItems.clear();
       for (BreakpointPanelProvider panelProvider : myBreakpointsPanelProviders) {
         panelProvider.provideBreakpointItems(myProject, myBreakpointItems);
@@ -362,10 +363,14 @@ public class BreakpointsDialog extends DialogWrapper {
     saveCurrentItem();
     Disposer.dispose(myListenerDisposable);
     saveBreakpointsDialogState();
+    disposeItems();
+    super.dispose();
+  }
+
+  private void disposeItems() {
     for (BreakpointItem item : myBreakpointItems) {
       item.dispose();
     }
-    super.dispose();
   }
 
   private void saveCurrentItem() {
