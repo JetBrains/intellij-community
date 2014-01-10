@@ -247,6 +247,7 @@ public class GitLogProvider implements VcsLogProvider {
     if (maxCount > 0) {
       filterParameters.add("--max-count=" + maxCount);
     }
+    filterParameters.add("--date-order");
 
     // note: this filter must be the last parameter, because it uses "--" which separates parameters from paths
     List<VcsLogStructureFilter> structureFilters = ContainerUtil.findAll(filters, VcsLogStructureFilter.class);
