@@ -17,6 +17,7 @@ package com.intellij.ide.browsers;
 
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.SmartList;
@@ -80,7 +81,7 @@ public class WebBrowserManager implements PersistentStateComponent<Element>, Mod
       if (specificSettings != null) {
         Element settingsElement = new Element("settings");
         XmlSerializer.serializeInto(specificSettings, settingsElement, new SkipDefaultValuesSerializationFilters());
-        if (!settingsElement.getContent().isEmpty()) {
+        if (!JDOMUtil.isEmpty(settingsElement)) {
           entry.addContent(settingsElement);
         }
       }
@@ -166,8 +167,8 @@ public class WebBrowserManager implements PersistentStateComponent<Element>, Mod
       }
 
       Element settingsElement = child.getChild("settings");
-      BrowserSpecificSettings specificSettings = settingsElement == null ? null : family.createBrowserSpecificSettings();
-      if (specificSettings != null) {
+      BrowserSpecificSettings specificSettings = family.createBrowserSpecificSettings();
+      if (specificSettings != null && settingsElement != null) {
         try {
           XmlSerializer.deserializeInto(specificSettings, settingsElement);
         }

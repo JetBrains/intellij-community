@@ -35,7 +35,7 @@ final class ConfigurableWebBrowser extends WebBrowser {
     super(family, name);
 
     this.id = id;
-    this.path = path;
+    this.path = StringUtil.nullize(path);
     this.active = active;
     this.specificSettings = specificSettings;
   }
@@ -61,7 +61,7 @@ final class ConfigurableWebBrowser extends WebBrowser {
   }
 
   public void setPath(@Nullable String value) {
-    path = value;
+    path = StringUtil.nullize(value);
   }
 
   @Override
@@ -106,7 +106,7 @@ final class ConfigurableWebBrowser extends WebBrowser {
            family.equals(browser.family) &&
            active == browser.active &&
            Comparing.strEqual(name, browser.name) &&
-           Comparing.strEqual(path, browser.path) &&
+           Comparing.equal(path, browser.path) &&
            Comparing.equal(specificSettings, browser.specificSettings);
   }
 

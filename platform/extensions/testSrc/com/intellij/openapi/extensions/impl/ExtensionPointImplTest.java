@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,30 +16,26 @@
 package com.intellij.openapi.extensions.impl;
 
 import com.intellij.openapi.extensions.*;
-import junit.framework.TestCase;
 import org.jetbrains.annotations.NotNull;
+import org.junit.Test;
 import org.picocontainer.defaults.DefaultPicoContainer;
+
+import static org.junit.Assert.*;
 
 /**
  * @author AKireyev
  */
-public class ExtensionPointImplTest extends TestCase {
+public class ExtensionPointImplTest {
+  @Test
   public void testCreate() {
-    ExtensionPointImpl extensionPoint = buildExtensionPoint();
+    ExtensionPoint<Integer> extensionPoint = buildExtensionPoint();
     assertEquals(ExtensionsImplTest.EXTENSION_POINT_NAME_1, extensionPoint.getName());
     assertEquals(Integer.class.getName(), extensionPoint.getClassName());
   }
 
-  private ExtensionPointImpl buildExtensionPoint() {
-    return new ExtensionPointImpl(ExtensionsImplTest.EXTENSION_POINT_NAME_1, Integer.class.getName(), ExtensionPoint.Kind.INTERFACE, buildExtensionArea(), null, new Extensions.SimpleLogProvider(), new UndefinedPluginDescriptor());
-  }
-
-  private ExtensionsAreaImpl buildExtensionArea() {
-    return new ExtensionsAreaImpl(new DefaultPicoContainer(), new Extensions.SimpleLogProvider());
-  }
-
+  @Test
   public void testUnregisterObject() {
-    ExtensionPointImpl extensionPoint = buildExtensionPoint();
+    ExtensionPoint<Integer> extensionPoint = buildExtensionPoint();
     extensionPoint.registerExtension(new Integer(123));
     Object[] extensions = extensionPoint.getExtensions();
     assertEquals(1, extensions.length);
@@ -48,10 +44,12 @@ public class ExtensionPointImplTest extends TestCase {
     assertEquals(0, extensions.length);
   }
 
-  public void testRegisterUnregister_Extension() {
-
+  @Test
+  public void testRegisterUnregisterExtension() {
     final AreaInstance area = new AreaInstance() {};
-    final ExtensionPointImpl extensionPoint = new ExtensionPointImpl("an.extension.point", Object.class.getName(), ExtensionPoint.Kind.INTERFACE, buildExtensionArea(), area, new Extensions.SimpleLogProvider(), new UndefinedPluginDescriptor());
+    final ExtensionPoint<Object> extensionPoint = new ExtensionPointImpl<Object>(
+      "an.extension.point", Object.class.getName(), ExtensionPoint.Kind.INTERFACE, buildExtensionArea(), area,
+      new Extensions.SimpleLogProvider(), new UndefinedPluginDescriptor());
 
     final boolean[] flags = new boolean[2];
     Extension extension = new Extension() {
@@ -71,24 +69,26 @@ public class ExtensionPointImplTest extends TestCase {
     };
 
     extensionPoint.registerExtension(extension);
-    assertTrue("Registratioon call is missed", flags[0]);
+    assertTrue("Register call is missed", flags[0]);
     assertFalse(flags[1]);
 
     extensionPoint.unregisterExtension(extension);
-    assertTrue("UnRegistratioon call is missed", flags[1]);
+    assertTrue("Unregister call is missed", flags[1]);
   }
 
+  @Test
   public void testRegisterObject() {
-    ExtensionPointImpl extensionPoint = buildExtensionPoint();
+    ExtensionPoint<Integer> extensionPoint = buildExtensionPoint();
     extensionPoint.registerExtension(new Integer(123));
     Object[] extensions = extensionPoint.getExtensions();
     assertEquals("One extension", 1, extensions.length);
-    assertEquals("Correct type", Integer[].class, extensions.getClass());
+    assertSame("Correct type", Integer[].class, extensions.getClass());
     assertEquals("Correct object", new Integer(123), extensions[0]);
   }
 
+  @Test
   public void testRegistrationOrder() {
-    ExtensionPointImpl extensionPoint = buildExtensionPoint();
+    ExtensionPoint<Integer> extensionPoint = buildExtensionPoint();
     extensionPoint.registerExtension(new Integer(123));
     extensionPoint.registerExtension(new Integer(321), LoadingOrder.FIRST);
     Object[] extensions = extensionPoint.getExtensions();
@@ -96,18 +96,19 @@ public class ExtensionPointImplTest extends TestCase {
     assertEquals("Correct object", new Integer(321), extensions[0]);
   }
 
+  @Test
   public void testListener() {
-    ExtensionPointImpl extensionPoint = buildExtensionPoint();
-    final boolean added[] = new boolean[1];
-    final boolean removed[] = new boolean[1];
-    extensionPoint.addExtensionPointListener(new ExtensionPointListener() {
+    ExtensionPoint<Integer> extensionPoint = buildExtensionPoint();
+    final boolean[] added = new boolean[1];
+    final boolean[] removed = new boolean[1];
+    extensionPoint.addExtensionPointListener(new ExtensionPointListener<Integer>() {
       @Override
-      public void extensionAdded(@NotNull Object extension, final PluginDescriptor pluginDescriptor) {
+      public void extensionAdded(@NotNull Integer extension, final PluginDescriptor pluginDescriptor) {
         added[0] = true;
       }
 
       @Override
-      public void extensionRemoved(@NotNull Object extension, final PluginDescriptor pluginDescriptor) {
+      public void extensionRemoved(@NotNull Integer extension, final PluginDescriptor pluginDescriptor) {
         removed[0] = true;
       }
     });
@@ -122,21 +123,32 @@ public class ExtensionPointImplTest extends TestCase {
     assertTrue(removed[0]);
   }
 
+  @Test
   public void testLateListener() {
-    ExtensionPointImpl extensionPoint = buildExtensionPoint();
-    final boolean added[] = new boolean[1];
+    ExtensionPoint<Integer> extensionPoint = buildExtensionPoint();
+    final boolean[] added = new boolean[1];
     extensionPoint.registerExtension(new Integer(123));
     assertFalse(added[0]);
-    extensionPoint.addExtensionPointListener(new ExtensionPointListener() {
+    extensionPoint.addExtensionPointListener(new ExtensionPointListener<Integer>() {
       @Override
-      public void extensionAdded(@NotNull Object extension, final PluginDescriptor pluginDescriptor) {
+      public void extensionAdded(@NotNull Integer extension, final PluginDescriptor pluginDescriptor) {
         added[0] = true;
       }
 
       @Override
-      public void extensionRemoved(@NotNull Object extension, final PluginDescriptor pluginDescriptor) {
+      public void extensionRemoved(@NotNull Integer extension, final PluginDescriptor pluginDescriptor) {
       }
     });
     assertTrue(added[0]);
+  }
+
+  private static ExtensionPoint<Integer> buildExtensionPoint() {
+    return new ExtensionPointImpl<Integer>(
+      ExtensionsImplTest.EXTENSION_POINT_NAME_1, Integer.class.getName(), ExtensionPoint.Kind.INTERFACE,
+      buildExtensionArea(), null, new Extensions.SimpleLogProvider(), new UndefinedPluginDescriptor());
+  }
+
+  private static ExtensionsAreaImpl buildExtensionArea() {
+    return new ExtensionsAreaImpl(new DefaultPicoContainer(), new Extensions.SimpleLogProvider());
   }
 }

@@ -687,7 +687,7 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
       fail("Parameterized test should implement FileBasedTestCaseHelper");
     }
 
-    PathManagerEx.replaceLookupStrategy(klass, LightPlatformCodeInsightTestCase.class, com.intellij.testFramework.Parameterized.class);
+    PathManagerEx.replaceLookupStrategy(klass, com.intellij.testFramework.Parameterized.class);
 
     final FileBasedTestCaseHelper fileBasedTestCase = (FileBasedTestCaseHelper)testCase;
     String testDataPath = testCase.getTestDataPath();

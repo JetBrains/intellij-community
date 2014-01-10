@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,18 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.ide.browsers;
+package com.intellij.util.text;
 
-import com.intellij.openapi.options.Configurable;
-import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
-public abstract class BrowserSpecificSettings {
-  @NotNull
-  public abstract Configurable createConfigurable();
+/**
+ * @author peter
+ */
+public interface CharArrayExternalizable extends CharSequence {
 
-  @NotNull
-  public String[] getAdditionalParameters() {
-    return ArrayUtil.EMPTY_STRING_ARRAY;
-  }
+  /**
+   * Copies own character sub-sequence to the given array
+   * @param start the index where to start taking chars from in this sequence
+   * @param end the index where to end taking chars in this sequence
+   * @param dest the array to put characters into
+   * @param destPos the index where to put the characters in the dest array
+   */
+  void getChars(int start, int end, @NotNull char[] dest, int destPos);
 }

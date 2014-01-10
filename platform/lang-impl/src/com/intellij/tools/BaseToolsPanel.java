@@ -76,7 +76,6 @@ public abstract class BaseToolsPanel<T extends Tool> extends JPanel {
   private boolean myIsModified = false;
 
   protected BaseToolsPanel() {
-
     myTree = new CheckboxTree(
       new CheckboxTree.CheckboxTreeCellRenderer() {
         @Override
@@ -181,8 +180,7 @@ public abstract class BaseToolsPanel<T extends Tool> extends JPanel {
           myTree.requestFocus();
         }
       }
-    }).setButtonComparator("Add", "Copy", "Edit", "Remove", "Up", "Down")
-          .createPanel(), BorderLayout.CENTER);
+    }).createPanel(), BorderLayout.CENTER);
 
     myAddButton = ToolbarDecorator.findAddButton(this);
     myEditButton = ToolbarDecorator.findEditButton(this);

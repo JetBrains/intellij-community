@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@ package com.intellij.idea;
 
 import com.intellij.ide.plugins.PluginManager;
 import com.intellij.util.PlatformUtils;
-import com.intellij.util.PlatformUtilsCore;
 
 import javax.swing.*;
 
@@ -29,7 +28,7 @@ public class MainImpl {
    * Called from PluginManager via reflection.
    */
   protected static void start(final String[] args) {
-    System.setProperty(PlatformUtilsCore.PLATFORM_PREFIX_KEY, PlatformUtils.getPlatformPrefix(PlatformUtilsCore.COMMUNITY_PREFIX));
+    System.setProperty(PlatformUtils.PLATFORM_PREFIX_KEY, PlatformUtils.getPlatformPrefix(PlatformUtils.IDEA_CE_PREFIX));
 
     StartupUtil.prepareAndStart(args, new StartupUtil.AppStarter() {
       @Override

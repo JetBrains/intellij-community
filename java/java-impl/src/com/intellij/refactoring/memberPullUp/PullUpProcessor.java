@@ -100,7 +100,7 @@ public class PullUpProcessor extends BaseRefactoringProcessor implements PullUpD
   @Nullable
   @Override
   protected String getRefactoringId() {
-    return "refactoring.pullUp";
+    return "refactoring.pull.up";
   }
 
   @Nullable
@@ -114,6 +114,14 @@ public class PullUpProcessor extends BaseRefactoringProcessor implements PullUpD
         return info.getMember();
       }
     });
+    return data;
+  }
+
+  @Nullable
+  @Override
+  protected RefactoringEventData getAfterData(UsageInfo[] usages) {
+    final RefactoringEventData data = new RefactoringEventData();
+    data.addElement(myTargetSuperClass);
     return data;
   }
 

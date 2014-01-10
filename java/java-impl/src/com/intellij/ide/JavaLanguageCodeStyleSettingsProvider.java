@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -74,7 +74,7 @@ public class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
 
   @Override
   public DisplayPriority getDisplayPriority() {
-    if (PlatformUtils.isIdea()) return DisplayPriority.KEY_LANGUAGE_SETTINGS;
+    if (PlatformUtils.isIdeaUltimate()) return DisplayPriority.KEY_LANGUAGE_SETTINGS;
     return DisplayPriority.LANGUAGE_SETTINGS;
   }
 
@@ -185,7 +185,7 @@ public class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
     "\n" +
     "  public void foo(int x, int y) {" +
     "    Runnable r = () -> {};\n" +
-    "    Runnable r1 = this :: bar;\n" + 
+    "    Runnable r1 = this :: bar;\n" +
     "    for (int i = 0; i < x; i++) {\n" +
     "      y += (y ^ 0x123) << 2;\n" +
     "    }\n" +

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -90,7 +90,7 @@ public class PluginsAdvertiser implements StartupActivity {
           final JsonObject jsonObject = jsonElement.getAsJsonObject();
           final JsonElement pluginId = jsonObject.get("pluginId");
           final JsonElement bundled = jsonObject.get("bundled");
-          result.add(new Plugin(PluginId.getId(StringUtil.unquoteString(pluginId.toString())), 
+          result.add(new Plugin(PluginId.getId(StringUtil.unquoteString(pluginId.toString())),
                                 Boolean.parseBoolean(StringUtil.unquoteString(bundled.toString()))));
         }
         return result;
@@ -132,7 +132,7 @@ public class PluginsAdvertiser implements StartupActivity {
           final IdeaPluginDescriptor loadedPlugin = PluginManager.getPlugin(PluginId.getId(pluginId));
           if (loadedPlugin != null && loadedPlugin.isEnabled()) continue;
 
-          if (loadedPlugin != null && fromServerPluginDescription != null && 
+          if (loadedPlugin != null && fromServerPluginDescription != null &&
               StringUtil.compareVersionNumbers(loadedPlugin.getVersion(), fromServerPluginDescription.getVersion()) >= 0) continue;
 
           final JsonElement ext = jsonObject.get("implementationName");
@@ -188,7 +188,7 @@ public class PluginsAdvertiser implements StartupActivity {
   }
 
   public static void openDownloadPage() {
-    BrowserUtil.open(ApplicationInfo.getInstance().getCompanyURL());    
+    BrowserUtil.open(ApplicationInfo.getInstance().getCompanyURL());
   }
 
   static void enablePlugins(Project project, final Collection<IdeaPluginDescriptor> disabledPlugins) {
@@ -216,7 +216,7 @@ public class PluginsAdvertiser implements StartupActivity {
   }
 
   static boolean hasBundledPluginToInstall(Collection<Plugin> plugins) {
-    if (PlatformUtils.isIdea()) return false;
+    if (PlatformUtils.isIdeaUltimate()) return false;
     for (Plugin plugin : plugins) {
       if (plugin.myBundled && PluginManager.getPlugin(PluginId.getId(plugin.myPluginId)) == null) {
         return true;
@@ -275,7 +275,7 @@ public class PluginsAdvertiser implements StartupActivity {
                   if (pluginDescriptor != null) {
                     myDisabledPlugins.put(plugin, pluginDescriptor);
                   }
-                } 
+                }
               }
 
               myBundledPlugins = hasBundledPluginToInstall(ids.values());
@@ -363,7 +363,7 @@ public class PluginsAdvertiser implements StartupActivity {
       }
     }
   }
-  
+
   @Tag("plugin")
   public static class Plugin implements Comparable<Plugin> {
     public String myPluginId;
@@ -415,7 +415,7 @@ public class PluginsAdvertiser implements StartupActivity {
     public ConfigurePluginsListener(Set<UnknownFeature> unknownFeatures,
                                     Project project,
                                     List<IdeaPluginDescriptor> allPlugins,
-                                    Set<PluginDownloader> plugins, 
+                                    Set<PluginDownloader> plugins,
                                     Map<Plugin, IdeaPluginDescriptor> disabledPlugins) {
       myUnknownFeatures = unknownFeatures;
       myProject = project;

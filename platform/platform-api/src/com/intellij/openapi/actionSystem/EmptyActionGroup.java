@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,18 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package com.intellij.openapi.actionSystem;
 
-/*
- * @author max
+/**
+ * This class purpose is to override (hide) already registered action groups by means of plugin.xml.
+ *
+ * @see EmptyAction
+ *
+ * @author gregsh
  */
-package com.intellij.psi.stubs;
+public final class EmptyActionGroup extends DefaultActionGroup {
+  public EmptyActionGroup() {
+    getTemplatePresentation().setEnabledAndVisible(false);
+  }
 
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
-
-@Retention(value = RetentionPolicy.RUNTIME)
-@Target(value = {ElementType.METHOD, ElementType.TYPE})
-public @interface Stubbed {
+  @Override
+  public void update(AnActionEvent e) {
+    getTemplatePresentation().setEnabledAndVisible(false);
+  }
 }
