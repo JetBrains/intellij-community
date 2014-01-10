@@ -18,23 +18,18 @@ package org.jetbrains.idea.devkit.inspections.internal;
 import com.intellij.codeInspection.BaseJavaLocalInspectionTool;
 import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.ProblemsHolder;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Key;
-import com.intellij.psi.JavaPsiFacade;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.psi.PsiElementVisitor;
-import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.ui.components.JBList;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.idea.devkit.module.PluginModuleType;
+import org.jetbrains.idea.devkit.util.PsiUtil;
 
 public abstract class InternalInspection extends BaseJavaLocalInspectionTool {
-  private static final Key<Boolean> INTERNAL_INSPECTIONS = Key.create("idea.internal.inspections.enabled");
-  private static final String MARKER_CLASS = JBList.class.getName();
-  private static final PsiElementVisitor EMPTY_VISITOR = new PsiElementVisitor() { };
-
   @NotNull
   @Override
   public final PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
-    return isAllowed(holder.getProject()) ? buildInternalVisitor(holder, isOnTheFly) : EMPTY_VISITOR;
+    return isAllowed(holder) ? buildInternalVisitor(holder, isOnTheFly) : PsiUtil.EMPTY_VISITOR;
   }
 
   @NotNull
@@ -42,17 +37,20 @@ public abstract class InternalInspection extends BaseJavaLocalInspectionTool {
   public final PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
                                               boolean isOnTheFly,
                                               @NotNull LocalInspectionToolSession session) {
-    return isAllowed(holder.getProject()) ? buildInternalVisitor(holder, isOnTheFly) : EMPTY_VISITOR;
+    return isAllowed(holder) ? buildInternalVisitor(holder, isOnTheFly) : PsiUtil.EMPTY_VISITOR;
   }
 
-  private static boolean isAllowed(@NotNull Project project) {
-    Boolean flag = project.getUserData(INTERNAL_INSPECTIONS);
-    if (flag == null) {
-      final GlobalSearchScope scope = GlobalSearchScope.allScope(project);
-      flag = JavaPsiFacade.getInstance(project).findClass(MARKER_CLASS, scope) != null;
-      project.putUserData(INTERNAL_INSPECTIONS, flag);
+  private static boolean isAllowed(ProblemsHolder holder) {
+    if (PsiUtil.isIdeaProject(holder.getProject())) {
+      return true;
     }
-    return flag;
+
+    Module module = ModuleUtilCore.findModuleForPsiElement(holder.getFile());
+    if (module != null && PluginModuleType.isPluginModuleOrDependency(module)) {
+      return true;
+    }
+
+    return false;
   }
 
   public abstract PsiElementVisitor buildInternalVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly);

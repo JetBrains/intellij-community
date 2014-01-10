@@ -15,7 +15,13 @@
  */
 package org.jetbrains.idea.devkit.util;
 
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.GlobalSearchScopesCore;
+import com.intellij.ui.components.JBList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -23,6 +29,10 @@ import org.jetbrains.annotations.Nullable;
  * @author Konstantin Bulenkov
  */
 public class PsiUtil {
+  private static final Key<Boolean> IDEA_PROJECT = Key.create("idea.internal.inspections.enabled");
+  private static final String IDE_PROJECT_MARKER_CLASS = JBList.class.getName();
+  public static final PsiElementVisitor EMPTY_VISITOR = new PsiElementVisitor() { };
+
   private PsiUtil() { }
 
   public static boolean isInstantiable(@NotNull PsiClass cls) {
@@ -87,5 +97,31 @@ public class PsiUtil {
     }
 
     return null;
+  }
+
+  public static boolean isIdeaProject(@Nullable Project project) {
+    if (project == null) return false;
+
+    Boolean flag = project.getUserData(IDEA_PROJECT);
+    if (flag == null) {
+      flag = checkIdeaProject(project);
+      project.putUserData(IDEA_PROJECT, flag);
+    }
+
+    return flag;
+  }
+
+  private static boolean checkIdeaProject(@NotNull Project project) {
+    VirtualFile baseDir = project.getBaseDir();
+    if (baseDir == null || baseDir.findChild("idea.iml") == null && baseDir.findChild("community-main.iml") == null) {
+      return false;
+    }
+
+    GlobalSearchScope scope = GlobalSearchScopesCore.projectProductionScope(project);
+    if (JavaPsiFacade.getInstance(project).findClass(IDE_PROJECT_MARKER_CLASS, scope) == null) {
+      return false;
+    }
+
+    return true;
   }
 }
