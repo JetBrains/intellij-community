@@ -20,6 +20,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.IntentionPowerPackBundle;
+import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.ImportUtils;
 import com.siyeh.ipp.base.MutablyNamedIntention;
 import com.siyeh.ipp.base.PsiElementPredicate;
@@ -112,6 +113,6 @@ public class ReplaceAssertLiteralWithAssertEqualsIntention extends MutablyNamedI
       newExpression.append(literal).append(", ").append(lastArgument.getText());
     }
     newExpression.append(')');
-    replaceExpression(newExpression.toString(), call);
+    PsiReplacementUtil.replaceExpression(call, newExpression.toString());
   }
 }

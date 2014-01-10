@@ -26,6 +26,7 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.ExpectedTypeUtils;
 import com.siyeh.ig.psiutils.MethodCallUtils;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
@@ -123,10 +124,10 @@ public class UnnecessaryBoxingInspection extends BaseInspection {
       }
       final int precedence = ParenthesesUtils.getPrecedence(unboxedExpression);
       if (!cast.isEmpty() && precedence > ParenthesesUtils.TYPE_CAST_PRECEDENCE) {
-        replaceExpression(expression, cast + '(' + unboxedExpression.getText() + ')');
+        PsiReplacementUtil.replaceExpression(expression, cast + '(' + unboxedExpression.getText() + ')');
       }
       else {
-        replaceExpression(expression, cast + unboxedExpression.getText());
+        PsiReplacementUtil.replaceExpression(expression, cast + unboxedExpression.getText());
       }
     }
 

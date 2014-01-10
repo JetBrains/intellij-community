@@ -120,8 +120,7 @@ public class ExtensionPointImpl<T> implements ExtensionPoint<T> {
   public synchronized void registerExtension(@NotNull T extension, @NotNull LoadingOrder order) {
     assert myExtensions.size() == myLoadedAdapters.size();
 
-    ObjectComponentAdapter adapter = new ObjectComponentAdapter(extension, order);
-    assertClass(extension.getClass());
+    ExtensionComponentAdapter adapter = new ObjectComponentAdapter(extension, order);
 
     if (LoadingOrder.ANY == order) {
       int index = myLoadedAdapters.size();
@@ -131,16 +130,15 @@ public class ExtensionPointImpl<T> implements ExtensionPoint<T> {
           index--;
         }
       }
-      internalRegisterExtension(extension, adapter, index, true);
+      registerExtension(extension, adapter, index, true);
     }
     else {
-      myExtensionAdapters.add(adapter);
+      registerExtensionAdapter(adapter);
       processAdapters();
     }
-    clearCache();
   }
 
-  private void internalRegisterExtension(@NotNull T extension, @NotNull ExtensionComponentAdapter adapter, int index, boolean runNotifications) {
+  private void registerExtension(@NotNull T extension, @NotNull ExtensionComponentAdapter adapter, int index, boolean runNotifications) {
     if (myExtensions.contains(extension)) {
       myLogger.error("Extension was already added: " + extension);
       return;
@@ -148,7 +146,7 @@ public class ExtensionPointImpl<T> implements ExtensionPoint<T> {
 
     Class<T> extensionClass = getExtensionClass();
     if (!extensionClass.isInstance(extension)) {
-      myLogger.error("Extension '" + extension + "' does not implement " + extensionClass);
+      myLogger.error("Extension " + extension.getClass() + " does not implement " + extensionClass);
       return;
     }
 
@@ -237,16 +235,15 @@ public class ExtensionPointImpl<T> implements ExtensionPoint<T> {
       myLoadedAdapters.clear();
       ExtensionComponentAdapter[] adapters = allAdapters.toArray(new ExtensionComponentAdapter[myExtensionAdapters.size()]);
       LoadingOrder.sort(adapters);
-      final List<T> extensions = new ArrayList<T>(adapters.length);
+      List<T> extensions = new ArrayList<T>(adapters.length);
       for (ExtensionComponentAdapter adapter : adapters) {
         @SuppressWarnings("unchecked") T extension = (T)adapter.getExtension();
-        assertClass(extension.getClass());
         extensions.add(extension);
       }
 
       for (int i = 0; i < extensions.size(); i++) {
         T extension = extensions.get(i);
-        internalRegisterExtension(extension, adapters[i], myExtensions.size(), ArrayUtilRt.find(loadedAdapters, adapters[i]) == -1);
+        registerExtension(extension, adapters[i], myExtensions.size(), ArrayUtilRt.find(loadedAdapters, adapters[i]) == -1);
       }
       myExtensionAdapters.clear();
     }
@@ -400,13 +397,15 @@ public class ExtensionPointImpl<T> implements ExtensionPoint<T> {
   }
 
   synchronized void registerExtensionAdapter(@NotNull ExtensionComponentAdapter adapter) {
+    Class<T> extensionClass = getExtensionClass();
+    Class<?> implementationClass = adapter.getComponentImplementation();
+    if (!extensionClass.isAssignableFrom(implementationClass)) {
+      myLogger.error("Extension " + implementationClass + " does not implement " + extensionClass);
+      return;
+    }
+
     myExtensionAdapters.add(adapter);
     clearCache();
-  }
-
-  private void assertClass(@NotNull Class<?> extensionClass) {
-    Class<T> expectedClass = getExtensionClass();
-    assert expectedClass.isAssignableFrom(extensionClass) : "Expected: " + expectedClass + "; Actual: " + extensionClass;
   }
 
   private void clearCache() {
@@ -451,7 +450,7 @@ public class ExtensionPointImpl<T> implements ExtensionPoint<T> {
     private final LoadingOrder myLoadingOrder;
 
     private ObjectComponentAdapter(@NotNull Object extension, @NotNull LoadingOrder loadingOrder) {
-      super(Object.class.getName(), null, null, null, false);
+      super(extension.getClass().getName(), null, null, null, false);
       myExtension = extension;
       myLoadingOrder = loadingOrder;
     }

@@ -15,6 +15,7 @@
  */
 package com.siyeh.ipp.commutative;
 
+import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ipp.base.MutablyNamedIntention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import com.siyeh.IntentionPowerPackBundle;
@@ -72,6 +73,6 @@ public class SwapMethodCallArgumentsIntention extends MutablyNamedIntention {
     }
     final String newExpression = callText + '(' + secondArgumentText +
                                  ", " + firstArgumentText + ')';
-    replaceExpression(newExpression, callExpression);
+    PsiReplacementUtil.replaceExpression(callExpression, newExpression);
   }
 }

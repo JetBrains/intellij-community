@@ -24,6 +24,7 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.ClassUtils;
 import org.jetbrains.annotations.NotNull;
 
@@ -76,7 +77,7 @@ public class UnnecessaryQualifierForThisInspection
       final PsiElement qualifier = descriptor.getPsiElement();
       final PsiThisExpression thisExpression =
         (PsiThisExpression)qualifier.getParent();
-      replaceExpression(thisExpression, PsiKeyword.THIS);
+      PsiReplacementUtil.replaceExpression(thisExpression, PsiKeyword.THIS);
     }
   }
 

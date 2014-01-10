@@ -25,6 +25,7 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.ExpectedTypeUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
@@ -170,8 +171,8 @@ public class CollectionsFieldAccessReplaceableByMethodCallInspection
         (PsiReferenceExpression)element;
       final String newMethodCallText =
         getCollectionsMethodCallText(referenceExpression);
-      replaceExpression(referenceExpression,
-                        "java.util." + newMethodCallText);
+      PsiReplacementUtil.replaceExpression(referenceExpression,
+                                           "java.util." + newMethodCallText);
     }
   }
 

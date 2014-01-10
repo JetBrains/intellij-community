@@ -23,6 +23,7 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.PsiReplacementUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -91,11 +92,11 @@ public class ArraysAsListWithZeroOrOneArgumentInspection extends BaseInspection 
       }
       final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)element;
       if (myEmpty) {
-        replaceExpressionAndShorten(methodCallExpression, "java.util.Collections.emptyList()");
+        PsiReplacementUtil.replaceExpressionAndShorten(methodCallExpression, "java.util.Collections.emptyList()");
       }
       else {
         final PsiExpressionList argumentList = methodCallExpression.getArgumentList();
-        replaceExpressionAndShorten(methodCallExpression, "java.util.Collections.singletonList" + argumentList.getText());
+        PsiReplacementUtil.replaceExpressionAndShorten(methodCallExpression, "java.util.Collections.singletonList" + argumentList.getText());
       }
     }
   }

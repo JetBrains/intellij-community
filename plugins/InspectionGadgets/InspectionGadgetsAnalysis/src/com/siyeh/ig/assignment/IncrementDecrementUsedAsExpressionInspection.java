@@ -27,6 +27,7 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.PsiReplacementUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -318,7 +319,7 @@ public class IncrementDecrementUsedAsExpressionInspection
           }
         }
       }
-      replaceExpression((PsiExpression)element, operandText);
+      PsiReplacementUtil.replaceExpression((PsiExpression)element, operandText);
     }
   }
 

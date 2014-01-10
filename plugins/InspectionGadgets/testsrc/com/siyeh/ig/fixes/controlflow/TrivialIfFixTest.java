@@ -32,7 +32,14 @@ public class TrivialIfFixTest extends IGQuickFixesTestCase {
   }
 
   public void testComments() {
-    final String testName = getTestName(false);
+    doTestByName(getTestName(false));
+  }
+
+  public void testCommentsInAssignment() {
+    doTestByName(getTestName(false));
+  }
+
+  public void doTestByName(String testName) {
     myFixture.configureByFile(getRelativePath() + "/" + testName + ".java");
     final String message = InspectionGadgetsBundle.message("constant.conditional.expression.simplify.quickfix");
     final List<IntentionAction> actions =

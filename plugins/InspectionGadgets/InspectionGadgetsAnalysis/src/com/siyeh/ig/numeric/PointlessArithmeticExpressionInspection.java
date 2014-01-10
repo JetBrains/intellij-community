@@ -26,6 +26,7 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.EquivalenceChecker;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import gnu.trove.THashSet;
@@ -166,7 +167,7 @@ public class PointlessArithmeticExpressionInspection
         (PsiExpression)descriptor.getPsiElement();
       final String newExpression =
         calculateReplacementExpression(expression);
-      replaceExpression(expression, newExpression);
+      PsiReplacementUtil.replaceExpression(expression, newExpression);
     }
   }
 

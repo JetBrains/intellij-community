@@ -19,6 +19,7 @@ import com.intellij.psi.PsiConditionalExpression;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
 import com.intellij.util.IncorrectOperationException;
+import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import com.siyeh.ipp.psiutils.BoolUtils;
@@ -47,6 +48,6 @@ public class FlipConditionalIntention extends Intention {
       elseExpression.getText() +
       ':' +
       thenExpression.getText();
-    replaceExpression(newExpression, exp);
+    PsiReplacementUtil.replaceExpression(exp, newExpression);
   }
 }

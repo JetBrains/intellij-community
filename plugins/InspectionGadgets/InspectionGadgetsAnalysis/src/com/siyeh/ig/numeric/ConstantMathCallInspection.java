@@ -24,6 +24,7 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.PsiReplacementUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -139,10 +140,10 @@ public class ConstantMathCallInspection extends BaseInspection {
         return;
       }
       if (PsiType.LONG.equals(type)) {
-        replaceExpressionAndShorten(call, newExpression + 'L');
+        PsiReplacementUtil.replaceExpressionAndShorten(call, newExpression + 'L');
       }
       else {
-        replaceExpressionAndShorten(call, newExpression);
+        PsiReplacementUtil.replaceExpressionAndShorten(call, newExpression);
       }
     }
   }

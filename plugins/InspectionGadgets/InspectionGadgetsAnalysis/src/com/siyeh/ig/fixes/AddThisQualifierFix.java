@@ -25,6 +25,7 @@ import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.ClassUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -75,6 +76,6 @@ public class AddThisQualifierFix extends InspectionGadgetsFix {
       }
       newExpression = containingClass.getQualifiedName() + ".this." + expression.getText();
     }
-    replaceExpressionAndShorten(expression, newExpression);
+    PsiReplacementUtil.replaceExpressionAndShorten(expression, newExpression);
   }
 }

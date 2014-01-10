@@ -24,6 +24,7 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
 import org.jetbrains.annotations.NotNull;
 
@@ -94,7 +95,7 @@ public class NegatedEqualityExpressionInspection extends BaseInspection {
       if (rhs != null) {
         text.append(rhs.getText());
       }
-      replaceExpression(prefixExpression, text.toString());
+      PsiReplacementUtil.replaceExpression(prefixExpression, text.toString());
     }
   }
 

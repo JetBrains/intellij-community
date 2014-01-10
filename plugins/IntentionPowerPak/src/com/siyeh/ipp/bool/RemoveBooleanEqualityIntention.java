@@ -18,6 +18,7 @@ package com.siyeh.ipp.bool;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.IncorrectOperationException;
+import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ipp.base.MutablyNamedIntention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import com.siyeh.IntentionPowerPackBundle;
@@ -53,7 +54,7 @@ public class RemoveBooleanEqualityIntention extends MutablyNamedIntention {
     @NonNls final String rhsText = rhs.getText();
     if (PsiKeyword.TRUE.equals(lhsText)) {
       if (isEquals) {
-        replaceExpression(rhsText, exp);
+        PsiReplacementUtil.replaceExpression(exp, rhsText);
       }
       else {
         replaceExpressionWithNegatedExpression(rhs, exp);
@@ -64,12 +65,12 @@ public class RemoveBooleanEqualityIntention extends MutablyNamedIntention {
         replaceExpressionWithNegatedExpression(rhs, exp);
       }
       else {
-        replaceExpression(rhsText, exp);
+        PsiReplacementUtil.replaceExpression(exp, rhsText);
       }
     }
     else if (PsiKeyword.TRUE.equals(rhsText)) {
       if (isEquals) {
-        replaceExpression(lhsText, exp);
+        PsiReplacementUtil.replaceExpression(exp, lhsText);
       }
       else {
         replaceExpressionWithNegatedExpression(lhs, exp);
@@ -80,7 +81,7 @@ public class RemoveBooleanEqualityIntention extends MutablyNamedIntention {
         replaceExpressionWithNegatedExpression(lhs, exp);
       }
       else {
-        replaceExpression(lhsText, exp);
+        PsiReplacementUtil.replaceExpression(exp, lhsText);
       }
     }
   }

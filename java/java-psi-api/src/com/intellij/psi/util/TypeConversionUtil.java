@@ -1058,7 +1058,7 @@ public class TypeConversionUtil {
       substitutor = getSuperClassSubstitutorInner(superClass, derivedClass, derivedSubstitutor, visited, manager);
     }
     if (substitutor == null) {
-      if (ourReportedSuperClassSubstitutorExceptions.add(derivedClass.getQualifiedName())) {
+      if (ourReportedSuperClassSubstitutorExceptions.add(derivedClass.getQualifiedName() + "/" + superClass.getQualifiedName())) {
         final StringBuilder msg = new StringBuilder("Super: " + classInfo(superClass));
         msg.append("visited:\n");
         for (PsiClass aClass : visited) {

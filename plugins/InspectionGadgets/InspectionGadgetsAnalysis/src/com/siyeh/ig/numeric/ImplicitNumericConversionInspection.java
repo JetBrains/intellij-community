@@ -26,6 +26,7 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.ExpectedTypeUtils;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
@@ -136,7 +137,7 @@ public class ImplicitNumericConversionInspection extends BaseInspection {
         if (newExpression == null) {
           return;
         }
-        replaceExpression(expression, newExpression);
+        PsiReplacementUtil.replaceExpression(expression, newExpression);
       }
       else {
         final String newExpression;
@@ -146,7 +147,7 @@ public class ImplicitNumericConversionInspection extends BaseInspection {
         else {
           newExpression = '(' + expectedType.getCanonicalText() + ")(" + expression.getText() + ')';
         }
-        replaceExpression(expression, newExpression);
+        PsiReplacementUtil.replaceExpression(expression, newExpression);
       }
     }
 

@@ -24,6 +24,7 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
@@ -163,7 +164,7 @@ public class TrivialStringConcatenationInspection extends BaseInspection {
         return;
       }
       final String newExpression = calculateReplacementExpression(expression);
-      replaceExpression((PsiExpression)parent, newExpression);
+      PsiReplacementUtil.replaceExpression((PsiExpression)parent, newExpression);
     }
   }
 

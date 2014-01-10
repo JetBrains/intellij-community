@@ -16,10 +16,17 @@
 package com.intellij.openapi.extensions.impl;
 
 import com.intellij.openapi.extensions.*;
+import com.intellij.util.ThrowableRunnable;
+import org.hamcrest.CustomMatcher;
+import org.hamcrest.Description;
+import org.hamcrest.Matcher;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
 import org.picocontainer.defaults.DefaultPicoContainer;
 
+import static com.intellij.openapi.extensions.impl.ExtensionComponentAdapterTest.readElement;
+import static com.intellij.openapi.extensions.impl.TestLogProvider.TestLogException;
+import static org.hamcrest.Matchers.equalTo;
 import static org.junit.Assert.*;
 
 /**
@@ -49,7 +56,7 @@ public class ExtensionPointImplTest {
     final AreaInstance area = new AreaInstance() {};
     final ExtensionPoint<Object> extensionPoint = new ExtensionPointImpl<Object>(
       "an.extension.point", Object.class.getName(), ExtensionPoint.Kind.INTERFACE, buildExtensionArea(), area,
-      new Extensions.SimpleLogProvider(), new UndefinedPluginDescriptor());
+      TestLogProvider.INSTANCE, new UndefinedPluginDescriptor());
 
     final boolean[] flags = new boolean[2];
     Extension extension = new Extension() {
@@ -142,13 +149,82 @@ public class ExtensionPointImplTest {
     assertTrue(added[0]);
   }
 
+  @Test
+  @SuppressWarnings("unchecked")
+  public void testIncompatibleExtension() {
+    final ExtensionPoint extensionPoint = buildExtensionPoint();
+
+    extensionPoint.registerExtension(new Integer(1));
+    assertThat(extensionPoint.getExtensions().length, equalTo(1));
+
+    assertThat(
+      new ThrowableRunnable() {
+        @Override
+        public void run() {
+          extensionPoint.registerExtension(new Double(0));
+        }
+      }, doesThrow(TestLogException.class)
+    );
+    assertThat(extensionPoint.getExtensions().length, equalTo(1));
+  }
+
+  @Test
+  public void testIncompatibleAdapter() throws Exception {
+    final ExtensionPointImpl<Integer> extensionPoint = (ExtensionPointImpl<Integer>)buildExtensionPoint();
+
+    extensionPoint.registerExtension(new Integer(1));
+    assertThat(extensionPoint.getExtensions().length, equalTo(1));
+
+    assertThat(
+      new ThrowableRunnable() {
+        @Override
+        public void run() {
+          extensionPoint.registerExtensionAdapter(buildAdapter());
+        }
+      }, doesThrow(TestLogException.class)
+    );
+    assertThat(extensionPoint.getExtensions().length, equalTo(1));
+  }
+
   private static ExtensionPoint<Integer> buildExtensionPoint() {
     return new ExtensionPointImpl<Integer>(
       ExtensionsImplTest.EXTENSION_POINT_NAME_1, Integer.class.getName(), ExtensionPoint.Kind.INTERFACE,
-      buildExtensionArea(), null, new Extensions.SimpleLogProvider(), new UndefinedPluginDescriptor());
+      buildExtensionArea(), null, TestLogProvider.INSTANCE, new UndefinedPluginDescriptor());
   }
 
   private static ExtensionsAreaImpl buildExtensionArea() {
-    return new ExtensionsAreaImpl(new DefaultPicoContainer(), new Extensions.SimpleLogProvider());
+    return new ExtensionsAreaImpl(new DefaultPicoContainer(), TestLogProvider.INSTANCE);
+  }
+
+  private static ExtensionComponentAdapter buildAdapter() {
+    return new ExtensionComponentAdapter(
+      String.class.getName(), readElement("<bean/>"), new DefaultPicoContainer(), new DefaultPluginDescriptor("test"), false);
+  }
+
+  private static Matcher<ThrowableRunnable> doesThrow(final Class<? extends Throwable> expected) {
+    return new CustomMatcher<ThrowableRunnable>(expected.getName()) {
+      private String myError = null;
+
+      @Override
+      public boolean matches(Object o) {
+        Throwable actual = null;
+        try { ((ThrowableRunnable)o).run(); }
+        catch (Throwable t) { actual = t; }
+
+        if (actual == null) {
+          myError = "nothing thrown";
+        }
+        else if (!expected.equals(actual.getClass())) {
+          myError = actual.getClass().getName();
+        }
+
+        return myError == null;
+      }
+
+      @Override
+      public void describeMismatch(Object item, Description description) {
+        description.appendText(myError);
+      }
+    };
   }
 }

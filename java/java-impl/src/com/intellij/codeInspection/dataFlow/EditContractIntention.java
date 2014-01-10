@@ -50,7 +50,6 @@ public class EditContractIntention extends BaseIntentionAction {
   private static PsiMethod getTargetMethod(@NotNull Project project, Editor editor, PsiFile file) {
     PsiElement element = file.findElementAt(editor.getCaretModel().getOffset());
     if (element == null) return null;
-    if (!PsiUtil.isLanguageLevel5OrHigher(element)) return null;
     if (!element.getManager().isInProject(element) || CodeStyleSettingsManager.getSettings(project).USE_EXTERNAL_ANNOTATIONS) {
       final PsiModifierListOwner owner = AddAnnotationPsiFix.getContainer(element);
       if (owner instanceof PsiMethod) {
