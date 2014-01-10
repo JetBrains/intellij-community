@@ -17,6 +17,7 @@ package com.siyeh.ipp.braces;
 
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
+import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NotNull;
 
@@ -45,6 +46,6 @@ public class AddBracesIntention extends BaseBracesIntention {
       return;
     }
     final String newStatement = "{\n" + statement.getText() + "\n}";
-    replaceStatement(newStatement, statement);
+    PsiReplacementUtil.replaceStatement(statement, newStatement);
   }
 }

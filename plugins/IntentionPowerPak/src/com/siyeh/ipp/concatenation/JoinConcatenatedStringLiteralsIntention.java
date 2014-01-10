@@ -18,6 +18,7 @@ package com.siyeh.ipp.concatenation;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
+import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NotNull;
@@ -86,6 +87,6 @@ public class JoinConcatenatedStringLiteralsIntention extends Intention {
     for (PsiElement bufferedElement : buffer) {
       newExpression.append(bufferedElement.getText());
     }
-    replaceExpression(newExpression.toString(), polyadicExpression);
+    PsiReplacementUtil.replaceExpression(polyadicExpression, newExpression.toString());
   }
 }

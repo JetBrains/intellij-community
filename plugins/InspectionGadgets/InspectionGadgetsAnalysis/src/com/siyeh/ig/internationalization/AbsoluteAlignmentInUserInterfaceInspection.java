@@ -24,6 +24,7 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.PsiReplacementUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
@@ -115,7 +116,7 @@ public class AbsoluteAlignmentInUserInterfaceInspection extends BaseInspection {
         return;
       }
       final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)parent;
-      replaceExpression(referenceExpression, myClassName + '.' + myReplacement);
+      PsiReplacementUtil.replaceExpression(referenceExpression, myClassName + '.' + myReplacement);
     }
   }
 

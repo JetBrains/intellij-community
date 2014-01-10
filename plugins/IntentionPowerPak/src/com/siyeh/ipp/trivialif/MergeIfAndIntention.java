@@ -17,6 +17,7 @@ package com.siyeh.ipp.trivialif;
 
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
+import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
@@ -73,6 +74,6 @@ public class MergeIfAndIntention extends Intention {
     }
     @NonNls final String statement = "if(" + parentConditionText + "&&" +
                                      childConditionText + ')' + childThenBranch.getText();
-    replaceStatement(statement, parentStatement);
+    PsiReplacementUtil.replaceStatement(parentStatement, statement);
   }
 }

@@ -23,6 +23,7 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
@@ -94,7 +95,7 @@ public class UnnecessaryCallToStringValueOfInspection extends BaseInspection {
       if (arguments.length != 1) {
         return;
       }
-      replaceExpression(methodCallExpression, calculateReplacementText(arguments[0]));
+      PsiReplacementUtil.replaceExpression(methodCallExpression, calculateReplacementText(arguments[0]));
     }
   }
 

@@ -16,6 +16,7 @@
 package com.siyeh.ipp.asserttoif;
 
 import com.intellij.psi.*;
+import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.BoolUtils;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
 import com.siyeh.ipp.base.Intention;
@@ -47,7 +48,7 @@ public class IfToAssertionIntention extends Intention {
       newStatementText.append(':').append(message);
     }
     newStatementText.append(';');
-    replaceStatement(newStatementText.toString(), ifStatement);
+    PsiReplacementUtil.replaceStatement(ifStatement, newStatementText.toString());
   }
 
   private static String getMessage(PsiElement element) {

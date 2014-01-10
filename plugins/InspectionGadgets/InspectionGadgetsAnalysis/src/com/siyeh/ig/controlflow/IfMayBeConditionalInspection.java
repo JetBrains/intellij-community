@@ -24,6 +24,7 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
 import com.siyeh.ig.psiutils.EquivalenceChecker;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
@@ -159,7 +160,7 @@ public class IfMayBeConditionalInspection extends BaseInspection {
           return;
         }
       }
-      replaceStatement(ifStatement, replacementText.toString());
+      PsiReplacementUtil.replaceStatement(ifStatement, replacementText.toString());
     }
 
     private static void appendExpressionText(@Nullable PsiExpression expression, StringBuilder out) {

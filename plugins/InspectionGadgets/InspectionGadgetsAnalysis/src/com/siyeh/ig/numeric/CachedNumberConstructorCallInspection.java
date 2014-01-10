@@ -24,6 +24,7 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.ClassUtils;
 import org.jetbrains.annotations.NotNull;
 
@@ -103,7 +104,7 @@ public class CachedNumberConstructorCallInspection
       final PsiExpression[] args = argList.getExpressions();
       final PsiExpression arg = args[0];
       final String text = arg.getText();
-      replaceExpression(expression, className + ".valueOf(" + text + ')');
+      PsiReplacementUtil.replaceExpression(expression, className + ".valueOf(" + text + ')');
     }
   }
 

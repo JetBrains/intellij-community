@@ -25,6 +25,7 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.ComparisonUtils;
 import com.siyeh.ig.psiutils.ExpectedTypeUtils;
 import com.siyeh.ig.psiutils.MethodCallUtils;
@@ -129,18 +130,18 @@ public class UnnecessaryUnboxingInspection extends BaseInspection {
           if (CommonClassNames.JAVA_LANG_BOOLEAN.equals(classname)) {
             @NonNls final String name = field.getName();
             if ("TRUE".equals(name)) {
-              replaceExpression(methodCall, "true");
+              PsiReplacementUtil.replaceExpression(methodCall, "true");
               return;
             }
             else if ("FALSE".equals(name)) {
-              replaceExpression(methodCall, "false");
+              PsiReplacementUtil.replaceExpression(methodCall, "false");
               return;
             }
           }
         }
       }
       final String strippedQualifierText = strippedQualifier.getText();
-      replaceExpression(methodCall, strippedQualifierText);
+      PsiReplacementUtil.replaceExpression(methodCall, strippedQualifierText);
     }
   }
 

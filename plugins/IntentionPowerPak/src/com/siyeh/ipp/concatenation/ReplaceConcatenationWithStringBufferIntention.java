@@ -19,6 +19,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.IntentionPowerPackBundle;
+import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
 import com.siyeh.ipp.base.MutablyNamedIntention;
 import com.siyeh.ipp.base.PsiElementPredicate;
@@ -65,7 +66,7 @@ public class ReplaceConcatenationWithStringBufferIntention extends MutablyNamedI
         newExpression.append(qualifierText);
       }
       turnExpressionIntoChainedAppends(expression, newExpression);
-      replaceExpression(newExpression.toString(), methodCallExpression);
+      PsiReplacementUtil.replaceExpression(methodCallExpression, newExpression.toString());
     }
     else {
       if (!PsiUtil.isLanguageLevel5OrHigher(expression)) {
@@ -76,7 +77,7 @@ public class ReplaceConcatenationWithStringBufferIntention extends MutablyNamedI
       }
       turnExpressionIntoChainedAppends(expression, newExpression);
       newExpression.append(".toString()");
-      replaceExpression(newExpression.toString(), expression);
+      PsiReplacementUtil.replaceExpression(expression, newExpression.toString());
     }
   }
 

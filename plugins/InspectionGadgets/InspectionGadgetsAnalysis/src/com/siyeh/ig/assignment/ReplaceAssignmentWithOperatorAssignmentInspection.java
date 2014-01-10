@@ -25,6 +25,7 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.EquivalenceChecker;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
 import org.jetbrains.annotations.NotNull;
@@ -171,7 +172,7 @@ public class ReplaceAssignmentWithOperatorAssignmentInspection extends BaseInspe
       }
       final PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)rhs;
       final String newExpression = calculateReplacementExpression(lhs, polyadicExpression);
-      replaceExpression(expression, newExpression);
+      PsiReplacementUtil.replaceExpression(expression, newExpression);
     }
   }
 

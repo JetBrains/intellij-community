@@ -22,6 +22,7 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.BoolUtils;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
 import org.jetbrains.annotations.Nls;
@@ -90,7 +91,7 @@ public class NegatedConditionalExpressionInspection extends BaseInspection {
       if (elseExpression != null) {
         newExpression.append(BoolUtils.getNegatedExpressionText(elseExpression));
       }
-      replaceExpression(prefixExpression, newExpression.toString());
+      PsiReplacementUtil.replaceExpression(prefixExpression, newExpression.toString());
     }
   }
 

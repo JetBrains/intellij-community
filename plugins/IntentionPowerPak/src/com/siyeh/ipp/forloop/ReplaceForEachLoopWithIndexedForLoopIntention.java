@@ -20,6 +20,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.*;
 import com.intellij.util.IncorrectOperationException;
+import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NonNls;
@@ -100,7 +101,7 @@ public class ReplaceForEachLoopWithIndexedForLoopIntention extends Intention {
       newStatement.append(body.getText());
     }
     newStatement.append('}');
-    replaceStatementAndShorten(newStatement.toString(), statement);
+    PsiReplacementUtil.replaceStatementAndShortenClassNames(statement, newStatement.toString());
   }
 
   protected void createForLoopDeclaration(PsiForeachStatement statement,

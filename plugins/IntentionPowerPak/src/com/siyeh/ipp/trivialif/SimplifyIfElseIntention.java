@@ -18,6 +18,7 @@ package com.siyeh.ipp.trivialif;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
@@ -80,7 +81,7 @@ public class SimplifyIfElseIntention extends Intention {
       PsiTreeUtil.skipSiblingsForward(statement,
                                       PsiWhiteSpace.class);
     @NonNls final String newStatement = "return " + conditionText + ';';
-    replaceStatement(newStatement, statement);
+    PsiReplacementUtil.replaceStatement(statement, newStatement);
     assert nextStatement != null;
     nextStatement.delete();
   }
@@ -93,7 +94,7 @@ public class SimplifyIfElseIntention extends Intention {
     }
     final String conditionText = condition.getText();
     @NonNls final String newStatement = "return " + conditionText + ';';
-    replaceStatement(newStatement, statement);
+    PsiReplacementUtil.replaceStatement(statement, newStatement);
   }
 
   private static void replaceSimplifiableAssignment(PsiIfStatement statement)
@@ -112,8 +113,7 @@ public class SimplifyIfElseIntention extends Intention {
     final String operand = operator.getText();
     final PsiExpression lhs = assignmentExpression.getLExpression();
     final String lhsText = lhs.getText();
-    replaceStatement(lhsText + operand + conditionText + ';',
-                     statement);
+    PsiReplacementUtil.replaceStatement(statement, lhsText + operand + conditionText + ';');
   }
 
   private static void replaceSimplifiableImplicitAssignment(
@@ -136,8 +136,7 @@ public class SimplifyIfElseIntention extends Intention {
     final String operand = operator.getText();
     final PsiExpression lhs = assignmentExpression.getLExpression();
     final String lhsText = lhs.getText();
-    replaceStatement(lhsText + operand + conditionText + ';',
-                     statement);
+    PsiReplacementUtil.replaceStatement(statement, lhsText + operand + conditionText + ';');
     assert prevStatement != null;
     prevStatement.delete();
   }
@@ -160,8 +159,7 @@ public class SimplifyIfElseIntention extends Intention {
     final String operand = operator.getText();
     final PsiExpression lhs = assignmentExpression.getLExpression();
     final String lhsText = lhs.getText();
-    replaceStatement(lhsText + operand + conditionText + ';',
-                     statement);
+    PsiReplacementUtil.replaceStatement(statement, lhsText + operand + conditionText + ';');
     assert prevStatement != null;
     prevStatement.delete();
   }
@@ -176,7 +174,7 @@ public class SimplifyIfElseIntention extends Intention {
       PsiTreeUtil.skipSiblingsForward(statement,
                                       PsiWhiteSpace.class);
     @NonNls final String newStatement = "return " + conditionText + ';';
-    replaceStatement(newStatement, statement);
+    PsiReplacementUtil.replaceStatement(statement, newStatement);
     assert nextStatement != null;
     nextStatement.delete();
   }
@@ -188,7 +186,7 @@ public class SimplifyIfElseIntention extends Intention {
     final String conditionText =
       BoolUtils.getNegatedExpressionText(condition);
     @NonNls final String newStatement = "return " + conditionText + ';';
-    replaceStatement(newStatement, statement);
+    PsiReplacementUtil.replaceStatement(statement, newStatement);
   }
 
   private static void replaceSimplifiableAssignmentNegated(
@@ -206,7 +204,6 @@ public class SimplifyIfElseIntention extends Intention {
     final String operand = operator.getText();
     final PsiExpression lhs = assignmentExpression.getLExpression();
     final String lhsText = lhs.getText();
-    replaceStatement(lhsText + operand + conditionText + ';',
-                     statement);
+    PsiReplacementUtil.replaceStatement(statement, lhsText + operand + conditionText + ';');
   }
 }

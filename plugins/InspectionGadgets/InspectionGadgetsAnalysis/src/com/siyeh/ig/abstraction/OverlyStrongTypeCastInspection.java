@@ -24,6 +24,7 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.ExpectedTypeUtils;
 import com.siyeh.ig.psiutils.InstanceOfUtils;
 import org.jetbrains.annotations.NonNls;
@@ -93,7 +94,7 @@ public class OverlyStrongTypeCastInspection extends BaseInspection {
       }
       @NonNls
       final String newExpression = '(' + expectedType.getCanonicalText() + ')' + operand.getText();
-      replaceExpressionAndShorten(expression, newExpression);
+      PsiReplacementUtil.replaceExpressionAndShorten(expression, newExpression);
     }
   }
 

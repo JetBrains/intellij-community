@@ -24,6 +24,7 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.PsiReplacementUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -119,8 +120,8 @@ public class UnpredictableBigDecimalConstructorCallInspection
         return;
       }
       final PsiExpression firstArgument = arguments[0];
-      replaceExpression(firstArgument,
-                        '"' + firstArgument.getText() + '"');
+      PsiReplacementUtil.replaceExpression(firstArgument,
+                                           '"' + firstArgument.getText() + '"');
     }
   }
 

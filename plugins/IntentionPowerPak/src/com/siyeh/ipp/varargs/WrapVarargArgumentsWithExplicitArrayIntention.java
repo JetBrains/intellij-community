@@ -18,6 +18,7 @@ package com.siyeh.ipp.varargs;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NotNull;
@@ -78,6 +79,6 @@ public class WrapVarargArgumentsWithExplicitArrayIntention extends Intention {
       }
     }
     newExpression.append("})");
-    replaceExpression(newExpression.toString(), methodCallExpression);
+    PsiReplacementUtil.replaceExpression(methodCallExpression, newExpression.toString());
   }
 }

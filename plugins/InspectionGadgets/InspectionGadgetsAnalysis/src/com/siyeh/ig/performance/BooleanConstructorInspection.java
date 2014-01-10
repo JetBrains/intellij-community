@@ -25,6 +25,7 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
 import org.jetbrains.annotations.NonNls;
@@ -127,7 +128,7 @@ public class BooleanConstructorInspection extends BaseInspection {
         }
         newExpression = buildText(argument, methodFound);
       }
-      replaceExpression(expression, newExpression);
+      PsiReplacementUtil.replaceExpression(expression, newExpression);
     }
 
     @NonNls

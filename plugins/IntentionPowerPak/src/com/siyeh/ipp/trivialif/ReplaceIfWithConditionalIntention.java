@@ -18,6 +18,7 @@ package com.siyeh.ipp.trivialif;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiDiamondTypeUtil;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.EquivalenceChecker;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
 import com.siyeh.ipp.base.Intention;
@@ -65,7 +66,7 @@ public class ReplaceIfWithConditionalIntention extends Intention {
         return;
       }
       final String conditional = getConditionalText(condition, thenRhs, elseRhs, thenAssign.getType());
-      replaceStatement(lhsText + operator + conditional + ';', ifStatement);
+      PsiReplacementUtil.replaceStatement(ifStatement, lhsText + operator + conditional + ';');
     }
     else if (ReplaceIfWithConditionalPredicate.isReplaceableReturn(ifStatement)) {
       final PsiExpression condition = ifStatement.getCondition();
@@ -90,7 +91,7 @@ public class ReplaceIfWithConditionalIntention extends Intention {
       }
       final PsiType returnType = method.getReturnType();
       final String conditional = getConditionalText(condition, thenReturnValue, elseReturnValue, returnType);
-      replaceStatement("return " + conditional + ';', ifStatement);
+      PsiReplacementUtil.replaceStatement(ifStatement, "return " + conditional + ';');
     }
     else if (ReplaceIfWithConditionalPredicate.isReplaceableMethodCall(ifStatement)) {
       final PsiExpression condition = ifStatement.getCondition();
@@ -133,7 +134,7 @@ public class ReplaceIfWithConditionalIntention extends Intention {
         }
       }
       replacementText.append(");");
-      replaceStatement(replacementText.toString(), ifStatement);
+      PsiReplacementUtil.replaceStatement(ifStatement, replacementText.toString());
     }
     else if (ReplaceIfWithConditionalPredicate.isReplaceableImplicitReturn(ifStatement)) {
       final PsiExpression condition = ifStatement.getCondition();
@@ -163,7 +164,7 @@ public class ReplaceIfWithConditionalIntention extends Intention {
       if (conditional == null) {
         return;
       }
-      replaceStatement("return " + conditional + ';', ifStatement);
+      PsiReplacementUtil.replaceStatement(ifStatement, "return " + conditional + ';');
       elseBranch.delete();
     }
   }

@@ -26,6 +26,7 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -293,7 +294,7 @@ public class SimplifiableIfStatementInspection extends BaseInspection {
           nextStatement.delete();
         }
       }
-      replaceStatement(ifStatement, newStatement);
+      PsiReplacementUtil.replaceStatement(ifStatement, newStatement);
     }
   }
 

@@ -24,6 +24,7 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -124,7 +125,7 @@ public class StringConstructorInspection extends BaseInspection {
       else {
         argText = "\"\"";
       }
-      replaceExpression(expression, argText);
+      PsiReplacementUtil.replaceExpression(expression, argText);
     }
   }
 

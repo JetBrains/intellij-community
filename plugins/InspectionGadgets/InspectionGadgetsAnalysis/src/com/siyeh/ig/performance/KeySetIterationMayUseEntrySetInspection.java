@@ -27,6 +27,7 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.TypeUtils;
 import com.siyeh.ig.psiutils.VariableAccessUtils;
 import org.jetbrains.annotations.Nls;
@@ -109,8 +110,8 @@ public class KeySetIterationMayUseEntrySetInspection extends BaseInspection {
           (PsiReferenceExpression)qualifier;
         map = reference.resolve();
         final String qualifierText = qualifier.getText();
-        replaceExpression(referenceExpression,
-                          qualifierText + ".entrySet()");
+        PsiReplacementUtil.replaceExpression(referenceExpression,
+                                             qualifierText + ".entrySet()");
       }
       else if (element instanceof PsiMethodCallExpression) {
         final PsiMethodCallExpression methodCallExpression =
@@ -126,8 +127,8 @@ public class KeySetIterationMayUseEntrySetInspection extends BaseInspection {
           (PsiReferenceExpression)qualifier;
         map = referenceExpression.resolve();
         final String qualifierText = qualifier.getText();
-        replaceExpression(methodCallExpression,
-                          qualifierText + ".entrySet()");
+        PsiReplacementUtil.replaceExpression(methodCallExpression,
+                                             qualifierText + ".entrySet()");
       }
       else {
         return;
@@ -192,10 +193,10 @@ public class KeySetIterationMayUseEntrySetInspection extends BaseInspection {
         collector.getParameterAccesses();
       for (PsiExpression access : accesses) {
         if (access instanceof PsiMethodCallExpression) {
-          replaceExpression(access, variableName + ".getValue()");
+          PsiReplacementUtil.replaceExpression(access, variableName + ".getValue()");
         }
         else {
-          replaceExpression(access, variableName + ".getKey()");
+          PsiReplacementUtil.replaceExpression(access, variableName + ".getKey()");
         }
       }
     }

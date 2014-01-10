@@ -15,6 +15,7 @@
  */
 package com.siyeh.ipp.opassign;
 
+import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ipp.base.MutablyNamedIntention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import com.siyeh.IntentionPowerPackBundle;
@@ -61,10 +62,10 @@ public class ReplacePostfixExpressionWithOperatorAssignmentIntention
     final IElementType tokenType =
       postfixExpression.getOperationTokenType();
     if (JavaTokenType.PLUSPLUS.equals(tokenType)) {
-      replaceExpression(operandText + "+=1", postfixExpression);
+      PsiReplacementUtil.replaceExpression(postfixExpression, operandText + "+=1");
     }
     else if (JavaTokenType.MINUSMINUS.equals(tokenType)) {
-      replaceExpression(operandText + "-=1", postfixExpression);
+      PsiReplacementUtil.replaceExpression(postfixExpression, operandText + "-=1");
     }
   }
 }
