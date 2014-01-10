@@ -34,7 +34,7 @@ public class Patch {
     throws IOException, OperationCancelledException {
     DiffCalculator.Result diff;
 
-    Runner.logger.trace("Calculating difference...");
+    Runner.logger.info("Calculating difference...");
     ui.startProcess("Calculating difference...");
     ui.checkCancelled();
 
@@ -61,7 +61,7 @@ public class Patch {
       }
     }
 
-    Runner.logger.trace("Preparing actions...");
+    Runner.logger.info("Preparing actions...");
     ui.startProcess("Preparing actions...");
     ui.checkCancelled();
 
@@ -148,7 +148,7 @@ public class Patch {
     final LinkedHashSet<String> files = Utils.collectRelativePaths(toDir);
     final List<ValidationResult> result = new ArrayList<ValidationResult>();
 
-    Runner.logger.trace("Validating installation...");
+    Runner.logger.info("Validating installation...");
     forEach(myActions, "Validating installation...", ui, true,
             new ActionsProcessor() {
               public void forEach(PatchAction each) throws IOException {
@@ -184,7 +184,7 @@ public class Patch {
             new ActionsProcessor() {
               public void forEach(PatchAction each) throws IOException {
                 each.backup(toDir, backupDir);
-                Runner.logger.trace("Backing up files dir: " + toDir.getCanonicalFile() + " to backupDir " + backupDir.getCanonicalFile());
+                Runner.logger.info("Backing up files dir: " + toDir.getCanonicalFile() + " to backupDir " + backupDir.getCanonicalFile());
               }
             });
 
@@ -197,7 +197,7 @@ public class Patch {
                 public void forEach(PatchAction each) throws IOException {
                   appliedActions.add(each);
                   each.apply(patchFile, toDir);
-                  Runner.logger.trace("applying patch file" + patchFile.getName() + " to dir " + toDir.getCanonicalFile());
+                  Runner.logger.info("applying patch file" + patchFile.getName() + " to dir " + toDir.getCanonicalFile());
                 }
               });
     }
@@ -233,7 +233,7 @@ public class Patch {
             new ActionsProcessor() {
               public void forEach(PatchAction each) throws IOException {
                 each.revert(toDir, backupDir);
-                Runner.logger.trace("revert to dir: " + toDir.getCanonicalFile() + " from backup dir " + backupDir.getCanonicalFile());
+                Runner.logger.info("revert to dir: " + toDir.getCanonicalFile() + " from backup dir " + backupDir.getCanonicalFile());
               }
             });
   }

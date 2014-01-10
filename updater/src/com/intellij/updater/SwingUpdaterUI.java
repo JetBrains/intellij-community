@@ -135,6 +135,7 @@ public class SwingUpdaterUI implements UpdaterUI {
             Thread.sleep(100);
           }
           catch (InterruptedException e) {
+            Runner.logger.error(e.fillInStackTrace());
             return;
           }
 
@@ -180,8 +181,10 @@ public class SwingUpdaterUI implements UpdaterUI {
           myApplied = myOperation.execute(SwingUpdaterUI.this);
         }
         catch (OperationCancelledException ignore) {
+          Runner.logger.error(ignore.fillInStackTrace());
         }
         catch(Throwable e) {
+          Runner.logger.error(e.fillInStackTrace());
           showError(e);
         }
         finally {
@@ -275,9 +278,11 @@ public class SwingUpdaterUI implements UpdaterUI {
       });
     }
     catch (InterruptedException e) {
+      Runner.logger.error(e.fillInStackTrace());
       throw new RuntimeException(e);
     }
     catch (InvocationTargetException e) {
+      Runner.logger.error(e.fillInStackTrace());
       throw new RuntimeException(e);
     }
     checkCancelled();
@@ -362,6 +367,7 @@ public class SwingUpdaterUI implements UpdaterUI {
             Thread.sleep(10);
           }
           catch (InterruptedException e) {
+            Runner.logger.error(e.fillInStackTrace());
             throw new RuntimeException(e);
           }
           ui.setProgress((i + 1) * 100 / 200);
@@ -380,6 +386,7 @@ public class SwingUpdaterUI implements UpdaterUI {
               Thread.sleep(10);
             }
             catch (InterruptedException e) {
+              Runner.logger.error(e.fillInStackTrace());
               throw new RuntimeException(e);
             }
             ui.setProgress((i + 1) * 100 / 200);
@@ -414,6 +421,7 @@ public class SwingUpdaterUI implements UpdaterUI {
               Thread.sleep(10);
             }
             catch (InterruptedException e) {
+              Runner.logger.error(e.fillInStackTrace());
               throw new RuntimeException(e);
             }
             ui.setProgress((i + 1) * 100 / 200);

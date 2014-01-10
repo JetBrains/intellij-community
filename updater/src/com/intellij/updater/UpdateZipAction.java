@@ -103,6 +103,7 @@ public class UpdateZipAction extends BaseUpdateAction {
       new ZipFile(newerFile).close();
     }
     catch (IOException e) {
+      Runner.logger.error("Corrupted target file: " + newerFile, e.fillInStackTrace());
       throw new IOException("Corrupted target file: " + newerFile, e);
     }
 
@@ -115,6 +116,7 @@ public class UpdateZipAction extends BaseUpdateAction {
       olderZip = new ZipFile(olderFile);
     }
     catch (IOException e) {
+      Runner.logger.error("Corrupted source file: " + olderFile, e.fillInStackTrace());
       throw new IOException("Corrupted source file: " + olderFile, e);
     }
 
@@ -137,10 +139,14 @@ public class UpdateZipAction extends BaseUpdateAction {
             patchOutput.closeEntry();
           }
           catch (IOException e) {
+            Runner.logger.error("Error building patch for .zip entry " + name, e.fillInStackTrace());
             throw new IOException("Error building patch for .zip entry " + name, e);
           }
         }
       });
+    }
+    catch (Exception ex) {
+      Runner.logger.error(ex.fillInStackTrace());
     }
     finally {
       olderZip.close();
@@ -164,6 +170,9 @@ public class UpdateZipAction extends BaseUpdateAction {
             try {
               applyDiff(Utils.findEntryInputStream(patchFile, myPath + "/" + path), in, entryOut);
             }
+            catch (Exception ex) {
+              Runner.logger.error(ex.fillInStackTrace());
+            }
             finally {
               entryOut.close();
             }
@@ -179,12 +188,18 @@ public class UpdateZipAction extends BaseUpdateAction {
         try {
           out.zipEntry(each, in);
         }
+        catch (Exception ex) {
+          Runner.logger.error(ex.fillInStackTrace());
+        }
         finally {
           in.close();
         }
       }
 
       out.finish();
+    }
+    catch (Exception ex) {
+      Runner.logger.error(ex.fillInStackTrace());
     }
     finally {
       fileOut.close();
@@ -207,6 +222,9 @@ public class UpdateZipAction extends BaseUpdateAction {
         processor.process(inEntry, new BufferedInputStream(in));
         processed.add(inEntry.getName());
       }
+    }
+    catch (Exception ex) {
+      Runner.logger.error(ex.fillInStackTrace());
     }
     finally {
       in.close();

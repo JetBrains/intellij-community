@@ -18,7 +18,7 @@ public class Utils {
   public static File createTempFile() throws IOException {
     if (myTempDir == null) {
       myTempDir = File.createTempFile("idea.updater.", ".tmp");
-      Runner.logger.trace("temp file: " + myTempDir.getCanonicalPath());
+      Runner.logger.info("temp file: " + myTempDir.getCanonicalPath());
       delete(myTempDir);
       myTempDir.mkdirs();
     }
@@ -30,14 +30,14 @@ public class Utils {
     File result = createTempFile();
     delete(result);
     result.mkdirs();
-    Runner.logger.trace("created tmp file: " + result.getCanonicalPath());
+    Runner.logger.info("created tmp file: " + result.getCanonicalPath());
     return result;
   }
 
   public static void cleanup() throws IOException {
     if (myTempDir == null) return;
     delete(myTempDir);
-    Runner.logger.trace("deleted file " + myTempDir.getCanonicalPath());
+    Runner.logger.info("deleted file " + myTempDir.getCanonicalPath());
     myTempDir = null;
   }
 
@@ -47,7 +47,7 @@ public class Utils {
       if (files != null) {
         for (File each : files) {
           delete(each);
-          Runner.logger.trace("deleted file " + each.getCanonicalPath());
+          Runner.logger.info("deleted file " + each.getCanonicalPath());
         }
       }
     }
@@ -65,13 +65,13 @@ public class Utils {
 
   public static void setExecutable(File file, boolean executable) throws IOException {
     if (executable && !file.setExecutable(true)) {
-      Runner.logger.error("Cannot set executable permissions for file " + file.getCanonicalPath());
+      Runner.logger.error("Can't set executable permissions for file " + file.getCanonicalPath());
       throw new IOException("Cannot set executable permissions for: " + file);
     }
   }
 
   public static void copy(File from, File to) throws IOException {
-    Runner.logger.trace("from " + from.getCanonicalPath() + " to " + to.getCanonicalPath());
+    Runner.logger.info("from " + from.getCanonicalPath() + " to " + to.getCanonicalPath());
     if (from.isDirectory()) {
       File[] files = from.listFiles();
       if (files == null) throw new IOException("Cannot get directory's content: " + from);
@@ -84,6 +84,9 @@ public class Utils {
       try {
         copyStreamToFile(in, to);
       }
+      catch (Exception ex) {
+        Runner.logger.error(ex.fillInStackTrace());
+      }
       finally {
         in.close();
       }
@@ -92,10 +95,13 @@ public class Utils {
   }
 
   public static void copyFileToStream(File from, OutputStream out) throws IOException {
-    Runner.logger.trace("from: " + from.getCanonicalPath());
+    Runner.logger.info("from: " + from.getCanonicalPath());
     InputStream in = new BufferedInputStream(new FileInputStream(from));
     try {
       copyStream(in, out);
+    }
+    catch (Exception ex) {
+      Runner.logger.error(ex.fillInStackTrace());
     }
     finally {
       in.close();
@@ -103,11 +109,14 @@ public class Utils {
   }
 
   public static void copyStreamToFile(InputStream from, File to) throws IOException {
-    Runner.logger.trace("to: " + to.getCanonicalPath());
+    Runner.logger.info("to: " + to.getCanonicalPath());
     to.getParentFile().mkdirs();
     OutputStream out = new BufferedOutputStream(new FileOutputStream(to));
     try {
       copyStream(from, out);
+    }
+    catch (Exception ex) {
+      Runner.logger.error(ex.fillInStackTrace());
     }
     finally {
       out.close();
@@ -118,6 +127,9 @@ public class Utils {
     OutputStream out = new BufferedOutputStream(to);
     try {
       from.writeTo(out);
+    }
+    catch (Exception ex) {
+      Runner.logger.error(ex.fillInStackTrace());
     }
     finally {
       out.flush();
@@ -132,6 +144,9 @@ public class Utils {
     ByteArrayOutputStream byteOut = new ByteArrayOutputStream();
     try {
       copyStream(in, byteOut);
+    }
+    catch (Exception ex) {
+      Runner.logger.error(ex.fillInStackTrace());
     }
     finally {
       byteOut.close();
@@ -150,7 +165,7 @@ public class Utils {
   public static InputStream getEntryInputStream(ZipFile zipFile, String entryPath) throws IOException {
     InputStream result = findEntryInputStream(zipFile, entryPath);
     if (result == null) throw new IOException("Entry " + entryPath + " not found");
-    Runner.logger.trace("entryPath: " + entryPath);
+    Runner.logger.info("entryPath: " + entryPath);
     return result;
   }
 

@@ -18,7 +18,7 @@ public class CreateAction extends PatchAction {
   }
 
   protected void doBuildPatchFile(File olderFile, File newerFile, ZipOutputStream patchOutput) throws IOException {
-    Runner.logger.trace("building PatchFile");
+    Runner.logger.info("building PatchFile");
     patchOutput.putNextEntry(new ZipEntry(myPath));
 
     writeExecutableFlag(patchOutput, newerFile);
@@ -29,7 +29,7 @@ public class CreateAction extends PatchAction {
 
   @Override
   protected ValidationResult doValidate(File toFile) {
-    Runner.logger.trace("validation the result");
+    Runner.logger.info("validation the result");
     ValidationResult result = doValidateAccess(toFile, ValidationResult.Action.CREATE);
     if (result != null) return result;
 
@@ -51,9 +51,12 @@ public class CreateAction extends PatchAction {
     try {
       boolean executable = readExecutableFlag(in);
       Utils.copyStreamToFile(in, toFile);
-      Runner.logger.trace("copyStreamToFile to File: " + toFile.getCanonicalPath());
+      Runner.logger.info("copyStreamToFile to file: " + toFile.getCanonicalPath());
       Utils.setExecutable(toFile, executable);
-      Runner.logger.trace("setExecutable for File: " + toFile.getCanonicalPath());
+      Runner.logger.info("setExecutable for file: " + toFile.getCanonicalPath());
+    }
+    catch (Exception ex) {
+      Runner.logger.error(ex.fillInStackTrace());
     }
     finally {
       in.close();
@@ -63,7 +66,7 @@ public class CreateAction extends PatchAction {
   private static void prepareToWriteFile(File file) throws IOException {
     if (file.exists()) {
       Utils.delete(file);
-      Runner.logger.trace("deleted File: " + file.getCanonicalPath());
+      Runner.logger.info("deleted File: " + file.getCanonicalPath());
       return;
     }
 
@@ -72,7 +75,7 @@ public class CreateAction extends PatchAction {
     }
     if (file != null && !file.isDirectory()) {
       Utils.delete(file);
-      Runner.logger.trace("deleted File(parent) : " + file.getCanonicalPath());
+      Runner.logger.info("deleted File(parent): " + file.getCanonicalPath());
     }
   }
 
@@ -82,6 +85,6 @@ public class CreateAction extends PatchAction {
 
   protected void doRevert(File toFile, File backupFile) throws IOException {
     Utils.delete(toFile);
-    Runner.logger.trace("deleted File : " + toFile.getCanonicalPath());
+    Runner.logger.info("deleted file: " + toFile.getCanonicalPath());
   }
 }

@@ -96,6 +96,9 @@ public abstract class PatchAction {
         if (lock == null) return false;
         lock.release();
       }
+      catch (Exception ex) {
+        Runner.logger.error(ex.fillInStackTrace());
+      }
       finally {
         ch.close();
         s.close();

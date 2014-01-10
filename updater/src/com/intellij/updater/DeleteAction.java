@@ -22,7 +22,7 @@ public class DeleteAction extends PatchAction {
 
   @Override
   protected ValidationResult doValidate(File toFile) throws IOException {
-    Runner.logger.trace("validation the result");
+    Runner.logger.info("validation the result");
     ValidationResult result = doValidateAccess(toFile, ValidationResult.Action.DELETE);
     if (result != null) return result;
     
@@ -45,18 +45,18 @@ public class DeleteAction extends PatchAction {
   @Override
   protected void doApply(ZipFile patchFile, File toFile) throws IOException {
     Utils.delete(toFile);
-    Runner.logger.trace("deleted file: " + toFile.getCanonicalPath());
+    Runner.logger.info("deleted file: " + toFile.getCanonicalPath());
   }
 
   protected void doBackup(File toFile, File backupFile) throws IOException {
     Utils.copy(toFile, backupFile);
-    Runner.logger.trace("toFile: " + toFile.getCanonicalPath() + " backupFile " + backupFile.getCanonicalPath());
+    Runner.logger.info("file: " + toFile.getCanonicalPath() + " backup file: " + backupFile.getCanonicalPath());
   }
 
   protected void doRevert(File toFile, File backupFile) throws IOException {
     Utils.delete(toFile); // make sure there is no directory remained on this path (may remain from previous 'create' actions
-    Runner.logger.trace("deleted file: " + toFile.getCanonicalPath());
+    Runner.logger.info("deleted file: " + toFile.getCanonicalPath());
     Utils.copy(backupFile, toFile);
-    Runner.logger.trace("copied backup file: " + backupFile.getCanonicalPath() + " to file " + toFile.getCanonicalPath());
+    Runner.logger.info("copied backup file: " + backupFile.getCanonicalPath() + " to file " + toFile.getCanonicalPath());
   }
 }

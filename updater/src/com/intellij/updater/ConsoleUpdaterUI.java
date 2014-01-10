@@ -10,7 +10,7 @@ public class ConsoleUpdaterUI implements UpdaterUI {
 
   public void startProcess(String title) {
     System.out.println(title);
-    Runner.logger.trace("title: " + title);
+    Runner.logger.info("title: " + title);
   }
 
   public void setProgress(int percentage) {
@@ -21,7 +21,7 @@ public class ConsoleUpdaterUI implements UpdaterUI {
 
   public void setStatus(String status) {
     System.out.println(myStatus = status);
-    Runner.logger.trace("status: " + status);
+    Runner.logger.info("status: " + status);
   }
 
   public void showError(Throwable e) {
@@ -38,7 +38,7 @@ public class ConsoleUpdaterUI implements UpdaterUI {
 
   @Override
   public String toString() {
-    Runner.logger.trace("Status: '" + myStatus + '\'');
+    Runner.logger.info("Status: '" + myStatus + '\'');
     return "Status: '" + myStatus + '\'';
   }
 }

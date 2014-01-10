@@ -31,30 +31,33 @@ public abstract class BaseUpdateAction extends PatchAction {
   @Override
   protected void doBackup(File toFile, File backupFile) throws IOException {
     Utils.copy(toFile, backupFile);
-    Runner.logger.trace("toFile " + toFile.getCanonicalPath() + " backupFile " + backupFile.getCanonicalPath());
+    Runner.logger.info("file: " + toFile.getCanonicalPath() + " backup file: " + backupFile.getCanonicalPath());
   }
 
   protected void replaceUpdated(File from, File dest) throws IOException {
     // on OS X code signing caches seem to be associated with specific file ids, so we need to remove the original file.
     if (!dest.delete()) throw new IOException("Cannot delete file " + dest);
     Utils.copy(from, dest);
-    Runner.logger.trace("from " + from.getCanonicalPath() + " dest " + dest.getCanonicalPath());
+    Runner.logger.info("from: " + from.getCanonicalPath() + " dest: " + dest.getCanonicalPath());
   }
 
   @Override
   protected void doRevert(File toFile, File backupFile) throws IOException {
     if (!toFile.exists() || isModified(toFile)) {
       Utils.copy(backupFile, toFile);
-      Runner.logger.trace("backupFile " + backupFile.getCanonicalPath() + " toFile " + toFile.getCanonicalPath());
+      Runner.logger.info("backup file: " + backupFile.getCanonicalPath() + " to file: " + toFile.getCanonicalPath());
     }
   }
 
   protected void writeDiff(File olderFile, File newerFile, ZipOutputStream patchOutput) throws IOException {
-    Runner.logger.trace("writing diff");
+    Runner.logger.info("writing diff");
     BufferedInputStream olderFileIn = new BufferedInputStream(new FileInputStream(olderFile));
     BufferedInputStream newerFileIn = new BufferedInputStream(new FileInputStream(newerFile));
     try {
       writeDiff(olderFileIn, newerFileIn, patchOutput);
+    }
+    catch (Exception ex) {
+      Runner.logger.error(ex.fillInStackTrace());
     }
     finally {
       olderFileIn.close();
@@ -64,7 +67,7 @@ public abstract class BaseUpdateAction extends PatchAction {
 
   protected void writeDiff(InputStream olderFileIn, InputStream newerFileIn, ZipOutputStream patchOutput)
     throws IOException {
-    Runner.logger.trace("writing diff");
+    Runner.logger.info("writing diff");
     ByteArrayOutputStream diffOutput = new ByteArrayOutputStream();
     byte[] newerFileBuffer = JBDiff.bsdiff(olderFileIn, newerFileIn, diffOutput);
     diffOutput.close();
@@ -80,7 +83,7 @@ public abstract class BaseUpdateAction extends PatchAction {
   }
 
   protected void applyDiff(InputStream patchInput, InputStream oldFileIn, OutputStream toFileOut) throws IOException {
-    Runner.logger.trace("applying diff");
+    Runner.logger.info("applying diff");
     if (patchInput.read() == 1) {
       JBPatch.bspatch(oldFileIn, toFileOut, patchInput);
     }

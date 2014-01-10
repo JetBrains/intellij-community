@@ -24,15 +24,10 @@ public class Runner {
 
   private static void initLogger(){
     String uHome = System.getProperty("user.home");
-    System.out.println("***************** --- logConfigure ---");
-    System.out.println("***************** uHome: " + uHome);
-
     FileAppender update = new FileAppender();
     update.setFile(uHome + "/update.log");
-    //first version - %d{ABSOLUTE} %5p %t %c{1}:%M:%L - %m%n
-    //%-4r [%t] %-5p %c %x - %m%n
     update.setLayout(new PatternLayout("%d{dd MMM yyyy HH:mm:ss} %-5p %C{1}.%M - %m%n"));
-    update.setThreshold(Level.TRACE);
+    update.setThreshold(Level.INFO);
     update.setAppend(true);
     update.activateOptions();
 
@@ -46,14 +41,13 @@ public class Runner {
     logger = Logger.getLogger("com.intellij.updater");
     logger.addAppender(update_error);
     logger.addAppender(update);
-    logger.setLevel(Level.TRACE);
+    logger.setLevel(Level.INFO);
     System.out.println("***************** --- logger created ---");
   }
 
   public static void main(String[] args) throws Exception {
     initLogger();
-    System.out.println("***************** PropertyConfigurator ");
-    logger.trace("--- Updater started ---");
+    logger.info("--- Updater started ---");
 
     if (args.length != 2 && args.length < 6) {
       printUsage();
@@ -61,9 +55,7 @@ public class Runner {
     }
 
     String command = args[0];
-    logger.trace("args[0]: " + args[0]);
-    System.out.println("args[0]: " + args[0]);
-
+    logger.info("args[0]: " + args[0]);
 
     if ("create".equals(command)) {
       if (args.length < 6) {
@@ -88,7 +80,7 @@ public class Runner {
 
       String destFolder = args[1];
 
-      logger.trace("args[1]: " + destFolder);
+      logger.info("args[1]: " + destFolder);
       System.out.println("args[1]: " + destFolder);
 
       install(destFolder);
@@ -100,7 +92,6 @@ public class Runner {
   }
 
   public static List<String> extractFiles(String[] args, String paramName) {
-//    logger.trace("List");
     List<String> result = new ArrayList<String>();
     for (String param : args) {
       if (param.startsWith(paramName + "=")) {
@@ -111,8 +102,7 @@ public class Runner {
         }
       }
     }
-//    logger.trace("List: " + result.toString());
-    logger.trace(result.toString());
+    logger.info(result.toString());
     return result;
   }
 
@@ -142,7 +132,7 @@ public class Runner {
                               optionalFiles,
                               ui);
 
-      logger.trace("List Packing jar file " + patchFile );
+      logger.info("Packing jar file: " + patchFile );
       ui.startProcess("Packing jar file '" + patchFile + "'...");
 
       FileOutputStream fileOut = new FileOutputStream(patchFile);
@@ -155,6 +145,9 @@ public class Runner {
             out.zipEntry(e, in);
           }
         }
+        catch (Exception ex) {
+          logger.error(ex.fillInStackTrace());
+        }
         finally {
           in.close();
         }
@@ -166,6 +159,9 @@ public class Runner {
           props.setProperty(NEW_BUILD_DESCRIPTION, newBuildDesc);
           props.store(byteOut, "");
         }
+        catch (Exception ex) {
+          logger.error(ex.fillInStackTrace());
+        }
         finally {
           byteOut.close();
         }
@@ -174,12 +170,15 @@ public class Runner {
         out.zipFile(PATCH_FILE_NAME, tempPatchFile);
         out.finish();
       }
+      catch (Exception ex) {
+        logger.error(ex.fillInStackTrace());
+      }
       finally {
         fileOut.close();
       }
     }
     catch (Exception ex) {
-      logger.error(ex);
+      logger.error(ex.fillInStackTrace());
     }
     finally {
       cleanup(ui);
@@ -187,7 +186,7 @@ public class Runner {
   }
 
   private static void cleanup(UpdaterUI ui) throws IOException {
-    logger.trace("Cleaning up...");
+    logger.info("Cleaning up...");
     ui.startProcess("Cleaning up...");
     ui.setProgressIndeterminate();
     Utils.cleanup();
@@ -195,7 +194,7 @@ public class Runner {
 
   private static void install(final String destFolder) throws Exception {
     System.out.println("install, destFolder: " + destFolder);
-    logger.trace("destFolder: " + destFolder);
+    logger.info("destFolder: " + destFolder);
     InputStream in = Runner.class.getResourceAsStream("/" + PATCH_PROPERTIES_ENTRY);
     Properties props = new Properties();
     try {
@@ -224,7 +223,7 @@ public class Runner {
                   props.getProperty(NEW_BUILD_DESCRIPTION),
                   new SwingUpdaterUI.InstallOperation() {
                     public boolean execute(UpdaterUI ui) throws OperationCancelledException {
-                      logger.trace("installing patch to the " + destFolder);
+                      logger.info("installing patch to the " + destFolder);
                       return doInstall(ui, destFolder);
                     }
                   });
@@ -236,7 +235,7 @@ public class Runner {
         File patchFile = Utils.createTempFile();
         ZipFile jarFile = new ZipFile(resolveJarFile());
 
-        logger.trace("Extracting patch file...");
+        logger.info("Extracting patch file...");
         ui.startProcess("Extracting patch file...");
         ui.setProgressIndeterminate();
         try {
@@ -248,7 +247,6 @@ public class Runner {
           catch (Exception ex) {
             logger.error(ex.fillInStackTrace());
           }
-
           finally {
             in.close();
             out.close();
@@ -257,13 +255,10 @@ public class Runner {
         catch (Exception ex) {
           logger.error(ex.fillInStackTrace());
         }
-
         finally {
           jarFile.close();
         }
-
         ui.checkCancelled();
-
         File destDir = new File(destFolder);
         PatchFileCreator.PreparationResult result = PatchFileCreator.prepareAndValidate(patchFile, destDir, ui);
         Map<String, ValidationResult.Option> options = ui.askUser(result.validationResults);
@@ -274,6 +269,9 @@ public class Runner {
         logger.error(e.fillInStackTrace());
       }
     }
+    catch (Exception ex) {
+      logger.error(ex.fillInStackTrace());
+    }
     finally {
       try {
         cleanup(ui);
@@ -283,12 +281,10 @@ public class Runner {
         logger.error(e.fillInStackTrace());
       }
     }
-
     return false;
   }
 
   private static File resolveJarFile() throws IOException {
-    System.out.println("***************** resolveJarFile");
     URL url = Runner.class.getResource("");
     if (url == null) throw new IOException("Cannot resolve jar file path");
     if (!"jar".equals(url.getProtocol())) throw new IOException("Patch file is not a 'jar' file");
