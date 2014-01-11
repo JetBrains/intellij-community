@@ -70,3 +70,28 @@ class SomeBeanUnitTest {
     }
   }
 }
+class Outer {
+  class A { // may not be static
+    B b;
+  }
+  class B extends  A {} // may not be static
+
+  class C { // may be static
+    D b;
+    class D extends C {}
+  }
+
+  static class E {
+    G.F b;
+    class G { // may be static
+      class F extends  E {}
+    }
+  }
+
+  class H { // may be static
+    J.I b;
+    class J {
+      class I extends  H {}
+    }
+  }
+}

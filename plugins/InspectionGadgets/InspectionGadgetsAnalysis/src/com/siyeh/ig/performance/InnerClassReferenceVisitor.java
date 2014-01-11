@@ -35,10 +35,11 @@ public class InnerClassReferenceVisitor extends JavaRecursiveElementVisitor {
   }
 
   private boolean isClassStaticallyAccessible(PsiClass aClass) {
-    if (aClass.getContainingClass() != null && aClass.hasModifierProperty(PsiModifier.STATIC)) {
-      if (!PsiTreeUtil.isAncestor(aClass, innerClass, false)) {
-        return true;
-      }
+    if (PsiTreeUtil.isAncestor(innerClass, aClass, false)) {
+      return true;
+    }
+    if (aClass.getContainingClass() != null) {
+        return aClass.hasModifierProperty(PsiModifier.STATIC);
     }
     if (InheritanceUtil.isInheritorOrSelf(innerClass, aClass, true)) {
       return true;
