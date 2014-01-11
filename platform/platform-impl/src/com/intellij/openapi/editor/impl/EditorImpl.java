@@ -748,6 +748,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     clearCaretThread();
 
     myFocusListeners.clear();
+    myMouseListeners.clear();
+    myMouseMotionListeners.clear();
 
     if (myConnection != null) {
       myConnection.disconnect();
