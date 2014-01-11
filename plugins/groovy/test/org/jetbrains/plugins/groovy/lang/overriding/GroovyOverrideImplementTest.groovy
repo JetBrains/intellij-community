@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -123,6 +123,41 @@ class X implements I {
 
 interface I {
     void foo() throws RuntimeException
+}
+''')
+  }
+
+  void testThrowsListWithImport() {
+    myFixture.addClass('''\
+package pack;
+public class Exc extends RuntimeException {}
+''')
+
+    myFixture.addClass('''\
+import pack.Exc;
+
+interface I {
+    void foo() throws Exc;
+}
+''')
+
+    myFixture.configureByText('a.groovy', '''\
+class X implements I {
+    <caret>
+}
+''')
+
+    generateImplementation(findMethod('I', 'foo'))
+
+    myFixture.checkResult('''\
+import pack.Exc
+
+class X implements I {
+
+    @Override
+    void foo() throws Exc {
+
+    }
 }
 ''')
   }
