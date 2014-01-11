@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -118,6 +118,8 @@ public class DefaultGroovyScriptRunner extends GroovyScriptRunner {
 
     params.getProgramParametersList().add("--main");
     params.getProgramParametersList().add(mainClass);
+
+    addClasspathFromRootModel(module, tests, params, true);
 
     if (params.getVMParametersList().getPropertyValue(GroovycOSProcessHandler.GRAPE_ROOT) == null) {
       String sysRoot = System.getProperty(GroovycOSProcessHandler.GRAPE_ROOT);
