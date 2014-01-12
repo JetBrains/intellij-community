@@ -7,7 +7,7 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="library" name="Log4J" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="Log4J" level="project" />
   </component>
 </module>
 
