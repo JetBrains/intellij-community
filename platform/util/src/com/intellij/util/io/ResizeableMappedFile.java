@@ -80,7 +80,7 @@ public class ResizeableMappedFile implements Forceable {
     return myStorage.length();
   }
 
-  private void resize(final int size) {
+  private void resize(final long size) {
     try {
       myStorage.resize(size);
     }
@@ -175,47 +175,47 @@ public class ResizeableMappedFile implements Forceable {
     }
   }
 
-  public int getInt(int index) {
+  public int getInt(long index) {
     return myStorage.getInt(index);
   }
 
-  public void putInt(int index, int value) {
+  public void putInt(long index, int value) {
     ensureSize(index + 4);
     myStorage.putInt(index, value);
   }
 
-  public short getShort(int index) {
+  public short getShort(long index) {
     return myStorage.getShort(index);
   }
 
-  public void putShort(int index, short value) {
+  public void putShort(long index, short value) {
     ensureSize(index + 2);
     myStorage.putShort(index, value);
   }
 
-  public long getLong(int index) {
+  public long getLong(long index) {
     return myStorage.getLong(index);
   }
 
-  public void putLong(int index, long value) {
+  public void putLong(long index, long value) {
     ensureSize(index + 8);
     myStorage.putLong(index, value);
   }
 
-  public byte get(int index) {
+  public byte get(long index) {
     return myStorage.get(index);
   }
 
-  public void put(int index, byte value) {
+  public void put(long index, byte value) {
     ensureSize(index + 1);
     myStorage.put(index, value);
   }
 
-  public void get(int index, byte[] dst, int offset, int length) {
+  public void get(long index, byte[] dst, int offset, int length) {
     myStorage.get(index, dst, offset, length);
   }
 
-  public void put(int index, byte[] src, int offset, int length) {
+  public void put(long index, byte[] src, int offset, int length) {
     ensureSize(index + length);
     myStorage.put(index, src, offset, length);
   }
