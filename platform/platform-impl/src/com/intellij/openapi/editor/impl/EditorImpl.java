@@ -1826,7 +1826,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   @Override
   public void removeEditorMouseListener(@NotNull EditorMouseListener listener) {
     boolean success = myMouseListeners.remove(listener);
-    LOG.assertTrue(success);
+    LOG.assertTrue(success || isReleased);
   }
 
   @Override
@@ -1837,7 +1837,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   @Override
   public void removeEditorMouseMotionListener(@NotNull EditorMouseMotionListener listener) {
     boolean success = myMouseMotionListeners.remove(listener);
-    LOG.assertTrue(success);
+    LOG.assertTrue(success || isReleased);
   }
 
   @Override
