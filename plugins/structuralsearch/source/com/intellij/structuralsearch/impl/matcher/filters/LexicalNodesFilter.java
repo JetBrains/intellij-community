@@ -2,11 +2,8 @@ package com.intellij.structuralsearch.impl.matcher.filters;
 
 import com.intellij.dupLocator.util.NodeFilter;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiElementVisitor;
 import com.intellij.structuralsearch.StructuralSearchProfile;
 import com.intellij.structuralsearch.StructuralSearchUtil;
-
-import java.util.List;
 
 /**
  * Filter for lexical nodes
@@ -15,13 +12,7 @@ public final class LexicalNodesFilter  implements NodeFilter {
   private boolean careKeyWords;
   private boolean result;
 
-  //private final PsiElementVisitor myJavaVisitor = new JavaLexicalNodesFilter(this);
-  //private final PsiElementVisitor myXmlVistVisitor = new XmlLexicalNodesFilter(this);
-
-  private List<PsiElementVisitor> myCachedFilters;
-
-  private LexicalNodesFilter() {
-  }
+  private LexicalNodesFilter() {}
 
   public static NodeFilter getInstance() {
     return NodeFilterHolder.instance;
@@ -37,9 +28,6 @@ public final class LexicalNodesFilter  implements NodeFilter {
 
   private static class NodeFilterHolder {
     private static final NodeFilter instance = new LexicalNodesFilter();
-
-    private NodeFilterHolder() {
-    }
   }
 
   public boolean isCareKeyWords() {
@@ -60,5 +48,4 @@ public final class LexicalNodesFilter  implements NodeFilter {
     }
     return result;
   }
-
 }

@@ -120,7 +120,7 @@ class EditVarConstraintsDialog extends DialogWrapper {
       public void actionPerformed(final ActionEvent e) {
         final SelectTemplateDialog dialog = new SelectTemplateDialog(project, false, false);
         dialog.show();
-        if (dialog.getExitCode() == DialogWrapper.OK_EXIT_CODE) {
+        if (dialog.getExitCode() == OK_EXIT_CODE) {
           final Configuration[] selectedConfigurations = dialog.getSelectedConfigurations();
           if (selectedConfigurations.length == 1) {
             withinCombo.getComboBox().getEditor().setItem(selectedConfigurations[0].getMatchOptions().getSearchPattern()); // TODO:

@@ -158,15 +158,13 @@ public class GlobalMatchingVisitor extends AbstractMatchingVisitor {
 
   @Nullable
   private PsiElementVisitor createMatchingVisitor(Language language) {
-    PsiElementVisitor visitor;
     StructuralSearchProfile profile = StructuralSearchUtil.getProfileByLanguage(language);
     if (profile == null) {
       LOG.warn("there is no StructuralSearchProfile for language " + language.getID());
       return null;
     }
     else {
-      visitor = profile.createMatchingVisitor(this);
-      return visitor;
+      return profile.createMatchingVisitor(this);
     }
   }
 
