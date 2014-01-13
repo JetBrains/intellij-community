@@ -168,17 +168,13 @@ public class GlobalMatchingVisitor extends AbstractMatchingVisitor {
     }
   }
 
-  public boolean shouldAdvanceThePattern(final PsiElement element, PsiElement match) {
-    MatchingHandler handler = matchContext.getPattern().getHandler(element);
-
-    return handler.shouldAdvanceThePatternFor(element, match);
-  }
-
-  // Matches tree segments starting with given elements to find equality
-  // @param el1 the pattern element for matching
-  // @param el2 the tree element for matching
-  // @return if they are equal and false otherwise
-
+  /**
+   * Matches tree segments starting with given elements to find equality
+   *
+   * @param el1 the pattern element for matching
+   * @param el2 the tree element for matching
+   * @return if they are equal and false otherwise
+   */
   public boolean matchSequentially(NodeIterator nodes, NodeIterator nodes2) {
     if (!nodes.hasNext()) {
       return nodes.hasNext() == nodes2.hasNext();

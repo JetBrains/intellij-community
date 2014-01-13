@@ -8,12 +8,15 @@ import com.intellij.psi.*;
 import com.intellij.structuralsearch.MatchResult;
 import com.intellij.structuralsearch.StructuralSearchProfile;
 import com.intellij.structuralsearch.StructuralSearchUtil;
+import com.intellij.structuralsearch.impl.matcher.CompiledPattern;
 import com.intellij.structuralsearch.impl.matcher.MatchContext;
 import com.intellij.structuralsearch.impl.matcher.MatchResultImpl;
 import com.intellij.structuralsearch.plugin.ui.Configuration;
 import com.intellij.structuralsearch.plugin.util.SmartPsiPointer;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Matching handler that manages substitutions matching
@@ -338,6 +341,81 @@ public class SubstitutionHandler extends MatchingHandler {
     }
   }
 
+  public boolean matchInAnyOrder(NodeIterator patternNodes, NodeIterator matchedNodes, final MatchContext context) {
+    final MatchResultImpl saveResult = context.hasResult() ? context.getResult() : null;
+    context.setResult(null);
+
+    try {
+
+      if (patternNodes.hasNext() && !matchedNodes.hasNext()) {
+        return validateSatisfactionOfHandlers(patternNodes, context);
+      }
+
+      Set<PsiElement> matchedElements = null;
+
+      for(; patternNodes.hasNext(); patternNodes.advance()) {
+        int matchedOccurs = 0;
+        final PsiElement patternNode = patternNodes.current();
+        final CompiledPattern pattern = context.getPattern();
+        final MatchingHandler handler = pattern.getHandler(patternNode);
+
+        final PsiElement startMatching = matchedNodes.current();
+        do {
+          final PsiElement element = handler.getPinnedNode(null);
+          final PsiElement matchedNode = (element != null) ? element : matchedNodes.current();
+
+          if (element == null) matchedNodes.advance();
+          if (!matchedNodes.hasNext()) matchedNodes.reset();
+
+          if (matchedOccurs <= maxOccurs &&
+              (matchedElements == null || !matchedElements.contains(matchedNode))) {
+
+            if (handler.match(patternNode, matchedNode, context)) {
+              ++matchedOccurs;
+              if (matchedElements == null) matchedElements = new HashSet<PsiElement>();
+              matchedElements.add(matchedNode);
+              if (handler.shouldAdvanceThePatternFor(patternNode, matchedNode)) {
+                break;
+              }
+            } else if (element != null) {
+              return false;
+            }
+
+            // clear state of dependent objects
+            clearingVisitor.clearState(pattern, patternNode);
+          }
+
+          // passed of elements and does not found the match
+          if (startMatching == matchedNodes.current()) {
+            final boolean result = validateSatisfactionOfHandlers(patternNodes, context) &&
+                                   matchedOccurs >= minOccurs && matchedOccurs <= maxOccurs;
+            if (result && context.getMatchedElementsListener() != null) {
+              context.getMatchedElementsListener().matchedElements(matchedElements);
+            }
+            return result;
+          }
+        } while(true);
+
+        if (!handler.shouldAdvanceThePatternFor(patternNode, null)) {
+          patternNodes.rewind();
+        }
+      }
+
+      final boolean result = validateSatisfactionOfHandlers(patternNodes, context);
+      if (result && context.getMatchedElementsListener() != null) {
+        context.getMatchedElementsListener().matchedElements(matchedElements);
+      }
+      return result;
+    } finally {
+      if (saveResult!=null) {
+        if (context.hasResult()) {
+          saveResult.getMatches().addAll(context.getResult().getMatches());
+        }
+        context.setResult(saveResult);
+      }
+    }
+  }
+
   public boolean matchSequentially(NodeIterator nodes, NodeIterator nodes2, MatchContext context) {
     return doMatchSequentially(nodes, nodes2, context);
   }
@@ -403,7 +481,7 @@ public class SubstitutionHandler extends MatchingHandler {
           final MatchingHandler nextHandler = context.getPattern().getHandler(nodes.current());
 
           while(matchedOccurs >= minOccurs) {
-            if (nextHandler.matchSequentially(nodes,nodes2,context)) {
+            if (nextHandler.matchSequentially(nodes, nodes2, context)) {
               totalMatchedOccurs = matchedOccurs;
               // match found
               return true;
@@ -417,16 +495,16 @@ public class SubstitutionHandler extends MatchingHandler {
           }
 
           if (matchedOccurs > 0) {
-            removeLastResults(matchedOccurs,context);
+            removeLastResults(matchedOccurs, context);
           }
           nodes.rewind();
           return false;
         } else {
           // match found
           if (handler.isMatchSequentiallySucceeded(nodes2)) {
-            return checkSameOccurencesConstraint();
+            return checkSameOccurrencesConstraint();
           }
-          removeLastResults(matchedOccurs,context);
+          removeLastResults(matchedOccurs, context);
           return false;
         }
       } else {
@@ -443,8 +521,8 @@ public class SubstitutionHandler extends MatchingHandler {
           flag = false;
 
           while(nodes2.hasNext() && matchedOccurs <= maxOccurs) {
-            if (nextHandler.matchSequentially(nodes,nodes2,context)) {
-              return checkSameOccurencesConstraint();
+            if (nextHandler.matchSequentially(nodes, nodes2, context)) {
+              return checkSameOccurrencesConstraint();
             }
 
             if (flag) {
@@ -467,7 +545,7 @@ public class SubstitutionHandler extends MatchingHandler {
           removeLastResults(matchedOccurs,context);
           return false;
         } else {
-          return checkSameOccurencesConstraint();
+          return checkSameOccurrencesConstraint();
         }
       }
     } finally {
@@ -475,7 +553,7 @@ public class SubstitutionHandler extends MatchingHandler {
     }
   }
 
-  private final boolean checkSameOccurencesConstraint() {
+  private boolean checkSameOccurrencesConstraint() {
     if (totalMatchedOccurs == -1) {
       totalMatchedOccurs = matchedOccurs;
       return true;

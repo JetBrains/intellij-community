@@ -2730,4 +2730,40 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
 
     assertEquals(1, findMatchesCount(s,s2));
   }
+
+  public void testFindMethodCallWithTwoOrThreeParameters() {
+    String source = "{ String.format(\"\"); String.format(\"\", 1); String.format(\"\", 1, 2); String.format(\"\", 1, 2, 3); }";
+    String pattern = "'_Instance.'_MethodCall('_Parameter{2,3})";
+
+    assertEquals(2, findMatchesCount(source, pattern));
+  }
+
+  public void testFindMethodWithCountedExceptionsInThrows() {
+    String source = "class A {" +
+                    "  void a() {}" +
+                    "  void b() throws E1 {}" +
+                    "  void c() throws E1, E2{}" +
+                    "  void d() throws E1, E2, E3 {}" +
+                    "}";
+
+    String pattern1 = "class '_A {" +
+                      "  '_type+ 'method+ () throws '_E{0,0}" +
+                      "}";
+    assertEquals(1, findMatchesCount(source, pattern1));
+
+    String pattern2 = "class '_A {" +
+                      "  '_type+ 'method+ () throws '_E{1,2}" +
+                      "}";
+    assertEquals(2, findMatchesCount(source, pattern2));
+
+    String pattern3 = "class '_A {" +
+                      "  '_type+ 'method+ () throws '_E{2,2}" +
+                      "}";
+    assertEquals(1, findMatchesCount(source, pattern3));
+
+    String pattern4 = "class '_A {" +
+                      "  '_type+ 'method+ () throws '_E{0,0}:[ regex( E2 )]" +
+                      "}";
+    assertEquals(2, findMatchesCount(source, pattern4));
+  }
 }

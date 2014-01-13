@@ -198,5 +198,10 @@ public final class MatchResultImpl extends MatchResult {
   public MatchResultImpl getContext() {
     return myContext;
   }
+
+  @Override
+  public String toString() {
+    return "MatchResultImpl{name='" + name + '\'' + ", matchImage='" + matchImage + '\'' + "}";
+  }
 }
 
