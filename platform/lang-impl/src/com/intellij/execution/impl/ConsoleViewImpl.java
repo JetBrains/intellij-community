@@ -1065,9 +1065,6 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
       final int lEnd = line - 1;
       int lStart = lEnd;
       while (prevFolding.equals(myFolding.get(lStart - 1))) lStart--;
-      if (lStart == lEnd) {
-        return;
-      }
 
       for (int i = lStart; i <= lEnd; i++) {
         myFolding.remove(i);
