@@ -181,6 +181,14 @@ public class ValueHint extends AbstractValueHint {
                         final DebuggerContextImpl debuggerContext,
                         final String title,
                         final AbstractValueHintTreeComponent<?> component) {
+    final AnAction setValueAction = ActionManager.getInstance().getAction(DebuggerActions.SET_VALUE);
+    setValueAction.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_F2, 0)), tree);
+    Disposer.register(tree, new Disposable() {
+      @Override
+      public void dispose() {
+        setValueAction.unregisterCustomShortcutSet(tree);
+      }
+    });
     DebuggerInvocationUtil.invokeLater(getProject(), new Runnable() {
       @Override
       public void run() {
@@ -214,15 +222,6 @@ public class ValueHint extends AbstractValueHint {
                                   @Override
                                   public String compute() {
                                     return myCurrentExpression.getText();
-                                  }
-                                });
-
-                                final AnAction setValueAction  = ActionManager.getInstance().getAction(DebuggerActions.SET_VALUE);
-                                setValueAction.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_F2, 0)), tree);
-                                Disposer.register(tree, new Disposable() {
-                                  @Override
-                                  public void dispose() {
-                                    setValueAction.unregisterCustomShortcutSet(tree);
                                   }
                                 });
 
