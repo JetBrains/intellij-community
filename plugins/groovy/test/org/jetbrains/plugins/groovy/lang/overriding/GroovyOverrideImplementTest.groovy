@@ -99,7 +99,7 @@ class Test<T> extends Base<T> {
 """
   }
 
-  void testTrhowsList() {
+  void testThrowsList() {
     assertImplement('''\
 class X implements I {
     <caret>
