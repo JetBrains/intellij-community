@@ -253,13 +253,20 @@ public class WebBrowserManager implements PersistentStateComponent<Element>, Mod
 
   @NotNull
   public WebBrowser getBrowser(@NotNull BrowserFamily family) {
+    WebBrowser browser = findBrowser(family);
+    LOG.assertTrue(browser != null, "Must be at least one browser per family");
+    return browser;
+  }
+
+  @Nullable
+  public WebBrowser findBrowser(@NotNull BrowserFamily family) {
     for (ConfigurableWebBrowser browser : browsers) {
       if (family.equals(browser.getFamily())) {
         return browser;
       }
     }
 
-    throw new IllegalStateException("Must be at least one browser per family");
+    return null;
   }
 
   public boolean isActive(@NotNull WebBrowser browser) {
