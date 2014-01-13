@@ -246,6 +246,13 @@ public class ArrangementMatchingRulesControl extends JBTable {
     refreshEditor();
   }
 
+  public void removeRow(int rowIndex) {
+    if (rowIndex < myEditorRow) {
+      hideEditor();
+    }
+    getModel().removeRow(rowIndex);
+  }
+
   public void refreshEditor() {
     ArrangementMatchingRulesModel model = getModel();
     if (myEditorRow >= model.getSize()) {
