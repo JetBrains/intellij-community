@@ -6,6 +6,9 @@ import org.jetbrains.annotations.Nullable;
 public final class LocalFileUrl implements Url {
   private final String path;
 
+  /**
+   * Use {@link Urls#newLocalFileUrl(String)} instead
+   */
   public LocalFileUrl(@NotNull String path) {
     this.path = path;
   }

@@ -44,6 +44,16 @@ public final class Urls {
   }
 
   @NotNull
+  public static Url newLocalFileUrl(@NotNull String path) {
+    return new LocalFileUrl(path);
+  }
+
+  @NotNull
+  public static Url newLocalFileUrl(@NotNull VirtualFile file) {
+    return newLocalFileUrl(file.getPath());
+  }
+
+  @NotNull
   public static Url newFromEncoded(@NotNull String url) {
     Url result = parseEncoded(url);
     LOG.assertTrue(result != null, url);
@@ -78,7 +88,7 @@ public final class Urls {
   // java.net.URI.create cannot parse "file:///Test Stuff" - but you don't need to worry about it - this method is aware
   @Nullable
   public static Url parseFromIdea(@NotNull String url) {
-    return URLUtil.containsScheme(url) ? parseUrl(url) : new LocalFileUrl(url);
+    return URLUtil.containsScheme(url) ? parseUrl(url) : newLocalFileUrl(url);
   }
 
   @Nullable
@@ -89,7 +99,7 @@ public final class Urls {
 
     if (asLocalIfNoScheme && !URLUtil.containsScheme(url)) {
       // nodejs debug — files only in local filesystem
-      return new LocalFileUrl(url);
+      return newLocalFileUrl(url);
     }
     return parseUrl(VfsUtilCore.toIdeaUrl(url));
   }
