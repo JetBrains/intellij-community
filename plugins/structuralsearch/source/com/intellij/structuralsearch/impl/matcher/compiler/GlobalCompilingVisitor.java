@@ -12,6 +12,7 @@ import com.intellij.structuralsearch.impl.matcher.handlers.MatchingHandler;
 import com.intellij.structuralsearch.impl.matcher.handlers.SubstitutionHandler;
 import com.intellij.structuralsearch.impl.matcher.predicates.RegExpPredicate;
 import com.intellij.structuralsearch.impl.matcher.strategies.ExprMatchingStrategy;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -62,7 +63,7 @@ public class GlobalCompilingVisitor {
 
     if ((!ourFilter.accepts(element) ||
          element instanceof PsiIdentifier) &&
-        (context.getPattern().isRealTypedVar(element)) &&
+        context.getPattern().isRealTypedVar(element) &&
         context.getPattern().getHandlerSimple(element) == null
       ) {
       String name = context.getPattern().getTypedVarString(element);
@@ -150,7 +151,7 @@ public class GlobalCompilingVisitor {
       return null;
     }
 
-    StringBuffer buf = new StringBuffer(content.length());
+    @NonNls StringBuilder buf = new StringBuilder(content.length());
     Matcher matcher = substitutionPattern.matcher(content);
     List<SubstitutionHandler> handlers = null;
     int start = 0;
@@ -159,7 +160,7 @@ public class GlobalCompilingVisitor {
 
     SubstitutionHandler handler = null;
     while (matcher.find()) {
-      if (handlers == null) handlers = new LinkedList<SubstitutionHandler>();
+      if (handlers == null) handlers = new ArrayList<SubstitutionHandler>();
       handler = (SubstitutionHandler)getContext().getPattern().getHandler(matcher.group(1));
       if (handler != null) handlers.add(handler);
 
@@ -181,7 +182,7 @@ public class GlobalCompilingVisitor {
         buf.append(".*?\\b(").append(predicate.getRegExp()).append(")\\b.*?");
       }
 
-      if (!IsNotSuitablePredicate(predicate, handler)) {
+      if (isSuitablePredicate(predicate, handler)) {
         processTokenizedName(predicate.getRegExp(), false, kind);
       }
 
@@ -216,8 +217,9 @@ public class GlobalCompilingVisitor {
     return null;
   }
 
-  static boolean IsNotSuitablePredicate(RegExpPredicate predicate, SubstitutionHandler handler) {
-    return predicate == null || handler.getMinOccurs() == 0 || !predicate.couldBeOptimized();
+  @Contract("null,_ -> false")
+  static boolean isSuitablePredicate(RegExpPredicate predicate, SubstitutionHandler handler) {
+    return predicate != null && handler.getMinOccurs() != 0 && predicate.couldBeOptimized();
   }
 
   private void addFilesToSearchForGivenWord(String refname, boolean endTransaction, GlobalCompilingVisitor.OccurenceKind kind) {
@@ -249,7 +251,7 @@ public class GlobalCompilingVisitor {
     if (getContext().getPattern().isTypedVar(refname)) {
       SubstitutionHandler handler = (SubstitutionHandler)getContext().getPattern().getHandler(refname);
       RegExpPredicate predicate = MatchingHandler.getSimpleRegExpPredicate(handler);
-      if (IsNotSuitablePredicate(predicate, handler)) {
+      if (!isSuitablePredicate(predicate, handler)) {
         return;
       }
 
@@ -290,12 +292,12 @@ public class GlobalCompilingVisitor {
     }
   }
 
-  public static enum OccurenceKind {
+  public enum OccurenceKind {
     LITERAL, COMMENT, CODE
   }
 
   private static class WordTokenizer {
-    private final List<String> myWords = new LinkedList<String>();
+    private final List<String> myWords = new ArrayList<String>();
 
     WordTokenizer(String text) {
       final StringTokenizer tokenizer = new StringTokenizer(text);

@@ -139,7 +139,7 @@ public class StructuralSearchUtil {
   }
 
   public static String shieldSpecialChars(String word) {
-    final StringBuffer buf = new StringBuffer(word.length());
+    final StringBuilder buf = new StringBuilder(word.length());
 
     for (int i = 0; i < word.length(); ++i) {
       if (MatchUtils.SPECIAL_CHARS.indexOf(word.charAt(i)) != -1) {

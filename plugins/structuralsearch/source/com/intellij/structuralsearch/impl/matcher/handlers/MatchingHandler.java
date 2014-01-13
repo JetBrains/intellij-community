@@ -1,19 +1,19 @@
 package com.intellij.structuralsearch.impl.matcher.handlers;
 
+import com.intellij.dupLocator.iterators.NodeIterator;
 import com.intellij.dupLocator.util.NodeFilter;
 import com.intellij.psi.*;
 import com.intellij.structuralsearch.impl.matcher.CompiledPattern;
 import com.intellij.structuralsearch.impl.matcher.MatchContext;
 import com.intellij.structuralsearch.impl.matcher.MatchResultImpl;
 import com.intellij.structuralsearch.impl.matcher.filters.DefaultFilter;
-import com.intellij.dupLocator.iterators.NodeIterator;
 import com.intellij.structuralsearch.impl.matcher.predicates.BinaryPredicate;
 import com.intellij.structuralsearch.impl.matcher.predicates.NotPredicate;
 import com.intellij.structuralsearch.impl.matcher.predicates.RegExpPredicate;
 import com.intellij.structuralsearch.impl.matcher.strategies.MatchingStrategy;
 
-import java.util.LinkedList;
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * Root of handlers for pattern node matching. Handles simplest type of the match.
@@ -30,7 +30,7 @@ public abstract class MatchingHandler extends MatchPredicate {
    * Matches given handler node against given value.
    * @param matchedNode for matching
    * @param context of the matching
-   * @return true if matching was successfull and false otherwise
+   * @return true if matching was successful and false otherwise
    */
   public boolean match(PsiElement patternNode,PsiElement matchedNode, int start, int end, MatchContext context) {
     return match(patternNode,matchedNode,context);
@@ -40,7 +40,7 @@ public abstract class MatchingHandler extends MatchPredicate {
    * Matches given handler node against given value.
    * @param matchedNode for matching
    * @param context of the matching
-   * @return true if matching was successfull and false otherwise
+   * @return true if matching was successful and false otherwise
    */
   public boolean match(PsiElement patternNode,PsiElement matchedNode, MatchContext context) {
     if (patternNode == null) {
@@ -159,38 +159,37 @@ public abstract class MatchingHandler extends MatchPredicate {
 
   protected static ClearStateVisitor clearingVisitor = new ClearStateVisitor();
 
-  public boolean matchInAnyOrder(NodeIterator nodes, NodeIterator nodes2, final MatchContext context) {
-    MatchResultImpl saveResult = context.hasResult()?context.getResult():null;
+  public boolean matchInAnyOrder(NodeIterator patternNodes, NodeIterator matchedNodes, final MatchContext context) {
+    final MatchResultImpl saveResult = context.hasResult() ? context.getResult() : null;
     context.setResult(null);
 
     try {
 
-      if (nodes.hasNext() && !nodes2.hasNext()) {
-        return validateSatisfactionOfHandlers(nodes, context);
+      if (patternNodes.hasNext() && !matchedNodes.hasNext()) {
+        return validateSatisfactionOfHandlers(patternNodes, context);
       }
 
-      List<PsiElement> usedVars = null;
+      Set<PsiElement> usedVars = null;
 
-      for(;nodes.hasNext();nodes.advance()) {
-        final PsiElement el = nodes.current();
+      for(;patternNodes.hasNext();patternNodes.advance()) {
+        final PsiElement patternNode = patternNodes.current();
 
-        final PsiElement startMatching = nodes2.current();
+        final PsiElement startMatching = matchedNodes.current();
         do {
-          final MatchingHandler handler = context.getPattern().getHandler(el);
+          final MatchingHandler handler = context.getPattern().getHandler(patternNode);
           final PsiElement element = handler.getPinnedNode(null);
-          final PsiElement el2 = element != null ? element:nodes2.current();
+          final PsiElement matchedNode = element != null ? element : matchedNodes.current();
 
-          if (element == null) nodes2.advance();
-          if (!nodes2.hasNext()) nodes2.reset();
+          if (element == null) matchedNodes.advance();
+          if (!matchedNodes.hasNext()) matchedNodes.reset();
 
-          if (usedVars== null ||
-              usedVars.indexOf(el2)==-1) {
-            final boolean matched = handler.match(el, el2, context);
+          if (usedVars== null || !usedVars.contains(matchedNode)) {
+            final boolean matched = handler.match(patternNode, matchedNode, context);
 
             if (matched) {
-              if (usedVars==null) usedVars = new LinkedList<PsiElement>();
-              usedVars.add(el2);
-              if (context.getMatcher().shouldAdvanceThePattern(el, el2)) {
+              if (usedVars==null) usedVars = new HashSet<PsiElement>();
+              usedVars.add(matchedNode);
+              if (context.getMatcher().shouldAdvanceThePattern(patternNode, matchedNode)) {
                 break;
               }
             } else if (element != null) {
@@ -198,12 +197,12 @@ public abstract class MatchingHandler extends MatchPredicate {
             }
 
             // clear state of dependent objects
-            clearingVisitor.clearState(context.getPattern(),el);
+            clearingVisitor.clearState(context.getPattern(),patternNode);
           }
 
           // passed of elements and does not found the match
-          if (startMatching == nodes2.current()) {
-            final boolean result = validateSatisfactionOfHandlers(nodes,context);
+          if (startMatching == matchedNodes.current()) {
+            final boolean result = validateSatisfactionOfHandlers(patternNodes,context);
             if (result && context.getMatchedElementsListener() != null) {
               context.getMatchedElementsListener().matchedElements(usedVars);
             }
@@ -211,12 +210,12 @@ public abstract class MatchingHandler extends MatchPredicate {
           }
         } while(true);
 
-        if (!context.getMatcher().shouldAdvanceThePattern(el, null)) {
-          nodes.rewind();
+        if (!context.getMatcher().shouldAdvanceThePattern(patternNode, null)) {
+          patternNodes.rewind();
         }
       }
 
-      final boolean result = validateSatisfactionOfHandlers(nodes,context);
+      final boolean result = validateSatisfactionOfHandlers(patternNodes,context);
       if (result && context.getMatchedElementsListener() != null) {
         context.getMatchedElementsListener().matchedElements(usedVars);
       }

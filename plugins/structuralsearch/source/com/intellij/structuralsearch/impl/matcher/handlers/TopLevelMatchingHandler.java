@@ -9,7 +9,7 @@ import com.intellij.structuralsearch.impl.matcher.MatchContext;
 import com.intellij.structuralsearch.impl.matcher.iterators.SsrFilteringNodeIterator;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.LinkedList;
+import java.util.ArrayList;
 import java.util.List;
 
 public final class TopLevelMatchingHandler extends MatchingHandler implements DelegatingHandler {
@@ -28,14 +28,13 @@ public final class TopLevelMatchingHandler extends MatchingHandler implements De
     if (matched) {
       List<PsiElement> matchedNodes = matchContext.getMatchedNodes();
       if (matchedNodes == null) {
-        matchedNodes = new LinkedList<PsiElement>();
+        matchedNodes = new ArrayList<PsiElement>();
         matchContext.setMatchedNodes(matchedNodes);
       }
 
       PsiElement elementToAdd = matchedNode;
 
-      if (patternNode instanceof PsiComment && matchedNode instanceof PsiMember
-         ) {
+      if (patternNode instanceof PsiComment && matchedNode instanceof PsiMember) {
         // psicomment and psidoccomment are placed inside the psimember next to them so
         // simple topdown matching should do additional "dances" to cover this case.
         elementToAdd = matchedNode.getFirstChild();
@@ -43,8 +42,6 @@ public final class TopLevelMatchingHandler extends MatchingHandler implements De
       }
 
       matchedNodes.add(elementToAdd);
-    } else {
-      //if (matchContext.hasResult()) matchContext.clearResult();
     }
 
     if ((!matched || matchContext.getOptions().isRecursiveSearch()) &&

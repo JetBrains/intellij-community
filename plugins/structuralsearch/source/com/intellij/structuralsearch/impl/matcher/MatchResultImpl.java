@@ -5,8 +5,8 @@ import com.intellij.structuralsearch.MatchResult;
 import com.intellij.structuralsearch.plugin.util.SmartPsiPointer;
 import org.jetbrains.annotations.NonNls;
 
+import java.util.ArrayList;
 import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.List;
 
 /**
@@ -77,7 +77,7 @@ public final class MatchResultImpl extends MatchResult {
   }
 
   public List<MatchResult> getMatches() {
-    if (matches==null) matches = new LinkedList<MatchResult>();
+    if (matches==null) matches = new ArrayList<MatchResult>();
     return matches;
   }
 
@@ -98,14 +98,14 @@ public final class MatchResultImpl extends MatchResult {
   }
 
   public void clear() {
-    if (matchRef!=null) {
+    if (matchRef != null) {
       matchRef.clear();
       matchRef = null;
     }
 
-    if (matches!=null) {
-      for (final MatchResult matche : matches) {
-        ((MatchResultImpl)matche).clear();
+    if (matches != null) {
+      for (final MatchResult match : matches) {
+        ((MatchResultImpl)match).clear();
       }
       matches = null;
     }
@@ -129,8 +129,8 @@ public final class MatchResultImpl extends MatchResult {
   public MatchResultImpl findSon(String name) {
     if (matches!=null) {
       // @todo this could be performance bottleneck, replace with hash lookup!
-      for (final MatchResult matche : matches) {
-        final MatchResultImpl res = (MatchResultImpl)matche;
+      for (final MatchResult match : matches) {
+        final MatchResultImpl res = (MatchResultImpl)match;
 
         if (name.equals(res.getName())) {
           return res;

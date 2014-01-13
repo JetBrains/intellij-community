@@ -84,7 +84,7 @@ public class JavaCompilingVisitor extends JavaRecursiveElementWalkingVisitor {
       }
 
       RegExpPredicate predicate = MatchingHandler.getSimpleRegExpPredicate(handler);
-      if (!GlobalCompilingVisitor.IsNotSuitablePredicate(predicate, handler)) {
+      if (GlobalCompilingVisitor.isSuitablePredicate(predicate, handler)) {
         myCompilingVisitor.processTokenizedName(predicate.getRegExp(), true, GlobalCompilingVisitor.OccurenceKind.COMMENT);
       }
 

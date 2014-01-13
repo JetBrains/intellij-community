@@ -413,12 +413,12 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
     if (allRemainingClassContentElementHandler != null) {
       myMatchingVisitor.getMatchContext().setMatchedElementsListener(
         newListener = new MatchContext.MatchedElementsListener() {
-          private List<PsiElement> myMatchedElements;
+          private Set<PsiElement> myMatchedElements;
 
           public void matchedElements(Collection<PsiElement> matchedElements) {
             if (matchedElements == null) return;
             if (myMatchedElements == null) {
-              myMatchedElements = new LinkedList<PsiElement>(matchedElements);
+              myMatchedElements = new HashSet<PsiElement>(matchedElements);
             }
             else {
               myMatchedElements.addAll(matchedElements);
@@ -429,7 +429,7 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
             final SubstitutionHandler handler = (SubstitutionHandler)allRemainingClassContentElementHandler;
 
             for (PsiElement el = clazz2.getFirstChild(); el != null; el = el.getNextSibling()) {
-              if (el instanceof PsiMember && (myMatchedElements == null || myMatchedElements.indexOf(el) == -1)) {
+              if (el instanceof PsiMember && (myMatchedElements == null || !myMatchedElements.contains(el))) {
                 handler.handle(el, myMatchingVisitor.getMatchContext());
               }
             }

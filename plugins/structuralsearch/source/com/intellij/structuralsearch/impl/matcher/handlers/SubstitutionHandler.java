@@ -1,5 +1,7 @@
 package com.intellij.structuralsearch.impl.matcher.handlers;
 
+import com.intellij.dupLocator.iterators.FilteringNodeIterator;
+import com.intellij.dupLocator.iterators.NodeIterator;
 import com.intellij.dupLocator.util.NodeFilter;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -8,12 +10,9 @@ import com.intellij.structuralsearch.StructuralSearchProfile;
 import com.intellij.structuralsearch.StructuralSearchUtil;
 import com.intellij.structuralsearch.impl.matcher.MatchContext;
 import com.intellij.structuralsearch.impl.matcher.MatchResultImpl;
-import com.intellij.dupLocator.iterators.FilteringNodeIterator;
-import com.intellij.dupLocator.iterators.NodeIterator;
 import com.intellij.structuralsearch.plugin.ui.Configuration;
 import com.intellij.structuralsearch.plugin.util.SmartPsiPointer;
 
-import java.util.LinkedList;
 import java.util.List;
 
 /**
@@ -41,7 +40,7 @@ public class SubstitutionHandler extends MatchingHandler {
         return false;
       }
 
-      StructuralSearchProfile profile = StructuralSearchUtil.getProfileByPsiElement(element);
+      final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByPsiElement(element);
       if (profile == null) {
         return false;
       }
@@ -144,18 +143,10 @@ public class SubstitutionHandler extends MatchingHandler {
 
   public boolean match(final PsiElement node, final PsiElement match, MatchContext context) {
     if (!super.match(node,match,context)) return false;
-    //MatchResult saveResult = context.getResult();
-    //context.setResult(null);
 
-    boolean result = matchHandler == null ?
-      context.getMatcher().match(node,match):
-      matchHandler.match(node,match,context);
-    //if (context.hasResult() && saveResult!=null) {
-    //  saveResult.addSon(context.getResult());
-    //}
-    //context.setResult(saveResult);
-
-    return result;
+    return matchHandler == null ?
+           context.getMatcher().match(node, match):
+           matchHandler.match(node,match,context);
   }
 
   public boolean handle(final PsiElement match, MatchContext context) {
@@ -207,7 +198,7 @@ public class SubstitutionHandler extends MatchingHandler {
   }
 
   public boolean handle(final PsiElement match, int start, int end, MatchContext context) {
-    if (!validate(match,start,end,context)) { 
+    if (!validate(match,start,end,context)) {
       myNestedResult = null;
       
       //if (maxOccurs==1 && minOccurs==1) {
@@ -321,23 +312,23 @@ public class SubstitutionHandler extends MatchingHandler {
     return maxOccurs;
   }
 
-  private final void removeLastResults(int numberOfResults, MatchContext context) {
+  private void removeLastResults(int numberOfResults, MatchContext context) {
     if (numberOfResults == 0) return;
-    MatchResultImpl substitution = context.getResult().findSon(name);
+    final MatchResultImpl substitution = context.getResult().findSon(name);
 
     if (substitution!=null) {
       final List<PsiElement> matchedNodes = context.getMatchedNodes();
 
       if (substitution.hasSons()) {
-        final LinkedList<MatchResult> sons = (LinkedList<MatchResult>) substitution.getMatches();
+        final List<MatchResult> sons = substitution.getMatches();
 
         while(numberOfResults > 0) {
           --numberOfResults;
-          final MatchResult matchResult = sons.removeLast();
+          final MatchResult matchResult = sons.remove(sons.size() - 1);
           if (matchedNodes != null) matchedNodes.remove(matchResult.getMatch());
         }
 
-        if (sons.size() == 0) {
+        if (sons.isEmpty()) {
           context.getResult().removeSon(name);
         }
       } else {
@@ -382,7 +373,7 @@ public class SubstitutionHandler extends MatchingHandler {
 
       if (matchedOccurs!=minOccurs) {
         // failed even for min occurs
-        removeLastResults(matchedOccurs,context);
+        removeLastResults(matchedOccurs, context);
         fNodes2.rewind(matchedOccurs);
         return false;
       }

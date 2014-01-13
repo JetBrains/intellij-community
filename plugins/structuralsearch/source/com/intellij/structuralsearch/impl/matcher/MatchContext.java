@@ -3,9 +3,9 @@ package com.intellij.structuralsearch.impl.matcher;
 import com.intellij.psi.PsiElement;
 import com.intellij.structuralsearch.MatchOptions;
 import com.intellij.structuralsearch.MatchResultSink;
+import com.intellij.util.containers.Stack;
 
 import java.util.Collection;
-import java.util.LinkedList;
 import java.util.List;
 
 /**
@@ -13,7 +13,7 @@ import java.util.List;
  */
 public class MatchContext {
   private MatchResultSink sink;
-  private final LinkedList<MatchResultImpl> previousResults = new LinkedList<MatchResultImpl>();
+  private final Stack<MatchResultImpl> previousResults = new Stack<MatchResultImpl>();
   private MatchResultImpl result;
   private CompiledPattern pattern;
   private MatchOptions options;
@@ -63,7 +63,7 @@ public class MatchContext {
   }
 
   public MatchResultImpl getPreviousResult() {
-    return previousResults.size() == 0 ? null:previousResults.getLast();
+    return previousResults.isEmpty() ? null : previousResults.peek();
   }
 
   public MatchResultImpl getResult() {
@@ -72,12 +72,12 @@ public class MatchContext {
   }
 
   public void pushResult() {
-    previousResults.addLast(result);
+    previousResults.push(result);
     result = null;
   }
   
   public void popResult() {
-    result = previousResults.removeLast();
+    result = previousResults.pop();
   }
   
   public void setResult(MatchResultImpl result) {

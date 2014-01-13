@@ -92,7 +92,7 @@ public class ReplacerImpl {
       CollectingMatchResultSink sink = new CollectingMatchResultSink();
       matcher.testFindMatches(new FilteringMatchResultSink(sink), this.options.getMatchOptions());
 
-      final List<ReplacementInfo> resultPtrList = new LinkedList<ReplacementInfo>();
+      final List<ReplacementInfo> resultPtrList = new ArrayList<ReplacementInfo>();
 
       for (final MatchResult result : sink.getMatches()) {
         resultPtrList.add(buildReplacement(result));
