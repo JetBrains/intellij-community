@@ -68,11 +68,6 @@ public class GroovyOverrideImplementUtil {
 
     setupAnnotations(aClass, method, result);
 
-    PsiTypeParameterList typeParameterList = result.getTypeParameterList();
-    if (typeParameterList != null && typeParameterList.getTextLength() == 0) {
-      typeParameterList.delete();
-    }
-
     GroovyChangeContextUtil.encodeContextInfo(result);
     return result;
   }
