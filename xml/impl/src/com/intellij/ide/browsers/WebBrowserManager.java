@@ -70,9 +70,12 @@ public class WebBrowserManager implements PersistentStateComponent<Element>, Mod
       entry.setAttribute("id", browser.getId().toString());
       entry.setAttribute("name", browser.getName());
       entry.setAttribute("family", browser.getFamily().name());
-      if (!StringUtil.isEmpty(browser.getPath())) {
-        entry.setAttribute("path", browser.getPath());
+
+      String path = browser.getPath();
+      if (path != null && !path.equals(browser.getFamily().getExecutionPath())) {
+        entry.setAttribute("path", path);
       }
+
       if (!browser.isActive()) {
         entry.setAttribute("active", "false");
       }
@@ -178,10 +181,16 @@ public class WebBrowserManager implements PersistentStateComponent<Element>, Mod
       }
 
       String activeValue = child.getAttributeValue("active");
+
+      String path = StringUtil.nullize(child.getAttributeValue("path"), true);
+      if (path == null) {
+        path = family.getExecutionPath();
+      }
+
       list.add(new ConfigurableWebBrowser(id,
                                           family,
                                           StringUtil.notNullize(child.getAttributeValue("name"), family.getName()),
-                                          StringUtil.nullize(child.getAttributeValue("path"), true),
+                                          path,
                                           activeValue == null || Boolean.parseBoolean(activeValue),
                                           specificSettings));
     }
