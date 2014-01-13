@@ -149,7 +149,7 @@ public class Main {
                          System.getProperty("java.home") + "/bin/java",
                          "-Xmx500m",
                          "-classpath",
-                         copyPatchFile.getPath(),
+                         copyPatchFile.getPath() + ";" + copyPatchFile.getPath() + "/lib/log4j.jar",
                          "com.intellij.updater.Runner",
                          "install",
                          PathManager.getHomePath());
