@@ -171,8 +171,9 @@ public class AutoPopupController implements Disposable {
       final Runnable request = new Runnable(){
         @Override
         public void run(){
-          if (myProject.isDisposed() || DumbService.isDumb(myProject) || editor.isDisposed()) return;
+          if (myProject.isDisposed() || DumbService.isDumb(myProject)) return;
           documentManager.commitAllDocuments();
+          if (editor.isDisposed() || !editor.getComponent().isShowing()) return;
           int lbraceOffset = editor.getCaretModel().getOffset() - 1;
           try {
             ShowParameterInfoHandler.invoke(myProject, editor, file1, lbraceOffset, highlightedMethod);
