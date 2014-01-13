@@ -181,13 +181,16 @@ public class ImportToggleAliasIntention implements IntentionAction {
                 InjectedLanguageManager.getInstance(project).getInjectedPsiFiles(host);
               if (files != null) {
                 for (Pair<PsiElement, TextRange> pair : files) {
-                  final ScopeOwner scopeOwner = (ScopeOwner)pair.getFirst();
-                  PsiTreeUtil.processElements(scopeOwner, new PsiElementProcessor() {
-                    public boolean execute(@NotNull PsiElement element) {
-                      getReferences(element);
-                      return true;
-                    }
-                  });
+                  final PsiElement first = pair.getFirst();
+                  if (first instanceof ScopeOwner) {
+                    final ScopeOwner scopeOwner = (ScopeOwner)first;
+                    PsiTreeUtil.processElements(scopeOwner, new PsiElementProcessor() {
+                      public boolean execute(@NotNull PsiElement element) {
+                        getReferences(element);
+                        return true;
+                      }
+                    });
+                  }
                 }
               }
             }
