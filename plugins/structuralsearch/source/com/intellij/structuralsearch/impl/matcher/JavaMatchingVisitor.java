@@ -396,34 +396,32 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
   }
 
   private boolean compareClasses(final PsiClass clazz, final PsiClass clazz2) {
-    PsiClass saveClazz = this.myClazz;
-    MatchContext.UnmatchedElementsListener oldlistener = myMatchingVisitor.getMatchContext().getUnmatchedElementsListener();
+    final PsiClass saveClazz = this.myClazz;
+    final MatchContext.MatchedElementsListener oldListener = myMatchingVisitor.getMatchContext().getMatchedElementsListener();
 
     this.myClazz = clazz2;
 
-    CompiledPattern pattern = myMatchingVisitor.getMatchContext().getPattern();
+    final CompiledPattern pattern = myMatchingVisitor.getMatchContext().getPattern();
     assert pattern instanceof JavaCompiledPattern;
     final JavaCompiledPattern javaPattern = (JavaCompiledPattern)pattern;
 
-    String unmatchedHandlerName = clazz.getUserData(JavaCompiledPattern.ALL_CLASS_CONTENT_VAR_NAME_KEY);
+    final String unmatchedHandlerName = clazz.getUserData(JavaCompiledPattern.ALL_CLASS_CONTENT_VAR_NAME_KEY);
     final MatchingHandler allRemainingClassContentElementHandler = unmatchedHandlerName != null ? pattern.getHandler(unmatchedHandlerName) : null;
-    MatchContext.UnmatchedElementsListener newlistener = null;
-    boolean result = false;
+    MatchContext.MatchedElementsListener newListener = null;
 
     assert javaPattern instanceof JavaCompiledPattern;
     if (allRemainingClassContentElementHandler != null) {
-      myMatchingVisitor.getMatchContext().setUnmatchedElementsListener(
-        newlistener = new MatchContext.UnmatchedElementsListener() {
-          private List<PsiElement> myUnmatchedList;
+      myMatchingVisitor.getMatchContext().setMatchedElementsListener(
+        newListener = new MatchContext.MatchedElementsListener() {
+          private List<PsiElement> myMatchedElements;
 
-          public void matchedElements(List<PsiElement> elementList) {
-            if (elementList != null) {
-              if (myUnmatchedList == null) {
-                myUnmatchedList = new LinkedList<PsiElement>(elementList);
-              }
-              else {
-                myUnmatchedList.addAll(elementList);
-              }
+          public void matchedElements(Collection<PsiElement> matchedElements) {
+            if (matchedElements == null) return;
+            if (myMatchedElements == null) {
+              myMatchedElements = new LinkedList<PsiElement>(matchedElements);
+            }
+            else {
+              myMatchedElements.addAll(matchedElements);
             }
           }
 
@@ -431,7 +429,7 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
             final SubstitutionHandler handler = (SubstitutionHandler)allRemainingClassContentElementHandler;
 
             for (PsiElement el = clazz2.getFirstChild(); el != null; el = el.getNextSibling()) {
-              if (el instanceof PsiMember && (myUnmatchedList == null || myUnmatchedList.indexOf(el) == -1)) {
+              if (el instanceof PsiMember && (myMatchedElements == null || myMatchedElements.indexOf(el) == -1)) {
                 handler.handle(el, myMatchingVisitor.getMatchContext());
               }
             }
@@ -440,6 +438,7 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
       );
     }
 
+    boolean result = false;
     try {
       final boolean templateIsInterface = clazz.isInterface();
       if (templateIsInterface != clazz2.isInterface()) return false;
@@ -473,10 +472,9 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
       final PsiField[] fields = clazz.getFields();
 
       if (fields.length > 0) {
-        final PsiField[] fields2;
-        fields2 = javaPattern.isRequestsSuperFields() ?
-                  clazz2.getAllFields() :
-                  clazz2.getFields();
+        final PsiField[] fields2 = javaPattern.isRequestsSuperFields() ?
+                                   clazz2.getAllFields() :
+                                   clazz2.getFields();
 
         if (!myMatchingVisitor.matchInAnyOrder(fields, fields2)) {
           return false;
@@ -486,10 +484,9 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
       final PsiMethod[] methods = clazz.getMethods();
 
       if (methods.length > 0) {
-        final PsiMethod[] methods2;
-        methods2 = javaPattern.isRequestsSuperMethods() ?
-                   clazz2.getAllMethods() :
-                   clazz2.getMethods();
+        final PsiMethod[] methods2 = javaPattern.isRequestsSuperMethods() ?
+                                     clazz2.getAllMethods() :
+                                     clazz2.getMethods();
 
         if (!myMatchingVisitor.matchInAnyOrder(methods, methods2)) {
           return false;
@@ -521,9 +518,9 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
       return result;
     }
     finally {
-      if (result && newlistener != null) newlistener.commitUnmatched();
+      if (result && newListener != null) newListener.commitUnmatched();
       this.myClazz = saveClazz;
-      myMatchingVisitor.getMatchContext().setUnmatchedElementsListener(oldlistener);
+      myMatchingVisitor.getMatchContext().setMatchedElementsListener(oldListener);
     }
   }
 

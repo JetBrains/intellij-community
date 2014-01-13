@@ -16,7 +16,7 @@ import java.util.LinkedList;
 import java.util.List;
 
 /**
- * Root of handlers for pattern node matching. Handles simpliest type of the match.
+ * Root of handlers for pattern node matching. Handles simplest type of the match.
  */
 public abstract class MatchingHandler extends MatchPredicate {
   protected NodeFilter filter;
@@ -203,9 +203,9 @@ public abstract class MatchingHandler extends MatchPredicate {
 
           // passed of elements and does not found the match
           if (startMatching == nodes2.current()) {
-            boolean result = validateSatisfactionOfHandlers(nodes,context);
-            if (result && context.getUnmatchedElementsListener() != null) {
-              context.getUnmatchedElementsListener().matchedElements(usedVars);
+            final boolean result = validateSatisfactionOfHandlers(nodes,context);
+            if (result && context.getMatchedElementsListener() != null) {
+              context.getMatchedElementsListener().matchedElements(usedVars);
             }
             return result;
           }
@@ -216,9 +216,9 @@ public abstract class MatchingHandler extends MatchPredicate {
         }
       }
 
-      boolean result = validateSatisfactionOfHandlers(nodes,context);
-      if (result && context.getUnmatchedElementsListener()!=null) {
-        context.getUnmatchedElementsListener().matchedElements(usedVars);
+      final boolean result = validateSatisfactionOfHandlers(nodes,context);
+      if (result && context.getMatchedElementsListener() != null) {
+        context.getMatchedElementsListener().matchedElements(usedVars);
       }
       return result;
     } finally {

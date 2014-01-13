@@ -4,6 +4,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.structuralsearch.MatchOptions;
 import com.intellij.structuralsearch.MatchResultSink;
 
+import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -38,12 +39,12 @@ public class MatchContext {
     myWithAlternativePatternRoots = withAlternativePatternRoots;
   }
 
-  public interface UnmatchedElementsListener {
-    void matchedElements(List<PsiElement> elementList);
+  public interface MatchedElementsListener {
+    void matchedElements(Collection<PsiElement> matchedElements);
     void commitUnmatched();
   }
 
-  private UnmatchedElementsListener unmatchedElementsListener;
+  private MatchedElementsListener myMatchedElementsListener;
 
   public void setMatcher(GlobalMatchingVisitor matcher) {
     this.matcher = matcher;
@@ -119,11 +120,11 @@ public class MatchContext {
     this.shouldRecursivelyMatch = shouldRecursivelyMatch;
   }
 
-  public void setUnmatchedElementsListener(UnmatchedElementsListener _unmatchedElementsListener) {
-    unmatchedElementsListener = _unmatchedElementsListener;
+  public void setMatchedElementsListener(MatchedElementsListener _matchedElementsListener) {
+    myMatchedElementsListener = _matchedElementsListener;
   }
 
-  public UnmatchedElementsListener getUnmatchedElementsListener() {
-    return unmatchedElementsListener;
+  public MatchedElementsListener getMatchedElementsListener() {
+    return myMatchedElementsListener;
   }
 }
