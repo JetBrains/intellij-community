@@ -291,7 +291,7 @@ public class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
                 isEmpty = isEmptyFunction(func);
                 emptyFunctions.put(func, isEmpty);
               }
-              if (isEmpty) {
+              if (isEmpty && !mayBeField) {
                 continue;
               }
             }
