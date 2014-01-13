@@ -139,6 +139,10 @@ public class CertificatesManager implements ApplicationComponent {
     factory.init((KeyStore)null);
     // assume that only X509 TrustManagers exist
     X509TrustManager systemManager = findX509TrustManager(factory.getTrustManagers());
+    assert systemManager != null;
+
+    // can also check, that default trust store exists, on this step
+    //assert systemManager.getAcceptedIssuers().length != 0
 
     MutableX509TrustManager customManager = new MutableX509TrustManager(myCacertsPath, myPassword);
     MyX509TrustManager trustManager = new MyX509TrustManager(systemManager, customManager);
@@ -192,7 +196,15 @@ public class CertificatesManager implements ApplicationComponent {
       try {
         mySystemManager.checkServerTrusted(certificates, s);
       }
-      catch (CertificateException e1) {
+      catch (RuntimeException e) {
+        Throwable cause = e.getCause();
+        // this can happen on some version of Apple's JRE, e.g. see IDEA-115565
+        if (cause != null && cause.getMessage().equals("the trustAnchors parameter must be non-empty")) {
+          LOG.error("It seems, that your JRE installation doesn't have system trust store.\n" +
+                    "If you're using Mac JRE, try upgrading to the latest version.", e);
+        }
+      }
+      catch (CertificateException e) {
         X509Certificate certificate = certificates[0];
         // looks like self-signed certificate
         if (certificates.length == 1) {
@@ -203,7 +215,7 @@ public class CertificatesManager implements ApplicationComponent {
             }
             catch (CertificateException e2) {
               if (myCustomManager.isBroken() || !updateTrustStore(certificate)) {
-                throw e1;
+                throw e;
               }
             }
           }
