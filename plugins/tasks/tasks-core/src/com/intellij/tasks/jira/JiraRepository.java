@@ -151,7 +151,11 @@ public class JiraRepository extends BaseRepositoryImpl {
     JsonObject object = GSON.fromJson(responseBody, JsonObject.class);
     // when JIRA 4.x support will be dropped 'versionNumber' array in response
     // may be used instead version string parsing
-    return JiraRestApi.fromJiraVersion(object.get("version").getAsString(), this);
+    JiraRestApi version = JiraRestApi.fromJiraVersion(object.get("version").getAsString(), this);
+    if (version == null) {
+      throw new Exception("JIRA below 4.0.0 doesn't have REST API and is no longer supported.");
+    }
+    return version;
   }
 
   @Override
