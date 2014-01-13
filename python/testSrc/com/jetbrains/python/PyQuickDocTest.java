@@ -20,6 +20,8 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.testFramework.TestDataFile;
+import com.jetbrains.python.documentation.DocStringFormat;
+import com.jetbrains.python.documentation.PyDocumentationSettings;
 import com.jetbrains.python.documentation.PythonDocumentationProvider;
 import com.jetbrains.python.fixtures.LightMarkedTestCase;
 import com.jetbrains.python.fixtures.PyTestCase;
@@ -35,12 +37,23 @@ import java.util.Map;
  */
 public class PyQuickDocTest extends LightMarkedTestCase {
   private PythonDocumentationProvider myProvider;
+  private String myFormat;
 
   @Override
   protected void setUp() throws Exception {
     super.setUp();
     // the provider is stateless, can be reused, as in real life
     myProvider = new PythonDocumentationProvider();
+    final PyDocumentationSettings documentationSettings = PyDocumentationSettings.getInstance(myFixture.getModule());
+    myFormat = documentationSettings.getFormat();
+    documentationSettings.setFormat(DocStringFormat.PLAIN);
+  }
+
+  @Override
+  public void tearDown() throws Exception {
+    final PyDocumentationSettings documentationSettings = PyDocumentationSettings.getInstance(myFixture.getModule());
+    documentationSettings.setFormat(myFormat);
+    super.tearDown();
   }
 
   private void checkByHTML(String text) {
