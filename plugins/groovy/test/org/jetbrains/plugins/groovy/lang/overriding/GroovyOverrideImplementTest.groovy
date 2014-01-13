@@ -100,7 +100,7 @@ class Test<T> extends Base<T> {
   }
 
   void testTrhowsList() {
-    myFixture.configureByText('a.groovy', '''\
+    assertImplement('''\
 class X implements I {
     <caret>
 }
@@ -108,11 +108,7 @@ class X implements I {
 interface I {
     void foo() throws RuntimeException
 }
-''')
-
-    generateImplementation(findMethod('I', 'foo'))
-
-    myFixture.checkResult('''\
+''', 'I', 'foo', '''\
 class X implements I {
 
     @Override
@@ -125,6 +121,12 @@ interface I {
     void foo() throws RuntimeException
 }
 ''')
+  }
+
+  private void assertImplement(String textBefore, String clazz, String name, String textAfter) {
+    myFixture.configureByText('a.groovy', textBefore)
+    generateImplementation(findMethod(clazz, name))
+    myFixture.checkResult(textAfter)
   }
 
   void testThrowsListWithImport() {
@@ -158,6 +160,39 @@ class X implements I {
     void foo() throws Exc {
 
     }
+}
+''')
+  }
+
+  void testNullableParameter() {
+    myFixture.addClass('''
+package org.jetbrains.annotations;
+public @interface Nullable{}
+''')
+
+    assertImplement('''
+import org.jetbrains.annotations.Nullable
+
+class Inheritor implements I {
+  <caret>
+}
+
+interface I {
+  def foo(@Nullable p)
+}
+''', 'I', 'foo', '''
+import org.jetbrains.annotations.Nullable
+
+class Inheritor implements I {
+
+    @Override
+    def foo(@Nullable Object p) {
+        <caret>return null
+    }
+}
+
+interface I {
+  def foo(@Nullable p)
 }
 ''')
   }
