@@ -1,7 +1,7 @@
 class A:
   def __init__(self):
-    self.x = 1
     self.y = None
+    self.x = 1
 
   def foo(self):
     a = self.y
