@@ -1,5 +1,5 @@
 /*
- * Copyright 2008-2013 Bas Leijdekkers
+ * Copyright 2008-2014 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -114,9 +114,14 @@ public class UnnecessaryToStringCallInspection extends BaseInspection {
         return;
       }
       final PsiExpression qualifier = methodExpression.getQualifierExpression();
-      if (qualifier != null && qualifier.getType() instanceof PsiArrayType) {
-        // do not warn on nonsensical code
-        return;
+      if (qualifier != null) {
+        if (qualifier.getType() instanceof PsiArrayType) {
+          // do not warn on nonsensical code
+          return;
+        }
+        else if (qualifier instanceof PsiSuperExpression) {
+          return;
+        }
       }
       registerMethodCallError(expression, calculateReplacementText(qualifier));
     }
