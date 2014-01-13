@@ -48,8 +48,8 @@ public abstract class JavaFindUsagesOptions extends FindUsagesOptions {
     return result;
   }
 
-  protected void addUsageTypes(LinkedHashSet<String> to) {
-    if (this.isUsages) {
+  protected void addUsageTypes(@NotNull LinkedHashSet<String> to) {
+    if (isUsages) {
       to.add(FindBundle.message("find.usages.panel.title.usages"));
     }
   }
@@ -57,13 +57,13 @@ public abstract class JavaFindUsagesOptions extends FindUsagesOptions {
   @NotNull
   @Override
   public final String generateUsagesString() {
-    String suffix = " " + FindBundle.message("find.usages.panel.title.separator") + " ";
+    String separator = " " + FindBundle.message("find.usages.panel.title.separator") + " ";
     LinkedHashSet<String> strings = new LinkedHashSet<String>();
     addUsageTypes(strings);
     if (strings.isEmpty()) {
       strings.add(FindBundle.message("find.usages.panel.title.usages"));
     }
-    return StringUtil.join(strings, suffix);
+    return StringUtil.join(strings, separator);
   }
 
 
