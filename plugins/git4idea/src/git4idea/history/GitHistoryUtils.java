@@ -46,6 +46,7 @@ import git4idea.*;
 import git4idea.branch.GitBranchUtil;
 import git4idea.commands.*;
 import git4idea.config.GitConfigUtil;
+import git4idea.config.GitVersionSpecialty;
 import git4idea.history.browser.GitHeavyCommit;
 import git4idea.history.browser.SHAHash;
 import git4idea.history.browser.SymbolicRefs;
@@ -1021,7 +1022,9 @@ public class GitHistoryUtils {
   public static List<GitCommit> commitsDetails(@NotNull Project project, @NotNull VirtualFile root,
                                                @NotNull final Collection<String> hashes) throws VcsException {
     List<String> params = new ArrayList<String>(hashes);
-    params.add(0, "--no-walk=unsorted");
+    GitVcs vcs = GitVcs.getInstance(project);
+    String noWalk = vcs != null && GitVersionSpecialty.NO_WALK_UNSORTED.existsIn(vcs.getVersion()) ? "--no-walk=unsorted" : "--no-walk";
+    params.add(0, noWalk);
     return getAllDetails(project, root, params);
   }
 
