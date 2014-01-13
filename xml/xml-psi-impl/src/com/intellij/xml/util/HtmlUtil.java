@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -264,7 +264,7 @@ public class HtmlUtil {
     return descriptors;
   }
 
-  public static XmlElementDescriptor[] getCustomTagDescriptors(XmlElement context) {
+  public static XmlElementDescriptor[] getCustomTagDescriptors(@Nullable PsiElement context) {
     String entitiesString = getEntitiesString(context, XmlEntitiesInspection.TAG_SHORT_NAME);
     if (entitiesString == null) return XmlElementDescriptor.EMPTY_ARRAY;
 
@@ -298,7 +298,7 @@ public class HtmlUtil {
   }
 
   @Nullable
-  public static String getEntitiesString(XmlElement context, String inspectionName) {
+  public static String getEntitiesString(@Nullable PsiElement context, @NotNull String inspectionName) {
     if (context == null) return null;
     PsiFile containingFile = context.getContainingFile().getOriginalFile();
 

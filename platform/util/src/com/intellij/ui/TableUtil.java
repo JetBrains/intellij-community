@@ -199,23 +199,16 @@ public class TableUtil {
     table.setRowSelectionInterval(0, 0);
   }
 
-  /**
-   * @return column width
-   */
-  public static int setupCheckboxColumn(@NotNull JTable table, int columnIndex) {
-    return setupCheckboxColumn(table.getColumnModel().getColumn(columnIndex));
+  public static void setupCheckboxColumn(@NotNull JTable table, int columnIndex) {
+    setupCheckboxColumn(table.getColumnModel().getColumn(columnIndex));
   }
 
-  /**
-   * @return column width
-   */
-  public static int setupCheckboxColumn(@NotNull TableColumn column) {
+  public static void setupCheckboxColumn(@NotNull TableColumn column) {
     int checkboxWidth = new JCheckBox().getPreferredSize().width;
     column.setResizable(false);
     column.setPreferredWidth(checkboxWidth);
     column.setMaxWidth(checkboxWidth);
     column.setMinWidth(checkboxWidth);
-    return checkboxWidth;
   }
 
   public static void updateScroller(@NotNull JTable table, boolean temporaryHideVerticalScrollBar) {
