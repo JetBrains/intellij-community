@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,7 +37,7 @@ public interface SpacingTokens extends GroovyElementTypes {
 
   TokenSet LOGICAL_OPERATORS = TokenSet.create(mLAND, mLOR);
   TokenSet EQUALITY_OPERATORS = TokenSet.create(mEQUAL, mNOT_EQUAL);
-  TokenSet RELATIONAL_OPERATORS = TokenSet.create(mGT, mGE, mLT, mLE);
+  TokenSet RELATIONAL_OPERATORS = TokenSet.create(mGT, mGE, mLT, mLE, mCOMPARE_TO);
   TokenSet BITWISE_OPERATORS = TokenSet.create(mBAND, mBOR, mBXOR);
   TokenSet ADDITIVE_OPERATORS = TokenSet.create(mPLUS, mMINUS);
   TokenSet MULTIPLICATIVE_OPERATORS = TokenSet.create(mSTAR, mDIV, mMOD);

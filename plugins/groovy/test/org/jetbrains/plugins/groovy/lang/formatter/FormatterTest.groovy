@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,6 +36,7 @@ public class FormatterTest extends GroovyFormatterTestCase {
   public void testArg2() throws Throwable { doTest(); }
   public void testBin1() throws Throwable { doTest(); }
   public void testBin2() throws Throwable { doTest(); }
+  public void testBin3() throws Throwable { doTest(); }
   public void testBlockExpr1() throws Throwable {
     //groovySettings.KEEP_CONTROL_STATEMENT_IN_ONE_LINE = false
     groovySettings.KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = false
