@@ -45,6 +45,8 @@ import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.ProperTextRange;
+import com.intellij.openapi.wm.ToolWindowAnchor;
+import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.Alarm;
@@ -1105,14 +1107,12 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
         needDelay = true;
         final JPanel editorFragmentPreviewPanel = new JPanel() {
           private static final int R = 6;
-          private static final int LEFT_INDENT = 0;//BalloonImpl.ARC;// + 5;
 
           @Override
           public Dimension getPreferredSize() {
-            int width = myEditor.getGutterComponentEx().getWidth();
-            width += Math.min(myEditor.getScrollingModel().getVisibleArea().width, myEditor.getContentComponent().getWidth());
-            if (UISettings.getInstance().HIDE_TOOL_STRIPES) width -=2;
-            return new Dimension(width - BalloonImpl.POINTER_WIDTH - LEFT_INDENT, myEditor.getLineHeight() * (myEndVisualLine - myStartVisualLine));
+            int width = myEditor.getGutterComponentEx().getWidth() + myEditor.getScrollingModel().getVisibleArea().width;
+            if (!ToolWindowManagerEx.getInstanceEx(myEditor.getProject()).getIdsOn(ToolWindowAnchor.LEFT).isEmpty()) width--;
+            return new Dimension(width - BalloonImpl.POINTER_WIDTH, myEditor.getLineHeight() * (myEndVisualLine - myStartVisualLine));
           }
 
           @Override
@@ -1132,13 +1132,13 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
               UISettings.setupAntialiasing(cg);
               int lineShift = -myEditor.getLineHeight() * myCacheStartLine;
 
-              AffineTransform translateInstance = AffineTransform.getTranslateInstance(-4, lineShift);
+              AffineTransform translateInstance = AffineTransform.getTranslateInstance(-3, lineShift);
               translateInstance.preConcatenate(t);
               cg.setTransform(translateInstance);
 
               cg.setClip(0, -lineShift, gutterWidth, myCacheLevel2.getHeight());
               gutterComponentEx.paint(cg);
-              translateInstance = AffineTransform.getTranslateInstance(gutterWidth - 4, lineShift);
+              translateInstance = AffineTransform.getTranslateInstance(gutterWidth  - 3, lineShift);
               translateInstance.preConcatenate(t);
               cg.setTransform(translateInstance);
               EditorComponentImpl contentComponent = myEditor.getContentComponent();
@@ -1158,7 +1158,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
               g2d.setColor(myEditor.getBackgroundColor());
               g2d.fillRect(0, 0, getWidth(), getHeight());
               AffineTransform translateInstance =
-                AffineTransform.getTranslateInstance(-LEFT_INDENT + gutterWidth, myEditor.getLineHeight() * (myCacheStartLine - myStartVisualLine));
+                AffineTransform.getTranslateInstance(gutterWidth, myEditor.getLineHeight() * (myCacheStartLine - myStartVisualLine));
               translateInstance.preConcatenate(transform);
               g2d.setTransform(translateInstance);
               UIUtil.drawImage(g2d, myCacheLevel2, -gutterWidth, 0, null);
@@ -1243,6 +1243,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
             myDelayed = false;
           }
         };
+        myEditorPreviewHint.setForceLightweightPopup(true);
       }
       Point point = new Point(hintInfo.getOriginalPoint());
       hintInfo.setTextBg(myEditor.getColorsScheme().getDefaultBackground());
