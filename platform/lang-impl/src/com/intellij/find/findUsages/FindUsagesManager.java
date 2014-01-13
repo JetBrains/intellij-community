@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -392,6 +392,7 @@ public class FindUsagesManager implements JDOMExternalizable {
   }
 
 
+  @NotNull
   private static UsageSearcher createUsageSearcher(@NotNull final UsageInfoToUsageConverter.TargetElementsDescriptor descriptor,
                                                    @NotNull final FindUsagesHandler handler,
                                                    @NotNull FindUsagesOptions _options,
@@ -478,7 +479,7 @@ public class FindUsagesManager implements JDOMExternalizable {
 
   @NotNull
   private static PsiElement2UsageTargetAdapter[] convertToUsageTargets(@NotNull List<? extends PsiElement> elementsToSearch) {
-    final ArrayList<PsiElement2UsageTargetAdapter> targets = new ArrayList<PsiElement2UsageTargetAdapter>(elementsToSearch.size());
+    final List<PsiElement2UsageTargetAdapter> targets = new ArrayList<PsiElement2UsageTargetAdapter>(elementsToSearch.size());
     for (PsiElement element : elementsToSearch) {
       convertToUsageTarget(targets, element);
     }
@@ -527,12 +528,12 @@ public class FindUsagesManager implements JDOMExternalizable {
 
   @NotNull
   private static UsageViewPresentation createPresentation(@NotNull PsiElement psiElement,
-                                                          @NotNull FindUsagesOptions findUsagesOptions,
+                                                          @NotNull FindUsagesOptions options,
                                                           boolean toOpenInNewTab) {
     UsageViewPresentation presentation = new UsageViewPresentation();
-    String scopeString = findUsagesOptions.searchScope == null ? null : findUsagesOptions.searchScope.getDisplayName();
+    String scopeString = options.searchScope == null ? null : options.searchScope.getDisplayName();
     presentation.setScopeText(scopeString);
-    String usagesString = generateUsagesString(findUsagesOptions);
+    String usagesString = generateUsagesString(options);
     presentation.setUsagesString(usagesString);
     String title = scopeString == null
                    ? FindBundle.message("find.usages.of.element.panel.title", usagesString, UsageViewUtil.getLongName(psiElement))
@@ -683,7 +684,8 @@ public class FindUsagesManager implements JDOMExternalizable {
     }
   }
 
-  private static String generateUsagesString(final FindUsagesOptions selectedOptions) {
+  @NotNull
+  private static String generateUsagesString(@NotNull FindUsagesOptions selectedOptions) {
     return selectedOptions.generateUsagesString();
   }
 
