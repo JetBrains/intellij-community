@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -211,7 +211,7 @@ public class DaemonListeners implements Disposable {
         }
         myActiveEditors = activeEditors;
         stopDaemon(true, "Active editor change");  // do not stop daemon if idea loses/gains focus
-        if (LaterInvocator.isInModalContext()) {
+        if (ApplicationManager.getApplication().isDispatchThread() && LaterInvocator.isInModalContext()) {
           // editor appear in modal context, re-enable the daemon
           myDaemonCodeAnalyzer.setUpdateByTimerEnabled(true);
         }
