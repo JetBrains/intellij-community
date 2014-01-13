@@ -22,9 +22,7 @@ import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.JavaPsiFacade;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
+import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.testFramework.IdeaTestCase;
@@ -221,12 +219,19 @@ public class IndexTest extends IdeaTestCase {
         PlatformTestUtil.tryGcSoftlyReachableObjects();
         assertNull(((PsiManagerEx)PsiManager.getInstance(getProject())).getFileManager().getCachedPsiFile(vFile));
 
+        PsiClass foo = facade.findClass("Foo", scope);
+        assertNotNull(foo);
+        assertTrue(foo.isValid());
+        assertEquals("class Foo {}", foo.getText());
+        assertTrue(foo.isValid());
+
+        PsiDocumentManager.getInstance(myProject).commitAllDocuments();
         assertNull(facade.findClass("Foo", scope));
       }
     });
   }
   
-  public void _testSavedUncommittedDocument() throws IOException {
+  public void testSavedUncommittedDocument() throws IOException {
     VirtualFile dir = getVirtualFile(createTempDirectory());
     PsiTestUtil.addSourceContentToRoots(myModule, dir);
     
@@ -247,11 +252,15 @@ public class IndexTest extends IdeaTestCase {
         Document document = FileDocumentManager.getInstance().getDocument(vFile);
         document.insertString(0, "class Foo {}");
         FileDocumentManager.getInstance().saveDocument(document);
-        // if Foo exists now, mod count should be different
-        //assertTrue(count != PsiManager.getInstance(myProject).getModificationTracker().getModificationCount());
-
+        
+        assertTrue(count == PsiManager.getInstance(myProject).getModificationTracker().getModificationCount());
+        assertNull(facade.findClass("Foo", scope));
+        
+        PsiDocumentManager.getInstance(myProject).commitAllDocuments();
         assertNotNull(facade.findClass("Foo", scope));
         assertNotNull(facade.findClass("Foo", scope).getText());
+        // if Foo exists now, mod count should be different
+        assertTrue(count != PsiManager.getInstance(myProject).getModificationTracker().getModificationCount());
       }
     });
   }

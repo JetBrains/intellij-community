@@ -9,6 +9,7 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
+import com.intellij.util.text.ImmutableCharSequence;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -54,6 +55,12 @@ public class MockPsiDocumentManager extends PsiDocumentManager {
 
   @Override
   public void commitDocument(@NotNull Document document) {
+  }
+
+  @NotNull
+  @Override
+  public ImmutableCharSequence getLastCommittedText(@NotNull Document document) {
+    return document.getImmutableCharSequence();
   }
 
   @Override
