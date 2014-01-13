@@ -3,10 +3,11 @@ package com.intellij.lang.properties.xml;
 import com.intellij.ide.highlighter.XmlFileType;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.search.EverythingGlobalScope;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.indexing.*;
@@ -101,20 +102,22 @@ public class XmlPropertiesIndex extends FileBasedIndexExtension<XmlPropertiesInd
   }
 
   static boolean isPropertiesFile(XmlFile file) {
-    if (DumbService.isDumb(file.getProject())) {
+    Project project = file.getProject();
+    if (DumbService.isDumb(project)) {
       CharSequence contents = file.getViewProvider().getContents();
       return CharArrayUtil.indexOf(contents, HTTP_JAVA_SUN_COM_DTD_PROPERTIES_DTD, 0) != -1 &&
           isAccepted(contents);
     }
-    return !FileBasedIndex.getInstance().processValues(NAME, MARKER_KEY, file.getVirtualFile(), new FileBasedIndex.ValueProcessor<String>() {
-      @Override
-      public boolean process(VirtualFile file, String value) {
-        return false;
-      }
-    }, new EverythingGlobalScope());
+    return !FileBasedIndex.getInstance().processValues(NAME, MARKER_KEY, file.getVirtualFile(),
+                                                       new FileBasedIndex.ValueProcessor<String>() {
+                                                         @Override
+                                                         public boolean process(VirtualFile file, String value) {
+                                                           return false;
+                                                         }
+                                                       }, GlobalSearchScope.allScope(project));
   }
 
-  static boolean isAccepted(CharSequence bytes) {
+  private static boolean isAccepted(CharSequence bytes) {
     MyIXMLBuilderAdapter builder = parse(bytes, true);
     return builder != null && builder.accepted;
   }
