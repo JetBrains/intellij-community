@@ -236,7 +236,7 @@ public class WebBrowserManager implements PersistentStateComponent<Element>, Mod
     }
     catch (IllegalArgumentException ignored) {
       for (ConfigurableWebBrowser browser : browsers) {
-        if (browser.getFamily().name().equals(idOrName) || browser.getFamily().getName().equals(idOrName)) {
+        if (browser.getFamily().name().equalsIgnoreCase(idOrName) || browser.getFamily().getName().equalsIgnoreCase(idOrName)) {
           return browser;
         }
       }

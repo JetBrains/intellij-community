@@ -18,10 +18,10 @@ package com.intellij.ide.browsers;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.ui.CollectionComboBoxModel;
 import com.intellij.ui.ComboboxWithBrowseButton;
 import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.util.PlatformIcons;
+import org.jdesktop.swingx.combobox.ListComboBoxModel;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -34,23 +34,27 @@ public class BrowserSelector {
   private final ComboboxWithBrowseButton myBrowserComboWithBrowse;
 
   public BrowserSelector(final boolean allowDefaultBrowser) {
-    myBrowserComboWithBrowse = new ComboboxWithBrowseButton(new ComboBox());
+    myBrowserComboWithBrowse = new ComboboxWithBrowseButton(new ComboBox(createBrowsersComboModel(allowDefaultBrowser)));
     myBrowserComboWithBrowse.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
+        WebBrowserManager browserManager = WebBrowserManager.getInstance();
+        long modificationCount = browserManager.getModificationCount();
         ShowSettingsUtil.getInstance().editConfigurable(myBrowserComboWithBrowse, new BrowserSettings());
 
         WebBrowser selectedItem = getSelected();
-        initBrowsersComboModel(allowDefaultBrowser);
+        if (modificationCount != browserManager.getModificationCount()) {
+          //noinspection unchecked
+          myBrowserComboWithBrowse.getComboBox().setModel(createBrowsersComboModel(allowDefaultBrowser));
+        }
         if (selectedItem != null) {
           setSelected(selectedItem);
         }
       }
     });
 
-    JComboBox comboBox = myBrowserComboWithBrowse.getComboBox();
     //noinspection unchecked
-    comboBox.setRenderer(new ListCellRendererWrapper<WebBrowser>() {
+    myBrowserComboWithBrowse.getComboBox().setRenderer(new ListCellRendererWrapper<WebBrowser>() {
       @Override
       public void customize(JList list,
                             WebBrowser value,
@@ -62,22 +66,20 @@ public class BrowserSelector {
         setText(value != null ? value.getName() : "Default");
       }
     });
-
-    initBrowsersComboModel(allowDefaultBrowser);
   }
 
   public JComponent getMainComponent() {
     return myBrowserComboWithBrowse;
   }
 
-  private void initBrowsersComboModel(boolean allowDefaultBrowser) {
+  @SuppressWarnings("Since15")
+  private static ListComboBoxModel<WebBrowser> createBrowsersComboModel(boolean allowDefaultBrowser) {
     List<WebBrowser> activeBrowsers = new ArrayList<WebBrowser>();
     if (allowDefaultBrowser) {
       activeBrowsers.add(null);
     }
     activeBrowsers.addAll(WebBrowserManager.getInstance().getActiveBrowsers());
-    //noinspection unchecked
-    myBrowserComboWithBrowse.getComboBox().setModel(new CollectionComboBoxModel(activeBrowsers));
+    return new ListComboBoxModel<WebBrowser>(activeBrowsers);
   }
 
   @SuppressWarnings({"deprecation", "UnusedDeclaration"})
