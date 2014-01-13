@@ -35,4 +35,15 @@ public class UnnecessaryToString {
   static void foo(String s) {
     System.out.println(s);
   }
+
+  class A {
+    public String toString() {
+      return "A";
+    }
+  }
+  class B extends A {
+    public String toString() {
+      return "B" + super.toString();
+    }
+  }
 }
