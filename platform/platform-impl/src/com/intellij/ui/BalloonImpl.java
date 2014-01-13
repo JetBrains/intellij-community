@@ -960,7 +960,7 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui, SwingConstants {
       Rectangle pointless = getPointlessContentRec(bounds, pointerLength);
 
       int size = getDistanceToTarget(pointless, targetPoint);
-      if (size < pointerLength) return false;
+      if (size < pointerLength - 1) return false;
 
       Range<Integer> balloonRange;
       Range<Integer> pointerRange;
@@ -1217,7 +1217,7 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui, SwingConstants {
     @Override
     protected Shape getPointingShape(final Rectangle bounds, final Graphics2D g, final Point pointTarget, final BalloonImpl balloon) {
       final Shaper shaper = new Shaper(balloon, bounds, pointTarget, RIGHT);
-      shaper.line(-balloon.getPointerLength(this) - 1, balloon.getPointerWidth(this) / 2);
+      shaper.lineTo((int)bounds.getMaxX() - shaper.getTargetDelta(RIGHT) - 1, pointTarget.y + balloon.getPointerWidth(this) / 2);
       shaper.toBottomCurve().roundLeftDown().toLeftCurve().roundLeftUp().toTopCurve().roundUpRight().toRightCurve().roundRightDown()
         .lineTo(shaper.getCurrent().x, pointTarget.y - balloon.getPointerWidth(this) / 2).lineTo(pointTarget.x, pointTarget.y).close();
       return shaper.getShape();

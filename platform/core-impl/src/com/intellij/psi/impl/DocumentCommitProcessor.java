@@ -18,7 +18,6 @@ package com.intellij.psi.impl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
@@ -26,7 +25,6 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.UnfairTextRange;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.PomManager;
 import com.intellij.pom.PomModel;
 import com.intellij.pom.event.PomModelEvent;
@@ -41,14 +39,11 @@ import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.text.DiffLog;
 import com.intellij.psi.impl.source.tree.FileElement;
 import com.intellij.psi.text.BlockSupport;
-import com.intellij.util.FileContentUtilCore;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.Arrays;
 
 public abstract class DocumentCommitProcessor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.DocumentCommitThread");
@@ -108,35 +103,26 @@ public abstract class DocumentCommitProcessor {
                                       @NotNull final PsiFile file,
                                       final boolean synchronously) {
     Document document = task.document;
+    if (PsiDocumentManager.getInstance(task.project).isCommitted(document)) return null;
     final TextBlock textBlock = TextBlock.get(file);
-    if (textBlock.isEmpty()) return null;
     final long startDocModificationTimeStamp = document.getModificationStamp();
     final FileElement myTreeElementBeingReparsedSoItWontBeCollected = ((PsiFileImpl)file).calcTreeElement();
-    if (textBlock.isEmpty()) return null; // if tree was just loaded above textBlock will be cleared by contentsLoaded
     final CharSequence chars = document.getCharsSequence();
     final Boolean data = document.getUserData(BlockSupport.DO_NOT_REPARSE_INCREMENTALLY);
     if (data != null) {
       document.putUserData(BlockSupport.DO_NOT_REPARSE_INCREMENTALLY, null);
       file.putUserData(BlockSupport.DO_NOT_REPARSE_INCREMENTALLY, data);
     }
-    final String oldPsiText = ApplicationManager.getApplication().isInternal() && ApplicationManager.getApplication().isUnitTestMode()
-                              ? myTreeElementBeingReparsedSoItWontBeCollected.getText()
-                              : null;
-    final TextRange changedPsiRange =
-      getChangedPsiRange(file, textBlock.getStartOffset(), textBlock.getPsiEndOffset(), document.getTextLength());
-    if (!assertBeforeCommit(document, file, textBlock, chars, oldPsiText, myTreeElementBeingReparsedSoItWontBeCollected)) {
-      return new Processor<Document>() {
-        @Override
-        public boolean process(Document document) {
-          VirtualFile vFile = FileDocumentManager.getInstance().getFile(document);
-          log("Recovering from assertBeforeCommit", task, synchronously, vFile, vFile != null && vFile.isValid());
-          if (vFile != null && vFile.isValid()) {
-            FileContentUtilCore.reparseFiles(Arrays.asList(vFile));
-          }
-          return true;
-        }
-      };
+    final String oldPsiText = myTreeElementBeingReparsedSoItWontBeCollected.getText();
+    int commonPrefixLength = StringUtil.commonPrefixLength(oldPsiText, chars);
+    final TextRange changedPsiRange;
+    if (commonPrefixLength == chars.length() && chars.length() == oldPsiText.length()) {
+      changedPsiRange = getChangedPsiRange(file, 0, 0, chars.length());
+    } else {
+      int commonSuffixLength = StringUtil.commonSuffixLength(oldPsiText, chars);
+      changedPsiRange = getChangedPsiRange(file, commonPrefixLength, oldPsiText.length() - commonSuffixLength, chars.length());
     }
+
     BlockSupport blockSupport = BlockSupport.getInstance(file.getProject());
     final DiffLog diffLog = blockSupport.reparseRange(file, changedPsiRange, chars, task.indicator);
 
@@ -204,45 +190,6 @@ public abstract class DocumentCommitProcessor {
     catch (IncorrectOperationException e) {
       LOG.error(e);
     }
-  }
-
-  private static boolean assertBeforeCommit(@NotNull Document document,
-                                         @NotNull PsiFile file,
-                                         @NotNull TextBlock textBlock,
-                                         @NotNull CharSequence chars,
-                                         String oldPsiText,
-                                         @NotNull FileElement myTreeElementBeingReparsedSoItWontBeCollected) {
-    int startOffset = textBlock.getStartOffset();
-    int psiEndOffset = textBlock.getPsiEndOffset();
-    if (oldPsiText != null) {
-      @NonNls String msg = "PSI/document inconsistency before reparse: file=" + file + " of class " + file.getClass();
-      if (startOffset >= oldPsiText.length()) {
-        msg += "\nstartOffset=" + oldPsiText + " while text length is " + oldPsiText.length() + "; ";
-        startOffset = oldPsiText.length();
-      }
-
-      String psiPrefix = oldPsiText.substring(0, startOffset);
-      String docPrefix = chars.subSequence(0, startOffset).toString();
-      String psiSuffix = psiEndOffset > oldPsiText.length() ? "<psiEndOffset too large>" : oldPsiText.substring(psiEndOffset);
-      String docSuffix = chars.subSequence(textBlock.getTextEndOffset(), chars.length()).toString();
-      if (!psiPrefix.equals(docPrefix) || !psiSuffix.equals(docSuffix)) {
-        if (!psiPrefix.equals(docPrefix)) {
-          msg = msg + "\n\npsiPrefix=" + psiPrefix + "\n\ndocPrefix=" + docPrefix;
-        }
-        if (!psiSuffix.equals(docSuffix)) {
-          msg = msg + "\n\npsiSuffix=" + psiSuffix + "\n\ndocSuffix=" + docSuffix;
-        }
-        LOG.error(msg);
-        return false;
-      }
-    }
-    else if (document.getTextLength() - textBlock.getTextEndOffset() !=
-             myTreeElementBeingReparsedSoItWontBeCollected.getTextLength() - psiEndOffset) {
-      LOG.error("PSI/document inconsistency before reparse: file=" + file);
-      return false;
-    }
-    
-    return true;
   }
 
   private void assertAfterCommit(Document document,

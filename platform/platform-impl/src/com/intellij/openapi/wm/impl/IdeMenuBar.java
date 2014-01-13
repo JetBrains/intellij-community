@@ -34,6 +34,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.ex.IdeFrameEx;
 import com.intellij.openapi.wm.impl.status.ClockPanel;
+import com.intellij.ui.ColorUtil;
 import com.intellij.ui.Gray;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.border.CustomLineBorder;
@@ -52,6 +53,8 @@ import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.geom.AffineTransform;
+import java.awt.geom.GeneralPath;
+import java.awt.geom.RoundRectangle2D;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
@@ -82,6 +85,7 @@ public class IdeMenuBar extends JMenuBar implements IdeEventQueue.EventDispatche
   private boolean myDisabled = false;
 
   @Nullable private final ClockPanel myClockPanel;
+  @Nullable private final MyExitFullScreenButton myButton;
   @Nullable private final Animator myAnimator;
   @Nullable private final Timer myActivationWatcher;
   @NotNull private State myState = State.EXPANDED;
@@ -100,7 +104,9 @@ public class IdeMenuBar extends JMenuBar implements IdeEventQueue.EventDispatche
       myAnimator = new MyAnimator();
       myActivationWatcher = new Timer(100, new MyActionListener());
       myClockPanel = new ClockPanel();
+      myButton = new MyExitFullScreenButton();
       add(myClockPanel);
+      add(myButton);
       addPropertyChangeListener(WindowManagerImpl.FULL_SCREEN, new PropertyChangeListener() {
         @Override public void propertyChange(PropertyChangeEvent evt) {
           updateState();
@@ -112,6 +118,7 @@ public class IdeMenuBar extends JMenuBar implements IdeEventQueue.EventDispatche
       myAnimator = null;
       myActivationWatcher = null;
       myClockPanel = null;
+      myButton = null;
     }
   }
 
@@ -150,11 +157,15 @@ public class IdeMenuBar extends JMenuBar implements IdeEventQueue.EventDispatche
     if (myClockPanel != null) {
       if (myState != State.EXPANDED) {
         myClockPanel.setVisible(true);
+        myButton.setVisible(true);
         Dimension preferredSize = myClockPanel.getPreferredSize();
         myClockPanel.setBounds(getBounds().width - preferredSize.width, 0, preferredSize.width, preferredSize.height);
+        preferredSize = myButton.getPreferredSize();
+        myButton.setBounds(getBounds().width - preferredSize.width * 2 - myClockPanel.getWidth(), 0, preferredSize.width, preferredSize.height);
       }
       else {
         myClockPanel.setVisible(false);
+        myButton.setVisible(false);
       }
     }
   }
@@ -225,6 +236,7 @@ public class IdeMenuBar extends JMenuBar implements IdeEventQueue.EventDispatche
           setState(State.EXPANDED);
           if (myClockPanel != null) {
             myClockPanel.setVisible(false);
+            myButton.setVisible(false);
           }
         }
       }
@@ -357,6 +369,7 @@ public class IdeMenuBar extends JMenuBar implements IdeEventQueue.EventDispatche
       updateMnemonicsVisibility();
       if (myClockPanel != null) {
         add(myClockPanel);
+        add(myButton);
       }
       validate();
 
@@ -435,7 +448,7 @@ public class IdeMenuBar extends JMenuBar implements IdeEventQueue.EventDispatche
   @Override
   public int getMenuCount() {
     int menuCount = super.getMenuCount();
-    return myClockPanel != null ? menuCount - 1: menuCount;
+    return myClockPanel != null ? menuCount - 2: menuCount;
   }
 
   private void updateMnemonicsVisibility() {
@@ -576,6 +589,97 @@ public class IdeMenuBar extends JMenuBar implements IdeEventQueue.EventDispatche
           ApplicationMenu.tryInstall(frame);
         }
       });
+    }
+  }
+
+  private static class MyExitFullScreenButton extends JButton {
+    private MyExitFullScreenButton() {
+      setFocusable(false);
+      addActionListener(new ActionListener() {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+          Window window = SwingUtilities.getWindowAncestor(MyExitFullScreenButton.this);
+          if (window instanceof IdeFrameEx) {
+            ((IdeFrameEx)window).toggleFullScreen(false);
+          }
+        }
+      });
+      addMouseListener(new MouseAdapter() {
+        @Override
+        public void mouseEntered(MouseEvent e) {
+          model.setRollover(true);
+        }
+
+        @Override
+        public void mouseExited(MouseEvent e) {
+          model.setRollover(false);
+        }
+      });
+    }
+    @Override
+    public Dimension getPreferredSize() {
+      int height;
+      Container parent = getParent();
+      if (isVisible() && parent != null) {
+        height = parent.getSize().height - parent.getInsets().top - parent.getInsets().bottom;
+      }
+      else {
+        height = super.getPreferredSize().height;
+      }
+      return new Dimension(height, height);
+    }
+
+    @Override
+    public Dimension getMaximumSize() {
+      return getPreferredSize();
+    }
+
+    @Override
+    public void paint(Graphics g) {
+      Graphics2D g2d = (Graphics2D)g.create();
+      try {
+        g2d.setColor(UIManager.getColor("Label.background"));
+        g2d.fillRect(0, 0, getWidth()+1, getHeight()+1);
+        g2d.setRenderingHint(RenderingHints.KEY_FRACTIONALMETRICS, RenderingHints.VALUE_FRACTIONALMETRICS_ON);
+        g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        g2d.setRenderingHint(RenderingHints.KEY_ALPHA_INTERPOLATION, RenderingHints.VALUE_ALPHA_INTERPOLATION_QUALITY);
+        double s = (double)getHeight() / 13;
+        g2d.translate(s, s);
+        Shape plate = new RoundRectangle2D.Double(0, 0, s * 11, s * 11, s, s);
+        Color color = UIManager.getColor("Label.foreground");
+        boolean hover = model.isRollover() || model.isPressed();
+        g2d.setColor(ColorUtil.withAlpha(color, hover? .25: .18));
+        g2d.fill(plate);
+        g2d.setColor(ColorUtil.withAlpha(color, hover? .4 : .33));
+        g2d.draw(plate);
+        g2d.setColor(ColorUtil.withAlpha(color, hover ? .7 : .66));
+        GeneralPath path = new GeneralPath();
+        path.moveTo(s * 2, s * 6);
+        path.lineTo(s * 5, s * 6);
+        path.lineTo(s * 5, s * 9);
+        path.lineTo(s * 4, s * 8);
+        path.lineTo(s * 2, s * 10);
+        path.quadTo(s * 2 - s/ Math.sqrt(2), s * 9 + s/Math.sqrt(2), s, s * 9);
+        path.lineTo(s * 3, s * 7);
+        path.lineTo(s * 2, s * 6);
+        path.closePath();
+        g2d.fill(path);
+        g2d.draw(path);
+        path = new GeneralPath();
+        path.moveTo(s * 6, s * 2);
+        path.lineTo(s * 6, s * 5);
+        path.lineTo(s * 9, s * 5);
+        path.lineTo(s * 8, s * 4);
+        path.lineTo(s * 10, s * 2);
+        path.quadTo(s * 9 + s/ Math.sqrt(2), s * 2 - s/Math.sqrt(2), s * 9 , s);
+        path.lineTo(s * 7, s * 3);
+        path.lineTo(s * 6, s * 2);
+        path.closePath();
+        g2d.fill(path);
+        g2d.draw(path);
+      } finally {
+        g2d.dispose();
+      }
     }
   }
 }
