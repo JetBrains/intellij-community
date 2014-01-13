@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,6 +42,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.util.Alarm;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class AutoPopupController implements Disposable {
@@ -150,7 +151,7 @@ public class AutoPopupController implements Disposable {
     myAlarm.cancelAllRequests();
   }
 
-  public void autoPopupParameterInfo(final Editor editor, @Nullable final PsiElement highlightedMethod){
+  public void autoPopupParameterInfo(@NotNull final Editor editor, @Nullable final PsiElement highlightedMethod){
     if (ApplicationManager.getApplication().isUnitTestMode()) return;
     if (DumbService.isDumb(myProject)) return;
     if (PowerSaveMode.isEnabled()) return;

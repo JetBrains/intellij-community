@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,9 +41,9 @@ public interface ModifiableModel extends Profile {
 
   void setBaseProfile(InspectionProfile profile);
 
-  void enableTool(String inspectionTool, NamedScope namedScope, Project project);
+  void enableTool(@NotNull String inspectionTool, NamedScope namedScope, Project project);
 
-  void disableTool(String inspectionTool, NamedScope namedScope, @NotNull Project project);
+  void disableTool(@NotNull String inspectionTool, NamedScope namedScope, @NotNull Project project);
 
   void setErrorLevel(HighlightDisplayKey key, @NotNull HighlightDisplayLevel level, Project project);
 
@@ -87,5 +87,5 @@ public interface ModifiableModel extends Profile {
 
   void disableTool(@NotNull String toolId, @NotNull PsiElement element);
 
-  void disableTool(String inspectionTool, Project project);
+  void disableTool(@NotNull String inspectionTool, Project project);
 }
