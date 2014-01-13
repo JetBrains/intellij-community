@@ -28,6 +28,7 @@ import com.intellij.openapi.fileTypes.UnknownFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.InputValidatorEx;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFileSystemItem;
@@ -104,7 +105,7 @@ public class CreateDirectoryOrPackageHandler implements InputValidatorEx {
     }
     
     boolean createFile = false;
-    if (StringUtil.countChars(subDirName, '.') == 1) {
+    if (StringUtil.countChars(subDirName, '.') == 1 && Registry.is("ide.suggest.file.when.creating.filename.like.directory")) {
       FileType fileType = findFileTypeBoundToName(subDirName);
       if (fileType != null) {
         String message = "The name you entered looks like a file name. Do you want to create a file named " + subDirName + " instead?";
