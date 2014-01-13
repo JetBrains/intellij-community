@@ -27,7 +27,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.tree.IFileElementType;
 import com.intellij.psi.tree.IStubFileElementType;
 import com.intellij.util.indexing.FileContent;
-import com.intellij.util.indexing.FileContentImpl;
 import com.intellij.util.indexing.IndexingDataKeys;
 import com.intellij.util.indexing.SubstitutedFileType;
 import org.jetbrains.annotations.Nullable;
@@ -66,7 +65,7 @@ public class StubTreeBuilder {
           PsiFile existingPsi = PsiDocumentManager.getInstance(inputData.getProject()).getPsiFile(document);
           if (existingPsi != null) {
             contentAsText = existingPsi.getText();
-            psi = ((FileContentImpl) inputData).createFileFromText(contentAsText);
+            psi = existingPsi;
           }
         }
         if (contentAsText == null) {
@@ -75,6 +74,9 @@ public class StubTreeBuilder {
         }
         psi = psi.getViewProvider().getStubBindingRoot();
         psi.putUserData(IndexingDataKeys.FILE_TEXT_CONTENT_KEY, contentAsText);
+        
+        // if we load AST, it should be easily gc-able. See PsiFileImpl.createTreeElementPointer()
+        psi.getManager().startBatchFilesProcessingMode();
 
         try {
           IStubFileElementType stubFileElementType;
@@ -96,6 +98,7 @@ public class StubTreeBuilder {
         }
         finally {
           psi.putUserData(IndexingDataKeys.FILE_TEXT_CONTENT_KEY, null);
+          psi.getManager().finishBatchFilesProcessingMode();
         }
       }
 
