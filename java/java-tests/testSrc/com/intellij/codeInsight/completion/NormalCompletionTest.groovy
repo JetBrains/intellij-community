@@ -1143,6 +1143,7 @@ class XInternalError {}
     """)
     assertOneElement myFixture.completeBasic()
   }
+  public void testStaticallyImportedFieldsTwiceSwitch() { doTest() }
 
   public void testStatementKeywords() {
     myFixture.configureByText("a.java", """
