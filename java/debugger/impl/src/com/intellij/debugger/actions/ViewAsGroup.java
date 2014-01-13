@@ -111,7 +111,7 @@ public class ViewAsGroup extends ActionGroup implements DumbAware {
         if (descriptor instanceof ValueDescriptorImpl) {
           anyValueDescriptor = true;
           ValueDescriptorImpl valueDescriptor = (ValueDescriptorImpl)descriptor;
-          if (valueDescriptor.isValueValid() && !nodeRenderer.isApplicable(valueDescriptor.getType())) {
+          if (!valueDescriptor.isValueValid() || !nodeRenderer.isApplicable(valueDescriptor.getType())) {
             allApp = false;
             break;
           }
@@ -141,7 +141,9 @@ public class ViewAsGroup extends ActionGroup implements DumbAware {
       }
     }
 
-    children.add(Separator.getInstance());
+    if (!children.isEmpty()) {
+      children.add(Separator.getInstance());
+    }
     children.addAll(renderers);
 
     return children.toArray(new AnAction[children.size()]);
