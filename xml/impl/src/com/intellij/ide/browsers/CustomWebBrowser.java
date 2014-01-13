@@ -49,6 +49,4 @@ final class CustomWebBrowser extends WebBrowser {
     String message = browserNotFoundMessage;
     return message == null ? super.getBrowserNotFoundMessage() : message;
   }
-
-
 }
