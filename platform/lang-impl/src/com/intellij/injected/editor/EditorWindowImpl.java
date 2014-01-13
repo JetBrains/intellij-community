@@ -63,14 +63,14 @@ import java.util.List;
 /**
  * @author Alexey
  */
-public class EditorWindow extends UserDataHolderBase implements EditorEx {
+public class EditorWindowImpl extends UserDataHolderBase implements EditorWindow, EditorEx {
   private final DocumentWindowImpl myDocumentWindow;
   private final EditorImpl myDelegate;
   private volatile PsiFile myInjectedFile;
   private final boolean myOneLine;
   private final CaretModelWindow myCaretModelDelegate;
   private final SelectionModelWindow mySelectionModelDelegate;
-  private static final List<EditorWindow> allEditors = new WeakList<EditorWindow>();
+  private static final List<EditorWindowImpl> allEditors = new WeakList<EditorWindowImpl>();
   private boolean myDisposed;
   private final MarkupModelWindow myMarkupModelDelegate;
   private final FoldingModelWindow myFoldingModelWindow;
@@ -79,9 +79,9 @@ public class EditorWindow extends UserDataHolderBase implements EditorEx {
   public static Editor create(@NotNull final DocumentWindowImpl documentRange, @NotNull final EditorImpl editor, @NotNull final PsiFile injectedFile) {
     assert documentRange.isValid();
     assert injectedFile.isValid();
-    EditorWindow window;
+    EditorWindowImpl window;
     synchronized (allEditors) {
-      for (EditorWindow editorWindow : allEditors) {
+      for (EditorWindowImpl editorWindow : allEditors) {
         if (editorWindow.getDocument() == documentRange && editorWindow.getDelegate() == editor) {
           editorWindow.myInjectedFile = injectedFile;
           if (editorWindow.isValid()) {
@@ -92,14 +92,17 @@ public class EditorWindow extends UserDataHolderBase implements EditorEx {
           //int i = 0;
         }
       }
-      window = new EditorWindow(documentRange, editor, injectedFile, documentRange.isOneLine());
+      window = new EditorWindowImpl(documentRange, editor, injectedFile, documentRange.isOneLine());
       allEditors.add(window);
     }
     assert window.isValid();
     return window;
   }
 
-  private EditorWindow(@NotNull DocumentWindowImpl documentWindow, @NotNull final EditorImpl delegate, @NotNull PsiFile injectedFile, boolean oneLine) {
+  private EditorWindowImpl(@NotNull DocumentWindowImpl documentWindow,
+                           @NotNull final EditorImpl delegate,
+                           @NotNull PsiFile injectedFile,
+                           boolean oneLine) {
     myDocumentWindow = documentWindow;
     myDelegate = delegate;
     myInjectedFile = injectedFile;
@@ -114,9 +117,9 @@ public class EditorWindow extends UserDataHolderBase implements EditorEx {
 
   public static void disposeInvalidEditors() {
     ApplicationManager.getApplication().assertWriteAccessAllowed();
-    Iterator<EditorWindow> iterator = allEditors.iterator();
+    Iterator<EditorWindowImpl> iterator = allEditors.iterator();
     while (iterator.hasNext()) {
-      EditorWindow editorWindow = iterator.next();
+      EditorWindowImpl editorWindow = iterator.next();
       if (!editorWindow.isValid()) {
         editorWindow.dispose();
 
@@ -126,15 +129,18 @@ public class EditorWindow extends UserDataHolderBase implements EditorEx {
     }
   }
 
+  @Override
   public boolean isValid() {
     return !isDisposed() && !myInjectedFile.getProject().isDisposed() && myInjectedFile.isValid() && myDocumentWindow.isValid();
   }
 
+  @Override
   @NotNull
   public PsiFile getInjectedFile() {
     return myInjectedFile;
   }
 
+  @Override
   @NotNull
   public LogicalPosition hostToInjected(@NotNull LogicalPosition hPos) {
     assert isValid();
@@ -154,6 +160,7 @@ public class EditorWindow extends UserDataHolderBase implements EditorEx {
     return offsetToLogicalPosition(iOffset);
   }
 
+  @Override
   @NotNull
   public LogicalPosition injectedToHost(@NotNull LogicalPosition pos) {
     assert isValid();
@@ -446,27 +453,27 @@ public class EditorWindow extends UserDataHolderBase implements EditorEx {
     EditorMouseListener wrapper = new EditorMouseListener() {
       @Override
       public void mousePressed(EditorMouseEvent e) {
-        listener.mousePressed(new EditorMouseEvent(EditorWindow.this, e.getMouseEvent(), e.getArea()));
+        listener.mousePressed(new EditorMouseEvent(EditorWindowImpl.this, e.getMouseEvent(), e.getArea()));
       }
 
       @Override
       public void mouseClicked(EditorMouseEvent e) {
-        listener.mouseClicked(new EditorMouseEvent(EditorWindow.this, e.getMouseEvent(), e.getArea()));
+        listener.mouseClicked(new EditorMouseEvent(EditorWindowImpl.this, e.getMouseEvent(), e.getArea()));
       }
 
       @Override
       public void mouseReleased(EditorMouseEvent e) {
-        listener.mouseReleased(new EditorMouseEvent(EditorWindow.this, e.getMouseEvent(), e.getArea()));
+        listener.mouseReleased(new EditorMouseEvent(EditorWindowImpl.this, e.getMouseEvent(), e.getArea()));
       }
 
       @Override
       public void mouseEntered(EditorMouseEvent e) {
-        listener.mouseEntered(new EditorMouseEvent(EditorWindow.this, e.getMouseEvent(), e.getArea()));
+        listener.mouseEntered(new EditorMouseEvent(EditorWindowImpl.this, e.getMouseEvent(), e.getArea()));
       }
 
       @Override
       public void mouseExited(EditorMouseEvent e) {
-        listener.mouseExited(new EditorMouseEvent(EditorWindow.this, e.getMouseEvent(), e.getArea()));
+        listener.mouseExited(new EditorMouseEvent(EditorWindowImpl.this, e.getMouseEvent(), e.getArea()));
       }
     };
     myEditorMouseListeners.registerWrapper(listener, wrapper);
@@ -490,12 +497,12 @@ public class EditorWindow extends UserDataHolderBase implements EditorEx {
     EditorMouseMotionListener wrapper = new EditorMouseMotionListener() {
       @Override
       public void mouseMoved(EditorMouseEvent e) {
-        listener.mouseMoved(new EditorMouseEvent(EditorWindow.this, e.getMouseEvent(), e.getArea()));
+        listener.mouseMoved(new EditorMouseEvent(EditorWindowImpl.this, e.getMouseEvent(), e.getArea()));
       }
 
       @Override
       public void mouseDragged(EditorMouseEvent e) {
-        listener.mouseDragged(new EditorMouseEvent(EditorWindow.this, e.getMouseEvent(), e.getArea()));
+        listener.mouseDragged(new EditorMouseEvent(EditorWindowImpl.this, e.getMouseEvent(), e.getArea()));
       }
     };
     myEditorMouseMotionListeners.registerWrapper(listener, wrapper);
@@ -749,7 +756,7 @@ public class EditorWindow extends UserDataHolderBase implements EditorEx {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
 
-    final EditorWindow that = (EditorWindow)o;
+    final EditorWindowImpl that = (EditorWindowImpl)o;
 
     DocumentWindow thatWindow = that.getDocument();
     return myDelegate.equals(that.myDelegate) && myDocumentWindow.equals(thatWindow);
@@ -759,6 +766,8 @@ public class EditorWindow extends UserDataHolderBase implements EditorEx {
     return myDocumentWindow.hashCode();
   }
 
+  @NotNull
+  @Override
   public Editor getDelegate() {
     return myDelegate;
   }
