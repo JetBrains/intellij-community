@@ -71,6 +71,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
       return HighlightingLevelManager.getInstance(file.getProject()).shouldHighlight(file);
     }
   };
+  private static final Random RESTART_DAEMON_RANDOM = new Random();
 
   protected final int myStartOffset;
   protected final int myEndOffset;
@@ -415,7 +416,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
           }, project.getDisposed());
         }
       }
-    }, new Random().nextInt(100), TimeUnit.MILLISECONDS);
+    }, RESTART_DAEMON_RANDOM.nextInt(100), TimeUnit.MILLISECONDS);
     throw new ProcessCanceledException();
   }
 
