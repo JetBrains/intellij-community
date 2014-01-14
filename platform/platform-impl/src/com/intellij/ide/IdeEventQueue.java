@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -692,6 +692,7 @@ public class IdeEventQueue extends EventQueue {
       myDispatchingFocusEvent = e instanceof FocusEvent;
 
       maybeReady();
+      fixStickyAlt(e);
 
       super.dispatchEvent(e);
     }
@@ -702,6 +703,13 @@ public class IdeEventQueue extends EventQueue {
     }
     finally {
       myDispatchingFocusEvent = false;
+    }
+  }
+
+  //IDEA-17359
+  private static void fixStickyAlt(AWTEvent e) {
+    if (SystemInfo.isWindowsXP && e instanceof KeyEvent && ((KeyEvent)e).getKeyCode() == KeyEvent.VK_ALT) {
+      ((KeyEvent)e).consume();
     }
   }
 
