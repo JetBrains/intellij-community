@@ -37,6 +37,8 @@ class CapitalizeAndUnderscoreTest extends TestCase {
     assert "foo_bar" == snakeCase("fooBar")
     assert "foo_bar" == snakeCase("FOO_BAR")
     assert "_foo_bar_" == snakeCase("-FOO-BAR-")
+    assert "a_b_c_d_e_f_g" == snakeCase("a-b.c/d|e*f+g")
+    assert "a_b" == snakeCase("a--b")
   }
   
   private static def snakeCase(String s) {
