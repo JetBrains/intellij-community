@@ -18,7 +18,7 @@ import java.awt.event.ActionListener;
  * Time: 14:45
  */
 
-class myCondition implements Condition {
+class TaskToolWindowCondition implements Condition {
 
     @Override
     public boolean value(Object o) {
@@ -28,30 +28,35 @@ class myCondition implements Condition {
 
 public class TaskTextToolWindowFactory implements ToolWindowFactory{
     JButton nextTask = new JButton("next");
+    JLabel task;
+    JPanel panel = new JPanel(new BorderLayout());
     public TaskTextToolWindowFactory() {
         nextTask.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
                 TaskManager.getInstance().incrementTask();
+                int curTask = TaskManager.getInstance().getCurrentTask();
+                task.setText(TaskManager.getInstance().getTaskText(curTask));
+                panel.updateUI();
             }
         });
     }
 
     @Override
     public void createToolWindowContent(Project project, ToolWindow toolWindow) {
-        JPanel myPanel = new JPanel();
         //JLabel task =  new JLabel("write your first program in python");
         //int curTask = TaskManager.getInstance().getCurrentTask();
         int curTask = 0;
-        JLabel task =  new JLabel(TaskManager.getInstance().getTaskText(curTask));
+        task =  new JLabel(TaskManager.getInstance().getTaskText(curTask));
         Font testFont = new Font("Courier", Font.BOLD, 16);
         task.setFont(testFont);
-        //myPanel.setBackground(Color.BLACK);
+        //panel.setBackground(Color.BLACK);
         task.setForeground(Color.CYAN);
-        myPanel.add(task);
-        myPanel.add(nextTask);
+        panel.add(task, BorderLayout.NORTH);
+        panel.add(nextTask, BorderLayout.SOUTH);
+        panel.updateUI();
         task.setVerticalAlignment(0);
         ContentFactory contentFactory = ContentFactory.SERVICE.getInstance();
-        Content content = contentFactory.createContent(myPanel, "", true);
+        Content content = contentFactory.createContent(panel, "", true);
         toolWindow.getContentManager().addContent(content);
     }
 }
