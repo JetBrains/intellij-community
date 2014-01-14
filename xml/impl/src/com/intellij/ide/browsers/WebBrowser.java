@@ -30,8 +30,10 @@ import static com.intellij.ide.browsers.BrowsersConfiguration.BrowserFamily;
 public abstract class WebBrowser {
   protected @NotNull BrowserFamily family;
   protected @NotNull String name;
+  private final UUID id;
 
-  protected WebBrowser(@NotNull BrowserFamily family, @NotNull String name) {
+  protected WebBrowser(@NotNull UUID id, @NotNull BrowserFamily family, @NotNull String name) {
+    this.id = id;
     this.family = family;
     this.name = name;
   }
@@ -42,7 +44,9 @@ public abstract class WebBrowser {
   }
 
   @NotNull
-  public abstract UUID getId();
+  public final UUID getId() {
+    return id;
+  }
 
   @NotNull
   public BrowserFamily getFamily() {
@@ -68,10 +72,11 @@ public abstract class WebBrowser {
   @NotNull
   public static WebBrowser createCustomBrowser(@NotNull BrowserFamily family,
                                                @NotNull String name,
+                                               @NotNull UUID id,
                                                @NotNull Icon icon,
                                                @NotNull NullableComputable<String> pathComputable,
                                                @Nullable String browserNotFoundMessage) {
-    return new CustomWebBrowser(family, name, icon, pathComputable, browserNotFoundMessage);
+    return new CustomWebBrowser(id, family, name, icon, pathComputable, browserNotFoundMessage);
   }
 
   @Override

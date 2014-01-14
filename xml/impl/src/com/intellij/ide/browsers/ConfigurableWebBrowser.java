@@ -12,7 +12,6 @@ import static com.intellij.ide.browsers.BrowsersConfiguration.BrowserFamily;
 
 final class ConfigurableWebBrowser extends WebBrowser {
   private boolean active;
-  private final UUID id;
   private String path;
 
   private BrowserSpecificSettings specificSettings;
@@ -32,9 +31,8 @@ final class ConfigurableWebBrowser extends WebBrowser {
                                 @Nullable String path,
                                 boolean active,
                                 @Nullable BrowserSpecificSettings specificSettings) {
-    super(family, name);
+    super(id, family, name);
 
-    this.id = id;
     this.path = StringUtil.nullize(path);
     this.active = active;
     this.specificSettings = specificSettings;
@@ -83,16 +81,6 @@ final class ConfigurableWebBrowser extends WebBrowser {
   }
 
   @Override
-  @NotNull
-  public UUID getId() {
-    return id;
-  }
-
-  public boolean isChanged(@NotNull ConfigurableWebBrowser info) {
-    return active != info.active || family != info.family || !StringUtil.equals(name, info.name) || !StringUtil.equals(path, info.path);
-  }
-
-  @Override
   public boolean equals(Object o) {
     if (this == o) {
       return true;
@@ -102,7 +90,7 @@ final class ConfigurableWebBrowser extends WebBrowser {
     }
 
     ConfigurableWebBrowser browser = (ConfigurableWebBrowser)o;
-    return id.equals(browser.id) &&
+    return getId().equals(browser.getId()) &&
            family.equals(browser.family) &&
            active == browser.active &&
            Comparing.strEqual(name, browser.name) &&
@@ -112,6 +100,6 @@ final class ConfigurableWebBrowser extends WebBrowser {
 
   @Override
   public int hashCode() {
-    return id.hashCode();
+    return getId().hashCode();
   }
 }

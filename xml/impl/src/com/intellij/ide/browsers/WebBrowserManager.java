@@ -234,16 +234,27 @@ public class WebBrowserManager implements PersistentStateComponent<Element>, Mod
   }
 
   @Nullable
+  private static UUID parseUuid(@NotNull String id) {
+    if (id.indexOf('-') == -1) {
+      return null;
+    }
+
+    try {
+      return UUID.fromString(id);
+    }
+    catch (IllegalArgumentException ignored) {
+      return null;
+    }
+  }
+
+  @Nullable
   public WebBrowser findBrowserById(@Nullable String idOrName) {
     if (StringUtil.isEmpty(idOrName)) {
       return null;
     }
 
-    UUID id;
-    try {
-      id = UUID.fromString(idOrName);
-    }
-    catch (IllegalArgumentException ignored) {
+    UUID id = parseUuid(idOrName);
+    if (id == null) {
       for (ConfigurableWebBrowser browser : browsers) {
         if (browser.getFamily().name().equalsIgnoreCase(idOrName) || browser.getFamily().getName().equalsIgnoreCase(idOrName)) {
           return browser;
