@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -168,7 +168,6 @@ public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidge
     setRefreshVisible(false);
     InlineProgressIndicator[] indicators = getCurrentInlineIndicators().toArray(new InlineProgressIndicator[0]);
     for (InlineProgressIndicator indicator : indicators) {
-      System.out.println("Disposing "+indicator);
       Disposer.dispose(indicator);
     }
     myInline2Original.clear();
