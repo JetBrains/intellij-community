@@ -120,7 +120,7 @@ public final class Palette implements Disposable, PersistentStateComponent<Eleme
   /** Invoked by reflection */
   public Palette(Project project) {
     myProject = project;
-    myLafManagerListener = new MyLafManagerListener();
+    myLafManagerListener = project == null ? null : new MyLafManagerListener();
     myClass2Properties = new HashMap<Class, IntrospectedProperty[]>();
     myClassName2Item = new HashMap<String, ComponentItem>();
     myGroups = new ArrayList<GroupItem>();
@@ -130,7 +130,9 @@ public final class Palette implements Disposable, PersistentStateComponent<Eleme
       mySpecialGroup.addItem(ComponentItem.createAnyComponentItem(project));
     }
 
-    LafManager.getInstance().addLafManagerListener(myLafManagerListener);
+    if (myLafManagerListener != null) {
+      LafManager.getInstance().addLafManagerListener(myLafManagerListener);
+    }
   }
 
   public Element getState() {
@@ -164,7 +166,9 @@ public final class Palette implements Disposable, PersistentStateComponent<Eleme
 
   @Override
   public void dispose() {
-    LafManager.getInstance().removeLafManagerListener(myLafManagerListener);
+    if (myLafManagerListener != null) {
+      LafManager.getInstance().removeLafManagerListener(myLafManagerListener);
+    }
   }
 
   public void readExternal(@NotNull final Element element) {
