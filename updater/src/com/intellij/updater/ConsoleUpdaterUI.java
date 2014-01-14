@@ -25,7 +25,7 @@ public class ConsoleUpdaterUI implements UpdaterUI {
   }
 
   public void showError(Throwable e) {
-    Runner.logger.error(e.fillInStackTrace());
+    Runner.printStackTrace(e);
     e.printStackTrace();
   }
 

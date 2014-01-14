@@ -56,7 +56,7 @@ public class CreateAction extends PatchAction {
       Runner.logger.info("setExecutable for file: " + toFile.getCanonicalPath());
     }
     catch (Exception ex) {
-      Runner.logger.error(ex.fillInStackTrace());
+      Runner.printStackTrace(ex);
     }
     finally {
       in.close();

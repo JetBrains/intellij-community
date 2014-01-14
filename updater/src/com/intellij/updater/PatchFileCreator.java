@@ -43,8 +43,8 @@ public class PatchFileCreator {
         each.buildPatchFile(olderDir, newerDir, out);
       }
     }
-    catch (Exception ex) {
-      Runner.logger.error(ex.fillInStackTrace());
+    catch (Exception e) {
+      Runner.printStackTrace(e);
     }
     finally {
       out.close();
@@ -101,8 +101,8 @@ public class PatchFileCreator {
     try {
       preparationResult.patch.revert(actionsToRevert, backupDir, preparationResult.toDir, ui);
     }
-    catch (Exception ex) {
-      Runner.logger.error(ex.fillInStackTrace());
+    catch (Exception e) {
+      Runner.printStackTrace(e);
     }
     finally {
       zipFile.close();

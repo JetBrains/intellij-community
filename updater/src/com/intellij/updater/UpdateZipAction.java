@@ -103,7 +103,8 @@ public class UpdateZipAction extends BaseUpdateAction {
       new ZipFile(newerFile).close();
     }
     catch (IOException e) {
-      Runner.logger.error("Corrupted target file: " + newerFile, e.fillInStackTrace());
+      Runner.logger.error("Corrupted target file: " + newerFile);
+      Runner.printStackTrace(e);
       throw new IOException("Corrupted target file: " + newerFile, e);
     }
 
@@ -116,7 +117,8 @@ public class UpdateZipAction extends BaseUpdateAction {
       olderZip = new ZipFile(olderFile);
     }
     catch (IOException e) {
-      Runner.logger.error("Corrupted source file: " + olderFile, e.fillInStackTrace());
+      Runner.logger.error("Corrupted source file: " + olderFile);
+      Runner.printStackTrace(e);
       throw new IOException("Corrupted source file: " + olderFile, e);
     }
 
@@ -139,14 +141,15 @@ public class UpdateZipAction extends BaseUpdateAction {
             patchOutput.closeEntry();
           }
           catch (IOException e) {
-            Runner.logger.error("Error building patch for .zip entry " + name, e.fillInStackTrace());
+            Runner.logger.error("Error building patch for .zip entry " + name);
+            Runner.printStackTrace(e);
             throw new IOException("Error building patch for .zip entry " + name, e);
           }
         }
       });
     }
-    catch (Exception ex) {
-      Runner.logger.error(ex.fillInStackTrace());
+    catch (Exception e) {
+      Runner.printStackTrace(e);
     }
     finally {
       olderZip.close();
@@ -170,8 +173,8 @@ public class UpdateZipAction extends BaseUpdateAction {
             try {
               applyDiff(Utils.findEntryInputStream(patchFile, myPath + "/" + path), in, entryOut);
             }
-            catch (Exception ex) {
-              Runner.logger.error(ex.fillInStackTrace());
+            catch (Exception e) {
+              Runner.printStackTrace(e);
             }
             finally {
               entryOut.close();
@@ -188,8 +191,8 @@ public class UpdateZipAction extends BaseUpdateAction {
         try {
           out.zipEntry(each, in);
         }
-        catch (Exception ex) {
-          Runner.logger.error(ex.fillInStackTrace());
+        catch (Exception e) {
+          Runner.printStackTrace(e);
         }
         finally {
           in.close();
@@ -198,8 +201,8 @@ public class UpdateZipAction extends BaseUpdateAction {
 
       out.finish();
     }
-    catch (Exception ex) {
-      Runner.logger.error(ex.fillInStackTrace());
+    catch (Exception e) {
+      Runner.printStackTrace(e);
     }
     finally {
       fileOut.close();
@@ -223,8 +226,8 @@ public class UpdateZipAction extends BaseUpdateAction {
         processed.add(inEntry.getName());
       }
     }
-    catch (Exception ex) {
-      Runner.logger.error(ex.fillInStackTrace());
+    catch (Exception e) {
+      Runner.printStackTrace(e);
     }
     finally {
       in.close();

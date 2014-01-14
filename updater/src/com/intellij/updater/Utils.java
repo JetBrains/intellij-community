@@ -57,7 +57,7 @@ public class Utils {
         Thread.sleep(10);
       }
       catch (InterruptedException ignore) {
-        Runner.logger.error(ignore.fillInStackTrace());
+        Runner.printStackTrace(ignore);
       }
     }
     if (file.exists()) throw new IOException("Cannot delete file " + file);
@@ -65,7 +65,7 @@ public class Utils {
 
   public static void setExecutable(File file, boolean executable) throws IOException {
     if (executable && !file.setExecutable(true)) {
-      Runner.logger.error("Can't set executable permissions for file " + file.getCanonicalPath());
+      Runner.logger.error("Can't set executable permissions for file");
       throw new IOException("Cannot set executable permissions for: " + file);
     }
   }
@@ -84,8 +84,8 @@ public class Utils {
       try {
         copyStreamToFile(in, to);
       }
-      catch (Exception ex) {
-        Runner.logger.error(ex.fillInStackTrace());
+      catch (Exception e) {
+        Runner.printStackTrace(e);
       }
       finally {
         in.close();
@@ -100,8 +100,8 @@ public class Utils {
     try {
       copyStream(in, out);
     }
-    catch (Exception ex) {
-      Runner.logger.error(ex.fillInStackTrace());
+    catch (Exception e) {
+      Runner.printStackTrace(e);
     }
     finally {
       in.close();
@@ -109,14 +109,13 @@ public class Utils {
   }
 
   public static void copyStreamToFile(InputStream from, File to) throws IOException {
-    Runner.logger.info("to: " + to.getCanonicalPath());
     to.getParentFile().mkdirs();
     OutputStream out = new BufferedOutputStream(new FileOutputStream(to));
     try {
       copyStream(from, out);
     }
-    catch (Exception ex) {
-      Runner.logger.error(ex.fillInStackTrace());
+    catch (Exception e) {
+      Runner.printStackTrace(e);
     }
     finally {
       out.close();
@@ -128,8 +127,8 @@ public class Utils {
     try {
       from.writeTo(out);
     }
-    catch (Exception ex) {
-      Runner.logger.error(ex.fillInStackTrace());
+    catch (Exception e) {
+      Runner.printStackTrace(e);
     }
     finally {
       out.flush();
@@ -145,8 +144,8 @@ public class Utils {
     try {
       copyStream(in, byteOut);
     }
-    catch (Exception ex) {
-      Runner.logger.error(ex.fillInStackTrace());
+    catch (Exception e) {
+      Runner.printStackTrace(e);
     }
     finally {
       byteOut.close();

@@ -56,8 +56,8 @@ public class ZipOutputWrapper {
     try {
       Utils.copyStream(from, tempOut);
     }
-    catch (Exception ex) {
-      Runner.logger.error(ex.fillInStackTrace());
+    catch (Exception e) {
+      Runner.printStackTrace(e);
     }
     finally {
       tempOut.close();
@@ -91,8 +91,8 @@ public class ZipOutputWrapper {
     try {
       zipEntry(new ZipEntry(entryPath), from);
     }
-    catch (Exception ex) {
-      Runner.logger.error(ex.fillInStackTrace());
+    catch (Exception e) {
+      Runner.printStackTrace(e);
     }
     finally {
       from.close();

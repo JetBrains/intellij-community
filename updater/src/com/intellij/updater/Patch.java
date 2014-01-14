@@ -202,13 +202,12 @@ public class Patch {
               });
     }
     catch (OperationCancelledException e) {
-//      Runner.logger.error("[OperationCancelledException] from Patch.apply " + System.getProperty("line.separator") + e);
-      Runner.logger.error(e.fillInStackTrace());
+      Runner.printStackTrace(e);
       shouldRevert = true;
       cancelled = true;
     }
     catch (Throwable e) {
-      Runner.logger.error(e.fillInStackTrace());
+      Runner.printStackTrace(e);
       shouldRevert = true;
       ui.showError(e);
     }

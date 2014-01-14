@@ -57,7 +57,7 @@ public abstract class BaseUpdateAction extends PatchAction {
       writeDiff(olderFileIn, newerFileIn, patchOutput);
     }
     catch (Exception ex) {
-      Runner.logger.error(ex.fillInStackTrace());
+      Runner.printStackTrace(ex);
     }
     finally {
       olderFileIn.close();

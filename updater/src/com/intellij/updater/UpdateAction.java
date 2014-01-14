@@ -34,15 +34,15 @@ public class UpdateAction extends BaseUpdateAction {
       try {
         applyDiff(in, oldFileIn, out);
       }
-      catch (Exception ex) {
-        Runner.logger.error(ex.fillInStackTrace());
+      catch (Exception e) {
+        Runner.printStackTrace(e);
       }
       finally {
         oldFileIn.close();
       }
     }
-    catch (Exception ex) {
-      Runner.logger.error(ex.fillInStackTrace());
+    catch (Exception e) {
+      Runner.printStackTrace(e);
     }
     finally {
       out.close();

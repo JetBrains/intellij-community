@@ -22,11 +22,18 @@ public class Runner {
   private static final String OLD_BUILD_DESCRIPTION = "old.build.description";
   private static final String NEW_BUILD_DESCRIPTION = "new.build.description";
 
-  public static String getStackTrace(Exception e){
+  public static void printStackTrace(Exception e){
     StringWriter sw = new StringWriter();
     PrintWriter pw = new PrintWriter(sw);
     e.printStackTrace(pw);
-    return sw.toString();
+    logger.error(sw.toString());
+  }
+
+  public static void printStackTrace(Throwable e){
+    StringWriter sw = new StringWriter();
+    PrintWriter pw = new PrintWriter(sw);
+    e.printStackTrace(pw);
+    logger.error(sw.toString());
   }
 
   private static void initLogger(){
@@ -152,7 +159,7 @@ public class Runner {
           }
         }
         catch (Exception ex) {
-          logger.error(getStackTrace(ex));
+          printStackTrace(ex);
         }
         finally {
           in.close();
@@ -166,7 +173,7 @@ public class Runner {
           props.store(byteOut, "");
         }
         catch (Exception ex) {
-          logger.error(getStackTrace(ex));
+          printStackTrace(ex);
         }
         finally {
           byteOut.close();
@@ -177,14 +184,14 @@ public class Runner {
         out.finish();
       }
       catch (Exception ex) {
-        logger.error(getStackTrace(ex));
+        printStackTrace(ex);
       }
       finally {
         fileOut.close();
       }
     }
     catch (Exception ex) {
-      logger.error(getStackTrace(ex));
+      printStackTrace(ex);
     }
     finally {
       cleanup(ui);
@@ -205,7 +212,7 @@ public class Runner {
       props.load(in);
     }
     catch (Exception ex) {
-      logger.error(getStackTrace(ex));
+      printStackTrace(ex);
     }
     finally {
       in.close();
@@ -218,7 +225,7 @@ public class Runner {
           UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
         }
         catch (Exception ex) {
-          logger.error(getStackTrace(ex));
+          printStackTrace(ex);
         }
       }
     });
@@ -249,7 +256,7 @@ public class Runner {
             Utils.copyStream(in, out);
           }
           catch (Exception ex) {
-            logger.error(getStackTrace(ex));
+            printStackTrace(ex);
           }
           finally {
             in.close();
@@ -257,7 +264,7 @@ public class Runner {
           }
         }
         catch (Exception ex) {
-          logger.error(getStackTrace(ex));
+          printStackTrace(ex);
         }
         finally {
           jarFile.close();
@@ -270,11 +277,11 @@ public class Runner {
       }
       catch (IOException e) {
         ui.showError(e);
-        logger.error(getStackTrace(e));
+        printStackTrace(e);
       }
     }
     catch (Exception ex) {
-      logger.error(getStackTrace(ex));
+      printStackTrace(ex);
     }
     finally {
       try {
@@ -282,7 +289,7 @@ public class Runner {
       }
       catch (IOException e) {
         ui.showError(e);
-        logger.error(getStackTrace(e));
+        printStackTrace(e);
       }
     }
     return false;
@@ -305,7 +312,7 @@ public class Runner {
       return new File(new URI(jarFileUrl));
     }
     catch (URISyntaxException e) {
-      logger.error(getStackTrace(e));
+      printStackTrace(e);
       throw new IOException(e.getMessage());
     }
   }
