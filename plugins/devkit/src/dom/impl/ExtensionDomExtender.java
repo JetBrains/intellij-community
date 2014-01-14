@@ -49,6 +49,7 @@ import java.util.*;
  */
 public class ExtensionDomExtender extends DomExtender<Extensions> {
   private static final PsiClassConverter CLASS_CONVERTER = new PluginPsiClassConverter();
+  private static final Converter LANGUAGE_CONVERTER = new LanguageResolvingConverter();
 
   private static class MyRequired implements Required {
     @Override
@@ -236,6 +237,9 @@ public class ExtensionDomExtender extends DomExtender<Extensions> {
         final DomExtension extension =
           registrar.registerGenericAttributeValueChildExtension(new XmlName(attrName), clazz).setDeclaringElement(field);
         markAsClass(extension, fieldName, withElement);
+        if (clazz.equals(String.class)) {
+          markAsLanguage(extension, fieldName);
+        }
       }
       return;
     }
@@ -265,6 +269,12 @@ public class ExtensionDomExtender extends DomExtender<Extensions> {
     }
   }
 
+  private static void markAsLanguage(DomExtension extension, String fieldName) {
+    if ("language".equals(fieldName)) {
+      extension.setConverter(LANGUAGE_CONVERTER);
+    }
+  }
+
   private static void markAsClass(DomExtension extension, String fieldName, @Nullable With withElement) {
     if (withElement != null) {
       final String withClassName = withElement.getImplements().getStringValue();
@@ -275,7 +285,7 @@ public class ExtensionDomExtender extends DomExtender<Extensions> {
         }
       });
     }
-    if (isClassField(fieldName) || withElement != null) {
+    if (withElement != null || isClassField(fieldName)) {
       extension.setConverter(CLASS_CONVERTER);
     }
   }
