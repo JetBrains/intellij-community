@@ -28,14 +28,12 @@ import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.impl.DebuggerSession;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.ui.DebuggerPanelsManager;
-import com.intellij.debugger.ui.impl.MainWatchPanel;
-import com.intellij.debugger.ui.impl.VariablesPanel;
-import com.intellij.debugger.ui.impl.WatchDebuggerTree;
+import com.intellij.debugger.ui.impl.*;
 import com.intellij.debugger.ui.impl.watch.*;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
@@ -46,10 +44,13 @@ import org.jetbrains.annotations.NotNull;
 public class AddToWatchActionHandler extends DebuggerActionHandler {
   @Override
   public boolean isEnabled(@NotNull Project project, AnActionEvent event) {
-    DebuggerTreeNodeImpl[] selectedNodes = DebuggerAction.getSelectedNodes(event.getDataContext());
+    DataContext context = event.getDataContext();
+    DebuggerTreeNodeImpl[] selectedNodes = DebuggerAction.getSelectedNodes(context);
     boolean enabled = false;
     if (selectedNodes != null && selectedNodes.length > 0) {
-      if (DebuggerAction.getPanel(event.getDataContext()) instanceof VariablesPanel) {
+      DebuggerTreePanel panel = DebuggerAction.getPanel(context);
+      if (panel instanceof VariablesPanel || panel instanceof WatchPanel
+          || (panel == null && DebuggerAction.getTree(context) instanceof InspectDebuggerTree)) {
         enabled = true;
         for (DebuggerTreeNodeImpl node : selectedNodes) {
           NodeDescriptorImpl descriptor = node.getDescriptor();
