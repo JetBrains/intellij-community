@@ -36,6 +36,8 @@ public class InternalDomExtender {
 
     registrar.registerGenericAttributeValueChildExtension(new XmlName("internal"), clazz)
       .setConverter(BooleanValueConverter.getInstance(false));
+    registrar.registerGenericAttributeValueChildExtension(new XmlName("overrides"), clazz)
+      .setConverter(BooleanValueConverter.getInstance(false));
   }
 
   public static class ForAction extends DomExtender<Action> {
