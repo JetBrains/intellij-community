@@ -897,6 +897,8 @@ public class IdeEventQueue extends EventQueue {
       boolean dispatch = true;
       if (e instanceof KeyEvent) {
         KeyEvent ke = (KeyEvent)e;
+        final Component component = ke.getComponent();
+        final Window window = component == null ? null : SwingUtilities.windowForComponent(component);
         boolean pureAlt = ke.getKeyCode() == KeyEvent.VK_ALT && (ke.getModifiers() | InputEvent.ALT_MASK) == InputEvent.ALT_MASK;
         if (!pureAlt) {
           myPureAltWasPressed = false;
@@ -925,10 +927,14 @@ public class IdeEventQueue extends EventQueue {
             }
             else {
               myWaiterScheduled = true;
+              //noinspection SSBasedInspection
               SwingUtilities.invokeLater(new Runnable() {
                 @Override
                 public void run() {
                   try {
+                    if (SystemInfo.isWindows || window == null || !window.isActive()) {
+                      return;
+                    }
                     myWaitingForAltRelease = true;
                     if (myRobot == null) {
                       myRobot = new Robot();
