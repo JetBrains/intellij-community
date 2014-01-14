@@ -70,7 +70,7 @@ public class MacFileChooserDialogImpl implements PathChooserDialog {
       final String fileName = Foundation.toStringViaUTF8(filename);
       if (fileName == null) return false;
       final VirtualFile virtualFile = LocalFileSystem.getInstance().findFileByPath(fileName);
-      return virtualFile == null || dialog.myChooserDescriptor.isFileSelectable(virtualFile);
+      return virtualFile == null || virtualFile.isDirectory() || dialog.myChooserDescriptor.isFileSelectable(virtualFile);
     }
   };
 
