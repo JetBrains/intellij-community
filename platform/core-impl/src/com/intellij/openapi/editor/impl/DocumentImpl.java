@@ -38,7 +38,6 @@ import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.CharArrayUtil;
-import com.intellij.util.text.ImmutableCharSequence;
 import com.intellij.util.text.ImmutableText;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -705,7 +704,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
 
   @NotNull
   @Override
-  public ImmutableCharSequence getImmutableCharSequence() {
+  public CharSequence getImmutableCharSequence() {
     return myText;
   }
 

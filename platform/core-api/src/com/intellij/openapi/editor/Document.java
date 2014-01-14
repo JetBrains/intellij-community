@@ -19,7 +19,6 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.UserDataHolder;
-import com.intellij.util.text.ImmutableCharSequence;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -66,10 +65,11 @@ public interface Document extends UserDataHolder {
   @NotNull CharSequence getCharsSequence();
 
   /**
-   * @return a char sequence representing document content that's guaranteed to be immutable.
+   * @return a char sequence representing document content that's guaranteed to be immutable. No read- or write-action is necessary.
+   * @see com.intellij.util.text.ImmutableCharSequence
    */
   @NotNull
-  ImmutableCharSequence getImmutableCharSequence();
+  CharSequence getImmutableCharSequence();
 
   /**
    * @deprecated Use {@link #getCharsSequence()} or {@link #getText()} instead.
