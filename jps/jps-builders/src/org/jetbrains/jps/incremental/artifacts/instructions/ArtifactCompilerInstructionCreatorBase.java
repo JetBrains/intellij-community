@@ -56,11 +56,16 @@ public abstract class ArtifactCompilerInstructionCreatorBase implements Artifact
 
   @Override
   public void addExtractDirectoryInstruction(@NotNull File jarFile, @NotNull String pathInJar) {
+    addExtractDirectoryInstruction(jarFile, pathInJar, null);
+  }
+
+  @Override
+  public void addExtractDirectoryInstruction(@NotNull File jarFile, @NotNull String pathInJar, @Nullable SourceFileFilter sourceFileFilter) {
     //an entry of a jar file is excluded if and only if the jar file itself is excluded. In that case we should unpack entries to the artifact
     // because the jar itself is explicitly added to the artifact layout.
     boolean includeExcluded = true;
 
-    final SourceFileFilterImpl filter = new SourceFileFilterImpl(null, myInstructionsBuilder.getRootsIndex(),
+    final SourceFileFilterImpl filter = new SourceFileFilterImpl(sourceFileFilter, myInstructionsBuilder.getRootsIndex(),
                                                                  myInstructionsBuilder.getIgnoredFileIndex(), includeExcluded);
     DestinationInfo destination = createDirectoryDestination();
     if (destination != null) {
