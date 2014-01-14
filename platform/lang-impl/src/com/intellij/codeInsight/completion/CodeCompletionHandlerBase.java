@@ -109,6 +109,10 @@ public class CodeCompletionHandlerBase {
   }
 
   public final void invokeCompletion(@NotNull final Project project, @NotNull final Editor editor, int time, boolean hasModifiers, boolean restarted) {
+    if (invokedExplicitly) {
+      CompletionLookupArranger.applyLastCompletionStatisticsUpdate();
+    }
+
     final PsiFile psiFile = PsiUtilBase.getPsiFileInEditor(editor, project);
     assert psiFile != null : "no PSI file: " + FileDocumentManager.getInstance().getFile(editor.getDocument());
 
@@ -116,17 +120,13 @@ public class CodeCompletionHandlerBase {
 
     CompletionAssertions.checkEditorValid(editor);
 
-    if (editor.isViewer()) {
+    if (editor.isViewer() || editor.getDocument().getOffsetGuard(editor.getCaretModel().getOffset()) != null) {
       editor.getDocument().fireReadOnlyModificationAttempt();
+      CodeInsightUtilBase.showReadOnlyViewWarning(editor);
       return;
     }
 
-    if (invokedExplicitly) {
-      CompletionLookupArranger.applyLastCompletionStatisticsUpdate();
-    }
-
-    if (!CodeInsightUtilBase.prepareEditorForWrite(editor) ||
-        !FileDocumentManager.getInstance().requestWriting(editor.getDocument(), project)) {
+    if (!FileDocumentManager.getInstance().requestWriting(editor.getDocument(), project)) {
       return;
     }
 

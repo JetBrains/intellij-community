@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,7 +39,7 @@ public class WebEditorOptions implements PersistentStateComponent<WebEditorOptio
   private boolean myBreadcrumbsEnabled = true;
   private boolean myBreadcrumbsEnabledInXml = false;
   private boolean myShowCssColorPreviewInGutter = true;
-  private boolean mySelectWholeCssSelectorSuffixOnDoubleClick = true;
+  private boolean mySelectWholeCssIdentifierOnDoubleClick = true;
   private boolean myShowCssInlineColorPreview = false;
   private boolean myAutomaticallyInsertClosingTag = true;
   private boolean myAutomaticallyInsertRequiredAttributes = true;
@@ -178,12 +178,12 @@ public class WebEditorOptions implements PersistentStateComponent<WebEditorOptio
     XmlSerializerUtil.copyBean(state, this);
   }
 
-  public boolean isSelectWholeCssSelectorSuffixOnDoubleClick() {
-    return mySelectWholeCssSelectorSuffixOnDoubleClick;
+  public boolean isSelectWholeCssIdentifierOnDoubleClick() {
+    return mySelectWholeCssIdentifierOnDoubleClick;
   }
 
-  public void setSelectWholeCssSelectorSuffixOnDoubleClick(boolean selectWholeCssSelectorSuffixOnDoubleClick) {
-    mySelectWholeCssSelectorSuffixOnDoubleClick = selectWholeCssSelectorSuffixOnDoubleClick;
+  public void setSelectWholeCssIdentifierOnDoubleClick(boolean selectWholeCssIdentifiersOnDoubleClick) {
+    mySelectWholeCssIdentifierOnDoubleClick = selectWholeCssIdentifiersOnDoubleClick;
   }
 
   public boolean isInsertQuotesForAttributeValue() {

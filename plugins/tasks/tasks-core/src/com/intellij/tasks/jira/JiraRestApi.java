@@ -96,16 +96,10 @@ public abstract class JiraRestApi {
       return;
     }
     final String transitionsUrl = myRepository.getUrl() + REST_API_PATH_SUFFIX + "/issue/" + task.getId() + "/transitions";
-    LOG.debug(String.format("Transition destination: %s, request: %s", state, requestBody));
+    LOG.debug(String.format("Transition: %s -> %s, request: %s", task.getState(), state, requestBody));
     final PostMethod method = new PostMethod(transitionsUrl);
     method.setRequestEntity(new StringRequestEntity(requestBody, "application/json", "utf-8"));
-    try {
-      myRepository.executeMethod(method);
-    }
-    catch (Exception e) {
-      LOG.warn(String.format("Transition destination: %s, server URL: %s", state, myRepository.getUrl()), e);
-      throw e;
-    }
+    myRepository.executeMethod(method);
   }
 
   @Nullable

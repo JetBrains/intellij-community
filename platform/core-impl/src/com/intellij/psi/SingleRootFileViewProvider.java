@@ -492,7 +492,7 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
       final VirtualFile virtualFile = getVirtualFile();
       if (virtualFile instanceof LightVirtualFile) {
         Document doc = getCachedDocument();
-        if (doc != null) return doc.getCharsSequence();
+        if (doc != null) return getLastCommittedText(doc);
         return ((LightVirtualFile)virtualFile).getContent();
       }
 
@@ -501,7 +501,7 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
         return LoadTextUtil.loadText(virtualFile);
       }
       else {
-        return document.getCharsSequence();
+        return getLastCommittedText(document);
       }
     }
 
@@ -517,6 +517,10 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
     }
   }
 
+  private CharSequence getLastCommittedText(Document document) {
+    return PsiDocumentManager.getInstance(myManager.getProject()).getLastCommittedText(document);
+  }
+
   private class DocumentContent implements Content {
     @NonNls
     @Override
@@ -530,7 +534,7 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
     public CharSequence getText() {
       final Document document = getDocument();
       assert document != null;
-      return document.getCharsSequence();
+      return getLastCommittedText(document);
     }
 
     @Override

@@ -109,11 +109,12 @@ public class StubTreeLoaderImpl extends StubTreeLoader {
       SerializedStubTree stubTree = datas.get(0);
       
       if (!stubTree.contentLengthMatches(vFile.getLength(), getCurrentTextContentLength(project, vFile, document))) {
-        return processError(vFile,
-                            "Outdated stub in index: " + StubUpdatingIndex.getIndexingStampInfo(vFile) +
-                            ", docSaved=" + saved +
-                            ", queried at " + vFile.getTimeStamp(),
-                            null);
+        //todo find another way of early stub-ast mismatch prevention
+        //return processError(vFile,
+        //                    "Outdated stub in index: " + StubUpdatingIndex.getIndexingStampInfo(vFile) +
+        //                    ", docSaved=" + saved +
+        //                    ", queried at " + vFile.getTimeStamp(),
+        //                    null);
       }
 
       Stub stub;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -94,18 +94,19 @@ public class GroovyOverrideImplementUtil {
     GrParameter[] parameters = result.getParameters();
     for (int i = 0; i < parameters.length; i++) {
       GrParameter parameter = parameters[i];
-      final PsiParameter original = originalParams[i];
+      PsiParameter original = originalParams[i];
 
       for (PsiAnnotation annotation : original.getModifierList().getAnnotations()) {
         final GrModifierList modifierList = parameter.getModifierList();
 
         String qname = annotation.getQualifiedName();
-
-        if (annotation instanceof GrAnnotation) {
-          modifierList.add(annotation);
-        }
-        else {
-          modifierList.add(factory.createAnnotationFromText(annotation.getText()));
+        if (qname != null && modifierList.findAnnotation(qname) == null) {
+          if (annotation instanceof GrAnnotation) {
+            modifierList.add(annotation);
+          }
+          else {
+            modifierList.add(factory.createAnnotationFromText(annotation.getText()));
+          }
         }
       }
     }

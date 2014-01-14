@@ -83,6 +83,7 @@ public class CertificatesManager implements ApplicationComponent {
       // Don't do this: protocol created this way will ignore SSL tunnels. See IDEA-115708.
       // Protocol.registerProtocol("https", CertificatesManager.createDefault().createProtocol());
       SSLContext.setDefault(getSslContext());
+      LOG.debug("Default SSL context initialized");
     }
     catch (Exception e) {
       LOG.error(e);
@@ -194,7 +195,7 @@ public class CertificatesManager implements ApplicationComponent {
       catch (CertificateException e1) {
         X509Certificate certificate = certificates[0];
         // looks like self-signed certificate
-        if (certificates.length == 1 && certificateIsSelfSigned(certificate)) {
+        if (certificates.length == 1) {
           // check-then-act sequence
           synchronized (myCustomManager) {
             try {
@@ -394,9 +395,5 @@ public class CertificatesManager implements ApplicationComponent {
       }
     }
     return null;
-  }
-
-  private static boolean certificateIsSelfSigned(X509Certificate certificate) {
-    return certificate.getIssuerX500Principal().equals(certificate.getSubjectX500Principal());
   }
 }

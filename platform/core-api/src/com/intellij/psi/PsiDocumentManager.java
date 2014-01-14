@@ -19,6 +19,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.text.ImmutableCharSequence;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -99,6 +100,13 @@ public abstract class PsiDocumentManager {
    * @param document the document to commit.
    */
   public abstract void commitDocument(@NotNull Document document);
+
+  /**
+   * @param document
+   * @return the document text that PSI should be based upon. For changed documents, it's their old text until the document is committed 
+   */
+  @NotNull
+  public abstract ImmutableCharSequence getLastCommittedText(@NotNull Document document);
 
   /**
    * Returns the list of documents which have been modified but not committed.

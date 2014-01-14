@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -84,8 +84,6 @@ public class LaterInvocator {
   private static final Runnable ourFlushQueueRunnable = new FlushQueue();
 
   private static final Stack<AWTEvent> ourEventStack = new Stack<AWTEvent>(); // guarded by RUN_LOCK
-
-  static boolean IS_TEST_MODE = false;
 
   private static final EventDispatcher<ModalityStateListener> ourModalityStateMulticaster =
     EventDispatcher.create(ModalityStateListener.class);
@@ -187,33 +185,25 @@ public class LaterInvocator {
   }
 
   public static void enterModal(@NotNull Object modalEntity) {
-    if (!IS_TEST_MODE) {
-      LOG.assertTrue(isDispatchThread(), "enterModal() should be invoked in event-dispatch thread");
-    }
+    LOG.assertTrue(isDispatchThread(), "enterModal() should be invoked in event-dispatch thread");
 
     if (LOG.isDebugEnabled()) {
       LOG.debug("enterModal:" + modalEntity);
     }
 
-    if (!IS_TEST_MODE) {
-      ourModalityStateMulticaster.getMulticaster().beforeModalityStateChanged(true);
-    }
+    ourModalityStateMulticaster.getMulticaster().beforeModalityStateChanged(true);
 
     ourModalEntities.add(modalEntity);
   }
 
   public static void leaveModal(@NotNull Object modalEntity) {
-    if (!IS_TEST_MODE) {
-      LOG.assertTrue(isDispatchThread(), "leaveModal() should be invoked in event-dispatch thread");
-    }
+    LOG.assertTrue(isDispatchThread(), "leaveModal() should be invoked in event-dispatch thread");
 
     if (LOG.isDebugEnabled()) {
       LOG.debug("leaveModal:" + modalEntity);
     }
 
-    if (!IS_TEST_MODE) {
-      ourModalityStateMulticaster.getMulticaster().beforeModalityStateChanged(false);
-    }
+    ourModalityStateMulticaster.getMulticaster().beforeModalityStateChanged(false);
 
     boolean removed = ourModalEntities.remove(modalEntity);
     LOG.assertTrue(removed, modalEntity);
@@ -237,15 +227,8 @@ public class LaterInvocator {
     }
   }
 
+  @TestOnly
   static void leaveAllModals() {
-    LOG.assertTrue(IS_TEST_MODE);
-
-    /*
-    if (!IS_TEST_MODE) {
-      ourModalityStateMulticaster.getMulticaster().beforeModalityStateChanged();
-    }
-    */
-
     ourModalEntities.clear();
     ourQueueSkipCount = 0;
     requestFlush();
@@ -253,9 +236,7 @@ public class LaterInvocator {
 
   @NotNull
   public static Object[] getCurrentModalEntities() {
-    if (!IS_TEST_MODE) {
-      ApplicationManager.getApplication().assertIsDispatchThread();
-    }
+    ApplicationManager.getApplication().assertIsDispatchThread();
     //TODO!
     //LOG.assertTrue(IdeEventQueue.getInstance().isInInputEvent() || isInMyRunnable());
 
@@ -263,9 +244,7 @@ public class LaterInvocator {
   }
 
   public static boolean isInModalContext() {
-    if (!IS_TEST_MODE) {
-      LOG.assertTrue(isDispatchThread());
-    }
+    LOG.assertTrue(isDispatchThread());
     return !ourModalEntities.isEmpty();
   }
 

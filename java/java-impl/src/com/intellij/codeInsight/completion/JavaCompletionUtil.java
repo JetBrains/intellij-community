@@ -379,7 +379,7 @@ public class JavaCompletionUtil {
           if (isInExcludedPackage((PsiMember)o, true)) {
             continue;
           }
-          mentioned.add((PsiMember)o);
+          mentioned.add(CompletionUtil.getOriginalOrSelf((PsiMember)o));
         }
         set.add(highlightIfNeeded(qualifierType, castQualifier(item, castItem, plainQualifier, processor), o));
       }

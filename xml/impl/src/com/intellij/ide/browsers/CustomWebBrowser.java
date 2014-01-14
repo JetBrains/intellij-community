@@ -12,23 +12,17 @@ final class CustomWebBrowser extends WebBrowser {
   private final Icon icon;
   private final String browserNotFoundMessage;
 
-  CustomWebBrowser(@NotNull BrowsersConfiguration.BrowserFamily family,
+  CustomWebBrowser(@NotNull UUID id,
+                   @NotNull BrowsersConfiguration.BrowserFamily family,
                    @NotNull String name,
                    @NotNull Icon icon,
                    @NotNull Computable<String> pathComputable,
                    @Nullable String browserNotFoundMessage) {
-    super(family, name);
+    super(id, family, name);
 
     this.pathComputable = pathComputable;
     this.icon = icon;
     this.browserNotFoundMessage = browserNotFoundMessage;
-  }
-
-  @NotNull
-  @Override
-  public UUID getId() {
-    // todo - refine Dartium usage
-    throw new IllegalStateException("Custom browser must not be referenced in this way");
   }
 
   @Override
@@ -49,6 +43,4 @@ final class CustomWebBrowser extends WebBrowser {
     String message = browserNotFoundMessage;
     return message == null ? super.getBrowserNotFoundMessage() : message;
   }
-
-
 }

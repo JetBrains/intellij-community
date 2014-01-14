@@ -18,6 +18,7 @@ package com.intellij.tasks.integration;
 import com.intellij.tasks.Task;
 import com.intellij.tasks.TaskManagerTestCase;
 import com.intellij.tasks.TaskState;
+import com.intellij.tasks.config.TaskSettings;
 import com.intellij.tasks.jira.JiraRepository;
 import com.intellij.tasks.jira.JiraRepositoryType;
 import com.intellij.tasks.jira.JiraVersion;
@@ -95,9 +96,11 @@ public class JiraIntegrationTest extends TaskManagerTestCase {
     Task task = myRepository.findTask(key);
     try {
       myRepository.setTaskState(task, TaskState.IN_PROGRESS);
-      assertEquals(myRepository.findTask(key).getState(), TaskState.IN_PROGRESS);
+      task = myRepository.findTask(key);
+      assertEquals(task.getState(), TaskState.IN_PROGRESS);
       myRepository.setTaskState(task, TaskState.RESOLVED);
-      assertEquals(myRepository.findTask(key).getState(), TaskState.RESOLVED);
+      task = myRepository.findTask(key);
+      assertEquals(task.getState(), TaskState.RESOLVED);
       myRepository.setTaskState(task, TaskState.REOPENED);
       assertEquals(myRepository.findTask(key).getState(), TaskState.REOPENED);
     }
@@ -122,12 +125,12 @@ public class JiraIntegrationTest extends TaskManagerTestCase {
     assertEquals(new JiraVersion("6.1-OD-09-WN").toString(), "6.1.9");
     assertEquals(new JiraVersion("5.0.6").toString(), "5.0.6");
     assertEquals(new JiraVersion("4.4.5").toString(), "4.4.5");
-
   }
 
   @Override
   public void setUp() throws Exception {
     super.setUp();
+    TaskSettings.getInstance().CONNECTION_TIMEOUT = 10000;
     myRepository = new JiraRepository(new JiraRepositoryType());
     myRepository.setUrl(JIRA_5_TEST_SERVER_URL);
     myRepository.setUsername("buildtest");

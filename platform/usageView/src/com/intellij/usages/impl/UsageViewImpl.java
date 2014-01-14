@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import com.intellij.find.FindManager;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.*;
 import com.intellij.ide.actions.CloseTabToolbarAction;
+import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
@@ -43,6 +44,7 @@ import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
+import com.intellij.psi.impl.PsiDocumentManagerBase;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBTabbedPane;
 import com.intellij.ui.content.Content;
@@ -59,6 +61,7 @@ import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.TransferToEDTQueue;
+import com.intellij.util.enumeration.EmptyEnumeration;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.DialogUtil;
 import com.intellij.util.ui.UIUtil;
@@ -95,8 +98,8 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
   private final Factory<UsageSearcher> myUsageSearcherFactory;
   private final Project myProject;
 
-  private boolean mySearchInProgress = true;
-  private ExporterToTextFile myTextFileExporter;
+  private volatile boolean mySearchInProgress = true;
+  private final ExporterToTextFile myTextFileExporter = new ExporterToTextFile(this);
   private final Alarm myUpdateAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
 
   private final UsageModelTracker myModelTracker;
@@ -144,6 +147,13 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
   private Splitter myPreviewSplitter;
   private volatile ProgressIndicator associatedProgress; // the progress that current find usages is running under
 
+  // true if usages tree is currently expanding
+  // (either at the end of find usages thanks to the 'expand usages after find' setting or
+  // because the user pressed 'expand all' button. During this, some ugly hacks applied
+  // to speed up the expanding (see getExpandedDescendants() here and UsageViewTreeCellRenderer.customizeCellRenderer())
+  private boolean expandingAll;
+  private final UsageViewTreeCellRenderer myUsageViewTreeCellRenderer;
+
   UsageViewImpl(@NotNull final Project project,
                 @NotNull UsageViewPresentation presentation,
                 @NotNull UsageTarget[] targets,
@@ -161,7 +171,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
         TreePath path = getPathForLocation(e.getX(), e.getY());
         if (path != null) {
           if (getCellRenderer() instanceof UsageViewTreeCellRenderer) {
-            return UsageViewTreeCellRenderer.getTooltipText(path.getLastPathComponent());
+            return UsageViewTreeCellRenderer.getTooltipFromPresentation(path.getLastPathComponent());
           }
         }
         return null;
@@ -170,6 +180,12 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
       @Override
       public boolean isPathEditable(final TreePath path) {
         return path.getLastPathComponent() instanceof UsageViewTreeModelBuilder.TargetsRootNode;
+      }
+
+      // hack to avoid quadratic expandAll()
+      @Override
+      public Enumeration<TreePath> getExpandedDescendants(TreePath parent) {
+        return expandingAll ? EmptyEnumeration.<TreePath>getInstance() : super.getExpandedDescendants(parent);
       }
     };
     myRootPanel = new MyPanel(myTree);
@@ -189,6 +205,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
       }
     });
 
+    myUsageViewTreeCellRenderer = new UsageViewTreeCellRenderer(this);
     if (!myPresentation.isDetachedMode()) {
       UIUtil.invokeLaterIfNeeded(new Runnable() {
         @Override
@@ -214,7 +231,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
             initTree();
             toolWindowPanel.setContent(myCentralPanel);
 
-            myTree.setCellRenderer(new UsageViewTreeCellRenderer(UsageViewImpl.this));
+            myTree.setCellRenderer(myUsageViewTreeCellRenderer);
             collapseAll();
 
             myModelTracker.addListener(UsageViewImpl.this);
@@ -275,6 +292,16 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
     disposeUsageContextPanels();
 
     JScrollPane treePane = ScrollPaneFactory.createScrollPane(myTree);
+    // add reaction to scrolling:
+    // since the UsageViewTreeCellRenderer ignores invisible nodes (outside the viewport), their preferred size is incorrect
+    // and we need to recalculate it when the node scrolled into visible rectangle
+    treePane.getViewport().addChangeListener(new ChangeListener() {
+      @Override
+      public void stateChanged(ChangeEvent e) {
+        // clear renderer cache of node preferred size
+        myTree.setCellRenderer(myUsageViewTreeCellRenderer);
+      }
+    });
     myPreviewSplitter = new Splitter(false, 0.5f, 0.1f, 0.9f);
     myPreviewSplitter.setFirstComponent(treePane);
 
@@ -431,7 +458,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
         Object component = path.getLastPathComponent();
         if (!(component instanceof Node)) return;
         Node node = (Node)component;
-        if (node.needsUpdate()) {
+        if (!expandingAll && node.needsUpdate()) {
           checkNodeValidity(node, path);
         }
       }
@@ -448,13 +475,9 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
         TreeCellRenderer renderer = myTree.getCellRenderer();
         if (renderer instanceof UsageViewTreeCellRenderer) {
           UsageViewTreeCellRenderer coloredRenderer = (UsageViewTreeCellRenderer)renderer;
-          coloredRenderer.clear();
-          coloredRenderer.customizeCellRenderer(null, value, false, false, false, 0, false);
-          return coloredRenderer.getCharSequence(true).toString();
+          return coloredRenderer.getPlainTextForNode(value);
         }
-        else {
-          return value == null? null : value.toString();
-        }
+        return value == null? null : value.toString();
       }
     }, true);
   }
@@ -556,8 +579,6 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
 
     CommonActionsManager actionsManager = CommonActionsManager.getInstance();
 
-    myTextFileExporter = new ExporterToTextFile(this);
-
     final JComponent component = getComponent();
 
     final AnAction expandAllAction = actionsManager.createExpandAllAction(treeExpander, component);
@@ -573,7 +594,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
 
 
     return new AnAction[] {
-      showSettings(),
+      canShowSettings() ? showSettings() : null,
       canPerformReRun() ? new ReRunAction() : null,
       new CloseAction(),
       ActionManager.getInstance().getAction("PinToolwindowTab"),
@@ -588,11 +609,17 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
     };
   }
 
+  private boolean canShowSettings() {
+    if (myTargets.length == 0) return false;
+    NavigationItem target = myTargets[0];
+    return target instanceof ConfigurableUsageTarget;
+  }
+
   @NotNull
   private AnAction showSettings() {
     return new AnAction("Settings...", "Show find usages settings dialog", AllIcons.General.ProjectSettings) {
       {
-        KeyboardShortcut shortcut = getShowUsagesWithSettingsShortcut();
+        KeyboardShortcut shortcut = getShowUsagesWithSettingsShortcut(myTargets);
         if (shortcut != null) {
           registerCustomShortcutSet(new CustomShortcutSet(shortcut), getComponent());
         }
@@ -694,7 +721,13 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
   }
 
   private void expandAll() {
-    TreeUtil.expandAll(myTree);
+    expandingAll = true;
+    try {
+      TreeUtil.expandAll(myTree);
+    }
+    finally {
+      expandingAll = false;
+    }
   }
 
   private void collapseAll() {
@@ -720,6 +753,16 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
   @Nullable
   public static KeyboardShortcut getShowUsagesWithSettingsShortcut() {
     return ActionManager.getInstance().getKeyboardShortcut("ShowSettingsAndFindUsages");
+  }
+
+  private static KeyboardShortcut getShowUsagesWithSettingsShortcut(@NotNull UsageTarget[] targets) {
+    //if (targets.length != 0) {
+    //  NavigationItem target = targets[0];
+    //  if (target instanceof ConfigurableUsageTarget) {
+    //    return ((ConfigurableUsageTarget)target).getShortcut();
+    //  }
+    //}
+    return getShowUsagesWithSettingsShortcut();
   }
 
   void associateProgress(ProgressIndicator indicator) {
@@ -977,7 +1020,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
     return myUsageNodes.size();
   }
 
-  public void setContent(@NotNull Content content) {
+  void setContent(@NotNull Content content) {
     myContent = content;
     content.setDisposer(this);
   }
@@ -1023,7 +1066,11 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
       shouldCheckChildren = false;
       // optimization: do not call expensive update() on invisible node
     }
-    if (shouldCheckChildren) {
+    UsageViewTreeCellRenderer.RowLocation isVisible =
+      myUsageViewTreeCellRenderer.isRowVisible(myTree.getRowForPath(new TreePath(((DefaultMutableTreeNode)node).getPath())),
+                                               myTree.getVisibleRect());
+
+    if (shouldCheckChildren && isVisible != UsageViewTreeCellRenderer.RowLocation.AFTER_VISIBLE_RECT) { // if row is below visible rectangle, no sense to update it or any children
       for (int i=0; i < node.getChildCount(); i++) {
         TreeNode child = node.getChildAt(i);
         checkNodeValidity(child, path.pathByAddingChild(child));
@@ -1031,7 +1078,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
     }
 
     // call update last, to let children a chance to update their cache first
-    if (node instanceof Node && node != getModelRoot()) {
+    if (node instanceof Node && node != getModelRoot() && isVisible == UsageViewTreeCellRenderer.RowLocation.INSIDE_VISIBLE_RECT) {
       ((Node)node).update(this);
     }
   }
@@ -1042,9 +1089,13 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
       @Override
       public void run() {
         if (myProject.isDisposed()) return;
-        PsiDocumentManager.getInstance(myProject).commitAllDocuments();
-
-        updateImmediately();
+        PsiDocumentManagerBase documentManager = (PsiDocumentManagerBase)PsiDocumentManager.getInstance(myProject);
+        documentManager.cancelAndRunWhenAllCommitted("UpdateUsageView", new Runnable() {
+          @Override
+          public void run() {
+            updateImmediately();
+          }
+        });
       }
     }, 300);
   }
@@ -1176,6 +1227,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
     return true;
   }
 
+  @NotNull
   @Override
   public UsageViewPresentation getPresentation() {
     return myPresentation;

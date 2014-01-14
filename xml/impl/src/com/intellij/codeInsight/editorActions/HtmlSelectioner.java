@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -169,7 +169,7 @@ public class HtmlSelectioner extends AbstractWordSelectioner {
 
   @Override
   public int getMinimalTextRangeLength(@NotNull PsiElement element, @NotNull CharSequence text, int cursorOffset) {
-    if (WebEditorOptions.getInstance().isSelectWholeCssSelectorSuffixOnDoubleClick()) {
+    if (WebEditorOptions.getInstance().isSelectWholeCssIdentifierOnDoubleClick()) {
       final XmlAttribute attribute = PsiTreeUtil.getParentOfType(element, XmlAttribute.class);
       final XmlAttributeValue attributeValue = PsiTreeUtil.getParentOfType(element, XmlAttributeValue.class);
       if (attribute != null && attributeValue != null) {

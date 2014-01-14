@@ -45,7 +45,9 @@ import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
 
 public class DocumentCommitThread extends DocumentCommitProcessor implements Runnable, Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.DocumentCommitThread");
@@ -143,7 +145,7 @@ public class DocumentCommitThread extends DocumentCommitProcessor implements Run
   private final StringBuilder log = new StringBuilder();
 
   @Override
-  public void log(@NonNls String msg, CommitTask task, boolean synchronously, @NonNls Object... args) {
+  public void log(@NonNls String msg, @Nullable CommitTask task, boolean synchronously, @NonNls Object... args) {
     if (true) return;
 
     String indent = new SimpleDateFormat("mm:ss:SSSS").format(new Date()) +
@@ -400,9 +402,16 @@ public class DocumentCommitThread extends DocumentCommitProcessor implements Run
       public void run() {
         ApplicationManager.getApplication().assertReadAccessAllowed();
         if (project.isDisposed()) return;
+
         final PsiDocumentManagerImpl documentManager = (PsiDocumentManagerImpl)PsiDocumentManager.getInstance(project);
+        if (documentManager.isCommitted(document)) return;
+
         FileViewProvider viewProvider = documentManager.getCachedViewProvider(document);
-        if (viewProvider == null) return;
+        if (viewProvider == null) {
+          finishProcessors.add(handleCommitWithoutPsi(documentManager, document, task, synchronously));
+          return;
+        }
+
         List<PsiFile> psiFiles = viewProvider.getAllFiles();
         for (PsiFile file : psiFiles) {
           if (file.isValid()) {
@@ -480,6 +489,25 @@ public class DocumentCommitThread extends DocumentCommitProcessor implements Run
       }
     };
     return finishRunnable;
+  }
+
+  private Processor<Document> handleCommitWithoutPsi(final PsiDocumentManagerImpl documentManager,
+                                                     Document document,
+                                                     final CommitTask task, final boolean synchronously) {
+    final long startDocModificationTimeStamp = document.getModificationStamp();
+    return new Processor<Document>() {
+      @Override
+      public boolean process(Document document) {
+        log("Finishing without PSI", task, synchronously, document.getModificationStamp(), startDocModificationTimeStamp);
+        if (document.getModificationStamp() != startDocModificationTimeStamp ||
+            documentManager.getCachedViewProvider(document) != null) {
+          return false;
+        }
+
+        documentManager.handleCommitWithoutPsi(document);
+        return true;
+      }
+    };
   }
 
   private boolean processAll(final Processor<CommitTask> processor) {

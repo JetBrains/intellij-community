@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiExpressionStatement;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -72,7 +73,8 @@ public abstract class PostfixTemplate {
 
   @Nullable
   public static PsiExpression getTopmostExpression(PsiElement context) {
-    return PsiTreeUtil.getTopmostParentOfType(context, PsiExpression.class);
+    PsiExpressionStatement statement = PsiTreeUtil.getNonStrictParentOfType(context, PsiExpressionStatement.class);
+    return statement != null ? PsiTreeUtil.getChildOfType(statement, PsiExpression.class) : null;
   }
 
   public abstract boolean isApplicable(@NotNull PsiElement context, @NotNull Document copyDocument, int newOffset);
