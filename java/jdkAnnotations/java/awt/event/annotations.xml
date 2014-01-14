@@ -100,6 +100,9 @@
       <val name="flagsFromClass" val="java.awt.event.InputEvent.class" />
     </annotation>
   </item>
+  <item name='java.awt.event.MouseEvent java.awt.Point getPoint()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
   <item name="java.awt.event.MouseEvent java.lang.String getMouseModifiersText(int) 0">
     <annotation name="org.intellij.lang.annotations.MagicConstant">
       <val name="flagsFromClass" val="java.awt.event.InputEvent.class" />
