@@ -95,6 +95,9 @@ public abstract class PatchAction {
         if (lock == null) return false;
         lock.release();
       }
+      catch (Exception e) {
+        Runner.printStackTrace(e);
+      }
       finally {
         ch.close();
         s.close();
@@ -102,9 +105,11 @@ public abstract class PatchAction {
       return true;
     }
     catch (OverlappingFileLockException e) {
+      Runner.printStackTrace(e);
       return false;
     }
     catch (IOException e) {
+      Runner.printStackTrace(e);
       return false;
     }
   }

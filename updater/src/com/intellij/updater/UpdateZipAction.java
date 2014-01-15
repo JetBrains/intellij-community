@@ -103,6 +103,8 @@ public class UpdateZipAction extends BaseUpdateAction {
       new ZipFile(newerFile).close();
     }
     catch (IOException e) {
+      Runner.logger.error("Corrupted target file: " + newerFile);
+      Runner.printStackTrace(e);
       throw new IOException("Corrupted target file: " + newerFile, e);
     }
 
@@ -115,6 +117,8 @@ public class UpdateZipAction extends BaseUpdateAction {
       olderZip = new ZipFile(olderFile);
     }
     catch (IOException e) {
+      Runner.logger.error("Corrupted source file: " + olderFile);
+      Runner.printStackTrace(e);
       throw new IOException("Corrupted source file: " + olderFile, e);
     }
 
@@ -137,10 +141,15 @@ public class UpdateZipAction extends BaseUpdateAction {
             patchOutput.closeEntry();
           }
           catch (IOException e) {
+            Runner.logger.error("Error building patch for .zip entry " + name);
+            Runner.printStackTrace(e);
             throw new IOException("Error building patch for .zip entry " + name, e);
           }
         }
       });
+    }
+    catch (Exception e) {
+      Runner.printStackTrace(e);
     }
     finally {
       olderZip.close();
@@ -164,6 +173,9 @@ public class UpdateZipAction extends BaseUpdateAction {
             try {
               applyDiff(Utils.findEntryInputStream(patchFile, myPath + "/" + path), in, entryOut);
             }
+            catch (Exception e) {
+              Runner.printStackTrace(e);
+            }
             finally {
               entryOut.close();
             }
@@ -179,12 +191,18 @@ public class UpdateZipAction extends BaseUpdateAction {
         try {
           out.zipEntry(each, in);
         }
+        catch (Exception e) {
+          Runner.printStackTrace(e);
+        }
         finally {
           in.close();
         }
       }
 
       out.finish();
+    }
+    catch (Exception e) {
+      Runner.printStackTrace(e);
     }
     finally {
       fileOut.close();
@@ -207,6 +225,9 @@ public class UpdateZipAction extends BaseUpdateAction {
         processor.process(inEntry, new BufferedInputStream(in));
         processed.add(inEntry.getName());
       }
+    }
+    catch (Exception e) {
+      Runner.printStackTrace(e);
     }
     finally {
       in.close();

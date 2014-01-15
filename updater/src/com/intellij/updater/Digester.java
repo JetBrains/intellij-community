@@ -28,11 +28,15 @@ public class Digester {
         zipFile = new ZipFile(file);
       }
       catch (IOException e) {
+        Runner.printStackTrace(e);
         return doDigestRegularFile(file);
       }
 
       try {
         return doDigestZipFile(zipFile);
+      }
+      catch (Exception e) {
+        Runner.printStackTrace(e);
       }
       finally {
         zipFile.close();
@@ -71,6 +75,9 @@ public class Digester {
       InputStream in = zipFile.getInputStream(each);
       try {
         doDigestStream(in, crc);
+      }
+      catch (Exception e) {
+        Runner.printStackTrace(e);
       }
       finally {
         in.close();
