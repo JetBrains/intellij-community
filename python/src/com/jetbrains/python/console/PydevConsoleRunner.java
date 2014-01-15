@@ -50,6 +50,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.tree.FileElement;
@@ -61,16 +62,11 @@ import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.net.NetUtils;
 import com.intellij.util.ui.UIUtil;
-import com.intellij.xdebugger.impl.frame.XStandaloneVariablesView;
 import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.console.completion.PydevConsoleElement;
 import com.jetbrains.python.console.parsing.PythonConsoleData;
 import com.jetbrains.python.console.pydev.ConsoleCommunication;
-import com.jetbrains.python.console.pydev.ConsoleCommunicationListener;
-import com.jetbrains.python.debugger.PyDebuggerEditorsProvider;
 import com.jetbrains.python.debugger.PySourcePosition;
-import com.jetbrains.python.debugger.PyStackFrame;
-import com.jetbrains.python.debugger.PyStackFrameInfo;
 import com.jetbrains.python.remote.PythonRemoteInterpreterManager;
 import com.jetbrains.python.run.ProcessRunner;
 import com.jetbrains.python.run.PythonCommandLineState;
@@ -84,8 +80,8 @@ import org.jetbrains.annotations.Nullable;
 import java.awt.event.KeyEvent;
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.Charset;
 import java.util.*;
-import java.util.List;
 
 import static com.jetbrains.python.sdk.PythonEnvUtil.setPythonIOEncoding;
 import static com.jetbrains.python.sdk.PythonEnvUtil.setPythonUnbuffered;
@@ -134,7 +130,11 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
   }
 
   public static Map<String, String> addDefaultEnvironments(Sdk sdk, Map<String, String> envs) {
-    setPythonIOEncoding(setPythonUnbuffered(envs), "utf-8");
+    Charset defaultCharset = EncodingManager.getInstance().getDefaultCharset();
+
+    final String encoding = defaultCharset != null ? defaultCharset.name() : "utf-8";
+    setPythonIOEncoding(setPythonUnbuffered(envs), encoding);
+    
     PythonSdkFlavor.initPythonPath(envs, true, PythonCommandLineState.getAddedPaths(sdk));
     return envs;
   }
@@ -304,7 +304,8 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
                                                                                                      PYDEV_PYDEVCONSOLE_PY)
                                                                                               .getPath(),
                                                                                             PySourcePosition.isWindowsPath(
-                                                                                              data.getInterpreterPath())));
+                                                                                              data.getInterpreterPath())
+    ));
     commandLine.getParametersList().set(2, "0");
     commandLine.getParametersList().set(3, "0");
 
@@ -570,7 +571,7 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
       new PydevConsoleExecuteActionHandler(getConsoleView(), getProcessHandler(), myPydevConsoleCommunication);
     myConsoleExecuteActionHandler.setEnabled(false);
     myHistoryController = new ConsoleHistoryController(myConsoleType.getTypeId(), "", getLanguageConsole(),
-                                 myConsoleExecuteActionHandler.getConsoleHistoryModel());
+                                                       myConsoleExecuteActionHandler.getConsoleHistoryModel());
     myHistoryController.install();
     return myConsoleExecuteActionHandler;
   }
