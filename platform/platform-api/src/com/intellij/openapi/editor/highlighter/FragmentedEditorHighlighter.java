@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.tree.IElementType;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 import java.util.Map;
@@ -90,6 +91,7 @@ public class FragmentedEditorHighlighter implements EditorHighlighter {
     }
   }
 
+  @NotNull
   @Override
   public HighlighterIterator createIterator(int startOffset) {
     Map.Entry<Integer, Element> entry = myPieces.ceilingEntry(startOffset);
@@ -97,15 +99,15 @@ public class FragmentedEditorHighlighter implements EditorHighlighter {
   }
 
   @Override
-  public void setText(CharSequence text) {
+  public void setText(@NotNull CharSequence text) {
   }
 
   @Override
-  public void setEditor(HighlighterClient editor) {
+  public void setEditor(@NotNull HighlighterClient editor) {
   }
 
   @Override
-  public void setColorScheme(EditorColorsScheme scheme) {
+  public void setColorScheme(@NotNull EditorColorsScheme scheme) {
   }
 
   @Override

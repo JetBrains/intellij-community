@@ -15,6 +15,7 @@
  */
 package com.intellij.platform.templates;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.fileTemplates.impl.UrlUtil;
 import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.application.PathManager;
@@ -27,6 +28,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
@@ -144,6 +146,11 @@ public class ArchivedTemplatesFactory extends ProjectTemplatesFactory {
   @Override
   public int getGroupWeight(String group) {
     return CUSTOM_GROUP.equals(group) ? -2 : 0;
+  }
+
+  @Override
+  public Icon getGroupIcon(String group) {
+    return CUSTOM_GROUP.equals(group) ? AllIcons.Modules.Types.UserDefined : super.getGroupIcon(group);
   }
 
   private final static Logger LOG = Logger.getInstance(ArchivedTemplatesFactory.class);

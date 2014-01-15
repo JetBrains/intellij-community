@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -60,9 +60,11 @@ public class PaletteManager implements ProjectComponent {
     myFileEditorManager = fileEditorManager;
   }
 
+  @Override
   public void projectOpened() {
     if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
       StartupManager.getInstance(myProject).registerPostStartupActivity(new Runnable() {
+        @Override
         public void run() {
           myPaletteWindow = new PaletteWindow(myProject);
           myPaletteToolWindow = ToolWindowManager.getInstance(myProject).
@@ -80,6 +82,7 @@ public class PaletteManager implements ProjectComponent {
     }
   }
 
+  @Override
   public void projectClosed() {
     if (myPaletteWindow != null) {
       myPaletteWindow.dispose();
@@ -88,14 +91,17 @@ public class PaletteManager implements ProjectComponent {
     }
   }
 
+  @Override
   @NotNull
   public String getComponentName() {
     return "PaletteManager";
   }
 
+  @Override
   public void initComponent() {
   }
 
+  @Override
   public void disposeComponent() {
     if (myPaletteWindow != null) {
       myPaletteWindow.dispose();
@@ -157,9 +163,9 @@ public class PaletteManager implements ProjectComponent {
   private final MergingUpdateQueue myQueue = new MergingUpdateQueue("palette", 200, true, null);
 
   private void processFileEditorChange(@Nullable final VirtualFile selectedFile) {
-
     myQueue.cancelAllUpdates();
     myQueue.queue(new Update("update") {
+      @Override
       public void run() {
         if (myPaletteWindow == null) return;
         myPaletteWindow.refreshPaletteIfChanged(selectedFile);
@@ -205,14 +211,17 @@ public class PaletteManager implements ProjectComponent {
   }
 
   private class MyFileEditorManagerListener implements FileEditorManagerListener {
+    @Override
     public void fileOpened(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
       processFileEditorChange(file);
     }
 
+    @Override
     public void fileClosed(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
       processFileEditorChange(null);
     }
 
+    @Override
     public void selectionChanged(@NotNull FileEditorManagerEvent event) {
       processFileEditorChange(event.getNewFile());
     }

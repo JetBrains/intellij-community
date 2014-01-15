@@ -138,4 +138,11 @@ public class DvcsUtil {
       }
     }) != null;
   }
+
+  @Nullable
+  public static String joinMessagesOrNull(@NotNull Collection<String> messages) {
+    String joined = StringUtil.join(messages, "\n");
+    return StringUtil.isEmptyOrSpaces(joined) ? null : joined;
+  }
+
 }

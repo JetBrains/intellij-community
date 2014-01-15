@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -90,17 +90,18 @@ public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDoc
   }
 
   @Override
-  public void setEditor(HighlighterClient editor) {
+  public void setEditor(@NotNull HighlighterClient editor) {
     LOG.assertTrue(myEditor == null, "Highlighters cannot be reused with different editors");
     myEditor = editor;
   }
 
   @Override
-  public void setColorScheme(EditorColorsScheme scheme) {
+  public void setColorScheme(@NotNull EditorColorsScheme scheme) {
     myScheme = scheme;
     myAttributesMap.clear();
   }
 
+  @NotNull
   @Override
   public HighlighterIterator createIterator(int startOffset) {
     synchronized (this) {
@@ -287,7 +288,7 @@ public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDoc
   }
 
   @Override
-  public void setText(CharSequence text) {
+  public void setText(@NotNull CharSequence text) {
     synchronized (this) {
       doSetText(text);
     }
