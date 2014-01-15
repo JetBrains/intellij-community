@@ -110,7 +110,7 @@ public abstract class TreeElementPattern<ParentType, T extends ParentType, Self 
     return withSuperParent(level, StandardPatterns.instanceOf(aClass));
   }
   public Self withSuperParent(final int level, @NotNull final ElementPattern<? extends ParentType> pattern) {
-    return with(new PatternConditionPlus<T, ParentType>("withSuperParent", pattern) {
+    return with(new PatternConditionPlus<T, ParentType>(level == 1 ? "withParent" : "withSuperParent", pattern) {
 
       @Override
       public boolean processValues(T t,

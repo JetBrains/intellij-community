@@ -32,6 +32,7 @@ import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.xml.*;
 import com.intellij.util.PairProcessor;
 import com.intellij.util.PatternValuesIndex;
+import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
 import org.intellij.plugins.intelliLang.Configuration;
 import org.intellij.plugins.intelliLang.inject.InjectedLanguage;
@@ -113,8 +114,7 @@ public final class XmlLanguageInjector implements MultiHostInjector {
           if (language == null) continue;
           final boolean separateFiles = !injection.isSingleFile() && StringUtil.isNotEmpty(injection.getValuePattern());
 
-          final List<Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange>> result =
-            new ArrayList<Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange>>();
+          final List<Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange>> result = ContainerUtil.newArrayList();
 
           xmlTag.acceptChildren(new PsiElementVisitor() {
             @Override
@@ -130,7 +130,7 @@ public final class XmlLanguageInjector implements MultiHostInjector {
               }
               else if (element instanceof XmlTag) {
                 if (!separateFiles) unparsableRef.set(Boolean.TRUE);
-                if (injection instanceof AbstractTagInjection && ((AbstractTagInjection)injection).isApplyToSubTagTexts()) {
+                if (injection instanceof AbstractTagInjection && ((AbstractTagInjection)injection).isApplyToSubTags()) {
                   element.acceptChildren(this);
                 }
               }

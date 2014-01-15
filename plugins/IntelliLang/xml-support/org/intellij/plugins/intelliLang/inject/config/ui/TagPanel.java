@@ -28,7 +28,6 @@ import com.intellij.ui.LanguageTextField;
 import org.intellij.lang.regexp.RegExpLanguage;
 import org.intellij.plugins.intelliLang.inject.config.AbstractTagInjection;
 import org.intellij.plugins.intelliLang.inject.config.JspSupportProxy;
-import org.intellij.plugins.intelliLang.inject.config.XmlTagInjection;
 
 import javax.swing.*;
 import java.util.ArrayList;
@@ -43,7 +42,7 @@ public class TagPanel extends AbstractInjectionPanel<AbstractTagInjection> {
 
   private EditorTextField myLocalName;
   private ComboBox myNamespace;
-  private JCheckBox myApplyRecursivelyCheckBox;
+  private JCheckBox myWithSubtags;
 
   public TagPanel(Project project, AbstractTagInjection injection) {
     super(injection, project);
@@ -95,19 +94,13 @@ public class TagPanel extends AbstractInjectionPanel<AbstractTagInjection> {
   protected void resetImpl() {
     myLocalName.setText(myOrigInjection.getTagName());
     myNamespace.getEditor().setItem(myOrigInjection.getTagNamespace());
-    final boolean isXmlTag = myOrigInjection instanceof XmlTagInjection;
-    myApplyRecursivelyCheckBox.setVisible(isXmlTag);
-    if (isXmlTag) {
-      myApplyRecursivelyCheckBox.setSelected(((XmlTagInjection)myOrigInjection).isApplyToSubTagTexts());
-    }
+    myWithSubtags.setSelected(myOrigInjection.isApplyToSubTags());
   }
 
-  protected void apply(AbstractTagInjection i) {
-    i.setTagName(myLocalName.getText());
-    i.setTagNamespace(getNamespace());
-    if (i instanceof XmlTagInjection) {
-      ((XmlTagInjection)i).setApplyToSubTagTexts(myApplyRecursivelyCheckBox.isSelected());
-    }
+  protected void apply(AbstractTagInjection other) {
+    other.setTagName(myLocalName.getText());
+    other.setTagNamespace(getNamespace());
+    other.setApplyToSubTags(myWithSubtags.isSelected());
   }
 
   private String getNamespace() {

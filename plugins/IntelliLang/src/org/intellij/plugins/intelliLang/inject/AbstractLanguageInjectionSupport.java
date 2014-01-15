@@ -114,12 +114,13 @@ public abstract class AbstractLanguageInjectionSupport extends LanguageInjection
   public static AnAction createDefaultAddAction(final Project project,
                                                 final Consumer<BaseInjection> consumer,
                                                 final AbstractLanguageInjectionSupport support) {
+    final String supportTitle = StringUtil.capitalize(support.getId());
     Icon icon = FileTypeManager.getInstance().getFileTypeByExtension(support.getId()).getIcon();
-    return new AnAction("Generic "+ StringUtil.capitalize(support.getId()), null, icon) {
+    return new AnAction("Generic "+ supportTitle, null, icon) {
       @Override
       public void actionPerformed(AnActionEvent e) {
         final BaseInjection injection = new BaseInjection(support.getId());
-        injection.setDisplayName("New "+ StringUtil.capitalize(support.getId())+" Injection");
+        injection.setDisplayName("New "+ supportTitle +" Injection");
         final BaseInjection newInjection = showDefaultInjectionUI(project, injection);
         if (newInjection != null) {
           consumer.consume(injection);
@@ -134,7 +135,7 @@ public abstract class AbstractLanguageInjectionSupport extends LanguageInjection
     panel.reset();
     final DialogBuilder builder = new DialogBuilder(project);
     LanguageInjectionSupport support = InjectorUtils.findInjectionSupport(injection.getSupportId());
-    if (support != null && support instanceof AbstractLanguageInjectionSupport) {
+    if (support instanceof AbstractLanguageInjectionSupport) {
       builder.setHelpId(((AbstractLanguageInjectionSupport)support).getHelpId());
     }
     builder.addOkAction();

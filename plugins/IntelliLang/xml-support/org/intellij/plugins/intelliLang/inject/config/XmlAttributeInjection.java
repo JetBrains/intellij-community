@@ -57,8 +57,7 @@ public class XmlAttributeInjection extends AbstractTagInjection {
     return element instanceof XmlAttribute && matches((XmlAttribute)element);
   }
 
-  @NotNull
-  public String getDisplayName() {
+  public String getGeneratedName() {
     final String tag = getTagName();
     final String attributeName = getAttributeName();
     if (!attributeName.equals(StringMatcher.NONE.getPattern())) {
@@ -95,7 +94,8 @@ public class XmlAttributeInjection extends AbstractTagInjection {
   public XmlAttributeInjection copyFrom(@NotNull BaseInjection o) {
     super.copyFrom(o);
     if (o instanceof XmlAttributeInjection) {
-      final XmlAttributeInjection other = (XmlAttributeInjection)o;
+      XmlAttributeInjection other = (XmlAttributeInjection)o;
+      setApplyToSubTags(other.isApplyToSubTags());
       setAttributeName(other.getAttributeName());
       setAttributeNamespace(other.getAttributeNamespace());
     }
@@ -104,10 +104,6 @@ public class XmlAttributeInjection extends AbstractTagInjection {
 
   protected void readExternalImpl(Element e) {
     super.readExternalImpl(e);
-    if (e.getAttribute("injector-id") == null) {
-      setAttributeName(JDOMExternalizer.readString(e, "ATT_NAME"));
-      setAttributeNamespace(JDOMExternalizer.readString(e, "ATT_NAMESPACE"));
-    }
   }
 
   protected void writeExternalImpl(Element e) {
@@ -142,7 +138,8 @@ public class XmlAttributeInjection extends AbstractTagInjection {
     if (StringUtil.isNotEmpty(name)) appendStringPattern(result, ".withLocalName(", name, ")");
     if (StringUtil.isNotEmpty(namespace)) appendStringPattern(result, ".withNamespace(", namespace, ")");
     if (StringUtil.isNotEmpty(injection.getTagName()) || StringUtil.isNotEmpty(injection.getTagNamespace())) {
-      result.append(".withParent(").append(XmlTagInjection.getPatternString(injection)).append(")");
+      result.append(".").append(injection.isApplyToSubTags() ? "inside" : "withParent").append("(")
+        .append(XmlTagInjection.getPatternString(injection)).append(")");
     }
     return result.toString();
   }
