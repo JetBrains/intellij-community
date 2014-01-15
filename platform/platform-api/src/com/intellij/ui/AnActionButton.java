@@ -15,6 +15,7 @@
  */
 package com.intellij.ui;
 
+import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.ui.UIUtil;
@@ -128,6 +129,10 @@ public abstract class AnActionButton extends AnAction implements ShortcutProvide
 
   public JComponent getContextComponent() {
     return myContextComponent;
+  }
+
+  public DataContext getDataContext() {
+    return DataManager.getInstance().getDataContext(getContextComponent());
   }
 
   private boolean isContextComponentOk() {
