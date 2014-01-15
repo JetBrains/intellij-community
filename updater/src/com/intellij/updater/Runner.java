@@ -10,19 +10,29 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import java.util.zip.ZipInputStream;
 
+import org.apache.log4j.Logger;
+import org.apache.log4j.Level;
+import org.apache.log4j.FileAppender;
+import org.apache.log4j.PatternLayout;
+
 public class Runner {
+  public static Logger logger;
   private static final String PATCH_FILE_NAME = "patch-file.zip";
   private static final String PATCH_PROPERTIES_ENTRY = "patch.properties";
   private static final String OLD_BUILD_DESCRIPTION = "old.build.description";
   private static final String NEW_BUILD_DESCRIPTION = "new.build.description";
 
   public static void main(String[] args) throws Exception {
+    initLogger();
+    logger.info("--- Updater started ---");
+
     if (args.length != 2 && args.length < 6) {
       printUsage();
       return;
     }
 
     String command = args[0];
+    logger.info("args[0]: " + args[0]);
 
     if ("create".equals(command)) {
       if (args.length < 6) {
@@ -46,12 +56,53 @@ public class Runner {
       }
 
       String destFolder = args[1];
+      logger.info("destFolder: " + destFolder);
       install(destFolder);
     }
     else {
       printUsage();
       return;
     }
+  }
+
+  private static void initLogger(){
+    String tmpDir = System.getProperty("java.io.tmpdir");
+    System.out.println("java.io.tmpdir: " + tmpDir);
+    //    String uHome = System.getProperty("user.home");
+    FileAppender update = new FileAppender();
+
+    update.setFile(tmpDir + "idea_updater.log");
+    update.setLayout(new PatternLayout("%d{dd MMM yyyy HH:mm:ss} %-5p %C{1}.%M - %m%n"));
+    update.setThreshold(Level.ALL);
+    update.setAppend(true);
+    update.activateOptions();
+
+    FileAppender update_error = new FileAppender();
+    update_error.setFile(tmpDir + "idea_updater_error.log");
+    update_error.setLayout(new PatternLayout("%d{dd MMM yyyy HH:mm:ss} %-5p %C{1}.%M - %m%n"));
+    update_error.setThreshold(Level.ERROR);
+    // The error(s) from an old run of the updater (if there were) could be found in idea_updater.log file
+    update_error.setAppend(false);
+    update_error.activateOptions();
+
+    logger = Logger.getLogger("com.intellij.updater");
+    logger.addAppender(update_error);
+    logger.addAppender(update);
+    logger.setLevel(Level.ALL);
+  }
+
+  public static void printStackTrace(Exception e){
+    StringWriter sw = new StringWriter();
+    PrintWriter pw = new PrintWriter(sw);
+    e.printStackTrace(pw);
+    logger.error(sw.toString());
+  }
+
+  public static void printStackTrace(Throwable e){
+    StringWriter sw = new StringWriter();
+    PrintWriter pw = new PrintWriter(sw);
+    e.printStackTrace(pw);
+    logger.error(sw.toString());
   }
 
   public static List<String> extractFiles(String[] args, String paramName) {
@@ -94,6 +145,7 @@ public class Runner {
                               optionalFiles,
                               ui);
 
+      logger.info("Packing jar file: " + patchFile );
       ui.startProcess("Packing jar file '" + patchFile + "'...");
 
       FileOutputStream fileOut = new FileOutputStream(patchFile);
@@ -106,6 +158,9 @@ public class Runner {
             out.zipEntry(e, in);
           }
         }
+        catch (Exception ex) {
+          printStackTrace(ex);
+        }
         finally {
           in.close();
         }
@@ -117,6 +172,9 @@ public class Runner {
           props.setProperty(NEW_BUILD_DESCRIPTION, newBuildDesc);
           props.store(byteOut, "");
         }
+        catch (Exception ex) {
+          printStackTrace(ex);
+        }
         finally {
           byteOut.close();
         }
@@ -125,9 +183,15 @@ public class Runner {
         out.zipFile(PATCH_FILE_NAME, tempPatchFile);
         out.finish();
       }
+      catch (Exception ex) {
+        printStackTrace(ex);
+      }
       finally {
         fileOut.close();
       }
+    }
+    catch (Exception ex) {
+      printStackTrace(ex);
     }
     finally {
       cleanup(ui);
@@ -135,6 +199,7 @@ public class Runner {
   }
 
   private static void cleanup(UpdaterUI ui) throws IOException {
+    logger.info("Cleaning up...");
     ui.startProcess("Cleaning up...");
     ui.setProgressIndeterminate();
     Utils.cleanup();
@@ -145,6 +210,9 @@ public class Runner {
     Properties props = new Properties();
     try {
       props.load(in);
+    }
+    catch (Exception ex) {
+      printStackTrace(ex);
     }
     finally {
       in.close();
@@ -157,6 +225,7 @@ public class Runner {
           UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
         }
         catch (Exception ignore) {
+          printStackTrace(ignore);
         }
       }
     });
@@ -165,6 +234,7 @@ public class Runner {
                   props.getProperty(NEW_BUILD_DESCRIPTION),
                   new SwingUpdaterUI.InstallOperation() {
                     public boolean execute(UpdaterUI ui) throws OperationCancelledException {
+                      logger.info("installing patch to the " + destFolder);
                       return doInstall(ui, destFolder);
                     }
                   });
@@ -176,6 +246,7 @@ public class Runner {
         File patchFile = Utils.createTempFile();
         ZipFile jarFile = new ZipFile(resolveJarFile());
 
+        logger.info("Extracting patch file...");
         ui.startProcess("Extracting patch file...");
         ui.setProgressIndeterminate();
         try {
@@ -184,10 +255,16 @@ public class Runner {
           try {
             Utils.copyStream(in, out);
           }
+          catch (Exception ex) {
+            printStackTrace(ex);
+          }
           finally {
             in.close();
             out.close();
           }
+        }
+        catch (Exception ex) {
+          printStackTrace(ex);
         }
         finally {
           jarFile.close();
@@ -202,7 +279,11 @@ public class Runner {
       }
       catch (IOException e) {
         ui.showError(e);
+        printStackTrace(e);
       }
+    }
+    catch (Exception ex) {
+      printStackTrace(ex);
     }
     finally {
       try {
@@ -210,6 +291,7 @@ public class Runner {
       }
       catch (IOException e) {
         ui.showError(e);
+        printStackTrace(e);
       }
     }
 
@@ -233,6 +315,7 @@ public class Runner {
       return new File(new URI(jarFileUrl));
     }
     catch (URISyntaxException e) {
+      printStackTrace(e);
       throw new IOException(e.getMessage());
     }
   }

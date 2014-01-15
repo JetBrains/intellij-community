@@ -20,7 +20,9 @@ public class PatchFileCreator {
                             List<String> criticalFiles,
                             List<String> optionalFiles,
                             UpdaterUI ui) throws IOException, OperationCancelledException {
+
     Patch patchInfo = new Patch(olderDir, newerDir, ignoredFiles, criticalFiles, optionalFiles, ui);
+    Runner.logger.info("Creating the patch file '" + patchFile + "'...");
     ui.startProcess("Creating the patch file '" + patchFile + "'...");
     ui.checkCancelled();
 
@@ -34,10 +36,15 @@ public class PatchFileCreator {
 
       List<PatchAction> actions = patchInfo.getActions();
       for (PatchAction each : actions) {
+
+        Runner.logger.info("Packing " + each.getPath());
         ui.setStatus("Packing " + each.getPath());
         ui.checkCancelled();
         each.buildPatchFile(olderDir, newerDir, out);
       }
+    }
+    catch (Exception e) {
+      Runner.printStackTrace(e);
     }
     finally {
       out.close();
@@ -93,6 +100,9 @@ public class PatchFileCreator {
     ZipFile zipFile = new ZipFile(preparationResult.patchFile);
     try {
       preparationResult.patch.revert(actionsToRevert, backupDir, preparationResult.toDir, ui);
+    }
+    catch (Exception e) {
+      Runner.printStackTrace(e);
     }
     finally {
       zipFile.close();
