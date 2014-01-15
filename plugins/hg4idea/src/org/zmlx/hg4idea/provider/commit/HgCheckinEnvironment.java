@@ -12,6 +12,7 @@
 // limitations under the License.
 package org.zmlx.hg4idea.provider.commit;
 
+import com.intellij.dvcs.DvcsCommitAdditionalComponent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -33,9 +34,13 @@ import com.intellij.util.PairConsumer;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.*;
 import org.zmlx.hg4idea.command.*;
 import org.zmlx.hg4idea.execution.HgCommandException;
+import org.zmlx.hg4idea.execution.HgCommandExecutor;
+import org.zmlx.hg4idea.execution.HgCommandResult;
+import org.zmlx.hg4idea.util.HgUtil;
 
 import java.util.*;
 
@@ -43,6 +48,7 @@ public class HgCheckinEnvironment implements CheckinEnvironment {
 
   private final Project myProject;
   private boolean myNextCommitIsPushed;
+  private boolean myNextCommitAmend; // If true, the next commit is amended
 
   public HgCheckinEnvironment(Project project) {
     myProject = project;
@@ -51,7 +57,7 @@ public class HgCheckinEnvironment implements CheckinEnvironment {
   public RefreshableOnComponent createAdditionalOptionsPanel(CheckinProjectPanel panel,
                                                              PairConsumer<Object, Object> additionalDataConsumer) {
     myNextCommitIsPushed = false;
-    return null;
+    return new HgCommitAdditionalComponent(myProject,panel);
   }
 
   public String getDefaultMessageFor(FilePath[] filesToCheckin) {
@@ -78,7 +84,7 @@ public class HgCheckinEnvironment implements CheckinEnvironment {
       VirtualFile repo = entry.getKey();
       Set<HgFile> selectedFiles = entry.getValue();
 
-      HgCommitCommand command = new HgCommitCommand(myProject, repo, preparedComment);
+      HgCommitCommand command = new HgCommitCommand(myProject, repo, preparedComment, myNextCommitAmend);
       
       if (isMergeCommit(repo)) {
         //partial commits are not allowed during merges
@@ -174,7 +180,7 @@ public class HgCheckinEnvironment implements CheckinEnvironment {
   }
 
   public List<VcsException> commit(List<Change> changes, String preparedComment) {
-    return commit(changes, preparedComment, FunctionUtil.<Object, Object>nullConstant(), null);
+    return commit(changes, preparedComment, FunctionUtil.nullConstant(), null);
   }
 
   public List<VcsException> scheduleMissingFileForDeletion(List<FilePath> files) {
@@ -246,7 +252,52 @@ public class HgCheckinEnvironment implements CheckinEnvironment {
     hgFiles.add(new HgFile(repo, filePath));
   }
 
-  public void setNextCommitIsPushed(boolean pushed) {
+  public void setNextCommitIsPushed() {
     myNextCommitIsPushed = true;
+  }
+
+  /**
+   * Commit options for hg
+   */
+  private class HgCommitAdditionalComponent extends DvcsCommitAdditionalComponent {
+
+    public HgCommitAdditionalComponent(@NotNull Project project, @NotNull CheckinProjectPanel panel) {
+      super(project, panel);
+      HgVcs myVcs = HgVcs.getInstance(myProject);
+      if (myVcs != null && !myVcs.getVersion().isAmendSupported()) {
+        myAmend.setEnabled(false);
+      }
+    }
+
+    public void refresh() {
+      super.refresh();
+      myNextCommitAmend = false;
+    }
+
+    public void saveState() {
+      myNextCommitAmend = myAmend.isSelected();
+    }
+
+    public void restoreState() {
+      myNextCommitAmend = false;
+    }
+
+    @NotNull
+    @Override
+    protected Collection<VirtualFile> getRoots() {
+      return HgUtil.getHgRepositories(myProject);
+    }
+
+    @Nullable
+    protected String getLastCommitMessage(@NotNull VirtualFile repo) throws VcsException {
+      HgCommandExecutor commandExecutor = new HgCommandExecutor(myProject);
+      List<String> args = new ArrayList<String>();
+      args.add("-r");
+      args.add(".");
+      args.add("--template");
+      args.add("{desc}");
+      HgCommandResult result = commandExecutor.executeInCurrentThread(repo, "log", args, null);
+      return result == null ? "" : result.getRawOutput();
+    }
   }
 }

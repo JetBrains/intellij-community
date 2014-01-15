@@ -16,13 +16,13 @@
 package git4idea.checkin;
 
 import com.intellij.CommonBundle;
+import com.intellij.dvcs.DvcsCommitAdditionalComponent;
+import com.intellij.dvcs.DvcsUtil;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
@@ -33,7 +33,6 @@ import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.GuiUtils;
-import com.intellij.ui.NonFocusableCheckBox;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
@@ -61,8 +60,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.io.*;
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -137,7 +134,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
         }
       }
     }
-    return joinOrNull(messages);
+    return DvcsUtil.joinMessagesOrNull(messages);
   }
 
   private static String loadMessage(@NotNull VirtualFile messageFile, @NotNull String encoding) throws IOException {
@@ -601,36 +598,18 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
   /**
    * Checkin options for git
    */
-  private class GitCheckinOptions implements CheckinChangeListSpecificComponent {
+  private class GitCheckinOptions extends DvcsCommitAdditionalComponent implements CheckinChangeListSpecificComponent {
     private final GitVcs myVcs;
-    /**
-     * A container panel
-     */
-    private final JPanel myPanel;
     /**
      * The author ComboBox, the combobox contains previously selected authors.
      */
     private final JComboBox myAuthor;
-    /**
-     * The amend checkbox
-     */
-    private final JCheckBox myAmend;
+
     private Date myAuthorDate;
-    @Nullable private String myPreviousMessage;
-    @Nullable private String myAmendedMessage;
 
-    @NotNull private final CheckinProjectPanel myCheckinPanel;
-
-    /**
-     * A constructor
-     *
-     * @param project
-     * @param panel
-     */
     GitCheckinOptions(@NotNull final Project project, @NotNull CheckinProjectPanel panel) {
+      super(project, panel);
       myVcs = GitVcs.getInstance(project);
-      myCheckinPanel = panel;
-      myPanel = new JPanel(new GridBagLayout());
       final Insets insets = new Insets(2, 2, 2, 2);
       // add authors drop down
       GridBagConstraints c = new GridBagConstraints();
@@ -648,7 +627,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
       c.gridy = 0;
       c.weightx = 1;
       c.fill = GridBagConstraints.HORIZONTAL;
-      final List<String> usersList = getUsersList(project, myCheckinPanel.getRoots());
+      final List<String> usersList = getUsersList(project);
       final Set<String> authors = usersList == null ? new HashSet<String>() : new HashSet<String>(usersList);
       ContainerUtil.addAll(authors, mySettings.getCommitAuthors());
       List<String> list = new ArrayList<String>(authors);
@@ -659,98 +638,24 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
           return StringUtil.shortenTextWithEllipsis(o, 30, 0);
         }
       });
-      myAuthor = new JComboBox(ArrayUtil.toObjectArray(list));
+      myAuthor = new ComboBox(ArrayUtil.toObjectArray(list));
       myAuthor.insertItemAt("", 0);
       myAuthor.setSelectedItem("");
       myAuthor.setEditable(true);
       authorLabel.setLabelFor(myAuthor);
       myAuthor.setToolTipText(GitBundle.getString("commit.author.tooltip"));
       myPanel.add(myAuthor, c);
-      // add amend checkbox
-      c = new GridBagConstraints();
-      c.gridx = 0;
-      c.gridy = 1;
-      c.gridwidth = 2;
-      c.anchor = GridBagConstraints.CENTER;
-      c.insets = insets;
-      c.weightx = 1;
-      c.fill = GridBagConstraints.HORIZONTAL;
-      myAmend = new NonFocusableCheckBox(GitBundle.getString("commit.amend"));
-      myAmend.setMnemonic('m');
-      myAmend.setSelected(false);
-      myAmend.setToolTipText(GitBundle.getString("commit.amend.tooltip"));
-      myPanel.add(myAmend, c);
-
-      myPreviousMessage = myCheckinPanel.getCommitMessage();
-
-      myAmend.addActionListener(new ActionListener() {
-        @Override
-        public void actionPerformed(ActionEvent e) {
-          if (myAmend.isSelected()) {
-            if (myPreviousMessage.equals(myCheckinPanel.getCommitMessage())) { // if user has already typed something, don't revert it
-              if (myAmendedMessage == null) {
-                loadMessageInModalTask(project);
-              }
-              else { // checkbox is selected not the first time
-                substituteCommitMessage(myAmendedMessage);
-              }
-            }
-          }
-          else {
-            // there was the amended message, but user has changed it => not reverting
-            if (myCheckinPanel.getCommitMessage().equals(myAmendedMessage)) {
-              myCheckinPanel.setCommitMessage(myPreviousMessage);
-            }
-          }
-        }
-      });
     }
 
-    private void loadMessageInModalTask(@NotNull Project project) {
-      try {
-        String messageFromGit =
-          ProgressManager.getInstance().runProcessWithProgressSynchronously(new ThrowableComputable<String, VcsException>() {
-            @Override
-            public String compute() throws VcsException {
-              return getLastCommitMessage();
-            }
-          }, "Reading commit message...", false, project);
-        if (!StringUtil.isEmptyOrSpaces(messageFromGit)) {
-          substituteCommitMessage(messageFromGit);
-          myAmendedMessage = messageFromGit;
-        }
-      }
-      catch (VcsException e) {
-        Messages.showErrorDialog(getComponent(), "Couldn't load commit message of the commit to amend.\n" + e.getMessage(),
-                                 "Commit Message not Loaded");
-        log.info(e);
-      }
-    }
-
-    private void substituteCommitMessage(@NotNull String newMessage) {
-      myPreviousMessage = myCheckinPanel.getCommitMessage();
-      myCheckinPanel.setCommitMessage(newMessage);
+    @Override
+    @NotNull
+    protected Set<VirtualFile> getRoots() {
+      return GitUtil.gitRoots(getSelectedFilePaths());
     }
 
     @Nullable
-    private String getLastCommitMessage() throws VcsException {
-      Set<VirtualFile> roots = GitUtil.gitRoots(getSelectedFilePaths());
-      final Ref<VcsException> exception = Ref.create();
-      LinkedHashSet<String> messages = ContainerUtil.newLinkedHashSet();
-      for (VirtualFile root : roots) {
-        String message = getLastCommitMessage(root);
-        if (message != null) {
-          messages.add(message);
-        }
-      }
-      if (!exception.isNull()) {
-        throw exception.get();
-      }
-      return joinOrNull(messages);
-    }
-
-    @Nullable
-    private String getLastCommitMessage(@NotNull VirtualFile root) throws VcsException {
+    @Override
+    protected String getLastCommitMessage(@NotNull VirtualFile root) throws VcsException {
       GitSimpleHandler h = new GitSimpleHandler(myProject, root, GitCommand.LOG);
       h.addParameters("--max-count=1");
       if (GitVersionSpecialty.STARTED_USING_RAW_BODY_IN_FORMAT.existsIn(myVcs.getVersion())) {
@@ -774,29 +679,16 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
       });
     }
 
-    private List<String> getUsersList(final Project project, final Collection<VirtualFile> roots) {
+    private List<String> getUsersList(final Project project) {
       return NewGitUsersComponent.getInstance(project).get();
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public JComponent getComponent() {
-      return myPanel;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
     public void refresh() {
+      super.refresh();
       myAuthor.setSelectedItem("");
-      myAmend.setSelected(false);
       reset();
     }
 
-    /**
-     * {@inheritDoc}
-     */
     public void saveState() {
       String author = (String)myAuthor.getEditor().getItem();
       myNextCommitAuthor = author.length() == 0 ? null : author;
@@ -811,9 +703,6 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
       myNextCommitAuthorDate = myAuthorDate;
     }
 
-    /**
-     * {@inheritDoc}
-     */
     public void restoreState() {
       refresh();
     }
@@ -828,12 +717,6 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
         myAuthorDate = new Date(commit.getTime());
       }
     }
-  }
-
-  @Nullable
-  private static String joinOrNull(@NotNull Collection<String> messages) {
-    String joined = StringUtil.join(messages, "\n");
-    return StringUtil.isEmptyOrSpaces(joined) ? null : joined;
   }
 
   public void setNextCommitIsPushed(Boolean nextCommitIsPushed) {
