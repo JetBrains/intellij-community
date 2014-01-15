@@ -188,8 +188,8 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
       else if (FeatureUsageTracker.getInstance()
         .isToBeAdvertisedInLookup(CodeCompletionFeatures.EDITING_COMPLETION_CONTROL_ENTER, getProject())) {
         myLookup.addAdvertisement("Press " +
-                                      CompletionContributor.getActionShortcut(IdeActions.ACTION_CHOOSE_LOOKUP_ITEM_ALWAYS) +
-                                      " to choose the selected (or first) suggestion", null);
+                                  CompletionContributor.getActionShortcut(IdeActions.ACTION_CHOOSE_LOOKUP_ITEM_ALWAYS) +
+                                  " to choose the selected (or first) suggestion", null);
       }
       if (!myEditor.isOneLineMode() &&
           FeatureUsageTracker.getInstance()
@@ -705,6 +705,10 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   }
 
   private static boolean shouldPreselectFirstSuggestion(CompletionParameters parameters) {
+    if (!Registry.is("ide.completion.autopopup.choose.by.enter")) {
+      return false;
+    }
+
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
       return true;
     }
