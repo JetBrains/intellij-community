@@ -95,13 +95,13 @@ public interface Group extends Actions {
         @NotNull
         GenericAttributeValue<String> getId();
 
-  	/**
-	 * Returns the value of the overrides child.
-	 * Attribute overrides
-	 * @return the value of the overrides child.
-	 */
-	@NotNull
-	GenericAttributeValue<Boolean> getOverrides();
+  	///**
+	// * Returns the value of the overrides child.
+	// * Attribute overrides
+	// * @return the value of the overrides child.
+	// */
+	//@NotNull
+	//GenericAttributeValue<Boolean> getOverrides();
 
 	/**
 	 * Returns the list of reference children.

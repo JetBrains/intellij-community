@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -301,14 +301,14 @@ public class EditorUtil {
     // text fragment.
     boolean useOptimization = true;
     boolean hasTabs;
-    if ((editor instanceof EditorImpl) && !((EditorImpl)editor).hasTabs()) {
+    if (editor instanceof EditorImpl && !((EditorImpl)editor).hasTabs()) {
       hasTabs = false;
       useOptimization = true;
     }
     else {
-      boolean hasNonTabs = false;
       hasTabs = false;
       int scanEndOffset = Math.min(end, start + columnNumber - currentColumn[0] + 1);
+      boolean hasNonTabs = false;
       for (int i = start; i < scanEndOffset; i++) {
         char c = text.charAt(i);
         if (debugBuffer != null) {
@@ -463,7 +463,7 @@ public class EditorUtil {
     }
     boolean hasTabs = true;
     if (useOptimization) {
-      if ((editor instanceof EditorImpl) && !((EditorImpl)editor).hasTabs()) {
+      if (editor instanceof EditorImpl && !((EditorImpl)editor).hasTabs()) {
         hasTabs = false;
       }
       else {

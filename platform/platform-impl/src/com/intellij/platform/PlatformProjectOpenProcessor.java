@@ -32,6 +32,8 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame;
@@ -43,6 +45,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.io.File;
+import java.io.IOException;
 
 /**
  * @author max
@@ -102,8 +105,16 @@ public class PlatformProjectOpenProcessor extends ProjectOpenProcessor {
         }
         baseDir = baseDir.getParent();
       }
-      if (baseDir == null) {
-        baseDir = virtualFile.getParent();
+      if (baseDir == null) { // no reasonable directory -> create new temp one or use parent
+        if (Registry.is("ide.open.file.in.temp.project.dir")) {
+          try {
+            File directory = FileUtil.createTempDirectory(virtualFile.getName(), null, true);
+            baseDir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(directory);
+          } catch (IOException ex) {
+            LOG.error(ex);
+          }
+        }
+        if (baseDir == null) baseDir = virtualFile.getParent();
       }
     }
 

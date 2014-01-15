@@ -33,6 +33,8 @@ public interface ArtifactCompilerInstructionCreator {
 
   void addExtractDirectoryInstruction(@NotNull File jarFile, @NotNull String pathInJar);
 
+  void addExtractDirectoryInstruction(@NotNull File jarFile, @NotNull String pathInJar, @Nullable SourceFileFilter sourceFileFilter);
+
   ArtifactCompilerInstructionCreator subFolder(@NotNull String directoryName);
 
   ArtifactCompilerInstructionCreator archive(@NotNull String archiveFileName);

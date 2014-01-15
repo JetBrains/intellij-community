@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.diagnostic.Dumpable;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.FoldRegion;
@@ -33,8 +34,13 @@ import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.ScrollingModel;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.event.DocumentEvent;
-import com.intellij.openapi.editor.ex.*;
+import com.intellij.openapi.editor.ex.DocumentEx;
+import com.intellij.openapi.editor.ex.FoldingListener;
+import com.intellij.openapi.editor.ex.FoldingModelEx;
+import com.intellij.openapi.editor.ex.PrioritizedDocumentListener;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -43,13 +49,11 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Set;
-import java.util.concurrent.CopyOnWriteArraySet;
 
 public class FoldingModelImpl implements FoldingModelEx, PrioritizedDocumentListener, Dumpable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.impl.EditorFoldingModelImpl");
 
-  private final Set<FoldingListener> myListeners = new CopyOnWriteArraySet<FoldingListener>();
+  private final List<FoldingListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
   private boolean myIsFoldingEnabled;
   private final EditorImpl myEditor;
@@ -536,14 +540,16 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedDocumentList
   }
 
   @Override
-  public boolean addListener(@NotNull FoldingListener listener) {
-    return myListeners.add(listener);
+  public void addListener(@NotNull final FoldingListener listener, @NotNull Disposable parentDisposable) {
+    myListeners.add(listener);
+    Disposer.register(parentDisposable, new Disposable() {
+      @Override
+      public void dispose() {
+        myListeners.remove(listener);
+      }
+    });
   }
 
-  @Override
-  public boolean removeListener(@NotNull FoldingListener listener) {
-    return myListeners.remove(listener);
-  }
 
   private void notifyListenersOnFoldRegionStateChange(@NotNull FoldRegion foldRegion) {
     for (FoldingListener listener : myListeners) {

@@ -72,15 +72,17 @@ public class CharTableImpl implements CharTable {
   @NotNull
   @Override
   public CharSequence intern(@NotNull final CharSequence baseText, final int startOffset, final int endOffset) {
-    if (endOffset - startOffset == baseText.length()) return baseText;
+    if (endOffset - startOffset == baseText.length()) return intern(baseText);
     return intern(new CharSequenceSubSequence(baseText, startOffset, endOffset));
   }
 
   @NotNull
   private static String createSequence(@NotNull CharSequence text) {
+    if (text instanceof String) {
+      return (String)text;
+    }
     char[] buf = new char[text.length()];
     CharArrayUtil.getChars(text, buf, 0);
-
     return StringFactory.createShared(buf); // this way the .toString() doesn't create another instance (as opposed to new CharArrayCharSequence())
   }
 

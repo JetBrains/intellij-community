@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,7 +38,6 @@ import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.CharArrayUtil;
-import com.intellij.util.text.ImmutableCharSequence;
 import com.intellij.util.text.ImmutableText;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -368,7 +367,6 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
     }
     assertWriteAccess();
     assertValidSeparators(s);
-    assertNotNestedModification();
 
     if (!isWritable()) throw new ReadOnlyModificationException(this);
     if (s.length() == 0) return;
@@ -395,7 +393,6 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
     assertWriteAccess();
     if (!isWritable()) throw new ReadOnlyModificationException(this);
     if (startOffset == endOffset) return;
-    assertNotNestedModification();
 
     CharSequence sToDelete = myText.subSequence(startOffset, endOffset);
 
@@ -412,8 +409,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
     assertBounds(srcStart, srcEnd);
     if (dstOffset == srcEnd) return;
     ProperTextRange srcRange = new ProperTextRange(srcStart, srcEnd);
-    assert !srcRange.containsOffset(dstOffset) :
-      String.format("Can't perform text move from range [%d; %d) to offset %d", srcStart, srcEnd, dstOffset);
+    assert !srcRange.containsOffset(dstOffset) : "Can't perform text move from range [" +srcStart+ "; " + srcEnd+ ") to offset "+dstOffset;
 
     String replacement = getCharsSequence().subSequence(srcStart, srcEnd).toString();
 
@@ -440,7 +436,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
     replaceString(startOffset, endOffset, s, LocalTimeCounter.currentTime(), startOffset == 0 && endOffset == getTextLength());
   }
 
-  private void replaceString(int startOffset, int endOffset, final CharSequence s, final long newModificationStamp, boolean wholeTextReplaced) {
+  private void replaceString(int startOffset, int endOffset, @NotNull CharSequence s, final long newModificationStamp, boolean wholeTextReplaced) {
     assertBounds(startOffset, endOffset);
 
     assertWriteAccess();
@@ -449,7 +445,6 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
     if (!isWritable()) {
       throw new ReadOnlyModificationException(this);
     }
-    assertNotNestedModification();
 
     final int newStringLength = s.length();
     final CharSequence chars = getCharsSequence();
@@ -479,7 +474,8 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
     ImmutableText newText;
     if (wholeTextReplaced && s instanceof ImmutableText) {
       newText = (ImmutableText)s;
-    } else {
+    }
+    else {
       newText = myText.delete(startOffset, endOffset).insert(startOffset, changedPart);
     }
     updateText(newText, startOffset, sToDelete, changedPart, wholeTextReplaced, newModificationStamp);
@@ -544,7 +540,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
     }
   }
 
-  private void throwGuardedFragment(RangeMarker guard, int offset, String oldString, String newString) {
+  private void throwGuardedFragment(@NotNull RangeMarker guard, int offset, String oldString, String newString) {
     if (myCheckGuardedBlocks > 0 && !myGuardsSuppressed) {
       DocumentEvent event = new DocumentEventImpl(this, offset, oldString, newString, myModificationStamp, false);
       throw new ReadOnlyFragmentModificationException(event, guard);
@@ -579,14 +575,15 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
     }
   }
 
-  private void updateText(ImmutableText newText,
+  private void updateText(@NotNull ImmutableText newText,
                           int offset,
                           @Nullable CharSequence oldString,
                           @Nullable CharSequence newString,
                           boolean wholeTextReplaced,
                           long newModificationStamp) {
-    final DocumentEvent event;
+    assertNotNestedModification();
     myChangeInProgress = true;
+    final DocumentEvent event;
     try {
       event = doBeforeChangedUpdate(offset, oldString, newString, wholeTextReplaced);
     }
@@ -639,7 +636,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
     }
   }
 
-  private void changedUpdate(DocumentEvent event, long newModificationStamp) {
+  private void changedUpdate(@NotNull DocumentEvent event, long newModificationStamp) {
     try {
       if (LOG.isDebugEnabled()) LOG.debug(event.toString());
 
@@ -663,6 +660,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
     }
   }
 
+  @NotNull
   @Override
   public String getText() {
     return ApplicationManager.getApplication().runReadAction(new Computable<String>() {
@@ -673,6 +671,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
     });
   }
 
+  @NotNull
   private String doGetText() {
     String s = SoftReference.dereference(myTextString);
     if (s == null) {
@@ -705,7 +704,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
 
   @NotNull
   @Override
-  public ImmutableCharSequence getImmutableCharSequence() {
+  public CharSequence getImmutableCharSequence() {
     return myText;
   }
 
@@ -755,7 +754,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
     cachedDocumentListenersRef.set(null);
     boolean success = documentListeners.remove(listener);
     if (!success) {
-      LOG.error("Can't remove document listener (" + listener + "). Registered cachedDocumentListenersRef: " + documentListeners);
+      LOG.error("Can't remove document listener (" + listener + "). Registered listeners: " + documentListeners);
     }
   }
 
@@ -895,6 +894,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
       ApplicationManager.getApplication().getMessageBus().syncPublisher(DocumentBulkUpdateListener.TOPIC);
   }
 
+  @NotNull
   private static DocumentBulkUpdateListener getPublisher() {
     return DocumentBulkUpdateListenerHolder.ourBulkChangePublisher;
   }

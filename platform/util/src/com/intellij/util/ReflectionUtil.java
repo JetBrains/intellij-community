@@ -150,13 +150,13 @@ public class ReflectionUtil {
   }
 
   @NotNull
-  public static Field findAssignableField(@NotNull Class clazz, @NotNull Class type, @NotNull String name) throws NoSuchFieldException {
+  public static Field findAssignableField(@NotNull Class clazz, @NotNull Class fieldType, @NotNull String fieldName) throws NoSuchFieldException {
     List<Field> fields = collectFields(clazz);
     for (Field each : fields) {
-      if (name.equals(each.getName()) && type.isAssignableFrom(each.getType())) return each;
+      if (fieldName.equals(each.getName()) && fieldType.isAssignableFrom(each.getType())) return each;
     }
 
-    throw new NoSuchFieldException("Class: " + clazz + " name: " + name + " type: " + type);
+    throw new NoSuchFieldException("Class: " + clazz + " fieldName: " + fieldName + " fieldType: " + fieldType);
   }
 
   private static void collectFields(@NotNull Class clazz, @NotNull List<Field> result) {
@@ -249,9 +249,9 @@ public class ReflectionUtil {
     return method == null ? null : method.getDeclaringClass();
   }
 
-  public static <T> T getField(@NotNull Class objectClass, Object object, @NotNull Class<T> type, @NotNull @NonNls String name) {
+  public static <T> T getField(@NotNull Class objectClass, Object object, @NotNull Class<T> fieldType, @NotNull @NonNls String fieldName) {
     try {
-      final Field field = findAssignableField(objectClass, type, name);
+      final Field field = findAssignableField(objectClass, fieldType, fieldName);
       field.setAccessible(true);
       return (T)field.get(object);
     }

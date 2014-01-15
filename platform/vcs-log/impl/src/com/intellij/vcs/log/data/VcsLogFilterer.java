@@ -95,13 +95,7 @@ public class VcsLogFilterer {
 
   public void requestVcs(@NotNull Collection<VcsLogFilter> filters, final LoadMoreStage loadMoreStage) {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    int maxCount;
-    if (loadMoreStage == LoadMoreStage.INITIAL) {
-      maxCount = LOAD_MORE_COMMITS_FIRST_STEP_LIMIT;
-    }
-    else {
-      maxCount = -1;
-    }
+    int maxCount = loadMoreStage == LoadMoreStage.INITIAL ? LOAD_MORE_COMMITS_FIRST_STEP_LIMIT : -1;
     myLogDataHolder.getFilteredDetailsFromTheVcs(filters, new Consumer<List<VcsFullCommitDetails>>() {
       @Override
       public void consume(List<VcsFullCommitDetails> details) {

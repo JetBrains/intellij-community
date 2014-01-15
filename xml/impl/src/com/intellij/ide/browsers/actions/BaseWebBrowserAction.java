@@ -33,6 +33,6 @@ final class BaseWebBrowserAction extends BaseOpenInBrowserAction {
   @Nullable
   @Override
   protected WebBrowser getBrowser(@NotNull AnActionEvent event) {
-    return WebBrowserManager.getInstance().isActive(browser) ? browser : null;
+    return WebBrowserManager.getInstance().isActive(browser) && browser.getPath() != null ? browser : null;
   }
 }
