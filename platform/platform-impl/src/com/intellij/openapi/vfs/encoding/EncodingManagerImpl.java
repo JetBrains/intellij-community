@@ -122,7 +122,7 @@ public class EncodingManagerImpl extends EncodingManager implements PersistentSt
     if (virtualFile == null) return;
     Project project = guessProject(virtualFile);
     if (project != null && project.isDisposed()) return;
-    Charset charset = LoadTextUtil.charsetFromContentOrNull(project, virtualFile, document.getText());
+    Charset charset = LoadTextUtil.charsetFromContentOrNull(project, virtualFile, document.getImmutableCharSequence());
     Charset oldCached = getCachedCharsetFromContent(document);
     if (!Comparing.equal(charset, oldCached)) {
       setCachedCharsetFromContent(charset, oldCached, document);
@@ -144,7 +144,7 @@ public class EncodingManagerImpl extends EncodingManager implements PersistentSt
     return ApplicationManager.getApplication().runReadAction(new Computable<Charset>() {
       @Override
       public Charset compute() {
-        Charset charsetFromContent = LoadTextUtil.charsetFromContentOrNull(project, virtualFile, document.getText());
+        Charset charsetFromContent = LoadTextUtil.charsetFromContentOrNull(project, virtualFile, document.getImmutableCharSequence());
         if (charsetFromContent != null) {
           setCachedCharsetFromContent(charsetFromContent, cached, document);
         }
