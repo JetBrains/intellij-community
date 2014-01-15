@@ -100,7 +100,7 @@ public class ProjectTypeStep extends ModuleWizardStep implements Disposable, Act
           append("         ");
         }
         else {
-          setBorder(IdeBorderFactory.createEmptyBorder(3, 10, 3, 5));
+          setBorder(IdeBorderFactory.createEmptyBorder(2, 10, 2, 5));
           setIcon(value.getIcon());
         }
         append(value.getName());
