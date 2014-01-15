@@ -81,27 +81,24 @@ public class FileChooserDescriptor implements Cloneable {
     return myTitle;
   }
 
-  public final FileChooserDescriptor setTitle(String title) {
+  public final void setTitle(String title) {
     myTitle = title;
-    return this;
   }
 
   public boolean isShowFileSystemRoots() {
     return myShowFileSystemRoots;
   }
 
-  public FileChooserDescriptor setShowFileSystemRoots(boolean showFileSystemRoots) {
+  public void setShowFileSystemRoots(boolean showFileSystemRoots) {
     myShowFileSystemRoots = showFileSystemRoots;
-    return this;
   }
 
   public final String getDescription() {
     return myDescription;
   }
 
-  public final FileChooserDescriptor setDescription(String description) {
+  public final void setDescription(String description) {
     myDescription = description;
-    return this;
   }
 
   public final boolean isChooseJarContents() {
@@ -185,7 +182,6 @@ public class FileChooserDescriptor implements Cloneable {
   /**
    * the method is called upon pressing Ok in the FileChooserDialog
    * Override the method in order to customize validation of user input
-   *
    * @param files - selected files to be checked
    * @throws Exception if the the files cannot be accepted
    */
@@ -220,23 +216,21 @@ public class FileChooserDescriptor implements Cloneable {
     return JarFileSystem.getInstance().findFileByPath(path + JarFileSystem.JAR_SEPARATOR);
   }
 
-  public final FileChooserDescriptor setHideIgnored(boolean hideIgnored) {
+  public final void setHideIgnored(boolean hideIgnored) {
     myHideIgnored = hideIgnored;
-    return this;
   }
 
   public final List<VirtualFile> getRoots() {
     return Collections.unmodifiableList(myRoots);
   }
 
-  public final FileChooserDescriptor setRoots(final VirtualFile... roots) {
-    return setRoots(Arrays.asList(roots));
+  public final void setRoots(final VirtualFile... roots) {
+    setRoots(Arrays.asList(roots));
   }
 
-  public final FileChooserDescriptor setRoots(@NotNull final List<VirtualFile> roots) {
+  public final void setRoots(@NotNull final List<VirtualFile> roots) {
     myRoots.clear();
     myRoots.addAll(roots);
-    return this;
   }
 
   public boolean isTreeRootVisible() {
