@@ -215,6 +215,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private static final int MOUSE_SELECTION_STATE_LINE_SELECTED = 2;
 
   private EditorHighlighter myHighlighter;
+  private Disposable myHighlighterDisposable = Disposer.newDisposable();
   private final TextDrawingCallback myTextDrawingCallback = new MyTextDrawingCallback();
 
   @MagicConstant(intValues = {VERTICAL_SCROLLBAR_LEFT, VERTICAL_SCROLLBAR_RIGHT})
@@ -282,28 +283,28 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   @NotNull private final JPanel myHeaderPanel;
 
   @Nullable private MouseEvent myInitialMouseEvent;
-  private           boolean    myIgnoreMouseEventsConsecutiveToInitial;
+  private boolean myIgnoreMouseEventsConsecutiveToInitial;
 
   private EditorDropHandler myDropHandler;
 
-  private                char[]         myPrefixText;
-  private                TextAttributes myPrefixAttributes;
-  private                int            myPrefixWidthInPixels;
-  @NotNull private final IndentsModel   myIndentsModel;
+  private char[] myPrefixText;
+  private TextAttributes myPrefixAttributes;
+  private int myPrefixWidthInPixels;
+  @NotNull private final IndentsModel myIndentsModel;
 
   @Nullable
   private CharSequence myPlaceholderText;
-  private int          myLastPaintedPlaceholderWidth;
+  private int myLastPaintedPlaceholderWidth;
 
   private boolean myStickySelection;
-  private int     myStickySelectionStart;
+  private int myStickySelectionStart;
   private boolean myScrollToCaret = true;
 
   private boolean myPurePaintingMode;
   private boolean myPaintSelection;
 
   private final EditorSizeAdjustmentStrategy mySizeAdjustmentStrategy = new EditorSizeAdjustmentStrategy();
-  private final Disposable                   myDisposable             = Disposer.newDisposable();
+  private final Disposable myDisposable = Disposer.newDisposable();
 
   static {
     ourCaretBlinkingCommand = new RepaintCursorCommand();
@@ -383,7 +384,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myDocument.addDocumentListener(new EditorDocumentAdapter(), myCaretModel);
     myDocument.addDocumentListener(mySoftWrapModel, myCaretModel);
 
-    myFoldingModel.addListener(mySoftWrapModel);
+    myFoldingModel.addListener(mySoftWrapModel, myCaretModel);
 
     myIndentsModel = new IndentsModelImpl(this);
     myCaretModel.addCaretListener(new CaretListener() {
@@ -722,9 +723,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myTraceableDisposable.kill(null);
 
     isReleased = true;
-    myDocument.removeDocumentListener(myHighlighter);
 
-    myFoldingModel.removeListener(mySoftWrapModel);
     myFoldingModel.dispose();
 
     mySoftWrapModel.release();
@@ -990,17 +989,22 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   @Override
-  public void setHighlighter(@NotNull EditorHighlighter highlighter) {
+  public void setHighlighter(@NotNull final EditorHighlighter highlighter) {
     assertIsDispatchThread();
     final Document document = getDocument();
-    if (myHighlighter != null && !isDisposed()) {
-      document.removeDocumentListener(myHighlighter);
-    }
+    Disposer.dispose(myHighlighterDisposable);
 
     document.addDocumentListener(highlighter);
+    myHighlighter = highlighter;
+    myHighlighterDisposable = new Disposable() {
+      @Override
+      public void dispose() {
+        document.removeDocumentListener(highlighter);
+      }
+    };
+    Disposer.register(myDisposable, myHighlighterDisposable);
     highlighter.setEditor(this);
     highlighter.setText(document.getCharsSequence());
-    myHighlighter = highlighter;
     EditorHighlighterCache.rememberEditorHighlighterForCachesOptimization(document, highlighter);
 
     if (myPanel != null) {
