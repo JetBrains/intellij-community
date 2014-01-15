@@ -48,7 +48,6 @@ import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ConcurrentHashSet;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
-import com.intellij.util.text.ImmutableCharSequence;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -66,7 +65,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
   private final PsiManager myPsiManager;
   private final DocumentCommitProcessor myDocumentCommitProcessor;
   protected final Set<Document> myUncommittedDocuments = new ConcurrentHashSet<Document>();
-  private final Map<Document, ImmutableCharSequence> myLastCommittedTexts = ContainerUtil.newConcurrentMap();
+  private final Map<Document, CharSequence> myLastCommittedTexts = ContainerUtil.newConcurrentMap();
 
   private volatile boolean myIsCommitInProgress;
   private final PsiToDocumentSynchronizer mySynchronizer;
@@ -550,8 +549,8 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
 
   @Override
   @NotNull
-  public ImmutableCharSequence getLastCommittedText(@NotNull Document document) {
-    ImmutableCharSequence text = myLastCommittedTexts.get(document);
+  public CharSequence getLastCommittedText(@NotNull Document document) {
+    CharSequence text = myLastCommittedTexts.get(document);
     return text != null ? text : document.getImmutableCharSequence();
   }
 
@@ -683,7 +682,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
   }
 
   public void handleCommitWithoutPsi(final Document document) {
-    final ImmutableCharSequence prevText = myLastCommittedTexts.remove(document);
+    final CharSequence prevText = myLastCommittedTexts.remove(document);
     if (prevText == null) {
       return;
     }

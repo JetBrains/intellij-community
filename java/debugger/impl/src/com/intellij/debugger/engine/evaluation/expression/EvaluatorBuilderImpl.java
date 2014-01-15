@@ -47,10 +47,7 @@ import com.sun.jdi.Value;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 public class EvaluatorBuilderImpl implements EvaluatorBuilder {
   private static final EvaluatorBuilderImpl ourInstance = new EvaluatorBuilderImpl();
@@ -866,7 +863,7 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
       }
       final PsiExpressionList argumentList = expression.getArgumentList();
       final PsiExpression[] argExpressions = argumentList.getExpressions();
-      final Evaluator[] argumentEvaluators = new Evaluator[argExpressions.length];
+      Evaluator[] argumentEvaluators = new Evaluator[argExpressions.length];
       // evaluate arguments
       for (int idx = 0; idx < argExpressions.length; idx++) {
         final PsiExpression psiExpression = argExpressions[idx];
@@ -957,6 +954,7 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
 
       if (psiMethod != null) {
         processBoxingConversions(psiMethod.getParameterList().getParameters(), argExpressions, resolveResult.getSubstitutor(), argumentEvaluators);
+        argumentEvaluators = wrapVarargs(psiMethod.getParameterList().getParameters(), argExpressions, resolveResult.getSubstitutor(), argumentEvaluators);
       }
 
       myResult = new MethodEvaluator(objectEvaluator, contextClass, methodExpr.getReferenceName(), psiMethod != null ? JVMNameUtil.getJVMSignature(psiMethod) : null, argumentEvaluators);
@@ -1162,6 +1160,7 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
 
         if (constructor != null) {
           processBoxingConversions(constructor.getParameterList().getParameters(), argExpressions, constructorResolveResult.getSubstitutor(), argumentEvaluators);
+          argumentEvaluators = wrapVarargs(constructor.getParameterList().getParameters(), argExpressions, constructorResolveResult.getSubstitutor(), argumentEvaluators);
         }
 
         //noinspection HardCodedStringLiteral
@@ -1233,6 +1232,34 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
       }
       return new ExpressionEvaluatorImpl(myResult);
     }
+  }
+
+  private static Evaluator[] wrapVarargs(final PsiParameter[] declaredParams,
+                                         final PsiExpression[] actualArgumentExpressions,
+                                         final PsiSubstitutor methodResolveSubstitutor,
+                                         final Evaluator[] argumentEvaluators) {
+    int lastParam = declaredParams.length - 1;
+    if (lastParam >= 0 && declaredParams[lastParam].isVarArgs() && argumentEvaluators.length > lastParam) {
+      // only wrap if the first varargs parameter is null for now
+      if (!TypeConversionUtil.isNullType(actualArgumentExpressions[lastParam].getType())) {
+        return argumentEvaluators;
+      }
+      // do not wrap arrays twice
+      if (argumentEvaluators.length - lastParam == 1 && actualArgumentExpressions[lastParam].getType() instanceof PsiArrayType) {
+        return argumentEvaluators;
+      }
+      PsiEllipsisType declaredParamType = (PsiEllipsisType)methodResolveSubstitutor.substitute(declaredParams[lastParam].getType());
+      ArrayInitializerEvaluator varargArrayEvaluator =
+        new ArrayInitializerEvaluator(Arrays.copyOfRange(argumentEvaluators, lastParam, argumentEvaluators.length));
+      NewArrayInstanceEvaluator evaluator =
+        new NewArrayInstanceEvaluator(new TypeEvaluator(JVMNameUtil.getJVMQualifiedName(declaredParamType.toArrayType())), null,
+                                      varargArrayEvaluator);
+      Evaluator[] res = new Evaluator[declaredParams.length];
+      System.arraycopy(argumentEvaluators, 0, res, 0, lastParam);
+      res[lastParam] = new DisableGC(evaluator);
+      return res;
+    }
+    return argumentEvaluators;
   }
 
   private static void processBoxingConversions(final PsiParameter[] declaredParams,

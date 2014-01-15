@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package com.intellij.openapi.ui;
 import com.intellij.notification.NotificationType;
 import com.intellij.ui.JBColor;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -34,19 +35,22 @@ public class MessageType {
   private final Icon myDefaultIcon;
   private final Color myPopupBackground;
 
-  private MessageType(final Icon defaultIcon, Color popupBackground) {
+  private MessageType(@NotNull Icon defaultIcon, @NotNull Color popupBackground) {
     myDefaultIcon = defaultIcon;
     myPopupBackground = popupBackground;
   }
 
+  @NotNull
   public Icon getDefaultIcon() {
     return myDefaultIcon;
   }
 
+  @NotNull
   public Color getPopupBackground() {
     return myPopupBackground;
   }
 
+  @NotNull
   public NotificationType toNotificationType() {
     return this == ERROR ? NotificationType.ERROR : this == WARNING ? NotificationType.WARNING : NotificationType.INFORMATION;
   }

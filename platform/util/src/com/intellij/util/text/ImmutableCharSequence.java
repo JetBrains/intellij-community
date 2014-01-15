@@ -19,79 +19,14 @@ import org.jetbrains.annotations.NotNull;
 
 public abstract class ImmutableCharSequence implements CharSequence {
 
-  @Override
-  public abstract ImmutableCharSequence subSequence(int start, int end);
+  public static CharSequence asImmutable(@NotNull final CharSequence cs) {
+    return isImmutable(cs) ? cs : cs.toString();
+  }
 
-  public static ImmutableCharSequence asImmutable(@NotNull final CharSequence cs) {
-    if (cs instanceof ImmutableCharSequence) return (ImmutableCharSequence)cs;
-    return new StringCharSequence(cs.toString());
+  public static boolean isImmutable(@NotNull final CharSequence cs) {
+    if (cs instanceof ImmutableCharSequence) return true;
+    if (cs instanceof CharSequenceSubSequence) return isImmutable(((CharSequenceSubSequence)cs).getBaseSequence());
+    return false;
   }
   
-  protected static class ImmutableSubSequence extends ImmutableCharSequence {
-    private final ImmutableCharSequence myChars;
-    private final int myStart;
-    private final int myEnd;
-
-    public ImmutableSubSequence(@NotNull ImmutableCharSequence chars, int start, int end) {
-      if (start < 0 || end > chars.length() || start > end) {
-        throw new IndexOutOfBoundsException("chars sequence.length:" + chars.length() +
-                                            ", start:" + start +
-                                            ", end:" + end);
-      }
-      myChars = chars;
-      myStart = start;
-      myEnd = end;
-    }
-
-    @Override
-    public final int length() {
-      return myEnd - myStart;
-    }
-
-    @Override
-    public final char charAt(int index) {
-      return myChars.charAt(index + myStart);
-    }
-
-    @Override
-    public ImmutableSubSequence subSequence(int start, int end) {
-      if (start == myStart && end == myEnd) return this;
-      return new ImmutableSubSequence(myChars, myStart + start, myStart + end);
-    }
-
-    @NotNull
-    public String toString() {
-      if (myChars instanceof StringCharSequence) return myChars.toString().substring(myStart, myEnd);
-      return StringFactory.createShared(CharArrayUtil.fromSequence(myChars, myStart, myEnd));
-    }
-  }
-
-  private static class StringCharSequence extends ImmutableCharSequence {
-    private final String myString;
-
-    public StringCharSequence(@NotNull String string) {
-      myString = string;
-    }
-
-    @Override
-    public int length() {
-      return myString.length();
-    }
-
-    @Override
-    public char charAt(int index) {
-      return myString.charAt(index);
-    }
-
-    @Override
-    public ImmutableCharSequence subSequence(int start, int end) {
-      return new ImmutableSubSequence(this, start, end);
-    }
-
-    @NotNull
-    @Override
-    public String toString() {
-      return myString;
-    }
-  }
 }

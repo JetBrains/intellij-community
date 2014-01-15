@@ -15,6 +15,7 @@
  */
 package org.jetbrains.jps.incremental.artifacts.instructions;
 
+import com.intellij.openapi.util.Condition;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.incremental.artifacts.ArtifactBuildTarget;
 import org.jetbrains.jps.indices.IgnoredFileIndex;
@@ -79,7 +80,9 @@ public class ArtifactInstructionsBuilderImpl implements ArtifactInstructionsBuil
 
   public JarBasedArtifactRootDescriptor createJarBasedRoot(@NotNull File jarFile,
                                                            @NotNull String pathInJar,
-                                                           @NotNull SourceFileFilter filter, final DestinationInfo destinationInfo) {
-    return new JarBasedArtifactRootDescriptor(jarFile, pathInJar, filter, myRootIndex++, myBuildTarget, destinationInfo);
+                                                           @NotNull SourceFileFilter filter,
+                                                           @NotNull DestinationInfo destinationInfo,
+                                                           @NotNull Condition<String> pathInJarFilter) {
+    return new JarBasedArtifactRootDescriptor(jarFile, pathInJar, filter, myRootIndex++, myBuildTarget, destinationInfo, pathInJarFilter);
   }
 }

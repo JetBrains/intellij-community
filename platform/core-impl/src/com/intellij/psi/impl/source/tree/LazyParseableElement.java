@@ -50,7 +50,7 @@ public class LazyParseableElement extends CompositeElement {
   // Under no circumstances should you grab the PSI_LOCK while holding this lock.
   private final ChameleonLock lock = new ChameleonLock();
   /** guarded by {@link #lock} */
-  private ImmutableCharSequence myText;
+  private CharSequence myText;
   
   private static final ThreadLocal<Boolean> ourSuppressEagerPsiCreation = new ThreadLocal<Boolean>();
 

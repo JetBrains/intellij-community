@@ -15,13 +15,16 @@
  */
 package com.jetbrains.python.quickFixes;
 
+import com.intellij.testFramework.TestDataPath;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyQuickFixTestCase;
 import com.jetbrains.python.inspections.PyUnresolvedReferencesInspection;
+import com.jetbrains.python.inspections.PyUnusedLocalInspection;
 
 /**
  * User: ktisha
  */
+@TestDataPath("$CONTENT_ROOT/../testData//quickFixes/AddFieldQuickFixTest/")
 public class AddFieldQuickFixTest extends PyQuickFixTestCase {
 
   public void testAddClassField() {
@@ -42,6 +45,14 @@ public class AddFieldQuickFixTest extends PyQuickFixTestCase {
 
   public void testAddFieldNewConstructor() {
     doQuickFixTest(PyUnresolvedReferencesInspection.class, PyBundle.message("QFIX.NAME.add.field.$0.to.class.$1", "x", "B"));
+  }
+
+  public void testFromUnusedParameter() {  // PY-1398
+    doQuickFixTest(PyUnusedLocalInspection.class, "Add field 'foo' to class A");
+  }
+
+  public void testFromUnusedParameterKeyword() {  // PY-1602
+    doQuickFixTest(PyUnusedLocalInspection.class, "Add field 'foo' to class A");
   }
 
 }
