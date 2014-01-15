@@ -66,20 +66,18 @@ public class AddFieldQuickFix implements LocalQuickFix {
   @Nullable
   public static PsiElement appendToMethod(PyFunction init, Function<String, PyStatement> callback) {
     // add this field as the last stmt of the constructor
-    final PyStatementList stmt_list = init.getStatementList();
-    PyStatement[] stmts = stmt_list.getStatements(); // NOTE: rather wasteful, consider iterable stmt list
-    PyStatement last_stmt = null;
-    if (stmts.length > 0) last_stmt = stmts[stmts.length-1];
+    final PyStatementList statementList = init.getStatementList();
+    assert statementList != null;
     // name of 'self' may be different for fancier styles
     PyParameter[] params = init.getParameterList().getParameters();
-    String self_name = PyNames.CANONICAL_SELF;
+    String selfName = PyNames.CANONICAL_SELF;
     if (params.length > 0) {
-      self_name = params[0].getName();
+      selfName = params[0].getName();
     }
-    PyStatement new_stmt = callback.fun(self_name);
-    if (!FileModificationService.getInstance().preparePsiElementForWrite(stmt_list)) return null;
-    final PsiElement result = stmt_list.addAfter(new_stmt, last_stmt);
-    PyPsiUtils.removeRedundantPass(stmt_list);
+    PyStatement newStmt = callback.fun(selfName);
+    if (!FileModificationService.getInstance().preparePsiElementForWrite(statementList)) return null;
+    final PsiElement result = PyUtil.addElementToStatementList(newStmt, statementList, true);
+    PyPsiUtils.removeRedundantPass(statementList);
     return result;
   }
 

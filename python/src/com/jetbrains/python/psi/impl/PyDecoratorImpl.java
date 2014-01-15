@@ -74,8 +74,8 @@ public class PyDecoratorImpl extends StubBasedPsiElementBase<PyDecoratorStub> im
   }
 
   public boolean hasArgumentList() {
-    ASTNode arglist_node = getNode().findChildByType(PyElementTypes.ARGUMENT_LIST);
-    return (arglist_node != null) && (arglist_node.findChildByType(PyTokenTypes.LPAR) != null);
+    final ASTNode arglistNode = getNode().findChildByType(PyElementTypes.ARGUMENT_LIST);
+    return (arglistNode != null) && (arglistNode.findChildByType(PyTokenTypes.LPAR) != null);
   }
 
   public QualifiedName getQualifiedName() {
