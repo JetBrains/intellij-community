@@ -137,6 +137,10 @@
       <implementation-class>com.intellij.ide.SystemHealthMonitor</implementation-class>
       <headless-implementation-class/>
     </component>
+
+    <component>
+      <implementation-class>com.intellij.diagnostic.DebugLogManager</implementation-class>
+    </component>
   </application-components>
 
   <project-components>
