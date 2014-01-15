@@ -378,9 +378,9 @@ public final class ImmutableText extends ImmutableCharSequence implements CharAr
                                                   replacement));
   }
 
-  public ImmutableCharSequence subSequence(final int start, final int end) {
+  public CharSequence subSequence(final int start, final int end) {
     if (start == 0 && end == length()) return this;
-    return new ImmutableSubSequence(this, start, end);
+    return new CharSequenceSubSequence(this, start, end);
   }
 
   /**

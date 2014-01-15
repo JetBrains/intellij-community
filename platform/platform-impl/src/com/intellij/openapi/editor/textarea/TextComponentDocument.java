@@ -21,7 +21,6 @@ import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.UserDataHolderBase;
-import com.intellij.util.text.ImmutableCharSequence;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -70,8 +69,8 @@ public class TextComponentDocument extends UserDataHolderBase implements Documen
 
   @NotNull
   @Override
-  public ImmutableCharSequence getImmutableCharSequence() {
-    return ImmutableCharSequence.asImmutable(getText());
+  public CharSequence getImmutableCharSequence() {
+    return getText();
   }
 
   @Override

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -692,6 +692,7 @@ public class IdeEventQueue extends EventQueue {
       myDispatchingFocusEvent = e instanceof FocusEvent;
 
       maybeReady();
+      fixStickyAlt(e);
 
       super.dispatchEvent(e);
     }
@@ -702,6 +703,13 @@ public class IdeEventQueue extends EventQueue {
     }
     finally {
       myDispatchingFocusEvent = false;
+    }
+  }
+
+  //IDEA-17359
+  private static void fixStickyAlt(AWTEvent e) {
+    if (SystemInfo.isWindowsXP && e instanceof KeyEvent && ((KeyEvent)e).getKeyCode() == KeyEvent.VK_ALT) {
+      ((KeyEvent)e).consume();
     }
   }
 
@@ -889,6 +897,8 @@ public class IdeEventQueue extends EventQueue {
       boolean dispatch = true;
       if (e instanceof KeyEvent) {
         KeyEvent ke = (KeyEvent)e;
+        final Component component = ke.getComponent();
+        final Window window = component == null ? null : SwingUtilities.windowForComponent(component);
         boolean pureAlt = ke.getKeyCode() == KeyEvent.VK_ALT && (ke.getModifiers() | InputEvent.ALT_MASK) == InputEvent.ALT_MASK;
         if (!pureAlt) {
           myPureAltWasPressed = false;
@@ -917,10 +927,14 @@ public class IdeEventQueue extends EventQueue {
             }
             else {
               myWaiterScheduled = true;
+              //noinspection SSBasedInspection
               SwingUtilities.invokeLater(new Runnable() {
                 @Override
                 public void run() {
                   try {
+                    if (SystemInfo.isWindows || window == null || !window.isActive()) {
+                      return;
+                    }
                     myWaitingForAltRelease = true;
                     if (myRobot == null) {
                       myRobot = new Robot();

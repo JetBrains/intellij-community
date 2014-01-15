@@ -213,7 +213,7 @@ public class DocumentWindowImpl extends UserDataHolderBase implements Disposable
 
   @NotNull
   @Override
-  public ImmutableCharSequence getImmutableCharSequence() {
+  public CharSequence getImmutableCharSequence() {
     return ImmutableCharSequence.asImmutable(getText());
   }
 

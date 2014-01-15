@@ -114,7 +114,7 @@ public abstract class DocumentCommitProcessor {
     final String oldPsiText = myTreeElementBeingReparsedSoItWontBeCollected.getText();
     int commonPrefixLength = StringUtil.commonPrefixLength(oldPsiText, chars);
     final TextRange changedPsiRange;
-    if (commonPrefixLength == chars.length()) {
+    if (commonPrefixLength == chars.length() && chars.length() == oldPsiText.length()) {
       changedPsiRange = getChangedPsiRange(file, 0, 0, chars.length());
     } else {
       int commonSuffixLength = StringUtil.commonSuffixLength(oldPsiText, chars);

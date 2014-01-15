@@ -39,7 +39,7 @@ public class DefaultUrlOpener extends UrlOpener {
   private static final Logger LOG = Logger.getInstance(DefaultUrlOpener.class);
 
   @Override
-  public boolean openUrl(final @NotNull WebBrowser browser, final @NotNull String url) {
+  public boolean openUrl(@NotNull WebBrowser browser, @NotNull String url) {
     return launchBrowser(browser, url, false);
   }
 
@@ -48,7 +48,7 @@ public class DefaultUrlOpener extends UrlOpener {
                                       boolean newWindowIfPossible,
                                       @NotNull String... additionalParameters) {
     final String browserPath = browser.getPath();
-    if (StringUtil.isEmptyOrSpaces(browserPath)) {
+    if (StringUtil.isEmpty(browserPath)) {
       Messages.showErrorDialog(browser.getBrowserNotFoundMessage(), IdeBundle.message("title.browser.not.found"));
       return false;
     }
@@ -57,7 +57,7 @@ public class DefaultUrlOpener extends UrlOpener {
   }
 
   private static boolean doLaunchBrowser(final String browserPath,
-                                         final BrowserSpecificSettings browserSpecificSettings,
+                                         @Nullable BrowserSpecificSettings browserSpecificSettings,
                                          final String url,
                                          final boolean newWindowIfPossible,
                                          final String[] additionalParameters) {
