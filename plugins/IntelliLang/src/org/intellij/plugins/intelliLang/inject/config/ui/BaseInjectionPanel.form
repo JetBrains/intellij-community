@@ -43,7 +43,7 @@
             </constraints>
             <properties>
               <labelFor value="5916a"/>
-              <text value="Display &amp;Name:"/>
+              <text value="&amp;Name:"/>
             </properties>
           </component>
           <component id="5916a" class="javax.swing.JTextField" binding="myNameTextField">
