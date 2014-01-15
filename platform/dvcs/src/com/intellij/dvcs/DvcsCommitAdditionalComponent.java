@@ -106,16 +106,16 @@ public abstract class DvcsCommitAdditionalComponent implements RefreshableOnComp
 
   private void loadMessageInModalTask(@NotNull Project project) {
     try {
-      String messageFromHg =
+      String messageFromVcs =
         ProgressManager.getInstance().runProcessWithProgressSynchronously(new ThrowableComputable<String, VcsException>() {
           @Override
           public String compute() throws VcsException {
             return getLastCommitMessage();
           }
         }, "Reading commit message...", false, project);
-      if (!StringUtil.isEmptyOrSpaces(messageFromHg)) {
-        substituteCommitMessage(messageFromHg);
-        myAmendedMessage = messageFromHg;
+      if (!StringUtil.isEmptyOrSpaces(messageFromVcs)) {
+        substituteCommitMessage(messageFromVcs);
+        myAmendedMessage = messageFromVcs;
       }
     }
     catch (VcsException e) {
