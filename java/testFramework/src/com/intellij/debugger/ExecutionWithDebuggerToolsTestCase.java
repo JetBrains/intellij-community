@@ -44,6 +44,7 @@ import com.intellij.openapi.projectRoots.impl.ProjectJdkImpl;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
+import com.intellij.testFramework.CompositeException;
 import com.intellij.ui.classFilter.ClassFilter;
 import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.ui.UIUtil;
@@ -61,7 +62,7 @@ public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCa
   private final SynchronizationBasedSemaphore myScriptRunnablesSema = new SynchronizationBasedSemaphore();
   protected static final int RATHER_LATER_INVOKES_N = 10;
   public DebugProcessImpl myDebugProcess = null;
-
+  private final CompositeException exception = new CompositeException();
 
   private class InvokeRatherLaterRequest {
     private final DebuggerCommandImpl myDebuggerCommand;
@@ -103,6 +104,12 @@ public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCa
     });
   }
 
+  @Override
+  protected void tearDown() throws Exception {
+    super.tearDown();
+    if (!exception.isEmpty()) throw exception;
+  }
+
   protected void onBreakpoint(SuspendContextRunnable runnable) {
     if (myPauseScriptListener == null) {
       final DebugProcessImpl debugProcess = getDebugProcess();
@@ -124,7 +131,11 @@ public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCa
               suspendContextRunnable.run(suspendContext);
             }
             catch (Exception e) {
+              exception.add(e);
               error(e);
+            }
+            catch (AssertionError e) {
+              exception.add(e);
             }
 
             if (myScriptRunnables.isEmpty()) {
