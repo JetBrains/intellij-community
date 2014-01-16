@@ -126,6 +126,10 @@ public class PyFormatterTest extends PyTestCase {
     doTest();
   }
 
+  public void testTwoLinesBetweenTopLevelDeclarationsWithComment() { // PY-9923
+    doTest();
+  }
+
   public void testSpecialSlice() {  // PY-1928
     doTest();
   }
