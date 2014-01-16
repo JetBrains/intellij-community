@@ -2158,8 +2158,14 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
 
     String s111 = "class A { void getManager() { getManager(); } };\n" +
                   "class B { void getManager() { getManager(); getManager(); } };";
-    String s112 = "'Instance?:[exprtype( B )].getManager();";
+    String s112 = "'Instance?:[exprtype( B )].getManager()";
     assertEquals("caring about missing qualifier type", 2, findMatchesCount(s111,s112));
+
+    String s112a = "'Instance?:[regex( B )].getManager()";
+    assertEquals("static query should not match instance method", 0, findMatchesCount(s111, s112a));
+
+    String s112b = "B.getManager()";
+    assertEquals("static query should not match instance method 2", 0, findMatchesCount(s111, s112b));
 
     String s113 = "class A { static void a() { a(); }}\n" +
                   "class B { static void a() { a(); a(); }}\n";
@@ -2167,12 +2173,18 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
     assertEquals("should care about implicit class qualifier", 2, findMatchesCount(s113, s114));
 
     String s114a = "B.a()";
-    assertEquals("simple implicit class qualifier query", 2, findMatchesCount(s113, s114a));
+    assertEquals("should match simple implicit class qualifier query", 2, findMatchesCount(s113, s114a));
+
+    String s114b = "'_Q?:[exprtype( B )].a()";
+    assertEquals("instance query should not match static method", 0, findMatchesCount(s113, s114b));
 
     String s115 = "class A { int a; int f() { return a; }}\n" +
                   "class B { int a; int g() { return a + a; }}\n";
     String s116 = "'_Instance?:[exprtype( B )].a";
     assertEquals("should care about implicit instance qualifier", 2, findMatchesCount(s115, s116));
+
+    String s116a = "A.a";
+    assertEquals("should not match instance method", 0, findMatchesCount(s115, s116a));
 
     String s117 = "class A { static int a; static int f() { return a; }}\n" +
                   "class B { static int a; static int g() { return a + a; }}\n";
