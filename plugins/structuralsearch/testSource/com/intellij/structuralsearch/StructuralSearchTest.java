@@ -2797,4 +2797,22 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
     String pattern1 = "this.a()";
     assertEquals(2, findMatchesCount(source, pattern1));
   }
+
+  public void testFindReferenceWithParentheses() {
+    String source = "class A {" +
+                    "  String value;" +
+                    "  A(String v) {" +
+                    "    value = (value);" +
+                    "    System.out.println(((2)));" +
+                    "    System.out.println(2);" +
+                    "  }" +
+                    "}";
+
+    String pattern1 = "'_value='_value";
+    assertEquals(1, findMatchesCount(source, pattern1));
+
+    String pattern2 = "System.out.println('_v);" +
+                      "System.out.println('_v);";
+    assertEquals(1, findMatchesCount(source, pattern2));
+  }
 }

@@ -549,6 +549,13 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
                                 myMatchingVisitor.match(slice.getIndexExpression(), slice2.getIndexExpression()));
   }
 
+  public static PsiElement removeParentheses(PsiElement element) {
+    while (element instanceof PsiParenthesizedExpression) {
+      element = ((PsiParenthesizedExpression)element).getExpression();
+    }
+    return element;
+  }
+
   @Override
   public void visitReferenceExpression(final PsiReferenceExpression reference) {
     final PsiExpression qualifier = reference.getQualifierExpression();
@@ -557,7 +564,7 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
     MatchingHandler _handler = nameElement != null ? myMatchingVisitor.getMatchContext().getPattern().getHandlerSimple(nameElement) : null;
     if (!(_handler instanceof SubstitutionHandler)) _handler = myMatchingVisitor.getMatchContext().getPattern().getHandlerSimple(reference);
 
-    PsiElement other = myMatchingVisitor.getElement();
+    PsiElement other = removeParentheses(myMatchingVisitor.getElement());
     if (_handler instanceof SubstitutionHandler &&
         !(myMatchingVisitor.getMatchContext().getPattern().getHandlerSimple(qualifier) instanceof SubstitutionHandler) &&
         !(qualifier instanceof PsiThisExpression)
