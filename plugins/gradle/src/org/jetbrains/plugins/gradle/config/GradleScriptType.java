@@ -21,7 +21,7 @@ import com.intellij.execution.*;
 import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.execution.configurations.RunProfile;
 import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.externalSystem.psi.search.ProjectBuildGlobalSearchScope;
+import com.intellij.openapi.externalSystem.psi.search.ExternalModuleBuildGlobalSearchScope;
 import com.intellij.openapi.externalSystem.util.ExternalSystemConstants;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
@@ -328,7 +328,7 @@ public class GradleScriptType extends GroovyScriptType {
       for (final VirtualFile root : files) {
         result = result.uniteWith(new NonClasspathDirectoryScope(root));
       }
-      result = new ProjectBuildGlobalSearchScope(result, modulePath);
+      result = new ExternalModuleBuildGlobalSearchScope(result, modulePath);
     }
     return result;
   }
