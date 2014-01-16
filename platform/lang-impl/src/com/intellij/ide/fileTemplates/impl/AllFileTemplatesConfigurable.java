@@ -358,6 +358,8 @@ public class AllFileTemplatesConfigurable implements SearchableConfigurable, Con
   }
 
   private void onTabChanged() {
+    applyEditor(myCurrentTab.getSelectedTemplate());
+    
     final int selectedIndex = myTabbedPane.getSelectedIndex();
     if (0 <= selectedIndex && selectedIndex < myTabs.length) {
       myCurrentTab = myTabs[selectedIndex];
@@ -371,17 +373,8 @@ public class AllFileTemplatesConfigurable implements SearchableConfigurable, Con
     if (prevTemplate != selectedValue) {
       LOG.assertTrue(myEditor != null, "selected:" + selectedValue + "; prev:" + prevTemplate);
       //selection has changed
-      if (myEditor.isModified() && Arrays.asList(myCurrentTab.getTemplates()).contains(prevTemplate)) {
-        try {
-          myModified = true;
-          myEditor.apply();
-          fireListChanged();
-        }
-        catch (ConfigurationException e) {
-          myCurrentTab.selectTemplate(prevTemplate);
-          Messages.showErrorDialog(myMainPanel, e.getMessage(), IdeBundle.message("title.cannot.save.current.template"));
-          return;
-        }
+      if (Arrays.asList(myCurrentTab.getTemplates()).contains(prevTemplate) && !applyEditor(prevTemplate)) {
+        return;
       }
       if (selectedValue == null) {
         myEditor.setTemplate(null, FileTemplateManagerImpl.getInstanceImpl().getDefaultTemplateDescription());
@@ -391,6 +384,24 @@ public class AllFileTemplatesConfigurable implements SearchableConfigurable, Con
         selectTemplate(selectedValue);
       }
     }
+  }
+
+  private boolean applyEditor(FileTemplate prevTemplate) {
+    if (myEditor.isModified()) {
+      try {
+        myModified = true;
+        myEditor.apply();
+        fireListChanged();
+      }
+      catch (ConfigurationException e) {
+        if (Arrays.asList(myCurrentTab.getTemplates()).contains(prevTemplate)) {
+          myCurrentTab.selectTemplate(prevTemplate);
+        }
+        Messages.showErrorDialog(myMainPanel, e.getMessage(), IdeBundle.message("title.cannot.save.current.template"));
+        return false;
+      }
+    }
+    return true;
   }
 
   private void selectTemplate(FileTemplate template) {
