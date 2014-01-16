@@ -30,6 +30,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.gradle.service.GradleBuildClasspathManager;
 import org.jetbrains.plugins.gradle.service.project.wizard.GradleProjectImportBuilder;
 import org.jetbrains.plugins.gradle.service.project.wizard.GradleProjectImportProvider;
 import org.jetbrains.plugins.gradle.settings.GradleSettings;
@@ -52,7 +53,12 @@ public class GradleStartupActivity implements StartupActivity {
 
   @Override
   public void runActivity(@NotNull Project project) {
+    configureBuildClasspath(project);
     showNotificationForUnlinkedGradleProject(project);
+  }
+
+  private static void configureBuildClasspath(@NotNull final Project project) {
+    GradleBuildClasspathManager.getInstance(project).reload();
   }
 
   private static void showNotificationForUnlinkedGradleProject(@NotNull final Project project) {

@@ -16,3 +16,4 @@
 org.jetbrains.plugins.gradle.model.builder.WarModelBuilderImpl
 org.jetbrains.plugins.gradle.model.builder.ModelDependenciesBuilderImpl
 org.jetbrains.plugins.gradle.model.builder.ModuleExtendedModelBuilderImpl
+org.jetbrains.plugins.gradle.model.builder.ModelBuildScriptClasspathBuilderImpl
