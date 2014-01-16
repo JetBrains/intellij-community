@@ -16,7 +16,7 @@ import org.apache.log4j.FileAppender;
 import org.apache.log4j.PatternLayout;
 
 public class Runner {
-  public static Logger logger;
+  public static Logger logger = null;
   private static final String PATCH_FILE_NAME = "patch-file.zip";
   private static final String PATCH_PROPERTIES_ENTRY = "patch.properties";
   private static final String OLD_BUILD_DESCRIPTION = "old.build.description";
@@ -65,7 +65,8 @@ public class Runner {
     }
   }
 
-  private static void initLogger(){
+  public final static void initLogger(){
+    if (logger == null){
     String tmpDir = System.getProperty("java.io.tmpdir");
     System.out.println("java.io.tmpdir: " + tmpDir);
     //    String uHome = System.getProperty("user.home");
@@ -89,6 +90,7 @@ public class Runner {
     logger.addAppender(update_error);
     logger.addAppender(update);
     logger.setLevel(Level.ALL);
+    }
   }
 
   public static void printStackTrace(Exception e){
