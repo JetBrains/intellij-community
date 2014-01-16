@@ -90,7 +90,7 @@ class Foo {
     performCopy()
     myFixture.configureByText 'a.txt', ''
     performPaste()
-    myFixture.checkResult "/a.java:2"
+    myFixture.checkResult "a.java:2"
   }
 
   public void _testMethodOverloadCopy() {
