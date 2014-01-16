@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -86,7 +86,7 @@ public class DefaultHighlightInfoProcessor extends HighlightInfoProcessor {
                                                       @NotNull final List<HighlightInfo> infos,
                                                       @NotNull final TextRange priorityRange,
                                                       @NotNull final TextRange restrictedRange) {
-    PsiFile psiFile = highlightingSession.getPsiFile();
+    final PsiFile psiFile = highlightingSession.getPsiFile();
     final Project project = psiFile.getProject();
     final Document document = PsiDocumentManager.getInstance(project).getDocument(psiFile);
     if (document == null) return;
@@ -99,7 +99,7 @@ public class DefaultHighlightInfoProcessor extends HighlightInfoProcessor {
         Editor editor = highlightingSession.getEditor();
         EditorColorsScheme scheme = editor == null ? null : editor.getColorsScheme();
 
-        UpdateHighlightersUtil.setHighlightersOutsideRange(project, document, infos, scheme,
+        UpdateHighlightersUtil.setHighlightersOutsideRange(project, document, psiFile, infos, scheme,
                                                            restrictedRange.getStartOffset(), restrictedRange.getEndOffset(),
                                                            ProperTextRange.create(priorityRange),
                                                            highlightingSession.getPassId());
