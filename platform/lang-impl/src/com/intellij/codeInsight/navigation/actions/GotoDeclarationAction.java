@@ -32,6 +32,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
+import com.intellij.openapi.extensions.ExtensionException;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
@@ -215,7 +216,7 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
         }
       }
       catch (AbstractMethodError e) {
-        LOG.error(handler.toString(), e);
+        LOG.error(new ExtensionException(handler.getClass()));
       }
     }
 

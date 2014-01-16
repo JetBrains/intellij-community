@@ -15,14 +15,12 @@
  */
 package com.intellij.diagnostic;
 
-import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.idea.IdeaApplication;
 import com.intellij.idea.Main;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.ErrorLogger;
 import com.intellij.openapi.diagnostic.IdeaLoggingEvent;
-import com.intellij.openapi.extensions.PluginId;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.apache.log4j.AppenderSkeleton;
@@ -105,13 +103,6 @@ public class DialogAppender extends AppenderSkeleton {
       Throwable throwable = info.getThrowable();
       //noinspection ThrowableResultOfMethodCallIgnored
       Throwable rootCause = ExceptionUtil.getRootCause(throwable);
-      if (rootCause instanceof AbstractMethodErrorWrapper) {
-        AbstractMethodErrorWrapper wrapper = (AbstractMethodErrorWrapper)rootCause;
-        PluginId pluginId = PluginManagerCore.getPluginByClassName(wrapper.getProblematicInstance().getClass().getName());
-        if (pluginId != null) {
-          rootCause = new PluginException(wrapper.getError(), pluginId);
-        }
-      }
       ideaEvent = rootCause instanceof LogEventException ? ((LogEventException)rootCause).getLogMessage() :
                   new IdeaLoggingEvent(message == null ? "<null> " : message.toString(), throwable);
     }
