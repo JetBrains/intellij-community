@@ -557,35 +557,36 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
     MatchingHandler _handler = nameElement != null ? myMatchingVisitor.getMatchContext().getPattern().getHandlerSimple(nameElement) : null;
     if (!(_handler instanceof SubstitutionHandler)) _handler = myMatchingVisitor.getMatchContext().getPattern().getHandlerSimple(reference);
 
+    PsiElement other = myMatchingVisitor.getElement();
     if (_handler instanceof SubstitutionHandler &&
         !(myMatchingVisitor.getMatchContext().getPattern().getHandlerSimple(qualifier) instanceof SubstitutionHandler) &&
         !(qualifier instanceof PsiThisExpression)
       ) {
-      if (myMatchingVisitor.getElement() instanceof PsiReferenceExpression) {
-        final PsiReferenceExpression psiReferenceExpression = (PsiReferenceExpression)myMatchingVisitor.getElement();
+      if (other instanceof PsiReferenceExpression) {
+        final PsiReferenceExpression psiReferenceExpression = (PsiReferenceExpression)other;
 
         if (psiReferenceExpression.getQualifierExpression() == null) {
-          myMatchingVisitor.setElement(psiReferenceExpression.getReferenceNameElement());
+          other = psiReferenceExpression.getReferenceNameElement();
         }
       }
 
       final SubstitutionHandler handler = (SubstitutionHandler)_handler;
       if (handler.isSubtype() || handler.isStrictSubtype()) {
-        myMatchingVisitor.setResult(checkMatchWithingHierarchy(myMatchingVisitor.getElement(), handler, reference));
+        myMatchingVisitor.setResult(checkMatchWithingHierarchy(other, handler, reference));
       }
       else {
-        myMatchingVisitor.setResult(handler.handle(myMatchingVisitor.getElement(), myMatchingVisitor.getMatchContext()));
+        myMatchingVisitor.setResult(handler.handle(other, myMatchingVisitor.getMatchContext()));
       }
 
       return;
     }
 
-    if (!(myMatchingVisitor.getElement() instanceof PsiReferenceExpression)) {
+    if (!(other instanceof PsiReferenceExpression)) {
       myMatchingVisitor.setResult(false);
       return;
     }
 
-    final PsiReferenceExpression reference2 = (PsiReferenceExpression)myMatchingVisitor.getElement();
+    final PsiReferenceExpression reference2 = (PsiReferenceExpression)other;
 
     // just variable
     final PsiExpression reference2Qualifier = reference2.getQualifierExpression();
@@ -595,7 +596,7 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
     }
 
     // handle field selection
-    if (!(myMatchingVisitor.getElement().getParent() instanceof PsiMethodCallExpression) && qualifier != null) {
+    if (!(other.getParent() instanceof PsiMethodCallExpression) && qualifier != null) {
       final PsiElement referenceElement = reference.getReferenceNameElement();
       final PsiElement referenceElement2 = reference2.getReferenceNameElement();
 
@@ -615,7 +616,7 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
         myMatchingVisitor.setResult(myMatchingVisitor.match(qualifier, reference2Qualifier));
       }
       else {
-        final PsiElement referencedElement = MatchUtils.getReferencedElement(myMatchingVisitor.getElement());
+        final PsiElement referencedElement = MatchUtils.getReferencedElement(other);
         if (referencedElement instanceof PsiField) {
           final PsiField field = (PsiField)referencedElement;
           if (qualifier instanceof PsiThisExpression) {
