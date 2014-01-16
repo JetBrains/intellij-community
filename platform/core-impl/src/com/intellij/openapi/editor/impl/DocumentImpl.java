@@ -65,7 +65,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
   private volatile SoftReference<String> myTextString;
 
   private boolean myIsReadOnly = false;
-  private boolean isStripTrailingSpacesEnabled = true;
+  private volatile boolean isStripTrailingSpacesEnabled = true;
   private volatile long myModificationStamp;
   private final PropertyChangeSupport myPropertyChangeSupport = new PropertyChangeSupport(this);
 
