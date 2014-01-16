@@ -132,7 +132,10 @@ public class MavenModuleBuilder extends ModuleBuilder implements SourcePathsBuil
   public MavenProject findPotentialParentProject(Project project) {
     if (!MavenProjectsManager.getInstance(project).isMavenizedProject()) return null;
 
-    File parentDir = new File(getContentEntryPath()).getParentFile();
+    String contentEntryPath = getContentEntryPath();
+    if (contentEntryPath == null) return null;
+
+    File parentDir = new File(contentEntryPath).getParentFile();
     if (parentDir == null) return null;
     VirtualFile parentPom = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(new File(parentDir, "pom.xml"));
     if (parentPom == null) return null;

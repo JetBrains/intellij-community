@@ -48,6 +48,7 @@ public class XmlTagInjection extends AbstractTagInjection {
 
   @Override
   public void generatePlaces() {
+    if (StringUtil.isEmpty(getDisplayName())) setDisplayName(getGeneratedName());
     setInjectionPlaces(new InjectionPlace(getCompiler().createElementPattern(getPatternString(this), getDisplayName()), true));
   }
 

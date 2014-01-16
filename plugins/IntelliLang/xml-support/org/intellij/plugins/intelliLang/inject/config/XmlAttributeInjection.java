@@ -15,7 +15,6 @@
  */
 package org.intellij.plugins.intelliLang.inject.config;
 
-import com.intellij.openapi.util.JDOMExternalizer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.xml.XmlAttribute;
@@ -73,6 +72,7 @@ public class XmlAttributeInjection extends AbstractTagInjection {
 
   @Override
   public void generatePlaces() {
+    if (StringUtil.isEmpty(getDisplayName())) setDisplayName(getGeneratedName());
     setInjectionPlaces(new InjectionPlace(getCompiler().createElementPattern(getPatternString(this), getDisplayName()), true));
   }
 
