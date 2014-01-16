@@ -230,12 +230,10 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
       for (PyClassLikeType type : myClass.getAncestorTypes(context)) {
         if (type instanceof PyClassType) {
           final PyClass pyClass = ((PyClassType)type).getPyClass();
-          if (pyClass != null) {
-            PsiElement superMember = resolveByMembersProviders(new PyClassTypeImpl(pyClass, isDefinition()), name, location);
+          PsiElement superMember = resolveByMembersProviders(new PyClassTypeImpl(pyClass, isDefinition()), name, location);
 
-            if (superMember != null) {
-              return ResolveResultList.to(superMember);
-            }
+          if (superMember != null) {
+            return ResolveResultList.to(superMember);
           }
         }
       }
