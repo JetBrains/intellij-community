@@ -294,9 +294,7 @@ public class MavenModuleImporter {
         if (file == null) continue;
 
         if (libraryModel == null) {
-          String libraryName = artifact.getLibraryName();
-          assert libraryName.startsWith(MavenArtifact.MAVEN_LIB_PREFIX);
-          libraryName = MavenArtifact.MAVEN_LIB_PREFIX + "ATTACHED-JAR: " + libraryName.substring(MavenArtifact.MAVEN_LIB_PREFIX.length());
+          String libraryName = getAttachedJarsLibName(artifact);
 
           Library library = myModifiableModelsProvider.getLibraryByName(libraryName);
           if (library == null) {
@@ -311,6 +309,14 @@ public class MavenModuleImporter {
         libraryModel.addRoot(file, rootType);
       }
     }
+  }
+
+  @NotNull
+  public static String getAttachedJarsLibName(@NotNull MavenArtifact artifact) {
+    String libraryName = artifact.getLibraryName();
+    assert libraryName.startsWith(MavenArtifact.MAVEN_LIB_PREFIX);
+    libraryName = MavenArtifact.MAVEN_LIB_PREFIX + "ATTACHED-JAR: " + libraryName.substring(MavenArtifact.MAVEN_LIB_PREFIX.length());
+    return libraryName;
   }
 
   @NotNull

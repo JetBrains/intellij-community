@@ -52,8 +52,8 @@ class StructureFilterPopupComponent extends FilterPopupComponent {
 
   @Nullable
   @Override
-  protected VcsLogFilter getFilter() {
-    return getValue() == ALL || myFiles.isEmpty() ? null : new VcsLogStructureFilter(myFiles, myRoots);
+  protected Collection<VcsLogFilter> getFilters() {
+    return getValue() == ALL || myFiles.isEmpty() ? null : Collections.<VcsLogFilter>singleton(new VcsLogStructureFilter(myFiles, myRoots));
   }
 
   private void setValue(@NotNull Collection<VirtualFile> files) {

@@ -46,6 +46,12 @@ public class GrIntroduceLocalVariableIntention extends Intention {
     editor.getSelectionModel().setSelection(offset, offset + length);
   }
 
+
+  @Override
+  public boolean startInWriteAction() {
+    return false;
+  }
+
   @Override
   protected void processIntention(@NotNull PsiElement element, Project project, Editor editor) throws IncorrectOperationException {
     setSelection(editor, getTargetExpression(element));

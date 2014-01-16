@@ -705,6 +705,10 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   }
 
   private static boolean shouldPreselectFirstSuggestion(CompletionParameters parameters) {
+    if (!Registry.is("ide.completion.autopopup.choose.by.enter")) {
+      return false;
+    }
+
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
       return true;
     }

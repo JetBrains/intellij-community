@@ -2,12 +2,19 @@ package com.intellij.lang.properties.xml;
 
 import com.intellij.ide.highlighter.XmlFileType;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.indexing.*;
-import com.intellij.util.io.*;
+import com.intellij.util.io.DataExternalizer;
+import com.intellij.util.io.EnumeratorStringDescriptor;
+import com.intellij.util.io.IOUtil;
+import com.intellij.util.io.KeyDescriptor;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.xml.NanoXmlUtil;
 import net.n3.nanoxml.StdXMLReader;
@@ -31,7 +38,7 @@ public class XmlPropertiesIndex extends FileBasedIndexExtension<XmlPropertiesInd
   public static final ID<Key,String> NAME = ID.create("xmlProperties");
 
   private static final EnumeratorStringDescriptor ENUMERATOR_STRING_DESCRIPTOR = new EnumeratorStringDescriptor();
-  public static final String HTTP_JAVA_SUN_COM_DTD_PROPERTIES_DTD = "http://java.sun.com/dtd/properties.dtd";
+  private static final String HTTP_JAVA_SUN_COM_DTD_PROPERTIES_DTD = "http://java.sun.com/dtd/properties.dtd";
 
   @NotNull
   @Override
@@ -94,7 +101,23 @@ public class XmlPropertiesIndex extends FileBasedIndexExtension<XmlPropertiesInd
     return map;
   }
 
-  static boolean isAccepted(CharSequence bytes) {
+  static boolean isPropertiesFile(XmlFile file) {
+    Project project = file.getProject();
+    if (DumbService.isDumb(project)) {
+      CharSequence contents = file.getViewProvider().getContents();
+      return CharArrayUtil.indexOf(contents, HTTP_JAVA_SUN_COM_DTD_PROPERTIES_DTD, 0) != -1 &&
+          isAccepted(contents);
+    }
+    return !FileBasedIndex.getInstance().processValues(NAME, MARKER_KEY, file.getVirtualFile(),
+                                                       new FileBasedIndex.ValueProcessor<String>() {
+                                                         @Override
+                                                         public boolean process(VirtualFile file, String value) {
+                                                           return false;
+                                                         }
+                                                       }, GlobalSearchScope.allScope(project));
+  }
+
+  private static boolean isAccepted(CharSequence bytes) {
     MyIXMLBuilderAdapter builder = parse(bytes, true);
     return builder != null && builder.accepted;
   }

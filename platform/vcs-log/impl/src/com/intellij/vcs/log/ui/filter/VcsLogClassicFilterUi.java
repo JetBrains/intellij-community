@@ -15,12 +15,14 @@
  */
 package com.intellij.vcs.log.ui.filter;
 
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.ui.SearchTextField;
 import com.intellij.ui.SearchTextFieldWithStoredHistory;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.VcsLogFilter;
@@ -91,13 +93,14 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUi {
 
   @NotNull
   private List<VcsLogFilter> getPopupFilters() {
-    return new ArrayList<VcsLogFilter>(ContainerUtil.mapNotNull(myFilterPopupComponents,
-                                                                new Function<FilterPopupComponent, VcsLogFilter>() {
-                                                                  @Override
-                                                                  public VcsLogFilter fun(FilterPopupComponent filterComponent) {
-                                                                    return filterComponent.getFilter();
-                                                                  }
-                                                                }));
+    List<VcsLogFilter> filters = new ArrayList<VcsLogFilter>();
+    for (FilterPopupComponent popupComponent : myFilterPopupComponents) {
+      Collection<VcsLogFilter> popupFilters = popupComponent.getFilters();
+      if (popupFilters != null) {
+        filters.addAll(popupFilters);
+      }
+    }
+    return filters;
   }
 
   void applyFilters() {

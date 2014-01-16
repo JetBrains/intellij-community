@@ -16,8 +16,6 @@
 package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupActivity;
@@ -44,15 +42,7 @@ public class OpenFilesActivity implements StartupActivity, DumbAware {
         }
       };
       if (Registry.is("ide.open.editors.asynchronously")) {
-        ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
-        if (indicator != null) {
-          indicator.pushState();
-          indicator.setText("Preparing editors to open...");
-        }
         runnable.run();
-        if (indicator != null) {
-          indicator.popState();
-        }
       }
       else {
         UIUtil.invokeLaterIfNeeded(runnable);

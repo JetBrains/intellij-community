@@ -89,11 +89,12 @@ public abstract class AbstractInjectionPanel<T extends BaseInjection> implements
 
   @SuppressWarnings({"unchecked"})
   public final void apply() {
-    apply(myOrigInjection);
-
     for (Field panel : myOtherPanels) {
       getField(panel).apply();
     }
+
+    // auto-generated name should go last
+    apply(myOrigInjection);
     myOrigInjection.generatePlaces();
     myEditCopy.copyFrom(myOrigInjection);
   }

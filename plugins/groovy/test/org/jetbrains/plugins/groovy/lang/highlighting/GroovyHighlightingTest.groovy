@@ -1704,6 +1704,11 @@ class E {
   <error>private foo()</error>{}
   <error>def foo(int x)</error> {}
 }
+
+class Z {
+ private Z() {}   //correct
+ private Z(x) {}  //correct
+}
 ''')
   }
 

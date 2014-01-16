@@ -124,11 +124,10 @@ class BranchFilterPopupComponent extends FilterPopupComponent {
 
   @Nullable
   @Override
-  protected VcsLogFilter getFilter() {
+  protected Collection<VcsLogFilter> getFilters() {
     String value = getValue();
-    return value == ALL
-           ? null
-           : new VcsLogBranchFilter(myUi.getLogDataHolder().getDataPack().getRefsModel().getBranches(), value);
+    Collection<VcsRef> allBranches = myUi.getLogDataHolder().getDataPack().getRefsModel().getBranches();
+    return value == ALL ? null : Collections.<VcsLogFilter>singleton(new VcsLogBranchFilter(allBranches, value));
   }
 
 }
