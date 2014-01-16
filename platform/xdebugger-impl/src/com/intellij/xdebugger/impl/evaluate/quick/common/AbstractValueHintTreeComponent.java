@@ -22,7 +22,6 @@ import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.xdebugger.XDebuggerBundle;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.tree.TreePath;
@@ -38,12 +37,10 @@ public abstract class AbstractValueHintTreeComponent<H> {
   private static final int HISTORY_SIZE = 11;
   private final ArrayList<H> myHistory = new ArrayList<H>();
   private int myCurrentIndex = -1;
-  private final AbstractValueHint myValueHint;
   private final Tree myTree;
   private JPanel myMainPanel;
 
-  protected AbstractValueHintTreeComponent(@Nullable AbstractValueHint valueHint, @NotNull Tree tree, @NotNull H initialItem) {
-    myValueHint = valueHint;
+  protected AbstractValueHintTreeComponent(@NotNull Tree tree, @NotNull H initialItem) {
     myTree = tree;
     myHistory.add(initialItem);
   }
@@ -75,9 +72,6 @@ public abstract class AbstractValueHintTreeComponent<H> {
   }
 
   private void updateHint() {
-    if (myValueHint != null) {
-      myValueHint.shiftLocation();
-    }
     updateTree(myHistory.get(myCurrentIndex));
   }
 

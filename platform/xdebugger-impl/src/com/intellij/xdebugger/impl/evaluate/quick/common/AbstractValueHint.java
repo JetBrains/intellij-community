@@ -74,7 +74,7 @@ public abstract class AbstractValueHint {
   private final Project myProject;
   private final Editor myEditor;
   private final ValueHintType myType;
-  private Point myPoint;
+  private final Point myPoint;
   private LightweightHint myCurrentHint;
   private JBPopup myPopup;
   private boolean myHintHidden;
@@ -203,15 +203,6 @@ public abstract class AbstractValueHint {
 
   private static Cursor hintCursor() {
     return Cursor.getPredefinedCursor(Cursor.HAND_CURSOR);
-  }
-
-  public void shiftLocation() {
-    if (myPopup != null) {
-      final Window window = SwingUtilities.getWindowAncestor(myPopup.getContent());
-      if (window != null) {
-        myPoint = new RelativePoint(window, new Point(2, 2)).getPoint(myEditor.getContentComponent());
-      }
-    }
   }
 
   public Project getProject() {
