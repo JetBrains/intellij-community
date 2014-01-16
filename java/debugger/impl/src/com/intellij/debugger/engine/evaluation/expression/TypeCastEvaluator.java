@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,15 +21,13 @@
 package com.intellij.debugger.engine.evaluation.expression;
 
 import com.intellij.debugger.DebuggerBundle;
+import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
-import com.sun.jdi.BooleanValue;
-import com.sun.jdi.CharValue;
-import com.sun.jdi.PrimitiveValue;
-import com.sun.jdi.Value;
+import com.sun.jdi.*;
 
 public class TypeCastEvaluator implements Evaluator {
   private final Evaluator myOperandEvaluator;
@@ -55,13 +53,13 @@ public class TypeCastEvaluator implements Evaluator {
       return null;
     }
     VirtualMachineProxyImpl vm = context.getDebugProcess().getVirtualMachineProxy();
-    if (DebuggerUtilsEx.isInteger(value)) {
+    if (DebuggerUtils.isInteger(value)) {
       value = DebuggerUtilsEx.createValue(vm, myCastType, ((PrimitiveValue)value).longValue());
       if (value == null) {
         throw EvaluateExceptionUtil.createEvaluateException(DebuggerBundle.message("evaluation.error.cannot.cast.numeric", myCastType));
       }
     }
-    else if (DebuggerUtilsEx.isNumeric(value)) {
+    else if (DebuggerUtils.isNumeric(value)) {
       value = DebuggerUtilsEx.createValue(vm, myCastType, ((PrimitiveValue)value).doubleValue());
       if (value == null) {
         throw EvaluateExceptionUtil.createEvaluateException(DebuggerBundle.message("evaluation.error.cannot.cast.numeric", myCastType));
@@ -79,6 +77,13 @@ public class TypeCastEvaluator implements Evaluator {
         throw EvaluateExceptionUtil.createEvaluateException(DebuggerBundle.message("evaluation.error.cannot.cast.char", myCastType));
       }
     }
+    else if (value instanceof ObjectReference) {
+      Type type = value.type();
+      if (!DebuggerUtils.instanceOf(type, myCastType)) {
+        throw EvaluateExceptionUtil.createEvaluateException(DebuggerBundle.message("evaluation.error.cannot.cast.object", type.name(), myCastType));
+      }
+    }
+
     return value;
   }
 }
