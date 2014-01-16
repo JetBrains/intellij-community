@@ -2778,4 +2778,23 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
                       "}";
     assertEquals(2, findMatchesCount(source, pattern4));
   }
+
+  public void testFindMethodsCalledWithinClass() {
+    String source = "class A {" +
+                    "  void a() {}" +
+                    "  static void b() {}" +
+                    "  void c() {" +
+                    "    a();" +
+                    "    b();" +
+                    "  }" +
+                    "}" +
+                    "class B extends A {" +
+                    "  void d() {" +
+                    "    a();" +
+                    "    b();" +
+                    "  }" +
+                    "}";
+    String pattern1 = "this.a()";
+    assertEquals(2, findMatchesCount(source, pattern1));
+  }
 }

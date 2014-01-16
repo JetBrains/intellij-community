@@ -1015,6 +1015,12 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
       }
       else {
         final PsiMethod method = mcall2.resolveMethod();
+        if (method != null) {
+          if (qualifier instanceof PsiThisExpression) {
+            myMatchingVisitor.setResult(!method.hasModifierProperty(PsiModifier.STATIC));
+            return;
+          }
+        }
         final MatchingHandler handler = myMatchingVisitor.getMatchContext().getPattern().getHandler(qualifier);
         matchImplicitQualifier(handler, method, myMatchingVisitor.getMatchContext());
         if (!myMatchingVisitor.getResult()) {
