@@ -284,8 +284,8 @@ public class HgCheckinEnvironment implements CheckinEnvironment {
 
     @NotNull
     @Override
-    protected Collection<VirtualFile> getRoots() {
-      return HgUtil.getHgRepositories(myProject);
+    protected Set<VirtualFile> getVcsRoots(Collection<FilePath> filePaths) {
+      return HgUtil.hgRoots(myProject, filePaths);
     }
 
     @Nullable

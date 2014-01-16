@@ -241,6 +241,23 @@ public abstract class HgUtil {
   }
 
   /**
+   * Get hg roots for paths
+   *
+   * @param filePaths the context paths
+   * @return a set of git roots
+   */
+  public static Set<VirtualFile> hgRoots(@NotNull Project project, final Collection<FilePath> filePaths) {
+    HashSet<VirtualFile> rc = new HashSet<VirtualFile>();
+    for (FilePath path : filePaths) {
+      final VirtualFile root = getHgRootOrNull(project, path);
+      if (root != null) {
+        rc.add(root);
+      }
+    }
+    return rc;
+  }
+
+  /**
    * Gets the Mercurial root for the given file path or null if non exists:
    * the root should not only be in directory mappings, but also the .hg repository folder should exist.
    * @see #getHgRootOrThrow(com.intellij.openapi.project.Project, com.intellij.openapi.vcs.FilePath)
