@@ -50,7 +50,24 @@ class PreferredProducerFind {
     if (location == null) {
       return null;
     }
+    final List<RuntimeConfigurationProducer> producers = findAllProducers(location, context);
+    if (producers.isEmpty()) return null;
+    Collections.sort(producers, RuntimeConfigurationProducer.COMPARATOR);
 
+    if(strict) {
+      final RuntimeConfigurationProducer first = producers.get(0);
+      for (Iterator<RuntimeConfigurationProducer> it = producers.iterator(); it.hasNext();) {
+        RuntimeConfigurationProducer producer = it.next();
+        if (producer != first && RuntimeConfigurationProducer.COMPARATOR.compare(producer, first) >= 0) {
+          it.remove();
+        }
+      }
+    }
+
+    return producers;
+  }
+
+  private static List<RuntimeConfigurationProducer> findAllProducers(Location location, ConfigurationContext context) {
     //todo load configuration types if not already loaded
     Extensions.getExtensions(ConfigurationType.CONFIGURATION_TYPE_EP);
     final RuntimeConfigurationProducer[] configurationProducers =
@@ -70,19 +87,6 @@ class PreferredProducerFind {
         producers.add(producer);
       }
     }
-    if (producers.isEmpty()) return null;
-    Collections.sort(producers, RuntimeConfigurationProducer.COMPARATOR);
-
-    if(strict) {
-      final RuntimeConfigurationProducer first = producers.get(0);
-      for (Iterator<RuntimeConfigurationProducer> it = producers.iterator(); it.hasNext();) {
-        RuntimeConfigurationProducer producer = it.next();
-        if (producer != first && RuntimeConfigurationProducer.COMPARATOR.compare(producer, first) >= 0) {
-          it.remove();
-        }
-      }
-    }
-
     return producers;
   }
 
@@ -93,24 +97,9 @@ class PreferredProducerFind {
       return null;
     }
 
-    //todo load configuration types if not already loaded
-    Extensions.getExtensions(ConfigurationType.CONFIGURATION_TYPE_EP);
-    final RuntimeConfigurationProducer[] configurationProducers =
-      ApplicationManager.getApplication().getExtensions(RuntimeConfigurationProducer.RUNTIME_CONFIGURATION_PRODUCER);
     final ArrayList<ConfigurationFromContext> configurationsFromContext = new ArrayList<ConfigurationFromContext>();
-    for (final RuntimeConfigurationProducer prototype : configurationProducers) {
-      final RuntimeConfigurationProducer producer;
-      try {
-        producer = prototype.createProducer(location, context);
-      }
-      catch (AbstractMethodError e) {
-        LOG.error(new AbstractMethodErrorWrapper(prototype, e));
-        continue;
-      }
-      if (producer.getConfiguration() != null) {
-        LOG.assertTrue(producer.getSourceElement() != null, producer);
-        configurationsFromContext.add(new ConfigurationFromContextWrapper(producer));
-      }
+    for (RuntimeConfigurationProducer producer : findAllProducers(location, context)) {
+      configurationsFromContext.add(new ConfigurationFromContextWrapper(producer));
     }
 
     for (RunConfigurationProducer producer : Extensions.getExtensions(RunConfigurationProducer.EP_NAME)) {
