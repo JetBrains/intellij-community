@@ -10,7 +10,7 @@ import java.util.ArrayList;
 public class TaskManager {
     static private TaskManager instance = null;
     private ArrayList<Task> tasks;
-    private int currentTask = 0;
+    private int currentTask = -1;
     private TaskManager() {
         tasks = new ArrayList<Task>(10);
     }
@@ -19,6 +19,10 @@ public class TaskManager {
             instance = new TaskManager();
         }
         return instance;
+    }
+
+    public int getTasksNum() {
+        return tasks.size();
     }
 
     public void addTask(int n) {

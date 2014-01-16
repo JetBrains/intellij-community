@@ -1,5 +1,6 @@
 package ru.compscicenter.edide;
 
+import com.intellij.openapi.diagnostic.Log;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.wm.ToolWindow;
@@ -33,10 +34,13 @@ public class TaskTextToolWindowFactory implements ToolWindowFactory{
     public TaskTextToolWindowFactory() {
         nextTask.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
-                TaskManager.getInstance().incrementTask();
-                int curTask = TaskManager.getInstance().getCurrentTask();
-                task.setText(TaskManager.getInstance().getTaskText(curTask));
-                panel.updateUI();
+                int nextTaskNum = TaskManager.getInstance().getCurrentTask() + 1;
+                if (nextTaskNum < TaskManager.getInstance().getTasksNum()) {
+                    TaskManager.getInstance().incrementTask();
+                    int curTask = TaskManager.getInstance().getCurrentTask();
+                    task.setText(TaskManager.getInstance().getTaskText(curTask));
+                    panel.updateUI();
+                }
             }
         });
     }
@@ -46,7 +50,15 @@ public class TaskTextToolWindowFactory implements ToolWindowFactory{
         //JLabel task =  new JLabel("write your first program in python");
         //int curTask = TaskManager.getInstance().getCurrentTask();
         int curTask = 0;
-        task =  new JLabel(TaskManager.getInstance().getTaskText(curTask));
+        TaskManager tm = TaskManager.getInstance();
+        String taskText;
+        if (tm.getTasksNum() != 0){
+            System.out.println(curTask);
+            taskText = tm.getTaskText(curTask);
+        } else {
+            taskText = "no tasks yet";
+        }
+        task =  new JLabel(taskText);
         Font testFont = new Font("Courier", Font.BOLD, 16);
         task.setFont(testFont);
         //panel.setBackground(Color.BLACK);
