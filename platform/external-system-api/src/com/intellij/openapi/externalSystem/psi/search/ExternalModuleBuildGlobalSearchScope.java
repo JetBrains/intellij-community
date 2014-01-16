@@ -23,12 +23,12 @@ import org.jetbrains.annotations.NotNull;
  * @author Vladislav.Soroka
  * @since 1/15/14
  */
-public class ProjectBuildGlobalSearchScope extends DelegatingGlobalSearchScope {
+public class ExternalModuleBuildGlobalSearchScope extends DelegatingGlobalSearchScope {
 
   @NotNull
   private final String externalModulePath;
 
-  public ProjectBuildGlobalSearchScope(@NotNull GlobalSearchScope baseScope, @NotNull String externalModulePath) {
+  public ExternalModuleBuildGlobalSearchScope(@NotNull GlobalSearchScope baseScope, @NotNull String externalModulePath) {
     super(baseScope);
     this.externalModulePath = externalModulePath;
   }

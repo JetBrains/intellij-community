@@ -329,7 +329,7 @@ public class FindInProjectUtil {
                                                         @NotNull final Project project,
                                                         final PsiDirectory psiDirectory) {
     final String moduleName = findModel.getModuleName();
-    Module module = moduleName == null ? null : ApplicationManager.getApplication().runReadAction(new Computable<Module>() {
+    final Module module = moduleName == null ? null : ApplicationManager.getApplication().runReadAction(new Computable<Module>() {
       @Override
       public Module compute() {
         return ModuleManager.getInstance(project).findModuleByName(moduleName);
@@ -385,8 +385,13 @@ public class FindInProjectUtil {
       if (psiDirectory == null) {
         boolean success = fileIndex.iterateContent(iterator);
         if (success && globalCustomScope != null && globalCustomScope.isSearchInLibraries()) {
-          OrderEnumerator enumerator = module == null ? OrderEnumerator.orderEntries(project) : OrderEnumerator.orderEntries(module);
-          final VirtualFile[] librarySources = enumerator.withoutModuleSourceEntries().withoutDepModules().getSourceRoots();
+          final VirtualFile[] librarySources = ApplicationManager.getApplication().runReadAction(new Computable<VirtualFile[]>() {
+            @Override
+            public VirtualFile[] compute() {
+              OrderEnumerator enumerator = module == null ? OrderEnumerator.orderEntries(project) : OrderEnumerator.orderEntries(module);
+              return enumerator.withoutModuleSourceEntries().withoutDepModules().getSourceRoots();
+            }
+          });
           iterateAll(librarySources, globalCustomScope, iterator);
         }
       }

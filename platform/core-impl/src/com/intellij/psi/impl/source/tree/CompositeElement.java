@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -577,7 +577,8 @@ public class CompositeElement extends TreeElement {
     return myCachedLength;
   }
 
-  private static TreeElement drillDown(TreeElement start) {
+  @NotNull
+  private static TreeElement drillDown(@NotNull TreeElement start) {
     TreeElement cur = start;
     while (cur.getCachedLength() < 0) {
       TreeElement child = cur.getFirstChildNode();

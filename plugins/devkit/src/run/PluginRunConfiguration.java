@@ -80,7 +80,7 @@ public class PluginRunConfiguration extends RunConfigurationBase implements Modu
 
     final Sdk ideaJdk = IdeaJdk.findIdeaJdk(jdk);
     if (ideaJdk == null) {
-      throw new ExecutionException(DevKitBundle.message("jdk.type.incorrect.common"));
+      throw new ExecutionException(DevKitBundle.message("sdk.type.incorrect.common"));
     }
     String sandboxHome = ((Sandbox)ideaJdk.getSdkAdditionalData()).getSandboxHome();
 
@@ -240,12 +240,12 @@ public class PluginRunConfiguration extends RunConfigurationBase implements Modu
       throw new RuntimeConfigurationException(DevKitBundle.message("run.configuration.no.module.specified"));
     }
     final ModuleRootManager rootManager = ModuleRootManager.getInstance(getModule());
-    final Sdk jdk = rootManager.getSdk();
-    if (jdk == null) {
-      throw new RuntimeConfigurationException(DevKitBundle.message("jdk.no.specified", moduleName));
+    final Sdk sdk = rootManager.getSdk();
+    if (sdk == null) {
+      throw new RuntimeConfigurationException(DevKitBundle.message("sdk.no.specified", moduleName));
     }
-    if (IdeaJdk.findIdeaJdk(jdk) == null) {
-      throw new RuntimeConfigurationException(DevKitBundle.message("jdk.type.incorrect", moduleName));
+    if (IdeaJdk.findIdeaJdk(sdk) == null) {
+      throw new RuntimeConfigurationException(DevKitBundle.message("sdk.type.incorrect", moduleName));
     }
   }
 

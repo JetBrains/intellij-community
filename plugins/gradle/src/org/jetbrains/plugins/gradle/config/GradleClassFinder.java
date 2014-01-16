@@ -16,7 +16,7 @@
 
 package org.jetbrains.plugins.gradle.config;
 
-import com.intellij.openapi.externalSystem.psi.search.ProjectBuildGlobalSearchScope;
+import com.intellij.openapi.externalSystem.psi.search.ExternalModuleBuildGlobalSearchScope;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.NonClasspathClassFinder;
@@ -53,9 +53,9 @@ public class GradleClassFinder extends NonClasspathClassFinder {
 
   @Override
   protected List<VirtualFile> getClassRoots(@Nullable GlobalSearchScope scope) {
-    if (scope instanceof ProjectBuildGlobalSearchScope) {
-      ProjectBuildGlobalSearchScope projectBuildGlobalSearchScope = (ProjectBuildGlobalSearchScope)scope;
-      return myBuildClasspathManager.getModuleClasspathEntries(projectBuildGlobalSearchScope.getExternalModulePath());
+    if (scope instanceof ExternalModuleBuildGlobalSearchScope) {
+      ExternalModuleBuildGlobalSearchScope externalModuleBuildGlobalSearchScope = (ExternalModuleBuildGlobalSearchScope)scope;
+      return myBuildClasspathManager.getModuleClasspathEntries(externalModuleBuildGlobalSearchScope.getExternalModulePath());
     }
     return myBuildClasspathManager.getAllClasspathEntries();
   }
