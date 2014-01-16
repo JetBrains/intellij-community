@@ -198,6 +198,11 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
       return ResolveResultList.to(classMember);
     }
 
+    classMember = resolveByOverridingAncestorsMembersProviders(this, name, location);
+    if (classMember != null) {
+      return ResolveResultList.to(classMember);
+    }
+
     if (inherited) {
       for (PyClassLikeType type : myClass.getAncestorTypes(context)) {
         if (type instanceof PyClassType) {
@@ -326,6 +331,17 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
       }
     }
 
+    return null;
+  }
+
+  @Nullable
+  private static PsiElement resolveByOverridingAncestorsMembersProviders(PyClassType type, String name, @Nullable PyExpression location) {
+    for (PyClassMembersProvider provider : Extensions.getExtensions(PyClassMembersProvider.EP_NAME)) {
+      if (provider instanceof PyOverridingAncestorsClassMembersProvider) {
+        final PsiElement resolveResult = provider.resolveMember(type, name, location);
+        if (resolveResult != null) return resolveResult;
+      }
+    }
     return null;
   }
 
