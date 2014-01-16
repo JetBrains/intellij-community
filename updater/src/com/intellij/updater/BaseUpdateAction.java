@@ -31,26 +31,22 @@ public abstract class BaseUpdateAction extends PatchAction {
   @Override
   protected void doBackup(File toFile, File backupFile) throws IOException {
     Utils.copy(toFile, backupFile);
-    Runner.logger.info("file: " + toFile.getCanonicalPath() + " backup file: " + backupFile.getCanonicalPath());
   }
 
   protected void replaceUpdated(File from, File dest) throws IOException {
     // on OS X code signing caches seem to be associated with specific file ids, so we need to remove the original file.
     if (!dest.delete()) throw new IOException("Cannot delete file " + dest);
     Utils.copy(from, dest);
-    Runner.logger.info("from: " + from.getCanonicalPath() + " dest: " + dest.getCanonicalPath());
   }
 
   @Override
   protected void doRevert(File toFile, File backupFile) throws IOException {
     if (!toFile.exists() || isModified(toFile)) {
       Utils.copy(backupFile, toFile);
-      Runner.logger.info("backup file: " + backupFile.getCanonicalPath() + " to file: " + toFile.getCanonicalPath());
     }
   }
 
   protected void writeDiff(File olderFile, File newerFile, ZipOutputStream patchOutput) throws IOException {
-    Runner.logger.info("writing diff");
     BufferedInputStream olderFileIn = new BufferedInputStream(new FileInputStream(olderFile));
     BufferedInputStream newerFileIn = new BufferedInputStream(new FileInputStream(newerFile));
     try {

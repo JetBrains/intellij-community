@@ -51,9 +51,7 @@ public class CreateAction extends PatchAction {
     try {
       boolean executable = readExecutableFlag(in);
       Utils.copyStreamToFile(in, toFile);
-      Runner.logger.info("copyStreamToFile to file: " + toFile.getCanonicalPath());
       Utils.setExecutable(toFile, executable);
-      Runner.logger.info("setExecutable for file: " + toFile.getCanonicalPath());
     }
     catch (Exception ex) {
       Runner.printStackTrace(ex);
@@ -66,7 +64,6 @@ public class CreateAction extends PatchAction {
   private static void prepareToWriteFile(File file) throws IOException {
     if (file.exists()) {
       Utils.delete(file);
-      Runner.logger.info("deleted File: " + file.getCanonicalPath());
       return;
     }
 
@@ -75,7 +72,6 @@ public class CreateAction extends PatchAction {
     }
     if (file != null && !file.isDirectory()) {
       Utils.delete(file);
-      Runner.logger.info("deleted File(parent): " + file.getCanonicalPath());
     }
   }
 
@@ -85,6 +81,5 @@ public class CreateAction extends PatchAction {
 
   protected void doRevert(File toFile, File backupFile) throws IOException {
     Utils.delete(toFile);
-    Runner.logger.info("deleted file: " + toFile.getCanonicalPath());
   }
 }

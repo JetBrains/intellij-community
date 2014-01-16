@@ -18,9 +18,9 @@ public class Utils {
   public static File createTempFile() throws IOException {
     if (myTempDir == null) {
       myTempDir = File.createTempFile("idea.updater.", ".tmp");
-      Runner.logger.info("temp file: " + myTempDir.getCanonicalPath());
       delete(myTempDir);
       myTempDir.mkdirs();
+      Runner.logger.info("created temp file: " + myTempDir.getCanonicalPath());
     }
 
     return File.createTempFile("temp.", ".tmp", myTempDir);
@@ -29,8 +29,9 @@ public class Utils {
   public static File createTempDir() throws IOException {
     File result = createTempFile();
     delete(result);
+    Runner.logger.info("deleted tmp dir: " + result.getCanonicalPath());
     result.mkdirs();
-    Runner.logger.info("created tmp file: " + result.getCanonicalPath());
+    Runner.logger.info("created tmp dir: " + result.getCanonicalPath());
     return result;
   }
 
@@ -95,7 +96,6 @@ public class Utils {
   }
 
   public static void copyFileToStream(File from, OutputStream out) throws IOException {
-    Runner.logger.info("from: " + from.getCanonicalPath());
     InputStream in = new BufferedInputStream(new FileInputStream(from));
     try {
       copyStream(in, out);

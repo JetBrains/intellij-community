@@ -22,45 +22,6 @@ public class Runner {
   private static final String OLD_BUILD_DESCRIPTION = "old.build.description";
   private static final String NEW_BUILD_DESCRIPTION = "new.build.description";
 
-  public static void printStackTrace(Exception e){
-    StringWriter sw = new StringWriter();
-    PrintWriter pw = new PrintWriter(sw);
-    e.printStackTrace(pw);
-    logger.error(sw.toString());
-  }
-
-  public static void printStackTrace(Throwable e){
-    StringWriter sw = new StringWriter();
-    PrintWriter pw = new PrintWriter(sw);
-    e.printStackTrace(pw);
-    logger.error(sw.toString());
-  }
-
-  private static void initLogger(){
-    String tmpDir = System.getProperty("java.io.tmpdir");
-    System.out.println("java.io.tmpdir: " + tmpDir);
-//    String uHome = System.getProperty("user.home");
-    FileAppender update = new FileAppender();
-
-    update.setFile(tmpDir + "idea_updater.log");
-    update.setLayout(new PatternLayout("%d{dd MMM yyyy HH:mm:ss} %-5p %C{1}.%M - %m%n"));
-    update.setThreshold(Level.ALL);
-    update.setAppend(true);
-    update.activateOptions();
-
-    FileAppender update_error = new FileAppender();
-    update_error.setFile(tmpDir + "idea_updater_error.log");
-    update_error.setLayout(new PatternLayout("%d{dd MMM yyyy HH:mm:ss} %-5p %C{1}.%M - %m%n"));
-    update_error.setThreshold(Level.ERROR);
-    update_error.setAppend(false); // The error info from old run of updater (if there were) can be found in idea_updater.log file
-    update_error.activateOptions();
-
-    logger = Logger.getLogger("com.intellij.updater");
-    logger.addAppender(update_error);
-    logger.addAppender(update);
-    logger.setLevel(Level.ALL);
-  }
-
   public static void main(String[] args) throws Exception {
     initLogger();
     logger.info("--- Updater started ---");
@@ -104,6 +65,46 @@ public class Runner {
     }
   }
 
+  private static void initLogger(){
+    String tmpDir = System.getProperty("java.io.tmpdir");
+    System.out.println("java.io.tmpdir: " + tmpDir);
+    //    String uHome = System.getProperty("user.home");
+    FileAppender update = new FileAppender();
+
+    update.setFile(tmpDir + "idea_updater.log");
+    update.setLayout(new PatternLayout("%d{dd MMM yyyy HH:mm:ss} %-5p %C{1}.%M - %m%n"));
+    update.setThreshold(Level.ALL);
+    update.setAppend(true);
+    update.activateOptions();
+
+    FileAppender update_error = new FileAppender();
+    update_error.setFile(tmpDir + "idea_updater_error.log");
+    update_error.setLayout(new PatternLayout("%d{dd MMM yyyy HH:mm:ss} %-5p %C{1}.%M - %m%n"));
+    update_error.setThreshold(Level.ERROR);
+    // The error(s) from an old run of the updater (if there were) could be found in idea_updater.log file
+    update_error.setAppend(false);
+    update_error.activateOptions();
+
+    logger = Logger.getLogger("com.intellij.updater");
+    logger.addAppender(update_error);
+    logger.addAppender(update);
+    logger.setLevel(Level.ALL);
+  }
+
+  public static void printStackTrace(Exception e){
+    StringWriter sw = new StringWriter();
+    PrintWriter pw = new PrintWriter(sw);
+    e.printStackTrace(pw);
+    logger.error(sw.toString());
+  }
+
+  public static void printStackTrace(Throwable e){
+    StringWriter sw = new StringWriter();
+    PrintWriter pw = new PrintWriter(sw);
+    e.printStackTrace(pw);
+    logger.error(sw.toString());
+  }
+
   public static List<String> extractFiles(String[] args, String paramName) {
     List<String> result = new ArrayList<String>();
     for (String param : args) {
@@ -115,7 +116,6 @@ public class Runner {
         }
       }
     }
-    logger.info(result.toString());
     return result;
   }
 
@@ -224,8 +224,8 @@ public class Runner {
         try {
           UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
         }
-        catch (Exception ex) {
-          printStackTrace(ex);
+        catch (Exception ignore) {
+          printStackTrace(ignore);
         }
       }
     });
@@ -269,7 +269,9 @@ public class Runner {
         finally {
           jarFile.close();
         }
+
         ui.checkCancelled();
+
         File destDir = new File(destFolder);
         PatchFileCreator.PreparationResult result = PatchFileCreator.prepareAndValidate(patchFile, destDir, ui);
         Map<String, ValidationResult.Option> options = ui.askUser(result.validationResults);
@@ -292,6 +294,7 @@ public class Runner {
         printStackTrace(e);
       }
     }
+
     return false;
   }
 
