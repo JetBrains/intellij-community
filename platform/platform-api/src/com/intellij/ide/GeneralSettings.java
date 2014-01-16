@@ -118,8 +118,10 @@ public class GeneralSettings implements NamedJDOMExternalizable, ExportableAppli
     myPropertyChangeSupport.removePropertyChangeListener(listener);
   }
 
+  @Override
   public void initComponent() { }
 
+  @Override
   public void disposeComponent() { }
 
   public String getBrowserPath() {
@@ -222,6 +224,7 @@ public class GeneralSettings implements NamedJDOMExternalizable, ExportableAppli
   }
 
   //todo use DefaultExternalizer
+  @Override
   public void readExternal(Element parentNode) {
     boolean safeWriteSettingRead = false;
 
@@ -371,6 +374,7 @@ public class GeneralSettings implements NamedJDOMExternalizable, ExportableAppli
     }
   }
 
+  @Override
   public void writeExternal(Element parentNode) {
     if (myBrowserPath != null) {
       Element element = new Element(ELEMENT_OPTION);
@@ -457,20 +461,24 @@ public class GeneralSettings implements NamedJDOMExternalizable, ExportableAppli
     }
   }
 
+  @Override
   public String getExternalFileName() {
     return "ide.general";
   }
 
+  @Override
   @NotNull
   public File[] getExportFiles() {
     return new File[]{PathManager.getOptionsFile(this)};
   }
 
+  @Override
   @NotNull
   public String getPresentableName() {
     return IdeBundle.message("general.settings");
   }
 
+  @Override
   @NotNull
   public String getComponentName() {
     return "GeneralSettings";
