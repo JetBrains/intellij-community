@@ -16,7 +16,7 @@ import org.apache.log4j.FileAppender;
 import org.apache.log4j.PatternLayout;
 
 public class Runner {
-  public static Logger logger;
+  public static Logger logger = null;
   private static final String PATCH_FILE_NAME = "patch-file.zip";
   private static final String PATCH_PROPERTIES_ENTRY = "patch.properties";
   private static final String OLD_BUILD_DESCRIPTION = "old.build.description";
@@ -65,30 +65,33 @@ public class Runner {
     }
   }
 
-  private static void initLogger(){
-    String tmpDir = System.getProperty("java.io.tmpdir");
-    System.out.println("java.io.tmpdir: " + tmpDir);
-    //    String uHome = System.getProperty("user.home");
-    FileAppender update = new FileAppender();
+  // public - to have ability init during test running
+  public final static void initLogger(){
+    if (logger == null){
+      String tmpDir = System.getProperty("java.io.tmpdir");
+      System.out.println("java.io.tmpdir: " + tmpDir);
+      //    String uHome = System.getProperty("user.home");
+      FileAppender update = new FileAppender();
 
-    update.setFile(tmpDir + "idea_updater.log");
-    update.setLayout(new PatternLayout("%d{dd MMM yyyy HH:mm:ss} %-5p %C{1}.%M - %m%n"));
-    update.setThreshold(Level.ALL);
-    update.setAppend(true);
-    update.activateOptions();
+      update.setFile(tmpDir + "idea_updater.log");
+      update.setLayout(new PatternLayout("%d{dd MMM yyyy HH:mm:ss} %-5p %C{1}.%M - %m%n"));
+      update.setThreshold(Level.ALL);
+      update.setAppend(true);
+      update.activateOptions();
 
-    FileAppender update_error = new FileAppender();
-    update_error.setFile(tmpDir + "idea_updater_error.log");
-    update_error.setLayout(new PatternLayout("%d{dd MMM yyyy HH:mm:ss} %-5p %C{1}.%M - %m%n"));
-    update_error.setThreshold(Level.ERROR);
-    // The error(s) from an old run of the updater (if there were) could be found in idea_updater.log file
-    update_error.setAppend(false);
-    update_error.activateOptions();
+      FileAppender update_error = new FileAppender();
+      update_error.setFile(tmpDir + "idea_updater_error.log");
+      update_error.setLayout(new PatternLayout("%d{dd MMM yyyy HH:mm:ss} %-5p %C{1}.%M - %m%n"));
+      update_error.setThreshold(Level.ERROR);
+      // The error(s) from an old run of the updater (if there were) could be found in idea_updater.log file
+      update_error.setAppend(false);
+      update_error.activateOptions();
 
-    logger = Logger.getLogger("com.intellij.updater");
-    logger.addAppender(update_error);
-    logger.addAppender(update);
-    logger.setLevel(Level.ALL);
+      logger = Logger.getLogger("com.intellij.updater");
+      logger.addAppender(update_error);
+      logger.addAppender(update);
+      logger.setLevel(Level.ALL);
+    }
   }
 
   public static void printStackTrace(Exception e){
