@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,23 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.designer.designSurface;
+package com.intellij.openapi.editor;
 
-import com.intellij.designer.model.RadComponent;
+import com.intellij.testFramework.LightPlatformCodeInsightTestCase;
 
-/**
- * @author Alexander Lobas
- */
-public interface FeedbackTreeLayer {
-  int INSERT_BEFORE = 0;
-  int INSERT_AFTER = 1;
-  int INSERT_SELECTION = 2;
-
-  void mark(RadComponent component, int feedback);
-
-  void unmark();
-
-  boolean isBeforeLocation(RadComponent component, int x, int y);
-
-  boolean isAfterLocation(RadComponent component, int x, int y);
+public class EditorModificationUtilTest extends LightPlatformCodeInsightTestCase {
+  public void testInsertStringAtCaretNotMovingCaret() throws Exception {
+    configureFromFileText(getTestName(false) + ".txt", "text <caret>");
+    EditorModificationUtil.insertStringAtCaret(myEditor, " ", false, false);
+    checkResultByText("text <caret> ");
+  }
 }

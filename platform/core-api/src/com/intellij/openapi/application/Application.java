@@ -17,7 +17,6 @@ package com.intellij.openapi.application;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.ComponentManager;
-import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.ThrowableComputable;
@@ -385,10 +384,4 @@ public interface Application extends ComponentManager {
   boolean isInternal();
 
   boolean isEAP();
-
-  /**
-   * Find a plugin that loaded a class with the given name
-   */
-  @Nullable
-  PluginId getPluginByClassName(@NotNull String className);
 }

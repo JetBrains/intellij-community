@@ -27,6 +27,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.ui.AppUIUtil;
 import com.intellij.xml.XmlBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -43,13 +44,18 @@ public class DefaultUrlOpener extends UrlOpener {
     return launchBrowser(browser, url, false);
   }
 
-  public static boolean launchBrowser(@NotNull WebBrowser browser,
+  public static boolean launchBrowser(@NotNull final WebBrowser browser,
                                       @Nullable String url,
                                       boolean newWindowIfPossible,
                                       @NotNull String... additionalParameters) {
     final String browserPath = browser.getPath();
     if (StringUtil.isEmpty(browserPath)) {
-      Messages.showErrorDialog(browser.getBrowserNotFoundMessage(), IdeBundle.message("title.browser.not.found"));
+      AppUIUtil.invokeOnEdt(new Runnable() {
+        @Override
+        public void run() {
+          Messages.showErrorDialog(browser.getBrowserNotFoundMessage(), IdeBundle.message("title.browser.not.found"));
+        }
+      });
       return false;
     }
 
@@ -71,8 +77,13 @@ public class DefaultUrlOpener extends UrlOpener {
       new GeneralCommandLine(command).createProcess();
       return true;
     }
-    catch (ExecutionException e) {
-      Messages.showErrorDialog(e.getMessage(), XmlBundle.message("browser.error"));
+    catch (final ExecutionException e) {
+      AppUIUtil.invokeOnEdt(new Runnable() {
+        @Override
+        public void run() {
+          Messages.showErrorDialog(e.getMessage(), XmlBundle.message("browser.error"));
+        }
+      });
       return false;
     }
   }

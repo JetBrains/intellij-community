@@ -25,7 +25,10 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.util.HtmlUtil;
+import org.jetbrains.annotations.Nullable;
 
 public class OpenFileInDefaultBrowserAction extends DumbAwareAction {
   @Override
@@ -57,12 +60,9 @@ public class OpenFileInDefaultBrowserAction extends DumbAwareAction {
     presentation.setText(text);
     presentation.setDescription(description);
 
-    GeneralSettings settings = GeneralSettings.getInstance();
-    if (!settings.isUseDefaultBrowser()) {
-      WebBrowser browser = WebBrowserManager.getInstance().findBrowserById(settings.getBrowserPath());
-      if (browser != null) {
-        presentation.setIcon(browser.getIcon());
-      }
+    WebBrowser browser = findUsingBrowser();
+    if (browser != null) {
+      presentation.setIcon(browser.getIcon());
     }
 
     if (ActionPlaces.isPopupPlace(e.getPlace())) {
@@ -70,8 +70,30 @@ public class OpenFileInDefaultBrowserAction extends DumbAwareAction {
     }
   }
 
+  @Nullable
+  private static WebBrowser findUsingBrowser() {
+    WebBrowserManager browserManager = WebBrowserManager.getInstance();
+    if (browserManager.getDefaultBrowser() == WebBrowserManager.DefaultBrowser.FIRST) {
+      return ContainerUtil.getFirstItem(browserManager.getActiveBrowsers());
+    }
+    else if (browserManager.getDefaultBrowser() == WebBrowserManager.DefaultBrowser.ALTERNATIVE) {
+      String path = GeneralSettings.getInstance().getBrowserPath();
+      if (!StringUtil.isEmpty(path)) {
+        WebBrowser browser = browserManager.findBrowserById(path);
+        if (browser == null) {
+          for (WebBrowser item : browserManager.getActiveBrowsers()) {
+            if (path.equals(item.getPath())) {
+              return item;
+            }
+          }
+        }
+      }
+    }
+    return null;
+  }
+
   @Override
   public void actionPerformed(AnActionEvent e) {
-    BaseOpenInBrowserAction.open(e, null);
+    BaseOpenInBrowserAction.open(e, findUsingBrowser());
   }
 }

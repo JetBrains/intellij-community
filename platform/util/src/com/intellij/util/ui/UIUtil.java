@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -224,6 +224,11 @@ public class UIUtil {
   }
 
   public static boolean isRetina() {
+    //Temporary workaround for HiDPI on Windows/Linux
+    if ("true".equalsIgnoreCase(System.getProperty("is.hidpi"))) {
+      return true;
+    }
+
     synchronized (ourRetina) {
       if (ourRetina.isNull()) {
         ourRetina.set(false); // in case HiDPIScaledImage.drawIntoImage is not called for some reason

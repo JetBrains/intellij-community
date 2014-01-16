@@ -18,6 +18,7 @@ package com.intellij.ide.browsers.firefox;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.SmartList;
 import com.intellij.util.SystemProperties;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -27,7 +28,6 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -35,7 +35,7 @@ import java.util.List;
  * @author nik
  */
 public class FirefoxUtil {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ide.browsers.firefox.FirefoxUtil");
+  private static final Logger LOG = Logger.getInstance(FirefoxUtil.class);
   @NonNls public static final String PROFILES_INI_FILE = "profiles.ini";
 
   private FirefoxUtil() {
@@ -70,7 +70,7 @@ public class FirefoxUtil {
   }
 
   @Nullable
-  public static FirefoxProfile findProfileByNameOrDefault(@Nullable String name, List<FirefoxProfile> profiles) {
+  public static FirefoxProfile findProfileByNameOrDefault(@Nullable String name, @NotNull List<FirefoxProfile> profiles) {
     for (FirefoxProfile profile : profiles) {
       if (profile.getName().equals(name)) {
         return profile;
@@ -81,7 +81,9 @@ public class FirefoxUtil {
 
   @Nullable
   public static FirefoxProfile getDefaultProfile(List<FirefoxProfile> profiles) {
-    if (profiles.isEmpty()) return null;
+    if (profiles.isEmpty()) {
+      return null;
+    }
 
     for (FirefoxProfile profile : profiles) {
       if (profile.isDefault()) {
@@ -92,15 +94,16 @@ public class FirefoxUtil {
   }
 
   @NotNull
-  public static List<FirefoxProfile> computeProfiles(File profilesFile) {
-    if (!profilesFile.isFile()) {
+  public static List<FirefoxProfile> computeProfiles(@Nullable File profilesFile) {
+    if (profilesFile == null || !profilesFile.isFile()) {
       return Collections.emptyList();
     }
 
     try {
-      BufferedReader reader = new BufferedReader(new FileReader(profilesFile));
+      BufferedReader reader;
+      reader = new BufferedReader(new FileReader(profilesFile));
       try {
-        final List<FirefoxProfile> profiles = new ArrayList<FirefoxProfile>();
+        final List<FirefoxProfile> profiles = new SmartList<FirefoxProfile>();
         boolean insideProfile = false;
         String currentName = null;
         String currentPath = null;
@@ -108,7 +111,7 @@ public class FirefoxUtil {
         boolean isRelative = false;
         boolean eof = false;
         while (!eof) {
-          @NonNls String line = reader.readLine();
+          String line = reader.readLine();
           if (line == null) {
             eof = true;
             line = "[]";
@@ -131,8 +134,8 @@ public class FirefoxUtil {
 
           final int i = line.indexOf('=');
           if (i != -1 && insideProfile) {
-            @NonNls String name = line.substring(0, i).trim();
-            @NonNls String value = line.substring(i + 1).trim();
+            String name = line.substring(0, i).trim();
+            String value = line.substring(i + 1).trim();
             if (name.equalsIgnoreCase("path")) {
               currentPath = value;
             }
@@ -142,7 +145,8 @@ public class FirefoxUtil {
             else if (name.equalsIgnoreCase("default") && value.equals("1")) {
               isDefault = true;
             }
-            else if (name.equalsIgnoreCase("isrelative") && value.equals("1")) {
+            else //noinspection SpellCheckingInspection
+              if (name.equalsIgnoreCase("isrelative") && value.equals("1")) {
               isRelative = true;
             }
           }
@@ -155,8 +159,8 @@ public class FirefoxUtil {
     }
     catch (IOException e) {
       LOG.info(e);
+      return Collections.emptyList();
     }
-    return Collections.emptyList();
   }
 
   private static File[] getProfilesDirs() {

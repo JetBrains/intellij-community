@@ -22,11 +22,14 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.ShowSettingsUtil;
+import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.EnumComboBoxModel;
 import com.intellij.ui.IdeBorderFactory;
+import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.util.Function;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.LocalPathCellEditor;
@@ -45,6 +48,7 @@ import java.util.Collections;
 import java.util.UUID;
 
 import static com.intellij.ide.browsers.BrowsersConfiguration.BrowserFamily;
+import static com.intellij.ide.browsers.WebBrowserManager.DefaultBrowser;
 import static com.intellij.util.ui.table.TableModelEditor.EditableColumnInfo;
 
 public class BrowserSettingsPanel {
@@ -128,9 +132,6 @@ public class BrowserSettingsPanel {
 
   private JPanel root;
 
-  private JRadioButton useSystemDefaultBrowser;
-
-  private JRadioButton useAlternativeBrowser;
   private TextFieldWithBrowseButton alternativeBrowserPathField;
 
   private JCheckBox confirmExtractFiles;
@@ -140,27 +141,49 @@ public class BrowserSettingsPanel {
   @SuppressWarnings("UnusedDeclaration")
   private JComponent browsersTable;
 
+  private ComboBox defaultBrowser;
+
   private TableModelEditor<ConfigurableWebBrowser> browsersEditor;
 
   public BrowserSettingsPanel() {
-    defaultBrowserPanel.setBorder(IdeBorderFactory.createTitledBorder("Default Browser", true));
+    defaultBrowserPanel.setBorder(IdeBorderFactory.createTitledBorder("Default Browser", false));
 
     alternativeBrowserPathField.addBrowseFolderListener(IdeBundle.message("title.select.path.to.browser"), null, null,
                                                         APP_FILE_CHOOSER_DESCRIPTOR);
 
+    //noinspection unchecked
+    defaultBrowser.setModel(new EnumComboBoxModel<DefaultBrowser>(DefaultBrowser.class));
     if (BrowserUtil.canStartDefaultBrowser()) {
-      ActionListener actionListener = new ActionListener() {
+      defaultBrowser.addActionListener(new ActionListener() {
         @Override
         public void actionPerformed(ActionEvent e) {
-          updateBrowserField();
+          alternativeBrowserPathField.setEnabled(getDefaultBrowser() == DefaultBrowser.ALTERNATIVE);
         }
-      };
-      useSystemDefaultBrowser.addActionListener(actionListener);
-      useAlternativeBrowser.addActionListener(actionListener);
+      });
+
+      defaultBrowser.setRenderer(new ListCellRendererWrapper<DefaultBrowser>() {
+        @Override
+        public void customize(JList list, DefaultBrowser value, int index, boolean selected, boolean hasFocus) {
+          String name;
+          switch (value) {
+            case SYSTEM:
+              name = "System";
+              break;
+            case FIRST:
+              name = "First";
+              break;
+            case ALTERNATIVE:
+              name = "Command";
+              break;
+            default: throw new IllegalStateException();
+          }
+
+          setText(name);
+        }
+      });
     }
     else {
-      useSystemDefaultBrowser.setVisible(false);
-      useAlternativeBrowser.setVisible(false);
+      defaultBrowser.setVisible(false);
     }
 
     clearExtractedFiles.addActionListener(new ActionListener() {
@@ -226,47 +249,38 @@ public class BrowserSettingsPanel {
   public boolean isModified() {
     GeneralSettings settings = GeneralSettings.getInstance();
     if (!Comparing.strEqual(settings.getBrowserPath(), alternativeBrowserPathField.getText()) ||
-        settings.isUseDefaultBrowser() != useSystemDefaultBrowser.isSelected() ||
         settings.isConfirmExtractFiles() != confirmExtractFiles.isSelected()) {
       return true;
     }
 
-    return browsersEditor.isModified(WebBrowserManager.getInstance().getList());
-  }
-
-  private void updateBrowserField() {
-    if (!BrowserUtil.canStartDefaultBrowser()) {
-      return;
-    }
-
-    alternativeBrowserPathField.getTextField().setEnabled(useAlternativeBrowser.isSelected());
-    alternativeBrowserPathField.getButton().setEnabled(useAlternativeBrowser.isSelected());
+    WebBrowserManager browserManager = WebBrowserManager.getInstance();
+    return browserManager.getDefaultBrowser() != getDefaultBrowser() || browsersEditor.isModified(browserManager.getList());
   }
 
   public void apply() throws ConfigurationException {
     GeneralSettings settings = GeneralSettings.getInstance();
 
+    settings.setUseDefaultBrowser(getDefaultBrowser() == DefaultBrowser.SYSTEM);
     settings.setBrowserPath(alternativeBrowserPathField.getText());
-    settings.setUseDefaultBrowser(useSystemDefaultBrowser.isSelected());
     settings.setConfirmExtractFiles(confirmExtractFiles.isSelected());
 
-    WebBrowserManager.getInstance().setList(browsersEditor.apply());
+    WebBrowserManager browserManager = WebBrowserManager.getInstance();
+    browserManager.defaultBrowser = getDefaultBrowser();
+    browserManager.setList(browsersEditor.apply());
+  }
+
+  private DefaultBrowser getDefaultBrowser() {
+    return (DefaultBrowser)defaultBrowser.getSelectedItem();
   }
 
   public void reset() {
     GeneralSettings settings = GeneralSettings.getInstance();
     alternativeBrowserPathField.setText(settings.getBrowserPath());
 
-    if (settings.isUseDefaultBrowser()) {
-      useSystemDefaultBrowser.setSelected(true);
-    }
-    else {
-      useAlternativeBrowser.setSelected(true);
-    }
+    defaultBrowser.setSelectedItem(WebBrowserManager.getInstance().defaultBrowser);
+    alternativeBrowserPathField.setEnabled(getDefaultBrowser() == DefaultBrowser.ALTERNATIVE);
+
     confirmExtractFiles.setSelected(settings.isConfirmExtractFiles());
-
-    updateBrowserField();
-
     browsersEditor.reset(WebBrowserManager.getInstance().getList());
   }
 }
