@@ -284,7 +284,13 @@ class ModuleRedeclarator(object):
                     else:
                         # a forward / circular declaration happens
                         notice = ""
-                        real_value = cleanup(repr(p_value))
+                        try:
+                            representation = repr(p_value)
+                        except Exception:
+                            import traceback
+                            traceback.print_exc(file=sys.stderr)
+                            return
+                        real_value = cleanup(representation)
                         if found_name:
                             if found_name == as_name:
                                 notice = " # (!) real value is %r" % real_value
