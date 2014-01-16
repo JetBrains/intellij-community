@@ -293,6 +293,10 @@ public class MavenModuleWizardStep extends ModuleWizardStep {
     myBuilder.setInheritedOptions(myInheritGroupIdCheckBox.isSelected(),
                                   myInheritVersionCheckBox.isSelected());
 
+    if (myContext.getProjectName() == null) {
+      myContext.setProjectName(myBuilder.getProjectId().getArtifactId());
+    }
+
     if (myArchetypes != null) {
       myBuilder.setArchetype(myArchetypes.getSelectedArchetype());
     }
