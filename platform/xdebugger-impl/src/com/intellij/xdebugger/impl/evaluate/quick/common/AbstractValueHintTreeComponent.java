@@ -54,43 +54,8 @@ public abstract class AbstractValueHintTreeComponent<H> {
     return myMainPanel;
   }
 
-  private AnAction createGoForwardAction(){
-    return new AnAction(CodeInsightBundle.message("quick.definition.forward"), null, AllIcons.Actions.Forward){
-      @Override
-      public void actionPerformed(AnActionEvent e) {
-        if (myHistory.size() > 1 && myCurrentIndex < myHistory.size() - 1){
-          myCurrentIndex ++;
-          updateHint();
-        }
-      }
-
-      @Override
-      public void update(AnActionEvent e) {
-        e.getPresentation().setEnabled(myHistory.size() > 1 && myCurrentIndex < myHistory.size() - 1);
-      }
-    };
-  }
-
   private void updateHint() {
     updateTree(myHistory.get(myCurrentIndex));
-  }
-
-  private AnAction createGoBackAction(){
-    return new AnAction(CodeInsightBundle.message("quick.definition.back"), null, AllIcons.Actions.Back){
-      @Override
-      public void actionPerformed(AnActionEvent e) {
-        if (myHistory.size() > 1 && myCurrentIndex > 0) {
-          myCurrentIndex--;
-          updateHint();
-        }
-      }
-
-
-      @Override
-      public void update(AnActionEvent e) {
-        e.getPresentation().setEnabled(myHistory.size() > 1 && myCurrentIndex > 0);
-      }
-    };
   }
 
   protected abstract void updateTree(H selectedItem);
@@ -108,28 +73,13 @@ public abstract class AbstractValueHintTreeComponent<H> {
 
   private JComponent createToolbar(JPanel parent) {
     DefaultActionGroup group = new DefaultActionGroup();
-    group.add(new AnAction(XDebuggerBundle.message("xdebugger.popup.value.tree.set.root.action.tooltip"),
-                           XDebuggerBundle.message("xdebugger.popup.value.tree.set.root.action.tooltip"), AllIcons.Modules.UnmarkWebroot) {
-      @Override
-      public void update(AnActionEvent e) {
-        TreePath path = myTree.getSelectionPath();
-        e.getPresentation().setEnabled(path != null && path.getPathCount() > 1);
-      }
+    group.add(new SetAsRootAction());
 
-      @Override
-      public void actionPerformed(AnActionEvent e) {
-        TreePath path = myTree.getSelectionPath();
-        if (path != null) {
-          setNodeAsRoot(path.getLastPathComponent());
-        }
-      }
-    });
-
-    AnAction back = createGoBackAction();
+    AnAction back = new GoBackwardAction();
     back.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_LEFT, InputEvent.ALT_MASK)), parent);
     group.add(back);
 
-    AnAction forward = createGoForwardAction();
+    AnAction forward = new GoForwardAction();
     forward.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_RIGHT, InputEvent.ALT_MASK)), parent);
     group.add(forward);
 
@@ -137,4 +87,64 @@ public abstract class AbstractValueHintTreeComponent<H> {
   }
 
   protected abstract void setNodeAsRoot(Object node);
+
+  private class GoForwardAction extends AnAction {
+    public GoForwardAction() {
+      super(CodeInsightBundle.message("quick.definition.forward"), null, AllIcons.Actions.Forward);
+    }
+
+    @Override
+    public void actionPerformed(AnActionEvent e) {
+      if (myHistory.size() > 1 && myCurrentIndex < myHistory.size() - 1){
+        myCurrentIndex ++;
+        updateHint();
+      }
+    }
+
+    @Override
+    public void update(AnActionEvent e) {
+      e.getPresentation().setEnabled(myHistory.size() > 1 && myCurrentIndex < myHistory.size() - 1);
+    }
+  }
+
+  private class GoBackwardAction extends AnAction {
+    public GoBackwardAction() {
+      super(CodeInsightBundle.message("quick.definition.back"), null, AllIcons.Actions.Back);
+    }
+
+    @Override
+    public void actionPerformed(AnActionEvent e) {
+      if (myHistory.size() > 1 && myCurrentIndex > 0) {
+        myCurrentIndex--;
+        updateHint();
+      }
+    }
+
+
+    @Override
+    public void update(AnActionEvent e) {
+      e.getPresentation().setEnabled(myHistory.size() > 1 && myCurrentIndex > 0);
+    }
+  }
+
+  private class SetAsRootAction extends AnAction {
+    public SetAsRootAction() {
+      super(XDebuggerBundle.message("xdebugger.popup.value.tree.set.root.action.tooltip"),
+            XDebuggerBundle.message("xdebugger.popup.value.tree.set.root.action.tooltip"), AllIcons.Modules.UnmarkWebroot);
+    }
+
+    @Override
+    public void update(AnActionEvent e) {
+      TreePath path = myTree.getSelectionPath();
+      e.getPresentation().setEnabled(path != null && path.getPathCount() > 1);
+    }
+
+    @Override
+    public void actionPerformed(AnActionEvent e) {
+      TreePath path = myTree.getSelectionPath();
+      if (path != null) {
+        setNodeAsRoot(path.getLastPathComponent());
+      }
+    }
+  }
 }
