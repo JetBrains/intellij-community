@@ -91,7 +91,8 @@ public class DfaVariableValue extends DfaValue {
     myIsNegated = isNegated;
     myQualifier = qualifier;
     myVarType = varType;
-    myTypeValue = varType == null ? null : (DfaTypeValue)myFactory.createTypeValue(varType, Nullness.UNKNOWN);
+    DfaValue typeValue = myFactory.createTypeValue(varType, Nullness.UNKNOWN);
+    myTypeValue = typeValue instanceof DfaTypeValue ? (DfaTypeValue)typeValue : null;
   }
 
   @Nullable
