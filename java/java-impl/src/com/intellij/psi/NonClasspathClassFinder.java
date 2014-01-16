@@ -44,17 +44,19 @@ public abstract class NonClasspathClassFinder extends PsiElementFinder {
   private volatile List<VirtualFile> myCache;
   private final PsiManager myManager;
   private final boolean myCheckForSources;
-  private final boolean myUseExtendedScope;
 
   public NonClasspathClassFinder(Project project) {
-    this(project, false, false);
+    this(project, false);
   }
 
-  protected NonClasspathClassFinder(Project project, boolean checkForSources, boolean useExtendedScope) {
+  protected NonClasspathClassFinder(Project project, boolean checkForSources) {
     myProject = project;
     myManager = PsiManager.getInstance(myProject);
-    myUseExtendedScope = useExtendedScope;
     myCheckForSources = checkForSources;
+  }
+
+  protected List<VirtualFile> getClassRoots(@Nullable GlobalSearchScope scope) {
+    return getClassRoots();
   }
 
   protected List<VirtualFile> getClassRoots() {
@@ -82,14 +84,11 @@ public abstract class NonClasspathClassFinder extends PsiElementFinder {
 
   @Override
   public PsiClass findClass(@NotNull String qualifiedName, @NotNull GlobalSearchScope scope) {
-    final List<VirtualFile> classRoots = getClassRoots();
+    final List<VirtualFile> classRoots = getClassRoots(scope);
     if (classRoots.isEmpty()) {
       return null;
     }
 
-    if(myUseExtendedScope) {
-      scope = addNonClasspathScope(myProject, scope);
-    }
     final String relPath = qualifiedName.replace('.', '/');
     for (final VirtualFile classRoot : classRoots) {
       if (scope.contains(classRoot)) {
@@ -131,7 +130,7 @@ public abstract class NonClasspathClassFinder extends PsiElementFinder {
   @NotNull
   @Override
   public PsiClass[] getClasses(@NotNull PsiPackage psiPackage, @NotNull GlobalSearchScope scope) {
-    final List<VirtualFile> classRoots = getClassRoots();
+    final List<VirtualFile> classRoots = getClassRoots(scope);
     if (classRoots.isEmpty()) {
       return PsiClass.EMPTY_ARRAY;
     }
@@ -160,7 +159,7 @@ public abstract class NonClasspathClassFinder extends PsiElementFinder {
   @NotNull
   @Override
   public Set<String> getClassNames(@NotNull PsiPackage psiPackage, @NotNull GlobalSearchScope scope) {
-    final List<VirtualFile> classRoots = getClassRoots();
+    final List<VirtualFile> classRoots = getClassRoots(scope);
     if (classRoots.isEmpty()) {
       return Collections.emptySet();
     }
@@ -172,7 +171,8 @@ public abstract class NonClasspathClassFinder extends PsiElementFinder {
         final VirtualFile dir = classRoot.findFileByRelativePath(pkgName.replace('.', '/'));
         if (dir != null && dir.isDirectory()) {
           for (final VirtualFile file : dir.getChildren()) {
-            if (!file.isDirectory() && "class".equals(file.getExtension())) {
+            if ((myCheckForSources && !file.isDirectory() && JavaFileType.DEFAULT_EXTENSION.equals(file.getExtension()))
+                || (!file.isDirectory() && "class".equals(file.getExtension()))) {
               result.add(file.getNameWithoutExtension());
             }
           }
@@ -207,7 +207,7 @@ public abstract class NonClasspathClassFinder extends PsiElementFinder {
                                            @NotNull GlobalSearchScope scope,
                                            @NotNull Processor<PsiDirectory> consumer,
                                            boolean includeLibrarySources) {
-    final List<VirtualFile> classRoots = getClassRoots();
+    final List<VirtualFile> classRoots = getClassRoots(scope);
     if (classRoots.isEmpty()) {
       return true;
     }
@@ -237,7 +237,7 @@ public abstract class NonClasspathClassFinder extends PsiElementFinder {
   @NotNull
   @Override
   public PsiPackage[] getSubPackages(@NotNull PsiPackage psiPackage, @NotNull GlobalSearchScope scope) {
-    final List<VirtualFile> classRoots = getClassRoots();
+    final List<VirtualFile> classRoots = getClassRoots(scope);
     if (classRoots.isEmpty()) {
       return super.getSubPackages(psiPackage, scope);
     }
