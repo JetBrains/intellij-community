@@ -128,7 +128,7 @@ public class GotoFileModel extends FilteringGotoByModel<FileType> {
   public String getFullName(final Object element) {
     if (element instanceof PsiFileSystemItem) {
       final VirtualFile virtualFile = ((PsiFileSystemItem)element).getVirtualFile();
-      return virtualFile != null ? virtualFile.getPath() : null;
+      return virtualFile != null ? GotoFileCellRenderer.getRelativePath(virtualFile, myProject) : null;
     }
 
     return getElementName(element);
