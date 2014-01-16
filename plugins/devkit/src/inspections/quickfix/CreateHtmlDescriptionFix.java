@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package org.jetbrains.idea.devkit.inspections.quickfix;
 
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.FileTemplateUtil;
@@ -36,9 +37,9 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
+import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.ArrayUtil;
-import icons.DevkitIcons;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.devkit.DevKitBundle;
@@ -181,7 +182,7 @@ public class CreateHtmlDescriptionFix implements LocalQuickFix, Iconable {
   }
 
   public Icon getIcon(int flags) {
-    return DevkitIcons.New_html;
+    return new LayeredIcon(AllIcons.FileTypes.Html, AllIcons.Actions.New);
   }
 
   private VirtualFile[] prepare(VirtualFile[] roots) {

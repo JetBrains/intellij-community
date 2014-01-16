@@ -190,7 +190,7 @@ bool LocateJVM()
 		return result;
 	}
 
-	std::string jreDir = GetAdjacentDir("jre");
+	std::string jreDir = GetAdjacentDir(need64BitJRE ? "jre64":"jre");
 	if (FindValidJVM(jreDir.c_str()) && Is64BitJRE(jvmPath) == need64BitJRE)
 	{
 		return true;

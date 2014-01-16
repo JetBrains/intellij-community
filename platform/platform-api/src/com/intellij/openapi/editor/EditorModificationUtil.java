@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -124,6 +124,9 @@ public class EditorModificationUtil {
       editor.getCaretModel().moveToOffset(offset, true);
       editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
       selectionModel.removeSelection();
+    }
+    else if (editor.getCaretModel().getOffset() != oldOffset) { // handling the case when caret model tracks document changes
+      editor.getCaretModel().moveToOffset(oldOffset);
     }
 
     return offset;

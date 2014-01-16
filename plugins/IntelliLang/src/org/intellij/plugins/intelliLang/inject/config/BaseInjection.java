@@ -56,7 +56,8 @@ public class BaseInjection implements Injection, PersistentStateComponent<Elemen
   public static final Key<BaseInjection> INJECTION_KEY = Key.create("INJECTION_KEY");
 
   @NotNull private final String mySupportId;
-  private String myDisplayName;
+
+  private String myDisplayName = "";
 
   private String myInjectedLanguageId = "";
   private String myPrefix = "";
@@ -98,7 +99,7 @@ public class BaseInjection implements Injection, PersistentStateComponent<Elemen
     return myDisplayName;
   }
 
-  public void setDisplayName(String displayName) {
+  public void setDisplayName(@NotNull String displayName) {
     myDisplayName = displayName;
   }
 
