@@ -23,6 +23,7 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiInvalidElementAccessException;
@@ -156,22 +157,9 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
     }
 
     if (resolveContext.allowProperties()) {
-      Property property = myClass.findProperty(name, true);
-      if (property != null) {
-        Maybe<Callable> accessor = property.getByDirection(direction);
-        if (accessor.isDefined()) {
-          Callable accessor_code = accessor.value();
-          ResolveResultList ret = new ResolveResultList();
-          if (accessor_code != null) ret.poke(accessor_code, RatedResolveResult.RATE_NORMAL);
-          PyTargetExpression site = property.getDefinitionSite();
-          if (site != null) ret.poke(site, RatedResolveResult.RATE_LOW);
-          if (ret.size() > 0) {
-            return ret;
-          }
-          else {
-            return null;
-          } // property is found, but the required accessor is explicitly absent
-        }
+      final Ref<ResolveResultList> resultRef = findProperty(name, direction, true);
+      if (resultRef != null) {
+        return resultRef.get();
       }
     }
 
@@ -254,6 +242,28 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
     }
 
     return Collections.emptyList();
+  }
+
+  private Ref<ResolveResultList> findProperty(String name, AccessDirection direction, boolean inherited) {
+    Ref<ResolveResultList> resultRef = null;
+    Property property = myClass.findProperty(name, inherited);
+    if (property != null) {
+      Maybe<Callable> accessor = property.getByDirection(direction);
+      if (accessor.isDefined()) {
+        Callable accessor_code = accessor.value();
+        ResolveResultList ret = new ResolveResultList();
+        if (accessor_code != null) ret.poke(accessor_code, RatedResolveResult.RATE_NORMAL);
+        PyTargetExpression site = property.getDefinitionSite();
+        if (site != null) ret.poke(site, RatedResolveResult.RATE_LOW);
+        if (ret.size() > 0) {
+          resultRef = Ref.create(ret);
+        }
+        else {
+          resultRef = Ref.create();
+        } // property is found, but the required accessor is explicitly absent
+      }
+    }
+    return resultRef;
   }
 
   @Nullable
