@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,6 +32,7 @@ import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jdom.Element;
@@ -166,8 +167,7 @@ public final class EditorHistoryManager extends AbstractProjectComponent impleme
   private void updateHistoryEntry(@Nullable final VirtualFile file,
                                   @Nullable final FileEditor fallbackEditor,
                                   @Nullable FileEditorProvider fallbackProvider,
-                                  final boolean changeEntryOrderOnly)
-  {
+                                  final boolean changeEntryOrderOnly) {
     if (file == null) {
       return;
     }
@@ -343,8 +343,15 @@ public final class EditorHistoryManager extends AbstractProjectComponent impleme
 
     @Override
     public void selectionChanged(@NotNull final FileEditorManagerEvent event){
-      updateHistoryEntry(event.getOldFile(), event.getOldEditor(), event.getOldProvider(), false);
-      updateHistoryEntry(event.getNewFile(), true);
+      // updateHistoryEntry does commitDocument which is 1) very expensive and 2) cannot be performed from within PSI change listener
+      // so defer updating history entry until documents committed to improve responsiveness
+      PsiDocumentManager.getInstance(myProject).performWhenAllCommitted(new Runnable() {
+        @Override
+        public void run() {
+          updateHistoryEntry(event.getOldFile(), event.getOldEditor(), event.getOldProvider(), false);
+          updateHistoryEntry(event.getNewFile(), true);
+        }
+      });
     }
   }
 
