@@ -86,7 +86,7 @@ public class PyPropertyAccessInspection extends PyInspection {
               property = myPropertyCache.get(key);
             }
             else {
-              property = cls.findProperty(name);
+              property = cls.findProperty(name, true);
             }
             myPropertyCache.put(key, property); // we store nulls, too, to know that a property does not exist
             if (property != null) {

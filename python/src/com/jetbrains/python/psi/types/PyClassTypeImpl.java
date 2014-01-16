@@ -156,7 +156,7 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
     }
 
     if (resolveContext.allowProperties()) {
-      Property property = myClass.findProperty(name);
+      Property property = myClass.findProperty(name, true);
       if (property != null) {
         Maybe<Callable> accessor = property.getByDirection(direction);
         if (accessor.isDefined()) {
