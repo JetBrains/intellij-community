@@ -16,10 +16,12 @@
 package com.intellij.ide.browsers.firefox;
 
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
+import com.intellij.openapi.fileChooser.PathChooserDialog;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.DocumentAdapter;
@@ -58,21 +60,24 @@ public class FirefoxSettingsConfigurable implements Configurable {
   }
 
   public static FileChooserDescriptor createProfilesIniChooserDescriptor() {
-    return new FileChooserDescriptor(true, false, false, false, false, false) {
+    FileChooserDescriptor descriptor = new FileChooserDescriptor(true, false, false, false, false, false) {
       @Override
-      public boolean isFileVisible(VirtualFile file, boolean showHiddenFiles) {
-        if (!file.isDirectory() && !file.getName().equals(FirefoxUtil.PROFILES_INI_FILE)) {
-          return false;
-        }
-        return super.isFileVisible(file, showHiddenFiles);
+      public boolean isFileSelectable(VirtualFile file) {
+        return file.getName().equals(FirefoxUtil.PROFILES_INI_FILE) && super.isFileSelectable(file);
       }
     };
+    if (SystemInfo.isMac) {
+      descriptor.putUserData(PathChooserDialog.NATIVE_MAC_CHOOSER_SHOW_HIDDEN_FILES, Boolean.TRUE);
+    }
+    return descriptor;
   }
 
+  @Override
   public JComponent createComponent() {
     return myMainPanel;
   }
 
+  @Override
   public boolean isModified() {
     return !Comparing.equal(mySettings.getProfile(), getConfiguredProfileName()) ||
            !Comparing.equal(mySettings.getProfilesIniPath(), getConfiguredProfileIniPath());
@@ -96,11 +101,13 @@ public class FirefoxSettingsConfigurable implements Configurable {
     return selected;
   }
 
+  @Override
   public void apply() throws ConfigurationException {
     mySettings.setProfile(getConfiguredProfileName());
     mySettings.setProfilesIniPath(getConfiguredProfileIniPath());
   }
 
+  @Override
   public void reset() {
     final File defaultFile = FirefoxUtil.getDefaultProfileIniPath();
     myDefaultProfilesIniPath = defaultFile != null ? defaultFile.getAbsolutePath() : "";
@@ -121,6 +128,7 @@ public class FirefoxSettingsConfigurable implements Configurable {
     final FirefoxProfile defaultProfile = FirefoxUtil.getDefaultProfile(profiles);
     myDefaultProfile = defaultProfile != null ? defaultProfile.getName() : null;
     for (FirefoxProfile profile : profiles) {
+      //noinspection unchecked
       myProfileCombobox.addItem(profile.getName());
     }
     if (!profiles.isEmpty()) {
@@ -129,14 +137,17 @@ public class FirefoxSettingsConfigurable implements Configurable {
     myLastProfilesIniPath = profilesIniPath;
   }
 
+  @Override
   public void disposeUIResources() {
   }
 
+  @Override
   @Nls
   public String getDisplayName() {
     return XmlBundle.message("display.name.firefox.settings");
   }
 
+  @Override
   public String getHelpTopic() {
     return null;
   }

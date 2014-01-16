@@ -26,6 +26,9 @@ import java.util.LinkedHashSet;
 import java.util.Set;
 
 public class ActionCallback implements Disposable {
+  public static final ActionCallback DONE = new Done();
+  public static final ActionCallback REJECTED = new Rejected();
+
   private final ExecutionCallback myDone;
   private final ExecutionCallback myRejected;
 
