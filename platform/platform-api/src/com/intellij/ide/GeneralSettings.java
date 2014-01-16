@@ -19,7 +19,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.ExportableApplicationComponent;
 import com.intellij.openapi.util.NamedJDOMExternalizable;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
 import org.intellij.lang.annotations.MagicConstant;
@@ -95,18 +95,8 @@ public class GeneralSettings implements NamedJDOMExternalizable, ExportableAppli
   }
 
   public GeneralSettings() {
-    myInactiveTimeout=DEFAULT_INACTIVE_TIMEOUT;
-
-    if (SystemInfo.isWindows) {
-      myBrowserPath = "C:\\Program Files\\Internet Explorer\\IExplore.exe";
-    }
-    else if (SystemInfo.isMac) {
-      myBrowserPath = "open";
-    }
-    else {
-      myBrowserPath = "";
-    }
-
+    myInactiveTimeout = DEFAULT_INACTIVE_TIMEOUT;
+    myBrowserPath = BrowserUtil.getDefaultAlternativeBrowserPath();
     myPropertyChangeSupport = new PropertyChangeSupport(this);
   }
 
@@ -376,7 +366,7 @@ public class GeneralSettings implements NamedJDOMExternalizable, ExportableAppli
 
   @Override
   public void writeExternal(Element parentNode) {
-    if (myBrowserPath != null) {
+    if (!StringUtil.isEmpty(myBrowserPath) && !myBrowserPath.equals(BrowserUtil.getDefaultAlternativeBrowserPath())) {
       Element element = new Element(ELEMENT_OPTION);
       element.setAttribute(ATTRIBUTE_NAME, OPTION_BROWSER_PATH);
       element.setAttribute(ATTRIBUTE_VALUE, myBrowserPath);

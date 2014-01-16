@@ -49,6 +49,8 @@ public class WebBrowserManager implements PersistentStateComponent<Element>, Mod
 
   private long modificationCount;
 
+  DefaultBrowser defaultBrowser = DefaultBrowser.SYSTEM;
+
   public WebBrowserManager() {
     browsers = new ArrayList<ConfigurableWebBrowser>();
     browsers.add(new ConfigurableWebBrowser(DEFAULT_CHROME_ID, BrowserFamily.CHROME));
@@ -62,9 +64,21 @@ public class WebBrowserManager implements PersistentStateComponent<Element>, Mod
     return ServiceManager.getService(WebBrowserManager.class);
   }
 
+  public enum DefaultBrowser {
+    SYSTEM, FIRST, ALTERNATIVE
+  }
+
+  public DefaultBrowser getDefaultBrowser() {
+    return defaultBrowser;
+  }
+
   @Override
   public Element getState() {
     Element state = new Element("state");
+    if (defaultBrowser != DefaultBrowser.SYSTEM) {
+      state.setAttribute("default", defaultBrowser.name().toLowerCase());
+    }
+
     for (ConfigurableWebBrowser browser : browsers) {
       Element entry = new Element("browser");
       entry.setAttribute("id", browser.getId().toString());
@@ -157,6 +171,16 @@ public class WebBrowserManager implements PersistentStateComponent<Element>, Mod
 
   @Override
   public void loadState(Element element) {
+    String defaultValue = element.getAttributeValue("default");
+    if (!StringUtil.isEmpty(defaultValue)) {
+      try {
+        defaultBrowser = DefaultBrowser.valueOf(defaultValue.toUpperCase());
+      }
+      catch (IllegalArgumentException e) {
+        LOG.warn(e);
+      }
+    }
+
     List<ConfigurableWebBrowser> list = new ArrayList<ConfigurableWebBrowser>();
     for (Element child : element.getChildren("browser")) {
       BrowserFamily family = readFamily(child.getAttributeValue("family"));
