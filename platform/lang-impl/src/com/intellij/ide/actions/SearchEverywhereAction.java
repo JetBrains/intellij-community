@@ -438,10 +438,10 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
             parent.repaint();
           }
         });
-        if (myPopup != null && myPopup.isVisible()) {
-          myPopup.cancel();
-          myPopup = null;
-        }
+        //if (myPopup != null && myPopup.isVisible()) {
+        //  myPopup.cancel();
+        //  myPopup = null;
+        //}
         rebuildList("");
       }
 
