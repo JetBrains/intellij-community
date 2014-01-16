@@ -487,7 +487,7 @@ public class DebuggerSession implements AbstractDebuggerSession {
       if (currentThread != null) {
         try {
           final int frameCount = currentThread.frameCount();
-          if (frameCount == 0 || (frameCount < myIgnoreFiltersFrameCountThreshold)) {
+          if (frameCount == 0 || (frameCount <= myIgnoreFiltersFrameCountThreshold)) {
             resetIgnoreStepFiltersFlag();
           }
         }
