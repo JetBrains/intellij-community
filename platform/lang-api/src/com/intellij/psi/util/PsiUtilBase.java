@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -142,7 +142,10 @@ public class PsiUtilBase extends PsiUtilCore {
   }
 
   @Nullable
-  public static Language reallyEvaluateLanguageInRange(final int start, final int end, final PsiFile file) {
+  public static Language reallyEvaluateLanguageInRange(final int start, final int end, @NotNull PsiFile file) {
+    if (file instanceof PsiBinaryFile) {
+      return file.getLanguage();
+    }
     Language lang = null;
     int curOffset = start;
     do {
@@ -170,7 +173,7 @@ public class PsiUtilBase extends PsiUtilCore {
   }
 
   @Nullable
-  public static Language evaluateLanguageInRange(final int start, final int end, final PsiFile file) {
+  public static Language evaluateLanguageInRange(final int start, final int end, @NotNull PsiFile file) {
     PsiElement elt = getElementAtOffset(file, start);
 
     TextRange selectionRange = new TextRange(start, end);
