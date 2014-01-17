@@ -20,7 +20,6 @@ import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
 import com.intellij.platform.ModuleAttachProcessor;
 import com.intellij.util.messages.MessageBus;
 import org.jetbrains.annotations.NotNull;
@@ -37,8 +36,8 @@ import org.jetbrains.annotations.NotNull;
     )}
 )
 public class RecentDirectoryProjectsManagerEx extends RecentDirectoryProjectsManager {
-  public RecentDirectoryProjectsManagerEx(ProjectManager projectManager, MessageBus messageBus) {
-    super(projectManager, messageBus);
+  public RecentDirectoryProjectsManagerEx(MessageBus messageBus) {
+    super(messageBus);
   }
 
   @NotNull

@@ -19,6 +19,7 @@ import com.intellij.CommonBundle;
 import com.intellij.conversion.ConversionResult;
 import com.intellij.conversion.ConversionService;
 import com.intellij.ide.AppLifecycleListener;
+import com.intellij.ide.RecentProjectsManagerBase;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.ide.startup.impl.StartupManagerImpl;
 import com.intellij.notification.NotificationsManager;
@@ -58,6 +59,7 @@ import com.intellij.openapi.vfs.impl.local.LocalFileSystemImpl;
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame;
 import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
@@ -118,7 +120,10 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
     return array;
   }
 
-  public ProjectManagerImpl(VirtualFileManager virtualFileManager, ProgressManager progressManager) {
+  /** @noinspection UnusedParameters*/
+  public ProjectManagerImpl(VirtualFileManager virtualFileManager,
+                            RecentProjectsManagerBase recentProjectsManager,
+                            ProgressManager progressManager) {
     myProgressManager = progressManager;
     Application app = ApplicationManager.getApplication();
     MessageBus messageBus = app.getMessageBus();
@@ -291,7 +296,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
                                     @NotNull String filePath,
                                     boolean isDefault,
                                     boolean isOptimiseTestLoadSpeed) {
-    return isDefault ? new DefaultProject(this, "", isOptimiseTestLoadSpeed, projectName)
+    return isDefault ? new DefaultProject(this, "", isOptimiseTestLoadSpeed, ObjectUtils.assertNotNull(projectName))
                      : new ProjectImpl(this, new File(filePath).getAbsolutePath(), isOptimiseTestLoadSpeed, projectName);
   }
 
