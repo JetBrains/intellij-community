@@ -1,6 +1,7 @@
 package org.jetbrains.jps.maven.compiler;
 
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.builders.BuildOutputConsumer;
@@ -116,7 +117,13 @@ public class MavenResourcesBuilder extends TargetBuilder<MavenResourceRootDescri
       private Pattern getDelimitersPattern() {
         Pattern pattern = myDelimitersPattern;
         if (pattern == null) {
-          pattern = Pattern.compile(config.delimitersPattern);
+          if (StringUtil.isEmpty(config.escapeString)) {
+            pattern = Pattern.compile(config.delimitersPattern);
+          }
+          else {
+            String quotedEscapeString = Pattern.quote(config.escapeString);
+            pattern = Pattern.compile("(" + quotedEscapeString + quotedEscapeString + ")|(?:(" + quotedEscapeString + ")?(" + config.delimitersPattern + "))");
+          }
           myDelimitersPattern = pattern;
         }
         return pattern;
@@ -168,28 +175,31 @@ public class MavenResourcesBuilder extends TargetBuilder<MavenResourceRootDescri
     Map<String, String> resolvedProperties = resolvedPropertiesParam;
 
     final Matcher matcher = delimitersPattern.matcher(text);
+
+    boolean hasEscapeString = !StringUtil.isEmpty(moduleConfig.escapeString);
+
     final int groupCount = matcher.groupCount();
-    final String escapeString = moduleConfig.escapeString;
+    int firstPropertyGroupIndex = hasEscapeString ? 3 : 0;
+
     int last = 0;
     while (matcher.find()) {
-      if (escapeString != null) {
-        int escapeStringStartIndex = matcher.start() - escapeString.length();
-        if (escapeStringStartIndex >= last) {
-          if (text.startsWith(escapeString, escapeStringStartIndex)) {
-            out.append(text, last, escapeStringStartIndex);
-            out.append(matcher.group());
-            last = matcher.end();
-            continue;
-          }
-        }
-      }
-
       out.append(text, last, matcher.start());
       last = matcher.end();
 
+      if (hasEscapeString) {
+        if (matcher.group(1) != null) {
+          out.append(moduleConfig.escapeString).append(moduleConfig.escapeString); // double escape string
+          continue;
+        }
+        else if (matcher.group(2) != null) {
+          out.append(matcher.group(3)); // escaped value
+          continue;
+        }
+      }
+
       String propertyName = null;
 
-      for (int i = 0; i < groupCount; i++) {
+      for (int i = firstPropertyGroupIndex; i < groupCount; i++) {
         propertyName = matcher.group(i + 1);
         if (propertyName != null) {
           break;
