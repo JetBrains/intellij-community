@@ -42,6 +42,7 @@ import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.actions.TextComponentEditorAction;
+import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileEditor.impl.EditorHistoryManager;
 import com.intellij.openapi.keymap.KeymapManager;
@@ -1394,7 +1395,14 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
     private void buildRecentFiles(String pattern) {
       final MinusculeMatcher matcher = new MinusculeMatcher("*" + pattern, NameUtil.MatchingCaseSensitivity.NONE);
       final ArrayList<VirtualFile> files = new ArrayList<VirtualFile>();
+      FileEditorManager editorManager = FileEditorManager.getInstance(project);
+      //we skip active editor
+      boolean skip = editorManager.getOpenFiles().length > 1;
       for (VirtualFile file : ArrayUtil.reverseArray(EditorHistoryManager.getInstance(project).getFiles())) {
+        if (skip) {
+          skip = false;
+          continue;
+        }
         if (StringUtil.isEmptyOrSpaces(pattern) || matcher.matches(file.getName())) {
           if (!files.contains(file)) {
             files.add(file);
