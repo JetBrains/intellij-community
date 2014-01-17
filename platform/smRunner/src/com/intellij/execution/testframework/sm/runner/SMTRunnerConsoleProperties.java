@@ -45,25 +45,42 @@ import org.jetbrains.annotations.Nullable;
 public class SMTRunnerConsoleProperties extends TestConsoleProperties implements SMStacktraceParser {
   private final RunConfiguration myConfiguration;
   protected final CompositeFilter myCustomFilter;
+  private final boolean myPrintTestingStartedTime;
 
   /**
    * @param config
    * @param testFrameworkName Prefix for storage which keeps runner settings. E.g. "RubyTestUnit"
    * @param executor
    */
-  public SMTRunnerConsoleProperties(@NotNull final RunConfiguration config,
-                                    @NotNull final String testFrameworkName,
-                                    @NotNull final Executor executor)
-  {
+  public SMTRunnerConsoleProperties(@NotNull RunConfiguration config,
+                                    @NotNull String testFrameworkName,
+                                    @NotNull Executor executor) {
+    this(config, testFrameworkName, executor, true);
+  }
+
+  /**
+   * @param config
+   * @param testFrameworkName Prefix for storage which keeps runner settings. E.g. "RubyTestUnit"
+   * @param executor
+   */
+  public SMTRunnerConsoleProperties(@NotNull RunConfiguration config,
+                                    @NotNull String testFrameworkName,
+                                    @NotNull Executor executor,
+                                    boolean printTestingStartedTime) {
     super(new Storage.PropertiesComponentStorage(testFrameworkName + "Support.", PropertiesComponent.getInstance()),
           config.getProject(),
           executor);
     myConfiguration = config;
     myCustomFilter = new CompositeFilter(config.getProject());
+    myPrintTestingStartedTime = printTestingStartedTime;
   }
 
   public RunConfiguration getConfiguration() {
     return myConfiguration;
+  }
+
+  public boolean isPrintTestingStartedTime() {
+    return myPrintTestingStartedTime;
   }
 
   @Override
