@@ -572,7 +572,8 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
       if (other instanceof PsiReferenceExpression) {
         final PsiReferenceExpression psiReferenceExpression = (PsiReferenceExpression)other;
 
-        if (psiReferenceExpression.getQualifierExpression() == null) {
+        final PsiExpression qualifier2 = psiReferenceExpression.getQualifierExpression();
+        if (qualifier2 == null || qualifier2 instanceof PsiThisExpression) {
           other = psiReferenceExpression.getReferenceNameElement();
         }
       }

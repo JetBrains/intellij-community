@@ -2815,4 +2815,23 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
                       "System.out.println('_v);";
     assertEquals(1, findMatchesCount(source, pattern2));
   }
+
+  public void testFindSelfAssignment() {
+    String source = "class A {" +
+                    "  protected String s;" +
+                    "  A(String t) {" +
+                    "    this.s = s;" +
+                    "    t = t;" +
+                    "    s = this.s;" +
+                    "  }" +
+                    //"}" +
+                    //"class B {" +
+                    //"  B(String t) {" +
+                    //"    super.s = s;" + // would be nice if found also
+                    //"  }" +
+                    "}";
+
+    String pattern = "'_var='_var";
+    assertEquals(3, findMatchesCount(source, pattern));
+  }
 }
