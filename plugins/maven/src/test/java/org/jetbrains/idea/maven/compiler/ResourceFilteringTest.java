@@ -887,6 +887,15 @@ public abstract class ResourceFilteringTest extends MavenImportingTestCase {
                   "      <filtering>true</filtering>" +
                   "    </resource>" +
                   "  </resources>" +
+                  "  <plugins>" +
+                  "    <plugin>" +
+                  "      <groupId>org.apache.maven.plugins</groupId>" +
+                  "      <artifactId>maven-resources-plugin</artifactId>" +
+                  "      <configuration>" +
+                  "        <escapeString>\\</escapeString>" +
+                  "      </configuration>" +
+                  "    </plugin>" +
+                  "  </plugins>" +
                   "</build>");
 
     compileModules("project");

@@ -129,7 +129,7 @@ public class MavenResourceCompilerConfigurationGenerator {
       }
 
       Element pluginConfiguration = mavenProject.getPluginConfiguration("org.apache.maven.plugins", "maven-resources-plugin");
-      resourceConfig.escapeString = MavenJDOMUtil.findChildValueByPath(pluginConfiguration, "escapeString", "\\");
+      resourceConfig.escapeString = MavenJDOMUtil.findChildValueByPath(pluginConfiguration, "escapeString", null);
       String escapeWindowsPaths = MavenJDOMUtil.findChildValueByPath(pluginConfiguration, "escapeWindowsPaths");
       if (escapeWindowsPaths != null) {
         resourceConfig.escapeWindowsPaths = Boolean.parseBoolean(escapeWindowsPaths);
