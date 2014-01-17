@@ -203,6 +203,10 @@ public class PyFormatterTest extends PyTestCase {
     doTest();
   }
 
+  public void testContinuationIndentAfterIf() { // PY-9573
+    doTest();
+  }
+
   public void testBlankLineAfterDecorator() {
     doTest();
   }
