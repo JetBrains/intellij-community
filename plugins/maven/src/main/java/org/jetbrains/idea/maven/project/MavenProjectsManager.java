@@ -461,7 +461,6 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
         // clear external system API options
         // see com.intellij.openapi.externalSystem.service.project.manage.ModuleDataService#setModuleOptions
         m.clearOption("external.system.id");
-        m.clearOption("external.system.id");
         m.clearOption("external.linked.project.path");
         m.clearOption("external.root.project.path");
         m.clearOption("external.system.module.group");
