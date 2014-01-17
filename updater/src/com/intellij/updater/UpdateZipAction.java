@@ -148,9 +148,6 @@ public class UpdateZipAction extends BaseUpdateAction {
         }
       });
     }
-    catch (Exception e) {
-      Runner.printStackTrace(e);
-    }
     finally {
       olderZip.close();
     }
@@ -173,9 +170,6 @@ public class UpdateZipAction extends BaseUpdateAction {
             try {
               applyDiff(Utils.findEntryInputStream(patchFile, myPath + "/" + path), in, entryOut);
             }
-            catch (Exception e) {
-              Runner.printStackTrace(e);
-            }
             finally {
               entryOut.close();
             }
@@ -191,18 +185,12 @@ public class UpdateZipAction extends BaseUpdateAction {
         try {
           out.zipEntry(each, in);
         }
-        catch (Exception e) {
-          Runner.printStackTrace(e);
-        }
         finally {
           in.close();
         }
       }
 
       out.finish();
-    }
-    catch (Exception e) {
-      Runner.printStackTrace(e);
     }
     finally {
       fileOut.close();
@@ -225,9 +213,6 @@ public class UpdateZipAction extends BaseUpdateAction {
         processor.process(inEntry, new BufferedInputStream(in));
         processed.add(inEntry.getName());
       }
-    }
-    catch (Exception e) {
-      Runner.printStackTrace(e);
     }
     finally {
       in.close();

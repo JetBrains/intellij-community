@@ -56,9 +56,6 @@ public class ZipOutputWrapper {
     try {
       Utils.copyStream(from, tempOut);
     }
-    catch (Exception e) {
-      Runner.printStackTrace(e);
-    }
     finally {
       tempOut.close();
     }
@@ -90,9 +87,6 @@ public class ZipOutputWrapper {
     InputStream from = new BufferedInputStream(new FileInputStream(file));
     try {
       zipEntry(new ZipEntry(entryPath), from);
-    }
-    catch (Exception e) {
-      Runner.printStackTrace(e);
     }
     finally {
       from.close();
