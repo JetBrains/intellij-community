@@ -135,7 +135,10 @@ public class PyStdlibTypeProvider extends PyTypeProviderBase {
     for (Map.Entry<PyExpression, PyNamedParameter> entry : arguments.entrySet()) {
       final PyNamedParameter parameter = entry.getValue();
       if ("mode".equals(parameter.getName())) {
-        final PyExpression argument = entry.getKey();
+        PyExpression argument = entry.getKey();
+        if (argument instanceof PyKeywordArgument) {
+          argument = ((PyKeywordArgument)argument).getValueExpression();
+        }
         if (argument instanceof PyStringLiteralExpression) {
           mode = ((PyStringLiteralExpression)argument).getStringValue();
           break;
