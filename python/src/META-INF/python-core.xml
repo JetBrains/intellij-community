@@ -330,6 +330,7 @@
     <localInspection language="Python" shortName="PyShadowingNamesInspection" displayName="Shadowing names from outer scopes" groupKey="INSP.GROUP.python" enabledByDefault="true"  level="WEAK WARNING" implementationClass="com.jetbrains.python.inspections.PyShadowingNamesInspection"/>
     <localInspection language="Python" shortName="PyAbstractClassInspection" displayName="Class must implement all abstract methods" groupKey="INSP.GROUP.python" enabledByDefault="true"  level="WARNING" implementationClass="com.jetbrains.python.inspections.PyAbstractClassInspection"/>
     <localInspection language="Python" shortName="PyPep8NamingInspection" displayName="PEP 8 naming convention violation" groupKey="INSP.GROUP.python" enabledByDefault="true"  level="WEAK WARNING" implementationClass="com.jetbrains.python.inspections.PyPep8NamingInspection"/>
+    <localInspection language="Python" shortName="PyAssignmentToForLoopParameterInspection" displayName="Assignment to 'for' loop parameter" groupKey="INSP.GROUP.python" enabledByDefault="true"  level="WARNING" implementationClass="com.jetbrains.python.inspections.PyAssignmentToForLoopParameterInspection"/>
 
     <liveTemplateContext implementation="com.jetbrains.python.codeInsight.liveTemplates.PythonTemplateContextType"/>
     <liveTemplateMacro implementation="com.jetbrains.python.codeInsight.liveTemplates.CollectionElementNameMacro"/>
