@@ -85,9 +85,6 @@ public class Utils {
       try {
         copyStreamToFile(in, to);
       }
-      catch (Exception e) {
-        Runner.printStackTrace(e);
-      }
       finally {
         in.close();
       }
@@ -100,9 +97,6 @@ public class Utils {
     try {
       copyStream(in, out);
     }
-    catch (Exception e) {
-      Runner.printStackTrace(e);
-    }
     finally {
       in.close();
     }
@@ -114,9 +108,6 @@ public class Utils {
     try {
       copyStream(from, out);
     }
-    catch (Exception e) {
-      Runner.printStackTrace(e);
-    }
     finally {
       out.close();
     }
@@ -126,9 +117,6 @@ public class Utils {
     OutputStream out = new BufferedOutputStream(to);
     try {
       from.writeTo(out);
-    }
-    catch (Exception e) {
-      Runner.printStackTrace(e);
     }
     finally {
       out.flush();
@@ -143,9 +131,6 @@ public class Utils {
     ByteArrayOutputStream byteOut = new ByteArrayOutputStream();
     try {
       copyStream(in, byteOut);
-    }
-    catch (Exception e) {
-      Runner.printStackTrace(e);
     }
     finally {
       byteOut.close();

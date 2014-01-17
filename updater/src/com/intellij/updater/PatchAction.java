@@ -9,7 +9,6 @@ import java.util.zip.ZipFile;
 import java.util.zip.ZipOutputStream;
 
 public abstract class PatchAction {
-
   protected String myPath;
   protected long myChecksum;
   private boolean isCritical;
@@ -95,9 +94,6 @@ public abstract class PatchAction {
         FileLock lock = ch.tryLock();
         if (lock == null) return false;
         lock.release();
-      }
-      catch (Exception e) {
-        Runner.printStackTrace(e);
       }
       finally {
         ch.close();

@@ -65,32 +65,31 @@ public class Runner {
     }
   }
 
-  // public - to have ability init during test running
   public final static void initLogger(){
     if (logger == null){
-      String tmpDir = System.getProperty("java.io.tmpdir");
-      System.out.println("java.io.tmpdir: " + tmpDir);
-      //    String uHome = System.getProperty("user.home");
-      FileAppender update = new FileAppender();
+    String tmpDir = System.getProperty("java.io.tmpdir");
+    System.out.println("java.io.tmpdir: " + tmpDir);
+    //    String uHome = System.getProperty("user.home");
+    FileAppender update = new FileAppender();
 
-      update.setFile(tmpDir + "idea_updater.log");
-      update.setLayout(new PatternLayout("%d{dd MMM yyyy HH:mm:ss} %-5p %C{1}.%M - %m%n"));
-      update.setThreshold(Level.ALL);
-      update.setAppend(true);
-      update.activateOptions();
+    update.setFile(tmpDir + "idea_updater.log");
+    update.setLayout(new PatternLayout("%d{dd MMM yyyy HH:mm:ss} %-5p %C{1}.%M - %m%n"));
+    update.setThreshold(Level.ALL);
+    update.setAppend(true);
+    update.activateOptions();
 
-      FileAppender update_error = new FileAppender();
-      update_error.setFile(tmpDir + "idea_updater_error.log");
-      update_error.setLayout(new PatternLayout("%d{dd MMM yyyy HH:mm:ss} %-5p %C{1}.%M - %m%n"));
-      update_error.setThreshold(Level.ERROR);
-      // The error(s) from an old run of the updater (if there were) could be found in idea_updater.log file
-      update_error.setAppend(false);
-      update_error.activateOptions();
+    FileAppender update_error = new FileAppender();
+    update_error.setFile(tmpDir + "idea_updater_error.log");
+    update_error.setLayout(new PatternLayout("%d{dd MMM yyyy HH:mm:ss} %-5p %C{1}.%M - %m%n"));
+    update_error.setThreshold(Level.ERROR);
+    // The error(s) from an old run of the updater (if there were) could be found in idea_updater.log file
+    update_error.setAppend(false);
+    update_error.activateOptions();
 
-      logger = Logger.getLogger("com.intellij.updater");
-      logger.addAppender(update_error);
-      logger.addAppender(update);
-      logger.setLevel(Level.ALL);
+    logger = Logger.getLogger("com.intellij.updater");
+    logger.addAppender(update_error);
+    logger.addAppender(update);
+    logger.setLevel(Level.ALL);
     }
   }
 
@@ -161,9 +160,6 @@ public class Runner {
             out.zipEntry(e, in);
           }
         }
-        catch (Exception ex) {
-          printStackTrace(ex);
-        }
         finally {
           in.close();
         }
@@ -175,9 +171,6 @@ public class Runner {
           props.setProperty(NEW_BUILD_DESCRIPTION, newBuildDesc);
           props.store(byteOut, "");
         }
-        catch (Exception ex) {
-          printStackTrace(ex);
-        }
         finally {
           byteOut.close();
         }
@@ -186,15 +179,9 @@ public class Runner {
         out.zipFile(PATCH_FILE_NAME, tempPatchFile);
         out.finish();
       }
-      catch (Exception ex) {
-        printStackTrace(ex);
-      }
       finally {
         fileOut.close();
       }
-    }
-    catch (Exception ex) {
-      printStackTrace(ex);
     }
     finally {
       cleanup(ui);
@@ -213,9 +200,6 @@ public class Runner {
     Properties props = new Properties();
     try {
       props.load(in);
-    }
-    catch (Exception ex) {
-      printStackTrace(ex);
     }
     finally {
       in.close();
@@ -258,16 +242,10 @@ public class Runner {
           try {
             Utils.copyStream(in, out);
           }
-          catch (Exception ex) {
-            printStackTrace(ex);
-          }
           finally {
             in.close();
             out.close();
           }
-        }
-        catch (Exception ex) {
-          printStackTrace(ex);
         }
         finally {
           jarFile.close();
@@ -284,9 +262,6 @@ public class Runner {
         ui.showError(e);
         printStackTrace(e);
       }
-    }
-    catch (Exception ex) {
-      printStackTrace(ex);
     }
     finally {
       try {

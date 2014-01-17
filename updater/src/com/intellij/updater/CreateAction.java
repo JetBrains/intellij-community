@@ -53,9 +53,6 @@ public class CreateAction extends PatchAction {
       Utils.copyStreamToFile(in, toFile);
       Utils.setExecutable(toFile, executable);
     }
-    catch (Exception ex) {
-      Runner.printStackTrace(ex);
-    }
     finally {
       in.close();
     }
