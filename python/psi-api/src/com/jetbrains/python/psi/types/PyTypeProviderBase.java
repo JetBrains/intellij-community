@@ -80,7 +80,7 @@ public class PyTypeProviderBase implements PyTypeProvider {
   };
 
   @Override
-  public PyType getReferenceExpressionType(PyReferenceExpression referenceExpression, TypeEvalContext context) {
+  public PyType getReferenceExpressionType(@NotNull PyReferenceExpression referenceExpression, @NotNull TypeEvalContext context) {
     return null;
   }
 

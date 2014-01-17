@@ -55,7 +55,8 @@ public class HippieWordCompletionHandler implements CodeInsightActionHandler {
   public void invoke(@NotNull Project project, @NotNull final Editor editor, @NotNull PsiFile file) {
     if (!FileModificationService.getInstance().prepareFileForWrite(file)) return;
 
-    if (editor.isViewer() || editor.getDocument().getOffsetGuard(editor.getCaretModel().getOffset()) != null) {
+    int offset = editor.getCaretModel().getOffset();
+    if (editor.isViewer() || editor.getDocument().getRangeGuard(offset, offset) != null) {
       editor.getDocument().fireReadOnlyModificationAttempt();
       CodeInsightUtilBase.showReadOnlyViewWarning(editor);
       return;

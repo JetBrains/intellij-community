@@ -585,7 +585,7 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
 
   @Nullable
   @Override
-  public Property findProperty(@NotNull final String name) {
+  public Property findProperty(@NotNull final String name, boolean inherited) {
     Property property = findLocalProperty(name);
     if (property != null) {
       return property;
@@ -593,10 +593,12 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
     if (findMethodByName(name, false) != null || findClassAttribute(name, false) != null) {
       return null;
     }
-    for (PyClass aClass : getAncestorClasses()) {
-      final Property ancestorProperty = ((PyClassImpl)aClass).findLocalProperty(name);
-      if (ancestorProperty != null) {
-        return ancestorProperty;
+    if (inherited) {
+      for (PyClass aClass : getAncestorClasses()) {
+        final Property ancestorProperty = ((PyClassImpl)aClass).findLocalProperty(name);
+        if (ancestorProperty != null) {
+          return ancestorProperty;
+        }
       }
     }
     return null;

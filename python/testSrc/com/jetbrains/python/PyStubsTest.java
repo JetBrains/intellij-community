@@ -118,12 +118,12 @@ public class PyStubsTest extends PyTestCase {
       pyClass = classes.get(1);
       assertEquals("BarClass", pyClass.getName());
 
-      Property prop = pyClass.findProperty("value");
+      Property prop = pyClass.findProperty("value", true);
       Maybe<Callable> maybe_function = prop.getGetter();
       assertTrue(maybe_function.isDefined());
       assertEquals(pyClass.getMethods()[0], maybe_function.value());
 
-      Property setvalueProp = pyClass.findProperty("setvalue");
+      Property setvalueProp = pyClass.findProperty("setvalue", true);
       Maybe<Callable> setter = setvalueProp.getSetter();
       assertTrue(setter.isDefined());
       assertEquals("__set", setter.value().getName());
@@ -131,7 +131,7 @@ public class PyStubsTest extends PyTestCase {
       // properties by decorator
       pyClass = classes.get(2);
       assertEquals("BazClass", pyClass.getName());
-      prop = pyClass.findProperty("x");
+      prop = pyClass.findProperty("x", true);
       maybe_function = prop.getGetter();
       assertTrue(maybe_function.isDefined());
       assertEquals(pyClass.getMethods()[0], maybe_function.value());

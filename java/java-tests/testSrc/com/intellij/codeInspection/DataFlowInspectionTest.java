@@ -303,6 +303,16 @@ public class DataFlowInspectionTest extends LightCodeInsightFixtureTestCase {
   
   public void testNotEqualsTypo() { doTest(); }
   public void testAndEquals() { doTest(); }
+
+  public void testParametersAreNonnullByDefault() {
+    myFixture.addClass("package javax.annotation; public @interface ParametersAreNonnullByDefault {}");
+    myFixture.addClass("package javax.annotation; public @interface ParametersAreNullableByDefault {}");
+    
+    myFixture.addClass("package foo; public class AnotherPackageNotNull { public static void foo(String s) {}}");
+    myFixture.addFileToProject("foo/package-info.java", "@javax.annotation.ParametersAreNonnullByDefault package foo;");
+    
+    doTest(); 
+  }
   
   public void _testNullCheckBeforeInstanceof() { doTest(); } // http://youtrack.jetbrains.com/issue/IDEA-113220
 }

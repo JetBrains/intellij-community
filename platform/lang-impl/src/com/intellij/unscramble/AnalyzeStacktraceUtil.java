@@ -54,7 +54,7 @@ import java.awt.datatransfer.Transferable;
  * @author yole
  */
 public class AnalyzeStacktraceUtil {
-  public static ExtensionPointName<Filter> EP_NAME = ExtensionPointName.create("com.intellij.analyzeStacktraceFilter");
+  public static final ExtensionPointName<Filter> EP_NAME = ExtensionPointName.create("com.intellij.analyzeStacktraceFilter");
 
   private AnalyzeStacktraceUtil() {
   }

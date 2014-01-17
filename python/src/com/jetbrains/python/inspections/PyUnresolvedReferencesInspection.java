@@ -695,7 +695,7 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
         if (overridesGetAttr(cls, myTypeEvalContext)) {
           return true;
         }
-        if (cls.findProperty(name) != null) {
+        if (cls.findProperty(name, true) != null) {
           return true;
         }
         if (PyUtil.hasUnresolvedAncestors(cls, myTypeEvalContext)) {

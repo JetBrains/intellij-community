@@ -265,7 +265,7 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
     if (qualifierType instanceof PyClassType) {
       final PyClassType classType = (PyClassType)qualifierType;
       PyClass pyClass = classType.getPyClass();
-      Property property = pyClass.findProperty(name);
+      Property property = pyClass.findProperty(name, true);
       if (property != null) {
         if (classType.isDefinition()) {
           return Ref.<PyType>create(PyBuiltinCache.getInstance(pyClass).getObjectType(PyNames.PROPERTY));
@@ -292,7 +292,7 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
   }
 
   @Nullable
-  private PyType getTypeFromProviders(TypeEvalContext context) {
+  private PyType getTypeFromProviders(@NotNull TypeEvalContext context) {
     for (PyTypeProvider provider : Extensions.getExtensions(PyTypeProvider.EP_NAME)) {
       try {
         final PyType type = provider.getReferenceExpressionType(this, context);

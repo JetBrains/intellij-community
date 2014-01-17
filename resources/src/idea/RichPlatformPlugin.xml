@@ -10,13 +10,6 @@
   <xi:include href="/componentSets/IdeaComponents.xml" xpointer="xpointer(/components/*)"/>
   <xi:include href="/idea/RichPlatformActions.xml" xpointer="xpointer(/component/*)"/>
 
-  <application-components>
-    <component>
-      <interface-class>com.intellij.ide.RecentProjectsManagerBase</interface-class>
-      <implementation-class>com.intellij.ide.RecentProjectsManager</implementation-class>
-    </component>
-  </application-components>
-
   <project-components>
     <component>
       <implementation-class>com.intellij.framework.detection.impl.FrameworkDetectionManager</implementation-class>
@@ -132,6 +125,9 @@
     <compiler.buildTargetScopeProvider implementation="com.intellij.packaging.impl.compiler.ArtifactBuildTargetScopeProvider"/>
     <compiler implementation="com.intellij.packaging.impl.compiler.ArtifactsCompiler" id="artifactsCompiler"/>
     <gotoRelatedProvider implementation="com.intellij.testIntegration.GotoTestRelatedProvider"/>
+
+    <applicationService serviceInterface="com.intellij.ide.RecentProjectsManagerBase"
+                        serviceImplementation="com.intellij.ide.RecentProjectsManager"/>
 
     <applicationService serviceInterface="com.intellij.util.descriptors.ConfigFileFactory"
                         serviceImplementation="com.intellij.util.descriptors.impl.ConfigFileFactoryImpl"/>
