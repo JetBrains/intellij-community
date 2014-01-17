@@ -228,7 +228,7 @@ public class PyFunctionImpl extends PyPresentableElementImpl<PyFunctionStub> imp
         if (returnClassType.getPyClass() == getContainingClass()) {
           final PyType receiverType = context.getType(receiver);
           if (receiverType instanceof PyClassType && PyTypeChecker.match(returnType, receiverType, context)) {
-            return receiverType;
+            return returnClassType.isDefinition() ? receiverType : ((PyClassType)receiverType).toInstance();
           }
         }
       }
