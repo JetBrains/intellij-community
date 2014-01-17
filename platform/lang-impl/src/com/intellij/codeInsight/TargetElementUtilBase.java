@@ -220,9 +220,11 @@ public class TargetElementUtilBase {
     Lookup activeLookup = LookupManager.getInstance(project).getActiveLookup();
     if (activeLookup != null) {
       LookupElement item = activeLookup.getCurrentItem();
-      final PsiElement psi = item == null ? null : CompletionUtil.getTargetElement(item);
-      if (psi != null && psi.isValid()) {
-        return psi;
+      if (item != null && item.isValid()) {
+        final PsiElement psi = CompletionUtil.getTargetElement(item);
+        if (psi != null && psi.isValid()) {
+          return psi;
+        }
       }
     }
     return null;

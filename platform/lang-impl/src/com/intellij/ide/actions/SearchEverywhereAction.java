@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -441,10 +441,10 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
             parent.repaint();
           }
         });
-        if (myPopup != null && myPopup.isVisible()) {
-          myPopup.cancel();
-          myPopup = null;
-        }
+        //if (myPopup != null && myPopup.isVisible()) {
+        //  myPopup.cancel();
+        //  myPopup = null;
+        //}
         rebuildList("");
       }
 
@@ -681,6 +681,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
     myBalloon = builder
       .setCancelOnClickOutside(true)
       .setModalContext(false)
+      .setRequestFocus(true)
       .setCancelCallback(new Computable<Boolean>() {
         @Override
         public Boolean compute() {

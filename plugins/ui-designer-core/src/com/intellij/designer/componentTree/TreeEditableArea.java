@@ -179,7 +179,7 @@ public final class TreeEditableArea implements EditableArea, FeedbackTreeLayer, 
     myCanvasSelection = canvasSelection;
   }
 
-//////////////////////////////////////////////////////////////////////////////////////////
+  //////////////////////////////////////////////////////////////////////////////////////////
   //
   // Visual
   //
@@ -294,6 +294,11 @@ public final class TreeEditableArea implements EditableArea, FeedbackTreeLayer, 
       }
     }
     myTree.mark(component, feedback);
+  }
+
+  @Override
+  public void unmark() {
+    myTree.mark(null, -1);
   }
 
   @Override

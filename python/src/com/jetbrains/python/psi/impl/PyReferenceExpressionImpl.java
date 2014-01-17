@@ -17,6 +17,7 @@ package com.jetbrains.python.psi.impl;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.ExtensionException;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
@@ -300,7 +301,7 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
         }
       }
       catch (AbstractMethodError e) {
-        LOG.info(e);
+        LOG.info(new ExtensionException(provider.getClass()));
       }
     }
     return null;

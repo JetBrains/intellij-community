@@ -16,12 +16,14 @@
 
 package org.intellij.plugins.relaxNG.model.descriptors;
 
+import com.intellij.lang.ASTNode;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.util.*;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlTag;
@@ -31,6 +33,7 @@ import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlElementsGroup;
 import com.intellij.xml.XmlNSDescriptor;
+import org.intellij.plugins.relaxNG.compact.RncElementTypes;
 import org.intellij.plugins.relaxNG.compact.RncFileType;
 import org.intellij.plugins.relaxNG.validation.RngSchemaValidator;
 import org.jetbrains.annotations.NonNls;
@@ -270,7 +273,10 @@ public class RngElementDescriptor implements XmlElementDescriptor {
     final PsiElement at;
     if (column > 0) {
       if (decl.getContainingFile().getFileType() == RncFileType.getInstance()) {
-        return file.findElementAt(startOffset + column);
+        final PsiElement rncElement = file.findElementAt(startOffset + column);
+        final ASTNode pattern = rncElement != null ? TreeUtil.findParent(rncElement.getNode(), RncElementTypes.PATTERN) : null;
+        final ASTNode nameClass = pattern != null ? pattern.findChildByType(RncElementTypes.NAME_CLASS) : null;
+        return nameClass != null ? nameClass.getPsi() : rncElement;
       }
       at = file.findElementAt(startOffset + column - 2);
     } else {

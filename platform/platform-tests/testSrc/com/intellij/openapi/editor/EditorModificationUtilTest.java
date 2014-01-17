@@ -13,21 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package icons;
+package com.intellij.openapi.editor;
 
-import com.intellij.openapi.util.IconLoader;
+import com.intellij.testFramework.LightPlatformCodeInsightTestCase;
 
-import javax.swing.*;
-
-/**
- * NOTE THIS FILE IS AUTO-GENERATED
- * DO NOT EDIT IT BY HAND, run build/scripts/icons.gant instead
- */
-public class DevkitIcons {
-  private static Icon load(String path) {
-    return IconLoader.getIcon(path, DevkitIcons.class);
+public class EditorModificationUtilTest extends LightPlatformCodeInsightTestCase {
+  public void testInsertStringAtCaretNotMovingCaret() throws Exception {
+    configureFromFileText(getTestName(false) + ".txt", "text <caret>");
+    EditorModificationUtil.insertStringAtCaret(myEditor, " ", false, false);
+    checkResultByText("text <caret> ");
   }
-
-  public static final Icon Add_sdk = load("/add_sdk.png"); // 16x16
-  public static final Icon Sdk_closed = load("/sdk_closed.png"); // 16x16
 }

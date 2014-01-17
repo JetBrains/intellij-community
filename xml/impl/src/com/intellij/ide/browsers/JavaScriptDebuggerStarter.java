@@ -44,9 +44,9 @@ public interface JavaScriptDebuggerStarter<RC extends RunConfiguration, U> {
     }
 
     public static <RC extends RunConfiguration> void startDebugOrLaunchBrowser(@NotNull RC runConfiguration,
-                                                                                  @NotNull String url,
-                                                                                  @Nullable WebBrowser browser,
-                                                                                  boolean startDebugger) {
+                                                                               @NotNull String url,
+                                                                               @Nullable WebBrowser browser,
+                                                                               boolean startDebugger) {
       if (!startDebugger || !start(runConfiguration, url)) {
         UrlOpener.launchBrowser(url, browser);
       }

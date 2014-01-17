@@ -33,6 +33,7 @@ import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.impl.EditorTextProvider;
 import com.intellij.debugger.ui.impl.DebuggerTreeRenderer;
 import com.intellij.debugger.ui.impl.InspectDebuggerTree;
+import com.intellij.debugger.ui.impl.watch.NodeDescriptorImpl;
 import com.intellij.debugger.ui.impl.watch.WatchItemDescriptor;
 import com.intellij.debugger.ui.tree.render.DescriptorLabelListener;
 import com.intellij.openapi.Disposable;
@@ -157,8 +158,7 @@ public class ValueHint extends AbstractValueHint {
                 }
               });
             } else {
-              final InspectDebuggerTree tree = getInspectTree(descriptor);
-              showTreePopup(tree, debuggerContext, expressionText, new ValueHintTreeComponent(ValueHint.this, tree, expressionText));
+              createAndShowTree(expressionText, descriptor, debuggerContext);
             }
           }
           catch (EvaluateException e) {
@@ -171,6 +171,11 @@ public class ValueHint extends AbstractValueHint {
     catch (EvaluateException e) {
       LOG.debug(e);
     }
+  }
+
+  private void createAndShowTree(String expressionText, WatchItemDescriptor descriptor, DebuggerContextImpl debuggerContext) {
+    final InspectDebuggerTree tree = getInspectTree(descriptor);
+    showTreePopup(tree, debuggerContext, expressionText, new ValueHintTreeComponent(this, tree, expressionText));
   }
 
   private static boolean isActiveTooltipApplicable(final Value value) {
@@ -217,7 +222,6 @@ public class ValueHint extends AbstractValueHint {
                               @Override
                               public void threadAction() {
                                 descriptor.setRenderer(debugProcess.getAutoRenderer(descriptor));
-                                final InspectDebuggerTree tree = getInspectTree(descriptor);
                                 final String expressionText = ApplicationManager.getApplication().runReadAction(new Computable<String>() {
                                   @Override
                                   public String compute() {
@@ -225,8 +229,7 @@ public class ValueHint extends AbstractValueHint {
                                   }
                                 });
 
-                                showTreePopup(tree, debuggerContext, expressionText,
-                                              new ValueHintTreeComponent(ValueHint.this, tree, expressionText));
+                                createAndShowTree(expressionText, descriptor, debuggerContext);
                               }
                             });
               }
@@ -241,7 +244,7 @@ public class ValueHint extends AbstractValueHint {
     });
   }
 
-  private InspectDebuggerTree getInspectTree(final WatchItemDescriptor descriptor) {
+  private InspectDebuggerTree getInspectTree(final NodeDescriptorImpl descriptor) {
     final InspectDebuggerTree tree = new InspectDebuggerTree(getProject());
     tree.getModel().addTreeModelListener(createTreeListener(tree));
     tree.setInspectDescriptor(descriptor);

@@ -76,7 +76,7 @@ public abstract class TreeEditOperation extends AbstractEditOperation {
 
   @Override
   public void eraseFeedback() {
-    myContext.getArea().getFeedbackTreeLayer().mark(null, FeedbackTreeLayer.INSERT_AFTER);
+    myContext.getArea().getFeedbackTreeLayer().unmark();
   }
 
   @Override

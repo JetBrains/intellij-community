@@ -40,7 +40,7 @@ import java.util.List;
  * @author yole
  */
 public abstract class RunConfigurationProducer<T extends RunConfiguration> {
-  public static ExtensionPointName<RunConfigurationProducer> EP_NAME = ExtensionPointName.create("com.intellij.runConfigurationProducer");
+  public static final ExtensionPointName<RunConfigurationProducer> EP_NAME = ExtensionPointName.create("com.intellij.runConfigurationProducer");
   private final ConfigurationFactory myConfigurationFactory;
 
   protected RunConfigurationProducer(final ConfigurationFactory configurationFactory) {
