@@ -174,29 +174,28 @@ public class PyFunctionImpl extends PyPresentableElementImpl<PyFunctionStub> imp
   @Nullable
   @Override
   public PyType getReturnType(@NotNull TypeEvalContext context, @Nullable PyQualifiedExpression callSite) {
-    final PyType type = getGenericReturnType(context, callSite);
-
+    PyType type = getGenericReturnType(context, callSite);
     if (callSite == null) {
       return type;
     }
     final PyTypeChecker.AnalyzeCallResults results = PyTypeChecker.analyzeCallSite(callSite, context);
-
     if (PyTypeChecker.hasGenerics(type, context)) {
       if (results != null) {
         final Map<PyGenericType, PyType> substitutions = PyTypeChecker.unifyGenericCall(this, results.getReceiver(), results.getArguments(),
                                                                                         context);
-        if (substitutions != null) {
-          return PyTypeChecker.substitute(type, substitutions, context);
-        }
+        type = substitutions != null ? PyTypeChecker.substitute(type, substitutions, context) : null;
       }
-      return null;
+      else {
+        type = null;
+      }
+    }
+    if (results != null) {
+      type = replaceSelf(type, results.getReceiver(), context);
     }
     if (results != null && isDynamicallyEvaluated(results.getArguments().values(), context)) {
       return PyUnionType.createWeakType(type);
     }
-    else {
-      return type;
-    }
+    return type;
   }
 
   @Nullable
@@ -205,16 +204,36 @@ public class PyFunctionImpl extends PyPresentableElementImpl<PyFunctionStub> imp
    */
   public PyType getReturnTypeWithoutCallSite(@NotNull TypeEvalContext context,
                                              @Nullable PyExpression receiver) {
-    final PyType type = getGenericReturnType(context, null);
+    PyType type = getGenericReturnType(context, null);
     if (PyTypeChecker.hasGenerics(type, context)) {
-      final Map<PyGenericType, PyType> substitutions =
-        PyTypeChecker.unifyGenericCall(this, receiver, Maps.<PyExpression, PyNamedParameter>newHashMap(), context);
+      final Map<PyGenericType, PyType> substitutions = PyTypeChecker.unifyGenericCall(this, receiver,
+                                                                                      Maps.<PyExpression, PyNamedParameter>newHashMap(),
+                                                                                      context);
       if (substitutions != null) {
-        return PyTypeChecker.substitute(type, substitutions, context);
+        type = PyTypeChecker.substitute(type, substitutions, context);
       }
-      return null;
+      else {
+        type = null;
+      }
     }
-    return type;
+    return replaceSelf(type, receiver, context);
+  }
+
+  @Nullable
+  private PyType replaceSelf(@Nullable PyType returnType, @Nullable PyExpression receiver, @NotNull TypeEvalContext context) {
+    if (receiver != null) {
+      // TODO: Currently we substitute only simple subclass types, but we could handle union and collection types as well
+      if (returnType instanceof PyClassType) {
+        final PyClassType returnClassType = (PyClassType)returnType;
+        if (returnClassType.getPyClass() == getContainingClass()) {
+          final PyType receiverType = context.getType(receiver);
+          if (receiverType instanceof PyClassType && PyTypeChecker.match(returnType, receiverType, context)) {
+            return returnClassType.isDefinition() ? receiverType : ((PyClassType)receiverType).toInstance();
+          }
+        }
+      }
+    }
+    return returnType;
   }
 
   private static boolean isDynamicallyEvaluated(@NotNull Collection<PyNamedParameter> parameters, @NotNull TypeEvalContext context) {

@@ -37,7 +37,8 @@ import java.util.Set;
  * @author yole
  */
 public class PyStdlibTypeProvider extends PyTypeProviderBase {
-  private static final Set<String> OPEN_FUNCTIONS = ImmutableSet.of("__builtin__.open", "io.open", "os.fdopen");
+  private static final Set<String> OPEN_FUNCTIONS = ImmutableSet.of("__builtin__.open", "io.open", "os.fdopen",
+                                                                    "pathlib.Path.open");
   private static final String BINARY_FILE_TYPE = "io.FileIO[bytes]";
   private static final String TEXT_FILE_TYPE = "io.TextIOWrapper[unicode]";
 
@@ -134,7 +135,10 @@ public class PyStdlibTypeProvider extends PyTypeProviderBase {
     for (Map.Entry<PyExpression, PyNamedParameter> entry : arguments.entrySet()) {
       final PyNamedParameter parameter = entry.getValue();
       if ("mode".equals(parameter.getName())) {
-        final PyExpression argument = entry.getKey();
+        PyExpression argument = entry.getKey();
+        if (argument instanceof PyKeywordArgument) {
+          argument = ((PyKeywordArgument)argument).getValueExpression();
+        }
         if (argument instanceof PyStringLiteralExpression) {
           mode = ((PyStringLiteralExpression)argument).getStringValue();
           break;

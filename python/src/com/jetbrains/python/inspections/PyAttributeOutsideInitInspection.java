@@ -100,7 +100,7 @@ public class PyAttributeOutsideInitInspection extends PyInspection {
       for (Map.Entry<String, PyTargetExpression> attribute : attributes.entrySet()) {
         String attributeName = attribute.getKey();
         if (attributeName == null) continue;
-        final Property property = containingClass.findProperty(attributeName);
+        final Property property = containingClass.findProperty(attributeName, true);
         if (!attributesInInit.containsKey(attributeName) && property == null) {
           registerProblem(attribute.getValue(), PyBundle.message("INSP.attribute.$0.outside.init", attributeName),
                           new PyMoveAttributeToInitQuickFix());
