@@ -394,7 +394,7 @@ public class SMTRunnerConsoleTest extends BaseSMTRunnerTestCase {
     myEventsProcessor.onTestOutput(new TestOutputEvent("my_test", "stdout1 ", true));
     myEventsProcessor.onTestOutput(new TestOutputEvent("my_test", "stderr1 ", false));
 
-    assertAllOutputs(myMockResettablePrinter, "stdout1 ", "stderr1 ", "\nignored msg\n");
+    assertAllOutputs(myMockResettablePrinter, "stdout1 ", "stderr1 ", "\nignored msg");
 
     final MockPrinter mockPrinter1 = new MockPrinter(true);
     mockPrinter1.onNewAvailable(myTest1);
