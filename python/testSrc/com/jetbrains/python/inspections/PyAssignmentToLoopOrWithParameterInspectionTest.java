@@ -21,7 +21,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author link
  */
-public class PyAssignmentToForLoopParameterInspectionTest extends PyInspectionTestCase {
+public class PyAssignmentToLoopOrWithParameterInspectionTest extends PyInspectionTestCase {
 
   public void testGood() {
     doTest();
@@ -42,12 +42,15 @@ public class PyAssignmentToForLoopParameterInspectionTest extends PyInspectionTe
   public void testTwoLoops() {
     doTest();
   }
+  public void testWithStatement() {
+    doTest();
+  }
 
 
   @NotNull
   @Override
   protected Class<? extends PyInspection> getInspectionClass() {
-    return PyAssignmentToForLoopParameterInspection.class;
+    return PyAssignmentToLoopOrWithParameterInspection.class;
   }
 
   @Override
