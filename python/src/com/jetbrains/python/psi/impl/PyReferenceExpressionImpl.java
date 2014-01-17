@@ -291,7 +291,7 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
   }
 
   @Nullable
-  private PyType getTypeFromProviders(TypeEvalContext context) {
+  private PyType getTypeFromProviders(@NotNull TypeEvalContext context) {
     for (PyTypeProvider provider : Extensions.getExtensions(PyTypeProvider.EP_NAME)) {
       try {
         final PyType type = provider.getReferenceExpressionType(this, context);
