@@ -133,17 +133,17 @@ public class ThreadDumpPanel extends JPanel {
     new ListSpeedSearch(myThreadList).setComparator(new SpeedSearchComparator(false, true));
 
     final Editor editor = CommonDataKeys.EDITOR.getData(DataManager.getInstance().getDataContext(consoleView.getPreferredFocusableComponent()));
-    assert editor != null;
-    editor.getDocument().addDocumentListener(new com.intellij.openapi.editor.event.DocumentAdapter() {
-      @Override
-      public void documentChanged(com.intellij.openapi.editor.event.DocumentEvent e) {
-        String filter = filterField.getText();
-        if (StringUtil.isNotEmpty(filter)) {
-          highlightOccurrences(filter, project, editor);
+    if (editor != null) {
+      editor.getDocument().addDocumentListener(new com.intellij.openapi.editor.event.DocumentAdapter() {
+        @Override
+        public void documentChanged(com.intellij.openapi.editor.event.DocumentEvent e) {
+          String filter = filterField.getText();
+          if (StringUtil.isNotEmpty(filter)) {
+            highlightOccurrences(filter, project, editor);
+          }
         }
-      }
-    });
-    
+      });
+    }
   }
 
   private static void highlightOccurrences(String filter, Project project, Editor editor) {
