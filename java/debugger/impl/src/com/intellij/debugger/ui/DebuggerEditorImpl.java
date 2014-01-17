@@ -183,10 +183,14 @@ public abstract class DebuggerEditorImpl extends CompletionEditor{
 
     List<CodeFragmentFactory> factories = DebuggerUtilsEx.getCodeFragmentFactories(context);
     boolean many = factories.size() > 1;
+    CodeFragmentFactory preferredFactory = factories.get(0);
     if (myInitialFactory) {
       myInitialFactory = false;
-      setFactory(factories.get(0));
+      setFactory(preferredFactory);
       myChooseFactory.setVisible(many);
+    }
+    if (many && DefaultCodeFragmentFactory.getInstance().equals(myFactory)) {
+      setFactory(preferredFactory);
     }
     myChooseFactory.setVisible(myChooseFactory.isVisible() || many);
     myChooseFactory.setEnabled(many && factories.contains(myFactory));
