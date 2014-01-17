@@ -18,6 +18,7 @@
     <orderEntry type="module" module-name="xslt-debugger" />
     <orderEntry type="module" module-name="xdebugger-impl" scope="TEST" />
     <orderEntry type="module" module-name="git4idea" scope="TEST" />
+    <orderEntry type="library" name="gson" level="project" />
   </component>
 </module>
 

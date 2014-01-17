@@ -15,14 +15,22 @@
  */
 package com.intellij.tasks.integration;
 
+import com.google.gson.Gson;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
 import com.intellij.tasks.Task;
 import com.intellij.tasks.TaskManagerTestCase;
 import com.intellij.tasks.TaskState;
 import com.intellij.tasks.config.TaskSettings;
+import com.intellij.tasks.impl.LocalTaskImpl;
+import com.intellij.tasks.impl.TaskUtil;
 import com.intellij.tasks.jira.JiraRepository;
 import com.intellij.tasks.jira.JiraRepositoryType;
 import com.intellij.tasks.jira.JiraVersion;
+import org.apache.commons.httpclient.methods.GetMethod;
 import org.jetbrains.annotations.NonNls;
+
+import java.util.Date;
 
 /**
  * @author Dmitry Avdeev
@@ -90,34 +98,49 @@ public class JiraIntegrationTest extends TaskManagerTestCase {
     changeStateAndCheck(JIRA_5_TEST_SERVER_URL, "UT-8");
   }
 
-  @SuppressWarnings("ConstantConditions")
+  public void testSetTimeSpend() throws Exception {
+    // only REST API 2.0 supports this feature
+    myRepository.setUrl(JIRA_5_TEST_SERVER_URL);
+    Task task = myRepository.findTask("UT-9");
+    assertNotNull("Test task not found", task);
+
+    // timestamp as comment
+    String comment = "Timestamp: " + TaskUtil.formatDate(new Date());
+
+    // semi-unique duration as timeSpend
+    // should be no longer than 8 hours in total, because it's considered as one full day
+    int minutes = (int)(System.currentTimeMillis() % 240) + 1;
+    String duration = String.format("%dh %dm", minutes / 60, minutes % 60);
+    myRepository.updateTimeSpent(new LocalTaskImpl(task), duration, comment);
+
+    // possible race conditions?
+    GetMethod request = new GetMethod(myRepository.getRestUrl("issue", task.getId(), "worklog"));
+    String response = myRepository.executeMethod(request);
+    JsonObject object = new Gson().fromJson(response, JsonObject.class);
+    JsonArray worklogs = object.get("worklogs").getAsJsonArray();
+    JsonObject last = worklogs.get(worklogs.size() - 1).getAsJsonObject();
+    assertEquals(comment, last.get("comment").getAsString());
+    assertEquals(duration, last.get("timeSpent").getAsString());
+  }
+
   private void changeStateAndCheck(String url, String key) throws Exception {
     myRepository.setUrl(url);
     Task task = myRepository.findTask(key);
+    assertNotNull("Test task not found", task);
+    assertEquals(String.format("Initial state of test task '%s' should be 'Reopened'", key),
+                 TaskState.REOPENED, task.getState());
     try {
-      myRepository.setTaskState(task, TaskState.IN_PROGRESS);
-      task = myRepository.findTask(key);
-      assertEquals(task.getState(), TaskState.IN_PROGRESS);
       myRepository.setTaskState(task, TaskState.RESOLVED);
       task = myRepository.findTask(key);
       assertEquals(task.getState(), TaskState.RESOLVED);
-      myRepository.setTaskState(task, TaskState.REOPENED);
-      assertEquals(myRepository.findTask(key).getState(), TaskState.REOPENED);
-    }
-    catch (Exception e) {
-      // always attempt to restore original state of the issue
+    } finally {
       try {
-        // transition to Resolved state usually is possible from any other
-        myRepository.setTaskState(task, TaskState.RESOLVED);
-      }
-      catch (Exception ignored) {
-      }
-      try {
+        // always attempt to restore original state of the issue
         myRepository.setTaskState(task, TaskState.REOPENED);
       }
       catch (Exception ignored) {
+        // empty
       }
-      throw e;
     }
   }
 
