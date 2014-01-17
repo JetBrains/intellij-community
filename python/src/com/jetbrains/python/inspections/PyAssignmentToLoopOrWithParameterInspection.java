@@ -19,10 +19,11 @@ import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
-import com.intellij.psi.PsiFile;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.psi.PyForPart;
 import com.jetbrains.python.psi.PyTargetExpression;
+import com.jetbrains.python.psi.PyWithStatement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -34,12 +35,18 @@ import org.jetbrains.annotations.Nullable;
  *   for i in range(1, 10):
  *    i = "new value"
  * </pre>
+ * and
+ * <pre>
+ * with open("file") as f:
+ *  f.read()
+ *  f = open("another file")
+ * </pre>
  *
  * @author link
  */
-public class PyAssignmentToForLoopParameterInspection extends PyInspection {
+public class PyAssignmentToLoopOrWithParameterInspection extends PyInspection {
 
-  private static final String MESSAGE = PyBundle.message("INSP.NAME.assignment.to.for.loop.parameter.display.name");
+  private static final String MESSAGE = PyBundle.message("INSP.NAME.assignment.to.loop.or.with.parameter.display.name");
 
   @NotNull
   @Override
@@ -73,14 +80,9 @@ public class PyAssignmentToForLoopParameterInspection extends PyInspection {
         return; //We are checking first time declaration
       }
 
-      //Find "for" between predecessors until we tree root
-      PsiElement element = variableFirstTimeDeclaration;
-      while (!(element instanceof PsiFile) && element != null) {
-        if (element instanceof PyForPart) {
-          registerProblem(node, MESSAGE);
-          return;
-        }
-        element = element.getParent();
+      //Check if variable declared in "for" or "with" statement
+      if (PsiTreeUtil.getNonStrictParentOfType(variableFirstTimeDeclaration, PyForPart.class, PyWithStatement.class) != null) {
+        registerProblem(node, MESSAGE);
       }
     }
   }
