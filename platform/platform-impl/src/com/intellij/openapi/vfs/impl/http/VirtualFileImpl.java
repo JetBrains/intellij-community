@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,13 +35,13 @@ import java.util.Collections;
 
 class VirtualFileImpl extends HttpVirtualFile {
   private final HttpFileSystemBase myFileSystem;
-  private final @Nullable RemoteFileInfoImpl myFileInfo;
+  @Nullable private final RemoteFileInfoImpl myFileInfo;
   private FileType myInitialFileType;
   private final String myPath;
   private final String myParentPath;
   private final String myName;
 
-  VirtualFileImpl(HttpFileSystemBase fileSystem, String path, final @Nullable RemoteFileInfoImpl fileInfo) {
+  VirtualFileImpl(HttpFileSystemBase fileSystem, String path, @Nullable final RemoteFileInfoImpl fileInfo) {
     myFileSystem = fileSystem;
     myPath = path;
     myFileInfo = fileInfo;

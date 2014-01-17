@@ -34,7 +34,7 @@ import java.lang.reflect.Modifier;
  */
 public class CharTableImpl implements CharTable {
   private static final int INTERN_THRESHOLD = 40; // 40 or more characters long tokens won't be interned.
-  private static final CharSequenceHashingStrategy HASHER = new CharSequenceHashingStrategy();
+  private static final CharSequenceHashingStrategy HASHER = CharSequenceHashingStrategy.CASE_SENSITIVE;
   private static final OpenTHashSet<CharSequence> STATIC_ENTRIES = newStaticSet();
 
   private final OpenTHashSet<CharSequence> entries = new OpenTHashSet<CharSequence>(10, 0.9f, HASHER);

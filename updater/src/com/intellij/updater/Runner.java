@@ -160,9 +160,6 @@ public class Runner {
             out.zipEntry(e, in);
           }
         }
-        catch (Exception ex) {
-          printStackTrace(ex);
-        }
         finally {
           in.close();
         }
@@ -174,9 +171,6 @@ public class Runner {
           props.setProperty(NEW_BUILD_DESCRIPTION, newBuildDesc);
           props.store(byteOut, "");
         }
-        catch (Exception ex) {
-          printStackTrace(ex);
-        }
         finally {
           byteOut.close();
         }
@@ -185,15 +179,9 @@ public class Runner {
         out.zipFile(PATCH_FILE_NAME, tempPatchFile);
         out.finish();
       }
-      catch (Exception ex) {
-        printStackTrace(ex);
-      }
       finally {
         fileOut.close();
       }
-    }
-    catch (Exception ex) {
-      printStackTrace(ex);
     }
     finally {
       cleanup(ui);
@@ -212,9 +200,6 @@ public class Runner {
     Properties props = new Properties();
     try {
       props.load(in);
-    }
-    catch (Exception ex) {
-      printStackTrace(ex);
     }
     finally {
       in.close();
@@ -257,16 +242,10 @@ public class Runner {
           try {
             Utils.copyStream(in, out);
           }
-          catch (Exception ex) {
-            printStackTrace(ex);
-          }
           finally {
             in.close();
             out.close();
           }
-        }
-        catch (Exception ex) {
-          printStackTrace(ex);
         }
         finally {
           jarFile.close();
@@ -283,9 +262,6 @@ public class Runner {
         ui.showError(e);
         printStackTrace(e);
       }
-    }
-    catch (Exception ex) {
-      printStackTrace(ex);
     }
     finally {
       try {

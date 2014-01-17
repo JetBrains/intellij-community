@@ -610,7 +610,7 @@ public class SingleInspectionProfilePanel extends JPanel {
   }
 
   static String renderSeverity(HighlightSeverity severity) {
-    return StringUtil.capitalizeWords(severity.toString().toLowerCase(), true);
+    return StringUtil.capitalizeWords(severity.getName().toLowerCase(), true);
   }
 
   private void toggleToolNode(final InspectionConfigTreeNode toolNode) {
@@ -1007,7 +1007,7 @@ public class SingleInspectionProfilePanel extends JPanel {
     final Set<HighlightSeverity> severities = ((InspectionProfileImpl)selectedProfile).getUsedSeverities();
     for (Iterator<HighlightSeverity> iterator = severities.iterator(); iterator.hasNext();) {
       HighlightSeverity severity = iterator.next();
-      if (registrar.isSeverityValid(severity.toString())) {
+      if (registrar.isSeverityValid(severity.getName())) {
         iterator.remove();
       }
     }
@@ -1015,9 +1015,9 @@ public class SingleInspectionProfilePanel extends JPanel {
     if (!severities.isEmpty()) {
       final SeverityRegistrar oppositeRegister = ((SeverityProvider)selectedProfile.getProfileManager()).getSeverityRegistrar();
       for (HighlightSeverity severity : severities) {
-        final TextAttributesKey attributesKey = TextAttributesKey.find(severity.toString());
+        final TextAttributesKey attributesKey = TextAttributesKey.find(severity.getName());
         final TextAttributes textAttributes = oppositeRegister.getTextAttributesBySeverity(severity);
-        LOG.assertTrue(textAttributes != null, severity.toString());
+        LOG.assertTrue(textAttributes != null, severity);
         HighlightInfoType.HighlightInfoTypeImpl info = new HighlightInfoType.HighlightInfoTypeImpl(severity, attributesKey);
         registrar.registerSeverity(new SeverityRegistrar.SeverityBasedTextAttributes(textAttributes.clone(), info),
                                    textAttributes.getErrorStripeColor());

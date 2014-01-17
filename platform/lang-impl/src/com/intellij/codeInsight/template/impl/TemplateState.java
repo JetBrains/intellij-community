@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -93,6 +93,7 @@ public class TemplateState implements Disposable {
   private boolean myFinished;
   @Nullable private PairProcessor<String, String> myProcessor;
   private boolean mySelectionCalculated = false;
+  private boolean myStarted;
 
   public TemplateState(@NotNull Project project, final Editor editor) {
     myProject = project;
@@ -134,32 +135,27 @@ public class TemplateState implements Disposable {
           final LookupImpl lookup = myEditor != null ? (LookupImpl)LookupManager.getActiveLookup(myEditor) : null;
           if (lookup != null) {
             lookup.performGuardedChange(runnable);
-          } else {
+          }
+          else {
             runnable.run();
           }
         }
       }
     };
 
-    myDocument.addDocumentListener(myEditorDocumentListener);
-    CommandProcessor.getInstance().addCommandListener(myCommandListener);
+    myDocument.addDocumentListener(myEditorDocumentListener, this);
+    CommandProcessor.getInstance().addCommandListener(myCommandListener, this);
   }
 
   @Override
   public synchronized void dispose() {
-    if (myEditorDocumentListener != null) {
-      myDocument.removeDocumentListener(myEditorDocumentListener);
-      myEditorDocumentListener = null;
-    }
-    if (myCommandListener != null) {
-      CommandProcessor.getInstance().removeCommandListener(myCommandListener);
-      myCommandListener = null;
-    }
+    myEditorDocumentListener = null;
+    myCommandListener = null;
 
     myProcessor = null;
 
     //Avoid the leak of the editor
-    releaseEditor();
+    releaseAll();
     myDocument = null;
   }
 
@@ -176,7 +172,7 @@ public class TemplateState implements Disposable {
 
   private void setCurrentVariableNumber(int variableNumber) {
     myCurrentVariableNumber = variableNumber;
-    final boolean isFinished = variableNumber < 0;
+    final boolean isFinished = isFinished();
     ((DocumentEx)myDocument).setStripTrailingSpacesEnabled(isFinished);
     myCurrentSegmentNumber = isFinished ? -1 : getCurrentSegmentNumber();
   }
@@ -262,9 +258,11 @@ public class TemplateState implements Disposable {
     }
   }
 
-  public void start(TemplateImpl template,
+  public void start(@NotNull TemplateImpl template,
                     @Nullable final PairProcessor<String, String> processor,
                     @Nullable Map<String, String> predefinedVarValues) {
+    LOG.assertTrue(!myStarted, "Already started");
+    myStarted = true;
     myTemplate = template;
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
 
@@ -328,7 +326,7 @@ public class TemplateState implements Disposable {
     }
   }
 
-  private void processAllExpressions(final TemplateImpl template) {
+  private void processAllExpressions(@NotNull final TemplateImpl template) {
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       @Override
       public void run() {
@@ -365,7 +363,7 @@ public class TemplateState implements Disposable {
     });
   }
 
-  public void doReformat(final TextRange range) {
+  private void doReformat(final TextRange range) {
     RangeMarker rangeMarker = null;
     if (range != null) {
       rangeMarker = myDocument.createRangeMarker(range);
@@ -876,14 +874,20 @@ public class TemplateState implements Disposable {
     }
   }
 
+  boolean isDisposed() {
+    return myDocument == null;
+  }
+
   private void cleanupTemplateState(boolean brokenOff) {
     final Editor editor = myEditor;
     fireBeforeTemplateFinished();
     int oldVar = myCurrentVariableNumber;
-    setCurrentVariableNumber(-1);
     currentVariableChanged(oldVar);
-    ((TemplateManagerImpl)TemplateManager.getInstance(myProject)).clearTemplateState(editor);
-    fireTemplateFinished(brokenOff);
+    if (!isDisposed()) {
+      setCurrentVariableNumber(-1);
+      TemplateManagerImpl.clearTemplateState(editor);
+      fireTemplateFinished(brokenOff);
+    }
     myListeners.clear();
     myProject = null;
   }

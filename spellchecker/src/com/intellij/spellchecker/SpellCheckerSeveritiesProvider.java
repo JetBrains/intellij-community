@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,7 +29,7 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
-import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class SpellCheckerSeveritiesProvider extends SeveritiesProvider {
@@ -38,16 +38,13 @@ public class SpellCheckerSeveritiesProvider extends SeveritiesProvider {
   @Override
   @NotNull
   public List<HighlightInfoType> getSeveritiesHighlightInfoTypes() {
-    final List<HighlightInfoType> result = new ArrayList<HighlightInfoType>();
-
     final TextAttributes attributes = new TextAttributes();
 
     attributes.setEffectType(EffectType.WAVE_UNDERSCORE);
     attributes.setEffectColor(new Color(0, 128, 0));
 
-    result.add(new HighlightInfoType.HighlightInfoTypeImpl(TYPO,
-               TextAttributesKey.createTextAttributesKey("TYPO", attributes)));
-    return result;
+    HighlightInfoType typo = new HighlightInfoType.HighlightInfoTypeImpl(TYPO, TextAttributesKey.createTextAttributesKey("TYPO", attributes));
+    return Collections.singletonList(typo);
   }
 
   @Override

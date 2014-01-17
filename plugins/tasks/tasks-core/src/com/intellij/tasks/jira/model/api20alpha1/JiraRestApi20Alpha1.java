@@ -2,6 +2,7 @@ package com.intellij.tasks.jira.model.api20alpha1;
 
 import com.google.gson.reflect.TypeToken;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.tasks.LocalTask;
 import com.intellij.tasks.TaskState;
 import com.intellij.tasks.jira.JiraRepository;
 import com.intellij.tasks.jira.JiraRestApi;
@@ -62,6 +63,11 @@ public class JiraRestApi20Alpha1 extends JiraRestApi {
       default:
         return null;
     }
+  }
+
+  @Override
+  public void updateTimeSpend(LocalTask task, String timeSpent, String comment) throws Exception {
+    throw new Exception(String.format("This version of JIRA REST API (%s) doesn't support updating worklog items.", getVersionName()));
   }
 
   @NotNull

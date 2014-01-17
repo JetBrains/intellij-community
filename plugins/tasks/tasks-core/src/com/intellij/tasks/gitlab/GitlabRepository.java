@@ -134,7 +134,7 @@ public class GitlabRepository extends NewBaseRepositoryImpl {
 
   @NotNull
   List<GitlabProject> fetchProjects() throws Exception {
-    HttpGet request = new HttpGet(getRestApiBaseUrl() + "projects");
+    HttpGet request = new HttpGet(getRestApiUrl("projects"));
     ResponseHandler<List<GitlabProject>> handler = new GsonMultipleObjectsDeserializer<GitlabProject>(GSON, LIST_OF_PROJECTS_TYPE);
     return getHttpClient().execute(request, handler);
   }
@@ -142,7 +142,7 @@ public class GitlabRepository extends NewBaseRepositoryImpl {
   @SuppressWarnings("UnusedDeclaration")
   @NotNull
   GitlabProject fetchProject(int id) throws Exception {
-    HttpGet request = new HttpGet(getRestApiBaseUrl() + "project/" + id);
+    HttpGet request = new HttpGet(getRestApiUrl("project", id));
     return getHttpClient().execute(request, new GsonSingleObjectDeserializer<GitlabProject>(GSON, GitlabProject.class));
   }
 
@@ -154,14 +154,14 @@ public class GitlabRepository extends NewBaseRepositoryImpl {
 
   private String getIssuesUrl() {
     if (myCurrentProject != null && myCurrentProject != UNSPECIFIED_PROJECT) {
-      return getRestApiBaseUrl() + "projects/" + myCurrentProject.getId() + "/issues";
+      return getRestApiUrl("projects", myCurrentProject.getId(), "issues");
     }
-    return getRestApiBaseUrl() + "issues";
+    return getRestApiUrl("issues");
   }
 
   @NotNull
   GitlabIssue fetchIssue(int id) throws Exception {
-    HttpGet request = new HttpGet(getRestApiBaseUrl() + "issues/" + id);
+    HttpGet request = new HttpGet(getRestApiUrl("issues", id));
     ResponseHandler<GitlabIssue> handler = new GsonSingleObjectDeserializer<GitlabIssue>(GSON, GitlabIssue.class);
     return getHttpClient().execute(request, handler);
   }
@@ -171,8 +171,10 @@ public class GitlabRepository extends NewBaseRepositoryImpl {
     return super.isConfigured() && !myPassword.isEmpty();
   }
 
-  private String getRestApiBaseUrl() {
-    return getUrl() + REST_API_PATH_PREFIX;
+  @NotNull
+  @Override
+  public String getRestApiPathPrefix() {
+    return REST_API_PATH_PREFIX;
   }
 
   @Nullable
