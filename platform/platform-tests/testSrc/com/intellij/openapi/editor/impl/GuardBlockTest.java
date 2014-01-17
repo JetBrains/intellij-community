@@ -78,13 +78,24 @@ public class GuardBlockTest extends LightPlatformCodeInsightFixtureTestCase {
   public void testNoCompletion() throws Exception {
     String text = "abc abd a<caret> abx";
     myFixture.configureByText("x.txt", text);
-    createGuard(0, myFixture.getFile().getTextLength());
+    int offset = myFixture.getEditor().getCaretModel().getOffset();
+    createGuard(offset - 1, myFixture.getFile().getTextLength()).setGreedyToRight(true);
 
     assertNull(myFixture.completeBasic());
     myFixture.checkResult(text);
 
+    //no hippie completion
     myFixture.performEditorAction(IdeActions.ACTION_HIPPIE_BACKWARD_COMPLETION);
     assertNull(LookupManager.getInstance(getProject()).getActiveLookup());
     myFixture.checkResult(text);
+    
+    //no completion at the file end
+    myFixture.getEditor().getCaretModel().moveToOffset(myFixture.getFile().getTextLength());
+    assertNull(myFixture.completeBasic());
+    myFixture.checkResult("abc abd a abx<caret>");
+
+    //completion at the beginning of the guard fragment
+    myFixture.getEditor().getCaretModel().moveToOffset(offset - 1);
+    assertNotNull(myFixture.completeBasic());
   }
 }

@@ -120,7 +120,8 @@ public class CodeCompletionHandlerBase {
 
     CompletionAssertions.checkEditorValid(editor);
 
-    if (editor.isViewer() || editor.getDocument().getOffsetGuard(editor.getCaretModel().getOffset()) != null) {
+    int offset = editor.getCaretModel().getOffset();
+    if (editor.isViewer() || editor.getDocument().getRangeGuard(offset, offset) != null) {
       editor.getDocument().fireReadOnlyModificationAttempt();
       CodeInsightUtilBase.showReadOnlyViewWarning(editor);
       return;
