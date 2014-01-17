@@ -58,7 +58,7 @@ public class MavenModuleResourceConfiguration {
   public Set<String> filteringExclusions = new THashSet<String>(FileUtil.PATH_HASHING_STRATEGY);
 
   @OptionTag
-  public String escapeString = MavenProjectConfiguration.DEFAULT_ESCAPE_STRING;
+  public String escapeString = null;
 
   @OptionTag
   public boolean escapeWindowsPaths = true;
