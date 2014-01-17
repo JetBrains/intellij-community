@@ -1,4 +1,4 @@
-package com.intellij.util.net;
+package com.intellij.util.net.ssl;
 
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -237,8 +237,7 @@ public class CertificatesManager implements ApplicationComponent {
         @Override
         public void run() {
           try {
-            UntrustedCertificateWarningDialog dialog =
-              new UntrustedCertificateWarningDialog(certificate, myCustomManager.myPath, myCustomManager.myPassword);
+            CertificateWarningDialog dialog = CertificateWarningDialog.createSelfSignedCertificateWarning(certificate);
             accepted.set(dialog.showAndGet());
             if (accepted.get()) {
               LOG.debug("Certificate was accepted");
@@ -254,7 +253,7 @@ public class CertificatesManager implements ApplicationComponent {
         proceeded.await();
       }
       catch (InterruptedException e) {
-        LOG.error(e);
+        LOG.error("Interrupted", e);
       }
       return accepted.get();
     }
