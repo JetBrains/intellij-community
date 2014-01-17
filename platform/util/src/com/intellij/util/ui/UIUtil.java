@@ -433,18 +433,22 @@ public class UIUtil {
     return ArrayUtil.toStringArray(lines);
   }
 
-  public static void setActionNameAndMnemonic(String text, Action action) {
-    int mnemoPos = text.indexOf('&');
-    if (mnemoPos >= 0 && mnemoPos < text.length() - 2) {
-      String mnemoChar = text.substring(mnemoPos + 1, mnemoPos + 2).trim();
-      if (mnemoChar.length() == 1) {
-        action.putValue(Action.MNEMONIC_KEY, Integer.valueOf((int)mnemoChar.charAt(0)));
-      }
-    }
+  public static void setActionNameAndMnemonic(@NotNull String text, @NotNull Action action) {
+    assignMnemonic(text, action);
 
     text = text.replaceAll("&", "");
     action.putValue(Action.NAME, text);
   }
+  public static void assignMnemonic(@NotNull String text, @NotNull Action action) {
+    int mnemoPos = text.indexOf('&');
+    if (mnemoPos >= 0 && mnemoPos < text.length() - 2) {
+      String mnemoChar = text.substring(mnemoPos + 1, mnemoPos + 2).trim();
+      if (mnemoChar.length() == 1) {
+        action.putValue(Action.MNEMONIC_KEY, Integer.valueOf(mnemoChar.charAt(0)));
+      }
+    }
+  }
+
 
   public static Font getLabelFont(@NotNull FontSize size) {
     return getFont(size, null);
