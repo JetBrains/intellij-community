@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -138,7 +138,7 @@ public class ExpectedHighlightingData {
         for (SeveritiesProvider provider : Extensions.getExtensions(SeveritiesProvider.EP_NAME)) {
           for (HighlightInfoType type : provider.getSeveritiesHighlightInfoTypes()) {
             final HighlightSeverity severity = type.getSeverity(null);
-            highlightingTypes.put(severity.toString(), new ExpectedHighlightingSet(severity, false, true));
+            highlightingTypes.put(severity.getName(), new ExpectedHighlightingSet(severity, false, true));
           }
         }
         highlightingTypes.put(END_LINE_HIGHLIGHT_MARKER, new ExpectedHighlightingSet(HighlightSeverity.ERROR, true, true));

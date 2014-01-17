@@ -16,7 +16,6 @@
 
 package com.intellij.execution.actions;
 
-import com.intellij.diagnostic.AbstractMethodErrorWrapper;
 import com.intellij.execution.Location;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.ConfigurationType;
@@ -24,6 +23,7 @@ import com.intellij.execution.impl.ConfigurationFromContextWrapper;
 import com.intellij.execution.junit.RuntimeConfigurationProducer;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.ExtensionException;
 import com.intellij.openapi.extensions.Extensions;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -79,7 +79,7 @@ class PreferredProducerFind {
         producer = prototype.createProducer(location, context);
       }
       catch (AbstractMethodError e) {
-        LOG.error(new AbstractMethodErrorWrapper(prototype, e));
+        LOG.error(new ExtensionException(prototype.getClass()));
         continue;
       }
       if (producer.getConfiguration() != null) {

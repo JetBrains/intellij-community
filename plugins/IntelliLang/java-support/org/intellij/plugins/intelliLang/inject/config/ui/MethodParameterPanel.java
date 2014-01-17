@@ -364,7 +364,7 @@ public class MethodParameterPanel extends AbstractInjectionPanel<MethodParameter
             return valueOf(o) != null;
           }
 
-        }, new TreeColumnInfo("Method/Parameters")
+        }, new TreeColumnInfo(" ")
     };
   }
 

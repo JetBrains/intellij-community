@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -76,7 +76,7 @@ public class HighlightSeverity implements Comparable<HighlightSeverity> {
    *             if two annotations with different severity levels cover the same text range, only
    *             the annotation with a higher severity level is displayed.
    */
-  public HighlightSeverity(@NonNls String name, int val) {
+  public HighlightSeverity(@NonNls @NotNull String name, int val) {
     myName = name;
     myVal = val;
   }
@@ -84,8 +84,7 @@ public class HighlightSeverity implements Comparable<HighlightSeverity> {
 
   //read external only
   public HighlightSeverity(@NotNull Element element) {
-    myName = JDOMExternalizerUtil.readField(element, "myName");
-    myVal = Integer.valueOf(JDOMExternalizerUtil.readField(element, "myVal"));
+    this(JDOMExternalizerUtil.readField(element, "myName"), Integer.valueOf(JDOMExternalizerUtil.readField(element, "myVal")));
   }
 
   public String toString() {
@@ -112,5 +111,10 @@ public class HighlightSeverity implements Comparable<HighlightSeverity> {
 
   public int hashCode() {
     return myName.hashCode();
+  }
+
+  @NotNull
+  public String getName() {
+    return myName;
   }
 }

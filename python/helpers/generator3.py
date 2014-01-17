@@ -1,41 +1,13 @@
 # encoding: utf-8
-from pycharm_generator_utils.module_redeclarator import *
-from pycharm_generator_utils.util_methods import *
-from pycharm_generator_utils.constants import *
-import os
 import atexit
 import zipfile
 
+from pycharm_generator_utils.module_redeclarator import *
+from pycharm_generator_utils.util_methods import *
+from pycharm_generator_utils.constants import *
+
+
 debug_mode = False
-
-
-def build_output_name(dirname, qualified_name):
-    qualifiers = qualified_name.split(".")
-    if dirname and not dirname.endswith("/") and not dirname.endswith("\\"):
-        dirname += os.path.sep # "a -> a/"
-    for pathindex in range(len(qualifiers) - 1): # create dirs for all qualifiers but last
-        subdirname = dirname + os.path.sep.join(qualifiers[0: pathindex + 1])
-        if not os.path.isdir(subdirname):
-            action("creating subdir %r", subdirname)
-            os.makedirs(subdirname)
-        init_py = os.path.join(subdirname, "__init__.py")
-        if os.path.isfile(subdirname + ".py"):
-            os.rename(subdirname + ".py", init_py)
-        elif not os.path.isfile(init_py):
-            init = fopen(init_py, "w")
-            init.close()
-    target_name = dirname + os.path.sep.join(qualifiers)
-    if os.path.isdir(target_name):
-        fname = os.path.join(target_name, "__init__.py")
-    else:
-        fname = target_name + ".py"
-
-    dirname = os.path.dirname(fname)
-
-    if not os.path.isdir(dirname):
-        os.makedirs(dirname)
-
-    return fname
 
 
 def redo_module(module_name, outfile, module_file_name, doing_builtins):
@@ -263,80 +235,67 @@ def process_one(name, mod_file_name, doing_builtins, subdir):
         say(name)
         sys.stdout.flush()
     action("doing nothing")
-    outfile = None
+
     try:
-        try:
-            fname = build_output_name(subdir, name)
-            action("opening %r", fname)
-            outfile = fopen(fname, "w")
-            old_modules = list(sys.modules.keys())
-            imported_module_names = []
+        fname = build_output_name(subdir, name)
+        action("opening %r", fname)
+        old_modules = list(sys.modules.keys())
+        imported_module_names = []
 
-            class MyFinder:
-                #noinspection PyMethodMayBeStatic
-                def find_module(self, fullname, path=None):
-                    if fullname != name:
-                        imported_module_names.append(fullname)
-                    return None
+        class MyFinder:
+            #noinspection PyMethodMayBeStatic
+            def find_module(self, fullname, path=None):
+                if fullname != name:
+                    imported_module_names.append(fullname)
+                return None
 
-            my_finder = None
-            if hasattr(sys, 'meta_path'):
-                my_finder = MyFinder()
-                sys.meta_path.append(my_finder)
-            else:
-                imported_module_names = None
+        my_finder = None
+        if hasattr(sys, 'meta_path'):
+            my_finder = MyFinder()
+            sys.meta_path.append(my_finder)
+        else:
+            imported_module_names = None
 
-            action("importing")
-            __import__(name) # sys.modules will fill up with what we want
+        action("importing")
+        __import__(name) # sys.modules will fill up with what we want
 
-            if my_finder:
-                sys.meta_path.remove(my_finder)
-            if imported_module_names is None:
-                imported_module_names = [m for m in sys.modules.keys() if m not in old_modules]
+        if my_finder:
+            sys.meta_path.remove(my_finder)
+        if imported_module_names is None:
+            imported_module_names = [m for m in sys.modules.keys() if m not in old_modules]
 
-            redo_module(name, outfile, mod_file_name, doing_builtins)
-            # The C library may have called Py_InitModule() multiple times to define several modules (gtk._gtk and gtk.gdk);
-            # restore all of them
-            path = name.split(".")
-            redo_imports = not ".".join(path[:-1]) in MODULES_INSPECT_DIR
-            if imported_module_names and redo_imports:
-                for m in sys.modules.keys():
-                    action("looking at possible submodule %r", m)
-                    # if module has __file__ defined, it has Python source code and doesn't need a skeleton
-                    if m not in old_modules and m not in imported_module_names and m != name and not hasattr(
-                            sys.modules[m], '__file__'):
-                        if not quiet:
-                            say(m)
-                            sys.stdout.flush()
-                        fname = build_output_name(subdir, m)
-                        action("opening %r", fname)
-                        subfile = fopen(fname, "w")
-                        try:
-                            redo_module(m, subfile, mod_file_name, doing_builtins)
-                        finally:
-                            action("closing %r", fname)
-                            subfile.close()
-        except:
-            exctype, value = sys.exc_info()[:2]
-            msg = "Failed to process %r while %s: %s"
-            args = name, CURRENT_ACTION, str(value)
-            report(msg, *args)
-            if outfile is not None and not outfile.closed:
-                outfile.write("# encoding: %s\n" % OUT_ENCODING)
-                outfile.write("# module %s\n" % name)
-                outfile.write("# from %s\n" % mod_file_name)
-                outfile.write("# by generator %s\n" % VERSION)
-                outfile.write("\n\n")
-                outfile.write("# Skeleton generation error:\n#\n#     " + (msg % args) + "\n")
-            if debug_mode:
-                if sys.platform == 'cli':
-                    import traceback
-                    traceback.print_exc(file=sys.stderr)
-                raise
-            return False
-    finally:
-        if outfile is not None and not outfile.closed:
-            outfile.close()
+        redo_module(name, fname, mod_file_name, doing_builtins)
+        # The C library may have called Py_InitModule() multiple times to define several modules (gtk._gtk and gtk.gdk);
+        # restore all of them
+        path = name.split(".")
+        redo_imports = not ".".join(path[:-1]) in MODULES_INSPECT_DIR
+        if imported_module_names and redo_imports:
+            for m in sys.modules.keys():
+                if m.startswith("pycharm_generator_utils"): continue
+                action("looking at possible submodule %r", m)
+                # if module has __file__ defined, it has Python source code and doesn't need a skeleton
+                if m not in old_modules and m not in imported_module_names and m != name and not hasattr(
+                        sys.modules[m], '__file__'):
+                    if not quiet:
+                        say(m)
+                        sys.stdout.flush()
+                    fname = build_output_name(subdir, m)
+                    action("opening %r", fname)
+                    try:
+                        redo_module(m, fname, mod_file_name, doing_builtins)
+                    finally:
+                        action("closing %r", fname)
+    except:
+        exctype, value = sys.exc_info()[:2]
+        msg = "Failed to process %r while %s: %s"
+        args = name, CURRENT_ACTION, str(value)
+        report(msg, *args)
+        if debug_mode:
+            if sys.platform == 'cli':
+                import traceback
+                traceback.print_exc(file=sys.stderr)
+            raise
+        return False
     return True
 
 

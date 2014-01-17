@@ -21,6 +21,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.tasks.Task;
 import com.intellij.tasks.TaskRepository;
 import org.jdom.Element;
@@ -28,7 +29,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.InputStream;
+import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Type;
+import java.net.URLEncoder;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
@@ -219,5 +222,20 @@ public class TaskUtil {
 
   public static GsonBuilder installDateDeserializer(GsonBuilder builder) {
     return builder.registerTypeAdapter(Date.class, DATE_DESERIALIZER);
+  }
+
+  /**
+   * Perform standard {@code application/x-www-urlencoded} translation for string {@code s}.
+   *
+   * @return urlencoded string
+   */
+  @NotNull
+  public static String encodeUrl(@NotNull String s) {
+    try {
+      return URLEncoder.encode(s, CharsetToolkit.UTF8);
+    }
+    catch (UnsupportedEncodingException e) {
+      throw new AssertionError("UTF-8 is not supported");
+    }
   }
 }

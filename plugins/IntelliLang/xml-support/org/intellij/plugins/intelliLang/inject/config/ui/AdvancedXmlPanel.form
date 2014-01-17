@@ -25,7 +25,7 @@
             </constraints>
             <properties>
               <labelFor value="7bf4e"/>
-              <text value="&amp;Value Pattern:"/>
+              <text value="&amp;Value pattern:"/>
               <toolTipText value="&lt;html&gt;Enter a regular expression that selects the parts of the tag's or attribute's value the language should be injected into.&lt;br&gt;The pattern should contain exactly one capturing group.&lt;/html&gt;"/>
             </properties>
           </component>
@@ -43,7 +43,7 @@
             </constraints>
             <properties>
               <labelFor value="a6f2"/>
-              <text value="&amp;XPath Condition:"/>
+              <text value="&amp;XPath condition:"/>
               <toolTipText value="&lt;html&gt;Enter an XPath expression that the tag/attribute must match additionally to the name-condition specified above.&lt;br&gt;This requires the XPathView plugin to be installed&lt;/html&gt;"/>
             </properties>
           </component>
