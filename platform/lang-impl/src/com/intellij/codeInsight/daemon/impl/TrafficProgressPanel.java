@@ -229,7 +229,7 @@ public class TrafficProgressPanel extends JPanel {
         if (status.errorCount[i] > 0) {
           final HighlightSeverity severity = SeverityRegistrar.getSeverityRegistrar(myTrafficLightRenderer.getProject()).getSeverityByIndex(i);
           String name =
-            status.errorCount[i] > 1 ? StringUtil.pluralize(severity.toString().toLowerCase()) : severity.toString().toLowerCase();
+            status.errorCount[i] > 1 ? StringUtil.pluralize(severity.getName().toLowerCase()) : severity.getName().toLowerCase();
           text += status.errorAnalyzingFinished
                   ? DaemonBundle.message("errors.found", status.errorCount[i], name)
                   : DaemonBundle.message("errors.found.so.far", status.errorCount[i], name);
