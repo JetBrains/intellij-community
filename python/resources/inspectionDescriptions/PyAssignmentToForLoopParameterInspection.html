@@ -1,0 +1,13 @@
+<html>
+<body>
+<span style="font-family: verdana,serif;">
+  This inspection checks for cases when loop variable is redeclared inside of loop.
+</span>
+<pre style="font-family: monospace">
+    for i in xrange(5):
+      for i in xrange(20, 25):
+          print("Inner", i)
+      print("Outer", i)
+  </pre>
+</body>
+</html>
