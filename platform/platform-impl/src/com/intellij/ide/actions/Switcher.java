@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -345,7 +345,12 @@ public class Switcher extends AnAction implements DumbAware {
         final int maxFiles = Math.max(editors.size(), recentFiles.length);
         final int len = isPinnedMode() ? recentFiles.length : Math.min(toolWindows.getModel().getSize(), maxFiles);
         boolean firstRecentMarked = false;
+        final List<VirtualFile> selectedFiles = Arrays.asList(editorManager.getSelectedFiles());
         for (int i = 0; i < len; i++) {
+          if (isPinnedMode() && selectedFiles.contains(recentFiles[i])) {
+            continue;
+          }
+
           final FileInfo info = new FileInfo(recentFiles[i], null);
           boolean add = true;
           if (isPinnedMode()) {

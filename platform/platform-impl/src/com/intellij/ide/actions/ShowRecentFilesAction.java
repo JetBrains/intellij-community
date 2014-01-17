@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,6 @@ import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 
@@ -36,10 +35,7 @@ public class ShowRecentFilesAction extends DumbAwareAction {
     final Project project = e.getData(CommonDataKeys.PROJECT);
     if (project != null) {
       FeatureUsageTracker.getInstance().triggerFeatureUsed("navigation.recent.files");
-      final Switcher.SwitcherPanel switcher = Switcher.createAndShowSwitcher(project, IdeBundle.message("title.popup.recent.files"), true);
-      if (FileEditorManagerEx.getInstanceEx(project).hasOpenedFile()) {
-        switcher.goForward();
-      }
+      Switcher.createAndShowSwitcher(project, IdeBundle.message("title.popup.recent.files"), true);
     }
   }
 }
