@@ -26,7 +26,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
-import com.intellij.psi.PsiExpressionStatement;
 import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -39,9 +38,9 @@ public abstract class ForIndexedPostfixTemplate extends PostfixTemplate {
   @Override
   public boolean isApplicable(@NotNull PsiElement context, @NotNull Document copyDocument, int newOffset) {
     PsiExpression expr = getTopmostExpression(context);
-    if (expr == null || !(expr.getParent() instanceof PsiExpressionStatement)) return false;
-    return PostfixTemplatesUtils.isNumber(expr.getType()) || PostfixTemplatesUtils.isArray(expr.getType()) || PostfixTemplatesUtils.isIterable(
-      expr.getType());
+    return expr != null && (PostfixTemplatesUtils.isNumber(expr.getType()) ||
+                            PostfixTemplatesUtils.isArray(expr.getType()) ||
+                            PostfixTemplatesUtils.isIterable(expr.getType()));
   }
 
   @Override

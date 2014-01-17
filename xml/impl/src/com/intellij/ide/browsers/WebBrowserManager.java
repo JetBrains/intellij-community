@@ -34,7 +34,7 @@ import java.util.UUID;
 
 import static com.intellij.ide.browsers.BrowsersConfiguration.BrowserFamily;
 
-@State(name = "WebBrowsersConfiguration", storages = {@Storage(file = StoragePathMacros.APP_CONFIG + "/browsers.xml")})
+@State(name = "WebBrowsersConfiguration", storages = {@Storage(file = StoragePathMacros.APP_CONFIG + "/web-browsers.xml")})
 public class WebBrowserManager implements PersistentStateComponent<Element>, ModificationTracker {
   private static final Logger LOG = Logger.getInstance(WebBrowserManager.class);
 
@@ -49,6 +49,8 @@ public class WebBrowserManager implements PersistentStateComponent<Element>, Mod
 
   private long modificationCount;
 
+  DefaultBrowser defaultBrowser = DefaultBrowser.SYSTEM;
+
   public WebBrowserManager() {
     browsers = new ArrayList<ConfigurableWebBrowser>();
     browsers.add(new ConfigurableWebBrowser(DEFAULT_CHROME_ID, BrowserFamily.CHROME));
@@ -62,17 +64,32 @@ public class WebBrowserManager implements PersistentStateComponent<Element>, Mod
     return ServiceManager.getService(WebBrowserManager.class);
   }
 
+  public enum DefaultBrowser {
+    SYSTEM, FIRST, ALTERNATIVE
+  }
+
+  public DefaultBrowser getDefaultBrowser() {
+    return defaultBrowser;
+  }
+
   @Override
   public Element getState() {
     Element state = new Element("state");
+    if (defaultBrowser != DefaultBrowser.SYSTEM) {
+      state.setAttribute("default", defaultBrowser.name().toLowerCase());
+    }
+
     for (ConfigurableWebBrowser browser : browsers) {
       Element entry = new Element("browser");
       entry.setAttribute("id", browser.getId().toString());
       entry.setAttribute("name", browser.getName());
       entry.setAttribute("family", browser.getFamily().name());
-      if (!StringUtil.isEmpty(browser.getPath())) {
-        entry.setAttribute("path", browser.getPath());
+
+      String path = browser.getPath();
+      if (path != null && !path.equals(browser.getFamily().getExecutionPath())) {
+        entry.setAttribute("path", path);
       }
+
       if (!browser.isActive()) {
         entry.setAttribute("active", "false");
       }
@@ -154,6 +171,16 @@ public class WebBrowserManager implements PersistentStateComponent<Element>, Mod
 
   @Override
   public void loadState(Element element) {
+    String defaultValue = element.getAttributeValue("default");
+    if (!StringUtil.isEmpty(defaultValue)) {
+      try {
+        defaultBrowser = DefaultBrowser.valueOf(defaultValue.toUpperCase());
+      }
+      catch (IllegalArgumentException e) {
+        LOG.warn(e);
+      }
+    }
+
     List<ConfigurableWebBrowser> list = new ArrayList<ConfigurableWebBrowser>();
     for (Element child : element.getChildren("browser")) {
       BrowserFamily family = readFamily(child.getAttributeValue("family"));
@@ -178,10 +205,16 @@ public class WebBrowserManager implements PersistentStateComponent<Element>, Mod
       }
 
       String activeValue = child.getAttributeValue("active");
+
+      String path = StringUtil.nullize(child.getAttributeValue("path"), true);
+      if (path == null) {
+        path = family.getExecutionPath();
+      }
+
       list.add(new ConfigurableWebBrowser(id,
                                           family,
                                           StringUtil.notNullize(child.getAttributeValue("name"), family.getName()),
-                                          StringUtil.nullize(child.getAttributeValue("path"), true),
+                                          path,
                                           activeValue == null || Boolean.parseBoolean(activeValue),
                                           specificSettings));
     }
@@ -225,18 +258,29 @@ public class WebBrowserManager implements PersistentStateComponent<Element>, Mod
   }
 
   @Nullable
+  private static UUID parseUuid(@NotNull String id) {
+    if (id.indexOf('-') == -1) {
+      return null;
+    }
+
+    try {
+      return UUID.fromString(id);
+    }
+    catch (IllegalArgumentException ignored) {
+      return null;
+    }
+  }
+
+  @Nullable
   public WebBrowser findBrowserById(@Nullable String idOrName) {
     if (StringUtil.isEmpty(idOrName)) {
       return null;
     }
 
-    UUID id;
-    try {
-      id = UUID.fromString(idOrName);
-    }
-    catch (IllegalArgumentException ignored) {
+    UUID id = parseUuid(idOrName);
+    if (id == null) {
       for (ConfigurableWebBrowser browser : browsers) {
-        if (browser.getFamily().name().equals(idOrName) || browser.getFamily().getName().equals(idOrName)) {
+        if (browser.getFamily().name().equalsIgnoreCase(idOrName) || browser.getFamily().getName().equalsIgnoreCase(idOrName)) {
           return browser;
         }
       }
@@ -253,13 +297,20 @@ public class WebBrowserManager implements PersistentStateComponent<Element>, Mod
 
   @NotNull
   public WebBrowser getBrowser(@NotNull BrowserFamily family) {
+    WebBrowser browser = findBrowser(family);
+    LOG.assertTrue(browser != null, "Must be at least one browser per family");
+    return browser;
+  }
+
+  @Nullable
+  public WebBrowser findBrowser(@NotNull BrowserFamily family) {
     for (ConfigurableWebBrowser browser : browsers) {
       if (family.equals(browser.getFamily())) {
         return browser;
       }
     }
 
-    throw new IllegalStateException("Must be at least one browser per family");
+    return null;
   }
 
   public boolean isActive(@NotNull WebBrowser browser) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,10 +20,7 @@ import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.impl.DaemonProgressIndicator;
 import com.intellij.concurrency.Job;
 import com.intellij.concurrency.JobLauncher;
-import com.intellij.injected.editor.DocumentWindow;
-import com.intellij.injected.editor.DocumentWindowImpl;
-import com.intellij.injected.editor.EditorWindow;
-import com.intellij.injected.editor.VirtualFileWindow;
+import com.intellij.injected.editor.*;
 import com.intellij.lang.Language;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.lang.injection.MultiHostInjector;
@@ -118,7 +115,7 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager impleme
 
   @Override
   public void dispose() {
-    EditorWindow.disposeInvalidEditors();
+    EditorWindowImpl.disposeInvalidEditors();
   }
 
   @Override

@@ -37,7 +37,6 @@ import com.intellij.openapi.components.impl.stores.StoresFactory;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -1155,12 +1154,6 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
       }
     }
     return true;
-  }
-
-  @Nullable
-  @Override
-  public PluginId getPluginByClassName(@NotNull String className) {
-    return PluginManagerCore.getPluginByClassName(className);
   }
 
   public boolean tryToApplyActivationState(boolean active, Window window) {

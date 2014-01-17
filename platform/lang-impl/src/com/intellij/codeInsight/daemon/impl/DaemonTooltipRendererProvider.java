@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,6 +34,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.xml.util.XmlStringUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -153,7 +154,7 @@ public class DaemonTooltipRendererProvider implements ErrorStripTooltipRendererP
         }
       }
       if (!text.isEmpty()) { //otherwise do not change anything
-        myText = "<html><body>" +  StringUtil.trimEnd(text, UIUtil.BORDER_LINE) + "</body></html>";
+        myText = XmlStringUtil.wrapInHtml(StringUtil.trimEnd(text, UIUtil.BORDER_LINE));
         return true;
       }
       return false;
@@ -176,13 +177,13 @@ public class DaemonTooltipRendererProvider implements ErrorStripTooltipRendererP
     @Override
     protected void stripDescription() {
       final List<String> problems = StringUtil.split(UIUtil.getHtmlBody(myText), UIUtil.BORDER_LINE);
-      myText = "<html><body>";
-      for (int i = 0, size = problems.size(); i < size; i++) {
-        final String problem = StringUtil.split(problems.get(i), END_MARKER).get(0);
+      myText = "";
+      for (String problem1 : problems) {
+        final String problem = StringUtil.split(problem1, END_MARKER).get(0);
         myText += UIUtil.getHtmlBody(problem).replace(DaemonBundle.message("inspection.collapse.description"),
                                                       DaemonBundle.message("inspection.extended.description")) + UIUtil.BORDER_LINE;
       }
-      myText = StringUtil.trimEnd(myText, UIUtil.BORDER_LINE) + "</body></html>";
+      myText = XmlStringUtil.wrapInHtml(StringUtil.trimEnd(myText, UIUtil.BORDER_LINE));
     }
 
     @Override

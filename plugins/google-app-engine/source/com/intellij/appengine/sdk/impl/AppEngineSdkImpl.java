@@ -121,9 +121,16 @@ public class AppEngineSdkImpl implements AppEngineSdk {
       }
       else {
         myClassesWhiteList = AppEngineSdkUtil.computeWhiteList(getToolsApiJarFile());
-        AppEngineSdkUtil.saveWhiteList(cachedWhiteList, myClassesWhiteList);
+        if (!myClassesWhiteList.isEmpty()) {
+          AppEngineSdkUtil.saveWhiteList(cachedWhiteList, myClassesWhiteList);
+        }
       }
     }
+    if (myClassesWhiteList.isEmpty()) {
+      //don't report errors if white-list wasn't properly loaded
+      return true;
+    }
+
     final String packageName = StringUtil.getPackageName(className);
     final String name = StringUtil.getShortName(className);
     final Set<String> classes = myClassesWhiteList.get(packageName);

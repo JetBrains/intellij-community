@@ -37,7 +37,7 @@ class ValueHintTreeComponent extends AbstractValueHintTreeComponent<Pair<NodeDes
   private final InspectDebuggerTree myTree;
 
   public ValueHintTreeComponent(final ValueHint valueHint, InspectDebuggerTree tree, final String title) {
-    super(valueHint, tree, Pair.create(tree.getInspectDescriptor(), title));
+    super(tree, Pair.create(tree.getInspectDescriptor(), title));
     myValueHint = valueHint;
     myTree = tree;
   }
@@ -61,7 +61,6 @@ class ValueHintTreeComponent extends AbstractValueHintTreeComponent<Pair<NodeDes
   @Override
   protected void setNodeAsRoot(final Object node) {
     if (node instanceof DebuggerTreeNodeImpl) {
-      myValueHint.shiftLocation();
       final DebuggerTreeNodeImpl debuggerTreeNode = (DebuggerTreeNodeImpl)node;
       final DebuggerContextImpl context = (DebuggerManagerEx.getInstanceEx(myValueHint.getProject())).getContext();
       context.getDebugProcess().getManagerThread().schedule(new DebuggerContextCommandImpl(context) {

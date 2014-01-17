@@ -609,7 +609,11 @@ public class JavaDocInfoGenerator {
             text = "\"" + StringUtil.trimLog(text, 120) + "\"";
           }
           else if (type.equalsToText("char")) text = "'" + text + "'";
-          initializer = instance.getElementFactory().createExpressionFromText(text, variable);
+          try {
+            initializer = instance.getElementFactory().createExpressionFromText(text, variable);
+          } catch (IncorrectOperationException ex) {
+            LOG.error(text, ex);
+          }
         }
       }
     }

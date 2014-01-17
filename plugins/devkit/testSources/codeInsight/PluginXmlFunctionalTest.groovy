@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.intellij.codeInspection.LocalInspectionTool
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection
 import com.intellij.codeInspection.htmlInspections.RequiredAttributesInspection
 import com.intellij.codeInspection.unusedSymbol.UnusedSymbolLocalInspection
+import com.intellij.codeInspection.xml.DeprecatedClassUsageInspection
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PluginPathManager
 import com.intellij.psi.ElementDescriptionUtil
@@ -30,7 +31,6 @@ import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase
 import com.intellij.testFramework.fixtures.TempDirTestFixture
 import com.intellij.usageView.UsageViewNodeTextLocation
 import com.intellij.usageView.UsageViewTypeLocation
-import com.intellij.codeInspection.xml.DeprecatedClassUsageInspection
 import org.jetbrains.idea.devkit.inspections.*
 
 /**
@@ -202,6 +202,15 @@ public class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
 
   public void testExtensionAttributeDeclaredUsingAccessors() {
     myFixture.testHighlighting("extensionAttributeWithAccessors.xml", "ExtBeanWithAccessors.java");
+  }
+
+  public void testLanguageAttribute() {
+    myFixture.addClass("package com.intellij.lang; " +
+                       "public class Language { " +
+                       "  protected Language(String id) {}" +
+                       "}")
+    myFixture.testHighlighting("languageAttribute.xml",
+                               "MyLanguageAttributeEPBean.java", "MyLanguage.java")
   }
 
   public void testPluginModule() throws Throwable {

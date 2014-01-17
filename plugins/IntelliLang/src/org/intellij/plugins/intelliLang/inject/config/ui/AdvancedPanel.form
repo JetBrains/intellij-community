@@ -26,7 +26,7 @@
             </constraints>
             <properties>
               <labelFor value="7bf4e"/>
-              <text value="&amp;Value Pattern:"/>
+              <text value="&amp;Value pattern:"/>
               <toolTipText value="&lt;html&gt;Enter a regular expression that selects the parts of the tag's or attribute's value the language should be injected into.&lt;br&gt;The pattern should contain exactly one capturing group.&lt;/html&gt;"/>
             </properties>
           </component>
@@ -43,7 +43,7 @@
               <grid row="0" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
-              <text value="&amp;Single File"/>
+              <text value="&amp;Single file"/>
             </properties>
           </component>
         </children>

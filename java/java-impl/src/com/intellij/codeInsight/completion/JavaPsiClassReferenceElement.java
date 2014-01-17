@@ -49,8 +49,8 @@ public class JavaPsiClassReferenceElement extends LookupItem<Object> {
 
   public JavaPsiClassReferenceElement(PsiClass psiClass) {
     super(psiClass.getName(), psiClass.getName());
-    myClass = psiClass.getContainingFile().getVirtualFile() == null ? psiClass : PsiAnchor.create(psiClass);
     myQualifiedName = psiClass.getQualifiedName();
+    myClass = psiClass.getContainingFile().getVirtualFile() == null || myQualifiedName == null ? psiClass : PsiAnchor.create(psiClass);
     JavaCompletionUtil.setShowFQN(this);
     setInsertHandler(AllClassesGetter.TRY_SHORTENING);
     setTailType(TailType.NONE);

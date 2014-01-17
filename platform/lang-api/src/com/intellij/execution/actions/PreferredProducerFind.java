@@ -16,7 +16,6 @@
 
 package com.intellij.execution.actions;
 
-import com.intellij.diagnostic.PluginException;
 import com.intellij.execution.Location;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.ConfigurationType;
@@ -24,8 +23,8 @@ import com.intellij.execution.impl.ConfigurationFromContextWrapper;
 import com.intellij.execution.junit.RuntimeConfigurationProducer;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.ExtensionException;
 import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.extensions.PluginId;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -51,27 +50,7 @@ class PreferredProducerFind {
     if (location == null) {
       return null;
     }
-
-    //todo load configuration types if not already loaded
-    Extensions.getExtensions(ConfigurationType.CONFIGURATION_TYPE_EP);
-    final RuntimeConfigurationProducer[] configurationProducers =
-      ApplicationManager.getApplication().getExtensions(RuntimeConfigurationProducer.RUNTIME_CONFIGURATION_PRODUCER);
-    final ArrayList<RuntimeConfigurationProducer> producers = new ArrayList<RuntimeConfigurationProducer>();
-    for (final RuntimeConfigurationProducer prototype : configurationProducers) {
-      final RuntimeConfigurationProducer producer;
-      try {
-        producer = prototype.createProducer(location, context);
-      }
-      catch (AbstractMethodError e) {
-        PluginId pluginId = ApplicationManager.getApplication().getPluginByClassName(prototype.getClass().getName());
-        LOG.error(prototype.toString(), pluginId != null ? new PluginException("Incompatible plugin", e, pluginId) : e);
-        continue;
-      }
-      if (producer.getConfiguration() != null) {
-        LOG.assertTrue(producer.getSourceElement() != null, producer);
-        producers.add(producer);
-      }
-    }
+    final List<RuntimeConfigurationProducer> producers = findAllProducers(location, context);
     if (producers.isEmpty()) return null;
     Collections.sort(producers, RuntimeConfigurationProducer.COMPARATOR);
 
@@ -88,6 +67,29 @@ class PreferredProducerFind {
     return producers;
   }
 
+  private static List<RuntimeConfigurationProducer> findAllProducers(Location location, ConfigurationContext context) {
+    //todo load configuration types if not already loaded
+    Extensions.getExtensions(ConfigurationType.CONFIGURATION_TYPE_EP);
+    final RuntimeConfigurationProducer[] configurationProducers =
+      ApplicationManager.getApplication().getExtensions(RuntimeConfigurationProducer.RUNTIME_CONFIGURATION_PRODUCER);
+    final ArrayList<RuntimeConfigurationProducer> producers = new ArrayList<RuntimeConfigurationProducer>();
+    for (final RuntimeConfigurationProducer prototype : configurationProducers) {
+      final RuntimeConfigurationProducer producer;
+      try {
+        producer = prototype.createProducer(location, context);
+      }
+      catch (AbstractMethodError e) {
+        LOG.error(new ExtensionException(prototype.getClass()));
+        continue;
+      }
+      if (producer.getConfiguration() != null) {
+        LOG.assertTrue(producer.getSourceElement() != null, producer);
+        producers.add(producer);
+      }
+    }
+    return producers;
+  }
+
   public static List<ConfigurationFromContext> getConfigurationsFromContext(final Location location,
                                                                             final ConfigurationContext context,
                                                                             final boolean strict) {
@@ -95,24 +97,9 @@ class PreferredProducerFind {
       return null;
     }
 
-    //todo load configuration types if not already loaded
-    Extensions.getExtensions(ConfigurationType.CONFIGURATION_TYPE_EP);
-    final RuntimeConfigurationProducer[] configurationProducers =
-      ApplicationManager.getApplication().getExtensions(RuntimeConfigurationProducer.RUNTIME_CONFIGURATION_PRODUCER);
     final ArrayList<ConfigurationFromContext> configurationsFromContext = new ArrayList<ConfigurationFromContext>();
-    for (final RuntimeConfigurationProducer prototype : configurationProducers) {
-      final RuntimeConfigurationProducer producer;
-      try {
-        producer = prototype.createProducer(location, context);
-      }
-      catch (AbstractMethodError e) {
-        LOG.error(prototype.toString(), e);
-        continue;
-      }
-      if (producer.getConfiguration() != null) {
-        LOG.assertTrue(producer.getSourceElement() != null, producer);
-        configurationsFromContext.add(new ConfigurationFromContextWrapper(producer));
-      }
+    for (RuntimeConfigurationProducer producer : findAllProducers(location, context)) {
+      configurationsFromContext.add(new ConfigurationFromContextWrapper(producer));
     }
 
     for (RunConfigurationProducer producer : Extensions.getExtensions(RunConfigurationProducer.EP_NAME)) {

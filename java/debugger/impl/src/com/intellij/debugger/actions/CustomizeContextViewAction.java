@@ -20,12 +20,12 @@ import com.intellij.debugger.settings.DebuggerDataViewsConfigurable;
 import com.intellij.debugger.settings.NodeRendererSettings;
 import com.intellij.debugger.settings.UserRenderersConfigurable;
 import com.intellij.debugger.ui.impl.FrameVariablesTree;
+import com.intellij.debugger.ui.impl.WatchDebuggerTree;
 import com.intellij.debugger.ui.impl.watch.DebuggerTree;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.options.CompositeConfigurable;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
@@ -76,7 +76,7 @@ public class CustomizeContextViewAction extends DebuggerAction{
 
   public void update(AnActionEvent e) {
     DebuggerTree tree = getTree(e.getDataContext());
-    e.getPresentation().setVisible(tree instanceof FrameVariablesTree);
+    e.getPresentation().setVisible(tree instanceof FrameVariablesTree || tree instanceof WatchDebuggerTree);
     e.getPresentation().setText(ActionsBundle.actionText(DebuggerActions.CUSTOMIZE_VIEWS));
   }
 }

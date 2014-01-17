@@ -28,7 +28,7 @@ public class XValueHintTreeComponent extends AbstractValueHintTreeComponent<Pair
   private final XDebuggerTree myTree;
 
   public XValueHintTreeComponent(@Nullable XValueHint valueHint, @NotNull XDebuggerTree tree, @NotNull Pair<XValue, String> initialItem) {
-    super(valueHint, tree, initialItem);
+    super(tree, initialItem);
 
     myValueHint = valueHint;
     myTree = tree;
@@ -46,10 +46,6 @@ public class XValueHintTreeComponent extends AbstractValueHintTreeComponent<Pair
   @Override
   protected void setNodeAsRoot(final Object node) {
     if (node instanceof XValueNodeImpl) {
-      if (myValueHint != null) {
-        myValueHint.shiftLocation();
-      }
-
       XValueNodeImpl valueNode = (XValueNodeImpl)node;
       Pair<XValue, String> item = Pair.create(valueNode.getValueContainer(), valueNode.getName());
       addToHistory(item);

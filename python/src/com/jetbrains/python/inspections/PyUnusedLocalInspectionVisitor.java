@@ -207,7 +207,8 @@ public class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
       owner.acceptChildren(new PyRecursiveElementVisitor(){
         @Override
         public void visitPyCallExpression(final PyCallExpression node) {
-          if ("locals".equals(node.getCallee().getName())){
+          final PyExpression callee = node.getCallee();
+          if (callee != null && "locals".equals(callee.getName())){
             throw new DontPerformException();
           }
           node.acceptChildren(this); // look at call expr in arguments
@@ -290,7 +291,7 @@ public class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
                 isEmpty = isEmptyFunction(func);
                 emptyFunctions.put(func, isEmpty);
               }
-              if (isEmpty) {
+              if (isEmpty && !mayBeField) {
                 continue;
               }
             }

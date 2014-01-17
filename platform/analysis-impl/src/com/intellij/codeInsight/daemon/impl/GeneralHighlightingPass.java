@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,9 @@ import com.intellij.codeInsight.daemon.impl.analysis.CustomHighlightInfoHolder;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingLevelManager;
 import com.intellij.codeInsight.problems.ProblemImpl;
+import com.intellij.concurrency.JobScheduler;
 import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -56,6 +58,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingPass implements DumbAware {
@@ -68,6 +71,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
       return HighlightingLevelManager.getInstance(file.getProject()).shouldHighlight(file);
     }
   };
+  private static final Random RESTART_DAEMON_RANDOM = new Random();
 
   protected final int myStartOffset;
   protected final int myEndOffset;
@@ -86,7 +90,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
     }
   };
   protected final EditorColorsScheme myGlobalScheme;
-  private NotNullProducer<HighlightVisitor[]> myHighlightVisitorProducer = new NotNullProducer<HighlightVisitor[]>() {
+  private volatile NotNullProducer<HighlightVisitor[]> myHighlightVisitorProducer = new NotNullProducer<HighlightVisitor[]>() {
     @NotNull
     @Override
     public HighlightVisitor[] produce() {
@@ -149,7 +153,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
         visitors.add(visitor);
       }
     }
-    LOG.assertTrue(!visitors.isEmpty(), list);
+    //LOG.assertTrue(!visitors.isEmpty(), list);
 
     HighlightVisitor[] visitorArray = visitors.toArray(new HighlightVisitor[visitors.size()]);
     Arrays.sort(visitorArray, VISITOR_ORDER_COMPARATOR);
@@ -398,18 +402,21 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
                                           @NotNull final Project project,
                                           @NotNull TextEditorHighlightingPass passCalledFrom) throws ProcessCanceledException {
     progress.cancel();
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
+    JobScheduler.getScheduler().schedule(new Runnable() {
+
       @Override
       public void run() {
-        try {
-          Thread.sleep(new Random().nextInt(100));
+        Application application = ApplicationManager.getApplication();
+        if (!project.isDisposed() && !application.isDisposed()) {
+          ApplicationManager.getApplication().invokeLater(new Runnable() {
+            @Override
+            public void run() {
+              DaemonCodeAnalyzer.getInstance(project).restart();
+            }
+          }, project.getDisposed());
         }
-        catch (InterruptedException e) {
-          LOG.error(e);
-        }
-        DaemonCodeAnalyzer.getInstance(project).restart();
       }
-    }, project.getDisposed());
+    }, RESTART_DAEMON_RANDOM.nextInt(100), TimeUnit.MILLISECONDS);
     throw new ProcessCanceledException();
   }
 

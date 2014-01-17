@@ -19,6 +19,7 @@ import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.DebuggerInvocationUtil;
 import com.intellij.debugger.DebuggerManagerEx;
+import com.intellij.debugger.actions.DebuggerActions;
 import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.JVMName;
 import com.intellij.debugger.engine.JVMNameUtil;
@@ -32,8 +33,13 @@ import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.impl.EditorTextProvider;
 import com.intellij.debugger.ui.impl.DebuggerTreeRenderer;
 import com.intellij.debugger.ui.impl.InspectDebuggerTree;
+import com.intellij.debugger.ui.impl.watch.NodeDescriptorImpl;
 import com.intellij.debugger.ui.impl.watch.WatchItemDescriptor;
 import com.intellij.debugger.ui.tree.render.DescriptorLabelListener;
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -54,6 +60,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.KeyEvent;
 
 /**
  * @author lex
@@ -151,8 +158,7 @@ public class ValueHint extends AbstractValueHint {
                 }
               });
             } else {
-              final InspectDebuggerTree tree = getInspectTree(descriptor);
-              showTreePopup(tree, debuggerContext, expressionText, new ValueHintTreeComponent(ValueHint.this, tree, expressionText));
+              createAndShowTree(expressionText, descriptor, debuggerContext);
             }
           }
           catch (EvaluateException e) {
@@ -167,6 +173,11 @@ public class ValueHint extends AbstractValueHint {
     }
   }
 
+  private void createAndShowTree(String expressionText, WatchItemDescriptor descriptor, DebuggerContextImpl debuggerContext) {
+    final InspectDebuggerTree tree = getInspectTree(descriptor);
+    showTreePopup(tree, debuggerContext, expressionText, new ValueHintTreeComponent(this, tree, expressionText));
+  }
+
   private static boolean isActiveTooltipApplicable(final Value value) {
     return value != null && !(value instanceof PrimitiveValue);
   }
@@ -175,6 +186,14 @@ public class ValueHint extends AbstractValueHint {
                         final DebuggerContextImpl debuggerContext,
                         final String title,
                         final AbstractValueHintTreeComponent<?> component) {
+    final AnAction setValueAction = ActionManager.getInstance().getAction(DebuggerActions.SET_VALUE);
+    setValueAction.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_F2, 0)), tree);
+    Disposer.register(tree, new Disposable() {
+      @Override
+      public void dispose() {
+        setValueAction.unregisterCustomShortcutSet(tree);
+      }
+    });
     DebuggerInvocationUtil.invokeLater(getProject(), new Runnable() {
       @Override
       public void run() {
@@ -203,15 +222,14 @@ public class ValueHint extends AbstractValueHint {
                               @Override
                               public void threadAction() {
                                 descriptor.setRenderer(debugProcess.getAutoRenderer(descriptor));
-                                final InspectDebuggerTree tree = getInspectTree(descriptor);
                                 final String expressionText = ApplicationManager.getApplication().runReadAction(new Computable<String>() {
                                   @Override
                                   public String compute() {
                                     return myCurrentExpression.getText();
                                   }
                                 });
-                                showTreePopup(tree, debuggerContext, expressionText,
-                                              new ValueHintTreeComponent(ValueHint.this, tree, expressionText));
+
+                                createAndShowTree(expressionText, descriptor, debuggerContext);
                               }
                             });
               }
@@ -226,7 +244,7 @@ public class ValueHint extends AbstractValueHint {
     });
   }
 
-  private InspectDebuggerTree getInspectTree(final WatchItemDescriptor descriptor) {
+  private InspectDebuggerTree getInspectTree(final NodeDescriptorImpl descriptor) {
     final InspectDebuggerTree tree = new InspectDebuggerTree(getProject());
     tree.getModel().addTreeModelListener(createTreeListener(tree));
     tree.setInspectDescriptor(descriptor);

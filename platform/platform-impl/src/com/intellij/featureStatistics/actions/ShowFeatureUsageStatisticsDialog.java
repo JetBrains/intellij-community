@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,6 +34,7 @@ import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.ListTableModel;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -181,7 +182,7 @@ public class ShowFeatureUsageStatisticsDialog extends DialogWrapper {
         " (~" + fstats.invocations / fstats.dayCount + " per working day)";
     }
 
-    controlsPanel.add(new JLabel("<html><body>" + labelText + "</body></html>"), BorderLayout.NORTH);
+    controlsPanel.add(new JLabel(XmlStringUtil.wrapInHtml(labelText)), BorderLayout.NORTH);
 
     JPanel topPanel = new JPanel(new BorderLayout());
     topPanel.add(controlsPanel, BorderLayout.NORTH);

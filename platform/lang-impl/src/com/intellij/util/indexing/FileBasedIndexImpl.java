@@ -56,6 +56,9 @@ import com.intellij.openapi.vfs.newvfs.persistent.FlushingDaemon;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiDocumentTransactionListener;
+import com.intellij.psi.impl.PsiManagerImpl;
+import com.intellij.psi.impl.PsiTreeChangeEventImpl;
+import com.intellij.psi.impl.PsiTreeChangePreprocessor;
 import com.intellij.psi.impl.cache.impl.id.PlatformIdTableBuilding;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.search.EverythingGlobalScope;
@@ -106,6 +109,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
   private final TObjectIntHashMap<ID<?, ?>> myIndexIdToVersionMap = new TObjectIntHashMap<ID<?, ?>>();
   private final Set<ID<?, ?>> myNotRequiringContentIndices = new THashSet<ID<?, ?>>();
   private final Set<ID<?, ?>> myRequiringContentIndices = new THashSet<ID<?, ?>>();
+  private final Set<ID<?, ?>> myPsiDependentIndices = new THashSet<ID<?, ?>>();
   private final Set<FileType> myNoLimitCheckTypes = new THashSet<FileType>();
 
   private final PerIndexDocumentVersionMap myLastIndexedDocStamps = new PerIndexDocumentVersionMap();
@@ -442,6 +446,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
         else {
           myRequiringContentIndices.add(name);
         }
+        if (extension instanceof PsiDependentIndex) myPsiDependentIndices.add(name);
         myNoLimitCheckTypes.addAll(extension.getFileTypesWithSizeLimitNotApplicable());
         break;
       }
@@ -1392,12 +1397,15 @@ public class FileBasedIndexImpl extends FileBasedIndex {
   }
 
   @NotNull
-  private Set<Document> getUnsavedOrTransactedDocuments() {
-    final Set<Document> docs = new THashSet<Document>(Arrays.asList(myFileDocumentManager.getUnsavedDocuments()));
+  private Set<Document> getUnsavedDocuments() {
+    return new THashSet<Document>(Arrays.asList(myFileDocumentManager.getUnsavedDocuments()));
+  }
+
+  @NotNull
+  private Set<Document> getTransactedDocuments() {
     synchronized (myTransactionMap) {
-      docs.addAll(myTransactionMap.keySet());
+      return new THashSet<Document>(myTransactionMap.keySet());
     }
-    return docs;
   }
 
   private void indexUnsavedDocuments(@NotNull ID<?, ?> indexId,
@@ -1408,7 +1416,8 @@ public class FileBasedIndexImpl extends FileBasedIndex {
       return; // no need to index unsaved docs
     }
 
-    final Set<Document> documents = getUnsavedOrTransactedDocuments();
+    Set<Document> documents = myPsiDependentIndices.contains(indexId) ? getTransactedDocuments() : getUnsavedDocuments();
+
     if (!documents.isEmpty()) {
       // now index unsaved data
       final StorageGuard.Holder guard = setDataBufferingEnabled(true);
@@ -1419,11 +1428,9 @@ public class FileBasedIndexImpl extends FileBasedIndex {
 
         semaphore.down();
         boolean allDocsProcessed = true;
-        boolean hasUncommittedDocuments = project == null;
         try {
           for (Document document : documents) {
             allDocsProcessed &= indexUnsavedDocument(document, indexId, project, filter, restrictedFile);
-            if (!hasUncommittedDocuments) hasUncommittedDocuments = PsiDocumentManager.getInstance(project).isUncommited(document);
             ProgressManager.checkCanceled();
           }
         }
@@ -1443,7 +1450,6 @@ public class FileBasedIndexImpl extends FileBasedIndex {
 
             // if we have uncommitted documents in unsaved documents, we may index old psi with new uncommitted doc,
             // to properly reindex with new psi / new doc we don't mark index up to date in this case (IDEA-111448)
-            if (!hasUncommittedDocuments) myUpToDateIndices.add(indexId);
           }
         }
       }
@@ -2439,11 +2445,32 @@ public class FileBasedIndexImpl extends FileBasedIndex {
   public void registerIndexableSet(@NotNull IndexableFileSet set, @Nullable Project project) {
     myIndexableSets.add(set);
     myIndexableSetToProjectMap.put(set, project);
+    if (project != null) {
+      ((PsiManagerImpl)PsiManager.getInstance(project)).addTreeChangePreprocessor(new PsiTreeChangePreprocessor() {
+        @Override
+        public void treeChanged(@NotNull PsiTreeChangeEventImpl event) {
+          if (event.isGenericChange() &&
+              event.getCode() == PsiTreeChangeEventImpl.PsiEventType.CHILDREN_CHANGED) {
+            PsiFile file = event.getFile();
+            if (file != null) {
+              VirtualFile virtualFile = file.getVirtualFile();
+              if (virtualFile instanceof VirtualFileWithId) {
+                for(ID<?,?> psiBackedIndex:myPsiDependentIndices) {
+                  IndexingStamp.update(virtualFile, psiBackedIndex, IndexInfrastructure.INVALID_STAMP2);
+                }
+                myChangedFilesCollector.scheduleForUpdate(virtualFile);
+                IndexingStamp.flushCache(virtualFile);
+              }
+            }
+          }
+        }
+      });
+    }
   }
 
   @Override
   public void removeIndexableSet(@NotNull IndexableFileSet set) {
-    myChangedFilesCollector.forceUpdate(null, null, null, true);
+    myChangedFilesCollector.forceUpdate(myIndexableSetToProjectMap.get(set), null, null, true);
     IndexingStamp.flushCaches();
     myIndexableSets.remove(set);
     myIndexableSetToProjectMap.remove(set);

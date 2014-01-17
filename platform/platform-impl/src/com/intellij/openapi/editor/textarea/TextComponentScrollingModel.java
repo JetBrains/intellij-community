@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,7 +31,7 @@ import java.awt.*;
 public class TextComponentScrollingModel implements ScrollingModel {
   private final JTextComponent myTextComponent;
 
-  public TextComponentScrollingModel(final JTextComponent textComponent) {
+  public TextComponentScrollingModel(@NotNull JTextComponent textComponent) {
     myTextComponent = textComponent;
   }
 

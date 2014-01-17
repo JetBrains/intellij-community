@@ -841,7 +841,7 @@ public class FileUtil extends FileUtilRt {
   }
 
   public static int pathHashCode(@Nullable String path) {
-    return StringUtil.isEmpty(path) || path == null ? 0 : PATH_HASHING_STRATEGY.computeHashCode(toCanonicalPath(path));
+    return StringUtil.isEmpty(path) ? 0 : PATH_HASHING_STRATEGY.computeHashCode(toCanonicalPath(path));
   }
 
   /**
@@ -987,6 +987,7 @@ public class FileUtil extends FileUtilRt {
       File toFile = new File(toDir, fromFile.getName());
       success = success && fromFile.renameTo(toFile);
     }
+    //noinspection ResultOfMethodCallIgnored
     fromDir.delete();
 
     return success;
@@ -1020,7 +1021,7 @@ public class FileUtil extends FileUtilRt {
     return file.canExecute();
   }
 
-  public static void setReadOnlyAttribute(@NotNull String path, boolean readOnlyFlag) throws IOException {
+  public static void setReadOnlyAttribute(@NotNull String path, boolean readOnlyFlag) {
     final boolean writableFlag = !readOnlyFlag;
     final File file = new File(path);
     if (!file.setWritable(writableFlag) && file.canWrite() != writableFlag) {

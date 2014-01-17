@@ -21,6 +21,7 @@ import com.intellij.ide.util.projectWizard.ModuleBuilder;
 import com.intellij.ide.util.projectWizard.ModuleWizardStep;
 import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
@@ -29,6 +30,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.platform.ProjectTemplate;
 import com.intellij.platform.ProjectTemplateEP;
+import com.intellij.platform.ProjectTemplatesFactory;
 import com.intellij.platform.templates.ArchivedProjectTemplate;
 import com.intellij.platform.templates.LocalArchivedTemplate;
 import com.intellij.platform.templates.RemoteTemplatesFactory;
@@ -100,7 +102,7 @@ public class ProjectTypeStep extends ModuleWizardStep implements Disposable, Act
           append("         ");
         }
         else {
-          setBorder(IdeBorderFactory.createEmptyBorder(3, 10, 3, 5));
+          setBorder(IdeBorderFactory.createEmptyBorder(2, 10, 2, 5));
           setIcon(value.getIcon());
         }
         append(value.getName());
@@ -152,7 +154,25 @@ public class ProjectTypeStep extends ModuleWizardStep implements Disposable, Act
     }
 
     List<TemplatesGroup> groups = new ArrayList<TemplatesGroup>(myTemplatesMap.keySet());
-    Collections.sort(groups);
+
+    // sorting by module type popularity
+    final MultiMap<ModuleType, TemplatesGroup> moduleTypes = new MultiMap<ModuleType, TemplatesGroup>();
+    for (TemplatesGroup group : groups) {
+      ModuleType type = getModuleType(group);
+      moduleTypes.putValue(type, group);
+    }
+    Collections.sort(groups, new Comparator<TemplatesGroup>() {
+      @Override
+      public int compare(TemplatesGroup o1, TemplatesGroup o2) {
+        int u = Comparing.compare(ProjectTemplatesFactory.CUSTOM_GROUP.equals(o1.getName()), ProjectTemplatesFactory.CUSTOM_GROUP.equals(o2.getName()));
+        if (u != 0) return u;
+        int i1 = moduleTypes.get(getModuleType(o2)).size() - moduleTypes.get(getModuleType(o1)).size();
+        if (i1 != 0) return i1;
+        int i = myTemplatesMap.get(o2).size() - myTemplatesMap.get(o1).size();
+        return i != 0 ? i : o1.compareTo(o2);
+      }
+    });
+
     Set<String> groupNames = ContainerUtil.map2Set(groups, new Function<TemplatesGroup, String>() {
       @Override
       public String fun(TemplatesGroup group) {
@@ -177,6 +197,16 @@ public class ProjectTypeStep extends ModuleWizardStep implements Disposable, Act
       }
     }
     return groups;
+  }
+
+  private ModuleType getModuleType(TemplatesGroup group) {
+    Collection<ProjectTemplate> templates = myTemplatesMap.get(group);
+    if (templates.isEmpty()) {
+      return null;
+    }
+    ProjectTemplate template = templates.iterator().next();
+    ModuleBuilder builder = myBuilders.get(template);
+    return builder.getModuleType();
   }
 
   // new category or template is selected

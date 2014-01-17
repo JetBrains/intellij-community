@@ -14,6 +14,7 @@ import com.intellij.testFramework.IdeaTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
 import com.intellij.util.Processor;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 
 import java.io.IOException;
@@ -149,39 +150,79 @@ public class PsiModificationTrackerTest extends LightPlatformCodeInsightFixtureT
     assertEquals(count + 1, modificationTracker.getJavaStructureModificationCount());
   }
 
-  public void _testClassShouldNotAppearWithoutEvents() throws IOException {
-    VirtualFile file = myFixture.getTempDirFixture().createFile("Foo.java", "");
+  public void testClassShouldNotAppearWithoutEvents_WithPsi() throws IOException {
+    final VirtualFile file = myFixture.getTempDirFixture().createFile("Foo.java", "");
     final Document document = FileDocumentManager.getInstance().getDocument(file);
     assertNotNull(document);
     new WriteCommandAction.Simple(getProject()) {
       @Override
       protected void run() throws Throwable {
         assertNull(JavaPsiFacade.getInstance(getProject()).findClass("Foo", GlobalSearchScope.allScope(getProject())));
-        PsiModificationTracker tracker = PsiManager.getInstance(getProject()).getModificationTracker();
+        PsiManager psiManager = PsiManager.getInstance(getProject());
+        PsiModificationTracker tracker = psiManager.getModificationTracker();
         long count1 = tracker.getJavaStructureModificationCount();
+        PsiJavaFile psiFile = (PsiJavaFile)psiManager.findFile(file);
 
         document.insertString(0, "class Foo {}");
 
         assertEquals(count1, tracker.getJavaStructureModificationCount()); // no PSI changes yet
         //so the class should not exist
         assertNull(JavaPsiFacade.getInstance(getProject()).findClass("Foo", GlobalSearchScope.allScope(getProject())));
-
+        assertSize(0, psiFile.getClasses());
+        assertEquals("", psiManager.findFile(file).getText());
+        PlatformTestUtil.tryGcSoftlyReachableObjects();
+        
         PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
 
         assertFalse(count1 == tracker.getJavaStructureModificationCount());
         assertNotNull(JavaPsiFacade.getInstance(getProject()).findClass("Foo", GlobalSearchScope.allScope(getProject())));
+        assertEquals("class Foo {}", psiManager.findFile(file).getText());
+        assertEquals("class Foo {}", psiManager.findFile(file).getNode().getText());
+        assertSize(1, psiFile.getClasses());
+      }
+    }.execute();
+  }
+  
+  public void testClassShouldNotAppearWithoutEvents_WithoutPsi() throws IOException {
+    final GlobalSearchScope allScope = GlobalSearchScope.allScope(getProject());
+    final JavaPsiFacade facade = JavaPsiFacade.getInstance(getProject());
+    final PsiManager psiManager = PsiManager.getInstance(getProject());
+    final PsiModificationTracker tracker = psiManager.getModificationTracker();
+
+    final VirtualFile file = myFixture.getTempDirFixture().createFile("Foo.java", "");
+    final Document document = FileDocumentManager.getInstance().getDocument(file);
+    assertNotNull(document);
+    new WriteCommandAction.Simple(getProject()) {
+      @Override
+      protected void run() throws Throwable {
+        assertNull(facade.findClass("Foo", allScope));
+        long count1 = tracker.getJavaStructureModificationCount();
+        
+        PlatformTestUtil.tryGcSoftlyReachableObjects();
+        assertNull(PsiDocumentManager.getInstance(getProject()).getCachedPsiFile(document));
+
+        document.insertString(0, "class Foo {}");
+
+        assertFalse(count1 == tracker.getJavaStructureModificationCount());
+        assertTrue(PsiDocumentManager.getInstance(getProject()).isCommitted(document));
+        assertNotNull(facade.findClass("Foo", allScope));
+
+        PsiJavaFile psiFile = (PsiJavaFile)psiManager.findFile(file);
+        assertSize(1, psiFile.getClasses());
+        assertEquals("class Foo {}", psiFile.getText());
+        assertEquals("class Foo {}", psiFile.getNode().getText());
       }
     }.execute();
   }
 
-  public void _testClassShouldNotDisappearWithoutEvents() throws IOException {
+  public void testClassShouldNotDisappearWithoutEvents() throws IOException {
     new WriteCommandAction.Simple(getProject()) {
       @Override
       protected void run() throws Throwable {
         PsiModificationTracker tracker = PsiManager.getInstance(getProject()).getModificationTracker();
         long count0 = tracker.getJavaStructureModificationCount();
 
-        VirtualFile file = myFixture.addFileToProject("Foo.java", "class Foo {}").getVirtualFile();
+        final VirtualFile file = myFixture.addFileToProject("Foo.java", "class Foo {}").getVirtualFile();
         final Document document = FileDocumentManager.getInstance().getDocument(file);
         assertNotNull(document);
 
@@ -191,13 +232,20 @@ public class PsiModificationTrackerTest extends LightPlatformCodeInsightFixtureT
 
         document.deleteString(0, document.getTextLength());
 
+        // some plugins (e.g. Copyright) hold file reference in an invokeLater runnable, let them pass 
+        UIUtil.dispatchAllInvocationEvents();
+
         // gc softly-referenced file and AST
         PlatformTestUtil.tryGcSoftlyReachableObjects();
-        assertNull(((PsiManagerEx)PsiManager.getInstance(getProject())).getFileManager().getCachedPsiFile(file));
+        final PsiManagerEx psiManager = (PsiManagerEx)PsiManager.getInstance(getProject());
+        assertNull(psiManager.getFileManager().getCachedPsiFile(file));
 
         assertEquals(count1, tracker.getJavaStructureModificationCount()); // no PSI changes yet
-        //so the class should exist
+        //so the class should still be there
         assertNotNull(JavaPsiFacade.getInstance(getProject()).findClass("Foo", GlobalSearchScope.allScope(getProject())));
+        assertSize(1, ((PsiJavaFile)psiManager.findFile(file)).getClasses());
+        assertEquals("class Foo {}", psiManager.findFile(file).getText());
+        PlatformTestUtil.tryGcSoftlyReachableObjects();
 
         PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
 

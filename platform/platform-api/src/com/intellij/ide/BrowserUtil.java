@@ -471,4 +471,17 @@ public class BrowserUtil {
       return panel;
     }
   }
+
+  @NotNull
+  public static String getDefaultAlternativeBrowserPath() {
+    if (SystemInfo.isWindows) {
+      return "C:\\Program Files\\Internet Explorer\\IExplore.exe";
+    }
+    else if (SystemInfo.isMac) {
+      return "open";
+    }
+    else {
+      return "";
+    }
+  }
 }

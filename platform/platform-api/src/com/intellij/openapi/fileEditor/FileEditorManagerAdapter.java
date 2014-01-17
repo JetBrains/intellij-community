@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,9 +19,12 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
 public abstract class FileEditorManagerAdapter implements FileEditorManagerListener{
+  @Override
   public void fileOpened(@NotNull FileEditorManager source, @NotNull VirtualFile file) {}
 
+  @Override
   public void fileClosed(@NotNull FileEditorManager source, @NotNull VirtualFile file) {}
 
+  @Override
   public void selectionChanged(@NotNull FileEditorManagerEvent event) {}
 }

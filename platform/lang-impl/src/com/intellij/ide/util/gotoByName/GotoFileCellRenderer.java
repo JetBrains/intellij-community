@@ -82,7 +82,7 @@ public class GotoFileCellRenderer extends PsiElementListCellRenderer<PsiFileSyst
   }
 
   @Nullable
-  private static String getRelativePath(final VirtualFile virtualFile, final Project project) {
+  static String getRelativePath(final VirtualFile virtualFile, final Project project) {
     String url = virtualFile.getPresentableUrl();
     if (project == null) {
       return url;

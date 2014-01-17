@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -171,6 +171,7 @@ public class DocumentWindowImpl extends UserDataHolderBase implements Disposable
     return startOffsetOfNextLine == 0 || getText().charAt(startOffsetOfNextLine - 1) != '\n' ? startOffsetOfNextLine : startOffsetOfNextLine - 1;
   }
 
+  @NotNull
   @Override
   public String getText() {
     CachedText cachedText = myCachedText;
@@ -213,7 +214,7 @@ public class DocumentWindowImpl extends UserDataHolderBase implements Disposable
 
   @NotNull
   @Override
-  public ImmutableCharSequence getImmutableCharSequence() {
+  public CharSequence getImmutableCharSequence() {
     return ImmutableCharSequence.asImmutable(getText());
   }
 

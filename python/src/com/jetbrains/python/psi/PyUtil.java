@@ -44,6 +44,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.QualifiedName;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -60,7 +61,6 @@ import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.codeInsight.stdlib.PyNamedTupleType;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
-import com.intellij.psi.util.QualifiedName;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.QualifiedResolveResult;
 import com.jetbrains.python.psi.types.*;
@@ -1313,13 +1313,31 @@ public class PyUtil {
       final PyStatement[] statements = statementList.getStatements();
       if (toTheBeginning && statements.length > 0) {
         final PyDocStringOwner docStringOwner = PsiTreeUtil.getParentOfType(statementList, PyDocStringOwner.class);
-        final PyStatement firstStatement = statements[0];
-        if (docStringOwner != null && firstStatement instanceof PyExpressionStatement &&
-            ((PyExpressionStatement)firstStatement).getExpression() == docStringOwner.getDocStringExpression()) {
-          element = statementList.addAfter(element, firstStatement);
+        PyStatement anchor = statements[0];
+        if (docStringOwner != null && anchor instanceof PyExpressionStatement &&
+            ((PyExpressionStatement)anchor).getExpression() == docStringOwner.getDocStringExpression()) {
+          final PyStatement next = PsiTreeUtil.getNextSiblingOfType(anchor, PyStatement.class);
+          if (next == null) {
+            return statementList.addAfter(element, anchor);
+          }
+          anchor = next;
         }
-        else
-          element = statementList.addBefore(element, firstStatement);
+        while (anchor instanceof PyExpressionStatement) {
+          final PyExpression expression = ((PyExpressionStatement)anchor).getExpression();
+          if (expression instanceof PyCallExpression) {
+            final PyExpression callee = ((PyCallExpression)expression).getCallee();
+            if ((isSuperCall((PyCallExpression)expression) || (callee != null && PyNames.INIT.equals(callee.getName())))) {
+              final PyStatement next = PsiTreeUtil.getNextSiblingOfType(anchor, PyStatement.class);
+              if (next == null) {
+                return statementList.addAfter(element, anchor);
+              }
+              anchor = next;
+            }
+            else break;
+          }
+          else break;
+        }
+        element = statementList.addBefore(element, anchor);
       }
       else {
         element = statementList.add(element);

@@ -20,11 +20,9 @@
 package com.intellij.openapi.roots.impl;
 
 import com.intellij.ProjectTopics;
-import com.intellij.diagnostic.PluginException;
-import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.ExtensionException;
 import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -193,8 +191,7 @@ public class PushedFilePropertiesUpdater {
       }
     }
     catch (AbstractMethodError ame) { // acceptsDirectory is missed
-      PluginId pluginId = pusher != null ? PluginManagerCore.getPluginByClassName(pusher.getClass().getName()) : null;
-      if (pluginId != null) throw new PluginException("Incompatible plugin", ame, pluginId);
+      if (pusher != null) throw new ExtensionException(pusher.getClass());
       throw ame;
     }
   }

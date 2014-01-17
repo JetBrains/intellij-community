@@ -17,6 +17,7 @@
 package com.intellij.util;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Condition;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -82,6 +83,7 @@ public class ReflectionUtil {
     return null;
   }
 
+  @SuppressWarnings("HardCodedStringLiteral")
   @NotNull
   public static String declarationToString(@NotNull GenericDeclaration anInterface) {
     return anInterface.toString()
@@ -126,7 +128,8 @@ public class ReflectionUtil {
           return getRawType(getActualTypeArguments((ParameterizedType)classType)[index]);
         }
       }
-    } else {
+    }
+    else {
       return getRawType(genericType);
     }
     return null;
@@ -140,23 +143,28 @@ public class ReflectionUtil {
   }
 
   @NotNull
-  public static Field findField(@NotNull Class clazz, @Nullable Class type, @NotNull String name) throws NoSuchFieldException {
-    List<Field> fields = collectFields(clazz);
-    for (Field each : fields) {
-      if (name.equals(each.getName()) && (type == null || each.getType().equals(type))) return each;
-    }
+  public static Field findField(@NotNull Class clazz, @Nullable final Class type, @NotNull final String name) throws NoSuchFieldException {
+    Field result = processFields(clazz, new Condition<Field>() {
+      @Override
+      public boolean value(Field field) {
+        return name.equals(field.getName()) && (type == null || field.getType().equals(type));
+      }
+    });
+    if (result != null) return result;
 
     throw new NoSuchFieldException("Class: " + clazz + " name: " + name + " type: " + type);
   }
 
   @NotNull
-  public static Field findAssignableField(@NotNull Class clazz, @NotNull Class type, @NotNull String name) throws NoSuchFieldException {
-    List<Field> fields = collectFields(clazz);
-    for (Field each : fields) {
-      if (name.equals(each.getName()) && type.isAssignableFrom(each.getType())) return each;
-    }
-
-    throw new NoSuchFieldException("Class: " + clazz + " name: " + name + " type: " + type);
+  public static Field findAssignableField(@NotNull Class<?> clazz, @NotNull final Class<?> fieldType, @NotNull final String fieldName) throws NoSuchFieldException {
+    Field result = processFields(clazz, new Condition<Field>() {
+      @Override
+      public boolean value(Field field) {
+        return fieldName.equals(field.getName()) && fieldType.isAssignableFrom(field.getType());
+      }
+    });
+    if (result != null) return result;
+    throw new NoSuchFieldException("Class: " + clazz + " fieldName: " + fieldName + " fieldType: " + fieldType);
   }
 
   private static void collectFields(@NotNull Class clazz, @NotNull List<Field> result) {
@@ -170,6 +178,23 @@ public class ReflectionUtil {
     for (Class each : interfaces) {
       collectFields(each, result);
     }
+  }
+
+  private static Field processFields(@NotNull Class clazz, @NotNull Condition<Field> checker) {
+    for (Field field : clazz.getDeclaredFields()) {
+      if (checker.value(field)) return field;
+    }
+    final Class superClass = clazz.getSuperclass();
+    if (superClass != null) {
+      Field result = processFields(superClass, checker);
+      if (result != null) return result;
+    }
+    final Class[] interfaces = clazz.getInterfaces();
+    for (Class each : interfaces) {
+      Field result = processFields(each, checker);
+      if (result != null) return result;
+    }
+    return null;
   }
 
   public static void resetField(@NotNull Class clazz, @NotNull Class type, @NotNull String name)  {
@@ -207,13 +232,13 @@ public class ReflectionUtil {
           field.set(object, Boolean.FALSE);
         }
         else if (int.class.equals(type)) {
-          field.set(object, new Integer(0));
+          field.set(object, Integer.valueOf(0));
         }
         else if (double.class.equals(type)) {
-          field.set(object, new Double(0));
+          field.set(object, Double.valueOf(0));
         }
         else if (float.class.equals(type)) {
-          field.set(object, new Float(0));
+          field.set(object, Float.valueOf(0));
         }
       }
       else {
@@ -249,9 +274,9 @@ public class ReflectionUtil {
     return method == null ? null : method.getDeclaringClass();
   }
 
-  public static <T> T getField(@NotNull Class objectClass, Object object, @NotNull Class<T> type, @NotNull @NonNls String name) {
+  public static <T> T getField(@NotNull Class objectClass, Object object, @NotNull Class<T> fieldType, @NotNull @NonNls String fieldName) {
     try {
-      final Field field = findAssignableField(objectClass, type, name);
+      final Field field = findAssignableField(objectClass, fieldType, fieldName);
       field.setAccessible(true);
       return (T)field.get(object);
     }

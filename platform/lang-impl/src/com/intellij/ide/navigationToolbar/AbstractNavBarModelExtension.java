@@ -27,12 +27,10 @@ import java.util.Collections;
 /**
  * @author gregsh
  */
-public class AbstractNavBarModelExtension implements NavBarModelExtension {
+public abstract class AbstractNavBarModelExtension implements NavBarModelExtension {
   @Nullable
   @Override
-  public String getPresentableText(Object object) {
-    return null;
-  }
+  public abstract String getPresentableText(Object object);
 
   @Nullable
   @Override

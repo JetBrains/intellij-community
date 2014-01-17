@@ -68,32 +68,29 @@ public class PyArgumentListInspection extends PyInspection {
 
     @Override
     public void visitPyDecoratorList(final PyDecoratorList node) {
-      PyDecorator[] decos = node.getDecorators();
-      for (PyDecorator deco : decos) {
-        if (! deco.hasArgumentList()) {
-          // empty arglist; deco function must have a non-kwarg first arg
-          PyCallExpression.PyMarkedCallee mkfunc = deco.resolveCallee(resolveWithoutImplicits());
-          if (mkfunc != null && !mkfunc.isImplicitlyResolved()) {
-            Callable callable = mkfunc.getCallable();
-            int first_param_offset =  mkfunc.getImplicitOffset();
-            final List<PyParameter> params = PyUtil.getParameters(callable, myTypeEvalContext);
-            final PyNamedParameter alleged_first_param = params.size() < first_param_offset ?
-                                                         null : params.get(first_param_offset-1).getAsNamed();
-            if (alleged_first_param == null || alleged_first_param.isKeywordContainer()) {
-              // no parameters left to pass function implicitly, or wrong param type
-              registerProblem(deco, PyBundle.message("INSP.func.$0.lacks.first.arg", callable.getName())); // TODO: better names for anon lambdas
-            }
-            else {
-              // possible unfilled params
-              for (int i=first_param_offset; i < params.size(); i += 1) {
-                PyNamedParameter par = params.get(i).getAsNamed();
-                // param tuples, non-starred or non-default won't do
-                if (par == null || (! par.isKeywordContainer() && ! par.isPositionalContainer() && !par.hasDefaultValue())) {
-                  String par_name;
-                  if (par != null) par_name = par.getName();
-                  else par_name = "(...)"; // can't be bothered to find the first non-tuple inside it
-                  registerProblem(deco, PyBundle.message("INSP.parameter.$0.unfilled", par_name));
-                }
+      PyDecorator[] decorators = node.getDecorators();
+      for (PyDecorator deco : decorators) {
+        if (deco.hasArgumentList()) continue;
+        final PyCallExpression.PyMarkedCallee markedCallee = deco.resolveCallee(resolveWithoutImplicits());
+        if (markedCallee != null && !markedCallee.isImplicitlyResolved()) {
+          final Callable callable = markedCallee.getCallable();
+          int firstParamOffset =  markedCallee.getImplicitOffset();
+          final List<PyParameter> params = PyUtil.getParameters(callable, myTypeEvalContext);
+          final PyNamedParameter allegedFirstParam = params.size() < firstParamOffset ?
+                                                       null : params.get(firstParamOffset-1).getAsNamed();
+          if (allegedFirstParam == null || allegedFirstParam.isKeywordContainer()) {
+            // no parameters left to pass function implicitly, or wrong param type
+            registerProblem(deco, PyBundle.message("INSP.func.$0.lacks.first.arg", callable.getName())); // TODO: better names for anon lambdas
+          }
+          else { // possible unfilled params
+            for (int i = firstParamOffset; i < params.size(); i += 1) {
+              final PyParameter parameter = params.get(i);
+              if (parameter instanceof PySingleStarParameter) continue;
+              final PyNamedParameter par = parameter.getAsNamed();
+              // param tuples, non-starred or non-default won't do
+              if (par == null || (!par.isKeywordContainer() && !par.isPositionalContainer() &&!par.hasDefaultValue())) {
+                String parameterName = par != null ? par.getName() : "(...)";
+                registerProblem(deco, PyBundle.message("INSP.parameter.$0.unfilled", parameterName));
               }
             }
           }

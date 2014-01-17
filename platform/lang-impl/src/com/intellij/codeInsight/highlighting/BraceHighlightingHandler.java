@@ -36,7 +36,6 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
-import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.EditorEx;
@@ -422,7 +421,8 @@ public class BraceHighlightingHandler {
       highlightBrace(lBrace, matched);
     }
 
-    if (!myEditor.equals(FileEditorManager.getInstance(myProject).getSelectedTextEditor())) {
+    FileEditorManager fileEditorManager = FileEditorManager.getInstance(myProject); // null in default project
+    if (fileEditorManager == null || !myEditor.equals(fileEditorManager.getSelectedTextEditor())) {
       return;
     }
 

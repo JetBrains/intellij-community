@@ -23,3 +23,12 @@ enum Fat {
     public final void eatCarbohydrates() {}
 
 }
+final class Soup {
+  @java.lang.SafeVarargs
+  private final void foo(java.util.Collection<String>... args) {
+    // ...
+  }
+
+  @java.lang.SafeVarargs
+  private static final void bar(java.util.Collection<Integer>... args) {}
+}

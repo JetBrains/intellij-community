@@ -66,7 +66,7 @@ public class XmlLanguageInjectionSupport extends AbstractLanguageInjectionSuppor
       final PsiElement p = host.getParent();
       if (p instanceof XmlAttribute) {
         final String s = ((XmlAttribute)p).getName();
-        return !(s.equals("xmlns") || s.startsWith("xmlns:"));
+        return !("xmlns".equals(s) || s.startsWith("xmlns:"));
       }
     }
     else if (host instanceof XmlText) {
@@ -177,7 +177,7 @@ public class XmlLanguageInjectionSupport extends AbstractLanguageInjectionSuppor
       }
     });
     if (builder.show() == DialogWrapper.OK_EXIT_CODE) {
-      return new AbstractTagInjection().copyFrom(xmlInjection);
+      return xmlInjection.copy();
     }
     return null;
   }
@@ -219,12 +219,15 @@ public class XmlLanguageInjectionSupport extends AbstractLanguageInjectionSuppor
           result.setTagNamespace(value);
         }
       }
-      else if (result instanceof XmlAttributeInjection &&
-               "inside".equals(condition.getDebugMethodName()) && condition instanceof PatternConditionPlus) {
-        final ElementPattern<?> insidePattern = ((PatternConditionPlus)condition).getValuePattern();
+      else if (result instanceof XmlAttributeInjection && condition instanceof PatternConditionPlus) {
+        boolean strict = "withParent".equals(condition.getDebugMethodName());
+        if (!strict && !"inside".equals(condition.getDebugMethodName())) return null;
+
+        result.setApplyToSubTags(!strict);
+        ElementPattern<?> insidePattern = ((PatternConditionPlus)condition).getValuePattern();
         if (!XmlTag.class.equals(insidePattern.getCondition().getInitialCondition().getAcceptedClass())) return null;
         for (PatternCondition<?> insideCondition : insidePattern.getCondition().getConditions()) {
-          final String tagValue = extractValue(insideCondition);
+          String tagValue = extractValue(insideCondition);
           if (tagValue == null) return null;
           if ("withLocalName".equals(insideCondition.getDebugMethodName())) {
             result.setTagName(tagValue);
@@ -232,10 +235,11 @@ public class XmlLanguageInjectionSupport extends AbstractLanguageInjectionSuppor
           else if ("withNamespace".equals(insideCondition.getDebugMethodName())) {
             result.setTagNamespace(tagValue);
           }
-
         }
       }
-      else return null;
+      else {
+        return null;
+      }
     }
     result.generatePlaces();
     return result;
@@ -265,14 +269,16 @@ public class XmlLanguageInjectionSupport extends AbstractLanguageInjectionSuppor
     return null;
   }
 
-  public BaseInjection createInjection(final Element element) {
+  public BaseInjection createInjection(Element element) {
     if (element.getName().equals(XmlAttributeInjection.class.getSimpleName())) {
       return new XmlAttributeInjection();
     }
     else if (element.getName().equals(XmlTagInjection.class.getSimpleName())) {
       return new XmlTagInjection();
     }
-    return new AbstractTagInjection();
+    else {
+      return new BaseInjection(XML_SUPPORT_ID);
+    }
   }
 
   public Configurable[] createSettings(final Project project, final Configuration configuration) {

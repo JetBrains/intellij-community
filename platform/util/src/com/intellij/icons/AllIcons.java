@@ -361,7 +361,7 @@ public class AllIcons {
     public static final Icon ComboArrowLeftPassive = IconLoader.getIcon("/general/comboArrowLeftPassive.png"); // 5x9
     public static final Icon ComboArrowRight = IconLoader.getIcon("/general/comboArrowRight.png"); // 5x9
     public static final Icon ComboArrowRightPassive = IconLoader.getIcon("/general/comboArrowRightPassive.png"); // 5x9
-    public static final Icon ComboBoxButtonArrow = IconLoader.getIcon("/general/comboBoxButtonArrow.png"); // 8x8
+    public static final Icon ComboBoxButtonArrow = IconLoader.getIcon("/general/comboBoxButtonArrow.png"); // 16x16
     public static final Icon ComboUpPassive = IconLoader.getIcon("/general/comboUpPassive.png"); // 16x16
     public static final Icon ConfigurableDefault = IconLoader.getIcon("/general/configurableDefault.png"); // 32x32
     public static final Icon Configure = IconLoader.getIcon("/general/Configure.png"); // 32x32
@@ -713,6 +713,7 @@ public class AllIcons {
       public static final Icon JavaeeAppModule = IconLoader.getIcon("/modules/types/JavaeeAppModule.png"); // 24x24
       public static final Icon JavaModule = IconLoader.getIcon("/modules/types/javaModule.png"); // 24x24
       public static final Icon PluginModule = IconLoader.getIcon("/modules/types/pluginModule.png"); // 24x24
+      public static final Icon UserDefined = IconLoader.getIcon("/modules/types/userDefined.png"); // 24x24
       public static final Icon WebModule = IconLoader.getIcon("/modules/types/webModule.png"); // 24x24
 
     }

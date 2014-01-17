@@ -153,7 +153,7 @@ public class TipManager implements Disposable, PopupMenuListener {
   }
 
   private boolean isInsideComponent(final MouseEvent e) {
-    final Rectangle compBounds = myComponent.getBounds();
+    final Rectangle compBounds = myComponent.getVisibleRect();
     final Point compPoint = SwingUtilities.convertPoint(e.getComponent(), e.getPoint(), myComponent);
 
     return compBounds.contains(compPoint);

@@ -21,7 +21,7 @@
         <clientProperties>
           <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory$PlainSmallWithoutIndent"/>
         </clientProperties>
-        <border type="none" title="Places Pattern"/>
+        <border type="none" title="Places Patterns"/>
         <children/>
       </grid>
       <nested-form id="b6e0b" form-file="org/intellij/plugins/intelliLang/inject/config/ui/AdvancedPanel.form" binding="myAdvancedPanel" custom-create="true">
@@ -43,7 +43,7 @@
             </constraints>
             <properties>
               <labelFor value="5916a"/>
-              <text value="Display &amp;Name:"/>
+              <text value="&amp;Name:"/>
             </properties>
           </component>
           <component id="5916a" class="javax.swing.JTextField" binding="myNameTextField">

@@ -27,6 +27,7 @@ import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actions.EditorActionUtil;
 import com.intellij.openapi.editor.colors.EditorColors;
@@ -50,8 +51,8 @@ import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.StringUtilRt;
@@ -422,26 +423,24 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
                                      @NotNull final EditorEx editor,
                                      final boolean erase,
                                      final boolean preserveMarkup) {
-    final Ref<String> ref = Ref.create("");
-    final Runnable action = new Runnable() {
+    String result = ApplicationManager.getApplication().runReadAction(new Computable<String>() {
       @Override
-      public void run() {
-        ref.set(addTextRangeToHistory(textRange, editor, preserveMarkup));
-        if (erase) {
+      public String compute() {
+        return addTextRangeToHistory(textRange, editor, preserveMarkup);
+      }
+    });
+    if (erase) {
+      new WriteCommandAction.Simple(myProject, myFile) {
+        @Override
+        protected void run() throws Throwable {
           editor.getDocument().deleteString(textRange.getStartOffset(), textRange.getEndOffset());
         }
-      }
-    };
-    if (erase) {
-      ApplicationManager.getApplication().runWriteAction(action);
-    }
-    else {
-      ApplicationManager.getApplication().runReadAction(action);
+      }.execute();
     }
     // always scroll to end on user input
     scrollHistoryToEnd();
     queueUiUpdate(true);
-    return ref.get();
+    return result;
   }
 
   public boolean shouldScrollHistoryToEnd() {

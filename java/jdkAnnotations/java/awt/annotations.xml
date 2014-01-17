@@ -150,6 +150,9 @@
       <val name="intValues" val="{java.awt.Label.LEFT, java.awt.Label.CENTER, java.awt.Label.RIGHT}" />
     </annotation>
   </item>
+  <item name='java.awt.Point Point(java.awt.Point) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
   <item name="java.awt.Rectangle Rectangle(java.awt.Dimension) 0">
     <annotation name="org.jetbrains.annotations.NotNull" />
   </item>

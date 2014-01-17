@@ -28,6 +28,7 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiFormatUtil;
+import com.intellij.psi.util.PsiFormatUtilBase;
 import com.intellij.ui.*;
 import com.intellij.ui.dualView.TreeTableView;
 import com.intellij.ui.treeStructure.treetable.ListTreeTableModelOnColumns;
@@ -42,6 +43,7 @@ import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.intellij.plugins.intelliLang.inject.config.MethodParameterInjection;
 import org.intellij.plugins.intelliLang.util.PsiUtilEx;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -91,23 +93,23 @@ public class MethodParameterPanel extends AbstractInjectionPanel<MethodParameter
     myParamsTable.getTree().setShowsRootHandles(true);
     myParamsTable.getTree().setCellRenderer(new ColoredTreeCellRenderer() {
 
-      public void customizeCellRenderer(final JTree tree,
-                                        final Object value,
-                                        final boolean selected,
-                                        final boolean expanded,
-                                        final boolean leaf,
-                                        final int row,
-                                        final boolean hasFocus) {
+      public void customizeCellRenderer(@NotNull JTree tree,
+                                        Object value,
+                                        boolean selected,
+                                        boolean expanded,
+                                        boolean leaf,
+                                        int row,
+                                        boolean hasFocus) {
 
         final Object o = ((DefaultMutableTreeNode)value).getUserObject();
         setIcon(o instanceof PsiMethod ? PlatformIcons.METHOD_ICON : o instanceof PsiParameter ? PlatformIcons.PARAMETER_ICON : null);
         final String name;
         if (o instanceof PsiMethod) {
-          name = PsiFormatUtil.formatMethod((PsiMethod)o, PsiSubstitutor.EMPTY, PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_PARAMETERS,
-                                            PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_TYPE);
+          name = PsiFormatUtil.formatMethod((PsiMethod)o, PsiSubstitutor.EMPTY, PsiFormatUtilBase.SHOW_NAME | PsiFormatUtilBase.SHOW_PARAMETERS,
+                                            PsiFormatUtilBase.SHOW_NAME | PsiFormatUtilBase.SHOW_TYPE);
         }
         else if (o instanceof PsiParameter) {
-          name = PsiFormatUtil.formatVariable((PsiParameter)o, PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_TYPE, PsiSubstitutor.EMPTY);
+          name = PsiFormatUtil.formatVariable((PsiParameter)o, PsiFormatUtilBase.SHOW_NAME | PsiFormatUtilBase.SHOW_TYPE, PsiSubstitutor.EMPTY);
         }
         else name = null;
         final boolean missing = o instanceof PsiElement && !((PsiElement)o).isPhysical();
@@ -362,7 +364,7 @@ public class MethodParameterPanel extends AbstractInjectionPanel<MethodParameter
             return valueOf(o) != null;
           }
 
-        }, new TreeColumnInfo("Method/Parameters")
+        }, new TreeColumnInfo(" ")
     };
   }
 
@@ -386,7 +388,7 @@ public class MethodParameterPanel extends AbstractInjectionPanel<MethodParameter
     }
   }
 
-  private class MyView extends TreeTableView implements TypeSafeDataProvider {
+  private static class MyView extends TreeTableView implements TypeSafeDataProvider {
     public MyView(ListTreeTableModelOnColumns treeTableModel) {
       super(treeTableModel);
     }

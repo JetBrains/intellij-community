@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -337,6 +337,7 @@ public abstract class UsefulTestCase extends TestCase {
     super.runBare();
   }
 
+  @Override
   public void runBare() throws Throwable {
     if (!shouldRunTest()) return;
 
@@ -421,7 +422,7 @@ public abstract class UsefulTestCase extends TestCase {
       String expectedString = toString(expected);
       String actualString = toString(actual);
       Assert.assertEquals(erroMsg, expectedString, actualString);
-      Assert.fail("Warning! 'toString' do not reflect the difference.\nExpected: " + expectedString + "\nActual: " + actualString);
+      Assert.fail("Warning! 'toString' does not reflect the difference.\nExpected: " + expectedString + "\nActual: " + actualString);
     }
   }
 
@@ -588,7 +589,7 @@ public abstract class UsefulTestCase extends TestCase {
   public static <T> void assertOneOf(T value, T... values) {
     boolean found = false;
     for (T v : values) {
-      if (value == v || (value != null && value.equals(v))) {
+      if (value == v || value != null && value.equals(v)) {
         found = true;
       }
     }
@@ -899,7 +900,8 @@ public abstract class UsefulTestCase extends TestCase {
     file.refresh(false, true);
   }
 
-  public static @NotNull Test filteredSuite(@RegExp String regexp, @NotNull Test test) {
+  @NotNull
+  public static Test filteredSuite(@RegExp String regexp, @NotNull Test test) {
     final Pattern pattern = Pattern.compile(regexp);
     final TestSuite testSuite = new TestSuite();
     new Processor<Test>() {

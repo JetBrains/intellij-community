@@ -173,13 +173,6 @@ public class PyQuickFixTest extends PyTestCase {
     doInspectionTest("AddClass.py", PyUnresolvedReferencesInspection.class, "Create class 'Xyzzy'", true, true);
   }
 
-  public void testFieldFromUnusedParameter() {  // PY-1398
-    doInspectionTest("FieldFromUnusedParameter.py", PyUnusedLocalInspection.class, "Add field 'foo' to class A", true, true);
-  }
-
-  public void testFieldFromUnusedParameterKeyword() {  // PY-1602
-    doInspectionTest("FieldFromUnusedParameterKeyword.py", PyUnusedLocalInspection.class, "Add field 'foo' to class A", true, true);
-  }
 
   public void testAddFunctionToModule() {  // PY-1602
     doInspectionTest(

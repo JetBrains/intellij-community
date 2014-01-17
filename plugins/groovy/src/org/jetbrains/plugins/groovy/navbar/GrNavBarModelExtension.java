@@ -22,6 +22,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
@@ -31,6 +32,12 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefini
  * Created by Max Medvedev on 9/5/13
  */
 public class GrNavBarModelExtension extends AbstractNavBarModelExtension {
+
+  @Nullable
+  @Override
+  public String getPresentableText(Object object) {
+    return null;
+  }
 
   @Override
   public PsiElement adjustElement(PsiElement psiElement) {

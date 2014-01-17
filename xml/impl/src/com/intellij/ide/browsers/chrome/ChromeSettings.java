@@ -15,20 +15,22 @@
  */
 package com.intellij.ide.browsers.chrome;
 
-import com.intellij.execution.configurations.ParametersList;
 import com.intellij.ide.browsers.BrowserSpecificSettings;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.execution.ParametersListUtil;
 import com.intellij.util.xmlb.annotations.Tag;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collections;
+import java.util.List;
+
 public final class ChromeSettings extends BrowserSpecificSettings {
   public static final String USER_DATA_DIR_ARG = "--user-data-dir=";
-  private String myCommandLineOptions;
-  private String myUserDataDirectoryPath;
+  private @Nullable String myCommandLineOptions;
+  private @Nullable String myUserDataDirectoryPath;
   private boolean myUseCustomProfile;
 
   public ChromeSettings() {
@@ -64,14 +66,21 @@ public final class ChromeSettings extends BrowserSpecificSettings {
 
   @NotNull
   @Override
-  public String[] getAdditionalParameters() {
-    String[] cliOptions = ParametersList.parse(myCommandLineOptions);
+  public List<String> getAdditionalParameters() {
+    if (myCommandLineOptions == null) {
+      if (myUseCustomProfile && myUserDataDirectoryPath != null) {
+        return Collections.singletonList(USER_DATA_DIR_ARG + FileUtilRt.toSystemDependentName(myUserDataDirectoryPath));
+      }
+      else {
+        return Collections.emptyList();
+      }
+    }
+
+    List<String> cliOptions = ParametersListUtil.parse(myCommandLineOptions);
     if (myUseCustomProfile && myUserDataDirectoryPath != null) {
-      return ArrayUtil.mergeArrays(cliOptions, USER_DATA_DIR_ARG + FileUtil.toSystemDependentName(myUserDataDirectoryPath));
+      cliOptions.add(USER_DATA_DIR_ARG + FileUtilRt.toSystemDependentName(myUserDataDirectoryPath));
     }
-    else {
-      return cliOptions;
-    }
+    return cliOptions;
   }
 
   @NotNull

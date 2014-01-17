@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,7 @@ import com.intellij.util.PlatformIcons;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.ComboBoxCellEditor;
 import com.intellij.util.ui.tree.TreeUtil;
+import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -118,9 +119,9 @@ public class DetectedRootsChooserDialog extends DialogWrapper {
   }
 
   private void init(List<SuggestedChildRootInfo> suggestedRoots) {
-    myDescription = "<html><body>" + ApplicationNamesInfo.getInstance().getFullProductName() +
+    myDescription = XmlStringUtil.wrapInHtml(ApplicationNamesInfo.getInstance().getFullProductName() +
                     " just scanned files and detected the following " + StringUtil.pluralize("root", suggestedRoots.size()) + ".<br>" +
-                    "Select items in the tree below or press Cancel to cancel operation.</body></html>";
+                    "Select items in the tree below or press Cancel to cancel operation.");
     myTreeTable = createTreeTable(suggestedRoots);
     myPane = ScrollPaneFactory.createScrollPane(myTreeTable);
     setTitle("Detected Roots");

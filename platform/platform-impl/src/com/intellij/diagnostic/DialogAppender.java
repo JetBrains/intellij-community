@@ -103,7 +103,7 @@ public class DialogAppender extends AppenderSkeleton {
       Throwable throwable = info.getThrowable();
       //noinspection ThrowableResultOfMethodCallIgnored
       Throwable rootCause = ExceptionUtil.getRootCause(throwable);
-      ideaEvent = rootCause instanceof LogEventException ? ((LogEventException)rootCause).getLogMessage() : 
+      ideaEvent = rootCause instanceof LogEventException ? ((LogEventException)rootCause).getLogMessage() :
                   new IdeaLoggingEvent(message == null ? "<null> " : message.toString(), throwable);
     }
     for (int i = errorLoggers.length - 1; i >= 0; i--) {

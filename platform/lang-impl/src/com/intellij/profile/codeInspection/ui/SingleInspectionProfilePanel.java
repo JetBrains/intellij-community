@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -64,6 +64,7 @@ import com.intellij.util.config.StorageAccessors;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
+import com.intellij.xml.util.XmlStringUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -756,7 +757,7 @@ public class SingleInspectionProfilePanel extends JPanel {
         catch (IOException e2) {
           try {
             //noinspection HardCodedStringLiteral
-            myBrowser.read(new StringReader("<html><body><b>" + UNDER_CONSTRUCTION + "</b></body></html>"), null);
+            myBrowser.read(new StringReader(XmlStringUtil.wrapInHtml("<b>" + UNDER_CONSTRUCTION + "</b>")), null);
           }
           catch (IOException e1) {
             //Can't be

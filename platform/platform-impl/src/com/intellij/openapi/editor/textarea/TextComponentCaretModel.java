@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,7 +33,7 @@ public class TextComponentCaretModel implements CaretModel {
   private final JTextComponent myTextComponent;
   private final TextComponentEditor myEditor;
 
-  public TextComponentCaretModel(final JTextComponent textComponent, TextComponentEditor editor) {
+  public TextComponentCaretModel(@NotNull JTextComponent textComponent, @NotNull TextComponentEditor editor) {
     myTextComponent = textComponent;
     myEditor = editor;
   }

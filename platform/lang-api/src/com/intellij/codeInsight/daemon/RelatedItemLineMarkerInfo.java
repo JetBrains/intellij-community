@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -99,7 +100,7 @@ public class RelatedItemLineMarkerInfo<T extends PsiElement> extends MergeableLi
           }
           tooltip.append(UIUtil.getHtmlBody(info));
         }
-        return "<html><body>" + tooltip.toString() + "</body></html>";
+        return XmlStringUtil.wrapInHtml(tooltip);
       }
     };
   }

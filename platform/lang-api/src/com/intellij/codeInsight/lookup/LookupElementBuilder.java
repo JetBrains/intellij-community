@@ -18,10 +18,10 @@ package com.intellij.codeInsight.lookup;
 
 import com.intellij.codeInsight.completion.InsertHandler;
 import com.intellij.codeInsight.completion.InsertionContext;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.util.PsiUtilCore;
-import com.intellij.util.ObjectUtils;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -67,7 +67,7 @@ public final class LookupElementBuilder extends LookupElement {
 
   public static LookupElementBuilder create(@NotNull PsiNamedElement element) {
     PsiUtilCore.ensureValid(element);
-    return new LookupElementBuilder(ObjectUtils.assertNotNull(element.getName()), element);
+    return new LookupElementBuilder(StringUtil.notNullize(element.getName()), element);
   }
 
   public static LookupElementBuilder createWithIcon(@NotNull PsiNamedElement element) {

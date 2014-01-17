@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -173,7 +173,7 @@ public interface SelectionModel {
    * @param blockEnd   the end of the rectangle to select.
    * @see #setSelection(int, int)
    */
-  void setBlockSelection(LogicalPosition blockStart, LogicalPosition blockEnd);
+  void setBlockSelection(@NotNull LogicalPosition blockStart, @NotNull LogicalPosition blockEnd);
 
   /**
    * Removes the block selection from the document.

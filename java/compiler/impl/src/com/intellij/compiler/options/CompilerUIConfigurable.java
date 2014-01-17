@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,6 +35,7 @@ import com.intellij.ui.RawCommandLineEditor;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtilRt;
+import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -91,12 +92,12 @@ public class CompilerUIConfigurable implements SearchableConfigurable, Configura
   public CompilerUIConfigurable(@NotNull final Project project) {
     myProject = project;
 
-    myPatternLegendLabel.setText("<html><body>" +
+    myPatternLegendLabel.setText(XmlStringUtil.wrapInHtml(
                                    "Use <b>;</b> to separate patterns and <b>!</b> to negate a pattern. " +
                                    "Accepted wildcards: <b>?</b> &mdash; exactly one symbol; <b>*</b> &mdash; zero or more symbols; " +
                                    "<b>/</b> &mdash; path separator; <b>/**/</b> &mdash; any number of directories; " +
-                                   "<i>&lt;dir_name&gt;</i>:<i>&lt;pattern&gt;</i> &mdash; restrict to source roots with the specified name" +
-                                   "</body></html>");
+                                   "<i>&lt;dir_name&gt;</i>:<i>&lt;pattern&gt;</i> &mdash; restrict to source roots with the specified name"
+    ));
     myPatternLegendLabel.setForeground(new JBColor(Gray._50, Gray._130));
     tweakControls(project);
   }
