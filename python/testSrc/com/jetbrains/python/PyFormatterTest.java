@@ -203,7 +203,7 @@ public class PyFormatterTest extends PyTestCase {
     doTest();
   }
 
-  public void testContinuationIndentAfterIf() { // PY-9573
+  public void testContinuationIndentInIndentingStatement() { // PY-9573
     doTest();
   }
 
