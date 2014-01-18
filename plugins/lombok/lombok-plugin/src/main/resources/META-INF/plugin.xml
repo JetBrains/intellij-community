@@ -19,6 +19,7 @@
 		<li>0.7.4
 				<ol>
 				    <li>TODO: Added refactoring actions for getter and setter methods</li>
+				    <li>Issue #94: Fixed Intellij does not correctly create the constructor with @RequiredAllConstructor for classes with @Value</li>
 				</ol>
 			</li>
 		<li>0.7.3
