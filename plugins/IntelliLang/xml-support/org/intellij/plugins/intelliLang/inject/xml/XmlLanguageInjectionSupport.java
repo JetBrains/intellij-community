@@ -43,8 +43,6 @@ import org.intellij.plugins.intelliLang.inject.config.*;
 import org.intellij.plugins.intelliLang.inject.config.ui.AbstractInjectionPanel;
 import org.intellij.plugins.intelliLang.inject.config.ui.XmlAttributePanel;
 import org.intellij.plugins.intelliLang.inject.config.ui.XmlTagPanel;
-import org.intellij.plugins.intelliLang.inject.config.ui.configurables.XmlAttributeInjectionConfigurable;
-import org.intellij.plugins.intelliLang.inject.config.ui.configurables.XmlTagInjectionConfigurable;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -304,12 +302,10 @@ public class XmlLanguageInjectionSupport extends AbstractLanguageInjectionSuppor
     final AbstractTagInjection originalInjection = (AbstractTagInjection)configuration.findExistingInjection(template);
 
     final XmlTagInjection newInjection = originalInjection == null? template : new XmlTagInjection().copyFrom(originalInjection);
-    if (InjectLanguageAction.doEditConfigurable(project, new XmlTagInjectionConfigurable(newInjection, null, project))) {
-      configuration.replaceInjectionsWithUndo(
-        project, Collections.singletonList(newInjection),
-        ContainerUtil.createMaybeSingletonList(originalInjection),
-        Collections.<PsiElement>emptyList());
-    }
+    configuration.replaceInjectionsWithUndo(
+      project, Collections.singletonList(newInjection),
+      ContainerUtil.createMaybeSingletonList(originalInjection),
+      Collections.<PsiElement>emptyList());
   }
 
   private static boolean doInjectInAttributeValue(final XmlAttributeValue host, final String languageId) {
@@ -333,12 +329,10 @@ public class XmlLanguageInjectionSupport extends AbstractLanguageInjectionSuppor
     final Configuration configuration = InjectorUtils.getEditableInstance(project);
     final BaseInjection originalInjection = configuration.findExistingInjection(template);
     final BaseInjection newInjection = originalInjection == null ? template : originalInjection.copy();
-    if (InjectLanguageAction.doEditConfigurable(project, new XmlAttributeInjectionConfigurable((XmlAttributeInjection)newInjection, null, project))) {
-      configuration.replaceInjectionsWithUndo(
-        project, Collections.singletonList(newInjection),
-        ContainerUtil.createMaybeSingletonList(originalInjection),
-        Collections.<PsiElement>emptyList());
-    }
+    configuration.replaceInjectionsWithUndo(
+      project, Collections.singletonList(newInjection),
+      ContainerUtil.createMaybeSingletonList(originalInjection),
+      Collections.<PsiElement>emptyList());
   }
 
   private static ArrayList<BaseInjection> collectInjections(final PsiElement host,
