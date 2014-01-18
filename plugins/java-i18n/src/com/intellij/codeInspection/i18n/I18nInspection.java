@@ -84,6 +84,8 @@ public class I18nInspection extends BaseLocalInspectionTool {
   public boolean ignoreAssignedToConstants = false;
   public boolean ignoreToString = false;
   @NonNls public String nonNlsCommentPattern = "NON-NLS";
+  public boolean ignoreForMethods = true;
+  @NonNls public String ignoreForSpecifiedMethods = "";
   private boolean ignoreForEnumConstants = false;
 
   private static final LocalQuickFix I18N_QUICK_FIX = new I18nizeQuickFix();
@@ -293,6 +295,39 @@ public class I18nInspection extends BaseLocalInspectionTool {
         }
       });
     panel.add(nonNlsCommentPatternComponent, gc);
+
+    final JTextField specifiedMethods = new JTextField(ignoreForSpecifiedMethods);
+    specifiedMethods.getDocument().addDocumentListener(new DocumentAdapter(){
+      @Override
+      protected void textChanged(DocumentEvent e) {
+        ignoreForSpecifiedMethods = specifiedMethods.getText();
+      }
+    });
+
+    final FieldPanel specifiedMethodsPanel = new FieldPanel(specifiedMethods,
+                   null,
+                   CodeInsightBundle.message("inspection.i18n.option.ignore.for.specified.methods"),
+                   null,
+                   null);
+    specifiedMethodsPanel.setEditable(ignoreForMethods);
+
+    final JCheckBox methodCheck =
+      new JCheckBox(CodeInsightBundle.message("inspection.i18n.option.ignore.for.methods"),
+                    ignoreForMethods);
+    methodCheck.addChangeListener(new ChangeListener() {
+      @Override
+      public void stateChanged(ChangeEvent e) {
+        ignoreForMethods = methodCheck.isSelected();
+        specifiedMethodsPanel.setEditable(ignoreForMethods);
+      }
+    });
+
+    gc.gridy ++;
+    panel.add(methodCheck, gc);
+
+    gc.gridy ++;
+    panel.add(specifiedMethodsPanel, gc);
+
 
     final JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(panel);
     scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
@@ -584,6 +619,9 @@ public class I18nInspection extends BaseLocalInspectionTool {
       return false;
     }
     if (!ignoreForExceptionConstructors && isArgOfSpecifiedExceptionConstructor(expression, ignoreForSpecifiedExceptionConstructors.split(","))) {
+      return false;
+    }
+    if (ignoreForMethods && isArgOfSpecifiedMethods(expression, ignoreForSpecifiedMethods.split(","))) {
       return false;
     }
     if (ignoreForJUnitAsserts && isArgOfJUnitAssertion(expression)) {
@@ -928,6 +966,37 @@ public class I18nInspection extends BaseLocalInspectionTool {
     return throwable != null && aClass.isInheritor(throwable, true);
   }
 
+  private static boolean isArgOfSpecifiedMethods(PsiExpression expression, String[] specifiedMethods) {
+    if (specifiedMethods.length == 0) return false;
+
+    final PsiElement parent = PsiTreeUtil.getParentOfType(expression, PsiExpressionList.class, PsiClass.class);
+    if (!(parent instanceof PsiExpressionList)) {
+      return false;
+    }
+    final PsiElement grandparent = parent.getParent();
+    if (!(grandparent instanceof PsiCallExpression)) {
+      return false;
+    }
+
+    final PsiMethod aMethod = ((PsiCallExpression)grandparent).resolveMethod();
+    if (aMethod == null) {
+      return false;
+    }
+
+    final PsiClass aClass = aMethod.getContainingClass();
+    if (aClass == null) {
+      return false;
+    }
+
+    final String reference = aClass.getQualifiedName() + "#" + aMethod.getName();
+
+    for (String specifiedException : specifiedMethods) {
+      if (specifiedException.equals(reference)) return true;
+
+    }
+
+    return false;
+  }
   private static boolean isArgOfSpecifiedExceptionConstructor(PsiExpression expression, String[] specifiedExceptions) {
     if (specifiedExceptions.length == 0) return false;
 
