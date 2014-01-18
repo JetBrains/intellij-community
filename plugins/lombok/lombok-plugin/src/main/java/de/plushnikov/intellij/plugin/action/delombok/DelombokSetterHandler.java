@@ -41,7 +41,7 @@ public class DelombokSetterHandler implements CodeInsightActionHandler {
     }
   }
 
-  private void processClass(@NotNull Project project, @NotNull PsiClass psiClass) {
+  protected void processClass(@NotNull Project project, @NotNull PsiClass psiClass) {
     final PsiAnnotation psiAnnotation = PsiAnnotationUtil.findAnnotation(psiClass, setterProcessor.getSupportedAnnotation());
     if (null != psiAnnotation) {
       List<? super PsiElement> classSetters = setterProcessor.process(psiClass);
