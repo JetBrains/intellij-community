@@ -366,6 +366,10 @@ public class PyFormatterTest extends PyTestCase {
     doTest();
   }
 
+  public void testIndentParensInImport() { // PY-9075
+    doTest();
+  }
+
   private void doTest() {
     doTest(false);
   }

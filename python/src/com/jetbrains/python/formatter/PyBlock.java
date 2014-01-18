@@ -213,13 +213,17 @@ public class PyBlock implements ASTBlock {
       }
     }
     else if (parentType == PyElementTypes.FROM_IMPORT_STATEMENT) {
-      if ((childType == PyElementTypes.IMPORT_ELEMENT || childType == PyTokenTypes.RPAR) &&
-          _node.findChildByType(PyTokenTypes.LPAR) != null) {
-        if (myContext.getPySettings().ALIGN_MULTILINE_IMPORTS) {
-          childAlignment = getAlignmentForChildren();
+      if (_node.findChildByType(PyTokenTypes.LPAR) != null) {
+        if (childType == PyElementTypes.IMPORT_ELEMENT) {
+          if (myContext.getPySettings().ALIGN_MULTILINE_IMPORTS) {
+            childAlignment = getAlignmentForChildren();
+          }
+          else {
+            childIndent = Indent.getNormalIndent();
+          }
         }
-        else {
-          childIndent = Indent.getNormalIndent();
+        if (childType == PyTokenTypes.RPAR) {
+          childIndent = Indent.getNoneIndent();
         }
       }
     }
