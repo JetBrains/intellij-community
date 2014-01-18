@@ -192,15 +192,31 @@
   </extensions>
 
   <actions>
-    <action id="LOMBOK_REFACTOR_GETTER" class="de.plushnikov.intellij.plugin.action.RefactorGetterAction"
-            text="GetterAction"
-            description="Action to refactor getter method to lombok annotation">
+    <group id="LombokActionGroup" text="Lombok" description="Refactor code with lombok annotations"
+           icon="/icons/lombok.png" popup="true">
+      <action id="lombokRefactorGetter" class="de.plushnikov.intellij.plugin.action.lombok.RefactorGetterAction"
+              text="Lombok @Getter" description="Action to replace getter methods with lombok @Getter annotation">
+      </action>
+      <action id="lombokRefactorSetter" class="de.plushnikov.intellij.plugin.action.lombok.RefactorSetterAction"
+              text="Lombok @Setter" description="Action to replace setter methods with lombok @Setter annotation">
+      </action>
+      <separator/>
+
       <add-to-group group-id="RefactoringMenu" anchor="last"/>
-    </action>
-    <action id="LOMBOK_REFACTOR_SETTER" class="de.plushnikov.intellij.plugin.action.RefactorSetterAction"
-            text="SetterAction"
-            description="Action to refactor setter method to lombok annotation">
+    </group>
+    <group id="DelombokActionGroup" text="Delombok" description="Refactor code removing lombok annotations"
+           icon="/icons/delombok.png" popup="true">
+      <action id="delombokRefactorGetter" class="de.plushnikov.intellij.plugin.action.delombok.RefactorGetterAction"
+              text="Delombok @Getter"
+              description="Action to replace lombok @Getter annotation with vanilla getter methods">
+      </action>
+      <action id="delombokRefactorSetter" class="de.plushnikov.intellij.plugin.action.delombok.RefactorSetterAction"
+              text="Delombok @Setter"
+              description="Action to replace lombok @Setter annotation with vanilla setter methods">
+      </action>
+      <separator/>
+
       <add-to-group group-id="RefactoringMenu" anchor="last"/>
-    </action>
+    </group>
   </actions>
 </idea-plugin>

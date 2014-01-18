@@ -1,4 +1,4 @@
-package de.plushnikov.intellij.plugin.action;
+package de.plushnikov.intellij.plugin.action.lombok;
 
 import com.intellij.codeInsight.generation.ClassMember;
 import com.intellij.codeInsight.generation.EncapsulatableClassMember;
@@ -12,36 +12,37 @@ import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifierList;
 import com.intellij.psi.util.PropertyUtil;
-import lombok.Getter;
+import de.plushnikov.intellij.plugin.action.BaseRefactorHandler;
+import lombok.Setter;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class RefactorGetterHandler extends LombokRefactorHandler {
+public class RefactorSetterHandler extends BaseRefactorHandler {
 
-  public RefactorGetterHandler(Project project, DataContext dataContext) {
+  public RefactorSetterHandler(Project project, DataContext dataContext) {
     super(dataContext, project);
   }
 
   protected String getChooserTitle() {
-    return "Select Fields to Replace Getter-Method With @Getter";
+    return "Select Fields to replace Setter-Method With @Getter";
   }
 
   @Override
   protected String getNothingFoundMessage() {
-    return "No field getter have been found to generate @Getters for";
+    return "No field getter have been found to generate @Setter for";
   }
 
   @Override
   protected String getNothingAcceptedMessage() {
-    return "No fields with getter method were found";
+    return "No fields with setter method were found";
   }
 
   @Override
   protected List<EncapsulatableClassMember> getEncapsulatableClassMembers(PsiClass psiClass) {
     final List<EncapsulatableClassMember> result = new ArrayList<EncapsulatableClassMember>();
     for (PsiField field : psiClass.getFields()) {
-      if (null != PropertyUtil.findPropertyGetter(psiClass, field.getName(), false, false)) {
+      if (null != PropertyUtil.findPropertySetter(psiClass, field.getName(), false, false)) {
         result.add(new PsiFieldMember(field));
       }
     }
@@ -54,13 +55,11 @@ public class RefactorGetterHandler extends LombokRefactorHandler {
       final PsiElementClassMember elementClassMember = (PsiElementClassMember) classMember;
 
       PsiField psiField = (PsiField) elementClassMember.getPsiElement();
-      PsiMethod psiMethod = PropertyUtil.findPropertyGetter(psiField.getContainingClass(), psiField.getName(), false, false);
-      ;
+      PsiMethod psiMethod = PropertyUtil.findPropertySetter(psiField.getContainingClass(), psiField.getName(), false, false);
       if (null != psiMethod) {
         PsiModifierList modifierList = psiField.getModifierList();
         if (null != modifierList) {
-          PsiAnnotation psiAnnotation = modifierList.addAnnotation(Getter.class.getName());
-//          psiAnnotation.setDeclaredAttributeValue("value", )
+          PsiAnnotation psiAnnotation = modifierList.addAnnotation(Setter.class.getName());
 
           psiMethod.delete();
         }

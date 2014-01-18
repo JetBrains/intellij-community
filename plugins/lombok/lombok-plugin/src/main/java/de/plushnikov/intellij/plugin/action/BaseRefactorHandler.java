@@ -20,12 +20,12 @@ import java.util.List;
 /**
  * Date: 15.12.13 Time: 23:06
  */
-public abstract class LombokRefactorHandler implements Runnable {
+public abstract class BaseRefactorHandler implements Runnable {
   protected final Project project;
   protected final Editor editor;
   protected final MemberChooser<ClassMember> chooser;
 
-  public LombokRefactorHandler(DataContext dataContext, Project project) {
+  public BaseRefactorHandler(DataContext dataContext, Project project) {
     this.project = project;
     editor = PlatformDataKeys.EDITOR.getData(dataContext);
 
