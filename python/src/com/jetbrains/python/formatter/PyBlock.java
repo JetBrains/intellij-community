@@ -258,13 +258,26 @@ public class PyBlock implements ASTBlock {
     while (prev != null && prev.getElementType() == TokenType.WHITE_SPACE) {
       if (prev.getText().contains("\\") && !childIndent.equals(Indent.getContinuationIndent()) &&
           !childIndent.equals(Indent.getContinuationIndent(true))) {
-        childIndent = Indent.getNormalIndent();
+        childIndent = isIndentNext(child) ? Indent.getContinuationIndent() : Indent.getNormalIndent();
         break;
       }
       prev = prev.getTreePrev();
     }
 
     return new PyBlock(this, child, childAlignment, childIndent, wrap, myContext);
+  }
+
+  private static boolean isIndentNext(ASTNode child) {
+    PsiElement psi = PsiTreeUtil.getParentOfType(child.getPsi(), PyStatement.class);
+
+    return psi instanceof PyIfStatement ||
+           psi instanceof PyForStatement ||
+           psi instanceof PyWithStatement ||
+           psi instanceof PyClass ||
+           psi instanceof PyFunction ||
+           psi instanceof PyTryExceptStatement ||
+           psi instanceof PyElsePart ||
+           psi instanceof PyIfPart;
   }
 
   private static boolean isSubscriptionOperand(ASTNode child) {
@@ -438,7 +451,7 @@ public class PyBlock implements ASTBlock {
 
       if ((node1.getElementType() == PyElementTypes.FUNCTION_DECLARATION || node1.getElementType() == PyElementTypes.CLASS_DECLARATION)
           && _node.getElementType() instanceof PyFileElementType) {
-        
+
         if (psi2 instanceof PsiComment) {
           final PsiElement psi3 = PsiTreeUtil.getNextSiblingOfType(psi2, PyElement.class);
 
