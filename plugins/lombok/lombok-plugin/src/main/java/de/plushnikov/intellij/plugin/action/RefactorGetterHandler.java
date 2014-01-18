@@ -41,7 +41,7 @@ public class RefactorGetterHandler extends LombokRefactorHandler {
   protected List<EncapsulatableClassMember> getEncapsulatableClassMembers(PsiClass psiClass) {
     final List<EncapsulatableClassMember> result = new ArrayList<EncapsulatableClassMember>();
     for (PsiField field : psiClass.getFields()) {
-      if (null != PropertyUtil.findGetterForField(field)) {
+      if (null != PropertyUtil.findPropertyGetter(psiClass, field.getName(), false, false)) {
         result.add(new PsiFieldMember(field));
       }
     }
@@ -54,7 +54,8 @@ public class RefactorGetterHandler extends LombokRefactorHandler {
       final PsiElementClassMember elementClassMember = (PsiElementClassMember) classMember;
 
       PsiField psiField = (PsiField) elementClassMember.getPsiElement();
-      PsiMethod psiMethod = PropertyUtil.findGetterForField(psiField);
+      PsiMethod psiMethod = PropertyUtil.findPropertyGetter(psiField.getContainingClass(), psiField.getName(), false, false);
+      ;
       if (null != psiMethod) {
         PsiModifierList modifierList = psiField.getModifierList();
         if (null != modifierList) {

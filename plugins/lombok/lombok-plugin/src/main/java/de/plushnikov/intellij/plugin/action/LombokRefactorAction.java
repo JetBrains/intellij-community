@@ -2,8 +2,8 @@ package de.plushnikov.intellij.plugin.action;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
@@ -23,7 +23,7 @@ public abstract class LombokRefactorAction extends AnAction {
     boolean processChooser = handler.processChooser();
 
     if (processChooser) {
-      final Editor editor = CommonDataKeys.EDITOR.getData(e.getDataContext());
+      final Editor editor = PlatformDataKeys.EDITOR.getData(e.getDataContext());
 
       CommandProcessor.getInstance().executeCommand(e.getProject(), new Runnable() {
         @Override

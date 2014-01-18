@@ -6,9 +6,9 @@ import com.intellij.codeInsight.generation.EncapsulatableClassMember;
 import com.intellij.codeInsight.generation.OverrideImplementUtil;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.ide.util.MemberChooser;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DataKeys;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
@@ -27,7 +27,7 @@ public abstract class LombokRefactorHandler implements Runnable {
 
   public LombokRefactorHandler(DataContext dataContext, Project project) {
     this.project = project;
-    editor = CommonDataKeys.EDITOR.getData(dataContext);
+    editor = PlatformDataKeys.EDITOR.getData(dataContext);
 
     PsiFile psiFile = DataKeys.PSI_FILE.getData(dataContext);
     PsiClass psiClass = OverrideImplementUtil.getContextClass(project, editor, psiFile, false);
