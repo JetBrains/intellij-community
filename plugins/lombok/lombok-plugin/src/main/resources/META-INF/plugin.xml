@@ -83,10 +83,10 @@
   <actions>
     <group id="LombokActionGroup" text="Lombok" description="Refactor code with lombok annotations"
            icon="/icons/lombok.png" popup="true">
-      <action id="defaultLombokGetter" class="de.plushnikov.intellij.plugin.action.lombok.RefactorGetterAction"
+      <action id="defaultLombokGetter" class="de.plushnikov.intellij.plugin.action.lombok.LombokGetterAction"
               text="Default @Getter" description="Action to replace all getter methods with lombok @Getter annotation">
       </action>
-      <action id="defaultLombokSetter" class="de.plushnikov.intellij.plugin.action.lombok.RefactorSetterAction"
+      <action id="defaultLombokSetter" class="de.plushnikov.intellij.plugin.action.lombok.LombokSetterAction"
               text="Default @Setter" description="Action to replace all setter methods with lombok @Setter annotation">
       </action>
       <separator/>
