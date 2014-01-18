@@ -114,6 +114,7 @@ public abstract class DummyCachingFileSystem<T extends VirtualFile> extends Dumm
     throw new UnsupportedOperationException("not implemented");
   }
 
+  @Nullable
   public Project getProject(String projectId) {
     List<Project> list = myProject2Id.getKeysByValue(projectId);
     return list == null || list.size() > 1 ? null : list.get(0);
