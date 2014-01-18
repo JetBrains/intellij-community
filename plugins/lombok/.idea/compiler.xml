@@ -31,6 +31,8 @@
       </profile>
     </annotationProcessing>
     <bytecodeTargetLevel>
+      <module name="lombok-api" target="1.6" />
+      <module name="lombok-intellij-plugin" target="1.6" />
       <module name="lombok-test" target="1.6" />
       <module name="lombok_pg-manual-test" target="1.6" />
     </bytecodeTargetLevel>

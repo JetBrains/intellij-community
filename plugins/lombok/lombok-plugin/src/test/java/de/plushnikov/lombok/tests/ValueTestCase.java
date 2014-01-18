@@ -6,6 +6,11 @@ import java.io.IOException;
 
 public class ValueTestCase extends LombokParsingTestCase {
 
+  public void testValueIssue94() throws IOException {
+    //TODO After adding support for final Modifier on class/fields -> adapt test
+    doTest();
+  }
+
   public void testValuePlain() throws IOException {
     //TODO add support for final Modifier on class
     doTest();
