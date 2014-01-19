@@ -1,11 +1,9 @@
 package com.intellij.structuralsearch.plugin.ui;
 
-import org.jdom.Element;
-import org.jdom.Attribute;
-import org.jdom.DataConversionException;
-import org.jetbrains.annotations.NonNls;
-import com.intellij.structuralsearch.MatchOptions;
 import com.intellij.openapi.util.JDOMExternalizable;
+import com.intellij.structuralsearch.MatchOptions;
+import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 
 /**
  * Created by IntelliJ IDEA.
@@ -19,9 +17,6 @@ public abstract class Configuration implements JDOMExternalizable {
   private String name = "";
   private boolean predefined;
 
-  private boolean searchOnDemand;
-
-  @NonNls private static final String DEMAND_ATTRIBUTE_NAME = "ondemand";
   private static ConfigurationCreator configurationCreator;
 
   public String getName() {
@@ -34,20 +29,10 @@ public abstract class Configuration implements JDOMExternalizable {
 
   public void readExternal(Element element) {
     name = element.getAttributeValue(NAME_ATTRIBUTE_NAME);
-
-    Attribute attr = element.getAttribute(DEMAND_ATTRIBUTE_NAME);
-    if (attr!=null) {
-      try {
-        searchOnDemand = attr.getBooleanValue();
-      } catch(DataConversionException ex) {}
-    }
   }
 
   public void writeExternal(Element element) {
     element.setAttribute(NAME_ATTRIBUTE_NAME,name);
-    if (searchOnDemand) {
-      element.setAttribute(DEMAND_ATTRIBUTE_NAME,String.valueOf(searchOnDemand));
-    }
   }
 
   public boolean isPredefined() {
@@ -70,14 +55,6 @@ public abstract class Configuration implements JDOMExternalizable {
 
   public int hashCode() {
     return getMatchOptions().hashCode();
-  }
-
-  public boolean isSearchOnDemand() {
-    return searchOnDemand;
-  }
-
-  public void setSearchOnDemand(boolean searchOnDemand) {
-    this.searchOnDemand = searchOnDemand;
   }
 
   public static void setActiveCreator(ConfigurationCreator creator) {

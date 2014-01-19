@@ -38,8 +38,6 @@ import com.intellij.psi.search.SearchScope;
 import com.intellij.structuralsearch.*;
 import com.intellij.structuralsearch.impl.matcher.MatcherImpl;
 import com.intellij.structuralsearch.plugin.StructuralSearchPlugin;
-import com.intellij.structuralsearch.plugin.replace.ui.NavigateSearchResultsDialog;
-import com.intellij.structuralsearch.plugin.ui.actions.DoSearchAction;
 import com.intellij.ui.ComboboxSpeedSearch;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.ListCellRendererWrapper;
@@ -72,7 +70,6 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
   // options of search scope
   private ScopeChooserCombo myScopeChooserCombo;
 
-  private JCheckBox searchIncrementally;
   private JCheckBox recursiveMatching;
   private JCheckBox caseSensitiveMatch;
 
@@ -213,11 +210,6 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
   }
 
   protected void buildOptions(JPanel searchOptions) {
-    searchIncrementally = new JCheckBox(SSRBundle.message("find.with.prompt.checkbox"), false);
-    if (isSearchOnDemandEnabled()) {
-      searchOptions.add(UIUtil.createOptionLine(searchIncrementally));
-    }
-
     recursiveMatching = new JCheckBox(SSRBundle.message("recursive.matching.checkbox"), true);
     if (isRecursiveSearchEnabled()) {
       searchOptions.add(UIUtil.createOptionLine(recursiveMatching));
@@ -230,7 +222,6 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
     maxMatches = new JTextField(Integer.toString(MatchOptions.DEFAULT_MAX_MATCHES_COUNT), 3);
     searchOptions.add(FormBuilder.createFormBuilder().addLabeledComponent(maxMatchesSwitch, maxMatches).getPanel());
 
-    //noinspection HardCodedStringLiteral
     final List<FileType> types = new ArrayList<FileType>();
 
     for (FileType fileType : StructuralSearchUtil.getSuitableFileTypes()) {
@@ -471,7 +462,6 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
       }
     }
 
-    searchIncrementally.setSelected(configuration.isSearchOnDemand());
     MatchOptions options = configuration.getMatchOptions();
     StructuralSearchProfile profile = StructuralSearchUtil.getProfileByFileType(options.getFileType());
     assert profile != null;
@@ -506,18 +496,7 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
   }
 
   protected void runAction(final Configuration config, final SearchContext searchContext) {
-    if (searchIncrementally.isSelected()) {
-      NavigateSearchResultsDialog resultsDialog = createResultsNavigator(searchContext, config);
-
-      DoSearchAction.execute(searchContext.getProject(), resultsDialog, config);
-    }
-    else {
-      createUsageView(searchContext, config);
-    }
-  }
-
-  protected NavigateSearchResultsDialog createResultsNavigator(final SearchContext searchContext, Configuration config) {
-    return new NavigateSearchResultsDialog(searchContext.getProject(), false);
+    createUsageView(searchContext, config);
   }
 
   protected void createUsageView(final SearchContext searchContext, final Configuration config) {
@@ -1032,11 +1011,6 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
 
     options.setSearchPattern(searchCriteriaEdit.getDocument().getText());
     options.setCaseSensitiveMatch(caseSensitiveMatch.isSelected());
-    config.setSearchOnDemand(isSearchOnDemandEnabled() && searchIncrementally.isSelected());
-  }
-
-  protected boolean isSearchOnDemandEnabled() {
-    return false;
   }
 
   @NotNull

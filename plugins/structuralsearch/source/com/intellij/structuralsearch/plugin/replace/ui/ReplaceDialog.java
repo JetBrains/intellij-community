@@ -94,12 +94,6 @@ public class ReplaceDialog extends SearchDialog {
 
   }
 
-  protected NavigateSearchResultsDialog createResultsNavigator(final SearchContext searchContext, Configuration config) {
-    final NavigateSearchResultsDialog resultsDialog = new NavigateSearchResultsDialog(searchContext.getProject(), true);
-    resultsDialog.setOptions(((ReplaceConfiguration)config).getOptions());
-    return resultsDialog;
-  }
-
   protected UsageViewContext createUsageViewContext(Configuration configuration) {
     return new ReplaceUsageViewContext(searchContext, configuration);
   }
@@ -288,10 +282,6 @@ public class ReplaceDialog extends SearchDialog {
   }
 
   protected boolean isRecursiveSearchEnabled() {
-    return false;
-  }
-
-  protected boolean isSearchOnDemandEnabled() {
     return false;
   }
 
