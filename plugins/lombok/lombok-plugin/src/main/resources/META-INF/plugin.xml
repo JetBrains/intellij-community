@@ -136,6 +136,7 @@
 				    <li>Added refactoring action for Lombok @Log and friends</li>
 				    <li>Added refactoring actions for Lombok @Getter and @Setter methods</li>
 				    <li>Added refactoring actions for Delombok @Getter and @Setter methods</li>
+				    <li>Fixed problem with renaming fields in class containing lombok @Getter and @Setter</li>
 				    <li>Issue #94: Fixed Intellij does not correctly create the constructor with @RequiredAllConstructor for classes with @Value</li>
 				</ol>
 			</li>

@@ -6,7 +6,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiIdentifier;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiType;
-import com.intellij.psi.impl.light.LightIdentifier;
 import com.intellij.psi.impl.light.LightModifierList;
 import com.intellij.psi.impl.light.LightParameter;
 import com.intellij.psi.impl.light.LightVariableBuilder;
@@ -17,14 +16,29 @@ import org.jetbrains.annotations.NotNull;
  * @author Plushnikov Michail
  */
 public class LombokLightParameter extends LightParameter {
-  private final LightIdentifier myNameIdentifier;
+  private String myName;
+  private final LombokLightIdentifier myNameIdentifier;
 
   public LombokLightParameter(@NotNull String name, @NotNull PsiType type, PsiElement declarationScope, Language language) {
     super(name, type, declarationScope, language);
+    myName = name;
     PsiManager manager = declarationScope.getManager();
-    myNameIdentifier = new LightIdentifier(manager, name);
+    myNameIdentifier = new LombokLightIdentifier(manager, name);
     ReflectionUtil.setFinalFieldPerReflection(LightVariableBuilder.class, this, LightModifierList.class,
         new LombokLightModifierList(manager, language));
+  }
+
+  @NotNull
+  @Override
+  public String getName() {
+    return myName;
+  }
+
+  @Override
+  public PsiElement setName(@NotNull String name) {
+    myName = name;
+    myNameIdentifier.setText(name);
+    return this;
   }
 
   @Override
