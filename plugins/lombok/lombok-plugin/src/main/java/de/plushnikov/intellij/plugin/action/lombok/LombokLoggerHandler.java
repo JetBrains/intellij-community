@@ -1,5 +1,6 @@
 package de.plushnikov.intellij.plugin.action.lombok;
 
+import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiField;
@@ -57,7 +58,7 @@ public class LombokLoggerHandler extends BaseLombokHandler {
       int result = Messages.showOkCancelDialog(
           String.format("Logger field: \"%s\" Is not private static field named \"log\". Refactor anyway?", psiField.getName()),
           "Attention!", Messages.getQuestionIcon());
-      return Messages.OK == result;
+      return DialogWrapper.OK_EXIT_CODE == result;
     }
     return true;
   }
