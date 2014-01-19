@@ -3,10 +3,14 @@ package de.plushnikov.intellij.plugin.util;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiKeyword;
 import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiModifierList;
+import com.intellij.psi.PsiModifierListOwner;
+import com.intellij.psi.util.PsiUtil;
 import lombok.AccessLevel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.lang.annotation.Annotation;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -77,8 +81,25 @@ public class LombokProcessorUtil {
     }
   }
 
+  @NotNull
+  public static PsiAnnotation createAnnotationWithAccessLevel(@NotNull Class<? extends Annotation> annotationClass, @NotNull PsiModifierListOwner psiModifierListOwner) {
+    String value = "";
+    final PsiModifierList modifierList = psiModifierListOwner.getModifierList();
+    if (null != modifierList) {
+      final String accessModifier = PsiUtil.getAccessModifier(PsiUtil.getAccessLevel(modifierList));
+      if (null != accessModifier) {
+        final AccessLevel accessLevel = convertModifierToAccessLevel(accessModifier);
+        if (null != accessLevel && !AccessLevel.PUBLIC.equals(accessLevel)) {
+          value = AccessLevel.class.getName() + "." + accessLevel;
+        }
+      }
+    }
+
+    return PsiAnnotationUtil.createPsiAnnotation(psiModifierListOwner, annotationClass, value);
+  }
+
   @Nullable
-  private static AccessLevel convertModifierToAccessLevel(String psiModifier) {
+  public static AccessLevel convertModifierToAccessLevel(String psiModifier) {
     Map<String, AccessLevel> map = new HashMap<String, AccessLevel>();
     map.put(PsiModifier.PUBLIC, AccessLevel.PUBLIC);
     map.put(PsiModifier.PACKAGE_LOCAL, AccessLevel.PACKAGE);

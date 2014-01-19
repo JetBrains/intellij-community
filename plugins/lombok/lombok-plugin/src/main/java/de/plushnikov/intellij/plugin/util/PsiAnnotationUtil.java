@@ -1,11 +1,14 @@
 package de.plushnikov.intellij.plugin.util;
 
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiAnnotationMemberValue;
 import com.intellij.psi.PsiArrayInitializerMemberValue;
+import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiClassObjectAccessExpression;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementFactory;
 import com.intellij.psi.PsiEnumConstant;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiJavaCodeReferenceElement;
@@ -16,6 +19,7 @@ import com.intellij.psi.PsiReferenceExpression;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.PsiTypeElement;
 import com.intellij.psi.PsiVariable;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.StringBuilderSpinAllocator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -31,6 +35,19 @@ import java.util.regex.Pattern;
  * @author Plushnikov Michail
  */
 public class PsiAnnotationUtil {
+
+  @NotNull
+  public static PsiAnnotation createPsiAnnotation(@NotNull PsiModifierListOwner psiModifierListOwner, @NotNull Class<? extends Annotation> annotationClass, @Nullable String value) {
+    final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(psiModifierListOwner.getProject()).getElementFactory();
+    final PsiClass psiClass = PsiTreeUtil.getParentOfType(psiModifierListOwner, PsiClass.class);
+    final String valueString = StringUtil.isNotEmpty(value) ? "(" + value + ")" : "";
+    return elementFactory.createAnnotationFromText("@" + annotationClass.getName() + valueString, psiClass);
+  }
+
+  @Nullable
+  public static PsiAnnotation findAnnotation(@NotNull PsiModifierListOwner psiModifierListOwner, @NotNull final Class<? extends Annotation> annotationType) {
+    return findAnnotation(psiModifierListOwner, annotationType.getName());
+  }
 
   @Nullable
   public static PsiAnnotation findAnnotation(@NotNull PsiModifierListOwner psiModifierListOwner, @NotNull String qualifiedName) {
