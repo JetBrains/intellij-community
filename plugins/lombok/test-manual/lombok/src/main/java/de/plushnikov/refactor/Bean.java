@@ -8,11 +8,11 @@ import java.io.InputStream;
 import java.util.Date;
 import java.util.logging.Logger;
 
-@Getter(onMethod = {}, value = AccessLevel.PRIVATE)
+@Getter(onMethod = {}, value = AccessLevel.PACKAGE)
 @Setter(onMethod = {}, value = AccessLevel.PROTECTED)
 public class Bean {
 
-  public final Logger log324 = java.util.logging.Logger.getLogger(Bean.class.getName());
+  public static final Logger log324 = java.util.logging.Logger.getLogger(Bean.class.getName());
 
   public void logHallo() {
     log324.info("Hello!");
@@ -21,11 +21,11 @@ public class Bean {
   public static void main(String[] args) {
     Bean bean = new Bean();
     bean.setA(123);
-    System.out.println(bean.getB());
+    System.out.println(bean.getA());
     bean.logHallo();
   }
 
-  private int a;
+  private static int a;
   private float b;
   private double c;
   private String d;
@@ -36,7 +36,7 @@ public class Bean {
   public Bean() {
   }
 
-  public int getA() {
+  public static int getA() {
     return a;
   }
 
