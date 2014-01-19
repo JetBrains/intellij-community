@@ -10,6 +10,7 @@ import org.jetbrains.annotations.NotNull;
 public class LombokLoggerActionTest extends LightCodeInsightTestCase {
 
   public void testLogSimple() throws Exception {
+    Messages.setTestDialog(TestDialog.DEFAULT);
     doTest();
   }
 
@@ -19,14 +20,17 @@ public class LombokLoggerActionTest extends LightCodeInsightTestCase {
   }
 
   public void testLogPublic() throws Exception {
+    Messages.setTestDialog(TestDialog.OK);
     doTest();
   }
 
   public void testLogNonStatic() throws Exception {
+    Messages.setTestDialog(TestDialog.OK);
     doTest();
   }
 
   public void testLogNonFinal() throws Exception {
+    Messages.setTestDialog(TestDialog.OK);
     doTest();
   }
 

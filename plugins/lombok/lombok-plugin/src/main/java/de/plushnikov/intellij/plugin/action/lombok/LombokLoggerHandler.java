@@ -56,7 +56,7 @@ public class LombokLoggerHandler extends BaseLombokHandler {
   private boolean checkLoggerField(@NotNull PsiField psiField) {
     if (!isValidLoggerField(psiField)) {
       int result = Messages.showOkCancelDialog(
-          String.format("Logger field: \"%s\" Is not private static field named \"log\". Refactor anyway?", psiField.getName()),
+          String.format("Logger field: \"%s\" Is not private static final field named \"log\". Refactor anyway?", psiField.getName()),
           "Attention!", Messages.getQuestionIcon());
       return DialogWrapper.OK_EXIT_CODE == result;
     }
@@ -66,8 +66,9 @@ public class LombokLoggerHandler extends BaseLombokHandler {
   private boolean isValidLoggerField(@NotNull PsiField psiField) {
     boolean isPrivate = psiField.hasModifierProperty(PsiModifier.PRIVATE);
     boolean isStatic = psiField.hasModifierProperty(PsiModifier.STATIC);
+    boolean isFinal = psiField.hasModifierProperty(PsiModifier.FINAL);
     boolean isProperlyNamed = LOMBOK_LOGGER_NAME.equals(psiField.getName());
 
-    return isPrivate & isStatic & isProperlyNamed;
+    return isPrivate & isStatic & isFinal & isProperlyNamed;
   }
 }
