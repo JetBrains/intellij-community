@@ -3,6 +3,9 @@ package com.intellij.vcs.log.ui;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.MessageType;
+import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
+import com.intellij.util.PairFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.Hash;
@@ -234,33 +237,68 @@ public class VcsLogUI {
     updateUI();
   }
 
-  public void jumpToCommit(final Hash commitHash) {
-    int row = myLogDataHolder.getDataPack().getRowByHash(commitHash);
-    if (row != -1) {
+  public void jumpToCommit(@NotNull Hash commitHash) {
+    jumpTo(commitHash, new PairFunction<AbstractVcsLogTableModel, Hash, Integer>() {
+      @Override
+      public Integer fun(AbstractVcsLogTableModel model, Hash hash) {
+        return model.getRowOfCommit(hash);
+      }
+    });
+  }
+
+  public void jumpToCommitByPartOfHash(@NotNull String commitHash) {
+    jumpTo(commitHash, new PairFunction<AbstractVcsLogTableModel, String, Integer>() {
+      @Override
+      public Integer fun(AbstractVcsLogTableModel model, String hash) {
+        return model.getRowOfCommitByPartOfHash(hash);
+      }
+    });
+  }
+
+  private <T> void jumpTo(@NotNull final T commitId, @NotNull final PairFunction<AbstractVcsLogTableModel, T, Integer> rowGetter) {
+    AbstractVcsLogTableModel model = getModel();
+    if (model == null) {
+      return;
+    }
+
+    int row = rowGetter.fun(model, commitId);
+    if (row >= 0) {
       jumpToRow(row);
     }
-    else {
-      myLogDataHolder.showFullLog(new Runnable() {
+    else if (model.canRequestMore()) {
+      model.requestToLoadMore(new Runnable() {
         @Override
         public void run() {
-          jumpToCommit(commitHash);
+          jumpTo(commitId, rowGetter);
         }
       });
+    }
+    else {
+      commitNotFound(commitId.toString());
     }
   }
 
-  public void jumpToCommitByPartOfHash(final String hash) {
-    Node node = myLogDataHolder.getDataPack().getNodeByPartOfHash(hash);
-    if (node != null) {
-      jumpToRow(node.getRowIndex());
+  @Nullable
+  private AbstractVcsLogTableModel getModel() {
+    TableModel model = getTable().getModel();
+    if (model instanceof AbstractVcsLogTableModel) {
+      return (AbstractVcsLogTableModel)model;
     }
-    else if (!myLogDataHolder.isFullLogShowing()) {
-      myLogDataHolder.showFullLog(new Runnable() {
-        @Override
-        public void run() {
-          jumpToCommitByPartOfHash(hash);
-        }
-      });
+    showMessage(MessageType.WARNING, "The log is not ready to search yet");
+    return null;
+  }
+
+  private void showMessage(@NotNull MessageType messageType, @NotNull String message) {
+    LOG.info(message);
+    VcsBalloonProblemNotifier.showOverChangesView(myProject, message, messageType);
+  }
+
+  private void commitNotFound(@NotNull String commitHash) {
+    if (collectFilters().isEmpty()) {
+      showMessage(MessageType.WARNING, "Commit " + commitHash + " not found");
+    }
+    else {
+      showMessage(MessageType.WARNING, "Commit " + commitHash + " doesn't exist or doesn't match the active filters");
     }
   }
 

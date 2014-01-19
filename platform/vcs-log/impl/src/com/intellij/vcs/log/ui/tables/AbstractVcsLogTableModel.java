@@ -1,5 +1,6 @@
 package com.intellij.vcs.log.ui.tables;
 
+import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.impl.NullVirtualFile;
@@ -46,7 +47,7 @@ public abstract class AbstractVcsLogTableModel<CommitColumnClass, CommitId> exte
   @Override
   public final Object getValueAt(int rowIndex, int columnIndex) {
     if (rowIndex >= getRowCount() - 1) {
-      requestToLoadMore();
+      requestToLoadMore(EmptyRunnable.INSTANCE);
     }
 
     VcsShortCommitDetails data = getShortDetails(rowIndex);
@@ -74,7 +75,16 @@ public abstract class AbstractVcsLogTableModel<CommitColumnClass, CommitId> exte
     }
   }
 
-  public abstract void requestToLoadMore();
+  /**
+   * Requests the proper data provider to load more data from the log & recreate the model.
+   * @param onLoaded will be called upon task completion on the EDT.
+   */
+  public abstract void requestToLoadMore(@NotNull Runnable onLoaded);
+
+  /**
+   * Returns true if not all data has been loaded, i.e. there is sense to {@link #requestToLoadMore(Runnable) request more data}.
+   */
+  public abstract boolean canRequestMore();
 
   /**
    * Returns Changes for commits at selected rows.<br/>
@@ -101,6 +111,18 @@ public abstract class AbstractVcsLogTableModel<CommitColumnClass, CommitId> exte
    */
   @Nullable
   public abstract Hash getHashAtRow(int row);
+
+  /**
+   * Returns the row number containing the given commit,
+   * or -1 if the requested commit is not contained in this table model (possibly because not all data has been loaded).
+   */
+  public abstract int getRowOfCommit(@NotNull Hash hash);
+
+  /**
+   * Returns the number of the first row which contains a commit which hash starts with the given value,
+   * or -1 if no such commit was found (possibly because not all data has been loaded).
+   */
+  public abstract int getRowOfCommitByPartOfHash(@NotNull String hash);
 
   @Override
   public Class<?> getColumnClass(int column) {

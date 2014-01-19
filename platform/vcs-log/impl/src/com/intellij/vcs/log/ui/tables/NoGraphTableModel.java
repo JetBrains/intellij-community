@@ -61,12 +61,17 @@ public class NoGraphTableModel extends AbstractVcsLogTableModel<CommitCell, Hash
   }
 
   @Override
-  public void requestToLoadMore() {
+  public void requestToLoadMore(@NotNull Runnable onLoaded) {
     if (myLoadMoreWasRequested.compareAndSet(false, true)     // Don't send the request to VCS twice
         && myLoadMoreStage != LoadMoreStage.ALL_REQUESTED) {  // or when everything possible is loaded
       myUi.getTable().setPaintBusy(true);
-      myUi.getFilterer().requestVcs(myUi.collectFilters(), myLoadMoreStage);
+      myUi.getFilterer().requestVcs(myUi.collectFilters(), myLoadMoreStage, onLoaded);
     }
+  }
+
+  @Override
+  public boolean canRequestMore() {
+    return myLoadMoreStage != LoadMoreStage.ALL_REQUESTED;
   }
 
   @Nullable
@@ -115,4 +120,28 @@ public class NoGraphTableModel extends AbstractVcsLogTableModel<CommitCell, Hash
   public Hash getHashAtRow(int row) {
     return myCommits.get(row).getHash();
   }
+
+  @Override
+  public int getRowOfCommit(@NotNull Hash hash) {
+    for (int i = 0; i < myCommits.size(); i++) {
+      VcsFullCommitDetails commit = myCommits.get(i);
+      if (commit.getHash().equals(hash)) {
+        return i;
+      }
+    }
+    return -1;
+  }
+
+  @Override
+  public int getRowOfCommitByPartOfHash(@NotNull String hash) {
+    String lowercaseHash = hash.toLowerCase();
+    for (int i = 0; i < myCommits.size(); i++) {
+      VcsFullCommitDetails commit = myCommits.get(i);
+      if (commit.getHash().toString().toLowerCase().startsWith(lowercaseHash)) {
+        return i;
+      }
+    }
+    return -1;
+  }
+
 }
