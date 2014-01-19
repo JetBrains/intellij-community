@@ -35,10 +35,12 @@ public class LombokLightMethodBuilder extends LightMethodBuilder {
   private final LightIdentifier myNameIdentifier;
   private final LombokLightReferenceListBuilder myThrowsList;
   private ASTNode myASTNode;
+  private String myName;
 
   public LombokLightMethodBuilder(@NotNull PsiManager manager, @NotNull String name) {
     super(manager, JavaLanguage.INSTANCE, name,
-       new LightParameterListBuilder(manager, JavaLanguage.INSTANCE), new LombokLightModifierList(manager, JavaLanguage.INSTANCE));
+        new LightParameterListBuilder(manager, JavaLanguage.INSTANCE), new LombokLightModifierList(manager, JavaLanguage.INSTANCE));
+    myName = name;
     myNameIdentifier = new LombokLightIdentifier(manager, name);
     myThrowsList = new LombokLightReferenceListBuilder(manager, JavaLanguage.INSTANCE, PsiReferenceList.Role.THROWS_LIST);
   }
@@ -203,6 +205,18 @@ public class LombokLightMethodBuilder extends LightMethodBuilder {
       return containingClass.add(newElement);
     }
     return null;
+  }
+
+  @NotNull
+  @Override
+  public String getName() {
+    return myName;
+  }
+
+  @Override
+  public PsiElement setName(@NotNull String name) throws IncorrectOperationException {
+    myName = name;
+    return this;
   }
 
   @Override

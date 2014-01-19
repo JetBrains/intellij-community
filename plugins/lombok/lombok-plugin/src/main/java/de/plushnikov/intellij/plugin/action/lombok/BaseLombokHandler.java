@@ -76,9 +76,19 @@ public abstract class BaseLombokHandler implements CodeInsightActionHandler {
   }
 
   private void addAnnotation(@NotNull PsiModifierListOwner targetElement, @NotNull PsiModifierListOwner sourceElement, @NotNull Class<? extends Annotation> annotationClass) {
-    final PsiAnnotation presentAnnotation = PsiAnnotationUtil.findAnnotation(targetElement, annotationClass);
-
     final PsiAnnotation newPsiAnnotation = LombokProcessorUtil.createAnnotationWithAccessLevel(annotationClass, sourceElement);
+
+    addAnnotation(targetElement, newPsiAnnotation, annotationClass);
+  }
+
+  protected void addAnnotation(@NotNull PsiModifierListOwner targetElement, @NotNull Class<? extends Annotation> annotationClass) {
+    final PsiAnnotation newPsiAnnotation = PsiAnnotationUtil.createPsiAnnotation(targetElement, annotationClass);
+
+    addAnnotation(targetElement, newPsiAnnotation, annotationClass);
+  }
+
+  private void addAnnotation(@NotNull PsiModifierListOwner targetElement, @NotNull PsiAnnotation newPsiAnnotation, @NotNull Class<? extends Annotation> annotationClass) {
+    final PsiAnnotation presentAnnotation = PsiAnnotationUtil.findAnnotation(targetElement, annotationClass);
 
     final Project project = targetElement.getProject();
     final JavaCodeStyleManager javaCodeStyleManager = JavaCodeStyleManager.getInstance(project);

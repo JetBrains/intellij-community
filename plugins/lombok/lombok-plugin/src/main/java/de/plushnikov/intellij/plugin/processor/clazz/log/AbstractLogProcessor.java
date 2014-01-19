@@ -38,6 +38,14 @@ public abstract class AbstractLogProcessor extends AbstractClassProcessor {
     this.loggerInitializer = loggerInitializer;
   }
 
+  public static String getLoggerName() {
+    return loggerName;
+  }
+
+  public String getLoggerType() {
+    return loggerType;
+  }
+
   @Override
   protected boolean validate(@NotNull PsiAnnotation psiAnnotation, @NotNull PsiClass psiClass, @NotNull ProblemBuilder builder) {
     boolean result = true;

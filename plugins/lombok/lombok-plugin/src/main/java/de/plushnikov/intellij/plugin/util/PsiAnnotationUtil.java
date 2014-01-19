@@ -37,6 +37,11 @@ import java.util.regex.Pattern;
 public class PsiAnnotationUtil {
 
   @NotNull
+  public static PsiAnnotation createPsiAnnotation(@NotNull PsiModifierListOwner psiModifierListOwner, @NotNull Class<? extends Annotation> annotationClass) {
+    return createPsiAnnotation(psiModifierListOwner, annotationClass, "");
+  }
+
+  @NotNull
   public static PsiAnnotation createPsiAnnotation(@NotNull PsiModifierListOwner psiModifierListOwner, @NotNull Class<? extends Annotation> annotationClass, @Nullable String value) {
     final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(psiModifierListOwner.getProject()).getElementFactory();
     final PsiClass psiClass = PsiTreeUtil.getParentOfType(psiModifierListOwner, PsiClass.class);

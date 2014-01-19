@@ -1,73 +1,94 @@
 package de.plushnikov.refactor;
 
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.Setter;
+
 import java.io.InputStream;
 import java.util.Date;
+import java.util.logging.Logger;
 
+@Getter(onMethod = {}, value = AccessLevel.PRIVATE)
+@Setter(onMethod = {}, value = AccessLevel.PROTECTED)
 public class Bean {
-    private int a;
-    private float b;
-    private double c;
-    private String d;
-    private Integer e;
-    private InputStream f;
-    private Date g;
 
-    public Bean() {
-    }
+  public final Logger log324 = java.util.logging.Logger.getLogger(Bean.class.getName());
 
-    public int getA() {
-        return a;
-    }
+  public void logHallo() {
+    log324.info("Hello!");
+  }
 
-    public void setA(int a) {
-        this.a = a;
-    }
+  public static void main(String[] args) {
+    Bean bean = new Bean();
+    bean.setA(123);
+    System.out.println(bean.getB());
+    bean.logHallo();
+  }
 
-    public float getB() {
-        return b;
-    }
+  private int a;
+  private float b;
+  private double c;
+  private String d;
+  private Integer e;
+  private InputStream f;
+  private Date g;
 
-    public void setB(float b) {
-        this.b = b;
-    }
+  public Bean() {
+  }
 
-    public double getC() {
-        return c;
-    }
+  public int getA() {
+    return a;
+  }
 
-    public void setC(double c) {
-        this.c = c;
-    }
+  public void setA(int a) {
+    this.a = a;
+  }
 
-    public String getD() {
-        return d;
-    }
+  public float getB() {
+    return b;
+  }
 
-    public void setD(String d) {
-        this.d = d;
-    }
+  public void setB(float b) {
+    this.b = b;
+  }
 
-    public Integer getE() {
-        return e;
-    }
+  public double getC() {
+    return c;
+  }
 
-    public void setE(Integer e) {
-        this.e = e;
-    }
+  public void setC(double c) {
+    this.c = c;
+  }
 
-    public InputStream getF() {
-        return f;
-    }
+  public String getD() {
+    return d;
+  }
 
-    public void setF(InputStream f) {
-        this.f = f;
-    }
+  public void setD(String d) {
+    this.d = d;
+  }
 
-    public Date getG() {
-        return g;
-    }
+  public Integer getE() {
+    return e;
+  }
 
-    public void setG(Date g) {
-        this.g = g;
-    }
+  public void setE(Integer e) {
+    this.e = e;
+  }
+
+  public InputStream getF() {
+    return f;
+  }
+
+  public void setF(InputStream f) {
+    this.f = f;
+  }
+
+  public Date getG() {
+    return g;
+  }
+
+  public void setG(Date g) {
+    this.g = g;
+  }
 }

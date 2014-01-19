@@ -83,6 +83,7 @@
   <actions>
     <group id="LombokActionGroup" text="Lombok" description="Refactor code with lombok annotations"
            icon="/icons/lombok.png" popup="true">
+
       <action id="defaultLombokGetter" class="de.plushnikov.intellij.plugin.action.lombok.LombokGetterAction"
               text="Default @Getter" description="Action to replace all getter methods with lombok @Getter annotation">
       </action>
@@ -90,14 +91,19 @@
               text="Default @Setter" description="Action to replace all setter methods with lombok @Setter annotation">
       </action>
       <separator/>
-      <action id="generalLombokGetter" class="de.plushnikov.intellij.plugin.action.lombok.RefactorGetterAction"
-              text="Selectable @Getter"
-              description="Action to replace some getter methods with lombok @Getter annotation">
+      <action id="defaultLombokLogger" class="de.plushnikov.intellij.plugin.action.lombok.LombokLoggerAction"
+              text="@Log (and friends)" description="Action to replace logger with lombok @Log annotation">
       </action>
-      <action id="generalLombokSetter" class="de.plushnikov.intellij.plugin.action.lombok.RefactorSetterAction"
-              text="Selectable @Setter"
-              description="Action to replace some setter methods with lombok @Setter annotation">
-      </action>
+
+      <!--<separator/>-->
+      <!--<action id="generalLombokGetter" class="de.plushnikov.intellij.plugin.action.lombok.RefactorGetterAction"-->
+      <!--text="Selectable @Getter"-->
+      <!--description="Action to replace some getter methods with lombok @Getter annotation">-->
+      <!--</action>-->
+      <!--<action id="generalLombokSetter" class="de.plushnikov.intellij.plugin.action.lombok.RefactorSetterAction"-->
+      <!--text="Selectable @Setter"-->
+      <!--description="Action to replace some setter methods with lombok @Setter annotation">-->
+      <!--</action>-->
 
       <add-to-group group-id="RefactoringMenu" anchor="last"/>
     </group>
@@ -123,8 +129,13 @@
 		<ul>
 		<li>0.8
 				<ol>
-				    <li>Added refactoring actions for Lombok of getter and setter methods</li>
-				    <li>Added refactoring actions for Delombok getter and setter methods</li>
+				    <!--<li>TODO: Add generate actions for Lombok equals/hashcode, toString, getter, setter, constructor and maybe logger method</li>-->
+				    <!--<li>TODO: Add delombok actions for @Data, Logger and Constructor annotations</li>-->
+				    <!--<li>TODO: Add delombok action for all annotations</li>-->
+
+				    <li>Added refactoring action for Lombok @Log and friends</li>
+				    <li>Added refactoring actions for Lombok @Getter and @Setter methods</li>
+				    <li>Added refactoring actions for Delombok @Getter and @Setter methods</li>
 				    <li>Issue #94: Fixed Intellij does not correctly create the constructor with @RequiredAllConstructor for classes with @Value</li>
 				</ol>
 			</li>
