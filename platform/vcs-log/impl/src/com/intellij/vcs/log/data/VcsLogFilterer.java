@@ -3,6 +3,7 @@ package com.intellij.vcs.log.data;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.Ref;
 import com.intellij.util.Consumer;
 import com.intellij.util.Function;
@@ -87,13 +88,13 @@ public class VcsLogFilterer {
         myUI.updateUI();
 
         if (model.getRowCount() == 0) {
-          model.requestToLoadMore();
+          model.requestToLoadMore(EmptyRunnable.INSTANCE);
         }
       }
     });
   }
 
-  public void requestVcs(@NotNull Collection<VcsLogFilter> filters, final LoadMoreStage loadMoreStage) {
+  public void requestVcs(@NotNull Collection<VcsLogFilter> filters, final LoadMoreStage loadMoreStage, @NotNull final Runnable onSuccess) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     int maxCount;
     if (loadMoreStage == LoadMoreStage.INITIAL) {
@@ -108,6 +109,7 @@ public class VcsLogFilterer {
         LoadMoreStage newLoadMoreStage = advanceLoadMoreStage(loadMoreStage);
         myUI.setModel(new NoGraphTableModel(myUI, details, myLogDataHolder.getDataPack().getRefsModel(), newLoadMoreStage));
         myUI.updateUI();
+        onSuccess.run();
       }
     }, maxCount);
   }

@@ -1,7 +1,6 @@
 package com.intellij.vcs.log.ui.tables;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcs.log.Hash;
@@ -57,8 +56,13 @@ public class GraphTableModel extends AbstractVcsLogTableModel<GraphCommitCell, N
   }
 
   @Override
-  public void requestToLoadMore() {
-    myDataHolder.showFullLog(EmptyRunnable.INSTANCE);
+  public void requestToLoadMore(@NotNull Runnable onLoaded) {
+    myDataHolder.showFullLog(onLoaded);
+  }
+
+  @Override
+  public boolean canRequestMore() {
+    return !myDataHolder.isFullLogShowing();
   }
 
   @Nullable
@@ -118,6 +122,17 @@ public class GraphTableModel extends AbstractVcsLogTableModel<GraphCommitCell, N
   public Hash getHashAtRow(int row) {
     Node node = myDataPack.getGraphModel().getGraph().getCommitNodeInRow(row);
     return node == null ? null : myDataHolder.getHash(node.getCommitIndex());
+  }
+
+  @Override
+  public int getRowOfCommit(@NotNull final Hash hash) {
+    return myDataPack.getRowByHash(hash);
+  }
+
+  @Override
+  public int getRowOfCommitByPartOfHash(@NotNull String hash) {
+    Node node = myDataPack.getNodeByPartOfHash(hash);
+    return node != null ? node.getRowIndex() : -1;
   }
 
 }
