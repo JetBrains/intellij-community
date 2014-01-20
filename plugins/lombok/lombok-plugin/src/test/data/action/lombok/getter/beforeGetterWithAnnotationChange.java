@@ -1,14 +1,15 @@
-@lombok.Getter(lombok.AccessLevel.PRIVATE)
 class Test {
   private float b;
+  @lombok.Getter(lombok.AccessLevel.PRIVATE)
   private double c;
+  @lombok.Getter(lombok.AccessLevel.PROTECTED)
   private String d;
 
   public float getB() {
     return b;
   }
 
-  public double getC() {
+  protected double getC() {
     return c;
   }
 

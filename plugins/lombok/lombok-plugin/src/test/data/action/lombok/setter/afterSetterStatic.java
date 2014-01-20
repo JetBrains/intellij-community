@@ -1,8 +1,10 @@
-@lombok.Setter
+import lombok.Setter;
+
+@Setter
 class Test {
-  @lombok.Setter
+  @Setter
   private static float b;
-  @lombok.Setter
+  @Setter
   private static double c;
   private String d;
 

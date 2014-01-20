@@ -1,9 +1,8 @@
-import lombok.extern.java.Log;
-
-@Log
 class Test {
 
-    public void logHallo() {
+    private static final java.util.logging.Logger log = java.util.logging.Logger.getLogger(Test.class.getName());
+
+  public void logHallo() {
     log.info("Hello!");
   }
 

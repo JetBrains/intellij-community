@@ -1,13 +1,20 @@
 package de.plushnikov.intellij.plugin.action.lombok;
 
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TestDialog;
-import com.intellij.testFramework.LightCodeInsightTestCase;
-import org.jetbrains.annotations.NotNull;
+import de.plushnikov.intellij.plugin.action.LombokLightActionTest;
 
-public class LombokLoggerActionTest extends LightCodeInsightTestCase {
+public class LombokLoggerActionTest extends LombokLightActionTest {
+
+  protected AnAction getAction() {
+    return new LombokLoggerAction();
+  }
+
+  @Override
+  protected String getBasePath() {
+    return super.getBasePath() + "/action/lombok/log";
+  }
 
   public void testLogSimple() throws Exception {
     Messages.setTestDialog(TestDialog.DEFAULT);
@@ -34,21 +41,4 @@ public class LombokLoggerActionTest extends LightCodeInsightTestCase {
     doTest();
   }
 
-  @NotNull
-  @Override
-  protected String getTestDataPath() {
-    return "./lombok-plugin/src/test/data";
-  }
-
-  protected void doTest() throws Exception {
-    configureByFile("/action/lombok/log/before" + getTestName(false) + ".java");
-    performTest();
-    checkResultByFile("/action/lombok/log/after" + getTestName(false) + ".java");
-  }
-
-  private void performTest() {
-    LombokLoggerAction anAction = new LombokLoggerAction();
-    anAction.actionPerformed(AnActionEvent.createFromInputEvent(anAction, null, ""));
-    FileDocumentManager.getInstance().saveAllDocuments();
-  }
 }

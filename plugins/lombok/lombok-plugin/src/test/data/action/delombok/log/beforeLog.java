@@ -1,9 +1,7 @@
-import lombok.extern.java.Log;
-
-@Log
+@lombok.extern.java.Log
 class Test {
 
-    public void logHallo() {
+  public void logHallo() {
     log.info("Hello!");
   }
 

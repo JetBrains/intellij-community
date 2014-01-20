@@ -1,8 +1,10 @@
-@lombok.Getter
+import lombok.Getter;
+
+@Getter
 class Test {
-  @lombok.Getter
+  @Getter
   private static float b;
-  @lombok.Getter
+  @Getter
   private static double c;
   private String d;
 

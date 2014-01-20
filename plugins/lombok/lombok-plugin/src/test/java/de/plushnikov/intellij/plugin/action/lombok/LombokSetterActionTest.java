@@ -1,11 +1,18 @@
 package de.plushnikov.intellij.plugin.action.lombok;
 
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.testFramework.LightCodeInsightTestCase;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.openapi.actionSystem.AnAction;
+import de.plushnikov.intellij.plugin.action.LombokLightActionTest;
 
-public class LombokSetterActionTest extends LightCodeInsightTestCase {
+public class LombokSetterActionTest extends LombokLightActionTest {
+
+  protected AnAction getAction() {
+    return new LombokSetterAction();
+  }
+
+  @Override
+  protected String getBasePath() {
+    return super.getBasePath() + "/action/lombok/setter";
+  }
 
   public void testSetterSimple() throws Exception {
     doTest();
@@ -25,24 +32,5 @@ public class LombokSetterActionTest extends LightCodeInsightTestCase {
 
   public void testSetterWithAnnotationChange() throws Exception {
     doTest();
-  }
-
-
-  @NotNull
-  @Override
-  protected String getTestDataPath() {
-    return "./lombok-plugin/src/test/data";
-  }
-
-  protected void doTest() throws Exception {
-    configureByFile("/action/lombok/setter/before" + getTestName(false) + ".java");
-    performTest();
-    checkResultByFile("/action/lombok/setter/after" + getTestName(false) + ".java");
-  }
-
-  private void performTest() {
-    LombokSetterAction anAction = new LombokSetterAction();
-    anAction.actionPerformed(AnActionEvent.createFromInputEvent(anAction, null, ""));
-    FileDocumentManager.getInstance().saveAllDocuments();
   }
 }

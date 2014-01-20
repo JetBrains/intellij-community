@@ -5,66 +5,36 @@ import com.google.common.base.Predicates;
 import com.google.common.collect.Collections2;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.PomNamedTarget;
-import com.intellij.psi.*;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.psi.PsiAnnotation;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiJavaFile;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiModifierList;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiParameterList;
+import com.intellij.psi.PsiType;
 import org.apache.log4j.Logger;
 
-import java.io.File;
 import java.io.IOException;
-import java.util.*;
-import java.util.regex.Pattern;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * Base test case for testing that the Lombok plugin parses the Lombok annotations correctly.
  */
-public abstract class LombokParsingTestCase extends LightCodeInsightFixtureTestCase {
+public abstract class LombokParsingTestCase extends LombokLightCodeInsightTestCase {
 
   private static final Set<String> modifiers = new HashSet<String>(Arrays.asList(
       PsiModifier.PUBLIC, PsiModifier.PACKAGE_LOCAL, PsiModifier.PROTECTED, PsiModifier.PRIVATE, PsiModifier.FINAL, PsiModifier.STATIC,
       PsiModifier.ABSTRACT, PsiModifier.SYNCHRONIZED, PsiModifier.TRANSIENT, PsiModifier.VOLATILE, PsiModifier.NATIVE));
 
-  private static final String LOMBOK_SRC_PATH = "./lombok-api/target/generated-sources/lombok";
-  private static final String LOMBOKPG_SRC_PATH = "./lombok-api/target/generated-sources/lombok-pg";
-
   private static final Logger LOG = Logger.getLogger(LombokParsingTestCase.class);
-
-  @Override
-  protected String getTestDataPath() {
-    return ".";
-  }
-
-  @Override
-  protected String getBasePath() {
-    return "lombok-plugin/src/test/data";
-  }
-
-  @Override
-  public void setUp() throws Exception {
-    super.setUp();
-    addLombokClassesToFixture();
-  }
-
-  private void addLombokClassesToFixture() {
-    loadFilesFrom(LOMBOK_SRC_PATH);
-    loadFilesFrom(LOMBOKPG_SRC_PATH);
-  }
-
-  private void loadFilesFrom(final String srcPath) {
-    List<File> filesByMask = FileUtil.findFilesByMask(Pattern.compile(".*\\.java"), new File(srcPath));
-    for (File javaFile : filesByMask) {
-      String filePath = javaFile.getPath().replace("\\", "/");
-      myFixture.copyFileToProject(filePath, filePath.substring(srcPath.length() + 1));
-    }
-  }
-
-  private PsiFile loadToPsiFile(String fileName) {
-    VirtualFile virtualFile = myFixture.copyFileToProject(getBasePath() + "/" + fileName, fileName);
-    myFixture.configureFromExistingVirtualFile(virtualFile);
-    return myFixture.getFile();
-  }
 
   public void doTest() throws IOException {
     doTest(getTestName(false).replace('$', '/') + ".java");

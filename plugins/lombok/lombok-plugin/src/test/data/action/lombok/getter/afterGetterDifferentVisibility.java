@@ -1,9 +1,12 @@
+import lombok.AccessLevel;
+import lombok.Getter;
+
 class Test {
-  @lombok.Getter
+  @Getter
   private float b;
-  @lombok.Getter(lombok.AccessLevel.PROTECTED)
+  @Getter(AccessLevel.PROTECTED)
   private double c;
-  @lombok.Getter(lombok.AccessLevel.PRIVATE)
+  @Getter(AccessLevel.PRIVATE)
   private String d;
 
 }

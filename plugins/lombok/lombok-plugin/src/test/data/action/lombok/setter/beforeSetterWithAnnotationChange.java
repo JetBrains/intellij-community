@@ -1,14 +1,15 @@
-@lombok.Setter(lombok.AccessLevel.PRIVATE)
 class Test {
   private float b;
+  @lombok.Setter(lombok.AccessLevel.PRIVATE)
   private double c;
+  @lombok.Setter(lombok.AccessLevel.PROTECTED)
   private String d;
 
   public void setB(float b) {
     this.b = b;
   }
 
-  public void setC(double c) {
+  protected void setC(double c) {
     this.c = c;
   }
 
