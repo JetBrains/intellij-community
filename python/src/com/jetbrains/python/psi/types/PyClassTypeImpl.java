@@ -216,7 +216,7 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
     }
 
     if (isDefinition() && myClass.isNewStyleClass()) {
-      PyClassType typeType = getMetaclassType();
+      final PyClassLikeType typeType = getMetaclassType(context);
       if (typeType != null) {
         List<? extends RatedResolveResult> typeMembers = typeType.resolveMember(name, location, direction, resolveContext);
         if (typeMembers != null && !typeMembers.isEmpty()) {
@@ -252,10 +252,10 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
   }
 
   @Nullable
-  private PyClassType getMetaclassType() {
-    final PyClass metaClass = PyUtil.getMetaClass(myClass);
-    if (metaClass != null) {
-      return new PyClassTypeImpl(metaClass, false);
+  private PyClassLikeType getMetaclassType(@NotNull TypeEvalContext context) {
+    final PyClassLikeType type = myClass.getMetaClassType(context);
+    if (type != null) {
+      return type;
     }
     return PyBuiltinCache.getInstance(myClass).getObjectType("type");
   }
@@ -395,7 +395,7 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
     }
 
     if (isDefinition() && myClass.isNewStyleClass()) {
-      final PyClassType typeType = getMetaclassType();
+      final PyClassLikeType typeType = getMetaclassType(typeEvalContext);
       if (typeType != null) {
         Collections.addAll(ret, typeType.getCompletionVariants(prefix, location, context));
       }
