@@ -5,12 +5,12 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiFile;
 import com.intellij.structuralsearch.SSRBundle;
 import com.intellij.usages.Usage;
 import com.intellij.usages.UsageTarget;
 import com.intellij.usages.UsageView;
 import com.intellij.usages.UsageViewPresentation;
-import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -76,9 +76,11 @@ public class UsageViewContext {
   public void configure(final UsageViewPresentation presentation) {
     String s = _getPresentableText();
     if (s.length() > 15) s = s.substring(0,15) + "...";
-    final String usagesString = SSRBundle.message("occurences.of", s);
+    final String usagesString = SSRBundle.message("occurrences.of", s);
     presentation.setUsagesString(usagesString);
     presentation.setTabText(StringUtil.capitalize(usagesString));
+    presentation.setUsagesWord("occurrence");
+    presentation.setCodeUsagesString("found.occurrences");
   }
 
   private static class MyUsageTarget implements UsageTarget {
