@@ -34,6 +34,10 @@ try {
   URLClassLoader classLoader = new URLClassLoader(urls, getClass().classLoader)
   Class modelClass = classLoader.loadClass('org.jetbrains.plugins.gradle.model.internal.ExtraModelBuilder')
   allprojects {
+    apply plugin: 'idea'
+    idea.module.ext.set('resourceDirs', [])
+    idea.module.ext.set('testResourceDirs', [])
+
     ext.jetExtraModelBuilderClass = modelClass
     apply plugin: JetGradlePlugin
   }
