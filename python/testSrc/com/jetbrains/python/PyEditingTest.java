@@ -144,7 +144,7 @@ public class PyEditingTest extends PyTestCase {
   }
 
   public void testEnterInStatement() {
-    doTestEnter("if a <caret>and b: pass", "if a \\\n    and b: pass");
+    doTestEnter("if a <caret>and b: pass", "if a \\\n        and b: pass");
   }
 
   public void testEnterBeforeStatement() {
@@ -225,7 +225,7 @@ public class PyEditingTest extends PyTestCase {
   public void testEnterInImportWithParens() {  // PY-2661
     doTestEnter("from django.http import (HttpResponse,<caret>)",
                 "from django.http import (HttpResponse,\n" +
-                "                         )");
+                ")");
   }
 
   public void testEnterInKeyword() {

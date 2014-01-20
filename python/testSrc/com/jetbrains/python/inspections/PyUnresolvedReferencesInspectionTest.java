@@ -326,6 +326,16 @@ public class PyUnresolvedReferencesInspectionTest extends PyTestCase {
     doTest();
   }
 
+  // PY-10977
+  public void testContextManagerSubclass() {
+    doTest();
+  }
+
+  // PY-11413
+  public void testReturnSelfInSuperClass() {
+    doTest();
+  }
+
   private void doTest() {
     myFixture.configureByFile(TEST_DIRECTORY + getTestName(true) + ".py");
     myFixture.enableInspections(PyUnresolvedReferencesInspection.class);

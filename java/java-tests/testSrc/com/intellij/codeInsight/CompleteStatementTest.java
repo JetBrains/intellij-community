@@ -258,6 +258,8 @@ public class CompleteStatementTest extends EditorActionTestCase {
   
   public void testGenericMethodBody() throws Exception { doTest(); }
   
+  public void testArrayInitializerRBracket() throws Exception { doTest(); }
+  
   private void doTestBracesNextLineStyle() throws Exception {
     CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject());
     settings.BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE;

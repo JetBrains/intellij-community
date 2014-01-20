@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,11 +17,14 @@
 package com.intellij.execution.ui.layout.actions;
 
 import com.intellij.execution.ui.layout.CellTransform;
+import com.intellij.icons.AllIcons;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.ui.content.Content;
+
+import javax.swing.*;
 
 public class RestoreViewAction extends AnAction {
 
@@ -38,7 +41,8 @@ public class RestoreViewAction extends AnAction {
     Presentation p = e.getPresentation();
     p.setText(ActionsBundle.message("action.Runner.RestoreView.text", myContent.getDisplayName()));
     p.setDescription(ActionsBundle.message("action.Runner.RestoreView.description"));
-    p.setIcon(myContent.getIcon());
+    Icon icon = myContent.getIcon();
+    p.setIcon(icon == null ? AllIcons.Debugger.RestoreLayout : icon);
   }
 
   @Override

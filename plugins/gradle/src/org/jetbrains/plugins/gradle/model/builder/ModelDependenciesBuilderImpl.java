@@ -261,15 +261,13 @@ public class ModelDependenciesBuilderImpl implements ModelBuilderService {
   private static GradleDependencyScope deduceScope(String configurationName,
                                                    Map<String, Map<String, Collection<Configuration>>> userScopes) {
     GradleDependencyScope scope = GradleDependencyScope.fromName(configurationName);
-    if (scope == null) {
-      for (Map.Entry<String, Map<String, Collection<Configuration>>> entry : userScopes.entrySet()) {
-        Collection<Configuration> plusConfigurations = entry.getValue().get("plus");
-        if (plusConfigurations == null) continue;
+    for (Map.Entry<String, Map<String, Collection<Configuration>>> entry : userScopes.entrySet()) {
+      Collection<Configuration> plusConfigurations = entry.getValue().get("plus");
+      if (plusConfigurations == null) continue;
 
-        for (Configuration plus : plusConfigurations) {
-          if (plus.getName().equals(configurationName)) {
-            return GradleDependencyScope.fromIdeaMappingName(entry.getKey());
-          }
+      for (Configuration plus : plusConfigurations) {
+        if (plus.getName().equals(configurationName)) {
+          return GradleDependencyScope.fromIdeaMappingName(entry.getKey().toLowerCase());
         }
       }
     }

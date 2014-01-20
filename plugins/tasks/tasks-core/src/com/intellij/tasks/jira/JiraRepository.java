@@ -5,7 +5,6 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
@@ -223,6 +222,6 @@ public class JiraRepository extends BaseRepositoryImpl {
   }
 
   public String getRestUrl(String... parts) {
-    return getUrl() + REST_API_PATH + "/" + FileUtil.join(parts);
+    return getUrl() + REST_API_PATH + "/" + StringUtil.join(parts, "/");
   }
 }

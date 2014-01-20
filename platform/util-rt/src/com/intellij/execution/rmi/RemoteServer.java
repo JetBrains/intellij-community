@@ -15,6 +15,7 @@
  */
 package com.intellij.execution.rmi;
 
+import com.intellij.execution.rmi.ssl.SslSocketFactory;
 import org.jetbrains.annotations.Nullable;
 
 import javax.naming.Context;
@@ -28,6 +29,7 @@ import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.rmi.server.ExportException;
 import java.rmi.server.UnicastRemoteObject;
+import java.security.Security;
 import java.util.Hashtable;
 import java.util.Random;
 
@@ -43,6 +45,7 @@ public class RemoteServer {
   protected static void start(Remote remote) throws Exception {
     setupRMI();
     banJNDI();
+    setupSSL();
 
     if (ourRemote != null) throw new AssertionError("Already started");
     ourRemote = remote;
@@ -98,6 +101,12 @@ public class RemoteServer {
   private static void banJNDI() {
     if (System.getProperty(Context.INITIAL_CONTEXT_FACTORY) == null) {
       System.setProperty(Context.INITIAL_CONTEXT_FACTORY, "com.intellij.execution.rmi.RemoteServer$Jndi");
+    }
+  }
+
+  public static void setupSSL() {
+    if (System.getProperty(SslSocketFactory.SSL_CA_CERT_PATH) != null) {
+      Security.setProperty("ssl.SocketFactory.provider", "com.intellij.execution.rmi.ssl.SslSocketFactory");
     }
   }
 

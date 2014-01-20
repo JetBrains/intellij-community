@@ -23,7 +23,7 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizableStringList;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.PsiModifierListOwner;
+import com.intellij.psi.*;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -126,11 +126,38 @@ public class NullableNotNullManager implements PersistentStateComponent<Element>
   }
 
   public boolean isNullable(PsiModifierListOwner owner, boolean checkBases) {
-    return AnnotationUtil.isAnnotated(owner, getNullables(), checkBases, false);
+    if (AnnotationUtil.isAnnotated(owner, getNullables(), checkBases, false)) {
+      return true;
+    }
+
+    return owner instanceof PsiParameter && isContainerAnnotated(owner, "javax.annotation.ParametersAreNullableByDefault");
   }
 
   public boolean isNotNull(PsiModifierListOwner owner, boolean checkBases) {
-    return AnnotationUtil.isAnnotated(owner, getNotNulls(), checkBases, false);
+    if (AnnotationUtil.isAnnotated(owner, getNotNulls(), checkBases, false)) {
+      return true;
+    }
+
+    return owner instanceof PsiParameter && isContainerAnnotated(owner, "javax.annotation.ParametersAreNonnullByDefault");
+  }
+
+  private static boolean isContainerAnnotated(PsiModifierListOwner owner, String annotationFQN) {
+    PsiElement element = owner.getParent();
+    while (element != null) {
+      if (element instanceof PsiModifierListOwner &&
+          AnnotationUtil.isAnnotated((PsiModifierListOwner)element, annotationFQN, false, false)) {
+        return true;
+      }
+
+      if (element instanceof PsiClassOwner) {
+        String packageName = ((PsiClassOwner)element).getPackageName();
+        PsiPackage psiPackage = JavaPsiFacade.getInstance(element.getProject()).findPackage(packageName);
+        return psiPackage != null && AnnotationUtil.isAnnotated(psiPackage, annotationFQN, false, false);
+      }
+
+      element = element.getContext();
+    }
+    return false;
   }
 
   public List<String> getNullables() {

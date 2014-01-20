@@ -15,18 +15,22 @@
  */
 package com.intellij.unscramble;
 
+import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.DataManager;
 import com.intellij.notification.NotificationGroup;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.ActionPlaces;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.colors.EditorColors;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Splitter;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
@@ -34,6 +38,7 @@ import com.intellij.util.PlatformIcons;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
+import javax.swing.event.DocumentEvent;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
@@ -58,14 +63,16 @@ public class ThreadDumpPanel extends JPanel {
   private static final Icon EDT_BUSY_ICON_DAEMON = new LayeredIcon(EdtBusy, Daemon_sign);
   private static final Icon IO_ICON_DAEMON = new LayeredIcon(IO, Daemon_sign);
   private final JBList myThreadList;
+  private final List<ThreadState> myThreadDump;
 
-  public ThreadDumpPanel(Project project, final ConsoleView consoleView, final DefaultActionGroup toolbarActions, final List<ThreadState> threadDump) {
+  public ThreadDumpPanel(final Project project, final ConsoleView consoleView, final DefaultActionGroup toolbarActions, final List<ThreadState> threadDump) {
     super(new BorderLayout());
+    myThreadDump = threadDump;
     final ThreadState[] data = threadDump.toArray(new ThreadState[threadDump.size()]);
-    DefaultListModel model = new DefaultListModel();
-    for (ThreadState threadState : data) {
-      model.addElement(threadState);
-    }
+    final DefaultListModel model = new DefaultListModel();
+
+    final SearchTextField filterField = new SearchTextField();
+
     myThreadList = new JBList(model);
     myThreadList.setCellRenderer(new ThreadListCellRenderer());
     myThreadList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
@@ -82,18 +89,78 @@ public class ThreadDumpPanel extends JPanel {
         myThreadList.repaint();
       }
     });
+
+    DocumentAdapter filterListener = new DocumentAdapter() {
+      @Override
+      protected void textChanged(DocumentEvent e) {
+        String text = filterField.getText();
+        model.clear();
+        for (ThreadState state : data) {
+          if (StringUtil.containsIgnoreCase(state.getStackTrace(), text) || StringUtil.containsIgnoreCase(state.getName(), text)) {
+            //noinspection unchecked
+            model.addElement(state);
+          }
+        }
+        if (!model.isEmpty()) {
+          myThreadList.setSelectedIndex(0);
+        }
+        myThreadList.revalidate();
+        myThreadList.repaint();
+      }
+    };
+    filterField.addDocumentListener(filterListener);
+    filterListener.changedUpdate(null);
+
     toolbarActions.add(new CopyToClipboardAction(threadDump, project));
     toolbarActions.add(new SortThreadsAction());
     //toolbarActions.add(new ShowRecentlyChanged());
     add(ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, toolbarActions, false).getComponent(), BorderLayout.WEST);
+    
+    JPanel filterPanel = new JPanel(new BorderLayout());
+    filterPanel.add(new JLabel("Filter:"), BorderLayout.WEST);
+    filterPanel.add(filterField);
+    
+    JPanel leftPanel = new JPanel(new BorderLayout());
+    leftPanel.add(filterPanel, BorderLayout.NORTH);
+    leftPanel.add(ScrollPaneFactory.createScrollPane(myThreadList, SideBorder.LEFT | SideBorder.RIGHT), BorderLayout.CENTER);
 
     final Splitter splitter = new Splitter(false, 0.3f);
-    splitter.setFirstComponent(ScrollPaneFactory.createScrollPane(myThreadList, SideBorder.LEFT | SideBorder.RIGHT));
+    splitter.setFirstComponent(leftPanel);
     splitter.setSecondComponent(consoleView.getComponent());
 
     add(splitter, BorderLayout.CENTER);
 
     new ListSpeedSearch(myThreadList).setComparator(new SpeedSearchComparator(false, true));
+
+    final Editor editor = CommonDataKeys.EDITOR.getData(DataManager.getInstance().getDataContext(consoleView.getPreferredFocusableComponent()));
+    if (editor != null) {
+      editor.getDocument().addDocumentListener(new com.intellij.openapi.editor.event.DocumentAdapter() {
+        @Override
+        public void documentChanged(com.intellij.openapi.editor.event.DocumentEvent e) {
+          String filter = filterField.getText();
+          if (StringUtil.isNotEmpty(filter)) {
+            highlightOccurrences(filter, project, editor);
+          }
+        }
+      });
+    }
+  }
+
+  private static void highlightOccurrences(String filter, Project project, Editor editor) {
+    final HighlightManager highlightManager = HighlightManager.getInstance(project);
+    EditorColorsManager colorManager = EditorColorsManager.getInstance();
+    final TextAttributes attributes = colorManager.getGlobalScheme().getAttributes(EditorColors.TEXT_SEARCH_RESULT_ATTRIBUTES);
+    String documentText = editor.getDocument().getText();
+    int i = -1;
+    while (true) {
+      int nextOccurrence = StringUtil.indexOfIgnoreCase(documentText, filter, i + 1);
+      if (nextOccurrence < 0) {
+        break;
+      }
+      i = nextOccurrence;
+      highlightManager.addOccurrenceHighlight(editor, i, i + filter.length(), attributes,
+                                               HighlightManager.HIDE_BY_TEXT_CHANGE, null, null);
+    }
   }
 
   private static Icon getThreadStateIcon(final ThreadState threadState) {
@@ -119,7 +186,7 @@ public class ThreadDumpPanel extends JPanel {
     return daemon ? RUNNING_ICON_DAEMON : Running;
   }
 
-  private static enum StateCode {RUN, RUN_IO, RUN_SOCKET, PAUSED, LOCKED, EDT, IDLE}
+  private enum StateCode {RUN, RUN_IO, RUN_SOCKET, PAUSED, LOCKED, EDT, IDLE}
   private static StateCode getThreadStateCode(final ThreadState state) {
     if (state.isSleeping()) return StateCode.PAUSED;
     if (state.isWaiting()) return StateCode.LOCKED;

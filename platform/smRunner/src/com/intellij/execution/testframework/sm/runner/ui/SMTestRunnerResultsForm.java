@@ -19,10 +19,7 @@ import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.testframework.*;
 import com.intellij.execution.testframework.sm.SMRunnerUtil;
-import com.intellij.execution.testframework.sm.runner.SMTRunnerEventsListener;
-import com.intellij.execution.testframework.sm.runner.SMTRunnerTreeBuilder;
-import com.intellij.execution.testframework.sm.runner.SMTRunnerTreeStructure;
-import com.intellij.execution.testframework.sm.runner.SMTestProxy;
+import com.intellij.execution.testframework.sm.runner.*;
 import com.intellij.execution.testframework.sm.runner.ui.statistics.StatisticsPanel;
 import com.intellij.execution.testframework.ui.AbstractTestTreeBuilder;
 import com.intellij.execution.testframework.ui.TestResultsPanel;
@@ -217,9 +214,15 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
     selectAndNotify(myTestsRootNode);
 
     myStartTime = System.currentTimeMillis();
-    myTestsRootNode.addSystemOutput("Testing started at "
-                                    + DateFormatUtil.formatTime(myStartTime)
-                                    + " ...\n");
+    boolean printTestingStartedTime = true;
+    if (myConsoleProperties instanceof SMTRunnerConsoleProperties) {
+      printTestingStartedTime = ((SMTRunnerConsoleProperties) myConsoleProperties).isPrintTestingStartedTime();
+    }
+    if (printTestingStartedTime) {
+      myTestsRootNode.addSystemOutput("Testing started at "
+                                      + DateFormatUtil.formatTime(myStartTime)
+                                      + " ...\n");
+    }
 
     updateStatusLabel(false);
 

@@ -4,8 +4,8 @@ allprojects{
   apply plugin: 'java'
 }
 
-project(":group2:subgroup11:project") {
+project("dependentProject") {
   dependencies {
-    compile project(":project")
+    compile project(":dependencyProject")
   }
 }

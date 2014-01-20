@@ -28,7 +28,6 @@ import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.keymap.KeymapUtil;
-import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
@@ -221,7 +220,4 @@ public class InjectLanguageAction implements IntentionAction {
     return false;
   }
 
-  public static boolean doEditConfigurable(final Project project, final Configurable configurable) {
-    return true; //ShowSettingsUtil.getInstance().editConfigurable(project, configurable);
-  }
 }

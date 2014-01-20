@@ -63,6 +63,7 @@ public class GlassPaneDialogWrapperPeer extends DialogWrapperPeer implements Foc
   private Project myProject;
   private MyDialog myDialog;
   private boolean myCanBeParent;
+  private String myTitle;
 
   public GlassPaneDialogWrapperPeer(DialogWrapper wrapper, Project project, boolean canBeParent) throws GlasspanePeerUnavailableException {
     myWrapper = wrapper;
@@ -236,7 +237,7 @@ public class GlassPaneDialogWrapperPeer extends DialogWrapperPeer implements Foc
   }
 
   public void setTitle(final String title) {
-    throw new UnsupportedOperationException("Not implemented in " + getClass().getCanonicalName());
+    myTitle = title;
   }
 
   // TODO: WTF?! VOID?!!!
