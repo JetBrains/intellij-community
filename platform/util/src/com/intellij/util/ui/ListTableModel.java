@@ -91,7 +91,7 @@ public class ListTableModel<Item> extends TableViewModel<Item> implements ItemRe
   }
 
   @Override
-  public Object getRowValue(int row) {
+  public Item getRowValue(int row) {
     return myItems.get(row);
   }
 
