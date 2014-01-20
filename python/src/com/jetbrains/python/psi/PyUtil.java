@@ -415,7 +415,7 @@ public class PyUtil {
       PyExpression qualifier = ref.getQualifier();
       if (qualifier != null) {
         String attr_name = ref.getReferencedName();
-        if (PyNames.CLASS.equals(attr_name)) {
+        if (PyNames.__CLASS__.equals(attr_name)) {
           PyType qualifierType = context.getType(qualifier);
           if (qualifierType instanceof PyClassType) {
             return new PyClassTypeImpl(((PyClassType)qualifierType).getPyClass(), true); // always as class, never instance
@@ -1114,7 +1114,7 @@ public class PyUtil {
         PyExpression[] args = node.getArguments();
         if (args.length > 0) {
           String firstArg = args[0].getText();
-          if (firstArg.equals(klass.getName()) || firstArg.equals(PyNames.CANONICAL_SELF + "." + PyNames.CLASS)) {
+          if (firstArg.equals(klass.getName()) || firstArg.equals(PyNames.CANONICAL_SELF + "." + PyNames.__CLASS__)) {
             return true;
           }
           for (PyClass s : klass.getAncestorClasses()) {
