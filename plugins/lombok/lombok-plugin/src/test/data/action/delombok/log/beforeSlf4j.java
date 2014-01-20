@@ -1,4 +1,4 @@
-@lombok.extern.java.Log
+@lombok.extern.slf4j.Slf4j
 class Test {
 
   public void logHallo() {

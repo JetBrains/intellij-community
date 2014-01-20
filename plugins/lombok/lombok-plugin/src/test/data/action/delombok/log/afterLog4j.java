@@ -1,7 +1,8 @@
-@lombok.extern.java.Log
 class Test {
 
-  public void logHallo() {
+    private static final org.apache.log4j.Logger log = org.apache.log4j.Logger.getLogger(Test.class);
+
+    public void logHallo() {
     log.info("Hello!");
   }
 

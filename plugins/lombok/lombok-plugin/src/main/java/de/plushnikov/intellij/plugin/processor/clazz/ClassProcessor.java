@@ -12,5 +12,5 @@ import java.util.List;
  * @author Plushnikov Michail
  */
 public interface ClassProcessor extends Processor {
-  void process(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation, @NotNull List<? super PsiElement> target);
+  void process(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation, ProcessorModus processorModus, @NotNull List<? super PsiElement> target);
 }

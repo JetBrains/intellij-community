@@ -3,6 +3,7 @@ package de.plushnikov.intellij.plugin.processor.clazz.constructor;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
@@ -36,7 +37,7 @@ import java.util.List;
  */
 public abstract class AbstractConstructorClassProcessor extends AbstractClassProcessor {
 
-  protected AbstractConstructorClassProcessor(@NotNull Class<? extends Annotation> supportedAnnotationClass, @NotNull Class supportedClass) {
+  protected AbstractConstructorClassProcessor(@NotNull Class<? extends Annotation> supportedAnnotationClass, @NotNull Class<? extends PsiElement> supportedClass) {
     super(supportedAnnotationClass, supportedClass);
   }
 

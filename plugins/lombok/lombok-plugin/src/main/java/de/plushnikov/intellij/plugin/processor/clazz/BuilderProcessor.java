@@ -34,7 +34,7 @@ public class BuilderProcessor extends BuilderInnerClassProcessor {
     return validateInternal(psiAnnotation, psiClass, builder, false);
   }
 
-  protected void processIntern(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation, @NotNull List<? super PsiElement> target) {
+  protected void generateLombokPsiElements(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation, @NotNull List<? super PsiElement> target) {
     final Collection<PsiMethod> definedConstructors = PsiClassUtil.collectClassConstructorIntern(psiClass);
     // Create all args constructor only if there is no declared constructor
     if (definedConstructors.isEmpty()) {
@@ -49,9 +49,9 @@ public class BuilderProcessor extends BuilderInnerClassProcessor {
       final String builderMethodName = BuilderUtil.createBuilderMethodName(psiAnnotation);
       if (!PsiMethodUtil.hasMethodByName(PsiClassUtil.collectClassMethodsIntern(psiClass), builderMethodName)) {
         LombokLightMethodBuilder method = new LombokLightMethodBuilder(psiClass.getManager(), builderMethodName)
-           .withMethodReturnType(PsiClassUtil.getTypeWithGenerics(innerClassByName))
-           .withContainingClass(psiClass)
-           .withNavigationElement(psiAnnotation);
+            .withMethodReturnType(PsiClassUtil.getTypeWithGenerics(innerClassByName))
+            .withContainingClass(psiClass)
+            .withNavigationElement(psiAnnotation);
         method.withModifier(PsiModifier.STATIC);
         method.withModifier(PsiModifier.PUBLIC);
         target.add(method);

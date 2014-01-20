@@ -52,7 +52,7 @@ public class BuilderInnerClassProcessor extends AbstractClassProcessor {
    */
   protected boolean validateInternal(PsiAnnotation psiAnnotation, PsiClass psiClass, ProblemBuilder builder, boolean shouldAddErrors) {
     return validateAnnotationOnRightType(psiClass, builder, shouldAddErrors)
-       && validateExistingInnerClass(psiClass, psiAnnotation, builder, shouldAddErrors);
+        && validateExistingInnerClass(psiClass, psiAnnotation, builder, shouldAddErrors);
   }
 
   protected boolean validateAnnotationOnRightType(@NotNull PsiClass psiClass, @NotNull ProblemBuilder builder, boolean shouldAddErrors) {
@@ -77,7 +77,7 @@ public class BuilderInnerClassProcessor extends AbstractClassProcessor {
     return true;
   }
 
-  protected void processIntern(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation, @NotNull List<? super PsiElement> target) {
+  protected void generateLombokPsiElements(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation, @NotNull List<? super PsiElement> target) {
     final String innerClassSimpleName = BuilderUtil.createBuilderClassName(psiAnnotation, psiClass);
     final String innerClassQualifiedName = psiClass.getName() + "." + BuilderUtil.createBuilderClassName(psiAnnotation, psiClass);
 
@@ -85,14 +85,14 @@ public class BuilderInnerClassProcessor extends AbstractClassProcessor {
     assert innerClassByName == null; // validation should ensure that
 
     LombokLightClassBuilder innerClass = new LombokLightClassBuilder(psiClass.getProject(), innerClassSimpleName, innerClassQualifiedName)
-      .withContainingClass(psiClass)
-      .withNavigationElement(psiAnnotation)
-      .withParameterTypes(psiClass.getTypeParameterList())
-      .withModifier(PsiModifier.PUBLIC)
-      .withModifier(PsiModifier.STATIC);
+        .withContainingClass(psiClass)
+        .withNavigationElement(psiAnnotation)
+        .withParameterTypes(psiClass.getTypeParameterList())
+        .withModifier(PsiModifier.PUBLIC)
+        .withModifier(PsiModifier.STATIC);
     innerClass.withConstructors(createConstructors(innerClass, psiAnnotation))
-      .withFields(createFields(psiClass))
-      .withMethods(createMethods(psiClass, innerClass, psiAnnotation));
+        .withFields(createFields(psiClass))
+        .withMethods(createMethods(psiClass, innerClass, psiAnnotation));
     target.add(innerClass);
   }
 
@@ -116,7 +116,7 @@ public class BuilderInnerClassProcessor extends AbstractClassProcessor {
       }
       if (createField) {
         fields.add(new LombokLightFieldBuilder(psiClass.getManager(), psiField.getName(), psiField.getType())
-          .withModifier(PsiModifier.PRIVATE));
+            .withModifier(PsiModifier.PRIVATE));
       }
     }
     return fields;
@@ -145,11 +145,11 @@ public class BuilderInnerClassProcessor extends AbstractClassProcessor {
       }
       if (createMethod) {
         methods.add(new LombokLightMethodBuilder(psiField.getManager(), BuilderUtil.createSetterName(psiAnnotation, psiField.getName()))
-          .withMethodReturnType(BuilderUtil.createSetterReturnType(psiAnnotation, PsiClassUtil.getTypeWithGenerics(innerClass)))
-          .withContainingClass(innerClass)
-          .withParameter(psiField.getName(), psiField.getType())
-          .withNavigationElement(psiAnnotation)
-          .withModifier(PsiModifier.PUBLIC));
+            .withMethodReturnType(BuilderUtil.createSetterReturnType(psiAnnotation, PsiClassUtil.getTypeWithGenerics(innerClass)))
+            .withContainingClass(innerClass)
+            .withParameter(psiField.getName(), psiField.getType())
+            .withNavigationElement(psiAnnotation)
+            .withModifier(PsiModifier.PUBLIC));
       }
     }
     return methods;
@@ -157,10 +157,10 @@ public class BuilderInnerClassProcessor extends AbstractClassProcessor {
 
   protected PsiMethod createBuildMethod(@NotNull PsiClass parentClass, @NotNull PsiClass innerClass, @NotNull PsiAnnotation psiAnnotation) {
     return new LombokLightMethodBuilder(parentClass.getManager(), BuilderUtil.createBuildMethodName(psiAnnotation))
-       .withMethodReturnType(PsiClassUtil.getTypeWithGenerics(parentClass))
-       .withContainingClass(innerClass)
-       .withNavigationElement(parentClass)
-       .withModifier(PsiModifier.PUBLIC);
+        .withMethodReturnType(PsiClassUtil.getTypeWithGenerics(parentClass))
+        .withContainingClass(innerClass)
+        .withNavigationElement(parentClass)
+        .withModifier(PsiModifier.PUBLIC);
   }
 
 }

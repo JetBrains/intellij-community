@@ -12,7 +12,7 @@ import java.util.regex.Pattern;
 /**
  * Date: 20.01.14 Time: 20:27
  */
-public class LombokLightCodeInsightTestCase extends LightCodeInsightFixtureTestCase {
+public abstract class LombokLightCodeInsightTestCase extends LightCodeInsightFixtureTestCase {
   private static final String LOMBOK_SRC_PATH = "./lombok-api/target/generated-sources/lombok";
   private static final String LOMBOKPG_SRC_PATH = "./lombok-api/target/generated-sources/lombok-pg";
 

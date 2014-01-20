@@ -45,7 +45,7 @@ public class WitherProcessor extends AbstractClassProcessor {
     return null != methodVisibility;
   }
 
-  protected void processIntern(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation, @NotNull List<? super PsiElement> target) {
+  protected void generateLombokPsiElements(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation, @NotNull List<? super PsiElement> target) {
     final String methodVisibility = LombokProcessorUtil.getMethodModifier(psiAnnotation);
     if (methodVisibility != null) {
       final AccessorsInfo accessorsInfo = AccessorsInfo.build(psiClass);

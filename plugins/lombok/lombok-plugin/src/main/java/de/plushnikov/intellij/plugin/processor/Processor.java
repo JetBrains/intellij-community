@@ -15,22 +15,30 @@ import java.util.List;
  * @author Plushnikov Michail
  */
 public interface Processor {
+  public static enum ProcessorModus {
+    LOMBOK,
+    DELOMBOK
+  }
+
   boolean acceptAnnotation(@NotNull PsiAnnotation psiAnnotation, @NotNull Class<? extends PsiElement> type);
 
   @NotNull
   String getSupportedAnnotation();
 
+  @NotNull
   Class<? extends Annotation> getSupportedAnnotationClass();
 
+  @NotNull
   Class<? extends PsiElement> getSupportedClass();
 
+  @NotNull
   Collection<LombokProblem> verifyAnnotation(@NotNull PsiAnnotation psiAnnotation);
-
 
   boolean isEnabled(@NotNull Project project);
 
   boolean canProduce(@NotNull Class<? extends PsiElement> type);
 
   @NotNull
-  List<? super PsiElement> process(@NotNull PsiClass psiClass);
+  List<? super PsiElement> process(@NotNull PsiClass psiClass, @NotNull ProcessorModus processorModus);
+
 }

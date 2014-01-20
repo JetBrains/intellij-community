@@ -1,4 +1,4 @@
-@lombok.extern.java.Log
+@lombok.extern.apachecommons.CommonsLog
 class Test {
 
   public void logHallo() {

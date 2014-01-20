@@ -23,6 +23,7 @@ import java.util.List;
  * Inspect and validate @AutoGenMethodStub lombok-pg annotation on a class
  * Creates methods for all of unimplemented methods of the annotated type and create method stubs for all of them
  * TODO implement me
+ *
  * @author Plushnikov Michail
  */
 public class AutoGenMethodStubProcessor extends AbstractClassProcessor {
@@ -44,7 +45,7 @@ public class AutoGenMethodStubProcessor extends AbstractClassProcessor {
     return result;
   }
 
-  protected void processIntern(@NotNull final PsiClass psiClass, @NotNull final PsiAnnotation psiAnnotation, @NotNull final List<? super PsiElement> target) {
+  protected void generateLombokPsiElements(@NotNull final PsiClass psiClass, @NotNull final PsiAnnotation psiAnnotation, @NotNull final List<? super PsiElement> target) {
     //todo reimplement this to get it working
     final Collection<CandidateInfo> candidateInfos = OverrideImplementUtil.getMethodsToOverrideImplement(psiClass, true);
     for (CandidateInfo candidateInfo : candidateInfos) {

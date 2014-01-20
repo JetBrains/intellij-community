@@ -85,7 +85,7 @@ public class LombokAugmentProvider extends PsiAugmentProvider {
       final List<Psi> result = new ArrayList<Psi>();
       for (Processor processor : LombokProcessorExtensionPoint.EP_NAME.getExtensions()) {
         if (processor.canProduce(type) && processor.isEnabled(project)) {
-          result.addAll((Collection<Psi>) processor.process(psiClass));
+          result.addAll((Collection<Psi>) processor.process(psiClass, Processor.ProcessorModus.LOMBOK));
         }
       }
       return result;

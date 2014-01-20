@@ -1,6 +1,6 @@
 class Test {
 
-    private static final java.util.logging.Logger log = java.util.logging.Logger.getLogger(Test.class.getName());
+    private static final org.apache.logging.log4j.Logger log = org.apache.logging.log4j.LogManager.getLogger(Test.class);
 
     public void logHallo() {
     log.info("Hello!");

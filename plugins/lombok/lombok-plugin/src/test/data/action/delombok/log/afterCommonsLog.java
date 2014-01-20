@@ -1,6 +1,6 @@
 class Test {
 
-    private static final java.util.logging.Logger log = java.util.logging.Logger.getLogger(Test.class.getName());
+    private static final org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(Test.class);
 
     public void logHallo() {
     log.info("Hello!");

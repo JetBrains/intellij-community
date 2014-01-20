@@ -11,7 +11,6 @@ import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
 import de.plushnikov.intellij.plugin.thirdparty.LombokUtils;
 import de.plushnikov.intellij.plugin.util.LombokProcessorUtil;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationUtil;
-import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import lombok.Value;
 import lombok.experimental.NonFinal;
@@ -45,7 +44,7 @@ public class RequiredArgsConstructorProcessor extends AbstractConstructorClassPr
     return result;
   }
 
-  protected void processIntern(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation, @NotNull List<? super PsiElement> target) {
+  protected void generateLombokPsiElements(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation, @NotNull List<? super PsiElement> target) {
     final String methodVisibility = LombokProcessorUtil.getAccessVisibity(psiAnnotation);
     if (null != methodVisibility) {
       final Collection<PsiField> allReqFields = getRequiredFields(psiClass);
@@ -71,7 +70,7 @@ public class RequiredArgsConstructorProcessor extends AbstractConstructorClassPr
       PsiModifierList modifierList = psiField.getModifierList();
       if (null != modifierList) {
         boolean isFinal = modifierList.hasModifierProperty(PsiModifier.FINAL);
-        if(!isFinal && classAnnotatedWithValue) {
+        if (!isFinal && classAnnotatedWithValue) {
           isFinal = PsiAnnotationUtil.isNotAnnotatedWith(psiField, NonFinal.class);
         }
         final boolean isNonNull = PsiAnnotationUtil.isAnnotatedWith(psiField, LombokUtils.NON_NULL_PATTERN);

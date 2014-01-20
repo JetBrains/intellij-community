@@ -1,15 +1,15 @@
 package de.plushnikov.intellij.plugin.action.delombok;
 
 import com.intellij.codeInsight.CodeInsightActionHandler;
+import com.intellij.codeInsight.generation.OverrideImplementUtil;
+import com.intellij.openapi.command.undo.UndoUtil;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiJavaFile;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.util.PropertyUtil;
@@ -33,24 +33,24 @@ public class DelombokSetterHandler implements CodeInsightActionHandler {
 
   @Override
   public void invoke(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
-    if (StdFileTypes.JAVA.equals(file.getFileType())) {
-      final PsiJavaFile javaFile = (PsiJavaFile) file;
-      for (PsiClass psiClass : javaFile.getClasses()) {
-        processClass(project, psiClass);
-      }
+    PsiClass psiClass = OverrideImplementUtil.getContextClass(project, editor, file, false);
+    if (null != psiClass) {
+      processClass(project, psiClass);
+
+      UndoUtil.markPsiFileForUndo(file);
     }
   }
 
   protected void processClass(@NotNull Project project, @NotNull PsiClass psiClass) {
     final PsiAnnotation psiAnnotation = PsiAnnotationUtil.findAnnotation(psiClass, setterProcessor.getSupportedAnnotation());
     if (null != psiAnnotation) {
-      List<? super PsiElement> classSetters = setterProcessor.process(psiClass);
+      List<? super PsiElement> classSetters = setterProcessor.process(psiClass, de.plushnikov.intellij.plugin.processor.Processor.ProcessorModus.LOMBOK);
       createVanillaSetters(project, psiClass, classSetters);
 
       psiAnnotation.delete();
     }
 
-    List<? super PsiElement> fieldSetters = setterFieldProcessor.process(psiClass);
+    List<? super PsiElement> fieldSetters = setterFieldProcessor.process(psiClass, de.plushnikov.intellij.plugin.processor.Processor.ProcessorModus.LOMBOK);
     if (!fieldSetters.isEmpty()) {
       createVanillaSetters(project, psiClass, fieldSetters);
     }

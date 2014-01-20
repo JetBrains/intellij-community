@@ -41,7 +41,7 @@ public class NoArgsConstructorProcessor extends AbstractConstructorClassProcesso
     return createConstructorMethod(psiClass, methodVisibility, psiAnnotation, Collections.<PsiField>emptyList());
   }
 
-  protected void processIntern(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation, @NotNull List<? super PsiElement> target) {
+  protected void generateLombokPsiElements(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation, @NotNull List<? super PsiElement> target) {
     final String methodVisibility = LombokProcessorUtil.getAccessVisibity(psiAnnotation);
     if (null != methodVisibility) {
       target.addAll(createConstructorMethod(psiClass, methodVisibility, psiAnnotation, Collections.<PsiField>emptyList()));

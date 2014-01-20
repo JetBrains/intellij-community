@@ -38,18 +38,29 @@ public abstract class AbstractClassProcessor extends AbstractProcessor implement
 
   @NotNull
   @Override
-  public List<? super PsiElement> process(@NotNull PsiClass psiClass) {
+  public List<? super PsiElement> process(@NotNull PsiClass psiClass, @NotNull ProcessorModus processorModus) {
     List<? super PsiElement> result = Collections.emptyList();
 
     PsiAnnotation psiAnnotation = PsiAnnotationUtil.findAnnotation(psiClass, getSupportedAnnotation());
     if (null != psiAnnotation) {
       result = new ArrayList<PsiElement>();
-      process(psiClass, psiAnnotation, result);
+      process(psiClass, psiAnnotation, processorModus, result);
     }
 
     return result;
   }
 
+  public final void process(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation, ProcessorModus processorModus, @NotNull List<? super PsiElement> target) {
+    if (validate(psiAnnotation, psiClass, ProblemEmptyBuilder.getInstance())) {
+      if (ProcessorModus.LOMBOK.equals(processorModus)) {
+        generateLombokPsiElements(psiClass, psiAnnotation, target);
+      } else {
+        generateDelombokPsiElements(psiClass, psiAnnotation, target);
+      }
+    }
+  }
+
+  @NotNull
   @Override
   public Collection<LombokProblem> verifyAnnotation(@NotNull PsiAnnotation psiAnnotation) {
     Collection<LombokProblem> result = Collections.emptyList();
@@ -65,22 +76,19 @@ public abstract class AbstractClassProcessor extends AbstractProcessor implement
 
   protected abstract boolean validate(@NotNull PsiAnnotation psiAnnotation, @NotNull PsiClass psiClass, @NotNull ProblemBuilder builder);
 
-  public final void process(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation, @NotNull List<? super PsiElement> target) {
-    if (validate(psiAnnotation, psiClass, ProblemEmptyBuilder.getInstance())) {
-      processIntern(psiClass, psiAnnotation, target);
-    }
-  }
+  protected abstract void generateLombokPsiElements(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation, @NotNull List<? super PsiElement> target);
 
-  protected abstract void processIntern(PsiClass psiClass, PsiAnnotation psiAnnotation, List<? super PsiElement> target);
+  protected void generateDelombokPsiElements(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation, @NotNull List<? super PsiElement> target) {
+  }
 
   protected void validateCallSuperParam(PsiAnnotation psiAnnotation, PsiClass psiClass, ProblemBuilder builder, String generatedMethodName) {
     Boolean callSuperProperty = PsiAnnotationUtil.getDeclaredAnnotationValue(psiAnnotation, "callSuper", Boolean.class);
     if (null == callSuperProperty && PsiClassUtil.hasSuperClass(psiClass)) {
       builder.addWarning("Generating " + generatedMethodName + " implementation but without a call to superclass, " +
-         "even though this class does not extend java.lang.Object." +
-         "If this is intentional, add '(callSuper=false)' to your type.",
-         PsiQuickFixFactory.createChangeAnnotationParameterFix(psiAnnotation, "callSuper", "true"),
-         PsiQuickFixFactory.createChangeAnnotationParameterFix(psiAnnotation, "callSuper", "false"));
+          "even though this class does not extend java.lang.Object." +
+          "If this is intentional, add '(callSuper=false)' to your type.",
+          PsiQuickFixFactory.createChangeAnnotationParameterFix(psiAnnotation, "callSuper", "true"),
+          PsiQuickFixFactory.createChangeAnnotationParameterFix(psiAnnotation, "callSuper", "false"));
     }
   }
 
@@ -91,7 +99,7 @@ public abstract class AbstractClassProcessor extends AbstractProcessor implement
         if (null == fieldByName) {
           final String newPropertyValue = calcNewPropertyValue(ofProperty, fieldName);
           builder.addWarning(String.format("The field '%s' does not exist", fieldName),
-             PsiQuickFixFactory.createChangeAnnotationParameterFix(psiAnnotation, "of", newPropertyValue));
+              PsiQuickFixFactory.createChangeAnnotationParameterFix(psiAnnotation, "of", newPropertyValue));
         }
       }
     }
@@ -104,12 +112,12 @@ public abstract class AbstractClassProcessor extends AbstractProcessor implement
         if (null == fieldByName) {
           final String newPropertyValue = calcNewPropertyValue(excludeProperty, fieldName);
           builder.addWarning(String.format("The field '%s' does not exist", fieldName),
-             PsiQuickFixFactory.createChangeAnnotationParameterFix(psiAnnotation, "exclude", newPropertyValue));
+              PsiQuickFixFactory.createChangeAnnotationParameterFix(psiAnnotation, "exclude", newPropertyValue));
         } else {
           if (fieldName.startsWith(LombokUtils.LOMBOK_INTERN_FIELD_MARKER) || fieldByName.hasModifierProperty(PsiModifier.STATIC)) {
             final String newPropertyValue = calcNewPropertyValue(excludeProperty, fieldName);
             builder.addWarning(String.format("The field '%s' would have been excluded anyway", fieldName),
-               PsiQuickFixFactory.createChangeAnnotationParameterFix(psiAnnotation, "exclude", newPropertyValue));
+                PsiQuickFixFactory.createChangeAnnotationParameterFix(psiAnnotation, "exclude", newPropertyValue));
           }
         }
       }

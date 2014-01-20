@@ -33,6 +33,7 @@ public class SynchronizedProcessor extends AbstractProcessor {
     super(Synchronized.class, PsiElement.class);
   }
 
+  @NotNull
   @Override
   public Collection<LombokProblem> verifyAnnotation(@NotNull PsiAnnotation psiAnnotation) {
     Collection<LombokProblem> result = new ArrayList<LombokProblem>(2);

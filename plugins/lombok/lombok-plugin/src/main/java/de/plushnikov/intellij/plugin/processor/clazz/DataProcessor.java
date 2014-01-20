@@ -61,7 +61,7 @@ public class DataProcessor extends AbstractClassProcessor {
     return result;
   }
 
-  protected void processIntern(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation, @NotNull List<? super PsiElement> target) {
+  protected void generateLombokPsiElements(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation, @NotNull List<? super PsiElement> target) {
     if (PsiAnnotationUtil.isNotAnnotatedWith(psiClass, Getter.class)) {
       target.addAll(new GetterProcessor().createFieldGetters(psiClass, PsiModifier.PUBLIC));
     }

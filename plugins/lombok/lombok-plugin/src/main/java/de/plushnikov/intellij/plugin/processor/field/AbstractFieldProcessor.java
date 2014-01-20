@@ -35,7 +35,7 @@ public abstract class AbstractFieldProcessor extends AbstractProcessor implement
 
   @NotNull
   @Override
-  public List<? super PsiElement> process(@NotNull PsiClass psiClass) {
+  public List<? super PsiElement> process(@NotNull PsiClass psiClass, @NotNull ProcessorModus processorModus) {
     List<? super PsiElement> result = new ArrayList<PsiElement>();
     for (PsiField psiField : PsiClassUtil.collectClassFieldsIntern(psiClass)) {
       PsiAnnotation psiAnnotation = PsiAnnotationUtil.findAnnotation(psiField, getSupportedAnnotation());
@@ -46,6 +46,7 @@ public abstract class AbstractFieldProcessor extends AbstractProcessor implement
     return result;
   }
 
+  @NotNull
   @Override
   public Collection<LombokProblem> verifyAnnotation(@NotNull PsiAnnotation psiAnnotation) {
     Collection<LombokProblem> result = Collections.emptyList();

@@ -10,6 +10,7 @@ import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiModifierList;
 import com.intellij.psi.PsiType;
 import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
 import de.plushnikov.intellij.plugin.processor.clazz.AbstractClassProcessor;
@@ -60,9 +61,9 @@ public abstract class AbstractLogProcessor extends AbstractClassProcessor {
     return result;
   }
 
-  protected void processIntern(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation, @NotNull List<? super PsiElement> target) {
-    Project project = psiClass.getProject();
-    PsiManager manager = psiClass.getContainingFile().getManager();
+  protected void generateLombokPsiElements(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation, @NotNull List<? super PsiElement> target) {
+    final Project project = psiClass.getProject();
+    final PsiManager manager = psiClass.getContainingFile().getManager();
 
     final PsiElementFactory psiElementFactory = JavaPsiFacade.getElementFactory(project);
     PsiType psiLoggerType = psiElementFactory.createTypeFromText(loggerType, psiClass);
@@ -89,5 +90,24 @@ public abstract class AbstractLogProcessor extends AbstractClassProcessor {
       }
     }
     return false;
+  }
+
+  protected void generateDelombokPsiElements(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation, @NotNull List<? super PsiElement> target) {
+    final Project project = psiClass.getProject();
+    final PsiElementFactory psiElementFactory = JavaPsiFacade.getElementFactory(project);
+
+    PsiField psiField = psiElementFactory.createField(loggerName, psiElementFactory.createTypeByFQClassName(loggerType));
+    PsiModifierList modifierList = psiField.getModifierList();
+    if (null != modifierList) {
+      modifierList.setModifierProperty(PsiModifier.PRIVATE, true);
+      modifierList.setModifierProperty(PsiModifier.FINAL, true);
+      modifierList.setModifierProperty(PsiModifier.STATIC, true);
+    }
+
+    final String classQualifiedName = psiClass.getQualifiedName();
+    final String className = null != classQualifiedName ? classQualifiedName : psiClass.getName();
+    psiField.setInitializer(psiElementFactory.createExpressionFromText(String.format(loggerInitializer, className), psiClass));
+
+    target.add(psiField);
   }
 }

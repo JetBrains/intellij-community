@@ -1,7 +1,8 @@
-@lombok.extern.java.Log
 class Test {
 
-  public void logHallo() {
+    private static final org.slf4j.ext.XLogger log = org.slf4j.ext.XLoggerFactory.getXLogger(Test.class);
+
+    public void logHallo() {
     log.info("Hello!");
   }
 

@@ -120,6 +120,9 @@
               text="@Setter" description="Action to replace lombok @Setter annotation with vanilla setter methods">
       </action>
       <separator/>
+      <action id="delombokLogger" class="de.plushnikov.intellij.plugin.action.delombok.DelombokLoggerAction"
+              text="@Log (and friends)" description="Action to replace lombok @Log (and other) annotation with vanilla log field">
+      </action>
 
       <add-to-group group-id="RefactoringMenu" anchor="last"/>
     </group>
