@@ -1,0 +1,74 @@
+//noinspection GrPackage
+
+project("defaultJavaModule") {
+  apply plugin: "java"
+}
+
+project("moduleWithSourceSetDirBothAsResourceAndJava") {
+  apply plugin: "java"
+
+  sourceSets.main.resources.srcDir 'src/main/java'
+  sourceSets.test.resources.srcDir 'src/test/java'
+}
+
+project("moduleWithCustomSourceSet") {
+  apply plugin: "java"
+
+  sourceSets {
+    custom
+  }
+
+  sourceSets.custom.java.srcDir 'src/custom/java'
+}
+
+project("withIntegrationTests") {
+  apply plugin: 'java'
+
+  sourceSets {
+    integrationTest {
+      java.srcDir file('src/integration-test/java')
+      resources.srcDir file('src/integration-test/resources')
+    }
+  }
+
+  dependencies {
+    integrationTestCompile sourceSets.main.output
+    integrationTestCompile configurations.testCompile
+    integrationTestCompile sourceSets.test.output
+    integrationTestRuntime configurations.testRuntime
+  }
+
+  //noinspection GrUnresolvedAccess
+  task integrationTest(type: Test, dependsOn: jar) {
+    testClassesDir = sourceSets.integrationTest.output.classesDir
+    classpath = sourceSets.integrationTest.runtimeClasspath
+  }
+
+  check.dependsOn integrationTest
+}
+
+project("withIdeaPluginCustomization1") {
+  apply plugin: 'java'
+
+  idea {
+    module {
+      testSourceDirs += file('src/intTest/java')
+      testSourceDirs += file('src/intTest/resources')
+      excludeDirs += file('some-extra-exclude-folder')
+    }
+  }
+}
+
+// see http://youtrack.jetbrains.com/issue/IDEA-119365
+project("withIdeaPluginCustomization2") {
+  apply plugin: 'java'
+
+  idea {
+    module {
+      sourceDirs += testSourceDirs
+      testSourceDirs = []
+      ext.resourceDirs += file('some-extra-resource-folder')
+      ext.testResourceDirs += file('some-extra-test-resource-folder')
+    }
+  }
+}

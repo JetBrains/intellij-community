@@ -311,7 +311,7 @@ public class GradleScriptType extends GroovyScriptType {
     if (!FileUtilRt.extensionEquals(file.getName(), GradleConstants.EXTENSION)) return baseScope;
 
     final Collection<VirtualFile> files;
-    GlobalSearchScope result = GlobalSearchScope.notScope(baseScope);
+    GlobalSearchScope result = GlobalSearchScope.EMPTY_SCOPE;
     final Module module = ModuleUtilCore.findModuleForPsiElement(file);
     if (module != null) {
       for (OrderEntry entry : ModuleRootManager.getInstance(module).getOrderEntries()) {
