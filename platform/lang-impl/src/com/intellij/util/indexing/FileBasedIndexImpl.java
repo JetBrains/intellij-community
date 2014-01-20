@@ -2457,7 +2457,8 @@ public class FileBasedIndexImpl extends FileBasedIndex {
 
   @Override
   public void removeIndexableSet(@NotNull IndexableFileSet set) {
-    myChangedFilesCollector.forceUpdate(null, null, null, true);
+    if (!myIndexableSetToProjectMap.containsKey(set)) return; // avoid second unfiltered forceUpdate
+    myChangedFilesCollector.forceUpdate(myIndexableSetToProjectMap.get(set), null, null, true);
     IndexingStamp.flushCaches();
     myIndexableSets.remove(set);
     myIndexableSetToProjectMap.remove(set);
