@@ -330,6 +330,14 @@ public class EclipseCodeStyleSchemeImporter implements SchemeImporter<CodeStyleS
       settings.RESOURCE_LIST_LPAREN_ON_NEXT_LINE = decoder.isFirstElementWrapped();
       return true;
     }
+    else if (OPTION_ALIGN_CHAINED_CALLS.equals(key)) {
+      settings.METHOD_CALL_CHAIN_WRAP = decoder.getWrapType();
+      settings.ALIGN_MULTILINE_CHAINED_METHODS = decoder.isAlignmentOn();
+    }
+    else if (OPTION_ALIGN_CONDITIONALS.equals(key)) {
+      settings.TERNARY_OPERATION_WRAP = decoder.getWrapType();
+      settings.ALIGN_MULTILINE_TERNARY_OPERATION = decoder.isAlignmentOn();
+    }
     return false;
   }
 }

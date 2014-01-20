@@ -115,6 +115,10 @@ public class EclipseSettingsImportTest extends PlatformTestCase {
     javaSettings.ALIGN_MULTILINE_RESOURCES = true;
     javaSettings.RESOURCE_LIST_WRAP = CommonCodeStyleSettings.DO_NOT_WRAP;
     javaSettings.RESOURCE_LIST_LPAREN_ON_NEXT_LINE = true;
+    javaSettings.METHOD_CALL_CHAIN_WRAP = CommonCodeStyleSettings.DO_NOT_WRAP;
+    javaSettings.ALIGN_MULTILINE_CHAINED_METHODS = false;
+    javaSettings.TERNARY_OPERATION_WRAP = CommonCodeStyleSettings.DO_NOT_WRAP;
+    javaSettings.ALIGN_MULTILINE_TERNARY_OPERATION = false;
     indentOptions.USE_TAB_CHARACTER = false;
     indentOptions.SMART_TABS = false;
     indentOptions.TAB_SIZE = 3;
@@ -209,6 +213,10 @@ public class EclipseSettingsImportTest extends PlatformTestCase {
       assertFalse(javaSettings.ALIGN_MULTILINE_RESOURCES);
       assertEquals(CommonCodeStyleSettings.WRAP_AS_NEEDED, javaSettings.RESOURCE_LIST_WRAP);
       assertFalse(javaSettings.RESOURCE_LIST_LPAREN_ON_NEXT_LINE);
+      assertEquals(CommonCodeStyleSettings.WRAP_ON_EVERY_ITEM | CommonCodeStyleSettings.WRAP_AS_NEEDED, javaSettings.METHOD_CALL_CHAIN_WRAP);
+      assertTrue(javaSettings.ALIGN_MULTILINE_CHAINED_METHODS);
+      assertEquals(CommonCodeStyleSettings.WRAP_AS_NEEDED, javaSettings.TERNARY_OPERATION_WRAP);
+      assertTrue(javaSettings.ALIGN_MULTILINE_TERNARY_OPERATION);
     }
     finally {
       inputStream.close();

@@ -60,6 +60,8 @@ public interface EclipseXmlProfileElements {
   String OPTION_ALIGN_THROWS_IN_METHOD_DECL = "org.eclipse.jdt.core.formatter.alignment_for_throws_clause_in_method_declaration";
   String OPTION_ALIGN_RESOURCES_IN_TRY = "org.eclipse.jdt.core.formatter.alignment_for_resources_in_try";
   String OPTION_ALIGN_METHOD_DECL = "org.eclipse.jdt.core.formatter.alignment_for_method_declaration";
+  String OPTION_ALIGN_CHAINED_CALLS = "org.eclipse.jdt.core.formatter.alignment_for_selector_in_method_invocation";
+  String OPTION_ALIGN_CONDITIONALS = "org.eclipse.jdt.core.formatter.alignment_for_conditional_expression";
 
   int WRAP_MASK = 0x70;
 
