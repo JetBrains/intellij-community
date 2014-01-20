@@ -41,6 +41,7 @@ import com.intellij.openapi.fileTypes.FileTypeEvent;
 import com.intellij.openapi.fileTypes.FileTypeListener;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileAdapter;
 import com.intellij.openapi.vfs.VirtualFileEvent;
@@ -347,7 +348,9 @@ class TextEditorComponent extends JBLoadingPanel implements DataProvider {
         // File can be invalidated after file changes name (extension also
         // can changes). The editor should be removed if it's invalid.
         updateValidProperty();
-        updateHighlighters();
+        if (Comparing.equal(e.getFile(), myFile) && !Comparing.equal(e.getOldValue(), e.getNewValue())) {
+          updateHighlighters();
+        }
       }
     }
 
