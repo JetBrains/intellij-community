@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
@@ -110,7 +111,7 @@ class ToolWindowsWidget extends JLabel implements CustomStatusBarWidget, StatusB
               popup.cancel();
             }
           }
-        }, 150);
+        }, 300);
         return true;
       }
     }
@@ -155,7 +156,7 @@ class ToolWindowsWidget extends JLabel implements CustomStatusBarWidget, StatusB
           final Dimension size = list.getPreferredSize();
           final JComponent c = ToolWindowsWidget.this;
           final Insets padding = UIUtil.getListViewportPadding();
-          final RelativePoint point = new RelativePoint(c, new Point(-4, -padding.top - padding.bottom -4 - size.height));
+          final RelativePoint point = new RelativePoint(c, new Point(-4, -padding.top - padding.bottom -4 - size.height + (SystemInfo.isMac ? 2 : 0)));
 
           if (popup != null && popup.isVisible()) {
             return;
