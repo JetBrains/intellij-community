@@ -34,10 +34,10 @@ import com.jetbrains.python.psi.PyTryExceptStatement;
  * User: dcheryasov
  * Date: Mar 2, 2010 6:48:40 PM
  */
-public class UnindentingInsertHandler implements InsertHandler<PythonLookupElement> {
-  public final static UnindentingInsertHandler INSTANCE = new UnindentingInsertHandler();
+public class PyUnindentingInsertHandler implements InsertHandler<PythonLookupElement> {
+  public final static PyUnindentingInsertHandler INSTANCE = new PyUnindentingInsertHandler();
 
-  private UnindentingInsertHandler() {
+  private PyUnindentingInsertHandler() {
   }
 
   public void handleInsert(InsertionContext context, PythonLookupElement item) {
@@ -56,7 +56,9 @@ public class UnindentingInsertHandler implements InsertHandler<PythonLookupEleme
     final Document document = editor.getDocument();
     int offset = editor.getCaretModel().getOffset();
     CharSequence text = document.getCharsSequence();
-    if (offset >= text.length()) offset = text.length() - 1;
+    if (offset >= text.length()) {
+      offset = text.length() - 1;
+    }
 
     int line_start_offset = document.getLineStartOffset(document.getLineNumber(offset));
     int nonspace_offset = findBeginning(line_start_offset, text);
@@ -64,26 +66,26 @@ public class UnindentingInsertHandler implements InsertHandler<PythonLookupEleme
 
     Class<? extends PsiElement> parentClass = null;
 
-    int last_offset = nonspace_offset + "finally".length(); // the longest of all
+    int last_offset = nonspace_offset + PyKeywords.FINALLY.length(); // the longest of all
     if (last_offset > offset) last_offset = offset;
     int local_length = last_offset - nonspace_offset + 1;
     if (local_length > 0) {
       String piece = text.subSequence(nonspace_offset, last_offset+1).toString();
-      final int else_len = "else".length();
+      final int else_len = PyKeywords.ELSE.length();
       if (local_length >= else_len) {
-        if ((piece.startsWith("else") || piece.startsWith("elif")) && (else_len == piece.length() || piece.charAt(else_len) < 'a' || piece.charAt(else_len) > 'z')) {
+        if ((piece.startsWith(PyKeywords.ELSE) || piece.startsWith(PyKeywords.ELIF)) && (else_len == piece.length() || piece.charAt(else_len) < 'a' || piece.charAt(else_len) > 'z')) {
           parentClass = PyStatementWithElse.class;
         }
       }
-      final int except_len = "except".length();
+      final int except_len = PyKeywords.EXCEPT.length();
       if (local_length >= except_len) {
-        if (piece.startsWith("except") && (except_len == piece.length() || piece.charAt(except_len) < 'a' || piece.charAt(except_len) > 'z')) {
+        if (piece.startsWith(PyKeywords.EXCEPT) && (except_len == piece.length() || piece.charAt(except_len) < 'a' || piece.charAt(except_len) > 'z')) {
           parentClass = PyTryExceptStatement.class;
         }
       }
-      final int finally_len = "finally".length();
+      final int finally_len = PyKeywords.FINALLY.length();
       if (local_length >= finally_len) {
-        if (piece.startsWith("finally") && (finally_len == piece.length() || piece.charAt(finally_len) < 'a' || piece.charAt(finally_len) > 'z')) {
+        if (piece.startsWith(PyKeywords.FINALLY) && (finally_len == piece.length() || piece.charAt(finally_len) < 'a' || piece.charAt(finally_len) > 'z')) {
           parentClass = PyTryExceptStatement.class;
         }
       }
