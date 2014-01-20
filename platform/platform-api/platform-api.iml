@@ -34,6 +34,7 @@
     <orderEntry type="module" module-name="editor-ui-api" exported="" />
     <orderEntry type="library" name="pty4j" level="project" />
     <orderEntry type="library" name="Guava" level="project" />
+    <orderEntry type="library" name="http-client" level="project" />
   </component>
 </module>
 
