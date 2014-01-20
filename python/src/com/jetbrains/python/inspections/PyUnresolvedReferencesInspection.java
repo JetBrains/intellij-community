@@ -985,6 +985,10 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
             final PyImportElement importElement = (PyImportElement)unusedImport;
             final PsiElement element = importElement.resolve();
             if (element == null) {
+              if (importElement.getImportedQName() != null) {
+                //Mark import as unused even if it can't be resolved
+                result.add(importElement.getParent());
+              }
               continue;
             }
             if (dunderAll != null && dunderAll.contains(importElement.getVisibleName())) {

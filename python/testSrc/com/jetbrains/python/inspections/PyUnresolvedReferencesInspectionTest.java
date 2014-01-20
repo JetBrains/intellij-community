@@ -335,6 +335,31 @@ public class PyUnresolvedReferencesInspectionTest extends PyInspectionTestCase {
     doTest();
   }
 
+  // PY-6955
+  public void testUnusedUnresolvedModuleImported() {
+    doTest();
+  }
+
+  // PY-6955
+  public void testUnusedUnresolvedNameImported() {
+    doMultiFileTest();
+  }
+
+  // PY-6955
+  public void testUnusedUnresolvedNameImportedSeveralTimes() {
+    doMultiFileTest();
+  }
+
+  // PY-6955
+  public void testUsedUnresolvedNameImportedSeveralTimes() {
+    doMultiFileTest();
+  }
+
+  // PY-6955
+  public void testUnusedUnresolvedPackageImported() {
+    doTest();
+  }
+
   @NotNull
   @Override
   protected Class<? extends PyInspection> getInspectionClass() {

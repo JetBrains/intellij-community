@@ -28,6 +28,9 @@ public abstract class PyInspectionTestCase extends PyTestCase {
     configureInspection();
   }
 
+  protected void doMultiFileTest() {
+    doMultiFileTest("a.py");
+  }
   protected void doMultiFileTest(@NotNull String filename) {
     myFixture.copyDirectoryToProject(getTestDirectory(false), "");
     myFixture.configureFromTempProjectFile(filename);
