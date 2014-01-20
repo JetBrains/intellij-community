@@ -15,6 +15,7 @@
  */
 package org.jetbrains.io;
 
+import com.google.gson.annotations.Since;
 import com.intellij.openapi.util.text.StringUtil;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
