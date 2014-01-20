@@ -40,8 +40,10 @@ import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.documentation.DocStringUtil;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.PyResolveUtil;
 import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
+import com.jetbrains.python.psi.resolve.QualifiedResolveResult;
 import com.jetbrains.python.psi.stubs.PropertyStubStorage;
 import com.jetbrains.python.psi.stubs.PyClassStub;
 import com.jetbrains.python.psi.stubs.PyFunctionStub;
@@ -1167,6 +1169,56 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
     // TODO: Return different cached copies depending on the type eval context parameters
     final CachedValuesManager manager = CachedValuesManager.getManager(getProject());
     return manager.getParameterizedCachedValue(this, myCachedValueKey, myCachedAncestorsProvider, false, context);
+  }
+
+  @Nullable
+  @Override
+  public PyClassLikeType getMetaClassType(@NotNull TypeEvalContext context) {
+    final PyTargetExpression metaClassAttribute = findClassAttribute(PyNames.DUNDER_METACLASS, false);
+    if (metaClassAttribute != null) {
+      final PyExpression expression = metaClassAttribute.findAssignedValue();
+      final PyClass metaclass = getMetaFromExpression(expression);
+      if (metaclass != null) {
+        return new PyClassTypeImpl(metaclass, false);
+      }
+    }
+    final PsiFile containingFile = getContainingFile();
+    if (containingFile instanceof PyFile) {
+      final PsiElement element = ((PyFile)containingFile).getElementNamed(PyNames.DUNDER_METACLASS);
+      if (element instanceof PyTargetExpression) {
+        final PyExpression expression = ((PyTargetExpression)element).findAssignedValue();
+        final PyClass metaclass = getMetaFromExpression(expression);
+        if (metaclass != null) {
+          return new PyClassTypeImpl(metaclass, false);
+        }
+      }
+    }
+
+    if (LanguageLevel.forElement(this).isPy3K()) {
+      final PyExpression[] superClassExpressions = getSuperClassExpressions();
+      for (PyExpression superClassExpression : superClassExpressions) {
+        if (superClassExpression instanceof PyKeywordArgument &&
+            PyNames.METACLASS.equals(((PyKeywordArgument)superClassExpression).getKeyword())) {
+          final PyExpression expression = ((PyKeywordArgument)superClassExpression).getValueExpression();
+          final PyClass metaclass = getMetaFromExpression(expression);
+          if (metaclass != null) {
+            return new PyClassTypeImpl(metaclass, false);
+          }
+        }
+      }
+    }
+    return null;
+  }
+
+  @Nullable
+  private static PyClass getMetaFromExpression(final PyExpression metaclass) {
+    if (metaclass instanceof PyReferenceExpression) {
+      final QualifiedResolveResult result = ((PyReferenceExpression)metaclass).followAssignmentsChain(PyResolveContext.noImplicits());
+      if (result.getElement() instanceof PyClass) {
+        return (PyClass)result.getElement();
+      }
+    }
+    return null;
   }
 
   @NotNull
