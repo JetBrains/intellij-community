@@ -1170,11 +1170,24 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
   @Nullable
   @Override
   public PyClassLikeType getMetaClassType(@NotNull TypeEvalContext context) {
-    final PyExpression expression = getMetaClassExpression();
-    if (expression != null) {
-      final PyType type = context.getType(expression);
-      if (type instanceof PyClassLikeType) {
-        return (PyClassLikeType)type;
+    if (context.maySwitchToAST(this)) {
+      final PyExpression expression = getMetaClassExpression();
+      if (expression != null) {
+        final PyType type = context.getType(expression);
+        if (type instanceof PyClassLikeType) {
+          return (PyClassLikeType)type;
+        }
+      }
+    }
+    else {
+      final PyClassStub stub = getStub();
+      final QualifiedName name = stub != null ? stub.getMetaClass() : PyQualifiedNameFactory.fromExpression(getMetaClassExpression());
+      final PsiFile file = getContainingFile();
+      if (file instanceof PyFile) {
+        final PyFile pyFile = (PyFile)file;
+        if (name != null) {
+          return classTypeFromQName(name, pyFile, context);
+        }
       }
     }
     return null;
