@@ -184,7 +184,7 @@ public class EclipseCodeStyleSchemeImporter implements SchemeImporter<CodeStyleS
         case WRAP_ALL_EXCEPT_FIRST:
         case WRAP_ALL_INDENT_EXCEPT_FIRST:
         case WRAP_ALL_ON_NEW_LINE_EACH:
-          return CommonCodeStyleSettings.WRAP_ON_EVERY_ITEM;
+          return CommonCodeStyleSettings.WRAP_AS_NEEDED | CommonCodeStyleSettings.WRAP_ON_EVERY_ITEM;
       }
       return CommonCodeStyleSettings.DO_NOT_WRAP;
     }
