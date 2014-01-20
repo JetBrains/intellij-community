@@ -24,9 +24,23 @@ public abstract class PyInspectionTestCase extends PyTestCase {
    * Launches test. To be called by test author
    */
   protected void doTest() {
-    myFixture.configureByFile("inspections/" + getInspectionClass().getSimpleName() + "/" + getTestName(true) + ".py");
+    myFixture.configureByFile(getTestDirectory(true) + ".py");
+    configureInspection();
+  }
+
+  protected void doMultiFileTest(@NotNull String filename) {
+    myFixture.copyDirectoryToProject(getTestDirectory(false), "");
+    myFixture.configureFromTempProjectFile(filename);
+    configureInspection();
+  }
+
+  private void configureInspection() {
     myFixture.enableInspections(getInspectionClass());
     myFixture.checkHighlighting(isWarning(), isInfo(), isWeakWarning());
+  }
+
+  private String getTestDirectory(boolean lowercaseFirstLetter) {
+    return "inspections/" + getInspectionClass().getSimpleName() + "/" + getTestName(lowercaseFirstLetter);
   }
 
 
