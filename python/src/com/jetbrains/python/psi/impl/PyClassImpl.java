@@ -40,10 +40,8 @@ import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.documentation.DocStringUtil;
 import com.jetbrains.python.psi.*;
-import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.PyResolveUtil;
 import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
-import com.jetbrains.python.psi.resolve.QualifiedResolveResult;
 import com.jetbrains.python.psi.stubs.PropertyStubStorage;
 import com.jetbrains.python.psi.stubs.PyClassStub;
 import com.jetbrains.python.psi.stubs.PyFunctionStub;
@@ -1174,14 +1172,16 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
   public PyClassLikeType getMetaClassType(@NotNull TypeEvalContext context) {
     final LanguageLevel level = LanguageLevel.forElement(this);
     if (level.isAtLeast(LanguageLevel.PYTHON30)) {
+      // TODO: This requires switching from stubs to AST
       final PyExpression[] superClassExpressions = getSuperClassExpressions();
       for (PyExpression superClassExpression : superClassExpressions) {
-        if (superClassExpression instanceof PyKeywordArgument &&
-            PyNames.METACLASS.equals(((PyKeywordArgument)superClassExpression).getKeyword())) {
-          final PyExpression expression = ((PyKeywordArgument)superClassExpression).getValueExpression();
-          final PyClass metaclass = getMetaFromExpression(expression);
-          if (metaclass != null) {
-            return new PyClassTypeImpl(metaclass, false);
+        if (superClassExpression instanceof PyKeywordArgument) {
+          final PyKeywordArgument argument = (PyKeywordArgument)superClassExpression;
+          if (PyNames.METACLASS.equals(argument.getKeyword())) {
+            final PyClassLikeType type = getClassLikeType(argument, context);
+            if (type != null) {
+              return type;
+            }
           }
         }
       }
@@ -1189,20 +1189,18 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
     else {
       final PyTargetExpression metaClassAttribute = findClassAttribute(PyNames.DUNDER_METACLASS, false);
       if (metaClassAttribute != null) {
-        final PyExpression expression = metaClassAttribute.findAssignedValue();
-        final PyClass metaclass = getMetaFromExpression(expression);
-        if (metaclass != null) {
-          return new PyClassTypeImpl(metaclass, false);
+        final PyClassLikeType type = getClassLikeType(metaClassAttribute, context);
+        if (type != null) {
+          return type;
         }
       }
       final PsiFile containingFile = getContainingFile();
       if (containingFile instanceof PyFile) {
         final PsiElement element = ((PyFile)containingFile).getElementNamed(PyNames.DUNDER_METACLASS);
-        if (element instanceof PyTargetExpression) {
-          final PyExpression expression = ((PyTargetExpression)element).findAssignedValue();
-          final PyClass metaclass = getMetaFromExpression(expression);
-          if (metaclass != null) {
-            return new PyClassTypeImpl(metaclass, false);
+        if (element instanceof PyTypedElement) {
+          final PyClassLikeType type = getClassLikeType((PyTypedElement)element, context);
+          if (type != null) {
+            return type;
           }
         }
       }
@@ -1211,12 +1209,10 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
   }
 
   @Nullable
-  private static PyClass getMetaFromExpression(final PyExpression metaclass) {
-    if (metaclass instanceof PyReferenceExpression) {
-      final QualifiedResolveResult result = ((PyReferenceExpression)metaclass).followAssignmentsChain(PyResolveContext.noImplicits());
-      if (result.getElement() instanceof PyClass) {
-        return (PyClass)result.getElement();
-      }
+  private static PyClassLikeType getClassLikeType(@NotNull PyTypedElement element, @NotNull TypeEvalContext context) {
+    final PyType type = context.getType(element);
+    if (type instanceof PyClassLikeType) {
+      return (PyClassLikeType)type;
     }
     return null;
   }
