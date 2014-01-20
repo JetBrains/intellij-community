@@ -1172,49 +1172,43 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
   @Nullable
   @Override
   public PyClassLikeType getMetaClassType(@NotNull TypeEvalContext context) {
-    final LanguageLevel level = LanguageLevel.forElement(this);
-    if (level.isAtLeast(LanguageLevel.PYTHON30)) {
-      // TODO: This requires switching from stubs to AST
-      final PyExpression[] superClassExpressions = getSuperClassExpressions();
-      for (PyExpression superClassExpression : superClassExpressions) {
-        if (superClassExpression instanceof PyKeywordArgument) {
-          final PyKeywordArgument argument = (PyKeywordArgument)superClassExpression;
-          if (PyNames.METACLASS.equals(argument.getKeyword())) {
-            final PyClassLikeType type = getClassLikeType(argument, context);
-            if (type != null) {
-              return type;
-            }
-          }
-        }
-      }
-    }
-    else {
-      final PyTargetExpression metaClassAttribute = findClassAttribute(PyNames.DUNDER_METACLASS, false);
-      if (metaClassAttribute != null) {
-        final PyClassLikeType type = getClassLikeType(metaClassAttribute, context);
-        if (type != null) {
-          return type;
-        }
-      }
-      final PsiFile containingFile = getContainingFile();
-      if (containingFile instanceof PyFile) {
-        final PsiElement element = ((PyFile)containingFile).getElementNamed(PyNames.DUNDER_METACLASS);
-        if (element instanceof PyTypedElement) {
-          final PyClassLikeType type = getClassLikeType((PyTypedElement)element, context);
-          if (type != null) {
-            return type;
-          }
-        }
+    final PyExpression expression = getMetaClassExpression();
+    if (expression != null) {
+      final PyType type = context.getType(expression);
+      if (type instanceof PyClassLikeType) {
+        return (PyClassLikeType)type;
       }
     }
     return null;
   }
 
   @Nullable
-  private static PyClassLikeType getClassLikeType(@NotNull PyTypedElement element, @NotNull TypeEvalContext context) {
-    final PyType type = context.getType(element);
-    if (type instanceof PyClassLikeType) {
-      return (PyClassLikeType)type;
+  public PyExpression getMetaClassExpression() {
+    final LanguageLevel level = LanguageLevel.forElement(this);
+    if (level.isAtLeast(LanguageLevel.PYTHON30)) {
+      // Requires AST access
+      for (PyExpression expression : getSuperClassExpressions()) {
+        if (expression instanceof PyKeywordArgument) {
+          final PyKeywordArgument argument = (PyKeywordArgument)expression;
+          if (PyNames.METACLASS.equals(argument.getKeyword())) {
+            return argument.getValueExpression();
+          }
+        }
+      }
+    }
+    else {
+      final PyTargetExpression attribute = findClassAttribute(PyNames.DUNDER_METACLASS, false);
+      if (attribute != null) {
+        return attribute;
+      }
+      final PsiFile file = getContainingFile();
+      if (file instanceof PyFile) {
+        final PyFile pyFile = (PyFile)file;
+        final PsiElement element = pyFile.getElementNamed(PyNames.DUNDER_METACLASS);
+        if (element instanceof PyExpression) {
+          return (PyExpression)element;
+        }
+      }
     }
     return null;
   }
