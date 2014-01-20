@@ -43,7 +43,7 @@ public class BrowserSettingsProviderImpl extends BrowserSettingsProvider {
   }
 
   public boolean isModified() {
-    return mySettingsPanel.isModified();
+    return mySettingsPanel != null && mySettingsPanel.isModified();
   }
 
   public void apply() throws ConfigurationException {
