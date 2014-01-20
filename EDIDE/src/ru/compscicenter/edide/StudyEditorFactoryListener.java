@@ -42,22 +42,27 @@ public class StudyEditorFactoryListener implements EditorFactoryListener {
                         }
                         BufferedReader metaReader = new BufferedReader(new InputStreamReader(metaIS));
                         int replaceNum = Integer.parseInt(metaReader.readLine());
-
+                        System.out.println("replaceNum = " + replaceNum);
+                        int startOffset0 = 0;
+                        PsiFile psiOpenFile = PsiManager.getInstance(event.getEditor().getProject()).findFile(vfOpenedFile);
+                        TemplateBuilder builder = TemplateBuilderFactory.getInstance().createTemplateBuilder(psiOpenFile);
                         for (int i = 0; i < replaceNum; i++) {
                             int startOffset = Integer.parseInt(metaReader.readLine());
+                            if (i == 0) {
+                                startOffset0 = startOffset;
+                            }
+                            System.out.println("startOffset = " + startOffset);
                             String textToWrite = metaReader.readLine();
                             String answer = metaReader.readLine();
-                            PsiFile psiOpenFile = PsiManager.getInstance(event.getEditor().getProject()).findFile(vfOpenedFile);
-                            Project project = event.getEditor().getProject();
                             event.getEditor().getDocument().createRangeMarker(startOffset, startOffset + textToWrite.length());
-                            TemplateBuilder builder = TemplateBuilderFactory.getInstance().createTemplateBuilder(psiOpenFile);
                             int endOffset = startOffset + textToWrite.length();
                             TextRange range = new TextRange(startOffset, endOffset);
                             builder.replaceRange(range, textToWrite);
-                            Template template = ((TemplateBuilderImpl) builder).buildInlineTemplate();
-                            TemplateManager.getInstance(project).startTemplate(event.getEditor(), template);
-                            event.getEditor().getCaretModel().moveToOffset(startOffset);
                         }
+                        Template template = ((TemplateBuilderImpl) builder).buildInlineTemplate();
+                        Project project = event.getEditor().getProject();
+                        TemplateManager.getInstance(project).startTemplate(event.getEditor(), template);
+                        event.getEditor().getCaretModel().moveToOffset(startOffset0);
                     }
                 } catch (IOException e) {
                     System.out.println("Something wrong with meta file");

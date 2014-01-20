@@ -1,1 +1,1 @@
-print "Hello, world! I'm               "
+type operator "Hello, world! I'm type your name"
