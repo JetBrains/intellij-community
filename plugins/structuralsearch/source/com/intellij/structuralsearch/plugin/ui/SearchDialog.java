@@ -527,18 +527,6 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
       }
     );
 
-    processPresentation.addNotFoundAction(
-      new AbstractAction(SSRBundle.message("edit.query.button.description")) {
-        {
-          putValue(FindUsagesProcessPresentation.NAME_WITH_MNEMONIC_KEY, SSRBundle.message("edit.query.button"));
-        }
-
-        @Override
-        public void actionPerformed(ActionEvent e) {
-          UIUtil.invokeAction(config, searchContext);
-        }
-      }
-    );
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
 
     manager.searchAndShowUsages(
