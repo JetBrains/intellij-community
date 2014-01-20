@@ -53,31 +53,7 @@ public class PyStdlibTypeProvider extends PyTypeProviderBase {
 
   @Override
   public PyType getReferenceType(@NotNull PsiElement referenceTarget, @NotNull TypeEvalContext context, @Nullable PsiElement anchor) {
-    if (referenceTarget instanceof PyTargetExpression) {
-      final PyTargetExpression target = (PyTargetExpression)referenceTarget;
-      final QualifiedName calleeName = target.getCalleeName();
-      if (calleeName != null && PyNames.NAMEDTUPLE.equals(calleeName.toString())) {
-        // TODO: Create stubs for namedtuple for preventing switch from stub to AST
-        final PyExpression value = target.findAssignedValue();
-        if (value instanceof PyCallExpression) {
-          final PyCallExpression call = (PyCallExpression)value;
-          final PyCallExpression.PyMarkedCallee callee = call.resolveCallee(PyResolveContext.noImplicits());
-          if (callee != null) {
-            final Callable callable = callee.getCallable();
-            if (PyNames.COLLECTIONS_NAMEDTUPLE.equals(callable.getQualifiedName())) {
-              return PyNamedTupleType.fromCall(call, 1);
-            }
-          }
-        }
-      }
-    }
-    else if (referenceTarget instanceof PyFunction && anchor instanceof PyCallExpression) {
-      final PyFunction function = (PyFunction)referenceTarget;
-      if (PyNames.NAMEDTUPLE.equals(function.getName()) && PyNames.COLLECTIONS_NAMEDTUPLE.equals(function.getQualifiedName())) {
-        return PyNamedTupleType.fromCall((PyCallExpression)anchor, 2);
-      }
-    }
-    return null;
+    return getNamedTupleType(referenceTarget, anchor);
   }
 
   @Nullable
@@ -122,6 +98,35 @@ public class PyStdlibTypeProvider extends PyTypeProviderBase {
     final String name = contextManager.getName();
     if ("FileIO".equals(name) || "TextIOWrapper".equals(name) || "IOBase".equals(name) || "_IOBase".equals(name)) {
       return context.getType(withExpression);
+    }
+    return null;
+  }
+
+  @Nullable
+  private static PyType getNamedTupleType(@NotNull PsiElement referenceTarget, @Nullable PsiElement anchor) {
+    if (referenceTarget instanceof PyTargetExpression) {
+      final PyTargetExpression target = (PyTargetExpression)referenceTarget;
+      final QualifiedName calleeName = target.getCalleeName();
+      if (calleeName != null && PyNames.NAMEDTUPLE.equals(calleeName.toString())) {
+        // TODO: Create stubs for namedtuple for preventing switch from stub to AST
+        final PyExpression value = target.findAssignedValue();
+        if (value instanceof PyCallExpression) {
+          final PyCallExpression call = (PyCallExpression)value;
+          final PyCallExpression.PyMarkedCallee callee = call.resolveCallee(PyResolveContext.noImplicits());
+          if (callee != null) {
+            final Callable callable = callee.getCallable();
+            if (PyNames.COLLECTIONS_NAMEDTUPLE.equals(callable.getQualifiedName())) {
+              return PyNamedTupleType.fromCall(call, 1);
+            }
+          }
+        }
+      }
+    }
+    else if (referenceTarget instanceof PyFunction && anchor instanceof PyCallExpression) {
+      final PyFunction function = (PyFunction)referenceTarget;
+      if (PyNames.NAMEDTUPLE.equals(function.getName()) && PyNames.COLLECTIONS_NAMEDTUPLE.equals(function.getQualifiedName())) {
+        return PyNamedTupleType.fromCall((PyCallExpression)anchor, 2);
+      }
     }
     return null;
   }
