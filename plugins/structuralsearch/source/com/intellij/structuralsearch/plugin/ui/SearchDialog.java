@@ -572,22 +572,7 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
     );
   }
 
-  protected void configureActions(final UsageViewContext context) {
-    context.getUsageView().addButtonToLowerPane(
-      new Runnable() {
-        @Override
-        public void run() {
-          SwingUtilities.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-              UIUtil.invokeAction(context.getConfiguration(), searchContext);
-            }
-          });
-        }
-      },
-      SSRBundle.message("edit.query.button.description")
-    );
-  }
+  protected void configureActions(final UsageViewContext context) {}
 
   protected String getDefaultTitle() {
     return SSRBundle.message("structural.search.title");

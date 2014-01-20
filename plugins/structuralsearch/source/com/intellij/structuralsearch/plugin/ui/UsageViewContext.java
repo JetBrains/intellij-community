@@ -7,10 +7,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.structuralsearch.SSRBundle;
-import com.intellij.usages.Usage;
-import com.intellij.usages.UsageTarget;
-import com.intellij.usages.UsageView;
-import com.intellij.usages.UsageViewPresentation;
+import com.intellij.usages.*;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -83,7 +80,7 @@ public class UsageViewContext {
     presentation.setCodeUsagesString("found.occurrences");
   }
 
-  private static class MyUsageTarget implements UsageTarget {
+  private class MyUsageTarget implements ConfigurableUsageTarget {
     private final String myPresentableText;
 
     MyUsageTarget(String str) {
@@ -166,6 +163,11 @@ public class UsageViewContext {
     @Override
     public boolean canNavigateToSource() {
       return false;
+    }
+
+    @Override
+    public void showSettings() {
+      UIUtil.invokeAction(myConfiguration, mySearchContext);
     }
   }
 }
