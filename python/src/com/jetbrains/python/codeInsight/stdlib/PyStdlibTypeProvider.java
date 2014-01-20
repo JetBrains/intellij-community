@@ -21,6 +21,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.QualifiedName;
 import com.jetbrains.python.PyNames;
+import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
+import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyTypeProvider;
@@ -30,6 +32,7 @@ import com.jetbrains.python.psi.types.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -53,7 +56,36 @@ public class PyStdlibTypeProvider extends PyTypeProviderBase {
 
   @Override
   public PyType getReferenceType(@NotNull PsiElement referenceTarget, @NotNull TypeEvalContext context, @Nullable PsiElement anchor) {
-    return getNamedTupleType(referenceTarget, anchor);
+    PyType type = getNamedTupleType(referenceTarget, anchor);
+    if (type != null) {
+      return type;
+    }
+    type = getEnumType(referenceTarget, context);
+    if (type != null) {
+      return type;
+    }
+    return null;
+  }
+
+  @Nullable
+  private static PyType getEnumType(@NotNull PsiElement referenceTarget, @NotNull TypeEvalContext context) {
+    if (referenceTarget instanceof PyTargetExpression) {
+      final PyTargetExpression target = (PyTargetExpression)referenceTarget;
+      final ScopeOwner owner = ScopeUtil.getScopeOwner(target);
+      if (owner instanceof PyClass) {
+        final PyClass cls = (PyClass)owner;
+        final List<PyClassLikeType> types = cls.getAncestorTypes(context);
+        for (PyClassLikeType type : types) {
+          if ("enum.Enum".equals(type.getClassQName())) {
+            final PyType classType = context.getType(cls);
+            if (classType instanceof PyClassType) {
+              return ((PyClassType)classType).toInstance();
+            }
+          }
+        }
+      }
+    }
+    return null;
   }
 
   @Nullable

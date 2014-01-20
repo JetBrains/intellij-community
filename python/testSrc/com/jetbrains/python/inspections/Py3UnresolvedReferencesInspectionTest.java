@@ -101,4 +101,8 @@ public class Py3UnresolvedReferencesInspectionTest extends PyTestCase {
   public void testObjectNewAttributes() {
     doTest();
   }
+
+  public void testEnumMemberAttributes() {
+    doMultiFileTest("a.py");
+  }
 }
