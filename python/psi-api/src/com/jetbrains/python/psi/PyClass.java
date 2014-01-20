@@ -224,4 +224,13 @@ public interface PyClass extends PsiNameIdentifierOwner, PyStatement, NameDefine
    */
   @Nullable
   PyClassLikeType getMetaClassType(@NotNull TypeEvalContext context);
+
+  /**
+   * Returns the expression that defines the metaclass of the class.
+   *
+   * It might be defined outside the class in case of file-level __metaclass__ attributes.
+   * Operates at the AST level.
+   */
+  @Nullable
+  PyExpression getMetaClassExpression();
 }

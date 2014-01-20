@@ -1183,6 +1183,7 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
   }
 
   @Nullable
+  @Override
   public PyExpression getMetaClassExpression() {
     final LanguageLevel level = LanguageLevel.forElement(this);
     if (level.isAtLeast(LanguageLevel.PYTHON30)) {
