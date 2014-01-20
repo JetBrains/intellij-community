@@ -37,6 +37,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.event.TableModelListener;
 import java.lang.reflect.Constructor;
 import java.util.ArrayList;
 import java.util.List;
@@ -92,6 +93,16 @@ public class TableModelEditor<T> implements ElementProducer<T> {
         }
       });
     }
+  }
+
+  public TableModelEditor<T> modelListener(@NotNull TableModelListener listener) {
+    model.addTableModelListener(listener);
+    return this;
+  }
+
+  @NotNull
+  public ListTableModel<T> getModel() {
+    return model;
   }
 
   public static abstract class ItemEditor<T> {
