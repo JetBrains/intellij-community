@@ -45,7 +45,6 @@ import com.intellij.ui.TitledSeparator;
 import com.intellij.usages.*;
 import com.intellij.util.Alarm;
 import com.intellij.util.Processor;
-import com.intellij.util.ui.FormBuilder;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -73,8 +72,6 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
   private JCheckBox recursiveMatching;
   private JCheckBox caseSensitiveMatch;
 
-  private JCheckBox maxMatchesSwitch;
-  private JTextField maxMatches;
   private JComboBox fileTypes;
   private JComboBox contexts;
   private JComboBox dialects;
@@ -91,7 +88,6 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
   private boolean useLastConfiguration;
 
   private static boolean ourOpenInNewTab;
-  private static boolean ourUseMaxCount;
 
   @NonNls private FileType ourFtSearchVariant = StructuralSearchUtil.DEFAULT_FILE_TYPE;
   private static Language ourDialect = null;
@@ -217,10 +213,6 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
 
     caseSensitiveMatch = new JCheckBox(SSRBundle.message("case.sensitive.checkbox"), true);
     searchOptions.add(UIUtil.createOptionLine(caseSensitiveMatch));
-
-    maxMatchesSwitch = new JCheckBox(SSRBundle.message("maximum.matches.checkbox"), false);
-    maxMatches = new JTextField(Integer.toString(MatchOptions.DEFAULT_MAX_MATCHES_COUNT), 3);
-    searchOptions.add(FormBuilder.createFormBuilder().addLabeledComponent(maxMatchesSwitch, maxMatches).getPanel());
 
     final List<FileType> types = new ArrayList<FileType>();
 
@@ -449,10 +441,6 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
     caseSensitiveMatch.setSelected(
       matchOptions.isCaseSensitiveMatch()
     );
-
-    if (matchOptions.getMaxMatchesCount() != Integer.MAX_VALUE) {
-      maxMatches.setText(String.valueOf(matchOptions.getMaxMatchesCount()));
-    }
 
     model.getConfig().getMatchOptions().clearVariableConstraints();
     if (matchOptions.hasVariableConstraints()) {
@@ -828,8 +816,6 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
       model.getConfig()
     );
 
-    maxMatchesSwitch.setSelected(ourUseMaxCount);
-
     if (!useLastConfiguration) {
       final Editor editor = FileEditorManager.getInstance(searchContext.getProject()).getSelectedTextEditor();
       boolean setSomeText = false;
@@ -955,24 +941,6 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
       searchWithinHierarchy && !myDoingOkAction ? GlobalSearchScope.projectScope(getProject()) : myScopeChooserCombo.getSelectedScope());
     options.setLooseMatching(true);
     options.setRecursiveSearch(isRecursiveSearchEnabled() && recursiveMatching.isSelected());
-
-    ourUseMaxCount = maxMatchesSwitch.isSelected();
-
-    if (maxMatchesSwitch.isSelected()) {
-      try {
-        options.setMaxMatchesCount(
-          Integer.parseInt(maxMatches.getText())
-        );
-      }
-      catch (NumberFormatException ex) {
-        options.setMaxMatchesCount(
-          MatchOptions.DEFAULT_MAX_MATCHES_COUNT
-        );
-      }
-    }
-    else {
-      options.setMaxMatchesCount(Integer.MAX_VALUE);
-    }
 
     ourFtSearchVariant = (FileType)fileTypes.getSelectedItem();
     ourDialect = (Language)dialects.getSelectedItem();

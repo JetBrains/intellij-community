@@ -28,8 +28,7 @@ public class MatchOptions implements JDOMExternalizable, Cloneable {
   private boolean resultIsContextMatch = false;
   private FileType myFileType = StructuralSearchUtil.DEFAULT_FILE_TYPE;
   private Language myDialect = null;
-  private int maxMatches = DEFAULT_MAX_MATCHES_COUNT;
-  public static final int DEFAULT_MAX_MATCHES_COUNT = 1000;
+  private int maxMatches = Integer.MAX_VALUE;
 
   private SearchScope scope;
   private SearchScope downUpMatchScope;
@@ -41,7 +40,6 @@ public class MatchOptions implements JDOMExternalizable, Cloneable {
   @NonNls private static final String DISTINCT_ATTRIBUTE_NAME = "distinct";
   @NonNls private static final String RECURSIVE_ATTRIBUTE_NAME = "recursive";
   @NonNls private static final String CASESENSITIVE_ATTRIBUTE_NAME = "caseInsensitive";
-  @NonNls private static final String MAXMATCHES_ATTRIBUTE_NAME = "maxMatches";
   //private static final String SCOPE_ATTRIBUTE_NAME = "scope";
   @NonNls private static final String CONSTRAINT_TAG_NAME = "constraint";
   @NonNls private static final String FILE_TYPE_ATTR_NAME = "type";
@@ -143,10 +141,6 @@ public class MatchOptions implements JDOMExternalizable, Cloneable {
     return searchCriteria;
   }
 
-  public void setMaxMatchesCount(int _maxMatches) {
-    maxMatches = _maxMatches;
-  }
-
   public int getMaxMatchesCount() {
     return maxMatches;
   }
@@ -225,13 +219,6 @@ public class MatchOptions implements JDOMExternalizable, Cloneable {
       } catch(DataConversionException ignored) {}
     }
 
-    attr = element.getAttribute(MAXMATCHES_ATTRIBUTE_NAME);
-    if (attr!=null) {
-      try {
-        maxMatches = attr.getIntValue();
-      } catch(DataConversionException ignored) {}
-    }
-
     attr = element.getAttribute(FILE_TYPE_ATTR_NAME);
     if (attr!=null) {
       String value = attr.getValue();
@@ -277,7 +264,6 @@ public class MatchOptions implements JDOMExternalizable, Cloneable {
     if (distinct != matchOptions.distinct) return false;
     //if (enableAutoIdentifySearchTarget != matchOptions.enableAutoIdentifySearchTarget) return false;
     if (looseMatching != matchOptions.looseMatching) return false;
-    if (maxMatches != matchOptions.maxMatches) return false;
     if (recursiveSearch != matchOptions.recursiveSearch) return false;
     // @TODO support scope
 
@@ -307,8 +293,6 @@ public class MatchOptions implements JDOMExternalizable, Cloneable {
     result = 29 * result + (distinct ? 1 : 0);
     result = 29 * result + (recursiveSearch ? 1 : 0);
     result = 29 * result + (caseSensitiveMatch ? 1 : 0);
-    //result = 29 * result + (enableAutoIdentifySearchTarget ? 1 : 0);
-    result = 29 * result + maxMatches;
     // @TODO support scope
     result = 29 * result + (searchCriteria != null ? searchCriteria.hashCode() : 0);
     result = 29 * result + (variableConstraints != null ? variableConstraints.hashCode() : 0);
