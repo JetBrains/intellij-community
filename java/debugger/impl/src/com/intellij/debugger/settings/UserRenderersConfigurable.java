@@ -184,6 +184,8 @@ public class UserRenderersConfigurable implements SearchableConfigurable, Config
   public void apply() throws ConfigurationException {
     myRendererDataConfigurable.apply();
     flushTo(NodeRendererSettings.getInstance().getCustomRenderers());
+
+    NodeRendererSettings.getInstance().fireRenderersChanged();
   }
 
   private void flushTo(final RendererConfiguration rendererConfiguration) {
