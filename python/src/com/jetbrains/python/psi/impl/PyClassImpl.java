@@ -1172,32 +1172,34 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
   @Nullable
   @Override
   public PyClassLikeType getMetaClassType(@NotNull TypeEvalContext context) {
-    final PyTargetExpression metaClassAttribute = findClassAttribute(PyNames.DUNDER_METACLASS, false);
-    if (metaClassAttribute != null) {
-      final PyExpression expression = metaClassAttribute.findAssignedValue();
-      final PyClass metaclass = getMetaFromExpression(expression);
-      if (metaclass != null) {
-        return new PyClassTypeImpl(metaclass, false);
-      }
-    }
-    final PsiFile containingFile = getContainingFile();
-    if (containingFile instanceof PyFile) {
-      final PsiElement element = ((PyFile)containingFile).getElementNamed(PyNames.DUNDER_METACLASS);
-      if (element instanceof PyTargetExpression) {
-        final PyExpression expression = ((PyTargetExpression)element).findAssignedValue();
-        final PyClass metaclass = getMetaFromExpression(expression);
-        if (metaclass != null) {
-          return new PyClassTypeImpl(metaclass, false);
-        }
-      }
-    }
-
-    if (LanguageLevel.forElement(this).isPy3K()) {
+    final LanguageLevel level = LanguageLevel.forElement(this);
+    if (level.isAtLeast(LanguageLevel.PYTHON30)) {
       final PyExpression[] superClassExpressions = getSuperClassExpressions();
       for (PyExpression superClassExpression : superClassExpressions) {
         if (superClassExpression instanceof PyKeywordArgument &&
             PyNames.METACLASS.equals(((PyKeywordArgument)superClassExpression).getKeyword())) {
           final PyExpression expression = ((PyKeywordArgument)superClassExpression).getValueExpression();
+          final PyClass metaclass = getMetaFromExpression(expression);
+          if (metaclass != null) {
+            return new PyClassTypeImpl(metaclass, false);
+          }
+        }
+      }
+    }
+    else {
+      final PyTargetExpression metaClassAttribute = findClassAttribute(PyNames.DUNDER_METACLASS, false);
+      if (metaClassAttribute != null) {
+        final PyExpression expression = metaClassAttribute.findAssignedValue();
+        final PyClass metaclass = getMetaFromExpression(expression);
+        if (metaclass != null) {
+          return new PyClassTypeImpl(metaclass, false);
+        }
+      }
+      final PsiFile containingFile = getContainingFile();
+      if (containingFile instanceof PyFile) {
+        final PsiElement element = ((PyFile)containingFile).getElementNamed(PyNames.DUNDER_METACLASS);
+        if (element instanceof PyTargetExpression) {
+          final PyExpression expression = ((PyTargetExpression)element).findAssignedValue();
           final PyClass metaclass = getMetaFromExpression(expression);
           if (metaclass != null) {
             return new PyClassTypeImpl(metaclass, false);
