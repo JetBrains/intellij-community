@@ -31,7 +31,7 @@ import com.intellij.psi.formatter.common.AbstractBlock;
 import com.intellij.psi.formatter.java.wrap.JavaWrapManager;
 import com.intellij.psi.formatter.java.wrap.ReservedWrapsProvider;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
-import com.intellij.psi.impl.source.codeStyle.ShiftIndentInsideHelper;
+import com.intellij.psi.impl.source.codeStyle.*;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.impl.source.tree.java.ClassElement;
@@ -457,7 +457,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
     if (childType == JavaElementType.METHOD_CALL_EXPRESSION) {
       result.add(createMethodCallExpressionBlock(child,
                                                  arrangeChildWrap(child, defaultWrap),
-                                                 arrangeChildAlignment(child, alignmentStrategy)));
+                                                 arrangeChildAlignment(child, alignmentStrategy), childIndent));
     }
     else {
       IElementType nodeType = myNode.getElementType();
@@ -710,10 +710,10 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
   }
 
   @NotNull
-  private Block createMethodCallExpressionBlock(@NotNull final ASTNode node, final Wrap blockWrap, final Alignment alignment) {
+  private Block createMethodCallExpressionBlock(@NotNull ASTNode node, Wrap blockWrap, Alignment alignment, Indent indent) {
     final ArrayList<ASTNode> nodes = new ArrayList<ASTNode>();
     collectNodes(nodes, node);
-    return new ChainMethodCallsBlockBuilder(alignment, blockWrap).build(nodes);
+    return new ChainMethodCallsBlockBuilder(alignment, blockWrap, indent).build(nodes);
   }
 
   @NotNull
@@ -1028,6 +1028,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
 
     ASTNode prev = child;
     boolean afterAnonymousClass = false;
+    final boolean enforceIndent = shouldEnforceIndentToChildren();
     while (child != null) {
       isAfterIncomplete = isAfterIncomplete || child.getElementType() == TokenType.ERROR_ELEMENT ||
                           child.getElementType() == JavaElementType.EMPTY_EXPRESSION;
@@ -1044,7 +1045,6 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
         }
         else {
           final IElementType elementType = child.getElementType();
-          final boolean enforceIndent = shouldEnforceIndentToChildren(child);
           Indent indentToUse = enforceIndent ? internalIndentEnforcedToChildren : internalIndent;
           AlignmentStrategy alignmentStrategyToUse = canUseAnonymousClassAlignment(child) ? anonymousClassStrategy : alignmentStrategy;
           processChild(result, child, alignmentStrategyToUse.getAlignment(elementType), wrappingStrategy.getWrap(elementType), indentToUse);
@@ -1105,7 +1105,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
     return true;
   }
   
-  private boolean shouldEnforceIndentToChildren(@NotNull ASTNode node) {
+  private boolean shouldEnforceIndentToChildren() {
     if (myNode.getElementType() != JavaElementType.EXPRESSION_LIST) {
       return false;
     }
@@ -1114,9 +1114,9 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
       return false;
     }
 
-    PsiExpressionList methodParamsList = (PsiExpressionList)myNode.getPsi();
-    return JavaFormatterUtil.hasMultilineArguments(methodParamsList)
-           && JavaFormatterUtil.isMultilineExceptArguments(methodParamsList);
+    PsiExpression[] arguments = ((PsiExpressionList)myNode.getPsi()).getExpressions();
+    return (JavaFormatterUtil.hasMultilineArguments(arguments) || JavaFormatterUtil.canHaveMultilineArgumentsAfterWrap(arguments, mySettings))
+           && (JavaFormatterUtil.isMultilineExceptArguments(arguments) || JavaFormatterUtil.canBeMultilineExceptArgumentsAfterWrap(arguments, mySettings));
   }
 
   private static boolean isAnonymousClass(@Nullable ASTNode node) {
@@ -1432,13 +1432,15 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
   private class ChainMethodCallsBlockBuilder {
     private Wrap blockWrap;
     private Alignment blockAlignment;
+    private Indent blockIndent;
 
     private Wrap myWrap;
     private Alignment myChainedCallsAlignment;
 
-    public ChainMethodCallsBlockBuilder(Alignment alignment, Wrap wrap) {
+    public ChainMethodCallsBlockBuilder(Alignment alignment, Wrap wrap, Indent indent) {
       blockWrap = wrap;
       blockAlignment = alignment;
+      blockIndent = indent;
     }
 
     public Block build(List<ASTNode> nodes)  {
@@ -1446,8 +1448,8 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
       myChainedCallsAlignment = getNewAlignment();
 
       List<Block> blocks = buildBlocksFrom(nodes);
-      Indent indent = Indent.getContinuationWithoutFirstIndent(myIndentSettings.USE_RELATIVE_INDENTS);
 
+      Indent indent = blockIndent != null ? blockIndent : Indent.getContinuationWithoutFirstIndent(myIndentSettings.USE_RELATIVE_INDENTS);
       return new SyntheticCodeBlock(blocks, blockAlignment, mySettings, indent, blockWrap);
     }
 

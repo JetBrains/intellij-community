@@ -1151,7 +1151,8 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
       createParenthSpace(mySettings.CALL_PARAMETERS_LPAREN_ON_NEXT_LINE, mySettings.SPACE_WITHIN_EMPTY_METHOD_CALL_PARENTHESES);
     }
     else if (myRole2 == ChildRole.RPARENTH) {
-      if (JavaFormatterUtil.hasMultilineArguments(list) && JavaFormatterUtil.isMultilineExceptArguments(list)) {
+      PsiExpression[] arguments = list.getExpressions();
+      if (JavaFormatterUtil.hasMultilineArguments(arguments) && JavaFormatterUtil.isMultilineExceptArguments(arguments)) {
         myResult = Spacing.createSpacing(0, 0, 1, mySettings.KEEP_LINE_BREAKS, 0);
       }
       else {
