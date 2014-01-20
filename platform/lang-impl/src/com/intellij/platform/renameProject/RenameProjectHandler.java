@@ -33,6 +33,7 @@ import com.intellij.openapi.ui.InputValidator;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Ref;
 import com.intellij.platform.ModuleAttachProcessor;
+import com.intellij.projectImport.ProjectAttachProcessor;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.refactoring.RefactoringBundle;
@@ -101,7 +102,7 @@ public class RenameProjectHandler implements RenameHandler, TitledHandler {
 
     @Override
     public boolean canClose(final String inputString) {
-      if (!inputString.equals(myProject.getName()) && (myModule == null || myModule == ModuleAttachProcessor.getPrimaryModule(myProject))) {
+      if (shouldRenameProject(inputString)) {
         myProject.setProjectName(inputString);
         myProject.save();
       }
@@ -131,6 +132,22 @@ public class RenameProjectHandler implements RenameHandler, TitledHandler {
         return success.get().booleanValue();
       }
       return true;
+    }
+
+    private boolean shouldRenameProject(String inputString) {
+      if (inputString.equals(myProject.getName())) {
+        return false;
+      }
+
+      if (myModule == null) {
+        return true;
+      }
+
+      if (ProjectAttachProcessor.canAttachToProject()) {
+        return myModule == ModuleAttachProcessor.getPrimaryModule(myProject);
+      }
+
+      return myModule == ModuleAttachProcessor.findModuleInBaseDir(myProject);
     }
   }
 }

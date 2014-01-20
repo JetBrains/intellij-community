@@ -456,7 +456,7 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
   }
 
   @Override
-  public void renameFile(final Object requestor, @NotNull final VirtualFile file, @NotNull final String newName) throws IOException {
+  public void renameFile(final Object requestor, @NotNull VirtualFile file, @NotNull String newName) throws IOException {
     getDelegate(file).renameFile(requestor, file, newName);
     processEvent(new VFilePropertyChangeEvent(requestor, file, VirtualFile.PROP_NAME, file.getName(), newName, false));
   }

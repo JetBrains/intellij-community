@@ -167,7 +167,7 @@ public class MavenResourceCompiler implements ClassPostProcessingCompiler {
         Set<String> nonFilteredExtensions = collectNonFilteredExtensions(mavenProject);
         String escapeString = MavenJDOMUtil.findChildValueByPath(mavenProject.getPluginConfiguration("org.apache.maven.plugins",
                                                                                                      "maven-resources-plugin"),
-                                                                 "escapeString", "\\");
+                                                                 "escapeString", null);
 
         List<MyProcessingItem> moduleItemsToProcess = new ArrayList<MyProcessingItem>();
         collectProcessingItems(eachModule, mavenProject, context, properties, propertiesHashCode,
@@ -245,7 +245,7 @@ public class MavenResourceCompiler implements ClassPostProcessingCompiler {
                                              Properties properties,
                                              long propertiesHashCode,
                                              Set<String> nonFilteredExtensions,
-                                             String escapeString,
+                                             @Nullable String escapeString,
                                              boolean tests,
                                              List<MyProcessingItem> result) {
     String outputDir = CompilerPaths.getModuleOutputPath(module, tests);
@@ -305,7 +305,7 @@ public class MavenResourceCompiler implements ClassPostProcessingCompiler {
                                              final Properties properties,
                                              final long propertiesHashCode,
                                              final Set<String> nonFilteredExtensions,
-                                             final String escapeString,
+                                             @Nullable final String escapeString,
                                              final List<MyProcessingItem> result,
                                              final ProgressIndicator indicator) {
     VfsUtilCore.visitChildrenRecursively(currentDir, new VirtualFileVisitor() {
@@ -476,7 +476,7 @@ public class MavenResourceCompiler implements ClassPostProcessingCompiler {
                             boolean isFiltered,
                             Properties properties,
                             long propertiesHashCode,
-                            String escapeString) {
+                            @Nullable String escapeString) {
       myModule = module;
       mySourceFile = sourceFile;
       myOutputPath = outputPath;
@@ -507,6 +507,7 @@ public class MavenResourceCompiler implements ClassPostProcessingCompiler {
       return myProperties;
     }
 
+    @Nullable
     public String getEscapeString() {
       return myEscapeString;
     }

@@ -33,6 +33,10 @@ public abstract class StubProcessingHelperBase {
   }
 
   public <Psi extends PsiElement> boolean processStubsInFile(final Project project, final VirtualFile file, StubIdList value, final Processor<? super Psi> processor) {
+    return processStubsInFile(project, file, value, processor, false);
+  }
+
+  public <Psi extends PsiElement> boolean processStubsInFile(final Project project, final VirtualFile file, StubIdList value, final Processor<? super Psi> processor, final boolean skipOnErrors) {
     StubTree stubTree = null;
 
     PsiFile _psifile = PsiManager.getInstance(project).findFile(file);
@@ -66,7 +70,15 @@ public abstract class StubProcessingHelperBase {
       stubTree = (StubTree)objectStubTree;
       final List<StubElement<?>> plained = stubTree.getPlainList();
       for (int i = 0, size = value.size(); i < size; i++) {
-        final StubElement<?> stub = plained.get(value.get(i));
+        final int stubTreeIndex = value.get(i);
+        if (stubTreeIndex >= plained.size()) {
+          if (!skipOnErrors)
+            onInternalError(file);
+
+          break;
+        }
+
+        final StubElement<?> stub = plained.get(stubTreeIndex);
         PsiUtilCore.ensureValid(psiFile);
         final ASTNode tree = psiFile.findTreeForStub(stubTree, stub);
 
@@ -76,7 +88,7 @@ public abstract class StubProcessingHelperBase {
             PsiUtilCore.ensureValid(psi);
             if (!processor.process(psi)) return false;
           }
-          else {
+          else if (!skipOnErrors) {
             String persistedStubTree = ((PsiFileStubImpl)stubTree.getRoot()).printTree();
 
             String stubTreeJustBuilt =
@@ -103,11 +115,13 @@ public abstract class StubProcessingHelperBase {
       for (int i = 0, size = value.size(); i < size; i++) {
         final int stubTreeIndex = value.get(i);
         if (stubTreeIndex >= plained.size()) {
-          final VirtualFile virtualFile = psiFile.getVirtualFile();
-          StubTree stubTreeFromIndex = (StubTree)StubTreeLoader.getInstance().readFromVFile(project, file);
-          LOG.error(stubTreeAndIndexDoNotMatch(stubTree, psiFile, plained, virtualFile, stubTreeFromIndex));
+          if (!skipOnErrors) {
+            final VirtualFile virtualFile = psiFile.getVirtualFile();
+            StubTree stubTreeFromIndex = (StubTree)StubTreeLoader.getInstance().readFromVFile(project, file);
+            LOG.error(stubTreeAndIndexDoNotMatch(stubTree, psiFile, plained, virtualFile, stubTreeFromIndex));
 
-          onInternalError(file);
+            onInternalError(file);
+          }
 
           break;
         }

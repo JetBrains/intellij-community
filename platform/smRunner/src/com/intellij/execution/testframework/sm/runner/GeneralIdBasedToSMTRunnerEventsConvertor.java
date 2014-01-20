@@ -39,7 +39,7 @@ public class GeneralIdBasedToSMTRunnerEventsConvertor extends GeneralTestEventsP
   private static final Logger LOG = Logger.getInstance(GeneralIdBasedToSMTRunnerEventsConvertor.class.getName());
 
   private final TIntObjectHashMap<Node> myNodeByIdMap = new TIntObjectHashMap<Node>();
-  private final Set<Node> myRunningNodes = ContainerUtil.newHashSet();
+  private final Set<Node> myRunningTestNodes = ContainerUtil.newHashSet();
   private final List<SMTRunnerEventsListener> myEventsListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private final SMTestProxy.SMRootTestProxy myTestsRootProxy;
   private final Node myTestsRootNode;
@@ -68,9 +68,7 @@ public class GeneralIdBasedToSMTRunnerEventsConvertor extends GeneralTestEventsP
     addToInvokeLater(new Runnable() {
       public void run() {
         myTestsRootNode.setState(State.RUNNING);
-        myRunningNodes.add(myTestsRootNode);
         myTestsRootProxy.setStarted();
-
         fireOnTestingStarted();
       }
     });
@@ -98,14 +96,14 @@ public class GeneralIdBasedToSMTRunnerEventsConvertor extends GeneralTestEventsP
         // or it finished after all tests have been run
         // Lets assume, if at finish all suites except root suite are passed
         // then all is ok otherwise process was terminated by user
-        if (myRunningNodes.size() == 1 && myRunningNodes.contains(myTestsRootNode)) {
+        if (myRunningTestNodes.isEmpty()) {
           myTestsRootProxy.setFinished();
         } else {
-          logProblem("Unexpected running nodes: " + myRunningNodes);
+          logProblem("Unexpected running nodes: " + myRunningTestNodes);
           myTestsRootProxy.setTerminated();
         }
         myNodeByIdMap.clear();
-        myRunningNodes.clear();
+        myRunningTestNodes.clear();
 
         fireOnTestingFinished();
       }
@@ -463,13 +461,13 @@ public class GeneralIdBasedToSMTRunnerEventsConvertor extends GeneralTestEventsP
       public void run() {
         myEventsListeners.clear();
 
-        if (!myRunningNodes.isEmpty()) {
+        if (!myRunningTestNodes.isEmpty()) {
           Application application = ApplicationManager.getApplication();
           if (!application.isHeadlessEnvironment() && !application.isUnitTestMode()) {
             logProblem("Not all events were processed!");
           }
         }
-        myRunningNodes.clear();
+        myRunningTestNodes.clear();
         myNodeByIdMap.clear();
       }
     });
@@ -479,12 +477,12 @@ public class GeneralIdBasedToSMTRunnerEventsConvertor extends GeneralTestEventsP
     Node node = lowestNode;
     while (node != null && node != myTestsRootNode && node.getState() == State.NOT_RUNNING) {
       node.setState(State.RUNNING);
-      myRunningNodes.add(node);
       SMTestProxy proxy = node.getProxy();
       proxy.setStarted();
       if (proxy.isSuite()) {
         fireOnSuiteStarted(proxy);
       } else {
+        myRunningTestNodes.add(lowestNode);
         fireOnTestStarted(proxy);
       }
       node = node.getParentNode();
@@ -493,53 +491,15 @@ public class GeneralIdBasedToSMTRunnerEventsConvertor extends GeneralTestEventsP
 
   private void terminateNode(@NotNull Node node, @NotNull State terminateState) {
     node.setState(terminateState);
-    myRunningNodes.remove(node);
+    myRunningTestNodes.remove(node);
   }
 
   @NotNull
   private Node findActiveNode() {
-    List<Node> runningLeaves = ContainerUtil.newArrayListWithExpectedSize(1);
-    for (Node node : myRunningNodes) {
-      if (!node.hasRunningChildren()) {
-        runningLeaves.add(node);
-      }
-    }
-    if (runningLeaves.isEmpty()) {
+    if (myRunningTestNodes.isEmpty()) {
       return myTestsRootNode;
     }
-    if (runningLeaves.size() == 1) {
-      return runningLeaves.iterator().next();
-    }
-    List<Node> commonPathToRoot = null;
-    for (Node leaf : runningLeaves) {
-      List<Node> pathToRoot = leaf.getAncestorsFromParentToRoot();
-      if (commonPathToRoot == null) {
-        commonPathToRoot = pathToRoot;
-      } else {
-        commonPathToRoot = intersectPathsToRoot(commonPathToRoot, pathToRoot);
-      }
-    }
-    if (commonPathToRoot == null || commonPathToRoot.isEmpty()) {
-      throw new RuntimeException("Unexpected common path to root: " + commonPathToRoot + ", running leaves: " + runningLeaves);
-    }
-    return commonPathToRoot.get(0);
-  }
-
-  @NotNull
-  private static List<Node> intersectPathsToRoot(@NotNull List<Node> pathToRoot1, @NotNull List<Node> pathToRoot2) {
-    final int minSize = Math.min(pathToRoot1.size(), pathToRoot2.size());
-    final int shift1 = pathToRoot1.size() - minSize;
-    final int shift2 = pathToRoot2.size() - minSize;
-    int commonSize = 0;
-    for (int i = 0; i < minSize; i++) {
-      Node node1 = pathToRoot1.get(i + shift1);
-      Node node2 = pathToRoot2.get(i + shift2);
-      if (node1 == node2) {
-        commonSize = minSize - i;
-        break;
-      }
-    }
-    return pathToRoot1.subList(pathToRoot1.size() - commonSize, pathToRoot1.size());
+    return myRunningTestNodes.iterator().next();
   }
 
   private void logProblem(@NotNull String msg) {
@@ -565,7 +525,6 @@ public class GeneralIdBasedToSMTRunnerEventsConvertor extends GeneralTestEventsP
     private final Node myParentNode;
     private final SMTestProxy myProxy;
     private State myState;
-    private int myRunningChildCount = 0;
 
     Node(int id, @Nullable Node parentNode, @NotNull SMTestProxy proxy) {
       myId = id;
@@ -601,14 +560,6 @@ public class GeneralIdBasedToSMTRunnerEventsConvertor extends GeneralTestEventsP
       if (!accepted) {
         throw new RuntimeException("Illegal state change [" + myState + " -> " + newState + "]: " + toString());
       }
-      if (myParentNode != null) {
-        if (newState == State.RUNNING) {
-          myParentNode.myRunningChildCount++;
-        }
-        else if (myState == State.RUNNING) {
-          myParentNode.myRunningChildCount--;
-        }
-      }
       myState = newState;
     }
 
@@ -637,20 +588,6 @@ public class GeneralIdBasedToSMTRunnerEventsConvertor extends GeneralTestEventsP
              ", state=" + myState +
              '}';
     }
-
-    public boolean hasRunningChildren() {
-      return myRunningChildCount > 0;
-    }
-
-    @NotNull
-    public List<Node> getAncestorsFromParentToRoot() {
-      List<Node> ancestors = ContainerUtil.newArrayList();
-      Node parent = getParentNode();
-      while (parent != null) {
-        ancestors.add(parent);
-        parent = parent.getParentNode();
-      }
-      return ancestors;
-    }
   }
+
 }

@@ -114,6 +114,7 @@ public abstract class DummyCachingFileSystem<T extends VirtualFile> extends Dumm
     throw new UnsupportedOperationException("not implemented");
   }
 
+  @Nullable
   public Project getProject(String projectId) {
     List<Project> list = myProject2Id.getKeysByValue(projectId);
     return list == null || list.size() > 1 ? null : list.get(0);
@@ -168,7 +169,7 @@ public abstract class DummyCachingFileSystem<T extends VirtualFile> extends Dumm
     }
   }
 
-  protected void beforeFileRename(VirtualFile file, Object requestor, String oldName, String newName) {
+  protected void beforeFileRename(@NotNull VirtualFile file, Object requestor, @NotNull String oldName, @NotNull String newName) {
     fireBeforePropertyChange(requestor, file, VirtualFile.PROP_NAME, oldName, newName);
     myCachedFiles.remove(file.getPath());
   }

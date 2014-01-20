@@ -22,6 +22,9 @@
     <xi:include href="/META-INF/VcsExtensions.xml" xpointer="xpointer(/idea-plugin/extensions/*)"/>
     <xi:include href="/META-INF/LangExtensions.xml" xpointer="xpointer(/idea-plugin/extensions/*)"/>
 
+    <applicationService serviceInterface="com.intellij.ide.RecentProjectsManagerBase"
+                        serviceImplementation="com.intellij.ide.RecentDirectoryProjectsManagerEx"/>
+
     <applicationService serviceInterface="com.intellij.packageDependencies.DependenciesVisitorFactory"
                         serviceImplementation="com.intellij.packageDependencies.DependenciesVisitorFactory"/>
     <applicationService serviceInterface="com.intellij.openapi.projectRoots.ProjectJdkTable"

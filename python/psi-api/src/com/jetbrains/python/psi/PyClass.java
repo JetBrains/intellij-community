@@ -136,11 +136,13 @@ public interface PyClass extends PsiNameIdentifierOwner, PyStatement, NameDefine
   /**
    * Finds a property with the specified name in the class or one of its ancestors.
    *
+   *
    * @param name of the property
+   * @param inherited
    * @return descriptor of property accessors, or null if such property does not exist.
    */
   @Nullable
-  Property findProperty(@NotNull String name);
+  Property findProperty(@NotNull String name, boolean inherited);
 
   /**
    * Apply a processor to every method, looking at superclasses in method resolution order as needed.

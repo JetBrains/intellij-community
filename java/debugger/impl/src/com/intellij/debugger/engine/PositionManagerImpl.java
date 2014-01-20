@@ -179,14 +179,16 @@ public class PositionManagerImpl implements PositionManager {
     }
 
     final String originalQName = refType.name();
-    int dollar = originalQName.indexOf('$');
-    final String qName = dollar >= 0 ? originalQName.substring(0, dollar) : originalQName;
     final GlobalSearchScope searchScope = myDebugProcess.getSearchScope();
-    PsiClass psiClass = DebuggerUtils.findClass(qName, project, searchScope);
-    if (psiClass == null && dollar >= 0 /*originalName and qName really differ*/) {
-      psiClass = DebuggerUtils.findClass(originalQName, project, searchScope); // try to lookup original name
+    PsiClass psiClass = DebuggerUtils.findClass(originalQName, project, searchScope); // try to lookup original name first
+    if (psiClass == null) {
+      int dollar = originalQName.indexOf('$');
+      if (dollar > 0) {
+        final String qName = originalQName.substring(0, dollar);
+        psiClass = DebuggerUtils.findClass(qName, project, searchScope);
+      }
     }
-    
+
     if (psiClass != null) {
       final PsiElement element = psiClass.getNavigationElement();
       return element.getContainingFile();

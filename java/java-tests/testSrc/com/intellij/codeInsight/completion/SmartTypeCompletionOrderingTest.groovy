@@ -321,6 +321,10 @@ public class SmartTypeCompletionOrderingTest extends CompletionSortingTestCase {
     checkPreferredItems 0, 'type', 'Object.class'
   }
 
+  public void testPreferStringsInStringConcatenation() {
+    checkPreferredItems 0, 'toString'
+  }
+
   @Override
   protected String getBasePath() {
     return JavaTestUtil.getRelativeJavaTestDataPath() + BASE_PATH;

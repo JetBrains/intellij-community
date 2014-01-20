@@ -1,16 +1,28 @@
+/*
+ * Copyright 2000-2014 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.psi.css;
 
 import com.intellij.lang.ParserDefinition;
 import com.intellij.lexer.Lexer;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
-
-/**
- * User: zolotov
- * Date: 2/19/13
- */
+import org.jetbrains.annotations.NotNull;
 
 public class MinifiedFilesUtil {
+
   private MinifiedFilesUtil() {
   }
 
@@ -21,18 +33,39 @@ public class MinifiedFilesUtil {
   private static final int MIN_LINE_LENGTH = 100; // if there's compact line that is long enough, file is considered to be minified
 
   private static final double MAX_UNNEEDED_OFFSET_PERCENTAGE = 0.01;
+  
+  private static final int COUNT_OF_CONSIDERING_CHARACTERS_FROM_END_OF_FILE = 400;
 
   /**
    * Finds out whether the file minified by using common (not language-specific) heuristics.
    * Can be used for checking of css/less/scss/sass and js files.
    *
-   * @param lexer                    Lexer started on content of target file
+   * @param fileContent              target file content
    * @param parserDefinition         Parser definition of target language
    * @param noWSRequireAfterTokenSet TokenSet of types that doesn't require whitespaces after them.
    */
-  public static boolean isMinified(Lexer lexer,
-                                   ParserDefinition parserDefinition,
-                                   TokenSet noWSRequireAfterTokenSet) {
+  public static boolean isMinified(@NotNull CharSequence fileContent,
+                                   @NotNull ParserDefinition parserDefinition,
+                                   @NotNull TokenSet noWSRequireAfterTokenSet) {
+    Lexer lexer = parserDefinition.createLexer(null);
+    lexer.start(fileContent);
+    if (!isMinified(lexer, parserDefinition, noWSRequireAfterTokenSet)) {
+      return false;
+    }
+    else if (lexer.getTokenType() == null) {
+      // whole file had been considered
+      return true;
+    }
+
+    int startOffset = fileContent.length() - COUNT_OF_CONSIDERING_CHARACTERS_FROM_END_OF_FILE;
+    if (startOffset <= 0) {
+      return true;
+    }
+    lexer.start(fileContent, startOffset, fileContent.length());
+    return isMinified(lexer, parserDefinition, noWSRequireAfterTokenSet);
+  }
+
+  protected static boolean isMinified(Lexer lexer, ParserDefinition parserDefinition, TokenSet noWSRequireAfterTokenSet) {
     int offsetIgnoringComments = 0;
     int offsetIgnoringCommentsAndStrings = 0;
     int lineLength = 0;
@@ -58,7 +91,13 @@ public class MinifiedFilesUtil {
 
       if (whitespaceTokens.contains(tokenType)) {
         if (!commentTokens.contains(lastTokenType) && tokenLength > 1) {
-          return false;
+          lexer.advance();
+          if (lexer.getTokenType() == null) {
+            // it was last token
+            break;
+          } else {
+            return false;
+          }
         }
 
         if (lexer.getTokenText().contains("\n")) {
@@ -82,10 +121,11 @@ public class MinifiedFilesUtil {
       lastTokenType = tokenType;
     }
 
-    return offsetIgnoringComments >= MIN_SIZE && (unneededWhitespaceCount + 0.0d) / offsetIgnoringCommentsAndStrings < MAX_UNNEEDED_OFFSET_PERCENTAGE;
+    return offsetIgnoringComments >= MIN_SIZE &&
+           (unneededWhitespaceCount + 0.0d) / offsetIgnoringCommentsAndStrings < MAX_UNNEEDED_OFFSET_PERCENTAGE;
   }
 
-  public static boolean isMinified(Lexer lexer, ParserDefinition parserDefinition) {
-    return isMinified(lexer, parserDefinition, TokenSet.EMPTY);
+  public static boolean isMinified(@NotNull CharSequence fileContent, @NotNull ParserDefinition parserDefinition) {
+    return isMinified(fileContent, parserDefinition, TokenSet.EMPTY);
   }
 }

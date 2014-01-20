@@ -868,10 +868,15 @@ public abstract class ResourceFilteringTest extends MavenImportingTestCase {
   }
 
   public void testEscapingFiltering() throws Exception {
+    if (!useJps()) return;
+
     createProjectSubFile("filters/filter.properties", "xxx=value");
     createProjectSubFile("resources/file.properties",
                          "value1=\\${xxx}\n" +
-                         "value2=${xxx}\n");
+                         "value2=\\\\${xxx}\n" +
+                         "value3=\\\\\\${xxx}\n" +
+                         "value3=\\\\\\\\${xxx}\n" +
+                         "value4=.\\.\\\\.\\\\\\.");
 
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
@@ -887,12 +892,24 @@ public abstract class ResourceFilteringTest extends MavenImportingTestCase {
                   "      <filtering>true</filtering>" +
                   "    </resource>" +
                   "  </resources>" +
+                  "  <plugins>" +
+                  "    <plugin>" +
+                  "      <groupId>org.apache.maven.plugins</groupId>" +
+                  "      <artifactId>maven-resources-plugin</artifactId>" +
+                  "      <configuration>" +
+                  "        <escapeString>\\</escapeString>" +
+                  "      </configuration>" +
+                  "    </plugin>" +
+                  "  </plugins>" +
                   "</build>");
 
     compileModules("project");
     assertResult("target/classes/file.properties",
                  "value1=${xxx}\n" +
-                 "value2=value\n");
+                 "value2=\\\\value\n" +
+                 "value3=\\\\${xxx}\n" +
+                 "value3=\\\\\\\\value\n" +
+                 "value4=.\\.\\\\.\\\\\\.");
   }
 
   public void testPropertyPriority() throws Exception {

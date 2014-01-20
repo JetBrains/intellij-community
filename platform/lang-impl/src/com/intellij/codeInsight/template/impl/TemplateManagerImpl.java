@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -80,11 +80,11 @@ public class TemplateManagerImpl extends TemplateManager implements ProjectCompo
         Editor editor = event.getEditor();
         if (editor.getProject() != null && editor.getProject() != myProject) return;
         if (myProject.isDisposed() || !myProject.isOpen()) return;
-        TemplateState tState = getTemplateState(editor);
-        if (tState != null) {
-          tState.gotoEnd();
+        TemplateState state = getTemplateState(editor);
+        if (state != null) {
+          state.gotoEnd();
         }
-        editor.putUserData(TEMPLATE_STATE_KEY, null);
+        clearTemplateState(editor);
       }
     };
     EditorFactory.getInstance().addEditorFactoryListener(myEditorFactoryListener, myProject);
@@ -108,8 +108,8 @@ public class TemplateManagerImpl extends TemplateManager implements ProjectCompo
     });
   }
 
-  private static void disposeState(final TemplateState tState) {
-    Disposer.dispose(tState);
+  private static void disposeState(@NotNull TemplateState state) {
+    Disposer.dispose(state);
   }
 
   @Override
@@ -123,11 +123,11 @@ public class TemplateManagerImpl extends TemplateManager implements ProjectCompo
   }
 
   @Nullable
-  public static TemplateState getTemplateState(Editor editor) {
+  public static TemplateState getTemplateState(@NotNull Editor editor) {
     return editor.getUserData(TEMPLATE_STATE_KEY);
   }
 
-  void clearTemplateState(final Editor editor) {
+  static void clearTemplateState(@NotNull Editor editor) {
     TemplateState prevState = getTemplateState(editor);
     if (prevState != null) {
       disposeState(prevState);
@@ -135,7 +135,7 @@ public class TemplateManagerImpl extends TemplateManager implements ProjectCompo
     editor.putUserData(TEMPLATE_STATE_KEY, null);
   }
 
-  private TemplateState initTemplateState(final Editor editor) {
+  private TemplateState initTemplateState(@NotNull Editor editor) {
     clearTemplateState(editor);
     TemplateState state = new TemplateState(myProject, editor);
     Disposer.register(this, state);
@@ -379,7 +379,7 @@ public class TemplateManagerImpl extends TemplateManager implements ProjectCompo
     final Document document = editor.getDocument();
     final CharSequence text = document.getCharsSequence();
 
-    if (template2argument == null || template2argument.size() == 0) {
+    if (template2argument == null || template2argument.isEmpty()) {
       return null;
     }
     if (!FileDocumentManager.getInstance().requestWriting(editor.getDocument(), myProject)) {
@@ -407,14 +407,13 @@ public class TemplateManagerImpl extends TemplateManager implements ProjectCompo
                                                          @Nullable Character shortcutChar,
                                                          TemplateSettings settings,
                                                          boolean hasArgument) {
-    String key;
     List<TemplateImpl> candidates = Collections.emptyList();
     for (int i = settings.getMaxKeyLength(); i >= 1; i--) {
       int wordStart = caretOffset - i;
       if (wordStart < 0) {
         continue;
       }
-      key = text.subSequence(wordStart, caretOffset).toString();
+      String key = text.subSequence(wordStart, caretOffset).toString();
       if (Character.isJavaIdentifierStart(key.charAt(0))) {
         if (wordStart > 0 && Character.isJavaIdentifierPart(text.charAt(wordStart - 1))) {
           continue;
@@ -519,7 +518,7 @@ public class TemplateManagerImpl extends TemplateManager implements ProjectCompo
     final TemplateContextType[] typeCollection = getAllContextTypes();
     LinkedList<TemplateContextType> userDefinedExtensionsFirst = new LinkedList<TemplateContextType>();
     for (TemplateContextType contextType : typeCollection) {
-      if (contextType.getClass().getName().startsWith("com.intellij.codeInsight.template")) {
+      if (contextType.getClass().getName().startsWith(Template.class.getPackage().getName())) {
         userDefinedExtensionsFirst.addLast(contextType);
       }
       else {

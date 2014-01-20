@@ -30,7 +30,7 @@ public interface PyTypeProvider {
   ExtensionPointName<PyTypeProvider> EP_NAME = ExtensionPointName.create("Pythonid.typeProvider");
 
   @Nullable
-  PyType getReferenceExpressionType(PyReferenceExpression referenceExpression, TypeEvalContext context);
+  PyType getReferenceExpressionType(@NotNull PyReferenceExpression referenceExpression, @NotNull TypeEvalContext context);
 
   @Nullable
   PyType getReferenceType(@NotNull PsiElement referenceTarget, TypeEvalContext context, @Nullable PsiElement anchor);

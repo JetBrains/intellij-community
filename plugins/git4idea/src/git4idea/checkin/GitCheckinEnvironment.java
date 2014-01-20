@@ -658,14 +658,16 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
     protected String getLastCommitMessage(@NotNull VirtualFile root) throws VcsException {
       GitSimpleHandler h = new GitSimpleHandler(myProject, root, GitCommand.LOG);
       h.addParameters("--max-count=1");
+      String formatPattern;
       if (GitVersionSpecialty.STARTED_USING_RAW_BODY_IN_FORMAT.existsIn(myVcs.getVersion())) {
-        h.addParameters("--pretty=%B");
+        formatPattern = "%B";
       }
       else {
         // only message: subject + body; "%-b" means that preceding line-feeds will be deleted if the body is empty
         // %s strips newlines from subject; there is no way to work around it before 1.7.2 with %B (unless parsing some fixed format)
-        h.addParameters("--pretty=%s%n%n%-b");
+        formatPattern = "%s%n%n%-b";
       }
+      h.addParameters("--pretty=format:" + formatPattern);
       return h.run();
     }
 

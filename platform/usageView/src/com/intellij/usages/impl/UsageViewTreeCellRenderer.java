@@ -22,12 +22,14 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.ui.ColoredTreeCellRenderer;
+import com.intellij.ui.DarculaColors;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.speedSearch.SpeedSearchUtil;
 import com.intellij.usageView.UsageTreeColors;
 import com.intellij.usageView.UsageTreeColorsScheme;
 import com.intellij.usageView.UsageViewBundle;
 import com.intellij.usages.*;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -44,6 +46,7 @@ class UsageViewTreeCellRenderer extends ColoredTreeCellRenderer {
   private static final SimpleTextAttributes ourInvalidAttributes = SimpleTextAttributes.fromTextAttributes(ourColorsScheme.getAttributes(UsageTreeColors.INVALID_PREFIX));
   private static final SimpleTextAttributes ourReadOnlyAttributes = SimpleTextAttributes.fromTextAttributes(ourColorsScheme.getAttributes(UsageTreeColors.READONLY_PREFIX));
   private static final SimpleTextAttributes ourNumberOfUsagesAttribute = SimpleTextAttributes.fromTextAttributes(ourColorsScheme.getAttributes(UsageTreeColors.NUMBER_OF_USAGES));
+  private static final SimpleTextAttributes ourInvalidAttributesDarcula = new SimpleTextAttributes(null, DarculaColors.RED, null, ourInvalidAttributes.getStyle());
   public static final Insets STANDARD_IPAD_NOWIFI = new Insets(1, 2, 1, 2);
   private static final Rectangle EMPTY_RECTANGLE = new Rectangle();
 
@@ -63,7 +66,7 @@ class UsageViewTreeCellRenderer extends ColoredTreeCellRenderer {
     if (value instanceof Node && tree != null && value != tree.getModel().getRoot()) {
       Node node = (Node)value;
       if (!node.isValid()) {
-        append(UsageViewBundle.message("node.invalid") + " ", ourInvalidAttributes);
+        append(UsageViewBundle.message("node.invalid") + " ", UIUtil.isUnderDarcula() ? ourInvalidAttributesDarcula : ourInvalidAttributes);
       }
       if (myPresentation.isShowReadOnlyStatusAsRed() && node.isReadOnly()) {
         showAsReadOnly = true;
