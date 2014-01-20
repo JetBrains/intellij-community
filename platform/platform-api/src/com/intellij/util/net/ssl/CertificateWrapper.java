@@ -1,4 +1,4 @@
-package com.intellij.util.net;
+package com.intellij.util.net.ssl;
 
 import com.intellij.util.containers.HashMap;
 import org.apache.commons.codec.digest.DigestUtils;
@@ -8,6 +8,8 @@ import org.jetbrains.annotations.NotNull;
 import javax.security.auth.x500.X500Principal;
 import java.security.cert.CertificateEncodingException;
 import java.security.cert.X509Certificate;
+import java.util.Collections;
+import java.util.Date;
 import java.util.Map;
 
 /**
@@ -27,12 +29,20 @@ public class CertificateWrapper {
     mySubjectFields = extractFields(certificate.getSubjectX500Principal());
   }
 
+  /**
+   * @param name - Common name of desired issuer field
+   * @return field value of {@link #NOT_AVAILABLE}. if it doesn't exist
+   */
   @NotNull
   public String getIssuerField(@NotNull CommonField name) {
     String field = myIssuerFields.get(name.getShortName());
     return field == null ? NOT_AVAILABLE : field;
   }
 
+  /**
+   * @param name - Common name of desired subject field
+   * @return field value of {@link #NOT_AVAILABLE}, if it doesn't exist
+   */
   @NotNull
   public String getSubjectField(@NotNull CommonField name) {
     String field = mySubjectFields.get(name.getShortName());
@@ -41,14 +51,13 @@ public class CertificateWrapper {
 
   /**
    * Returns SHA-256 fingerprint of the certificate.
-   * Returned string is in upper case and octets are delimited by spaces.
    *
    * @return SHA-256 fingerprint or {@link #NOT_AVAILABLE} in case of any error
    */
   @NotNull
   public String getSha256Fingerprint() {
     try {
-      return formatHex(DigestUtils.sha256Hex(myCertificate.getEncoded()));
+      return DigestUtils.sha256Hex(myCertificate.getEncoded());
     }
     catch (CertificateEncodingException e) {
       return NOT_AVAILABLE;
@@ -57,13 +66,12 @@ public class CertificateWrapper {
 
   /**
    * Returns SHA-1 fingerprint of the certificate.
-   * Returned string is in upper case and octets are delimited by spaces.
    *
    * @return SHA-1 fingerprint or {@link #NOT_AVAILABLE} in case of any error
    */
-  private static String getSha1Fingerprint(X509Certificate certificate) {
+  public String getSha1Fingerprint() {
     try {
-      return formatHex(DigestUtils.sha1Hex(certificate.getEncoded()));
+      return DigestUtils.sha1Hex(myCertificate.getEncoded());
     }
     catch (Exception e) {
       return NOT_AVAILABLE;
@@ -101,6 +109,34 @@ public class CertificateWrapper {
     return myCertificate.getSerialNumber().toString();
   }
 
+  public X509Certificate getCertificate() {
+    return myCertificate;
+  }
+
+  public X500Principal getIssuerX500Principal() {
+    return myCertificate.getIssuerX500Principal();
+  }
+
+  public X500Principal getSubjectX500Principal() {
+    return myCertificate.getSubjectX500Principal();
+  }
+
+  public Date getNotBefore() {
+    return myCertificate.getNotBefore();
+  }
+
+  public Date getNotAfter() {
+    return myCertificate.getNotAfter();
+  }
+
+  public Map<String, String> getIssuerFields() {
+    return myIssuerFields;
+  }
+
+  public Map<String, String> getSubjectFields() {
+    return mySubjectFields;
+  }
+
   private static Map<String, String> extractFields(X500Principal principal) {
     Map<String, String> fields = new HashMap<String, String>();
     for (String field : principal.getName().split(",")) {
@@ -111,17 +147,7 @@ public class CertificateWrapper {
       }
       fields.put(parts[0], parts[1]);
     }
-    return fields;
-  }
-
-  @NotNull
-  private static String formatHex(@NotNull String hex) {
-    StringBuilder builder = new StringBuilder((int)(hex.length() * 1.5));
-    for (int i = 0; i < hex.length(); i += 2) {
-      builder.append(hex.substring(i, i + 2));
-      builder.append(' ');
-    }
-    return builder.toString().toUpperCase();
+    return Collections.unmodifiableMap(fields);
   }
 
 

@@ -4,7 +4,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.StreamUtil;
-import com.intellij.util.net.UntrustedCertificateWarningDialog;
+import com.intellij.util.net.ssl.CertificateWarningDialog;
 
 import java.io.InputStream;
 import java.security.KeyStore;
@@ -27,8 +27,8 @@ public class ShowCertificateInfoAction extends AnAction {
       try {
         final KeyStore keyStore = KeyStore.getInstance(KeyStore.getDefaultType());
         keyStore.load(stream, "changeit".toCharArray());
-        UntrustedCertificateWarningDialog dialog =
-          new UntrustedCertificateWarningDialog((X509Certificate)keyStore.getCertificate("mykey"), "", "");
+        X509Certificate certificate = (X509Certificate)keyStore.getCertificate("mykey");
+        CertificateWarningDialog dialog = CertificateWarningDialog.createSelfSignedCertificateWarning(certificate);
         LOG.debug("Accepted: " + dialog.showAndGet());
       }
       finally {
