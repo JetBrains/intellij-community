@@ -148,6 +148,12 @@ public class PyJavaClassType implements PyClassLikeType {
     return myClass.isValid();
   }
 
+  @Nullable
+  @Override
+  public PyClassLikeType getMetaClassType(@NotNull TypeEvalContext context, boolean inherited) {
+    return null;
+  }
+
   public PsiClass getPsiClass() {
     return myClass;
   }
