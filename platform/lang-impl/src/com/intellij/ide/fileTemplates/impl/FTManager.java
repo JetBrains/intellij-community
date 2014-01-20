@@ -188,7 +188,8 @@ class FTManager {
     final FileTemplateBase previous = myTemplates.put(qName, bundled);
     mySortedTemplates = null;
 
-    LOG.assertTrue(previous == null, "Duplicate bundled template " + qName);
+    LOG.assertTrue(previous == null, "Duplicate bundled template " + qName +
+                                     " [" + template.getTemplateURL() + ", " + previous + ']');
     return bundled;
   }
 
