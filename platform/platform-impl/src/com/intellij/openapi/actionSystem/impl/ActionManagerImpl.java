@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -203,12 +203,12 @@ public final class ActionManagerImpl extends ActionManagerEx implements Applicat
   }
 
   @Override
-  public ActionToolbar createActionToolbar(final String place, final ActionGroup group, final boolean horizontal) {
+  public ActionToolbar createActionToolbar(final String place, @NotNull final ActionGroup group, final boolean horizontal) {
     return createActionToolbar(place, group, horizontal, false);
   }
 
   @Override
-  public ActionToolbar createActionToolbar(final String place, final ActionGroup group, final boolean horizontal, final boolean decorateButtons) {
+  public ActionToolbar createActionToolbar(final String place, @NotNull final ActionGroup group, final boolean horizontal, final boolean decorateButtons) {
     return new ActionToolbarImpl(place, group, horizontal, decorateButtons, myDataManager, this, (KeymapManagerEx)myKeymapManager);
   }
 
@@ -338,7 +338,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Applicat
   }
 
   @Override
-  public JComponent createButtonToolbar(final String actionPlace, final ActionGroup messageActionGroup) {
+  public JComponent createButtonToolbar(final String actionPlace, @NotNull final ActionGroup messageActionGroup) {
     return new ButtonToolbarImpl(actionPlace, messageActionGroup, myDataManager, this);
   }
 
@@ -1030,6 +1030,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Applicat
     };
   }
 
+  @NotNull
   @Override
   public String[] getPluginActions(PluginId pluginName) {
     if (myPlugin2Id.containsKey(pluginName)){
