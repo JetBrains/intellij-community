@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -426,13 +426,7 @@ public class Messages {
    */
   @OkCancelResult
   public static int showOkCancelDialog(Project project, String message, @NotNull String title, @NotNull String okText, @NotNull String cancelText, Icon icon) {
-    if (canShowMacSheetPanel()) {
-      int result = MacMessages.getInstance()
-        .showYesNoDialog(title, message, okText, cancelText, WindowManager.getInstance().suggestParentWindow(project));
-      return result == YES ? OK : CANCEL;
-    }
-
-    return showDialog(project, message, title, new String[]{okText, cancelText}, 0, icon) == 0 ? OK : CANCEL;
+    return showOkCancelDialog(project, message, title, okText, cancelText, icon, null);
   }
 
   /**
@@ -1218,20 +1212,10 @@ public class Messages {
           actions[i].putValue(FOCUSED_ACTION, Boolean.TRUE);
         }
 
-        assignMnemonic(option, actions[i]);
+        UIUtil.assignMnemonic(option, actions[i]);
 
       }
       return actions;
-    }
-
-    private static void assignMnemonic(@NotNull String option, Action action) {
-      int mnemoPos = option.indexOf("&");
-      if (mnemoPos >= 0 && mnemoPos < option.length() - 2) {
-        String mnemoChar = option.substring(mnemoPos + 1, mnemoPos + 2).trim();
-        if (mnemoChar.length() == 1) {
-          action.putValue(Action.MNEMONIC_KEY, Integer.valueOf(mnemoChar.charAt(0)));
-        }
-      }
     }
 
     @Override

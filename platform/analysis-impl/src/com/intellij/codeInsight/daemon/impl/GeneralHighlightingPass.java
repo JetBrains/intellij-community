@@ -153,7 +153,12 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
         visitors.add(visitor);
       }
     }
-    //LOG.assertTrue(!visitors.isEmpty(), list);
+    if (visitors.isEmpty()) {
+      LOG.error("No visitors registered. list=" +
+                list +
+                "; all visitors are:" +
+                Arrays.asList(Extensions.getExtensions(HighlightVisitor.EP_HIGHLIGHT_VISITOR, myProject)));
+    }
 
     HighlightVisitor[] visitorArray = visitors.toArray(new HighlightVisitor[visitors.size()]);
     Arrays.sort(visitorArray, VISITOR_ORDER_COMPARATOR);

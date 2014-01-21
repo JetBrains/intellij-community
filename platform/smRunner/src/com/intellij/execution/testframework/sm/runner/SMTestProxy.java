@@ -143,6 +143,13 @@ public class SMTestProxy extends AbstractTestProxy {
     return false;
   }
 
+  /**
+   * @return true if the state is final (PASSED, FAILED, IGNORED, TERMINATED)
+   */
+  public boolean isFinal() {
+    return myState.isFinal();
+  }
+
   private void setStacktraceIfNotSet(@Nullable String stacktrace) {
     if (myStacktrace == null) myStacktrace = stacktrace;
   }

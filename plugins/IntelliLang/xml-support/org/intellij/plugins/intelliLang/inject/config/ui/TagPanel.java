@@ -49,7 +49,6 @@ public class TagPanel extends AbstractInjectionPanel<AbstractTagInjection> {
     $$$setupUI$$$();
 
     myNamespace.setModel(createNamespaceUriModel(myProject));
-    myLocalName.getDocument().addDocumentListener(new TreeUpdateListener());
   }
 
   public static ComboBoxModel createNamespaceUriModel(Project project) {
