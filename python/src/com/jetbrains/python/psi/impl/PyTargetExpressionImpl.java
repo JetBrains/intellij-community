@@ -356,7 +356,7 @@ public class PyTargetExpressionImpl extends PyPresentableElementImpl<PyTargetExp
     }
     if (source != null) {
       final PyType sourceType = context.getType(source);
-      final PyType type = getIterationType(sourceType, source, context);
+      final PyType type = getIterationType(sourceType, source, this, context);
       if (type instanceof PyTupleType && target instanceof PyTupleExpression) {
         return getTypeFromTupleAssignment((PyTupleExpression)target, (PyTupleType)type);
       }
@@ -368,7 +368,8 @@ public class PyTargetExpressionImpl extends PyPresentableElementImpl<PyTargetExp
   }
 
   @Nullable
-  private static PyType getIterationType(@Nullable PyType iterableType, @Nullable PyExpression source, @NotNull TypeEvalContext context) {
+  private static PyType getIterationType(@Nullable PyType iterableType, @Nullable PyExpression source, @NotNull PsiElement anchor,
+                                         @NotNull TypeEvalContext context) {
     PyType result = null;
     if (iterableType instanceof PyCollectionType) {
       result = ((PyCollectionType)iterableType).getElementType(context);
@@ -386,40 +387,50 @@ public class PyTargetExpressionImpl extends PyPresentableElementImpl<PyTargetExp
       final Collection<PyType> members = ((PyUnionType)iterableType).getMembers();
       final List<PyType> iterationTypes = new ArrayList<PyType>();
       for (PyType member : members) {
-        iterationTypes.add(getIterationType(member, source, context));
+        iterationTypes.add(getIterationType(member, source, anchor, context));
       }
       return PyUnionType.union(iterationTypes);
     }
-    else if (iterableType instanceof PyClassType) {
-      final PyClass pyClass = ((PyClassType)iterableType).getPyClass();
-      if (PyABCUtil.isSubclass(pyClass, PyNames.ITERATOR)) {
-        final PyFunction iterateMethod = pyClass.findMethodByName(PyNames.ITER, true);
-        PyType iterateMethodType = null;
-        if (iterateMethod != null) {
-          iterateMethodType = getContextSensitiveType(iterateMethod, context, source);
+    else if (iterableType != null && PyABCUtil.isSubtype(iterableType, PyNames.ITERATOR, context)) {
+      final PyFunction iterateMethod = findMethodByName(iterableType, PyNames.ITER, context);
+      PyType iterateMethodType = null;
+      if (iterateMethod != null) {
+        iterateMethodType = getContextSensitiveType(iterateMethod, context, source);
+      }
+      if (iterateMethodType instanceof PyCollectionType) {
+        final PyCollectionType collectionType = (PyCollectionType)iterateMethodType;
+        result = collectionType.getElementType(context);
+      }
+      if (result == null) {
+        final String nextMethodName = LanguageLevel.forElement(anchor).isAtLeast(LanguageLevel.PYTHON30) ?
+                                      PyNames.DUNDER_NEXT : PyNames.NEXT;
+        final PyFunction next = findMethodByName(iterableType, nextMethodName, context);
+        if (next != null) {
+          result = getContextSensitiveType(next, context, source);
         }
-        if (iterateMethodType instanceof PyCollectionType) {
-          final PyCollectionType collectionType = (PyCollectionType)iterateMethodType;
-          result = collectionType.getElementType(context);
-        }
-        if (result == null) {
-          PyFunction next = pyClass.findMethodByName(PyNames.NEXT, true);
-          if (next == null) {
-            next = pyClass.findMethodByName(PyNames.DUNDER_NEXT, true);
-          }
-          if (next != null) {
-            result = getContextSensitiveType(next, context, source);
-          }
-        }
-        if (result == null) {
-          final PyFunction getItem = pyClass.findMethodByName(PyNames.GETITEM, true);
-          if (getItem != null) {
-            result = getContextSensitiveType(getItem, context, source);
-          }
+      }
+      if (result == null) {
+        final PyFunction getItem = findMethodByName(iterableType, PyNames.GETITEM, context);
+        if (getItem != null) {
+          result = getContextSensitiveType(getItem, context, source);
         }
       }
     }
     return result;
+  }
+
+  @Nullable
+  private static PyFunction findMethodByName(@NotNull PyType type, @NotNull String name, @NotNull TypeEvalContext context) {
+    final PyResolveContext resolveContext = PyResolveContext.defaultContext().withTypeEvalContext(context);
+    final List<? extends RatedResolveResult> results = type.resolveMember(name, null, AccessDirection.READ, resolveContext);
+    if (results != null && !results.isEmpty()) {
+      final RatedResolveResult result = results.get(0);
+      final PsiElement element = result.getElement();
+      if (element instanceof PyFunction) {
+        return (PyFunction)element;
+      }
+    }
+    return null;
   }
 
   @Nullable
