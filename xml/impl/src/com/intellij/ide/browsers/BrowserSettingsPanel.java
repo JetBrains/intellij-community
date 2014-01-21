@@ -265,6 +265,11 @@ public class BrowserSettingsPanel {
       public void applyEdited(@NotNull ConfigurableWebBrowser oldItem, @NotNull ConfigurableWebBrowser newItem) {
         oldItem.setSpecificSettings(newItem.getSpecificSettings());
       }
+
+      @Override
+      public boolean isRemovable(@NotNull ConfigurableWebBrowser item) {
+        return !WebBrowserManager.isPredefinedBrowser(item);
+      }
     };
     browsersEditor = new TableModelEditor<ConfigurableWebBrowser>(Collections.<ConfigurableWebBrowser>emptyList(), COLUMNS,
                                                                   itemEditor, "No web browsers configured"
