@@ -547,8 +547,6 @@ Function GUIInit
   Push $4
   Push $5
 
-;   MessageBox MB_OK "Profile: ${PROFILE}\PyCharmProjects"
-
 ; is the current version of IDEA installed?
   Call searchCurrentVersion
 
@@ -706,22 +704,18 @@ skip_ipr:
 !include "idea_win.nsh"
 
   ; check if PyCharm project folder is already exists
-;  Push $0
-;  Push $1
-  FindFirst $0 $1 $PROFILE\PyCharmProjects\*.*
   IfFileExists "$PROFILE\PyCharmProjects\*.*" skipCopyProject
-;  StrCmp $1 "" 0 skipCopyProject
   CreateDirectory "$PROFILE\PyCharmProjects"
   ; install PyCharm project example
-  SetOutPath ${PROFILE}\PyCharmProjects
+  Push $0
+  StrCpy $0 $INSTDIR
+  StrCpy $INSTDIR ${PROFILE}\PyCharmProjects
+;  SetOutPath ${PROFILE}\PyCharmProjects
   !include "python_projects.nsh"
+  StrCpy $INSTDIR $0
+  Pop $0
 
 skipCopyProject:
-SetOutPath $INSTDIR
-;  FindClose $0
-;  Pop $1
-;  Pop $0
-
   IntCmp $IS_UPGRADE_60 1 skip_properties
   SetOutPath $INSTDIR\bin
   File "${PRODUCT_PROPERTIES_FILE}"
