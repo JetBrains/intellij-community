@@ -51,7 +51,6 @@ import com.intellij.ui.SimpleColoredText;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.xdebugger.impl.evaluate.quick.common.AbstractValueHint;
-import com.intellij.xdebugger.impl.evaluate.quick.common.AbstractValueHintTreeComponent;
 import com.intellij.xdebugger.impl.evaluate.quick.common.ValueHintType;
 import com.sun.jdi.Method;
 import com.sun.jdi.PrimitiveValue;
@@ -157,8 +156,9 @@ public class ValueHint extends AbstractValueHint {
                   }
                 }
               });
-            } else {
-              createAndShowTree(expressionText, descriptor, debuggerContext);
+            }
+            else {
+              createAndShowTree(expressionText, descriptor);
             }
           }
           catch (EvaluateException e) {
@@ -173,34 +173,18 @@ public class ValueHint extends AbstractValueHint {
     }
   }
 
-  private void createAndShowTree(String expressionText, WatchItemDescriptor descriptor, DebuggerContextImpl debuggerContext) {
-    final InspectDebuggerTree tree = getInspectTree(descriptor);
-    showTreePopup(tree, debuggerContext, expressionText, new ValueHintTreeComponent(this, tree, expressionText));
+  private void createAndShowTree(final String expressionText, final NodeDescriptorImpl descriptor) {
+    final DebuggerTreeCreatorImpl creator = new DebuggerTreeCreatorImpl(getProject());
+    DebuggerInvocationUtil.invokeLater(getProject(), new Runnable() {
+      @Override
+      public void run() {
+        showTreePopup(creator, Pair.create(descriptor, expressionText));
+      }
+    });
   }
 
   private static boolean isActiveTooltipApplicable(final Value value) {
     return value != null && !(value instanceof PrimitiveValue);
-  }
-
-  public void showTreePopup(final InspectDebuggerTree tree,
-                        final DebuggerContextImpl debuggerContext,
-                        final String title,
-                        final AbstractValueHintTreeComponent<?> component) {
-    final AnAction setValueAction = ActionManager.getInstance().getAction(DebuggerActions.SET_VALUE);
-    setValueAction.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_F2, 0)), tree);
-    Disposer.register(tree, new Disposable() {
-      @Override
-      public void dispose() {
-        setValueAction.unregisterCustomShortcutSet(tree);
-      }
-    });
-    DebuggerInvocationUtil.invokeLater(getProject(), new Runnable() {
-      @Override
-      public void run() {
-        tree.rebuild(debuggerContext);
-        showTreePopup(component, tree, title);
-      }
-    });
   }
 
   private void showHint(final SimpleColoredText text, final WatchItemDescriptor descriptor) {
@@ -229,7 +213,7 @@ public class ValueHint extends AbstractValueHint {
                                   }
                                 });
 
-                                createAndShowTree(expressionText, descriptor, debuggerContext);
+                                createAndShowTree(expressionText, descriptor);
                               }
                             });
               }
@@ -244,10 +228,19 @@ public class ValueHint extends AbstractValueHint {
     });
   }
 
-  private InspectDebuggerTree getInspectTree(final NodeDescriptorImpl descriptor) {
-    final InspectDebuggerTree tree = new InspectDebuggerTree(getProject());
-    tree.getModel().addTreeModelListener(createTreeListener(tree));
+  public static InspectDebuggerTree createInspectTree(final NodeDescriptorImpl descriptor, Project project) {
+    final InspectDebuggerTree tree = new InspectDebuggerTree(project);
+    final AnAction setValueAction = ActionManager.getInstance().getAction(DebuggerActions.SET_VALUE);
+    setValueAction.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_F2, 0)), tree);
+    Disposer.register(tree, new Disposable() {
+      @Override
+      public void dispose() {
+        setValueAction.unregisterCustomShortcutSet(tree);
+      }
+    });
     tree.setInspectDescriptor(descriptor);
+    DebuggerContextImpl context = DebuggerManagerEx.getInstanceEx(project).getContext();
+    tree.rebuild(context);
     return tree;
   }
 
