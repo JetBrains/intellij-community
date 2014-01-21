@@ -77,10 +77,10 @@ public class UsageViewContext {
     presentation.setUsagesString(usagesString);
     presentation.setTabText(StringUtil.capitalize(usagesString));
     presentation.setUsagesWord("occurrence");
-    presentation.setCodeUsagesString("found.occurrences");
+    presentation.setCodeUsagesString(SSRBundle.message("found.occurrences"));
   }
 
-  private class MyUsageTarget implements ConfigurableUsageTarget {
+  private static class MyUsageTarget implements UsageTarget {
     private final String myPresentableText;
 
     MyUsageTarget(String str) {
@@ -163,11 +163,6 @@ public class UsageViewContext {
     @Override
     public boolean canNavigateToSource() {
       return false;
-    }
-
-    @Override
-    public void showSettings() {
-      UIUtil.invokeAction(myConfiguration, mySearchContext);
     }
   }
 }
