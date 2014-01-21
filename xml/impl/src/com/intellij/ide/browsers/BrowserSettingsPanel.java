@@ -289,14 +289,20 @@ public class BrowserSettingsPanel {
   }
 
   public boolean isModified() {
-    GeneralSettings settings = GeneralSettings.getInstance();
-    if (!Comparing.strEqual(settings.getBrowserPath(), alternativeBrowserPathField.getText()) ||
-        settings.isConfirmExtractFiles() != confirmExtractFiles.isSelected()) {
+    WebBrowserManager browserManager = WebBrowserManager.getInstance();
+    GeneralSettings generalSettings = GeneralSettings.getInstance();
+
+    DefaultBrowser defaultBrowser = getDefaultBrowser();
+    if (browserManager.getDefaultBrowser() != defaultBrowser || generalSettings.isConfirmExtractFiles() != confirmExtractFiles.isSelected()) {
       return true;
     }
 
-    WebBrowserManager browserManager = WebBrowserManager.getInstance();
-    return browserManager.getDefaultBrowser() != getDefaultBrowser() || browsersEditor.isModified(browserManager.getList());
+    if (defaultBrowser == DefaultBrowser.ALTERNATIVE &&
+        !Comparing.strEqual(generalSettings.getBrowserPath(), alternativeBrowserPathField.getText())) {
+      return true;
+    }
+
+    return browsersEditor.isModified(browserManager.getList());
   }
 
   public void apply() throws ConfigurationException {
