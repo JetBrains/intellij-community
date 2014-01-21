@@ -42,9 +42,6 @@ public interface PyTypeProvider {
   PyType getReturnType(@NotNull PyFunction function, @Nullable PyQualifiedExpression callSite, @NotNull TypeEvalContext context);
 
   @Nullable
-  PyType getIterationType(@NotNull PyClass iterable);
-
-  @Nullable
   PyType getContextManagerVariableType(PyClass contextManager, PyExpression withExpression, TypeEvalContext context);
 
   @Nullable
