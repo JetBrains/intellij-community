@@ -93,7 +93,7 @@ datatypes w = "http://whattf.org/datatype-draft"
 		( text & common.elem.flow* )
 
 	common.inner.flow =
-		(	style.elem.scoped?,
+		(	style.elem.scoped*,
 			(	text
 			&	common.elem.flow*
 			)
@@ -189,7 +189,7 @@ common.attrs.i18n =
 #		} & XMLonly
 	common.attrs.translate =
 		attribute translate {
-			w:string "yes" | w:string "no"
+			w:string "" | w:string "yes" | w:string "no"
 		}
 
 common.attrs.present =
@@ -406,6 +406,12 @@ common.attrs.other =
 common-form.attrs.form = ( notAllowed )
 
 # #####################################################################
+##  Script-supporting elements
+# #####################################################################
+
+common.elem.script-supporting = ( notAllowed )
+
+# #####################################################################
 ##  ARIA Module Hooks                                                 #
 # #####################################################################
 
@@ -423,6 +429,7 @@ common.attrs.aria.role.contentinfo = ( notAllowed )
 common.attrs.aria.role.dialog = ( notAllowed )
 common.attrs.aria.role.directory = ( notAllowed )
 common.attrs.aria.role.document = ( notAllowed )
+common.attrs.aria.role.group = ( notAllowed )
 common.attrs.aria.role.heading = ( notAllowed )
 common.attrs.aria.role.img = ( notAllowed )
 common.attrs.aria.role.link = ( notAllowed )
@@ -450,25 +457,50 @@ common.attrs.aria.role.spinbutton = ( notAllowed )
 common.attrs.aria.role.status = ( notAllowed )
 common.attrs.aria.role.tab = ( notAllowed )
 common.attrs.aria.role.tablist = ( notAllowed )
+common.attrs.aria.role.tabpanel = ( notAllowed )
 common.attrs.aria.role.textbox = ( notAllowed )
 common.attrs.aria.role.toolbar = ( notAllowed )
 common.attrs.aria.role.tree = ( notAllowed )
 common.attrs.aria.role.treeitem = ( notAllowed )
+common.attrs.aria.implicit.article = ( notAllowed )
+common.attrs.aria.implicit.banner = ( notAllowed )
 common.attrs.aria.implicit.button = ( notAllowed )
-common.attrs.aria.implicit.input = ( notAllowed )
-common.attrs.aria.implicit.region = ( notAllowed )
+common.attrs.aria.implicit.checkbox = ( notAllowed )
+common.attrs.aria.implicit.columnheader = ( notAllowed )
+common.attrs.aria.implicit.combobox = ( notAllowed )
+common.attrs.aria.implicit.complementary = ( notAllowed )
+common.attrs.aria.implicit.contentinfo = ( notAllowed )
+common.attrs.aria.implicit.dialog = ( notAllowed )
+common.attrs.aria.implicit.document = ( notAllowed )
 common.attrs.aria.implicit.group = ( notAllowed )
-common.attrs.aria.implicit.th = ( notAllowed )
-common.attrs.aria.implicit.structure = ( notAllowed )
-common.attrs.aria.implicit.link = ( notAllowed )
-common.attrs.aria.implicit.listitem = ( notAllowed )
+common.attrs.aria.implicit.heading = ( notAllowed )
 common.attrs.aria.implicit.img = ( notAllowed )
+common.attrs.aria.implicit.landmark = ( notAllowed )
+common.attrs.aria.implicit.link = ( notAllowed )
+common.attrs.aria.implicit.list = ( notAllowed )
+common.attrs.aria.implicit.listbox = ( notAllowed )
+common.attrs.aria.implicit.listitem = ( notAllowed )
+common.attrs.aria.implicit.main = ( notAllowed )
+common.attrs.aria.implicit.navigation = ( notAllowed )
+common.attrs.aria.implicit.option = ( notAllowed )
+common.attrs.aria.implicit.progressbar = ( notAllowed )
+common.attrs.aria.implicit.radio = ( notAllowed )
+common.attrs.aria.implicit.region = ( notAllowed )
+common.attrs.aria.implicit.rowheader = ( notAllowed )
+common.attrs.aria.implicit.section = ( notAllowed )
 common.attrs.aria.implicit.select = ( notAllowed )
+common.attrs.aria.implicit.slider = ( notAllowed )
+common.attrs.aria.implicit.spinbutton = ( notAllowed )
+common.attrs.aria.implicit.status = ( notAllowed )
+common.attrs.aria.implicit.structure = ( notAllowed )
+common.attrs.aria.implicit.textbox = ( notAllowed )
+common.attrs.aria.implicit.toolbar = ( notAllowed )
 common.attrs.aria.prop.readonly = ( notAllowed )
 common.attrs.aria.landmark.application = ( notAllowed )
 common.attrs.aria.landmark.banner = ( notAllowed )
 common.attrs.aria.landmark.complementary = ( notAllowed )
 common.attrs.aria.landmark.contentinfo = ( notAllowed )
+common.attrs.aria.landmark.form = ( notAllowed )
 common.attrs.aria.landmark.main = ( notAllowed )
 common.attrs.aria.landmark.navigation = ( notAllowed )
 common.attrs.aria.landmark.search = ( notAllowed )
