@@ -78,12 +78,9 @@ public class TableUtil {
       throw new RuntimeException("model must be instance of ItemRemovable");
     }
 
-    ListSelectionModel selectionModel = table.getSelectionModel();
-    int minSelectionIndex = selectionModel.getMinSelectionIndex();
-    if (minSelectionIndex == -1) {
+    if (table.getSelectionModel().isSelectionEmpty()) {
       return new ArrayList<Object[]>(0);
     }
-
 
     final List<Object[]> removedItems = new SmartList<Object[]>();
     final ItemRemovable itemRemovable = (ItemRemovable)model;
@@ -108,11 +105,11 @@ public class TableUtil {
     }
 
     ListSelectionModel selectionModel = table.getSelectionModel();
-    int minSelectionIndex = selectionModel.getMinSelectionIndex();
-    if (minSelectionIndex == -1) {
+    if (selectionModel.isSelectionEmpty()) {
       return false;
     }
 
+    int minSelectionIndex = selectionModel.getMinSelectionIndex();
     TableModel model = table.getModel();
     boolean removed = false;
     for (int index = table.getRowCount() - 1; index >= 0; index--) {
