@@ -84,13 +84,12 @@ public class RefreshQueueImpl extends RefreshQueue {
           }
         }
         finally {
-          Application app = ApplicationManager.getApplication();
-          app.invokeLater(new DumbAwareRunnable() {
+          ApplicationManager.getApplication().invokeLater(new DumbAwareRunnable() {
             @Override
             public void run() {
               session.fireEvents(false);
             }
-          }, modality, app.getDisposed());
+          }, modality);
         }
       }
     });
