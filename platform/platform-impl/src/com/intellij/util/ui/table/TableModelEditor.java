@@ -37,6 +37,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
 import java.lang.reflect.Constructor;
 import java.util.ArrayList;
@@ -96,7 +97,16 @@ public class TableModelEditor<T> implements ElementProducer<T> {
     }
   }
 
-  public TableModelEditor<T> modelListener(@NotNull TableModelListener listener) {
+  public static abstract class DataChangedListener<T> implements TableModelListener {
+    public abstract void dataChanged(@NotNull ColumnInfo<T, ?> columnInfo, int rowIndex);
+
+    @Override
+    public void tableChanged(TableModelEvent e) {
+    }
+  }
+
+  public TableModelEditor<T> modelListener(@NotNull DataChangedListener<T> listener) {
+    model.dataChangedListener = listener;
     model.addTableModelListener(listener);
     return this;
   }
@@ -140,6 +150,7 @@ public class TableModelEditor<T> implements ElementProducer<T> {
     private List<T> items;
     private final TableModelEditor<T> editor;
     private final THashMap<T, T> modifiedToOriginal = new THashMap<T, T>();
+    private DataChangedListener<T> dataChangedListener;
 
     public MyListTableModel(@NotNull ColumnInfo[] columns, @NotNull List<T> items, @NotNull TableModelEditor<T> editor) {
       super(columns, items);
@@ -173,6 +184,9 @@ public class TableModelEditor<T> implements ElementProducer<T> {
             : !Comparing.equal(oldValue, newValue)) {
 
           column.setValue(getMutable(rowIndex, item), newValue);
+          if (dataChangedListener != null) {
+            dataChangedListener.dataChanged(column, rowIndex);
+          }
         }
       }
     }
