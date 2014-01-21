@@ -100,8 +100,10 @@ public class GeneralIdBasedToSMTRunnerEventsConvertor extends GeneralTestEventsP
         if (completeTree) {
           myTestsRootProxy.setFinished();
         } else {
-          logProblem("Unexpected running nodes: " + myRunningTestNodes);
           myTestsRootProxy.setTerminated();
+        }
+        if (!myRunningTestNodes.isEmpty()) {
+          logProblem("Unexpected running nodes: " + myRunningTestNodes);
         }
         myNodeByIdMap.clear();
         myRunningTestNodes.clear();
