@@ -622,6 +622,7 @@ FunctionEnd
 ; Installer sections
 ;------------------------------------------------------------------------------
 Section "IDEA Files" CopyIdeaFiles
+   MessageBox MB_OK "Profile: $PROFILE\PyCharmProjects"
 ;  StrCpy $baseRegKey "HKCU"
 ;  !insertmacro INSTALLOPTIONS_READ $R2 "Desktop.ini" "Field 3" "State"
 ;  StrCmp $R2 1 continue_for_current_user
@@ -704,19 +705,20 @@ skip_ipr:
 !include "idea_win.nsh"
 
   ; check if PyCharm project folder is already exists
-  Push $0
-  Push $1
+;  Push $0
+;  Push $1
   FindFirst $0 $1 $PROFILE\PyCharmProjects\*.*
-  StrCmp $1 "" 0 skipCopyProject
+  IfFileExists "$PROFILE\PyCharmProjects\*.*" skipCopyProject
+;  StrCmp $1 "" 0 skipCopyProject
   CreateDirectory "$PROFILE\PyCharmProjects"
   ; install PyCharm project example
   SetOutPath $PROFILE\PyCharmProjects
   !include "python_projects.nsh"
 
 skipCopyProject:
-  FindClose $0
-  Pop $1
-  Pop $0
+;  FindClose $0
+;  Pop $1
+;  Pop $0
 
   IntCmp $IS_UPGRADE_60 1 skip_properties
   SetOutPath $INSTDIR\bin
