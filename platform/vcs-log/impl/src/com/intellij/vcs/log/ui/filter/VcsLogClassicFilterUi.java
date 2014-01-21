@@ -86,7 +86,7 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUi {
   public Collection<VcsLogFilter> getFilters() {
     List<VcsLogFilter> filters = getPopupFilters();
     if (!myTextFilter.getText().isEmpty()) {
-      filters.add(new VcsLogTextFilter(myTextFilter.getText()));
+      filters.add(new VcsLogTextFilterImpl(myTextFilter.getText()));
     }
     return filters;
   }

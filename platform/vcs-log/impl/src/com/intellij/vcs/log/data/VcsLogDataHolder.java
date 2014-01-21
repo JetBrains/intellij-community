@@ -485,11 +485,17 @@ public class VcsLogDataHolder implements Disposable {
     runInBackground(new ThrowableConsumer<ProgressIndicator, VcsException>() {
       @Override
       public void consume(ProgressIndicator indicator) throws VcsException {
+        List<VcsLogBranchFilter> branchFilters = ContainerUtil.findAll(filters, VcsLogBranchFilter.class);
+        List<VcsLogUserFilter> userFilters = ContainerUtil.findAll(filters, VcsLogUserFilter.class);
+        List<VcsLogDateFilter> dateFilters = ContainerUtil.findAll(filters, VcsLogDateFilter.class);
+        List<VcsLogTextFilter> textFilters = ContainerUtil.findAll(filters, VcsLogTextFilter.class);
+        List<VcsLogStructureFilter> structureFilters = ContainerUtil.findAll(filters, VcsLogStructureFilter.class);
 
         Collection<List<? extends TimedVcsCommit>> logs = ContainerUtil.newArrayList();
         final Map<Hash, VcsFullCommitDetails> allDetails = ContainerUtil.newHashMap();
         for (Map.Entry<VirtualFile, VcsLogProvider> entry : myLogProviders.entrySet()) {
-          List<? extends VcsFullCommitDetails> details = entry.getValue().getFilteredDetails(entry.getKey(), filters, maxCount);
+          List<? extends VcsFullCommitDetails> details = entry.getValue().getFilteredDetails(
+            entry.getKey(), branchFilters, userFilters, dateFilters, textFilters, structureFilters, maxCount);
           logs.add(getCommitsFromDetails(details));
           for (VcsFullCommitDetails detail : details) {
             allDetails.put(detail.getHash(), detail);
