@@ -44,7 +44,7 @@ public class RequiredArgsConstructorProcessor extends AbstractConstructorClassPr
     return result;
   }
 
-  protected void generateLombokPsiElements(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation, @NotNull List<? super PsiElement> target) {
+  protected void generatePsiElements(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation, @NotNull ProcessorModus processorModus, @NotNull List<? super PsiElement> target) {
     final String methodVisibility = LombokProcessorUtil.getAccessVisibity(psiAnnotation);
     if (null != methodVisibility) {
       final Collection<PsiField> allReqFields = getRequiredFields(psiClass);

@@ -61,12 +61,12 @@ public class DataProcessor extends AbstractClassProcessor {
     return result;
   }
 
-  protected void generateLombokPsiElements(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation, @NotNull List<? super PsiElement> target) {
+  protected void generatePsiElements(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation, @NotNull ProcessorModus processorModus, @NotNull List<? super PsiElement> target) {
     if (PsiAnnotationUtil.isNotAnnotatedWith(psiClass, Getter.class)) {
-      target.addAll(new GetterProcessor().createFieldGetters(psiClass, PsiModifier.PUBLIC));
+      target.addAll(new GetterProcessor().createFieldGetters(psiClass, PsiModifier.PUBLIC, processorModus));
     }
     if (PsiAnnotationUtil.isNotAnnotatedWith(psiClass, Setter.class)) {
-      target.addAll(new SetterProcessor().createFieldSetters(psiClass, PsiModifier.PUBLIC));
+      target.addAll(new SetterProcessor().createFieldSetters(psiClass, PsiModifier.PUBLIC, processorModus));
     }
     if (PsiAnnotationUtil.isNotAnnotatedWith(psiClass, EqualsAndHashCode.class)) {
       target.addAll(new EqualsAndHashCodeProcessor().createEqualAndHashCode(psiClass, psiAnnotation, true));

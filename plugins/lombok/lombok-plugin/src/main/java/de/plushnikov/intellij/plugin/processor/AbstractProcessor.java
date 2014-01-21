@@ -8,6 +8,7 @@ import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.annotation.Annotation;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
@@ -81,7 +82,7 @@ public abstract class AbstractProcessor implements Processor {
   }
 
   @NotNull
-  protected List<? extends PsiElement> generatePsiElements(@NotNull PsiClass psiClass) {
-    return Collections.emptyList();
+  public Collection<PsiAnnotation> collectProcessedAnnotations(@NotNull PsiClass psiClass) {
+    return Collections.emptySet();
   }
 }

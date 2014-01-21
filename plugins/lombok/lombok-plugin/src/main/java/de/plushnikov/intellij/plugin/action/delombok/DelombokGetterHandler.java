@@ -8,17 +8,14 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiModifier;
-import com.intellij.psi.util.PropertyUtil;
-import com.intellij.psi.util.PsiUtil;
+import de.plushnikov.intellij.plugin.processor.Processor;
 import de.plushnikov.intellij.plugin.processor.clazz.GetterProcessor;
 import de.plushnikov.intellij.plugin.processor.field.GetterFieldProcessor;
-import de.plushnikov.intellij.plugin.util.PsiAnnotationUtil;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collection;
 import java.util.List;
 
 public class DelombokGetterHandler implements CodeInsightActionHandler {
@@ -42,43 +39,31 @@ public class DelombokGetterHandler implements CodeInsightActionHandler {
   }
 
   protected void processClass(@NotNull Project project, @NotNull PsiClass psiClass) {
-    final PsiAnnotation psiAnnotation = PsiAnnotationUtil.findAnnotation(psiClass, getterProcessor.getSupportedAnnotation());
-    if (null != psiAnnotation) {
-      List<? super PsiElement> classGetters = getterProcessor.process(psiClass, de.plushnikov.intellij.plugin.processor.Processor.ProcessorModus.LOMBOK);
-      createVanillaGetters(project, psiClass, classGetters);
+    Collection<PsiAnnotation> psiAnnotations = getterProcessor.collectProcessedAnnotations(psiClass);
 
+    List<? super PsiElement> psiElements = getterProcessor.process(psiClass, Processor.ProcessorModus.DELOMBOK);
+    for (Object psiElement : psiElements) {
+      psiClass.add((PsiElement) psiElement);
+    }
+
+    for (PsiAnnotation psiAnnotation : psiAnnotations) {
       psiAnnotation.delete();
     }
 
-    List<? super PsiElement> fieldGetters = getterFieldProcessor.process(psiClass, de.plushnikov.intellij.plugin.processor.Processor.ProcessorModus.LOMBOK);
-    if (!fieldGetters.isEmpty()) {
-      createVanillaGetters(project, psiClass, fieldGetters);
-    }
-
-    for (PsiField psiField : psiClass.getFields()) {
-      final PsiAnnotation psiFieldAnnotation = PsiAnnotationUtil.findAnnotation(psiField, getterFieldProcessor.getSupportedAnnotation());
-      if (null != psiFieldAnnotation) {
-        psiFieldAnnotation.delete();
-      }
-    }
+    processFields(psiClass);
   }
 
-  private void createVanillaGetters(Project project, PsiClass psiClass, List<? super PsiElement> classGetters) {
-    for (Object psiElement : classGetters) {
-      final PsiMethod lombokMethod = (PsiMethod) psiElement;
+  private void processFields(@NotNull PsiClass psiClass) {
+    Collection<PsiAnnotation> psiAnnotations = getterFieldProcessor.collectProcessedAnnotations(psiClass);
 
-      final String propertyName = PropertyUtil.getPropertyName(lombokMethod);
-      if (null != propertyName) {
-        PsiField propertyField = PropertyUtil.findPropertyField(project, psiClass, propertyName, lombokMethod.hasModifierProperty(PsiModifier.STATIC));
-        if (null != propertyField) {
-          PsiMethod propertyGetter = PropertyUtil.generateGetterPrototype(propertyField);
-          final String accessModifier = PsiUtil.getAccessModifier(PsiUtil.getAccessLevel(lombokMethod.getModifierList()));
-          if (null != accessModifier) {
-            PsiUtil.setModifierProperty(propertyGetter, accessModifier, true);
-          }
-          psiClass.add(propertyGetter);
-        }
-      }
+    List<? super PsiElement> psiElements = getterFieldProcessor.process(psiClass, Processor.ProcessorModus.DELOMBOK);
+    for (Object psiElement : psiElements) {
+      psiClass.add((PsiMethod) psiElement);
+    }
+
+
+    for (PsiAnnotation psiAnnotation : psiAnnotations) {
+      psiAnnotation.delete();
     }
   }
 

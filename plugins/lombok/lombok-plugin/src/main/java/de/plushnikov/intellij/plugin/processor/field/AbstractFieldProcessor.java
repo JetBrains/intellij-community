@@ -40,7 +40,21 @@ public abstract class AbstractFieldProcessor extends AbstractProcessor implement
     for (PsiField psiField : PsiClassUtil.collectClassFieldsIntern(psiClass)) {
       PsiAnnotation psiAnnotation = PsiAnnotationUtil.findAnnotation(psiField, getSupportedAnnotation());
       if (null != psiAnnotation) {
-        process(psiField, psiAnnotation, result);
+        if (validate(psiAnnotation, psiField, ProblemEmptyBuilder.getInstance())) {
+          generatePsiElements(psiField, psiAnnotation, processorModus, result);
+        }
+      }
+    }
+    return result;
+  }
+
+  @NotNull
+  public Collection<PsiAnnotation> collectProcessedAnnotations(@NotNull PsiClass psiClass) {
+    List<PsiAnnotation> result = new ArrayList<PsiAnnotation>();
+    for (PsiField psiField : PsiClassUtil.collectClassFieldsIntern(psiClass)) {
+      PsiAnnotation psiAnnotation = PsiAnnotationUtil.findAnnotation(psiField, getSupportedAnnotation());
+      if (null != psiAnnotation) {
+        result.add(psiAnnotation);
       }
     }
     return result;
@@ -62,13 +76,7 @@ public abstract class AbstractFieldProcessor extends AbstractProcessor implement
 
   protected abstract boolean validate(@NotNull PsiAnnotation psiAnnotation, @NotNull PsiField psiField, @NotNull ProblemBuilder builder);
 
-  public final void process(@NotNull PsiField psiField, @NotNull PsiAnnotation psiAnnotation, @NotNull List<? super PsiElement> target) {
-    if (validate(psiAnnotation, psiField, ProblemEmptyBuilder.getInstance())) {
-      processIntern(psiField, psiAnnotation, target);
-    }
-  }
-
-  protected abstract void processIntern(PsiField psiField, PsiAnnotation psiAnnotation, List<? super PsiElement> target);
+  protected abstract void generatePsiElements(@NotNull PsiField psiField, @NotNull PsiAnnotation psiAnnotation, @NotNull ProcessorModus processorModus, @NotNull List<? super PsiElement> target);
 
   protected void copyAnnotations(final PsiField fromPsiElement, final PsiModifierList toModifierList, final Pattern... patterns) {
     final Collection<String> annotationsToCopy = PsiAnnotationUtil.collectAnnotationsToCopy(fromPsiElement, patterns);

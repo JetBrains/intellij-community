@@ -77,7 +77,7 @@ public class BuilderInnerClassProcessor extends AbstractClassProcessor {
     return true;
   }
 
-  protected void generateLombokPsiElements(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation, @NotNull List<? super PsiElement> target) {
+  protected void generatePsiElements(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation, @NotNull ProcessorModus processorModus, @NotNull List<? super PsiElement> target) {
     final String innerClassSimpleName = BuilderUtil.createBuilderClassName(psiAnnotation, psiClass);
     final String innerClassQualifiedName = psiClass.getName() + "." + BuilderUtil.createBuilderClassName(psiAnnotation, psiClass);
 

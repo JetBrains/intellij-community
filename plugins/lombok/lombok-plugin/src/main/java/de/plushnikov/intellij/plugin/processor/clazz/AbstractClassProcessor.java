@@ -43,21 +43,22 @@ public abstract class AbstractClassProcessor extends AbstractProcessor implement
 
     PsiAnnotation psiAnnotation = PsiAnnotationUtil.findAnnotation(psiClass, getSupportedAnnotation());
     if (null != psiAnnotation) {
-      result = new ArrayList<PsiElement>();
-      process(psiClass, psiAnnotation, processorModus, result);
+      if (validate(psiAnnotation, psiClass, ProblemEmptyBuilder.getInstance())) {
+        result = new ArrayList<PsiElement>();
+        generatePsiElements(psiClass, psiAnnotation, processorModus, result);
+      }
     }
-
     return result;
   }
 
-  public final void process(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation, ProcessorModus processorModus, @NotNull List<? super PsiElement> target) {
-    if (validate(psiAnnotation, psiClass, ProblemEmptyBuilder.getInstance())) {
-      if (ProcessorModus.LOMBOK.equals(processorModus)) {
-        generateLombokPsiElements(psiClass, psiAnnotation, target);
-      } else {
-        generateDelombokPsiElements(psiClass, psiAnnotation, target);
-      }
+  @NotNull
+  public Collection<PsiAnnotation> collectProcessedAnnotations(@NotNull PsiClass psiClass) {
+    Collection<PsiAnnotation> result = new ArrayList<PsiAnnotation>();
+    PsiAnnotation psiAnnotation = PsiAnnotationUtil.findAnnotation(psiClass, getSupportedAnnotation());
+    if (null != psiAnnotation) {
+      result.add(psiAnnotation);
     }
+    return result;
   }
 
   @NotNull
@@ -76,10 +77,7 @@ public abstract class AbstractClassProcessor extends AbstractProcessor implement
 
   protected abstract boolean validate(@NotNull PsiAnnotation psiAnnotation, @NotNull PsiClass psiClass, @NotNull ProblemBuilder builder);
 
-  protected abstract void generateLombokPsiElements(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation, @NotNull List<? super PsiElement> target);
-
-  protected void generateDelombokPsiElements(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation, @NotNull List<? super PsiElement> target) {
-  }
+  protected abstract void generatePsiElements(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation, @NotNull ProcessorModus processorModus, @NotNull List<? super PsiElement> target);
 
   protected void validateCallSuperParam(PsiAnnotation psiAnnotation, PsiClass psiClass, ProblemBuilder builder, String generatedMethodName) {
     Boolean callSuperProperty = PsiAnnotationUtil.getDeclaredAnnotationValue(psiAnnotation, "callSuper", Boolean.class);

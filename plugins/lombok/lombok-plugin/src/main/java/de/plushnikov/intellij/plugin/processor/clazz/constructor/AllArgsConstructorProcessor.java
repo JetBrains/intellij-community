@@ -42,7 +42,7 @@ public class AllArgsConstructorProcessor extends AbstractConstructorClassProcess
     return createConstructorMethod(psiClass, methodVisibility, psiAnnotation, allNotInitializedNotStaticFields);
   }
 
-  protected void generateLombokPsiElements(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation, @NotNull List<? super PsiElement> target) {
+  protected void generatePsiElements(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation, @NotNull ProcessorModus processorModus, @NotNull List<? super PsiElement> target) {
     final String methodVisibility = LombokProcessorUtil.getAccessVisibity(psiAnnotation);
     if (null != methodVisibility) {
       final String staticConstructorName = getStaticConstructorName(psiAnnotation);

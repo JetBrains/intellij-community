@@ -8,6 +8,8 @@ import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiType;
+import com.intellij.psi.util.PropertyUtil;
+import com.intellij.psi.util.PsiUtil;
 import de.plushnikov.intellij.plugin.extension.UserMapKeys;
 import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
 import de.plushnikov.intellij.plugin.psi.LombokLightMethodBuilder;
@@ -40,10 +42,16 @@ public class GetterFieldProcessor extends AbstractFieldProcessor {
     super(supportedAnnotationClass, supportedClass);
   }
 
-  protected void processIntern(@NotNull PsiField psiField, @NotNull PsiAnnotation psiAnnotation, @NotNull List<? super PsiElement> target) {
+  protected void generatePsiElements(@NotNull PsiField psiField, @NotNull PsiAnnotation psiAnnotation, @NotNull ProcessorModus processorModus, @NotNull List<? super PsiElement> target) {
     final String methodVisibility = LombokProcessorUtil.getMethodModifier(psiAnnotation);
     if (methodVisibility != null) {
-      target.add(createGetterMethod(psiField, methodVisibility));
+      final PsiMethod getterMethod;
+      if (ProcessorModus.LOMBOK.equals(processorModus)) {
+        getterMethod = createGetterMethod(psiField, methodVisibility);
+      } else {
+        getterMethod = generateGetterMethod(psiField, methodVisibility);
+      }
+      target.add(getterMethod);
     }
   }
 
@@ -140,6 +148,18 @@ public class GetterFieldProcessor extends AbstractFieldProcessor {
     copyAnnotations(psiField, method.getModifierList(),
         LombokUtils.NON_NULL_PATTERN, LombokUtils.NULLABLE_PATTERN, LombokUtils.DEPRECATED_PATTERN);
     return method;
+  }
+
+  @NotNull
+  public PsiMethod generateGetterMethod(@NotNull PsiField psiField, @NotNull String methodVisibility) {
+    PsiMethod propertyGetter = PropertyUtil.generateGetterPrototype(psiField);
+    final String getterName = getGetterName(psiField);
+    if (!propertyGetter.getName().equals(getterName)) {
+      propertyGetter.setName(getterName);
+    }
+    PsiUtil.setModifierProperty(propertyGetter, methodVisibility, true);
+
+    return propertyGetter;
   }
 
   private String getGetterName(@NotNull PsiField psiField) {

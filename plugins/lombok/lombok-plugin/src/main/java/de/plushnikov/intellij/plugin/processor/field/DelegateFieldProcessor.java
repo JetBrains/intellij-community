@@ -80,7 +80,7 @@ public class DelegateFieldProcessor extends AbstractFieldProcessor {
     return result;
   }
 
-  protected void processIntern(@NotNull PsiField psiField, @NotNull PsiAnnotation psiAnnotation, @NotNull List<? super PsiElement> target) {
+  protected void generatePsiElements(@NotNull PsiField psiField, @NotNull PsiAnnotation psiAnnotation, @NotNull ProcessorModus processorModus, @NotNull List<? super PsiElement> target) {
     final PsiClass psiClass = psiField.getContainingClass();
     final Project project = psiField.getProject();
     final PsiManager manager = psiField.getContainingFile().getManager();
