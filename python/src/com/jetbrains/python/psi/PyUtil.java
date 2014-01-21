@@ -698,14 +698,11 @@ public class PyUtil {
       return false;
     }
     for (PyDecorator decorator : decoratorList.getDecorators()) {
-      final PyExpression callee = decorator.getCallee();
-      if (callee instanceof PyReferenceExpression) {
-        final PsiReference reference = callee.getReference();
-        if (reference == null) continue;
-        final PsiElement resolved = reference.resolve();
-        if (resolved instanceof PyQualifiedNameOwner) {
-          final String name = ((PyQualifiedNameOwner)resolved).getQualifiedName();
-          return PyNames.ABSTRACTMETHOD.equals(name) || PyNames.ABSTRACTPROPERTY.equals(name);
+      final QualifiedName qualifiedName = decorator.getQualifiedName();
+      if (qualifiedName != null) {
+        final String name = qualifiedName.toString();
+        if (PyNames.ABSTRACTMETHOD.equals(name) || PyNames.ABSTRACTPROPERTY.equals(name)) {
+          return true;
         }
       }
     }
