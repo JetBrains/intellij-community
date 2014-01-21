@@ -268,10 +268,11 @@ public class XmlLanguageInjectionSupport extends AbstractLanguageInjectionSuppor
   }
 
   public BaseInjection createInjection(Element element) {
-    if (element.getName().equals(XmlAttributeInjection.class.getSimpleName())) {
+    String place = StringUtil.notNullize(element.getChildText("place"), "");
+    if (place.startsWith("xmlAttribute")) {
       return new XmlAttributeInjection();
     }
-    else if (element.getName().equals(XmlTagInjection.class.getSimpleName())) {
+    else if (place.startsWith("xmlTag")) {
       return new XmlTagInjection();
     }
     else {
