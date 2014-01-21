@@ -547,7 +547,7 @@ Function GUIInit
   Push $4
   Push $5
 
-   MessageBox MB_OK "Profile: $PROFILE\PyCharmProjects"
+;   MessageBox MB_OK "Profile: ${PROFILE}\PyCharmProjects"
 
 ; is the current version of IDEA installed?
   Call searchCurrentVersion
@@ -713,7 +713,7 @@ skip_ipr:
 ;  StrCmp $1 "" 0 skipCopyProject
   CreateDirectory "$PROFILE\PyCharmProjects"
   ; install PyCharm project example
-  SetOutPath $PROFILE\PyCharmProjects
+  SetOutPath ${PROFILE}\PyCharmProjects
   !include "python_projects.nsh"
 
 skipCopyProject:
