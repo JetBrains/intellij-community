@@ -267,6 +267,7 @@ public class PySkeletonRefresher {
     final String skeletonsPath = getSkeletonsPath();
     final File skeletonsDir = new File(skeletonsPath);
     if (!skeletonsDir.exists()) {
+      //noinspection ResultOfMethodCallIgnored
       skeletonsDir.mkdirs();
     }
     final String readablePath = FileUtil.getLocationRelativeToUserHome(homePath);
@@ -446,7 +447,7 @@ public class PySkeletonRefresher {
         reader.close();
       }
     }
-    catch (IOException e) {
+    catch (IOException ignored) {
     }
     return null;
   }
