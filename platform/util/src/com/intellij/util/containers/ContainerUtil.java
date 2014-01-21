@@ -330,6 +330,10 @@ public class ContainerUtil extends ContainerUtilRt {
 
   @NotNull
   public static <E> List<E> reverse(@NotNull final List<E> elements) {
+    if (elements.isEmpty()) {
+      return ContainerUtilRt.emptyList();
+    }
+
     return new AbstractList<E>() {
       @Override
       public E get(int index) {

@@ -15,6 +15,8 @@
  */
 package com.intellij.ui;
 
+import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.ItemRemovable;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -26,7 +28,6 @@ import javax.swing.table.TableColumn;
 import javax.swing.table.TableModel;
 import java.awt.*;
 import java.util.ArrayList;
-import java.util.LinkedList;
 import java.util.List;
 
 public class TableUtil {
@@ -84,16 +85,15 @@ public class TableUtil {
     int minSelectionIndex = selectionModel.getMinSelectionIndex();
     if (minSelectionIndex == -1) return new ArrayList<Object[]>(0);
 
-    List<Object[]> removedItems = new LinkedList<Object[]>();
-
+    List<Object[]> removedItems = new SmartList<Object[]>();
     final int columnCount = model.getColumnCount();
     for (int idx = table.getRowCount() - 1; idx >= 0; idx--) {
       if (selectionModel.isSelectedIndex(idx) && (applyable == null || applyable.isOperationApplyable(model, idx))) {
         final Object[] row = new Object[columnCount];
-        for(int column = 0; column < columnCount; column++){
+        for (int column = 0; column < columnCount; column++) {
           row[column] = model.getValueAt(idx, column);
         }
-        removedItems.add(0, row);
+        removedItems.add(row);
         ((ItemRemovable)model).removeRow(idx);
       }
     }
@@ -108,7 +108,7 @@ public class TableUtil {
         selectionModel.setSelectionInterval(minSelectionIndex, minSelectionIndex);
       }
     }
-    return removedItems;
+    return ContainerUtil.reverse(removedItems);
   }
 
   public static int moveSelectedItemsUp(@NotNull JTable table) {
