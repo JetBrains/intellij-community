@@ -16,11 +16,10 @@
 package com.intellij.application.options;
 
 import com.intellij.openapi.options.Configurable;
-import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.codeStyle.CodeStyleSettingsProvider;
-import com.intellij.psi.codeStyle.DisplayPriority;
+import com.intellij.psi.codeStyle.*;
 import com.intellij.util.PlatformUtils;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Rustam Vishnyakov
@@ -47,5 +46,11 @@ public class JavaCodeStyleSettingsProvider extends CodeStyleSettingsProvider {
   @Override
   public String getConfigurableDisplayName() {
     return "Java";
+  }
+
+  @Nullable
+  @Override
+  public CustomCodeStyleSettings createCustomSettings(CodeStyleSettings settings) {
+    return new JavaCodeStyleSettings(settings);
   }
 }

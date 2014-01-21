@@ -76,17 +76,18 @@ public class JavaFormatterSpaceTest extends AbstractJavaFormatterTest {
 
   public void testCommaInTypeArguments() {
     // Inspired by IDEA-31681
-    getSettings().SPACE_AFTER_COMMA_IN_TYPE_ARGUMENTS = false;
+    getSettings().SPACE_AFTER_COMMA = false;
 
+    getSettings().SPACE_AFTER_COMMA_IN_TYPE_ARGUMENTS = false;
     String initial =
       "interface TestInterface<A,B> {\n" +
       "\n" +
-      "    <X,Y> void foo(X x, Y y);\n" +
+      "    <X,Y> void foo(X x,Y y);\n" +
       "}\n" +
       "\n" +
       "public class FormattingTest implements TestInterface<String,Integer> {\n" +
       "\n" +
-      "    public <X,Y> void foo(X x, Y y) {\n" +
+      "    public <X,Y> void foo(X x,Y y) {\n" +
       "        Map<String,Integer> map = new HashMap<String,Integer>();\n" +
       "    }\n" +
       "}";
@@ -95,14 +96,14 @@ public class JavaFormatterSpaceTest extends AbstractJavaFormatterTest {
 
     getSettings().SPACE_AFTER_COMMA_IN_TYPE_ARGUMENTS = true;
     String formatted =
-      "interface TestInterface<A, B> {\n" +
+      "interface TestInterface<A,B> {\n" +
       "\n" +
-      "    <X, Y> void foo(X x, Y y);\n" +
+      "    <X,Y> void foo(X x,Y y);\n" +
       "}\n" +
       "\n" +
       "public class FormattingTest implements TestInterface<String, Integer> {\n" +
       "\n" +
-      "    public <X, Y> void foo(X x, Y y) {\n" +
+      "    public <X,Y> void foo(X x,Y y) {\n" +
       "        Map<String, Integer> map = new HashMap<String, Integer>();\n" +
       "    }\n" +
       "}";
@@ -489,5 +490,53 @@ public class JavaFormatterSpaceTest extends AbstractJavaFormatterTest {
                   "    (() i)\n" +
                   "}";
     doClassTest(text, text);
+  }
+
+  public void testSpacesWithinAngleBrackets() throws Exception {
+    getJavaSettings().SPACES_WITHIN_ANGLE_BRACKETS = true;
+
+    String beforeMethod = "static <      T             > void    fromArray(  T  [   ]   a ,   Collection<  T  >  c) {\n}";
+    doClassTest(beforeMethod, "static < T > void fromArray(T[] a, Collection< T > c) {\n}");
+
+    String beforeLocal = "Map<    String,   String     > map = new HashMap<   String,   String   >();";
+    doMethodTest(beforeLocal, "Map< String, String > map = new HashMap< String, String >();");
+
+    String beforeClass = "class  A <   U    > {\n}";
+    doTextTest(beforeClass, "class A< U > {\n}");
+
+    getJavaSettings().SPACES_WITHIN_ANGLE_BRACKETS = false;
+    doMethodTest(beforeLocal, "Map<String, String> map = new HashMap<String, String>();");
+    doClassTest(beforeMethod, "static <T> void fromArray(T[] a, Collection<T> c) {\n}");
+    doTextTest(beforeClass, "class A<U> {\n}");
+  }
+
+  public void testSpaceAfterClosingAngleBracket_InTypeArgument() throws Exception {
+    String before = "Bar.<String, Integer>    mess(null);";
+
+    getJavaSettings().SPACE_AFTER_CLOSING_ANGLE_BRACKET_IN_TYPE_ARGUMENT = false;
+    doMethodTest(before, "Bar.<String, Integer>mess(null);");
+
+    getJavaSettings().SPACE_AFTER_CLOSING_ANGLE_BRACKET_IN_TYPE_ARGUMENT = true;
+    doMethodTest(before, "Bar.<String, Integer> mess(null);");
+  }
+
+  public void testSpaceBeforeOpeningAngleBracket_InTypeParameter() throws Exception {
+    String before = "class        A<T> {\n}";
+
+    getJavaSettings().SPACE_BEFORE_OPENING_ANGLE_BRACKET_IN_TYPE_PARAMETER = false;
+    doTextTest(before, "class A<T> {\n}");
+
+    getJavaSettings().SPACE_BEFORE_OPENING_ANGLE_BRACKET_IN_TYPE_PARAMETER = true;
+    doTextTest(before, "class A <T> {\n}");
+  }
+
+  public void testSpaceAroundTypeBounds() throws Exception {
+    String before = "public class     Foo<T extends Bar & Abba, U> {\n}";
+
+    getJavaSettings().SPACE_AROUND_TYPE_BOUNDS_IN_TYPE_PARAMETERS = true;
+    doTextTest(before, "public class Foo<T extends Bar & Abba, U> {\n}");
+
+    getJavaSettings().SPACE_AROUND_TYPE_BOUNDS_IN_TYPE_PARAMETERS = false;
+    doTextTest(before, "public class Foo<T extends Bar&Abba, U> {\n}");
   }
 }
