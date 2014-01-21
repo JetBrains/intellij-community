@@ -333,11 +333,24 @@ public class PivotalTrackerRepository extends BaseRepositoryImpl {
 
   @Override
   public void setTaskState(Task task, TaskState state) throws Exception {
-    if (state != TaskState.IN_PROGRESS) super.setTaskState(task, state);
+
     final String realId = getRealId(task.getId());
     if (realId == null) return;
+
+    String encodedState;
+    switch (state) {
+      case RESOLVED: {
+        encodedState = encodeUrl("finished");
+        break;
+      }
+      default: {
+        encodedState = encodeUrl("started");
+        break;
+      }
+    }
+
     String url = API_URL + "/projects/" + myProjectId + "/stories/" + realId;
-    url +="?" + encodeUrl("story[current_state]") + "=" + encodeUrl("started");
+    url +="?" + encodeUrl("story[current_state]") + "=" + encodedState;
     LOG.info("Updating issue state by id: " + url);
     final HttpMethod method = doREST(url, HTTPMethod.PUT);
     final InputStream stream = method.getResponseBodyAsStream();
@@ -345,7 +358,7 @@ public class PivotalTrackerRepository extends BaseRepositoryImpl {
     final Task story = element.getName().equals("story") ? createIssue(element) : null;
     if (story == null) {
       throw new Exception("Error setting state for: " + url + ", HTTP status code: " + method.getStatusCode() +
-                                "\n" + element.getText());
+                          "\n" + element.getText());
     }
   }
 
