@@ -199,17 +199,21 @@ public class TableView<Item> extends BaseTableView implements ItemsProvider, Sel
 
   @NotNull
   public List<Item> getSelectedObjects() {
-    final int[] selectedRows = getSelectedRows();
-    if (selectedRows == null || selectedRows.length == 0) {
+    ListSelectionModel selectionModel = getSelectionModel();
+    int minSelectionIndex = selectionModel.getMinSelectionIndex();
+    int maxSelectionIndex = selectionModel.getMaxSelectionIndex();
+    if (minSelectionIndex == -1 || maxSelectionIndex == -1) {
       return Collections.emptyList();
     }
 
     List<Item> result = new SmartList<Item>();
     ListTableModel<Item> model = getListTableModel();
-    for (int selectedRow : selectedRows) {
-      int modelIndex = convertRowIndexToModel(selectedRow);
-      if (modelIndex >= 0 && modelIndex < model.getRowCount()) {
-        result.add(model.getRowValue(modelIndex));
+    for (int i = minSelectionIndex; i <= maxSelectionIndex; i++) {
+      if (selectionModel.isSelectedIndex(i)) {
+        int modelIndex = convertRowIndexToModel(i);
+        if (modelIndex >= 0 && modelIndex < model.getRowCount()) {
+          result.add(model.getRowValue(modelIndex));
+        }
       }
     }
     return result;

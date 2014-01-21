@@ -105,14 +105,15 @@ public class TableUtil {
     }
 
     ListSelectionModel selectionModel = table.getSelectionModel();
-    if (selectionModel.isSelectionEmpty()) {
+    int minSelectionIndex = selectionModel.getMinSelectionIndex();
+    int maxSelectionIndex = selectionModel.getMaxSelectionIndex();
+    if (minSelectionIndex == -1 || maxSelectionIndex == -1) {
       return false;
     }
 
-    int minSelectionIndex = selectionModel.getMinSelectionIndex();
     TableModel model = table.getModel();
     boolean removed = false;
-    for (int index = table.getRowCount() - 1; index >= 0; index--) {
+    for (int index = maxSelectionIndex; index >= 0; index--) {
       if (selectionModel.isSelectedIndex(index) && (applyable == null || applyable.isOperationApplyable(model, index))) {
         itemRemovable.removeRow(index);
         removed = true;
@@ -127,7 +128,7 @@ public class TableUtil {
     if (count == 0) {
       table.clearSelection();
     }
-    else if (table.getSelectedRow() == -1) {
+    else if (selectionModel.getMinSelectionIndex() == -1) {
       if (minSelectionIndex >= model.getRowCount()) {
         selectionModel.setSelectionInterval(model.getRowCount() - 1, model.getRowCount() - 1);
       }
