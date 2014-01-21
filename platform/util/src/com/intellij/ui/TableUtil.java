@@ -73,30 +73,59 @@ public class TableUtil {
 
   @NotNull
   public static List<Object[]> removeSelectedItems(@NotNull JTable table, @Nullable ItemChecker applyable) {
-    if (table.isEditing()) {
-      table.getCellEditor().stopCellEditing();
-    }
-    TableModel model = table.getModel();
+    final TableModel model = table.getModel();
     if (!(model instanceof ItemRemovable)) {
       throw new RuntimeException("model must be instance of ItemRemovable");
     }
 
     ListSelectionModel selectionModel = table.getSelectionModel();
     int minSelectionIndex = selectionModel.getMinSelectionIndex();
-    if (minSelectionIndex == -1) return new ArrayList<Object[]>(0);
+    if (minSelectionIndex == -1) {
+      return new ArrayList<Object[]>(0);
+    }
 
-    List<Object[]> removedItems = new SmartList<Object[]>();
+
+    final List<Object[]> removedItems = new SmartList<Object[]>();
+    final ItemRemovable itemRemovable = (ItemRemovable)model;
     final int columnCount = model.getColumnCount();
-    for (int idx = table.getRowCount() - 1; idx >= 0; idx--) {
-      if (selectionModel.isSelectedIndex(idx) && (applyable == null || applyable.isOperationApplyable(model, idx))) {
-        final Object[] row = new Object[columnCount];
+    doRemoveSelectedItems(table, new ItemRemovable() {
+      @Override
+      public void removeRow(int index) {
+        Object[] row = new Object[columnCount];
         for (int column = 0; column < columnCount; column++) {
-          row[column] = model.getValueAt(idx, column);
+          row[column] = model.getValueAt(index, column);
         }
         removedItems.add(row);
-        ((ItemRemovable)model).removeRow(idx);
+        itemRemovable.removeRow(index);
+      }
+    }, applyable);
+    return ContainerUtil.reverse(removedItems);
+  }
+
+  public static boolean doRemoveSelectedItems(@NotNull JTable table, @NotNull ItemRemovable itemRemovable, @Nullable ItemChecker applyable) {
+    if (table.isEditing()) {
+      table.getCellEditor().stopCellEditing();
+    }
+
+    ListSelectionModel selectionModel = table.getSelectionModel();
+    int minSelectionIndex = selectionModel.getMinSelectionIndex();
+    if (minSelectionIndex == -1) {
+      return false;
+    }
+
+    TableModel model = table.getModel();
+    boolean removed = false;
+    for (int index = table.getRowCount() - 1; index >= 0; index--) {
+      if (selectionModel.isSelectedIndex(index) && (applyable == null || applyable.isOperationApplyable(model, index))) {
+        itemRemovable.removeRow(index);
+        removed = true;
       }
     }
+
+    if (!removed) {
+      return false;
+    }
+
     int count = model.getRowCount();
     if (count == 0) {
       table.clearSelection();
@@ -109,7 +138,7 @@ public class TableUtil {
         selectionModel.setSelectionInterval(minSelectionIndex, minSelectionIndex);
       }
     }
-    return ContainerUtil.reverse(removedItems);
+    return true;
   }
 
   public static int moveSelectedItemsUp(@NotNull JTable table) {
