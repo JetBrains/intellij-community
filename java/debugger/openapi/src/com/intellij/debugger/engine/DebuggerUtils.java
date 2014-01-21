@@ -275,6 +275,7 @@ public abstract class DebuggerUtils {
   }
 
   private static Type getSuperTypeInt(Type subType, String superType) {
+    superType = superType.replace('.', '$'); // jdi type have dollars instead of dots
     Type result;
     if (subType == null) {
       return null;
