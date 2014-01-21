@@ -53,6 +53,7 @@ import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 import org.jetbrains.plugins.gradle.util.GradleEnvironment;
 
+import java.io.File;
 import java.util.*;
 
 /**
@@ -284,7 +285,8 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
   private void handleBuildSrcProject(@NotNull final DataNode<ProjectData> resultProjectDataNode,
                                      @NotNull final ProjectConnectionDataNodeFunction projectConnectionDataNodeFunction) {
 
-    if (projectConnectionDataNodeFunction.myIsPreviewMode || GradleEnvironment.DISABLE_ENHANCED_TOOLING_API) return;
+    if (projectConnectionDataNodeFunction.myIsPreviewMode || GradleEnvironment.DISABLE_ENHANCED_TOOLING_API ||
+        !new File(projectConnectionDataNodeFunction.myProjectPath).isDirectory()) return;
 
     final DataNode<ModuleData> buildSrcModuleDataNode =
       ExternalSystemApiUtil.find(resultProjectDataNode, ProjectKeys.MODULE, new BooleanFunction<DataNode<ModuleData>>() {

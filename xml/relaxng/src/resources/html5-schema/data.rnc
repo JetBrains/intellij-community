@@ -32,6 +32,26 @@ datatypes w = "http://whattf.org/datatype-draft"
 
 	common.elem.phrasing |= time.elem
 
+## Data: <data>
+
+	data.elem =
+		element data { data.inner & data.attrs }
+	data.attrs =
+		(	common.attrs
+		&	data.attrs.value
+		&	(	common.attrs.aria.role.presentation
+			|	common.attrs.aria.role.menuitem
+			)?
+		)
+		data.attrs.value =
+			attribute value {
+				string
+			}
+	data.inner =
+		( common.inner.phrasing )
+
+	common.elem.phrasing |= data.elem
+
 ## Scalar Gauge: <meter>
 
 	meter.elem =

@@ -21,7 +21,9 @@ namespace local = ""
 		&	img.attrs.usemap?
 		&	img.attrs.ismap?
 		&	img.attrs.border? # obsolete
-		&	common.attrs.aria?
+		&	(	common.attrs.aria.implicit.img
+			|	common.attrs.aria
+			)?
 		)
 		img.attrs.src =
 			attribute src {
@@ -212,51 +214,51 @@ namespace local = ""
 			                    | rev
 			                    | inlist
 			                    | its-loc-note
-			                    | its-loc-note-type
-			                    | its-loc-note-ref
-			                    | its-term-info-ref
-			                    | its-term
-			                    | its-term-confidence
-			                    | its-within-text
-			                    | its-domain-mapping
-			                    | its-disambig-granularity
-			                    | its-disambig-confidence
-			                    | its-disambig-class-ref
-			                    | its-disambig-ident
-			                    | its-disambig-ident-ref
-			                    | its-disambig-source
-			                    | its-locale-filter-list
-			                    | its-person
-			                    | its-person-ref
-			                    | its-org
-			                    | its-org-ref
-			                    | its-tool
-			                    | its-tool-ref
-			                    | its-rev-person
-			                    | its-rev-person-ref
-			                    | its-rev-org
-			                    | its-rev-org-ref
-			                    | its-rev-tool
-			                    | its-rev-tool-ref
-			                    | its-prov-ref
-			                    | its-provenance-records-ref
-			                    | its-loc-quality-issues-ref
-			                    | its-loc-quality-issue-type
-			                    | its-loc-quality-issue-comment
-			                    | its-loc-quality-issue-severity
-			                    | its-loc-quality-issue-profile-ref
-			                    | its-loc-quality-issue-enabled
-			                    | its-loc-quality-rating-score
-			                    | its-loc-quality-rating-vote
-			                    | its-loc-quality-rating-score-threshold
-			                    | its-loc-quality-rating-vote-threshold
-			                    | its-loc-quality-rating-profile-ref
-			                    | its-mt-confidence
-			                    | its-allowed-characters
-			                    | its-storage-size
-			                    | its-storage-encoding
-			                    | its-line-break-type
-			                    | its-annotators-ref
+                                            | its-loc-note-type
+                                            | its-loc-note-ref
+                                            | its-term-info-ref
+                                            | its-term
+                                            | its-term-confidence
+                                            | its-within-text
+                                            | its-domain-mapping
+                                            | its-ta-confidence
+                                            | its-ta-class-ref
+                                            | its-ta-ident
+                                            | its-ta-ident-ref
+                                            | its-ta-source
+                                            | its-locale-filter-list
+                                            | its-locale-filter-type
+                                            | its-person
+                                            | its-person-ref
+                                            | its-org
+                                            | its-org-ref
+                                            | its-tool
+                                            | its-tool-ref
+                                            | its-rev-person
+                                            | its-rev-person-ref
+                                            | its-rev-org
+                                            | its-rev-org-ref
+                                            | its-rev-tool
+                                            | its-rev-tool-ref
+                                            | its-prov-ref
+                                            | its-provenance-records-ref
+                                            | its-loc-quality-issues-ref
+                                            | its-loc-quality-issue-type
+                                            | its-loc-quality-issue-comment
+                                            | its-loc-quality-issue-severity
+                                            | its-loc-quality-issue-profile-ref
+                                            | its-loc-quality-issue-enabled
+                                            | its-loc-quality-rating-score
+                                            | its-loc-quality-rating-vote
+                                            | its-loc-quality-rating-score-threshold
+                                            | its-loc-quality-rating-vote-threshold
+                                            | its-loc-quality-rating-profile-ref
+                                            | its-mt-confidence
+                                            | its-allowed-characters
+                                            | its-storage-size
+                                            | its-storage-encoding
+                                            | its-line-break-type
+                                            | its-annotators-ref
 			                    ) 
 			{
 				string
@@ -287,8 +289,7 @@ namespace local = ""
 		&	object.attrs.usemap?
 		&	object.attrs.name?
 		&	common-form.attrs.form?
-		&	(	common.attrs.aria.implicit.region
-			|	common.attrs.aria.landmark.application
+		&	(	common.attrs.aria.landmark.application
 			|	common.attrs.aria.landmark.document
 			|	common.attrs.aria.role.img
 			)?
@@ -366,8 +367,7 @@ namespace local = ""
 		&	iframe.attrs.sandbox?
 		&	iframe.attrs.seamless?
 		&	iframe.attrs.allowfullscreen?
-		&	(	common.attrs.aria.implicit.region
-			|	common.attrs.aria.landmark.application
+		&	(	common.attrs.aria.landmark.application
 			|	common.attrs.aria.landmark.document
 			|	common.attrs.aria.role.img
 			)?
@@ -589,13 +589,13 @@ namespace local = ""
 		&	common.attrs.i18n
 		&	common.attrs.present
 		&	common.attrs.other
+		&	shared-hyperlink.attrs.download?
 		&	(	area.attrs.alt
 			&	shared-hyperlink.attrs.href
 			)?
 		&	shared-hyperlink.attrs.target?
 		&	shared-hyperlink.attrs.ping?
 		&	shared-hyperlink.attrs.rel?
-		&	shared-hyperlink.attrs.media?
 		&	shared-hyperlink.attrs.hreflang?
 		&	shared-hyperlink.attrs.type?
 		&	area.attrs.shape?

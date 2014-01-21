@@ -25,6 +25,7 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.spellchecker.ui.SpellCheckingEditorCustomization;
 import com.intellij.ui.EditorCustomization;
 import com.intellij.ui.EditorTextField;
@@ -33,11 +34,13 @@ import com.intellij.ui.SoftWrapsEditorCustomization;
 import com.intellij.util.Function;
 import com.intellij.util.TextFieldCompletionProviderDumbAware;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.vcs.log.VcsFullCommitDetails;
 import com.intellij.vcs.log.VcsLogFilter;
 import com.intellij.vcs.log.VcsUser;
 import com.intellij.vcs.log.data.VcsLogDataHolder;
+import com.intellij.vcs.log.data.VcsLogDetailsFilter;
 import com.intellij.vcs.log.data.VcsLogUiProperties;
-import com.intellij.vcs.log.data.VcsLogUserFilter;
+import com.intellij.vcs.log.VcsLogUserFilter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -101,7 +104,7 @@ class UserFilterPopupComponent extends FilterPopupComponent {
     return ContainerUtil.map(mySelectedUsers, new Function<String, VcsLogFilter>() {
       @Override
       public VcsLogFilter fun(String name) {
-        return name == ME ? new VcsLogUserFilter.Me(myDataHolder.getCurrentUser()) : new VcsLogUserFilter.ByName(name);
+        return name == ME ? new Me(myDataHolder.getCurrentUser()) : new ByName(name);
       }
     });
   }
@@ -265,4 +268,54 @@ class UserFilterPopupComponent extends FilterPopupComponent {
       }
     }
   }
+
+  /**
+   * Filters by the given name or part of it.
+   */
+  public static class ByName implements VcsLogUserFilter, VcsLogDetailsFilter {
+
+    @NotNull private final String myUser;
+
+    public ByName(@NotNull String user) {
+      myUser = user;
+    }
+
+    @Override
+    public boolean matches(@NotNull VcsFullCommitDetails detail) {
+      return detail.getAuthor().getName().toLowerCase().contains(myUser.toLowerCase()) ||
+             detail.getAuthor().getEmail().toLowerCase().contains(myUser.toLowerCase());
+    }
+
+    @NotNull
+    @Override
+    public String getUserName(@NotNull VirtualFile root) {
+      return myUser;
+    }
+  }
+
+  /**
+   * Looks for commits matching the current user,
+   * i.e. looks for the value stored in the VCS config and compares the configured name with the one returned in commit details.
+   */
+  public static class Me implements VcsLogUserFilter, VcsLogDetailsFilter {
+
+    @NotNull private final Map<VirtualFile, VcsUser> myMeData;
+
+    public Me(@NotNull Map<VirtualFile, VcsUser> meData) {
+      myMeData = meData;
+    }
+
+    @Override
+    public boolean matches(@NotNull VcsFullCommitDetails details) {
+      VcsUser meInThisRoot = myMeData.get(details.getRoot());
+      return meInThisRoot != null && meInThisRoot.equals(details.getAuthor());
+    }
+
+    @NotNull
+    @Override
+    public String getUserName(@NotNull VirtualFile root) {
+      return myMeData.get(root).getName();
+    }
+  }
+
 }
