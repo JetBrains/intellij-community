@@ -122,7 +122,7 @@ public class PyDecoratorImpl extends StubBasedPsiElementBase<PyDecoratorStub> im
   @Override
   public <T extends PsiElement> T getArgument(int index, Class<T> argClass) {
     PyExpression[] args = getArguments();
-    return args.length >= index && argClass.isInstance(args[index]) ? argClass.cast(args[index]) : null;
+    return args.length > index && argClass.isInstance(args[index]) ? argClass.cast(args[index]) : null;
   }
 
   @Override
