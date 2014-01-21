@@ -7,6 +7,7 @@ import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.javadoc.PsiDocTagValue;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.structuralsearch.MatchOptions;
 import com.intellij.structuralsearch.MatchResult;
 import com.intellij.structuralsearch.impl.matcher.filters.LexicalNodesFilter;
@@ -17,7 +18,6 @@ import com.intellij.dupLocator.iterators.ArrayBackedNodeIterator;
 import com.intellij.structuralsearch.impl.matcher.iterators.DocValuesIterator;
 import com.intellij.structuralsearch.impl.matcher.iterators.HierarchyNodeIterator;
 import com.intellij.dupLocator.iterators.NodeIterator;
-import com.intellij.structuralsearch.impl.matcher.predicates.ExprTypePredicate;
 import com.intellij.structuralsearch.impl.matcher.predicates.NotPredicate;
 import com.intellij.structuralsearch.impl.matcher.predicates.RegExpPredicate;
 import com.intellij.util.containers.ContainerUtil;
@@ -549,13 +549,6 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
                                 myMatchingVisitor.match(slice.getIndexExpression(), slice2.getIndexExpression()));
   }
 
-  public static PsiElement removeParentheses(PsiElement element) {
-    while (element instanceof PsiParenthesizedExpression) {
-      element = ((PsiParenthesizedExpression)element).getExpression();
-    }
-    return element;
-  }
-
   @Override
   public void visitReferenceExpression(final PsiReferenceExpression reference) {
     final PsiExpression qualifier = reference.getQualifierExpression();
@@ -564,7 +557,7 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
     MatchingHandler _handler = nameElement != null ? myMatchingVisitor.getMatchContext().getPattern().getHandlerSimple(nameElement) : null;
     if (!(_handler instanceof SubstitutionHandler)) _handler = myMatchingVisitor.getMatchContext().getPattern().getHandlerSimple(reference);
 
-    PsiElement other = removeParentheses(myMatchingVisitor.getElement());
+    PsiElement other = PsiUtil.skipParenthesizedExprUp(myMatchingVisitor.getElement());
     if (_handler instanceof SubstitutionHandler &&
         !(myMatchingVisitor.getMatchContext().getPattern().getHandlerSimple(qualifier) instanceof SubstitutionHandler) &&
         !(qualifier instanceof PsiThisExpression)
