@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -880,7 +880,7 @@ class LockFreeCopyOnWriteArrayList<E> implements List<E>, RandomAccess {
     Object[] elements = array;
     if (elements.length == 0) return EmptyIterator.getInstance();
 
-    return new COWIterator<E>(elements, 0);
+    return new COWIterator(elements, 0);
   }
 
   /**
@@ -916,10 +916,10 @@ class LockFreeCopyOnWriteArrayList<E> implements List<E>, RandomAccess {
       throw new IndexOutOfBoundsException("Index: " + index);
     }
 
-    return elements.length == 0 ? EmptyListIterator.<E>getInstance() : new COWIterator<E>(elements, index);
+    return elements.length == 0 ? EmptyListIterator.<E>getInstance() : new COWIterator(elements, index);
   }
 
-  private static class COWIterator<E> implements ListIterator<E> {
+  private class COWIterator implements ListIterator<E> {
     /**
      * Snapshot of the array
      */
@@ -928,6 +928,7 @@ class LockFreeCopyOnWriteArrayList<E> implements List<E>, RandomAccess {
      * Index of element to be returned by subsequent call to next.
      */
     private int cursor;
+    private int lastRet = -1; // index of last element returned; -1 if no such
 
     private COWIterator(@NotNull Object[] elements, int initialCursor) {
       cursor = initialCursor;
@@ -950,6 +951,7 @@ class LockFreeCopyOnWriteArrayList<E> implements List<E>, RandomAccess {
       if (!hasNext()) {
         throw new NoSuchElementException();
       }
+      lastRet = cursor;
       return (E)snapshot[cursor++];
     }
 
@@ -974,7 +976,13 @@ class LockFreeCopyOnWriteArrayList<E> implements List<E>, RandomAccess {
 
     @Override
     public void remove() {
-      throw new UnsupportedOperationException();
+      if (lastRet < 0) {
+          throw new IllegalStateException();
+      }
+      @SuppressWarnings("unchecked")
+      E e = (E)snapshot[lastRet];
+      lastRet = -1;
+      LockFreeCopyOnWriteArrayList.this.remove(e);
     }
 
     @Override

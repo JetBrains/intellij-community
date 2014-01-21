@@ -102,14 +102,6 @@ public class XmlAttributeInjection extends AbstractTagInjection {
     return this;
   }
 
-  protected void readExternalImpl(Element e) {
-    super.readExternalImpl(e);
-  }
-
-  protected void writeExternalImpl(Element e) {
-    super.writeExternalImpl(e);
-  }
-
   @SuppressWarnings({"RedundantIfStatement"})
   public boolean equals(Object o) {
     if (this == o) return true;

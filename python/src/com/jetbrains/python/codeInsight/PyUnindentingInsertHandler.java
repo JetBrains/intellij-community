@@ -25,6 +25,7 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.completion.PythonLookupElement;
 import com.jetbrains.python.psi.PyStatementWithElse;
 import com.jetbrains.python.psi.PyTryExceptStatement;
@@ -67,28 +68,28 @@ public class PyUnindentingInsertHandler implements InsertHandler<PythonLookupEle
 
     Class<? extends PsiElement> parentClass = null;
 
-    int last_offset = nonspace_offset + PyKeywords.FINALLY.length(); // the longest of all
+    int last_offset = nonspace_offset + PyNames.FINALLY.length(); // the longest of all
     if (last_offset > offset) last_offset = offset;
     int local_length = last_offset - nonspace_offset + 1;
     if (local_length > 0) {
       String piece = text.subSequence(nonspace_offset, last_offset + 1).toString();
-      final int else_len = PyKeywords.ELSE.length();
+      final int else_len = PyNames.ELSE.length();
       if (local_length >= else_len) {
-        if ((piece.startsWith(PyKeywords.ELSE) || piece.startsWith(PyKeywords.ELIF)) &&
+        if ((piece.startsWith(PyNames.ELSE) || piece.startsWith(PyNames.ELIF)) &&
             (else_len == piece.length() || piece.charAt(else_len) < 'a' || piece.charAt(else_len) > 'z')) {
           parentClass = PyStatementWithElse.class;
         }
       }
-      final int except_len = PyKeywords.EXCEPT.length();
+      final int except_len = PyNames.EXCEPT.length();
       if (local_length >= except_len) {
-        if (piece.startsWith(PyKeywords.EXCEPT) &&
+        if (piece.startsWith(PyNames.EXCEPT) &&
             (except_len == piece.length() || piece.charAt(except_len) < 'a' || piece.charAt(except_len) > 'z')) {
           parentClass = PyTryExceptStatement.class;
         }
       }
-      final int finally_len = PyKeywords.FINALLY.length();
+      final int finally_len = PyNames.FINALLY.length();
       if (local_length >= finally_len) {
-        if (piece.startsWith(PyKeywords.FINALLY) &&
+        if (piece.startsWith(PyNames.FINALLY) &&
             (finally_len == piece.length() || piece.charAt(finally_len) < 'a' || piece.charAt(finally_len) > 'z')) {
           parentClass = PyTryExceptStatement.class;
         }

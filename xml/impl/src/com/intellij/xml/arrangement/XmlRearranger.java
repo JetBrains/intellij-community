@@ -5,9 +5,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.codeStyle.arrangement.ArrangementSettings;
-import com.intellij.psi.codeStyle.arrangement.ArrangementUtil;
-import com.intellij.psi.codeStyle.arrangement.Rearranger;
+import com.intellij.psi.codeStyle.arrangement.*;
 import com.intellij.psi.codeStyle.arrangement.group.ArrangementGroupingRule;
 import com.intellij.psi.codeStyle.arrangement.match.ArrangementEntryMatcher;
 import com.intellij.psi.codeStyle.arrangement.match.StdArrangementEntryMatcher;
@@ -46,6 +44,8 @@ public class XmlRearranger
       Collections.<ArrangementGroupingRule>emptyList(), DEFAULT_MATCH_RULES);
   }
 
+  private static final DefaultArrangementSettingsSerializer SETTINGS_SERIALIZER = new DefaultArrangementSettingsSerializer(DEFAULT_SETTINGS);
+
   @NotNull
   public static StdArrangementMatchRule attrArrangementRule(@NotNull String nameFilter,
                                                             @NotNull String namespaceFilter,
@@ -54,6 +54,12 @@ public class XmlRearranger
       new ArrangementAtomMatchCondition(StdArrangementTokens.Regexp.NAME, nameFilter),
       new ArrangementAtomMatchCondition(StdArrangementTokens.Regexp.XML_NAMESPACE, namespaceFilter)
     )), orderType);
+  }
+
+  @NotNull
+  @Override
+  public ArrangementSettingsSerializer getSerializer() {
+    return SETTINGS_SERIALIZER;
   }
 
   @Nullable

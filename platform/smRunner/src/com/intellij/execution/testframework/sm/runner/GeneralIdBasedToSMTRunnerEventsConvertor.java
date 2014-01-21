@@ -94,13 +94,16 @@ public class GeneralIdBasedToSMTRunnerEventsConvertor extends GeneralTestEventsP
 
         // We don't know whether process was destroyed by user
         // or it finished after all tests have been run
-        // Lets assume, if at finish all suites except root suite are passed
+        // Lets assume, if at finish all nodes except root suite have final state (passed, failed or ignored),
         // then all is ok otherwise process was terminated by user
-        if (myRunningTestNodes.isEmpty()) {
+        boolean completeTree = isTreeComplete();
+        if (completeTree) {
           myTestsRootProxy.setFinished();
         } else {
-          logProblem("Unexpected running nodes: " + myRunningTestNodes);
           myTestsRootProxy.setTerminated();
+        }
+        if (!myRunningTestNodes.isEmpty()) {
+          logProblem("Unexpected running nodes: " + myRunningTestNodes);
         }
         myNodeByIdMap.clear();
         myRunningTestNodes.clear();
@@ -108,6 +111,19 @@ public class GeneralIdBasedToSMTRunnerEventsConvertor extends GeneralTestEventsP
         fireOnTestingFinished();
       }
     });
+  }
+
+  private boolean isTreeComplete() {
+    if (!myRunningTestNodes.isEmpty()) {
+      return false;
+    }
+    List<? extends SMTestProxy> children = myTestsRootProxy.getChildren();
+    for (SMTestProxy child : children) {
+      if (!child.isFinal() || child.wasTerminated()) {
+        return false;
+      }
+    }
+    return true;
   }
 
   @Override
