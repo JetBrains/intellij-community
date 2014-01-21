@@ -48,9 +48,6 @@ public class XmlAttributePanel extends AbstractInjectionPanel<XmlAttributeInject
     myNamespace.setModel(TagPanel.createNamespaceUriModel(project));
 
     init(injection.copy());
-
-    // be sure to add the listener after initializing the textfield's value
-    myLocalName.getDocument().addDocumentListener(new TreeUpdateListener());
   }
 
   public JPanel getComponent() {

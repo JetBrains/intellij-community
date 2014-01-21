@@ -70,8 +70,9 @@ public class ImageOrColorPreviewManager implements Disposable, EditorMouseMotion
           return;
         }
 
-        KeyListener keyListener = editor.getUserData(EDITOR_LISTENER_ADDED);
+        KeyListener keyListener = EDITOR_LISTENER_ADDED.get(editor);
         if (keyListener != null) {
+          EDITOR_LISTENER_ADDED.set(editor, null);
           editor.getContentComponent().removeKeyListener(keyListener);
           editor.removeEditorMouseMotionListener(ImageOrColorPreviewManager.this);
         }
@@ -112,7 +113,7 @@ public class ImageOrColorPreviewManager implements Disposable, EditorMouseMotion
     };
     editor.getContentComponent().addKeyListener(keyListener);
 
-    editor.putUserData(EDITOR_LISTENER_ADDED, keyListener);
+    EDITOR_LISTENER_ADDED.set(editor, keyListener);
   }
 
   private static boolean isSupportedFile(PsiFile psiFile) {

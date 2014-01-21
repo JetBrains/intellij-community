@@ -490,7 +490,7 @@ public class PyCallExpressionHelper {
               if (first_arg instanceof PyReferenceExpression) {
                 final PyReferenceExpression firstArgRef = (PyReferenceExpression)first_arg;
                 final PyExpression qualifier = firstArgRef.getQualifier();
-                if (qualifier != null && PyNames.CLASS.equals(firstArgRef.getReferencedName())) {
+                if (qualifier != null && PyNames.__CLASS__.equals(firstArgRef.getReferencedName())) {
                   final PsiReference qRef = qualifier.getReference();
                   final PsiElement element = qRef == null ? null : qRef.resolve();
                   if (element instanceof PyParameter) {

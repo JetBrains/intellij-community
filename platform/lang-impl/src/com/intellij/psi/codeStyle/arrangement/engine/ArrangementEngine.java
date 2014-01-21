@@ -53,12 +53,25 @@ import java.util.*;
  */
 public class ArrangementEngine {
 
+  /**
+   * Arranges given PSI root contents that belong to the given ranges.
+   * <b>Note:</b> After arrangement editor foldings we'll be preserved.
+   *
+   * @param editor
+   * @param file   target PSI root
+   * @param ranges target ranges to use within the given root
+   */
   public void arrange(@NotNull final Editor editor, @NotNull PsiFile file, Collection<TextRange> ranges) {
-    arrange(file, ranges, null);
-    // This should be uncommented as soon as cdr pushed fixes for range markers processing.
-    //arrange(file, ranges, new RestoreFoldArrangementCallback(editor));
+    arrange(file, ranges, new RestoreFoldArrangementCallback(editor));
   }
 
+  /**
+   * Arranges given PSI root contents that belong to the given ranges.
+   * <b>Note:</b> Editor foldings are not expected to be preserved.
+   *
+   * @param file   target PSI root
+   * @param ranges target ranges to use within the given root
+   */
   public void arrange(@NotNull PsiFile file, @NotNull Collection<TextRange> ranges) {
     arrange(file, ranges, null);
   }

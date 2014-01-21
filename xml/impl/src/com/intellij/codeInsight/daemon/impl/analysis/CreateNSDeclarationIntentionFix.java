@@ -206,9 +206,11 @@ public class CreateNSDeclarationIntentionFix implements HintAction, LocalQuickFi
 
   @Override
   public boolean showHint(@NotNull final Editor editor) {
-    if (myToken == null) return false;
-    XmlToken token = (XmlToken)myToken.retrieve();
-    if (token == null) return false;
+    XmlToken token = null;
+    if (myToken != null) {
+      token = (XmlToken)myToken.retrieve();
+      if (token == null) return false;
+    }
     if (!XmlSettings.getInstance().SHOW_XML_ADD_IMPORT_HINTS || myNamespacePrefix.isEmpty()) {
       return false;
     }
@@ -219,7 +221,7 @@ public class CreateNSDeclarationIntentionFix implements HintAction, LocalQuickFi
       final String message = ShowAutoImportPass.getMessage(namespaces.size() > 1, namespaces.iterator().next());
       final String title = getTitle();
       final ImportNSAction action = new ImportNSAction(namespaces, getFile(), element, editor, title);
-      if (element instanceof XmlTag) {
+      if (element instanceof XmlTag && token != null) {
         if (VisibleHighlightingPassFactory.calculateVisibleRange(editor).contains(token.getTextRange())) {
           HintManager.getInstance().showQuestionHint(editor, message,
                                                      token.getTextOffset(),

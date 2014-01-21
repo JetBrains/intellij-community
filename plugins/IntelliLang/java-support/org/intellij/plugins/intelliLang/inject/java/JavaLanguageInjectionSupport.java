@@ -174,10 +174,7 @@ public class JavaLanguageInjectionSupport extends AbstractLanguageInjectionSuppo
   }
 
   public BaseInjection createInjection(final Element element) {
-    if (element.getName().equals(MethodParameterInjection.class.getSimpleName())) {
-      return new MethodParameterInjection();
-    }
-    else return new BaseInjection(JAVA_SUPPORT_ID);
+    return new BaseInjection(JAVA_SUPPORT_ID);
   }
 
   private static boolean doInjectInJava(final Project project,

@@ -111,6 +111,7 @@ public class StartBrowserPanel {
     }
   }
 
+  @Nullable
   private static Url virtualFileToUrl(VirtualFile file, Project project) {
     PsiFile psiFile;
     AccessToken token = ReadAction.start();
@@ -139,7 +140,8 @@ public class StartBrowserPanel {
       @NotNull
       @Override
       protected String chosenFileToResultingText(@NotNull VirtualFile chosenFile) {
-        return virtualFileToUrl(chosenFile, project).toDecodedForm();
+        Url url = virtualFileToUrl(chosenFile, project);
+        return url == null ? chosenFile.getUrl() : url.toDecodedForm();
       }
     });
   }
