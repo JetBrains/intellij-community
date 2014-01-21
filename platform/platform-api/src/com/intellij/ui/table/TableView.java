@@ -15,6 +15,7 @@
  */
 package com.intellij.ui.table;
 
+import com.intellij.ui.GuiUtils;
 import com.intellij.ui.TableUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
@@ -257,5 +258,18 @@ public class TableView<Item> extends BaseTableView implements ItemsProvider, Sel
 
   public void stopEditing() {
     TableUtil.stopEditing(this);
+  }
+
+  @Override
+  protected void createDefaultEditors() {
+    super.createDefaultEditors();
+
+    //noinspection unchecked
+    defaultEditorsByColumnClass.put(String.class, new UIDefaults.LazyValue() {
+      @Override
+      public Object createValue(UIDefaults table) {
+        return new DefaultCellEditor(GuiUtils.createUndoableTextField());
+      }
+    });
   }
 }
