@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.gradle.integrations.maven;
 
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.externalSystem.util.ExternalSystemConstants;
@@ -97,9 +98,9 @@ public class ImportMavenRepositoriesTask implements Runnable {
 
     final PsiFile[] psiFiles = ArrayUtil.toObjectArray(psiFileList, PsiFile.class);
 
-    final Set<MavenRemoteRepository> mavenRemoteRepositories = new WriteCommandAction<Set<MavenRemoteRepository>>(myProject, psiFiles) {
+    final Set<MavenRemoteRepository> mavenRemoteRepositories = new ReadAction<Set<MavenRemoteRepository>>() {
       @Override
-      protected void run(Result<Set<MavenRemoteRepository>> result) throws Throwable {
+      protected void run(@NotNull Result<Set<MavenRemoteRepository>> result) throws Throwable {
         Set<MavenRemoteRepository> myRemoteRepositories = ContainerUtil.newHashSet();
         for (PsiFile psiFile : psiFiles) {
           List<GrClosableBlock> repositoriesBlocks = ContainerUtil.newArrayList();
@@ -118,7 +119,7 @@ public class ImportMavenRepositoriesTask implements Runnable {
       }
     }.execute().getResultObject();
 
-    if (mavenRemoteRepositories.isEmpty()) return;
+    if (mavenRemoteRepositories == null || mavenRemoteRepositories.isEmpty()) return;
 
     MavenRepositoriesHolder.getInstance(myProject).update(mavenRemoteRepositories);
 
