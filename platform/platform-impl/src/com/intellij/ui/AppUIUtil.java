@@ -166,10 +166,12 @@ public class AppUIUtil {
     });
   }
 
+  @Deprecated
+  /**
+   * to remove in IDEA 14
+   */
   public static JTextField createUndoableTextField() {
-    JTextField field = new JTextField();
-    new TextComponentUndoProvider(field);
-    return field;
+    return GuiUtils.createUndoableTextField();
   }
 
   private static final int MIN_ICON_SIZE = 32;
