@@ -89,6 +89,7 @@ public class TableModelEditor<T> implements ElementProducer<T> {
               };
             }
             ((DialogItemEditor<T>)TableModelEditor.this.itemEditor).edit(item, mutator);
+            table.requestFocus();
           }
         }
       });
