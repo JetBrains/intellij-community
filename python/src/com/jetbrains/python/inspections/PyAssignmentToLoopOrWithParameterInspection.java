@@ -23,6 +23,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.psi.PyForPart;
 import com.jetbrains.python.psi.PyTargetExpression;
+import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.psi.PyWithStatement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -72,6 +73,9 @@ public class PyAssignmentToLoopOrWithParameterInspection extends PyInspection {
     public void visitPyTargetExpression(PyTargetExpression node) {
       PsiElement variableDeclaration = node.getReference().resolve();
       if (variableDeclaration == null) {
+        return;
+      }
+      if (!PyUtil.inSameFile(node, variableDeclaration)) {
         return;
       }
       PsiElement variableFirstTimeDeclaration = variableDeclaration.getParent();
