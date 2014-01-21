@@ -547,6 +547,8 @@ Function GUIInit
   Push $4
   Push $5
 
+   MessageBox MB_OK "Profile: $PROFILE\PyCharmProjects"
+
 ; is the current version of IDEA installed?
   Call searchCurrentVersion
 
@@ -622,7 +624,6 @@ FunctionEnd
 ; Installer sections
 ;------------------------------------------------------------------------------
 Section "IDEA Files" CopyIdeaFiles
-;   MessageBox MB_OK "Profile: $PROFILE\PyCharmProjects"
 ;  StrCpy $baseRegKey "HKCU"
 ;  !insertmacro INSTALLOPTIONS_READ $R2 "Desktop.ini" "Field 3" "State"
 ;  StrCmp $R2 1 continue_for_current_user
