@@ -707,15 +707,16 @@ skip_ipr:
   Push $0
   Push $1
   FindFirst $0 $1 $PROFILE\PyCharmProjects\*.*
-  StrCmp $1 "" 0 copyProjectExample
+  StrCmp $1 "" 0 skipCopyProject
   CreateDirectory "$PROFILE\PyCharmProjects"
-copyProjectExample:
-  FindClose $0
-  Pop $1
-  Pop $0
   ; install PyCharm project example
   SetOutPath $PROFILE\PyCharmProjects
   !include "python_projects.nsh"
+
+skipCopyProject:
+  FindClose $0
+  Pop $1
+  Pop $0
 
   IntCmp $IS_UPGRADE_60 1 skip_properties
   SetOutPath $INSTDIR\bin
