@@ -78,7 +78,7 @@ public class PyStdlibTypeProvider extends PyTypeProviderBase {
         final PyClass cls = (PyClass)owner;
         final List<PyClassLikeType> types = cls.getAncestorTypes(context);
         for (PyClassLikeType type : types) {
-          if ("enum.Enum".equals(type.getClassQName())) {
+          if (type != null && "enum.Enum".equals(type.getClassQName())) {
             final PyType classType = context.getType(cls);
             if (classType instanceof PyClassType) {
               return ((PyClassType)classType).toInstance();
