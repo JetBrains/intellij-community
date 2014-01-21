@@ -61,7 +61,7 @@ public class PyStdlibTypeProvider extends PyTypeProviderBase {
     if (type != null) {
       return type;
     }
-    type = getEnumType(referenceTarget, context);
+    type = getEnumType(referenceTarget, context, anchor);
     if (type != null) {
       return type;
     }
@@ -69,7 +69,8 @@ public class PyStdlibTypeProvider extends PyTypeProviderBase {
   }
 
   @Nullable
-  private static PyType getEnumType(@NotNull PsiElement referenceTarget, @NotNull TypeEvalContext context) {
+  private static PyType getEnumType(@NotNull PsiElement referenceTarget, @NotNull TypeEvalContext context,
+                                    @Nullable PsiElement anchor) {
     if (referenceTarget instanceof PyTargetExpression) {
       final PyTargetExpression target = (PyTargetExpression)referenceTarget;
       final ScopeOwner owner = ScopeUtil.getScopeOwner(target);
@@ -84,6 +85,34 @@ public class PyStdlibTypeProvider extends PyTypeProviderBase {
             }
           }
         }
+      }
+    }
+    if (referenceTarget instanceof PyQualifiedNameOwner) {
+      final PyQualifiedNameOwner qualifiedNameOwner = (PyQualifiedNameOwner)referenceTarget;
+      final String name = qualifiedNameOwner.getQualifiedName();
+      if ("enum.Enum.name".equals(name)) {
+        return PyBuiltinCache.getInstance(referenceTarget).getStrType();
+      }
+      else if ("enum.Enum.value".equals(name) && anchor instanceof PyReferenceExpression && context.maySwitchToAST(anchor)) {
+        final PyReferenceExpression anchorExpr = (PyReferenceExpression)anchor;
+        final PyExpression qualifier = anchorExpr.getQualifier();
+        if (qualifier instanceof PyReferenceExpression) {
+          final PyReferenceExpression qualifierExpr = (PyReferenceExpression)qualifier;
+          final PsiElement resolvedQualifier = qualifierExpr.getReference().resolve();
+          if (resolvedQualifier instanceof PyTargetExpression) {
+            final PyTargetExpression qualifierTarget = (PyTargetExpression)resolvedQualifier;
+            // Requires switching to AST, we cannot use getType(qualifierTarget) here, because its type is overridden by this type provider
+            if (context.maySwitchToAST(qualifierTarget)) {
+              final PyExpression value = qualifierTarget.findAssignedValue();
+              if (value != null) {
+                return context.getType(value);
+              }
+            }
+          }
+        }
+      }
+      else if ("enum.EnumMeta.__members__".equals(name)) {
+        return PyTypeParser.getTypeByName(referenceTarget, "dict[str, unknown]");
       }
     }
     return null;
