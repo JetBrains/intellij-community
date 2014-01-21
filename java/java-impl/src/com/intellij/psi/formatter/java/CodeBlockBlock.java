@@ -23,6 +23,7 @@ import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiSyntheticClass;
 import com.intellij.psi.TokenType;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
+import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.formatter.FormatterUtil;
 import com.intellij.psi.formatter.common.AbstractBlock;
 import com.intellij.psi.impl.source.tree.JavaDocElementType;
@@ -42,12 +43,13 @@ public class CodeBlockBlock extends AbstractJavaBlock {
 
   private final int myChildrenIndent;
 
-  public CodeBlockBlock(final ASTNode node,
-                        final Wrap wrap,
-                        final Alignment alignment,
-                        final Indent indent,
-                        final CommonCodeStyleSettings settings) {
-    super(node, wrap, getAlignmentStrategy(alignment, node, settings), indent, settings);
+  public CodeBlockBlock(ASTNode node,
+                        Wrap wrap,
+                        Alignment alignment,
+                        Indent indent,
+                        CommonCodeStyleSettings settings,
+                        JavaCodeStyleSettings javaSettings) {
+    super(node, wrap, getAlignmentStrategy(alignment, node, settings), indent, settings, javaSettings);
     if (isSwitchCodeBlock() && !settings.INDENT_CASE_FROM_SWITCH) {
       myChildrenIndent = 0;
     }
@@ -200,7 +202,7 @@ public class CodeBlockBlock extends AbstractJavaBlock {
 
   private SyntheticCodeBlock createCaseSectionBlock(final ArrayList<Block> localResult, final Alignment childAlignment, final Indent indent,
                                                     final Wrap childWrap) {
-    final SyntheticCodeBlock result = new SyntheticCodeBlock(localResult, childAlignment, getSettings(), indent, childWrap) {
+    final SyntheticCodeBlock result = new SyntheticCodeBlock(localResult, childAlignment, getSettings(), myJavaSettings, indent, childWrap) {
       @Override
       @NotNull
       public ChildAttributes getChildAttributes(final int newChildIndex) {

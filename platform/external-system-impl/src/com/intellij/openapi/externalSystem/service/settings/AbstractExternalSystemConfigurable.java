@@ -190,7 +190,7 @@ public abstract class AbstractExternalSystemConfigurable<
   @NotNull
   protected String getProjectName(@NotNull String path) {
     File file = new File(path);
-    return file.isDirectory() ? file.getName() : file.getParentFile().getName();
+    return file.isDirectory() || file.getParentFile() == null ? file.getName() : file.getParentFile().getName();
   }
 
   private void prepareSystemSettings(@NotNull SystemSettings s) {

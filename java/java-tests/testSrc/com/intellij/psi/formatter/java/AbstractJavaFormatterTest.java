@@ -30,10 +30,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
-import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
+import com.intellij.psi.codeStyle.*;
 import com.intellij.testFramework.LightIdeaTestCase;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.text.LineReader;
@@ -78,6 +75,11 @@ public abstract class AbstractJavaFormatterTest extends LightIdeaTestCase {
 
   protected enum Action {REFORMAT, INDENT}
 
+
+  public static JavaCodeStyleSettings getJavaSettings() {
+    return getSettings().getRootSettings().getCustomSettings(JavaCodeStyleSettings.class);
+  }
+
   private interface TestFormatAction {
     void run(PsiFile psiFile, int startOffset, int endOffset);
   }
@@ -114,6 +116,11 @@ public abstract class AbstractJavaFormatterTest extends LightIdeaTestCase {
     return rootSettings.getCommonSettings(JavaLanguage.INSTANCE);
   }
 
+  //public static JavaCodeStyleSettings getJavaSettings() {
+  //  CodeStyleSettings rootSettings = CodeStyleSettingsManager.getSettings(getProject());
+  //  return rootSettings.getCustomSettings(JavaCodeStyleSettings.class);
+  //}
+  //
   public static CommonCodeStyleSettings.IndentOptions getIndentOptions() {
     return getSettings().getRootSettings().getIndentOptions(StdFileTypes.JAVA);
   }

@@ -42,7 +42,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.TableModelEvent;
-import javax.swing.event.TableModelListener;
 import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableCellRenderer;
 import java.awt.event.ActionEvent;
@@ -64,6 +63,25 @@ public class BrowserSettingsPanel {
         return file.getName().endsWith(".app");
       }
     } : FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor();
+
+  private static final EditableColumnInfo<ConfigurableWebBrowser, String> PATH_COLUMN_INFO =
+    new EditableColumnInfo<ConfigurableWebBrowser, String>("Path") {
+      @Override
+      public String valueOf(ConfigurableWebBrowser item) {
+        return item.getPath();
+      }
+
+      @Override
+      public void setValue(ConfigurableWebBrowser item, String value) {
+        item.setPath(value);
+      }
+
+      @Nullable
+      @Override
+      public TableCellEditor getEditor(ConfigurableWebBrowser item) {
+        return new LocalPathCellEditor().fileChooserDescriptor(APP_FILE_CHOOSER_DESCRIPTOR);
+      }
+    };
 
   private static final ColumnInfo[] COLUMNS = {new EditableColumnInfo<ConfigurableWebBrowser, Boolean>() {
     @Override
@@ -117,23 +135,7 @@ public class BrowserSettingsPanel {
     public TableCellEditor getEditor(ConfigurableWebBrowser item) {
       return ComboBoxTableCellEditor.INSTANCE;
     }
-  }, new EditableColumnInfo<ConfigurableWebBrowser, String>("Path") {
-    @Override
-    public String valueOf(ConfigurableWebBrowser item) {
-      return item.getPath();
-    }
-
-    @Override
-    public void setValue(ConfigurableWebBrowser item, String value) {
-      item.setPath(value);
-    }
-
-    @Nullable
-    @Override
-    public TableCellEditor getEditor(ConfigurableWebBrowser item) {
-      return new LocalPathCellEditor().fileChooserDescriptor(APP_FILE_CHOOSER_DESCRIPTOR);
-    }
-  }};
+  }, PATH_COLUMN_INFO};
 
   private JPanel root;
 
@@ -266,11 +268,21 @@ public class BrowserSettingsPanel {
     };
     browsersEditor = new TableModelEditor<ConfigurableWebBrowser>(Collections.<ConfigurableWebBrowser>emptyList(), COLUMNS,
                                                                   itemEditor, "No web browsers configured"
-    ).modelListener(new TableModelListener() {
+    ).modelListener(new TableModelEditor.DataChangedListener<ConfigurableWebBrowser>() {
       @Override
       public void tableChanged(TableModelEvent event) {
-        // todo support inline editing (TableModelEvent is not triggered in this case)
-        if (event.getFirstRow() == 0 && getDefaultBrowser() == DefaultBrowser.FIRST) {
+        update(event.getFirstRow());
+      }
+
+      @Override
+      public void dataChanged(@NotNull ColumnInfo<ConfigurableWebBrowser, ?> columnInfo, int rowIndex) {
+        if (columnInfo == PATH_COLUMN_INFO) {
+          update(rowIndex);
+        }
+      }
+
+      private void update(int rowIndex) {
+        if (rowIndex == 0 && getDefaultBrowser() == DefaultBrowser.FIRST) {
           setCustomPathToFirstListed();
         }
       }
@@ -289,14 +301,20 @@ public class BrowserSettingsPanel {
   }
 
   public boolean isModified() {
-    GeneralSettings settings = GeneralSettings.getInstance();
-    if (!Comparing.strEqual(settings.getBrowserPath(), alternativeBrowserPathField.getText()) ||
-        settings.isConfirmExtractFiles() != confirmExtractFiles.isSelected()) {
+    WebBrowserManager browserManager = WebBrowserManager.getInstance();
+    GeneralSettings generalSettings = GeneralSettings.getInstance();
+
+    DefaultBrowser defaultBrowser = getDefaultBrowser();
+    if (browserManager.getDefaultBrowser() != defaultBrowser || generalSettings.isConfirmExtractFiles() != confirmExtractFiles.isSelected()) {
       return true;
     }
 
-    WebBrowserManager browserManager = WebBrowserManager.getInstance();
-    return browserManager.getDefaultBrowser() != getDefaultBrowser() || browsersEditor.isModified(browserManager.getList());
+    if (defaultBrowser == DefaultBrowser.ALTERNATIVE &&
+        !Comparing.strEqual(generalSettings.getBrowserPath(), alternativeBrowserPathField.getText())) {
+      return true;
+    }
+
+    return browsersEditor.isModified(browserManager.getList());
   }
 
   public void apply() throws ConfigurationException {

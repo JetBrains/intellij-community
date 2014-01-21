@@ -127,8 +127,12 @@ class ModuleRedeclarator(object):
                 for buf in self.classes_buffs:
                     fname = build_output_name(mod_path, buf.name)
                     dummy = fopen(fname, "w")
+                    self.header_buf.flush(dummy)
                     buf.flush(dummy)
-                    data += "from " + buf.name + " import " + buf.name + "\n"
+                    data += "from "
+                    if version[0] >= 3:
+                        data += "."
+                    data += buf.name + " import " + buf.name + "\n"
                     dummy.close()
 
                 init.write(data)

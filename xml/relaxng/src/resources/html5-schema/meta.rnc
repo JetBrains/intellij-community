@@ -55,8 +55,8 @@ datatypes w = "http://whattf.org/datatype-draft"
 		(	common.attrs
 		&	(	common.attrs.aria.landmark.application
 			|	common.attrs.aria.landmark.document
-			|	common.attrs.aria.implicit.structure
 			|	common.attrs.aria.role.presentation
+			|	common.attrs.aria.implicit.document
 			)?
 		&	body.attrs.onafterprint?
 		&	body.attrs.onbeforeprint?

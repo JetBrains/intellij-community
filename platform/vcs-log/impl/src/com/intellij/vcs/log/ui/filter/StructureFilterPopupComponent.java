@@ -24,7 +24,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.VcsLogFilter;
-import com.intellij.vcs.log.data.VcsLogStructureFilter;
+import com.intellij.vcs.log.data.VcsLogStructureFilterImpl;
 import com.intellij.vcs.log.ui.VcsStructureChooser;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -53,7 +53,7 @@ class StructureFilterPopupComponent extends FilterPopupComponent {
   @Nullable
   @Override
   protected Collection<VcsLogFilter> getFilters() {
-    return getValue() == ALL || myFiles.isEmpty() ? null : Collections.<VcsLogFilter>singleton(new VcsLogStructureFilter(myFiles, myRoots));
+    return getValue() == ALL || myFiles.isEmpty() ? null : Collections.<VcsLogFilter>singleton(new VcsLogStructureFilterImpl(myFiles, myRoots));
   }
 
   private void setValue(@NotNull Collection<VirtualFile> files) {

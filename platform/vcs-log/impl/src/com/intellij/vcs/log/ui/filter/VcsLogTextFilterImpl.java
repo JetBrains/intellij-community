@@ -13,45 +13,29 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.vcs.log.data;
+package com.intellij.vcs.log.ui.filter;
 
 import com.intellij.vcs.log.VcsFullCommitDetails;
+import com.intellij.vcs.log.VcsLogTextFilter;
+import com.intellij.vcs.log.data.VcsLogDetailsFilter;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import java.util.Date;
+public class VcsLogTextFilterImpl implements VcsLogDetailsFilter, VcsLogTextFilter {
 
-public class VcsLogDateFilter implements VcsLogDetailsFilter {
+  @NotNull private final String myText;
 
-  @Nullable private final Date myAfter;
-  @Nullable private final Date myBefore;
-
-  public VcsLogDateFilter(@Nullable Date after, @Nullable Date before) {
-    myAfter = after;
-    myBefore = before;
+  public VcsLogTextFilterImpl(@NotNull String text) {
+    myText = text;
   }
 
   @Override
   public boolean matches(@NotNull VcsFullCommitDetails details) {
-    Date date = new Date(details.getTime());  // Git itself also filters by commit time, not author time
-    boolean matches = true;
-    if (myAfter != null) {
-      matches &= date.after(myAfter);
-    }
-    if (myBefore != null) {
-      matches &= date.before(myBefore);
-    }
-    return matches;
+    return details.getFullMessage().toLowerCase().contains(myText.toLowerCase());
   }
 
-  @Nullable
-  public Date getAfter() {
-    return myAfter;
+  @Override
+  @NotNull
+  public String getText() {
+    return myText;
   }
-
-  @Nullable
-  public Date getBefore() {
-    return myBefore;
-  }
-
 }

@@ -62,6 +62,7 @@ datatypes w = "http://whattf.org/datatype-draft"
 	ul.attrs =
 		(	common.attrs
 		&	(	(	common.attrs.aria.role.directory
+				|	common.attrs.aria.role.group
 				|	common.attrs.aria.role.list
 				|	common.attrs.aria.role.listbox
 				|	common.attrs.aria.role.menu
@@ -71,11 +72,13 @@ datatypes w = "http://whattf.org/datatype-draft"
 				|	common.attrs.aria.role.tree
 				|	common.attrs.aria.role.presentation
 				)
-				|	common.attrs.aria.implicit.region
+				|	common.attrs.aria.implicit.list
 			)?
 		)
 	ul.inner =
-		( li.elem* )
+		(	li.elem*
+		&	common.elem.script-supporting*
+		)
 
 	common.elem.flow |= ul.elem
 
@@ -85,7 +88,16 @@ datatypes w = "http://whattf.org/datatype-draft"
 		element li { li.inner & li.attrs }
 	li.attrs =
 		(	common.attrs 
-		&	common.attrs.aria?
+		&	(	common.attrs.aria.implicit.listitem
+			|	common.attrs.aria.role.listitem
+			|	common.attrs.aria.role.menuitem
+			|	common.attrs.aria.role.menuitemcheckbox
+			|	common.attrs.aria.role.menuitemradio
+			|	common.attrs.aria.role.option
+			|	common.attrs.aria.role.tab
+			|	common.attrs.aria.role.treeitem
+			|	common.attrs.aria.role.presentation
+			)?
 		)
 	li.inner =
 		( common.inner.flow )
@@ -109,7 +121,7 @@ datatypes w = "http://whattf.org/datatype-draft"
 				|	common.attrs.aria.role.tree
 				|	common.attrs.aria.role.presentation
 				)
-				|	common.attrs.aria.implicit.region
+				|	common.attrs.aria.implicit.list
 			)?
 		)
 		ol.attrs.start =
@@ -125,7 +137,9 @@ datatypes w = "http://whattf.org/datatype-draft"
 				w:string "1" | w:string "a" | w:string "A" | w:string "i" | w:string "I"
 			}
 	ol.inner =
-		( oli.elem* )
+		(	oli.elem*
+		&	common.elem.script-supporting*
+		)
 
 	common.elem.flow |= ol.elem
 
@@ -136,7 +150,14 @@ datatypes w = "http://whattf.org/datatype-draft"
 	oli.attrs =
 		(	common.attrs
 		&	oli.attrs.value?
-		&	common.attrs.aria?
+		&	(	common.attrs.aria.implicit.listitem
+			|	common.attrs.aria.role.listitem
+			|	common.attrs.aria.role.menuitemcheckbox
+			|	common.attrs.aria.role.menuitemradio
+			|	common.attrs.aria.role.option
+			|	common.attrs.aria.role.treeitem
+			|	common.attrs.aria.role.presentation
+			)?
 		)
 		oli.attrs.value =
 			attribute value {
@@ -157,8 +178,13 @@ datatypes w = "http://whattf.org/datatype-draft"
 		&	common.attrs.aria?
 		)
 	dl.inner =
-		(	(	dt.elem+
-			,	dd.elem+
+		(	(	(	dt.elem
+				&	common.elem.script-supporting*
+				)+
+			,
+				(	dd.elem
+				&	common.elem.script-supporting*
+				)+
 			)*
 		)
 
@@ -212,8 +238,7 @@ datatypes w = "http://whattf.org/datatype-draft"
 		element legend { legend.inner & legend.attrs }
 	legend.attrs =
 		(	common.attrs
-		&	(	common.attrs.aria.implicit.region
-			|	common.attrs.aria.role.presentation
+		&	(	common.attrs.aria.role.presentation
 			|	common.attrs.aria.role.menuitem
 			)?
 		)	

@@ -173,12 +173,12 @@ public class PyArgumentListInspection extends PyInspection {
           PyType inside_type = context.getType(content);
           if (inside_type != null && !PyTypeChecker.isUnknown(inside_type)) {
             if (((PyStarArgument)arg).isKeyword()) {
-              if (!PyABCUtil.isSubtype(inside_type, PyNames.MAPPING)) {
+              if (!PyABCUtil.isSubtype(inside_type, PyNames.MAPPING, context)) {
                 holder.registerProblem(arg, PyBundle.message("INSP.expected.dict.got.$0", inside_type.getName()));
               }
             }
             else { // * arg
-              if (!PyABCUtil.isSubtype(inside_type, PyNames.ITERABLE)) {
+              if (!PyABCUtil.isSubtype(inside_type, PyNames.ITERABLE, context)) {
                 holder.registerProblem(arg, PyBundle.message("INSP.expected.iter.got.$0", inside_type.getName()));
               }
             }

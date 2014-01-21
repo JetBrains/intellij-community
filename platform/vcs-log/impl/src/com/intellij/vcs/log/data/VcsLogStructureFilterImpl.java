@@ -24,17 +24,18 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.vcs.log.VcsFullCommitDetails;
+import com.intellij.vcs.log.VcsLogStructureFilter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 
-public class VcsLogStructureFilter implements VcsLogDetailsFilter {
+public class VcsLogStructureFilterImpl implements VcsLogDetailsFilter, VcsLogStructureFilter {
 
   @NotNull private final Collection<VirtualFile> myFiles;
   @NotNull private final MultiMap<VirtualFile, VirtualFile> myFilesByRoots;
 
-  public VcsLogStructureFilter(@NotNull Collection<VirtualFile> files, Collection<VirtualFile> roots) {
+  public VcsLogStructureFilterImpl(@NotNull Collection<VirtualFile> files, Collection<VirtualFile> roots) {
     myFiles = files;
     myFilesByRoots = groupFilesByVcsRoots(files, roots);
   }
@@ -87,6 +88,7 @@ public class VcsLogStructureFilter implements VcsLogDetailsFilter {
     }) != null;
   }
 
+  @Override
   @NotNull
   public Collection<VirtualFile> getFiles(@NotNull VirtualFile root) {
     return myFilesByRoots.get(root);

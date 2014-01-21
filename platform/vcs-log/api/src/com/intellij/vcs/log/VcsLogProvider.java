@@ -84,7 +84,12 @@ public interface VcsLogProvider {
    */
   @NotNull
   List<? extends VcsFullCommitDetails> getFilteredDetails(@NotNull VirtualFile root,
-                                                          @NotNull Collection<VcsLogFilter> filters, int maxCount) throws VcsException;
+                                                          @NotNull Collection<VcsLogBranchFilter> branchFilters,
+                                                          @NotNull Collection<VcsLogUserFilter> userFilters,
+                                                          @NotNull Collection<VcsLogDateFilter> dateFilters,
+                                                          @NotNull Collection<VcsLogTextFilter> textFilters,
+                                                          @NotNull Collection<VcsLogStructureFilter> structureFilters,
+                                                          int maxCount) throws VcsException;
 
   /**
    * Returns the name of current user as specified for the given root,

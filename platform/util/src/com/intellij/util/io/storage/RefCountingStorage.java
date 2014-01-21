@@ -69,19 +69,20 @@ public class RefCountingStorage extends AbstractStorage {
 
   private BufferExposingByteArrayOutputStream internalReadStream(int record) throws IOException {
     waitForPendingWriteForRecord(record);
+    byte[] result;
 
     synchronized (myLock) {
+      result = super.readBytes(record);
+    }
 
-      byte[] result = super.readBytes(record);
-      InflaterInputStream in = new CustomInflaterInputStream(result);
-      try {
-        final BufferExposingByteArrayOutputStream outputStream = new BufferExposingByteArrayOutputStream();
-        StreamUtil.copyStreamContent(in, outputStream);
-        return outputStream;
-      }
-      finally {
-        in.close();
-      }
+    InflaterInputStream in = new CustomInflaterInputStream(result);
+    try {
+      final BufferExposingByteArrayOutputStream outputStream = new BufferExposingByteArrayOutputStream();
+      StreamUtil.copyStreamContent(in, outputStream);
+      return outputStream;
+    }
+    finally {
+      in.close();
     }
   }
 

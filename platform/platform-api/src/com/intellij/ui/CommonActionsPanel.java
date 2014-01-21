@@ -29,6 +29,8 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.InputEvent;
+import java.awt.event.KeyEvent;
 import java.util.*;
 
 /**
@@ -241,6 +243,18 @@ public class CommonActionsPanel extends JPanel {
 
       final JComponent c = getContextComponent();
       if (c instanceof JTable || c instanceof JList) {
+        if (myButton == Buttons.EDIT) {
+          InputEvent inputEvent = e.getInputEvent();
+          if (inputEvent instanceof KeyEvent &&
+              c instanceof JTable &&
+              ((JTable)c).isEditing() &&
+              !(inputEvent.getComponent() instanceof ActionButtonComponent) // action button active in any case in the toolbar
+            ) {
+            e.getPresentation().setEnabled(false);
+            return;
+          }
+        }
+
         final ListSelectionModel model = c instanceof JTable ? ((JTable)c).getSelectionModel() 
                                                              : ((JList)c).getSelectionModel();
         final int size = c instanceof JTable ? ((JTable)c).getRowCount()  

@@ -24,10 +24,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
-import com.intellij.psi.codeStyle.CodeStyleSettingsCustomizable;
-import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
-import com.intellij.psi.codeStyle.DisplayPriority;
-import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider;
+import com.intellij.psi.codeStyle.*;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.PlatformUtils;
@@ -61,6 +58,17 @@ public class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
   @Override
   public void customizeSettings(@NotNull CodeStyleSettingsCustomizable consumer, @NotNull SettingsType settingsType) {
     consumer.showAllStandardOptions();
+    if (settingsType == SettingsType.SPACING_SETTINGS) {
+      consumer.showCustomOption(JavaCodeStyleSettings.class, "SPACES_WITHIN_ANGLE_BRACKETS", "Angle brackets",CodeStyleSettingsCustomizable.SPACES_WITHIN);
+
+      String groupName = CodeStyleSettingsCustomizable.SPACES_IN_TYPE_ARGUMENTS;
+      consumer.moveStandardOption("SPACE_AFTER_COMMA_IN_TYPE_ARGUMENTS", groupName);
+      consumer.showCustomOption(JavaCodeStyleSettings.class, "SPACE_AFTER_CLOSING_ANGLE_BRACKET_IN_TYPE_ARGUMENT", "After closing angle bracket", groupName);
+
+      groupName = CodeStyleSettingsCustomizable.SPACES_IN_TYPE_PARAMETERS;
+      consumer.showCustomOption(JavaCodeStyleSettings.class, "SPACE_BEFORE_OPENING_ANGLE_BRACKET_IN_TYPE_PARAMETER", "Before opening angle bracket", groupName);
+      consumer.showCustomOption(JavaCodeStyleSettings.class, "SPACE_AROUND_TYPE_BOUNDS_IN_TYPE_PARAMETERS", "Around type bounds", groupName);
+    }
   }
 
   @Override
@@ -180,7 +188,7 @@ public class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
   private static final String SPACING_SAMPLE =
     "@Annotation(param1 = \"value1\", param2 = \"value2\")\n" +
     "@SuppressWarnings({\"ALL\"})\n" +
-    "public class Foo<T, U> {\n" +
+    "public class Foo<T extends Bar & Abba, U> {\n" +
     "  int[] X = new int[]{1, 3, 5, 6, 7, 87, 1213, 2};\n" +
     "\n" +
     "  public void foo(int x, int y) {" +
@@ -209,13 +217,20 @@ public class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
     "      finally {\n" +
     "        int[] arr = (int[])g(y);\n" +
     "        x = y >= 0 ? arr[y] : -1;\n" +
+    "        Map<String, String> sMap = new HashMap<String, String>();\n" +
+    "        Bar.<String, Integer>mess(null);\n" +
     "      }\n" +
     "    }\n" +
     "    while (true);\n" +
     "  }\n" +
     "  void bar(){{return;}}\n" +
     "}\n" +
-    "class Bar {}";
+    "class Bar {\n" +
+    "    static <U, T> U mess(T t) {\n" +
+    "        return null;\n" +
+    "    }\n" +
+    "}\n" +
+    "interface Abba {}";
 
   private static final String WRAPPING_CODE_SAMPLE =
     "/*\n" +

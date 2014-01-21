@@ -15,6 +15,8 @@
  */
 package com.intellij.util.io;
 
+import com.intellij.util.ArrayUtil;
+
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.Arrays;
@@ -66,6 +68,11 @@ public class UnsyncByteArrayOutputStream extends OutputStream {
   }
 
   public byte[] toByteArray() {
+    if (myBuffer.length == myCount) {
+      byte[] buffer = myBuffer;
+      myBuffer = ArrayUtil.EMPTY_BYTE_ARRAY;
+      return buffer;
+    }
     return Arrays.copyOf(myBuffer, myCount);
   }
 

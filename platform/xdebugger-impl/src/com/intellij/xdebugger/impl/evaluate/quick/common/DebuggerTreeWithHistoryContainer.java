@@ -16,8 +16,12 @@
 package com.intellij.xdebugger.impl.evaluate.quick.common;
 
 import com.intellij.codeInsight.CodeInsightBundle;
+import com.intellij.concurrency.ResultConsumer;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.xdebugger.XDebuggerBundle;
@@ -28,39 +32,45 @@ import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
-import java.util.ArrayList;
+import java.util.*;
+import java.util.List;
 
 /**
  * @author nik
  */
-public abstract class AbstractValueHintTreeComponent<H> {
+abstract class DebuggerTreeWithHistoryContainer<D> {
+  private static final Logger LOG = Logger.getInstance(DebuggerTreeWithHistoryContainer.class);
   private static final int HISTORY_SIZE = 11;
-  private final ArrayList<H> myHistory = new ArrayList<H>();
+  private final List<D> myHistory = new ArrayList<D>();
   private int myCurrentIndex = -1;
-  private final Tree myTree;
-  private JPanel myMainPanel;
+  protected final DebuggerTreeCreator<D> myTreeCreator;
+  @NotNull protected final Project myProject;
 
-  protected AbstractValueHintTreeComponent(@NotNull Tree tree, @NotNull H initialItem) {
-    myTree = tree;
+  protected DebuggerTreeWithHistoryContainer(@NotNull D initialItem, @NotNull DebuggerTreeCreator<D> creator, @NotNull Project project) {
+    myTreeCreator = creator;
+    myProject = project;
     myHistory.add(initialItem);
   }
 
-  public JPanel getMainPanel() {
-    if (myMainPanel == null) {
-      myMainPanel = new JPanel(new BorderLayout());
-      myMainPanel.add(ScrollPaneFactory.createScrollPane(myTree), BorderLayout.CENTER);
-      myMainPanel.add(createToolbar(myMainPanel), BorderLayout.NORTH);
-    }
-    return myMainPanel;
+  protected JPanel createMainPanel(Tree tree) {
+    JPanel mainPanel = new JPanel(new BorderLayout());
+    mainPanel.add(ScrollPaneFactory.createScrollPane(tree), BorderLayout.CENTER);
+    mainPanel.add(createToolbar(mainPanel, tree), BorderLayout.NORTH);
+    return mainPanel;
   }
 
-  private void updateHint() {
-    updateTree(myHistory.get(myCurrentIndex));
+  private void updateTree() {
+    D item = myHistory.get(myCurrentIndex);
+    updateTree(item);
   }
 
-  protected abstract void updateTree(H selectedItem);
+  protected void updateTree(@NotNull D selectedItem) {
+    updateContainer(myTreeCreator.createTree(selectedItem), myTreeCreator.getTitle(selectedItem));
+  }
 
-  protected void addToHistory(final H item) {
+  protected abstract void updateContainer(Tree tree, String title);
+
+  protected void addToHistory(final D item) {
     if (myCurrentIndex < HISTORY_SIZE) {
       if (myCurrentIndex != -1) {
         myCurrentIndex += 1;
@@ -71,9 +81,9 @@ public abstract class AbstractValueHintTreeComponent<H> {
     }
   }
 
-  private JComponent createToolbar(JPanel parent) {
+  private JComponent createToolbar(JPanel parent, Tree tree) {
     DefaultActionGroup group = new DefaultActionGroup();
-    group.add(new SetAsRootAction());
+    group.add(new SetAsRootAction(tree));
 
     AnAction back = new GoBackwardAction();
     back.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_LEFT, InputEvent.ALT_MASK)), parent);
@@ -86,8 +96,6 @@ public abstract class AbstractValueHintTreeComponent<H> {
     return ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, group, true).getComponent();
   }
 
-  protected abstract void setNodeAsRoot(Object node);
-
   private class GoForwardAction extends AnAction {
     public GoForwardAction() {
       super(CodeInsightBundle.message("quick.definition.forward"), null, AllIcons.Actions.Forward);
@@ -97,7 +105,7 @@ public abstract class AbstractValueHintTreeComponent<H> {
     public void actionPerformed(AnActionEvent e) {
       if (myHistory.size() > 1 && myCurrentIndex < myHistory.size() - 1){
         myCurrentIndex ++;
-        updateHint();
+        updateTree();
       }
     }
 
@@ -116,7 +124,7 @@ public abstract class AbstractValueHintTreeComponent<H> {
     public void actionPerformed(AnActionEvent e) {
       if (myHistory.size() > 1 && myCurrentIndex > 0) {
         myCurrentIndex--;
-        updateHint();
+        updateTree();
       }
     }
 
@@ -128,9 +136,12 @@ public abstract class AbstractValueHintTreeComponent<H> {
   }
 
   private class SetAsRootAction extends AnAction {
-    public SetAsRootAction() {
+    private Tree myTree;
+
+    public SetAsRootAction(Tree tree) {
       super(XDebuggerBundle.message("xdebugger.popup.value.tree.set.root.action.tooltip"),
             XDebuggerBundle.message("xdebugger.popup.value.tree.set.root.action.tooltip"), AllIcons.Modules.UnmarkWebroot);
+      myTree = tree;
     }
 
     @Override
@@ -143,7 +154,26 @@ public abstract class AbstractValueHintTreeComponent<H> {
     public void actionPerformed(AnActionEvent e) {
       TreePath path = myTree.getSelectionPath();
       if (path != null) {
-        setNodeAsRoot(path.getLastPathComponent());
+        Object node = path.getLastPathComponent();
+        myTreeCreator.createDescriptorByNode(node, new ResultConsumer<D>() {
+          @Override
+          public void onSuccess(final D value) {
+            if (value != null) {
+              ApplicationManager.getApplication().invokeLater(new Runnable() {
+                @Override
+                public void run() {
+                  addToHistory(value);
+                  updateTree(value);
+                }
+              });
+            }
+          }
+
+          @Override
+          public void onFailure(Throwable t) {
+            LOG.debug(t);
+          }
+        });
       }
     }
   }
