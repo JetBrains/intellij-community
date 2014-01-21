@@ -73,7 +73,7 @@ public class TableUtil {
 
   @NotNull
   public static List<Object[]> removeSelectedItems(@NotNull JTable table, @Nullable ItemChecker applyable) {
-    if (table.isEditing()){
+    if (table.isEditing()) {
       table.getCellEditor().stopCellEditing();
     }
     TableModel model = table.getModel();
@@ -104,7 +104,8 @@ public class TableUtil {
     else if (table.getSelectedRow() == -1) {
       if (minSelectionIndex >= model.getRowCount()) {
         selectionModel.setSelectionInterval(model.getRowCount() - 1, model.getRowCount() - 1);
-      } else {
+      }
+      else {
         selectionModel.setSelectionInterval(minSelectionIndex, minSelectionIndex);
       }
     }
