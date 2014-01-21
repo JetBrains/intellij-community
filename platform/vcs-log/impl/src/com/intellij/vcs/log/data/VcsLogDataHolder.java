@@ -24,6 +24,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.VcsException;
@@ -494,8 +495,16 @@ public class VcsLogDataHolder implements Disposable {
         Collection<List<? extends TimedVcsCommit>> logs = ContainerUtil.newArrayList();
         final Map<Hash, VcsFullCommitDetails> allDetails = ContainerUtil.newHashMap();
         for (Map.Entry<VirtualFile, VcsLogProvider> entry : myLogProviders.entrySet()) {
+          VirtualFile root = entry.getKey();
+
+          List<VcsLogStructureFilter> rootMatchingStructureFilters = filterStructureFiltersByRoot(root, structureFilters);
+          if (rootMatchingStructureFilters.isEmpty() && !structureFilters.isEmpty()) {
+            // there were structure filters but none matches the root
+            continue;
+          }
+
           List<? extends VcsFullCommitDetails> details = entry.getValue().getFilteredDetails(
-            entry.getKey(), branchFilters, userFilters, dateFilters, textFilters, structureFilters, maxCount);
+            root, branchFilters, userFilters, dateFilters, textFilters, rootMatchingStructureFilters, maxCount);
           logs.add(getCommitsFromDetails(details));
           for (VcsFullCommitDetails detail : details) {
             allDetails.put(detail.getHash(), detail);
@@ -533,6 +542,17 @@ public class VcsLogDataHolder implements Disposable {
         });
       }
     }, "Looking for more results...");
+  }
+
+  @NotNull
+  private static List<VcsLogStructureFilter> filterStructureFiltersByRoot(@NotNull final VirtualFile root,
+                                                                          @NotNull List<VcsLogStructureFilter> structureFilters) {
+    return ContainerUtil.filter(structureFilters, new Condition<VcsLogStructureFilter>() {
+      @Override
+      public boolean value(VcsLogStructureFilter filter) {
+        return !filter.getFiles(root).isEmpty();
+      }
+    });
   }
 
   @NotNull
