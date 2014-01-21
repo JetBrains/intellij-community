@@ -18,13 +18,13 @@ package com.intellij.ui;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.util.containers.SmartHashSet;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.HashSet;
 import java.util.Set;
 
 /**
@@ -104,7 +104,7 @@ public abstract class AnActionButton extends AnAction implements ShortcutProvide
   
   public final void addCustomUpdater(@NotNull AnActionButtonUpdater updater) {
     if (myUpdaters == null) {
-      myUpdaters = new HashSet<AnActionButtonUpdater>();
+      myUpdaters = new SmartHashSet<AnActionButtonUpdater>();
     }
     myUpdaters.add(updater);
   }
