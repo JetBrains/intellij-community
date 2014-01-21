@@ -355,22 +355,46 @@ public class GradleExecutionHelper {
   }
 
   @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
-  public static void setInitScript(LongRunningOperation longRunningOperation) {
+  public static boolean setInitScript(@NotNull LongRunningOperation longRunningOperation, boolean isBuildSrcProject) {
     try {
       InputStream stream = GradleProjectResolver.class.getResourceAsStream("/org/jetbrains/plugins/gradle/model/internal/init.gradle");
-      if (stream == null) return;
+      if (stream == null) return isBuildSrcProject;
 
       String jarPath = PathUtil.getCanonicalPath(PathUtil.getJarPathForClass(GradleProjectResolver.class));
       String s = FileUtil.loadTextAndClose(stream).replace("${JAR_PATH}", jarPath);
+
+      if(isBuildSrcProject) {
+        String buildSrcDefaultInitScript = getBuildSrcDefaultInitScript();
+        if(buildSrcDefaultInitScript == null) return false;
+        s += buildSrcDefaultInitScript;
+      }
 
       final File tempFile = FileUtil.createTempFile("ijinit", '.' + GradleConstants.EXTENSION, true);
       FileUtil.writeToFile(tempFile, s);
 
       String[] buildExecutorArgs = new String[]{"--init-script", tempFile.getAbsolutePath()};
       longRunningOperation.withArguments(buildExecutorArgs);
+
+      return true;
     }
     catch (Exception e) {
       LOG.warn("Can't use IJ gradle init script", e);
+      return false;
+    }
+  }
+
+  @Nullable
+  @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
+  public static String getBuildSrcDefaultInitScript() {
+    try {
+      InputStream stream = GradleProjectResolver.class.getResourceAsStream("/org/jetbrains/plugins/gradle/model/internal/buildSrcInit.gradle");
+      if (stream == null) return null;
+
+      return FileUtil.loadTextAndClose(stream);
+    }
+    catch (Exception e) {
+      LOG.warn("Can't use IJ gradle init script", e);
+      return null;
     }
   }
 
