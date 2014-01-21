@@ -392,13 +392,6 @@ public class PyTargetExpressionImpl extends PyPresentableElementImpl<PyTargetExp
     }
     else if (iterableType instanceof PyClassType) {
       final PyClass pyClass = ((PyClassType)iterableType).getPyClass();
-      for (PyTypeProvider provider: Extensions.getExtensions(PyTypeProvider.EP_NAME)) {
-        final PyType iterationType = provider.getIterationType(pyClass);
-        if (iterationType != null) {
-          result = iterationType;
-          break;
-        }
-      }
       if (PyABCUtil.isSubclass(pyClass, PyNames.ITERATOR)) {
         final PyFunction iterateMethod = pyClass.findMethodByName(PyNames.ITER, true);
         PyType iterateMethodType = null;

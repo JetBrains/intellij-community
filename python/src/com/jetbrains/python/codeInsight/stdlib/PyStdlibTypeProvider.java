@@ -137,18 +137,6 @@ public class PyStdlibTypeProvider extends PyTypeProviderBase {
 
   @Nullable
   @Override
-  public PyType getIterationType(@NotNull PyClass iterable) {
-    final PyBuiltinCache builtinCache = PyBuiltinCache.getInstance(iterable);
-    if (builtinCache.hasInBuiltins(iterable)) {
-      if ("file".equals(iterable.getName())) {
-        return builtinCache.getStrType();
-      }
-    }
-    return null;
-  }
-
-  @Nullable
-  @Override
   public PyType getContextManagerVariableType(@NotNull PyClass contextManager, @NotNull PyExpression withExpression, @NotNull TypeEvalContext context) {
     if ("contextlib.closing".equals(contextManager.getQualifiedName()) && withExpression instanceof PyCallExpression) {
       PyExpression closee = ((PyCallExpression)withExpression).getArgument(0, PyExpression.class);
