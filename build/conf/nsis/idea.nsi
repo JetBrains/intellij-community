@@ -709,7 +709,7 @@ skip_ipr:
   ; install PyCharm project example
   Push $0
   StrCpy $0 $INSTDIR
-  StrCpy $INSTDIR ${PROFILE}\PyCharmProjects
+  StrCpy $INSTDIR $PROFILE\PyCharmProjects
 ;  SetOutPath ${PROFILE}\PyCharmProjects
   !include "python_projects.nsh"
   StrCpy $INSTDIR $0
