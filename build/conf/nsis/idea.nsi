@@ -622,7 +622,7 @@ FunctionEnd
 ; Installer sections
 ;------------------------------------------------------------------------------
 Section "IDEA Files" CopyIdeaFiles
-   MessageBox MB_OK "Profile: $PROFILE\PyCharmProjects"
+;   MessageBox MB_OK "Profile: $PROFILE\PyCharmProjects"
 ;  StrCpy $baseRegKey "HKCU"
 ;  !insertmacro INSTALLOPTIONS_READ $R2 "Desktop.ini" "Field 3" "State"
 ;  StrCmp $R2 1 continue_for_current_user
@@ -716,6 +716,7 @@ skip_ipr:
   !include "python_projects.nsh"
 
 skipCopyProject:
+SetOutPath $INSTDIR
 ;  FindClose $0
 ;  Pop $1
 ;  Pop $0
