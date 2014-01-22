@@ -54,6 +54,10 @@ public class PyPep8NamingInspectionTest extends PyTestCase {
     doTest();
   }
 
+  public void testGlobals() {
+    doTest();
+  }
+
   public void testTest() {
     doTest();
   }
