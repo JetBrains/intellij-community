@@ -20,6 +20,7 @@ import com.intellij.psi.PsiNameValuePair;
 import com.intellij.psi.PsiParameter;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import de.plushnikov.intellij.plugin.processor.AbstractProcessor;
 import de.plushnikov.intellij.plugin.processor.clazz.AbstractClassProcessor;
 import de.plushnikov.intellij.plugin.processor.field.AbstractFieldProcessor;
@@ -60,6 +61,8 @@ public class BaseDelombokHandler implements CodeInsightActionHandler {
       for (AbstractFieldProcessor fieldProcessor : fieldProcessors) {
         processFields(project, psiClass, fieldProcessor);
       }
+
+      JavaCodeStyleManager.getInstance(project).optimizeImports(file);
 
       UndoUtil.markPsiFileForUndo(file);
     }
