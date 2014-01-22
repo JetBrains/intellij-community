@@ -9,6 +9,7 @@ def isMac = System.getProperty("os.name").toLowerCase().startsWith("mac")
 def args = [
         "-Xmx450m",
         "-XX:MaxPermSize=430m",
+        "-Dfile.encoding=UTF-8"
 ]
 if (isMac) args << "-d32";
 
