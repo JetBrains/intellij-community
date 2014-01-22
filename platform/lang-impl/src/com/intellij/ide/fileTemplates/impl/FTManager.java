@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -154,7 +154,7 @@ class FTManager {
     }
   }
 
-  public void updateTemplates(Collection<FileTemplate> newTemplates) {
+  public void updateTemplates(@NotNull Collection<FileTemplate> newTemplates) {
     final Set<String> toDisable = new HashSet<String>();
     for (DefaultTemplate template : myDefaultTemplates) {
       toDisable.add(template.getQualifiedName());
