@@ -39,6 +39,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
+import javax.swing.table.TableModel;
 import java.lang.reflect.Constructor;
 import java.util.ArrayList;
 import java.util.List;
@@ -61,6 +62,7 @@ public class TableModelEditor<T> implements ElementProducer<T> {
 
     model = new MyListTableModel<T>(columns, new ArrayList<T>(items), this);
     table = new TableView<T>(model);
+    table.setDefaultEditor(Enum.class, ComboBoxTableCellEditor.INSTANCE);
     table.setStriped(true);
     new TableSpeedSearch(table);
     if (columns[0].getColumnClass() == Boolean.class && columns[0].getName().isEmpty()) {
@@ -68,7 +70,8 @@ public class TableModelEditor<T> implements ElementProducer<T> {
     }
 
     table.getEmptyText().setText(emptyText);
-    toolbarDecorator = ToolbarDecorator.createDecorator(table, this);
+    MyRemoveAction removeAction = new MyRemoveAction();
+    toolbarDecorator = ToolbarDecorator.createDecorator(table, this).setRemoveAction(removeAction).setRemoveActionUpdater(removeAction);
 
     if (itemEditor instanceof DialogItemEditor) {
       toolbarDecorator.setEditAction(new AnActionButtonRunnable() {
@@ -129,6 +132,10 @@ public class TableModelEditor<T> implements ElementProducer<T> {
      * Class must have empty constructor.
      */
     public abstract Class<T> getItemClass();
+
+    public boolean isRemovable(@NotNull T item) {
+      return true;
+    }
   }
 
   public static abstract class DialogItemEditor<T> extends ItemEditor<T> {
@@ -330,5 +337,31 @@ public class TableModelEditor<T> implements ElementProducer<T> {
 
   public void reset(@NotNull List<T> items) {
     model.setItems(new ArrayList<T>(items));
+  }
+
+  private class MyRemoveAction implements AnActionButtonRunnable, AnActionButtonUpdater, TableUtil.ItemChecker {
+    @Override
+    public void run(AnActionButton button) {
+      if (TableUtil.doRemoveSelectedItems(table, model, this)) {
+        table.requestFocus();
+        TableUtil.updateScroller(table, false);
+      }
+    }
+
+    @Override
+    public boolean isOperationApplyable(@NotNull TableModel ignored, int row) {
+      T item = model.getItem(row);
+      return item != null && itemEditor.isRemovable(item);
+    }
+
+    @Override
+    public boolean isEnabled(AnActionEvent e) {
+      for (T item : table.getSelectedObjects()) {
+        if (itemEditor.isRemovable(item)) {
+          return true;
+        }
+      }
+      return false;
+    }
   }
 }

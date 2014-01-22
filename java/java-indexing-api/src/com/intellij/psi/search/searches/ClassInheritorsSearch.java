@@ -156,7 +156,7 @@ public class ClassInheritorsSearch extends ExtensibleQueryFactory<PsiClass, Clas
   }
 
   public static Query<PsiClass> search(@NotNull SearchParameters parameters) {
-    return INSTANCE.createQuery(parameters);
+    return INSTANCE.createUniqueResultsQuery(parameters);
   }
 
   public static Query<PsiClass> search(@NotNull final PsiClass aClass, @NotNull SearchScope scope, final boolean checkDeep, final boolean checkInheritance) {

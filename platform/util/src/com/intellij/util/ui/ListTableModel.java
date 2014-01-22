@@ -22,7 +22,7 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.util.*;
 
-public class ListTableModel<Item> extends TableViewModel<Item> implements ItemRemovable, EditableModel {
+public class ListTableModel<Item> extends TableViewModel<Item> implements EditableModel {
   private ColumnInfo[] myColumnInfos;
   private List<Item> myItems;
   private int mySortByColumn;

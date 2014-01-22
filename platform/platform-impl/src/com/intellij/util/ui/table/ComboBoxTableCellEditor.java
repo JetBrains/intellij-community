@@ -15,42 +15,34 @@
  */
 package com.intellij.util.ui.table;
 
-import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.ui.EnumComboBoxModel;
 import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.ui.PopupMenuListenerAdapter;
 import com.intellij.util.ListWithSelection;
-import com.intellij.util.ui.AbstractTableCellEditor;
 import org.jdesktop.swingx.combobox.ListComboBoxModel;
 
 import javax.swing.*;
 import javax.swing.event.PopupMenuEvent;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.util.Collections;
 
 /**
  * Supported value type: {@link ListWithSelection} and {@link java.lang.Enum}.
  * Value type can implement {@link com.intellij.openapi.util.Iconable} to display icon.
  */
-public class ComboBoxTableCellEditor extends AbstractTableCellEditor {
+public class ComboBoxTableCellEditor extends DefaultCellEditor {
   public static final ComboBoxTableCellEditor INSTANCE = new ComboBoxTableCellEditor();
 
-  private final ComboBox comboBox;
+  private final JComboBox comboBox;
 
   public ComboBoxTableCellEditor() {
-    //noinspection unchecked
-    comboBox = new ComboBox(new ListComboBoxModel(Collections.emptyList()));
-    comboBox.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        stopCellEditing();
-      }
-    });
+    //noinspection unchecked,UndesirableClassUsage
+    super(new JComboBox(new ListComboBoxModel(Collections.emptyList())));
 
-    // problem: pop-up opened - closed by esc (see jb ComboBox.registerCancelOnEscape) - editing is not canceled, but must be
+    comboBox = (JComboBox)getComponent();
+
+    // problem: pop-up opened - closed by esc - editing is not canceled, but must be
     comboBox.addPopupMenuListener(new PopupMenuListenerAdapter() {
       @Override
       public void popupMenuWillBecomeInvisible(PopupMenuEvent e) {
@@ -70,7 +62,6 @@ public class ComboBoxTableCellEditor extends AbstractTableCellEditor {
         setIcon(value instanceof Iconable ? ((Iconable)value).getIcon(Iconable.ICON_FLAG_VISIBILITY) : null);
       }
     });
-    comboBox.registerTableCellEditor(this);
   }
 
   @Override
@@ -98,10 +89,5 @@ public class ComboBoxTableCellEditor extends AbstractTableCellEditor {
     }
 
     return comboBox;
-  }
-
-  @Override
-  public Object getCellEditorValue() {
-    return comboBox.getSelectedItem();
   }
 }
