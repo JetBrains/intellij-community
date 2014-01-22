@@ -17,6 +17,7 @@ package com.intellij.debugger.ui;
 
 import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.DebuggerInvocationUtil;
+import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.engine.DebugProcessEvents;
 import com.intellij.debugger.engine.DebugProcessImpl;
@@ -28,6 +29,7 @@ import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
 import com.intellij.debugger.ui.breakpoints.*;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -426,6 +428,20 @@ public class PositionHighlighter {
       }
 
       return group;
+    }
+
+    @Override
+    public AnAction getMiddleButtonClickAction() {
+      return new AnAction() {
+        @Override
+        public void actionPerformed(AnActionEvent e) {
+          if (myEventsOutOfLine.size() == 1) {
+            Breakpoint breakpoint = myEventsOutOfLine.get(0).getFirst();
+            breakpoint.ENABLED = !breakpoint.ENABLED;
+            DebuggerManagerEx.getInstanceEx(myProject).getBreakpointManager().fireBreakpointChanged(breakpoint);
+          }
+        }
+      };
     }
 
     @Override

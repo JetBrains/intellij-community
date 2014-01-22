@@ -3,6 +3,7 @@ package org.jetbrains.plugins.javaFX.sceneBuilder;
 import com.oracle.javafx.scenebuilder.app.DocumentWindowController;
 import javafx.application.Platform;
 import javafx.embed.swing.JFXPanel;
+import javafx.fxml.FXMLLoader;
 
 import javax.swing.*;
 import java.io.File;
@@ -15,6 +16,8 @@ public class SceneBuilderWrapper {
 
   public static JComponent create(final String path) throws Exception {
     final EmbedSceneBuilderApp app = new EmbedSceneBuilderApp();
+
+    FXMLLoader.setDefaultClassLoader(SceneBuilderWrapper.class.getClassLoader());
 
     final JFXPanel panel = new JFXPanel();
     Platform.runLater(new Runnable() {

@@ -30,8 +30,12 @@ public class CertificateWarningDialog extends DialogWrapper {
     throw new UnsupportedOperationException("Not supported");
   }
 
-  public static CertificateWarningDialog createWrongHostnameCertificateWarning(@NotNull X509Certificate certificate) {
-    throw new UnsupportedOperationException("Not supported");
+  public static CertificateWarningDialog createHostnameMismatchWarning(@NotNull X509Certificate certificate,
+                                                                       @NotNull String hostname) {
+    String message = String.format("Server's certificate common name doesn't match hostname in URL: '%s' != '%s'",
+                                   new CertificateWrapper(certificate).getSubjectField(CertificateWrapper.CommonField.COMMON_NAME),
+                                   hostname);
+    return new CertificateWarningDialog(certificate, "Invalid hostname", message);
   }
 
   private JPanel myRootPanel;
@@ -48,7 +52,7 @@ public class CertificateWarningDialog extends DialogWrapper {
 
     CertificatesManager manager = CertificatesManager.getInstance();
     setTitle(title);
-    myMessagePane.setText(String.format("<html><body><p><b>%s</b></p></body></html>", message));
+    myMessagePane.setText(String.format("<html><body><p>%s</p></body></html>", message));
     myMessagePane.setBackground(UIUtil.getPanelBackground());
     setOKButtonText("Accept");
     setCancelButtonText("Reject");

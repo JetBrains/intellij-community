@@ -31,6 +31,8 @@ public class CustomFileTypeWordSelectionTest extends LightPlatformCodeInsightFix
     doTest();
   }
 
+  public void testCustomFileTypeQuotes() { doTest(); }
+
   public void testCustomFileTypeSkipMatchedPair() {
     doTest();
   }
