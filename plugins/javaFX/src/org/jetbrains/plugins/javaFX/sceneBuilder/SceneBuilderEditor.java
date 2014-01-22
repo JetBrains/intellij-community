@@ -1,6 +1,8 @@
 package org.jetbrains.plugins.javaFX.sceneBuilder;
 
 import com.intellij.codeHighlighting.BackgroundEditorHighlighter;
+import com.intellij.ide.plugins.PluginManager;
+import com.intellij.ide.plugins.cl.PluginClassLoader;
 import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileEditor;
@@ -154,10 +156,13 @@ public class SceneBuilderEditor extends UserDataHolderBase implements FileEditor
       throw new Exception(info.libPath + " no jar found");
     }
 
-    urls.add(new File(PathUtil.getJarPathForClass(Class.forName("javafx.embed.swing.JFXPanel"))).toURI().toURL());
-    urls.add(new File(PathUtil.getJarPathForClass(SceneBuilderWrapper.class)).toURI().toURL());
-
-    return new URLClassLoader(urls.toArray(new URL[urls.size()]), null);
+    final String parent = new File(PathUtil.getJarPathForClass(SceneBuilderEditor.class)).getParent();
+    if (SceneBuilderEditor.class.getClassLoader() instanceof PluginClassLoader) {
+      urls.add(new File(new File(parent).getParent(), "embedder.jar").toURI().toURL());
+    } else {
+      urls.add(new File(parent, "FXBuilderEmbedder").toURI().toURL());
+    }
+    return new URLClassLoader(urls.toArray(new URL[urls.size()]));
   }
 
   @NotNull
