@@ -27,25 +27,9 @@ public class PyAssignmentToLoopOrWithParameterInspectionTest extends PyInspectio
     doTest();
   }
 
-  public void testSimpleReassignment() {
+  public void testBad() {
     doTest();
   }
-
-  public void testTupleAssignment() {
-    doTest();
-  }
-
-  public void testTupleDeclaration() {
-    doTest();
-  }
-
-  public void testTwoLoops() {
-    doTest();
-  }
-  public void testWithStatement() {
-    doTest();
-  }
-
 
   @NotNull
   @Override
