@@ -959,7 +959,7 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
     }
   }
 
-  public void matchImplicitQualifier(MatchingHandler matchingHandler, PsiElement target, MatchContext context) {
+  private void matchImplicitQualifier(MatchingHandler matchingHandler, PsiElement target, MatchContext context) {
     if (!(matchingHandler instanceof SubstitutionHandler)) {
       myMatchingVisitor.setResult(false);
       return;
