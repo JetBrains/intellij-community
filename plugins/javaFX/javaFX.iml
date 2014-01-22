@@ -6,6 +6,7 @@
       <sourceFolder url="file://$MODULE_DIR$/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/resources" isTestSource="false" />
     </content>
+    <orderEntry type="module" module-name="FxBuilderStubs" scope="PROVIDED" />
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="lang-api" />
@@ -23,6 +24,7 @@
     <orderEntry type="module" module-name="common-javaFX-plugin" />
     <orderEntry type="module" module-name="manifest" />
     <orderEntry type="module" module-name="idea-ui" />
+    <orderEntry type="module" module-name="FxBuilderEmbedder" />
   </component>
 </module>
 

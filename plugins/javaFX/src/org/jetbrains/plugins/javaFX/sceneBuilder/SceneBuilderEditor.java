@@ -14,6 +14,8 @@ import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.HyperlinkLabel;
+import com.intellij.util.PathUtil;
+import javafx.embed.swing.JFXPanel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -111,9 +113,7 @@ public class SceneBuilderEditor extends UserDataHolderBase implements FileEditor
   private void loadSceneBuilder(SceneBuilderInfo info) throws Exception {
     mySceneLoader = createSceneLoader(info);
 
-    System.out.println(mySceneLoader.loadClass("com.oracle.javafx.scenebuilder.app.SceneBuilderApp"));
-
-    Class<?> wrapperClass = mySceneLoader.loadClass("org.jetbrains.plugins.javaFX.sceneBuilder.SceneBuilderWrapper");
+    Class<?> wrapperClass = Class.forName("org.jetbrains.plugins.javaFX.sceneBuilder.SceneBuilderWrapper", false, mySceneLoader);
     myFxPanel = (JComponent)wrapperClass.getMethod("create", String.class).invoke(null, myFile.getPath());
 
     myPanel.add(myFxPanel, SCENE_CARD);
@@ -155,7 +155,10 @@ public class SceneBuilderEditor extends UserDataHolderBase implements FileEditor
       throw new Exception(info.libPath + " no jar found");
     }
 
-    return new URLClassLoader(urls.toArray(new URL[urls.size()]));
+    urls.add(new File(PathUtil.getJarPathForClass(JFXPanel.class)).toURI().toURL());
+    urls.add(new File(PathUtil.getJarPathForClass(SceneBuilderWrapper.class)).toURI().toURL());
+
+    return new URLClassLoader(urls.toArray(new URL[urls.size()]), null);
   }
 
   @NotNull

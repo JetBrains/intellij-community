@@ -216,10 +216,7 @@ def layoutFull(String home, String targetDirectory, String patchedDescriptorDir 
             module("common-javaFX-plugin")
           }
           jar("embedder.jar") {
-            module("FXBuilderEmbedder") {
-              exclude(name: "com/**")
-              exclude(name: "javafx/**")
-            }
+            module("FXBuilderEmbedder")
           }
         }
       }
