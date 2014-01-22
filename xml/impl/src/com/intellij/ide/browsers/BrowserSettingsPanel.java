@@ -34,7 +34,6 @@ import com.intellij.util.Function;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.ListTableModel;
 import com.intellij.util.ui.LocalPathCellEditor;
-import com.intellij.util.ui.table.ComboBoxTableCellEditor;
 import com.intellij.util.ui.table.IconTableCellRenderer;
 import com.intellij.util.ui.table.TableModelEditor;
 import org.jetbrains.annotations.NotNull;
@@ -108,7 +107,7 @@ public class BrowserSettingsPanel {
     public void setValue(ConfigurableWebBrowser item, String value) {
       item.setName(value);
     }
-  }, new EditableColumnInfo<ConfigurableWebBrowser, BrowserFamily>("Family") {
+  }, new ColumnInfo<ConfigurableWebBrowser, BrowserFamily>("Family") {
     @Override
     public Class getColumnClass() {
       return BrowserFamily.class;
@@ -130,10 +129,9 @@ public class BrowserSettingsPanel {
       return IconTableCellRenderer.ICONABLE;
     }
 
-    @Nullable
     @Override
-    public TableCellEditor getEditor(ConfigurableWebBrowser item) {
-      return ComboBoxTableCellEditor.INSTANCE;
+    public boolean isCellEditable(ConfigurableWebBrowser item) {
+      return !WebBrowserManager.getInstance().isPredefinedBrowser(item);
     }
   }, PATH_COLUMN_INFO};
 
@@ -268,7 +266,7 @@ public class BrowserSettingsPanel {
 
       @Override
       public boolean isRemovable(@NotNull ConfigurableWebBrowser item) {
-        return !WebBrowserManager.isPredefinedBrowser(item);
+        return !WebBrowserManager.getInstance().isPredefinedBrowser(item);
       }
     };
     browsersEditor = new TableModelEditor<ConfigurableWebBrowser>(Collections.<ConfigurableWebBrowser>emptyList(), COLUMNS,
