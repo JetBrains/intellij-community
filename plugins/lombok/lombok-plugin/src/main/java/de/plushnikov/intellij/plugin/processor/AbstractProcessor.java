@@ -77,7 +77,7 @@ public abstract class AbstractProcessor implements Processor {
   }
 
   @NotNull
-  public List<? super PsiElement> process(@NotNull PsiClass psiClass, @NotNull ProcessorModus processorModus) {
+  public List<? super PsiElement> process(@NotNull PsiClass psiClass) {
     return Collections.emptyList();
   }
 

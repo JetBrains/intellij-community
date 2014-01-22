@@ -2,6 +2,7 @@ package de.plushnikov.intellij.plugin.util;
 
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiCodeBlock;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementFactory;
 import com.intellij.psi.PsiManager;
@@ -25,6 +26,12 @@ public class PsiMethodUtil {
     LombokLightMethod lightMethod = new LombokLightMethod(manager, method, psiClass);
     lightMethod.setNavigationElement(navigationTarget);
     return lightMethod;
+  }
+
+  @NotNull
+  public static PsiCodeBlock createCodeBlockFromText(@NotNull String blockText, @NotNull PsiClass psiClass) {
+    final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(psiClass.getProject()).getElementFactory();
+    return elementFactory.createCodeBlockFromText("{" + blockText + "}", psiClass);
   }
 
   public static boolean hasMethodByName(@NotNull Collection<PsiMethod> classMethods, @NotNull String methodName) {

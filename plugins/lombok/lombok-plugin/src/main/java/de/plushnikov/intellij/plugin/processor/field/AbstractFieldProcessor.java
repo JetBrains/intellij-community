@@ -35,13 +35,13 @@ public abstract class AbstractFieldProcessor extends AbstractProcessor implement
 
   @NotNull
   @Override
-  public List<? super PsiElement> process(@NotNull PsiClass psiClass, @NotNull ProcessorModus processorModus) {
+  public List<? super PsiElement> process(@NotNull PsiClass psiClass) {
     List<? super PsiElement> result = new ArrayList<PsiElement>();
     for (PsiField psiField : PsiClassUtil.collectClassFieldsIntern(psiClass)) {
       PsiAnnotation psiAnnotation = PsiAnnotationUtil.findAnnotation(psiField, getSupportedAnnotation());
       if (null != psiAnnotation) {
         if (validate(psiAnnotation, psiField, ProblemEmptyBuilder.getInstance())) {
-          generatePsiElements(psiField, psiAnnotation, processorModus, result);
+          generatePsiElements(psiField, psiAnnotation, result);
         }
       }
     }
@@ -76,7 +76,7 @@ public abstract class AbstractFieldProcessor extends AbstractProcessor implement
 
   protected abstract boolean validate(@NotNull PsiAnnotation psiAnnotation, @NotNull PsiField psiField, @NotNull ProblemBuilder builder);
 
-  protected abstract void generatePsiElements(@NotNull PsiField psiField, @NotNull PsiAnnotation psiAnnotation, @NotNull ProcessorModus processorModus, @NotNull List<? super PsiElement> target);
+  protected abstract void generatePsiElements(@NotNull PsiField psiField, @NotNull PsiAnnotation psiAnnotation, @NotNull List<? super PsiElement> target);
 
   protected void copyAnnotations(final PsiField fromPsiElement, final PsiModifierList toModifierList, final Pattern... patterns) {
     final Collection<String> annotationsToCopy = PsiAnnotationUtil.collectAnnotationsToCopy(fromPsiElement, patterns);

@@ -71,7 +71,7 @@ public class SingletonProcessor extends AbstractClassProcessor {
     return result;
   }
 
-  protected void generatePsiElements(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation, @NotNull ProcessorModus processorModus, @NotNull List<? super PsiElement> target) {
+  protected void generatePsiElements(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation, @NotNull List<? super PsiElement> target) {
     LombokLightMethodBuilder method = new LombokLightMethodBuilder(psiClass.getManager(), METHOD_NAME)
         .withMethodReturnType(PsiTypesUtil.getClassType(psiClass))
         .withContainingClass(psiClass)

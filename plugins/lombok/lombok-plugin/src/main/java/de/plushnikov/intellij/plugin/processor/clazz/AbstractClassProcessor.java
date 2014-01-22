@@ -38,14 +38,14 @@ public abstract class AbstractClassProcessor extends AbstractProcessor implement
 
   @NotNull
   @Override
-  public List<? super PsiElement> process(@NotNull PsiClass psiClass, @NotNull ProcessorModus processorModus) {
+  public List<? super PsiElement> process(@NotNull PsiClass psiClass) {
     List<? super PsiElement> result = Collections.emptyList();
 
     PsiAnnotation psiAnnotation = PsiAnnotationUtil.findAnnotation(psiClass, getSupportedAnnotation());
     if (null != psiAnnotation) {
       if (validate(psiAnnotation, psiClass, ProblemEmptyBuilder.getInstance())) {
         result = new ArrayList<PsiElement>();
-        generatePsiElements(psiClass, psiAnnotation, processorModus, result);
+        generatePsiElements(psiClass, psiAnnotation, result);
       }
     }
     return result;
@@ -77,7 +77,7 @@ public abstract class AbstractClassProcessor extends AbstractProcessor implement
 
   protected abstract boolean validate(@NotNull PsiAnnotation psiAnnotation, @NotNull PsiClass psiClass, @NotNull ProblemBuilder builder);
 
-  protected abstract void generatePsiElements(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation, @NotNull ProcessorModus processorModus, @NotNull List<? super PsiElement> target);
+  protected abstract void generatePsiElements(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation, @NotNull List<? super PsiElement> target);
 
   protected void validateCallSuperParam(PsiAnnotation psiAnnotation, PsiClass psiClass, ProblemBuilder builder, String generatedMethodName) {
     Boolean callSuperProperty = PsiAnnotationUtil.getDeclaredAnnotationValue(psiAnnotation, "callSuper", Boolean.class);

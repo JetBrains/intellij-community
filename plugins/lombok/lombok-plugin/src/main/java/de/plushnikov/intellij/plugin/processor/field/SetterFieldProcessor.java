@@ -10,8 +10,6 @@ import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiModifierList;
 import com.intellij.psi.PsiParameter;
 import com.intellij.psi.PsiType;
-import com.intellij.psi.util.PropertyUtil;
-import com.intellij.psi.util.PsiUtil;
 import de.plushnikov.intellij.plugin.extension.UserMapKeys;
 import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
 import de.plushnikov.intellij.plugin.psi.LombokLightMethodBuilder;
@@ -45,16 +43,10 @@ public class SetterFieldProcessor extends AbstractFieldProcessor {
   }
 
   @Override
-  protected void generatePsiElements(@NotNull PsiField psiField, @NotNull PsiAnnotation psiAnnotation, @NotNull ProcessorModus processorModus, @NotNull List<? super PsiElement> target) {
+  protected void generatePsiElements(@NotNull PsiField psiField, @NotNull PsiAnnotation psiAnnotation, @NotNull List<? super PsiElement> target) {
     final String methodVisibility = LombokProcessorUtil.getMethodModifier(psiAnnotation);
     if (methodVisibility != null) {
-      final PsiMethod getterMethod;
-      if (ProcessorModus.LOMBOK.equals(processorModus)) {
-        getterMethod = createSetterMethod(psiField, methodVisibility);
-      } else {
-        getterMethod = generateSetterMethod(psiField, methodVisibility);
-      }
-      target.add(getterMethod);
+      target.add(createSetterMethod(psiField, methodVisibility));
     }
   }
 
@@ -154,7 +146,8 @@ public class SetterFieldProcessor extends AbstractFieldProcessor {
     if (StringUtil.isNotEmpty(methodModifier)) {
       method.withModifier(methodModifier);
     }
-    if (psiField.hasModifierProperty(PsiModifier.STATIC)) {
+    boolean isStatic = psiField.hasModifierProperty(PsiModifier.STATIC);
+    if (isStatic) {
       method.withModifier(PsiModifier.STATIC);
     }
 
@@ -168,24 +161,17 @@ public class SetterFieldProcessor extends AbstractFieldProcessor {
       }
     }
 
+    final String thisOrClass = isStatic ? psiClass.getName() : "this";
+    String blockText = String.format("%s.%s = %s;", thisOrClass, psiField.getName(), methodParameter.getName());
+    if (!isStatic && !PsiType.VOID.equals(returnType)) {
+      blockText += "return this;";
+    }
+
+    method.withBody(PsiMethodUtil.createCodeBlockFromText(blockText, psiClass));
+
     copyAnnotations(psiField, method.getModifierList(), LombokUtils.DEPRECATED_PATTERN);
 
     return method;
-  }
-
-  @NotNull
-  public PsiMethod generateSetterMethod(@NotNull PsiField psiField, @NotNull String methodVisibility) {
-    final boolean returnSelf = !PsiType.VOID.equals(getReturnType(psiField));
-
-    PsiMethod propertySetter = PropertyUtil.generateSetterPrototype(psiField, psiField.getContainingClass(), returnSelf);
-
-    final String methodName = getSetterName(psiField, PsiType.BOOLEAN.equals(psiField.getType()));
-    if (!propertySetter.getName().equals(methodName)) {
-      propertySetter.setName(methodName);
-    }
-
-    PsiUtil.setModifierProperty(propertySetter, methodVisibility, true);
-    return propertySetter;
   }
 
   protected PsiType getReturnType(@NotNull PsiField psiField) {

@@ -6,6 +6,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiCodeBlock;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementFactory;
 import com.intellij.psi.PsiFile;
@@ -36,6 +37,7 @@ public class LombokLightMethodBuilder extends LightMethodBuilder {
   private final LombokLightReferenceListBuilder myThrowsList;
   private ASTNode myASTNode;
   private String myName;
+  private PsiCodeBlock myBodyCodeBlock;
 
   public LombokLightMethodBuilder(@NotNull PsiManager manager, @NotNull String name) {
     super(manager, JavaLanguage.INSTANCE, name,
@@ -104,6 +106,16 @@ public class LombokLightMethodBuilder extends LightMethodBuilder {
   public LombokLightMethodBuilder withConstructor(boolean isConstructor) {
     setConstructor(isConstructor);
     return this;
+  }
+
+  public LombokLightMethodBuilder withBody(@NotNull PsiCodeBlock codeBlock) {
+    myBodyCodeBlock = codeBlock;
+    return this;
+  }
+
+  @Override
+  public PsiCodeBlock getBody() {
+    return myBodyCodeBlock;
   }
 
   @Override

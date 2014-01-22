@@ -62,15 +62,15 @@ public class GetterProcessor extends AbstractClassProcessor {
     return null != methodVisibility;
   }
 
-  protected void generatePsiElements(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation, @NotNull ProcessorModus processorModus, @NotNull List<? super PsiElement> target) {
+  protected void generatePsiElements(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation, @NotNull List<? super PsiElement> target) {
     final String methodVisibility = LombokProcessorUtil.getMethodModifier(psiAnnotation);
     if (methodVisibility != null) {
-      target.addAll(createFieldGetters(psiClass, methodVisibility, processorModus));
+      target.addAll(createFieldGetters(psiClass, methodVisibility));
     }
   }
 
   @NotNull
-  public Collection<PsiMethod> createFieldGetters(@NotNull PsiClass psiClass, @NotNull String methodModifier, @NotNull ProcessorModus processorModus) {
+  public Collection<PsiMethod> createFieldGetters(@NotNull PsiClass psiClass, @NotNull String methodModifier) {
     Collection<PsiMethod> result = new ArrayList<PsiMethod>();
     final Collection<PsiMethod> classMethods = PsiClassUtil.collectClassMethodsIntern(psiClass);
 
@@ -92,11 +92,7 @@ public class GetterProcessor extends AbstractClassProcessor {
       }
 
       if (createGetter) {
-        if (ProcessorModus.LOMBOK.equals(processorModus)) {
-          result.add(fieldProcessor.createGetterMethod(psiField, methodModifier));
-        } else {
-          result.add(fieldProcessor.generateGetterMethod(psiField, methodModifier));
-        }
+        result.add(fieldProcessor.createGetterMethod(psiField, methodModifier));
       }
     }
     return result;

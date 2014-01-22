@@ -34,7 +34,7 @@ public class BuilderProcessor extends BuilderInnerClassProcessor {
     return validateInternal(psiAnnotation, psiClass, builder, false);
   }
 
-  protected void generatePsiElements(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation, @NotNull ProcessorModus processorModus, @NotNull List<? super PsiElement> target) {
+  protected void generatePsiElements(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation, @NotNull List<? super PsiElement> target) {
     final Collection<PsiMethod> definedConstructors = PsiClassUtil.collectClassConstructorIntern(psiClass);
     // Create all args constructor only if there is no declared constructor
     if (definedConstructors.isEmpty()) {

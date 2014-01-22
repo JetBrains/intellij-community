@@ -65,7 +65,7 @@ public class ValueProcessor extends AbstractClassProcessor {
     return result;
   }
 
-  protected void generatePsiElements(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation, @NotNull ProcessorModus processorModus, @NotNull List<? super PsiElement> target) {
+  protected void generatePsiElements(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation, @NotNull List<? super PsiElement> target) {
     //TODO add support for final Modifier on class
     /*//@Value class are final
     if (!PsiClassUtil.isFinalClass(psiClass) && !PsiAnnotationUtil.isAnnotatedWith(psiClass, NonFinal.class)) {
@@ -74,7 +74,7 @@ public class ValueProcessor extends AbstractClassProcessor {
     */
 
     if (PsiAnnotationUtil.isNotAnnotatedWith(psiClass, Getter.class)) {
-      target.addAll(new GetterProcessor().createFieldGetters(psiClass, PsiModifier.PUBLIC, processorModus));
+      target.addAll(new GetterProcessor().createFieldGetters(psiClass, PsiModifier.PUBLIC));
     }
     if (PsiAnnotationUtil.isNotAnnotatedWith(psiClass, EqualsAndHashCode.class)) {
       target.addAll(new EqualsAndHashCodeProcessor().createEqualAndHashCode(psiClass, psiAnnotation, false));

@@ -33,7 +33,7 @@ public abstract class AbstractMethodProcessor extends AbstractProcessor implemen
 
   @NotNull
   @Override
-  public List<? super PsiElement> process(@NotNull PsiClass psiClass, @NotNull ProcessorModus processorModus) {
+  public List<? super PsiElement> process(@NotNull PsiClass psiClass) {
     List<? super PsiElement> result = new ArrayList<PsiElement>();
     for (PsiMethod psiMethod : PsiClassUtil.collectClassMethodsIntern(psiClass)) {
       PsiAnnotation psiAnnotation = PsiAnnotationUtil.findAnnotation(psiMethod, getSupportedAnnotation());

@@ -51,7 +51,7 @@ public class EnumIdFieldProcessor extends AbstractFieldProcessor {
     return result;
   }
 
-  protected void generatePsiElements(@NotNull PsiField psiField, @NotNull PsiAnnotation psiAnnotation, @NotNull ProcessorModus processorModus, @NotNull List<? super PsiElement> target) {
+  protected void generatePsiElements(@NotNull PsiField psiField, @NotNull PsiAnnotation psiAnnotation, @NotNull List<? super PsiElement> target) {
     final String fieldName = psiField.getName();
     final PsiType psiFieldType = psiField.getType();
 
