@@ -6,7 +6,6 @@
       <sourceFolder url="file://$MODULE_DIR$/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/resources" isTestSource="false" />
     </content>
-    <orderEntry type="module" module-name="FxBuilderStubs" scope="PROVIDED" />
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="lang-api" />

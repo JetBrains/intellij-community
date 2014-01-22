@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -309,14 +309,19 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border {
       comboBoxEditor.getEditorComponent().addFocusListener(new FocusAdapter() {
         @Override
         public void focusGained(FocusEvent e) {
-          comboBox.revalidate();
-          comboBox.repaint();
+          update();
+        }
+
+        void update() {
+          if (comboBox != null) {
+            comboBox.revalidate();
+            comboBox.repaint();
+          }
         }
 
         @Override
         public void focusLost(FocusEvent e) {
-          comboBox.revalidate();
-          comboBox.repaint();
+          update();
         }
       });
     }
