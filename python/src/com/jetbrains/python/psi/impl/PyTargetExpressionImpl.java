@@ -578,6 +578,9 @@ public class PyTargetExpressionImpl extends PyPresentableElementImpl<PyTargetExp
   @NotNull
   @Override
   public SearchScope getUseScope() {
+    if (isQualified()) {
+      return super.getUseScope();
+    }
     final ScopeOwner owner = ScopeUtil.getScopeOwner(this);
     if (owner != null) {
       final Scope scope = ControlFlowCache.getScope(owner);
