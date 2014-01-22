@@ -238,7 +238,7 @@ public class PyBlock implements ASTBlock {
         childIndent = Indent.getNoneIndent();
       }
       else {
-        childIndent = Indent.getNormalIndent();
+        childIndent = isIndentNext(child) ? Indent.getContinuationIndent() : Indent.getNormalIndent();
       }
     }
     else if (parentType == PyElementTypes.SUBSCRIPTION_EXPRESSION) {
