@@ -275,7 +275,7 @@ public abstract class DebuggerUtils {
   }
 
   private static boolean typeEquals(Type type, String typeName) {
-    return type.name().replace('$', '.').equals(typeName);
+    return type.name().replace('$', '.').equals(typeName.replace('$', '.'));
   }
 
   private static Type getSuperTypeInt(Type subType, String superType) {
