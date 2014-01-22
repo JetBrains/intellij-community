@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,28 +15,25 @@
  */
 package com.intellij.ide.actions;
 
+import com.intellij.openapi.actionSystem.ActionGroupUtil;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
-import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.DumbAware;
 
 /**
- * This group hides itself when there's no registered children.
+ * This group hides itself when there's no enabled and visible child.
  *
  * @see com.intellij.ide.actions.SmartPopupActionGroup
- * @see com.intellij.ide.actions.NonTrivialActionGroup
+ * @see com.intellij.ide.actions.NonEmptyActionGroup
+ *
+ * @author gregsh
  */
-public class NonEmptyActionGroup extends DefaultActionGroup implements DumbAware {
-  public NonEmptyActionGroup() {
+public class NonTrivialActionGroup extends DefaultActionGroup implements DumbAware {
+  public NonTrivialActionGroup() {
     super();
   }
 
-  public void update(AnActionEvent event) {
-    Presentation presentation = event.getPresentation();
-    presentation.setVisible(getChildrenCount() > 0);
-  }
-
-  public boolean hideIfNoVisibleChildren() {
-    return true;
+  public void update(AnActionEvent e) {
+    e.getPresentation().setVisible(!ActionGroupUtil.isGroupEmpty(this, e));
   }
 }
