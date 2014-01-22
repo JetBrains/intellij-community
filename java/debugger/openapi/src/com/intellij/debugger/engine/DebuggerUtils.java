@@ -274,14 +274,17 @@ public abstract class DebuggerUtils {
     return getSuperTypeInt(subType, superType);
   }
 
+  private static boolean typeEquals(Type type, String typeName) {
+    return type.name().replace('$', '.').equals(typeName);
+  }
+
   private static Type getSuperTypeInt(Type subType, String superType) {
-    superType = superType.replace('.', '$'); // jdi type have dollars instead of dots
     Type result;
     if (subType == null) {
       return null;
     }
 
-    if (subType.name().equals(superType)) {
+    if (typeEquals(subType, superType)) {
       return subType;
     }
 
@@ -294,7 +297,7 @@ public abstract class DebuggerUtils {
       List ifaces = ((ClassType)subType).allInterfaces();
       for (Object iface : ifaces) {
         InterfaceType interfaceType = (InterfaceType)iface;
-        if (interfaceType.name().equals(superType)) {
+        if (typeEquals(interfaceType, superType)) {
           return interfaceType;
         }
       }
