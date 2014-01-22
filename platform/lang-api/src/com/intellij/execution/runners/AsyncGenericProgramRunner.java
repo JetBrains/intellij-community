@@ -72,14 +72,14 @@ public abstract class AsyncGenericProgramRunner<Settings extends RunnerSettings>
   }
 
   /**
-   * Makes all the needed preparations for the execution. Although this method is called in EDT,
-   * these preparations can be performed in a background thread.
+   * Makes all the needed preparations for the further execution. Although this method is called in EDT,
+   * these preparations can be performed in a background thread. <p/>
+   * Once the preparations are done, {@code consumer.consume(RunProfileStarter)} should be called in EDT to start actual execution.
    *
    * @param project Project instance
    * @param env ExecutionEnvironment instance
    * @param state RunProfileState instance
-   * @param consumer RunProfileStarterConsumer instance, its 'consume' method should be called in EDT.
-   *                 If no further actual execution is needed, 'consume' method should be called.
+   * @param consumer RunProfileStarterConsumer instance; if no further actual execution is needed, then {@code consumer.consume} method shouldn't be called.
    */
   protected abstract void prepare(@NotNull Project project,
                                   @NotNull ExecutionEnvironment env,
